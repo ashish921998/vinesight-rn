@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -488,16 +489,48 @@ export function AddActivityModal({
           </View>
         </View>
 
-        {showDatePicker && (
+        {showDatePicker && Platform.OS === 'android' && (
           <DateTimePicker
             value={selectedDate}
             mode="date"
-            display="default"
             onChange={(_, date) => {
               setShowDatePicker(false);
               if (date) setSelectedDate(date);
             }}
           />
+        )}
+        {showDatePicker && Platform.OS === 'ios' && (
+          <Pressable
+            onPress={() => setShowDatePicker(false)}
+            className="absolute inset-0 bg-black/50 z-50"
+          >
+            <View
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-4"
+              onStartShouldSetResponder={() => true}
+            >
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-lg font-bold text-surface-900">Select Date</Text>
+                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                  <Ionicons name="close" size={24} color="#9CA3AF" />
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="inline"
+                onChange={(_, date) => {
+                  if (date) setSelectedDate(date);
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(false)}
+                className="mt-4 py-3 rounded-xl items-center"
+                style={{ backgroundColor: '#408059' }}
+              >
+                <Text className="font-semibold text-white">Done</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
         )}
 
         {/* Content */}

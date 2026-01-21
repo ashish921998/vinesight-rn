@@ -21,29 +21,41 @@ export function StatsCard({
   title,
   value,
   icon,
-  color = '#22C55E',
+  color = '#408059',
   iconColor,
   subtitle,
   onPress,
 }: StatsCardProps) {
   const finalColor = iconColor || color;
   const content = (
-    <View className="bg-white rounded-xl p-4 border border-gray-100">
+    <View 
+      className="rounded-xl p-4"
+      style={{ 
+        backgroundColor: '#ffffff',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+      }}
+    >
       <View className="flex-row items-center justify-between">
-        <View 
-          className="w-10 h-10 rounded-lg items-center justify-center"
-          style={{ backgroundColor: `${finalColor}15` }}
-        >
-          <Ionicons name={icon} size={20} color={finalColor} />
-        </View>
-        <View className="items-end">
-          <Text className="text-2xl font-bold text-gray-900">{value}</Text>
-          {subtitle && (
-            <Text className="text-xs text-gray-500">{subtitle}</Text>
-          )}
-        </View>
+        <Ionicons 
+          name={icon} 
+          size={20} 
+          color={finalColor}
+          style={{ opacity: 1 }}
+        />
+        <Text className="text-2xl font-bold" style={{ color: '#000000' }}>
+          {value}
+        </Text>
       </View>
-      <Text className="text-sm text-gray-500 mt-3">{title}</Text>
+      <Text 
+        className="text-xs mt-3"
+        style={{ color: '#8e8e93' }}
+      >
+        {title}
+      </Text>
     </View>
   );
 

@@ -88,30 +88,55 @@ export default function LabTestsScreen() {
   ) => {
     const isSoil = type === 'soil';
     const params = Object.entries(test.parameters || {}).slice(0, 8);
+    const color = isSoil ? '#597A61' : '#4C806B';
 
     return (
       <View
         key={test.id}
-        className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderRadius: 16,
+          padding: 16,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: isSoil ? 'rgba(89, 122, 97, 0.2)' : 'rgba(76, 128, 107, 0.2)',
+          shadowColor: color,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 4,
+        }}
       >
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center">
             <View
-              className={`w-10 h-10 rounded-full items-center justify-center ${
-                isSoil ? 'bg-amber-100' : 'bg-green-100'
-              }`}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: isSoil ? 'rgba(89, 122, 97, 0.1)' : 'rgba(76, 128, 107, 0.1)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
               <Ionicons
                 name={isSoil ? 'leaf' : 'leaf-outline'}
                 size={20}
-                color={isSoil ? '#d97706' : '#16a34a'}
+                color={color}
               />
             </View>
             <View className="ml-3">
-              <Text className="text-sm font-semibold text-gray-800">
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '700',
+                  color: color,
+                  textTransform: 'uppercase',
+                }}
+              >
                 {isSoil ? 'Soil Analysis' : 'Petiole Analysis'}
               </Text>
-              <Text className="text-xs text-gray-500">{test.date}</Text>
+              <Text className="text-base font-semibold text-gray-800">{test.date}</Text>
             </View>
           </View>
           <TouchableOpacity
@@ -128,75 +153,84 @@ export default function LabTestsScreen() {
 
         {/* Parameters Grid */}
         {params.length > 0 && (
-          <View className="flex-row flex-wrap gap-2 mb-3">
-            {params.map(([key, value]) => (
-              <View
-                key={key}
-                className="bg-gray-50 px-3 py-2 rounded-lg min-w-[70px]"
-              >
-                <Text className="text-xs text-gray-500">
-                  {formatParameterKey(key)}
-                </Text>
-                <Text className="text-sm font-semibold text-gray-800">
-                  {typeof value === 'number' ? value.toFixed(2) : value}
-                  <Text className="text-xs font-normal text-gray-500">
-                    {' '}
-                    {getParameterUnit(key, isSoil)}
+          <View className="border-t border-gray-200 pt-3 mb-3">
+            <View className="flex-row flex-wrap gap-3">
+              {params.map(([key, value]) => (
+                <View
+                  key={key}
+                  style={{
+                    backgroundColor: 'rgba(242, 242, 247, 0.5)',
+                    borderRadius: 12,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    minWidth: 75,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: color,
+                    }}
+                  >
+                    {formatParameterKey(key)}
                   </Text>
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Recommendations */}
-        {test.recommendations && (
-          <View className="bg-blue-50 p-3 rounded-lg mb-2">
-            <Text className="text-xs font-medium text-blue-700 mb-1">
-              Recommendations
-            </Text>
-            <Text className="text-sm text-blue-800">{test.recommendations}</Text>
+                  <Text className="text-xs font-medium text-gray-800 mt-1">
+                    {typeof value === 'number' ? value.toFixed(2) : value}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
 
         {/* Notes */}
         {test.notes && (
-          <Text className="text-sm text-gray-600 italic">{test.notes}</Text>
+          <Text
+            style={{
+              fontSize: 12,
+              color: '#666',
+              marginTop: 4,
+            }}
+            numberOfLines={2}
+          >
+            {test.notes}
+          </Text>
         )}
       </View>
     );
   };
 
-  const renderEmptyState = (type: TestType) => (
-    <View className="flex-1 items-center justify-center py-16">
-      <View
-        className={`w-20 h-20 rounded-full items-center justify-center ${
-          type === 'soil' ? 'bg-amber-50' : 'bg-green-50'
-        }`}
-      >
+  const renderEmptyState = (type: TestType) => {
+    const color = type === 'soil' ? '#597A61' : '#4C806B';
+
+    return (
+      <View className="flex-1 items-center justify-center py-16">
         <Ionicons
           name={type === 'soil' ? 'leaf' : 'leaf-outline'}
-          size={40}
-          color={type === 'soil' ? '#d97706' : '#16a34a'}
+          size={48}
+          color={color}
+          style={{ opacity: 0.5 }}
         />
-      </View>
-      <Text className="text-lg font-semibold text-gray-700 mt-4">
-        No {type === 'soil' ? 'Soil' : 'Petiole'} Tests
-      </Text>
-      <Text className="text-gray-500 text-center mt-2 px-8">
-        Add a {type} test to track nutrient levels and get recommendations.
-      </Text>
-      <TouchableOpacity
-        onPress={() => setShowAddModal(true)}
-        className="mt-4 bg-green-600 px-6 py-3 rounded-full flex-row items-center"
-      >
-        <Ionicons name="add" size={20} color="white" />
-        <Text className="text-white font-semibold ml-1">
-          Add {type === 'soil' ? 'Soil' : 'Petiole'} Test
+        <Text className="text-lg font-semibold text-gray-800 mt-4">
+          No {type === 'soil' ? 'Soil' : 'Petiole'} Tests
         </Text>
-      </TouchableOpacity>
-    </View>
-  );
+        <Text className="text-gray-500 text-center mt-2 px-8">
+          Add a {type === 'soil' ? 'soil' : 'petiole'} test to track nutrient levels.
+        </Text>
+        <TouchableOpacity
+          onPress={() => setShowAddModal(true)}
+          className="mt-4 bg-[#408059] px-6 py-3 rounded-full flex-row items-center"
+        >
+          <Ionicons name="add" size={20} color="white" />
+          <Text className="text-white font-semibold ml-1">
+            Add {type === 'soil' ? 'Soil' : 'Petiole'} Test
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   if (!farmId || farmIdNum === 0) {
     return (
@@ -218,13 +252,13 @@ export default function LabTestsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#f2f2f7]" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
+      <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white/80 backdrop-blur-lg">
         <TouchableOpacity onPress={() => router.back()} className="mr-3">
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Ionicons name="flask" size={24} color="#8b5cf6" />
+        <Ionicons name="flask" size={24} color="#408059" />
         <View className="ml-2 flex-1">
           <Text className="text-xl font-bold text-gray-800">Lab Tests</Text>
           {farm && (
@@ -233,40 +267,40 @@ export default function LabTestsScreen() {
         </View>
         <TouchableOpacity
           onPress={() => setShowAddModal(true)}
-          className="bg-green-600 p-2 rounded-full"
+          className="bg-[#408059] p-2 rounded-full"
         >
           <Ionicons name="add" size={24} color="white" />
         </TouchableOpacity>
       </View>
 
       {/* Tabs */}
-      <View className="flex-row bg-white px-4 py-2 border-b border-gray-200">
+      <View className="flex-row bg-white/80 px-4 py-3 border-b border-gray-200">
         <TouchableOpacity
           onPress={() => setSelectedTab('soil')}
-          className={`flex-1 py-3 rounded-lg mr-2 ${
-            selectedTab === 'soil' ? 'bg-amber-100' : 'bg-gray-100'
+          className={`flex-1 py-2 mr-2 ${
+            selectedTab === 'soil' ? 'border-b-2 border-[#597A61]' : ''
           }`}
         >
           <Text
-            className={`text-center font-semibold ${
-              selectedTab === 'soil' ? 'text-amber-700' : 'text-gray-600'
+            className={`text-center text-sm font-semibold uppercase ${
+              selectedTab === 'soil' ? 'text-[#597A61]' : 'text-gray-400'
             }`}
           >
-            🌱 Soil ({soilTests?.length || 0})
+            Soil ({soilTests?.length || 0})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setSelectedTab('petiole')}
-          className={`flex-1 py-3 rounded-lg ml-2 ${
-            selectedTab === 'petiole' ? 'bg-green-100' : 'bg-gray-100'
+          className={`flex-1 py-2 ml-2 ${
+            selectedTab === 'petiole' ? 'border-b-2 border-[#4C806B]' : ''
           }`}
         >
           <Text
-            className={`text-center font-semibold ${
-              selectedTab === 'petiole' ? 'text-green-700' : 'text-gray-600'
+            className={`text-center text-sm font-semibold uppercase ${
+              selectedTab === 'petiole' ? 'text-[#4C806B]' : 'text-gray-400'
             }`}
           >
-            🍃 Petiole ({petioleTests?.length || 0})
+            Petiole ({petioleTests?.length || 0})
           </Text>
         </TouchableOpacity>
       </View>

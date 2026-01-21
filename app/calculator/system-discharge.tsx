@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -60,6 +61,7 @@ export default function SystemDischargeScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 bg-surface-50"
@@ -174,6 +176,7 @@ export default function SystemDischargeScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      </SafeAreaView>
     </>
   );
 }

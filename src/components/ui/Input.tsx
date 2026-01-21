@@ -40,23 +40,26 @@ export function Input({
   const getBorderColor = () => {
     if (hasError) return 'border-red-500';
     if (isFocused) return 'border-primary-500';
-    return 'border-surface-200';
+    return 'border-gray-200';
   };
 
   // Background color based on state
   const getBackgroundColor = () => {
-    if (isDisabled) return 'bg-surface-100';
+    if (isDisabled) return 'bg-gray-100';
     return 'bg-white';
   };
 
   return (
     <View className={containerClassName}>
       {label && (
-        <Text className="text-sm font-medium text-surface-700 mb-1.5">
+        <Text 
+          className="text-sm font-medium mb-1.5"
+          style={{ color: '#000000' }}
+        >
           {label}
         </Text>
       )}
-      
+
       <View
         className={`
           flex-row items-center
@@ -69,18 +72,19 @@ export function Input({
           <Ionicons
             name={leftIcon}
             size={20}
-            color={isFocused ? '#408059' : '#9CA3AF'}
+            color={isFocused ? '#408059' : '#c7c7cc'}
             style={{ marginRight: 10 }}
           />
         )}
-        
+
         <TextInput
           className={`
             flex-1 py-3.5
-            text-base text-surface-900
+            text-base
             ${className || ''}
           `}
-          placeholderTextColor="#9CA3AF"
+          style={{ color: '#000000' }}
+          placeholderTextColor="#c7c7cc"
           editable={editable}
           secureTextEntry={isPassword && !showPassword}
           onFocus={(e) => {
@@ -93,7 +97,7 @@ export function Input({
           }}
           {...props}
         />
-        
+
         {isPassword && (
           <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
@@ -102,11 +106,11 @@ export function Input({
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={20}
-              color="#9CA3AF"
+              color="#c7c7cc"
             />
           </TouchableOpacity>
         )}
-        
+
         {!isPassword && rightIcon && (
           <TouchableOpacity
             onPress={onRightIconPress}
@@ -116,16 +120,21 @@ export function Input({
             <Ionicons
               name={rightIcon}
               size={20}
-              color={isFocused ? '#408059' : '#9CA3AF'}
+              color={isFocused ? '#408059' : '#c7c7cc'}
             />
           </TouchableOpacity>
         )}
       </View>
-      
+
       {hasError && (
         <View className="flex-row items-center mt-1.5">
-          <Ionicons name="alert-circle" size={14} color="#EF4444" />
-          <Text className="text-xs text-red-500 ml-1">{error}</Text>
+          <Ionicons name="alert-circle" size={14} color="#ff3b30" />
+          <Text 
+            className="text-xs ml-1"
+            style={{ color: '#ff3b30' }}
+          >
+            {error}
+          </Text>
         </View>
       )}
     </View>

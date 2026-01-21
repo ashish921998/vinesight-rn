@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'r
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkers, useDeleteWorker, useAllWorkerAttendance } from '@/hooks';
 import { AddWorkerModal } from '@/components/screens';
+import { AttendanceView } from '@/components/screens';
 import type { Worker } from '@/types';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
@@ -172,20 +173,7 @@ export default function WorkersScreen() {
   );
 
   const renderAttendanceTab = () => (
-    <View className="flex-1 items-center justify-center p-8">
-      <View className="w-20 h-20 bg-blue-100 rounded-full items-center justify-center mb-4">
-        <Ionicons name="calendar-outline" size={40} color="#3B82F6" />
-      </View>
-      <Text className="text-lg font-semibold text-surface-900 text-center">
-        Attendance Tracking
-      </Text>
-      <Text className="text-sm text-surface-500 text-center mt-2">
-        Track daily attendance, work types,{`\n`}and calculate earnings.
-      </Text>
-      <Text className="text-xs text-surface-400 mt-4">
-        Coming soon in a future update
-      </Text>
-    </View>
+    <AttendanceView workers={activeWorkers} onSaveSuccess={refetch} />
   );
 
   const renderAnalyticsTab = () => (
@@ -206,7 +194,8 @@ export default function WorkersScreen() {
   );
 
   return (
-    <View className="flex-1 bg-surface-50">
+    <>
+      <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
       {/* Tab Selector */}
       <View className="bg-white px-4 pt-2 pb-3">
         <View className="flex-row bg-surface-100 rounded-xl p-1">
@@ -256,15 +245,16 @@ export default function WorkersScreen() {
         >
           <Ionicons name="add" size={28} color="#FFFFFF" />
         </TouchableOpacity>
-      )}
+       )}
+       </View>
 
-      {/* Add/Edit Worker Modal */}
+       {/* Add/Edit Worker Modal */}
       <AddWorkerModal
         visible={showAddModal}
         onClose={handleAddModalClose}
         worker={workerToEdit}
         onSaveSuccess={refetch}
       />
-    </View>
+    </>
   );
 }

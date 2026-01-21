@@ -23,6 +23,9 @@ export * from './report';
 // Onboarding types
 export * from './onboarding';
 
+// AI types
+export * from './ai';
+
 // Re-export commonly used types for convenience
 export type {
   Farm,

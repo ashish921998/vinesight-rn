@@ -27,11 +27,11 @@ export function QuickActionButton({
     >
       <View
         className="w-12 h-12 rounded-full items-center justify-center mb-2"
-        style={{ backgroundColor: `${color}15` }}
+        style={{ backgroundColor: `${color}1A` }}
       >
-        <Ionicons name={icon} size={22} color={color} />
+        <Ionicons name={icon} size={20} color={color} />
       </View>
-      <Text className="text-xs font-medium text-gray-900 text-center">
+      <Text className="text-xs font-medium text-center" style={{ color: '#000000' }}>
         {title}
       </Text>
     </Pressable>

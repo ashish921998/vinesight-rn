@@ -18,9 +18,6 @@ interface ExpenseFormProps {
 
 // Icon mapping for expense types
 const EXPENSE_ICONS: Record<ExpenseTypeId, keyof typeof Ionicons.glyphMap> = {
-  'Labor': 'people-outline',
-  'Fertilizer': 'leaf-outline',
-  'Spray': 'flask-outline',
   'Equipment': 'construct-outline',
   'Fuel': 'car-outline',
   'Seeds/Plants': 'flower-outline',

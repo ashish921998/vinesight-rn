@@ -455,10 +455,11 @@ export const initAuthListener = () => {
       // Silently update session without triggering navigation changes
       const currentState = useAuthStore.getState();
       if (currentState.isAuthenticated) {
-        useAuthStore.setState({
+        useAuthStore.setState((state) => ({
+          ...state,
           session,
           user: session.user,
-        }, true); // Replace state without triggering subscriptions
+        }));
       }
     }
   });

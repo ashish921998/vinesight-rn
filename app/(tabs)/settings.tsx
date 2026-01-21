@@ -108,6 +108,7 @@ export default function SettingsScreen() {
     <ScrollView
       className="flex-1 bg-surface-50"
       contentContainerStyle={{ paddingBottom: 32 }}
+      style={{ backgroundColor: '#f2f2f7' }}
     >
       {/* Profile Section */}
       <View className="bg-white mx-4 mt-4 rounded-2xl p-4">
@@ -385,8 +386,8 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-        </View>
-      </Modal>
+         </View>
+       </Modal>
     </ScrollView>
   );
 }

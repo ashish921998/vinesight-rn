@@ -66,11 +66,16 @@ export function ActivityLogCard({
     : date;
 
   const content = (
-    <View className="flex-row items-center bg-primary/5 rounded-xl px-3 py-3">
+    <View 
+      className="flex-row items-center rounded-xl px-3 py-2"
+      style={{ 
+        backgroundColor: '#ffffff',
+      }}
+    >
       {/* Icon */}
       <View
         className="w-10 h-10 rounded-full items-center justify-center mr-3"
-        style={{ backgroundColor: `${logType.color}15` }}
+        style={{ backgroundColor: `${logType.color}26` }}
       >
         <Ionicons
           name={logType.icon as keyof typeof Ionicons.glyphMap}
@@ -81,19 +86,28 @@ export function ActivityLogCard({
 
       {/* Content */}
       <View className="flex-1">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-sm font-semibold text-gray-900">
-            {logType.label}
-          </Text>
-          <Text className="text-xs text-gray-500">{displayDate}</Text>
-        </View>
-        <Text className="text-xs text-gray-500 mt-0.5" numberOfLines={1}>
-          {displayDescription}
+        <Text className="text-sm font-semibold" style={{ color: '#000000' }} numberOfLines={1}>
+          {displayDescription || logType.label}
         </Text>
-        {farmName && (
-          <Text className="text-xs text-primary mt-0.5">{farmName}</Text>
-        )}
+        <View className="flex-row items-center mt-1">
+          {farmName && (
+            <>
+              <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                {farmName}
+              </Text>
+              <Text className="text-xs mx-1" style={{ color: '#c7c7cc' }}>
+                •
+              </Text>
+            </>
+          )}
+          <Text className="text-xs" style={{ color: '#c7c7cc' }}>
+            {displayDate}
+          </Text>
+        </View>
       </View>
+
+      {/* Chevron */}
+      <Ionicons name="chevron-forward" size={16} color="#c7c7cc" />
     </View>
   );
 

@@ -227,8 +227,8 @@ export interface SoilProfile {
   created_at?: string | null;
 }
 
-export type SoilProfileInsert = Omit<SoilProfile, 'id' | 'created_at'>;
-export type SoilProfileUpdate = Partial<Omit<SoilProfile, 'id' | 'farm_id' | 'created_at'>>;
+export type SoilProfileInsert = Omit<SoilProfile, 'id'> & { created_at?: string | null };
+export type SoilProfileUpdate = Partial<Omit<SoilProfile, 'id' | 'farm_id'>>;
 
 // ============================================================
 // MARK: - Calculation History

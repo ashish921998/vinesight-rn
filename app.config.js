@@ -11,7 +11,7 @@ module.exports = {
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
-      backgroundColor: "#16a34a"
+      backgroundColor: "#408059"
     },
     ios: {
       supportsTablet: true,
@@ -24,12 +24,12 @@ module.exports = {
         NSLocationAlwaysUsageDescription: "Vinesight needs your location to provide weather updates for your farms."
       }
     },
-    android: {
-      package: "com.vinesight.app",
-      adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#16a34a"
-      },
+      android: {
+        package: "com.vinesight.app",
+        adaptiveIcon: {
+          foregroundImage: "./assets/adaptive-icon.png",
+          backgroundColor: "#408059"
+        },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: true,
       permissions: [

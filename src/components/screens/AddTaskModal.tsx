@@ -27,6 +27,8 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   editingTask: TaskReminder | null;
+  initialFarmId?: number | null;
+  onSaveSuccess?: () => void;
 }
 
 const TASK_TYPES: TaskType[] = [
@@ -42,7 +44,13 @@ const TASK_TYPES: TaskType[] = [
 
 const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
 
-export default function AddTaskModal({ visible, onClose, editingTask }: Props) {
+export default function AddTaskModal({
+  visible,
+  onClose,
+  editingTask,
+  initialFarmId,
+  onSaveSuccess,
+}: Props) {
   const { data: farms } = useFarms();
   const createMutation = useCreateTask();
   const updateMutation = useUpdateTask();
@@ -71,13 +79,15 @@ export default function AddTaskModal({ visible, onClose, editingTask }: Props) {
         setDueDate(editingTask.due_date || '');
       } else {
         resetForm();
-        // Set default farm
-        if (farms && farms.length > 0 && farms[0].id) {
+        // Set initial farm if provided, otherwise use first farm
+        if (initialFarmId) {
+          setFarmId(initialFarmId);
+        } else if (farms && farms.length > 0 && farms[0].id) {
           setFarmId(farms[0].id);
         }
       }
     }
-  }, [visible, editingTask, farms]);
+  }, [visible, editingTask, farms, initialFarmId]);
 
   const resetForm = () => {
     setTitle('');
@@ -136,6 +146,7 @@ export default function AddTaskModal({ visible, onClose, editingTask }: Props) {
       } else {
         await createMutation.mutateAsync(taskData);
       }
+      onSaveSuccess?.();
       onClose();
     } catch (error) {
       Alert.alert('Error', 'Failed to save task. Please try again.');

@@ -61,14 +61,14 @@ export interface TaskTemplate {
 
 // Task type display info
 export const TASK_TYPE_INFO: Record<TaskType, { label: string; icon: string; color: string }> = {
-  irrigation: { label: 'Irrigation', icon: 'water', color: '#3B82F6' },
-  spray: { label: 'Spray', icon: 'flask', color: '#8B5CF6' },
-  fertigation: { label: 'Fertigation', icon: 'leaf', color: '#16A34A' },
-  harvest: { label: 'Harvest', icon: 'basket', color: '#F59E0B' },
-  soil_test: { label: 'Soil Test', icon: 'layers', color: '#6366F1' },
-  petiole_test: { label: 'Petiole Test', icon: 'analytics', color: '#EC4899' },
-  expense: { label: 'Expense', icon: 'cash', color: '#DC2626' },
-  note: { label: 'Note', icon: 'document-text', color: '#6B7280' },
+  irrigation: { label: 'Irrigation', icon: 'water', color: '#4d8573' },
+  spray: { label: 'Spray', icon: 'flask', color: '#598d6b' },
+  fertigation: { label: 'Fertigation', icon: 'leaf', color: '#408059' },
+  harvest: { label: 'Harvest', icon: 'basket', color: '#669475' },
+  soil_test: { label: 'Soil Test', icon: 'layers', color: '#598266' },
+  petiole_test: { label: 'Petiole Test', icon: 'analytics', color: '#7a9a5c' },
+  expense: { label: 'Expense', icon: 'cash', color: '#598066' },
+  note: { label: 'Note', icon: 'document-text', color: '#738c7a' },
 };
 
 // Priority display info

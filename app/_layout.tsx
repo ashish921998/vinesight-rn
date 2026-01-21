@@ -28,7 +28,8 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  const { initialize, isLoading } = useAuthStore();
+  const initialize = useAuthStore(state => state.initialize);
+  const isLoading = useAuthStore(state => state.isLoading);
 
   useEffect(() => {
     // Initialize auth state

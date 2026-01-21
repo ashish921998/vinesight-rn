@@ -15,6 +15,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useCreateSoilProfile,
@@ -49,6 +50,8 @@ export default function AddSoilProfileModal({
     right: '',
     down: '',
   });
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const isLoading = createProfile.isPending;
 
@@ -56,6 +59,8 @@ export default function AddSoilProfileModal({
     setSections({ left: '', center: '', right: '', down: '' });
     setFusariumPct('');
     setEcValues({ left: '', center: '', right: '', down: '' });
+    setSelectedDate(new Date());
+    setShowDatePicker(false);
   };
 
   const handleSubmit = async () => {
@@ -81,6 +86,7 @@ export default function AddSoilProfileModal({
         farm_id: farmId,
         sections: sectionData,
         fusarium_pct: fusariumPct ? parseFloat(fusariumPct) : null,
+        created_at: selectedDate.toISOString(),
       });
 
       resetForm();
@@ -88,6 +94,15 @@ export default function AddSoilProfileModal({
     } catch (error) {
       console.error('Error creating soil profile:', error);
       Alert.alert('Error', 'Failed to save soil profile');
+    }
+  };
+
+  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
+    if (date) {
+      setSelectedDate(date);
+    }
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
     }
   };
 
@@ -105,21 +120,25 @@ export default function AddSoilProfileModal({
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}
-    >
+      >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-gray-50"
+        className="flex-1"
+        style={{ backgroundColor: '#f2f2f7' }}
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 py-4 bg-white border-b border-gray-200">
+        <View
+          className="flex-row items-center justify-between px-4 py-4"
+          style={{ backgroundColor: 'rgba(255,255,255, 0.8)', borderBottomWidth: 0.5, borderBottomColor: 'rgba(0, 0, 0, 0.1)' }}
+        >
           <TouchableOpacity onPress={onClose}>
-            <Text className="text-gray-600 text-base">Cancel</Text>
+            <Text className="text-[#8e8e93] text-base">Cancel</Text>
           </TouchableOpacity>
-          <Text className="text-lg font-bold text-gray-800">Add Soil Profile</Text>
+          <Text className="text-lg font-bold text-[#1c1c1e]">Add Soil Profile</Text>
           <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
             <Text
               className={`text-base font-semibold ${
-                isLoading ? 'text-gray-400' : 'text-indigo-600'
+                isLoading ? 'text-[#c7c7cc]' : 'text-[#408059]'
               }`}
             >
               {isLoading ? 'Saving...' : 'Save'}
@@ -128,12 +147,95 @@ export default function AddSoilProfileModal({
         </View>
 
         <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+          {/* Date Picker */}
+          <View
+            className="rounded-2xl p-4 mt-4"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 3,
+            }}
+          >
+            <Text className="text-sm font-semibold text-[#8e8e93] mb-1">
+              Profile Date
+            </Text>
+            <Text className="text-xs text-[#8e8e93] mb-3">
+              Select the date when this soil profile was taken.
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              className="bg-[#f9f9f9] border border-[#e5e5e5] rounded-xl px-4 py-3 flex-row items-center justify-between"
+            >
+              <Text className="text-base text-[#1c1c1e]">
+                {selectedDate.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </Text>
+              <Ionicons name="calendar" size={20} color="#8e8e93" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Date Picker Modal */}
+          <Modal
+            visible={showDatePicker}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowDatePicker(false)}
+          >
+            <View className="flex-1 bg-black/30 items-center justify-center">
+              <View
+                className="bg-white rounded-2xl p-4"
+                style={{
+                  width: '85%',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.06,
+                  shadowRadius: 12,
+                  elevation: 8,
+                }}
+              >
+                <Text className="text-lg font-bold text-[#1c1c1e] mb-4 text-center">
+                  Select Profile Date
+                </Text>
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="date"
+                  display="spinner"
+                  onChange={handleDateChange}
+                  style={{ width: '100%' }}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(false)}
+                  className="mt-4 py-3 rounded-xl items-center"
+                  style={{ backgroundColor: '#408059' }}
+                >
+                  <Text className="font-semibold text-white">Done</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+
           {/* Section Moisture Inputs */}
-          <View className="bg-white rounded-xl p-4 mt-4 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-1">
+          <View
+            className="rounded-2xl p-4 mt-4"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 3,
+            }}
+          >
+            <Text className="text-sm font-semibold text-[#8e8e93] mb-1">
               Moisture Readings (%)
             </Text>
-            <Text className="text-xs text-gray-400 mb-4">
+            <Text className="text-xs text-[#8e8e93] mb-4">
               Enter soil moisture percentage for each section. At least one is required.
             </Text>
 
@@ -145,21 +247,21 @@ export default function AddSoilProfileModal({
                     <View className="flex-row items-center mb-1">
                       <View
                         className="w-6 h-6 rounded-full items-center justify-center mr-2"
-                        style={{ backgroundColor: `${info.color}20` }}
+                        style={{ backgroundColor: 'rgba(64, 128, 89, 0.2)' }}
                       >
                         <Text
                           className="text-xs font-bold"
-                          style={{ color: info.color }}
+                          style={{ color: '#408059' }}
                         >
                           {info.abbr}
                         </Text>
                       </View>
-                      <Text className="text-sm text-gray-700">{info.label}</Text>
+                      <Text className="text-sm text-[#1c1c1e]">{info.label}</Text>
                     </View>
                     <TextInput
-                      className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-3 text-gray-800"
+                      className="bg-[#f9f9f9] border border-[#e5e5e5] rounded-xl px-3 py-3 text-[#1c1c1e]"
                       placeholder="0.0"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor="#c7c7cc"
                       keyboardType="decimal-pad"
                       value={sections[name]}
                       onChangeText={(value) => updateSection(name, value)}
@@ -171,11 +273,21 @@ export default function AddSoilProfileModal({
           </View>
 
           {/* EC Values (Optional) */}
-          <View className="bg-white rounded-xl p-4 mt-4 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-1">
+          <View
+            className="rounded-2xl p-4 mt-4"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 3,
+            }}
+          >
+            <Text className="text-sm font-semibold text-[#8e8e93] mb-1">
               EC Values (dS/m) - Optional
             </Text>
-            <Text className="text-xs text-gray-400 mb-4">
+            <Text className="text-xs text-[#8e8e93] mb-4">
               Electrical conductivity readings for each section.
             </Text>
 
@@ -184,13 +296,13 @@ export default function AddSoilProfileModal({
                 const info = SECTION_INFO[name];
                 return (
                   <View key={`ec-${name}`} className="w-[48%]">
-                    <Text className="text-xs text-gray-500 mb-1">
+                    <Text className="text-xs text-[#8e8e93] mb-1">
                       {info.label} EC
                     </Text>
                     <TextInput
-                      className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800"
+                      className="bg-[#f9f9f9] border border-[#e5e5e5] rounded-xl px-3 py-2 text-[#1c1c1e]"
                       placeholder="0.0"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor="#c7c7cc"
                       keyboardType="decimal-pad"
                       value={ecValues[name]}
                       onChangeText={(value) => updateEc(name, value)}
@@ -202,17 +314,27 @@ export default function AddSoilProfileModal({
           </View>
 
           {/* Fusarium Percentage (Optional) */}
-          <View className="bg-white rounded-xl p-4 mt-4 mb-8 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-1">
+          <View
+            className="rounded-2xl p-4 mt-4 mb-8"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 3,
+            }}
+          >
+            <Text className="text-sm font-semibold text-[#8e8e93] mb-1">
               Fusarium (%) - Optional
             </Text>
-            <Text className="text-xs text-gray-400 mb-3">
+            <Text className="text-xs text-[#8e8e93] mb-3">
               Fusarium wilt percentage if applicable.
             </Text>
             <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-3 text-gray-800"
+              className="bg-[#f9f9f9] border border-[#e5e5e5] rounded-xl px-3 py-3 text-[#1c1c1e]"
               placeholder="0.0"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor="#c7c7cc"
               keyboardType="decimal-pad"
               value={fusariumPct}
               onChangeText={setFusariumPct}

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAnalytics } from '../src/hooks/useAnalytics';
@@ -76,7 +77,8 @@ export default function AnalyticsScreen() {
   }
 
   return (
-    <View className="flex-1 bg-surface-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
+      <View className="flex-1 bg-surface-50">
       <Stack.Screen options={{ title: 'Analytics' }} />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
@@ -390,5 +392,6 @@ export default function AnalyticsScreen() {
         )}
       </ScrollView>
     </View>
+    </SafeAreaView>
   );
 }

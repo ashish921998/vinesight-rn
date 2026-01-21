@@ -44,31 +44,31 @@ export function Button({
   // Variant styles
   const variantStyles = {
     primary: isDisabled
-      ? 'bg-primary-400'
-      : 'bg-primary-600 active:bg-primary-700',
+      ? 'bg-surface-300'
+      : 'bg-primary-500 active:bg-primary-600',
     secondary: isDisabled
       ? 'bg-surface-200'
       : 'bg-surface-100 active:bg-surface-200',
     outline: isDisabled
       ? 'border border-surface-300'
-      : 'border border-primary-600 active:bg-primary-50',
+      : 'border border-primary-500 active:bg-primary-50',
     ghost: isDisabled
       ? ''
       : 'active:bg-surface-100',
   };
-  
+
   // Text styles
   const textSizeStyles = {
     sm: 'text-sm',
     md: 'text-base',
     lg: 'text-lg',
   };
-  
+
   const textVariantStyles = {
     primary: 'text-white font-semibold',
     secondary: isDisabled ? 'text-surface-400' : 'text-surface-700 font-semibold',
-    outline: isDisabled ? 'text-surface-400' : 'text-primary-600 font-semibold',
-    ghost: isDisabled ? 'text-surface-400' : 'text-primary-600 font-medium',
+    outline: isDisabled ? 'text-surface-400' : 'text-primary-500 font-semibold',
+    ghost: isDisabled ? 'text-surface-400' : 'text-primary-500 font-medium',
   };
 
   return (

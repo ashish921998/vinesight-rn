@@ -8,6 +8,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFarms } from '../src/hooks';
@@ -130,7 +131,9 @@ export default function TasksScreen() {
   }
 
   return (
-    <View className="flex-1 bg-surface-50">
+    <>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
+        <View className="flex-1 bg-surface-50">
       <Stack.Screen
         options={{
           title: 'Tasks',
@@ -359,6 +362,8 @@ export default function TasksScreen() {
         }}
         editingTask={editingTask}
       />
-    </View>
+      </View>
+      </SafeAreaView>
+    </>
   );
 }

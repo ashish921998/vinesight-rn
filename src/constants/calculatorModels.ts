@@ -70,7 +70,7 @@ export function getWaterStatus(waterLevel: number): WaterStatus {
       label: 'Critical',
       message: 'IRRIGATION NEEDED - Water level critical!',
       icon: 'alert-circle',
-      color: '#DC2626', // red-600
+      color: '#db4437',
     };
   } else if (waterLevel < 10) {
     return {
@@ -78,7 +78,7 @@ export function getWaterStatus(waterLevel: number): WaterStatus {
       label: 'Low',
       message: 'Low water level - consider irrigation soon',
       icon: 'alert-circle-outline',
-      color: '#F59E0B', // amber-500
+      color: '#ea8600',
     };
   } else if (waterLevel < 25) {
     return {
@@ -86,7 +86,7 @@ export function getWaterStatus(waterLevel: number): WaterStatus {
       label: 'Medium',
       message: 'Medium water level - monitor closely',
       icon: 'water-outline',
-      color: '#3B82F6', // blue-500
+      color: '#f9a825',
     };
   } else {
     return {
@@ -94,7 +94,7 @@ export function getWaterStatus(waterLevel: number): WaterStatus {
       label: 'Good',
       message: 'Good water level',
       icon: 'checkmark-circle',
-      color: '#22C55E', // green-500
+      color: '#0b8d32',
     };
   }
 }
@@ -202,12 +202,12 @@ export interface LogType {
 }
 
 export const LOG_TYPES: LogType[] = [
-  { id: 'irrigation', label: 'Irrigation', icon: 'water', color: '#3B82F6' },
-  { id: 'spray', label: 'Spray', icon: 'flask', color: '#8B5CF6' },
-  { id: 'harvest', label: 'Harvest', icon: 'basket', color: '#A855F7' },
-  { id: 'expense', label: 'Expense', icon: 'cash', color: '#EF4444' },
-  { id: 'fertigation', label: 'Fertigation', icon: 'leaf', color: '#22C55E' },
-  { id: 'note', label: 'Note', icon: 'document-text', color: '#6B7280' },
+  { id: 'irrigation', label: 'Irrigation', icon: 'water', color: '#4d8573' },
+  { id: 'spray', label: 'Spray', icon: 'flask', color: '#598d6b' },
+  { id: 'harvest', label: 'Harvest', icon: 'basket', color: '#669475' },
+  { id: 'expense', label: 'Expense', icon: 'cash', color: '#598066' },
+  { id: 'fertigation', label: 'Fertigation', icon: 'leaf', color: '#408059' },
+  { id: 'note', label: 'Note', icon: 'document-text', color: '#738c7a' },
 ];
 
 export function getLogType(id: LogTypeId): LogType {
@@ -219,9 +219,6 @@ export function getLogType(id: LogTypeId): LogType {
 // ============================================================
 
 export const EXPENSE_TYPES = [
-  'Labor',
-  'Fertilizer',
-  'Spray',
   'Equipment',
   'Fuel',
   'Seeds/Plants',

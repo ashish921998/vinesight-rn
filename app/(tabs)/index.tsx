@@ -82,7 +82,8 @@ export default function DashboardScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-gray-100"
+      className="flex-1"
+      style={{ backgroundColor: '#f2f2f7' }}
       contentContainerStyle={{ paddingBottom: 100 }}
       refreshControl={
         <RefreshControl
@@ -95,65 +96,84 @@ export default function DashboardScreen() {
       <View className="p-4">
         {/* Welcome Header */}
         <View className="mb-6">
-          <Text className="text-2xl font-bold text-gray-900">{greeting}</Text>
+          <Text 
+            className="text-2xl font-bold"
+            style={{ color: '#000000' }}
+          >
+            {greeting}
+          </Text>
         </View>
 
         {/* Stats Grid */}
-        <View className="flex-row flex-wrap" style={{ gap: 12, marginBottom: 24 }}>
-          <View style={{ width: '48%' }}>
-            <StatsCard
-              title="Farms"
-              value={stats?.farmsCount?.toString() ?? '0'}
-              icon="leaf"
-              color="#22C55E"
-            />
+        <View style={{ marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', marginBottom: 12 }}>
+            <View style={{ flex: 1, paddingRight: 6 }}>
+              <StatsCard
+                title="Farms"
+                value={stats?.farmsCount?.toString() ?? '0'}
+                icon="leaf"
+                color="#408059"
+              />
+            </View>
+            <View style={{ flex: 1, paddingLeft: 6 }}>
+              <StatsCard
+                title="Active Workers"
+                value={stats?.activeWorkersCount?.toString() ?? '0'}
+                icon="people"
+                color="#408059"
+              />
+            </View>
           </View>
-          <View style={{ width: '48%' }}>
-            <StatsCard
-              title="Active Workers"
-              value={stats?.activeWorkersCount?.toString() ?? '0'}
-              icon="people"
-              color="#22C55E"
-            />
-          </View>
-          <View style={{ width: '48%' }}>
-            <StatsCard
-              title="Activities"
-              value={stats?.recentActivitiesCount?.toString() ?? '0'}
-              icon="bar-chart"
-              color="#22C55E"
-            />
-          </View>
-          <View style={{ width: '48%' }}>
-            <StatsCard
-              title="Harvest"
-              value={formatHarvest(stats?.totalHarvest ?? 0)}
-              icon="basket"
-              color="#A855F7"
-            />
+          <View style={{ flexDirection: 'row' }}>
+            <View style={{ flex: 1, paddingRight: 6 }}>
+              <StatsCard
+                title="Activities"
+                value={stats?.recentActivitiesCount?.toString() ?? '0'}
+                icon="bar-chart"
+                color="#408059"
+              />
+            </View>
+            <View style={{ flex: 1, paddingLeft: 6 }}>
+              <StatsCard
+                title="Harvest"
+                value={formatHarvest(stats?.totalHarvest ?? 0)}
+                icon="basket"
+                color="#669475"
+              />
+            </View>
           </View>
         </View>
 
         {/* Farms Needing Attention */}
         {farmsNeedingAttention && farmsNeedingAttention.length > 0 && (
           <View className="mb-6">
-            <Text className="text-sm font-semibold text-gray-500 uppercase mb-3">
+            <Text className="text-base font-semibold mb-3" style={{ color: '#000000' }}>
               Needs Attention
             </Text>
             {farmsNeedingAttention.slice(0, 3).map((item) => (
               <Pressable
                 key={item.farm.id}
                 onPress={() => item.farm.id && handleFarmAttention(item.farm.id)}
-                className="bg-orange-50 rounded-xl p-4 mb-2 flex-row items-center active:opacity-80"
+                className="rounded-xl p-3 mb-2 flex-row items-center active:opacity-80"
+                style={{ 
+                  backgroundColor: 'rgba(255, 149, 0, 0.05)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 149, 0, 0.2)',
+                }}
               >
-                <Ionicons name="alert-circle" size={24} color="#F59E0B" />
+                <View 
+                  className="w-9 h-9 rounded-full items-center justify-center"
+                  style={{ backgroundColor: 'rgba(255, 149, 0, 0.15)' }}
+                >
+                  <Ionicons name="water" size={18} color="#ff9500" />
+                </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-base font-semibold text-gray-900">
+                  <Text className="text-sm font-semibold" style={{ color: '#000000' }}>
                     {item.farm.name}
                   </Text>
-                  <Text className="text-sm text-orange-600">{item.reason}</Text>
+                  <Text className="text-xs" style={{ color: '#8e8e93' }}>Water calculation needed</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={16} color="#c7c7cc" />
               </Pressable>
             ))}
           </View>
@@ -161,33 +181,36 @@ export default function DashboardScreen() {
 
         {/* Quick Actions */}
         <View className="mb-6">
-          <Text className="text-sm font-semibold text-gray-500 uppercase mb-3">
+          <Text className="text-base font-semibold mb-3" style={{ color: '#000000' }}>
             Quick Actions
           </Text>
-          <View className="bg-white rounded-2xl p-4 border border-gray-100">
+          <View 
+            className="rounded-2xl p-4"
+            style={{ backgroundColor: '#ffffff' }}
+          >
             <View className="flex-row justify-around">
               <QuickActionButton
                 title="Irrigation"
                 icon="water"
-                color="#3B82F6"
+                color="#4d8573"
                 onPress={handleAddLog}
               />
               <QuickActionButton
                 title="Spray"
                 icon="flask"
-                color="#8B5CF6"
+                color="#598d6b"
                 onPress={handleAddLog}
               />
               <QuickActionButton
                 title="Harvest"
                 icon="basket"
-                color="#A855F7"
+                color="#669475"
                 onPress={handleAddLog}
               />
               <QuickActionButton
                 title="Note"
                 icon="document-text"
-                color="#22C55E"
+                color="#408059"
                 onPress={handleAddLog}
               />
             </View>
@@ -196,11 +219,14 @@ export default function DashboardScreen() {
 
         {/* Recent Activity */}
         <View>
-          <Text className="text-sm font-semibold text-gray-500 uppercase mb-3">
+          <Text className="text-base font-semibold mb-3" style={{ color: '#000000' }}>
             Recent Activity
           </Text>
           {recentActivities && recentActivities.length > 0 ? (
-            <View className="bg-white rounded-2xl p-4 border border-gray-100" style={{ gap: 8 }}>
+            <View 
+              className="rounded-2xl p-4"
+              style={{ backgroundColor: '#ffffff', gap: 8 }}
+            >
               {recentActivities.map((activity) => (
                 <ActivityLogCard
                   key={activity.id}
@@ -213,9 +239,12 @@ export default function DashboardScreen() {
               ))}
             </View>
           ) : (
-            <View className="bg-white rounded-2xl p-6 items-center">
-              <Ionicons name="time-outline" size={48} color="#9CA3AF" />
-              <Text className="text-gray-500 text-center mt-4">
+            <View 
+              className="rounded-2xl p-6 items-center"
+              style={{ backgroundColor: '#ffffff' }}
+            >
+              <Ionicons name="time-outline" size={48} color="#c7c7cc" />
+              <Text className="text-center mt-4" style={{ color: '#8e8e93' }}>
                 No recent activity yet.{'\n'}Start by adding your first farm!
               </Text>
             </View>

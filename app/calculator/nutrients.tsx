@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculatorModels';
@@ -74,6 +75,7 @@ export default function NutrientCalculatorScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 bg-surface-50"
@@ -219,6 +221,7 @@ export default function NutrientCalculatorScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      </SafeAreaView>
     </>
   );
 }

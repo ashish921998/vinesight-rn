@@ -8,47 +8,70 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Vinesight Premium Color Palette
+        // Vinesight iOS Match - Monochromatic Green Palette
         primary: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          950: '#052e16',
+          50: '#f0f5f2',
+          100: '#e1ebe5',
+          200: '#c3d6cc',
+          300: '#9cc5b1',
+          400: '#75b397',
+          500: '#408059',
+          600: '#346a4a',
+          700: '#2d5c3f',
+          800: '#264d35',
+          900: '#1f412b',
+          950: '#0f2116',
+        },
+        secondary: {
+          500: '#598d6b',
         },
         accent: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          500: '#33734d',
         },
+        irrigation: {
+          500: '#4d8573',
+        },
+        spray: {
+          500: '#598d6b',
+        },
+        fertigation: {
+          500: '#408059',
+        },
+        harvest: {
+          500: '#669475',
+        },
+        observation: {
+          500: '#738c7a',
+        },
+        task: {
+          500: '#4d8573',
+        },
+        expense: {
+          500: '#598066',
+        },
+        // iOS System Colors
         surface: {
-          50: '#fafafa',
-          100: '#f5f5f5',
-          200: '#e5e5e5',
-          300: '#d4d4d4',
-          400: '#a3a3a3',
-          500: '#737373',
-          600: '#525252',
-          700: '#404040',
-          800: '#262626',
-          900: '#171717',
+          50: '#f2f2f7',
+          100: '#ffffff',
+          200: '#f2f2f7',
+          300: '#e5e5ea',
+          400: '#d1d1d6',
+          500: '#8e8e93',
+          600: '#636366',
+          700: '#48484a',
+          800: '#3a3a3c',
+          900: '#2c2c2e',
         },
-        warning: '#f59e0b',
-        error: '#ef4444',
-        success: '#22c55e',
+        warning: '#ff9500',
+        error: '#ff3b30',
+        success: '#34c759',
+        // Water status colors
+        water: {
+          critical: '#db4437',
+          low: '#ea8600',
+          medium: '#f9a825',
+          good: '#0b8d32',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

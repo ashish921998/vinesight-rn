@@ -80,13 +80,22 @@ export default function LoginScreen() {
         <View className="flex-1 px-8 pt-16 pb-8">
           {/* Logo & Title */}
           <View className="items-center mt-8 mb-12">
-            <View className="w-28 h-28 rounded-3xl bg-primary-100 items-center justify-center mb-4">
+            <View 
+              className="w-28 h-28 rounded-3xl items-center justify-center mb-4"
+              style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+            >
               <Ionicons name="leaf" size={56} color="#408059" />
             </View>
-            <Text className="text-3xl font-bold text-surface-900">
+            <Text 
+              className="text-3xl font-bold"
+              style={{ color: '#000000' }}
+            >
               Vinesight
             </Text>
-            <Text className="text-base text-surface-500 mt-1">
+            <Text 
+              className="text-base mt-1"
+              style={{ color: '#8e8e93' }}
+            >
               Farm Management
             </Text>
           </View>
@@ -131,9 +140,15 @@ export default function LoginScreen() {
 
               {/* Error Message */}
               {errorMessage && (
-                <View className="flex-row items-center px-4 py-3 bg-red-50 rounded-xl mb-2">
-                  <Ionicons name="alert-circle" size={18} color="#EF4444" />
-                  <Text className="text-sm text-red-600 ml-2 flex-1">
+                <View 
+                  className="flex-row items-center px-4 py-3 rounded-xl mb-2"
+                  style={{ backgroundColor: 'rgba(255, 59, 48, 0.1)' }}
+                >
+                  <Ionicons name="alert-circle" size={18} color="#ff3b30" />
+                  <Text 
+                    className="text-sm ml-2 flex-1"
+                    style={{ color: '#ff3b30' }}
+                  >
                     {errorMessage}
                   </Text>
                 </View>
@@ -151,9 +166,20 @@ export default function LoginScreen() {
 
             {/* Divider */}
             <View className="flex-row items-center my-8">
-              <View className="flex-1 h-px bg-surface-200" />
-              <Text className="text-sm text-surface-400 mx-4">or</Text>
-              <View className="flex-1 h-px bg-surface-200" />
+              <View 
+                className="flex-1 h-px"
+                style={{ backgroundColor: '#e5e5ea' }}
+              />
+              <Text 
+                className="text-sm mx-4"
+                style={{ color: '#c7c7cc' }}
+              >
+                or
+              </Text>
+              <View 
+                className="flex-1 h-px"
+                style={{ backgroundColor: '#e5e5ea' }}
+              />
             </View>
 
             {/* Google Sign In (placeholder for future) */}
@@ -176,11 +202,17 @@ export default function LoginScreen() {
             className="items-center py-4 mt-4"
             disabled={isLoading}
           >
-            <Text className="text-sm text-surface-600">
+            <Text 
+              className="text-sm"
+              style={{ color: '#8e8e93' }}
+            >
               {isSignUp
                 ? 'Already have an account? '
                 : "Don't have an account? "}
-              <Text className="text-primary-600 font-semibold">
+              <Text 
+                className="font-semibold"
+                style={{ color: '#408059' }}
+              >
                 {isSignUp ? 'Sign In' : 'Sign Up'}
               </Text>
             </Text>

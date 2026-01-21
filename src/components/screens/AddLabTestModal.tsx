@@ -3,7 +3,7 @@
  * Modal for adding soil or petiole test records
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,15 +14,21 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import {
   useCreateSoilTest,
   useCreatePetioleTest,
   SOIL_PARAMETERS,
   PETIOLE_PARAMETERS,
 } from '../../hooks/useLabTests';
+import { parseLabTestFromImage, parseLabTestFromText, ParsedLabTest } from '../../utils/pdfParser';
 
 interface AddLabTestModalProps {
   visible: boolean;
@@ -39,16 +45,51 @@ export default function AddLabTestModal({
 }: AddLabTestModalProps) {
   const createSoilTest = useCreateSoilTest();
   const createPetioleTest = useCreatePetioleTest();
+  const webViewRef = useRef<WebView>(null);
 
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [parameters, setParameters] = useState<Record<string, string>>({});
   const [recommendations, setRecommendations] = useState('');
   const [notes, setNotes] = useState('');
+  const [isParsingPDF, setIsParsingPDF] = useState(false);
+  const [showPDFWebView, setShowPDFWebView] = useState(false);
+  const [currentPDFBase64, setCurrentPDFBase64] = useState<string | null>(null);
+
+  const PDF_PARSE_TIMEOUT_MS = 30000;
 
   const isSoil = testType === 'soil';
   const parameterList = isSoil ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
   const isLoading = createSoilTest.isPending || createPetioleTest.isPending;
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    if (showPDFWebView) {
+      timeoutId = setTimeout(() => {
+        setShowPDFWebView(false);
+        setIsParsingPDF(false);
+        setCurrentPDFBase64(null);
+        Alert.alert(
+          'Timeout',
+          'PDF parsing timed out. Please try converting the PDF to an image or take screenshots.',
+          [{ text: 'OK' }]
+        );
+      }, PDF_PARSE_TIMEOUT_MS);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [showPDFWebView]);
+
+  useEffect(() => {
+    if (showPDFWebView && currentPDFBase64 && webViewRef.current) {
+      webViewRef.current.postMessage(currentPDFBase64);
+    }
+  }, [showPDFWebView, currentPDFBase64]);
 
   const resetForm = () => {
     setDate(new Date());
@@ -96,7 +137,9 @@ export default function AddLabTestModal({
   };
 
   const handleDateChange = (_: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
     if (selectedDate) {
       setDate(selectedDate);
     }
@@ -109,6 +152,157 @@ export default function AddLabTestModal({
     }));
   };
 
+  const handleUploadFile = async () => {
+    Alert.alert(
+      'Choose Upload Method',
+      'How would you like to upload the lab test report?',
+      [
+        {
+          text: 'Take Photo',
+          onPress: () => handleTakePhoto(),
+        },
+        {
+          text: 'Select Image',
+          onPress: () => handleSelectImage(),
+        },
+        {
+          text: 'Select PDF',
+          onPress: () => handleSelectPDF(),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission denied', 'Camera permission is required to take photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        await parseAndPopulateForm(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    }
+  };
+
+  const handleSelectImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        await parseAndPopulateForm(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error selecting image:', error);
+      Alert.alert('Error', 'Failed to select image. Please try again.');
+    }
+  };
+
+  const handleSelectPDF = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const file = result.assets[0];
+      setIsParsingPDF(true);
+
+      const fileData = await FileSystem.readAsStringAsync(file.uri, {
+        encoding: 'base64',
+      });
+
+      const pdfBase64 = `data:application/pdf;base64,${fileData}`;
+      setCurrentPDFBase64(pdfBase64);
+      setShowPDFWebView(true);
+    } catch (error) {
+      console.error('Error selecting PDF:', error);
+      Alert.alert('Error', 'Failed to select PDF. Please try again.');
+    }
+  };
+
+  const parseAndPopulateForm = async (uri: string) => {
+    try {
+      setIsParsingPDF(true);
+
+      const parsedData = await parseLabTestFromImage(uri, testType);
+
+      if (Object.keys(parsedData.parameters).length === 0) {
+        Alert.alert(
+          'No Data Found',
+          'Could not extract test parameters from the image. Please try again with a clearer image or enter data manually.',
+          [{ text: 'OK' }]
+        );
+        setIsParsingPDF(false);
+        return;
+      }
+
+      // Update form with parsed data
+      if (parsedData.testDate) {
+        const parsedDate = new Date(parsedData.testDate);
+        if (!isNaN(parsedDate.getTime())) {
+          setDate(parsedDate);
+        }
+      }
+
+      if (parsedData.parameters) {
+        const stringParams: Record<string, string> = {};
+        Object.entries(parsedData.parameters).forEach(([key, value]) => {
+          stringParams[key] = value.toString();
+        });
+        setParameters(stringParams);
+      }
+
+      if (parsedData.recommendations) {
+        setRecommendations(parsedData.recommendations);
+      }
+
+      if (parsedData.notes) {
+        setNotes(parsedData.notes);
+      }
+
+      Alert.alert(
+        'Success',
+        `Successfully extracted ${Object.keys(parsedData.parameters).length} parameters. Please review and save.`,
+        [{ text: 'OK' }]
+      );
+    } catch (parseError) {
+      console.error('Parsing error:', parseError);
+      Alert.alert(
+        'Parsing Failed',
+        'Could not extract data from the image. Please try again with a clearer image or enter data manually.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsParsingPDF(false);
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -118,20 +312,20 @@ export default function AddLabTestModal({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-gray-50"
+        className="flex-1 bg-[#f2f2f7]"
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 py-4 bg-white border-b border-gray-200">
+        <View className="flex-row items-center justify-between px-4 py-4 bg-white/80 border-b border-gray-200 backdrop-blur-lg">
           <TouchableOpacity onPress={onClose}>
             <Text className="text-gray-600 text-base">Cancel</Text>
           </TouchableOpacity>
-          <Text className="text-lg font-bold text-gray-800">
+          <Text className="text-lg font-bold text-[#408059]">
             Add {isSoil ? 'Soil' : 'Petiole'} Test
           </Text>
           <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
             <Text
               className={`text-base font-semibold ${
-                isLoading ? 'text-gray-400' : 'text-green-600'
+                isLoading ? 'text-gray-400' : 'text-[#408059]'
               }`}
             >
               {isLoading ? 'Saving...' : 'Save'}
@@ -139,13 +333,164 @@ export default function AddLabTestModal({
           </TouchableOpacity>
         </View>
 
+        {/* Hidden WebView for PDF parsing */}
+        {showPDFWebView && currentPDFBase64 && (
+          <WebView
+            ref={webViewRef}
+            source={{ html: `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+              </head>
+              <body>
+                <script>
+                  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                  window.__PDF_BASE64__ = null;
+
+                  async function extractText() {
+                    if (!window.__PDF_BASE64__) {
+                      window.ReactNativeWebView.postMessage('PDF_PARSE_ERROR');
+                      return;
+                    }
+                    try {
+                      const loadingTask = pdfjsLib.getDocument(window.__PDF_BASE64__);
+                      const pdf = await loadingTask.promise;
+                      let fullText = '';
+
+                      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                        const page = await pdf.getPage(pageNum);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map((item) => item.str).join(' ');
+                        fullText += pageText + '\\n';
+                      }
+
+                      window.ReactNativeWebView.postMessage('PDF_TEXT:' + fullText);
+                    } catch (error) {
+                      window.ReactNativeWebView.postMessage('PDF_PARSE_ERROR');
+                    }
+                  }
+
+                  window.addEventListener('message', (event) => {
+                    window.__PDF_BASE64__ = event.data;
+                    extractText();
+                  });
+                </script>
+              </body>
+              </html>
+            ` }}
+            onMessage={async (event) => {
+              if (event.nativeEvent.data === 'PDF_PARSE_ERROR') {
+                setShowPDFWebView(false);
+                setIsParsingPDF(false);
+                Alert.alert(
+                  'Error',
+                  'Could not parse PDF. Please try converting it to an image or take screenshots.',
+                  [{ text: 'OK' }]
+                );
+              } else if (event.nativeEvent.data.startsWith('PDF_TEXT:')) {
+                const text = event.nativeEvent.data.replace('PDF_TEXT:', '');
+                setShowPDFWebView(false);
+
+                if (!text || text.trim().length < 50) {
+                  setIsParsingPDF(false);
+                  Alert.alert(
+                    'No Data Found',
+                    'Could not extract sufficient text from the PDF. Please try a different file.',
+                    [{ text: 'OK' }]
+                  );
+                  return;
+                }
+
+                try {
+                  const parsedData = await parseLabTestFromText(text, testType);
+
+                  if (Object.keys(parsedData.parameters).length === 0) {
+                    Alert.alert(
+                      'No Data Found',
+                      'Could not extract test parameters from the PDF.',
+                      [{ text: 'OK' }]
+                    );
+                    setIsParsingPDF(false);
+                    return;
+                  }
+
+                  if (parsedData.testDate) {
+                    const parsedDate = new Date(parsedData.testDate);
+                    if (!isNaN(parsedDate.getTime())) {
+                      setDate(parsedDate);
+                    }
+                  }
+
+                  if (parsedData.parameters) {
+                    const stringParams: Record<string, string> = {};
+                    Object.entries(parsedData.parameters).forEach(([key, value]) => {
+                      stringParams[key] = value.toString();
+                    });
+                    setParameters(stringParams);
+                  }
+
+                  if (parsedData.recommendations) {
+                    setRecommendations(parsedData.recommendations);
+                  }
+
+                  if (parsedData.notes) {
+                    setNotes(parsedData.notes);
+                  }
+
+                  Alert.alert(
+                    'Success',
+                    `Successfully extracted ${Object.keys(parsedData.parameters).length} parameters. Please review and save.`,
+                    [{ text: 'OK' }]
+                  );
+                } catch (error) {
+                  console.error('Parsing error:', error);
+                  Alert.alert(
+                    'Parsing Failed',
+                    'Could not parse extracted text. Please try a different file.',
+                    [{ text: 'OK' }]
+                  );
+                }
+                setIsParsingPDF(false);
+              }
+            }}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            style={{ display: 'none' }}
+          />
+        )}
+
         <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+          {/* Upload Button */}
+          <TouchableOpacity
+            onPress={handleUploadFile}
+            disabled={isParsingPDF || isLoading}
+            className="bg-white rounded-xl p-4 mt-4 shadow-sm border-2 border-dashed border-[#408059] border-opacity-30"
+          >
+            {isParsingPDF ? (
+              <View className="flex-row items-center justify-center">
+                <ActivityIndicator color="#408059" size="small" />
+                <Text className="text-base font-medium text-[#408059] ml-2">
+                  Parsing with AI...
+                </Text>
+              </View>
+            ) : (
+              <View className="flex-row items-center justify-center">
+                <Ionicons name="document" size={24} color="#408059" />
+                <Text className="text-base font-medium text-[#408059] ml-2">
+                  Upload Lab Report (Photo, Image, or PDF)
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           {/* Date Picker */}
           <View className="bg-white rounded-xl p-4 mt-4 shadow-sm">
             <Text className="text-sm font-medium text-gray-500 mb-2">Test Date</Text>
             <TouchableOpacity
               onPress={() => setShowDatePicker(true)}
-              className="flex-row items-center justify-between bg-gray-50 p-3 rounded-lg"
+              className="flex-row items-center justify-between bg-[#f2f2f7] p-3 rounded-lg"
             >
               <View className="flex-row items-center">
                 <Ionicons name="calendar" size={20} color="#666" />
@@ -183,7 +528,7 @@ export default function AddLabTestModal({
                     {param.label} {param.unit && `(${param.unit})`}
                   </Text>
                   <TextInput
-                    className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800"
+                    className="bg-[#f2f2f7] border border-gray-200 rounded-lg px-3 py-2 text-gray-800"
                     placeholder="0.00"
                     placeholderTextColor="#9ca3af"
                     keyboardType="decimal-pad"
@@ -201,7 +546,7 @@ export default function AddLabTestModal({
               Recommendations (Optional)
             </Text>
             <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-3 text-gray-800 min-h-[80px]"
+              className="bg-[#f2f2f7] border border-gray-200 rounded-lg px-3 py-3 text-gray-800 min-h-[80px]"
               placeholder="Enter lab recommendations..."
               placeholderTextColor="#9ca3af"
               multiline
@@ -217,7 +562,7 @@ export default function AddLabTestModal({
               Notes (Optional)
             </Text>
             <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-3 text-gray-800 min-h-[60px]"
+              className="bg-[#f2f2f7] border border-gray-200 rounded-lg px-3 py-3 text-gray-800 min-h-[60px]"
               placeholder="Add any additional notes..."
               placeholderTextColor="#9ca3af"
               multiline

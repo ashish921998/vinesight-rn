@@ -15,7 +15,6 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useCreateFarm } from '@/hooks';
 import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
-import { SOIL_TEXTURE_CLASSES } from '@/constants/calculatorModels';
 import type { FarmInsert } from '@/types';
 
 // Section component for grouping form fields

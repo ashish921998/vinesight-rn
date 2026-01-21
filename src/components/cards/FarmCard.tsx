@@ -17,21 +17,38 @@ interface FarmCardProps {
 export function FarmCard({ farm, onPress }: FarmCardProps) {
   const needsAttention = isLowWater(farm);
   const statusText = needsAttention ? 'NEEDS ATTENTION' : 'HEALTHY';
-  const statusColor = needsAttention ? 'text-red-500' : 'text-purple-500';
-  const statusBg = needsAttention ? 'bg-red-50' : 'bg-purple-50';
+  const statusColor = needsAttention ? '#ff3b30' : '#408059';
+  const statusBg = needsAttention ? 'rgba(255, 59, 48, 0.1)' : 'rgba(64, 128, 89, 0.1)';
 
   return (
     <Pressable
       onPress={onPress}
-      className="bg-white rounded-3xl p-5 border border-gray-100 active:opacity-90"
+      className="rounded-xl p-4 active:opacity-90"
+      style={{ 
+        backgroundColor: '#ffffff',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 1,
+      }}
     >
       {/* Header: Name & Status */}
-      <View className="flex-row items-start justify-between mb-4">
-        <Text className="text-xl font-medium text-gray-900 flex-1 mr-2">
+      <View className="flex-row items-start justify-between mb-3">
+        <Text 
+          className="text-lg font-medium flex-1 mr-2"
+          style={{ color: '#000000' }}
+        >
           {farm.name}
         </Text>
-        <View className={`${statusBg} px-2 py-1 rounded-full`}>
-          <Text className={`text-xs font-bold ${statusColor}`}>
+        <View 
+          className="px-2 py-1 rounded-full"
+          style={{ backgroundColor: statusBg }}
+        >
+          <Text 
+            className="text-xs font-bold uppercase"
+            style={{ color: statusColor }}
+          >
             {statusText}
           </Text>
         </View>
@@ -40,15 +57,21 @@ export function FarmCard({ farm, onPress }: FarmCardProps) {
       {/* Subheader: Variety & Area */}
       <View className="flex-row items-center justify-between mb-4">
         {farm.crop_variety ? (
-          <View className="bg-primary/10 px-2 py-1 rounded-md">
-            <Text className="text-xs font-bold text-primary uppercase">
+          <View 
+            className="px-2 py-1 rounded-md"
+            style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+          >
+            <Text 
+              className="text-xs font-bold uppercase"
+              style={{ color: '#408059' }}
+            >
               {farm.crop_variety}
             </Text>
           </View>
         ) : (
           <View />
         )}
-        <Text className="text-sm text-gray-500">
+        <Text className="text-sm" style={{ color: '#8e8e93' }}>
           {farm.area.toFixed(1)} Acres
         </Text>
       </View>
@@ -56,14 +79,26 @@ export function FarmCard({ farm, onPress }: FarmCardProps) {
       {/* Data Grid */}
       <View className="flex-row gap-3">
         {/* Water Balance Box */}
-        <View className="flex-1 bg-gray-100 rounded-xl p-3">
+        <View 
+          className="flex-1 rounded-xl p-3"
+          style={{ backgroundColor: '#f2f2f7' }}
+        >
           <View className="flex-row items-center gap-2">
-            <View className="w-3 h-3 rounded-full bg-amber-700" />
+            <View 
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: '#669475' }}
+            />
             <View>
-              <Text className="text-[10px] font-bold text-gray-500 uppercase">
+              <Text 
+                className="text-[10px] font-bold uppercase"
+                style={{ color: '#8e8e93' }}
+              >
                 WATER BALANCE
               </Text>
-              <Text className="text-base font-semibold text-gray-900">
+              <Text 
+                className="text-base font-semibold"
+                style={{ color: '#000000' }}
+              >
                 {farm.remaining_water != null
                   ? `${farm.remaining_water.toFixed(1)} mm`
                   : '—'}
@@ -73,16 +108,23 @@ export function FarmCard({ farm, onPress }: FarmCardProps) {
         </View>
 
         {/* Region Box */}
-        <View className="flex-1 bg-gray-100 rounded-xl p-3">
+        <View 
+          className="flex-1 rounded-xl p-3"
+          style={{ backgroundColor: '#f2f2f7' }}
+        >
           <View className="flex-row items-center gap-2">
-            <Ionicons name="location" size={12} color="#6B7280" />
+            <Ionicons name="location" size={12} color="#8e8e93" />
             <View>
-              <Text className="text-[10px] font-bold text-gray-500 uppercase">
+              <Text 
+                className="text-[10px] font-bold uppercase"
+                style={{ color: '#8e8e93' }}
+              >
                 REGION
               </Text>
               <Text
-                className="text-sm font-medium text-gray-900"
+                className="text-sm font-medium"
                 numberOfLines={1}
+                style={{ color: '#000000' }}
               >
                 {farm.region || 'Unknown'}
               </Text>

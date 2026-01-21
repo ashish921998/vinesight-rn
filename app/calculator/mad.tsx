@@ -14,9 +14,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { REFILL_SPANS, SOIL_TYPES, type RefillSpanId } from '@/constants/calculatorModels';
+
 
 export default function MADCalculatorScreen() {
   // Step 1: MAD Calculation inputs
@@ -94,24 +97,41 @@ export default function MADCalculatorScreen() {
         options={{
           title: 'MAD Calculator',
           headerTitleStyle: { fontWeight: '600' },
+          headerTintColor: '#408059',
         }}
       />
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-surface-50"
+        className="flex-1"
+        style={{ backgroundColor: '#f2f2f7' }}
       >
+        <LinearGradient
+          colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
+          style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
+        />
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Step 1: MAD Calculation Card */}
-          <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+          <View
+            className="rounded-2xl p-4 mb-4 overflow-hidden"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 3,
+            }}
+          >
             <View className="flex-row items-center mb-4">
-              <View className="w-8 h-8 bg-blue-100 rounded-lg items-center justify-center">
-                <Ionicons name="water" size={18} color="#3B82F6" />
+              <View className="w-8 h-8 rounded-lg items-center justify-center" style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}>
+                <Ionicons name="water" size={18} color="#408059" />
               </View>
-              <Text className="text-base font-semibold text-surface-900 ml-2">
+              <Text className="text-base font-semibold ml-2" style={{ color: '#1c1c1e' }}>
                 Step 1: MAD Calculation
               </Text>
             </View>
@@ -146,12 +166,12 @@ export default function MADCalculatorScreen() {
             />
 
             {/* Soil type guidance */}
-            <View className="bg-surface-50 rounded-xl p-3 mt-3">
-              <Text className="text-xs font-medium text-surface-600 mb-2">
+            <View className="rounded-xl p-3 mt-3" style={{ backgroundColor: '#f9f9f9' }}>
+              <Text className="text-xs font-medium mb-2" style={{ color: '#8e8e93' }}>
                 Typical water retention by soil type:
               </Text>
               {SOIL_TYPES.map((soil) => (
-                <Text key={soil.id} className="text-xs text-surface-500">
+                <Text key={soil.id} className="text-xs" style={{ color: '#8e8e93' }}>
                   • {soil.label}: {soil.waterRetentionMin}-{soil.waterRetentionMax}%
                 </Text>
               ))}
@@ -163,12 +183,12 @@ export default function MADCalculatorScreen() {
               disabled={!canCalculateMAD || madResult !== null}
               className="mt-4 py-3 rounded-xl items-center"
               style={{
-                backgroundColor: canCalculateMAD && !madResult ? '#408059' : '#E5E7EB',
+                backgroundColor: canCalculateMAD && !madResult ? '#408059' : '#e5e5ea',
               }}
             >
               <Text
                 className="font-semibold"
-                style={{ color: canCalculateMAD && !madResult ? '#FFFFFF' : '#9CA3AF' }}
+                style={{ color: canCalculateMAD && !madResult ? '#ffffff' : '#8e8e93' }}
               >
                 Calculate MAD
               </Text>
@@ -177,19 +197,19 @@ export default function MADCalculatorScreen() {
             {/* MAD Result */}
             {madResult !== null && (
               <View className="mt-4">
-                <View className="bg-primary-50 rounded-xl p-4 items-center">
-                  <Text className="text-3xl font-bold text-primary-700">
+                <View className="rounded-xl p-4 items-center" style={{ backgroundColor: 'rgba(64, 128, 89, 0.08)' }}>
+                  <Text className="text-3xl font-bold" style={{ color: '#408059' }}>
                     {madResult.toFixed(4)}
                   </Text>
-                  <Text className="text-sm text-primary-600 mt-1">
+                  <Text className="text-sm mt-1" style={{ color: '#408059' }}>
                     Maximum Allowable Deficit
                   </Text>
                 </View>
-                <View className="bg-surface-50 rounded-xl p-3 mt-3">
-                  <Text className="text-xs font-medium text-surface-600 mb-1">
+                <View className="rounded-xl p-3 mt-3" style={{ backgroundColor: '#f9f9f9' }}>
+                  <Text className="text-xs font-medium mb-1" style={{ color: '#8e8e93' }}>
                     Interpretation
                   </Text>
-                  <Text className="text-xs text-surface-500">
+                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
                     {interpretMAD(madResult)}
                   </Text>
                 </View>
@@ -199,17 +219,27 @@ export default function MADCalculatorScreen() {
 
           {/* Step 2: Refill Tank Calculator */}
           {madResult !== null && (
-            <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+            <View
+              className="rounded-2xl p-4 mb-4 overflow-hidden"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.06,
+                shadowRadius: 12,
+                elevation: 3,
+              }}
+            >
               <View className="flex-row items-center mb-4">
-                <View className="w-8 h-8 bg-green-100 rounded-lg items-center justify-center">
-                  <Ionicons name="arrow-up-circle" size={18} color="#22C55E" />
+                <View className="w-8 h-8 rounded-lg items-center justify-center" style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}>
+                  <Ionicons name="arrow-up-circle" size={18} color="#408059" />
                 </View>
-                <Text className="text-base font-semibold text-surface-900 ml-2">
+                <Text className="text-base font-semibold ml-2" style={{ color: '#1c1c1e' }}>
                   Step 2: Refill Tank Calculator
                 </Text>
               </View>
 
-              <Text className="text-sm font-medium text-surface-700 mb-2">
+              <Text className="text-sm font-medium mb-2" style={{ color: '#3a3a3c' }}>
                 Select Refill Span
               </Text>
               {REFILL_SPANS.map((span) => (
@@ -218,30 +248,30 @@ export default function MADCalculatorScreen() {
                   onPress={() => setSelectedRefillSpan(span.id)}
                   className="flex-row items-center p-3 rounded-xl mb-2"
                   style={{
-                    backgroundColor: selectedRefillSpan === span.id ? '#F0FDF4' : '#F9FAFB',
+                    backgroundColor: selectedRefillSpan === span.id ? 'rgba(64, 128, 89, 0.08)' : '#f9f9f9',
                     borderWidth: 1,
-                    borderColor: selectedRefillSpan === span.id ? '#22C55E' : '#E5E7EB',
+                    borderColor: selectedRefillSpan === span.id ? '#408059' : '#e5e5ea',
                   }}
                 >
-                  <Text className="flex-1 text-sm text-surface-700">{span.label}</Text>
+                  <Text className="flex-1 text-sm" style={{ color: '#1c1c1e' }}>{span.label}</Text>
                   {selectedRefillSpan === span.id && (
-                    <Ionicons name="checkmark-circle" size={20} color="#22C55E" />
+                    <Ionicons name="checkmark-circle" size={20} color="#408059" />
                   )}
                 </TouchableOpacity>
               ))}
 
               {/* Guidance */}
-              <View className="bg-surface-50 rounded-xl p-3 mt-2">
-                <Text className="text-xs font-medium text-surface-600 mb-2">
+              <View className="rounded-xl p-3 mt-2" style={{ backgroundColor: '#f9f9f9' }}>
+                <Text className="text-xs font-medium mb-2" style={{ color: '#8e8e93' }}>
                   Refill span guidance:
                 </Text>
-                <Text className="text-xs text-surface-500">
+                <Text className="text-xs" style={{ color: '#8e8e93' }}>
                   • Heavy Growth (0.2): Fruit set - maintain turgor
                 </Text>
-                <Text className="text-xs text-surface-500">
+                <Text className="text-xs" style={{ color: '#8e8e93' }}>
                   • Normal Growth (0.3): Flowering - balance growth/stress
                 </Text>
-                <Text className="text-xs text-surface-500">
+                <Text className="text-xs" style={{ color: '#8e8e93' }}>
                   • Controlled Stress (0.4): Veraison - improve quality/sugar
                 </Text>
               </View>
@@ -252,12 +282,12 @@ export default function MADCalculatorScreen() {
                 disabled={!canCalculateRefillTank || refillTankResult !== null}
                 className="mt-4 py-3 rounded-xl items-center"
                 style={{
-                  backgroundColor: canCalculateRefillTank && !refillTankResult ? '#408059' : '#E5E7EB',
+                  backgroundColor: canCalculateRefillTank && !refillTankResult ? '#408059' : '#e5e5ea',
                 }}
               >
                 <Text
                   className="font-semibold"
-                  style={{ color: canCalculateRefillTank && !refillTankResult ? '#FFFFFF' : '#9CA3AF' }}
+                  style={{ color: canCalculateRefillTank && !refillTankResult ? '#ffffff' : '#8e8e93' }}
                 >
                   Calculate Refill Tank
                 </Text>
@@ -266,19 +296,19 @@ export default function MADCalculatorScreen() {
               {/* Refill Tank Result */}
               {refillTankResult !== null && (
                 <View className="mt-4">
-                  <View className="bg-green-50 rounded-xl p-4 items-center">
-                    <Text className="text-3xl font-bold text-green-700">
+                  <View className="rounded-xl p-4 items-center" style={{ backgroundColor: 'rgba(64, 128, 89, 0.08)' }}>
+                    <Text className="text-3xl font-bold" style={{ color: '#408059' }}>
                       {refillTankResult.toFixed(4)}
                     </Text>
-                    <Text className="text-sm text-green-600 mt-1">
+                    <Text className="text-sm mt-1" style={{ color: '#408059' }}>
                       Refill Tank Requirement
                     </Text>
                   </View>
-                  <View className="bg-surface-50 rounded-xl p-3 mt-3">
-                    <Text className="text-xs font-medium text-surface-600 mb-1">
+                  <View className="rounded-xl p-3 mt-3" style={{ backgroundColor: '#f9f9f9' }}>
+                    <Text className="text-xs font-medium mb-1" style={{ color: '#8e8e93' }}>
                       What this means
                     </Text>
-                    <Text className="text-xs text-surface-500">
+                    <Text className="text-xs" style={{ color: '#8e8e93' }}>
                       Apply {refillTankResult.toFixed(4)} units of water when soil moisture drops
                       to {((REFILL_SPANS.find(s => s.id === selectedRefillSpan)?.value ?? 0) * 100).toFixed(0)}% of MAD to maintain
                       optimal vine health.
@@ -293,11 +323,19 @@ export default function MADCalculatorScreen() {
           {madResult !== null && refillTankResult !== null && (
             <TouchableOpacity
               onPress={resetCalculator}
-              className="bg-white rounded-2xl py-4 items-center border border-surface-200"
+              className="rounded-2xl py-4 items-center overflow-hidden"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.06,
+                shadowRadius: 12,
+                elevation: 3,
+              }}
             >
               <View className="flex-row items-center">
-                <Ionicons name="refresh" size={18} color="#6B7280" />
-                <Text className="text-surface-600 font-medium ml-2">
+                <Ionicons name="refresh" size={18} color="#8e8e93" />
+                <Text className="font-medium ml-2" style={{ color: '#8e8e93' }}>
                   Reset Calculator
                 </Text>
               </View>
@@ -305,6 +343,7 @@ export default function MADCalculatorScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      </SafeAreaView>
     </>
   );
 }
@@ -325,17 +364,18 @@ function InputRow({
 }) {
   return (
     <View className="mb-3">
-      <Text className="text-sm text-surface-600 mb-1">{label}</Text>
-      <View className="flex-row items-center bg-surface-50 rounded-xl">
+      <Text className="text-sm mb-1" style={{ color: '#8e8e93' }}>{label}</Text>
+      <View className="flex-row items-center rounded-xl" style={{ backgroundColor: '#f9f9f9' }}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor="#8e8e93"
           keyboardType="decimal-pad"
-          className="flex-1 px-4 py-3 text-base text-surface-900"
+          className="flex-1 px-4 py-3 text-base"
+          style={{ color: '#1c1c1e' }}
         />
-        <Text className="text-sm text-surface-500 pr-4">{unit}</Text>
+        <Text className="text-sm pr-4" style={{ color: '#8e8e93' }}>{unit}</Text>
       </View>
     </View>
   );

@@ -42,7 +42,10 @@ export function useCreateSoilProfile() {
     mutationFn: async (profile: SoilProfileInsert) => {
       const { data, error } = await supabase
         .from('soil_profiles')
-        .insert(profile)
+        .insert({
+          ...profile,
+          created_at: profile.created_at || new Date().toISOString(),
+        })
         .select()
         .single();
 
