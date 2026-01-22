@@ -23,14 +23,13 @@ export function StatsCard({
   icon,
   color = '#408059',
   iconColor,
-  subtitle,
   onPress,
 }: StatsCardProps) {
   const finalColor = iconColor || color;
   const content = (
-    <View 
+    <View
       className="rounded-xl p-4"
-      style={{ 
+      style={{
         backgroundColor: '#ffffff',
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 2 },
@@ -40,20 +39,12 @@ export function StatsCard({
       }}
     >
       <View className="flex-row items-center justify-between">
-        <Ionicons 
-          name={icon} 
-          size={20} 
-          color={finalColor}
-          style={{ opacity: 1 }}
-        />
+        <Ionicons name={icon} size={20} color={finalColor} style={{ opacity: 1 }} />
         <Text className="text-2xl font-bold" style={{ color: '#000000' }}>
           {value}
         </Text>
       </View>
-      <Text 
-        className="text-xs mt-3"
-        style={{ color: '#8e8e93' }}
-      >
+      <Text className="text-xs mt-3" style={{ color: '#8e8e93' }}>
         {title}
       </Text>
     </View>

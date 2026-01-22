@@ -52,10 +52,7 @@ export function Input({
   return (
     <View className={containerClassName}>
       {label && (
-        <Text 
-          className="text-sm font-medium mb-1.5"
-          style={{ color: '#000000' }}
-        >
+        <Text className="text-sm font-medium mb-1.5 text-black">
           {label}
         </Text>
       )}
@@ -80,10 +77,9 @@ export function Input({
         <TextInput
           className={`
             flex-1 py-3.5
-            text-base
+            text-base text-black
             ${className || ''}
           `}
-          style={{ color: '#000000' }}
           placeholderTextColor="#c7c7cc"
           editable={editable}
           secureTextEntry={isPassword && !showPassword}
@@ -129,10 +125,7 @@ export function Input({
       {hasError && (
         <View className="flex-row items-center mt-1.5">
           <Ionicons name="alert-circle" size={14} color="#ff3b30" />
-          <Text 
-            className="text-xs ml-1"
-            style={{ color: '#ff3b30' }}
-          >
+          <Text className="text-xs ml-1 text-[#ff3b30]">
             {error}
           </Text>
         </View>

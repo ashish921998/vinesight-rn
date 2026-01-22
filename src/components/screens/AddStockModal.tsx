@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -28,12 +28,24 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
 
   const currency = profile?.preferred_currency || 'INR';
 
+  // Track previous visible/item state to prevent unnecessary updates
+  const prevVisibleRef = useRef(visible);
+  const prevItemIdRef = useRef(item?.id);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    // Only update when modal becomes visible or item changes
     if (visible && item) {
-      setQuantityToAdd('');
-      setNewUnitPrice(item.unit_price.toString());
+      const shouldUpdate = !prevVisibleRef.current || item.id !== prevItemIdRef.current;
+      if (shouldUpdate) {
+        setQuantityToAdd('');
+        setNewUnitPrice(item.unit_price.toString());
+      }
     }
+    prevVisibleRef.current = visible;
+    prevItemIdRef.current = item?.id;
   }, [visible, item]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const newQuantity = (item?.quantity || 0) + parseFloat(quantityToAdd || '0');
   const newValue = newQuantity * parseFloat(newUnitPrice || '0');
@@ -55,7 +67,7 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
         },
       });
       onClose();
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Error', 'Failed to update stock. Please try again.');
     }
   };
@@ -113,9 +125,7 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
 
           {/* Quantity to Add */}
           <View className="mb-4">
-            <Text className="text-sm font-medium text-surface-700 mb-2">
-              Quantity to Add *
-            </Text>
+            <Text className="text-sm font-medium text-surface-700 mb-2">Quantity to Add *</Text>
             <View className="flex-row items-center bg-white rounded-xl border border-surface-200">
               <TextInput
                 value={quantityToAdd}
@@ -149,9 +159,7 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
               />
               <Text className="text-base text-surface-500 pr-4">per {item.unit}</Text>
             </View>
-            <Text className="text-xs text-surface-500 mt-1">
-              Leave as is to keep current price
-            </Text>
+            <Text className="text-xs text-surface-500 mt-1">Leave as is to keep current price</Text>
           </View>
 
           {/* Preview */}

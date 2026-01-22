@@ -1,17 +1,25 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 // Calculator data (Irrigation Planning section)
 const calculators = [
+  {
+    id: 'weather',
+    title: 'Weather & Irrigation',
+    description: 'Farm weather data, forecasts & irrigation needs',
+    icon: 'sunny' as const,
+    color: '#F59E0B',
+    route: '/weather' as Href,
+  },
   {
     id: 'mad',
     title: 'MAD Calculator',
     description: 'Maximum allowable deficit & tank requirements',
     icon: 'speedometer' as const,
     color: '#3B82F6',
-    route: '/calculator/mad',
+    route: '/calculator/mad' as Href,
   },
   {
     id: 'system-discharge',
@@ -19,7 +27,7 @@ const calculators = [
     description: 'Irrigation system design & discharge rates',
     icon: 'water' as const,
     color: '#408059',
-    route: '/calculator/system-discharge',
+    route: '/calculator/system-discharge' as Href,
   },
   {
     id: 'lai',
@@ -27,7 +35,7 @@ const calculators = [
     description: 'Leaf area index & canopy management',
     icon: 'leaf' as const,
     color: '#22C55E',
-    route: '/calculator/lai',
+    route: '/calculator/lai' as Href,
   },
   {
     id: 'nutrients',
@@ -35,7 +43,7 @@ const calculators = [
     description: 'Fertilizer requirements & application planning',
     icon: 'flask' as const,
     color: '#8B5CF6',
-    route: '/calculator/nutrients',
+    route: '/calculator/nutrients' as Href,
   },
 ];
 
@@ -57,13 +65,11 @@ export default function ToolsScreen() {
 
       {/* Calculators Section */}
       <View className="mb-6">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-3">
-          CALCULATORS
-        </Text>
+        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-3">CALCULATORS</Text>
         {calculators.map((calc) => (
           <TouchableOpacity
             key={calc.id}
-            onPress={() => router.push(calc.route as any)}
+            onPress={() => router.push(calc.route)}
             className="bg-white rounded-2xl p-4 mb-3 flex-row items-center"
             activeOpacity={0.7}
           >
@@ -74,9 +80,7 @@ export default function ToolsScreen() {
               <Ionicons name={calc.icon} size={22} color={calc.color} />
             </View>
             <View className="flex-1 ml-3">
-              <Text className="text-base font-semibold text-surface-900">
-                {calc.title}
-              </Text>
+              <Text className="text-base font-semibold text-surface-900">{calc.title}</Text>
               <Text className="text-xs text-surface-500 mt-0.5" numberOfLines={1}>
                 {calc.description}
               </Text>

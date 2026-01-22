@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { NumericInput, FormField } from './FormField';
+import { NumericInput } from './FormField';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculatorModels';
 
 export interface HarvestFormData {
@@ -19,11 +19,10 @@ interface HarvestFormProps {
 
 export function HarvestForm({ data, onChange }: HarvestFormProps) {
   const isValid = data.quantity > 0 && data.grade !== '';
-  
+
   // Calculate total value if price is set
-  const totalValue = data.price && data.quantity > 0 
-    ? (data.quantity * data.price).toFixed(0) 
-    : null;
+  const totalValue =
+    data.price && data.quantity > 0 ? (data.quantity * data.price).toFixed(0) : null;
 
   return (
     <View>
@@ -33,12 +32,8 @@ export function HarvestForm({ data, onChange }: HarvestFormProps) {
           <Ionicons name="basket" size={20} color="#F59E0B" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">
-            Harvest
-          </Text>
-          <Text className="text-sm text-surface-500">
-            Log harvest quantity and details
-          </Text>
+          <Text className="text-lg font-semibold text-surface-900">Harvest</Text>
+          <Text className="text-sm text-surface-500">Log harvest quantity and details</Text>
         </View>
       </View>
 
@@ -64,22 +59,24 @@ export function HarvestForm({ data, onChange }: HarvestFormProps) {
             Grade <Text className="text-red-500">*</Text>
           </Text>
         </View>
-        
+
         <View className="flex-row flex-wrap gap-2">
           {HARVEST_GRADES.map((grade) => (
             <TouchableOpacity
               key={grade}
               onPress={() => onChange({ ...data, grade })}
               className={`px-4 py-2.5 rounded-xl border ${
-                data.grade === grade 
-                  ? 'bg-amber-500 border-amber-500' 
+                data.grade === grade
+                  ? 'bg-amber-500 border-amber-500'
                   : 'bg-white border-surface-200'
               }`}
               activeOpacity={0.7}
             >
-              <Text className={`text-sm font-medium ${
-                data.grade === grade ? 'text-white' : 'text-surface-700'
-              }`}>
+              <Text
+                className={`text-sm font-medium ${
+                  data.grade === grade ? 'text-white' : 'text-surface-700'
+                }`}
+              >
                 {grade}
               </Text>
             </TouchableOpacity>
@@ -104,11 +101,9 @@ export function HarvestForm({ data, onChange }: HarvestFormProps) {
       <View className="mb-4">
         <View className="flex-row items-center mb-1.5">
           <Ionicons name="person-outline" size={16} color="#408059" style={{ marginRight: 6 }} />
-          <Text className="text-sm font-semibold text-surface-800">
-            Buyer
-          </Text>
+          <Text className="text-sm font-semibold text-surface-800">Buyer</Text>
         </View>
-        
+
         <View className="flex-row items-center px-4 py-3 rounded-xl border border-surface-200 bg-white">
           <Ionicons name="person-outline" size={20} color="#6B7280" style={{ marginRight: 10 }} />
           <TextInput
@@ -130,7 +125,9 @@ export function HarvestForm({ data, onChange }: HarvestFormProps) {
             {data.quantity > 0 && (
               <View>
                 <Text className="text-xs text-amber-600">Quantity</Text>
-                <Text className="text-base font-semibold text-amber-800">{data.quantity.toFixed(1)} kg</Text>
+                <Text className="text-base font-semibold text-amber-800">
+                  {data.quantity.toFixed(1)} kg
+                </Text>
               </View>
             )}
             {data.grade && (
@@ -151,10 +148,10 @@ export function HarvestForm({ data, onChange }: HarvestFormProps) {
 
       {/* Validation indicator */}
       <View className="flex-row items-center pt-4 border-t border-surface-100">
-        <Ionicons 
-          name={isValid ? "checkmark-circle" : "alert-circle-outline"} 
-          size={16} 
-          color={isValid ? "#22C55E" : "#9CA3AF"} 
+        <Ionicons
+          name={isValid ? 'checkmark-circle' : 'alert-circle-outline'}
+          size={16}
+          color={isValid ? '#22C55E' : '#9CA3AF'}
         />
         <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
           {isValid ? 'Ready to add' : 'Enter quantity and select grade'}

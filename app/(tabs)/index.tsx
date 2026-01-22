@@ -1,8 +1,7 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, RefreshControl, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/stores';
 import {
   useDashboardStats,
   useFarmsNeedingAttention,
@@ -36,7 +35,6 @@ function formatHarvest(value: number): string {
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Data hooks
@@ -65,14 +63,6 @@ export default function DashboardScreen() {
       router.push(`/farm/${farms[0].id}`);
     } else {
       router.push('/(tabs)/farms');
-    }
-  };
-
-  const handleWaterCalc = () => {
-    if (farms && farms.length > 0 && farms[0].id) {
-      router.push(`/farm/${farms[0].id}`);
-    } else {
-      router.push('/(tabs)/tools');
     }
   };
 

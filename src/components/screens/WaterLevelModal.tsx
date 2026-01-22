@@ -85,7 +85,7 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
       setSelectedGrowthStage(null);
       setCalculatedWaterLevel(null);
       setUseManual(false);
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Error', 'Failed to update water level');
     } finally {
       setIsSaving(false);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -50,22 +50,9 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
   const currency = profile?.preferred_currency || 'INR';
   const isEditing = !!editingItem;
 
-  // Reset form when modal opens/closes or editing item changes
-  useEffect(() => {
-    if (visible) {
-      if (editingItem) {
-        setName(editingItem.name);
-        setType(editingItem.type as WarehouseItemType);
-        setQuantity(editingItem.quantity.toString());
-        setUnit(editingItem.unit as WarehouseUnit);
-        setUnitPrice(editingItem.unit_price.toString());
-        setReorderQuantity(editingItem.reorder_quantity?.toString() || '');
-        setNotes(editingItem.notes || '');
-      } else {
-        resetForm();
-      }
-    }
-  }, [visible, editingItem]);
+  // Track previous state to prevent unnecessary updates
+  const prevVisibleRef = useRef(visible);
+  const prevEditingItemIdRef = useRef(editingItem?.id);
 
   const resetForm = () => {
     setName('');
@@ -78,6 +65,33 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
     setShowTypePicker(false);
     setShowUnitPicker(false);
   };
+
+  // Reset form when modal opens/closes or editing item changes
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    // Only update when modal becomes visible or editingItem changes
+    if (visible) {
+      const shouldUpdate =
+        !prevVisibleRef.current || editingItem?.id !== prevEditingItemIdRef.current;
+
+      if (shouldUpdate) {
+        if (editingItem) {
+          setName(editingItem.name);
+          setType(editingItem.type as WarehouseItemType);
+          setQuantity(editingItem.quantity.toString());
+          setUnit(editingItem.unit as WarehouseUnit);
+          setUnitPrice(editingItem.unit_price.toString());
+          setReorderQuantity(editingItem.reorder_quantity?.toString() || '');
+          setNotes(editingItem.notes || '');
+        } else {
+          resetForm();
+        }
+      }
+    }
+    prevVisibleRef.current = visible;
+    prevEditingItemIdRef.current = editingItem?.id;
+  }, [visible, editingItem]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSubmit = async () => {
     // Validation
@@ -114,7 +128,7 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
         await createMutation.mutateAsync(itemData);
       }
       onClose();
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Error', 'Failed to save item. Please try again.');
     }
   };
@@ -136,7 +150,9 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
             {isEditing ? 'Edit Item' : 'Add Item'}
           </Text>
           <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
-            <Text className={`text-base font-semibold ${isLoading ? 'text-surface-400' : 'text-primary-600'}`}>
+            <Text
+              className={`text-base font-semibold ${isLoading ? 'text-surface-400' : 'text-primary-600'}`}
+            >
               {isLoading ? 'Saving...' : 'Save'}
             </Text>
           </TouchableOpacity>
@@ -164,7 +180,9 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
             >
               <View className="flex-row items-center">
                 <Ionicons
-                  name={ITEM_TYPES.find((t) => t.value === type)?.icon as any}
+                  name={
+                    ITEM_TYPES.find((t) => t.value === type)?.icon as keyof typeof Ionicons.glyphMap
+                  }
                   size={20}
                   color={type === 'fertilizer' ? '#16A34A' : '#3B82F6'}
                 />
@@ -188,7 +206,7 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
                     }`}
                   >
                     <Ionicons
-                      name={itemType.icon as any}
+                      name={itemType.icon as keyof typeof Ionicons.glyphMap}
                       size={20}
                       color={itemType.value === 'fertilizer' ? '#16A34A' : '#3B82F6'}
                     />

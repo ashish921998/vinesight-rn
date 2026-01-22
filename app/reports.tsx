@@ -36,8 +36,8 @@ export default function ReportsScreen() {
   const [showToPicker, setShowToPicker] = useState(false);
   const [showFarmPicker, setShowFarmPicker] = useState(false);
 
-  const { preview, isLoading: dataLoading, farm } = useReportData(selectedFarmId, dateRange);
-  const { isExporting, exportReport, exportError } = useReportExport();
+  const { preview, isLoading: dataLoading } = useReportData(selectedFarmId, dateRange);
+  const { isExporting, exportReport } = useReportExport();
 
   // Auto-select first farm
   React.useEffect(() => {
@@ -54,14 +54,18 @@ export default function ReportsScreen() {
 
     try {
       await exportReport(preview, format, reportType);
-    } catch {
-      Alert.alert('Export Failed', exportError || 'Unable to export report');
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Unable to export report';
+      Alert.alert('Export Failed', errorMessage);
     }
   };
 
   const handleDateChange = (type: 'from' | 'to', date: Date | undefined) => {
     if (date) {
-      const dateStr = date.toISOString().split('T')[0];
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       setDateRange((prev) => ({ ...prev, [type]: dateStr }));
     }
     if (type === 'from') setShowFromPicker(false);
@@ -128,7 +132,11 @@ export default function ReportsScreen() {
                 {selectedFarm?.name || 'Select a farm'}
               </Text>
             </View>
-            <Ionicons name={showFarmPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
+            <Ionicons
+              name={showFarmPicker ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color="#666"
+            />
           </TouchableOpacity>
 
           {showFarmPicker && (
@@ -213,7 +221,7 @@ export default function ReportsScreen() {
                 }`}
               >
                 <Ionicons
-                  name={type.icon as any}
+                  name={type.icon as keyof typeof Ionicons.glyphMap}
                   size={24}
                   color={reportType === type.value ? '#1a5d1a' : '#9ca3af'}
                   style={{ alignSelf: 'center' }}
@@ -239,7 +247,7 @@ export default function ReportsScreen() {
         ) : preview ? (
           <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-sm">
             <Text className="text-sm font-medium text-gray-500 mb-3">Preview Summary</Text>
-            
+
             <View className="flex-row flex-wrap gap-3">
               <View className="bg-blue-50 p-3 rounded-lg flex-1 min-w-[45%]">
                 <Text className="text-2xl font-bold text-blue-600">

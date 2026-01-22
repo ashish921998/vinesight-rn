@@ -119,7 +119,7 @@ export function useDeleteIrrigationRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.IRRIGATION_RECORDS)
         .delete()
@@ -230,7 +230,7 @@ export function useDeleteSprayRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.SPRAY_RECORDS)
         .delete()
@@ -341,7 +341,7 @@ export function useDeleteFertigationRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.FERTIGATION_RECORDS)
         .delete()
@@ -452,7 +452,7 @@ export function useDeleteHarvestRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.HARVEST_RECORDS)
         .delete()
@@ -563,7 +563,7 @@ export function useDeleteExpenseRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.EXPENSE_RECORDS)
         .delete()

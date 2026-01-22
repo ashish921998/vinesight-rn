@@ -1,11 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import {
-  View,
-  TextInput,
-  Text,
-  Pressable,
-  Animated,
-} from 'react-native';
+import { View, TextInput, Text, Pressable, Animated } from 'react-native';
 
 interface OTPInputProps {
   length?: number;
@@ -15,16 +9,10 @@ interface OTPInputProps {
   error?: string;
 }
 
-export function OTPInput({
-  length = 6,
-  value,
-  onChange,
-  autoFocus = true,
-  error,
-}: OTPInputProps) {
+export function OTPInput({ length = 6, value, onChange, autoFocus = true, error }: OTPInputProps) {
   const inputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const cursorAnim = useRef(new Animated.Value(0)).current;
+  const [cursorAnim] = useState(() => new Animated.Value(0));
 
   // Cursor blinking animation
   useEffect(() => {
@@ -41,7 +29,7 @@ export function OTPInput({
             duration: 500,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       ).start();
     } else {
       cursorAnim.setValue(0);
@@ -109,9 +97,7 @@ export function OTPInput({
                 `}
               >
                 {isFilled ? (
-                  <Text className="text-2xl font-bold text-surface-900">
-                    {digit}
-                  </Text>
+                  <Text className="text-2xl font-bold text-surface-900">{digit}</Text>
                 ) : isActive ? (
                   <Animated.View
                     style={{

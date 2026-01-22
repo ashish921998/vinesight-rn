@@ -1,58 +1,67 @@
 module.exports = {
   expo: {
-    name: "Vinesight",
-    slug: "vinesight-rn",
-    version: "1.0.0",
-    orientation: "portrait",
-    icon: "./assets/icon.png",
-    userInterfaceStyle: "automatic",
-    scheme: "vinesight",
-    newArchEnabled: true,
+    name: 'Vinesight',
+    slug: 'vinesight-rn',
+    version: '1.0.1',
+    orientation: 'portrait',
+    icon: './assets/icon.png',
+    userInterfaceStyle: 'automatic',
+    scheme: 'vinesight',
+    // New Architecture disabled for production stability.
+    // React Native's New Architecture is still experimental and may cause
+    // unexpected crashes in production. Enable after thorough testing.
+    newArchEnabled: false,
     splash: {
-      image: "./assets/splash-icon.png",
-      resizeMode: "contain",
-      backgroundColor: "#408059"
+      image: './assets/splash-icon.png',
+      resizeMode: 'contain',
+      backgroundColor: '#408059',
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.vinesight.app",
+      bundleIdentifier: 'com.vinesight.app',
       config: {
-        usesNonExemptEncryption: false
+        usesNonExemptEncryption: false,
       },
       infoPlist: {
-        NSLocationWhenInUseUsageDescription: "Vinesight needs your location to show nearby farms and provide weather data.",
-        NSLocationAlwaysUsageDescription: "Vinesight needs your location to provide weather updates for your farms."
-      }
+        NSLocationWhenInUseUsageDescription:
+          'Vinesight needs your location to show nearby farms and provide weather data.',
+        NSLocationAlwaysUsageDescription:
+          'Vinesight needs your location to provide weather updates for your farms.',
+      },
     },
-      android: {
-        package: "com.vinesight.app",
-        adaptiveIcon: {
-          foregroundImage: "./assets/adaptive-icon.png",
-          backgroundColor: "#408059"
-        },
+    android: {
+      package: 'com.vinesight.app',
+      adaptiveIcon: {
+        foregroundImage: './assets/playstore.png',
+        backgroundColor: '#408059',
+      },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: true,
-      permissions: [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ]
+      permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
     },
     web: {
-      favicon: "./assets/favicon.png",
-      bundler: "metro"
+      favicon: './assets/favicon.png',
+      bundler: 'metro',
     },
     plugins: [
-      "expo-router",
-      "expo-secure-store",
+      'expo-router',
+      'expo-secure-store',
+      'expo-font',
       [
-        "expo-location",
+        'expo-location',
         {
-          locationAlwaysAndWhenInUsePermission: "Allow Vinesight to use your location."
-        }
-      ]
+          locationAlwaysAndWhenInUsePermission: 'Allow Vinesight to use your location.',
+        },
+      ],
+      '@sentry/react-native/expo',
     ],
     experiments: {
-      typedRoutes: true
-    }
-  }
+      typedRoutes: true,
+    },
+    extra: {
+      eas: {
+        projectId: 'ede2bb37-3ad0-4503-9522-02bd1539e79b',
+      },
+    },
+  },
 };

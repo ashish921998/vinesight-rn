@@ -13,16 +13,16 @@ import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/useTasks';
-import {
-  TaskReminder,
-  TaskStatus,
-  TASK_TYPE_INFO,
-  PRIORITY_INFO,
-  STATUS_INFO,
-} from '../src/types/task';
+import { TaskReminder, TASK_TYPE_INFO, PRIORITY_INFO } from '../src/types/task';
 import AddTaskModal from '../src/components/screens/AddTaskModal';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
+
+const startOfDay = (date: Date) => {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+};
 
 export default function TasksScreen() {
   const { data: farms } = useFarms();
@@ -42,13 +42,13 @@ export default function TasksScreen() {
 
   // Filter and count tasks
   const { filteredTasks, counts } = useMemo(() => {
-    if (!tasks) return { filteredTasks: [], counts: { all: 0, pending: 0, overdue: 0, completed: 0 } };
+    if (!tasks)
+      return { filteredTasks: [], counts: { all: 0, pending: 0, overdue: 0, completed: 0 } };
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayMidnight = startOfDay(new Date());
 
     const overdueTasks = tasks.filter(
-      (t) => !t.completed && t.due_date && new Date(t.due_date) < today
+      (t) => !t.completed && t.due_date && new Date(t.due_date) < todayMidnight,
     );
     const pendingTasks = tasks.filter((t) => !t.completed);
     const completedTasks = tasks.filter((t) => t.completed);
@@ -104,8 +104,7 @@ export default function TasksScreen() {
   const formatDueDate = (dateString: string | null) => {
     if (!dateString) return 'No due date';
     const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfDay(new Date());
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -117,7 +116,7 @@ export default function TasksScreen() {
 
   const isOverdue = (task: TaskReminder) => {
     if (task.completed || !task.due_date) return false;
-    return new Date(task.due_date) < new Date();
+    return new Date(task.due_date) < startOfDay(new Date());
   };
 
   if (isLoading) {
@@ -134,235 +133,223 @@ export default function TasksScreen() {
     <>
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
         <View className="flex-1 bg-surface-50">
-      <Stack.Screen
-        options={{
-          title: 'Tasks',
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => {
-                setEditingTask(null);
-                setShowAddModal(true);
-              }}
-              className="mr-4"
+          <Stack.Screen
+            options={{
+              title: 'Tasks',
+              headerRight: () => (
+                <TouchableOpacity
+                  onPress={() => {
+                    setEditingTask(null);
+                    setShowAddModal(true);
+                  }}
+                  className="mr-4"
+                >
+                  <Ionicons name="add-circle" size={28} color="#408059" />
+                </TouchableOpacity>
+              ),
+            }}
+          />
+
+          <ScrollView
+            contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+            refreshControl={
+              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
+            }
+          >
+            {/* Stats Cards */}
+            <View className="flex-row mb-4" style={{ gap: 8 }}>
+              <View className="flex-1 bg-white rounded-xl p-3 items-center">
+                <Text className="text-2xl font-bold text-surface-900">{counts.pending}</Text>
+                <Text className="text-xs text-surface-500">Pending</Text>
+              </View>
+              <View className="flex-1 bg-amber-50 rounded-xl p-3 items-center">
+                <Text className="text-2xl font-bold text-amber-700">{counts.overdue}</Text>
+                <Text className="text-xs text-amber-600">Overdue</Text>
+              </View>
+              <View className="flex-1 bg-green-50 rounded-xl p-3 items-center">
+                <Text className="text-2xl font-bold text-green-700">{counts.completed}</Text>
+                <Text className="text-xs text-green-600">Completed</Text>
+              </View>
+            </View>
+
+            {/* Filter Tabs */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="mb-4"
+              contentContainerStyle={{ gap: 8 }}
             >
-              <Ionicons name="add-circle" size={28} color="#408059" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
-      <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
-        }
-      >
-        {/* Stats Cards */}
-        <View className="flex-row mb-4" style={{ gap: 8 }}>
-          <View className="flex-1 bg-white rounded-xl p-3 items-center">
-            <Text className="text-2xl font-bold text-surface-900">{counts.pending}</Text>
-            <Text className="text-xs text-surface-500">Pending</Text>
-          </View>
-          <View className="flex-1 bg-amber-50 rounded-xl p-3 items-center">
-            <Text className="text-2xl font-bold text-amber-700">{counts.overdue}</Text>
-            <Text className="text-xs text-amber-600">Overdue</Text>
-          </View>
-          <View className="flex-1 bg-green-50 rounded-xl p-3 items-center">
-            <Text className="text-2xl font-bold text-green-700">{counts.completed}</Text>
-            <Text className="text-xs text-green-600">Completed</Text>
-          </View>
-        </View>
-
-        {/* Filter Tabs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-4"
-          contentContainerStyle={{ gap: 8 }}
-        >
-          {(['all', 'pending', 'overdue', 'completed'] as FilterType[]).map((type) => (
-            <TouchableOpacity
-              key={type}
-              onPress={() => setFilter(type)}
-              className={`px-4 py-2 rounded-full ${
-                filter === type ? 'bg-primary-600' : 'bg-white'
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium ${
-                  filter === type ? 'text-white' : 'text-surface-600'
-                }`}
-              >
-                {type.charAt(0).toUpperCase() + type.slice(1)} ({counts[type]})
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Task List */}
-        {filteredTasks.length === 0 ? (
-          <View className="bg-white rounded-2xl p-8 items-center">
-            <Ionicons name="checkbox-outline" size={48} color="#9CA3AF" />
-            <Text className="text-surface-600 mt-4 text-center">No tasks found</Text>
-            <Text className="text-surface-500 text-sm mt-1 text-center">
-              {filter === 'all'
-                ? 'Create your first task to get started'
-                : `No ${filter} tasks`}
-            </Text>
-            {filter === 'all' && (
-              <TouchableOpacity
-                onPress={() => {
-                  setEditingTask(null);
-                  setShowAddModal(true);
-                }}
-                className="mt-4 bg-primary-600 px-6 py-3 rounded-xl"
-              >
-                <Text className="text-white font-semibold">Add Task</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        ) : (
-          filteredTasks.map((task) => {
-            const typeInfo = TASK_TYPE_INFO[task.type];
-            const priorityInfo = PRIORITY_INFO[task.priority];
-            const overdue = isOverdue(task);
-
-            return (
-              <View
-                key={task.id}
-                className={`bg-white rounded-2xl p-4 mb-3 ${
-                  overdue ? 'border-2 border-amber-300' : ''
-                } ${task.completed ? 'opacity-60' : ''}`}
-              >
-                <View className="flex-row items-start">
-                  {/* Complete Checkbox */}
-                  <TouchableOpacity
-                    onPress={() => !task.completed && handleComplete(task)}
-                    disabled={task.completed}
-                    className={`w-6 h-6 rounded-full border-2 items-center justify-center mr-3 mt-0.5 ${
-                      task.completed
-                        ? 'bg-green-500 border-green-500'
-                        : 'border-surface-300'
+              {(['all', 'pending', 'overdue', 'completed'] as FilterType[]).map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  onPress={() => setFilter(type)}
+                  className={`px-4 py-2 rounded-full ${
+                    filter === type ? 'bg-primary-600' : 'bg-white'
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-medium ${
+                      filter === type ? 'text-white' : 'text-surface-600'
                     }`}
                   >
-                    {task.completed && (
-                      <Ionicons name="checkmark" size={16} color="white" />
-                    )}
+                    {type.charAt(0).toUpperCase() + type.slice(1)} ({counts[type]})
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Task List */}
+            {filteredTasks.length === 0 ? (
+              <View className="bg-white rounded-2xl p-8 items-center">
+                <Ionicons name="checkbox-outline" size={48} color="#9CA3AF" />
+                <Text className="text-surface-600 mt-4 text-center">No tasks found</Text>
+                <Text className="text-surface-500 text-sm mt-1 text-center">
+                  {filter === 'all'
+                    ? 'Create your first task to get started'
+                    : `No ${filter} tasks`}
+                </Text>
+                {filter === 'all' && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEditingTask(null);
+                      setShowAddModal(true);
+                    }}
+                    className="mt-4 bg-primary-600 px-6 py-3 rounded-xl"
+                  >
+                    <Text className="text-white font-semibold">Add Task</Text>
                   </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              filteredTasks.map((task) => {
+                const typeInfo = TASK_TYPE_INFO[task.type];
+                const priorityInfo = PRIORITY_INFO[task.priority];
+                const overdue = isOverdue(task);
 
-                  <View className="flex-1">
-                    {/* Title & Type */}
-                    <View className="flex-row items-center">
-                      <View
-                        className="w-6 h-6 rounded items-center justify-center mr-2"
-                        style={{ backgroundColor: `${typeInfo.color}20` }}
-                      >
-                        <Ionicons
-                          name={typeInfo.icon as any}
-                          size={14}
-                          color={typeInfo.color}
-                        />
-                      </View>
-                      <Text
-                        className={`text-base font-semibold flex-1 ${
-                          task.completed
-                            ? 'text-surface-500 line-through'
-                            : 'text-surface-900'
+                return (
+                  <View
+                    key={task.id}
+                    className={`bg-white rounded-2xl p-4 mb-3 ${
+                      overdue ? 'border-2 border-amber-300' : ''
+                    } ${task.completed ? 'opacity-60' : ''}`}
+                  >
+                    <View className="flex-row items-start">
+                      {/* Complete Checkbox */}
+                      <TouchableOpacity
+                        onPress={() => !task.completed && handleComplete(task)}
+                        disabled={task.completed}
+                        className={`w-6 h-6 rounded-full border-2 items-center justify-center mr-3 mt-0.5 ${
+                          task.completed ? 'bg-green-500 border-green-500' : 'border-surface-300'
                         }`}
-                        numberOfLines={1}
                       >
-                        {task.title}
-                      </Text>
-                    </View>
+                        {task.completed && <Ionicons name="checkmark" size={16} color="white" />}
+                      </TouchableOpacity>
 
-                    {/* Description */}
-                    {task.description && (
-                      <Text
-                        className="text-sm text-surface-500 mt-1"
-                        numberOfLines={2}
-                      >
-                        {task.description}
-                      </Text>
-                    )}
+                      <View className="flex-1">
+                        {/* Title & Type */}
+                        <View className="flex-row items-center">
+                          <View
+                            className="w-6 h-6 rounded items-center justify-center mr-2"
+                            style={{ backgroundColor: `${typeInfo.color}20` }}
+                          >
+                            <Ionicons
+                              name={typeInfo.icon as keyof typeof Ionicons.glyphMap}
+                              size={14}
+                              color={typeInfo.color}
+                            />
+                          </View>
+                          <Text
+                            className={`text-base font-semibold flex-1 ${
+                              task.completed ? 'text-surface-500 line-through' : 'text-surface-900'
+                            }`}
+                            numberOfLines={1}
+                          >
+                            {task.title}
+                          </Text>
+                        </View>
 
-                    {/* Farm & Due Date */}
-                    <View className="flex-row items-center mt-2 flex-wrap" style={{ gap: 8 }}>
-                      <View className="flex-row items-center">
-                        <Ionicons name="leaf" size={12} color="#6B7280" />
-                        <Text className="text-xs text-surface-500 ml-1">
-                          {getFarmName(task.farm_id)}
-                        </Text>
+                        {/* Description */}
+                        {task.description && (
+                          <Text className="text-sm text-surface-500 mt-1" numberOfLines={2}>
+                            {task.description}
+                          </Text>
+                        )}
+
+                        {/* Farm & Due Date */}
+                        <View className="flex-row items-center mt-2 flex-wrap" style={{ gap: 8 }}>
+                          <View className="flex-row items-center">
+                            <Ionicons name="leaf" size={12} color="#6B7280" />
+                            <Text className="text-xs text-surface-500 ml-1">
+                              {getFarmName(task.farm_id)}
+                            </Text>
+                          </View>
+                          <View
+                            className={`flex-row items-center ${
+                              overdue ? 'bg-red-100' : 'bg-surface-100'
+                            } px-2 py-0.5 rounded`}
+                          >
+                            <Ionicons
+                              name="calendar"
+                              size={12}
+                              color={overdue ? '#DC2626' : '#6B7280'}
+                            />
+                            <Text
+                              className={`text-xs ml-1 ${
+                                overdue ? 'text-red-600 font-medium' : 'text-surface-500'
+                              }`}
+                            >
+                              {formatDueDate(task.due_date)}
+                            </Text>
+                          </View>
+                          <View
+                            className="px-2 py-0.5 rounded"
+                            style={{ backgroundColor: priorityInfo.bgColor }}
+                          >
+                            <Text
+                              className="text-xs font-medium"
+                              style={{ color: priorityInfo.color }}
+                            >
+                              {priorityInfo.label}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
-                      <View
-                        className={`flex-row items-center ${
-                          overdue ? 'bg-red-100' : 'bg-surface-100'
-                        } px-2 py-0.5 rounded`}
-                      >
-                        <Ionicons
-                          name="calendar"
-                          size={12}
-                          color={overdue ? '#DC2626' : '#6B7280'}
-                        />
-                        <Text
-                          className={`text-xs ml-1 ${
-                            overdue ? 'text-red-600 font-medium' : 'text-surface-500'
-                          }`}
-                        >
-                          {formatDueDate(task.due_date)}
-                        </Text>
-                      </View>
-                      <View
-                        className="px-2 py-0.5 rounded"
-                        style={{ backgroundColor: priorityInfo.bgColor }}
-                      >
-                        <Text
-                          className="text-xs font-medium"
-                          style={{ color: priorityInfo.color }}
-                        >
-                          {priorityInfo.label}
-                        </Text>
-                      </View>
+
+                      {/* Actions */}
+                      {!task.completed && (
+                        <TouchableOpacity onPress={() => handleDelete(task)} className="p-2">
+                          <Ionicons name="trash-outline" size={18} color="#DC2626" />
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
+                );
+              })
+            )}
+          </ScrollView>
 
-                  {/* Actions */}
-                  {!task.completed && (
-                    <TouchableOpacity
-                      onPress={() => handleDelete(task)}
-                      className="p-2"
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#DC2626" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-            );
-          })
-        )}
-      </ScrollView>
+          {/* FAB */}
+          <TouchableOpacity
+            onPress={() => {
+              setEditingTask(null);
+              setShowAddModal(true);
+            }}
+            className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center shadow-lg"
+            style={{ elevation: 5 }}
+          >
+            <Ionicons name="add" size={28} color="white" />
+          </TouchableOpacity>
 
-      {/* FAB */}
-      <TouchableOpacity
-        onPress={() => {
-          setEditingTask(null);
-          setShowAddModal(true);
-        }}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center shadow-lg"
-        style={{ elevation: 5 }}
-      >
-        <Ionicons name="add" size={28} color="white" />
-      </TouchableOpacity>
-
-      {/* Add Task Modal */}
-      <AddTaskModal
-        visible={showAddModal}
-        onClose={() => {
-          setShowAddModal(false);
-          setEditingTask(null);
-        }}
-        editingTask={editingTask}
-      />
-      </View>
+          {/* Add Task Modal */}
+          <AddTaskModal
+            visible={showAddModal}
+            onClose={() => {
+              setShowAddModal(false);
+              setEditingTask(null);
+            }}
+            editingTask={editingTask}
+          />
+        </View>
       </SafeAreaView>
     </>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -68,26 +68,10 @@ export default function AddTaskModal({
 
   const isEditing = !!editingTask;
 
-  useEffect(() => {
-    if (visible) {
-      if (editingTask) {
-        setTitle(editingTask.title);
-        setDescription(editingTask.description || '');
-        setType(editingTask.type);
-        setPriority(editingTask.priority);
-        setFarmId(editingTask.farm_id);
-        setDueDate(editingTask.due_date || '');
-      } else {
-        resetForm();
-        // Set initial farm if provided, otherwise use first farm
-        if (initialFarmId) {
-          setFarmId(initialFarmId);
-        } else if (farms && farms.length > 0 && farms[0].id) {
-          setFarmId(farms[0].id);
-        }
-      }
-    }
-  }, [visible, editingTask, farms, initialFarmId]);
+  // Track previous state to prevent unnecessary updates
+  const prevVisibleRef = useRef(false);
+  const prevEditingTaskIdRef = useRef<number | null | undefined>(undefined);
+  const prevEditingTaskUpdatedAtRef = useRef<string | undefined>(undefined);
 
   const resetForm = () => {
     setTitle('');
@@ -100,6 +84,40 @@ export default function AddTaskModal({
     setShowFarmPicker(false);
     setShowTemplates(false);
   };
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    // Update when modal becomes visible, editingTask changes, or task data is updated
+    if (visible) {
+      const shouldUpdate =
+        !prevVisibleRef.current ||
+        editingTask?.id !== prevEditingTaskIdRef.current ||
+        editingTask?.updated_at !== prevEditingTaskUpdatedAtRef.current;
+
+      if (shouldUpdate) {
+        if (editingTask) {
+          setTitle(editingTask.title);
+          setDescription(editingTask.description || '');
+          setType(editingTask.type);
+          setPriority(editingTask.priority);
+          setFarmId(editingTask.farm_id);
+          setDueDate(editingTask.due_date || '');
+        } else {
+          resetForm();
+          // Set initial farm if provided, otherwise use first farm
+          if (initialFarmId) {
+            setFarmId(initialFarmId);
+          } else if (farms && farms.length > 0 && farms[0].id) {
+            setFarmId(farms[0].id);
+          }
+        }
+      }
+    }
+    prevVisibleRef.current = visible;
+    prevEditingTaskIdRef.current = editingTask?.id;
+    prevEditingTaskUpdatedAtRef.current = editingTask?.updated_at;
+  }, [visible, editingTask, farms, initialFarmId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const applyTemplate = (template: TaskTemplate) => {
     setTitle(template.title);
@@ -148,7 +166,7 @@ export default function AddTaskModal({
       }
       onSaveSuccess?.();
       onClose();
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Error', 'Failed to save task. Please try again.');
     }
   };
@@ -189,9 +207,7 @@ export default function AddTaskModal({
               className="bg-primary-50 rounded-xl p-4 mb-4 flex-row items-center"
             >
               <Ionicons name="flash" size={20} color="#408059" />
-              <Text className="text-primary-700 font-medium ml-2 flex-1">
-                Use Template
-              </Text>
+              <Text className="text-primary-700 font-medium ml-2 flex-1">Use Template</Text>
               <Ionicons
                 name={showTemplates ? 'chevron-up' : 'chevron-down'}
                 size={20}
@@ -217,7 +233,7 @@ export default function AddTaskModal({
                         style={{ backgroundColor: `${typeInfo.color}20` }}
                       >
                         <Ionicons
-                          name={typeInfo.icon as any}
+                          name={typeInfo.icon as keyof typeof Ionicons.glyphMap}
                           size={16}
                           color={typeInfo.color}
                         />
@@ -267,9 +283,7 @@ export default function AddTaskModal({
                   >
                     <Text
                       className={
-                        farmId === farm.id
-                          ? 'text-primary-700 font-medium'
-                          : 'text-surface-700'
+                        farmId === farm.id ? 'text-primary-700 font-medium' : 'text-surface-700'
                       }
                     >
                       {farm.name}
@@ -318,7 +332,7 @@ export default function AddTaskModal({
               >
                 <View className="flex-row items-center">
                   <Ionicons
-                    name={TASK_TYPE_INFO[type].icon as any}
+                    name={TASK_TYPE_INFO[type].icon as keyof typeof Ionicons.glyphMap}
                     size={16}
                     color={TASK_TYPE_INFO[type].color}
                   />
@@ -368,7 +382,7 @@ export default function AddTaskModal({
                   }`}
                 >
                   <Ionicons
-                    name={TASK_TYPE_INFO[taskType].icon as any}
+                    name={TASK_TYPE_INFO[taskType].icon as keyof typeof Ionicons.glyphMap}
                     size={18}
                     color={TASK_TYPE_INFO[taskType].color}
                   />
@@ -402,10 +416,7 @@ export default function AddTaskModal({
                     className="w-6 h-6 rounded items-center justify-center"
                     style={{ backgroundColor: PRIORITY_INFO[p].bgColor }}
                   >
-                    <Text
-                      className="text-xs font-bold"
-                      style={{ color: PRIORITY_INFO[p].color }}
-                    >
+                    <Text className="text-xs font-bold" style={{ color: PRIORITY_INFO[p].color }}>
                       {p.charAt(0).toUpperCase()}
                     </Text>
                   </View>
@@ -431,9 +442,7 @@ export default function AddTaskModal({
               className="bg-white rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
               placeholderTextColor="#9CA3AF"
             />
-            <Text className="text-xs text-surface-500 mt-1">
-              Enter date in YYYY-MM-DD format
-            </Text>
+            <Text className="text-xs text-surface-500 mt-1">Enter date in YYYY-MM-DD format</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

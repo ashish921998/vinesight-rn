@@ -4,7 +4,7 @@
  * Ported from iOS EditCloudActivityLogView.swift
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,

@@ -40,3 +40,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+google-service-account.json
+
+# lint results
+lint-results.json
+*-results.json

@@ -8,9 +8,20 @@ import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
-import type { IrrigationRecord, SprayRecord, HarvestRecord, ExpenseRecord, FertigationRecord } from '../../types';
+import type {
+  IrrigationRecord,
+  SprayRecord,
+  HarvestRecord,
+  ExpenseRecord,
+  FertigationRecord,
+} from '../../types';
 
-type RecordData = IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
+type RecordData =
+  | IrrigationRecord
+  | SprayRecord
+  | HarvestRecord
+  | ExpenseRecord
+  | FertigationRecord;
 
 interface ActivityLogCardProps {
   type: LogTypeId;
@@ -24,24 +35,29 @@ interface ActivityLogCardProps {
 // Generate description from record data
 function getDescriptionFromData(type: LogTypeId, data?: RecordData): string {
   if (!data) return '';
-  
+
   switch (type) {
-    case 'irrigation':
+    case 'irrigation': {
       const irrigation = data as IrrigationRecord;
       return `${irrigation.duration?.toFixed(1) || 0}h duration`;
-    case 'spray':
+    }
+    case 'spray': {
       const spray = data as SprayRecord;
       return spray.chemical || 'Spray application';
-    case 'harvest':
+    }
+    case 'harvest': {
       const harvest = data as HarvestRecord;
       return `${harvest.quantity?.toFixed(1) || 0}kg - ${harvest.grade || 'N/A'}`;
-    case 'expense':
+    }
+    case 'expense': {
       const expense = data as ExpenseRecord;
       return `₹${expense.cost?.toLocaleString() || 0} - ${expense.type || 'General'}`;
-    case 'fertigation':
+    }
+    case 'fertigation': {
       const fertigation = data as FertigationRecord;
       const fertCount = fertigation.fertilizers?.length || 0;
       return `${fertCount} fertilizer${fertCount !== 1 ? 's' : ''} applied`;
+    }
     default:
       return '';
   }
@@ -66,9 +82,9 @@ export function ActivityLogCard({
     : date;
 
   const content = (
-    <View 
+    <View
       className="flex-row items-center rounded-xl px-3 py-2"
-      style={{ 
+      style={{
         backgroundColor: '#ffffff',
       }}
     >

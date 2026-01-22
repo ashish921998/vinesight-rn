@@ -4,14 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -22,7 +15,6 @@ import {
   useDeleteSoilTest,
   useDeletePetioleTest,
   formatParameterKey,
-  getParameterUnit,
 } from '../src/hooks/useLabTests';
 import { SoilTestRecord, PetioleTestRecord } from '../src/types/database';
 import AddLabTestModal from '../src/components/screens/AddLabTestModal';
@@ -45,47 +37,36 @@ export default function LabTestsScreen() {
   const isLoading = farmLoading || soilLoading || petioleLoading;
 
   const handleDeleteSoilTest = (test: SoilTestRecord) => {
-    Alert.alert(
-      'Delete Test',
-      'Are you sure you want to delete this soil test?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            if (test.id) {
-              deleteSoilTest.mutate({ id: test.id, farmId: farmIdNum });
-            }
-          },
+    Alert.alert('Delete Test', 'Are you sure you want to delete this soil test?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          if (test.id) {
+            deleteSoilTest.mutate({ id: test.id, farmId: farmIdNum });
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleDeletePetioleTest = (test: PetioleTestRecord) => {
-    Alert.alert(
-      'Delete Test',
-      'Are you sure you want to delete this petiole test?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            if (test.id) {
-              deletePetioleTest.mutate({ id: test.id, farmId: farmIdNum });
-            }
-          },
+    Alert.alert('Delete Test', 'Are you sure you want to delete this petiole test?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          if (test.id) {
+            deletePetioleTest.mutate({ id: test.id, farmId: farmIdNum });
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  const renderTestCard = (
-    test: SoilTestRecord | PetioleTestRecord,
-    type: TestType
-  ) => {
+  const renderTestCard = (test: SoilTestRecord | PetioleTestRecord, type: TestType) => {
     const isSoil = type === 'soil';
     const params = Object.entries(test.parameters || {}).slice(0, 8);
     const color = isSoil ? '#597A61' : '#4C806B';
@@ -119,11 +100,7 @@ export default function LabTestsScreen() {
                 justifyContent: 'center',
               }}
             >
-              <Ionicons
-                name={isSoil ? 'leaf' : 'leaf-outline'}
-                size={20}
-                color={color}
-              />
+              <Ionicons name={isSoil ? 'leaf' : 'leaf-outline'} size={20} color={color} />
             </View>
             <View className="ml-3">
               <Text
@@ -237,9 +214,7 @@ export default function LabTestsScreen() {
       <SafeAreaView className="flex-1 bg-gray-50">
         <View className="flex-1 items-center justify-center">
           <Ionicons name="alert-circle" size={48} color="#ef4444" />
-          <Text className="text-lg font-semibold text-gray-700 mt-4">
-            Invalid Farm
-          </Text>
+          <Text className="text-lg font-semibold text-gray-700 mt-4">Invalid Farm</Text>
           <TouchableOpacity
             onPress={() => router.back()}
             className="mt-4 bg-gray-200 px-6 py-2 rounded-lg"
@@ -261,9 +236,7 @@ export default function LabTestsScreen() {
         <Ionicons name="flask" size={24} color="#408059" />
         <View className="ml-2 flex-1">
           <Text className="text-xl font-bold text-gray-800">Lab Tests</Text>
-          {farm && (
-            <Text className="text-xs text-gray-500">{farm.name}</Text>
-          )}
+          {farm && <Text className="text-xs text-gray-500">{farm.name}</Text>}
         </View>
         <TouchableOpacity
           onPress={() => setShowAddModal(true)}
@@ -313,17 +286,13 @@ export default function LabTestsScreen() {
         </View>
       ) : (
         <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
-          {selectedTab === 'soil' ? (
-            soilTests && soilTests.length > 0 ? (
-              soilTests.map((test) => renderTestCard(test, 'soil'))
-            ) : (
-              renderEmptyState('soil')
-            )
-          ) : petioleTests && petioleTests.length > 0 ? (
-            petioleTests.map((test) => renderTestCard(test, 'petiole'))
-          ) : (
-            renderEmptyState('petiole')
-          )}
+          {selectedTab === 'soil'
+            ? soilTests && soilTests.length > 0
+              ? soilTests.map((test) => renderTestCard(test, 'soil'))
+              : renderEmptyState('soil')
+            : petioleTests && petioleTests.length > 0
+              ? petioleTests.map((test) => renderTestCard(test, 'petiole'))
+              : renderEmptyState('petiole')}
           <View className="h-8" />
         </ScrollView>
       )}

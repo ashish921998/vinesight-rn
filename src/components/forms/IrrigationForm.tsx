@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NumericInput } from './FormField';
 
@@ -15,18 +15,12 @@ interface IrrigationFormProps {
   systemDischarge?: number;
 }
 
-export function IrrigationForm({ 
-  data, 
-  onChange,
-  farmArea,
-  systemDischarge,
-}: IrrigationFormProps) {
+export function IrrigationForm({ data, onChange, farmArea, systemDischarge }: IrrigationFormProps) {
   const isValid = data.duration > 0;
-  
+
   // Calculate estimated water applied
-  const estimatedWater = systemDischarge && data.duration > 0 
-    ? (data.duration * systemDischarge).toFixed(1) 
-    : null;
+  const estimatedWater =
+    systemDischarge && data.duration > 0 ? (data.duration * systemDischarge).toFixed(1) : null;
 
   return (
     <View>
@@ -36,12 +30,8 @@ export function IrrigationForm({
           <Ionicons name="water" size={20} color="#3B82F6" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">
-            Irrigation
-          </Text>
-          <Text className="text-sm text-surface-500">
-            Log irrigation duration
-          </Text>
+          <Text className="text-lg font-semibold text-surface-900">Irrigation</Text>
+          <Text className="text-sm text-surface-500">Log irrigation duration</Text>
         </View>
       </View>
 
@@ -73,16 +63,14 @@ export function IrrigationForm({
               </Text>
             </View>
           )}
-          
+
           {estimatedWater && (
             <View className="flex-1 min-w-[140px] bg-blue-50 rounded-xl p-3">
               <View className="flex-row items-center mb-1">
                 <Ionicons name="water-outline" size={14} color="#3B82F6" />
                 <Text className="text-xs text-blue-600 ml-1">Est. Water</Text>
               </View>
-              <Text className="text-sm font-semibold text-blue-700">
-                {estimatedWater} mm
-              </Text>
+              <Text className="text-sm font-semibold text-blue-700">{estimatedWater} mm</Text>
             </View>
           )}
         </View>
@@ -90,10 +78,10 @@ export function IrrigationForm({
 
       {/* Validation indicator */}
       <View className="flex-row items-center mt-4 pt-4 border-t border-surface-100">
-        <Ionicons 
-          name={isValid ? "checkmark-circle" : "alert-circle-outline"} 
-          size={16} 
-          color={isValid ? "#22C55E" : "#9CA3AF"} 
+        <Ionicons
+          name={isValid ? 'checkmark-circle' : 'alert-circle-outline'}
+          size={16}
+          color={isValid ? '#22C55E' : '#9CA3AF'}
         />
         <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
           {isValid ? 'Ready to add' : 'Enter duration to continue'}

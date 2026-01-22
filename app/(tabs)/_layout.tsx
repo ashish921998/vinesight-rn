@@ -6,11 +6,9 @@ import { Platform } from 'react-native';
 function TabBarIcon({
   name,
   color,
-  focused,
 }: {
   name: keyof typeof Ionicons.glyphMap;
   color: string;
-  focused: boolean;
 }) {
   return <Ionicons name={name} size={24} color={color} />;
 }
@@ -57,7 +55,6 @@ export default function TabLayout() {
             <TabBarIcon
               name={focused ? 'grid' : 'grid-outline'}
               color={color}
-              focused={focused}
             />
           ),
         }}
@@ -70,7 +67,6 @@ export default function TabLayout() {
             <TabBarIcon
               name={focused ? 'leaf' : 'leaf-outline'}
               color={color}
-              focused={focused}
             />
           ),
         }}
@@ -83,7 +79,6 @@ export default function TabLayout() {
             <TabBarIcon
               name={focused ? 'people' : 'people-outline'}
               color={color}
-              focused={focused}
             />
           ),
         }}
@@ -96,7 +91,6 @@ export default function TabLayout() {
             <TabBarIcon
               name={focused ? 'calculator' : 'calculator-outline'}
               color={color}
-              focused={focused}
             />
           ),
         }}
@@ -109,7 +103,6 @@ export default function TabLayout() {
             <TabBarIcon
               name={focused ? 'settings' : 'settings-outline'}
               color={color}
-              focused={focused}
             />
           ),
         }}

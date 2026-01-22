@@ -100,14 +100,13 @@ export class AnalyticsService {
   static calculateCostAnalysis(
     harvests: HarvestRecord[],
     expenses: ExpenseRecord[],
-    farms: Farm[]
+    _farms: Farm[]
   ): CostAnalysis {
     const totalCosts = expenses.reduce((sum, r) => sum + (r.cost || 0), 0);
     const totalRevenue = harvests.reduce(
       (sum, r) => sum + (r.quantity || 0) * (r.price || 0),
       0
     );
-    const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0);
 
     const profitMargin =
       totalRevenue > 0 ? ((totalRevenue - totalCosts) / totalRevenue) * 100 : 0;

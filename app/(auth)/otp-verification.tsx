@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +23,9 @@ export default function OTPVerificationScreen() {
     clearError,
   } = useAuthStore();
 
+  const lastOtpSentSuccessRef = useRef(otpSentSuccessfully);
+  const verificationTriggeredRef = useRef(false);
+
   // Redirect when authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -42,18 +45,14 @@ export default function OTPVerificationScreen() {
   }, [resendCooldown]);
 
   // Reset cooldown when OTP sent successfully
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (otpSentSuccessfully) {
+    if (otpSentSuccessfully && !lastOtpSentSuccessRef.current) {
       setResendCooldown(RESEND_COOLDOWN);
     }
+    lastOtpSentSuccessRef.current = otpSentSuccessfully;
   }, [otpSentSuccessfully]);
-
-  // Auto-submit when 6 digits entered
-  useEffect(() => {
-    if (otpCode.length === 6 && email) {
-      handleVerify();
-    }
-  }, [otpCode]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleVerify = useCallback(async () => {
     if (!email || otpCode.length !== 6) return;
@@ -65,6 +64,22 @@ export default function OTPVerificationScreen() {
       setOtpCode('');
     }
   }, [email, otpCode, verifyOTP, clearError]);
+
+  // Stable verify function that doesn't change on every render
+  const verifyRef = useRef(handleVerify);
+  useEffect(() => {
+    verifyRef.current = handleVerify;
+  }, [handleVerify]);
+
+  // Auto-submit when 6 digits entered
+  useEffect(() => {
+    if (otpCode.length === 6 && email && !isLoading && !verificationTriggeredRef.current) {
+      verificationTriggeredRef.current = true;
+      verifyRef.current();
+    } else if (otpCode.length !== 6) {
+      verificationTriggeredRef.current = false;
+    }
+  }, [otpCode, email, isLoading]);
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;
@@ -101,9 +116,7 @@ export default function OTPVerificationScreen() {
         </Text>
 
         <View className="bg-surface-100 px-4 py-2 rounded-lg mt-2">
-          <Text className="text-base font-semibold text-surface-900">
-            {email}
-          </Text>
+          <Text className="text-base font-semibold text-surface-900">{email}</Text>
         </View>
       </View>
 
@@ -134,21 +147,13 @@ export default function OTPVerificationScreen() {
           className="py-2"
         >
           {resendCooldown > 0 ? (
-            <Text className="text-sm text-surface-400">
-              Resend code in {resendCooldown}s
-            </Text>
+            <Text className="text-sm text-surface-400">Resend code in {resendCooldown}s</Text>
           ) : (
-            <Text className="text-sm text-primary-600 font-medium">
-              Resend Code
-            </Text>
+            <Text className="text-sm text-primary-600 font-medium">Resend Code</Text>
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={handleBack}
-          disabled={isLoading}
-          className="py-2 mt-2"
-        >
+        <TouchableOpacity onPress={handleBack} disabled={isLoading} className="py-2 mt-2">
           <Text className="text-sm text-surface-500">Use Different Email</Text>
         </TouchableOpacity>
       </View>

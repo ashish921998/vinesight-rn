@@ -50,10 +50,12 @@ class AIService {
       region?: string;
       growthStage?: string;
       daysSincePruning?: number;
-    }
+    },
   ): Promise<SendMessageResponse> {
     if (!this.openai) {
-      throw new Error('OpenAI API key not configured. Please set EXPO_PUBLIC_OPENAI_API_KEY in your environment.');
+      throw new Error(
+        'OpenAI API key not configured. Please set EXPO_PUBLIC_OPENAI_API_KEY in your environment.',
+      );
     }
 
     const contextInfo = farmContext
@@ -83,9 +85,11 @@ class AIService {
         max_tokens: 1000,
       });
 
-      const assistantMessage = response.choices[0]?.message?.content || 'I apologize, but I encountered an issue generating a response. Please try again.';
+      const assistantMessage =
+        response.choices[0]?.message?.content ||
+        'I apologize, but I encountered an issue generating a response. Please try again.';
 
-      const suggestions = await this.generateFollowUpSuggestions(userMessage, conversationHistory);
+      const suggestions = await this.generateFollowUpSuggestions(userMessage);
 
       return {
         message: {
@@ -97,23 +101,23 @@ class AIService {
         suggestions,
       };
     } catch (error) {
-      console.error('Error calling OpenAI API:', error);
+      if (__DEV__) {
+        console.error('Error calling OpenAI API:', error);
+      }
       throw new Error(
-        `Failed to get AI response: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to get AI response: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
 
-  private async generateFollowUpSuggestions(
-    lastUserMessage: string,
-    conversationHistory: ChatMessage[]
-  ): Promise<string[]> {
+  private async generateFollowUpSuggestions(lastUserMessage: string): Promise<string[]> {
     if (!this.openai) return [];
 
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       {
         role: 'system',
-        content: 'You are a helpful assistant. Generate 3-4 brief follow-up questions or suggestions based on the conversation. Each should be a short phrase (max 8 words). Return as a JSON array of strings.',
+        content:
+          'You are a helpful assistant. Generate 3-4 brief follow-up questions or suggestions based on the conversation. Each should be a short phrase (max 8 words). Return as a JSON array of strings.',
       },
       {
         role: 'user',

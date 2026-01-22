@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,21 +10,13 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useCreateFarm } from '@/hooks';
+import { useFarm, useUpdateFarm } from '@/hooks';
 import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
-import type { FarmInsert } from '@/types';
+import type { FarmUpdate } from '@/types';
 
-const formatLocalDate = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-// Section component for grouping form fields
 function Section({
   title,
   children,
@@ -53,7 +45,6 @@ function Section({
   );
 }
 
-// Form field component
 function FormField({
   label,
   required = false,
@@ -74,33 +65,38 @@ function FormField({
   );
 }
 
-export default function AddFarmScreen() {
-  const router = useRouter();
-  const createFarm = useCreateFarm();
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
-  // Form state - Required
+export default function EditFarmScreen() {
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const farmId = id ? parseInt(id, 10) : undefined;
+  const { data: farm, isLoading: farmLoading } = useFarm(farmId);
+  const updateFarm = useUpdateFarm();
+
   const [name, setName] = useState('');
   const [region, setRegion] = useState('');
   const [area, setArea] = useState('');
   const [selectedCrop, setSelectedCrop] = useState<CropType>('Grapes');
   const [cropVariety, setCropVariety] = useState('');
   const [customVariety, setCustomVariety] = useState('');
-  const [plantingDate, setPlantingDate] = useState(new Date());
+  const [plantingDate, setPlantingDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Form state - Optional Spacing
   const [vineSpacing, setVineSpacing] = useState('');
   const [rowSpacing, setRowSpacing] = useState('');
 
-  // Form state - Optional Irrigation
   const [totalTankCapacity, setTotalTankCapacity] = useState('');
   const [systemDischarge, setSystemDischarge] = useState('');
 
-  // Form state - Optional Dates
   const [dateOfPruning, setDateOfPruning] = useState<Date | null>(null);
   const [showPruningDatePicker, setShowPruningDatePicker] = useState(false);
 
-  // Section expansion state
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
     spacing: false,
@@ -108,28 +104,56 @@ export default function AddFarmScreen() {
     dates: false,
   });
 
-  // Variety picker state
   const [showVarietyPicker, setShowVarietyPicker] = useState(false);
   const [varietySearchText, setVarietySearchText] = useState('');
 
-  // Get varieties for selected crop
+  // Track previous farm ID and updated_at to detect when farm data changes
+  const prevFarmIdRef = useRef<number | undefined>(undefined);
+  const prevUpdatedAtRef = useRef<string | null | undefined>(undefined);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    // Update form when we get a new farm (different ID) or when farm data is updated
+    if (
+      farm &&
+      (farm.id !== prevFarmIdRef.current || farm.updated_at !== prevUpdatedAtRef.current)
+    ) {
+      setName(farm.name || '');
+      setRegion(farm.region || '');
+      setArea(farm.area?.toString() || '');
+      setSelectedCrop((farm.crop as CropType) || 'Grapes');
+      setCropVariety(farm.crop_variety || '');
+      if (farm.planting_date) {
+        setPlantingDate(new Date(farm.planting_date));
+      }
+      setVineSpacing(farm.vine_spacing?.toString() || '');
+      setRowSpacing(farm.row_spacing?.toString() || '');
+      setTotalTankCapacity(farm.total_tank_capacity?.toString() || '');
+      setSystemDischarge(farm.system_discharge?.toString() || '');
+      if (farm.date_of_pruning) {
+        setDateOfPruning(new Date(farm.date_of_pruning));
+      }
+      prevFarmIdRef.current = farm.id;
+      prevUpdatedAtRef.current = farm.updated_at;
+    }
+  }, [farm]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   const varieties = useMemo(() => {
     return CROP_VARIETIES[selectedCrop] || ['Custom'];
   }, [selectedCrop]);
 
-  // Filter varieties based on search
   const filteredVarieties = useMemo(() => {
     if (!varietySearchText.trim()) return varieties;
     const query = varietySearchText.toLowerCase();
     return varieties.filter((v) => v.toLowerCase().includes(query));
   }, [varieties, varietySearchText]);
 
-  // Form validation
   const isValid = useMemo(() => {
     if (!name.trim()) return false;
     if (!region.trim()) return false;
-    const areaValue = Number(area);
-    if (!Number.isFinite(areaValue) || areaValue <= 0) return false;
+    const parsedArea = parseFloat(area);
+    if (!Number.isFinite(parsedArea) || parsedArea <= 0) return false;
     if (cropVariety === 'Custom' && !customVariety.trim()) return false;
     if (!cropVariety && !customVariety.trim()) return false;
     return true;
@@ -156,16 +180,20 @@ export default function AddFarmScreen() {
       Alert.alert('Missing Information', 'Please fill in all required fields.');
       return;
     }
+    if (!farmId) {
+      Alert.alert('Error', 'Invalid farm ID');
+      return;
+    }
 
     const finalVariety = cropVariety === 'Custom' ? customVariety : cropVariety;
 
-    const farmData: FarmInsert = {
+    const farmData: FarmUpdate = {
       name: name.trim(),
       region: region.trim(),
       area: parseFloat(area),
       crop: selectedCrop,
       crop_variety: finalVariety,
-      planting_date: formatLocalDate(plantingDate),
+      planting_date: plantingDate ? formatLocalDate(plantingDate) : undefined,
       vine_spacing: vineSpacing ? parseFloat(vineSpacing) : null,
       row_spacing: rowSpacing ? parseFloat(rowSpacing) : null,
       total_tank_capacity: totalTankCapacity ? parseFloat(totalTankCapacity) : null,
@@ -174,20 +202,47 @@ export default function AddFarmScreen() {
     };
 
     try {
-      await createFarm.mutateAsync(farmData);
+      await updateFarm.mutateAsync({ id: farmId, updates: farmData });
       router.back();
-    } catch (_error: unknown) {
+    } catch (error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : 'Failed to create farm. Please try again.';
+        error instanceof Error ? error.message : 'Failed to update farm. Please try again.';
       Alert.alert('Error', errorMessage);
     }
   };
+
+  if (farmLoading) {
+    return (
+      <View className="flex-1 bg-surface-50 justify-center items-center">
+        <ActivityIndicator size="large" color="#408059" />
+        <Text className="text-surface-500 mt-4">Loading farm...</Text>
+      </View>
+    );
+  }
+
+  if (!farm) {
+    return (
+      <View className="flex-1 bg-surface-50 justify-center items-center px-8">
+        <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
+        <Text className="text-xl font-bold text-surface-900 mt-4">Farm Not Found</Text>
+        <Text className="text-surface-500 text-center mt-2">
+          The farm you&apos;re looking for doesn&apos;t exist or has been deleted.
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="mt-6 bg-primary-500 px-6 py-3 rounded-xl"
+        >
+          <Text className="text-white font-semibold">Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'Add Farm',
+          title: 'Edit Farm',
           headerStyle: { backgroundColor: '#F9FAFB' },
           headerTintColor: '#111827',
           headerLeft: () => (
@@ -207,7 +262,6 @@ export default function AddFarmScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Basic Information */}
           <Section title="Basic Information" isExpanded={expandedSections.basic}>
             <FormField label="Farm Name" required>
               <TextInput
@@ -298,14 +352,15 @@ export default function AddFarmScreen() {
                 onPress={() => setShowDatePicker(true)}
               >
                 <Ionicons name="calendar-outline" size={20} color="#6B7280" />
-                <Text className="text-base text-surface-900 ml-3">
-                  {plantingDate.toLocaleDateString()}
+                <Text
+                  className={`text-base ml-3 ${plantingDate ? 'text-surface-900' : 'text-surface-400'}`}
+                >
+                  {plantingDate ? plantingDate.toLocaleDateString() : 'Select date'}
                 </Text>
               </TouchableOpacity>
             </FormField>
           </Section>
 
-          {/* Spacing Information */}
           <Section
             title="Spacing (Optional)"
             isExpanded={expandedSections.spacing}
@@ -334,7 +389,6 @@ export default function AddFarmScreen() {
             </FormField>
           </Section>
 
-          {/* Irrigation Information */}
           <Section
             title="Irrigation (Optional)"
             isExpanded={expandedSections.irrigation}
@@ -363,7 +417,6 @@ export default function AddFarmScreen() {
             </FormField>
           </Section>
 
-          {/* Important Dates */}
           <Section
             title="Important Dates (Optional)"
             isExpanded={expandedSections.dates}
@@ -397,75 +450,80 @@ export default function AddFarmScreen() {
           </Section>
         </ScrollView>
 
-        {/* Save Button */}
         <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-surface-200">
           <TouchableOpacity
             className={`py-4 rounded-xl items-center ${
-              isValid && !createFarm.isPending ? 'bg-primary-600' : 'bg-surface-300'
+              isValid && !updateFarm.isPending ? 'bg-primary-600' : 'bg-surface-300'
             }`}
             onPress={handleSave}
-            disabled={!isValid || createFarm.isPending}
+            disabled={!isValid || updateFarm.isPending}
           >
-            {createFarm.isPending ? (
+            {updateFarm.isPending ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text className="text-base font-semibold text-white">Save Farm</Text>
+              <Text className="text-base font-semibold text-white">Save Changes</Text>
             )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
 
-      {/* Variety Picker Modal */}
       {showVarietyPicker && (
-        <View className="absolute inset-0 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[70%]">
-            <View className="flex-row items-center justify-between p-4 border-b border-surface-200">
-              <Text className="text-lg font-semibold text-surface-900">Select Variety</Text>
-              <TouchableOpacity onPress={() => setShowVarietyPicker(false)}>
-                <Ionicons name="close" size={24} color="#111827" />
-              </TouchableOpacity>
-            </View>
-
-            <View className="px-4 py-3 border-b border-surface-100">
-              <View className="flex-row items-center bg-surface-50 rounded-xl px-4 py-2.5">
-                <Ionicons name="search" size={20} color="#9CA3AF" />
-                <TextInput
-                  className="flex-1 ml-2 text-base text-surface-900"
-                  placeholder="Search varieties..."
-                  placeholderTextColor="#9CA3AF"
-                  value={varietySearchText}
-                  onChangeText={setVarietySearchText}
-                />
-              </View>
-            </View>
-
-            <ScrollView className="max-h-80">
-              {filteredVarieties.map((variety) => (
-                <TouchableOpacity
-                  key={variety}
-                  className={`px-4 py-3.5 border-b border-surface-100 ${
-                    cropVariety === variety ? 'bg-primary-50' : ''
-                  }`}
-                  onPress={() => handleSelectVariety(variety)}
-                >
-                  <Text
-                    className={`text-base ${
-                      cropVariety === variety ? 'text-primary-600 font-medium' : 'text-surface-900'
-                    }`}
-                  >
-                    {variety}
-                  </Text>
+        <TouchableOpacity
+          className="absolute inset-0 bg-black/50 justify-end"
+          activeOpacity={1}
+          onPress={() => setShowVarietyPicker(false)}
+        >
+          <TouchableOpacity activeOpacity={1}>
+            <View className="bg-white rounded-t-3xl max-h-[70%]">
+              <View className="flex-row items-center justify-between p-4 border-b border-surface-200">
+                <Text className="text-lg font-semibold text-surface-900">Select Variety</Text>
+                <TouchableOpacity onPress={() => setShowVarietyPicker(false)}>
+                  <Ionicons name="close" size={24} color="#111827" />
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
+              </View>
+
+              <View className="px-4 py-3 border-b border-surface-100">
+                <View className="flex-row items-center bg-surface-50 rounded-xl px-4 py-2.5">
+                  <Ionicons name="search" size={20} color="#9CA3AF" />
+                  <TextInput
+                    className="flex-1 ml-2 text-base text-surface-900"
+                    placeholder="Search varieties..."
+                    placeholderTextColor="#9CA3AF"
+                    value={varietySearchText}
+                    onChangeText={setVarietySearchText}
+                  />
+                </View>
+              </View>
+
+              <ScrollView className="max-h-80">
+                {filteredVarieties.map((variety) => (
+                  <TouchableOpacity
+                    key={variety}
+                    className={`px-4 py-3.5 border-b border-surface-100 ${
+                      cropVariety === variety ? 'bg-primary-50' : ''
+                    }`}
+                    onPress={() => handleSelectVariety(variety)}
+                  >
+                    <Text
+                      className={`text-base ${
+                        cropVariety === variety
+                          ? 'text-primary-600 font-medium'
+                          : 'text-surface-900'
+                      }`}
+                    >
+                      {variety}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       )}
 
-      {/* Date Pickers */}
       {showDatePicker && (
         <DateTimePicker
-          value={plantingDate}
+          value={plantingDate || new Date()}
           mode="date"
           display="default"
           onChange={(event: DateTimePickerEvent, date?: Date) => {

@@ -17,8 +17,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -28,7 +28,7 @@ import {
   SOIL_PARAMETERS,
   PETIOLE_PARAMETERS,
 } from '../../hooks/useLabTests';
-import { parseLabTestFromImage, parseLabTestFromText, ParsedLabTest } from '../../utils/pdfParser';
+import { parseLabTestFromImage, parseLabTestFromText } from '../../utils/pdfParser';
 
 interface AddLabTestModalProps {
   visible: boolean;
@@ -73,7 +73,7 @@ export default function AddLabTestModal({
         Alert.alert(
           'Timeout',
           'PDF parsing timed out. Please try converting the PDF to an image or take screenshots.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
       }, PDF_PARSE_TIMEOUT_MS);
     }
@@ -136,7 +136,7 @@ export default function AddLabTestModal({
     }
   };
 
-  const handleDateChange = (_: any, selectedDate?: Date) => {
+  const handleDateChange = (_: DateTimePickerEvent, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
@@ -153,28 +153,24 @@ export default function AddLabTestModal({
   };
 
   const handleUploadFile = async () => {
-    Alert.alert(
-      'Choose Upload Method',
-      'How would you like to upload the lab test report?',
-      [
-        {
-          text: 'Take Photo',
-          onPress: () => handleTakePhoto(),
-        },
-        {
-          text: 'Select Image',
-          onPress: () => handleSelectImage(),
-        },
-        {
-          text: 'Select PDF',
-          onPress: () => handleSelectPDF(),
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ]
-    );
+    Alert.alert('Choose Upload Method', 'How would you like to upload the lab test report?', [
+      {
+        text: 'Take Photo',
+        onPress: () => handleTakePhoto(),
+      },
+      {
+        text: 'Select Image',
+        onPress: () => handleSelectImage(),
+      },
+      {
+        text: 'Select PDF',
+        onPress: () => handleSelectPDF(),
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]);
   };
 
   const handleTakePhoto = async () => {
@@ -256,7 +252,7 @@ export default function AddLabTestModal({
         Alert.alert(
           'No Data Found',
           'Could not extract test parameters from the image. Please try again with a clearer image or enter data manually.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
         setIsParsingPDF(false);
         return;
@@ -289,14 +285,14 @@ export default function AddLabTestModal({
       Alert.alert(
         'Success',
         `Successfully extracted ${Object.keys(parsedData.parameters).length} parameters. Please review and save.`,
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
     } catch (parseError) {
       console.error('Parsing error:', parseError);
       Alert.alert(
         'Parsing Failed',
         'Could not extract data from the image. Please try again with a clearer image or enter data manually.',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
     } finally {
       setIsParsingPDF(false);
@@ -337,7 +333,8 @@ export default function AddLabTestModal({
         {showPDFWebView && currentPDFBase64 && (
           <WebView
             ref={webViewRef}
-            source={{ html: `
+            source={{
+              html: `
               <!DOCTYPE html>
               <html>
               <head>
@@ -379,7 +376,8 @@ export default function AddLabTestModal({
                 </script>
               </body>
               </html>
-            ` }}
+            `,
+            }}
             onMessage={async (event) => {
               if (event.nativeEvent.data === 'PDF_PARSE_ERROR') {
                 setShowPDFWebView(false);
@@ -387,7 +385,7 @@ export default function AddLabTestModal({
                 Alert.alert(
                   'Error',
                   'Could not parse PDF. Please try converting it to an image or take screenshots.',
-                  [{ text: 'OK' }]
+                  [{ text: 'OK' }],
                 );
               } else if (event.nativeEvent.data.startsWith('PDF_TEXT:')) {
                 const text = event.nativeEvent.data.replace('PDF_TEXT:', '');
@@ -398,7 +396,7 @@ export default function AddLabTestModal({
                   Alert.alert(
                     'No Data Found',
                     'Could not extract sufficient text from the PDF. Please try a different file.',
-                    [{ text: 'OK' }]
+                    [{ text: 'OK' }],
                   );
                   return;
                 }
@@ -410,7 +408,7 @@ export default function AddLabTestModal({
                     Alert.alert(
                       'No Data Found',
                       'Could not extract test parameters from the PDF.',
-                      [{ text: 'OK' }]
+                      [{ text: 'OK' }],
                     );
                     setIsParsingPDF(false);
                     return;
@@ -442,14 +440,14 @@ export default function AddLabTestModal({
                   Alert.alert(
                     'Success',
                     `Successfully extracted ${Object.keys(parsedData.parameters).length} parameters. Please review and save.`,
-                    [{ text: 'OK' }]
+                    [{ text: 'OK' }],
                   );
                 } catch (error) {
                   console.error('Parsing error:', error);
                   Alert.alert(
                     'Parsing Failed',
                     'Could not parse extracted text. Please try a different file.',
-                    [{ text: 'OK' }]
+                    [{ text: 'OK' }],
                   );
                 }
                 setIsParsingPDF(false);
@@ -494,9 +492,7 @@ export default function AddLabTestModal({
             >
               <View className="flex-row items-center">
                 <Ionicons name="calendar" size={20} color="#666" />
-                <Text className="text-base text-gray-800 ml-2">
-                  {date.toLocaleDateString()}
-                </Text>
+                <Text className="text-base text-gray-800 ml-2">{date.toLocaleDateString()}</Text>
               </View>
               <Ionicons name="chevron-down" size={20} color="#666" />
             </TouchableOpacity>
@@ -514,9 +510,7 @@ export default function AddLabTestModal({
 
           {/* Parameters */}
           <View className="bg-white rounded-xl p-4 mt-4 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-3">
-              Test Parameters
-            </Text>
+            <Text className="text-sm font-medium text-gray-500 mb-3">Test Parameters</Text>
             <Text className="text-xs text-gray-400 mb-4">
               Enter values for the parameters you have. Leave empty for unknown values.
             </Text>
@@ -558,9 +552,7 @@ export default function AddLabTestModal({
 
           {/* Notes */}
           <View className="bg-white rounded-xl p-4 mt-4 mb-8 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-2">
-              Notes (Optional)
-            </Text>
+            <Text className="text-sm font-medium text-gray-500 mb-2">Notes (Optional)</Text>
             <TextInput
               className="bg-[#f2f2f7] border border-gray-200 rounded-lg px-3 py-3 text-gray-800 min-h-[60px]"
               placeholder="Add any additional notes..."

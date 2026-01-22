@@ -255,7 +255,7 @@ export function useDeleteSoilTestRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.SOIL_TEST_RECORDS)
         .delete()
@@ -347,7 +347,7 @@ export function useDeletePetioleTestRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.PETIOLE_TEST_RECORDS)
         .delete()
@@ -439,7 +439,7 @@ export function useDeleteSoilProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.SOIL_PROFILES)
         .delete()

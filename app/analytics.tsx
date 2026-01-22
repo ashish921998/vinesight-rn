@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -369,7 +368,7 @@ export default function AnalyticsScreen() {
                     style={{ backgroundColor: `${iconInfo.color}15` }}
                   >
                     <Ionicons
-                      name={iconInfo.icon as any}
+                      name={iconInfo.icon as keyof typeof Ionicons.glyphMap}
                       size={18}
                       color={iconInfo.color}
                     />
