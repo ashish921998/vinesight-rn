@@ -64,10 +64,10 @@ export default function OTPVerificationScreen() {
 
   // Auto-submit when 6 digits entered
   useEffect(() => {
-    if (otpCode.length === 6 && email) {
+    if (otpCode.length === 6 && email && !isLoading) {
       handleVerify();
     }
-  }, [otpCode, email, handleVerify]);
+  }, [otpCode, email, handleVerify, isLoading]);
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;
@@ -104,9 +104,7 @@ export default function OTPVerificationScreen() {
         </Text>
 
         <View className="bg-surface-100 px-4 py-2 rounded-lg mt-2">
-          <Text className="text-base font-semibold text-surface-900">
-            {email}
-          </Text>
+          <Text className="text-base font-semibold text-surface-900">{email}</Text>
         </View>
       </View>
 
@@ -137,21 +135,13 @@ export default function OTPVerificationScreen() {
           className="py-2"
         >
           {resendCooldown > 0 ? (
-            <Text className="text-sm text-surface-400">
-              Resend code in {resendCooldown}s
-            </Text>
+            <Text className="text-sm text-surface-400">Resend code in {resendCooldown}s</Text>
           ) : (
-            <Text className="text-sm text-primary-600 font-medium">
-              Resend Code
-            </Text>
+            <Text className="text-sm text-primary-600 font-medium">Resend Code</Text>
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={handleBack}
-          disabled={isLoading}
-          className="py-2 mt-2"
-        >
+        <TouchableOpacity onPress={handleBack} disabled={isLoading} className="py-2 mt-2">
           <Text className="text-sm text-surface-500">Use Different Email</Text>
         </TouchableOpacity>
       </View>

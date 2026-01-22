@@ -29,12 +29,7 @@ interface AddWorkerModalProps {
   onSaveSuccess?: () => void;
 }
 
-export function AddWorkerModal({
-  visible,
-  onClose,
-  worker,
-  onSaveSuccess,
-}: AddWorkerModalProps) {
+export function AddWorkerModal({ visible, onClose, worker, onSaveSuccess }: AddWorkerModalProps) {
   const [name, setName] = useState('');
   const [dailyRate, setDailyRate] = useState('');
   const [advanceBalance, setAdvanceBalance] = useState('');
@@ -163,9 +158,7 @@ export function AddWorkerModal({
 
             {/* Advance Balance */}
             <View className="mb-4">
-              <Text className="text-sm font-medium text-surface-700 mb-2">
-                Advance Balance (₹)
-              </Text>
+              <Text className="text-sm font-medium text-surface-700 mb-2">Advance Balance (₹)</Text>
               <View className="flex-row items-center bg-surface-50 rounded-xl">
                 <Text className="text-surface-500 pl-4">₹</Text>
                 <TextInput
@@ -185,9 +178,7 @@ export function AddWorkerModal({
             {/* Active Status */}
             <View className="flex-row items-center justify-between py-2">
               <View>
-                <Text className="text-sm font-medium text-surface-700">
-                  Active Worker
-                </Text>
+                <Text className="text-sm font-medium text-surface-700">Active Worker</Text>
                 <Text className="text-xs text-surface-500 mt-0.5">
                   Inactive workers are hidden from attendance
                 </Text>
@@ -208,9 +199,10 @@ export function AddWorkerModal({
               <View className="flex-1 ml-2">
                 <Text className="text-sm font-medium text-blue-700">Tips</Text>
                 <Text className="text-xs text-blue-600 mt-1">
-                  • Daily rate is used to calculate attendance earnings{'\n'}
-                  • Advance balance tracks money owed by the worker{'\n'}
-                  • Mark workers as inactive when they're no longer working
+                  • Daily rate is used to calculate attendance earnings{'\n'}• Advance balance
+                  tracks money owed by the worker{'\n'}
+                  {/* eslint-disable-next-line react/no-unescaped-entities */}• Mark workers as
+                  inactive when they're no longer working
                 </Text>
               </View>
             </View>

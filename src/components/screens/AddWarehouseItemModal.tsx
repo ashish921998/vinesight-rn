@@ -50,6 +50,18 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
   const currency = profile?.preferred_currency || 'INR';
   const isEditing = !!editingItem;
 
+  const resetForm = () => {
+    setName('');
+    setType('fertilizer');
+    setQuantity('');
+    setUnit('kg');
+    setUnitPrice('');
+    setReorderQuantity('');
+    setNotes('');
+    setShowTypePicker(false);
+    setShowUnitPicker(false);
+  };
+
   // Reset form when modal opens/closes or editing item changes
   useEffect(() => {
     if (visible) {
@@ -66,18 +78,6 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
       }
     }
   }, [visible, editingItem]);
-
-  const resetForm = () => {
-    setName('');
-    setType('fertilizer');
-    setQuantity('');
-    setUnit('kg');
-    setUnitPrice('');
-    setReorderQuantity('');
-    setNotes('');
-    setShowTypePicker(false);
-    setShowUnitPicker(false);
-  };
 
   const handleSubmit = async () => {
     // Validation
@@ -114,7 +114,7 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
         await createMutation.mutateAsync(itemData);
       }
       onClose();
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Error', 'Failed to save item. Please try again.');
     }
   };
@@ -136,7 +136,9 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
             {isEditing ? 'Edit Item' : 'Add Item'}
           </Text>
           <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
-            <Text className={`text-base font-semibold ${isLoading ? 'text-surface-400' : 'text-primary-600'}`}>
+            <Text
+              className={`text-base font-semibold ${isLoading ? 'text-surface-400' : 'text-primary-600'}`}
+            >
               {isLoading ? 'Saving...' : 'Save'}
             </Text>
           </TouchableOpacity>
@@ -164,7 +166,9 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
             >
               <View className="flex-row items-center">
                 <Ionicons
-                  name={ITEM_TYPES.find((t) => t.value === type)?.icon as any}
+                  name={
+                    ITEM_TYPES.find((t) => t.value === type)?.icon as keyof typeof Ionicons.glyphMap
+                  }
                   size={20}
                   color={type === 'fertilizer' ? '#16A34A' : '#3B82F6'}
                 />
@@ -188,7 +192,7 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
                     }`}
                   >
                     <Ionicons
-                      name={itemType.icon as any}
+                      name={itemType.icon as keyof typeof Ionicons.glyphMap}
                       size={20}
                       color={itemType.value === 'fertilizer' ? '#16A34A' : '#3B82F6'}
                     />

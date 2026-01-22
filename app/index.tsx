@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,9 +20,7 @@ export default function Index() {
             <Ionicons name="leaf" size={48} color="#408059" />
           </View>
 
-          <Text className="text-3xl font-bold text-surface-900 mb-2">
-            Vinesight
-          </Text>
+          <Text className="text-3xl font-bold text-surface-900 mb-2">Vinesight</Text>
           <Text className="text-surface-500 mb-8">Farm Management</Text>
 
           <ActivityIndicator size="large" color="#408059" />

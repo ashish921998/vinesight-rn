@@ -34,12 +34,18 @@ const SOIL_TYPES: { value: SoilType; label: string }[] = [
 // Weather condition icons
 function getWeatherIconName(conditionCode: number): keyof typeof Ionicons.glyphMap {
   switch (conditionCode) {
-    case 1000: return 'sunny';
-    case 1003: return 'partly-sunny';
-    case 1006: return 'cloudy';
-    case 1153: return 'rainy';
-    case 1186: return 'rainy';
-    default: return 'cloudy';
+    case 1000:
+      return 'sunny';
+    case 1003:
+      return 'partly-sunny';
+    case 1006:
+      return 'cloudy';
+    case 1153:
+      return 'rainy';
+    case 1186:
+      return 'rainy';
+    default:
+      return 'cloudy';
   }
 }
 
@@ -79,21 +85,13 @@ export default function WeatherScreen() {
   }, [farms, selectedFarmId]);
 
   // Fetch weather data
-  const {
-    weather,
-    etc,
-    alerts,
-    irrigationSchedule,
-    isLoading,
-    error,
-    refetch,
-    isRefetching,
-  } = useWeatherData(
-    selectedFarm?.latitude ?? undefined,
-    selectedFarm?.longitude ?? undefined,
-    growthStage,
-    soilType
-  );
+  const { weather, etc, alerts, irrigationSchedule, isLoading, error, refetch, isRefetching } =
+    useWeatherData(
+      selectedFarm?.latitude ?? undefined,
+      selectedFarm?.longitude ?? undefined,
+      growthStage,
+      soilType,
+    );
 
   // Set initial farm when farms load
   React.useEffect(() => {
@@ -115,12 +113,8 @@ export default function WeatherScreen() {
     return (
       <View className="flex-1 bg-surface-50 items-center justify-center p-6">
         <Ionicons name="cloud-offline" size={48} color="#9CA3AF" />
-        <Text className="text-surface-600 mt-4 text-center">
-          Unable to load weather data
-        </Text>
-        <Text className="text-surface-500 text-sm mt-2 text-center">
-          {error.message}
-        </Text>
+        <Text className="text-surface-600 mt-4 text-center">Unable to load weather data</Text>
+        <Text className="text-surface-500 text-sm mt-2 text-center">{error.message}</Text>
         <TouchableOpacity
           onPress={() => refetch()}
           className="mt-4 bg-primary-600 px-6 py-3 rounded-xl"
@@ -150,18 +144,12 @@ export default function WeatherScreen() {
       className="flex-1 bg-surface-50"
       contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
       refreshControl={
-        <RefreshControl
-          refreshing={isRefetching}
-          onRefresh={refetch}
-          tintColor="#408059"
-        />
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
       }
     >
       {/* Farm Selector */}
       <View className="mb-4">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2">
-          FARM
-        </Text>
+        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2">FARM</Text>
         <TouchableOpacity
           onPress={() => setShowFarmPicker(!showFarmPicker)}
           className="bg-white rounded-xl p-4 flex-row items-center justify-between"
@@ -261,9 +249,7 @@ export default function WeatherScreen() {
                   >
                     <Text
                       className={
-                        growthStage === stage
-                          ? 'text-primary-700 font-medium'
-                          : 'text-surface-700'
+                        growthStage === stage ? 'text-primary-700 font-medium' : 'text-surface-700'
                       }
                     >
                       {stage}
@@ -277,9 +263,7 @@ export default function WeatherScreen() {
 
         {/* Soil Type Picker */}
         <View className="flex-1">
-          <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2">
-            SOIL TYPE
-          </Text>
+          <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2">SOIL TYPE</Text>
           <TouchableOpacity
             onPress={() => setShowSoilPicker(!showSoilPicker)}
             className="bg-white rounded-xl p-3 flex-row items-center justify-between"
@@ -304,9 +288,7 @@ export default function WeatherScreen() {
                 >
                   <Text
                     className={
-                      soilType === type.value
-                        ? 'text-primary-700 font-medium'
-                        : 'text-surface-700'
+                      soilType === type.value ? 'text-primary-700 font-medium' : 'text-surface-700'
                     }
                   >
                     {type.label}
@@ -329,9 +311,7 @@ export default function WeatherScreen() {
               <Text className="text-white text-5xl font-bold mt-1">
                 {weather.current.temperature}°
               </Text>
-              <Text className="text-primary-100 text-base mt-1">
-                {weather.current.condition}
-              </Text>
+              <Text className="text-primary-100 text-base mt-1">{weather.current.condition}</Text>
             </View>
             <View className="items-end">
               <Ionicons
@@ -409,9 +389,7 @@ export default function WeatherScreen() {
                   color={index === 0 ? '#408059' : '#6B7280'}
                   style={{ marginVertical: 8 }}
                 />
-                <Text className="text-sm font-bold text-surface-900">
-                  {day.maxTemp}°
-                </Text>
+                <Text className="text-sm font-bold text-surface-900">{day.maxTemp}°</Text>
                 <Text className="text-xs text-surface-500">{day.minTemp}°</Text>
                 {day.precipitationProbability > 0 && (
                   <View className="flex-row items-center mt-1">
@@ -468,7 +446,7 @@ export default function WeatherScreen() {
       {alerts && (
         <View className="mb-4">
           <Text className="text-xs font-bold text-surface-500 tracking-wider mb-3">
-            ALERTS & RECOMMENDATIONS
+            ALERTS &amp; RECOMMENDATIONS
           </Text>
 
           {/* Irrigation Alert */}
@@ -478,9 +456,7 @@ export default function WeatherScreen() {
                 <View className="w-8 h-8 rounded-lg bg-blue-100 items-center justify-center">
                   <Ionicons name="water" size={16} color="#3B82F6" />
                 </View>
-                <Text className="text-sm font-semibold text-surface-900 ml-2">
-                  Irrigation
-                </Text>
+                <Text className="text-sm font-semibold text-surface-900 ml-2">Irrigation</Text>
               </View>
               <View
                 className="px-2 py-1 rounded-full"
@@ -510,9 +486,7 @@ export default function WeatherScreen() {
                 <View className="w-8 h-8 rounded-lg bg-orange-100 items-center justify-center">
                   <Ionicons name="bug" size={16} color="#F59E0B" />
                 </View>
-                <Text className="text-sm font-semibold text-surface-900 ml-2">
-                  Pest & Disease
-                </Text>
+                <Text className="text-sm font-semibold text-surface-900 ml-2">Pest & Disease</Text>
               </View>
               <View
                 className="px-2 py-1 rounded-full"
@@ -590,8 +564,8 @@ export default function WeatherScreen() {
                     item.priority === 'high'
                       ? '#FEE2E2'
                       : item.priority === 'medium'
-                      ? '#FEF3C7'
-                      : '#DCFCE7',
+                        ? '#FEF3C7'
+                        : '#DCFCE7',
                 }}
               >
                 <Ionicons
@@ -601,8 +575,8 @@ export default function WeatherScreen() {
                     item.priority === 'high'
                       ? '#DC2626'
                       : item.priority === 'medium'
-                      ? '#D97706'
-                      : '#16A34A'
+                        ? '#D97706'
+                        : '#16A34A'
                   }
                 />
               </View>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NumericInput } from './FormField';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculatorModels';
@@ -22,9 +22,10 @@ interface SprayFormProps {
 }
 
 export function SprayForm({ data, onChange }: SprayFormProps) {
-  const isValid = data.waterVolume > 0 && 
-    data.chemicals.length > 0 && 
-    data.chemicals.every(c => c.name.trim() && c.quantity > 0);
+  const isValid =
+    data.waterVolume > 0 &&
+    data.chemicals.length > 0 &&
+    data.chemicals.every((c) => c.name.trim() && c.quantity > 0);
 
   const addChemical = () => {
     if (data.chemicals.length < 10) {
@@ -54,12 +55,8 @@ export function SprayForm({ data, onChange }: SprayFormProps) {
           <Ionicons name="flask" size={20} color="#8B5CF6" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">
-            Spray Application
-          </Text>
-          <Text className="text-sm text-surface-500">
-            Log chemicals and water volume
-          </Text>
+          <Text className="text-lg font-semibold text-surface-900">Spray Application</Text>
+          <Text className="text-sm text-surface-500">Log chemicals and water volume</Text>
         </View>
       </View>
 
@@ -105,24 +102,20 @@ export function SprayForm({ data, onChange }: SprayFormProps) {
             activeOpacity={0.7}
           >
             <Ionicons name="add-circle" size={20} color="#8B5CF6" />
-            <Text className="text-sm font-medium text-purple-600 ml-2">
-              Add Chemical
-            </Text>
+            <Text className="text-sm font-medium text-purple-600 ml-2">Add Chemical</Text>
           </TouchableOpacity>
         )}
       </View>
 
       {/* Validation indicator */}
       <View className="flex-row items-center mt-4 pt-4 border-t border-surface-100">
-        <Ionicons 
-          name={isValid ? "checkmark-circle" : "alert-circle-outline"} 
-          size={16} 
-          color={isValid ? "#22C55E" : "#9CA3AF"} 
+        <Ionicons
+          name={isValid ? 'checkmark-circle' : 'alert-circle-outline'}
+          size={16}
+          color={isValid ? '#22C55E' : '#9CA3AF'}
         />
         <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
-          {isValid 
-            ? 'Ready to add' 
-            : 'Add water volume and at least one chemical'}
+          {isValid ? 'Ready to add' : 'Add water volume and at least one chemical'}
         </Text>
       </View>
     </View>
@@ -175,17 +168,17 @@ function ChemicalRow({ chemical, onUpdate, onRemove, showRemove }: ChemicalRowPr
             onUpdate({ quantity: qty });
           }}
         />
-        
+
         {/* Unit Picker */}
         <TouchableOpacity
           onPress={() => setShowUnitPicker(!showUnitPicker)}
           className="flex-1 flex-row items-center justify-between bg-white rounded-lg px-3 py-2.5 ml-2"
         >
           <Text className="text-base text-surface-900">{chemical.unit}</Text>
-          <Ionicons 
-            name={showUnitPicker ? "chevron-up" : "chevron-down"} 
-            size={18} 
-            color="#6B7280" 
+          <Ionicons
+            name={showUnitPicker ? 'chevron-up' : 'chevron-down'}
+            size={18}
+            color="#6B7280"
           />
         </TouchableOpacity>
       </View>
@@ -204,9 +197,11 @@ function ChemicalRow({ chemical, onUpdate, onRemove, showRemove }: ChemicalRowPr
                 unit === chemical.unit ? 'bg-primary-50' : ''
               }`}
             >
-              <Text className={`text-sm ${
-                unit === chemical.unit ? 'text-primary-600 font-medium' : 'text-surface-700'
-              }`}>
+              <Text
+                className={`text-sm ${
+                  unit === chemical.unit ? 'text-primary-600 font-medium' : 'text-surface-700'
+                }`}
+              >
                 {unit}
               </Text>
             </TouchableOpacity>
@@ -218,9 +213,11 @@ function ChemicalRow({ chemical, onUpdate, onRemove, showRemove }: ChemicalRowPr
 }
 
 export function validateSprayForm(data: SprayFormData): boolean {
-  return data.waterVolume > 0 && 
-    data.chemicals.length > 0 && 
-    data.chemicals.every(c => c.name.trim() && c.quantity > 0);
+  return (
+    data.waterVolume > 0 &&
+    data.chemicals.length > 0 &&
+    data.chemicals.every((c) => c.name.trim() && c.quantity > 0)
+  );
 }
 
 // Create empty spray form data

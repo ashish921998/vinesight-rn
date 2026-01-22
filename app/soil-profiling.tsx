@@ -4,14 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -49,9 +42,10 @@ export default function SoilProfilingScreen() {
   const trendsData = useMemo(() => {
     if (!profiles || profiles.length === 0) return null;
 
-    const avgMoisture = profiles.reduce((sum, p) => {
-      return sum + calculateAverageMoisture(p.sections);
-    }, 0) / profiles.length;
+    const avgMoisture =
+      profiles.reduce((sum, p) => {
+        return sum + calculateAverageMoisture(p.sections);
+      }, 0) / profiles.length;
 
     const latestProfile = profiles[0];
     const previousProfile = profiles.length > 1 ? profiles[1] : null;
@@ -67,29 +61,23 @@ export default function SoilProfilingScreen() {
       avgMoisture: Math.round(avgMoisture * 10) / 10,
       profileCount: profiles.length,
       moistureChange,
-      latestMoisture: latestProfile
-        ? calculateAverageMoisture(latestProfile.sections)
-        : 0,
+      latestMoisture: latestProfile ? calculateAverageMoisture(latestProfile.sections) : 0,
     };
   }, [profiles]);
 
   const handleDeleteProfile = (profile: SoilProfile) => {
-    Alert.alert(
-      'Delete Profile',
-      'Are you sure you want to delete this soil profile?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            if (profile.id) {
-              deleteProfile.mutate({ id: profile.id, farmId: farmIdNum });
-            }
-          },
+    Alert.alert('Delete Profile', 'Are you sure you want to delete this soil profile?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          if (profile.id) {
+            deleteProfile.mutate({ id: profile.id, farmId: farmIdNum });
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const renderProfileCard = (profile: SoilProfile) => {
@@ -129,20 +117,24 @@ export default function SoilProfilingScreen() {
                 {status.label}
               </Text>
             </View>
-            <TouchableOpacity
-              onPress={() => handleDeleteProfile(profile)}
-              className="p-2"
-            >
+            <TouchableOpacity onPress={() => handleDeleteProfile(profile)} className="p-2">
               <Ionicons name="trash-outline" size={18} color="#ff3b30" />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Average Moisture */}
-        <View className="p-3 rounded-lg mb-3" style={{ backgroundColor: 'rgba(64, 128, 89, 0.08)' }}>
+        <View
+          className="p-3 rounded-lg mb-3"
+          style={{ backgroundColor: 'rgba(64, 128, 89, 0.08)' }}
+        >
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm" style={{ color: '#408059' }}>Average Moisture</Text>
-            <Text className="text-xl font-bold" style={{ color: '#408059' }}>{avgMoisture}%</Text>
+            <Text className="text-sm" style={{ color: '#408059' }}>
+              Average Moisture
+            </Text>
+            <Text className="text-xl font-bold" style={{ color: '#408059' }}>
+              {avgMoisture}%
+            </Text>
           </View>
         </View>
 
@@ -157,16 +149,10 @@ export default function SoilProfilingScreen() {
                 className="flex-1 p-2 rounded-lg"
                 style={{ backgroundColor: 'rgba(64, 128, 89, 0.08)' }}
               >
-                <Text
-                  className="text-xs font-bold text-center"
-                  style={{ color: '#408059' }}
-                >
+                <Text className="text-xs font-bold text-center" style={{ color: '#408059' }}>
                   {info.abbr}
                 </Text>
-                <Text
-                  className="text-sm font-semibold text-center"
-                  style={{ color: '#408059' }}
-                >
+                <Text className="text-sm font-semibold text-center" style={{ color: '#408059' }}>
                   {value !== null ? `${value}%` : '-'}
                 </Text>
               </View>
@@ -179,14 +165,17 @@ export default function SoilProfilingScreen() {
 
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-16">
-      <View className="w-20 h-20 rounded-full items-center justify-center" style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}>
+      <View
+        className="w-20 h-20 rounded-full items-center justify-center"
+        style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+      >
         <Ionicons name="layers" size={40} color="rgba(64, 128, 89, 0.5)" />
       </View>
       <Text className="text-lg font-semibold mt-4" style={{ color: '#1c1c1e' }}>
         No Soil Profiles
       </Text>
       <Text className="text-center mt-2 px-8" style={{ color: '#8e8e93' }}>
-        Add soil moisture profiles to track your farm's soil health over time.
+        Add soil moisture profiles to track your farm&apos;s soil health over time.
       </Text>
       <TouchableOpacity
         onPress={() => setShowAddModal(true)}
@@ -229,7 +218,9 @@ export default function SoilProfilingScreen() {
               elevation: 2,
             }}
           >
-            <Text className="text-xs mb-1" style={{ color: '#8e8e93' }}>Avg Moisture</Text>
+            <Text className="text-xs mb-1" style={{ color: '#8e8e93' }}>
+              Avg Moisture
+            </Text>
             <Text className="text-2xl font-bold" style={{ color: '#408059' }}>
               {trendsData.avgMoisture}%
             </Text>
@@ -245,43 +236,39 @@ export default function SoilProfilingScreen() {
               elevation: 2,
             }}
           >
-            <Text className="text-xs mb-1" style={{ color: '#8e8e93' }}>Total Profiles</Text>
+            <Text className="text-xs mb-1" style={{ color: '#8e8e93' }}>
+              Total Profiles
+            </Text>
             <Text className="text-2xl font-bold" style={{ color: '#408059' }}>
               {trendsData.profileCount}
             </Text>
           </View>
         </View>
 
-        {/* Moisture Change */}
-        {trendsData.moistureChange !== null && (
-          <View
-            className="rounded-xl p-4 mb-4"
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.05,
-              shadowRadius: 5,
-              elevation: 2,
-            }}
-          >
-            <Text className="text-sm mb-2" style={{ color: '#8e8e93' }}>Recent Change</Text>
-            <View className="flex-row items-center">
-              <Ionicons
-                name={trendsData.moistureChange >= 0 ? 'arrow-up' : 'arrow-down'}
-                size={24}
-                color={trendsData.moistureChange >= 0 ? '#10B981' : '#EF4444'}
-              />
-              <Text
-                className="text-2xl font-bold ml-2"
-                style={{ color: trendsData.moistureChange >= 0 ? '#10B981' : '#EF4444' }}
-              >
-                {Math.abs(trendsData.moistureChange).toFixed(1)}%
-              </Text>
-              <Text className="ml-2" style={{ color: '#8e8e93' }}>from last profile</Text>
-            </View>
+        <View
+          className="bg-white rounded-t-3xl p-4 mb-4"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+        >
+          <Text className="text-sm font-semibold mb-2" style={{ color: '#8e8e93' }}>
+            Recent Change
+          </Text>
+          <View className="flex-row items-center">
+            <Ionicons
+              name={trendsData.moistureChange >= 0 ? 'arrow-up' : 'arrow-down'}
+              size={24}
+              color={trendsData.moistureChange >= 0 ? '#10B981' : '#EF4444'}
+            />
+            <Text
+              className="text-2xl font-bold ml-2"
+              style={{ color: trendsData.moistureChange >= 0 ? '#10B981' : '#EF4444' }}
+            >
+              {Math.abs(trendsData.moistureChange).toFixed(1)}%
+            </Text>
+            <Text className="ml-2" style={{ color: '#8e8e93' }}>
+              from last profile
+            </Text>
           </View>
-        )}
+        </View>
 
         {/* Latest Profile */}
         <View
@@ -295,7 +282,9 @@ export default function SoilProfilingScreen() {
             elevation: 2,
           }}
         >
-          <Text className="text-sm mb-2" style={{ color: '#8e8e93' }}>Latest Moisture</Text>
+          <Text className="text-sm mb-2" style={{ color: '#8e8e93' }}>
+            Latest Moisture
+          </Text>
           <Text className="text-3xl font-bold" style={{ color: '#408059' }}>
             {trendsData.latestMoisture}%
           </Text>
@@ -316,14 +305,17 @@ export default function SoilProfilingScreen() {
             Select a Farm First
           </Text>
           <Text className="text-center mt-2" style={{ color: '#8e8e93' }}>
-            Soil profiles are associated with specific farms. Please select a farm to view its soil profiles.
+            Soil profiles are associated with specific farms. Please select a farm to view its soil
+            profiles.
           </Text>
           <TouchableOpacity
             onPress={() => router.push('/(tabs)/farms')}
             className="mt-6 px-6 py-3 rounded-full"
             style={{ backgroundColor: '#408059' }}
           >
-            <Text className="font-semibold" style={{ color: '#ffffff' }}>Go to Farms</Text>
+            <Text className="font-semibold" style={{ color: '#ffffff' }}>
+              Go to Farms
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -339,20 +331,27 @@ export default function SoilProfilingScreen() {
       {/* Header */}
       <View
         className="flex-row items-center px-4 py-3"
-        style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', borderBottomWidth: 0.5, borderBottomColor: 'rgba(0, 0, 0, 0.1)' }}
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderBottomWidth: 0.5,
+          borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+        }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mr-3">
           <Ionicons name="arrow-back" size={24} color="#408059" />
         </TouchableOpacity>
         <Ionicons name="layers" size={24} color="#408059" />
         <View className="ml-2 flex-1">
-          <Text className="text-xl font-bold" style={{ color: '#1c1c1e' }}>Soil Profiling</Text>
-          {farm && <Text className="text-xs" style={{ color: '#8e8e93' }}>{farm.name}</Text>}
+          <Text className="text-xl font-bold" style={{ color: '#1c1c1e' }}>
+            Soil Profiling
+          </Text>
+          {farm && (
+            <Text className="text-xs" style={{ color: '#8e8e93' }}>
+              {farm.name}
+            </Text>
+          )}
         </View>
-        <TouchableOpacity
-          onPress={() => setShowAddModal(true)}
-          className="p-2"
-        >
+        <TouchableOpacity onPress={() => setShowAddModal(true)} className="p-2">
           <Ionicons name="add-circle" size={28} color="#408059" />
         </TouchableOpacity>
       </View>
@@ -389,16 +388,13 @@ export default function SoilProfilingScreen() {
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#408059" />
-          <Text className="mt-2" style={{ color: '#8e8e93' }}>Loading profiles...</Text>
+          <Text className="mt-2" style={{ color: '#8e8e93' }}>
+            Loading profiles...
+          </Text>
         </View>
       ) : selectedTab === 'history' ? (
-        <ScrollView
-          className="flex-1 px-4 pt-4"
-          showsVerticalScrollIndicator={false}
-        >
-          {profiles && profiles.length > 0
-            ? profiles.map(renderProfileCard)
-            : renderEmptyState()}
+        <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
+          {profiles && profiles.length > 0 ? profiles.map(renderProfileCard) : renderEmptyState()}
           <View className="h-8" />
         </ScrollView>
       ) : (

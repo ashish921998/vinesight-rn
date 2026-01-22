@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const js = require('@eslint/js');
 const { FlatCompat } = require('@eslint/eslintrc');
 const typescriptEslint = require('@typescript-eslint/eslint-plugin');
@@ -7,6 +8,7 @@ const reactHooksPlugin = require('eslint-plugin-react-hooks');
 const reactNativePlugin = require('eslint-plugin-react-native');
 const prettierConfig = require('eslint-config-prettier');
 const globals = require('globals');
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
@@ -45,23 +47,23 @@ module.exports = [
       'react/prop-types': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { 
+        {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_'
-        }
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
       'react-native/no-unused-styles': 'warn',
       'react-native/split-platform-components': 'warn',
-      'react-native/no-inline-styles': 'warn',
-      'react-native/no-color-literals': 'warn',
+      'react-native/no-inline-styles': 'off',
+      'react-native/no-color-literals': 'off',
       'react-native/no-raw-text': 'off',
       'react-native/no-single-element-style-arrays': 'warn',
       'react-hooks/set-state-in-effect': 'off',
     },
     settings: {
       react: {
-        version: '19.2.3',
+        version: '19.1.0',
       },
     },
   },

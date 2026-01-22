@@ -36,7 +36,7 @@ export default function ReportsScreen() {
   const [showToPicker, setShowToPicker] = useState(false);
   const [showFarmPicker, setShowFarmPicker] = useState(false);
 
-  const { preview, isLoading: dataLoading, farm } = useReportData(selectedFarmId, dateRange);
+  const { preview, isLoading: dataLoading } = useReportData(selectedFarmId, dateRange);
   const { isExporting, exportReport, exportError } = useReportExport();
 
   // Auto-select first farm
@@ -128,7 +128,11 @@ export default function ReportsScreen() {
                 {selectedFarm?.name || 'Select a farm'}
               </Text>
             </View>
-            <Ionicons name={showFarmPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
+            <Ionicons
+              name={showFarmPicker ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color="#666"
+            />
           </TouchableOpacity>
 
           {showFarmPicker && (
@@ -213,7 +217,7 @@ export default function ReportsScreen() {
                 }`}
               >
                 <Ionicons
-                  name={type.icon as any}
+                  name={type.icon as keyof typeof Ionicons.glyphMap}
                   size={24}
                   color={reportType === type.value ? '#1a5d1a' : '#9ca3af'}
                   style={{ alignSelf: 'center' }}
@@ -239,7 +243,7 @@ export default function ReportsScreen() {
         ) : preview ? (
           <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-sm">
             <Text className="text-sm font-medium text-gray-500 mb-3">Preview Summary</Text>
-            
+
             <View className="flex-row flex-wrap gap-3">
               <View className="bg-blue-50 p-3 rounded-lg flex-1 min-w-[45%]">
                 <Text className="text-2xl font-bold text-blue-600">

@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  TextInput,
-  View,
-  Text,
-  TouchableOpacity,
-  type TextInputProps,
-} from 'react-native';
+import { TextInput, View, Text, type TextInputProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface FormFieldProps extends TextInputProps {
@@ -35,15 +29,13 @@ export function FormField({
   return (
     <View className="mb-4">
       <View className="flex-row items-center mb-1.5">
-        {icon && (
-          <Ionicons name={icon} size={16} color="#408059" style={{ marginRight: 6 }} />
-        )}
+        {icon && <Ionicons name={icon} size={16} color="#408059" style={{ marginRight: 6 }} />}
         <Text className="text-sm font-semibold text-surface-800">
           {label}
           {required && <Text className="text-red-500"> *</Text>}
         </Text>
       </View>
-      
+
       <View
         className={`
           flex-row items-center
@@ -53,15 +45,8 @@ export function FormField({
           ${isDisabled ? 'bg-surface-100' : 'bg-white'}
         `}
       >
-        {icon && (
-          <Ionicons
-            name={icon}
-            size={20}
-            color={iconColor}
-            style={{ marginRight: 10 }}
-          />
-        )}
-        
+        {icon && <Ionicons name={icon} size={20} color={iconColor} style={{ marginRight: 10 }} />}
+
         <TextInput
           className={`flex-1 text-base text-surface-900 ${className || ''}`}
           placeholderTextColor="#9CA3AF"
@@ -77,11 +62,9 @@ export function FormField({
           {...props}
         />
       </View>
-      
-      {hint && !hasError && (
-        <Text className="text-xs text-surface-500 mt-1">{hint}</Text>
-      )}
-      
+
+      {hint && !hasError && <Text className="text-xs text-surface-500 mt-1">{hint}</Text>}
+
       {hasError && (
         <View className="flex-row items-center mt-1.5">
           <Ionicons name="alert-circle" size={14} color="#EF4444" />
@@ -93,7 +76,10 @@ export function FormField({
 }
 
 // Numeric input variant
-interface NumericInputProps extends Omit<FormFieldProps, 'value' | 'onChangeText' | 'keyboardType'> {
+interface NumericInputProps extends Omit<
+  FormFieldProps,
+  'value' | 'onChangeText' | 'keyboardType'
+> {
   value: number;
   onValueChange: (value: number) => void;
   min?: number;
@@ -116,21 +102,20 @@ export function NumericInput({
   const handleChangeText = (text: string) => {
     // Allow empty string, digits, and one decimal point
     const cleanText = text.replace(/[^0-9.]/g, '');
-    
+
     // Prevent multiple decimal points
     const parts = cleanText.split('.');
     let sanitizedText = parts[0];
     if (parts.length > 1) {
       sanitizedText += '.' + parts[1].slice(0, decimals);
     }
-    
+
     setTextValue(sanitizedText);
-    
+
     const numValue = parseFloat(sanitizedText) || 0;
-    const clampedValue = max !== undefined 
-      ? Math.min(Math.max(numValue, min), max)
-      : Math.max(numValue, min);
-    
+    const clampedValue =
+      max !== undefined ? Math.min(Math.max(numValue, min), max) : Math.max(numValue, min);
+
     onValueChange(clampedValue);
   };
 
@@ -145,7 +130,7 @@ export function NumericInput({
           {props.required && <Text className="text-red-500"> *</Text>}
         </Text>
       </View>
-      
+
       <View className="flex-row items-center px-4 py-3 rounded-xl border border-surface-200 bg-white">
         {props.icon && (
           <Ionicons
@@ -155,7 +140,7 @@ export function NumericInput({
             style={{ marginRight: 10 }}
           />
         )}
-        
+
         <TextInput
           className="flex-1 text-base text-surface-900"
           placeholderTextColor="#9CA3AF"
@@ -164,16 +149,14 @@ export function NumericInput({
           onChangeText={handleChangeText}
           placeholder={props.placeholder}
         />
-        
-        {unit && (
-          <Text className="text-sm text-surface-500 ml-2">{unit}</Text>
-        )}
+
+        {unit && <Text className="text-sm text-surface-500 ml-2">{unit}</Text>}
       </View>
-      
+
       {props.hint && !props.error && (
         <Text className="text-xs text-surface-500 mt-1">{props.hint}</Text>
       )}
-      
+
       {props.error && (
         <View className="flex-row items-center mt-1.5">
           <Ionicons name="alert-circle" size={14} color="#EF4444" />

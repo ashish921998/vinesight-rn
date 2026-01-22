@@ -41,3 +41,7 @@ yarn-error.*
 /ios
 /android
 google-service-account.json
+
+# lint results
+lint-results.json
+*-results.json
