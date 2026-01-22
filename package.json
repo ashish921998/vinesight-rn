@@ -91,6 +91,7 @@
     "install": {
       "exclude": [
         "react",
+        "react-dom",
         "react-native-webview"
       ]
     }
