@@ -11,17 +11,25 @@ import * as Sentry from '@sentry/react-native';
 import { useAuthStore, initAuthListener, cleanupAuthListener } from '@/stores';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-// Initialize Sentry
-Sentry.init({
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  enabled: !__DEV__, // Only track errors in production
-  debug: __DEV__, // Show debug info in development
-  tracesSampleRate: 1.0, // Capture 100% of transactions for performance monitoring
-  integrations: [Sentry.reactNativeTracingIntegration()],
-});
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
+
+// Initialize Sentry (avoid crashing startup if env/config is missing)
+try {
+  Sentry.init({
+    dsn: sentryDsn,
+    enabled: !__DEV__ && Boolean(sentryDsn), // Only track errors in production when configured
+    debug: __DEV__, // Show debug info in development
+    tracesSampleRate: 1.0, // Capture 100% of transactions for performance monitoring
+    integrations: [Sentry.reactNativeTracingIntegration()],
+  });
+} catch (error) {
+  if (__DEV__) {
+    console.error('Sentry initialization failed:', error);
+  }
+}
 
 // Prevent auto-hide splash screen
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync().catch(() => null);
 
 // Create a client outside component to prevent recreation
 const queryClient = new QueryClient({
@@ -61,7 +69,7 @@ export default Sentry.wrap(function RootLayout() {
   useEffect(() => {
     // Hide splash screen when auth is loaded
     if (!isLoading) {
-      SplashScreen.hideAsync();
+      void SplashScreen.hideAsync().catch(() => null);
     }
   }, [isLoading]);
 
