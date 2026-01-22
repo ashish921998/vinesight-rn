@@ -18,6 +18,12 @@ import AddTaskModal from '../src/components/screens/AddTaskModal';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
 
+const startOfDay = (date: Date) => {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+};
+
 export default function TasksScreen() {
   const { data: farms } = useFarms();
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
@@ -38,12 +44,6 @@ export default function TasksScreen() {
   const { filteredTasks, counts } = useMemo(() => {
     if (!tasks)
       return { filteredTasks: [], counts: { all: 0, pending: 0, overdue: 0, completed: 0 } };
-
-    const startOfDay = (date: Date) => {
-      const result = new Date(date);
-      result.setHours(0, 0, 0, 0);
-      return result;
-    };
 
     const todayMidnight = startOfDay(new Date());
 
@@ -104,8 +104,7 @@ export default function TasksScreen() {
   const formatDueDate = (dateString: string | null) => {
     if (!dateString) return 'No due date';
     const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfDay(new Date());
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -117,9 +116,7 @@ export default function TasksScreen() {
 
   const isOverdue = (task: TaskReminder) => {
     if (task.completed || !task.due_date) return false;
-    const todayMidnight = new Date();
-    todayMidnight.setHours(0, 0, 0, 0);
-    return new Date(task.due_date) < todayMidnight;
+    return new Date(task.due_date) < startOfDay(new Date());
   };
 
   if (isLoading) {

@@ -37,7 +37,7 @@ export default function ReportsScreen() {
   const [showFarmPicker, setShowFarmPicker] = useState(false);
 
   const { preview, isLoading: dataLoading } = useReportData(selectedFarmId, dateRange);
-  const { isExporting, exportReport, exportError } = useReportExport();
+  const { isExporting, exportReport } = useReportExport();
 
   // Auto-select first farm
   React.useEffect(() => {
@@ -54,14 +54,18 @@ export default function ReportsScreen() {
 
     try {
       await exportReport(preview, format, reportType);
-    } catch {
-      Alert.alert('Export Failed', exportError || 'Unable to export report');
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Unable to export report';
+      Alert.alert('Export Failed', errorMessage);
     }
   };
 
   const handleDateChange = (type: 'from' | 'to', date: Date | undefined) => {
     if (date) {
-      const dateStr = date.toISOString().split('T')[0];
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       setDateRange((prev) => ({ ...prev, [type]: dateStr }));
     }
     if (type === 'from') setShowFromPicker(false);

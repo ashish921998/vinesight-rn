@@ -206,7 +206,10 @@ function MarkAttendanceTab({
   }, [todayString]);
 
   const formatDate = (date: Date): string => {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const getCellKey = (workerId: number, date: string) => `${workerId}-${date}`;
@@ -243,7 +246,7 @@ function MarkAttendanceTab({
           status: record.work_status as AttendanceStatus,
           workType: record.work_type,
           farmIds: record.farm_ids || [],
-          existingRecordId: record.id!,
+          existingRecordId: record.id,
           isModified: false,
         });
       }
@@ -393,8 +396,8 @@ function MarkAttendanceTab({
       return newMap;
     });
 
-    goToNextWorker();
     setSaving(false);
+    goToNextWorker();
   };
 
   const goToNextWorker = () => {
@@ -409,6 +412,21 @@ function MarkAttendanceTab({
     if (selectedWorkerIndex > 0) {
       setSelectedWorkerIndex(selectedWorkerIndex - 1);
     }
+  };
+
+  const handleWorkerSelect = () => {
+    if (workers.length === 0) return;
+
+    const buttons = workers.map((worker, index) => ({
+      text: worker.name,
+      onPress: () => setSelectedWorkerIndex(index),
+      style: 'default' as const,
+    }));
+
+    Alert.alert('Select Worker', 'Choose a worker to mark attendance', [
+      ...buttons,
+      { text: 'Cancel', style: 'cancel' as const },
+    ]);
   };
 
   const isToday = (date: Date): boolean => {
@@ -452,6 +470,7 @@ function MarkAttendanceTab({
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View className="flex-row gap-3">
             <TouchableOpacity
+              onPress={handleWorkerSelect}
               activeOpacity={0.7}
               className="flex-row items-center px-4 py-2.5 rounded-2xl"
               style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
@@ -462,8 +481,7 @@ function MarkAttendanceTab({
               </Text>
               <Ionicons name="chevron-down" size={14} color="#8e8e93" className="ml-1" />
             </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.7}
+            <View
               className="flex-row items-center px-4 py-2.5 rounded-2xl"
               style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
             >
@@ -473,8 +491,7 @@ function MarkAttendanceTab({
                   ? `${selectedFarmIds.length} farm${selectedFarmIds.length > 1 ? 's' : ''}`
                   : 'All Farms'}
               </Text>
-              <Ionicons name="chevron-down" size={14} color="#8e8e93" className="ml-1" />
-            </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </View>
@@ -513,7 +530,7 @@ function MarkAttendanceTab({
                   key={dateStr}
                   onPress={() => handleDayCellClick(date)}
                   activeOpacity={0.7}
-                  className={`w-[30%] aspect-square items-center justify-center mb-3 rounded-2xl ${isTodayDate ? '' : ''}`}
+                  className="w-[30%] aspect-square items-center justify-center mb-3 rounded-2xl"
                   style={{
                     backgroundColor: isTodayDate
                       ? 'rgba(59, 130, 246, 0.1)'

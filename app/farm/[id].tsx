@@ -14,7 +14,13 @@ import { useFarm, useFarmRecords, useWeather, useDeleteFarm } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/useTasks';
 import { StatsCard, ActivityLogCard } from '@/components/cards';
 import { AddActivityModal, WaterLevelModal, AddTaskModal } from '@/components/screens';
-import type { IrrigationRecord, SprayRecord, HarvestRecord, ExpenseRecord, FertigationRecord } from '@/types';
+import type {
+  IrrigationRecord,
+  SprayRecord,
+  HarvestRecord,
+  ExpenseRecord,
+  FertigationRecord,
+} from '@/types';
 import { PRIORITY_INFO } from '@/types/task';
 
 // Workboard action type
@@ -38,12 +44,12 @@ export default function FarmDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const farmId = id ? parseInt(id, 10) : undefined;
-  
+
   const { data: farm, isLoading: farmLoading, refetch: refetchFarm } = useFarm(farmId);
-  const { 
-    irrigationRecords, 
-    sprayRecords, 
-    harvestRecords, 
+  const {
+    irrigationRecords,
+    sprayRecords,
+    harvestRecords,
     expenseRecords,
     fertigationRecords,
     refetch: refetchRecords,
@@ -61,15 +67,15 @@ export default function FarmDetailScreen() {
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
 
-
   // Calculate stats
-  const totalRecords = useMemo(() => 
-    (irrigationRecords?.length || 0) + 
-    (sprayRecords?.length || 0) + 
-    (harvestRecords?.length || 0) + 
-    (expenseRecords?.length || 0) +
-    (fertigationRecords?.length || 0),
-    [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords]
+  const totalRecords = useMemo(
+    () =>
+      (irrigationRecords?.length || 0) +
+      (sprayRecords?.length || 0) +
+      (harvestRecords?.length || 0) +
+      (expenseRecords?.length || 0) +
+      (fertigationRecords?.length || 0),
+    [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords],
   );
 
   // Days since pruning
@@ -90,38 +96,50 @@ export default function FarmDetailScreen() {
       data: IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
     }> = [];
 
-    irrigationRecords?.forEach(r => logs.push({ 
-      id: `irrigation-${r.id}`, 
-      type: 'irrigation', 
-      date: r.date, 
-      data: r 
-    }));
-    sprayRecords?.forEach(r => logs.push({ 
-      id: `spray-${r.id}`, 
-      type: 'spray', 
-      date: r.date, 
-      data: r 
-    }));
-    harvestRecords?.forEach(r => logs.push({ 
-      id: `harvest-${r.id}`, 
-      type: 'harvest', 
-      date: r.date, 
-      data: r 
-    }));
-    expenseRecords?.forEach(r => logs.push({ 
-      id: `expense-${r.id}`, 
-      type: 'expense', 
-      date: r.date, 
-      data: r 
-    }));
-    fertigationRecords?.forEach(r => logs.push({ 
-      id: `fertigation-${r.id}`, 
-      type: 'fertigation', 
-      date: r.date, 
-      data: r 
-    }));
+    irrigationRecords?.forEach((r) =>
+      logs.push({
+        id: `irrigation-${r.id}`,
+        type: 'irrigation',
+        date: r.date,
+        data: r,
+      }),
+    );
+    sprayRecords?.forEach((r) =>
+      logs.push({
+        id: `spray-${r.id}`,
+        type: 'spray',
+        date: r.date,
+        data: r,
+      }),
+    );
+    harvestRecords?.forEach((r) =>
+      logs.push({
+        id: `harvest-${r.id}`,
+        type: 'harvest',
+        date: r.date,
+        data: r,
+      }),
+    );
+    expenseRecords?.forEach((r) =>
+      logs.push({
+        id: `expense-${r.id}`,
+        type: 'expense',
+        date: r.date,
+        data: r,
+      }),
+    );
+    fertigationRecords?.forEach((r) =>
+      logs.push({
+        id: `fertigation-${r.id}`,
+        type: 'fertigation',
+        date: r.date,
+        data: r,
+      }),
+    );
 
-    return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
+    return logs
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 10);
   }, [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords]);
 
   const handleRefresh = async () => {
@@ -188,23 +206,27 @@ export default function FarmDetailScreen() {
 
   const handleDeleteFarm = () => {
     if (!farmId || !farm) return;
-    Alert.alert('Delete Farm', `Are you sure you want to delete "${farm.name}"? This action cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          deleteFarmMutation.mutate(farmId, {
-            onSuccess: () => {
-              router.back();
-            },
-            onError: (error: Error) => {
-              Alert.alert('Error', error.message || 'Failed to delete farm');
-            },
-          });
+    Alert.alert(
+      'Delete Farm',
+      `Are you sure you want to delete "${farm.name}"? This will also delete all associated data including irrigation records, spray records, harvests, expenses, soil profiles, and other farm-related data. This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteFarmMutation.mutate(farmId, {
+              onSuccess: () => {
+                router.back();
+              },
+              onError: (error: Error) => {
+                Alert.alert('Error', error.message || 'Failed to delete farm');
+              },
+            });
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const formatDueDate = (dateString: string | null) => {
@@ -246,11 +268,16 @@ export default function FarmDetailScreen() {
     }
   };
 
-
-
   if (farmLoading && !farm) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7', justifyContent: 'center', alignItems: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: '#f2f2f7',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         <ActivityIndicator size="large" color="#408059" />
         <Text className="text-surface-500 mt-4">Loading farm...</Text>
       </View>
@@ -259,7 +286,15 @@ export default function FarmDetailScreen() {
 
   if (!farm) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: '#f2f2f7',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 32,
+        }}
+      >
         <Ionicons name="alert-circle-outline" size={48} color="#9CA3AF" />
         <Text className="text-lg font-semibold text-surface-900 mt-4">Farm Not Found</Text>
         <TouchableOpacity onPress={() => router.back()} className="mt-4">
@@ -278,19 +313,25 @@ export default function FarmDetailScreen() {
           headerTintColor: '#000000',
           headerRight: () => (
             <View className="flex-row items-center">
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => router.push(`/farm/${id}/edit`)}
                 className="mr-4"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Ionicons name="create-outline" size={24} color="#408059" />
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={handleDeleteFarm}
                 className="mr-2"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                disabled={deleteFarmMutation.isPending}
+                style={{ opacity: deleteFarmMutation.isPending ? 0.5 : 1 }}
               >
-                <Ionicons name="trash-outline" size={24} color="#DC2626" />
+                {deleteFarmMutation.isPending ? (
+                  <ActivityIndicator size="small" color="#DC2626" />
+                ) : (
+                  <Ionicons name="trash-outline" size={24} color="#DC2626" />
+                )}
               </TouchableOpacity>
             </View>
           ),
@@ -298,11 +339,9 @@ export default function FarmDetailScreen() {
             <View className="items-center">
               <Text className="text-lg font-bold text-surface-900">{farm.name}</Text>
               <View className="flex-row items-center">
-                <Text className="text-xs text-surface-500">
-                  {farm.crop_variety || farm.crop}
-                </Text>
+                <Text className="text-xs text-surface-500">{farm.crop_variety || farm.crop}</Text>
                 <Text className="text-xs text-surface-500 mx-1">•</Text>
-                <View 
+                <View
                   className="flex-row items-center px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: '#408059' }}
                 >
@@ -319,248 +358,237 @@ export default function FarmDetailScreen() {
 
       <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
         {/* Subtle top gradient */}
-        <View 
-          className="absolute top-0 left-0 right-0"
-        />
+        <View className="absolute top-0 left-0 right-0" />
 
         <ScrollView
           className="flex-1"
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor="#408059"
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#408059" />
           }
           showsVerticalScrollIndicator={false}
         >
-        {/* Farm Header Card - iOS Style Glass Effect */}
-        <View 
-          className="mx-4 mt-16 rounded-2xl overflow-hidden"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 6 },
-          }}
-        >
-          <View className="p-4">
-            <View className="flex-row items-start justify-between">
-              <View className="flex-1">
-                <View className="flex-row items-center">
-                  <View className="w-12 h-12 bg-primary-100 rounded-xl items-center justify-center">
-                    <Ionicons name="leaf" size={24} color="#408059" />
-                  </View>
-                  <View className="ml-3 flex-1">
-                    <View className="flex-row items-center">
-                      <Text className="text-xl font-bold text-surface-900">
-                        {farm.name}
-                      </Text>
-                      {daysSincePruning !== null && (
-                        <View className="ml-2 flex-row items-center px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F59E0B' }}>
-                          <Ionicons name="cut-outline" size={10} color="#FFFFFF" />
-                          <Text className="text-xs font-bold text-white ml-1">
-                            {daysSincePruning}d
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text className="text-sm text-surface-500">
-                      {farm.crop_variety || farm.crop}
-                    </Text>
-                  </View>
-                </View>
-                
-                {farm.region && (
-                  <View className="flex-row items-center mt-3">
-                    <Ionicons name="location-outline" size={16} color="#6B7280" />
-                    <Text className="text-sm text-surface-600 ml-1">{farm.region}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-
-            {/* Weather info */}
-            {weather && (
-              <View className="mt-4 pt-4 border-t border-surface-100">
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center">
-                    <View className="w-8 h-8 bg-sky-100 rounded-lg items-center justify-center">
-                      <Ionicons name="partly-sunny" size={16} color="#0284C7" />
-                    </View>
-                    <View className="ml-2">
-                      <Text className="text-xs text-surface-500">Current Weather</Text>
-                      <Text className="text-base font-semibold text-surface-900">
-                        {weather.current.condition}
-                      </Text>
-                    </View>
-                  </View>
-      <View className="flex-row items-center gap-3">
-        <View className="items-center">
-          <Text className="text-lg font-bold text-surface-900">
-            {weather.current.temperature}°
-          </Text>
-          <Text className="text-xs text-surface-500">Temperature</Text>
-        </View>
-        <View className="w-px h-8 bg-surface-200" />
-        <View className="items-center">
-          <Text className="text-lg font-bold text-surface-900">
-            {weather.forecast[0]?.et0 ?? 0}
-          </Text>
-          <Text className="text-xs text-surface-500">ET0 (mm)</Text>
-        </View>
-      </View>
-                </View>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Stats Grid - iOS Style */}
-        <View className="px-4 mt-4">
-          <View className="flex-row gap-3">
-            <TouchableOpacity
-              className="flex-1"
-              onPress={() => router.push(`/logs?farmId=${id}`)}
-              activeOpacity={0.7}
-            >
-              <StatsCard
-                title="Log Entries"
-                value={totalRecords.toString()}
-                icon="document-text"
-                iconColor="#4D8561"
-                subtitle="Records"
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-1"
-              onPress={() => setShowWaterLevelModal(true)}
-              activeOpacity={0.7}
-            >
-              <StatsCard
-                title="Soil Water"
-                value={farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
-                icon="water"
-                iconColor="#4D857A"
-                subtitle="mm"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Workboard Section */}
-        <View className="px-4 mt-6">
-          <Text className="text-xs font-bold text-surface-500 tracking-wider mb-1">
-            WORKBOARD
-          </Text>
-          <Text className="text-sm text-surface-500 mb-2">
-            Quick access to tools and resources.
-          </Text>
-
+          {/* Farm Header Card - iOS Style Glass Effect */}
           <View
-            className="rounded-2xl p-4 mt-2"
+            className="mx-4 mt-16 rounded-2xl overflow-hidden"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 5 },
-              borderRadius: 12
+              shadowOffset: { width: 0, height: 6 },
             }}
           >
-            <View style={{ flexDirection: 'row' }}>
-              {WORKBOARD_ACTIONS.map((action) => (
-                <TouchableOpacity
-                  key={action.id}
-                  style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}
-                  activeOpacity={0.7}
-                  onPress={() => handleWorkboardAction(action)}
-                >
-                  <View
-                    className="rounded-full items-center justify-center mb-2"
-                    style={{
-                      width: 40,
-                      height: 40,
-                      backgroundColor: `${action.color}1A`,
-                    }}
-                  >
-                    <Ionicons name={action.icon} size={18} color={action.color} />
+            <View className="p-4">
+              <View className="flex-row items-start justify-between">
+                <View className="flex-1">
+                  <View className="flex-row items-center">
+                    <View className="w-12 h-12 bg-primary-100 rounded-xl items-center justify-center">
+                      <Ionicons name="leaf" size={24} color="#408059" />
+                    </View>
+                    <View className="ml-3 flex-1">
+                      <View className="flex-row items-center">
+                        <Text className="text-xl font-bold text-surface-900">{farm.name}</Text>
+                        {daysSincePruning !== null && (
+                          <View
+                            className="ml-2 flex-row items-center px-2 py-0.5 rounded-full"
+                            style={{ backgroundColor: '#F59E0B' }}
+                          >
+                            <Ionicons name="cut-outline" size={10} color="#FFFFFF" />
+                            <Text className="text-xs font-bold text-white ml-1">
+                              {daysSincePruning}d
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text className="text-sm text-surface-500">
+                        {farm.crop_variety || farm.crop}
+                      </Text>
+                    </View>
                   </View>
-                  <Text className="text-xs font-medium text-surface-600 text-center leading-tight">
-                    {action.title}
+
+                  {farm.region && (
+                    <View className="flex-row items-center mt-3">
+                      <Ionicons name="location-outline" size={16} color="#6B7280" />
+                      <Text className="text-sm text-surface-600 ml-1">{farm.region}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Weather info */}
+              {weather && (
+                <View className="mt-4 pt-4 border-t border-surface-100">
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center">
+                      <View className="w-8 h-8 bg-sky-100 rounded-lg items-center justify-center">
+                        <Ionicons name="partly-sunny" size={16} color="#0284C7" />
+                      </View>
+                      <View className="ml-2">
+                        <Text className="text-xs text-surface-500">Current Weather</Text>
+                        <Text className="text-base font-semibold text-surface-900">
+                          {weather.current.condition}
+                        </Text>
+                      </View>
+                    </View>
+                    <View className="flex-row items-center gap-3">
+                      <View className="items-center">
+                        <Text className="text-lg font-bold text-surface-900">
+                          {weather.current.temperature}°
+                        </Text>
+                        <Text className="text-xs text-surface-500">Temperature</Text>
+                      </View>
+                      <View className="w-px h-8 bg-surface-200" />
+                      <View className="items-center">
+                        <Text className="text-lg font-bold text-surface-900">
+                          {weather.forecast[0]?.et0 ?? 0}
+                        </Text>
+                        <Text className="text-xs text-surface-500">ET0 (mm)</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Stats Grid - iOS Style */}
+          <View className="px-4 mt-4">
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                className="flex-1"
+                onPress={() => router.push(`/logs?farmId=${id}`)}
+                activeOpacity={0.7}
+              >
+                <StatsCard
+                  title="Log Entries"
+                  value={totalRecords.toString()}
+                  icon="document-text"
+                  iconColor="#4D8561"
+                  subtitle="Records"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1"
+                onPress={() => setShowWaterLevelModal(true)}
+                activeOpacity={0.7}
+              >
+                <StatsCard
+                  title="Soil Water"
+                  value={farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
+                  icon="water"
+                  iconColor="#4D857A"
+                  subtitle="mm"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Workboard Section */}
+          <View className="px-4 mt-6">
+            <Text className="text-xs font-bold text-surface-500 tracking-wider mb-1">
+              WORKBOARD
+            </Text>
+            <Text className="text-sm text-surface-500 mb-2">
+              Quick access to tools and resources.
+            </Text>
+
+            <View
+              className="rounded-2xl p-4 mt-2"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 5 },
+                borderRadius: 12,
+              }}
+            >
+              <View style={{ flexDirection: 'row' }}>
+                {WORKBOARD_ACTIONS.map((action) => (
+                  <TouchableOpacity
+                    key={action.id}
+                    style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}
+                    activeOpacity={0.7}
+                    onPress={() => handleWorkboardAction(action)}
+                  >
+                    <View
+                      className="rounded-full items-center justify-center mb-2"
+                      style={{
+                        width: 40,
+                        height: 40,
+                        backgroundColor: `${action.color}1A`,
+                      }}
+                    >
+                      <Ionicons name={action.icon} size={18} color={action.color} />
+                    </View>
+                    <Text className="text-xs font-medium text-surface-600 text-center leading-tight">
+                      {action.title}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* Tabs */}
+          <View className="px-4 mt-6">
+            <View className="flex-row">
+              {(['activities', 'tasks'] as const).map((tab) => (
+                <TouchableOpacity
+                  key={tab}
+                  className="flex-1 items-center py-3"
+                  onPress={() => setSelectedTab(tab)}
+                >
+                  <Text
+                    className={`text-sm font-bold uppercase text-center ${
+                      selectedTab === tab ? 'text-primary-600' : 'text-surface-400'
+                    }`}
+                  >
+                    {tab === 'activities' ? 'Activities' : 'Tasks'}
                   </Text>
+                  <View
+                    className={`h-0.5 rounded-full mt-2 ${
+                      selectedTab === tab ? 'bg-primary-600' : 'bg-transparent'
+                    }`}
+                    style={{ width: 30 }}
+                  />
                 </TouchableOpacity>
               ))}
             </View>
           </View>
-        </View>
 
-        {/* Tabs */}
-        <View className="px-4 mt-6">
-          <View className="flex-row">
-            {(['activities', 'tasks'] as const).map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                className="flex-1 items-center py-3"
-                onPress={() => setSelectedTab(tab)}
-              >
-                <Text
-                  className={`text-sm font-bold uppercase text-center ${
-                    selectedTab === tab ? 'text-primary-600' : 'text-surface-400'
-                  }`}
-                >
-                  {tab === 'activities' ? 'Activities' : 'Tasks'}
-                </Text>
-                <View
-                  className={`h-0.5 rounded-full mt-2 ${
-                    selectedTab === tab ? 'bg-primary-600' : 'bg-transparent'
-                  }`}
-                  style={{ width: 30 }}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Tab Content */}
-        <View className="px-4 mt-4 pb-28">
-          {selectedTab === 'activities' ? (
-            recentLogs.length > 0 ? (
-              <View className="gap-3">
-                {recentLogs.map((log) => (
-                  <ActivityLogCard
-                    key={log.id}
-                    type={log.type}
-                    date={log.date}
-                    data={log.data}
-                  />
-                ))}
-              </View>
-            ) : (
-              <View
-                className="rounded-2xl items-center p-10"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.06,
-                  shadowRadius: 12,
-                  elevation: 6,
-                }}
-              >
-                <View
-                  className="w-16 h-16 rounded-full items-center justify-center mb-4"
-                  style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
-                >
-                  <Ionicons name="document-text-outline" size={32} color="#9CA3AF" />
+          {/* Tab Content */}
+          <View className="px-4 mt-4 pb-28">
+            {selectedTab === 'activities' ? (
+              recentLogs.length > 0 ? (
+                <View className="gap-3">
+                  {recentLogs.map((log) => (
+                    <ActivityLogCard key={log.id} type={log.type} date={log.date} data={log.data} />
+                  ))}
                 </View>
-                <Text className="text-base font-semibold text-surface-900">
-                  No Activities Yet
-                </Text>
-                <Text className="text-sm text-surface-500 text-center mt-1">
-                  Start logging activities to see them here
-                </Text>
-              </View>
-            )
-          ) : (
-            tasks && tasks.length > 0 ? (
+              ) : (
+                <View
+                  className="rounded-2xl items-center p-10"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.06,
+                    shadowRadius: 12,
+                    elevation: 6,
+                  }}
+                >
+                  <View
+                    className="w-16 h-16 rounded-full items-center justify-center mb-4"
+                    style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
+                  >
+                    <Ionicons name="document-text-outline" size={32} color="#9CA3AF" />
+                  </View>
+                  <Text className="text-base font-semibold text-surface-900">
+                    No Activities Yet
+                  </Text>
+                  <Text className="text-sm text-surface-500 text-center mt-1">
+                    Start logging activities to see them here
+                  </Text>
+                </View>
+              )
+            ) : tasks && tasks.length > 0 ? (
               <View className="gap-3">
                 {tasks.map((task) => {
                   const priorityInfo = PRIORITY_INFO[task.priority];
@@ -586,22 +614,16 @@ export default function FarmDetailScreen() {
                           onPress={() => !task.completed && handleCompleteTask(task.id!)}
                           disabled={task.completed}
                           className={`w-7 h-7 rounded-full border-2 items-center justify-center mr-3 mt-0.5 ${
-                            task.completed
-                              ? 'bg-green-500 border-green-500'
-                              : 'border-surface-300'
+                            task.completed ? 'bg-green-500 border-green-500' : 'border-surface-300'
                           }`}
                         >
-                          {task.completed && (
-                            <Ionicons name="checkmark" size={18} color="white" />
-                          )}
+                          {task.completed && <Ionicons name="checkmark" size={18} color="white" />}
                         </TouchableOpacity>
 
                         <View className="flex-1">
                           <Text
                             className={`text-base font-semibold ${
-                              task.completed
-                                ? 'text-surface-500 line-through'
-                                : 'text-surface-900'
+                              task.completed ? 'text-surface-500 line-through' : 'text-surface-900'
                             }`}
                             numberOfLines={2}
                           >
@@ -678,15 +700,12 @@ export default function FarmDetailScreen() {
                 >
                   <Ionicons name="checkbox-outline" size={32} color="#9CA3AF" />
                 </View>
-                <Text className="text-base font-semibold text-surface-900">
-                  No Tasks Yet
-                </Text>
+                <Text className="text-base font-semibold text-surface-900">No Tasks Yet</Text>
                 <Text className="text-sm text-surface-500 text-center mt-1">
                   Tap the + button to create tasks
                 </Text>
               </View>
-            )
-          )}
+            )}
           </View>
         </ScrollView>
       </View>

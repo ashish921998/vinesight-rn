@@ -50,9 +50,11 @@ export default function LogsScreen() {
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
 
   const { data: farms = [], isLoading: farmsLoading } = useFarms();
-  const [selectedFarmId, setSelectedFarmId] = useState<number | undefined>(
-    farmId ? parseInt(farmId, 10) : undefined,
-  );
+  const [selectedFarmId, setSelectedFarmId] = useState<number | undefined>(() => {
+    if (!farmId) return undefined;
+    const parsed = parseInt(farmId, 10);
+    return isNaN(parsed) ? undefined : parsed;
+  });
 
   // Set default farm when farms load
   React.useEffect(() => {
@@ -235,6 +237,11 @@ export default function LogsScreen() {
   }, [combinedLogs, searchQuery, selectedLogTypes, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / itemsPerPage));
+
+  React.useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
   const paginatedLogs = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
@@ -251,6 +258,8 @@ export default function LogsScreen() {
         | HarvestRecord
         | ExpenseRecord
         | FertigationRecord;
+      // Defensive: farm_id should be number per TypeScript types, but handle string
+      // case in case Supabase returns strings (e.g., for certain database configs)
       const farmIdNum =
         selectedFarmId ??
         (record.farm_id

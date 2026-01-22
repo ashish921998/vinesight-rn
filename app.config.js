@@ -2,11 +2,14 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '1.0.0',
+    version: '1.0.1',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
     scheme: 'vinesight',
+    // New Architecture disabled for production stability.
+    // React Native's New Architecture is still experimental and may cause
+    // unexpected crashes in production. Enable after thorough testing.
     newArchEnabled: false,
     splash: {
       image: './assets/splash-icon.png',
@@ -29,7 +32,7 @@ module.exports = {
     android: {
       package: 'com.vinesight.app',
       adaptiveIcon: {
-        foregroundImage: './assets/adaptive-icon.png',
+        foregroundImage: './assets/playstore.png',
         backgroundColor: '#408059',
       },
       edgeToEdgeEnabled: true,

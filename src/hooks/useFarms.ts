@@ -15,7 +15,10 @@ import { TABLES, toSupabaseTimestampString } from '../types';
 // ============================================================
 
 async function getUserId(): Promise<string> {
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
   if (error || !session) {
     throw new Error('Please sign in to continue');
   }
@@ -54,11 +57,7 @@ export function useFarm(id: number | undefined) {
   return useQuery({
     queryKey: queryKeys.farms.detail(id!),
     queryFn: async (): Promise<Farm> => {
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .select('*')
-        .eq('id', id)
-        .single();
+      const { data, error } = await supabase.from(TABLES.FARMS).select('*').eq('id', id).single();
 
       if (error) throw error;
       return data;
@@ -107,13 +106,7 @@ export function useUpdateFarm() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: FarmUpdate;
-    }): Promise<Farm> => {
+    mutationFn: async ({ id, updates }: { id: number; updates: FarmUpdate }): Promise<Farm> => {
       const userId = await getUserId();
 
       const { data, error } = await supabase
@@ -135,10 +128,7 @@ export function useUpdateFarm() {
       });
       // Update detail cache
       if (updatedFarm.id) {
-        queryClient.setQueryData(
-          queryKeys.farms.detail(updatedFarm.id),
-          updatedFarm
-        );
+        queryClient.setQueryData(queryKeys.farms.detail(updatedFarm.id), updatedFarm);
       }
     },
   });
@@ -179,10 +169,7 @@ export function useUpdateFarmWaterLevel() {
         return old.map((f) => (f.id === updatedFarm.id ? updatedFarm : f));
       });
       if (updatedFarm.id) {
-        queryClient.setQueryData(
-          queryKeys.farms.detail(updatedFarm.id),
-          updatedFarm
-        );
+        queryClient.setQueryData(queryKeys.farms.detail(updatedFarm.id), updatedFarm);
       }
     },
   });
@@ -215,6 +202,30 @@ export function useDeleteFarm() {
       });
       // Remove detail cache
       queryClient.removeQueries({ queryKey: queryKeys.farms.detail(deletedId) });
+
+      // Invalidate all related queries for the deleted farm
+      // Note: Database should have CASCADE DELETE constraints set up
+      // to automatically delete associated records (irrigation_records,
+      // spray_records, harvest_records, expense_records, etc.)
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            queryKey[0] === 'irrigationRecords' ||
+            queryKey[0] === 'sprayRecords' ||
+            queryKey[0] === 'fertigationRecords' ||
+            queryKey[0] === 'harvestRecords' ||
+            queryKey[0] === 'expenseRecords' ||
+            queryKey[0] === 'soilTestRecords' ||
+            queryKey[0] === 'petioleTestRecords' ||
+            queryKey[0] === 'soilProfiles' ||
+            queryKey[0] === 'calculationHistory' ||
+            queryKey[0] === 'temporaryWorkerEntries' ||
+            queryKey[0] === 'workerAttendance' ||
+            queryKey[0] === 'dashboard'
+          );
+        },
+      });
     },
   });
 }
@@ -230,11 +241,7 @@ export function usePrefetchFarm() {
     queryClient.prefetchQuery({
       queryKey: queryKeys.farms.detail(id),
       queryFn: async () => {
-        const { data, error } = await supabase
-          .from(TABLES.FARMS)
-          .select('*')
-          .eq('id', id)
-          .single();
+        const { data, error } = await supabase.from(TABLES.FARMS).select('*').eq('id', id).single();
 
         if (error) throw error;
         return data;

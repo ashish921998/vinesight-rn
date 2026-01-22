@@ -60,7 +60,9 @@ export default function OnboardingScreen() {
 
       setPreferences({ notificationsEnabled: finalStatus === 'granted' });
     } catch (error) {
-      console.log('Notifications not available or failed to load:', error);
+      if (__DEV__) {
+        console.log('Notifications not available or failed to load:', error);
+      }
       // In Expo Go or unsupported environments, just continue without
       // enabling notifications so onboarding can still complete.
       setPreferences({ notificationsEnabled: false });

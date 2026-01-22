@@ -23,6 +23,9 @@ export default function OTPVerificationScreen() {
     clearError,
   } = useAuthStore();
 
+  const lastOtpSentSuccessRef = useRef(otpSentSuccessfully);
+  const verificationTriggeredRef = useRef(false);
+
   // Redirect when authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -40,8 +43,6 @@ export default function OTPVerificationScreen() {
 
     return () => clearInterval(timer);
   }, [resendCooldown]);
-
-  const lastOtpSentSuccessRef = useRef(otpSentSuccessfully);
 
   // Reset cooldown when OTP sent successfully
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -64,19 +65,21 @@ export default function OTPVerificationScreen() {
     }
   }, [email, otpCode, verifyOTP, clearError]);
 
-  const verificationTriggeredRef = useRef(false);
+  // Stable verify function that doesn't change on every render
+  const verifyRef = useRef(handleVerify);
+  useEffect(() => {
+    verifyRef.current = handleVerify;
+  }, [handleVerify]);
 
   // Auto-submit when 6 digits entered
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (otpCode.length === 6 && email && !isLoading && !verificationTriggeredRef.current) {
       verificationTriggeredRef.current = true;
-      handleVerify();
+      verifyRef.current();
     } else if (otpCode.length !== 6) {
       verificationTriggeredRef.current = false;
     }
-  }, [otpCode, email, isLoading, handleVerify]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }, [otpCode, email, isLoading]);
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;

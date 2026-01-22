@@ -52,18 +52,14 @@ export default function SettingsScreen() {
   const userPhone = profile?.phone || '';
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: signOut,
-        },
-      ]
-    );
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: signOut,
+      },
+    ]);
   };
 
   const handleSaveProfile = async () => {
@@ -76,7 +72,10 @@ export default function SettingsScreen() {
       });
       setShowEditProfile(false);
       refetchProfile();
-    } catch {
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to update profile:', error);
+      }
       Alert.alert('Error', 'Failed to update profile');
     } finally {
       setIsSaving(false);
@@ -90,17 +89,19 @@ export default function SettingsScreen() {
       await updateProfile.mutateAsync({ preferred_currency: code });
       refetchProfile();
     } catch (error) {
-      console.error('Failed to update currency:', error);
+      if (__DEV__) {
+        console.error('Failed to update currency:', error);
+      }
     }
   };
 
   const getCurrencyLabel = (code: string) => {
-    const currency = CURRENCIES.find(c => c.code === code);
+    const currency = CURRENCIES.find((c) => c.code === code);
     return currency?.label || code;
   };
 
   const getAreaUnitLabel = (id: string) => {
-    const unit = AREA_UNITS.find(u => u.id === id);
+    const unit = AREA_UNITS.find((u) => u.id === id);
     return unit?.label || id;
   };
 
@@ -123,9 +124,7 @@ export default function SettingsScreen() {
             )}
           </View>
           <View className="flex-1 ml-4">
-            <Text className="text-lg font-semibold text-surface-900">
-              {userName}
-            </Text>
+            <Text className="text-lg font-semibold text-surface-900">{userName}</Text>
             <Text className="text-sm text-surface-500">{userEmail}</Text>
             {userPhone ? (
               <Text className="text-xs text-surface-400 mt-0.5">{userPhone}</Text>
@@ -139,16 +138,9 @@ export default function SettingsScreen() {
 
       {/* General Section */}
       <View className="mt-6 px-4">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">
-          GENERAL
-        </Text>
+        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">GENERAL</Text>
         <View className="bg-white rounded-2xl overflow-hidden">
-          <SettingsItem
-            icon="globe-outline"
-            title="Language"
-            value="System Default"
-            disabled
-          />
+          <SettingsItem icon="globe-outline" title="Language" value="System Default" disabled />
           <TouchableOpacity onPress={() => setShowAreaPicker(true)}>
             <SettingsItem
               icon="resize-outline"
@@ -194,26 +186,18 @@ export default function SettingsScreen() {
 
       {/* Support Section */}
       <View className="mt-6 px-4">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">
-          SUPPORT
-        </Text>
+        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">SUPPORT</Text>
         <View className="bg-white rounded-2xl overflow-hidden">
           <SettingsItem icon="help-circle-outline" title="Help Center" />
           <SettingsItem icon="chatbubble-outline" title="Contact Support" />
           <SettingsItem icon="document-text-outline" title="Privacy Policy" />
-          <SettingsItem
-            icon="shield-checkmark-outline"
-            title="Terms of Service"
-            isLast
-          />
+          <SettingsItem icon="shield-checkmark-outline" title="Terms of Service" isLast />
         </View>
       </View>
 
       {/* Account Section */}
       <View className="mt-6 px-4">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">
-          ACCOUNT
-        </Text>
+        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">ACCOUNT</Text>
         <View className="bg-white rounded-2xl overflow-hidden">
           <TouchableOpacity
             onPress={handleSignOut}
@@ -223,9 +207,7 @@ export default function SettingsScreen() {
             <View className="w-9 h-9 rounded-lg bg-red-100 items-center justify-center">
               <Ionicons name="log-out-outline" size={20} color="#EF4444" />
             </View>
-            <Text className="flex-1 ml-3 text-base text-red-600">
-              Sign Out
-            </Text>
+            <Text className="flex-1 ml-3 text-base text-red-600">Sign Out</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -334,9 +316,7 @@ export default function SettingsScreen() {
                     index < CURRENCIES.length - 1 ? 'border-b border-surface-100' : ''
                   }`}
                 >
-                  <Text className="flex-1 text-base text-surface-900">
-                    {currency.label}
-                  </Text>
+                  <Text className="flex-1 text-base text-surface-900">{currency.label}</Text>
                   {selectedCurrency === currency.code && (
                     <Ionicons name="checkmark-circle" size={22} color="#408059" />
                   )}
@@ -376,9 +356,7 @@ export default function SettingsScreen() {
                     index < AREA_UNITS.length - 1 ? 'border-b border-surface-100' : ''
                   }`}
                 >
-                  <Text className="flex-1 text-base text-surface-900">
-                    {unit.label}
-                  </Text>
+                  <Text className="flex-1 text-base text-surface-900">{unit.label}</Text>
                   {selectedAreaUnit === unit.id && (
                     <Ionicons name="checkmark-circle" size={22} color="#408059" />
                   )}
@@ -386,8 +364,8 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-         </View>
-       </Modal>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -416,9 +394,7 @@ function SettingsItem({
         <Ionicons name={icon} size={20} color="#6B7280" />
       </View>
       <Text className="flex-1 ml-3 text-base text-surface-900">{title}</Text>
-      {value && (
-        <Text className="text-sm text-surface-500 mr-2">{value}</Text>
-      )}
+      {value && <Text className="text-sm text-surface-500 mr-2">{value}</Text>}
       {!disabled && <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />}
     </View>
   );
@@ -438,9 +414,7 @@ function NotificationToggle({
 
   return (
     <View
-      className={`flex-row items-center px-4 py-3 ${
-        !isLast ? 'border-b border-surface-100' : ''
-      }`}
+      className={`flex-row items-center px-4 py-3 ${!isLast ? 'border-b border-surface-100' : ''}`}
     >
       <View className="flex-1">
         <Text className="text-base text-surface-900">{title}</Text>

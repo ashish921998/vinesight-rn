@@ -89,7 +89,7 @@ class AIService {
         response.choices[0]?.message?.content ||
         'I apologize, but I encountered an issue generating a response. Please try again.';
 
-      const suggestions = await this.generateFollowUpSuggestions(userMessage, conversationHistory);
+      const suggestions = await this.generateFollowUpSuggestions(userMessage);
 
       return {
         message: {
@@ -110,10 +110,7 @@ class AIService {
     }
   }
 
-  private async generateFollowUpSuggestions(
-    lastUserMessage: string,
-    _conversationHistory: ChatMessage[],
-  ): Promise<string[]> {
+  private async generateFollowUpSuggestions(lastUserMessage: string): Promise<string[]> {
     if (!this.openai) return [];
 
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [

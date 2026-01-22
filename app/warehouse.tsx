@@ -72,7 +72,11 @@ export default function WarehouseScreen() {
         style: 'destructive',
         onPress: () => {
           if (item.id) {
-            deleteItemMutation.mutate(item.id);
+            deleteItemMutation.mutate(item.id, {
+              onError: (error) => {
+                Alert.alert('Error', error.message || 'Failed to delete item');
+              },
+            });
           }
         },
       },

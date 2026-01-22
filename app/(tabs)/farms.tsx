@@ -26,13 +26,14 @@ export default function FarmsScreen() {
   const filteredFarms = useMemo(() => {
     if (!farms) return [];
     if (!searchQuery.trim()) return farms;
-    
+
     const query = searchQuery.toLowerCase().trim();
-    return farms.filter(farm => 
-      farm.name.toLowerCase().includes(query) ||
-      farm.crop?.toLowerCase().includes(query) ||
-      farm.crop_variety?.toLowerCase().includes(query) ||
-      farm.region?.toLowerCase().includes(query)
+    return farms.filter(
+      (farm) =>
+        farm.name.toLowerCase().includes(query) ||
+        farm.crop?.toLowerCase().includes(query) ||
+        farm.crop_variety?.toLowerCase().includes(query) ||
+        farm.region?.toLowerCase().includes(query),
     );
   }, [farms, searchQuery]);
 
@@ -55,7 +56,7 @@ export default function FarmsScreen() {
     if (typeof farmId !== 'number') return;
     Alert.alert(
       'Delete Farm',
-      `Are you sure you want to delete "${farm.name}"? This action cannot be undone and will delete all associated data.`,
+      `Are you sure you want to delete "${farm.name}"? This will also delete all associated data including irrigation records, spray records, harvests, expenses, soil profiles, and other farm-related data. This action cannot be undone.`,
       [
         {
           text: 'Cancel',
@@ -73,7 +74,7 @@ export default function FarmsScreen() {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -91,17 +92,13 @@ export default function FarmsScreen() {
   const renderHeader = () => (
     <View className="px-4 pb-4">
       {/* Search Bar */}
-      <View 
+      <View
         className={`
           flex-row items-center bg-white rounded-xl px-4 py-3
           border ${isSearchFocused ? 'border-primary-500' : 'border-gray-200'}
         `}
       >
-        <Ionicons 
-          name="search-outline" 
-          size={20} 
-          color={isSearchFocused ? '#408059' : '#c7c7cc'} 
-        />
+        <Ionicons name="search-outline" size={20} color={isSearchFocused ? '#408059' : '#c7c7cc'} />
         <TextInput
           className="flex-1 ml-3 text-base"
           style={{ color: '#000000' }}
@@ -133,55 +130,37 @@ export default function FarmsScreen() {
       {/* Quick Stats */}
       {!searchQuery.trim() && farms && farms.length > 0 && (
         <View className="flex-row mt-4 gap-3">
-          <View 
-            className="flex-1 rounded-xl p-3"
-            style={{ backgroundColor: '#ffffff' }}
-          >
+          <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: '#ffffff' }}>
             <View className="flex-row items-center">
-              <View 
+              <View
                 className="w-8 h-8 rounded-lg items-center justify-center"
                 style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
               >
                 <Ionicons name="leaf" size={16} color="#408059" />
               </View>
               <View className="ml-2">
-                <Text 
-                  className="text-lg font-bold"
-                  style={{ color: '#000000' }}
-                >
+                <Text className="text-lg font-bold" style={{ color: '#000000' }}>
                   {farms.length}
                 </Text>
-                <Text 
-                  className="text-xs"
-                  style={{ color: '#8e8e93' }}
-                >
+                <Text className="text-xs" style={{ color: '#8e8e93' }}>
                   Total Farms
                 </Text>
               </View>
             </View>
           </View>
-          <View 
-            className="flex-1 rounded-xl p-3"
-            style={{ backgroundColor: '#ffffff' }}
-          >
+          <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: '#ffffff' }}>
             <View className="flex-row items-center">
-              <View 
+              <View
                 className="w-8 h-8 rounded-lg items-center justify-center"
                 style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
               >
                 <Ionicons name="resize" size={16} color="#408059" />
               </View>
               <View className="ml-2">
-                <Text 
-                  className="text-lg font-bold"
-                  style={{ color: '#000000' }}
-                >
+                <Text className="text-lg font-bold" style={{ color: '#000000' }}>
                   {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}
                 </Text>
-                <Text 
-                  className="text-xs"
-                  style={{ color: '#8e8e93' }}
-                >
+                <Text className="text-xs" style={{ color: '#8e8e93' }}>
                   Total Acres
                 </Text>
               </View>
@@ -197,10 +176,7 @@ export default function FarmsScreen() {
       return (
         <View className="flex-1 items-center justify-center p-8">
           <ActivityIndicator size="large" color="#408059" />
-          <Text 
-            className="text-base mt-4"
-            style={{ color: '#8e8e93' }}
-          >
+          <Text className="text-base mt-4" style={{ color: '#8e8e93' }}>
             Loading farms...
           </Text>
         </View>
@@ -210,32 +186,20 @@ export default function FarmsScreen() {
     if (searchQuery.trim()) {
       return (
         <View className="flex-1 items-center justify-center p-8">
-          <View 
+          <View
             className="w-20 h-20 rounded-full items-center justify-center mb-4"
             style={{ backgroundColor: '#f2f2f7' }}
           >
             <Ionicons name="search-outline" size={36} color="#c7c7cc" />
           </View>
-          <Text 
-            className="text-lg font-semibold text-center"
-            style={{ color: '#000000' }}
-          >
+          <Text className="text-lg font-semibold text-center" style={{ color: '#000000' }}>
             No Results Found
           </Text>
-          <Text 
-            className="text-base text-center mt-2"
-            style={{ color: '#8e8e93' }}
-          >
+          <Text className="text-base text-center mt-2" style={{ color: '#8e8e93' }}>
             Try a different search term
           </Text>
-          <TouchableOpacity 
-            onPress={() => setSearchQuery('')}
-            className="mt-4"
-          >
-            <Text 
-              className="font-medium"
-              style={{ color: '#408059' }}
-            >
+          <TouchableOpacity onPress={() => setSearchQuery('')} className="mt-4">
+            <Text className="font-medium" style={{ color: '#408059' }}>
               Clear Search
             </Text>
           </TouchableOpacity>
@@ -245,25 +209,19 @@ export default function FarmsScreen() {
 
     return (
       <View className="flex-1 items-center justify-center p-8">
-        <View 
+        <View
           className="w-24 h-24 rounded-full items-center justify-center mb-6"
           style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
         >
           <Ionicons name="leaf-outline" size={48} color="#408059" />
         </View>
-        <Text 
-          className="text-xl font-semibold text-center"
-          style={{ color: '#000000' }}
-        >
+        <Text className="text-xl font-semibold text-center" style={{ color: '#000000' }}>
           No Farms Yet
         </Text>
-        <Text 
-          className="text-base text-center mt-2"
-          style={{ color: '#8e8e93' }}
-        >
+        <Text className="text-base text-center mt-2" style={{ color: '#8e8e93' }}>
           Add your first farm to start tracking irrigation, sprays, and harvests.
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           className="px-6 py-3 rounded-xl mt-6"
           style={{ backgroundColor: '#408059' }}
           onPress={handleAddFarm}
@@ -275,10 +233,7 @@ export default function FarmsScreen() {
   };
 
   return (
-    <View
-      className="flex-1"
-      style={{ backgroundColor: '#f2f2f7' }}
-    >
+    <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
       <FlatList
         data={filteredFarms}
         renderItem={renderFarm}

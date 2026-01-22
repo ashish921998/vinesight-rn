@@ -69,8 +69,9 @@ export default function AddTaskModal({
   const isEditing = !!editingTask;
 
   // Track previous state to prevent unnecessary updates
-  const prevVisibleRef = useRef(visible);
-  const prevEditingTaskIdRef = useRef(editingTask?.id);
+  const prevVisibleRef = useRef(false);
+  const prevEditingTaskIdRef = useRef<number | null | undefined>(undefined);
+  const prevEditingTaskUpdatedAtRef = useRef<string | undefined>(undefined);
 
   const resetForm = () => {
     setTitle('');
@@ -86,10 +87,12 @@ export default function AddTaskModal({
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    // Only update when modal becomes visible or editingTask changes
+    // Update when modal becomes visible, editingTask changes, or task data is updated
     if (visible) {
       const shouldUpdate =
-        !prevVisibleRef.current || editingTask?.id !== prevEditingTaskIdRef.current;
+        !prevVisibleRef.current ||
+        editingTask?.id !== prevEditingTaskIdRef.current ||
+        editingTask?.updated_at !== prevEditingTaskUpdatedAtRef.current;
 
       if (shouldUpdate) {
         if (editingTask) {
@@ -112,6 +115,7 @@ export default function AddTaskModal({
     }
     prevVisibleRef.current = visible;
     prevEditingTaskIdRef.current = editingTask?.id;
+    prevEditingTaskUpdatedAtRef.current = editingTask?.updated_at;
   }, [visible, editingTask, farms, initialFarmId]);
   /* eslint-enable react-hooks/set-state-in-effect */
 

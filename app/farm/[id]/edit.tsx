@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useFarm, useUpdateFarm } from '@/hooks';
 import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
-import type { FarmInsert } from '@/types';
+import type { FarmUpdate } from '@/types';
 
 function Section({
   title,
@@ -65,6 +65,13 @@ function FormField({
   );
 }
 
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function EditFarmScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -78,7 +85,7 @@ export default function EditFarmScreen() {
   const [selectedCrop, setSelectedCrop] = useState<CropType>('Grapes');
   const [cropVariety, setCropVariety] = useState('');
   const [customVariety, setCustomVariety] = useState('');
-  const [plantingDate, setPlantingDate] = useState(new Date());
+  const [plantingDate, setPlantingDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [vineSpacing, setVineSpacing] = useState('');
@@ -100,13 +107,17 @@ export default function EditFarmScreen() {
   const [showVarietyPicker, setShowVarietyPicker] = useState(false);
   const [varietySearchText, setVarietySearchText] = useState('');
 
-  // Track previous farm ID to detect when farm data changes
+  // Track previous farm ID and updated_at to detect when farm data changes
   const prevFarmIdRef = useRef<number | undefined>(undefined);
+  const prevUpdatedAtRef = useRef<string | null | undefined>(undefined);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    // Only update form when we get a new farm (different ID)
-    if (farm && farm.id !== prevFarmIdRef.current) {
+    // Update form when we get a new farm (different ID) or when farm data is updated
+    if (
+      farm &&
+      (farm.id !== prevFarmIdRef.current || farm.updated_at !== prevUpdatedAtRef.current)
+    ) {
       setName(farm.name || '');
       setRegion(farm.region || '');
       setArea(farm.area?.toString() || '');
@@ -123,6 +134,7 @@ export default function EditFarmScreen() {
         setDateOfPruning(new Date(farm.date_of_pruning));
       }
       prevFarmIdRef.current = farm.id;
+      prevUpdatedAtRef.current = farm.updated_at;
     }
   }, [farm]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -175,18 +187,18 @@ export default function EditFarmScreen() {
 
     const finalVariety = cropVariety === 'Custom' ? customVariety : cropVariety;
 
-    const farmData: Partial<FarmInsert> = {
+    const farmData: FarmUpdate = {
       name: name.trim(),
       region: region.trim(),
       area: parseFloat(area),
       crop: selectedCrop,
       crop_variety: finalVariety,
-      planting_date: plantingDate.toISOString().split('T')[0],
+      planting_date: plantingDate ? formatLocalDate(plantingDate) : undefined,
       vine_spacing: vineSpacing ? parseFloat(vineSpacing) : null,
       row_spacing: rowSpacing ? parseFloat(rowSpacing) : null,
       total_tank_capacity: totalTankCapacity ? parseFloat(totalTankCapacity) : null,
       system_discharge: systemDischarge ? parseFloat(systemDischarge) : null,
-      date_of_pruning: dateOfPruning ? dateOfPruning.toISOString().split('T')[0] : null,
+      date_of_pruning: dateOfPruning ? formatLocalDate(dateOfPruning) : null,
     };
 
     try {
@@ -199,11 +211,29 @@ export default function EditFarmScreen() {
     }
   };
 
-  if (farmLoading || !farm) {
+  if (farmLoading) {
     return (
       <View className="flex-1 bg-surface-50 justify-center items-center">
         <ActivityIndicator size="large" color="#408059" />
         <Text className="text-surface-500 mt-4">Loading farm...</Text>
+      </View>
+    );
+  }
+
+  if (!farm) {
+    return (
+      <View className="flex-1 bg-surface-50 justify-center items-center px-8">
+        <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
+        <Text className="text-xl font-bold text-surface-900 mt-4">Farm Not Found</Text>
+        <Text className="text-surface-500 text-center mt-2">
+          The farm you&apos;re looking for doesn&apos;t exist or has been deleted.
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="mt-6 bg-primary-500 px-6 py-3 rounded-xl"
+        >
+          <Text className="text-white font-semibold">Go Back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -322,8 +352,10 @@ export default function EditFarmScreen() {
                 onPress={() => setShowDatePicker(true)}
               >
                 <Ionicons name="calendar-outline" size={20} color="#6B7280" />
-                <Text className="text-base text-surface-900 ml-3">
-                  {plantingDate.toLocaleDateString()}
+                <Text
+                  className={`text-base ml-3 ${plantingDate ? 'text-surface-900' : 'text-surface-400'}`}
+                >
+                  {plantingDate ? plantingDate.toLocaleDateString() : 'Select date'}
                 </Text>
               </TouchableOpacity>
             </FormField>
@@ -436,54 +468,62 @@ export default function EditFarmScreen() {
       </KeyboardAvoidingView>
 
       {showVarietyPicker && (
-        <View className="absolute inset-0 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[70%]">
-            <View className="flex-row items-center justify-between p-4 border-b border-surface-200">
-              <Text className="text-lg font-semibold text-surface-900">Select Variety</Text>
-              <TouchableOpacity onPress={() => setShowVarietyPicker(false)}>
-                <Ionicons name="close" size={24} color="#111827" />
-              </TouchableOpacity>
-            </View>
-
-            <View className="px-4 py-3 border-b border-surface-100">
-              <View className="flex-row items-center bg-surface-50 rounded-xl px-4 py-2.5">
-                <Ionicons name="search" size={20} color="#9CA3AF" />
-                <TextInput
-                  className="flex-1 ml-2 text-base text-surface-900"
-                  placeholder="Search varieties..."
-                  placeholderTextColor="#9CA3AF"
-                  value={varietySearchText}
-                  onChangeText={setVarietySearchText}
-                />
-              </View>
-            </View>
-
-            <ScrollView className="max-h-80">
-              {filteredVarieties.map((variety) => (
-                <TouchableOpacity
-                  key={variety}
-                  className={`px-4 py-3.5 border-b border-surface-100 ${
-                    cropVariety === variety ? 'bg-primary-50' : ''
-                  }`}
-                  onPress={() => handleSelectVariety(variety)}
-                >
-                  <Text
-                    className={`text-base ${
-                      cropVariety === variety ? 'text-primary-600 font-medium' : 'text-surface-900'
-                    }`}
-                  >
-                    {variety}
-                  </Text>
+        <TouchableOpacity
+          className="absolute inset-0 bg-black/50 justify-end"
+          activeOpacity={1}
+          onPress={() => setShowVarietyPicker(false)}
+        >
+          <TouchableOpacity activeOpacity={1}>
+            <View className="bg-white rounded-t-3xl max-h-[70%]">
+              <View className="flex-row items-center justify-between p-4 border-b border-surface-200">
+                <Text className="text-lg font-semibold text-surface-900">Select Variety</Text>
+                <TouchableOpacity onPress={() => setShowVarietyPicker(false)}>
+                  <Ionicons name="close" size={24} color="#111827" />
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
+              </View>
+
+              <View className="px-4 py-3 border-b border-surface-100">
+                <View className="flex-row items-center bg-surface-50 rounded-xl px-4 py-2.5">
+                  <Ionicons name="search" size={20} color="#9CA3AF" />
+                  <TextInput
+                    className="flex-1 ml-2 text-base text-surface-900"
+                    placeholder="Search varieties..."
+                    placeholderTextColor="#9CA3AF"
+                    value={varietySearchText}
+                    onChangeText={setVarietySearchText}
+                  />
+                </View>
+              </View>
+
+              <ScrollView className="max-h-80">
+                {filteredVarieties.map((variety) => (
+                  <TouchableOpacity
+                    key={variety}
+                    className={`px-4 py-3.5 border-b border-surface-100 ${
+                      cropVariety === variety ? 'bg-primary-50' : ''
+                    }`}
+                    onPress={() => handleSelectVariety(variety)}
+                  >
+                    <Text
+                      className={`text-base ${
+                        cropVariety === variety
+                          ? 'text-primary-600 font-medium'
+                          : 'text-surface-900'
+                      }`}
+                    >
+                      {variety}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       )}
 
       {showDatePicker && (
         <DateTimePicker
-          value={plantingDate}
+          value={plantingDate || new Date()}
           mode="date"
           display="default"
           onChange={(event: DateTimePickerEvent, date?: Date) => {

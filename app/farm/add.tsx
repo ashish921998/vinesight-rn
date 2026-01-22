@@ -17,6 +17,13 @@ import { useCreateFarm } from '@/hooks';
 import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
 import type { FarmInsert } from '@/types';
 
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Section component for grouping form fields
 function Section({
   title,
@@ -121,7 +128,8 @@ export default function AddFarmScreen() {
   const isValid = useMemo(() => {
     if (!name.trim()) return false;
     if (!region.trim()) return false;
-    if (!area || parseFloat(area) <= 0) return false;
+    const areaValue = Number(area);
+    if (!Number.isFinite(areaValue) || areaValue <= 0) return false;
     if (cropVariety === 'Custom' && !customVariety.trim()) return false;
     if (!cropVariety && !customVariety.trim()) return false;
     return true;
@@ -157,12 +165,12 @@ export default function AddFarmScreen() {
       area: parseFloat(area),
       crop: selectedCrop,
       crop_variety: finalVariety,
-      planting_date: plantingDate.toISOString().split('T')[0],
+      planting_date: formatLocalDate(plantingDate),
       vine_spacing: vineSpacing ? parseFloat(vineSpacing) : null,
       row_spacing: rowSpacing ? parseFloat(rowSpacing) : null,
       total_tank_capacity: totalTankCapacity ? parseFloat(totalTankCapacity) : null,
       system_discharge: systemDischarge ? parseFloat(systemDischarge) : null,
-      date_of_pruning: dateOfPruning ? dateOfPruning.toISOString().split('T')[0] : null,
+      date_of_pruning: dateOfPruning ? formatLocalDate(dateOfPruning) : null,
     };
 
     try {

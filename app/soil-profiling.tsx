@@ -39,6 +39,7 @@ export default function SoilProfilingScreen() {
   const isLoading = farmLoading || profilesLoading;
 
   // Calculate trends data
+  // Note: profiles are ordered by created_at descending (latest first) via useSoilProfiles hook
   const trendsData = useMemo(() => {
     if (!profiles || profiles.length === 0) return null;
 
