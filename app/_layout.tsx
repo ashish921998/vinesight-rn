@@ -38,7 +38,7 @@ const queryClient = new QueryClient({
   },
 });
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
   const isLoading = useAuthStore((state) => state.isLoading);
 
@@ -81,4 +81,4 @@ export default function RootLayout() {
       </GestureHandlerRootView>
     </ErrorBoundary>
   );
-}
+});

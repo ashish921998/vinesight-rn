@@ -7,10 +7,7 @@ module.exports = {
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
     scheme: 'vinesight',
-    // New Architecture disabled for production stability.
-    // React Native's New Architecture is still experimental and may cause
-    // unexpected crashes in production. Enable after thorough testing.
-    newArchEnabled: false,
+    newArchEnabled: true,
     splash: {
       image: './assets/splash-icon.png',
       resizeMode: 'contain',
@@ -31,6 +28,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
+      versionCode: 2, // Increment this for each new release
       adaptiveIcon: {
         foregroundImage: './assets/playstore.png',
         backgroundColor: '#408059',
@@ -53,7 +51,6 @@ module.exports = {
           locationAlwaysAndWhenInUsePermission: 'Allow Vinesight to use your location.',
         },
       ],
-      '@sentry/react-native/expo',
     ],
     experiments: {
       typedRoutes: true,

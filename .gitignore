@@ -45,3 +45,5 @@ google-service-account.json
 # lint results
 lint-results.json
 *-results.json
+
+.env.local
