@@ -153,7 +153,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
     } catch (error: unknown) {
       set({
-        errorMessage: getErrorMessage(error, 'Sign up failed'),
+        errorMessage: getErrorMessage(error, 'Sign in failed'),
         isAuthenticated: false,
         isLoading: false,
       });

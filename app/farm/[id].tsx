@@ -243,9 +243,15 @@ export default function FarmDetailScreen() {
     return date.toLocaleDateString();
   };
 
+  const startOfDay = (date: Date) => {
+    const result = new Date(date);
+    result.setHours(0, 0, 0, 0);
+    return result;
+  };
+
   const isOverdue = (task: { completed?: boolean; due_date?: string | null }) => {
     if (task.completed || !task.due_date) return false;
-    return new Date(task.due_date) < new Date();
+    return new Date(task.due_date) < startOfDay(new Date());
   };
 
   const handleWorkboardAction = (action: WorkboardAction) => {
@@ -357,9 +363,6 @@ export default function FarmDetailScreen() {
       />
 
       <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
-        {/* Subtle top gradient */}
-        <View className="absolute top-0 left-0 right-0" />
-
         <ScrollView
           className="flex-1"
           refreshControl={
@@ -494,9 +497,6 @@ export default function FarmDetailScreen() {
               className="rounded-2xl p-4 mt-2"
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 5 },
-                borderRadius: 12,
               }}
             >
               <View style={{ flexDirection: 'row' }}>
