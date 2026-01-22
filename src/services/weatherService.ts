@@ -32,7 +32,7 @@ export class WeatherService {
   static async getWeatherData(
     latitude?: number,
     longitude?: number,
-    days: number = 7
+    days: number = 7,
   ): Promise<WeatherData> {
     const coords =
       latitude && longitude
@@ -72,9 +72,11 @@ export class WeatherService {
       const data = await response.json();
       return this.parseWeatherResponse(data, coords);
     } catch (error) {
-      console.error('Error fetching weather data:', error);
+      if (__DEV__) {
+        console.error('Error fetching weather data:', error);
+      }
       throw new Error(
-        `Failed to fetch weather data: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to fetch weather data: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -103,7 +105,7 @@ export class WeatherService {
       timezone: string;
       elevation: number;
     },
-    coords: { latitude: number; longitude: number; name: string; region: string; country: string }
+    coords: { latitude: number; longitude: number; name: string; region: string; country: string },
   ): WeatherData {
     const daily = data.daily;
 
@@ -113,15 +115,14 @@ export class WeatherService {
       humidity: Math.round(daily.relative_humidity_2m_mean[0]),
       windSpeed: Math.round(daily.wind_speed_10m_max[0]),
       windDirection: this.getWindDirection(daily.wind_direction_10m_dominant[0]),
-      uvIndex: Math.round(daily.uv_index_max?.[0] || this.estimateUVIndex(daily.shortwave_radiation_sum[0])),
-      cloudCover: this.estimateCloudCover(daily.sunshine_duration[0]),
-      condition: this.getWeatherCondition(
-        daily.temperature_2m_mean[0],
-        daily.precipitation_sum[0]
+      uvIndex: Math.round(
+        daily.uv_index_max?.[0] || this.estimateUVIndex(daily.shortwave_radiation_sum[0]),
       ),
+      cloudCover: this.estimateCloudCover(daily.sunshine_duration[0]),
+      condition: this.getWeatherCondition(daily.temperature_2m_mean[0], daily.precipitation_sum[0]),
       conditionCode: this.getConditionCode(
         daily.temperature_2m_mean[0],
-        daily.precipitation_sum[0]
+        daily.precipitation_sum[0],
       ),
       precipitation: daily.precipitation_sum[0] || 0,
       feelsLike: Math.round(daily.temperature_2m_mean[0]),
@@ -137,19 +138,19 @@ export class WeatherService {
       minHumidity: Math.round(daily.relative_humidity_2m_min[i]),
       avgHumidity: Math.round(daily.relative_humidity_2m_mean[i]),
       precipitation: daily.precipitation_sum[i] || 0,
-      precipitationProbability: daily.precipitation_probability_max?.[i] || 
+      precipitationProbability:
+        daily.precipitation_probability_max?.[i] ||
         this.estimatePrecipitationProbability(daily.precipitation_sum[i]),
       windSpeed: Math.round(daily.wind_speed_10m_max[i]),
       windDirection: this.getWindDirection(daily.wind_direction_10m_dominant[i]),
-      condition: this.getWeatherCondition(
-        daily.temperature_2m_mean[i],
-        daily.precipitation_sum[i]
-      ),
+      condition: this.getWeatherCondition(daily.temperature_2m_mean[i], daily.precipitation_sum[i]),
       conditionCode: this.getConditionCode(
         daily.temperature_2m_mean[i],
-        daily.precipitation_sum[i]
+        daily.precipitation_sum[i],
       ),
-      uvIndex: Math.round(daily.uv_index_max?.[i] || this.estimateUVIndex(daily.shortwave_radiation_sum[i])),
+      uvIndex: Math.round(
+        daily.uv_index_max?.[i] || this.estimateUVIndex(daily.shortwave_radiation_sum[i]),
+      ),
       et0: daily.et0_fao_evapotranspiration[i],
     }));
 
@@ -217,7 +218,7 @@ export class WeatherService {
 
   private static generateIrrigationAlert(
     weather: WeatherData,
-    etc: ETc
+    etc: ETc,
   ): WeatherAlerts['irrigation'] {
     const current = weather.current;
     const forecast = weather.forecast.slice(0, 3);
@@ -337,7 +338,7 @@ export class WeatherService {
   static generateIrrigationSchedule(
     weather: WeatherData,
     etc: ETc,
-    soilType: SoilType = 'medium'
+    soilType: SoilType = 'medium',
   ): IrrigationSchedule {
     const schedule: IrrigationSchedule['schedule'] = [];
     const forecast = weather.forecast.slice(0, 7);
@@ -399,8 +400,25 @@ export class WeatherService {
   // Helper methods
   private static getWindDirection(degrees: number): string {
     if (degrees == null || isNaN(degrees)) return 'N/A';
-    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-    const index = Math.round(((degrees % 360) + 360) % 360 / 22.5) % 16;
+    const directions = [
+      'N',
+      'NNE',
+      'NE',
+      'ENE',
+      'E',
+      'ESE',
+      'SE',
+      'SSE',
+      'S',
+      'SSW',
+      'SW',
+      'WSW',
+      'W',
+      'WNW',
+      'NW',
+      'NNW',
+    ];
+    const index = Math.round((((degrees % 360) + 360) % 360) / 22.5) % 16;
     return directions[index];
   }
 
@@ -429,7 +447,10 @@ export class WeatherService {
   private static estimateCloudCover(sunshineDuration: number): number {
     const sunshineDurationHours = sunshineDuration / 3600;
     const maxSunshine = 12;
-    return Math.max(0, Math.min(100, Math.round(((maxSunshine - sunshineDurationHours) / maxSunshine) * 100)));
+    return Math.max(
+      0,
+      Math.min(100, Math.round(((maxSunshine - sunshineDurationHours) / maxSunshine) * 100)),
+    );
   }
 
   private static estimatePrecipitationProbability(precipitation: number): number {
@@ -445,12 +466,18 @@ export class WeatherService {
    */
   static getWeatherIcon(conditionCode: number): string {
     switch (conditionCode) {
-      case 1000: return 'sunny';
-      case 1003: return 'partly-sunny';
-      case 1006: return 'cloudy';
-      case 1153: return 'rainy';
-      case 1186: return 'rainy';
-      default: return 'cloudy';
+      case 1000:
+        return 'sunny';
+      case 1003:
+        return 'partly-sunny';
+      case 1006:
+        return 'cloudy';
+      case 1153:
+        return 'rainy';
+      case 1186:
+        return 'rainy';
+      default:
+        return 'cloudy';
     }
   }
 }

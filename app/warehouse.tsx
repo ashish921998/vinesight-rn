@@ -11,7 +11,7 @@ import {
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useWarehouseItems, useProfile } from '../src/hooks';
+import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import AddWarehouseItemModal from '../src/components/screens/AddWarehouseItemModal';
 import AddStockModal from '../src/components/screens/AddStockModal';
@@ -30,6 +30,7 @@ const COLORS = {
 export default function WarehouseScreen() {
   const { data: profile } = useProfile();
   const { data: items, isLoading, refetch, isRefetching } = useWarehouseItems();
+  const deleteItemMutation = useDeleteWarehouseItem();
 
   const [filter, setFilter] = useState<FilterType>('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -236,15 +237,14 @@ export default function WarehouseScreen() {
                             Reorder at: {item.reorder_quantity} {item.unit}
                           </Text>
                         )}
-                        <View className="mt-2 py-1.5 px-3 rounded-full items-center self-start">
+                        <View
+                          className="mt-2 py-1.5 px-3 rounded-full items-center self-start"
+                          style={{ backgroundColor: COLORS.primary }}
+                        >
                           <Text
                             className="text-xs font-medium"
                             style={{
                               color: 'white',
-                              backgroundColor: COLORS.primary,
-                              paddingHorizontal: 12,
-                              paddingVertical: 6,
-                              borderRadius: 999,
                             }}
                           >
                             Add Stock

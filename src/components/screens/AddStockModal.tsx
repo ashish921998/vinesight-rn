@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -28,12 +28,24 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
 
   const currency = profile?.preferred_currency || 'INR';
 
+  // Track previous visible/item state to prevent unnecessary updates
+  const prevVisibleRef = useRef(visible);
+  const prevItemIdRef = useRef(item?.id);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    // Only update when modal becomes visible or item changes
     if (visible && item) {
-      setQuantityToAdd('');
-      setNewUnitPrice(item.unit_price.toString());
+      const shouldUpdate = !prevVisibleRef.current || item.id !== prevItemIdRef.current;
+      if (shouldUpdate) {
+        setQuantityToAdd('');
+        setNewUnitPrice(item.unit_price.toString());
+      }
     }
+    prevVisibleRef.current = visible;
+    prevItemIdRef.current = item?.id;
   }, [visible, item]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const newQuantity = (item?.quantity || 0) + parseFloat(quantityToAdd || '0');
   const newValue = newQuantity * parseFloat(newUnitPrice || '0');

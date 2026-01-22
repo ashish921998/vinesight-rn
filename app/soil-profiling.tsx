@@ -254,15 +254,31 @@ export default function SoilProfilingScreen() {
           </Text>
           <View className="flex-row items-center">
             <Ionicons
-              name={trendsData.moistureChange >= 0 ? 'arrow-up' : 'arrow-down'}
+              name={
+                trendsData.moistureChange !== null && trendsData.moistureChange >= 0
+                  ? 'arrow-up'
+                  : 'arrow-down'
+              }
               size={24}
-              color={trendsData.moistureChange >= 0 ? '#10B981' : '#EF4444'}
+              color={
+                trendsData.moistureChange !== null && trendsData.moistureChange >= 0
+                  ? '#10B981'
+                  : '#EF4444'
+              }
             />
             <Text
               className="text-2xl font-bold ml-2"
-              style={{ color: trendsData.moistureChange >= 0 ? '#10B981' : '#EF4444' }}
+              style={{
+                color:
+                  trendsData.moistureChange !== null && trendsData.moistureChange >= 0
+                    ? '#10B981'
+                    : '#EF4444',
+              }}
             >
-              {Math.abs(trendsData.moistureChange).toFixed(1)}%
+              {trendsData.moistureChange !== null
+                ? Math.abs(trendsData.moistureChange).toFixed(1)
+                : '0.0'}
+              %
             </Text>
             <Text className="ml-2" style={{ color: '#8e8e93' }}>
               from last profile

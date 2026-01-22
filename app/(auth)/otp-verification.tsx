@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,15 +41,17 @@ export default function OTPVerificationScreen() {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  const [lastOtpSentSuccess, setLastOtpSentSuccess] = useState(otpSentSuccessfully);
+  const lastOtpSentSuccessRef = useRef(otpSentSuccessfully);
 
   // Reset cooldown when OTP sent successfully
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (otpSentSuccessfully && !lastOtpSentSuccess) {
+    if (otpSentSuccessfully && !lastOtpSentSuccessRef.current) {
       setResendCooldown(RESEND_COOLDOWN);
     }
-    setLastOtpSentSuccess(otpSentSuccessfully);
-  }, [otpSentSuccessfully, lastOtpSentSuccess]);
+    lastOtpSentSuccessRef.current = otpSentSuccessfully;
+  }, [otpSentSuccessfully]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleVerify = useCallback(async () => {
     if (!email || otpCode.length !== 6) return;
@@ -62,12 +64,19 @@ export default function OTPVerificationScreen() {
     }
   }, [email, otpCode, verifyOTP, clearError]);
 
+  const verificationTriggeredRef = useRef(false);
+
   // Auto-submit when 6 digits entered
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (otpCode.length === 6 && email && !isLoading) {
+    if (otpCode.length === 6 && email && !isLoading && !verificationTriggeredRef.current) {
+      verificationTriggeredRef.current = true;
       handleVerify();
+    } else if (otpCode.length !== 6) {
+      verificationTriggeredRef.current = false;
     }
-  }, [otpCode, email, handleVerify, isLoading]);
+  }, [otpCode, email, isLoading, handleVerify]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;

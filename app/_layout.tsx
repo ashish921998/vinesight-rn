@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthStore, initAuthListener, cleanupAuthListener } from '@/stores';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Prevent auto-hide splash screen
 SplashScreen.preventAutoHideAsync();
@@ -28,8 +29,8 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  const initialize = useAuthStore(state => state.initialize);
-  const isLoading = useAuthStore(state => state.isLoading);
+  const initialize = useAuthStore((state) => state.initialize);
+  const isLoading = useAuthStore((state) => state.isLoading);
 
   useEffect(() => {
     // Initialize auth state
@@ -38,7 +39,7 @@ export default function RootLayout() {
       // Initialize auth listener AFTER navigation is set up
       initAuthListener();
     };
-    
+
     init();
 
     // Cleanup listener on unmount
@@ -55,17 +56,19 @@ export default function RootLayout() {
   }, [isLoading]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <StatusBar style="auto" />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
-        </QueryClientProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <QueryClientProvider client={queryClient}>
+            <StatusBar style="auto" />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          </QueryClientProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }

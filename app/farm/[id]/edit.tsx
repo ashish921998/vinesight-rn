@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -100,8 +100,13 @@ export default function EditFarmScreen() {
   const [showVarietyPicker, setShowVarietyPicker] = useState(false);
   const [varietySearchText, setVarietySearchText] = useState('');
 
+  // Track previous farm ID to detect when farm data changes
+  const prevFarmIdRef = useRef<number | undefined>(undefined);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (farm) {
+    // Only update form when we get a new farm (different ID)
+    if (farm && farm.id !== prevFarmIdRef.current) {
       setName(farm.name || '');
       setRegion(farm.region || '');
       setArea(farm.area?.toString() || '');
@@ -117,8 +122,10 @@ export default function EditFarmScreen() {
       if (farm.date_of_pruning) {
         setDateOfPruning(new Date(farm.date_of_pruning));
       }
+      prevFarmIdRef.current = farm.id;
     }
   }, [farm]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const varieties = useMemo(() => {
     return CROP_VARIETIES[selectedCrop] || ['Custom'];

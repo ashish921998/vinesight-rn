@@ -30,7 +30,9 @@ const ExpoSecureStoreAdapter = {
       }
       return await SecureStore.getItemAsync(key);
     } catch (error) {
-      console.error('SecureStore getItem error:', error);
+      if (__DEV__) {
+        console.error('SecureStore getItem error:', error);
+      }
       return null;
     }
   },
@@ -43,7 +45,9 @@ const ExpoSecureStoreAdapter = {
       }
       await SecureStore.setItemAsync(key, value);
     } catch (error) {
-      console.error('SecureStore setItem error:', error);
+      if (__DEV__) {
+        console.error('SecureStore setItem error:', error);
+      }
     }
   },
 
@@ -55,7 +59,9 @@ const ExpoSecureStoreAdapter = {
       }
       await SecureStore.deleteItemAsync(key);
     } catch (error) {
-      console.error('SecureStore removeItem error:', error);
+      if (__DEV__) {
+        console.error('SecureStore removeItem error:', error);
+      }
     }
   },
 };

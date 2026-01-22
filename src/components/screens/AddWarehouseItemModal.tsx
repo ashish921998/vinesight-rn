@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -50,6 +50,10 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
   const currency = profile?.preferred_currency || 'INR';
   const isEditing = !!editingItem;
 
+  // Track previous state to prevent unnecessary updates
+  const prevVisibleRef = useRef(visible);
+  const prevEditingItemIdRef = useRef(editingItem?.id);
+
   const resetForm = () => {
     setName('');
     setType('fertilizer');
@@ -63,21 +67,31 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
   };
 
   // Reset form when modal opens/closes or editing item changes
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    // Only update when modal becomes visible or editingItem changes
     if (visible) {
-      if (editingItem) {
-        setName(editingItem.name);
-        setType(editingItem.type as WarehouseItemType);
-        setQuantity(editingItem.quantity.toString());
-        setUnit(editingItem.unit as WarehouseUnit);
-        setUnitPrice(editingItem.unit_price.toString());
-        setReorderQuantity(editingItem.reorder_quantity?.toString() || '');
-        setNotes(editingItem.notes || '');
-      } else {
-        resetForm();
+      const shouldUpdate =
+        !prevVisibleRef.current || editingItem?.id !== prevEditingItemIdRef.current;
+
+      if (shouldUpdate) {
+        if (editingItem) {
+          setName(editingItem.name);
+          setType(editingItem.type as WarehouseItemType);
+          setQuantity(editingItem.quantity.toString());
+          setUnit(editingItem.unit as WarehouseUnit);
+          setUnitPrice(editingItem.unit_price.toString());
+          setReorderQuantity(editingItem.reorder_quantity?.toString() || '');
+          setNotes(editingItem.notes || '');
+        } else {
+          resetForm();
+        }
       }
     }
+    prevVisibleRef.current = visible;
+    prevEditingItemIdRef.current = editingItem?.id;
   }, [visible, editingItem]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSubmit = async () => {
     // Validation

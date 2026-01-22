@@ -43,7 +43,7 @@ npm run web
 
 ## Project Structure
 
-```
+```text
 vinesight-rn/
 ├── app/                    # Expo Router pages (Navigation)
 │   ├── (auth)/             # Auth screens

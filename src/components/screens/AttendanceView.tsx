@@ -261,7 +261,9 @@ function MarkAttendanceTab({
 
       setCellData(newCellData);
     } catch (error) {
-      console.error('Error loading attendance:', error);
+      if (__DEV__) {
+        console.error('Error loading attendance:', error);
+      }
       Alert.alert('Error', 'Failed to load attendance data');
     } finally {
       setLoading(false);
@@ -369,7 +371,9 @@ function MarkAttendanceTab({
     }
 
     if (errors.length > 0) {
-      console.error('Attendance save partial failures:', errors);
+      if (__DEV__) {
+        console.error('Attendance save partial failures:', errors);
+      }
       Alert.alert('Partial Error', `Saved with ${errors.length} error(s). Reloading...`);
       prevWorkerIdRef.current = undefined;
       setSaving(false);
@@ -712,7 +716,9 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
       const records = await fetchAttendanceForWorker(selectedWorkerId, startDate, endDate);
       setAttendanceData(records);
     } catch (error) {
-      console.error('Error loading calendar attendance:', error);
+      if (__DEV__) {
+        console.error('Error loading calendar attendance:', error);
+      }
       Alert.alert('Error', 'Failed to load attendance');
     } finally {
       setLoading(false);

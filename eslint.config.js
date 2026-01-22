@@ -59,7 +59,6 @@ module.exports = [
       'react-native/no-color-literals': 'off',
       'react-native/no-raw-text': 'off',
       'react-native/no-single-element-style-arrays': 'warn',
-      'react-hooks/set-state-in-effect': 'off',
     },
     settings: {
       react: {

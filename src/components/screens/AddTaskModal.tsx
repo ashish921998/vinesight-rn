@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -68,6 +68,10 @@ export default function AddTaskModal({
 
   const isEditing = !!editingTask;
 
+  // Track previous state to prevent unnecessary updates
+  const prevVisibleRef = useRef(visible);
+  const prevEditingTaskIdRef = useRef(editingTask?.id);
+
   const resetForm = () => {
     setTitle('');
     setDescription('');
@@ -80,26 +84,36 @@ export default function AddTaskModal({
     setShowTemplates(false);
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    // Only update when modal becomes visible or editingTask changes
     if (visible) {
-      if (editingTask) {
-        setTitle(editingTask.title);
-        setDescription(editingTask.description || '');
-        setType(editingTask.type);
-        setPriority(editingTask.priority);
-        setFarmId(editingTask.farm_id);
-        setDueDate(editingTask.due_date || '');
-      } else {
-        resetForm();
-        // Set initial farm if provided, otherwise use first farm
-        if (initialFarmId) {
-          setFarmId(initialFarmId);
-        } else if (farms && farms.length > 0 && farms[0].id) {
-          setFarmId(farms[0].id);
+      const shouldUpdate =
+        !prevVisibleRef.current || editingTask?.id !== prevEditingTaskIdRef.current;
+
+      if (shouldUpdate) {
+        if (editingTask) {
+          setTitle(editingTask.title);
+          setDescription(editingTask.description || '');
+          setType(editingTask.type);
+          setPriority(editingTask.priority);
+          setFarmId(editingTask.farm_id);
+          setDueDate(editingTask.due_date || '');
+        } else {
+          resetForm();
+          // Set initial farm if provided, otherwise use first farm
+          if (initialFarmId) {
+            setFarmId(initialFarmId);
+          } else if (farms && farms.length > 0 && farms[0].id) {
+            setFarmId(farms[0].id);
+          }
         }
       }
     }
+    prevVisibleRef.current = visible;
+    prevEditingTaskIdRef.current = editingTask?.id;
   }, [visible, editingTask, farms, initialFarmId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const applyTemplate = (template: TaskTemplate) => {
     setTitle(template.title);
