@@ -7,8 +7,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Sentry from '@sentry/react-native';
 import { useAuthStore, initAuthListener, cleanupAuthListener } from '@/stores';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+// Initialize Sentry
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enabled: !__DEV__, // Only track errors in production
+  debug: __DEV__, // Show debug info in development
+  tracesSampleRate: 1.0, // Capture 100% of transactions for performance monitoring
+  integrations: [Sentry.reactNativeTracingIntegration()],
+});
 
 // Prevent auto-hide splash screen
 SplashScreen.preventAutoHideAsync();

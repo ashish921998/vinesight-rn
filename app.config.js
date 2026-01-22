@@ -50,6 +50,7 @@ module.exports = {
           locationAlwaysAndWhenInUsePermission: 'Allow Vinesight to use your location.',
         },
       ],
+      '@sentry/react-native/expo',
     ],
     experiments: {
       typedRoutes: true,

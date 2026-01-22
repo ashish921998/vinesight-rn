@@ -1,6 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Sentry from '@sentry/react-native';
 
 interface Props {
   children: ReactNode;
@@ -35,6 +36,14 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({
       error,
       errorInfo: errorInfo.componentStack || null,
+    });
+
+    // Report to Sentry
+    Sentry.withScope((scope) => {
+      scope.setContext('errorInfo', {
+        componentStack: errorInfo.componentStack || 'No component stack',
+      });
+      Sentry.captureException(error);
     });
 
     if (__DEV__) {
