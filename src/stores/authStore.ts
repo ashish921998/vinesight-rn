@@ -137,9 +137,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        errorMessage: error.message || 'Sign in failed',
+        errorMessage: (error as { message?: string }).message || 'Sign in failed',
         isAuthenticated: false,
         isLoading: false,
       });
@@ -175,9 +175,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           isLoading: false,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        errorMessage: error.message || 'Sign up failed',
+        errorMessage: (error as { message?: string }).message || 'Sign up failed',
         isAuthenticated: false,
         isLoading: false,
       });
@@ -233,9 +233,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           isLoading: false,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        errorMessage: error.message || 'Sign up failed',
+        errorMessage: (error as { message?: string }).message || 'Sign up failed',
         isAuthenticated: false,
         isLoading: false,
       });
@@ -259,9 +259,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        errorMessage: error.message || 'Sign out failed',
+        errorMessage: (error as { message?: string }).message || 'Sign out failed',
         isLoading: false,
       });
     }
@@ -292,9 +292,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: true,
         isLoading: false,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        errorMessage: error.message || 'Failed to send OTP',
+        errorMessage: (error as { message?: string }).message || 'Failed to send OTP',
         otpSentSuccessfully: false,
         isLoading: false,
       });
@@ -331,7 +331,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         isLoading: false,
       });
-    } catch (error: any) {
+    } catch (_error: unknown) {
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
         isAuthenticated: false,
@@ -340,27 +340,26 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     }
   },
 
-  // Resend OTP
   resendOTP: async () => {
     const { pendingOTPEmail, pendingOTPType, sendOTP } = get();
-    
+
     if (!pendingOTPEmail) return;
-    
+
     if (pendingOTPType === 'signup') {
       set({ isLoading: true, otpSentSuccessfully: false });
-      
+
       try {
         const { error } = await supabase.auth.resend({
           email: pendingOTPEmail,
           type: 'signup',
         });
-        
+
         if (error) throw error;
-        
+
         set({ isLoading: false, otpSentSuccessfully: true });
-      } catch (error: any) {
+      } catch (error: unknown) {
         set({
-          errorMessage: error.message || 'Failed to resend code',
+          errorMessage: (error as { message?: string }).message || 'Failed to resend code',
           otpSentSuccessfully: false,
           isLoading: false,
         });
@@ -401,13 +400,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const { error } = await supabase.auth.updateUser({
         data: { country },
       });
-      
+
       if (error) throw error;
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       set({ user });
-    } catch (error: any) {
-      set({ errorMessage: error.message || 'Failed to update country' });
+    } catch (error: unknown) {
+      set({ errorMessage: (error as { message?: string }).message || 'Failed to update country' });
     }
   },
 
@@ -417,13 +416,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const { error } = await supabase.auth.updateUser({
         data: { area_unit: areaUnit },
       });
-      
+
       if (error) throw error;
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       set({ user });
-    } catch (error: any) {
-      set({ errorMessage: error.message || 'Failed to update area unit' });
+    } catch (error: unknown) {
+      set({ errorMessage: (error as { message?: string }).message || 'Failed to update area unit' });
     }
   },
 }));

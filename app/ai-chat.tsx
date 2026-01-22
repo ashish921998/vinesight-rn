@@ -9,9 +9,8 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
-  Keyboard,
 } from 'react-native';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
@@ -64,7 +63,6 @@ export default function AIChatScreen() {
   const router = useRouter();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
   const { data: farm } = useFarm(farmId ? parseInt(farmId, 10) : undefined);
-  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');

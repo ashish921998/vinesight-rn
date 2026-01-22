@@ -6,7 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './queryKeys';
-import type { Farm, Worker, HarvestRecord, IrrigationRecord, SprayRecord } from '../types';
+import type { Farm } from '../types';
 import { TABLES, isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
 

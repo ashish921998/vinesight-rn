@@ -8,8 +8,6 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
@@ -32,7 +30,7 @@ import {
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculatorModels';
 import { AddActivityModal, EditActivityModal } from '@/components/screens';
-import type { Farm, IrrigationRecord, SprayRecord, HarvestRecord, ExpenseRecord, FertigationRecord } from '@/types';
+import type { IrrigationRecord, SprayRecord, HarvestRecord, ExpenseRecord, FertigationRecord } from '@/types';
 
 interface CombinedLog {
   id: string;
@@ -43,7 +41,6 @@ interface CombinedLog {
 }
 
 export default function LogsScreen() {
-  const router = useRouter();
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   
   const { data: farms = [], isLoading: farmsLoading } = useFarms();
@@ -300,11 +297,7 @@ export default function LogsScreen() {
               className="rounded-2xl px-4 py-3"
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 5 },
-                shadowOpacity: 0.03,
-                shadowRadius: 10,
-                elevation: 6,
+                borderRadius: 12,
               }}
             >
               <View className="flex-row items-center justify-between">
@@ -341,9 +334,6 @@ export default function LogsScreen() {
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 5 },
-                shadowOpacity: 0.03,
-                shadowRadius: 10,
-                elevation: 6,
               }}
             >
               {/* Search Bar */}
@@ -461,11 +451,6 @@ export default function LogsScreen() {
                 className="rounded-2xl items-center p-10"
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.06,
-                  shadowRadius: 12,
-                  elevation: 6,
                 }}
               >
                 <View
@@ -510,11 +495,6 @@ export default function LogsScreen() {
                         className="rounded-2xl overflow-hidden"
                         style={{
                           backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                          shadowColor: '#000',
-                          shadowOffset: { width: 0, height: 5 },
-                          shadowOpacity: 0.03,
-                          shadowRadius: 10,
-                          elevation: 6,
                         }}
                       >
                         <View className="flex-row items-center p-4">

@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Farm } from '../../types';
 import { isLowWater } from '../../types';
@@ -12,9 +12,11 @@ import { isLowWater } from '../../types';
 interface FarmCardProps {
   farm: Farm;
   onPress?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-export function FarmCard({ farm, onPress }: FarmCardProps) {
+export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
   const needsAttention = isLowWater(farm);
   const statusText = needsAttention ? 'NEEDS ATTENTION' : 'HEALTHY';
   const statusColor = needsAttention ? '#ff3b30' : '#408059';
@@ -41,16 +43,44 @@ export function FarmCard({ farm, onPress }: FarmCardProps) {
         >
           {farm.name}
         </Text>
-        <View 
-          className="px-2 py-1 rounded-full"
-          style={{ backgroundColor: statusBg }}
-        >
-          <Text 
-            className="text-xs font-bold uppercase"
-            style={{ color: statusColor }}
+        <View className="flex-row items-center gap-2">
+          {onEdit && (
+            <TouchableOpacity
+              onPress={(e: any) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              className="w-8 h-8 rounded-lg items-center justify-center active:opacity-70"
+              style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="create-outline" size={18} color="#408059" />
+            </TouchableOpacity>
+          )}
+          {onDelete && (
+            <TouchableOpacity
+              onPress={(e: any) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="w-8 h-8 rounded-lg items-center justify-center active:opacity-70"
+              style={{ backgroundColor: 'rgba(255, 59, 48, 0.1)' }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="trash-outline" size={18} color="#ff3b30" />
+            </TouchableOpacity>
+          )}
+          <View 
+            className="px-2 py-1 rounded-full"
+            style={{ backgroundColor: statusBg }}
           >
-            {statusText}
-          </Text>
+            <Text 
+              className="text-xs font-bold uppercase"
+              style={{ color: statusColor }}
+            >
+              {statusText}
+            </Text>
+          </View>
         </View>
       </View>
 

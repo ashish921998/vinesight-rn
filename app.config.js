@@ -44,6 +44,7 @@ module.exports = {
     plugins: [
       "expo-router",
       "expo-secure-store",
+      "expo-font",
       [
         "expo-location",
         {
@@ -53,6 +54,11 @@ module.exports = {
     ],
     experiments: {
       typedRoutes: true
+    },
+    extra: {
+      eas: {
+        projectId: "ede2bb37-3ad0-4503-9522-02bd1539e79b"
+      }
     }
   }
 };

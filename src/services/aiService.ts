@@ -106,7 +106,7 @@ class AIService {
 
   private async generateFollowUpSuggestions(
     lastUserMessage: string,
-    conversationHistory: ChatMessage[]
+    _conversationHistory: ChatMessage[]
   ): Promise<string[]> {
     if (!this.openai) return [];
 

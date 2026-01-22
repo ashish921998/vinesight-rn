@@ -250,7 +250,7 @@ export function useDeleteWorkerAttendance() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workerId }: { id: number; workerId: number }): Promise<void> => {
+    mutationFn: async ({ id, workerId: _workerId }: { id: number; workerId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.WORKER_ATTENDANCE)
         .delete()
@@ -318,7 +318,7 @@ export function useDeleteWorkerTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workerId }: { id: number; workerId: number }): Promise<void> => {
+    mutationFn: async ({ id, workerId: _workerId }: { id: number; workerId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.WORKER_TRANSACTIONS)
         .delete()
@@ -503,7 +503,7 @@ export function useDeleteTemporaryWorkerEntry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
       const { error } = await supabase
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
         .delete()

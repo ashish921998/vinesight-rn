@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useFarm, useFarmRecords, useWeather } from '@/hooks';
+import { useFarm, useFarmRecords, useWeather, useDeleteFarm } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/useTasks';
 import { StatsCard, ActivityLogCard } from '@/components/cards';
 import { AddActivityModal, WaterLevelModal, AddTaskModal } from '@/components/screens';
-import type { Farm, IrrigationRecord, SprayRecord, HarvestRecord, ExpenseRecord, FertigationRecord } from '@/types';
-import { TASK_TYPE_INFO, PRIORITY_INFO } from '@/types/task';
+import type { IrrigationRecord, SprayRecord, HarvestRecord, ExpenseRecord, FertigationRecord } from '@/types';
+import { PRIORITY_INFO } from '@/types/task';
 
 // Workboard action type
 interface WorkboardAction {
@@ -46,7 +46,6 @@ export default function FarmDetailScreen() {
     harvestRecords, 
     expenseRecords,
     fertigationRecords,
-    isLoading: recordsLoading,
     refetch: refetchRecords,
   } = useFarmRecords(farmId);
 
@@ -54,6 +53,7 @@ export default function FarmDetailScreen() {
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
+  const deleteFarmMutation = useDeleteFarm();
 
   const [refreshing, setRefreshing] = useState(false);
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
@@ -63,16 +63,6 @@ export default function FarmDetailScreen() {
 
 
   // Calculate stats
-  const totalHarvest = useMemo(() => 
-    harvestRecords?.reduce((sum, r) => sum + r.quantity, 0) || 0,
-    [harvestRecords]
-  );
-
-  const totalExpenses = useMemo(() => 
-    expenseRecords?.reduce((sum, r) => sum + r.cost, 0) || 0,
-    [expenseRecords]
-  );
-
   const totalRecords = useMemo(() => 
     (irrigationRecords?.length || 0) + 
     (sprayRecords?.length || 0) + 
@@ -89,7 +79,7 @@ export default function FarmDetailScreen() {
     const today = new Date();
     const diffTime = today.getTime() - pruningDate.getTime();
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  }, [farm?.date_of_pruning]);
+  }, [farm]);
 
   // Recent activity logs - combine and sort
   const recentLogs = useMemo(() => {
@@ -196,6 +186,27 @@ export default function FarmDetailScreen() {
     ]);
   };
 
+  const handleDeleteFarm = () => {
+    if (!farmId || !farm) return;
+    Alert.alert('Delete Farm', `Are you sure you want to delete "${farm.name}"? This action cannot be undone.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          deleteFarmMutation.mutate(farmId, {
+            onSuccess: () => {
+              router.back();
+            },
+            onError: (error: Error) => {
+              Alert.alert('Error', error.message || 'Failed to delete farm');
+            },
+          });
+        },
+      },
+    ]);
+  };
+
   const formatDueDate = (dateString: string | null) => {
     if (!dateString) return 'No due date';
     const date = new Date(dateString);
@@ -210,7 +221,7 @@ export default function FarmDetailScreen() {
     return date.toLocaleDateString();
   };
 
-  const isOverdue = (task: any) => {
+  const isOverdue = (task: { completed?: boolean; due_date?: string | null }) => {
     if (task.completed || !task.due_date) return false;
     return new Date(task.due_date) < new Date();
   };
@@ -266,12 +277,22 @@ export default function FarmDetailScreen() {
           headerStyle: { backgroundColor: '#f2f2f7' },
           headerTintColor: '#000000',
           headerRight: () => (
-            <TouchableOpacity 
-              onPress={() => router.push(`/farm/${id}/edit`)}
-              className="mr-4"
-            >
-              <Ionicons name="create-outline" size={24} color="#408059" />
-            </TouchableOpacity>
+            <View className="flex-row items-center">
+              <TouchableOpacity 
+                onPress={() => router.push(`/farm/${id}/edit`)}
+                className="mr-4"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="create-outline" size={24} color="#408059" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={handleDeleteFarm}
+                className="mr-2"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="trash-outline" size={24} color="#DC2626" />
+              </TouchableOpacity>
+            </View>
           ),
           headerTitle: () => (
             <View className="items-center">
@@ -300,10 +321,6 @@ export default function FarmDetailScreen() {
         {/* Subtle top gradient */}
         <View 
           className="absolute top-0 left-0 right-0"
-          style={{ 
-            height: 300,
-            backgroundColor: 'rgba(64, 128, 89, 0.08)'
-          }}
         />
 
         <ScrollView
@@ -324,9 +341,6 @@ export default function FarmDetailScreen() {
             backgroundColor: 'rgba(255, 255, 255, 0.8)',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.06,
-            shadowRadius: 12,
-            elevation: 6,
           }}
         >
           <View className="p-4">
@@ -448,13 +462,11 @@ export default function FarmDetailScreen() {
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 5 },
-              shadowOpacity: 0.03,
-              shadowRadius: 10,
-              elevation: 6,
+              borderRadius: 12
             }}
           >
             <View style={{ flexDirection: 'row' }}>
-              {WORKBOARD_ACTIONS.map((action, index) => (
+              {WORKBOARD_ACTIONS.map((action) => (
                 <TouchableOpacity
                   key={action.id}
                   style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}
@@ -551,7 +563,6 @@ export default function FarmDetailScreen() {
             tasks && tasks.length > 0 ? (
               <View className="gap-3">
                 {tasks.map((task) => {
-                  const typeInfo = TASK_TYPE_INFO[task.type];
                   const priorityInfo = PRIORITY_INFO[task.priority];
                   const overdue = isOverdue(task);
 

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useWorkers, useDeleteWorker, useAllWorkerAttendance } from '@/hooks';
+import { useWorkers, useDeleteWorker } from '@/hooks';
 import { AddWorkerModal } from '@/components/screens';
 import { AttendanceView } from '@/components/screens';
 import type { Worker } from '@/types';
@@ -16,7 +16,6 @@ const TAB_DATA: { id: WorkersTab; label: string; icon: keyof typeof Ionicons.gly
 
 export default function WorkersScreen() {
   const { data: workers, isLoading, refetch } = useWorkers();
-  const { data: attendance } = useAllWorkerAttendance();
   const deleteWorker = useDeleteWorker();
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');

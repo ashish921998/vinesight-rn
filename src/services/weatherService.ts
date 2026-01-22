@@ -7,11 +7,9 @@ import {
   WeatherData,
   CurrentWeather,
   ForecastDay,
-  LocationData,
   ETc,
   WeatherAlerts,
   IrrigationSchedule,
-  OpenMeteoWeatherData,
   GrapeGrowthStage,
   SoilType,
 } from '../types/weather';
@@ -82,11 +80,32 @@ export class WeatherService {
   }
 
   private static parseWeatherResponse(
-    data: any,
+    data: {
+      daily: {
+        time: string[];
+        temperature_2m_max: number[];
+        temperature_2m_min: number[];
+        temperature_2m_mean: number[];
+        relative_humidity_2m_max: number[];
+        relative_humidity_2m_min: number[];
+        relative_humidity_2m_mean: number[];
+        wind_speed_10m_max: number[];
+        wind_direction_10m_dominant: number[];
+        precipitation_sum: number[];
+        shortwave_radiation_sum: number[];
+        sunshine_duration: number[];
+        et0_fao_evapotranspiration: number[];
+        precipitation_probability_max?: number[];
+        uv_index_max?: number[];
+      };
+      latitude: number;
+      longitude: number;
+      timezone: string;
+      elevation: number;
+    },
     coords: { latitude: number; longitude: number; name: string; region: string; country: string }
   ): WeatherData {
     const daily = data.daily;
-    const today = daily.time[0];
 
     // Current weather from today's data
     const currentWeather: CurrentWeather = {
@@ -189,9 +208,6 @@ export class WeatherService {
    * Generate weather-based alerts for farming
    */
   static generateWeatherAlerts(weather: WeatherData, etc: ETc): WeatherAlerts {
-    const current = weather.current;
-    const forecast = weather.forecast.slice(0, 3);
-
     return {
       irrigation: this.generateIrrigationAlert(weather, etc),
       pest: this.generatePestAlert(weather),

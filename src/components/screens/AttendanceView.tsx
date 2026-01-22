@@ -13,9 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFarms } from '@/hooks';
 import { supabase } from '@/lib/supabase';
-import type { Farm } from '@/types';
-import type { Worker } from '@/types';
-import type { WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
+import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
 
 interface AttendanceViewProps {
   workers: Worker[];
@@ -107,7 +105,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Tab Selector - Gradient Style */}
         <View className="mx-4 mt-4">
-          <View className="rounded-2xl p-1.5" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 6 }}>
+          <View className="rounded-2xl p-1.5" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
             <View className="flex-row overflow-hidden rounded-xl">
               <TouchableOpacity
                 onPress={() => setActiveTab('mark')}
@@ -473,7 +471,7 @@ function MarkAttendanceTab({
             <TouchableOpacity
               activeOpacity={0.7}
               className="flex-row items-center px-4 py-2.5 rounded-2xl"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 4 }}
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
             >
               <Ionicons name="person-outline" size={16} color="#408059" />
               <Text className="text-sm font-semibold ml-2" style={{ color: '#000000' }}>{selectedWorker?.name || 'All Workers'}</Text>
@@ -482,7 +480,7 @@ function MarkAttendanceTab({
             <TouchableOpacity
               activeOpacity={0.7}
               className="flex-row items-center px-4 py-2.5 rounded-2xl"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 4 }}
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
             >
               <Ionicons name="leaf-outline" size={16} color="#408059" />
               <Text className="text-sm font-semibold ml-2" style={{ color: '#000000' }}>{selectedFarmIds.length > 0 ? `${selectedFarmIds.length} farm${selectedFarmIds.length > 1 ? 's' : ''}` : 'All Farms'}</Text>
@@ -494,7 +492,7 @@ function MarkAttendanceTab({
 
       {/* Week Days Grid */}
       <View className="mx-4 mt-4">
-        <View className="rounded-3xl p-4 mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.08, shadowRadius: 15, elevation: 8 }}>
+        <View className="rounded-3xl p-4 mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-xs font-bold uppercase" style={{ color: '#8e8e93' }}>{dateRangeMode === 'week' ? formatDate(dateRange[0]) : 'Date Range'}</Text>
             <TouchableOpacity className="px-3 py-1.5 rounded-full" style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}>
@@ -517,7 +515,7 @@ function MarkAttendanceTab({
                   onPress={() => handleDayCellClick(date)}
                   activeOpacity={0.7}
                   className={`w-[30%] aspect-square items-center justify-center mb-3 rounded-2xl ${isTodayDate ? '' : ''}`}
-                  style={{ backgroundColor: isTodayDate ? 'rgba(59, 130, 246, 0.1)' : 'rgba(249, 250, 251, 0.8)', ...(modified ? { backgroundColor: statusInfo.bgColor, shadowColor: statusInfo.badgeColor, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 } : {}) }}
+                  style={{ backgroundColor: isTodayDate ? 'rgba(59, 130, 246, 0.1)' : 'rgba(249, 250, 251, 0.8)', ...(modified ? { backgroundColor: statusInfo.bgColor } : {}) }}
                 >
                   <Text className="text-[10px] font-semibold uppercase mb-1" style={{ color: isTodayDate ? '#2563EB' : '#9CA3AF' }}>{getDayName(date)}</Text>
                   <Text className={`text-lg font-bold ${isTodayDate ? 'text-blue-600' : 'text-gray-900'}`}>{date.getDate()}</Text>
@@ -536,7 +534,7 @@ function MarkAttendanceTab({
             onPress={() => handleQuickAction('full_day')}
             activeOpacity={0.7}
             className="flex-1 py-3 rounded-2xl flex-row items-center justify-center"
-            style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', shadowColor: '#22C55E', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 }}
+            style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
           >
             <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
             <Text className="text-sm font-bold ml-2" style={{ color: '#166534' }}>All Full</Text>
@@ -545,7 +543,7 @@ function MarkAttendanceTab({
             onPress={() => handleQuickAction('half_day')}
             activeOpacity={0.7}
             className="flex-1 py-3 rounded-2xl flex-row items-center justify-center"
-            style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 }}
+            style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}
           >
             <Ionicons name="time" size={18} color="#F59E0B" />
             <Text className="text-sm font-bold ml-2" style={{ color: '#B45309' }}>All Half</Text>
@@ -554,7 +552,7 @@ function MarkAttendanceTab({
             onPress={() => handleQuickAction('absent')}
             activeOpacity={0.7}
             className="flex-1 py-3 rounded-2xl flex-row items-center justify-center"
-            style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 }}
+            style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
           >
             <Ionicons name="close-circle" size={18} color="#EF4444" />
             <Text className="text-sm font-bold ml-2" style={{ color: '#B91C1C' }}>All Off</Text>
@@ -562,7 +560,7 @@ function MarkAttendanceTab({
         </View>
 
         {/* Worker Selector */}
-        <View className="rounded-3xl p-4 mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.08, shadowRadius: 15, elevation: 8 }}>
+        <View className="rounded-3xl p-4 mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
           <View className="flex-row items-center justify-between">
             <TouchableOpacity
               onPress={goToPrevWorker}
@@ -600,7 +598,7 @@ function MarkAttendanceTab({
           activeOpacity={0.8}
           disabled={saving}
           className="rounded-3xl py-4 mb-6"
-          style={{ backgroundColor: '#408059', shadowColor: '#408059', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8, opacity: saving ? 0.6 : 1 }}
+          style={{ backgroundColor: '#408059', opacity: saving ? 0.6 : 1 }}
         >
           {saving ? (
             <View className="flex-row items-center justify-center">
@@ -717,7 +715,7 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
           <TouchableOpacity
             activeOpacity={0.7}
             className="flex-row items-center px-4 py-2.5 rounded-2xl"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 4 }}
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
           >
             <Ionicons name="person-outline" size={16} color="#408059" />
             <Text className="text-sm font-semibold ml-2" style={{ color: '#000000' }}>{selectedWorker?.name || 'All Workers'}</Text>
@@ -728,7 +726,7 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
 
       {/* Month Navigation */}
       <View className="mx-4 mt-4">
-        <View className="rounded-3xl p-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.08, shadowRadius: 15, elevation: 8 }}>
+        <View className="rounded-3xl p-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
           <View className="flex-row items-center justify-between">
             <TouchableOpacity
               onPress={() => {
@@ -775,7 +773,7 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
 
       {/* Calendar */}
       <View className="mx-4 mt-4">
-        <View className="rounded-3xl p-4 mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.08, shadowRadius: 15, elevation: 8 }}>
+        <View className="rounded-3xl p-4 mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
           {loading ? (
             <View className="py-12 items-center">
               <ActivityIndicator size="small" color="#408059" />
@@ -827,18 +825,18 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
 
       {/* Legend */}
       <View className="mx-4 mb-6">
-        <View className="rounded-3xl p-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.08, shadowRadius: 15, elevation: 8 }}>
+        <View className="rounded-3xl p-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
           <View className="flex-row items-center justify-center gap-6">
             <View className="flex-row items-center gap-2">
-              <View className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22C55E', shadowColor: '#22C55E', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 }} />
+              <View className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22C55E' }} />
               <Text className="text-sm font-semibold" style={{ color: '#000000' }}>Full Day</Text>
             </View>
             <View className="flex-row items-center gap-2">
-              <View className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F59E0B', shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 }} />
+              <View className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F59E0B' }} />
               <Text className="text-sm font-semibold" style={{ color: '#000000' }}>Half Day</Text>
             </View>
             <View className="flex-row items-center gap-2">
-              <View className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EF4444', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 }} />
+              <View className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EF4444' }} />
               <Text className="text-sm font-semibold" style={{ color: '#000000' }}>Absent</Text>
             </View>
           </View>

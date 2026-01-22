@@ -7,16 +7,18 @@ import {
   RefreshControl,
   TextInput,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useFarms } from '@/hooks';
+import { useFarms, useDeleteFarm } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import type { Farm } from '@/types';
 
 export default function FarmsScreen() {
   const router = useRouter();
   const { data: farms, isLoading, refetch } = useFarms();
+  const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
@@ -35,6 +37,7 @@ export default function FarmsScreen() {
   }, [farms, searchQuery]);
 
   const handleFarmPress = (farm: Farm) => {
+    if (typeof farm.id !== 'number') return;
     router.push(`/farm/${farm.id}`);
   };
 
@@ -42,11 +45,45 @@ export default function FarmsScreen() {
     router.push('/farm/add');
   };
 
+  const handleEditFarm = (farm: Farm) => {
+    if (typeof farm.id !== 'number') return;
+    router.push(`/farm/${farm.id}/edit`);
+  };
+
+  const handleDeleteFarm = (farm: Farm) => {
+    const farmId = farm.id;
+    if (typeof farmId !== 'number') return;
+    Alert.alert(
+      'Delete Farm',
+      `Are you sure you want to delete "${farm.name}"? This action cannot be undone and will delete all associated data.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteFarm.mutateAsync(farmId);
+            } catch (error: unknown) {
+              const errorMessage = error instanceof Error ? error.message : 'Failed to delete farm';
+              Alert.alert('Error', errorMessage);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderFarm = ({ item }: { item: Farm }) => (
     <View className="px-4 mb-3">
-      <FarmCard 
-        farm={item} 
-        onPress={() => handleFarmPress(item)} 
+      <FarmCard
+        farm={item}
+        onPress={() => handleFarmPress(item)}
+        onEdit={() => handleEditFarm(item)}
+        onDelete={() => handleDeleteFarm(item)}
       />
     </View>
   );

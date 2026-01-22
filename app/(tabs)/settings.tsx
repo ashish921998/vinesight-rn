@@ -19,7 +19,7 @@ import { CURRENCIES, AREA_UNITS } from '@/constants/calculatorModels';
 
 export default function SettingsScreen() {
   const { user, signOut, isLoading: authLoading } = useAuthStore();
-  const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useProfile();
+  const { data: profile, refetch: refetchProfile } = useProfile();
   const updateProfile = useUpdateProfile();
 
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -76,7 +76,7 @@ export default function SettingsScreen() {
       });
       setShowEditProfile(false);
       refetchProfile();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to update profile');
     } finally {
       setIsSaving(false);

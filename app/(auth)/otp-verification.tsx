@@ -41,19 +41,15 @@ export default function OTPVerificationScreen() {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
+  const [lastOtpSentSuccess, setLastOtpSentSuccess] = useState(otpSentSuccessfully);
+
   // Reset cooldown when OTP sent successfully
   useEffect(() => {
-    if (otpSentSuccessfully) {
+    if (otpSentSuccessfully && !lastOtpSentSuccess) {
       setResendCooldown(RESEND_COOLDOWN);
     }
-  }, [otpSentSuccessfully]);
-
-  // Auto-submit when 6 digits entered
-  useEffect(() => {
-    if (otpCode.length === 6 && email) {
-      handleVerify();
-    }
-  }, [otpCode]);
+    setLastOtpSentSuccess(otpSentSuccessfully);
+  }, [otpSentSuccessfully, lastOtpSentSuccess]);
 
   const handleVerify = useCallback(async () => {
     if (!email || otpCode.length !== 6) return;
@@ -65,6 +61,13 @@ export default function OTPVerificationScreen() {
       setOtpCode('');
     }
   }, [email, otpCode, verifyOTP, clearError]);
+
+  // Auto-submit when 6 digits entered
+  useEffect(() => {
+    if (otpCode.length === 6 && email) {
+      handleVerify();
+    }
+  }, [otpCode, email, handleVerify]);
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;

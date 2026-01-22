@@ -24,7 +24,7 @@ export function OTPInput({
 }: OTPInputProps) {
   const inputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const cursorAnim = useRef(new Animated.Value(0)).current;
+  const [cursorAnim] = useState(() => new Animated.Value(0));
 
   // Cursor blinking animation
   useEffect(() => {

@@ -6,6 +6,14 @@ import { Ionicons } from '@expo/vector-icons';
 // Calculator data (Irrigation Planning section)
 const calculators = [
   {
+    id: 'weather',
+    title: 'Weather & Irrigation',
+    description: 'Farm weather data, forecasts & irrigation needs',
+    icon: 'sunny' as const,
+    color: '#F59E0B',
+    route: '/weather',
+  },
+  {
     id: 'mad',
     title: 'MAD Calculator',
     description: 'Maximum allowable deficit & tank requirements',
@@ -63,7 +71,7 @@ export default function ToolsScreen() {
         {calculators.map((calc) => (
           <TouchableOpacity
             key={calc.id}
-            onPress={() => router.push(calc.route as any)}
+            onPress={() => router.push(calc.route as never)}
             className="bg-white rounded-2xl p-4 mb-3 flex-row items-center"
             activeOpacity={0.7}
           >
