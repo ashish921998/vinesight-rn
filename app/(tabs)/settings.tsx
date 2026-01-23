@@ -57,7 +57,16 @@ export default function SettingsScreen() {
       {
         text: 'Sign Out',
         style: 'destructive',
-        onPress: signOut,
+        onPress: async () => {
+          try {
+            await signOut();
+          } catch (error) {
+            if (__DEV__) {
+              console.error('Sign out error:', error);
+            }
+            Alert.alert('Error', 'Failed to sign out. Please try again.');
+          }
+        },
       },
     ]);
   };

@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { useAuthStore, initAuthListener, cleanupAuthListener } from '@/stores';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -30,6 +31,7 @@ try {
 
 // Prevent auto-hide splash screen
 void SplashScreen.preventAutoHideAsync().catch(() => null);
+WebBrowser.maybeCompleteAuthSession();
 
 // Create a client outside component to prevent recreation
 const queryClient = new QueryClient({

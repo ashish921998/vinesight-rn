@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '1.0.1',
+    version: '1.0.3',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
@@ -16,6 +16,7 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.app',
+      scheme: 'vinesight',
       config: {
         usesNonExemptEncryption: false,
       },
@@ -28,7 +29,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 2, // Increment this for each new release
+      versionCode: 4, // Increment this for each new release
       adaptiveIcon: {
         foregroundImage: './assets/playstore.png',
         backgroundColor: '#408059',
@@ -36,6 +37,16 @@ module.exports = {
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: true,
       permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
+      intentFilters: [
+        {
+          action: 'VIEW',
+          category: ['BROWSABLE', 'DEFAULT'],
+          data: {
+            scheme: 'vinesight',
+            host: '*',
+          },
+        },
+      ],
     },
     web: {
       favicon: './assets/favicon.png',
@@ -43,6 +54,7 @@ module.exports = {
     },
     plugins: [
       'expo-router',
+      'expo-web-browser',
       'expo-secure-store',
       'expo-font',
       [

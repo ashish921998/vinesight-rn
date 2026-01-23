@@ -1,19 +1,44 @@
+import { useEffect, useRef } from 'react';
+import { useRouter } from 'expo-router';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
+import { useAuthStore } from '@/stores';
 
 // Tab icon component
-function TabBarIcon({
-  name,
-  color,
-}: {
-  name: keyof typeof Ionicons.glyphMap;
-  color: string;
-}) {
+function TabBarIcon({ name, color }: { name: keyof typeof Ionicons.glyphMap; color: string }) {
   return <Ionicons name={name} size={24} color={color} />;
 }
 
 export default function TabLayout() {
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const hasRedirected = useRef(false);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (__DEV__) {
+      console.log(
+        'TabLayout: isAuthenticated =',
+        isAuthenticated,
+        'hasRedirected =',
+        hasRedirected.current,
+      );
+    }
+    if (!isAuthenticated && !hasRedirected.current) {
+      if (__DEV__) {
+        console.log('TabLayout: Redirecting to login');
+      }
+      hasRedirected.current = true;
+      router.replace('/(auth)/login');
+    }
+    if (isAuthenticated && hasRedirected.current) {
+      // Reset redirect flag when authenticated
+      hasRedirected.current = false;
+    }
+  }, [isAuthenticated, isLoading, router]);
+
   return (
     <Tabs
       screenOptions={{
@@ -52,10 +77,7 @@ export default function TabLayout() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'grid' : 'grid-outline'}
-              color={color}
-            />
+            <TabBarIcon name={focused ? 'grid' : 'grid-outline'} color={color} />
           ),
         }}
       />
@@ -64,10 +86,7 @@ export default function TabLayout() {
         options={{
           title: 'Farms',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'leaf' : 'leaf-outline'}
-              color={color}
-            />
+            <TabBarIcon name={focused ? 'leaf' : 'leaf-outline'} color={color} />
           ),
         }}
       />
@@ -76,10 +95,7 @@ export default function TabLayout() {
         options={{
           title: 'Workers',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'people' : 'people-outline'}
-              color={color}
-            />
+            <TabBarIcon name={focused ? 'people' : 'people-outline'} color={color} />
           ),
         }}
       />
@@ -88,10 +104,7 @@ export default function TabLayout() {
         options={{
           title: 'Tools',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'calculator' : 'calculator-outline'}
-              color={color}
-            />
+            <TabBarIcon name={focused ? 'calculator' : 'calculator-outline'} color={color} />
           ),
         }}
       />
@@ -100,10 +113,7 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'settings' : 'settings-outline'}
-              color={color}
-            />
+            <TabBarIcon name={focused ? 'settings' : 'settings-outline'} color={color} />
           ),
         }}
       />

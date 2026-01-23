@@ -39,6 +39,7 @@ interface AuthActions {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name?: string) => Promise<void>;
   signUpWithOTP: (email: string, password: string, name?: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 
   // OTP methods
@@ -256,14 +257,115 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     }
   },
 
+  // Sign in with Google OAuth
+  signInWithGoogle: async () => {
+    set({ errorMessage: null, isLoading: true });
+
+    try {
+      const { openAuthSessionAsync } = await import('expo-web-browser');
+
+      // Use consistent scheme registered in Google OAuth and Supabase
+      const redirectUri = 'vinesight://auth/callback';
+
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+      if (!supabaseUrl) {
+        throw new Error('Missing EXPO_PUBLIC_SUPABASE_URL');
+      }
+
+      const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUri,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (oauthError) throw oauthError;
+      if (!oauthData?.url) throw new Error('No OAuth URL returned');
+
+      const result = await openAuthSessionAsync(oauthData.url, redirectUri);
+
+      if (result.type === 'success') {
+        let url: URL;
+        let code: string | null;
+        let queryError: string | null;
+        let hashParams: URLSearchParams;
+        let accessToken: string | null;
+        let refreshToken: string | null;
+
+        try {
+          url = new URL(result.url);
+          code = url.searchParams.get('code');
+          queryError = url.searchParams.get('error');
+          hashParams = new URLSearchParams(url.hash.replace(/^#/, ''));
+          accessToken = hashParams.get('access_token') || url.searchParams.get('access_token');
+          refreshToken = hashParams.get('refresh_token') || url.searchParams.get('refresh_token');
+        } catch (error) {
+          throw new Error(`Failed to parse OAuth URL: ${result.url}. ${error}`);
+        }
+
+        if (queryError) {
+          throw new Error(queryError);
+        }
+
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          set({
+            user: data.user,
+            session: data.session,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } else if (accessToken) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          });
+          if (error) throw error;
+          set({
+            user: data.user,
+            session: data.session,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } else {
+          throw new Error('No code or access token in response');
+        }
+      } else if (result.type === 'cancel') {
+        set({
+          errorMessage: 'Google sign-in was cancelled',
+          isLoading: false,
+        });
+      } else {
+        throw new Error('Google sign-in failed');
+      }
+    } catch (error: unknown) {
+      set({
+        errorMessage: getErrorMessage(error, 'Google sign-in failed'),
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    }
+  },
+
   // Sign out
   signOut: async () => {
     set({ errorMessage: null, isLoading: true });
 
     try {
-      const { error } = await supabase.auth.signOut();
+      if (__DEV__) {
+        console.log('Signing out...');
+      }
+
+      // Clear Supabase session first
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) throw error;
 
+      if (__DEV__) {
+        console.log('Sign out successful, clearing state');
+      }
+
+      // Explicitly clear state
       set({
         user: null,
         session: null,
@@ -273,10 +375,27 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
       });
+
+      // Force clear any cached sessions from storage
+      try {
+        await supabase.auth.getSession();
+      } catch (_e) {
+        // Ignore errors when clearing cache
+      }
     } catch (error: unknown) {
+      if (__DEV__) {
+        console.error('Sign out error:', error);
+      }
+
+      // Even if sign out fails, clear the local state to allow user to try again
       set({
-        errorMessage: getErrorMessage(error, 'Sign out failed'),
+        user: null,
+        session: null,
+        isAuthenticated: false,
         isLoading: false,
+        pendingOTPEmail: null,
+        otpSentSuccessfully: false,
+        pendingOTPType: 'email',
       });
     }
   },
@@ -455,6 +574,9 @@ export const initAuthListener = () => {
   if (authListener) return;
 
   authListener = supabase.auth.onAuthStateChange((event, session) => {
+    if (__DEV__) {
+      console.log('Auth state change:', event, session?.user?.email);
+    }
     // Only update state for significant auth events, not token refreshes during navigation
     if (event === 'SIGNED_IN' && session) {
       useAuthStore.setState({
@@ -464,11 +586,17 @@ export const initAuthListener = () => {
         isLoading: false,
       });
     } else if (event === 'SIGNED_OUT') {
+      if (__DEV__) {
+        console.log('SIGNED_OUT event received, clearing auth state');
+      }
       useAuthStore.setState({
         user: null,
         session: null,
         isAuthenticated: false,
         isLoading: false,
+        pendingOTPEmail: null,
+        otpSentSuccessfully: false,
+        pendingOTPType: 'email',
       });
     } else if (event === 'TOKEN_REFRESHED' && session) {
       // Silently update session without triggering navigation changes
