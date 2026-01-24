@@ -421,6 +421,7 @@ export function AddEntryModal({
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [taskFarmId, setTaskFarmId] = useState<number | null>(null);
   const [dueDate, setDueDate] = useState('');
+  const [showDueDatePicker, setShowDueDatePicker] = useState(false);
   const [showTypePicker, setShowTypePicker] = useState(false);
   const [showPriorityPicker, setShowPriorityPicker] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -435,6 +436,7 @@ export function AddEntryModal({
     setType('note');
     setPriority('medium');
     setDueDate('');
+    setShowDueDatePicker(false);
     setShowTypePicker(false);
     setShowPriorityPicker(false);
     setShowTemplates(false);
@@ -1031,14 +1033,74 @@ export function AddEntryModal({
 
       <View className="mb-4">
         <Text className="text-sm font-medium text-surface-700 mb-2">Due Date</Text>
-        <TextInput
-          value={dueDate}
-          onChangeText={setDueDate}
-          placeholder="YYYY-MM-DD (e.g., 2024-01-25)"
-          className="bg-white rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
-          placeholderTextColor="#9CA3AF"
-        />
-        <Text className="text-xs text-surface-500 mt-1">Enter date in YYYY-MM-DD format</Text>
+        <TouchableOpacity
+          onPress={() => setShowDueDatePicker(true)}
+          className="bg-white rounded-xl px-4 py-3 flex-row items-center justify-between border border-surface-200"
+        >
+          <View className="flex-row items-center flex-1">
+            <Ionicons name="calendar" size={18} color={dueDate ? '#408059' : '#9CA3AF'} />
+            <Text className="ml-2 text-base" style={{ color: dueDate ? '#111827' : '#9CA3AF' }}>
+              {dueDate
+                ? new Date(dueDate).toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                : 'Select due date'}
+            </Text>
+          </View>
+          {dueDate && (
+            <TouchableOpacity onPress={() => setDueDate('')} className="ml-2 p-1">
+              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        </TouchableOpacity>
+        {showDueDatePicker && Platform.OS === 'android' && (
+          <DateTimePicker
+            value={dueDate ? new Date(dueDate) : new Date()}
+            mode="date"
+            onChange={(_, date) => {
+              setShowDueDatePicker(false);
+              if (date) {
+                setDueDate(date.toISOString().split('T')[0]);
+              }
+            }}
+          />
+        )}
+        {showDueDatePicker && Platform.OS === 'ios' && (
+          <Pressable
+            onPress={() => setShowDueDatePicker(false)}
+            className="absolute inset-0 bg-black/50 z-50"
+          >
+            <View
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-4"
+              onStartShouldSetResponder={() => true}
+            >
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-lg font-bold text-surface-900">Select Due Date</Text>
+                <TouchableOpacity onPress={() => setShowDueDatePicker(false)}>
+                  <Ionicons name="close" size={24} color="#9CA3AF" />
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={dueDate ? new Date(dueDate) : new Date()}
+                mode="date"
+                display="inline"
+                onChange={(_, date) => {
+                  if (date) setDueDate(date.toISOString().split('T')[0]);
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setShowDueDatePicker(false)}
+                className="mt-4 py-3 rounded-xl items-center"
+                style={{ backgroundColor: '#408059' }}
+              >
+                <Text className="font-semibold text-white">Done</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        )}
       </View>
     </>
   );
