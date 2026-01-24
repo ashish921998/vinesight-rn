@@ -10,12 +10,12 @@ import { TrendData, ParameterTrend, TestTrendsResponse } from '../types/analytic
 export class LabTrendsService {
   static calculateSoilTrends(tests: SoilTestRecord[]): TestTrendsResponse {
     console.log('calculateSoilTrends called with', tests.length, 'tests');
-    return this.calculateTrends(tests, SOIL_PARAMETERS, this.mapSoilParameters.bind(this));
+    return this.calculateTrends(tests, SOIL_PARAMETERS, LabTrendsService.mapSoilParameters);
   }
 
   static calculatePetioleTrends(tests: PetioleTestRecord[]): TestTrendsResponse {
     console.log('calculatePetioleTrends called with', tests.length, 'tests');
-    return this.calculateTrends(tests, PETIOLE_PARAMETERS, this.mapPetioleParameters.bind(this));
+    return this.calculateTrends(tests, PETIOLE_PARAMETERS, LabTrendsService.mapPetioleParameters);
   }
 
   private static mapSoilParameters(parameters: Record<string, number>): Record<string, number> {

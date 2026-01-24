@@ -1,7 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, RefreshControl, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  RefreshControl,
+  Pressable,
+  Modal,
+  TouchableOpacity,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useDashboardStats,
   useFarmsNeedingAttention,
@@ -9,6 +18,8 @@ import {
   useFarms,
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
+import { AddEntryModal } from '@/components/screens';
+import type { LogTypeId } from '@/constants/calculatorModels';
 
 // ============================================================
 // MARK: - Greeting Helper
@@ -35,7 +46,12 @@ function formatHarvest(value: number): string {
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showFarmPicker, setShowFarmPicker] = useState(false);
+  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
+  const [selectedQuickAction, setSelectedQuickAction] = useState<LogTypeId | null>(null);
+  const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
 
   // Data hooks
   const { data: stats, refetch: refetchStats } = useDashboardStats();
@@ -52,13 +68,31 @@ export default function DashboardScreen() {
   };
 
   // Navigation handlers
-  const handleAddLog = () => {
-    // Navigate to first farm if exists, or farms list
-    if (farms && farms.length > 0 && farms[0].id) {
-      router.push(`/farm/${farms[0].id}`);
+  const handleQuickAction = (actionType: LogTypeId) => {
+    // Show farm picker if farms exist, otherwise show farms list
+    if (farms && farms.length > 0) {
+      setSelectedQuickAction(actionType);
+      setShowFarmPicker(true);
     } else {
       router.push('/(tabs)/farms');
     }
+  };
+
+  const handleFarmSelection = (farmId: number) => {
+    setShowFarmPicker(false);
+    setSelectedFarmId(farmId);
+    setShowAddEntryModal(true);
+  };
+
+  const handleAddEntryModalClose = () => {
+    setShowAddEntryModal(false);
+    setSelectedQuickAction(null);
+    setSelectedFarmId(null);
+  };
+
+  const handleLogSaveSuccess = () => {
+    handleAddEntryModalClose();
+    refetchActivities();
   };
 
   const handleFarmAttention = (farmId: number) => {
@@ -68,13 +102,13 @@ export default function DashboardScreen() {
   return (
     <ScrollView
       className="flex-1"
-      style={{ backgroundColor: '#f2f2f7' }}
       contentContainerStyle={{ paddingBottom: 100 }}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#408059" />
       }
+      scrollIndicatorInsets={{ top: insets.top }}
     >
-      <View className="p-4">
+      <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 16 }}>
         {/* Welcome Header */}
         <View className="mb-6">
           <Text className="text-2xl font-bold" style={{ color: '#000000' }}>
@@ -170,25 +204,25 @@ export default function DashboardScreen() {
                 title="Irrigation"
                 icon="water"
                 color="#4d8573"
-                onPress={handleAddLog}
+                onPress={() => handleQuickAction('irrigation')}
               />
               <QuickActionButton
                 title="Spray"
                 icon="flask"
                 color="#598d6b"
-                onPress={handleAddLog}
+                onPress={() => handleQuickAction('spray')}
               />
               <QuickActionButton
                 title="Harvest"
                 icon="basket"
                 color="#669475"
-                onPress={handleAddLog}
+                onPress={() => handleQuickAction('harvest')}
               />
               <QuickActionButton
                 title="Note"
                 icon="document-text"
                 color="#408059"
-                onPress={handleAddLog}
+                onPress={() => handleQuickAction('note')}
               />
             </View>
           </View>
@@ -221,6 +255,78 @@ export default function DashboardScreen() {
             </View>
           )}
         </View>
+
+        {/* Farm Picker Modal */}
+        <Modal
+          visible={showFarmPicker}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowFarmPicker(false)}
+        >
+          <View className="flex-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <View
+              className="absolute bottom-0 left-0 right-0 rounded-t-3xl p-4 pt-6"
+              style={{ backgroundColor: '#ffffff', maxHeight: '80%' }}
+            >
+              {/* Header */}
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-lg font-semibold" style={{ color: '#000000' }}>
+                  Select Farm
+                </Text>
+                <Pressable onPress={() => setShowFarmPicker(false)}>
+                  <Ionicons name="close" size={24} color="#8e8e93" />
+                </Pressable>
+              </View>
+
+              {/* Farm List */}
+              <ScrollView
+                showsVerticalScrollIndicator={true}
+                nestedScrollEnabled={true}
+                className="max-h-96"
+              >
+                {farms && farms.length > 0 ? (
+                  farms.map((farm) => (
+                    <TouchableOpacity
+                      key={farm.id}
+                      onPress={() => farm.id && handleFarmSelection(farm.id)}
+                      className="p-4 border-b flex-row items-center justify-between"
+                      style={{ borderColor: '#e5e5ea' }}
+                    >
+                      <View className="flex-1">
+                        <Text className="text-base font-medium" style={{ color: '#000000' }}>
+                          {farm.name}
+                        </Text>
+                        {farm.region && (
+                          <Text className="text-sm mt-1" style={{ color: '#8e8e93' }}>
+                            {farm.region}
+                          </Text>
+                        )}
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color="#c7c7cc" />
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View className="p-6 items-center">
+                    <Text style={{ color: '#8e8e93' }}>No farms available</Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Add Entry Modal */}
+        {selectedFarmId && selectedQuickAction && (
+          <AddEntryModal
+            visible={showAddEntryModal}
+            onClose={handleAddEntryModalClose}
+            initialFarmId={selectedFarmId}
+            initialLogType={selectedQuickAction}
+            tabs={['log']}
+            initialTab="log"
+            onLogSaveSuccess={handleLogSaveSuccess}
+          />
+        )}
       </View>
     </ScrollView>
   );

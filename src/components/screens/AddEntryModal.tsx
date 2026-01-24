@@ -76,6 +76,7 @@ interface AddEntryModalProps {
   initialTab?: EntryTab;
   farm?: Farm;
   initialFarmId?: number | null;
+  initialLogType?: LogTypeId | null;
   editingTask?: TaskReminder | null;
   onLogSaveSuccess?: () => void;
   onTaskSaveSuccess?: () => void;
@@ -115,6 +116,7 @@ export function AddEntryModal({
   initialTab,
   farm,
   initialFarmId,
+  initialLogType,
   editingTask,
   onLogSaveSuccess,
   onTaskSaveSuccess,
@@ -191,6 +193,13 @@ export function AddEntryModal({
       keyboardHideListener.remove();
     };
   }, []);
+
+  // Set initial log type if provided
+  useEffect(() => {
+    if (visible && initialLogType) {
+      setSelectedLogType(initialLogType);
+    }
+  }, [visible, initialLogType]);
 
   const isLogFormValid = useMemo(() => {
     if (!selectedLogType) return false;
@@ -1251,7 +1260,7 @@ export function AddEntryModal({
                         className="ml-2 font-semibold"
                         style={{ color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' }}
                       >
-                        Save {pendingLogs.length > 0 ? `Logs (${pendingLogs.length})` : ''}
+                        {pendingLogs.length > 0 ? `Save Logs (${pendingLogs.length})` : 'Save'}
                       </Text>
                     </>
                   )}

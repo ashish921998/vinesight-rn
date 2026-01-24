@@ -80,7 +80,7 @@ export default Sentry.wrap(function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
-            <StatusBar style="auto" />
+            <StatusBar barStyle="dark-content" />
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="(auth)" />

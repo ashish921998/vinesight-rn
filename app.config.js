@@ -5,9 +5,13 @@ module.exports = {
     version: '1.0.4',
     orientation: 'portrait',
     icon: './assets/icon.png',
-    userInterfaceStyle: 'automatic',
+    userInterfaceStyle: 'light',
     scheme: 'vinesight',
     newArchEnabled: true,
+    statusBar: {
+      backgroundColor: '#FFFFFF',
+      barStyle: 'dark-content',
+    },
     splash: {
       image: './assets/splash-screen.png',
       resizeMode: 'contain',
@@ -29,7 +33,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 5, // Increment this for each new release
+      versionCode: 5,
       adaptiveIcon: {
         foregroundImage: './assets/playstore.png',
         backgroundColor: '#408059',
@@ -47,6 +51,14 @@ module.exports = {
           },
         },
       ],
+      statusBar: {
+        backgroundColor: '#FFFFFF',
+        barStyle: 'dark-content',
+      },
+      navigationBar: {
+        backgroundColor: '#FFFFFF',
+        barStyle: 'dark',
+      },
     },
     web: {
       favicon: './assets/favicon.png',
