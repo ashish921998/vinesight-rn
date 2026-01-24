@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/useTasks';
 import { TaskReminder, TASK_TYPE_INFO, PRIORITY_INFO } from '../src/types/task';
-import AddTaskModal from '../src/components/screens/AddTaskModal';
+import { AddEntryModal } from '../src/components/screens';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
 
@@ -341,13 +341,18 @@ export default function TasksScreen() {
           </TouchableOpacity>
 
           {/* Add Task Modal */}
-          <AddTaskModal
+          <AddEntryModal
             visible={showAddModal}
             onClose={() => {
               setShowAddModal(false);
               setEditingTask(null);
             }}
+            tabs={['task']}
+            initialTab="task"
             editingTask={editingTask}
+            onTaskSaveSuccess={() => {
+              refetch();
+            }}
           />
         </View>
       </SafeAreaView>

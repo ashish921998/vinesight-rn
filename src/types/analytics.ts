@@ -80,3 +80,36 @@ export interface PerformanceAlert {
 
 // Time range for analytics
 export type TimeRange = '30d' | '90d' | '1y' | 'all';
+
+// Lab test trends types
+export interface TrendData {
+  date: string;
+  parameters: Record<string, number | null>;
+}
+
+export interface ParameterTrend {
+  key: string;
+  label: string;
+  unit: string;
+  values: number[];
+  min: number;
+  max: number;
+  avg: number;
+  change: number | null; // null when baseline is zero (cannot calculate percentage)
+}
+
+export interface TrendStats {
+  current: number;
+  previous: number;
+  min: number;
+  max: number;
+  avg: number;
+  change: number;
+  changeType: 'up' | 'down' | 'stable';
+}
+
+export interface TestTrendsResponse {
+  tests: TrendData[];
+  parameterTrends: Record<string, ParameterTrend>;
+  dateRange: { start: string; end: string };
+}

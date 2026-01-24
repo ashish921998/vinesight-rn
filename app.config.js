@@ -2,14 +2,14 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '1.0.3',
+    version: '1.0.4',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
     scheme: 'vinesight',
     newArchEnabled: true,
     splash: {
-      image: './assets/splash-icon.png',
+      image: './assets/splash-screen.png',
       resizeMode: 'contain',
       backgroundColor: '#408059',
     },
@@ -29,7 +29,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 4, // Increment this for each new release
+      versionCode: 5, // Increment this for each new release
       adaptiveIcon: {
         foregroundImage: './assets/playstore.png',
         backgroundColor: '#408059',

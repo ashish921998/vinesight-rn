@@ -13,6 +13,7 @@ import {
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCreateFarm } from '@/hooks';
 import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
 import type { FarmInsert } from '@/types';
@@ -77,6 +78,7 @@ function FormField({
 export default function AddFarmScreen() {
   const router = useRouter();
   const createFarm = useCreateFarm();
+  const insets = useSafeAreaInsets();
 
   // Form state - Required
   const [name, setName] = useState('');
@@ -198,222 +200,241 @@ export default function AddFarmScreen() {
         }}
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
-        <ScrollView
-          className="flex-1 bg-surface-50"
-          contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-          showsVerticalScrollIndicator={false}
+      <SafeAreaView className="flex-1 bg-surface-50" edges={['top', 'bottom']}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
         >
-          {/* Basic Information */}
-          <Section title="Basic Information" isExpanded={expandedSections.basic}>
-            <FormField label="Farm Name" required>
-              <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
-                placeholder="Enter farm name"
-                placeholderTextColor="#9CA3AF"
-                value={name}
-                onChangeText={setName}
-              />
-            </FormField>
-
-            <FormField label="Region / Location" required>
-              <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
-                placeholder="Enter region or location"
-                placeholderTextColor="#9CA3AF"
-                value={region}
-                onChangeText={setRegion}
-              />
-            </FormField>
-
-            <FormField label="Area (acres)" required>
-              <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
-                placeholder="Enter area in acres"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="decimal-pad"
-                value={area}
-                onChangeText={setArea}
-              />
-            </FormField>
-
-            <FormField label="Crop Type" required>
-              <View className="flex-row flex-wrap gap-2">
-                {CROPS.map((crop) => (
-                  <TouchableOpacity
-                    key={crop}
-                    className={`px-4 py-2.5 rounded-xl border ${
-                      selectedCrop === crop
-                        ? 'bg-primary-500 border-primary-500'
-                        : 'bg-white border-surface-200'
-                    }`}
-                    onPress={() => {
-                      setSelectedCrop(crop);
-                      setCropVariety('');
-                      setCustomVariety('');
-                    }}
-                  >
-                    <Text
-                      className={`text-sm font-medium ${
-                        selectedCrop === crop ? 'text-white' : 'text-surface-700'
-                      }`}
-                    >
-                      {crop}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </FormField>
-
-            <FormField label="Variety" required>
-              <TouchableOpacity
-                className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center justify-between"
-                onPress={() => setShowVarietyPicker(true)}
-              >
-                <Text
-                  className={`text-base ${cropVariety ? 'text-surface-900' : 'text-surface-400'}`}
-                >
-                  {cropVariety || 'Select variety'}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#6B7280" />
-              </TouchableOpacity>
-
-              {cropVariety === 'Custom' && (
-                <TextInput
-                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200 mt-3"
-                  placeholder="Enter custom variety name"
-                  placeholderTextColor="#9CA3AF"
-                  value={customVariety}
-                  onChangeText={setCustomVariety}
-                />
-              )}
-            </FormField>
-
-            <FormField label="Planting Date">
-              <TouchableOpacity
-                className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center"
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Ionicons name="calendar-outline" size={20} color="#6B7280" />
-                <Text className="text-base text-surface-900 ml-3">
-                  {plantingDate.toLocaleDateString()}
-                </Text>
-              </TouchableOpacity>
-            </FormField>
-          </Section>
-
-          {/* Spacing Information */}
-          <Section
-            title="Spacing (Optional)"
-            isExpanded={expandedSections.spacing}
-            onToggle={() => handleToggleSection('spacing')}
+          <ScrollView
+            className="flex-1 bg-surface-50"
+            contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+            showsVerticalScrollIndicator={false}
           >
-            <FormField label="Vine Spacing (feet)">
-              <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
-                placeholder="Distance between vines"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="decimal-pad"
-                value={vineSpacing}
-                onChangeText={setVineSpacing}
-              />
-            </FormField>
-
-            <FormField label="Row Spacing (feet)">
-              <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
-                placeholder="Distance between rows"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="decimal-pad"
-                value={rowSpacing}
-                onChangeText={setRowSpacing}
-              />
-            </FormField>
-          </Section>
-
-          {/* Irrigation Information */}
-          <Section
-            title="Irrigation (Optional)"
-            isExpanded={expandedSections.irrigation}
-            onToggle={() => handleToggleSection('irrigation')}
-          >
-            <FormField label="Total Tank Capacity (mm)">
-              <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
-                placeholder="Available water storage capacity"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="decimal-pad"
-                value={totalTankCapacity}
-                onChangeText={setTotalTankCapacity}
-              />
-            </FormField>
-
-            <FormField label="System Discharge (mm/hr)">
-              <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
-                placeholder="Irrigation system discharge rate"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="decimal-pad"
-                value={systemDischarge}
-                onChangeText={setSystemDischarge}
-              />
-            </FormField>
-          </Section>
-
-          {/* Important Dates */}
-          <Section
-            title="Important Dates (Optional)"
-            isExpanded={expandedSections.dates}
-            onToggle={() => handleToggleSection('dates')}
-          >
-            <FormField label="Date of Pruning">
-              <TouchableOpacity
-                className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center justify-between"
-                onPress={() => setShowPruningDatePicker(true)}
-              >
-                <View className="flex-row items-center">
-                  <Ionicons name="cut-outline" size={20} color="#6B7280" />
-                  <Text
-                    className={`text-base ml-3 ${
-                      dateOfPruning ? 'text-surface-900' : 'text-surface-400'
-                    }`}
-                  >
-                    {dateOfPruning ? dateOfPruning.toLocaleDateString() : 'Select date'}
+            <View className="bg-white rounded-2xl p-4 mb-4 border border-surface-100">
+              <View className="flex-row items-center">
+                <View className="w-10 h-10 rounded-xl items-center justify-center bg-primary-100">
+                  <Ionicons name="leaf-outline" size={20} color="#408059" />
+                </View>
+                <View className="ml-3 flex-1">
+                  <Text className="text-base font-semibold text-surface-900">Farm Details</Text>
+                  <Text className="text-sm text-surface-500">
+                    Set up your farm profile to track activities and insights.
                   </Text>
                 </View>
-                {dateOfPruning && (
-                  <TouchableOpacity
-                    onPress={() => setDateOfPruning(null)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Ionicons name="close-circle" size={20} color="#9CA3AF" />
-                  </TouchableOpacity>
-                )}
-              </TouchableOpacity>
-            </FormField>
-          </Section>
-        </ScrollView>
+              </View>
+            </View>
 
-        {/* Save Button */}
-        <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-surface-200">
-          <TouchableOpacity
-            className={`py-4 rounded-xl items-center ${
-              isValid && !createFarm.isPending ? 'bg-primary-600' : 'bg-surface-300'
-            }`}
-            onPress={handleSave}
-            disabled={!isValid || createFarm.isPending}
+            {/* Basic Information */}
+            <Section title="Basic Information" isExpanded={expandedSections.basic}>
+              <FormField label="Farm Name" required>
+                <TextInput
+                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                  placeholder="Enter farm name"
+                  placeholderTextColor="#9CA3AF"
+                  value={name}
+                  onChangeText={setName}
+                />
+              </FormField>
+
+              <FormField label="Region / Location" required>
+                <TextInput
+                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                  placeholder="Enter region or location"
+                  placeholderTextColor="#9CA3AF"
+                  value={region}
+                  onChangeText={setRegion}
+                />
+              </FormField>
+
+              <FormField label="Area (acres)" required>
+                <TextInput
+                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                  placeholder="Enter area in acres"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
+                  value={area}
+                  onChangeText={setArea}
+                />
+              </FormField>
+
+              <FormField label="Crop Type" required>
+                <View className="flex-row flex-wrap gap-2">
+                  {CROPS.map((crop) => (
+                    <TouchableOpacity
+                      key={crop}
+                      className={`px-4 py-2.5 rounded-xl border ${
+                        selectedCrop === crop
+                          ? 'bg-primary-500 border-primary-500'
+                          : 'bg-white border-surface-200'
+                      }`}
+                      onPress={() => {
+                        setSelectedCrop(crop);
+                        setCropVariety('');
+                        setCustomVariety('');
+                      }}
+                    >
+                      <Text
+                        className={`text-sm font-medium ${
+                          selectedCrop === crop ? 'text-white' : 'text-surface-700'
+                        }`}
+                      >
+                        {crop}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </FormField>
+
+              <FormField label="Variety" required>
+                <TouchableOpacity
+                  className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center justify-between"
+                  onPress={() => setShowVarietyPicker(true)}
+                >
+                  <Text
+                    className={`text-base ${cropVariety ? 'text-surface-900' : 'text-surface-400'}`}
+                  >
+                    {cropVariety || 'Select variety'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#6B7280" />
+                </TouchableOpacity>
+
+                {cropVariety === 'Custom' && (
+                  <TextInput
+                    className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200 mt-3"
+                    placeholder="Enter custom variety name"
+                    placeholderTextColor="#9CA3AF"
+                    value={customVariety}
+                    onChangeText={setCustomVariety}
+                  />
+                )}
+              </FormField>
+
+              <FormField label="Planting Date">
+                <TouchableOpacity
+                  className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center"
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Ionicons name="calendar-outline" size={20} color="#6B7280" />
+                  <Text className="text-base text-surface-900 ml-3">
+                    {plantingDate.toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+              </FormField>
+            </Section>
+
+            {/* Spacing Information */}
+            <Section
+              title="Spacing (Optional)"
+              isExpanded={expandedSections.spacing}
+              onToggle={() => handleToggleSection('spacing')}
+            >
+              <FormField label="Vine Spacing (feet)">
+                <TextInput
+                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                  placeholder="Distance between vines"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
+                  value={vineSpacing}
+                  onChangeText={setVineSpacing}
+                />
+              </FormField>
+
+              <FormField label="Row Spacing (feet)">
+                <TextInput
+                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                  placeholder="Distance between rows"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
+                  value={rowSpacing}
+                  onChangeText={setRowSpacing}
+                />
+              </FormField>
+            </Section>
+
+            {/* Irrigation Information */}
+            <Section
+              title="Irrigation (Optional)"
+              isExpanded={expandedSections.irrigation}
+              onToggle={() => handleToggleSection('irrigation')}
+            >
+              <FormField label="Total Tank Capacity (mm)">
+                <TextInput
+                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                  placeholder="Available water storage capacity"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
+                  value={totalTankCapacity}
+                  onChangeText={setTotalTankCapacity}
+                />
+              </FormField>
+
+              <FormField label="System Discharge (mm/hr)">
+                <TextInput
+                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                  placeholder="Irrigation system discharge rate"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
+                  value={systemDischarge}
+                  onChangeText={setSystemDischarge}
+                />
+              </FormField>
+            </Section>
+
+            {/* Important Dates */}
+            <Section
+              title="Important Dates (Optional)"
+              isExpanded={expandedSections.dates}
+              onToggle={() => handleToggleSection('dates')}
+            >
+              <FormField label="Date of Pruning">
+                <TouchableOpacity
+                  className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center justify-between"
+                  onPress={() => setShowPruningDatePicker(true)}
+                >
+                  <View className="flex-row items-center">
+                    <Ionicons name="cut-outline" size={20} color="#6B7280" />
+                    <Text
+                      className={`text-base ml-3 ${
+                        dateOfPruning ? 'text-surface-900' : 'text-surface-400'
+                      }`}
+                    >
+                      {dateOfPruning ? dateOfPruning.toLocaleDateString() : 'Select date'}
+                    </Text>
+                  </View>
+                  {dateOfPruning && (
+                    <TouchableOpacity
+                      onPress={() => setDateOfPruning(null)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              </FormField>
+            </Section>
+          </ScrollView>
+
+          {/* Save Button */}
+          <View
+            className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-surface-200"
+            style={{ paddingBottom: Math.max(insets.bottom, 16) }}
           >
-            {createFarm.isPending ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text className="text-base font-semibold text-white">Save Farm</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+            <TouchableOpacity
+              className={`py-4 rounded-xl items-center ${
+                isValid && !createFarm.isPending ? 'bg-primary-600' : 'bg-surface-300'
+              }`}
+              onPress={handleSave}
+              disabled={!isValid || createFarm.isPending}
+            >
+              {createFarm.isPending ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text className="text-base font-semibold text-white">Save Farm</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
 
       {/* Variety Picker Modal */}
       {showVarietyPicker && (

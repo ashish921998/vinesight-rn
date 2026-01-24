@@ -81,11 +81,6 @@ export default function LabTestsScreen() {
           marginBottom: 16,
           borderWidth: 1,
           borderColor: isSoil ? 'rgba(89, 122, 97, 0.2)' : 'rgba(76, 128, 107, 0.2)',
-          shadowColor: color,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
-          elevation: 4,
         }}
       >
         <View className="flex-row items-center justify-between mb-3">
@@ -238,6 +233,19 @@ export default function LabTestsScreen() {
           <Text className="text-xl font-bold text-gray-800">Lab Tests</Text>
           {farm && <Text className="text-xs text-gray-500">{farm.name}</Text>}
         </View>
+        <TouchableOpacity
+          onPress={() => {
+            if (selectedTab === 'soil') {
+              router.push(`/soil-trends?farmId=${farmId}`);
+            } else {
+              router.push(`/petiole-trends?farmId=${farmId}`);
+            }
+          }}
+          className="bg-[#408059] px-3 py-2 rounded-full flex-row items-center mr-2"
+        >
+          <Ionicons name="trending-up" size={16} color="white" />
+          <Text className="text-white font-semibold ml-1.5 text-sm">View Trends</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setShowAddModal(true)}
           className="bg-[#408059] p-2 rounded-full"

@@ -29,7 +29,7 @@ import {
   useFertigationRecordsByFarms,
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculatorModels';
-import { AddActivityModal, EditActivityModal } from '@/components/screens';
+import { AddEntryModal, EditActivityModal } from '@/components/screens';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -764,11 +764,13 @@ export default function LogsScreen() {
       </SafeAreaView>
 
       {selectedFarm && (
-        <AddActivityModal
+        <AddEntryModal
           visible={showAddModal}
           onClose={() => setShowAddModal(false)}
           farm={selectedFarm}
-          onSaveSuccess={() => {
+          tabs={['log']}
+          initialTab="log"
+          onLogSaveSuccess={() => {
             refetchRecords();
           }}
         />

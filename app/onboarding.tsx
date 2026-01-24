@@ -110,17 +110,7 @@ export default function OnboardingScreen() {
       </Text>
 
       {filteredFeatures.map((feature, index) => (
-        <View
-          key={index}
-          className="bg-white rounded-2xl p-4 mb-3 flex-row items-center"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.05,
-            shadowRadius: 8,
-            elevation: 2,
-          }}
-        >
+        <View key={index} className="bg-white rounded-2xl p-4 mb-3 flex-row items-center">
           <View
             className="w-12 h-12 rounded-xl items-center justify-center mr-4"
             style={{ backgroundColor: `${feature.color}15` }}

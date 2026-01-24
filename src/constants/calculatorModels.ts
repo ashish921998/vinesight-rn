@@ -31,18 +31,18 @@ export interface WaterGrowthStage {
 
 export const WATER_GROWTH_STAGES: WaterGrowthStage[] = [
   { id: 'beginningBudbreak', label: 'Beginning Budbreak', kc: 0.25 },
-  { id: 'shoot30cm', label: 'Shoot 30cm', kc: 0.30 },
-  { id: 'shoot50cm', label: 'Shoot 50cm', kc: 0.40 },
-  { id: 'shoot80cm', label: 'Shoot 80cm', kc: 0.50 },
-  { id: 'beginningBloom', label: 'Beginning Bloom', kc: 0.60 },
-  { id: 'fruitSet', label: 'Fruit Set', kc: 0.70 },
-  { id: 'berry6to8mm', label: 'Berry 6-8mm', kc: 0.80 },
+  { id: 'shoot30cm', label: 'Shoot 30cm', kc: 0.3 },
+  { id: 'shoot50cm', label: 'Shoot 50cm', kc: 0.4 },
+  { id: 'shoot80cm', label: 'Shoot 80cm', kc: 0.5 },
+  { id: 'beginningBloom', label: 'Beginning Bloom', kc: 0.6 },
+  { id: 'fruitSet', label: 'Fruit Set', kc: 0.7 },
+  { id: 'berry6to8mm', label: 'Berry 6-8mm', kc: 0.8 },
   { id: 'berry12mm', label: 'Berry 12mm', kc: 0.85 },
-  { id: 'closingBunches', label: 'Closing Bunches', kc: 1.00 },
-  { id: 'beginningVeraison', label: 'Beginning Veraison', kc: 1.00 },
-  { id: 'beginningHarvest', label: 'Beginning Harvest', kc: 0.80 },
-  { id: 'endHarvest', label: 'End Harvest', kc: 0.60 },
-  { id: 'afterHarvest', label: 'After Harvest', kc: 0.50 },
+  { id: 'closingBunches', label: 'Closing Bunches', kc: 1.0 },
+  { id: 'beginningVeraison', label: 'Beginning Veraison', kc: 1.0 },
+  { id: 'beginningHarvest', label: 'Beginning Harvest', kc: 0.8 },
+  { id: 'endHarvest', label: 'End Harvest', kc: 0.6 },
+  { id: 'afterHarvest', label: 'After Harvest', kc: 0.5 },
 ];
 
 export function getGrowthStageDisplayText(stage: WaterGrowthStage): string {
@@ -123,13 +123,69 @@ export interface GrapeGrowthStage {
 }
 
 export const GRAPE_GROWTH_STAGES: GrapeGrowthStage[] = [
-  { id: 'dormant', label: 'Dormant', kc: 0.15, seasonalFactor: 0.2, nitrogenFactor: 0.2, phosphorusFactor: 0.1, potassiumFactor: 0.3 },
-  { id: 'budbreak', label: 'Bud Break', kc: 0.3, seasonalFactor: 0.5, nitrogenFactor: 2.5, phosphorusFactor: 0.8, potassiumFactor: 3.5 },
-  { id: 'flowering', label: 'Flowering', kc: 0.7, seasonalFactor: 0.7, nitrogenFactor: 4.5, phosphorusFactor: 1.2, potassiumFactor: 5.5 },
-  { id: 'fruitSet', label: 'Fruit Set', kc: 0.95, seasonalFactor: 0.85, nitrogenFactor: 6.0, phosphorusFactor: 1.8, potassiumFactor: 8.0 },
-  { id: 'veraison', label: 'Veraison', kc: 0.85, seasonalFactor: 1.0, nitrogenFactor: 3.5, phosphorusFactor: 1.0, potassiumFactor: 6.5 },
-  { id: 'harvest', label: 'Harvest', kc: 0.45, seasonalFactor: 0.9, nitrogenFactor: 1.5, phosphorusFactor: 0.5, potassiumFactor: 2.5 },
-  { id: 'postHarvest', label: 'Post Harvest', kc: 0.6, seasonalFactor: 0.6, nitrogenFactor: 2.0, phosphorusFactor: 0.6, potassiumFactor: 3.0 },
+  {
+    id: 'dormant',
+    label: 'Dormant',
+    kc: 0.15,
+    seasonalFactor: 0.2,
+    nitrogenFactor: 0.2,
+    phosphorusFactor: 0.1,
+    potassiumFactor: 0.3,
+  },
+  {
+    id: 'budbreak',
+    label: 'Bud Break',
+    kc: 0.3,
+    seasonalFactor: 0.5,
+    nitrogenFactor: 2.5,
+    phosphorusFactor: 0.8,
+    potassiumFactor: 3.5,
+  },
+  {
+    id: 'flowering',
+    label: 'Flowering',
+    kc: 0.7,
+    seasonalFactor: 0.7,
+    nitrogenFactor: 4.5,
+    phosphorusFactor: 1.2,
+    potassiumFactor: 5.5,
+  },
+  {
+    id: 'fruitSet',
+    label: 'Fruit Set',
+    kc: 0.95,
+    seasonalFactor: 0.85,
+    nitrogenFactor: 6.0,
+    phosphorusFactor: 1.8,
+    potassiumFactor: 8.0,
+  },
+  {
+    id: 'veraison',
+    label: 'Veraison',
+    kc: 0.85,
+    seasonalFactor: 1.0,
+    nitrogenFactor: 3.5,
+    phosphorusFactor: 1.0,
+    potassiumFactor: 6.5,
+  },
+  {
+    id: 'harvest',
+    label: 'Harvest',
+    kc: 0.45,
+    seasonalFactor: 0.9,
+    nitrogenFactor: 1.5,
+    phosphorusFactor: 0.5,
+    potassiumFactor: 2.5,
+  },
+  {
+    id: 'postHarvest',
+    label: 'Post Harvest',
+    kc: 0.6,
+    seasonalFactor: 0.6,
+    nitrogenFactor: 2.0,
+    phosphorusFactor: 0.6,
+    potassiumFactor: 3.0,
+  },
 ];
 
 // ============================================================
@@ -165,9 +221,27 @@ export interface SoilType {
 }
 
 export const SOIL_TYPES: SoilType[] = [
-  { id: 'sandy', label: 'Sandy', durationMultiplier: 1.2, waterRetentionMin: 10, waterRetentionMax: 15 },
-  { id: 'loamy', label: 'Loamy', durationMultiplier: 1.0, waterRetentionMin: 15, waterRetentionMax: 20 },
-  { id: 'clay', label: 'Clay', durationMultiplier: 0.8, waterRetentionMin: 20, waterRetentionMax: 25 },
+  {
+    id: 'sandy',
+    label: 'Sandy',
+    durationMultiplier: 1.2,
+    waterRetentionMin: 10,
+    waterRetentionMax: 15,
+  },
+  {
+    id: 'loamy',
+    label: 'Loamy',
+    durationMultiplier: 1.0,
+    waterRetentionMin: 15,
+    waterRetentionMax: 20,
+  },
+  {
+    id: 'clay',
+    label: 'Clay',
+    durationMultiplier: 0.8,
+    waterRetentionMin: 20,
+    waterRetentionMax: 25,
+  },
 ];
 
 // ============================================================
@@ -211,7 +285,7 @@ export const LOG_TYPES: LogType[] = [
 ];
 
 export function getLogType(id: LogTypeId): LogType {
-  return LOG_TYPES.find(lt => lt.id === id) ?? LOG_TYPES[0];
+  return LOG_TYPES.find((lt) => lt.id === id) ?? LOG_TYPES[0];
 }
 
 // ============================================================
@@ -228,7 +302,7 @@ export const EXPENSE_TYPES = [
   'Other',
 ] as const;
 
-export type ExpenseTypeId = typeof EXPENSE_TYPES[number];
+export type ExpenseTypeId = (typeof EXPENSE_TYPES)[number];
 
 // ============================================================
 // MARK: - Harvest Grades
@@ -244,21 +318,21 @@ export const HARVEST_GRADES = [
   'Reject',
 ] as const;
 
-export type HarvestGrade = typeof HARVEST_GRADES[number];
+export type HarvestGrade = (typeof HARVEST_GRADES)[number];
 
 // ============================================================
 // MARK: - Chemical Units
 // ============================================================
 
-export const CHEMICAL_UNITS = ['gm/L', 'ml/L', 'gm/tank', 'ml/tank'] as const;
-export type ChemicalUnit = typeof CHEMICAL_UNITS[number];
+export const CHEMICAL_UNITS = ['gm/L', 'ml/L', 'gm/acre', 'ml/acre', 'ppm'] as const;
+export type ChemicalUnit = (typeof CHEMICAL_UNITS)[number];
 
 // ============================================================
 // MARK: - Fertilizer Units
 // ============================================================
 
-export const FERTILIZER_UNITS = ['kg/acre', 'liter/acre', 'kg/ha', 'liter/ha'] as const;
-export type FertilizerUnit = typeof FERTILIZER_UNITS[number];
+export const FERTILIZER_UNITS = ['kg/acre', 'liter/acre'] as const;
+export type FertilizerUnit = (typeof FERTILIZER_UNITS)[number];
 
 // ============================================================
 // MARK: - Soil Texture Classes
@@ -279,7 +353,7 @@ export const SOIL_TEXTURE_CLASSES = [
   'Clay',
 ] as const;
 
-export type SoilTextureClass = typeof SOIL_TEXTURE_CLASSES[number];
+export type SoilTextureClass = (typeof SOIL_TEXTURE_CLASSES)[number];
 
 // ============================================================
 // MARK: - Currency Options

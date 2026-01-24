@@ -11,11 +11,14 @@ import {
   PetioleTestRecord,
   PetioleTestRecordInsert,
 } from '../types/database';
+import { LabTrendsService } from '../services/labTrendsService';
 
 // Query keys
 export const labTestQueryKeys = {
   soilTests: (farmId: number) => ['soil-tests', farmId] as const,
   petioleTests: (farmId: number) => ['petiole-tests', farmId] as const,
+  soilTrends: (farmId: number) => ['soil-trends', farmId] as const,
+  petioleTrends: (farmId: number) => ['petiole-trends', farmId] as const,
 };
 
 /**
@@ -116,10 +119,7 @@ export function useDeleteSoilTest() {
 
   return useMutation({
     mutationFn: async ({ id, farmId }: { id: number; farmId: number }) => {
-      const { error } = await supabase
-        .from('soil_test_records')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('soil_test_records').delete().eq('id', id);
 
       if (error) throw error;
       return { id, farmId };
@@ -140,10 +140,7 @@ export function useDeletePetioleTest() {
 
   return useMutation({
     mutationFn: async ({ id, farmId }: { id: number; farmId: number }) => {
-      const { error } = await supabase
-        .from('petiole_test_records')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('petiole_test_records').delete().eq('id', id);
 
       if (error) throw error;
       return { id, farmId };
@@ -176,26 +173,36 @@ export const SOIL_PARAMETERS = [
 
 // Common petiole test parameters
 export const PETIOLE_PARAMETERS = [
-  { key: 'N', label: 'Nitrogen (N)', unit: '%', min: 0, max: 5, step: 0.01 },
-  { key: 'P', label: 'Phosphorus (P)', unit: '%', min: 0, max: 1, step: 0.01 },
-  { key: 'K', label: 'Potassium (K)', unit: '%', min: 0, max: 5, step: 0.01 },
-  { key: 'Ca', label: 'Calcium (Ca)', unit: '%', min: 0, max: 5, step: 0.01 },
-  { key: 'Mg', label: 'Magnesium (Mg)', unit: '%', min: 0, max: 2, step: 0.01 },
-  { key: 'S', label: 'Sulfur (S)', unit: '%', min: 0, max: 1, step: 0.01 },
-  { key: 'Zn', label: 'Zinc (Zn)', unit: 'ppm', min: 0, max: 200, step: 1 },
-  { key: 'Fe', label: 'Iron (Fe)', unit: 'ppm', min: 0, max: 500, step: 1 },
-  { key: 'Mn', label: 'Manganese (Mn)', unit: 'ppm', min: 0, max: 300, step: 1 },
-  { key: 'Cu', label: 'Copper (Cu)', unit: 'ppm', min: 0, max: 50, step: 1 },
-  { key: 'B', label: 'Boron (B)', unit: 'ppm', min: 0, max: 100, step: 1 },
+  {
+    key: 'ammonical_nitrogen',
+    label: 'Ammonical Nitrogen',
+    unit: 'ppm',
+    min: 0,
+    max: 1000,
+    step: 1,
+  },
+  { key: 'nitrate_nitrogen', label: 'Nitrate Nitrogen', unit: 'ppm', min: 0, max: 1000, step: 1 },
+  { key: 'total_nitrogen', label: 'Total Nitrogen', unit: '%', min: 0, max: 5, step: 0.01 },
+  { key: 'phosphorus', label: 'Phosphorus (P)', unit: '%', min: 0, max: 1, step: 0.01 },
+  { key: 'potassium', label: 'Potassium (K)', unit: '%', min: 0, max: 5, step: 0.01 },
+  { key: 'calcium', label: 'Calcium (Ca)', unit: '%', min: 0, max: 5, step: 0.01 },
+  { key: 'magnesium', label: 'Magnesium (Mg)', unit: '%', min: 0, max: 2, step: 0.01 },
+  { key: 'sulfur', label: 'Sulfur (S)', unit: '%', min: 0, max: 1, step: 0.01 },
+  { key: 'zinc', label: 'Zinc (Zn)', unit: 'ppm', min: 0, max: 200, step: 1 },
+  { key: 'iron', label: 'Iron (Fe)', unit: 'ppm', min: 0, max: 500, step: 1 },
+  { key: 'manganese', label: 'Manganese (Mn)', unit: 'ppm', min: 0, max: 300, step: 1 },
+  { key: 'copper', label: 'Copper (Cu)', unit: 'ppm', min: 0, max: 50, step: 1 },
+  { key: 'boron', label: 'Boron (B)', unit: 'ppm', min: 0, max: 100, step: 1 },
+  { key: 'chloride', label: 'Chloride', unit: '%', min: 0, max: 1, step: 0.01 },
+  { key: 'sodium', label: 'Sodium', unit: '%', min: 0, max: 1, step: 0.01 },
+  { key: 'molybdenum', label: 'Molybdenum', unit: 'ppm', min: 0, max: 1, step: 0.01 },
 ];
 
 /**
  * Format parameter key for display
  */
 export function formatParameterKey(key: string): string {
-  const param = [...SOIL_PARAMETERS, ...PETIOLE_PARAMETERS].find(
-    (p) => p.key === key
-  );
+  const param = [...SOIL_PARAMETERS, ...PETIOLE_PARAMETERS].find((p) => p.key === key);
   return param?.label || key;
 }
 
@@ -206,4 +213,63 @@ export function getParameterUnit(key: string, isSoil: boolean): string {
   const params = isSoil ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
   const param = params.find((p) => p.key === key);
   return param?.unit || '';
+}
+
+// Parameter colors for charts (distinct colors)
+export const PARAMETER_COLORS = [
+  '#3B82F6', // blue
+  '#10B981', // green
+  '#F59E0B', // amber
+  '#EF4444', // red
+  '#8B5CF6', // purple
+  '#EC4899', // pink
+  '#14B8A6', // teal
+  '#F97316', // orange
+] as const;
+
+// Default selected parameters
+export const SOIL_DEFAULT_PARAMS = ['pH', 'N', 'P', 'K'] as const;
+export const PETIOLE_DEFAULT_PARAMS = [
+  'total_nitrogen',
+  'phosphorus',
+  'potassium',
+  'calcium',
+] as const;
+
+export function useSoilTestTrends(farmId: number) {
+  return useQuery({
+    queryKey: labTestQueryKeys.soilTrends(farmId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('soil_test_records')
+        .select('*')
+        .eq('farm_id', farmId)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+      const testData = data as SoilTestRecord[];
+      const trends = LabTrendsService.calculateSoilTrends(testData || []);
+      return trends;
+    },
+    enabled: farmId > 0,
+  });
+}
+
+export function usePetioleTestTrends(farmId: number) {
+  return useQuery({
+    queryKey: labTestQueryKeys.petioleTrends(farmId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('petiole_test_records')
+        .select('*')
+        .eq('farm_id', farmId)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+      const testData = data as PetioleTestRecord[];
+      const trends = LabTrendsService.calculatePetioleTrends(testData || []);
+      return trends;
+    },
+    enabled: farmId > 0,
+  });
 }

@@ -50,7 +50,14 @@ import {
   useUpdateFertigationRecord,
 } from '@/hooks';
 import { toSupabaseDateString, fromSupabaseDateString } from '@/types';
-import type { Farm, IrrigationRecord, SprayRecord, HarvestRecord, ExpenseRecord, FertigationRecord } from '@/types';
+import type {
+  Farm,
+  IrrigationRecord,
+  SprayRecord,
+  HarvestRecord,
+  ExpenseRecord,
+  FertigationRecord,
+} from '@/types';
 
 interface EditActivityModalProps {
   visible: boolean;
@@ -79,7 +86,9 @@ export function EditActivityModal({
   const [sprayData, setSprayData] = useState<SprayFormData>(createEmptySprayFormData());
   const [harvestData, setHarvestData] = useState<HarvestFormData>(createEmptyHarvestFormData());
   const [expenseData, setExpenseData] = useState<ExpenseFormData>(createEmptyExpenseFormData());
-  const [fertigationData, setFertigationData] = useState<FertigationFormData>(createEmptyFertigationFormData());
+  const [fertigationData, setFertigationData] = useState<FertigationFormData>(
+    createEmptyFertigationFormData(),
+  );
 
   const updateIrrigation = useUpdateIrrigationRecord();
   const updateSpray = useUpdateSprayRecord();
@@ -87,7 +96,7 @@ export function EditActivityModal({
   const updateExpense = useUpdateExpenseRecord();
   const updateFertigation = useUpdateFertigationRecord();
 
-  const logTypeConfig = LOG_TYPES.find(lt => lt.id === logType);
+  const logTypeConfig = LOG_TYPES.find((lt) => lt.id === logType);
 
   const isFormValid = useMemo(() => {
     switch (logType) {
@@ -131,12 +140,12 @@ export function EditActivityModal({
             }
           }
 
-          const allowedUnits = ['gm/L', 'ml/L', 'gm/tank', 'ml/tank'] as const;
-          type AllowedUnit = typeof allowedUnits[number];
+          const allowedUnits = ['gm/L', 'ml/L', 'gm/acre', 'ml/acre', 'ppm'] as const;
+          type AllowedUnit = (typeof allowedUnits)[number];
 
           if (r.chemical) {
-            const chemicalParts = r.chemical.split(',').map(part => part.trim());
-            const chemicals = chemicalParts.map(part => {
+            const chemicalParts = r.chemical.split(',').map((part) => part.trim());
+            const chemicals = chemicalParts.map((part) => {
               const match = part.match(/(.+?)\s*\((\d+\.?\d*)\s*(.+?)\)/);
               if (match) {
                 const unit = match[3].trim() as AllowedUnit;
@@ -179,7 +188,15 @@ export function EditActivityModal({
           const r = record as HarvestRecord;
           setHarvestData({
             quantity: r.quantity || 0,
-            grade: (r.grade || '') as '' | 'A' | 'B' | 'C' | 'Export Quality' | 'Premium' | 'Standard' | 'Reject',
+            grade: (r.grade || '') as
+              | ''
+              | 'A'
+              | 'B'
+              | 'C'
+              | 'Export Quality'
+              | 'Premium'
+              | 'Standard'
+              | 'Reject',
             price: r.price || 0,
             buyer: r.buyer || '',
           });
@@ -188,7 +205,15 @@ export function EditActivityModal({
         case 'expense': {
           const r = record as ExpenseRecord;
           setExpenseData({
-            type: (r.type || '') as '' | 'Equipment' | 'Fuel' | 'Seeds/Plants' | 'Packaging' | 'Transport' | 'Maintenance' | 'Other',
+            type: (r.type || '') as
+              | ''
+              | 'Equipment'
+              | 'Fuel'
+              | 'Seeds/Plants'
+              | 'Packaging'
+              | 'Transport'
+              | 'Maintenance'
+              | 'Other',
             cost: r.cost || 0,
             remarks: r.remarks || '',
           });
@@ -198,10 +223,10 @@ export function EditActivityModal({
           const r = record as FertigationRecord;
           const data = createEmptyFertigationFormData();
           if (r.fertilizers && r.fertilizers.length > 0) {
-            data.fertilizers = r.fertilizers.map(f => ({
+            data.fertilizers = r.fertilizers.map((f) => ({
               name: f.name,
               quantity: f.quantity,
-              unit: f.unit as 'kg/acre' | 'liter/acre' | 'kg/ha' | 'liter/ha',
+              unit: f.unit as 'kg/acre' | 'liter/acre',
             }));
           }
           setFertigationData(data);
@@ -240,7 +265,9 @@ export function EditActivityModal({
           if (r.id == null) {
             throw new Error('Record ID is missing');
           }
-          const chemicalStr = sprayData.chemicals.map(c => `${c.name} (${c.quantity} ${c.unit})`).join(', ');
+          const chemicalStr = sprayData.chemicals
+            .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
+            .join(', ');
           const doseStr = `Water: ${sprayData.waterVolume}L`;
           await updateSpray.mutateAsync({
             id: r.id,
@@ -293,7 +320,7 @@ export function EditActivityModal({
           await updateFertigation.mutateAsync({
             id: r.id,
             updates: {
-              fertilizers: fertigationData.fertilizers.map(f => ({
+              fertilizers: fertigationData.fertilizers.map((f) => ({
                 name: f.name,
                 unit: f.unit,
                 quantity: f.quantity,
@@ -337,15 +364,9 @@ export function EditActivityModal({
         {logType === 'irrigation' && (
           <IrrigationForm data={irrigationData} onChange={setIrrigationData} />
         )}
-        {logType === 'spray' && (
-          <SprayForm data={sprayData} onChange={setSprayData} />
-        )}
-        {logType === 'harvest' && (
-          <HarvestForm data={harvestData} onChange={setHarvestData} />
-        )}
-        {logType === 'expense' && (
-          <ExpenseForm data={expenseData} onChange={setExpenseData} />
-        )}
+        {logType === 'spray' && <SprayForm data={sprayData} onChange={setSprayData} />}
+        {logType === 'harvest' && <HarvestForm data={harvestData} onChange={setHarvestData} />}
+        {logType === 'expense' && <ExpenseForm data={expenseData} onChange={setExpenseData} />}
         {logType === 'fertigation' && (
           <FertigationForm data={fertigationData} onChange={setFertigationData} />
         )}
@@ -374,7 +395,9 @@ export function EditActivityModal({
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
               <Text className="text-lg font-bold text-[#1c1c1e]">Edit Log</Text>
-              <Text className="text-sm text-[#8e8e93]" numberOfLines={1}>{farm.name}</Text>
+              <Text className="text-sm text-[#8e8e93]" numberOfLines={1}>
+                {farm.name}
+              </Text>
             </View>
             <TouchableOpacity onPress={handleClose}>
               <Ionicons name="close-circle" size={28} color="#9CA3AF" />

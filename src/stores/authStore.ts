@@ -317,9 +317,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
             isLoading: false,
           });
         } else if (accessToken) {
+          if (!refreshToken && __DEV__) {
+            console.warn('OAuth response missing refresh_token - session may not persist');
+          }
+          if (!refreshToken) {
+            throw new Error('OAuth response missing refresh_token');
+          }
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
-            refresh_token: refreshToken || '',
+            refresh_token: refreshToken,
           });
           if (error) throw error;
           set({

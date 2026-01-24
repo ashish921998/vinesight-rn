@@ -1,7 +1,18 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  FlatList,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFarms } from '@/hooks';
 import { supabase } from '@/lib/supabase';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
@@ -24,6 +35,18 @@ interface CellData {
 }
 
 const STATUS_CYCLE: AttendanceStatus[] = ['full_day', 'half_day', 'absent', null];
+
+const UI = {
+  bg: '#F4F6F8',
+  surface: '#FFFFFF',
+  surfaceSoft: 'rgba(255, 255, 255, 0.9)',
+  border: 'rgba(15, 23, 42, 0.08)',
+  primary: '#2F6B4F',
+  primarySoft: 'rgba(47, 107, 79, 0.12)',
+  text: '#0F172A',
+  muted: '#6B7280',
+  accent: '#2563EB',
+};
 
 const getStatusDisplay = (status: AttendanceStatus) => {
   switch (status) {
@@ -72,20 +95,17 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
 
   if (activeWorkers.length === 0) {
     return (
-      <View
-        className="flex-1 items-center justify-center p-8"
-        style={{ backgroundColor: '#f2f2f7' }}
-      >
+      <View className="flex-1 items-center justify-center p-8" style={{ backgroundColor: UI.bg }}>
         <View
           className="w-24 h-24 rounded-3xl items-center justify-center mb-4"
-          style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+          style={{ backgroundColor: UI.primarySoft }}
         >
-          <Ionicons name="people-outline" size={48} color="#408059" />
+          <Ionicons name="people-outline" size={48} color={UI.primary} />
         </View>
-        <Text className="text-lg font-bold text-center" style={{ color: '#000000' }}>
+        <Text className="text-lg font-bold text-center" style={{ color: UI.text }}>
           No Active Workers
         </Text>
-        <Text className="text-sm text-center mt-2" style={{ color: '#8e8e93' }}>
+        <Text className="text-sm text-center mt-2" style={{ color: UI.muted }}>
           Add workers in the Workers tab to start tracking attendance.
         </Text>
       </View>
@@ -93,9 +113,9 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
+    <View className="flex-1" style={{ backgroundColor: UI.bg }}>
       <LinearGradient
-        colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
+        colors={['rgba(47, 107, 79, 0.12)', 'transparent']}
         style={{ height: 200, position: 'absolute', top: 0, left: 0, right: 0 }}
       />
 
@@ -104,7 +124,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
         <View className="mx-4 mt-4">
           <View
             className="rounded-2xl p-1.5"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+            style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
           >
             <View className="flex-row overflow-hidden rounded-xl">
               <TouchableOpacity
@@ -113,12 +133,12 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                 className={`flex-1 flex-row items-center justify-center py-3 transition-all ${
                   activeTab === 'mark' ? '' : 'bg-transparent'
                 }`}
-                style={activeTab === 'mark' ? { backgroundColor: '#408059' } : {}}
+                style={activeTab === 'mark' ? { backgroundColor: UI.primary } : {}}
               >
                 <Ionicons
                   name="create-outline"
                   size={18}
-                  color={activeTab === 'mark' ? '#FFFFFF' : '#8e8e93'}
+                  color={activeTab === 'mark' ? '#FFFFFF' : UI.muted}
                 />
                 <Text
                   className={`text-sm font-semibold ml-2 ${
@@ -134,12 +154,12 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                 className={`flex-1 flex-row items-center justify-center py-3 transition-all ${
                   activeTab === 'calendar' ? '' : 'bg-transparent'
                 }`}
-                style={activeTab === 'calendar' ? { backgroundColor: '#408059' } : {}}
+                style={activeTab === 'calendar' ? { backgroundColor: UI.primary } : {}}
               >
                 <Ionicons
                   name="calendar-outline"
                   size={18}
-                  color={activeTab === 'calendar' ? '#FFFFFF' : '#8e8e93'}
+                  color={activeTab === 'calendar' ? '#FFFFFF' : UI.muted}
                 />
                 <Text
                   className={`text-sm font-semibold ml-2 ${
@@ -183,6 +203,8 @@ function MarkAttendanceTab({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedFarmIds, setSelectedFarmIds] = useState<number[]>([]);
+  const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
+  const [farmSheetVisible, setFarmSheetVisible] = useState(false);
 
   const prevWorkerIdRef = useRef<number | undefined>(undefined);
 
@@ -416,17 +438,7 @@ function MarkAttendanceTab({
 
   const handleWorkerSelect = () => {
     if (workers.length === 0) return;
-
-    const buttons = workers.map((worker, index) => ({
-      text: worker.name,
-      onPress: () => setSelectedWorkerIndex(index),
-      style: 'default' as const,
-    }));
-
-    Alert.alert('Select Worker', 'Choose a worker to mark attendance', [
-      ...buttons,
-      { text: 'Cancel', style: 'cancel' as const },
-    ]);
+    setWorkerSheetVisible(true);
   };
 
   const isToday = (date: Date): boolean => {
@@ -443,10 +455,15 @@ function MarkAttendanceTab({
     return days[date.getDay()];
   };
 
+  const formatShortDate = (date: Date) => {
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    return `${month} ${date.getDate()}`;
+  };
+
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#408059" />
+        <ActivityIndicator size="large" color={UI.primary} />
       </View>
     );
   }
@@ -462,61 +479,108 @@ function MarkAttendanceTab({
   return (
     <ScrollView
       className="flex-1"
-      style={{ backgroundColor: '#f2f2f7' }}
+      style={{ backgroundColor: UI.bg }}
       showsVerticalScrollIndicator={false}
     >
+      {/* Intro */}
+      <View className="mx-4 mt-4">
+        <View
+          className="rounded-3xl p-4"
+          style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
+        >
+          <Text className="text-xs font-bold uppercase tracking-wider" style={{ color: UI.muted }}>
+            Attendance
+          </Text>
+          <Text className="text-xl font-bold mt-1" style={{ color: UI.text }}>
+            Mark daily status quickly
+          </Text>
+          <View className="flex-row items-center mt-2">
+            <Ionicons name="information-circle-outline" size={16} color={UI.muted} />
+            <Text className="text-xs ml-2" style={{ color: UI.muted }}>
+              Tap a day to cycle Full • Half • Absent • Clear
+            </Text>
+          </View>
+        </View>
+      </View>
+
       {/* Filter Bar */}
       <View className="mx-4 mt-4">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View className="flex-row gap-3">
+        <View
+          className="rounded-3xl p-4"
+          style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
+        >
+          <Text className="text-xs font-bold uppercase tracking-wider" style={{ color: UI.muted }}>
+            Filters
+          </Text>
+          <View className="flex-row gap-3 mt-3">
             <TouchableOpacity
               onPress={handleWorkerSelect}
               activeOpacity={0.7}
-              className="flex-row items-center px-4 py-2.5 rounded-2xl"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+              className="flex-1 px-4 py-3 rounded-2xl border"
+              style={{ backgroundColor: '#FFFFFF', borderColor: UI.border }}
             >
-              <Ionicons name="person-outline" size={16} color="#408059" />
-              <Text className="text-sm font-semibold ml-2" style={{ color: '#000000' }}>
-                {selectedWorker?.name || 'All Workers'}
-              </Text>
-              <Ionicons name="chevron-down" size={14} color="#8e8e93" className="ml-1" />
+              <View className="flex-row items-center">
+                <Ionicons name="person-outline" size={16} color={UI.primary} />
+                <Text className="text-xs font-semibold ml-2" style={{ color: UI.muted }}>
+                  Worker
+                </Text>
+              </View>
+              <View className="flex-row items-center mt-1">
+                <Text className="text-sm font-semibold" style={{ color: UI.text }}>
+                  {selectedWorker?.name || 'All Workers'}
+                </Text>
+                <Ionicons name="chevron-down" size={14} color={UI.muted} className="ml-1" />
+              </View>
             </TouchableOpacity>
-            <View
-              className="flex-row items-center px-4 py-2.5 rounded-2xl"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+            <TouchableOpacity
+              onPress={() => setFarmSheetVisible(true)}
+              activeOpacity={0.7}
+              className="flex-1 px-4 py-3 rounded-2xl border"
+              style={{ backgroundColor: '#FFFFFF', borderColor: UI.border }}
             >
-              <Ionicons name="leaf-outline" size={16} color="#408059" />
-              <Text className="text-sm font-semibold ml-2" style={{ color: '#000000' }}>
-                {selectedFarmIds.length > 0
-                  ? `${selectedFarmIds.length} farm${selectedFarmIds.length > 1 ? 's' : ''}`
-                  : 'All Farms'}
-              </Text>
-            </View>
+              <View className="flex-row items-center">
+                <Ionicons name="leaf-outline" size={16} color={UI.primary} />
+                <Text className="text-xs font-semibold ml-2" style={{ color: UI.muted }}>
+                  Farms
+                </Text>
+              </View>
+              <View className="flex-row items-center mt-1">
+                <Text className="text-sm font-semibold" style={{ color: UI.text }}>
+                  {selectedFarmIds.length > 0 ? `${selectedFarmIds.length} selected` : 'All Farms'}
+                </Text>
+                <Ionicons name="chevron-down" size={14} color={UI.muted} className="ml-1" />
+              </View>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
       </View>
 
       {/* Week Days Grid */}
       <View className="mx-4 mt-4">
         <View
           className="rounded-3xl p-4 mb-4"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+          style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
         >
           <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-xs font-bold uppercase" style={{ color: '#8e8e93' }}>
-              {formatDate(dateRange[0])}
-            </Text>
+            <View>
+              <Text className="text-xs font-bold uppercase" style={{ color: UI.muted }}>
+                This Week
+              </Text>
+              <Text className="text-sm font-semibold mt-1" style={{ color: UI.text }}>
+                {formatShortDate(dateRange[0])} - {formatShortDate(dateRange[dateRange.length - 1])}
+              </Text>
+            </View>
             <TouchableOpacity
               className="px-3 py-1.5 rounded-full"
-              style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+              style={{ backgroundColor: UI.primarySoft }}
             >
-              <Text className="text-xs font-bold" style={{ color: '#408059' }}>
-                This Week
+              <Text className="text-xs font-bold" style={{ color: UI.primary }}>
+                {hasModifications ? 'Unsaved Changes' : 'Up to Date'}
               </Text>
             </TouchableOpacity>
           </View>
 
-          <View className="flex-row flex-wrap">
+          <View className="flex-row flex-wrap justify-between">
             {dateRange.map((date) => {
               const dateStr = formatDate(date);
               const key = getCellKey(selectedWorker?.id || 0, dateStr);
@@ -524,23 +588,23 @@ function MarkAttendanceTab({
               const statusInfo = getStatusDisplay(cell?.status ?? null);
               const modified = cell?.isModified ?? false;
               const isTodayDate = isToday(date);
+              const hasStatus = cell?.status !== null;
 
               return (
                 <TouchableOpacity
                   key={dateStr}
                   onPress={() => handleDayCellClick(date)}
                   activeOpacity={0.7}
-                  className="w-[30%] aspect-square items-center justify-center mb-3 rounded-2xl"
+                  className="w-[31%] aspect-square items-center justify-center mb-3 rounded-2xl relative"
                   style={{
-                    backgroundColor: isTodayDate
-                      ? 'rgba(59, 130, 246, 0.1)'
-                      : 'rgba(249, 250, 251, 0.8)',
-                    ...(modified ? { backgroundColor: statusInfo.bgColor } : {}),
+                    backgroundColor: hasStatus ? statusInfo.bgColor : 'rgba(249, 250, 251, 0.9)',
+                    borderWidth: isTodayDate ? 1 : 0,
+                    borderColor: isTodayDate ? UI.accent : 'transparent',
                   }}
                 >
                   <Text
                     className="text-[10px] font-semibold uppercase mb-1"
-                    style={{ color: isTodayDate ? '#2563EB' : '#9CA3AF' }}
+                    style={{ color: isTodayDate ? UI.accent : '#9CA3AF' }}
                   >
                     {getDayName(date)}
                   </Text>
@@ -549,12 +613,18 @@ function MarkAttendanceTab({
                   >
                     {date.getDate()}
                   </Text>
+                  {modified ? (
+                    <View
+                      className="absolute top-2 right-2 w-2 h-2 rounded-full"
+                      style={{ backgroundColor: UI.primary }}
+                    />
+                  ) : null}
                   <View
-                    className={`mt-1 px-2 py-0.5 rounded-full ${modified ? '' : 'bg-transparent'}`}
-                    style={modified ? { backgroundColor: statusInfo.badgeColor } : {}}
+                    className={`mt-1 px-2 py-0.5 rounded-full ${hasStatus ? '' : 'bg-transparent'}`}
+                    style={hasStatus ? { backgroundColor: statusInfo.badgeColor } : {}}
                   >
                     <Text
-                      className={`text-xs font-bold ${modified ? 'text-white' : 'text-transparent'}`}
+                      className={`text-xs font-bold ${hasStatus ? 'text-white' : 'text-transparent'}`}
                     >
                       {statusInfo.label}
                     </Text>
@@ -566,12 +636,15 @@ function MarkAttendanceTab({
         </View>
 
         {/* Quick Actions */}
-        <View className="flex-row gap-3 mb-4">
+        <View
+          className="rounded-3xl p-3 mb-4 flex-row gap-3"
+          style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
+        >
           <TouchableOpacity
             onPress={() => handleQuickAction('full_day')}
             activeOpacity={0.7}
             className="flex-1 py-3 rounded-2xl flex-row items-center justify-center"
-            style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
+            style={{ backgroundColor: 'rgba(34, 197, 94, 0.12)' }}
           >
             <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
             <Text className="text-sm font-bold ml-2" style={{ color: '#166534' }}>
@@ -582,7 +655,7 @@ function MarkAttendanceTab({
             onPress={() => handleQuickAction('half_day')}
             activeOpacity={0.7}
             className="flex-1 py-3 rounded-2xl flex-row items-center justify-center"
-            style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}
+            style={{ backgroundColor: 'rgba(245, 158, 11, 0.12)' }}
           >
             <Ionicons name="time" size={18} color="#F59E0B" />
             <Text className="text-sm font-bold ml-2" style={{ color: '#B45309' }}>
@@ -593,7 +666,7 @@ function MarkAttendanceTab({
             onPress={() => handleQuickAction('absent')}
             activeOpacity={0.7}
             className="flex-1 py-3 rounded-2xl flex-row items-center justify-center"
-            style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+            style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)' }}
           >
             <Ionicons name="close-circle" size={18} color="#EF4444" />
             <Text className="text-sm font-bold ml-2" style={{ color: '#B91C1C' }}>
@@ -605,7 +678,7 @@ function MarkAttendanceTab({
         {/* Worker Selector */}
         <View
           className="rounded-3xl p-4 mb-4"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+          style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
         >
           <View className="flex-row items-center justify-between">
             <TouchableOpacity
@@ -615,26 +688,39 @@ function MarkAttendanceTab({
               className="w-12 h-12 items-center justify-center rounded-full"
               style={{
                 backgroundColor:
-                  selectedWorkerIndex === 0 ? 'rgba(229, 231, 235, 0.5)' : 'rgba(64, 128, 89, 0.1)',
+                  selectedWorkerIndex === 0 ? 'rgba(229, 231, 235, 0.5)' : UI.primarySoft,
               }}
             >
               <Ionicons
                 name="chevron-back"
                 size={22}
-                color={selectedWorkerIndex === 0 ? '#D1D5DB' : '#408059'}
+                color={selectedWorkerIndex === 0 ? '#D1D5DB' : UI.primary}
               />
             </TouchableOpacity>
 
             <View className="flex-1 mx-4 items-center">
-              <Text className="text-lg font-bold" style={{ color: '#000000' }}>
+              <Text className="text-lg font-bold" style={{ color: UI.text }}>
                 {selectedWorker?.name}
               </Text>
               <View className="flex-row items-center mt-1">
-                <Ionicons name="wallet-outline" size={14} color="#408059" />
-                <Text className="text-sm font-semibold ml-1" style={{ color: '#8e8e93' }}>
+                <Ionicons name="wallet-outline" size={14} color={UI.primary} />
+                <Text className="text-sm font-semibold ml-1" style={{ color: UI.muted }}>
                   ₹{selectedWorker?.daily_rate}/day
                 </Text>
               </View>
+              <TouchableOpacity
+                onPress={handleWorkerSelect}
+                activeOpacity={0.7}
+                className="mt-2 px-3 py-1.5 rounded-full border"
+                style={{ borderColor: 'rgba(47, 107, 79, 0.3)' }}
+              >
+                <Text className="text-xs font-bold" style={{ color: UI.primary }}>
+                  Select Worker
+                </Text>
+              </TouchableOpacity>
+              <Text className="text-[11px] font-semibold mt-2" style={{ color: '#9CA3AF' }}>
+                {selectedWorkerIndex + 1} of {workers.length}
+              </Text>
             </View>
 
             <TouchableOpacity
@@ -646,13 +732,13 @@ function MarkAttendanceTab({
                 backgroundColor:
                   selectedWorkerIndex === workers.length - 1
                     ? 'rgba(229, 231, 235, 0.5)'
-                    : 'rgba(64, 128, 89, 0.1)',
+                    : UI.primarySoft,
               }}
             >
               <Ionicons
                 name="chevron-forward"
                 size={22}
-                color={selectedWorkerIndex === workers.length - 1 ? '#D1D5DB' : '#408059'}
+                color={selectedWorkerIndex === workers.length - 1 ? '#D1D5DB' : UI.primary}
               />
             </TouchableOpacity>
           </View>
@@ -664,7 +750,7 @@ function MarkAttendanceTab({
           activeOpacity={0.8}
           disabled={saving}
           className="rounded-3xl py-4 mb-6"
-          style={{ backgroundColor: '#408059', opacity: saving ? 0.6 : 1 }}
+          style={{ backgroundColor: UI.primary, opacity: saving ? 0.6 : 1 }}
         >
           {saving ? (
             <View className="flex-row items-center justify-center">
@@ -687,6 +773,29 @@ function MarkAttendanceTab({
           )}
         </TouchableOpacity>
       </View>
+      <WorkerSelectSheet
+        visible={workerSheetVisible}
+        title="Select Worker"
+        subtitle="Choose a worker to mark attendance"
+        workers={workers}
+        selectedWorkerId={selectedWorker?.id ?? null}
+        onSelect={(workerId) => {
+          const index = workers.findIndex((worker) => worker.id === workerId);
+          if (index >= 0) setSelectedWorkerIndex(index);
+          setWorkerSheetVisible(false);
+        }}
+        onClose={() => setWorkerSheetVisible(false)}
+      />
+      <FarmSelectSheet
+        visible={farmSheetVisible}
+        farms={farms}
+        selectedFarmIds={selectedFarmIds}
+        onApply={(farmIds) => {
+          setSelectedFarmIds(farmIds);
+          setFarmSheetVisible(false);
+        }}
+        onClose={() => setFarmSheetVisible(false)}
+      />
     </ScrollView>
   );
 }
@@ -698,22 +807,13 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [attendanceData, setAttendanceData] = useState<WorkerAttendance[]>([]);
   const [loading, setLoading] = useState(false);
+  const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
 
   const selectedWorker = workers.find((w) => w.id === selectedWorkerId);
 
   const handleWorkerSelect = () => {
     if (workers.length === 0) return;
-
-    const buttons = workers.map((worker) => ({
-      text: worker.name,
-      onPress: () => setSelectedWorkerId(worker.id!),
-      style: 'default' as const,
-    }));
-
-    Alert.alert('Select Worker', 'Choose a worker to view attendance', [
-      ...buttons,
-      { text: 'Cancel', style: 'cancel' as const },
-    ]);
+    setWorkerSheetVisible(true);
   };
 
   const loadCalendarAttendance = React.useCallback(async () => {
@@ -803,30 +903,41 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
   return (
     <ScrollView
       className="flex-1"
-      style={{ backgroundColor: '#f2f2f7' }}
+      style={{ backgroundColor: UI.bg }}
       showsVerticalScrollIndicator={false}
     >
       {/* Filter Bar */}
       <View className="mx-4 mt-4">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View
+          className="rounded-3xl p-4"
+          style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
+        >
+          <Text className="text-xs font-bold uppercase tracking-wider" style={{ color: UI.muted }}>
+            Worker
+          </Text>
           <TouchableOpacity
             onPress={handleWorkerSelect}
             activeOpacity={0.7}
-            className="flex-row items-center px-4 py-2.5 rounded-2xl"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+            className="flex-row items-center justify-between px-4 py-3 rounded-2xl border mt-3"
+            style={{ backgroundColor: '#FFFFFF', borderColor: UI.border }}
           >
-            <Ionicons name="person-outline" size={16} color="#408059" />
-            <Text className="text-sm font-semibold ml-2" style={{ color: '#000000' }}>
-              {selectedWorker?.name || 'All Workers'}
-            </Text>
-            <Ionicons name="chevron-down" size={14} color="#8e8e93" className="ml-1" />
+            <View className="flex-row items-center">
+              <Ionicons name="person-outline" size={16} color={UI.primary} />
+              <Text className="text-sm font-semibold ml-2" style={{ color: UI.text }}>
+                {selectedWorker?.name || 'All Workers'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-down" size={14} color={UI.muted} />
           </TouchableOpacity>
-        </ScrollView>
+        </View>
       </View>
 
       {/* Month Navigation */}
       <View className="mx-4 mt-4">
-        <View className="rounded-3xl p-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+        <View
+          className="rounded-3xl p-4"
+          style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
+        >
           <View className="flex-row items-center justify-between">
             <TouchableOpacity
               onPress={() => {
@@ -836,12 +947,12 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
               }}
               activeOpacity={0.7}
               className="w-10 h-10 items-center justify-center rounded-full"
-              style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+              style={{ backgroundColor: UI.primarySoft }}
             >
-              <Ionicons name="chevron-back" size={22} color="#408059" />
+              <Ionicons name="chevron-back" size={22} color={UI.primary} />
             </TouchableOpacity>
 
-            <Text className="text-lg font-bold" style={{ color: '#000000' }}>
+            <Text className="text-lg font-bold" style={{ color: UI.text }}>
               {monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
             </Text>
 
@@ -850,9 +961,9 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
                 onPress={() => setCalendarMonth(new Date())}
                 activeOpacity={0.7}
                 className="px-3 py-1.5 rounded-full mr-2"
-                style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+                style={{ backgroundColor: UI.primarySoft }}
               >
-                <Text className="text-xs font-bold" style={{ color: '#408059' }}>
+                <Text className="text-xs font-bold" style={{ color: UI.primary }}>
                   Today
                 </Text>
               </TouchableOpacity>
@@ -864,9 +975,9 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
                 }}
                 activeOpacity={0.7}
                 className="w-10 h-10 items-center justify-center rounded-full"
-                style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+                style={{ backgroundColor: UI.primarySoft }}
               >
-                <Ionicons name="chevron-forward" size={22} color="#408059" />
+                <Ionicons name="chevron-forward" size={22} color={UI.primary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -877,18 +988,15 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
       <View className="mx-4 mt-4">
         <View
           className="rounded-3xl p-4 mb-4"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+          style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
         >
           {loading ? (
             <View className="py-12 items-center">
-              <ActivityIndicator size="small" color="#408059" />
+              <ActivityIndicator size="small" color={UI.primary} />
             </View>
           ) : (
             <>
-              <View
-                className="flex-row pb-3 border-b"
-                style={{ borderColor: 'rgba(0, 0, 0, 0.05)' }}
-              >
+              <View className="flex-row pb-3 border-b" style={{ borderColor: UI.border }}>
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
                   <View key={`day-${index}`} className="flex-1">
                     <Text
@@ -913,11 +1021,18 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
                         <View
                           className="w-full h-full items-center justify-center rounded-2xl"
                           style={{
-                            backgroundColor: isTodayDate ? 'rgba(64, 128, 89, 0.1)' : 'transparent',
+                            backgroundColor: isTodayDate ? UI.primarySoft : 'transparent',
                           }}
                         >
                           <Text
-                            className={`text-sm font-semibold ${isTodayDate ? 'text-[#408059]' : isCurrentMonth ? 'text-gray-900' : 'text-gray-300'}`}
+                            className="text-sm font-semibold"
+                            style={{
+                              color: isTodayDate
+                                ? UI.primary
+                                : isCurrentMonth
+                                  ? '#111827'
+                                  : '#D1D5DB',
+                            }}
                           >
                             {day.getDate()}
                           </Text>
@@ -956,30 +1071,285 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
 
       {/* Legend */}
       <View className="mx-4 mb-6">
-        <View className="rounded-3xl p-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+        <View
+          className="rounded-3xl p-4"
+          style={{ backgroundColor: UI.surfaceSoft, borderColor: UI.border, borderWidth: 1 }}
+        >
           <View className="flex-row items-center justify-center gap-6">
             <View className="flex-row items-center gap-2">
               <View className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22C55E' }} />
-              <Text className="text-sm font-semibold" style={{ color: '#000000' }}>
+              <Text className="text-sm font-semibold" style={{ color: UI.text }}>
                 Full Day
               </Text>
             </View>
             <View className="flex-row items-center gap-2">
               <View className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F59E0B' }} />
-              <Text className="text-sm font-semibold" style={{ color: '#000000' }}>
+              <Text className="text-sm font-semibold" style={{ color: UI.text }}>
                 Half Day
               </Text>
             </View>
             <View className="flex-row items-center gap-2">
               <View className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EF4444' }} />
-              <Text className="text-sm font-semibold" style={{ color: '#000000' }}>
+              <Text className="text-sm font-semibold" style={{ color: UI.text }}>
                 Absent
               </Text>
             </View>
           </View>
         </View>
       </View>
+      <WorkerSelectSheet
+        visible={workerSheetVisible}
+        title="Select Worker"
+        subtitle="Choose a worker to view attendance"
+        workers={workers}
+        selectedWorkerId={selectedWorkerId}
+        onSelect={(workerId) => {
+          setSelectedWorkerId(workerId);
+          setWorkerSheetVisible(false);
+        }}
+        onClose={() => setWorkerSheetVisible(false)}
+      />
     </ScrollView>
+  );
+}
+
+function WorkerSelectSheet({
+  visible,
+  title,
+  subtitle,
+  workers,
+  selectedWorkerId,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  subtitle: string;
+  workers: Worker[];
+  selectedWorkerId: number | null;
+  onSelect: (workerId: number) => void;
+  onClose: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable
+        className="flex-1"
+        onPress={onClose}
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.35)' }}
+      >
+        <View className="flex-1 justify-end">
+          <Pressable
+            className="rounded-t-3xl px-5 pt-5"
+            onPress={() => undefined}
+            style={{ backgroundColor: UI.surface, paddingBottom: Math.max(insets.bottom, 16) }}
+          >
+            <View className="flex-row items-center justify-between mb-3">
+              <View className="flex-1 pr-3">
+                <Text className="text-lg font-bold" style={{ color: UI.text }}>
+                  {title}
+                </Text>
+                <Text className="text-sm mt-1" style={{ color: UI.muted }}>
+                  {subtitle}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={onClose}
+                activeOpacity={0.7}
+                className="w-9 h-9 rounded-full items-center justify-center"
+                style={{ backgroundColor: UI.primarySoft }}
+              >
+                <Ionicons name="close" size={18} color={UI.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={workers}
+              keyExtractor={(item) => item.id?.toString() ?? item.name}
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 360 }}
+              renderItem={({ item }) => {
+                const isSelected = item.id === selectedWorkerId;
+                return (
+                  <TouchableOpacity
+                    onPress={() => item.id && onSelect(item.id)}
+                    activeOpacity={0.7}
+                    className="flex-row items-center justify-between px-4 py-3 rounded-2xl mb-2 border"
+                    style={{
+                      backgroundColor: isSelected ? UI.primarySoft : '#F9FAFB',
+                      borderColor: isSelected ? 'rgba(47, 107, 79, 0.35)' : UI.border,
+                    }}
+                  >
+                    <View>
+                      <Text className="text-base font-semibold" style={{ color: UI.text }}>
+                        {item.name}
+                      </Text>
+                      {item.daily_rate ? (
+                        <Text className="text-xs mt-1" style={{ color: UI.muted }}>
+                          ₹{item.daily_rate}/day
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Ionicons
+                      name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={20}
+                      color={isSelected ? UI.primary : '#D1D5DB'}
+                    />
+                  </TouchableOpacity>
+                );
+              }}
+            />
+
+            <TouchableOpacity
+              onPress={onClose}
+              activeOpacity={0.7}
+              className="mt-3 py-3 rounded-2xl items-center border"
+              style={{ borderColor: UI.border }}
+            >
+              <Text className="text-sm font-bold" style={{ color: UI.text }}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </View>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function FarmSelectSheet({
+  visible,
+  farms,
+  selectedFarmIds,
+  onApply,
+  onClose,
+}: {
+  visible: boolean;
+  farms: Farm[];
+  selectedFarmIds: number[];
+  onApply: (farmIds: number[]) => void;
+  onClose: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  const [draftIds, setDraftIds] = useState<number[]>(selectedFarmIds);
+  const prevVisibleRef = useRef(visible);
+
+  useEffect(() => {
+    if (visible && !prevVisibleRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDraftIds(selectedFarmIds);
+    }
+    prevVisibleRef.current = visible;
+  }, [visible, selectedFarmIds]);
+
+  const toggleFarm = (farmId: number) => {
+    setDraftIds((prev) =>
+      prev.includes(farmId) ? prev.filter((id) => id !== farmId) : [...prev, farmId],
+    );
+  };
+
+  const handleApply = () => {
+    const nextIds = draftIds.length > 0 ? draftIds : farms.map((farm) => farm.id!).filter(Boolean);
+    onApply(nextIds);
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable
+        className="flex-1"
+        onPress={onClose}
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.35)' }}
+      >
+        <View className="flex-1 justify-end">
+          <Pressable
+            className="rounded-t-3xl px-5 pt-5"
+            onPress={() => undefined}
+            style={{ backgroundColor: UI.surface, paddingBottom: Math.max(insets.bottom, 16) }}
+          >
+            <View className="flex-row items-center justify-between mb-3">
+              <View className="flex-1 pr-3">
+                <Text className="text-lg font-bold" style={{ color: UI.text }}>
+                  Select Farms
+                </Text>
+                <Text className="text-sm mt-1" style={{ color: UI.muted }}>
+                  Choose farms to apply attendance
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={onClose}
+                activeOpacity={0.7}
+                className="w-9 h-9 rounded-full items-center justify-center"
+                style={{ backgroundColor: UI.primarySoft }}
+              >
+                <Ionicons name="close" size={18} color={UI.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={farms}
+              keyExtractor={(item) => item.id?.toString() ?? item.name}
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 360 }}
+              renderItem={({ item }) => {
+                const farmId = item.id ?? 0;
+                const isSelected = draftIds.includes(farmId);
+                return (
+                  <TouchableOpacity
+                    onPress={() => item.id && toggleFarm(item.id)}
+                    activeOpacity={0.7}
+                    className="flex-row items-center justify-between px-4 py-3 rounded-2xl mb-2 border"
+                    style={{
+                      backgroundColor: isSelected ? UI.primarySoft : '#F9FAFB',
+                      borderColor: isSelected ? 'rgba(47, 107, 79, 0.35)' : UI.border,
+                    }}
+                  >
+                    <View>
+                      <Text className="text-base font-semibold" style={{ color: UI.text }}>
+                        {item.name}
+                      </Text>
+                      <Text className="text-xs mt-1" style={{ color: UI.muted }}>
+                        {item.region}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={20}
+                      color={isSelected ? UI.primary : '#D1D5DB'}
+                    />
+                  </TouchableOpacity>
+                );
+              }}
+            />
+
+            <View className="flex-row gap-3 mt-3">
+              <TouchableOpacity
+                onPress={() => {
+                  setDraftIds(farms.map((farm) => farm.id!).filter(Boolean));
+                }}
+                activeOpacity={0.7}
+                className="flex-1 py-3 rounded-2xl items-center border"
+                style={{ borderColor: 'rgba(47, 107, 79, 0.25)' }}
+              >
+                <Text className="text-sm font-bold" style={{ color: UI.primary }}>
+                  Select All
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleApply}
+                activeOpacity={0.7}
+                className="flex-1 py-3 rounded-2xl items-center"
+                style={{ backgroundColor: UI.primary }}
+              >
+                <Text className="text-sm font-bold" style={{ color: '#FFFFFF' }}>
+                  Apply
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </View>
+      </Pressable>
+    </Modal>
   );
 }
 

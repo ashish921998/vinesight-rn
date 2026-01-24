@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { UnitPickerModal } from '../ui/UnitPickerModal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculatorModels';
 
 export interface FertilizerEntry {
@@ -20,8 +21,8 @@ interface FertigationFormProps {
 }
 
 export function FertigationForm({ data, onChange }: FertigationFormProps) {
-  const isValid = data.fertilizers.length > 0 && 
-    data.fertilizers.every(f => f.name.trim() && f.quantity > 0);
+  const isValid =
+    data.fertilizers.length > 0 && data.fertilizers.every((f) => f.name.trim() && f.quantity > 0);
 
   const addFertilizer = () => {
     if (data.fertilizers.length < 10) {
@@ -44,7 +45,7 @@ export function FertigationForm({ data, onChange }: FertigationFormProps) {
   };
 
   // Calculate total inputs count
-  const totalInputs = data.fertilizers.filter(f => f.name.trim() && f.quantity > 0).length;
+  const totalInputs = data.fertilizers.filter((f) => f.name.trim() && f.quantity > 0).length;
 
   return (
     <View>
@@ -54,12 +55,8 @@ export function FertigationForm({ data, onChange }: FertigationFormProps) {
           <Ionicons name="leaf" size={20} color="#22C55E" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">
-            Fertigation
-          </Text>
-          <Text className="text-sm text-surface-500">
-            Log fertilizer application
-          </Text>
+          <Text className="text-lg font-semibold text-surface-900">Fertigation</Text>
+          <Text className="text-sm text-surface-500">Log fertilizer application</Text>
         </View>
       </View>
 
@@ -84,7 +81,7 @@ export function FertigationForm({ data, onChange }: FertigationFormProps) {
         {/* Fertilizers List */}
         {data.fertilizers.map((fertilizer, index) => (
           <FertilizerRow
-            key={index}
+            key={`${fertilizer.name}-${fertilizer.quantity}-${fertilizer.unit}`}
             fertilizer={fertilizer}
             onUpdate={(updates) => updateFertilizer(index, updates)}
             onRemove={() => removeFertilizer(index)}
@@ -100,9 +97,7 @@ export function FertigationForm({ data, onChange }: FertigationFormProps) {
             activeOpacity={0.7}
           >
             <Ionicons name="add-circle" size={20} color="#22C55E" />
-            <Text className="text-sm font-medium text-green-600 ml-2">
-              Add Fertilizer
-            </Text>
+            <Text className="text-sm font-medium text-green-600 ml-2">Add Fertilizer</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -110,11 +105,9 @@ export function FertigationForm({ data, onChange }: FertigationFormProps) {
       {/* Summary */}
       {totalInputs > 0 && (
         <View className="bg-green-50 rounded-xl p-4 mt-4">
-          <Text className="text-sm font-semibold text-green-700 mb-2">
-            Fertilizers Summary
-          </Text>
+          <Text className="text-sm font-semibold text-green-700 mb-2">Fertilizers Summary</Text>
           {data.fertilizers
-            .filter(f => f.name.trim() && f.quantity > 0)
+            .filter((f) => f.name.trim() && f.quantity > 0)
             .map((f, idx) => (
               <View key={idx} className="flex-row items-center justify-between py-1">
                 <Text className="text-sm text-green-800">{f.name}</Text>
@@ -128,15 +121,13 @@ export function FertigationForm({ data, onChange }: FertigationFormProps) {
 
       {/* Validation indicator */}
       <View className="flex-row items-center mt-4 pt-4 border-t border-surface-100">
-        <Ionicons 
-          name={isValid ? "checkmark-circle" : "alert-circle-outline"} 
-          size={16} 
-          color={isValid ? "#22C55E" : "#9CA3AF"} 
+        <Ionicons
+          name={isValid ? 'checkmark-circle' : 'alert-circle-outline'}
+          size={16}
+          color={isValid ? '#22C55E' : '#9CA3AF'}
         />
         <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
-          {isValid 
-            ? 'Ready to add' 
-            : 'Add at least one fertilizer with quantity'}
+          {isValid ? 'Ready to add' : 'Add at least one fertilizer with quantity'}
         </Text>
       </View>
     </View>
@@ -153,87 +144,102 @@ interface FertilizerRowProps {
 
 function FertilizerRow({ fertilizer, onUpdate, onRemove, showRemove }: FertilizerRowProps) {
   const [showUnitPicker, setShowUnitPicker] = useState(false);
+  const [isNameFocused, setIsNameFocused] = useState(false);
+  const [isQuantityFocused, setIsQuantityFocused] = useState(false);
+  const [quantityText, setQuantityText] = useState(
+    fertilizer.quantity > 0 ? fertilizer.quantity.toString() : '',
+  );
+
+  const handleQuantityChange = (text: string) => {
+    const cleanText = text.replace(/[^0-9.]/g, '');
+    const parts = cleanText.split('.');
+    let sanitizedText = parts[0];
+    if (parts.length > 1) {
+      sanitizedText += '.' + parts[1].slice(0, 2);
+    }
+    setQuantityText(sanitizedText);
+    const qty = parseFloat(sanitizedText) || 0;
+    onUpdate({ quantity: qty });
+  };
+
+  const isRowComplete = fertilizer.name.trim() && fertilizer.quantity > 0;
 
   return (
-    <View className="bg-surface-50 rounded-xl p-3 mb-3">
+    <View
+      className={`rounded-xl p-3 mb-3 border ${
+        isRowComplete ? 'bg-green-50 border-green-200' : 'bg-surface-50 border-transparent'
+      }`}
+    >
       {/* Fertilizer Name Row */}
-      <View className="flex-row items-center mb-2">
+      <View className="flex-row items-center">
         <TextInput
-          className="flex-1 bg-white rounded-lg px-3 py-2.5 text-base text-surface-900"
+          className={`flex-1 rounded-lg px-3 py-2.5 text-base text-surface-900 bg-white border ${
+            isNameFocused ? 'border-green-400' : 'border-surface-200'
+          }`}
           placeholder="Fertilizer name"
           placeholderTextColor="#9CA3AF"
           value={fertilizer.name}
           onChangeText={(name) => onUpdate({ name })}
+          onFocus={() => setIsNameFocused(true)}
+          onBlur={() => setIsNameFocused(false)}
         />
         {showRemove && (
           <TouchableOpacity
             onPress={onRemove}
             className="ml-2 p-2"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
           >
-            <Ionicons name="close-circle" size={22} color="#EF4444" />
+            <Ionicons name="remove-circle" size={24} color="#9CA3AF" />
           </TouchableOpacity>
         )}
       </View>
 
       {/* Quantity and Unit Row */}
-      <View className="flex-row items-center">
+      <View className="flex-row items-center mt-2">
         <TextInput
-          className="w-20 bg-white rounded-lg px-3 py-2.5 text-base text-surface-900"
+          className={`rounded-lg px-3 py-2.5 text-base text-surface-900 text-center bg-white border ${
+            isQuantityFocused ? 'border-green-400' : 'border-surface-200'
+          }`}
           placeholder="Qty"
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"
-          value={fertilizer.quantity > 0 ? fertilizer.quantity.toString() : ''}
-          onChangeText={(text) => {
-            const qty = parseFloat(text) || 0;
-            onUpdate({ quantity: qty });
-          }}
+          value={quantityText}
+          onChangeText={handleQuantityChange}
+          onFocus={() => setIsQuantityFocused(true)}
+          onBlur={() => setIsQuantityFocused(false)}
+          style={{ flex: 1 }}
         />
-        
+
         {/* Unit Picker */}
         <TouchableOpacity
-          onPress={() => setShowUnitPicker(!showUnitPicker)}
-          className="flex-1 flex-row items-center justify-between bg-white rounded-lg px-3 py-2.5 ml-2"
+          onPress={() => setShowUnitPicker(true)}
+          activeOpacity={0.7}
+          className="flex-row items-center justify-between bg-white rounded-lg px-3 py-2.5 ml-2 border border-surface-200"
+          style={{ flex: 1 }}
         >
           <Text className="text-base text-surface-900">{fertilizer.unit}</Text>
-          <Ionicons 
-            name={showUnitPicker ? "chevron-up" : "chevron-down"} 
-            size={18} 
-            color="#6B7280" 
-          />
+          <Ionicons name="chevron-forward" size={18} color="#6B7280" />
         </TouchableOpacity>
       </View>
 
-      {/* Unit Options Dropdown */}
-      {showUnitPicker && (
-        <View className="mt-2 bg-white rounded-lg border border-surface-200 overflow-hidden">
-          {FERTILIZER_UNITS.map((unit) => (
-            <TouchableOpacity
-              key={unit}
-              onPress={() => {
-                onUpdate({ unit });
-                setShowUnitPicker(false);
-              }}
-              className={`px-3 py-2.5 border-b border-surface-100 ${
-                unit === fertilizer.unit ? 'bg-primary-50' : ''
-              }`}
-            >
-              <Text className={`text-sm ${
-                unit === fertilizer.unit ? 'text-primary-600 font-medium' : 'text-surface-700'
-              }`}>
-                {unit}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+      {/* Unit Picker Modal */}
+      <UnitPickerModal
+        visible={showUnitPicker}
+        onClose={() => setShowUnitPicker(false)}
+        onSelect={(unit) => onUpdate({ unit })}
+        selectedValue={fertilizer.unit}
+        options={FERTILIZER_UNITS}
+        title="Select Unit"
+      />
     </View>
   );
 }
 
 export function validateFertigationForm(data: FertigationFormData): boolean {
-  return data.fertilizers.length > 0 && 
-    data.fertilizers.every(f => f.name.trim() && f.quantity > 0);
+  return (
+    data.fertilizers.length > 0 && data.fertilizers.every((f) => f.name.trim() && f.quantity > 0)
+  );
 }
 
 // Create empty fertigation form data

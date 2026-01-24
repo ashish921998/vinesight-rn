@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   IrrigationForm,
@@ -64,11 +65,16 @@ interface AddActivityModalProps {
 interface PendingLog {
   id: string;
   type: LogTypeId;
-  data: IrrigationFormData | SprayFormData | HarvestFormData | ExpenseFormData | FertigationFormData;
+  data:
+    | IrrigationFormData
+    | SprayFormData
+    | HarvestFormData
+    | ExpenseFormData
+    | FertigationFormData;
   displayDescription: string;
 }
 
-const ACTIVITY_TYPES = LOG_TYPES.filter(lt => lt.id !== 'note');
+const ACTIVITY_TYPES = LOG_TYPES.filter((lt) => lt.id !== 'note');
 
 export function AddActivityModal({
   visible,
@@ -88,7 +94,9 @@ export function AddActivityModal({
   const [sprayData, setSprayData] = useState<SprayFormData>(createEmptySprayFormData());
   const [harvestData, setHarvestData] = useState<HarvestFormData>(createEmptyHarvestFormData());
   const [expenseData, setExpenseData] = useState<ExpenseFormData>(createEmptyExpenseFormData());
-  const [fertigationData, setFertigationData] = useState<FertigationFormData>(createEmptyFertigationFormData());
+  const [fertigationData, setFertigationData] = useState<FertigationFormData>(
+    createEmptyFertigationFormData(),
+  );
 
   // Mutations
   const createIrrigation = useCreateIrrigationRecord();
@@ -179,12 +187,21 @@ export function AddActivityModal({
       displayDescription: getLogDescription(selectedLogType, data),
     };
 
-    setPendingLogs(prev => [...prev, newLog]);
+    setPendingLogs((prev) => [...prev, newLog]);
     setSelectedLogType(null);
-  }, [selectedLogType, isFormValid, irrigationData, sprayData, harvestData, expenseData, fertigationData, getLogDescription]);
+  }, [
+    selectedLogType,
+    isFormValid,
+    irrigationData,
+    sprayData,
+    harvestData,
+    expenseData,
+    fertigationData,
+    getLogDescription,
+  ]);
 
   const removeLogFromSession = useCallback((id: string) => {
-    setPendingLogs(prev => prev.filter(log => log.id !== id));
+    setPendingLogs((prev) => prev.filter((log) => log.id !== id));
   }, []);
 
   const saveAllLogs = async () => {
@@ -210,8 +227,12 @@ export function AddActivityModal({
             });
 
             // Update water level if farm has required values
-            if (farm.total_tank_capacity && farm.system_discharge && 
-                farm.total_tank_capacity > 0 && farm.system_discharge > 0) {
+            if (
+              farm.total_tank_capacity &&
+              farm.system_discharge &&
+              farm.total_tank_capacity > 0 &&
+              farm.system_discharge > 0
+            ) {
               const waterAdded = data.duration * farm.system_discharge;
               const currentWater = farm.remaining_water ?? 0;
               const newWaterLevel = Math.min(farm.total_tank_capacity, currentWater + waterAdded);
@@ -224,7 +245,9 @@ export function AddActivityModal({
           }
           case 'spray': {
             const data = log.data as SprayFormData;
-            const chemicalStr = data.chemicals.map(c => `${c.name} (${c.quantity} ${c.unit})`).join(', ');
+            const chemicalStr = data.chemicals
+              .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
+              .join(', ');
             await createSpray.mutateAsync({
               farm_id: farm.id,
               date: dateStr,
@@ -267,7 +290,7 @@ export function AddActivityModal({
             await createFertigation.mutateAsync({
               farm_id: farm.id,
               date: dateStr,
-              fertilizers: data.fertilizers.map(f => ({
+              fertilizers: data.fertilizers.map((f) => ({
                 name: f.name,
                 unit: f.unit,
                 quantity: f.quantity,
@@ -293,22 +316,18 @@ export function AddActivityModal({
 
   const handleClose = () => {
     if (pendingLogs.length > 0) {
-      Alert.alert(
-        'Discard Changes?',
-        'You have unsaved logs. Are you sure you want to close?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Discard',
-            style: 'destructive',
-            onPress: () => {
-              setPendingLogs([]);
-              setSelectedLogType(null);
-              onClose();
-            },
+      Alert.alert('Discard Changes?', 'You have unsaved logs. Are you sure you want to close?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: () => {
+            setPendingLogs([]);
+            setSelectedLogType(null);
+            onClose();
           },
-        ]
-      );
+        },
+      ]);
     } else {
       setSelectedLogType(null);
       onClose();
@@ -335,7 +354,9 @@ export function AddActivityModal({
               >
                 <View
                   className="w-10 h-10 rounded-full items-center justify-center mb-2"
-                  style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : `${logType.color}15` }}
+                  style={{
+                    backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : `${logType.color}15`,
+                  }}
                 >
                   <Ionicons
                     name={logType.icon as keyof typeof Ionicons.glyphMap}
@@ -365,9 +386,7 @@ export function AddActivityModal({
         {selectedLogType === 'irrigation' && (
           <IrrigationForm data={irrigationData} onChange={setIrrigationData} />
         )}
-        {selectedLogType === 'spray' && (
-          <SprayForm data={sprayData} onChange={setSprayData} />
-        )}
+        {selectedLogType === 'spray' && <SprayForm data={sprayData} onChange={setSprayData} />}
         {selectedLogType === 'harvest' && (
           <HarvestForm data={harvestData} onChange={setHarvestData} />
         )}
@@ -408,7 +427,7 @@ export function AddActivityModal({
           Pending Logs ({pendingLogs.length})
         </Text>
         {pendingLogs.map((log) => {
-          const logType = LOG_TYPES.find(lt => lt.id === log.type);
+          const logType = LOG_TYPES.find((lt) => lt.id === log.type);
           return (
             <View
               key={log.id}
@@ -446,142 +465,153 @@ export function AddActivityModal({
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-surface-50"
-      >
-        {/* Header */}
-        <View className="bg-white px-4 py-4 border-b border-surface-100">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
-              <Text className="text-lg font-bold text-surface-900">Add Farm Log</Text>
-              <Text className="text-sm text-surface-500" numberOfLines={1}>{farm.name}</Text>
+      <SafeAreaView className="flex-1 bg-surface-50" edges={['top']}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          className="flex-1 bg-surface-50"
+        >
+          {/* Header */}
+          <View className="bg-white px-4 pb-4 pt-2 border-b border-surface-100">
+            <View className="items-center mb-3">
+              <View className="w-12 h-1.5 rounded-full bg-surface-200" />
             </View>
-            <TouchableOpacity onPress={handleClose}>
-              <Ionicons name="close-circle" size={28} color="#9CA3AF" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Date Picker Row */}
-          <View className="flex-row items-center justify-between mt-3">
-            <TouchableOpacity
-              onPress={() => setShowDatePicker(true)}
-              className="flex-row items-center bg-surface-100 px-4 py-2 rounded-lg"
-            >
-              <Ionicons name="calendar" size={18} color="#408059" />
-              <Text className="ml-2 text-sm font-medium text-surface-900">
-                {selectedDate.toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </Text>
-            </TouchableOpacity>
-
-            {pendingLogs.length > 0 && (
-              <View className="flex-row items-center bg-primary-100 px-3 py-1.5 rounded-full">
-                <Ionicons name="document-text" size={14} color="#408059" />
-                <Text className="ml-1 text-xs font-semibold text-primary-700">
-                  {pendingLogs.length} draft{pendingLogs.length !== 1 ? 's' : ''}
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1">
+                <Text className="text-lg font-bold text-surface-900">Add Farm Log</Text>
+                <Text className="text-sm text-surface-500" numberOfLines={1}>
+                  {farm.name}
                 </Text>
               </View>
-            )}
-          </View>
-        </View>
-
-        {showDatePicker && Platform.OS === 'android' && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            onChange={(_, date) => {
-              setShowDatePicker(false);
-              if (date) setSelectedDate(date);
-            }}
-          />
-        )}
-        {showDatePicker && Platform.OS === 'ios' && (
-          <Pressable
-            onPress={() => setShowDatePicker(false)}
-            className="absolute inset-0 bg-black/50 z-50"
-          >
-            <View
-              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-4"
-              onStartShouldSetResponder={() => true}
-            >
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-lg font-bold text-surface-900">Select Date</Text>
-                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                  <Ionicons name="close" size={24} color="#9CA3AF" />
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                display="inline"
-                onChange={(_, date) => {
-                  if (date) setSelectedDate(date);
-                }}
-              />
-              <TouchableOpacity
-                onPress={() => setShowDatePicker(false)}
-                className="mt-4 py-3 rounded-xl items-center"
-                style={{ backgroundColor: '#408059' }}
-              >
-                <Text className="font-semibold text-white">Done</Text>
+              <TouchableOpacity onPress={handleClose}>
+                <Ionicons name="close-circle" size={28} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
-          </Pressable>
-        )}
 
-        {/* Content */}
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ padding: 16 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {renderLogTypeSelector()}
-          {renderForm()}
-          {renderPendingLogs()}
-        </ScrollView>
+            {/* Date Picker Row */}
+            <View className="flex-row items-center justify-between mt-3">
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                className="flex-row items-center bg-surface-100 px-4 py-2 rounded-lg"
+              >
+                <Ionicons name="calendar" size={18} color="#408059" />
+                <Text className="ml-2 text-sm font-medium text-surface-900">
+                  {selectedDate.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </Text>
+              </TouchableOpacity>
 
-        {/* Footer */}
-        <View className="bg-white px-4 py-4 border-t border-surface-100">
-          <View className="flex-row" style={{ gap: 12 }}>
-            <TouchableOpacity
-              onPress={handleClose}
-              className="flex-1 py-3.5 rounded-xl border border-surface-200 items-center"
-            >
-              <Text className="font-semibold text-surface-600">Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={saveAllLogs}
-              disabled={pendingLogs.length === 0 || isSubmitting}
-              className="flex-1 py-3.5 rounded-xl items-center flex-row justify-center"
-              style={{
-                backgroundColor: pendingLogs.length > 0 && !isSubmitting ? '#408059' : '#E5E7EB',
-              }}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons
-                    name="save"
-                    size={18}
-                    color={pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF'}
-                  />
-                  <Text
-                    className="ml-2 font-semibold"
-                    style={{ color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' }}
-                  >
-                    Save {pendingLogs.length > 0 ? `(${pendingLogs.length})` : ''}
+              {pendingLogs.length > 0 && (
+                <View className="flex-row items-center bg-primary-100 px-3 py-1.5 rounded-full">
+                  <Ionicons name="document-text" size={14} color="#408059" />
+                  <Text className="ml-1 text-xs font-semibold text-primary-700">
+                    {pendingLogs.length} draft{pendingLogs.length !== 1 ? 's' : ''}
                   </Text>
-                </>
+                </View>
               )}
-            </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+
+          {showDatePicker && Platform.OS === 'android' && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              onChange={(_, date) => {
+                setShowDatePicker(false);
+                if (date) setSelectedDate(date);
+              }}
+            />
+          )}
+          {showDatePicker && Platform.OS === 'ios' && (
+            <Pressable
+              onPress={() => setShowDatePicker(false)}
+              className="absolute inset-0 bg-black/50 z-50"
+            >
+              <View
+                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-4"
+                onStartShouldSetResponder={() => true}
+              >
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-lg font-bold text-surface-900">Select Date</Text>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                    <Ionicons name="close" size={24} color="#9CA3AF" />
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="date"
+                  display="inline"
+                  onChange={(_, date) => {
+                    if (date) setSelectedDate(date);
+                  }}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(false)}
+                  className="mt-4 py-3 rounded-xl items-center"
+                  style={{ backgroundColor: '#408059' }}
+                >
+                  <Text className="font-semibold text-white">Done</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          )}
+
+          {/* Content */}
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
+            keyboardShouldPersistTaps="handled"
+            contentInsetAdjustmentBehavior="automatic"
+            maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+            showsVerticalScrollIndicator={true}
+          >
+            {renderLogTypeSelector()}
+            {renderForm()}
+            {renderPendingLogs()}
+          </ScrollView>
+
+          {/* Footer */}
+          <View className="bg-white px-4 py-4 border-t border-surface-100">
+            <View className="flex-row" style={{ gap: 12 }}>
+              <TouchableOpacity
+                onPress={handleClose}
+                className="flex-1 py-3.5 rounded-xl border border-surface-200 items-center"
+              >
+                <Text className="font-semibold text-surface-600">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={saveAllLogs}
+                disabled={pendingLogs.length === 0 || isSubmitting}
+                className="flex-1 py-3.5 rounded-xl items-center flex-row justify-center"
+                style={{
+                  backgroundColor: pendingLogs.length > 0 && !isSubmitting ? '#408059' : '#E5E7EB',
+                }}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons
+                      name="save"
+                      size={18}
+                      color={pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF'}
+                    />
+                    <Text
+                      className="ml-2 font-semibold"
+                      style={{ color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' }}
+                    >
+                      Save {pendingLogs.length > 0 ? `(${pendingLogs.length})` : ''}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </Modal>
   );
 }

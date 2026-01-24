@@ -28,11 +28,6 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
       className="rounded-xl p-4 active:opacity-90"
       style={{
         backgroundColor: '#ffffff',
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 1,
       }}
     >
       {/* Header: Name & Status */}

@@ -42,18 +42,18 @@ export default function LAICalculatorScreen() {
     // Estimate leaf area per shoot (cm²) - using empirical relationship
     // Leaf area ≈ 0.7 × shoot length² (simplified)
     const leafAreaPerShoot = 0.7 * sl * sl;
-    
+
     // Total leaf area per vine (cm²)
     const totalLeafAreaPerVine = leafAreaPerShoot * spv;
-    
+
     // Ground area per vine (m²)
     const groundAreaPerVine = vs * rs;
-    
+
     // LAI = Total leaf area / Ground area (convert cm² to m²)
-    const lai = (totalLeafAreaPerVine / 10000) / groundAreaPerVine;
-    
+    const lai = totalLeafAreaPerVine / 10000 / groundAreaPerVine;
+
     // Canopy width estimate (m)
-    const canopyWidth = sl / 100 * 0.8; // 80% of shoot length
+    const canopyWidth = (sl / 100) * 0.8; // 80% of shoot length
 
     setResult({ lai, canopyWidth });
   };
@@ -103,149 +103,139 @@ export default function LAICalculatorScreen() {
         }}
       />
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-surface-50"
-      >
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 bg-surface-50"
         >
-          {/* Calculator Card */}
-          <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-            <View className="flex-row items-center mb-4">
-              <View className="w-8 h-8 bg-green-100 rounded-lg items-center justify-center">
-                <Ionicons name="leaf" size={18} color="#22C55E" />
-              </View>
-              <Text className="text-base font-semibold text-surface-900 ml-2">
-                Leaf Area Index Calculator
-              </Text>
-            </View>
-
-            <InputRow
-              label="Average Shoot Length"
-              value={shootLength}
-              onChangeText={setShootLength}
-              unit="cm"
-              placeholder="100"
-            />
-            <InputRow
-              label="Shoots per Vine"
-              value={shootsPerVine}
-              onChangeText={setShootsPerVine}
-              unit=""
-              placeholder="20"
-            />
-            <InputRow
-              label="Vine Spacing"
-              value={vineSpacing}
-              onChangeText={setVineSpacing}
-              unit="m"
-              placeholder="1.8"
-            />
-            <InputRow
-              label="Row Spacing"
-              value={rowSpacing}
-              onChangeText={setRowSpacing}
-              unit="m"
-              placeholder="3.0"
-            />
-
-            {/* Info */}
-            <View className="bg-green-50 rounded-xl p-3 mt-3">
-              <Text className="text-xs font-medium text-green-700 mb-1">About LAI</Text>
-              <Text className="text-xs text-green-600">
-                Leaf Area Index is the ratio of total leaf area to ground area. 
-                Optimal LAI for table grapes is 1.5-2.5.
-              </Text>
-            </View>
-
-            {/* Calculate Button */}
-            <TouchableOpacity
-              onPress={calculate}
-              disabled={!canCalculate || result !== null}
-              className="mt-4 py-3 rounded-xl items-center"
-              style={{
-                backgroundColor: canCalculate && !result ? '#408059' : '#E5E7EB',
-              }}
-            >
-              <Text
-                className="font-semibold"
-                style={{ color: canCalculate && !result ? '#FFFFFF' : '#9CA3AF' }}
-              >
-                Calculate LAI
-              </Text>
-            </TouchableOpacity>
-
-            {/* Results */}
-            {result !== null && (
-              <View className="mt-4">
-                <View className="flex-row gap-3">
-                  <View className="flex-1 bg-primary-50 rounded-xl p-4 items-center">
-                    <Text className="text-2xl font-bold text-primary-700">
-                      {result.lai.toFixed(2)}
-                    </Text>
-                    <Text className="text-xs text-primary-600 mt-1">
-                      Leaf Area Index
-                    </Text>
-                  </View>
-                  <View className="flex-1 bg-blue-50 rounded-xl p-4 items-center">
-                    <Text className="text-2xl font-bold text-blue-700">
-                      {result.canopyWidth.toFixed(1)} m
-                    </Text>
-                    <Text className="text-xs text-blue-600 mt-1">
-                      Est. Canopy Width
-                    </Text>
-                  </View>
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
+            contentInsetAdjustmentBehavior="never"
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Calculator Card */}
+            <View className="bg-white rounded-2xl p-4 shadow-sm">
+              <View className="flex-row items-center mb-4">
+                <View className="w-8 h-8 bg-green-100 rounded-lg items-center justify-center">
+                  <Ionicons name="leaf" size={18} color="#22C55E" />
                 </View>
-
-                {/* Interpretation */}
-                {(() => {
-                  const interp = getLAIInterpretation(result.lai);
-                  return (
-                    <View 
-                      className="rounded-xl p-3 mt-3"
-                      style={{ backgroundColor: `${interp.color}15` }}
-                    >
-                      <View className="flex-row items-center mb-1">
-                        <View 
-                          className="w-3 h-3 rounded-full mr-2"
-                          style={{ backgroundColor: interp.color }}
-                        />
-                        <Text 
-                          className="text-sm font-semibold"
-                          style={{ color: interp.color }}
-                        >
-                          {interp.label}
-                        </Text>
-                      </View>
-                      <Text className="text-xs text-surface-600">
-                        {interp.message}
-                      </Text>
-                    </View>
-                  );
-                })()}
-              </View>
-            )}
-          </View>
-
-          {/* Reset Button */}
-          {result !== null && (
-            <TouchableOpacity
-              onPress={reset}
-              className="bg-white rounded-2xl py-4 items-center border border-surface-200"
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="refresh" size={18} color="#6B7280" />
-                <Text className="text-surface-600 font-medium ml-2">
-                  Reset Calculator
+                <Text className="text-base font-semibold text-surface-900 ml-2">
+                  Leaf Area Index Calculator
                 </Text>
               </View>
-            </TouchableOpacity>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+              <InputRow
+                label="Average Shoot Length"
+                value={shootLength}
+                onChangeText={setShootLength}
+                unit="cm"
+                placeholder="100"
+              />
+              <InputRow
+                label="Shoots per Vine"
+                value={shootsPerVine}
+                onChangeText={setShootsPerVine}
+                unit=""
+                placeholder="20"
+              />
+              <InputRow
+                label="Vine Spacing"
+                value={vineSpacing}
+                onChangeText={setVineSpacing}
+                unit="m"
+                placeholder="1.8"
+              />
+              <InputRow
+                label="Row Spacing"
+                value={rowSpacing}
+                onChangeText={setRowSpacing}
+                unit="m"
+                placeholder="3.0"
+              />
+
+              {/* Info */}
+              <View className="bg-green-50 rounded-xl p-3 mt-3">
+                <Text className="text-xs font-medium text-green-700 mb-1">About LAI</Text>
+                <Text className="text-xs text-green-600">
+                  Leaf Area Index is the ratio of total leaf area to ground area. Optimal LAI for
+                  table grapes is 1.5-2.5.
+                </Text>
+              </View>
+
+              {/* Calculate Button */}
+              <TouchableOpacity
+                onPress={calculate}
+                disabled={!canCalculate || result !== null}
+                className="mt-4 py-3 rounded-xl items-center"
+                style={{
+                  backgroundColor: canCalculate && !result ? '#408059' : '#E5E7EB',
+                }}
+              >
+                <Text
+                  className="font-semibold"
+                  style={{ color: canCalculate && !result ? '#FFFFFF' : '#9CA3AF' }}
+                >
+                  Calculate LAI
+                </Text>
+              </TouchableOpacity>
+
+              {/* Results */}
+              {result !== null && (
+                <View className="mt-4">
+                  <View className="flex-row gap-3">
+                    <View className="flex-1 bg-primary-50 rounded-xl p-4 items-center">
+                      <Text className="text-2xl font-bold text-primary-700">
+                        {result.lai.toFixed(2)}
+                      </Text>
+                      <Text className="text-xs text-primary-600 mt-1">Leaf Area Index</Text>
+                    </View>
+                    <View className="flex-1 bg-blue-50 rounded-xl p-4 items-center">
+                      <Text className="text-2xl font-bold text-blue-700">
+                        {result.canopyWidth.toFixed(1)} m
+                      </Text>
+                      <Text className="text-xs text-blue-600 mt-1">Est. Canopy Width</Text>
+                    </View>
+                  </View>
+
+                  {/* Interpretation */}
+                  {(() => {
+                    const interp = getLAIInterpretation(result.lai);
+                    return (
+                      <View
+                        className="rounded-xl p-3 mt-3"
+                        style={{ backgroundColor: `${interp.color}15` }}
+                      >
+                        <View className="flex-row items-center mb-1">
+                          <View
+                            className="w-3 h-3 rounded-full mr-2"
+                            style={{ backgroundColor: interp.color }}
+                          />
+                          <Text className="text-sm font-semibold" style={{ color: interp.color }}>
+                            {interp.label}
+                          </Text>
+                        </View>
+                        <Text className="text-xs text-surface-600">{interp.message}</Text>
+                      </View>
+                    );
+                  })()}
+                </View>
+              )}
+            </View>
+
+            {/* Reset Button */}
+            {result !== null && (
+              <TouchableOpacity
+                onPress={reset}
+                className="bg-white rounded-2xl py-4 items-center border border-surface-200"
+              >
+                <View className="flex-row items-center">
+                  <Ionicons name="refresh" size={18} color="#6B7280" />
+                  <Text className="text-surface-600 font-medium ml-2">Reset Calculator</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

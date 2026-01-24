@@ -17,11 +17,7 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  useCreateSoilProfile,
-  SECTION_NAMES,
-  SECTION_INFO,
-} from '../../hooks/useSoilProfiles';
+import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/useSoilProfiles';
 import { SoilSectionData } from '../../types/database';
 
 interface AddSoilProfileModalProps {
@@ -65,9 +61,7 @@ export default function AddSoilProfileModal({
 
   const handleSubmit = async () => {
     // Validate at least one section has moisture value
-    const filledSections = Object.entries(sections).filter(
-      ([, value]) => value.trim() !== ''
-    );
+    const filledSections = Object.entries(sections).filter(([, value]) => value.trim() !== '');
 
     if (filledSections.length === 0) {
       Alert.alert('Error', 'Please enter at least one moisture value');
@@ -120,7 +114,7 @@ export default function AddSoilProfileModal({
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}
-      >
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -129,7 +123,11 @@ export default function AddSoilProfileModal({
         {/* Header */}
         <View
           className="flex-row items-center justify-between px-4 py-4"
-          style={{ backgroundColor: 'rgba(255,255,255, 0.8)', borderBottomWidth: 0.5, borderBottomColor: 'rgba(0, 0, 0, 0.1)' }}
+          style={{
+            backgroundColor: 'rgba(255,255,255, 0.8)',
+            borderBottomWidth: 0.5,
+            borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+          }}
         >
           <TouchableOpacity onPress={onClose}>
             <Text className="text-[#8e8e93] text-base">Cancel</Text>
@@ -152,16 +150,9 @@ export default function AddSoilProfileModal({
             className="rounded-2xl p-4 mt-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 3,
             }}
           >
-            <Text className="text-sm font-semibold text-[#8e8e93] mb-1">
-              Profile Date
-            </Text>
+            <Text className="text-sm font-semibold text-[#8e8e93] mb-1">Profile Date</Text>
             <Text className="text-xs text-[#8e8e93] mb-3">
               Select the date when this soil profile was taken.
             </Text>
@@ -192,11 +183,6 @@ export default function AddSoilProfileModal({
                 className="bg-white rounded-2xl p-4"
                 style={{
                   width: '85%',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.06,
-                  shadowRadius: 12,
-                  elevation: 8,
                 }}
               >
                 <Text className="text-lg font-bold text-[#1c1c1e] mb-4 text-center">
@@ -225,16 +211,9 @@ export default function AddSoilProfileModal({
             className="rounded-2xl p-4 mt-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 3,
             }}
           >
-            <Text className="text-sm font-semibold text-[#8e8e93] mb-1">
-              Moisture Readings (%)
-            </Text>
+            <Text className="text-sm font-semibold text-[#8e8e93] mb-1">Moisture Readings (%)</Text>
             <Text className="text-xs text-[#8e8e93] mb-4">
               Enter soil moisture percentage for each section. At least one is required.
             </Text>
@@ -249,10 +228,7 @@ export default function AddSoilProfileModal({
                         className="w-6 h-6 rounded-full items-center justify-center mr-2"
                         style={{ backgroundColor: 'rgba(64, 128, 89, 0.2)' }}
                       >
-                        <Text
-                          className="text-xs font-bold"
-                          style={{ color: '#408059' }}
-                        >
+                        <Text className="text-xs font-bold" style={{ color: '#408059' }}>
                           {info.abbr}
                         </Text>
                       </View>
@@ -277,11 +253,6 @@ export default function AddSoilProfileModal({
             className="rounded-2xl p-4 mt-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 3,
             }}
           >
             <Text className="text-sm font-semibold text-[#8e8e93] mb-1">
@@ -296,9 +267,7 @@ export default function AddSoilProfileModal({
                 const info = SECTION_INFO[name];
                 return (
                   <View key={`ec-${name}`} className="w-[48%]">
-                    <Text className="text-xs text-[#8e8e93] mb-1">
-                      {info.label} EC
-                    </Text>
+                    <Text className="text-xs text-[#8e8e93] mb-1">{info.label} EC</Text>
                     <TextInput
                       className="bg-[#f9f9f9] border border-[#e5e5e5] rounded-xl px-3 py-2 text-[#1c1c1e]"
                       placeholder="0.0"
@@ -318,11 +287,6 @@ export default function AddSoilProfileModal({
             className="rounded-2xl p-4 mt-4 mb-8"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 3,
             }}
           >
             <Text className="text-sm font-semibold text-[#8e8e93] mb-1">

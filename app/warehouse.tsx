@@ -147,10 +147,6 @@ export default function WarehouseScreen() {
               className="flex-1 rounded-2xl p-4"
               style={{
                 backgroundColor: COLORS.glass,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.06,
-                shadowRadius: 12,
               }}
             >
               <Ionicons
@@ -167,10 +163,6 @@ export default function WarehouseScreen() {
               className="flex-1 rounded-2xl p-4"
               style={{
                 backgroundColor: COLORS.glass,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.06,
-                shadowRadius: 12,
               }}
             >
               <Ionicons name="cash" size={24} color={COLORS.primary} />
@@ -214,10 +206,6 @@ export default function WarehouseScreen() {
                         className="rounded-xl p-3"
                         style={{
                           backgroundColor: COLORS.glass,
-                          shadowColor: '#000',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.05,
-                          shadowRadius: 8,
                         }}
                       >
                         <View className="flex-row items-center">
@@ -274,16 +262,6 @@ export default function WarehouseScreen() {
                 key={type}
                 onPress={() => setFilter(type)}
                 className={`flex-1 py-2.5 rounded-lg ${filter === type ? 'bg-white' : ''}`}
-                style={
-                  filter === type
-                    ? {
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 4,
-                      }
-                    : {}
-                }
               >
                 <Text
                   className={`text-center text-sm font-medium ${
@@ -306,10 +284,6 @@ export default function WarehouseScreen() {
               className="rounded-2xl p-8 items-center"
               style={{
                 backgroundColor: COLORS.glass,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.06,
-                shadowRadius: 12,
               }}
             >
               <View
@@ -351,10 +325,6 @@ export default function WarehouseScreen() {
                     backgroundColor: isLowStock ? `${COLORS.lowStock}0D` : COLORS.glass,
                     borderColor: isLowStock ? `${COLORS.lowStock}4D` : 'transparent',
                     borderWidth: isLowStock ? 1 : 0,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 6 },
-                    shadowOpacity: 0.06,
-                    shadowRadius: 12,
                   }}
                 >
                   <View className="flex-row items-start">
@@ -466,11 +436,6 @@ export default function WarehouseScreen() {
         className="absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center"
         style={{
           backgroundColor: COLORS.primary,
-          shadowColor: COLORS.primary,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.4,
-          shadowRadius: 8,
-          elevation: 8,
         }}
       >
         <Ionicons name="add" size={28} color="white" />

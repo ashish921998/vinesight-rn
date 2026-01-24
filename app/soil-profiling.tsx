@@ -91,11 +91,6 @@ export default function SoilProfilingScreen() {
         className="rounded-xl p-4 mb-3"
         style={{
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 5,
-          elevation: 2,
         }}
       >
         <View className="flex-row items-center justify-between mb-3">
@@ -212,11 +207,6 @@ export default function SoilProfilingScreen() {
             className="flex-1 rounded-xl p-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.05,
-              shadowRadius: 5,
-              elevation: 2,
             }}
           >
             <Text className="text-xs mb-1" style={{ color: '#8e8e93' }}>
@@ -230,11 +220,6 @@ export default function SoilProfilingScreen() {
             className="flex-1 rounded-xl p-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.05,
-              shadowRadius: 5,
-              elevation: 2,
             }}
           >
             <Text className="text-xs mb-1" style={{ color: '#8e8e93' }}>
@@ -292,11 +277,6 @@ export default function SoilProfilingScreen() {
           className="rounded-xl p-4"
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.05,
-            shadowRadius: 5,
-            elevation: 2,
           }}
         >
           <Text className="text-sm mb-2" style={{ color: '#8e8e93' }}>

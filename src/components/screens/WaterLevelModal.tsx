@@ -117,10 +117,7 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
               <Ionicons name="close" size={24} color="#8e8e93" />
             </TouchableOpacity>
             <Text className="text-lg font-bold text-[#1c1c1e]">Update Soil Water Level</Text>
-            <TouchableOpacity
-              onPress={handleCalculate}
-              className="p-2"
-            >
+            <TouchableOpacity onPress={handleCalculate} className="p-2">
               <Text className="font-semibold text-[#408059]">Calculate</Text>
             </TouchableOpacity>
           </View>
@@ -132,16 +129,9 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
             className="rounded-2xl p-4 mb-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 3,
             }}
           >
-            <Text className="text-xs font-semibold text-[#8e8e93] mb-1">
-              CURRENT WATER LEVEL
-            </Text>
+            <Text className="text-xs font-semibold text-[#8e8e93] mb-1">CURRENT WATER LEVEL</Text>
             <View className="flex-row items-baseline">
               <Text className="text-3xl font-bold text-[#1c1c1e]">
                 {farm.remaining_water?.toFixed(1) || '--'}
@@ -156,16 +146,9 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
               className="rounded-2xl p-4 mb-4"
               style={{
                 backgroundColor: '#408059',
-                shadowColor: '#408059',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.15,
-                shadowRadius: 12,
-                elevation: 3,
               }}
             >
-              <Text className="text-xs font-semibold text-white/80 mb-1">
-                NEW WATER LEVEL
-              </Text>
+              <Text className="text-xs font-semibold text-white/80 mb-1">NEW WATER LEVEL</Text>
               <View className="flex-row items-baseline">
                 <Text className="text-3xl font-bold text-white">
                   {calculatedWaterLevel.toFixed(1)}
@@ -186,11 +169,6 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
             className="rounded-2xl overflow-hidden mb-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 3,
             }}
           >
             <TouchableOpacity
@@ -198,7 +176,9 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
               className={`flex-row items-center justify-between px-4 py-4 ${!useManual ? 'bg-[#408059]/10' : ''}`}
             >
               <View className="flex-1">
-                <Text className={`text-sm font-semibold ${!useManual ? 'text-[#408059]' : 'text-[#1c1c1e]'}`}>
+                <Text
+                  className={`text-sm font-semibold ${!useManual ? 'text-[#408059]' : 'text-[#1c1c1e]'}`}
+                >
                   Calculate with ET0
                 </Text>
                 <Text className="text-xs text-[#8e8e93] mt-1">
@@ -219,7 +199,9 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
               className={`flex-row items-center justify-between px-4 py-4 ${useManual ? 'bg-[#408059]/10' : ''}`}
             >
               <View className="flex-1">
-                <Text className={`text-sm font-semibold ${useManual ? 'text-[#408059]' : 'text-[#1c1c1e]'}`}>
+                <Text
+                  className={`text-sm font-semibold ${useManual ? 'text-[#408059]' : 'text-[#1c1c1e]'}`}
+                >
                   Manual Entry
                 </Text>
                 <Text className="text-xs text-[#8e8e93] mt-1">
@@ -242,14 +224,11 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
               className="rounded-2xl p-4 mb-4"
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.06,
-                shadowRadius: 12,
-                elevation: 3,
               }}
             >
-              <Text className="text-sm font-semibold text-[#1c1c1e] mb-3">ET0 (Reference Evapotranspiration)</Text>
+              <Text className="text-sm font-semibold text-[#1c1c1e] mb-3">
+                ET0 (Reference Evapotranspiration)
+              </Text>
               <View className="flex-row items-center bg-[#f9f9f9] rounded-xl px-4 py-3">
                 <TextInput
                   className="flex-1 text-base text-[#1c1c1e]"
@@ -267,8 +246,12 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
                 onPress={() => setShowGrowthStagePicker(true)}
                 className="flex-row items-center justify-between bg-[#f9f9f9] rounded-xl px-4 py-3"
               >
-                <Text className={`text-base ${selectedGrowthStage ? 'text-[#1c1c1e]' : 'text-[#c7c7cc]'}`}>
-                  {selectedGrowthStage ? `${selectedGrowthStage.label} (Kc: ${selectedGrowthStage.kc.toFixed(2)})` : 'Select growth stage'}
+                <Text
+                  className={`text-base ${selectedGrowthStage ? 'text-[#1c1c1e]' : 'text-[#c7c7cc]'}`}
+                >
+                  {selectedGrowthStage
+                    ? `${selectedGrowthStage.label} (Kc: ${selectedGrowthStage.kc.toFixed(2)})`
+                    : 'Select growth stage'}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#8e8e93" />
               </TouchableOpacity>
@@ -281,14 +264,11 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
               className="rounded-2xl p-4 mb-4"
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.06,
-                shadowRadius: 12,
-                elevation: 3,
               }}
             >
-              <Text className="text-sm font-semibold text-[#1c1c1e] mb-3">Soil Water Level (mm)</Text>
+              <Text className="text-sm font-semibold text-[#1c1c1e] mb-3">
+                Soil Water Level (mm)
+              </Text>
               <View className="flex-row items-center bg-[#f9f9f9] rounded-xl px-4 py-3">
                 <TextInput
                   className="flex-1 text-base text-[#1c1c1e]"
@@ -308,11 +288,6 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
             className="rounded-2xl p-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 3,
             }}
           >
             <View className="flex-row items-start">
@@ -358,15 +333,12 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
               className="bg-white rounded-2xl w-full"
               style={{
                 maxHeight: '60%',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.06,
-                shadowRadius: 12,
-                elevation: 8,
               }}
             >
               <View className="px-4 py-4 border-b border-gray-200">
-                <Text className="text-lg font-bold text-[#1c1c1e] text-center">Select Growth Stage</Text>
+                <Text className="text-lg font-bold text-[#1c1c1e] text-center">
+                  Select Growth Stage
+                </Text>
               </View>
               <ScrollView style={{ maxHeight: 400 }}>
                 {WATER_GROWTH_STAGES.map((stage) => (
@@ -382,9 +354,13 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
                   >
                     <View className="flex-row items-center justify-between">
                       <View>
-                        <Text className={`text-base font-medium ${
-                          selectedGrowthStage?.id === stage.id ? 'text-[#408059]' : 'text-[#1c1c1e]'
-                        }`}>
+                        <Text
+                          className={`text-base font-medium ${
+                            selectedGrowthStage?.id === stage.id
+                              ? 'text-[#408059]'
+                              : 'text-[#1c1c1e]'
+                          }`}
+                        >
                           {stage.label}
                         </Text>
                         <Text className="text-sm text-[#8e8e93] mt-0.5">

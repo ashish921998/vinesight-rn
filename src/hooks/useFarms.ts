@@ -57,12 +57,18 @@ export function useFarm(id: number | undefined) {
   return useQuery({
     queryKey: queryKeys.farms.detail(id!),
     queryFn: async (): Promise<Farm> => {
-      const { data, error } = await supabase.from(TABLES.FARMS).select('*').eq('id', id).single();
+      const userId = await getUserId();
+      const { data, error } = await supabase
+        .from(TABLES.FARMS)
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', userId)
+        .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && !isNaN(id),
   });
 }
 

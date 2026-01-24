@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +14,7 @@ export default function TabLayout() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
-  const hasRedirected = useRef(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -23,21 +23,26 @@ export default function TabLayout() {
         'TabLayout: isAuthenticated =',
         isAuthenticated,
         'hasRedirected =',
-        hasRedirected.current,
+        hasRedirected,
       );
     }
-    if (!isAuthenticated && !hasRedirected.current) {
+    if (!isAuthenticated && !hasRedirected) {
       if (__DEV__) {
         console.log('TabLayout: Redirecting to login');
       }
-      hasRedirected.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHasRedirected(true);
       router.replace('/(auth)/login');
     }
-    if (isAuthenticated && hasRedirected.current) {
+    if (isAuthenticated && hasRedirected) {
       // Reset redirect flag when authenticated
-      hasRedirected.current = false;
+      setHasRedirected(false);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, hasRedirected]);
+
+  if (isLoading || !isAuthenticated) {
+    return null;
+  }
 
   return (
     <Tabs

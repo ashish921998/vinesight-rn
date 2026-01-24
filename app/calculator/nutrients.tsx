@@ -40,8 +40,8 @@ export default function NutrientCalculatorScreen() {
     if (!canCalculate || !selectedStage) return;
     const a = parseFloat(area);
     const ty = parseFloat(targetYield);
-    
-    const stage = GRAPE_GROWTH_STAGES.find(s => s.id === selectedStage);
+
+    const stage = GRAPE_GROWTH_STAGES.find((s) => s.id === selectedStage);
     if (!stage) return;
 
     // Base nutrient requirements (kg/acre for 10 tons/acre target yield)
@@ -76,151 +76,144 @@ export default function NutrientCalculatorScreen() {
         }}
       />
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-surface-50"
-      >
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 bg-surface-50"
         >
-          {/* Calculator Card */}
-          <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-            <View className="flex-row items-center mb-4">
-              <View className="w-8 h-8 bg-purple-100 rounded-lg items-center justify-center">
-                <Ionicons name="flask" size={18} color="#8B5CF6" />
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
+            contentInsetAdjustmentBehavior="never"
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Calculator Card */}
+            <View className="bg-white rounded-2xl p-4 shadow-sm">
+              <View className="flex-row items-center mb-4">
+                <View className="w-8 h-8 bg-purple-100 rounded-lg items-center justify-center">
+                  <Ionicons name="flask" size={18} color="#8B5CF6" />
+                </View>
+                <Text className="text-base font-semibold text-surface-900 ml-2">
+                  Nutrient Calculator
+                </Text>
               </View>
-              <Text className="text-base font-semibold text-surface-900 ml-2">
-                Nutrient Calculator
-              </Text>
-            </View>
 
-            <InputRow
-              label="Total Area"
-              value={area}
-              onChangeText={setArea}
-              unit="acres"
-              placeholder="5"
-            />
-            <InputRow
-              label="Target Yield"
-              value={targetYield}
-              onChangeText={setTargetYield}
-              unit="kg/acre"
-              placeholder="8000"
-            />
+              <InputRow
+                label="Total Area"
+                value={area}
+                onChangeText={setArea}
+                unit="acres"
+                placeholder="5"
+              />
+              <InputRow
+                label="Target Yield"
+                value={targetYield}
+                onChangeText={setTargetYield}
+                unit="kg/acre"
+                placeholder="8000"
+              />
 
-            {/* Growth Stage Selection */}
-            <Text className="text-sm font-medium text-surface-700 mb-2 mt-2">
-              Growth Stage
-            </Text>
-            <View className="flex-row flex-wrap gap-2 mb-3">
-              {GRAPE_GROWTH_STAGES.map((stage) => (
-                <TouchableOpacity
-                  key={stage.id}
-                  onPress={() => setSelectedStage(stage.id)}
-                  className="px-3 py-2 rounded-lg"
-                  style={{
-                    backgroundColor: selectedStage === stage.id ? '#408059' : '#F3F4F6',
-                  }}
-                >
-                  <Text
-                    className="text-xs font-medium"
+              {/* Growth Stage Selection */}
+              <Text className="text-sm font-medium text-surface-700 mb-2 mt-2">Growth Stage</Text>
+              <View className="flex-row flex-wrap gap-2 mb-3">
+                {GRAPE_GROWTH_STAGES.map((stage) => (
+                  <TouchableOpacity
+                    key={stage.id}
+                    onPress={() => setSelectedStage(stage.id)}
+                    className="px-3 py-2 rounded-lg"
                     style={{
-                      color: selectedStage === stage.id ? '#FFFFFF' : '#374151',
+                      backgroundColor: selectedStage === stage.id ? '#408059' : '#F3F4F6',
                     }}
                   >
-                    {stage.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                    <Text
+                      className="text-xs font-medium"
+                      style={{
+                        color: selectedStage === stage.id ? '#FFFFFF' : '#374151',
+                      }}
+                    >
+                      {stage.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-            {/* Info */}
-            <View className="bg-purple-50 rounded-xl p-3">
-              <Text className="text-xs font-medium text-purple-700 mb-1">
-                How it works
-              </Text>
-              <Text className="text-xs text-purple-600">
-                Nutrient requirements vary by growth stage. The calculator adjusts 
-                N-P-K recommendations based on crop demand at each stage.
-              </Text>
-            </View>
+              {/* Info */}
+              <View className="bg-purple-50 rounded-xl p-3">
+                <Text className="text-xs font-medium text-purple-700 mb-1">How it works</Text>
+                <Text className="text-xs text-purple-600">
+                  Nutrient requirements vary by growth stage. The calculator adjusts N-P-K
+                  recommendations based on crop demand at each stage.
+                </Text>
+              </View>
 
-            {/* Calculate Button */}
-            <TouchableOpacity
-              onPress={calculate}
-              disabled={!canCalculate || result !== null}
-              className="mt-4 py-3 rounded-xl items-center"
-              style={{
-                backgroundColor: canCalculate && !result ? '#408059' : '#E5E7EB',
-              }}
-            >
-              <Text
-                className="font-semibold"
-                style={{ color: canCalculate && !result ? '#FFFFFF' : '#9CA3AF' }}
+              {/* Calculate Button */}
+              <TouchableOpacity
+                onPress={calculate}
+                disabled={!canCalculate || result !== null}
+                className="mt-4 py-3 rounded-xl items-center"
+                style={{
+                  backgroundColor: canCalculate && !result ? '#408059' : '#E5E7EB',
+                }}
               >
-                Calculate Requirements
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  className="font-semibold"
+                  style={{ color: canCalculate && !result ? '#FFFFFF' : '#9CA3AF' }}
+                >
+                  Calculate Requirements
+                </Text>
+              </TouchableOpacity>
 
-            {/* Results */}
+              {/* Results */}
+              {result !== null && (
+                <View className="mt-4">
+                  <Text className="text-sm font-semibold text-surface-700 mb-3">
+                    Recommended Nutrients
+                  </Text>
+                  <View className="gap-2">
+                    <NutrientRow
+                      label="Nitrogen (N)"
+                      value={result.nitrogen}
+                      color="#22C55E"
+                      bgColor="#F0FDF4"
+                    />
+                    <NutrientRow
+                      label="Phosphorus (P₂O₅)"
+                      value={result.phosphorus}
+                      color="#F59E0B"
+                      bgColor="#FFFBEB"
+                    />
+                    <NutrientRow
+                      label="Potassium (K₂O)"
+                      value={result.potassium}
+                      color="#8B5CF6"
+                      bgColor="#F5F3FF"
+                    />
+                  </View>
+
+                  <View className="bg-surface-50 rounded-xl p-3 mt-3">
+                    <Text className="text-xs font-medium text-surface-600 mb-1">Note</Text>
+                    <Text className="text-xs text-surface-500">
+                      These are estimated values. For precise recommendations, conduct soil and
+                      petiole tests and consult an agronomist.
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* Reset Button */}
             {result !== null && (
-              <View className="mt-4">
-                <Text className="text-sm font-semibold text-surface-700 mb-3">
-                  Recommended Nutrients
-                </Text>
-                <View className="gap-2">
-                  <NutrientRow
-                    label="Nitrogen (N)"
-                    value={result.nitrogen}
-                    color="#22C55E"
-                    bgColor="#F0FDF4"
-                  />
-                  <NutrientRow
-                    label="Phosphorus (P₂O₅)"
-                    value={result.phosphorus}
-                    color="#F59E0B"
-                    bgColor="#FFFBEB"
-                  />
-                  <NutrientRow
-                    label="Potassium (K₂O)"
-                    value={result.potassium}
-                    color="#8B5CF6"
-                    bgColor="#F5F3FF"
-                  />
+              <TouchableOpacity
+                onPress={reset}
+                className="bg-white rounded-2xl py-4 items-center border border-surface-200"
+              >
+                <View className="flex-row items-center">
+                  <Ionicons name="refresh" size={18} color="#6B7280" />
+                  <Text className="text-surface-600 font-medium ml-2">Reset Calculator</Text>
                 </View>
-
-                <View className="bg-surface-50 rounded-xl p-3 mt-3">
-                  <Text className="text-xs font-medium text-surface-600 mb-1">
-                    Note
-                  </Text>
-                  <Text className="text-xs text-surface-500">
-                    These are estimated values. For precise recommendations, 
-                    conduct soil and petiole tests and consult an agronomist.
-                  </Text>
-                </View>
-              </View>
+              </TouchableOpacity>
             )}
-          </View>
-
-          {/* Reset Button */}
-          {result !== null && (
-            <TouchableOpacity
-              onPress={reset}
-              className="bg-white rounded-2xl py-4 items-center border border-surface-200"
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="refresh" size={18} color="#6B7280" />
-                <Text className="text-surface-600 font-medium ml-2">
-                  Reset Calculator
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );
@@ -271,7 +264,7 @@ function NutrientRow({
   bgColor: string;
 }) {
   return (
-    <View 
+    <View
       className="flex-row items-center justify-between p-3 rounded-xl"
       style={{ backgroundColor: bgColor }}
     >

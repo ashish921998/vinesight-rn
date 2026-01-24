@@ -6,11 +6,14 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  Image,
+  ImageSourcePropType,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
+import playstoreLogo from '../../assets/playstore.png';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -84,7 +87,7 @@ export default function LoginScreen() {
               className="w-28 h-28 rounded-3xl items-center justify-center mb-4"
               style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
             >
-              <Ionicons name="leaf" size={56} color="#408059" />
+              <Image source={playstoreLogo as ImageSourcePropType} className="w-20 h-20" />
             </View>
             <Text className="text-3xl font-bold" style={{ color: '#000000' }}>
               Vinesight

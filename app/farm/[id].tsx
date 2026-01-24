@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFarm, useFarmRecords, useWeather, useDeleteFarm } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/useTasks';
 import { StatsCard, ActivityLogCard } from '@/components/cards';
-import { AddActivityModal, WaterLevelModal, AddTaskModal } from '@/components/screens';
+import { AddEntryModal, WaterLevelModal } from '@/components/screens';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -62,9 +62,9 @@ export default function FarmDetailScreen() {
   const deleteFarmMutation = useDeleteFarm();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [showAddActivityModal, setShowAddActivityModal] = useState(false);
+  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
+  const [addEntryTab, setAddEntryTab] = useState<'log' | 'task'>('log');
   const [showWaterLevelModal, setShowWaterLevelModal] = useState(false);
-  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
 
   // Calculate stats
@@ -149,7 +149,8 @@ export default function FarmDetailScreen() {
   };
 
   const handleAddActivity = () => {
-    setShowAddActivityModal(true);
+    setAddEntryTab('log');
+    setShowAddEntryModal(true);
   };
 
   const handleActivitySaveSuccess = () => {
@@ -158,7 +159,8 @@ export default function FarmDetailScreen() {
   };
 
   const handleAddTask = () => {
-    setShowAddTaskModal(true);
+    setAddEntryTab('task');
+    setShowAddEntryModal(true);
   };
 
   const handleTaskSaveSuccess = () => {
@@ -567,11 +569,6 @@ export default function FarmDetailScreen() {
                   className="rounded-2xl items-center p-10"
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 6 },
-                    shadowOpacity: 0.06,
-                    shadowRadius: 12,
-                    elevation: 6,
                   }}
                 >
                   <View
@@ -602,11 +599,6 @@ export default function FarmDetailScreen() {
                       } ${task.completed ? 'opacity-60' : ''}`}
                       style={{
                         backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 6 },
-                        shadowOpacity: 0.06,
-                        shadowRadius: 12,
-                        elevation: 6,
                       }}
                     >
                       <View className="flex-row items-start">
@@ -687,11 +679,6 @@ export default function FarmDetailScreen() {
                 className="rounded-2xl items-center p-10"
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.06,
-                  shadowRadius: 12,
-                  elevation: 6,
                 }}
               >
                 <View
@@ -715,24 +702,20 @@ export default function FarmDetailScreen() {
         className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
         activeOpacity={0.8}
         onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
-        style={{
-          shadowColor: '#408059',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
-        }}
       >
         <Ionicons name="add" size={28} color="#FFFFFF" />
       </TouchableOpacity>
 
-      {/* Add Activity Modal */}
+      {/* Add Entry Modal */}
       {farm && (
-        <AddActivityModal
-          visible={showAddActivityModal}
-          onClose={() => setShowAddActivityModal(false)}
+        <AddEntryModal
+          visible={showAddEntryModal}
+          onClose={() => setShowAddEntryModal(false)}
           farm={farm}
-          onSaveSuccess={handleActivitySaveSuccess}
+          tabs={['log', 'task']}
+          initialTab={addEntryTab}
+          onLogSaveSuccess={handleActivitySaveSuccess}
+          onTaskSaveSuccess={handleTaskSaveSuccess}
         />
       )}
 
@@ -742,17 +725,6 @@ export default function FarmDetailScreen() {
           visible={showWaterLevelModal}
           onClose={() => setShowWaterLevelModal(false)}
           farm={farm}
-        />
-      )}
-
-      {/* Add Task Modal */}
-      {farmId && (
-        <AddTaskModal
-          visible={showAddTaskModal}
-          onClose={() => setShowAddTaskModal(false)}
-          editingTask={null}
-          initialFarmId={farmId}
-          onSaveSuccess={handleTaskSaveSuccess}
         />
       )}
     </>

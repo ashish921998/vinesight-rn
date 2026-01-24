@@ -1,8 +1,9 @@
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores';
 import { getConfigurationStatus } from '@/lib/supabase';
+import { AnimatedSplash } from '@/components/AnimatedSplash';
 
 /**
  * Entry point of the app
@@ -12,23 +13,9 @@ export default function Index() {
   const { isAuthenticated, isLoading } = useAuthStore();
   const configStatus = getConfigurationStatus();
 
-  // Show loading screen while checking auth
+  // Show animated splash screen while checking auth
   if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <View className="items-center">
-          {/* Logo */}
-          <View className="w-24 h-24 bg-primary-100 rounded-3xl mb-6 items-center justify-center">
-            <Ionicons name="leaf" size={48} color="#408059" />
-          </View>
-
-          <Text className="text-3xl font-bold text-surface-900 mb-2">Vinesight</Text>
-          <Text className="text-surface-500 mb-8">Farm Management</Text>
-
-          <ActivityIndicator size="large" color="#408059" />
-        </View>
-      </View>
-    );
+    return <AnimatedSplash duration={2500} />;
   }
 
   if (!configStatus.isConfigured) {

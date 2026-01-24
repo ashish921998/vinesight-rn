@@ -22,15 +22,9 @@ export default function WorkersScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [workerToEdit, setWorkerToEdit] = useState<Worker | undefined>(undefined);
 
-  const activeWorkers = useMemo(
-    () => workers?.filter(w => w.is_active) || [],
-    [workers]
-  );
+  const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
 
-  const inactiveWorkers = useMemo(
-    () => workers?.filter(w => !w.is_active) || [],
-    [workers]
-  );
+  const inactiveWorkers = useMemo(() => workers?.filter((w) => !w.is_active) || [], [workers]);
 
   const handleDeleteWorker = (worker: Worker) => {
     Alert.alert(
@@ -47,7 +41,7 @@ export default function WorkersScreen() {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -77,14 +71,10 @@ export default function WorkersScreen() {
 
         {/* Info */}
         <View className="flex-1 ml-3">
-          <Text className="text-base font-semibold text-surface-900">
-            {item.name}
-          </Text>
+          <Text className="text-base font-semibold text-surface-900">{item.name}</Text>
           <View className="flex-row items-center mt-1">
             <Ionicons name="cash-outline" size={12} color="#6B7280" />
-            <Text className="text-sm text-surface-500 ml-1">
-              ₹{item.daily_rate}/day
-            </Text>
+            <Text className="text-sm text-surface-500 ml-1">₹{item.daily_rate}/day</Text>
           </View>
         </View>
 
@@ -99,10 +89,7 @@ export default function WorkersScreen() {
         )}
 
         {/* Actions */}
-        <TouchableOpacity
-          onPress={() => handleDeleteWorker(item)}
-          className="p-2"
-        >
+        <TouchableOpacity onPress={() => handleDeleteWorker(item)} className="p-2">
           <Ionicons name="trash-outline" size={18} color="#EF4444" />
         </TouchableOpacity>
       </View>
@@ -162,11 +149,7 @@ export default function WorkersScreen() {
         ) : null
       }
       refreshControl={
-        <RefreshControl
-          refreshing={isLoading}
-          onRefresh={refetch}
-          tintColor="#408059"
-        />
+        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#408059" />
       }
     />
   );
@@ -180,74 +163,63 @@ export default function WorkersScreen() {
       <View className="w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
         <Ionicons name="bar-chart-outline" size={40} color="#8B5CF6" />
       </View>
-      <Text className="text-lg font-semibold text-surface-900 text-center">
-        Labor Analytics
-      </Text>
+      <Text className="text-lg font-semibold text-surface-900 text-center">Labor Analytics</Text>
       <Text className="text-sm text-surface-500 text-center mt-2">
         View labor costs, productivity,{`\n`}and attendance patterns.
       </Text>
-      <Text className="text-xs text-surface-400 mt-4">
-        Coming soon in a future update
-      </Text>
+      <Text className="text-xs text-surface-400 mt-4">Coming soon in a future update</Text>
     </View>
   );
 
   return (
     <>
       <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
-      {/* Tab Selector */}
-      <View className="bg-white px-4 pt-2 pb-3">
-        <View className="flex-row bg-surface-100 rounded-xl p-1">
-          {TAB_DATA.map((tab) => (
-            <TouchableOpacity
-              key={tab.id}
-              onPress={() => setSelectedTab(tab.id)}
-              className={`flex-1 flex-row items-center justify-center py-2.5 rounded-lg ${
-                selectedTab === tab.id ? 'bg-white border border-gray-200' : ''
-              }`}
-            >
-              <Ionicons
-                name={tab.icon}
-                size={16}
-                color={selectedTab === tab.id ? '#408059' : '#6B7280'}
-              />
-              <Text
-                className={`text-sm font-medium ml-1.5 ${
-                  selectedTab === tab.id ? 'text-primary-600' : 'text-surface-500'
+        {/* Tab Selector */}
+        <View className="bg-white px-4 pt-2 pb-3">
+          <View className="flex-row bg-surface-100 rounded-xl p-1">
+            {TAB_DATA.map((tab) => (
+              <TouchableOpacity
+                key={tab.id}
+                onPress={() => setSelectedTab(tab.id)}
+                className={`flex-1 flex-row items-center justify-center py-2.5 rounded-lg ${
+                  selectedTab === tab.id ? 'bg-white border border-gray-200' : ''
                 }`}
               >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Ionicons
+                  name={tab.icon}
+                  size={16}
+                  color={selectedTab === tab.id ? '#408059' : '#6B7280'}
+                />
+                <Text
+                  className={`text-sm font-medium ml-1.5 ${
+                    selectedTab === tab.id ? 'text-primary-600' : 'text-surface-500'
+                  }`}
+                >
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
+
+        {/* Tab Content */}
+        {selectedTab === 'workers' && renderWorkersTab()}
+        {selectedTab === 'attendance' && renderAttendanceTab()}
+        {selectedTab === 'analytics' && renderAnalyticsTab()}
+
+        {/* FAB */}
+        {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
+          <TouchableOpacity
+            onPress={() => setShowAddModal(true)}
+            className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Tab Content */}
-      {selectedTab === 'workers' && renderWorkersTab()}
-      {selectedTab === 'attendance' && renderAttendanceTab()}
-      {selectedTab === 'analytics' && renderAnalyticsTab()}
-
-      {/* FAB */}
-      {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
-        <TouchableOpacity
-          onPress={() => setShowAddModal(true)}
-          className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
-          activeOpacity={0.8}
-          style={{
-            shadowColor: '#408059',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 8,
-          }}
-        >
-          <Ionicons name="add" size={28} color="#FFFFFF" />
-        </TouchableOpacity>
-       )}
-       </View>
-
-       {/* Add/Edit Worker Modal */}
+      {/* Add/Edit Worker Modal */}
       <AddWorkerModal
         visible={showAddModal}
         onClose={handleAddModalClose}
