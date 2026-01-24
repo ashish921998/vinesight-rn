@@ -47,12 +47,7 @@ export default function DashboardScreen() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([
-      refetchStats(),
-      refetchAttention(),
-      refetchActivities(),
-      refetchFarms(),
-    ]);
+    await Promise.all([refetchStats(), refetchAttention(), refetchActivities(), refetchFarms()]);
     setIsRefreshing(false);
   };
 
@@ -76,20 +71,13 @@ export default function DashboardScreen() {
       style={{ backgroundColor: '#f2f2f7' }}
       contentContainerStyle={{ paddingBottom: 100 }}
       refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          tintColor="#408059"
-        />
+        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#408059" />
       }
     >
       <View className="p-4">
         {/* Welcome Header */}
         <View className="mb-6">
-          <Text 
-            className="text-2xl font-bold"
-            style={{ color: '#000000' }}
-          >
+          <Text className="text-2xl font-bold" style={{ color: '#000000' }}>
             {greeting}
           </Text>
         </View>
@@ -145,13 +133,13 @@ export default function DashboardScreen() {
                 key={item.farm.id}
                 onPress={() => item.farm.id && handleFarmAttention(item.farm.id)}
                 className="rounded-xl p-3 mb-2 flex-row items-center active:opacity-80"
-                style={{ 
+                style={{
                   backgroundColor: 'rgba(255, 149, 0, 0.05)',
                   borderWidth: 1,
                   borderColor: 'rgba(255, 149, 0, 0.2)',
                 }}
               >
-                <View 
+                <View
                   className="w-9 h-9 rounded-full items-center justify-center"
                   style={{ backgroundColor: 'rgba(255, 149, 0, 0.15)' }}
                 >
@@ -161,7 +149,9 @@ export default function DashboardScreen() {
                   <Text className="text-sm font-semibold" style={{ color: '#000000' }}>
                     {item.farm.name}
                   </Text>
-                  <Text className="text-xs" style={{ color: '#8e8e93' }}>Water calculation needed</Text>
+                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                    Water calculation needed
+                  </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="#c7c7cc" />
               </Pressable>
@@ -174,10 +164,7 @@ export default function DashboardScreen() {
           <Text className="text-base font-semibold mb-3" style={{ color: '#000000' }}>
             Quick Actions
           </Text>
-          <View 
-            className="rounded-2xl p-4"
-            style={{ backgroundColor: '#ffffff' }}
-          >
+          <View className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff' }}>
             <View className="flex-row justify-around">
               <QuickActionButton
                 title="Irrigation"
@@ -213,10 +200,7 @@ export default function DashboardScreen() {
             Recent Activity
           </Text>
           {recentActivities && recentActivities.length > 0 ? (
-            <View 
-              className="rounded-2xl p-4"
-              style={{ backgroundColor: '#ffffff', gap: 8 }}
-            >
+            <View className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', gap: 8 }}>
               {recentActivities.map((activity) => (
                 <ActivityLogCard
                   key={activity.id}
@@ -229,10 +213,7 @@ export default function DashboardScreen() {
               ))}
             </View>
           ) : (
-            <View 
-              className="rounded-2xl p-6 items-center"
-              style={{ backgroundColor: '#ffffff' }}
-            >
+            <View className="rounded-2xl p-6 items-center" style={{ backgroundColor: '#ffffff' }}>
               <Ionicons name="time-outline" size={48} color="#c7c7cc" />
               <Text className="text-center mt-4" style={{ color: '#8e8e93' }}>
                 No recent activity yet.{'\n'}Start by adding your first farm!

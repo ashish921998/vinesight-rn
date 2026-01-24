@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  TextInput,
-  View,
-  Text,
-  TouchableOpacity,
-  type TextInputProps,
-} from 'react-native';
+import { TextInput, View, Text, TouchableOpacity, type TextInputProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface InputProps extends TextInputProps {
@@ -51,11 +45,7 @@ export function Input({
 
   return (
     <View className={containerClassName}>
-      {label && (
-        <Text className="text-sm font-medium mb-1.5 text-black">
-          {label}
-        </Text>
-      )}
+      {label && <Text className="text-sm font-medium mb-1.5 text-black">{label}</Text>}
 
       <View
         className={`
@@ -113,11 +103,7 @@ export function Input({
             disabled={!onRightIconPress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons
-              name={rightIcon}
-              size={20}
-              color={isFocused ? '#408059' : '#c7c7cc'}
-            />
+            <Ionicons name={rightIcon} size={20} color={isFocused ? '#408059' : '#c7c7cc'} />
           </TouchableOpacity>
         )}
       </View>
@@ -125,9 +111,7 @@ export function Input({
       {hasError && (
         <View className="flex-row items-center mt-1.5">
           <Ionicons name="alert-circle" size={14} color="#ff3b30" />
-          <Text className="text-xs ml-1 text-[#ff3b30]">
-            {error}
-          </Text>
+          <Text className="text-xs ml-1 text-[#ff3b30]">{error}</Text>
         </View>
       )}
     </View>

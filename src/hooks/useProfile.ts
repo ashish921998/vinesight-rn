@@ -28,7 +28,10 @@ import {
 // ============================================================
 
 async function getUserId(): Promise<string> {
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
   if (error || !session) {
     throw new Error('Please sign in to continue');
   }
@@ -166,10 +169,7 @@ export function useDeleteWarehouseItem() {
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.WAREHOUSE_ITEMS)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.WAREHOUSE_ITEMS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -256,10 +256,7 @@ export function useDeleteSoilTestRecord() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.SOIL_TEST_RECORDS)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.SOIL_TEST_RECORDS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -348,10 +345,7 @@ export function useDeletePetioleTestRecord() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.PETIOLE_TEST_RECORDS)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.PETIOLE_TEST_RECORDS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -440,10 +434,7 @@ export function useDeleteSoilProfile() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.SOIL_PROFILES)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.SOIL_PROFILES).delete().eq('id', id);
 
       if (error) throw error;
     },

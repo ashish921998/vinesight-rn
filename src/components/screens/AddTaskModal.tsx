@@ -191,7 +191,7 @@ export default function AddTaskModal({
               <TouchableOpacity onPress={onClose} disabled={isLoading}>
                 <Text className="text-primary-600 text-base">Cancel</Text>
               </TouchableOpacity>
-              <Text className="text-lg font-semibold text-surface-900">
+              <Text className="text-lg font-semibold text-surface-900" numberOfLines={1}>
                 {isEditing ? 'Edit Task' : 'Add Task'}
               </Text>
               <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>

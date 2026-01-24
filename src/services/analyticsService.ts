@@ -31,7 +31,7 @@ export class AnalyticsService {
     fertigations: FertigationRecord[],
     harvests: HarvestRecord[],
     expenses: ExpenseRecord[],
-    timeRange: TimeRange = 'all'
+    timeRange: TimeRange = 'all',
   ): AnalyticsData {
     // Filter by time range
     const cutoffDate = this.getCutoffDate(timeRange);
@@ -41,22 +41,13 @@ export class AnalyticsService {
     const filteredExpenses = this.filterByDate(expenses, cutoffDate);
 
     // Calculate totals
-    const totalIrrigationHours = filteredIrrigations.reduce(
-      (sum, r) => sum + (r.duration || 0),
-      0
-    );
-    const totalHarvestQuantity = filteredHarvests.reduce(
-      (sum, r) => sum + (r.quantity || 0),
-      0
-    );
+    const totalIrrigationHours = filteredIrrigations.reduce((sum, r) => sum + (r.duration || 0), 0);
+    const totalHarvestQuantity = filteredHarvests.reduce((sum, r) => sum + (r.quantity || 0), 0);
     const totalHarvestValue = filteredHarvests.reduce(
       (sum, r) => sum + (r.quantity || 0) * (r.price || 0),
-      0
+      0,
     );
-    const totalExpenses = filteredExpenses.reduce(
-      (sum, r) => sum + (r.cost || 0),
-      0
-    );
+    const totalExpenses = filteredExpenses.reduce((sum, r) => sum + (r.cost || 0), 0);
 
     // Group irrigations by month
     const irrigationsByMonth = this.groupByMonth(filteredIrrigations);
@@ -75,7 +66,7 @@ export class AnalyticsService {
       filteredIrrigations,
       filteredSprays,
       filteredHarvests,
-      farms
+      farms,
     );
 
     return {
@@ -100,16 +91,12 @@ export class AnalyticsService {
   static calculateCostAnalysis(
     harvests: HarvestRecord[],
     expenses: ExpenseRecord[],
-    _farms: Farm[]
+    _farms: Farm[],
   ): CostAnalysis {
     const totalCosts = expenses.reduce((sum, r) => sum + (r.cost || 0), 0);
-    const totalRevenue = harvests.reduce(
-      (sum, r) => sum + (r.quantity || 0) * (r.price || 0),
-      0
-    );
+    const totalRevenue = harvests.reduce((sum, r) => sum + (r.quantity || 0) * (r.price || 0), 0);
 
-    const profitMargin =
-      totalRevenue > 0 ? ((totalRevenue - totalCosts) / totalRevenue) * 100 : 0;
+    const profitMargin = totalRevenue > 0 ? ((totalRevenue - totalCosts) / totalRevenue) * 100 : 0;
     const roi = totalCosts > 0 ? ((totalRevenue - totalCosts) / totalCosts) * 100 : 0;
 
     // Group expenses by type
@@ -141,16 +128,10 @@ export class AnalyticsService {
   /**
    * Calculate yield analysis
    */
-  static calculateYieldAnalysis(
-    harvests: HarvestRecord[],
-    farms: Farm[]
-  ): YieldAnalysis {
+  static calculateYieldAnalysis(harvests: HarvestRecord[], farms: Farm[]): YieldAnalysis {
     const totalArea = farms.reduce((sum, f) => sum + (f.area || 0), 0);
     const currentYield = harvests.reduce((sum, r) => sum + (r.quantity || 0), 0);
-    const harvestValue = harvests.reduce(
-      (sum, r) => sum + (r.quantity || 0) * (r.price || 0),
-      0
-    );
+    const harvestValue = harvests.reduce((sum, r) => sum + (r.quantity || 0) * (r.price || 0), 0);
     const yieldPerAcre = totalArea > 0 ? currentYield / totalArea : 0;
     const avgPricePerKg = currentYield > 0 ? harvestValue / currentYield : 0;
 
@@ -183,7 +164,7 @@ export class AnalyticsService {
   static calculatePerformanceMetrics(
     analytics: AnalyticsData,
     costAnalysis: CostAnalysis,
-    yieldAnalysis: YieldAnalysis
+    yieldAnalysis: YieldAnalysis,
   ): PerformanceMetrics {
     const recommendations: string[] = [];
     const alerts: PerformanceMetrics['alerts'] = [];
@@ -195,14 +176,15 @@ export class AnalyticsService {
     const sprayingScore = Math.min(100, analytics.totalSprayCount * 10);
 
     // Harvesting score (based on yield and quality)
-    const harvestingScore = yieldAnalysis.yieldPerAcre > 0 ? Math.min(100, yieldAnalysis.yieldPerAcre / 10) : 50;
+    const harvestingScore =
+      yieldAnalysis.yieldPerAcre > 0 ? Math.min(100, yieldAnalysis.yieldPerAcre / 10) : 50;
 
     // Cost efficiency score
     const costEfficiencyScore = costAnalysis.roi > 0 ? Math.min(100, costAnalysis.roi) : 50;
 
     // Overall score
     const overallScore = Math.round(
-      (irrigationScore + sprayingScore + harvestingScore + costEfficiencyScore) / 4
+      (irrigationScore + sprayingScore + harvestingScore + costEfficiencyScore) / 4,
     );
 
     // Generate recommendations
@@ -287,7 +269,7 @@ export class AnalyticsService {
 
   private static filterByDate<T extends { date: string }>(
     records: T[],
-    cutoffDate: Date | null
+    cutoffDate: Date | null,
   ): T[] {
     if (!cutoffDate) return records;
     return records.filter((r) => new Date(r.date) >= cutoffDate);
@@ -347,14 +329,8 @@ export class AnalyticsService {
       .sort((a, b) => b.amount - a.amount);
   }
 
-  private static calculateMonthlyTrends(
-    harvests: HarvestRecord[],
-    expenses: ExpenseRecord[]
-  ) {
-    const months = new Map<
-      string,
-      { revenue: number; costs: number; profit: number }
-    >();
+  private static calculateMonthlyTrends(harvests: HarvestRecord[], expenses: ExpenseRecord[]) {
+    const months = new Map<string, { revenue: number; costs: number; profit: number }>();
 
     harvests.forEach((h) => {
       const date = new Date(h.date);
@@ -388,10 +364,9 @@ export class AnalyticsService {
     irrigations: IrrigationRecord[],
     sprays: SprayRecord[],
     harvests: HarvestRecord[],
-    farms: Farm[]
+    farms: Farm[],
   ): RecentActivity[] {
-    const getFarmName = (farmId: number) =>
-      farms.find((f) => f.id === farmId)?.name || 'Unknown';
+    const getFarmName = (farmId: number) => farms.find((f) => f.id === farmId)?.name || 'Unknown';
 
     const activities: RecentActivity[] = [];
 

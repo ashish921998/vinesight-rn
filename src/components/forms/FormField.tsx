@@ -1,5 +1,12 @@
-import React, { useState } from 'react';
-import { TextInput, View, Text, type TextInputProps } from 'react-native';
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
+import {
+  TextInput,
+  View,
+  Text,
+  type TextInputProps,
+  type NativeSyntheticEvent,
+  type TextInputSubmitEditingEventData,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface FormFieldProps extends TextInputProps {
@@ -76,7 +83,13 @@ export function FormField({
 }
 
 // Numeric input variant
-interface NumericInputProps extends Omit<
+export interface NumericInputHandle {
+  focus: () => void;
+  blur: () => void;
+  value: string;
+}
+
+export interface NumericInputProps extends Omit<
   FormFieldProps,
   'value' | 'onChangeText' | 'keyboardType'
 > {
@@ -86,24 +99,55 @@ interface NumericInputProps extends Omit<
   max?: number;
   decimals?: number;
   unit?: string;
+  onSubmitEditing?: (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void;
+  blurOnSubmit?: boolean;
+  returnKeyType?: TextInputProps['returnKeyType'];
 }
 
-export function NumericInput({
-  value,
-  onValueChange,
-  min = 0,
-  max,
-  decimals = 2,
-  unit,
-  ...props
-}: NumericInputProps) {
-  const [textValue, setTextValue] = useState(value > 0 ? value.toString() : '');
+export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(function NumericInput(
+  {
+    value,
+    onValueChange,
+    min = 0,
+    max,
+    decimals = 2,
+    unit,
+    onSubmitEditing,
+    blurOnSubmit = true,
+    returnKeyType = 'done',
+    editable = true,
+    ...props
+  }: NumericInputProps,
+  ref,
+) {
+  const [textValue, setTextValue] = useState(value != null ? String(value) : '');
+  const [isFocused, setIsFocused] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const internalRef = useRef<TextInput>(null);
+  const hasError = !!props.error;
+  const isDisabled = !editable;
+
+  useEffect(() => {
+    if (!isEditing) {
+      setTextValue(value != null ? String(value) : '');
+    }
+  }, [value, isEditing]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => internalRef.current?.focus(),
+      blur: () => internalRef.current?.blur(),
+      get value() {
+        return textValue;
+      },
+    }),
+    [textValue, internalRef],
+  );
 
   const handleChangeText = (text: string) => {
-    // Allow empty string, digits, and one decimal point
     const cleanText = text.replace(/[^0-9.]/g, '');
 
-    // Prevent multiple decimal points
     const parts = cleanText.split('.');
     let sanitizedText = parts[0];
     if (parts.length > 1) {
@@ -131,7 +175,15 @@ export function NumericInput({
         </Text>
       </View>
 
-      <View className="flex-row items-center px-4 py-3 rounded-xl border border-surface-200 bg-white">
+      <View
+        className={`
+          flex-row items-center
+          px-4 py-2 rounded-xl
+          border
+          ${hasError ? 'border-red-500' : isFocused ? 'border-primary-500' : 'border-surface-200'}
+          ${isDisabled ? 'bg-surface-100' : 'bg-white'}
+        `}
+      >
         {props.icon && (
           <Ionicons
             name={props.icon}
@@ -142,12 +194,27 @@ export function NumericInput({
         )}
 
         <TextInput
+          ref={internalRef}
           className="flex-1 text-base text-surface-900"
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"
           value={textValue}
           onChangeText={handleChangeText}
           placeholder={props.placeholder}
+          onSubmitEditing={onSubmitEditing}
+          blurOnSubmit={blurOnSubmit}
+          returnKeyType={returnKeyType}
+          editable={editable}
+          onFocus={(e) => {
+            setIsFocused(true);
+            setIsEditing(true);
+            props.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            setIsEditing(false);
+            props.onBlur?.(e);
+          }}
         />
 
         {unit && <Text className="text-sm text-surface-500 ml-2">{unit}</Text>}
@@ -165,4 +232,4 @@ export function NumericInput({
       )}
     </View>
   );
-}
+});

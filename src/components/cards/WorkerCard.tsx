@@ -42,9 +42,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
 
       {/* Info */}
       <View className="flex-1">
-        <Text className="text-base font-semibold text-gray-900">
-          {worker.name}
-        </Text>
+        <Text className="text-base font-semibold text-gray-900">{worker.name}</Text>
         <View className="flex-row items-center mt-1">
           <Ionicons name="cash-outline" size={12} color="#6B7280" />
           <Text className="text-sm text-gray-500 ml-1">
@@ -58,9 +56,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
       {worker.advance_balance > 0 && (
         <View className="flex-row items-center">
           <Ionicons name="arrow-up-circle" size={12} color="#F59E0B" />
-          <Text className="text-sm font-semibold text-amber-500 ml-1">
-            {formattedAdvance}
-          </Text>
+          <Text className="text-sm font-semibold text-amber-500 ml-1">{formattedAdvance}</Text>
         </View>
       )}
 

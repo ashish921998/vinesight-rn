@@ -3,12 +3,7 @@
  * Types for the onboarding flow
  */
 
-export type OnboardingStep = 
-  | 'welcome'
-  | 'features'
-  | 'preferences'
-  | 'notifications'
-  | 'complete';
+export type OnboardingStep = 'welcome' | 'features' | 'preferences' | 'notifications' | 'complete';
 
 export interface OnboardingState {
   isComplete: boolean;
@@ -41,13 +36,15 @@ export const ONBOARDING_FEATURES: OnboardingFeature[] = [
   {
     icon: 'add-circle',
     title: 'Add Your Farms',
-    description: 'Create farms with details like location, crop type, and area. Manage multiple farms from one place.',
+    description:
+      'Create farms with details like location, crop type, and area. Manage multiple farms from one place.',
     color: '#1a5d1a',
   },
   {
     icon: 'stats-chart',
     title: 'Track Everything',
-    description: 'Log irrigation, sprays, harvests, expenses, and more. All your records in one place.',
+    description:
+      'Log irrigation, sprays, harvests, expenses, and more. All your records in one place.',
     color: '#F59E0B',
   },
   {

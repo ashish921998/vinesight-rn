@@ -19,12 +19,7 @@ export interface ExportOptions {
   reportType: ReportType;
 }
 
-export type ReportDataType = 
-  | 'irrigation'
-  | 'spray'
-  | 'fertigation'
-  | 'harvest'
-  | 'expense';
+export type ReportDataType = 'irrigation' | 'spray' | 'fertigation' | 'harvest' | 'expense';
 
 export interface ReportData {
   farmName: string;

@@ -2,36 +2,32 @@
 export { FormField, NumericInput } from './FormField';
 
 // Activity log forms
-export { 
-  IrrigationForm, 
-  validateIrrigationForm,
-  type IrrigationFormData,
-} from './IrrigationForm';
+export { IrrigationForm, validateIrrigationForm, type IrrigationFormData } from './IrrigationForm';
 
-export { 
-  SprayForm, 
+export {
+  SprayForm,
   validateSprayForm,
   createEmptySprayFormData,
   type SprayFormData,
   type ChemicalEntry,
 } from './SprayForm';
 
-export { 
-  HarvestForm, 
+export {
+  HarvestForm,
   validateHarvestForm,
   createEmptyHarvestFormData,
   type HarvestFormData,
 } from './HarvestForm';
 
-export { 
-  ExpenseForm, 
+export {
+  ExpenseForm,
   validateExpenseForm,
   createEmptyExpenseFormData,
   type ExpenseFormData,
 } from './ExpenseForm';
 
-export { 
-  FertigationForm, 
+export {
+  FertigationForm,
   validateFertigationForm,
   createEmptyFertigationFormData,
   type FertigationFormData,

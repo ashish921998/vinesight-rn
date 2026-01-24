@@ -36,7 +36,8 @@ export function useAnalytics(timeRange: TimeRange = 'all') {
   // Fetch all records across farms
   const { data: irrigations, isLoading: irrigationsLoading } = useIrrigationRecordsByFarms(farmIds);
   const { data: sprays, isLoading: spraysLoading } = useSprayRecordsByFarms(farmIds);
-  const { data: fertigations, isLoading: fertigationsLoading } = useFertigationRecordsByFarms(farmIds);
+  const { data: fertigations, isLoading: fertigationsLoading } =
+    useFertigationRecordsByFarms(farmIds);
   const { data: harvests, isLoading: harvestsLoading } = useHarvestRecordsByFarms(farmIds);
   const { data: expenses, isLoading: expensesLoading } = useExpenseRecordsByFarms(farmIds);
 
@@ -52,7 +53,7 @@ export function useAnalytics(timeRange: TimeRange = 'all') {
       fertigations,
       harvests,
       expenses,
-      timeRange
+      timeRange,
     );
   }, [farms, irrigations, sprays, fertigations, harvests, expenses, timeRange]);
 

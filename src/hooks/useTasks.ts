@@ -18,7 +18,10 @@ export const taskQueryKeys = {
 
 // Helper to get user ID
 async function getUserId(): Promise<string> {
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
   if (error || !session) {
     throw new Error('Please sign in to continue');
   }
@@ -165,10 +168,7 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const { error } = await supabase
-        .from('task_reminders')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('task_reminders').delete().eq('id', id);
 
       if (error) throw error;
     },

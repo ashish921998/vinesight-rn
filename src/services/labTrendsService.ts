@@ -10,23 +10,77 @@ import { TrendData, ParameterTrend, TestTrendsResponse } from '../types/analytic
 export class LabTrendsService {
   static calculateSoilTrends(tests: SoilTestRecord[]): TestTrendsResponse {
     console.log('calculateSoilTrends called with', tests.length, 'tests');
-    return this.calculateTrends(tests, SOIL_PARAMETERS);
+    return this.calculateTrends(tests, SOIL_PARAMETERS, this.mapSoilParameters.bind(this));
   }
 
   static calculatePetioleTrends(tests: PetioleTestRecord[]): TestTrendsResponse {
     console.log('calculatePetioleTrends called with', tests.length, 'tests');
-    return this.calculateTrends(tests, PETIOLE_PARAMETERS);
+    return this.calculateTrends(tests, PETIOLE_PARAMETERS, this.mapPetioleParameters.bind(this));
+  }
+
+  private static mapSoilParameters(parameters: Record<string, number>): Record<string, number> {
+    const keyMap: Record<string, string> = {
+      pH: 'ph',
+      EC: 'ec',
+      OC: 'organicCarbon',
+      OM: 'organicMatter',
+      N: 'nitrogen',
+      P: 'phosphorus',
+      K: 'potassium',
+      Ca: 'calcium',
+      Mg: 'magnesium',
+      S: 'sulfur',
+      Fe: 'iron',
+      Mn: 'manganese',
+      Zn: 'zinc',
+      Cu: 'copper',
+      B: 'boron',
+    };
+
+    const mapped: Record<string, number> = {};
+    for (const [key, value] of Object.entries(parameters)) {
+      const newKey = keyMap[key] || key;
+      mapped[newKey] = value;
+    }
+    return mapped;
+  }
+
+  private static mapPetioleParameters(parameters: Record<string, number>): Record<string, number> {
+    const keyMap: Record<string, string> = {
+      N: 'total_nitrogen',
+      P: 'phosphorus',
+      K: 'potassium',
+      Ca: 'calcium',
+      Mg: 'magnesium',
+      S: 'sulfur',
+      Fe: 'iron',
+      Mn: 'manganese',
+      Zn: 'zinc',
+      Cu: 'copper',
+      B: 'boron',
+      Mo: 'molybdenum',
+      Na: 'sodium',
+      Cl: 'chloride',
+    };
+
+    const mapped: Record<string, number> = {};
+    for (const [key, value] of Object.entries(parameters)) {
+      const newKey = keyMap[key] || key;
+      mapped[newKey] = value;
+    }
+    return mapped;
   }
 
   private static calculateTrends<T extends SoilTestRecord | PetioleTestRecord>(
     tests: T[],
     paramDefinitions: Array<{ key: string; label: string; unit: string }>,
+    parameterMapper?: (params: Record<string, number>) => Record<string, number>,
   ): TestTrendsResponse {
     const trendData: TrendData[] = [...tests]
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .map((test) => ({
         date: test.date,
-        parameters: test.parameters,
+        parameters: parameterMapper ? parameterMapper(test.parameters) : test.parameters,
       }));
 
     const parameterTrends: Record<string, ParameterTrend> = {};

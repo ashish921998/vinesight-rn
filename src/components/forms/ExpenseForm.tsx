@@ -18,13 +18,13 @@ interface ExpenseFormProps {
 
 // Icon mapping for expense types
 const EXPENSE_ICONS: Record<ExpenseTypeId, keyof typeof Ionicons.glyphMap> = {
-  'Equipment': 'construct-outline',
-  'Fuel': 'car-outline',
+  Equipment: 'construct-outline',
+  Fuel: 'car-outline',
   'Seeds/Plants': 'flower-outline',
-  'Packaging': 'cube-outline',
-  'Transport': 'bus-outline',
-  'Maintenance': 'hammer-outline',
-  'Other': 'ellipsis-horizontal-outline',
+  Packaging: 'cube-outline',
+  Transport: 'bus-outline',
+  Maintenance: 'hammer-outline',
+  Other: 'ellipsis-horizontal-outline',
 };
 
 export function ExpenseForm({ data, onChange }: ExpenseFormProps) {
@@ -38,12 +38,8 @@ export function ExpenseForm({ data, onChange }: ExpenseFormProps) {
           <Ionicons name="cash" size={20} color="#EF4444" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">
-            Expense
-          </Text>
-          <Text className="text-sm text-surface-500">
-            Log farm expense
-          </Text>
+          <Text className="text-lg font-semibold text-surface-900">Expense</Text>
+          <Text className="text-sm text-surface-500">Log farm expense</Text>
         </View>
       </View>
 
@@ -55,28 +51,28 @@ export function ExpenseForm({ data, onChange }: ExpenseFormProps) {
             Category <Text className="text-red-500">*</Text>
           </Text>
         </View>
-        
+
         <View className="flex-row flex-wrap gap-2">
           {EXPENSE_TYPES.map((type) => (
             <TouchableOpacity
               key={type}
               onPress={() => onChange({ ...data, type })}
               className={`flex-row items-center px-3 py-2.5 rounded-xl border ${
-                data.type === type 
-                  ? 'bg-red-500 border-red-500' 
-                  : 'bg-white border-surface-200'
+                data.type === type ? 'bg-red-500 border-red-500' : 'bg-white border-surface-200'
               }`}
               activeOpacity={0.7}
             >
-              <Ionicons 
-                name={EXPENSE_ICONS[type]} 
-                size={16} 
-                color={data.type === type ? '#FFFFFF' : '#6B7280'} 
+              <Ionicons
+                name={EXPENSE_ICONS[type]}
+                size={16}
+                color={data.type === type ? '#FFFFFF' : '#6B7280'}
                 style={{ marginRight: 6 }}
               />
-              <Text className={`text-sm font-medium ${
-                data.type === type ? 'text-white' : 'text-surface-700'
-              }`}>
+              <Text
+                className={`text-sm font-medium ${
+                  data.type === type ? 'text-white' : 'text-surface-700'
+                }`}
+              >
                 {type}
               </Text>
             </TouchableOpacity>
@@ -101,12 +97,15 @@ export function ExpenseForm({ data, onChange }: ExpenseFormProps) {
       {/* Remarks Input (Optional) */}
       <View className="mb-4">
         <View className="flex-row items-center mb-1.5">
-          <Ionicons name="document-text-outline" size={16} color="#408059" style={{ marginRight: 6 }} />
-          <Text className="text-sm font-semibold text-surface-800">
-            Remarks
-          </Text>
+          <Ionicons
+            name="document-text-outline"
+            size={16}
+            color="#408059"
+            style={{ marginRight: 6 }}
+          />
+          <Text className="text-sm font-semibold text-surface-800">Remarks</Text>
         </View>
-        
+
         <View className="px-4 py-3 rounded-xl border border-surface-200 bg-white">
           <TextInput
             className="text-base text-surface-900"
@@ -127,10 +126,10 @@ export function ExpenseForm({ data, onChange }: ExpenseFormProps) {
         <View className="bg-red-50 rounded-xl p-4 mb-4">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
-              <Ionicons 
-                name={data.type ? EXPENSE_ICONS[data.type] : 'cash'} 
-                size={20} 
-                color="#DC2626" 
+              <Ionicons
+                name={data.type ? EXPENSE_ICONS[data.type] : 'cash'}
+                size={20}
+                color="#DC2626"
               />
               <Text className="text-sm font-medium text-red-700 ml-2">{data.type}</Text>
             </View>
@@ -141,10 +140,10 @@ export function ExpenseForm({ data, onChange }: ExpenseFormProps) {
 
       {/* Validation indicator */}
       <View className="flex-row items-center pt-4 border-t border-surface-100">
-        <Ionicons 
-          name={isValid ? "checkmark-circle" : "alert-circle-outline"} 
-          size={16} 
-          color={isValid ? "#22C55E" : "#9CA3AF"} 
+        <Ionicons
+          name={isValid ? 'checkmark-circle' : 'alert-circle-outline'}
+          size={16}
+          color={isValid ? '#22C55E' : '#9CA3AF'}
         />
         <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
           {isValid ? 'Ready to add' : 'Select category and enter amount'}

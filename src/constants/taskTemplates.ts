@@ -27,7 +27,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     estimatedDuration: '2 hours',
     frequency: 'weekly',
     season: 'summer',
-    instructions: 'Water early morning (5-8 AM) and evening (6-8 PM). Check soil moisture at 30cm depth.',
+    instructions:
+      'Water early morning (5-8 AM) and evening (6-8 PM). Check soil moisture at 30cm depth.',
   },
 
   // Spray Tasks
@@ -40,7 +41,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     estimatedDuration: '3 hours',
     frequency: 'biweekly',
     growthStage: ['bud_break', 'flowering', 'fruit_set'],
-    instructions: 'Use sulfur-based fungicide. Apply in early morning or evening. Ensure complete canopy coverage.',
+    instructions:
+      'Use sulfur-based fungicide. Apply in early morning or evening. Ensure complete canopy coverage.',
   },
   {
     id: 'insecticide_spray_thrips',
@@ -51,7 +53,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     estimatedDuration: '2.5 hours',
     frequency: 'monthly',
     growthStage: ['bud_break', 'flowering'],
-    instructions: 'Use imidacloprid or spinosad. Check weather conditions - avoid spraying before rain.',
+    instructions:
+      'Use imidacloprid or spinosad. Check weather conditions - avoid spraying before rain.',
   },
 
   // Fertigation Tasks
@@ -64,7 +67,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     estimatedDuration: '1 hour',
     frequency: 'weekly',
     growthStage: ['bud_break', 'flowering', 'fruit_set'],
-    instructions: 'Mix 19:19:19 NPK at 0.5% concentration. Apply for 30-45 minutes. Check EC levels.',
+    instructions:
+      'Mix 19:19:19 NPK at 0.5% concentration. Apply for 30-45 minutes. Check EC levels.',
   },
   {
     id: 'calcium_spray_application',
@@ -75,7 +79,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     estimatedDuration: '2 hours',
     frequency: 'biweekly',
     growthStage: ['fruit_set', 'veraison'],
-    instructions: 'Use calcium chloride at 0.5% concentration. Apply in evening hours. Avoid during flowering.',
+    instructions:
+      'Use calcium chloride at 0.5% concentration. Apply in evening hours. Avoid during flowering.',
   },
 
   // Harvest Tasks
@@ -88,7 +93,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     estimatedDuration: '2 hours',
     frequency: 'weekly',
     growthStage: ['veraison', 'harvest'],
-    instructions: 'Sample from multiple blocks. Target: Brix 18-22°, pH 3.2-3.8. Check seed color and berry taste.',
+    instructions:
+      'Sample from multiple blocks. Target: Brix 18-22°, pH 3.2-3.8. Check seed color and berry taste.',
   },
   {
     id: 'pre_harvest_preparation',
@@ -111,7 +117,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     priority: 'medium',
     estimatedDuration: '1 hour',
     frequency: 'weekly',
-    instructions: 'Use soil moisture meter at 15cm, 30cm, and 60cm depths. Record readings for irrigation scheduling.',
+    instructions:
+      'Use soil moisture meter at 15cm, 30cm, and 60cm depths. Record readings for irrigation scheduling.',
   },
   {
     id: 'leaf_analysis_sampling',
@@ -122,7 +129,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     estimatedDuration: '2 hours',
     frequency: 'seasonal',
     growthStage: ['flowering', 'fruit_set'],
-    instructions: 'Collect 100 petioles from 5th-6th leaf from shoot tip. Sample from multiple blocks.',
+    instructions:
+      'Collect 100 petioles from 5th-6th leaf from shoot tip. Sample from multiple blocks.',
   },
 
   // General Tasks
@@ -134,7 +142,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     priority: 'high',
     estimatedDuration: '2 hours',
     frequency: 'weekly',
-    instructions: 'Check for powdery mildew, downy mildew, black rot. Record disease pressure levels.',
+    instructions:
+      'Check for powdery mildew, downy mildew, black rot. Record disease pressure levels.',
   },
   {
     id: 'winter_pruning',
@@ -161,12 +170,12 @@ export function getTemplatesBySeason(season: TaskTemplate['season']): TaskTempla
 
 export function getCurrentSeasonTemplates(): TaskTemplate[] {
   const month = new Date().getMonth() + 1;
-  
+
   let currentSeason: TaskTemplate['season'];
   if (month >= 3 && month <= 5) currentSeason = 'spring';
   else if (month >= 6 && month <= 8) currentSeason = 'summer';
   else if (month >= 9 && month <= 11) currentSeason = 'monsoon';
   else currentSeason = 'winter';
-  
+
   return getTemplatesBySeason(currentSeason);
 }

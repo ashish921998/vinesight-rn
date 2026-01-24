@@ -153,57 +153,101 @@ export function useDeletePetioleTest() {
   });
 }
 
-// Common soil test parameters
+// Common soil test parameters (matching vinesight-web order)
 export const SOIL_PARAMETERS = [
-  { key: 'pH', label: 'pH', unit: '', min: 0, max: 14, step: 0.1 },
-  { key: 'EC', label: 'EC', unit: 'dS/m', min: 0, max: 10, step: 0.1 },
-  { key: 'OC', label: 'Organic Carbon', unit: '%', min: 0, max: 5, step: 0.01 },
-  { key: 'N', label: 'Nitrogen (N)', unit: 'kg/ha', min: 0, max: 500, step: 1 },
-  { key: 'P', label: 'Phosphorus (P)', unit: 'kg/ha', min: 0, max: 200, step: 1 },
-  { key: 'K', label: 'Potassium (K)', unit: 'kg/ha', min: 0, max: 500, step: 1 },
-  { key: 'Ca', label: 'Calcium (Ca)', unit: 'meq/100g', min: 0, max: 50, step: 0.1 },
-  { key: 'Mg', label: 'Magnesium (Mg)', unit: 'meq/100g', min: 0, max: 20, step: 0.1 },
-  { key: 'S', label: 'Sulfur (S)', unit: 'ppm', min: 0, max: 100, step: 1 },
-  { key: 'Zn', label: 'Zinc (Zn)', unit: 'ppm', min: 0, max: 20, step: 0.1 },
-  { key: 'Fe', label: 'Iron (Fe)', unit: 'ppm', min: 0, max: 100, step: 0.1 },
-  { key: 'Mn', label: 'Manganese (Mn)', unit: 'ppm', min: 0, max: 50, step: 0.1 },
-  { key: 'Cu', label: 'Copper (Cu)', unit: 'ppm', min: 0, max: 10, step: 0.1 },
-  { key: 'B', label: 'Boron (B)', unit: 'ppm', min: 0, max: 5, step: 0.1 },
+  { key: 'ph', label: 'pH', unit: '', min: 0, max: 14, step: 0.1 },
+  { key: 'ec', label: 'EC', unit: 'dS/m', min: 0, max: 10, step: 0.1 },
+  { key: 'organicCarbon', label: 'Organic Carbon', unit: '%', min: 0, max: 5, step: 0.01 },
+  { key: 'organicMatter', label: 'Organic Matter', unit: '%', min: 0, max: 10, step: 0.01 },
+  { key: 'nitrogen', label: 'Nitrogen', unit: 'ppm', min: 0, max: 500, step: 1 },
+  { key: 'phosphorus', label: 'Phosphorus', unit: 'ppm', min: 0, max: 200, step: 1 },
+  { key: 'potassium', label: 'Potassium', unit: 'ppm', min: 0, max: 500, step: 1 },
+  { key: 'calcium', label: 'Calcium', unit: 'ppm', min: 0, max: 5000, step: 1 },
+  { key: 'magnesium', label: 'Magnesium', unit: 'ppm', min: 0, max: 2000, step: 1 },
+  { key: 'sulfur', label: 'Sulfur', unit: 'ppm', min: 0, max: 100, step: 1 },
+  { key: 'iron', label: 'Iron', unit: 'ppm', min: 0, max: 100, step: 0.1 },
+  { key: 'manganese', label: 'Manganese', unit: 'ppm', min: 0, max: 50, step: 0.1 },
+  { key: 'zinc', label: 'Zinc', unit: 'ppm', min: 0, max: 20, step: 0.1 },
+  { key: 'copper', label: 'Copper', unit: 'ppm', min: 0, max: 10, step: 0.1 },
+  { key: 'boron', label: 'Boron', unit: 'ppm', min: 0, max: 5, step: 0.1 },
 ];
 
-// Common petiole test parameters
+// Common petiole test parameters (matching vinesight-web order)
 export const PETIOLE_PARAMETERS = [
-  {
-    key: 'ammonical_nitrogen',
-    label: 'Ammonical Nitrogen',
-    unit: 'ppm',
-    min: 0,
-    max: 1000,
-    step: 1,
-  },
-  { key: 'nitrate_nitrogen', label: 'Nitrate Nitrogen', unit: 'ppm', min: 0, max: 1000, step: 1 },
   { key: 'total_nitrogen', label: 'Total Nitrogen', unit: '%', min: 0, max: 5, step: 0.01 },
-  { key: 'phosphorus', label: 'Phosphorus (P)', unit: '%', min: 0, max: 1, step: 0.01 },
-  { key: 'potassium', label: 'Potassium (K)', unit: '%', min: 0, max: 5, step: 0.01 },
-  { key: 'calcium', label: 'Calcium (Ca)', unit: '%', min: 0, max: 5, step: 0.01 },
-  { key: 'magnesium', label: 'Magnesium (Mg)', unit: '%', min: 0, max: 2, step: 0.01 },
-  { key: 'sulfur', label: 'Sulfur (S)', unit: '%', min: 0, max: 1, step: 0.01 },
-  { key: 'zinc', label: 'Zinc (Zn)', unit: 'ppm', min: 0, max: 200, step: 1 },
-  { key: 'iron', label: 'Iron (Fe)', unit: 'ppm', min: 0, max: 500, step: 1 },
-  { key: 'manganese', label: 'Manganese (Mn)', unit: 'ppm', min: 0, max: 300, step: 1 },
-  { key: 'copper', label: 'Copper (Cu)', unit: 'ppm', min: 0, max: 50, step: 1 },
-  { key: 'boron', label: 'Boron (B)', unit: 'ppm', min: 0, max: 100, step: 1 },
-  { key: 'chloride', label: 'Chloride', unit: '%', min: 0, max: 1, step: 0.01 },
-  { key: 'sodium', label: 'Sodium', unit: '%', min: 0, max: 1, step: 0.01 },
+  { key: 'nitrate_nitrogen', label: 'Nitrate N', unit: 'ppm', min: 0, max: 1000, step: 1 },
+  { key: 'ammoniacal_nitrogen', label: 'Ammoniacal N', unit: 'ppm', min: 0, max: 1000, step: 1 },
+  { key: 'phosphorus', label: 'Phosphorus', unit: '%', min: 0, max: 1, step: 0.01 },
+  { key: 'potassium', label: 'Potassium', unit: '%', min: 0, max: 5, step: 0.01 },
+  { key: 'calcium', label: 'Calcium', unit: '%', min: 0, max: 5, step: 0.01 },
+  { key: 'magnesium', label: 'Magnesium', unit: '%', min: 0, max: 2, step: 0.01 },
+  { key: 'sulfur', label: 'Sulfur', unit: '%', min: 0, max: 1, step: 0.01 },
+  { key: 'iron', label: 'Iron', unit: 'ppm', min: 0, max: 500, step: 1 },
+  { key: 'manganese', label: 'Manganese', unit: 'ppm', min: 0, max: 300, step: 1 },
+  { key: 'zinc', label: 'Zinc', unit: 'ppm', min: 0, max: 200, step: 1 },
+  { key: 'copper', label: 'Copper', unit: 'ppm', min: 0, max: 50, step: 1 },
+  { key: 'boron', label: 'Boron', unit: 'ppm', min: 0, max: 100, step: 1 },
   { key: 'molybdenum', label: 'Molybdenum', unit: 'ppm', min: 0, max: 1, step: 0.01 },
+  { key: 'sodium', label: 'Sodium', unit: '%', min: 0, max: 1, step: 0.01 },
+  { key: 'chloride', label: 'Chloride', unit: '%', min: 0, max: 1, step: 0.01 },
 ];
 
 /**
  * Format parameter key for display
  */
-export function formatParameterKey(key: string): string {
-  const param = [...SOIL_PARAMETERS, ...PETIOLE_PARAMETERS].find((p) => p.key === key);
+export function formatParameterKey(key: string, testType: 'soil' | 'petiole' = 'soil'): string {
+  const normalizedKey = normalizeParameterKey(key, testType);
+  const params = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
+  const param = params.find((p) => p.key === normalizedKey);
   return param?.label || key;
+}
+
+/**
+ * Normalize parameter key (handles old keys like pH, OC, N, etc.)
+ */
+function normalizeParameterKey(key: string, testType: 'soil' | 'petiole' = 'soil'): string {
+  const soilKeyMap: Record<string, string> = {
+    pH: 'ph',
+    EC: 'ec',
+    OC: 'organicCarbon',
+    OM: 'organicMatter',
+    N: 'nitrogen',
+    P: 'phosphorus',
+    K: 'potassium',
+    Ca: 'calcium',
+    Mg: 'magnesium',
+    S: 'sulfur',
+    Fe: 'iron',
+    Mn: 'manganese',
+    Zn: 'zinc',
+    Cu: 'copper',
+    B: 'boron',
+  };
+
+  const petioleKeyMap: Record<string, string> = {
+    N: 'total_nitrogen',
+    P: 'phosphorus',
+    K: 'potassium',
+    Ca: 'calcium',
+    Mg: 'magnesium',
+    S: 'sulfur',
+    Fe: 'iron',
+    Mn: 'manganese',
+    Zn: 'zinc',
+    Cu: 'copper',
+    B: 'boron',
+    Mo: 'molybdenum',
+    Na: 'sodium',
+    Cl: 'chloride',
+  };
+
+  const keyMap = testType === 'petiole' ? petioleKeyMap : soilKeyMap;
+
+  const mappedKey = keyMap[key];
+  if (!mappedKey) {
+    console.warn(`[useLabTests] No mapping found for key "${key}" in testType "${testType}"`);
+  }
+  return mappedKey ?? key;
 }
 
 /**
@@ -227,14 +271,9 @@ export const PARAMETER_COLORS = [
   '#F97316', // orange
 ] as const;
 
-// Default selected parameters
-export const SOIL_DEFAULT_PARAMS = ['pH', 'N', 'P', 'K'] as const;
-export const PETIOLE_DEFAULT_PARAMS = [
-  'total_nitrogen',
-  'phosphorus',
-  'potassium',
-  'calcium',
-] as const;
+// Default selected parameters (matching vinesight-web defaults)
+export const SOIL_DEFAULT_PARAMS = ['ph', 'ec'] as const;
+export const PETIOLE_DEFAULT_PARAMS = ['total_nitrogen', 'potassium'] as const;
 
 export function useSoilTestTrends(farmId: number) {
   return useQuery({

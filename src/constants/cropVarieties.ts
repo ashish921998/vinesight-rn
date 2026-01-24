@@ -4,16 +4,9 @@
  * Ported from iOS AddFarmSheet.swift
  */
 
-export const CROPS = [
-  'Grapes',
-  'Mango',
-  'Pomegranate',
-  'Citrus',
-  'Banana',
-  'Other',
-] as const;
+export const CROPS = ['Grapes', 'Mango', 'Pomegranate', 'Citrus', 'Banana', 'Other'] as const;
 
-export type CropType = typeof CROPS[number];
+export type CropType = (typeof CROPS)[number];
 
 export const CROP_VARIETIES: Record<CropType, string[]> = {
   Grapes: [
@@ -66,7 +59,7 @@ export const CROP_VARIETIES: Record<CropType, string[]> = {
     'Nebbiolo',
     'Barbera',
     'Dolcetto',
-    'Nero d\'Avola',
+    "Nero d'Avola",
     'Aglianico',
     'Fiano',
     'Gamay',
@@ -135,24 +128,8 @@ export const CROP_VARIETIES: Record<CropType, string[]> = {
     'Himsagar',
     'Custom',
   ],
-  Pomegranate: [
-    'Bhagawa',
-    'Ganesh',
-    'Arakta',
-    'Mridula',
-    'Ruby',
-    'Kandhari',
-    'Custom',
-  ],
-  Citrus: [
-    'Nagpur Orange',
-    'Kinnow',
-    'Mosambi',
-    'Lemon',
-    'Lime',
-    'Grapefruit',
-    'Custom',
-  ],
+  Pomegranate: ['Bhagawa', 'Ganesh', 'Arakta', 'Mridula', 'Ruby', 'Kandhari', 'Custom'],
+  Citrus: ['Nagpur Orange', 'Kinnow', 'Mosambi', 'Lemon', 'Lime', 'Grapefruit', 'Custom'],
   Banana: [
     'Grand Naine',
     'Robusta',

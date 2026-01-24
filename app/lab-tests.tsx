@@ -146,7 +146,7 @@ export default function LabTestsScreen() {
                       color: color,
                     }}
                   >
-                    {formatParameterKey(key)}
+                    {formatParameterKey(key, type)}
                   </Text>
                   <Text className="text-xs font-medium text-gray-800 mt-1">
                     {typeof value === 'number' ? value.toFixed(2) : value}

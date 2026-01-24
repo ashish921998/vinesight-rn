@@ -160,12 +160,7 @@ export interface UserMetadata {
 export type AuthProvider = 'email' | 'apple' | 'google' | 'otp';
 
 export interface AuthEvent {
-  event:
-    | 'SIGNED_IN'
-    | 'SIGNED_OUT'
-    | 'USER_UPDATED'
-    | 'PASSWORD_RECOVERY'
-    | 'TOKEN_REFRESHED';
+  event: 'SIGNED_IN' | 'SIGNED_OUT' | 'USER_UPDATED' | 'PASSWORD_RECOVERY' | 'TOKEN_REFRESHED';
   session: Session | null;
 }
 

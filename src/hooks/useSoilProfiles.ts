@@ -68,10 +68,7 @@ export function useDeleteSoilProfile() {
 
   return useMutation({
     mutationFn: async ({ id, farmId }: { id: number; farmId: number }) => {
-      const { error } = await supabase
-        .from('soil_profiles')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('soil_profiles').delete().eq('id', id);
 
       if (error) throw error;
       return { id, farmId };
@@ -86,7 +83,7 @@ export function useDeleteSoilProfile() {
 
 // Section names
 export const SECTION_NAMES = ['left', 'center', 'right', 'down'] as const;
-export type SectionName = typeof SECTION_NAMES[number];
+export type SectionName = (typeof SECTION_NAMES)[number];
 
 // Section display info
 export const SECTION_INFO: Record<SectionName, { label: string; abbr: string; color: string }> = {
@@ -108,10 +105,7 @@ export function calculateAverageMoisture(sections: SoilSectionData[]): number {
 /**
  * Get section value by name
  */
-export function getSectionValue(
-  sections: SoilSectionData[],
-  name: SectionName
-): number | null {
+export function getSectionValue(sections: SoilSectionData[], name: SectionName): number | null {
   const section = sections.find((s) => s.name === name);
   return section ? section.moisture_pct_user : null;
 }

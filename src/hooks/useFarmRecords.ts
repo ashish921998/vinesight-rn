@@ -21,18 +21,18 @@ export function useFarmRecords(farmId: number | undefined) {
   const expense = useExpenseRecords(farmId);
   const fertigation = useFertigationRecords(farmId);
 
-  const isLoading = 
-    irrigation.isLoading || 
-    spray.isLoading || 
-    harvest.isLoading || 
-    expense.isLoading || 
+  const isLoading =
+    irrigation.isLoading ||
+    spray.isLoading ||
+    harvest.isLoading ||
+    expense.isLoading ||
     fertigation.isLoading;
 
-  const isError = 
-    irrigation.isError || 
-    spray.isError || 
-    harvest.isError || 
-    expense.isError || 
+  const isError =
+    irrigation.isError ||
+    spray.isError ||
+    harvest.isError ||
+    expense.isError ||
     fertigation.isError;
 
   const refetch = async () => {

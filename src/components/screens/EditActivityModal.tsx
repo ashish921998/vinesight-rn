@@ -20,6 +20,10 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 
+function generateId(): string {
+  return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
 import {
   IrrigationForm,
   SprayForm,
@@ -153,6 +157,7 @@ export function EditActivityModal({
                 if (isNaN(parsedQuantity)) {
                   console.warn('[EditActivityModal] Invalid chemical quantity:', match[2]);
                   return {
+                    id: generateId(),
                     name: part,
                     quantity: 0,
                     unit: 'ml/L' as const,
@@ -161,12 +166,14 @@ export function EditActivityModal({
                 if (!allowedUnits.includes(unit)) {
                   console.warn('[EditActivityModal] Invalid unit, using default:', match[3]);
                   return {
+                    id: generateId(),
                     name: match[1].trim(),
                     quantity: parsedQuantity,
                     unit: 'ml/L' as const,
                   };
                 }
                 return {
+                  id: generateId(),
                   name: match[1].trim(),
                   quantity: parsedQuantity,
                   unit,
@@ -174,6 +181,7 @@ export function EditActivityModal({
               }
               console.warn('[EditActivityModal] Chemical parsing failed, using defaults:', part);
               return {
+                id: generateId(),
                 name: part,
                 quantity: 0,
                 unit: 'ml/L' as const,

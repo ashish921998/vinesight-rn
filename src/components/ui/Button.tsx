@@ -33,28 +33,22 @@ export function Button({
 
   // Base styles
   const baseStyles = 'flex-row items-center justify-center rounded-xl';
-  
+
   // Size styles
   const sizeStyles = {
     sm: 'px-4 py-2',
     md: 'px-6 py-3.5',
     lg: 'px-8 py-4',
   };
-  
+
   // Variant styles
   const variantStyles = {
-    primary: isDisabled
-      ? 'bg-surface-300'
-      : 'bg-primary-500 active:bg-primary-600',
-    secondary: isDisabled
-      ? 'bg-surface-200'
-      : 'bg-surface-100 active:bg-surface-200',
+    primary: isDisabled ? 'bg-surface-300' : 'bg-primary-500 active:bg-primary-600',
+    secondary: isDisabled ? 'bg-surface-200' : 'bg-surface-100 active:bg-surface-200',
     outline: isDisabled
       ? 'border border-surface-300'
       : 'border border-primary-500 active:bg-primary-50',
-    ghost: isDisabled
-      ? ''
-      : 'active:bg-surface-100',
+    ghost: isDisabled ? '' : 'active:bg-surface-100',
   };
 
   // Text styles
@@ -65,7 +59,7 @@ export function Button({
   };
 
   const textVariantStyles = {
-    primary: 'text-white font-semibold',
+    primary: isDisabled ? 'text-surface-500 font-semibold' : 'text-white font-semibold',
     secondary: isDisabled ? 'text-surface-400' : 'text-surface-700 font-semibold',
     outline: isDisabled ? 'text-surface-400' : 'text-primary-500 font-semibold',
     ghost: isDisabled ? 'text-surface-400' : 'text-primary-500 font-medium',

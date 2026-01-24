@@ -7,6 +7,21 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 
+const monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
 interface Props {
   trendData: TrendData[];
   parameterTrends: Record<string, ParameterTrend>;
@@ -37,23 +52,22 @@ export default function TrendsTable({ trendData, parameterTrends, selectedParams
     .map((key) => parameterTrends[key])
     .filter(Boolean) as ParameterTrend[];
 
-  const getValueStyle = (value: number, trend: ParameterTrend) => {
-    if (value === trend.min) return styles.minValue;
-    if (value === trend.max) return styles.maxValue;
-    return null;
-  };
-
   return (
     <ScrollView className="flex-1" nestedScrollEnabled>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.headerRow}>
           <Text style={[styles.headerCell, styles.nutrientCell]}>Nutrient</Text>
-          {trendData.map((item, index) => (
-            <Text key={`header-${item.date}-${index}`} style={styles.headerCell}>
-              {new Date(item.date).toLocaleDateString()}
-            </Text>
-          ))}
+          {trendData.map((item, index) => {
+            const date = new Date(item.date);
+            return (
+              <View key={`header-${item.date}-${index}`} style={styles.headerDateContainer}>
+                <Text style={styles.headerDateMonth}>{monthNames[date.getMonth()]}</Text>
+                <Text style={styles.headerDateDay}>{date.getDate()}</Text>
+                <Text style={styles.headerDateYear}>{date.getFullYear()}</Text>
+              </View>
+            );
+          })}
         </View>
 
         {/* Rows - one per nutrient */}
@@ -64,12 +78,19 @@ export default function TrendsTable({ trendData, parameterTrends, selectedParams
             </Text>
             {trendData.map((item, colIndex) => {
               const value = item.parameters[trend.key];
+              const prevValue = colIndex > 0 ? trendData[colIndex - 1].parameters[trend.key] : null;
+              const changeIndicator =
+                value != null && prevValue != null ? (
+                  value > prevValue ? (
+                    <Text style={styles.increase}> ↑</Text>
+                  ) : value < prevValue ? (
+                    <Text style={styles.decrease}> ↓</Text>
+                  ) : null
+                ) : null;
               return (
-                <Text
-                  key={`${trend.key}-${item.date}-${colIndex}`}
-                  style={[styles.cell, value != null && getValueStyle(value, trend)]}
-                >
+                <Text key={`${trend.key}-${item.date}-${colIndex}`} style={styles.cell}>
                   {value != null ? value.toFixed(2) : '-'}
+                  {changeIndicator}
                 </Text>
               );
             })}
@@ -126,12 +147,33 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     textAlign: 'center',
   },
-  minValue: {
+  increase: {
     color: '#10B981',
-    fontWeight: '700',
+    fontSize: 10,
   },
-  maxValue: {
+  decrease: {
     color: '#EF4444',
+    fontSize: 10,
+  },
+  headerDateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  headerDateMonth: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  headerDateDay: {
+    fontSize: 14,
     fontWeight: '700',
+    color: '#374151',
+  },
+  headerDateYear: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#6B7280',
   },
 });

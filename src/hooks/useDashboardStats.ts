@@ -40,7 +40,9 @@ export interface RecentActivity {
 // ============================================================
 
 async function getUserId(): Promise<string | null> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   return session?.user?.id ?? null;
 }
 
@@ -74,12 +76,9 @@ export function useDashboardStats() {
       const dateStr = sevenDaysAgo.toISOString().split('T')[0];
 
       // Get farm IDs first
-      const { data: farms } = await supabase
-        .from(TABLES.FARMS)
-        .select('id')
-        .eq('user_id', userId);
+      const { data: farms } = await supabase.from(TABLES.FARMS).select('id').eq('user_id', userId);
 
-      const farmIds = farms?.map(f => f.id) ?? [];
+      const farmIds = farms?.map((f) => f.id) ?? [];
 
       let activitiesCount = 0;
       let totalHarvest = 0;
@@ -155,16 +154,13 @@ export function useFarmsNeedingAttention() {
       const userId = await getUserId();
       if (!userId) return [];
 
-      const { data: farms } = await supabase
-        .from(TABLES.FARMS)
-        .select('*')
-        .eq('user_id', userId);
+      const { data: farms } = await supabase.from(TABLES.FARMS).select('*').eq('user_id', userId);
 
       if (!farms) return [];
 
       return farms
-        .filter(farm => isLowWater(farm))
-        .map(farm => ({
+        .filter((farm) => isLowWater(farm))
+        .map((farm) => ({
           farm,
           reason: 'Low water level',
         }));
@@ -192,8 +188,8 @@ export function useRecentActivities(limit: number = 5) {
 
       if (!farms || farms.length === 0) return [];
 
-      const farmIds = farms.map(f => f.id);
-      const farmMap = new Map(farms.map(f => [f.id, f.name]));
+      const farmIds = farms.map((f) => f.id);
+      const farmMap = new Map(farms.map((f) => [f.id, f.name]));
 
       // Fetch recent records from each table
       const [irrigation, spray, harvest, expense, fertigation] = await Promise.all([
@@ -232,7 +228,7 @@ export function useRecentActivities(limit: number = 5) {
       const activities: RecentActivity[] = [];
 
       // Map irrigation
-      irrigation.data?.forEach(r => {
+      irrigation.data?.forEach((r) => {
         activities.push({
           id: `irrigation_${r.id}`,
           type: 'irrigation',
@@ -244,7 +240,7 @@ export function useRecentActivities(limit: number = 5) {
       });
 
       // Map spray
-      spray.data?.forEach(r => {
+      spray.data?.forEach((r) => {
         activities.push({
           id: `spray_${r.id}`,
           type: 'spray',
@@ -256,7 +252,7 @@ export function useRecentActivities(limit: number = 5) {
       });
 
       // Map harvest
-      harvest.data?.forEach(r => {
+      harvest.data?.forEach((r) => {
         activities.push({
           id: `harvest_${r.id}`,
           type: 'harvest',
@@ -268,7 +264,7 @@ export function useRecentActivities(limit: number = 5) {
       });
 
       // Map expense
-      expense.data?.forEach(r => {
+      expense.data?.forEach((r) => {
         const formattedCost = new Intl.NumberFormat('en-IN', {
           style: 'currency',
           currency: 'INR',
@@ -285,7 +281,7 @@ export function useRecentActivities(limit: number = 5) {
       });
 
       // Map fertigation
-      fertigation.data?.forEach(r => {
+      fertigation.data?.forEach((r) => {
         activities.push({
           id: `fertigation_${r.id}`,
           type: 'fertigation',

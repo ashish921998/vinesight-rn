@@ -120,10 +120,7 @@ export function useDeleteIrrigationRecord() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.IRRIGATION_RECORDS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -231,10 +228,7 @@ export function useDeleteSprayRecord() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.SPRAY_RECORDS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -342,10 +336,7 @@ export function useDeleteFertigationRecord() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.FERTIGATION_RECORDS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -453,10 +444,7 @@ export function useDeleteHarvestRecord() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.HARVEST_RECORDS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -564,10 +552,7 @@ export function useDeleteExpenseRecord() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.EXPENSE_RECORDS).delete().eq('id', id);
 
       if (error) throw error;
     },

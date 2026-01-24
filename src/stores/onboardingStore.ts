@@ -72,6 +72,6 @@ export const useOnboardingStore = create<OnboardingStore>()(
     {
       name: 'vinesight-onboarding',
       storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+    },
+  ),
 );

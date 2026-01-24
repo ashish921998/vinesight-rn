@@ -43,7 +43,9 @@ export interface TaskReminder {
 export type TaskReminderInsert = Omit<TaskReminder, 'id' | 'created_at' | 'updated_at'>;
 
 // Update type
-export type TaskReminderUpdate = Partial<Omit<TaskReminder, 'id' | 'farm_id' | 'created_at' | 'updated_at' | 'created_by'>>;
+export type TaskReminderUpdate = Partial<
+  Omit<TaskReminder, 'id' | 'farm_id' | 'created_at' | 'updated_at' | 'created_by'>
+>;
 
 // Task template for quick creation
 export interface TaskTemplate {
@@ -72,7 +74,10 @@ export const TASK_TYPE_INFO: Record<TaskType, { label: string; icon: string; col
 };
 
 // Priority display info
-export const PRIORITY_INFO: Record<TaskPriority, { label: string; color: string; bgColor: string }> = {
+export const PRIORITY_INFO: Record<
+  TaskPriority,
+  { label: string; color: string; bgColor: string }
+> = {
   low: { label: 'Low', color: '#166534', bgColor: '#DCFCE7' },
   medium: { label: 'Medium', color: '#92400E', bgColor: '#FEF3C7' },
   high: { label: 'High', color: '#991B1B', bgColor: '#FEE2E2' },

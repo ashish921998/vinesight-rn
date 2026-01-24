@@ -28,7 +28,7 @@ async function readImageAsBase64(uri: string): Promise<string> {
     const base64 = await FileSystem.readAsStringAsync(uri, {
       encoding: 'base64',
     });
-    
+
     // Determine MIME type based on URI
     let mimeType = 'image/jpeg';
     if (uri.endsWith('.png')) {
@@ -38,7 +38,7 @@ async function readImageAsBase64(uri: string): Promise<string> {
     } else if (uri.endsWith('.gif')) {
       mimeType = 'image/gif';
     }
-    
+
     return `data:${mimeType};base64,${base64}`;
   } catch (error) {
     console.error('Error reading image:', error);
@@ -51,7 +51,7 @@ async function readImageAsBase64(uri: string): Promise<string> {
  */
 export async function parseLabTestFromImage(
   imageUri: string,
-  testType: 'soil' | 'petiole'
+  testType: 'soil' | 'petiole',
 ): Promise<ParsedLabTest> {
   const parameters = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
   const paramKeys = parameters.map((p) => `${p.key} (${p.label})`).join(', ');
@@ -111,7 +111,7 @@ Pay attention to units and convert if necessary to match the expected units.`,
     }
 
     const parsed = JSON.parse(content);
-    
+
     // Validate and clean parameters
     const cleanParameters: Record<string, number> = {};
     for (const [key, value] of Object.entries(parsed.parameters || {})) {
@@ -138,7 +138,7 @@ Pay attention to units and convert if necessary to match the expected units.`,
  */
 export async function parseLabTestFromText(
   text: string,
-  testType: 'soil' | 'petiole'
+  testType: 'soil' | 'petiole',
 ): Promise<ParsedLabTest> {
   const parameters = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
   const paramKeys = parameters.map((p) => `${p.key} (${p.label})`).join(', ');
@@ -185,7 +185,7 @@ Pay attention to units and convert if necessary to match the expected units.`,
     }
 
     const parsed = JSON.parse(content);
-    
+
     // Validate and clean parameters
     const cleanParameters: Record<string, number> = {};
     for (const [key, value] of Object.entries(parsed.parameters || {})) {

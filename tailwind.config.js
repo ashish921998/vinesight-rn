@@ -1,9 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './app/**/*.{js,jsx,ts,tsx}',
-    './src/**/*.{js,jsx,ts,tsx}',
-  ],
+  content: ['./app/**/*.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
@@ -81,11 +78,10 @@ module.exports = {
         '4xl': '2rem',
       },
       boxShadow: {
-        'glass': '0 8px 32px rgba(0, 0, 0, 0.08)',
+        glass: '0 8px 32px rgba(0, 0, 0, 0.08)',
         'glass-lg': '0 16px 48px rgba(0, 0, 0, 0.12)',
       },
     },
   },
   plugins: [],
 };
-

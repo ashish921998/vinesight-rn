@@ -87,7 +87,11 @@ export default function LoginScreen() {
               className="w-28 h-28 rounded-3xl items-center justify-center mb-4"
               style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
             >
-              <Image source={playstoreLogo as ImageSourcePropType} className="w-20 h-20" />
+              <Image
+                source={playstoreLogo as ImageSourcePropType}
+                style={{ width: 80, height: 80 }}
+                resizeMode="contain"
+              />
             </View>
             <Text className="text-3xl font-bold" style={{ color: '#000000' }}>
               Vinesight

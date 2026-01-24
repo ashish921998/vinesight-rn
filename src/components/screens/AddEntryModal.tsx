@@ -1049,7 +1049,7 @@ export function AddEntryModal({
             <View className="flex-row items-center">
               <View className="w-10" />
               <View className="flex-1 items-center">
-                <Text className="text-lg font-semibold text-surface-900">
+                <Text className="text-lg font-semibold text-surface-900" numberOfLines={1}>
                   {activeTab === 'log' ? 'Add Log' : isEditingTask ? 'Edit Task' : 'Add Task'}
                 </Text>
                 <Text className="text-xs text-surface-500" numberOfLines={1}>
@@ -1251,7 +1251,7 @@ export function AddEntryModal({
                         className="ml-2 font-semibold"
                         style={{ color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' }}
                       >
-                        Save {pendingLogs.length > 0 ? `(${pendingLogs.length})` : ''}
+                        Save {pendingLogs.length > 0 ? `Logs (${pendingLogs.length})` : ''}
                       </Text>
                     </>
                   )}

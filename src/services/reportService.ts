@@ -6,13 +6,7 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
-import {
-  ReportData,
-  ReportSummary,
-  ReportPreview,
-  DateRange,
-  ReportType,
-} from '../types/report';
+import { ReportData, ReportSummary, ReportPreview, DateRange, ReportType } from '../types/report';
 import {
   Farm,
   IrrigationRecord,
@@ -26,10 +20,7 @@ export class ReportService {
   /**
    * Filter records by date range
    */
-  static filterByDateRange<T extends { date: string }>(
-    records: T[],
-    dateRange: DateRange
-  ): T[] {
+  static filterByDateRange<T extends { date: string }>(records: T[], dateRange: DateRange): T[] {
     const fromDate = new Date(dateRange.from);
     const toDate = new Date(dateRange.to);
     toDate.setHours(23, 59, 59, 999); // Include entire end day
@@ -50,7 +41,7 @@ export class ReportService {
     fertigations: FertigationRecord[],
     harvests: HarvestRecord[],
     expenses: ExpenseRecord[],
-    dateRange: DateRange
+    dateRange: DateRange,
   ): ReportData {
     return {
       farmName: farm.name,
@@ -107,13 +98,10 @@ export class ReportService {
     const totalIrrigationHours = data.irrigation.reduce((sum, r) => sum + r.duration, 0);
     const totalWaterUsage = data.irrigation.reduce(
       (sum, r) => sum + r.duration * r.systemDischarge,
-      0
+      0,
     );
     const totalHarvest = data.harvest.reduce((sum, r) => sum + r.quantity, 0);
-    const totalRevenue = data.harvest.reduce(
-      (sum, r) => sum + r.quantity * (r.price || 0),
-      0
-    );
+    const totalRevenue = data.harvest.reduce((sum, r) => sum + r.quantity * (r.price || 0), 0);
     const totalExpenses = data.expense.reduce((sum, r) => sum + r.cost, 0);
 
     return {
@@ -148,7 +136,7 @@ export class ReportService {
     fertigations: FertigationRecord[],
     harvests: HarvestRecord[],
     expenses: ExpenseRecord[],
-    dateRange: DateRange
+    dateRange: DateRange,
   ): ReportPreview {
     const data = this.generateReportData(
       farm,
@@ -157,7 +145,7 @@ export class ReportService {
       fertigations,
       harvests,
       expenses,
-      dateRange
+      dateRange,
     );
     const summary = this.calculateSummary(data);
     return { data, summary };
@@ -181,10 +169,12 @@ export class ReportService {
       // Irrigation
       if (data.irrigation.length > 0) {
         rows.push('IRRIGATION RECORDS');
-        rows.push('Date,Duration (hrs),Area,Growth Stage,Moisture Status,System Discharge (L/h),Notes');
+        rows.push(
+          'Date,Duration (hrs),Area,Growth Stage,Moisture Status,System Discharge (L/h),Notes',
+        );
         data.irrigation.forEach((r) => {
           rows.push(
-            `${r.date},${r.duration},${r.area},${r.growthStage},${r.moistureStatus},${r.systemDischarge},"${r.notes || ''}"`
+            `${r.date},${r.duration},${r.area},${r.growthStage},${r.moistureStatus},${r.systemDischarge},"${r.notes || ''}"`,
           );
         });
         rows.push('');
@@ -196,7 +186,7 @@ export class ReportService {
         rows.push('Date,Chemical,Dose,Area,Weather,Operator,Notes');
         data.spray.forEach((r) => {
           rows.push(
-            `${r.date},"${r.chemical}","${r.dose}",${r.area},"${r.weather}","${r.operator}","${r.notes || ''}"`
+            `${r.date},"${r.chemical}","${r.dose}",${r.area},"${r.weather}","${r.operator}","${r.notes || ''}"`,
           );
         });
         rows.push('');
@@ -218,7 +208,7 @@ export class ReportService {
         rows.push('Date,Quantity (kg),Grade,Price,Buyer,Notes');
         data.harvest.forEach((r) => {
           rows.push(
-            `${r.date},${r.quantity},"${r.grade}",${r.price || ''},"${r.buyer || ''}","${r.notes || ''}"`
+            `${r.date},${r.quantity},"${r.grade}",${r.price || ''},"${r.buyer || ''}","${r.notes || ''}"`,
           );
         });
         rows.push('');
@@ -312,7 +302,7 @@ export class ReportService {
               .slice(0, 20)
               .map(
                 (r) =>
-                  `<tr><td>${r.date}</td><td>${r.duration}h</td><td>${r.area}</td><td>${r.growthStage}</td><td>${r.systemDischarge} L/h</td></tr>`
+                  `<tr><td>${r.date}</td><td>${r.duration}h</td><td>${r.area}</td><td>${r.growthStage}</td><td>${r.systemDischarge} L/h</td></tr>`,
               )
               .join('')}
           </table>
@@ -329,7 +319,7 @@ export class ReportService {
               .slice(0, 20)
               .map(
                 (r) =>
-                  `<tr><td>${r.date}</td><td>${r.chemical}</td><td>${r.dose}</td><td>${r.area}</td><td>${r.weather}</td></tr>`
+                  `<tr><td>${r.date}</td><td>${r.chemical}</td><td>${r.dose}</td><td>${r.area}</td><td>${r.weather}</td></tr>`,
               )
               .join('')}
           </table>
@@ -345,7 +335,7 @@ export class ReportService {
               .slice(0, 20)
               .map(
                 (r) =>
-                  `<tr><td>${r.date}</td><td>${r.quantity} kg</td><td>${r.grade}</td><td>${r.price ? '₹' + r.price : '-'}</td><td>${r.buyer || '-'}</td></tr>`
+                  `<tr><td>${r.date}</td><td>${r.quantity} kg</td><td>${r.grade}</td><td>${r.price ? '₹' + r.price : '-'}</td><td>${r.buyer || '-'}</td></tr>`,
               )
               .join('')}
           </table>
@@ -363,7 +353,7 @@ export class ReportService {
               .slice(0, 20)
               .map(
                 (r) =>
-                  `<tr><td>${r.date}</td><td>${r.type}</td><td>₹${r.cost}</td><td>${r.remarks || '-'}</td></tr>`
+                  `<tr><td>${r.date}</td><td>${r.type}</td><td>₹${r.cost}</td><td>${r.remarks || '-'}</td></tr>`,
               )
               .join('')}
           </table>
@@ -388,7 +378,7 @@ export class ReportService {
   static async exportCSV(data: ReportData, reportType: ReportType): Promise<void> {
     const csv = this.generateCSV(data, reportType);
     const filename = `${data.farmName.replace(/\s+/g, '_')}_report_${new Date().toISOString().split('T')[0]}.csv`;
-    
+
     // Create file in cache directory using new API
     const file = new File(Paths.cache, filename);
     await file.write(csv);
@@ -408,7 +398,7 @@ export class ReportService {
   static async exportPDF(
     data: ReportData,
     summary: ReportSummary,
-    reportType: ReportType
+    reportType: ReportType,
   ): Promise<void> {
     const html = this.generatePDFHtml(data, summary, reportType);
 

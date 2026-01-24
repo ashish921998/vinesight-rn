@@ -5,7 +5,14 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { WeatherService } from '../services/weatherService';
-import { WeatherData, ETc, WeatherAlerts, IrrigationSchedule, GrapeGrowthStage, SoilType } from '../types/weather';
+import {
+  WeatherData,
+  ETc,
+  WeatherAlerts,
+  IrrigationSchedule,
+  GrapeGrowthStage,
+  SoilType,
+} from '../types/weather';
 
 // Query keys for weather data
 export const weatherQueryKeys = {
@@ -30,7 +37,10 @@ export function useWeather(latitude?: number, longitude?: number) {
 /**
  * Hook to calculate ETc based on weather data and growth stage
  */
-export function useETc(weather: WeatherData | undefined, growthStage: GrapeGrowthStage): ETc | null {
+export function useETc(
+  weather: WeatherData | undefined,
+  growthStage: GrapeGrowthStage,
+): ETc | null {
   if (!weather) return null;
   return WeatherService.calculateETc(weather, growthStage);
 }
@@ -40,7 +50,7 @@ export function useETc(weather: WeatherData | undefined, growthStage: GrapeGrowt
  */
 export function useWeatherAlerts(
   weather: WeatherData | undefined,
-  etc: ETc | null
+  etc: ETc | null,
 ): WeatherAlerts | null {
   if (!weather || !etc) return null;
   return WeatherService.generateWeatherAlerts(weather, etc);
@@ -52,7 +62,7 @@ export function useWeatherAlerts(
 export function useIrrigationSchedule(
   weather: WeatherData | undefined,
   etc: ETc | null,
-  soilType: SoilType = 'medium'
+  soilType: SoilType = 'medium',
 ): IrrigationSchedule | null {
   if (!weather || !etc) return null;
   return WeatherService.generateIrrigationSchedule(weather, etc, soilType);
@@ -65,7 +75,7 @@ export function useWeatherData(
   latitude?: number,
   longitude?: number,
   growthStage: GrapeGrowthStage = 'Fruit set',
-  soilType: SoilType = 'medium'
+  soilType: SoilType = 'medium',
 ) {
   const weatherQuery = useWeather(latitude, longitude);
   const weather = weatherQuery.data;

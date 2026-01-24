@@ -34,8 +34,8 @@ export default function TabLayout() {
       setHasRedirected(true);
       router.replace('/(auth)/login');
     }
-    if (isAuthenticated && hasRedirected) {
-      // Reset redirect flag when authenticated
+    // Reset redirect flag when authenticated (regardless of previous hasRedirected state)
+    if (isAuthenticated) {
       setHasRedirected(false);
     }
   }, [isAuthenticated, isLoading, router, hasRedirected]);

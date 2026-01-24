@@ -29,7 +29,10 @@ import {
 // ============================================================
 
 async function getUserId(): Promise<string> {
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
   if (error || !session) {
     throw new Error('Please sign in to continue');
   }
@@ -62,11 +65,7 @@ export function useWorker(id: number | undefined) {
   return useQuery({
     queryKey: queryKeys.workers.detail(id!),
     queryFn: async (): Promise<Worker> => {
-      const { data, error } = await supabase
-        .from(TABLES.WORKERS)
-        .select('*')
-        .eq('id', id)
-        .single();
+      const { data, error } = await supabase.from(TABLES.WORKERS).select('*').eq('id', id).single();
 
       if (error) throw error;
       return data;
@@ -101,13 +100,7 @@ export function useUpdateWorker() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: WorkerUpdate;
-    }): Promise<Worker> => {
+    mutationFn: async ({ id, updates }: { id: number; updates: WorkerUpdate }): Promise<Worker> => {
       const { data, error } = await supabase
         .from(TABLES.WORKERS)
         .update(updates)
@@ -121,10 +114,7 @@ export function useUpdateWorker() {
     onSuccess: (updatedWorker) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.workers.all });
       if (updatedWorker.id) {
-        queryClient.setQueryData(
-          queryKeys.workers.detail(updatedWorker.id),
-          updatedWorker
-        );
+        queryClient.setQueryData(queryKeys.workers.detail(updatedWorker.id), updatedWorker);
       }
     },
   });
@@ -135,10 +125,7 @@ export function useDeleteWorker() {
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.WORKERS)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.WORKERS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -250,11 +237,14 @@ export function useDeleteWorkerAttendance() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workerId: _workerId }: { id: number; workerId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.WORKER_ATTENDANCE)
-        .delete()
-        .eq('id', id);
+    mutationFn: async ({
+      id,
+      workerId: _workerId,
+    }: {
+      id: number;
+      workerId: number;
+    }): Promise<void> => {
+      const { error } = await supabase.from(TABLES.WORKER_ATTENDANCE).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -318,11 +308,14 @@ export function useDeleteWorkerTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workerId: _workerId }: { id: number; workerId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.WORKER_TRANSACTIONS)
-        .delete()
-        .eq('id', id);
+    mutationFn: async ({
+      id,
+      workerId: _workerId,
+    }: {
+      id: number;
+      workerId: number;
+    }): Promise<void> => {
+      const { error } = await supabase.from(TABLES.WORKER_TRANSACTIONS).delete().eq('id', id);
 
       if (error) throw error;
     },
@@ -504,10 +497,7 @@ export function useDeleteTemporaryWorkerEntry() {
 
   return useMutation({
     mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase
-        .from(TABLES.TEMPORARY_WORKER_ENTRIES)
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from(TABLES.TEMPORARY_WORKER_ENTRIES).delete().eq('id', id);
 
       if (error) throw error;
     },

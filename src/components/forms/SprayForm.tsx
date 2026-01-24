@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { NumericInput } from './FormField';
+import { NumericInput, type NumericInputHandle } from './FormField';
 import { UnitPickerModal } from '../ui/UnitPickerModal';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculatorModels';
 
 export interface ChemicalEntry {
+  id: string;
   name: string;
   quantity: number;
   unit: ChemicalUnit;
+}
+
+function generateId(): string {
+  return `chem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
 export interface SprayFormData {
@@ -28,24 +33,77 @@ export function SprayForm({ data, onChange }: SprayFormProps) {
     data.chemicals.length > 0 &&
     data.chemicals.every((c) => c.name.trim() && c.quantity > 0);
 
+  const chemicalRefsMapRef = useRef<
+    Map<
+      string,
+      { name: React.RefObject<TextInput | null>; quantity: React.RefObject<TextInput | null> }
+    >
+  >(new Map());
+
+  const chemicalRefs = useMemo(() => {
+    /* eslint-disable react-hooks/refs */
+    const map = chemicalRefsMapRef.current;
+    const result: {
+      name: React.RefObject<TextInput | null>;
+      quantity: React.RefObject<TextInput | null>;
+    }[] = [];
+
+    for (const chemical of data.chemicals) {
+      let refs = map.get(chemical.id);
+      if (!refs) {
+        refs = {
+          name: React.createRef<TextInput | null>(),
+          quantity: React.createRef<TextInput | null>(),
+        };
+        map.set(chemical.id, refs);
+      }
+      result.push(refs);
+    }
+
+    const existingIds = new Set(data.chemicals.map((c) => c.id));
+    for (const [id] of map.entries()) {
+      if (!existingIds.has(id)) {
+        map.delete(id);
+      }
+    }
+
+    return result;
+  }, [data.chemicals]);
+
+  const waterVolumeRef = useRef<NumericInputHandle>(null);
+
   const addChemical = () => {
     if (data.chemicals.length < 10) {
       onChange({
         ...data,
-        chemicals: [...data.chemicals, { name: '', quantity: 0, unit: 'gm/L' }],
+        chemicals: [...data.chemicals, { id: generateId(), name: '', quantity: 0, unit: 'gm/L' }],
       });
     }
   };
 
-  const updateChemical = (index: number, updates: Partial<ChemicalEntry>) => {
-    const newChemicals = [...data.chemicals];
-    newChemicals[index] = { ...newChemicals[index], ...updates };
+  const updateChemical = (id: string, updates: Partial<ChemicalEntry>) => {
+    const newChemicals = data.chemicals.map((c) => (c.id === id ? { ...c, ...updates } : c));
     onChange({ ...data, chemicals: newChemicals });
   };
 
-  const removeChemical = (index: number) => {
-    const newChemicals = data.chemicals.filter((_, i) => i !== index);
+  const removeChemical = (id: string) => {
+    const newChemicals = data.chemicals.filter((c) => c.id !== id);
     onChange({ ...data, chemicals: newChemicals });
+  };
+
+  const focusFirstChemicalName = () => {
+    const ref = chemicalRefs[0]?.name.current;
+    if (ref) {
+      ref.focus();
+    }
+  };
+
+  const focusNextChemicalName = (index: number) => {
+    const nextIndex = index + 1;
+    const ref = chemicalRefs[nextIndex]?.name.current;
+    if (ref) {
+      ref.focus();
+    }
   };
 
   return (
@@ -73,6 +131,10 @@ export function SprayForm({ data, onChange }: SprayFormProps) {
         required
         decimals={2}
         hint="Total water used for the spray mix"
+        ref={waterVolumeRef}
+        onSubmitEditing={focusFirstChemicalName}
+        blurOnSubmit={false}
+        returnKeyType="next"
       />
 
       {/* Chemicals Section */}
@@ -87,11 +149,16 @@ export function SprayForm({ data, onChange }: SprayFormProps) {
         {/* Chemicals List */}
         {data.chemicals.map((chemical, index) => (
           <ChemicalRow
-            key={`${chemical.name}-${chemical.quantity}-${chemical.unit}`}
+            key={chemical.id}
             chemical={chemical}
-            onUpdate={(updates) => updateChemical(index, updates)}
-            onRemove={() => removeChemical(index)}
+            index={index}
+            chemicalCount={data.chemicals.length}
+            onUpdate={(updates) => updateChemical(chemical.id, updates)}
+            onRemove={() => removeChemical(chemical.id)}
             showRemove={data.chemicals.length > 1}
+            nameRef={chemicalRefs[index].name}
+            quantityRef={chemicalRefs[index].quantity}
+            onNextChemical={focusNextChemicalName}
           />
         ))}
 
@@ -126,12 +193,27 @@ export function SprayForm({ data, onChange }: SprayFormProps) {
 // Chemical Row Component
 interface ChemicalRowProps {
   chemical: ChemicalEntry;
+  index: number;
+  chemicalCount: number;
   onUpdate: (updates: Partial<ChemicalEntry>) => void;
   onRemove: () => void;
   showRemove: boolean;
+  nameRef: React.RefObject<TextInput | null>;
+  quantityRef: React.RefObject<TextInput | null>;
+  onNextChemical: (index: number) => void;
 }
 
-function ChemicalRow({ chemical, onUpdate, onRemove, showRemove }: ChemicalRowProps) {
+function ChemicalRow({
+  chemical,
+  index,
+  chemicalCount,
+  onUpdate,
+  onRemove,
+  showRemove,
+  nameRef,
+  quantityRef,
+  onNextChemical,
+}: ChemicalRowProps) {
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [quantityText, setQuantityText] = useState(
     chemical.quantity > 0 ? chemical.quantity.toString() : '',
@@ -153,6 +235,18 @@ function ChemicalRow({ chemical, onUpdate, onRemove, showRemove }: ChemicalRowPr
 
   const isRowComplete = chemical.name.trim() && chemical.quantity > 0;
 
+  const handleNameSubmit = () => {
+    if (quantityRef.current) {
+      quantityRef.current.focus();
+    }
+  };
+
+  const handleQuantitySubmit = () => {
+    if (index < chemicalCount - 1) {
+      onNextChemical(index);
+    }
+  };
+
   return (
     <View
       className={`rounded-xl p-3 mb-3 border ${
@@ -162,6 +256,7 @@ function ChemicalRow({ chemical, onUpdate, onRemove, showRemove }: ChemicalRowPr
       {/* Chemical Name Row */}
       <View className="flex-row items-center">
         <TextInput
+          ref={nameRef}
           className={`flex-1 rounded-lg px-3 py-2.5 text-base text-surface-900 bg-white border ${
             isNameFocused ? 'border-purple-400' : 'border-surface-200'
           }`}
@@ -171,6 +266,9 @@ function ChemicalRow({ chemical, onUpdate, onRemove, showRemove }: ChemicalRowPr
           onChangeText={(name) => onUpdate({ name })}
           onFocus={() => setIsNameFocused(true)}
           onBlur={() => setIsNameFocused(false)}
+          onSubmitEditing={handleNameSubmit}
+          returnKeyType="next"
+          blurOnSubmit={false}
         />
         {showRemove && (
           <TouchableOpacity
@@ -187,6 +285,7 @@ function ChemicalRow({ chemical, onUpdate, onRemove, showRemove }: ChemicalRowPr
       {/* Quantity and Unit Row */}
       <View className="flex-row items-center mt-2">
         <TextInput
+          ref={quantityRef}
           className={`rounded-lg px-3 py-2.5 text-base text-surface-900 text-center bg-white border ${
             isQuantityFocused ? 'border-purple-400' : 'border-surface-200'
           }`}
@@ -197,6 +296,9 @@ function ChemicalRow({ chemical, onUpdate, onRemove, showRemove }: ChemicalRowPr
           onChangeText={handleQuantityChange}
           onFocus={() => setIsQuantityFocused(true)}
           onBlur={() => setIsQuantityFocused(false)}
+          onSubmitEditing={handleQuantitySubmit}
+          returnKeyType={index < chemicalCount - 1 ? 'next' : 'done'}
+          blurOnSubmit={index >= chemicalCount - 1}
           style={{ flex: 1 }}
         />
 
@@ -237,6 +339,6 @@ export function validateSprayForm(data: SprayFormData): boolean {
 export function createEmptySprayFormData(): SprayFormData {
   return {
     waterVolume: 0,
-    chemicals: [{ name: '', quantity: 0, unit: 'gm/L' }],
+    chemicals: [{ id: generateId(), name: '', quantity: 0, unit: 'gm/L' }],
   };
 }

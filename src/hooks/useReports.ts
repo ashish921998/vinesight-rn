@@ -13,12 +13,7 @@ import {
   useExpenseRecords,
 } from './useRecords';
 import { ReportService } from '../services/reportService';
-import {
-  DateRange,
-  ReportPreview,
-  ReportType,
-  ReportFormat,
-} from '../types/report';
+import { DateRange, ReportPreview, ReportType, ReportFormat } from '../types/report';
 
 /**
  * Hook to get report data for a specific farm
@@ -47,7 +42,7 @@ export function useReportData(farmId: number | null, dateRange: DateRange | null
       fertigations,
       harvests,
       expenses,
-      dateRange
+      dateRange,
     );
   }, [farm, dateRange, irrigations, sprays, fertigations, harvests, expenses]);
 
@@ -78,11 +73,7 @@ export function useReportExport() {
   const [exportError, setExportError] = useState<string | null>(null);
 
   const exportReport = useCallback(
-    async (
-      preview: ReportPreview,
-      format: ReportFormat,
-      reportType: ReportType
-    ) => {
+    async (preview: ReportPreview, format: ReportFormat, reportType: ReportType) => {
       setIsExporting(true);
       setExportError(null);
 
@@ -100,7 +91,7 @@ export function useReportExport() {
         setIsExporting(false);
       }
     },
-    []
+    [],
   );
 
   return {

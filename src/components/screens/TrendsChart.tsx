@@ -10,6 +10,20 @@ import { TrendData, ParameterTrend } from '../../types/analytics';
 import { PARAMETER_COLORS } from '../../hooks/useLabTests';
 
 const screenWidth = Dimensions.get('window').width;
+const monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 interface Props {
   trendData: TrendData[];
@@ -29,7 +43,7 @@ export default function TrendsChart({
   const labels = useMemo(() => {
     return trendData.map((t) => {
       const date = new Date(t.date);
-      return `${date.getMonth() + 1}/${date.getDate()}`;
+      return `${date.getDate()} ${monthNames[date.getMonth()]}`;
     });
   }, [trendData]);
 
@@ -103,8 +117,8 @@ export default function TrendsChart({
   }
 
   return (
-    <ScrollView className="flex-1">
-      <View className="p-4">
+    <ScrollView className="flex-1 pt-4">
+      <View className="px-4 pb-4">
         <LineChart
           data={{
             labels,
@@ -127,7 +141,8 @@ export default function TrendsChart({
         {selectedPoint && (
           <View className="bg-blue-50 p-4 rounded-xl mb-4">
             <Text className="text-sm font-semibold text-blue-900 mb-2">
-              {new Date(selectedPoint.date).toLocaleDateString()}
+              {new Date(selectedPoint.date).getDate()}{' '}
+              {monthNames[new Date(selectedPoint.date).getMonth()]}
             </Text>
             {params.map((param) => {
               const value = trendData[selectedPoint.index].parameters[param.key];

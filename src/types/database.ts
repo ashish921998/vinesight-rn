@@ -75,7 +75,9 @@ export interface IrrigationRecord {
 }
 
 export type IrrigationRecordInsert = Omit<IrrigationRecord, 'id' | 'created_at'>;
-export type IrrigationRecordUpdate = Partial<Omit<IrrigationRecord, 'id' | 'farm_id' | 'created_at'>>;
+export type IrrigationRecordUpdate = Partial<
+  Omit<IrrigationRecord, 'id' | 'farm_id' | 'created_at'>
+>;
 
 // ============================================================
 // MARK: - Spray Record
@@ -120,7 +122,9 @@ export interface FertigationRecord {
 }
 
 export type FertigationRecordInsert = Omit<FertigationRecord, 'id' | 'created_at'>;
-export type FertigationRecordUpdate = Partial<Omit<FertigationRecord, 'id' | 'farm_id' | 'created_at'>>;
+export type FertigationRecordUpdate = Partial<
+  Omit<FertigationRecord, 'id' | 'farm_id' | 'created_at'>
+>;
 
 // ============================================================
 // MARK: - Harvest Record
@@ -202,7 +206,9 @@ export interface PetioleTestRecord {
 }
 
 export type PetioleTestRecordInsert = Omit<PetioleTestRecord, 'id' | 'created_at'>;
-export type PetioleTestRecordUpdate = Partial<Omit<PetioleTestRecord, 'id' | 'farm_id' | 'created_at'>>;
+export type PetioleTestRecordUpdate = Partial<
+  Omit<PetioleTestRecord, 'id' | 'farm_id' | 'created_at'>
+>;
 
 // ============================================================
 // MARK: - Soil Profile
@@ -294,8 +300,13 @@ export interface WarehouseItem {
   updated_at?: string | null;
 }
 
-export type WarehouseItemInsert = Omit<WarehouseItem, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
-export type WarehouseItemUpdate = Partial<Omit<WarehouseItem, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
+export type WarehouseItemInsert = Omit<
+  WarehouseItem,
+  'id' | 'user_id' | 'created_at' | 'updated_at'
+>;
+export type WarehouseItemUpdate = Partial<
+  Omit<WarehouseItem, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+>;
 
 // ============================================================
 // MARK: - Worker
@@ -319,7 +330,7 @@ export type WorkerUpdate = Partial<Omit<Worker, 'id' | 'user_id' | 'created_at' 
 export function calculateWorkerEarnings(
   worker: Worker,
   status: WorkStatus,
-  rateOverride?: number
+  rateOverride?: number,
 ): number {
   const rate = rateOverride ?? worker.daily_rate;
   switch (status) {
@@ -354,7 +365,9 @@ export interface WorkerAttendance {
 }
 
 export type WorkerAttendanceInsert = Omit<WorkerAttendance, 'id' | 'created_at' | 'updated_at'>;
-export type WorkerAttendanceUpdate = Partial<Omit<WorkerAttendance, 'id' | 'worker_id' | 'created_at' | 'updated_at'>>;
+export type WorkerAttendanceUpdate = Partial<
+  Omit<WorkerAttendance, 'id' | 'worker_id' | 'created_at' | 'updated_at'>
+>;
 
 /** Get status multiplier for attendance calculations */
 export function getStatusMultiplier(status: WorkStatus): number {
@@ -419,7 +432,9 @@ export interface WorkerSettlement {
 }
 
 export type WorkerSettlementInsert = Omit<WorkerSettlement, 'id' | 'created_at' | 'updated_at'>;
-export type WorkerSettlementUpdate = Partial<Omit<WorkerSettlement, 'id' | 'worker_id' | 'created_at' | 'updated_at'>>;
+export type WorkerSettlementUpdate = Partial<
+  Omit<WorkerSettlement, 'id' | 'worker_id' | 'created_at' | 'updated_at'>
+>;
 
 // ============================================================
 // MARK: - Work Type
@@ -452,7 +467,10 @@ export interface TemporaryWorkerEntry {
   updated_at?: string | null;
 }
 
-export type TemporaryWorkerEntryInsert = Omit<TemporaryWorkerEntry, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
+export type TemporaryWorkerEntryInsert = Omit<
+  TemporaryWorkerEntry,
+  'id' | 'user_id' | 'created_at' | 'updated_at'
+>;
 
 // ============================================================
 // MARK: - Error Types (matching Swift SupabaseDataError)

@@ -8,8 +8,7 @@ export const queryKeys = {
   farms: {
     all: ['farms'] as const,
     lists: () => [...queryKeys.farms.all, 'list'] as const,
-    list: (filters?: Record<string, unknown>) =>
-      [...queryKeys.farms.lists(), filters] as const,
+    list: (filters?: Record<string, unknown>) => [...queryKeys.farms.lists(), filters] as const,
     details: () => [...queryKeys.farms.all, 'detail'] as const,
     detail: (id: number) => [...queryKeys.farms.details(), id] as const,
   },
@@ -18,90 +17,71 @@ export const queryKeys = {
   irrigationRecords: {
     all: ['irrigationRecords'] as const,
     lists: () => [...queryKeys.irrigationRecords.all, 'list'] as const,
-    listByFarm: (farmId: number) =>
-      [...queryKeys.irrigationRecords.lists(), { farmId }] as const,
+    listByFarm: (farmId: number) => [...queryKeys.irrigationRecords.lists(), { farmId }] as const,
     listByFarms: (farmIds: number[]) =>
       [...queryKeys.irrigationRecords.lists(), { farmIds }] as const,
-    detail: (id: number) =>
-      [...queryKeys.irrigationRecords.all, 'detail', id] as const,
+    detail: (id: number) => [...queryKeys.irrigationRecords.all, 'detail', id] as const,
   },
 
   // Spray Records
   sprayRecords: {
     all: ['sprayRecords'] as const,
     lists: () => [...queryKeys.sprayRecords.all, 'list'] as const,
-    listByFarm: (farmId: number) =>
-      [...queryKeys.sprayRecords.lists(), { farmId }] as const,
-    listByFarms: (farmIds: number[]) =>
-      [...queryKeys.sprayRecords.lists(), { farmIds }] as const,
-    detail: (id: number) =>
-      [...queryKeys.sprayRecords.all, 'detail', id] as const,
+    listByFarm: (farmId: number) => [...queryKeys.sprayRecords.lists(), { farmId }] as const,
+    listByFarms: (farmIds: number[]) => [...queryKeys.sprayRecords.lists(), { farmIds }] as const,
+    detail: (id: number) => [...queryKeys.sprayRecords.all, 'detail', id] as const,
   },
 
   // Fertigation Records
   fertigationRecords: {
     all: ['fertigationRecords'] as const,
     lists: () => [...queryKeys.fertigationRecords.all, 'list'] as const,
-    listByFarm: (farmId: number) =>
-      [...queryKeys.fertigationRecords.lists(), { farmId }] as const,
+    listByFarm: (farmId: number) => [...queryKeys.fertigationRecords.lists(), { farmId }] as const,
     listByFarms: (farmIds: number[]) =>
       [...queryKeys.fertigationRecords.lists(), { farmIds }] as const,
-    detail: (id: number) =>
-      [...queryKeys.fertigationRecords.all, 'detail', id] as const,
+    detail: (id: number) => [...queryKeys.fertigationRecords.all, 'detail', id] as const,
   },
 
   // Harvest Records
   harvestRecords: {
     all: ['harvestRecords'] as const,
     lists: () => [...queryKeys.harvestRecords.all, 'list'] as const,
-    listByFarm: (farmId: number) =>
-      [...queryKeys.harvestRecords.lists(), { farmId }] as const,
-    listByFarms: (farmIds: number[]) =>
-      [...queryKeys.harvestRecords.lists(), { farmIds }] as const,
-    detail: (id: number) =>
-      [...queryKeys.harvestRecords.all, 'detail', id] as const,
+    listByFarm: (farmId: number) => [...queryKeys.harvestRecords.lists(), { farmId }] as const,
+    listByFarms: (farmIds: number[]) => [...queryKeys.harvestRecords.lists(), { farmIds }] as const,
+    detail: (id: number) => [...queryKeys.harvestRecords.all, 'detail', id] as const,
   },
 
   // Expense Records
   expenseRecords: {
     all: ['expenseRecords'] as const,
     lists: () => [...queryKeys.expenseRecords.all, 'list'] as const,
-    listByFarm: (farmId: number) =>
-      [...queryKeys.expenseRecords.lists(), { farmId }] as const,
-    listByFarms: (farmIds: number[]) =>
-      [...queryKeys.expenseRecords.lists(), { farmIds }] as const,
-    detail: (id: number) =>
-      [...queryKeys.expenseRecords.all, 'detail', id] as const,
+    listByFarm: (farmId: number) => [...queryKeys.expenseRecords.lists(), { farmId }] as const,
+    listByFarms: (farmIds: number[]) => [...queryKeys.expenseRecords.lists(), { farmIds }] as const,
+    detail: (id: number) => [...queryKeys.expenseRecords.all, 'detail', id] as const,
   },
 
   // Soil Test Records
   soilTestRecords: {
     all: ['soilTestRecords'] as const,
     lists: () => [...queryKeys.soilTestRecords.all, 'list'] as const,
-    listByFarm: (farmId: number) =>
-      [...queryKeys.soilTestRecords.lists(), { farmId }] as const,
-    detail: (id: number) =>
-      [...queryKeys.soilTestRecords.all, 'detail', id] as const,
+    listByFarm: (farmId: number) => [...queryKeys.soilTestRecords.lists(), { farmId }] as const,
+    detail: (id: number) => [...queryKeys.soilTestRecords.all, 'detail', id] as const,
   },
 
   // Petiole Test Records
   petioleTestRecords: {
     all: ['petioleTestRecords'] as const,
     lists: () => [...queryKeys.petioleTestRecords.all, 'list'] as const,
-    listByFarm: (farmId: number) =>
-      [...queryKeys.petioleTestRecords.lists(), { farmId }] as const,
-    detail: (id: number) =>
-      [...queryKeys.petioleTestRecords.all, 'detail', id] as const,
+    listByFarm: (farmId: number) => [...queryKeys.petioleTestRecords.lists(), { farmId }] as const,
+    detail: (id: number) => [...queryKeys.petioleTestRecords.all, 'detail', id] as const,
   },
 
   // Soil Profiles
   soilProfiles: {
     all: ['soilProfiles'] as const,
     lists: () => [...queryKeys.soilProfiles.all, 'list'] as const,
-    listByFarm: (farmId: number) =>
-      [...queryKeys.soilProfiles.lists(), { farmId }] as const,
-    detail: (id: number) =>
-      [...queryKeys.soilProfiles.all, 'detail', id] as const,
+    listByFarm: (farmId: number) => [...queryKeys.soilProfiles.lists(), { farmId }] as const,
+    detail: (id: number) => [...queryKeys.soilProfiles.all, 'detail', id] as const,
   },
 
   // Calculation History
@@ -122,10 +102,8 @@ export const queryKeys = {
   warehouseItems: {
     all: ['warehouseItems'] as const,
     lists: () => [...queryKeys.warehouseItems.all, 'list'] as const,
-    listByType: (type?: string) =>
-      [...queryKeys.warehouseItems.lists(), { type }] as const,
-    detail: (id: number) =>
-      [...queryKeys.warehouseItems.all, 'detail', id] as const,
+    listByType: (type?: string) => [...queryKeys.warehouseItems.lists(), { type }] as const,
+    detail: (id: number) => [...queryKeys.warehouseItems.all, 'detail', id] as const,
   },
 
   // Workers
@@ -178,8 +156,7 @@ export const queryKeys = {
   dashboard: {
     all: ['dashboard'] as const,
     stats: () => [...queryKeys.dashboard.all, 'stats'] as const,
-    farmsNeedingAttention: () =>
-      [...queryKeys.dashboard.all, 'farmsNeedingAttention'] as const,
+    farmsNeedingAttention: () => [...queryKeys.dashboard.all, 'farmsNeedingAttention'] as const,
     recentActivities: (limit?: number) =>
       [...queryKeys.dashboard.all, 'recentActivities', limit] as const,
   },

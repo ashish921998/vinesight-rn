@@ -30,6 +30,47 @@ import {
 } from '../../hooks/useLabTests';
 import { parseLabTestFromImage, parseLabTestFromText } from '../../utils/pdfParser';
 
+function normalizeParameterKey(key: string, isSoil: boolean): string {
+  if (isSoil) {
+    const soilKeyMap: Record<string, string> = {
+      pH: 'ph',
+      EC: 'ec',
+      OC: 'organicCarbon',
+      OM: 'organicMatter',
+      N: 'nitrogen',
+      P: 'phosphorus',
+      K: 'potassium',
+      Ca: 'calcium',
+      Mg: 'magnesium',
+      S: 'sulfur',
+      Fe: 'iron',
+      Mn: 'manganese',
+      Zn: 'zinc',
+      Cu: 'copper',
+      B: 'boron',
+    };
+    return soilKeyMap[key] || key;
+  } else {
+    const petioleKeyMap: Record<string, string> = {
+      N: 'total_nitrogen',
+      P: 'phosphorus',
+      K: 'potassium',
+      Ca: 'calcium',
+      Mg: 'magnesium',
+      S: 'sulfur',
+      Fe: 'iron',
+      Mn: 'manganese',
+      Zn: 'zinc',
+      Cu: 'copper',
+      B: 'boron',
+      Mo: 'molybdenum',
+      Na: 'sodium',
+      Cl: 'chloride',
+    };
+    return petioleKeyMap[key] || key;
+  }
+}
+
 interface AddLabTestModalProps {
   visible: boolean;
   onClose: () => void;
@@ -269,7 +310,8 @@ export default function AddLabTestModal({
       if (parsedData.parameters) {
         const stringParams: Record<string, string> = {};
         Object.entries(parsedData.parameters).forEach(([key, value]) => {
-          stringParams[key] = value.toString();
+          const normalizedKey = normalizeParameterKey(key, isSoil);
+          stringParams[normalizedKey] = value.toString();
         });
         setParameters(stringParams);
       }
@@ -424,7 +466,8 @@ export default function AddLabTestModal({
                   if (parsedData.parameters) {
                     const stringParams: Record<string, string> = {};
                     Object.entries(parsedData.parameters).forEach(([key, value]) => {
-                      stringParams[key] = value.toString();
+                      const normalizedKey = normalizeParameterKey(key, isSoil);
+                      stringParams[normalizedKey] = value.toString();
                     });
                     setParameters(stringParams);
                   }

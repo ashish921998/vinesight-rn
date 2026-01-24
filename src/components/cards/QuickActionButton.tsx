@@ -14,17 +14,9 @@ interface QuickActionButtonProps {
   onPress: () => void;
 }
 
-export function QuickActionButton({
-  title,
-  icon,
-  color,
-  onPress,
-}: QuickActionButtonProps) {
+export function QuickActionButton({ title, icon, color, onPress }: QuickActionButtonProps) {
   return (
-    <Pressable
-      onPress={onPress}
-      className="items-center active:opacity-70"
-    >
+    <Pressable onPress={onPress} className="items-center active:opacity-70">
       <View
         className="w-12 h-12 rounded-full items-center justify-center mb-2"
         style={{ backgroundColor: `${color}1A` }}
