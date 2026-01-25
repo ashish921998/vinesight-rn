@@ -1,5 +1,12 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  type NativeSyntheticEvent,
+  type TextInputFocusEventData,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NumericInput, type NumericInputHandle } from './FormField';
 import { UnitPickerModal } from '../ui/UnitPickerModal';
@@ -25,9 +32,10 @@ export interface SprayFormData {
 interface SprayFormProps {
   data: SprayFormData;
   onChange: (data: SprayFormData) => void;
+  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
 }
 
-export function SprayForm({ data, onChange }: SprayFormProps) {
+export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
   const isValid =
     data.waterVolume > 0 &&
     data.chemicals.length > 0 &&
@@ -135,6 +143,7 @@ export function SprayForm({ data, onChange }: SprayFormProps) {
         onSubmitEditing={focusFirstChemicalName}
         blurOnSubmit={false}
         returnKeyType="next"
+        onFocus={onInputFocus}
       />
 
       {/* Chemicals Section */}
@@ -159,6 +168,7 @@ export function SprayForm({ data, onChange }: SprayFormProps) {
             nameRef={chemicalRefs[index].name}
             quantityRef={chemicalRefs[index].quantity}
             onNextChemical={focusNextChemicalName}
+            onInputFocus={onInputFocus}
           />
         ))}
 
@@ -201,6 +211,7 @@ interface ChemicalRowProps {
   nameRef: React.RefObject<TextInput | null>;
   quantityRef: React.RefObject<TextInput | null>;
   onNextChemical: (index: number) => void;
+  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
 }
 
 function ChemicalRow({
@@ -213,6 +224,7 @@ function ChemicalRow({
   nameRef,
   quantityRef,
   onNextChemical,
+  onInputFocus,
 }: ChemicalRowProps) {
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [quantityText, setQuantityText] = useState(
@@ -264,7 +276,10 @@ function ChemicalRow({
           placeholderTextColor="#9CA3AF"
           value={chemical.name}
           onChangeText={(name) => onUpdate({ name })}
-          onFocus={() => setIsNameFocused(true)}
+          onFocus={(event) => {
+            setIsNameFocused(true);
+            onInputFocus?.(event);
+          }}
           onBlur={() => setIsNameFocused(false)}
           onSubmitEditing={handleNameSubmit}
           returnKeyType="next"
@@ -294,7 +309,10 @@ function ChemicalRow({
           keyboardType="decimal-pad"
           value={quantityText}
           onChangeText={handleQuantityChange}
-          onFocus={() => setIsQuantityFocused(true)}
+          onFocus={(event) => {
+            setIsQuantityFocused(true);
+            onInputFocus?.(event);
+          }}
           onBlur={() => setIsQuantityFocused(false)}
           onSubmitEditing={handleQuantitySubmit}
           returnKeyType={index < chemicalCount - 1 ? 'next' : 'done'}

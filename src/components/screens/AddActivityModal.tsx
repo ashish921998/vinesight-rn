@@ -4,7 +4,7 @@
  * Ported from iOS UnifiedDataLogsModalCloud.swift
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,16 @@ import {
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
+  NativeSyntheticEvent,
+  TextInputFocusEventData,
+  Keyboard,
+  useWindowDimensions,
+  UIManager,
+  findNodeHandle,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon } from '@/components/ui/app-icon';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   IrrigationForm,
@@ -83,11 +87,18 @@ export function AddActivityModal({
   initialLogType,
   onSaveSuccess,
 }: AddActivityModalProps) {
+  const { height: windowHeight } = useWindowDimensions();
+  const isIOS = process.env.EXPO_OS === 'ios';
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedLogType, setSelectedLogType] = useState<LogTypeId | null>(initialLogType ?? null);
+  const [showLogFormModal, setShowLogFormModal] = useState(false);
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const logFormScrollViewRef = useRef<ScrollView>(null);
+  const focusedInputRef = useRef<number | null>(null);
+  const scrollOffsetRef = useRef(0);
+  const keyboardHeightRef = useRef(0);
 
   // Form states
   const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: 0 });
@@ -123,6 +134,52 @@ export function AddActivityModal({
         return false;
     }
   }, [selectedLogType, irrigationData, sprayData, harvestData, expenseData, fertigationData]);
+
+  useEffect(() => {
+    if (visible && initialLogType) {
+      setSelectedLogType(initialLogType);
+      setShowLogFormModal(true);
+    }
+  }, [visible, initialLogType]);
+
+  const scrollToNode = useCallback((nodeHandle: number) => {
+    if (!keyboardHeightRef.current) return;
+    const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
+    UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
+      const keyboardTop = windowHeight - keyboardHeightRef.current;
+      const inputBottom = y + height;
+      const buffer = 24;
+      if (inputBottom > keyboardTop - buffer) {
+        const scrollBy = inputBottom - (keyboardTop - buffer);
+        logFormScrollViewRef.current?.scrollTo({
+          y: Math.max(0, scrollOffsetRef.current + scrollBy),
+          animated: true,
+        });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const keyboardShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      keyboardHeightRef.current = event.endCoordinates.height;
+      if (focusedInputRef.current) {
+        requestAnimationFrame(() => scrollToNode(focusedInputRef.current as number));
+      }
+    });
+    return () => {
+      keyboardShowListener.remove();
+    };
+  }, [scrollToNode]);
+
+  const scrollToFocusedInput = useCallback(
+    (event: NativeSyntheticEvent<TextInputFocusEventData>) => {
+      const nodeHandle = event.target;
+      if (!nodeHandle) return;
+      focusedInputRef.current = nodeHandle;
+      requestAnimationFrame(() => scrollToNode(nodeHandle));
+    },
+    [scrollToNode],
+  );
 
   const getLogDescription = useCallback((type: LogTypeId, data: unknown): string => {
     switch (type) {
@@ -189,6 +246,7 @@ export function AddActivityModal({
 
     setPendingLogs((prev) => [...prev, newLog]);
     setSelectedLogType(null);
+    setShowLogFormModal(false);
   }, [
     selectedLogType,
     isFormValid,
@@ -335,38 +393,46 @@ export function AddActivityModal({
   };
 
   const renderLogTypeSelector = () => (
-    <View className="bg-white rounded-2xl p-4 mb-4">
-      <Text className="text-base font-semibold text-surface-900 mb-3">Activity Type</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View className="flex-row" style={{ gap: 12 }}>
+    <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16}}>
+      <Text selectable style={{"fontSize": 16, "fontWeight": "600", "color": "#2c2c2e", "marginBottom": 12}}>Activity Type</Text>
+      <ScrollView contentInsetAdjustmentBehavior="automatic" horizontal showsHorizontalScrollIndicator={false}>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
           {ACTIVITY_TYPES.map((logType) => {
             const isSelected = selectedLogType === logType.id;
             return (
               <TouchableOpacity
                 key={logType.id}
-                onPress={() => setSelectedLogType(logType.id as LogTypeId)}
-                className="items-center py-3 px-4 rounded-xl"
-                style={{
+                onPress={() => {
+                  setSelectedLogType(logType.id as LogTypeId);
+                  setShowLogFormModal(true);
+                }}
+                style={[{"alignItems": "center", "paddingVertical": 12, "paddingHorizontal": 16, "borderRadius": 12}, {
                   backgroundColor: isSelected ? '#408059' : '#F9FAFB',
                   borderWidth: 1,
                   borderColor: isSelected ? '#408059' : '#E5E7EB',
-                }}
+                }]}
               >
                 <View
-                  className="w-10 h-10 rounded-full items-center justify-center mb-2"
-                  style={{
-                    backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : `${logType.color}15`,
-                  }}
+                  style={[
+                    {
+                      width: 40,
+                      height: 40,
+                      borderRadius: 999,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 8,
+                      backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : `${logType.color}15`,
+                    },
+                  ]}
                 >
-                  <Ionicons
-                    name={logType.icon as keyof typeof Ionicons.glyphMap}
+                  <AppIcon
+                    name={logType.icon}
                     size={20}
                     color={isSelected ? '#FFFFFF' : logType.color}
                   />
                 </View>
-                <Text
-                  className="text-xs font-semibold"
-                  style={{ color: isSelected ? '#FFFFFF' : '#374151' }}
+                <Text selectable
+                  style={[{"fontSize": 12, "fontWeight": "600"}, { color: isSelected ? '#FFFFFF' : '#374151' }]}
                 >
                   {logType.label}
                 </Text>
@@ -382,34 +448,50 @@ export function AddActivityModal({
     if (!selectedLogType) return null;
 
     return (
-      <View className="bg-white rounded-2xl p-4 mb-4">
+      <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16}}>
         {selectedLogType === 'irrigation' && (
-          <IrrigationForm data={irrigationData} onChange={setIrrigationData} />
+          <IrrigationForm
+            data={irrigationData}
+            onChange={setIrrigationData}
+            onInputFocus={scrollToFocusedInput}
+          />
         )}
-        {selectedLogType === 'spray' && <SprayForm data={sprayData} onChange={setSprayData} />}
+        {selectedLogType === 'spray' && (
+          <SprayForm data={sprayData} onChange={setSprayData} onInputFocus={scrollToFocusedInput} />
+        )}
         {selectedLogType === 'harvest' && (
-          <HarvestForm data={harvestData} onChange={setHarvestData} />
+          <HarvestForm
+            data={harvestData}
+            onChange={setHarvestData}
+            onInputFocus={scrollToFocusedInput}
+          />
         )}
         {selectedLogType === 'expense' && (
-          <ExpenseForm data={expenseData} onChange={setExpenseData} />
+          <ExpenseForm
+            data={expenseData}
+            onChange={setExpenseData}
+            onInputFocus={scrollToFocusedInput}
+          />
         )}
         {selectedLogType === 'fertigation' && (
-          <FertigationForm data={fertigationData} onChange={setFertigationData} />
+          <FertigationForm
+            data={fertigationData}
+            onChange={setFertigationData}
+            onInputFocus={scrollToFocusedInput}
+          />
         )}
 
         {/* Add Entry Button */}
         <TouchableOpacity
           onPress={addLogToSession}
           disabled={!isFormValid}
-          className="mt-4 py-3 rounded-xl items-center flex-row justify-center"
-          style={{
+          style={[{"marginTop": 16, "paddingVertical": 12, "borderRadius": 12, "alignItems": "center", "flexDirection": "row", "justifyContent": "center"}, {
             backgroundColor: isFormValid ? '#408059' : '#E5E7EB',
-          }}
+          }]}
         >
-          <Ionicons name="add-circle" size={20} color={isFormValid ? '#FFFFFF' : '#9CA3AF'} />
-          <Text
-            className="ml-2 font-semibold"
-            style={{ color: isFormValid ? '#FFFFFF' : '#9CA3AF' }}
+          <AppIcon name="add-circle" size={20} color={isFormValid ? '#FFFFFF' : '#9CA3AF'} />
+          <Text selectable
+            style={[{"marginLeft": 8, "fontWeight": "600"}, { color: isFormValid ? '#FFFFFF' : '#9CA3AF' }]}
           >
             Add Entry
           </Text>
@@ -418,12 +500,76 @@ export function AddActivityModal({
     );
   };
 
+  const renderLogFormModal = () => {
+    if (!selectedLogType) return null;
+    const logType = LOG_TYPES.find((lt) => lt.id === selectedLogType);
+    return (
+      <Modal
+        visible={showLogFormModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => {
+          setShowLogFormModal(false);
+          setSelectedLogType(null);
+        }}
+      >
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          keyboardShouldPersistTaps="handled"
+          style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
+          <KeyboardAvoidingView
+            behavior={isIOS ? 'padding' : 'height'}
+            keyboardVerticalOffset={isIOS ? 0 : 20}
+            style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+          >
+            <View style={{"backgroundColor": "#ffffff", "borderBottomWidth": 1, "borderColor": "#ffffff", "paddingHorizontal": 16, "paddingBottom": 12, "paddingTop": 8}}>
+              <View style={{"flexDirection": "row", "alignItems": "center"}}>
+                <View style={{"flex": 1}}>
+                  <Text selectable style={{"fontSize": 18, "fontWeight": "600", "color": "#2c2c2e"}}>
+                    {logType?.label ?? 'Add Log'}
+                  </Text>
+                  <Text selectable style={{"fontSize": 12, "color": "#8e8e93"}} numberOfLines={1}>
+                    {farm.name}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowLogFormModal(false);
+                    setSelectedLogType(null);
+                  }}
+                  style={{"width": 40, "alignItems": "flex-end"}}
+                >
+                  <AppIcon name="close-circle" size={26} color="#9CA3AF" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <ScrollView contentInsetAdjustmentBehavior="automatic"
+              ref={logFormScrollViewRef}
+              style={{"flex": 1}}
+              contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
+              keyboardShouldPersistTaps="handled"
+              onScroll={(event) => {
+                scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+              }}
+              scrollEventThrottle={16}
+            >
+              {renderForm()}
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </ScrollView>
+      </Modal>
+    );
+  };
+
   const renderPendingLogs = () => {
     if (pendingLogs.length === 0) return null;
 
     return (
-      <View className="bg-white rounded-2xl p-4 mb-4">
-        <Text className="text-base font-semibold text-surface-900 mb-3">
+      <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16}}>
+        <Text selectable style={{"fontSize": 16, "fontWeight": "600", "color": "#2c2c2e", "marginBottom": 12}}>
           Pending Logs ({pendingLogs.length})
         </Text>
         {pendingLogs.map((log) => {
@@ -431,25 +577,37 @@ export function AddActivityModal({
           return (
             <View
               key={log.id}
-              className="flex-row items-center p-3 rounded-xl mb-2"
-              style={{ backgroundColor: '#F3F4F6' }}
+              style={[
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 12,
+                  borderRadius: 12,
+                  marginBottom: 8,
+                  backgroundColor: '#F3F4F6',
+                },
+              ]}
             >
               <View
-                className="w-10 h-10 rounded-full items-center justify-center"
-                style={{ backgroundColor: `${logType?.color}15` }}
+                style={[
+                  {
+                    width: 40,
+                    height: 40,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: `${logType?.color}15`,
+                  },
+                ]}
               >
-                <Ionicons
-                  name={logType?.icon as keyof typeof Ionicons.glyphMap}
-                  size={18}
-                  color={logType?.color}
-                />
+                <AppIcon name={logType?.icon ?? 'document-text'} size={18} color={logType?.color} />
               </View>
-              <View className="flex-1 ml-3">
-                <Text className="text-sm font-semibold text-surface-900">{logType?.label}</Text>
-                <Text className="text-xs text-surface-500">{log.displayDescription}</Text>
+              <View style={{"flex": 1, "marginLeft": 12}}>
+                <Text selectable style={{"fontSize": 14, "fontWeight": "600", "color": "#2c2c2e"}}>{logType?.label}</Text>
+                <Text selectable style={{"fontSize": 12, "color": "#8e8e93"}}>{log.displayDescription}</Text>
               </View>
               <TouchableOpacity onPress={() => removeLogFromSession(log.id)}>
-                <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                <AppIcon name="trash-outline" size={20} color="#EF4444" />
               </TouchableOpacity>
             </View>
           );
@@ -465,37 +623,42 @@ export function AddActivityModal({
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <SafeAreaView className="flex-1 bg-surface-50" edges={['top']}>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-          className="flex-1 bg-surface-50"
+          behavior={isIOS ? 'padding' : 'height'}
+          keyboardVerticalOffset={isIOS ? 0 : 20}
+          style={{ flex: 1, backgroundColor: '#f2f2f7' }}
         >
           {/* Header */}
-          <View className="bg-white px-4 pb-4 pt-2 border-b border-surface-100">
-            <View className="items-center mb-3">
-              <View className="w-12 h-1.5 rounded-full bg-surface-200" />
+          <View style={{"backgroundColor": "#ffffff", "paddingHorizontal": 16, "paddingBottom": 16, "paddingTop": 8, "borderBottomWidth": 1, "borderColor": "#ffffff"}}>
+            <View style={{"alignItems": "center", "marginBottom": 12}}>
+              <View style={{"width": 48, "height": 6, "borderRadius": 999, "backgroundColor": "#f2f2f7"}} />
             </View>
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1">
-                <Text className="text-lg font-bold text-surface-900">Add Farm Log</Text>
-                <Text className="text-sm text-surface-500" numberOfLines={1}>
+            <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between"}}>
+              <View style={{"flex": 1}}>
+                <Text selectable style={{"fontSize": 18, "fontWeight": "700", "color": "#2c2c2e"}}>Add Farm Log</Text>
+                <Text selectable style={{"fontSize": 14, "color": "#8e8e93"}} numberOfLines={1}>
                   {farm.name}
                 </Text>
               </View>
               <TouchableOpacity onPress={handleClose}>
-                <Ionicons name="close-circle" size={28} color="#9CA3AF" />
+                <AppIcon name="close-circle" size={28} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
 
             {/* Date Picker Row */}
-            <View className="flex-row items-center justify-between mt-3">
+            <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "marginTop": 12}}>
               <TouchableOpacity
                 onPress={() => setShowDatePicker(true)}
-                className="flex-row items-center bg-surface-100 px-4 py-2 rounded-lg"
+                style={{"flexDirection": "row", "alignItems": "center", "backgroundColor": "#ffffff", "paddingHorizontal": 16, "paddingVertical": 8, "borderRadius": 10}}
               >
-                <Ionicons name="calendar" size={18} color="#408059" />
-                <Text className="ml-2 text-sm font-medium text-surface-900">
+                <AppIcon name="calendar" size={18} color="#408059" />
+                <Text selectable style={{"marginLeft": 8, "fontSize": 14, "fontWeight": "500", "color": "#2c2c2e"}}>
                   {selectedDate.toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short',
@@ -505,9 +668,9 @@ export function AddActivityModal({
               </TouchableOpacity>
 
               {pendingLogs.length > 0 && (
-                <View className="flex-row items-center bg-primary-100 px-3 py-1.5 rounded-full">
-                  <Ionicons name="document-text" size={14} color="#408059" />
-                  <Text className="ml-1 text-xs font-semibold text-primary-700">
+                <View style={{"flexDirection": "row", "alignItems": "center", "backgroundColor": "#e1ebe5", "paddingHorizontal": 12, "paddingVertical": 6, "borderRadius": 999}}>
+                  <AppIcon name="document-text" size={14} color="#408059" />
+                  <Text selectable style={{"marginLeft": 4, "fontSize": 12, "fontWeight": "600", "color": "#2d5c3f"}}>
                     {pendingLogs.length} draft{pendingLogs.length !== 1 ? 's' : ''}
                   </Text>
                 </View>
@@ -515,7 +678,7 @@ export function AddActivityModal({
             </View>
           </View>
 
-          {showDatePicker && Platform.OS === 'android' && (
+          {showDatePicker && !isIOS && (
             <DateTimePicker
               value={selectedDate}
               mode="date"
@@ -525,19 +688,19 @@ export function AddActivityModal({
               }}
             />
           )}
-          {showDatePicker && Platform.OS === 'ios' && (
+          {showDatePicker && isIOS && (
             <Pressable
               onPress={() => setShowDatePicker(false)}
-              className="absolute inset-0 bg-black/50 z-50"
+              style={{"position": "absolute", "top": 0, "right": 0, "bottom": 0, "left": 0, "backgroundColor": "rgba(0,0,0,0.5)", "zIndex": 50}}
             >
               <View
-                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-4"
+                style={{"position": "absolute", "bottom": 0, "left": 0, "right": 0, "backgroundColor": "#ffffff", "borderTopLeftRadius": 24, "borderTopRightRadius": 24, "padding": 16}}
                 onStartShouldSetResponder={() => true}
               >
-                <View className="flex-row items-center justify-between mb-4">
-                  <Text className="text-lg font-bold text-surface-900">Select Date</Text>
+                <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "marginBottom": 16}}>
+                  <Text selectable style={{"fontSize": 18, "fontWeight": "700", "color": "#2c2c2e"}}>Select Date</Text>
                   <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                    <Ionicons name="close" size={24} color="#9CA3AF" />
+                    <AppIcon name="close" size={24} color="#9CA3AF" />
                   </TouchableOpacity>
                 </View>
                 <DateTimePicker
@@ -550,10 +713,9 @@ export function AddActivityModal({
                 />
                 <TouchableOpacity
                   onPress={() => setShowDatePicker(false)}
-                  className="mt-4 py-3 rounded-xl items-center"
-                  style={{ backgroundColor: '#408059' }}
+                  style={[{"marginTop": 16, "paddingVertical": 12, "borderRadius": 12, "alignItems": "center"}, { backgroundColor: '#408059' }]}
                 >
-                  <Text className="font-semibold text-white">Done</Text>
+                  <Text selectable style={{"fontWeight": "600", "color": "#ffffff"}}>Done</Text>
                 </TouchableOpacity>
               </View>
             </Pressable>
@@ -561,7 +723,7 @@ export function AddActivityModal({
 
           {/* Content */}
           <ScrollView
-            className="flex-1"
+            style={{"flex": 1}}
             contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
             keyboardShouldPersistTaps="handled"
             contentInsetAdjustmentBehavior="automatic"
@@ -569,39 +731,45 @@ export function AddActivityModal({
             showsVerticalScrollIndicator={true}
           >
             {renderLogTypeSelector()}
-            {renderForm()}
+            {!selectedLogType && (
+              <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16, "borderWidth": 1, "borderColor": "#ffffff"}}>
+                <Text selectable style={{"fontSize": 14, "color": "#636366"}}>
+                  Select an activity type to open the full-screen form.
+                </Text>
+              </View>
+            )}
             {renderPendingLogs()}
           </ScrollView>
 
+          {renderLogFormModal()}
+
           {/* Footer */}
-          <View className="bg-white px-4 py-4 border-t border-surface-100">
-            <View className="flex-row" style={{ gap: 12 }}>
+          <View style={{"backgroundColor": "#ffffff", "paddingHorizontal": 16, "paddingVertical": 16, "borderTopWidth": 1, "borderColor": "#ffffff"}}>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
               <TouchableOpacity
                 onPress={handleClose}
-                className="flex-1 py-3.5 rounded-xl border border-surface-200 items-center"
+                style={{"flex": 1, "paddingVertical": 14, "borderRadius": 12, "borderWidth": 1, "borderColor": "#f2f2f7", "alignItems": "center"}}
               >
-                <Text className="font-semibold text-surface-600">Cancel</Text>
+                <Text selectable style={{"fontWeight": "600", "color": "#636366"}}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={saveAllLogs}
                 disabled={pendingLogs.length === 0 || isSubmitting}
-                className="flex-1 py-3.5 rounded-xl items-center flex-row justify-center"
-                style={{
+                style={[{"flex": 1, "paddingVertical": 14, "borderRadius": 12, "alignItems": "center", "flexDirection": "row", "justifyContent": "center"}, {
                   backgroundColor: pendingLogs.length > 0 && !isSubmitting ? '#408059' : '#E5E7EB',
-                }}
+                }]}
               >
                 {isSubmitting ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <>
-                    <Ionicons
+                    <AppIcon
                       name="save"
                       size={18}
                       color={pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF'}
                     />
-                    <Text
-                      className="ml-2 font-semibold"
-                      style={{ color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' }}
+                    <Text selectable
+                      style={[{"marginLeft": 8, "fontWeight": "600"}, { color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' }]}
                     >
                       Save {pendingLogs.length > 0 ? `(${pendingLogs.length})` : ''}
                     </Text>
@@ -611,7 +779,7 @@ export function AddActivityModal({
             </View>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </ScrollView>
     </Modal>
   );
 }

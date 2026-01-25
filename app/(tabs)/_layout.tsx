@@ -92,20 +92,12 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="farms"
+          name="explore"
           options={{
-            title: 'Farms',
+            title: 'Explore',
+            headerShown: false,
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'leaf' : 'leaf-outline'} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="workers"
-          options={{
-            title: 'Workers',
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'people' : 'people-outline'} color={color} />
+              <TabBarIcon name={focused ? 'compass' : 'compass-outline'} color={color} />
             ),
           }}
         />
@@ -125,6 +117,18 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <TabBarIcon name={focused ? 'settings' : 'settings-outline'} color={color} />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="farms"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="workers"
+          options={{
+            href: null,
           }}
         />
       </Tabs>

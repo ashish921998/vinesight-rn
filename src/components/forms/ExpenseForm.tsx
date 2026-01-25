@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  type NativeSyntheticEvent,
+  type TextInputFocusEventData,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NumericInput } from './FormField';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculatorModels';
@@ -14,6 +21,7 @@ export interface ExpenseFormData {
 interface ExpenseFormProps {
   data: ExpenseFormData;
   onChange: (data: ExpenseFormData) => void;
+  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
 }
 
 // Icon mapping for expense types
@@ -27,7 +35,7 @@ const EXPENSE_ICONS: Record<ExpenseTypeId, keyof typeof Ionicons.glyphMap> = {
   Other: 'ellipsis-horizontal-outline',
 };
 
-export function ExpenseForm({ data, onChange }: ExpenseFormProps) {
+export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) {
   const isValid = data.cost > 0 && data.type !== '';
 
   return (
@@ -92,6 +100,7 @@ export function ExpenseForm({ data, onChange }: ExpenseFormProps) {
         required
         decimals={0}
         hint="Total expense amount"
+        onFocus={onInputFocus}
       />
 
       {/* Remarks Input (Optional) */}
@@ -116,6 +125,7 @@ export function ExpenseForm({ data, onChange }: ExpenseFormProps) {
             multiline
             numberOfLines={2}
             textAlignVertical="top"
+            onFocus={onInputFocus}
           />
         </View>
         <Text className="text-xs text-surface-500 mt-1">Optional - describe the expense</Text>

@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  type NativeSyntheticEvent,
+  type TextInputFocusEventData,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UnitPickerModal } from '../ui/UnitPickerModal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculatorModels';
@@ -18,9 +25,10 @@ export interface FertigationFormData {
 interface FertigationFormProps {
   data: FertigationFormData;
   onChange: (data: FertigationFormData) => void;
+  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
 }
 
-export function FertigationForm({ data, onChange }: FertigationFormProps) {
+export function FertigationForm({ data, onChange, onInputFocus }: FertigationFormProps) {
   const isValid =
     data.fertilizers.length > 0 && data.fertilizers.every((f) => f.name.trim() && f.quantity > 0);
 
@@ -86,6 +94,7 @@ export function FertigationForm({ data, onChange }: FertigationFormProps) {
             onUpdate={(updates) => updateFertilizer(index, updates)}
             onRemove={() => removeFertilizer(index)}
             showRemove={data.fertilizers.length > 1}
+            onInputFocus={onInputFocus}
           />
         ))}
 
@@ -140,9 +149,16 @@ interface FertilizerRowProps {
   onUpdate: (updates: Partial<FertilizerEntry>) => void;
   onRemove: () => void;
   showRemove: boolean;
+  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
 }
 
-function FertilizerRow({ fertilizer, onUpdate, onRemove, showRemove }: FertilizerRowProps) {
+function FertilizerRow({
+  fertilizer,
+  onUpdate,
+  onRemove,
+  showRemove,
+  onInputFocus,
+}: FertilizerRowProps) {
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [isNameFocused, setIsNameFocused] = useState(false);
   const [isQuantityFocused, setIsQuantityFocused] = useState(false);
@@ -180,7 +196,10 @@ function FertilizerRow({ fertilizer, onUpdate, onRemove, showRemove }: Fertilize
           placeholderTextColor="#9CA3AF"
           value={fertilizer.name}
           onChangeText={(name) => onUpdate({ name })}
-          onFocus={() => setIsNameFocused(true)}
+          onFocus={(event) => {
+            setIsNameFocused(true);
+            onInputFocus?.(event);
+          }}
           onBlur={() => setIsNameFocused(false)}
         />
         {showRemove && (
@@ -206,7 +225,10 @@ function FertilizerRow({ fertilizer, onUpdate, onRemove, showRemove }: Fertilize
           keyboardType="decimal-pad"
           value={quantityText}
           onChangeText={handleQuantityChange}
-          onFocus={() => setIsQuantityFocused(true)}
+          onFocus={(event) => {
+            setIsQuantityFocused(true);
+            onInputFocus?.(event);
+          }}
           onBlur={() => setIsQuantityFocused(false)}
           style={{ flex: 1 }}
         />

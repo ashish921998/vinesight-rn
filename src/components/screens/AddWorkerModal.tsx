@@ -1,26 +1,14 @@
 /**
  * Add Worker Modal
  * Modal for adding/editing workers
- * Ported from iOS AddWorkerSheet.swift
+ * Redesigned with Airbnb-style UI
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  Switch,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Alert } from 'react-native';
 import { useCreateWorker, useUpdateWorker } from '@/hooks';
 import type { Worker } from '@/types';
+import { FormModal, SectionHeader, FormInput, Toggle, InfoCard } from '@/components/ui';
 
 interface AddWorkerModalProps {
   visible: boolean;
@@ -57,8 +45,18 @@ export function AddWorkerModal({ visible, onClose, worker, onSaveSuccess }: AddW
 
   const isValid = name.trim().length > 0 && parseFloat(dailyRate) > 0;
 
+  const handleReset = () => {
+    setName('');
+    setDailyRate('');
+    setAdvanceBalance('0');
+    setIsActive(true);
+  };
+
   const handleSave = async () => {
-    if (!isValid) return;
+    if (!isValid) {
+      Alert.alert('Missing Information', 'Please enter worker name and daily rate.');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -93,160 +91,70 @@ export function AddWorkerModal({ visible, onClose, worker, onSaveSuccess }: AddW
   };
 
   return (
-    <Modal
+    <FormModal
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
+      onClose={onClose}
+      title={isEditMode ? 'Edit Worker' : 'Add Worker'}
+      onSave={handleSave}
+      saveLabel={isEditMode ? 'Save Changes' : 'Add Worker'}
+      isLoading={isSubmitting}
+      isSaveDisabled={!isValid}
+      showResetButton={!isEditMode}
+      onReset={handleReset}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-surface-50"
-      >
-        {/* Header */}
-        <View className="bg-white px-4 py-4 border-b border-surface-100">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-surface-900">
-              {isEditMode ? 'Edit Worker' : 'Add Worker'}
-            </Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close-circle" size={28} color="#9CA3AF" />
-            </TouchableOpacity>
-          </View>
-        </View>
+      {/* Worker Details */}
+      <SectionHeader title="Worker Details" style={{ marginBottom: 16 }} />
 
-        {/* Content */}
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ padding: 16 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Form Card */}
-          <View className="bg-white rounded-2xl p-4">
-            {/* Name */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-surface-700 mb-2">
-                Worker Name <Text className="text-red-500">*</Text>
-              </Text>
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder="Enter worker name"
-                placeholderTextColor="#9CA3AF"
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900"
-              />
-            </View>
+      <FormInput
+        label="Worker Name"
+        value={name}
+        onChangeText={setName}
+        placeholder="e.g., Rajesh Kumar"
+        required
+        autoFocus
+        style={{ marginBottom: 12 }}
+      />
 
-            {/* Daily Rate */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-surface-700 mb-2">
-                Daily Rate (₹) <Text className="text-red-500">*</Text>
-              </Text>
-              <View className="flex-row items-center bg-surface-50 rounded-xl">
-                <Text className="text-surface-500 pl-4">₹</Text>
-                <TextInput
-                  value={dailyRate}
-                  onChangeText={setDailyRate}
-                  placeholder="400"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="decimal-pad"
-                  className="flex-1 px-2 py-3 text-base text-surface-900"
-                />
-                <Text className="text-surface-500 pr-4">/day</Text>
-              </View>
-            </View>
+      <FormInput
+        label="Daily Rate"
+        value={dailyRate}
+        onChangeText={setDailyRate}
+        placeholder="400"
+        keyboardType="decimal-pad"
+        prefix="₹"
+        suffix="/day"
+        required
+        style={{ marginBottom: 12 }}
+      />
 
-            {/* Advance Balance */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-surface-700 mb-2">Advance Balance (₹)</Text>
-              <View className="flex-row items-center bg-surface-50 rounded-xl">
-                <Text className="text-surface-500 pl-4">₹</Text>
-                <TextInput
-                  value={advanceBalance}
-                  onChangeText={setAdvanceBalance}
-                  placeholder="0"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="decimal-pad"
-                  className="flex-1 px-2 py-3 text-base text-surface-900"
-                />
-              </View>
-              <Text className="text-xs text-surface-500 mt-1">
-                Outstanding advance given to worker
-              </Text>
-            </View>
+      <FormInput
+        label="Advance Amount (Optional)"
+        value={advanceBalance}
+        onChangeText={setAdvanceBalance}
+        placeholder="0"
+        keyboardType="decimal-pad"
+        prefix="₹"
+        style={{ marginBottom: 20 }}
+      />
 
-            {/* Active Status */}
-            <View className="flex-row items-center justify-between py-2">
-              <View>
-                <Text className="text-sm font-medium text-surface-700">Active Worker</Text>
-                <Text className="text-xs text-surface-500 mt-0.5">
-                  Inactive workers are hidden from attendance
-                </Text>
-              </View>
-              <Switch
-                value={isActive}
-                onValueChange={setIsActive}
-                trackColor={{ false: '#D1D5DB', true: '#86EFAC' }}
-                thumbColor={isActive ? '#22C55E' : '#F3F4F6'}
-              />
-            </View>
-          </View>
+      {/* Active Status */}
+      <SectionHeader title="Status" style={{ marginBottom: 16 }} />
 
-          {/* Tips Card */}
-          <View className="bg-blue-50 rounded-xl p-4 mt-4">
-            <View className="flex-row items-start">
-              <Ionicons name="information-circle" size={20} color="#3B82F6" />
-              <View className="flex-1 ml-2">
-                <Text className="text-sm font-medium text-blue-700">Tips</Text>
-                <Text className="text-xs text-blue-600 mt-1">
-                  • Daily rate is used to calculate attendance earnings{'\n'}• Advance balance
-                  tracks money owed by the worker{'\n'}
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}• Mark workers as
-                  inactive when they're no longer working
-                </Text>
-              </View>
-            </View>
-          </View>
-        </ScrollView>
+      <Toggle
+        label="Active Worker"
+        description="Inactive workers won't appear in attendance lists"
+        value={isActive}
+        onValueChange={setIsActive}
+        style={{ marginBottom: 16 }}
+      />
 
-        {/* Footer */}
-        <View className="bg-white px-4 py-4 border-t border-surface-100">
-          <View className="flex-row" style={{ gap: 12 }}>
-            <TouchableOpacity
-              onPress={onClose}
-              className="flex-1 py-3.5 rounded-xl border border-surface-200 items-center"
-            >
-              <Text className="font-semibold text-surface-600">Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSave}
-              disabled={!isValid || isSubmitting}
-              className="flex-1 py-3.5 rounded-xl items-center flex-row justify-center"
-              style={{
-                backgroundColor: isValid && !isSubmitting ? '#408059' : '#E5E7EB',
-              }}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons
-                    name={isEditMode ? 'checkmark' : 'add'}
-                    size={18}
-                    color={isValid ? '#FFFFFF' : '#9CA3AF'}
-                  />
-                  <Text
-                    className="ml-2 font-semibold"
-                    style={{ color: isValid ? '#FFFFFF' : '#9CA3AF' }}
-                  >
-                    {isEditMode ? 'Save Changes' : 'Add Worker'}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      {/* Info Card */}
+      <InfoCard
+        icon="information-circle"
+        iconColor="#3B82F6"
+        backgroundColor="#EFF6FF"
+        message="Daily rate is used to calculate earnings. Advance balance tracks outstanding loans."
+      />
+    </FormModal>
   );
 }

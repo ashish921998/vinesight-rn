@@ -4,7 +4,7 @@
  * Ported from iOS EditCloudActivityLogView.swift
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,9 +14,14 @@ import {
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
+  NativeSyntheticEvent,
+  TextInputFocusEventData,
+  Keyboard,
+  useWindowDimensions,
+  UIManager,
+  findNodeHandle,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon } from '@/components/ui/app-icon';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -80,11 +85,17 @@ export function EditActivityModal({
   record,
   onSaveSuccess,
 }: EditActivityModalProps) {
+  const { height: windowHeight } = useWindowDimensions();
+  const isIOS = process.env.EXPO_OS === 'ios';
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [initializedRecordId, setInitializedRecordId] = useState<number | undefined>(undefined);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const focusedInputRef = useRef<number | null>(null);
+  const scrollOffsetRef = useRef(0);
+  const keyboardHeightRef = useRef(0);
 
   const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: 0 });
   const [sprayData, setSprayData] = useState<SprayFormData>(createEmptySprayFormData());
@@ -118,6 +129,45 @@ export function EditActivityModal({
         return false;
     }
   }, [logType, irrigationData, sprayData, harvestData, expenseData, fertigationData]);
+
+  const scrollToNode = useCallback((nodeHandle: number) => {
+    if (!keyboardHeightRef.current) return;
+    const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
+    UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
+      const keyboardTop = windowHeight - keyboardHeightRef.current;
+      const inputBottom = y + height;
+      const buffer = 24;
+      if (inputBottom > keyboardTop - buffer) {
+        const scrollBy = inputBottom - (keyboardTop - buffer);
+        scrollViewRef.current?.scrollTo({
+          y: Math.max(0, scrollOffsetRef.current + scrollBy),
+          animated: true,
+        });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const keyboardShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      keyboardHeightRef.current = event.endCoordinates.height;
+      if (focusedInputRef.current) {
+        requestAnimationFrame(() => scrollToNode(focusedInputRef.current as number));
+      }
+    });
+    return () => {
+      keyboardShowListener.remove();
+    };
+  }, [scrollToNode]);
+
+  const scrollToFocusedInput = useCallback(
+    (event: NativeSyntheticEvent<TextInputFocusEventData>) => {
+      const nodeHandle = event.target;
+      if (!nodeHandle) return;
+      focusedInputRef.current = nodeHandle;
+      requestAnimationFrame(() => scrollToNode(nodeHandle));
+    },
+    [scrollToNode],
+  );
 
   useEffect(() => {
     if (visible && (!isInitialized || initializedRecordId !== record.id)) {
@@ -360,23 +410,45 @@ export function EditActivityModal({
   const renderForm = () => {
     if (!isInitialized) {
       return (
-        <View className="flex-1 items-center justify-center py-20">
+        <View style={{"flex": 1, "alignItems": "center", "justifyContent": "center", "paddingVertical": 80}}>
           <ActivityIndicator size="large" color="#408059" />
-          <Text className="mt-4 text-[#8e8e93]">Loading...</Text>
+          <Text selectable style={{"marginTop": 16, "color": "#8e8e93"}}>Loading...</Text>
         </View>
       );
     }
 
     return (
-      <View className="bg-white rounded-2xl p-4 mb-4">
+      <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16}}>
         {logType === 'irrigation' && (
-          <IrrigationForm data={irrigationData} onChange={setIrrigationData} />
+          <IrrigationForm
+            data={irrigationData}
+            onChange={setIrrigationData}
+            onInputFocus={scrollToFocusedInput}
+          />
         )}
-        {logType === 'spray' && <SprayForm data={sprayData} onChange={setSprayData} />}
-        {logType === 'harvest' && <HarvestForm data={harvestData} onChange={setHarvestData} />}
-        {logType === 'expense' && <ExpenseForm data={expenseData} onChange={setExpenseData} />}
+        {logType === 'spray' && (
+          <SprayForm data={sprayData} onChange={setSprayData} onInputFocus={scrollToFocusedInput} />
+        )}
+        {logType === 'harvest' && (
+          <HarvestForm
+            data={harvestData}
+            onChange={setHarvestData}
+            onInputFocus={scrollToFocusedInput}
+          />
+        )}
+        {logType === 'expense' && (
+          <ExpenseForm
+            data={expenseData}
+            onChange={setExpenseData}
+            onInputFocus={scrollToFocusedInput}
+          />
+        )}
         {logType === 'fertigation' && (
-          <FertigationForm data={fertigationData} onChange={setFertigationData} />
+          <FertigationForm
+            data={fertigationData}
+            onChange={setFertigationData}
+            onInputFocus={scrollToFocusedInput}
+          />
         )}
       </View>
     );
@@ -389,35 +461,40 @@ export function EditActivityModal({
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-        style={{ backgroundColor: '#f2f2f7' }}
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+        contentContainerStyle={{ flexGrow: 1 }}
       >
+        <KeyboardAvoidingView
+          behavior={isIOS ? 'padding' : 'height'}
+          style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+        >
         <LinearGradient
           colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
           style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
         />
 
-        <View className="px-4 pt-12 pb-4">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
-              <Text className="text-lg font-bold text-[#1c1c1e]">Edit Log</Text>
-              <Text className="text-sm text-[#8e8e93]" numberOfLines={1}>
+        <View style={{"paddingHorizontal": 16, "paddingTop": 48, "paddingBottom": 16}}>
+          <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between"}}>
+            <View style={{"flex": 1}}>
+              <Text selectable style={{"fontSize": 18, "fontWeight": "700", "color": "#1c1c1e"}}>Edit Log</Text>
+              <Text selectable style={{"fontSize": 14, "color": "#8e8e93"}} numberOfLines={1}>
                 {farm.name}
               </Text>
             </View>
             <TouchableOpacity onPress={handleClose}>
-              <Ionicons name="close-circle" size={28} color="#9CA3AF" />
+              <AppIcon name="close-circle" size={28} color="#9CA3AF" />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
             onPress={() => setShowDatePicker(true)}
-            className="flex-row items-center mt-3 bg-[#f9f9f9] px-4 py-2 rounded-xl"
+            style={{"flexDirection": "row", "alignItems": "center", "marginTop": 12, "backgroundColor": "#f9f9f9", "paddingHorizontal": 16, "paddingVertical": 8, "borderRadius": 12}}
           >
-            <Ionicons name="calendar" size={18} color="#408059" />
-            <Text className="ml-2 text-sm font-medium text-[#1c1c1e]">
+            <AppIcon name="calendar" size={18} color="#408059" />
+            <Text selectable style={{"marginLeft": 8, "fontSize": 14, "fontWeight": "500", "color": "#1c1c1e"}}>
               {selectedDate.toLocaleDateString('en-US', {
                 weekday: 'short',
                 month: 'short',
@@ -439,25 +516,38 @@ export function EditActivityModal({
           />
         )}
 
-        <ScrollView
-          className="flex-1"
+        <ScrollView contentInsetAdjustmentBehavior="automatic"
+          ref={scrollViewRef}
+          style={{ flex: 1 }}
           contentContainerStyle={{ padding: 16 }}
           keyboardShouldPersistTaps="handled"
+          onScroll={(event) => {
+            scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
         >
-          <View className="bg-white rounded-2xl p-4 mb-4">
-            <Text className="text-base font-semibold text-[#1c1c1e] mb-3">Log Type</Text>
-            <View className="flex-row items-center">
+          <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16}}>
+            <Text selectable style={{"fontSize": 16, "fontWeight": "600", "color": "#1c1c1e", "marginBottom": 12}}>Log Type</Text>
+            <View style={{"flexDirection": "row", "alignItems": "center"}}>
               <View
-                className="w-10 h-10 rounded-full items-center justify-center"
-                style={{ backgroundColor: `${logTypeConfig?.color || '#408059'}15` }}
+                style={[
+                  {
+                    width: 40,
+                    height: 40,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: `${logTypeConfig?.color || '#408059'}15`,
+                  },
+                ]}
               >
-                <Ionicons
-                  name={logTypeConfig?.icon as keyof typeof Ionicons.glyphMap}
+                <AppIcon
+                  name={logTypeConfig?.icon}
                   size={20}
                   color={logTypeConfig?.color || '#408059'}
                 />
               </View>
-              <Text className="ml-3 text-base font-semibold text-[#1c1c1e]">
+              <Text selectable style={{"marginLeft": 12, "fontSize": 16, "fontWeight": "600", "color": "#1c1c1e"}}>
                 {logTypeConfig?.label}
               </Text>
             </View>
@@ -466,43 +556,45 @@ export function EditActivityModal({
           {renderForm()}
         </ScrollView>
 
-        <View className="bg-white px-4 py-4 border-t border-[#e5e5ea]">
-          <View className="flex-row" style={{ gap: 12 }}>
+        <View style={{ backgroundColor: '#ffffff', paddingHorizontal: 16, paddingVertical: 16, borderTopWidth: 1, borderColor: '#e5e5ea' }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity
               onPress={handleClose}
-              className="flex-1 py-3.5 rounded-xl border border-[#e5e5ea] items-center"
+              style={{ flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#e5e5ea', alignItems: 'center' }}
             >
-              <Text className="font-semibold text-[#8e8e93]">Cancel</Text>
+              <Text selectable style={{ fontWeight: '600', color: '#8e8e93' }}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSave}
               disabled={!isFormValid || isSubmitting}
-              className="flex-1 py-3.5 rounded-xl items-center flex-row justify-center"
-              style={{
+              style={[{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }, {
                 backgroundColor: isFormValid && !isSubmitting ? '#408059' : '#e5e5ea',
-              }}
+              }]}
             >
               {isSubmitting ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Ionicons
+                  <AppIcon
                     name="save"
                     size={18}
                     color={isFormValid && !isSubmitting ? '#FFFFFF' : '#9CA3AF'}
                   />
-                  <Text
-                    className="ml-2 font-semibold"
-                    style={{ color: isFormValid && !isSubmitting ? '#FFFFFF' : '#9CA3AF' }}
-                  >
-                    Save
-                  </Text>
+                    <Text selectable
+                      style={[
+                        { marginLeft: 8, fontWeight: '600' },
+                        { color: isFormValid && !isSubmitting ? '#FFFFFF' : '#9CA3AF' },
+                      ]}
+                    >
+                      Save
+                    </Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </ScrollView>
     </Modal>
   );
 }

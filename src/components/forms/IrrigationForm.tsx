@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, type NativeSyntheticEvent, type TextInputFocusEventData } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NumericInput } from './FormField';
 
@@ -13,9 +13,16 @@ interface IrrigationFormProps {
   onChange: (data: IrrigationFormData) => void;
   farmArea?: number;
   systemDischarge?: number;
+  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
 }
 
-export function IrrigationForm({ data, onChange, farmArea, systemDischarge }: IrrigationFormProps) {
+export function IrrigationForm({
+  data,
+  onChange,
+  farmArea,
+  systemDischarge,
+  onInputFocus,
+}: IrrigationFormProps) {
   const isValid = data.duration > 0;
 
   // Calculate estimated water applied
@@ -47,6 +54,7 @@ export function IrrigationForm({ data, onChange, farmArea, systemDischarge }: Ir
         required
         decimals={1}
         hint="How long was the irrigation cycle?"
+        onFocus={onInputFocus}
       />
 
       {/* Info cards */}

@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  type NativeSyntheticEvent,
+  type TextInputFocusEventData,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NumericInput } from './FormField';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculatorModels';
@@ -15,9 +22,10 @@ export interface HarvestFormData {
 interface HarvestFormProps {
   data: HarvestFormData;
   onChange: (data: HarvestFormData) => void;
+  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
 }
 
-export function HarvestForm({ data, onChange }: HarvestFormProps) {
+export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) {
   const isValid = data.quantity > 0 && data.grade !== '';
 
   // Calculate total value if price is set
@@ -49,6 +57,7 @@ export function HarvestForm({ data, onChange }: HarvestFormProps) {
         required
         decimals={1}
         hint="Total harvested weight"
+        onFocus={onInputFocus}
       />
 
       {/* Grade Selection */}
@@ -95,6 +104,7 @@ export function HarvestForm({ data, onChange }: HarvestFormProps) {
         unit="₹"
         decimals={0}
         hint="Optional - price per kilogram"
+        onFocus={onInputFocus}
       />
 
       {/* Buyer Input (Optional) */}
@@ -112,6 +122,7 @@ export function HarvestForm({ data, onChange }: HarvestFormProps) {
             placeholderTextColor="#9CA3AF"
             value={data.buyer || ''}
             onChangeText={(buyer) => onChange({ ...data, buyer: buyer || undefined })}
+            onFocus={onInputFocus}
           />
         </View>
         <Text className="text-xs text-surface-500 mt-1">Optional - who bought the harvest</Text>
