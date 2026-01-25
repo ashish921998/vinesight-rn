@@ -12,7 +12,10 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build:android:preview:local": "eas build --platform android --profile preview --local",
+    "build:android:production:local": "eas build --platform android --profile production --local",
+    "build:android:dev:local": "eas build --platform android --profile development --local"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
