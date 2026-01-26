@@ -7,12 +7,15 @@ import {
   TouchableOpacity,
   Image,
   ImageSourcePropType,
+  type ViewStyle,
+  type TextStyle,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol } from '@/components/ui/Symbol';
 import playstoreLogo from '../../assets/playstore.png';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -69,49 +72,142 @@ export default function LoginScreen() {
 
   const isFormValid = email && password && (!isSignUp || name);
 
+  const containerStyle: ViewStyle = {
+    flex: 1,
+    backgroundColor: colors.surface[100],
+  };
+
+  const contentContainerStyle: ViewStyle = {
+    flex: 1,
+    paddingHorizontal: spacing[8],
+    paddingTop: 64,
+    paddingBottom: spacing[8],
+  };
+
+  const logoContainerStyle: ViewStyle = {
+    alignItems: 'center',
+    marginTop: spacing[8],
+    marginBottom: 48,
+  };
+
+  const logoBoxStyle: ViewStyle = {
+    width: 112,
+    height: 112,
+    borderRadius: borderRadius['3xl'],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing[4],
+    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+  };
+
+  const titleTextStyle: TextStyle = {
+    fontSize: fontSize['3xl'],
+    fontWeight: fontWeight.bold,
+    color: '#000000',
+  };
+
+  const subtitleTextStyle: TextStyle = {
+    fontSize: fontSize.base,
+    marginTop: spacing[1],
+    color: colors.surface[500],
+  };
+
+  const formContainerStyle: ViewStyle = {
+    flex: 1,
+    justifyContent: 'center',
+  };
+
+  const formInnerStyle: ViewStyle = {
+    gap: spacing[4],
+  };
+
+  const errorContainerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.xl,
+    marginBottom: spacing[2],
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+  };
+
+  const errorTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    marginLeft: spacing[2],
+    flex: 1,
+    color: colors.error,
+  };
+
+  const dividerContainerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing[8],
+  };
+
+  const dividerLineStyle: ViewStyle = {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.surface[300],
+  };
+
+  const dividerTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    marginHorizontal: spacing[4],
+    color: colors.surface[400],
+  };
+
+  const toggleContainerStyle: ViewStyle = {
+    alignItems: 'center',
+    paddingVertical: spacing[4],
+    marginTop: spacing[4],
+  };
+
+  const toggleTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    color: colors.surface[500],
+  };
+
+  const toggleLinkStyle: TextStyle = {
+    fontWeight: fontWeight.semibold,
+    color: colors.primary[500],
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
+      style={containerStyle}
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-1 px-8 pt-16 pb-8">
+        <View style={contentContainerStyle}>
           {/* Logo & Title */}
-          <View className="items-center mt-8 mb-12">
-            <View
-              className="w-28 h-28 rounded-3xl items-center justify-center mb-4"
-              style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
-            >
+          <View style={logoContainerStyle}>
+            <View style={logoBoxStyle}>
               <Image
                 source={playstoreLogo as ImageSourcePropType}
                 style={{ width: 80, height: 80 }}
                 resizeMode="contain"
               />
             </View>
-            <Text className="text-3xl font-bold" style={{ color: '#000000' }}>
-              Vinesight
-            </Text>
-            <Text className="text-base mt-1" style={{ color: '#8e8e93' }}>
-              Farm Management
-            </Text>
+            <Text style={titleTextStyle}>Vinesight</Text>
+            <Text style={subtitleTextStyle}>Farm Management</Text>
           </View>
 
           {/* Form */}
-          <View className="flex-1 justify-center">
-            <View className="space-y-4">
+          <View style={formContainerStyle}>
+            <View style={formInnerStyle}>
               {isSignUp && (
                 <Input
                   placeholder="Full Name"
                   value={name}
                   onChangeText={setName}
-                  leftIcon="person-outline"
+                  leftIcon="person.fill"
                   autoCapitalize="words"
                   textContentType="name"
-                  containerClassName="mb-4"
+                  containerStyle={{ marginBottom: spacing[4] }}
                 />
               )}
 
@@ -119,35 +215,30 @@ export default function LoginScreen() {
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
-                leftIcon="mail-outline"
+                leftIcon="envelope.fill"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 textContentType="emailAddress"
                 autoComplete="email"
-                containerClassName="mb-4"
+                containerStyle={{ marginBottom: spacing[4] }}
               />
 
               <Input
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                leftIcon="lock-closed-outline"
+                leftIcon="lock.fill"
                 isPassword
                 textContentType={isSignUp ? 'newPassword' : 'password'}
                 autoComplete={isSignUp ? 'password-new' : 'password'}
-                containerClassName="mb-2"
+                containerStyle={{ marginBottom: spacing[2] }}
               />
 
               {/* Error Message */}
               {errorMessage && (
-                <View
-                  className="flex-row items-center px-4 py-3 rounded-xl mb-2"
-                  style={{ backgroundColor: 'rgba(255, 59, 48, 0.1)' }}
-                >
-                  <Symbol name="exclamationmark.circle.fill" size={18} color="#ff3b30" />
-                  <Text className="text-sm ml-2 flex-1" style={{ color: '#ff3b30' }}>
-                    {errorMessage}
-                  </Text>
+                <View style={errorContainerStyle}>
+                  <Symbol name="exclamationmark.circle.fill" size={18} color={colors.error} />
+                  <Text style={errorTextStyle}>{errorMessage}</Text>
                 </View>
               )}
 
@@ -157,40 +248,32 @@ export default function LoginScreen() {
                 onPress={handleAuth}
                 isLoading={isLoading}
                 disabled={!isFormValid || isLoading}
-                className="mt-4"
+                style={{ marginTop: spacing[4] }}
               />
             </View>
 
             {/* Divider */}
-            <View className="flex-row items-center my-8">
-              <View className="flex-1 h-px" style={{ backgroundColor: '#e5e5ea' }} />
-              <Text className="text-sm mx-4" style={{ color: '#c7c7cc' }}>
-                or
-              </Text>
-              <View className="flex-1 h-px" style={{ backgroundColor: '#e5e5ea' }} />
+            <View style={dividerContainerStyle}>
+              <View style={dividerLineStyle} />
+              <Text style={dividerTextStyle}>or</Text>
+              <View style={dividerLineStyle} />
             </View>
 
             {/* Google Sign In */}
             <Button
               title="Continue with Google"
               variant="outline"
-              leftIcon={<Symbol name="g.circle.fill" size={20} color="#408059" />}
+              leftIcon={<Symbol name="g.circle.fill" size={20} color={colors.primary[500]} />}
               onPress={signInWithGoogle}
               disabled={isLoading}
             />
           </View>
 
           {/* Toggle Sign Up/Sign In */}
-          <TouchableOpacity
-            onPress={toggleMode}
-            className="items-center py-4 mt-4"
-            disabled={isLoading}
-          >
-            <Text className="text-sm" style={{ color: '#8e8e93' }}>
+          <TouchableOpacity onPress={toggleMode} style={toggleContainerStyle} disabled={isLoading}>
+            <Text style={toggleTextStyle}>
               {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-              <Text className="font-semibold" style={{ color: '#408059' }}>
-                {isSignUp ? 'Sign In' : 'Sign Up'}
-              </Text>
+              <Text style={toggleLinkStyle}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
             </Text>
           </TouchableOpacity>
         </View>
