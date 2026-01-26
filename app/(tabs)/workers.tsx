@@ -5,6 +5,7 @@ import { useWorkers, useDeleteWorker } from '@/hooks';
 import { AddWorkerModal } from '@/components/screens';
 import { AttendanceView } from '@/components/screens';
 import type { Worker } from '@/types';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
@@ -57,40 +58,111 @@ export default function WorkersScreen() {
 
   const renderWorker = ({ item }: { item: Worker }) => (
     <TouchableOpacity
-      className="bg-white mx-4 mb-3 rounded-2xl overflow-hidden"
+      style={{
+        backgroundColor: colors.white,
+        marginHorizontal: spacing[4],
+        marginBottom: spacing[3],
+        borderRadius: borderRadius['2xl'],
+        overflow: 'hidden',
+      }}
       activeOpacity={0.7}
       onPress={() => handleEditWorker(item)}
     >
-      <View className="flex-row items-center p-4">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: spacing[4],
+        }}
+      >
         {/* Avatar */}
-        <View className="w-12 h-12 bg-primary-100 rounded-full items-center justify-center">
-          <Text className="text-lg font-bold text-primary-600">
+        <View
+          style={{
+            width: 48,
+            height: 48,
+            backgroundColor: 'rgba(64, 128, 89, 0.1)',
+            borderRadius: borderRadius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.bold,
+              color: colors.primary,
+            }}
+          >
             {item.name.charAt(0).toUpperCase()}
           </Text>
         </View>
 
         {/* Info */}
-        <View className="flex-1 ml-3">
-          <Text className="text-base font-semibold text-surface-900">{item.name}</Text>
-          <View className="flex-row items-center mt-1">
-            <Symbol name="indianrupeesign.circle" size={12} color="#6B7280" />
-            <Text className="text-sm text-surface-500 ml-1">₹{item.daily_rate}/day</Text>
+        <View
+          style={{
+            flex: 1,
+            marginLeft: spacing[3],
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: colors.black,
+            }}
+          >
+            {item.name}
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginTop: spacing[1],
+            }}
+          >
+            <Symbol name="indianrupeesign.circle" size={12} color={colors.gray[400]} />
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                color: colors.gray[400],
+                marginLeft: spacing[1],
+              }}
+            >
+              ₹{item.daily_rate}/day
+            </Text>
           </View>
         </View>
 
         {/* Advance Balance */}
         {item.advance_balance > 0 && (
-          <View className="flex-row items-center bg-orange-100 px-2 py-1 rounded-full mr-2">
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: 'rgba(251, 146, 60, 0.1)',
+              paddingHorizontal: spacing[2],
+              paddingVertical: spacing[1],
+              borderRadius: borderRadius.full,
+              marginRight: spacing[2],
+            }}
+          >
             <Symbol name="arrow.up.circle.fill" size={12} color="#F59E0B" />
-            <Text className="text-xs font-semibold text-orange-600 ml-1">
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                color: '#EA580C',
+                marginLeft: spacing[1],
+              }}
+            >
               ₹{item.advance_balance}
             </Text>
           </View>
         )}
 
         {/* Actions */}
-        <TouchableOpacity onPress={() => handleDeleteWorker(item)} className="p-2">
-          <Symbol name="trash" size={18} color="#EF4444" />
+        <TouchableOpacity onPress={() => handleDeleteWorker(item)} style={{ padding: spacing[2] }}>
+          <Symbol name="trash" size={18} color={colors.error} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -102,25 +174,43 @@ export default function WorkersScreen() {
       renderItem={renderWorker}
       keyExtractor={(item) => String(item.id)}
       contentContainerStyle={{
-        paddingTop: 16,
+        paddingTop: spacing[4],
         paddingBottom: 100,
         flexGrow: 1,
       }}
       ListHeaderComponent={
         activeWorkers.length > 0 ? (
-          <Text className="text-xs font-bold text-surface-500 tracking-wider mx-4 mb-2">
+          <Text
+            style={{
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.bold,
+              color: colors.gray[400],
+              letterSpacing: 0.5,
+              marginHorizontal: spacing[4],
+              marginBottom: spacing[2],
+            }}
+          >
             ACTIVE WORKERS ({activeWorkers.length})
           </Text>
         ) : null
       }
       ListFooterComponent={
         inactiveWorkers.length > 0 ? (
-          <View className="mt-4">
-            <Text className="text-xs font-bold text-surface-500 tracking-wider mx-4 mb-2">
+          <View style={{ marginTop: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: colors.gray[400],
+                letterSpacing: 0.5,
+                marginHorizontal: spacing[4],
+                marginBottom: spacing[2],
+              }}
+            >
               INACTIVE WORKERS ({inactiveWorkers.length})
             </Text>
             {inactiveWorkers.map((worker) => (
-              <View key={String(worker.id)} className="opacity-60">
+              <View key={String(worker.id)} style={{ opacity: 0.6 }}>
                 {renderWorker({ item: worker })}
               </View>
             ))}
@@ -129,27 +219,71 @@ export default function WorkersScreen() {
       }
       ListEmptyComponent={
         !isLoading ? (
-          <View className="flex-1 items-center justify-center p-8">
-            <View className="w-20 h-20 bg-primary-100 rounded-full items-center justify-center mb-4">
-              <Symbol name="person.2" size={40} color="#408059" />
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: spacing[8],
+            }}
+          >
+            <View
+              style={{
+                width: 80,
+                height: 80,
+                backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: spacing[4],
+              }}
+            >
+              <Symbol name="person.2" size={40} color={colors.primary} />
             </View>
-            <Text className="text-lg font-semibold text-surface-900 text-center">
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: colors.black,
+                textAlign: 'center',
+              }}
+            >
               No Workers Yet
             </Text>
-            <Text className="text-sm text-surface-500 text-center mt-2">
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                color: colors.gray[400],
+                textAlign: 'center',
+                marginTop: spacing[2],
+              }}
+            >
               Add workers to track attendance,{`\n`}payments, and settlements.
             </Text>
             <TouchableOpacity
               onPress={() => setShowAddModal(true)}
-              className="bg-primary-600 px-6 py-3 rounded-xl mt-4"
+              style={{
+                backgroundColor: colors.primary,
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.xl,
+                marginTop: spacing[4],
+              }}
             >
-              <Text className="text-white font-semibold">Add Worker</Text>
+              <Text
+                style={{
+                  color: colors.white,
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
+                Add Worker
+              </Text>
             </TouchableOpacity>
           </View>
         ) : null
       }
       refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#408059" />
+        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />
       }
     />
   );
@@ -159,46 +293,120 @@ export default function WorkersScreen() {
   );
 
   const renderAnalyticsTab = () => (
-    <View className="flex-1 items-center justify-center p-8">
-      <View className="w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: spacing[8],
+      }}
+    >
+      <View
+        style={{
+          width: 80,
+          height: 80,
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderRadius: borderRadius.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: spacing[4],
+        }}
+      >
         <Symbol name="chart.bar" size={40} color="#8B5CF6" />
       </View>
-      <Text className="text-lg font-semibold text-surface-900 text-center">Labor Analytics</Text>
-      <Text className="text-sm text-surface-500 text-center mt-2">
+      <Text
+        style={{
+          fontSize: fontSize.lg,
+          fontWeight: fontWeight.semibold,
+          color: colors.black,
+          textAlign: 'center',
+        }}
+      >
+        Labor Analytics
+      </Text>
+      <Text
+        style={{
+          fontSize: fontSize.sm,
+          color: colors.gray[400],
+          textAlign: 'center',
+          marginTop: spacing[2],
+        }}
+      >
         View labor costs, productivity,{`\n`}and attendance patterns.
       </Text>
-      <Text className="text-xs text-surface-400 mt-4">Coming soon in a future update</Text>
+      <Text
+        style={{
+          fontSize: fontSize.xs,
+          color: colors.gray[300],
+          marginTop: spacing[4],
+        }}
+      >
+        Coming soon in a future update
+      </Text>
     </View>
   );
 
   return (
     <>
-      <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.gray[100],
+        }}
+      >
         {/* Tab Selector */}
-        <View className="bg-white px-4 pt-2 pb-3">
-          <View className="flex-row bg-surface-100 rounded-xl p-1">
-            {TAB_DATA.map((tab) => (
-              <TouchableOpacity
-                key={tab.id}
-                onPress={() => setSelectedTab(tab.id)}
-                className={`flex-1 flex-row items-center justify-center py-2.5 rounded-lg ${
-                  selectedTab === tab.id ? 'bg-white border border-gray-200' : ''
-                }`}
-              >
-                <Symbol
-                  name={tab.icon}
-                  size={16}
-                  color={selectedTab === tab.id ? '#408059' : '#6B7280'}
-                />
-                <Text
-                  className={`text-sm font-medium ml-1.5 ${
-                    selectedTab === tab.id ? 'text-primary-600' : 'text-surface-500'
-                  }`}
+        <View
+          style={{
+            backgroundColor: colors.white,
+            paddingHorizontal: spacing[4],
+            paddingTop: spacing[2],
+            paddingBottom: spacing[3],
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: colors.gray[100],
+              borderRadius: borderRadius.xl,
+              padding: spacing[1],
+            }}
+          >
+            {TAB_DATA.map((tab) => {
+              const isSelected = selectedTab === tab.id;
+              return (
+                <TouchableOpacity
+                  key={tab.id}
+                  onPress={() => setSelectedTab(tab.id)}
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 10,
+                    borderRadius: borderRadius.lg,
+                    backgroundColor: isSelected ? colors.white : 'transparent',
+                    borderWidth: isSelected ? 1 : 0,
+                    borderColor: isSelected ? colors.gray[200] : 'transparent',
+                  }}
                 >
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Symbol
+                    name={tab.icon}
+                    size={16}
+                    color={isSelected ? colors.primary : colors.gray[400]}
+                  />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.medium,
+                      marginLeft: 6,
+                      color: isSelected ? colors.primary : colors.gray[400],
+                    }}
+                  >
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -211,10 +419,20 @@ export default function WorkersScreen() {
         {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
           <TouchableOpacity
             onPress={() => setShowAddModal(true)}
-            className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
+            style={{
+              position: 'absolute',
+              bottom: spacing[6],
+              right: spacing[6],
+              width: 56,
+              height: 56,
+              backgroundColor: colors.primary,
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             activeOpacity={0.8}
           >
-            <Symbol name="plus" size={28} color="#FFFFFF" />
+            <Symbol name="plus" size={28} color={colors.white} />
           </TouchableOpacity>
         )}
       </View>
