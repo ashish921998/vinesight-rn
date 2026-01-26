@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
-import { TextInput, View, Text, TouchableOpacity, type TextInputProps } from 'react-native';
+import {
+  TextInput,
+  View,
+  Text,
+  TouchableOpacity,
+  type TextInputProps,
+  type ViewStyle,
+  type TextStyle,
+} from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -9,7 +18,8 @@ interface InputProps extends TextInputProps {
   rightIcon?: string;
   onRightIconPress?: () => void;
   isPassword?: boolean;
-  containerClassName?: string;
+  containerStyle?: ViewStyle;
+  containerClassName?: string; // Legacy support - will be ignored
 }
 
 export function Input({
@@ -19,8 +29,8 @@ export function Input({
   rightIcon,
   onRightIconPress,
   isPassword = false,
-  containerClassName,
-  className,
+  containerStyle,
+  style,
   editable = true,
   ...props
 }: InputProps) {
@@ -32,42 +42,71 @@ export function Input({
 
   // Border color based on state
   const getBorderColor = () => {
-    if (hasError) return 'border-red-500';
-    if (isFocused) return 'border-primary-500';
-    return 'border-gray-200';
+    if (hasError) return colors.error;
+    if (isFocused) return colors.primary[500];
+    return colors.surface[300];
   };
 
   // Background color based on state
   const getBackgroundColor = () => {
-    if (isDisabled) return 'bg-gray-100';
-    return 'bg-white';
+    if (isDisabled) return colors.surface[50];
+    return colors.surface[100];
+  };
+
+  const labelStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    marginBottom: 6,
+    color: colors.surface[900],
+  };
+
+  const inputContainerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[4],
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: getBorderColor(),
+    backgroundColor: getBackgroundColor(),
+  };
+
+  const inputStyle: TextStyle = {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: fontSize.base,
+    color: colors.surface[900],
+  };
+
+  const errorContainerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  };
+
+  const errorTextStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    marginLeft: spacing[1],
+    color: colors.error,
   };
 
   return (
-    <View className={containerClassName}>
-      {label && <Text className="text-sm font-medium mb-1.5 text-black">{label}</Text>}
+    <View style={containerStyle}>
+      {label && <Text style={labelStyle}>{label}</Text>}
 
-      <View
-        className={`
-          flex-row items-center
-          px-4 rounded-xl
-          border ${getBorderColor()}
-          ${getBackgroundColor()}
-        `}
-      >
+      <View style={inputContainerStyle}>
         {leftIcon && (
           <View style={{ marginRight: 10 }}>
-            <Symbol name={leftIcon} size={20} color={isFocused ? '#408059' : '#c7c7cc'} />
+            <Symbol
+              name={leftIcon}
+              size={20}
+              color={isFocused ? colors.primary[500] : colors.surface[400]}
+            />
           </View>
         )}
 
         <TextInput
-          className={`
-            flex-1 py-3.5
-            text-base text-black
-            ${className || ''}
-          `}
-          placeholderTextColor="#c7c7cc"
+          style={[inputStyle, style]}
+          placeholderTextColor={colors.surface[400]}
           editable={editable}
           secureTextEntry={isPassword && !showPassword}
           onFocus={(e) => {
@@ -86,7 +125,11 @@ export function Input({
             onPress={() => setShowPassword(!showPassword)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Symbol name={showPassword ? 'eye.slash' : 'eye'} size={20} color="#c7c7cc" />
+            <Symbol
+              name={showPassword ? 'eye.slash' : 'eye'}
+              size={20}
+              color={colors.surface[400]}
+            />
           </TouchableOpacity>
         )}
 
@@ -96,15 +139,19 @@ export function Input({
             disabled={!onRightIconPress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Symbol name={rightIcon} size={20} color={isFocused ? '#408059' : '#c7c7cc'} />
+            <Symbol
+              name={rightIcon}
+              size={20}
+              color={isFocused ? colors.primary[500] : colors.surface[400]}
+            />
           </TouchableOpacity>
         )}
       </View>
 
       {hasError && (
-        <View className="flex-row items-center mt-1.5">
-          <Symbol name="exclamationmark.circle.fill" size={14} color="#ff3b30" />
-          <Text className="text-xs ml-1 text-[#ff3b30]">{error}</Text>
+        <View style={errorContainerStyle}>
+          <Symbol name="exclamationmark.circle.fill" size={14} color={colors.error} />
+          <Text style={errorTextStyle}>{error}</Text>
         </View>
       )}
     </View>

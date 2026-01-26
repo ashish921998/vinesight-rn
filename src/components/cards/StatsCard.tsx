@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface StatsCardProps {
   title: string;
@@ -26,28 +27,44 @@ export function StatsCard({
   onPress,
 }: StatsCardProps) {
   const finalColor = iconColor || color;
+
+  const containerStyle: ViewStyle = {
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    backgroundColor: colors.surface[100],
+  };
+
+  const headerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  };
+
+  const valueTextStyle: TextStyle = {
+    fontSize: fontSize['2xl'],
+    fontWeight: fontWeight.bold,
+    color: '#000000',
+  };
+
+  const titleTextStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    marginTop: spacing[3],
+    color: colors.surface[500],
+  };
+
   const content = (
-    <View
-      className="rounded-xl p-4"
-      style={{
-        backgroundColor: '#ffffff',
-      }}
-    >
-      <View className="flex-row items-center justify-between">
+    <View style={containerStyle}>
+      <View style={headerStyle}>
         <Symbol name={icon} size={20} color={finalColor} weight="semibold" />
-        <Text className="text-2xl font-bold" style={{ color: '#000000' }}>
-          {value}
-        </Text>
+        <Text style={valueTextStyle}>{value}</Text>
       </View>
-      <Text className="text-xs mt-3" style={{ color: '#8e8e93' }}>
-        {title}
-      </Text>
+      <Text style={titleTextStyle}>{title}</Text>
     </View>
   );
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} className="active:opacity-80">
+      <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
         {content}
       </Pressable>
     );

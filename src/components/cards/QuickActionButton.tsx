@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface QuickActionButtonProps {
   title: string;
@@ -15,17 +16,36 @@ interface QuickActionButtonProps {
 }
 
 export function QuickActionButton({ title, icon, color, onPress }: QuickActionButtonProps) {
+  const containerStyle: ViewStyle = {
+    alignItems: 'center',
+  };
+
+  const iconContainerStyle: ViewStyle = {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing[2],
+    backgroundColor: `${color}1A`,
+  };
+
+  const textStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    textAlign: 'center',
+    color: '#000000',
+  };
+
   return (
-    <Pressable onPress={onPress} className="items-center active:opacity-70">
-      <View
-        className="w-12 h-12 rounded-full items-center justify-center mb-2"
-        style={{ backgroundColor: `${color}1A` }}
-      >
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [containerStyle, { opacity: pressed ? 0.7 : 1 }]}
+    >
+      <View style={iconContainerStyle}>
         <Symbol name={icon} size={20} color={color} />
       </View>
-      <Text className="text-xs font-medium text-center" style={{ color: '#000000' }}>
-        {title}
-      </Text>
+      <Text style={textStyle}>{title}</Text>
     </Pressable>
   );
 }

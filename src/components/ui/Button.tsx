@@ -5,7 +5,10 @@ import {
   ActivityIndicator,
   View,
   type TouchableOpacityProps,
+  type ViewStyle,
+  type TextStyle,
 } from 'react-native';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -26,75 +29,99 @@ export function Button({
   rightIcon,
   fullWidth = true,
   disabled,
-  className,
+  style,
   ...props
 }: ButtonProps) {
   const isDisabled = disabled || isLoading;
 
   // Base styles
-  const baseStyles = 'flex-row items-center justify-center rounded-xl';
+  const baseStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: borderRadius.xl,
+  };
 
   // Size styles
-  const sizeStyles = {
-    sm: 'px-4 py-2',
-    md: 'px-6 py-3.5',
-    lg: 'px-8 py-4',
+  const sizeStyles: Record<string, ViewStyle> = {
+    sm: { paddingHorizontal: spacing[4], paddingVertical: spacing[2] },
+    md: { paddingHorizontal: spacing[6], paddingVertical: 14 },
+    lg: { paddingHorizontal: spacing[8], paddingVertical: spacing[4] },
   };
 
   // Variant styles
-  const variantStyles = {
-    primary: isDisabled ? 'bg-surface-300' : 'bg-primary-500 active:bg-primary-600',
-    secondary: isDisabled ? 'bg-surface-200' : 'bg-surface-100 active:bg-surface-200',
-    outline: isDisabled
-      ? 'border border-surface-300'
-      : 'border border-primary-500 active:bg-primary-50',
-    ghost: isDisabled ? '' : 'active:bg-surface-100',
+  const variantStyles: Record<string, ViewStyle> = {
+    primary: {
+      backgroundColor: isDisabled ? colors.surface[300] : colors.primary[500],
+    },
+    secondary: {
+      backgroundColor: isDisabled ? colors.surface[200] : colors.surface[100],
+    },
+    outline: {
+      borderWidth: 1,
+      borderColor: isDisabled ? colors.surface[300] : colors.primary[500],
+      backgroundColor: 'transparent',
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+    },
   };
 
   // Text styles
-  const textSizeStyles = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-lg',
+  const textSizeStyles: Record<string, TextStyle> = {
+    sm: { fontSize: fontSize.sm },
+    md: { fontSize: fontSize.base },
+    lg: { fontSize: fontSize.lg },
   };
 
-  const textVariantStyles = {
-    primary: isDisabled ? 'text-surface-500 font-semibold' : 'text-white font-semibold',
-    secondary: isDisabled ? 'text-surface-400' : 'text-surface-700 font-semibold',
-    outline: isDisabled ? 'text-surface-400' : 'text-primary-500 font-semibold',
-    ghost: isDisabled ? 'text-surface-400' : 'text-primary-500 font-medium',
+  const textVariantStyles: Record<string, TextStyle> = {
+    primary: {
+      color: isDisabled ? colors.surface[500] : colors.surface[100],
+      fontWeight: fontWeight.semibold,
+    },
+    secondary: {
+      color: isDisabled ? colors.surface[400] : colors.surface[700],
+      fontWeight: fontWeight.semibold,
+    },
+    outline: {
+      color: isDisabled ? colors.surface[400] : colors.primary[500],
+      fontWeight: fontWeight.semibold,
+    },
+    ghost: {
+      color: isDisabled ? colors.surface[400] : colors.primary[500],
+      fontWeight: fontWeight.medium,
+    },
+  };
+
+  const containerStyle: ViewStyle = {
+    ...baseStyle,
+    ...sizeStyles[size],
+    ...variantStyles[variant],
+    ...(fullWidth ? { width: '100%' } : {}),
+  };
+
+  const textStyle: TextStyle = {
+    ...textSizeStyles[size],
+    ...textVariantStyles[variant],
   };
 
   return (
     <TouchableOpacity
       disabled={isDisabled}
-      className={`
-        ${baseStyles}
-        ${sizeStyles[size]}
-        ${variantStyles[variant]}
-        ${fullWidth ? 'w-full' : ''}
-        ${className || ''}
-      `}
+      style={[containerStyle, style]}
       activeOpacity={0.8}
       {...props}
     >
       {isLoading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? '#FFFFFF' : '#408059'}
+          color={variant === 'primary' ? colors.surface[100] : colors.primary[500]}
           size={size === 'sm' ? 'small' : 'small'}
         />
       ) : (
         <>
-          {leftIcon && <View className="mr-2">{leftIcon}</View>}
-          <Text
-            className={`
-              ${textSizeStyles[size]}
-              ${textVariantStyles[variant]}
-            `}
-          >
-            {title}
-          </Text>
-          {rightIcon && <View className="ml-2">{rightIcon}</View>}
+          {leftIcon && <View style={{ marginRight: spacing[2] }}>{leftIcon}</View>}
+          <Text style={textStyle}>{title}</Text>
+          {rightIcon && <View style={{ marginLeft: spacing[2] }}>{rightIcon}</View>}
         </>
       )}
     </TouchableOpacity>

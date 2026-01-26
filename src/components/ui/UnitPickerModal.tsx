@@ -1,6 +1,15 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+  type ViewStyle,
+  type TextStyle,
+} from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface UnitPickerModalProps<T extends string> {
   visible: boolean;
@@ -24,41 +33,97 @@ export function UnitPickerModal<T extends string>({
     onClose();
   };
 
+  const overlayStyle: ViewStyle = {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  };
+
+  const containerStyle: ViewStyle = {
+    backgroundColor: colors.surface[100],
+    width: '100%',
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+  };
+
+  const headerStyle: ViewStyle = {
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surface[300],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  };
+
+  const cancelButtonStyle: ViewStyle = {
+    padding: spacing[2],
+    marginLeft: -spacing[2],
+  };
+
+  const cancelTextStyle: TextStyle = {
+    color: colors.surface[500],
+    fontWeight: fontWeight.semibold,
+  };
+
+  const titleTextStyle: TextStyle = {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.surface[900],
+    flex: 1,
+    textAlign: 'center',
+    paddingRight: 48,
+  };
+
+  const getOptionStyle = (isSelected: boolean): ViewStyle => ({
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surface[50],
+    backgroundColor: isSelected ? `${colors.primary[500]}0D` : 'transparent',
+  });
+
+  const optionContentStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  };
+
+  const getOptionTextStyle = (isSelected: boolean): TextStyle => ({
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.medium,
+    color: isSelected ? colors.primary[500] : colors.surface[900],
+  });
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 bg-black/30 items-center justify-end">
-        <View className="bg-white w-full rounded-t-3xl">
-          <View className="px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
-            <TouchableOpacity onPress={onClose} className="p-2 -ml-2">
-              <Text className="text-[#8e8e93] font-semibold">Cancel</Text>
+      <View style={overlayStyle}>
+        <View style={containerStyle}>
+          <View style={headerStyle}>
+            <TouchableOpacity onPress={onClose} style={cancelButtonStyle}>
+              <Text style={cancelTextStyle}>Cancel</Text>
             </TouchableOpacity>
-            <Text className="text-lg font-bold text-[#1c1c1e] flex-1 text-center pr-12">
-              {title}
-            </Text>
+            <Text style={titleTextStyle}>{title}</Text>
           </View>
           <ScrollView style={{ maxHeight: 400 }}>
-            {options.map((unit) => (
-              <TouchableOpacity
-                key={unit}
-                onPress={() => handleSelect(unit)}
-                className={`px-4 py-4 border-b border-gray-100 ${
-                  unit === selectedValue ? 'bg-[#408059]/5' : ''
-                }`}
-              >
-                <View className="flex-row items-center justify-between">
-                  <Text
-                    className={`text-base font-medium ${
-                      unit === selectedValue ? 'text-[#408059]' : 'text-[#1c1c1e]'
-                    }`}
-                  >
-                    {unit}
-                  </Text>
-                  {unit === selectedValue && (
-                    <Symbol name="checkmark.circle.fill" size={24} color="#408059" />
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
+            {options.map((unit) => {
+              const isSelected = unit === selectedValue;
+              return (
+                <TouchableOpacity
+                  key={unit}
+                  onPress={() => handleSelect(unit)}
+                  style={getOptionStyle(isSelected)}
+                >
+                  <View style={optionContentStyle}>
+                    <Text style={getOptionTextStyle(isSelected)}>{unit}</Text>
+                    {isSelected && (
+                      <Symbol name="checkmark.circle.fill" size={24} color={colors.primary[500]} />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
       </View>

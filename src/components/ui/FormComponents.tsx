@@ -8,10 +8,12 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Animated,
-  ViewStyle,
+  type ViewStyle,
+  type TextStyle,
 } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface FormModalProps {
   visible: boolean;
@@ -40,47 +42,103 @@ export function FormModal({
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
 
+  const headerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing[6],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surface[100],
+    paddingTop: Math.max(insets.top, 12),
+    paddingBottom: 12,
+  };
+
+  const closeButtonStyle: ViewStyle = {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surface[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const titleStyle: TextStyle = {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[900],
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: spacing[2],
+  };
+
+  const footerStyle: ViewStyle = {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.surface[100],
+    borderTopWidth: 1,
+    borderTopColor: colors.surface[100],
+    paddingHorizontal: spacing[6],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: Math.max(insets.bottom, 16),
+    paddingTop: 16,
+  };
+
+  const resetTextStyle: TextStyle = {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[900],
+    textDecorationLine: 'underline',
+  };
+
+  const saveButtonStyle: ViewStyle = {
+    paddingHorizontal: spacing[8],
+    paddingVertical: 14,
+    borderRadius: borderRadius.xl,
+    backgroundColor: isSaveDisabled || isLoading ? '#F3F4F6' : '#111827',
+  };
+
+  const saveTextStyle: TextStyle = {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: isSaveDisabled || isLoading ? '#9CA3AF' : colors.surface[100],
+  };
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <KeyboardAvoidingView
         behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-white"
+        style={{ flex: 1, backgroundColor: colors.surface[100] }}
       >
-        <View
-          className="flex-row items-center justify-between px-6 border-b border-surface-100"
-          style={{ paddingTop: Math.max(insets.top, 12), paddingBottom: 12 }}
-        >
-          <TouchableOpacity
-            onPress={onClose}
-            className="w-10 h-10 rounded-full bg-surface-100 items-center justify-center"
-            disabled={isLoading}
-          >
+        <View style={headerStyle}>
+          <TouchableOpacity onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
             <Symbol name="xmark" size={20} color="#111827" />
           </TouchableOpacity>
-          <Text
-            className="text-lg font-semibold text-surface-900 flex-1 text-center mx-2"
-            numberOfLines={1}
-          >
+          <Text style={titleStyle} numberOfLines={1}>
             {title}
           </Text>
-          <View className="w-10" />
+          <View style={{ width: 40 }} />
         </View>
 
         <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: 120,
+          }}
           showsVerticalScrollIndicator={false}
         >
           {children}
         </ScrollView>
 
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-surface-100 px-6 flex-row items-center justify-between"
-          style={{ paddingBottom: Math.max(insets.bottom, 16), paddingTop: 16 }}
-        >
+        <View style={footerStyle}>
           {showResetButton && onReset ? (
             <TouchableOpacity onPress={onReset} disabled={isLoading}>
-              <Text className="text-base font-semibold text-surface-900 underline">Reset</Text>
+              <Text style={resetTextStyle}>Reset</Text>
             </TouchableOpacity>
           ) : (
             <View />
@@ -90,19 +148,9 @@ export function FormModal({
             <TouchableOpacity
               onPress={onSave}
               disabled={isSaveDisabled || isLoading}
-              className="px-8 py-3.5 rounded-xl"
-              style={{
-                backgroundColor: isSaveDisabled || isLoading ? '#F3F4F6' : '#111827',
-              }}
+              style={saveButtonStyle}
             >
-              <Text
-                className="text-base font-semibold"
-                style={{
-                  color: isSaveDisabled || isLoading ? '#9CA3AF' : '#FFFFFF',
-                }}
-              >
-                {isLoading ? 'Saving...' : saveLabel}
-              </Text>
+              <Text style={saveTextStyle}>{isLoading ? 'Saving...' : saveLabel}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -136,47 +184,103 @@ export function FullScreenForm({
 }: FullScreenFormProps) {
   const insets = useSafeAreaInsets();
 
+  const headerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing[6],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surface[100],
+    paddingTop: Math.max(insets.top, 12),
+    paddingBottom: 12,
+  };
+
+  const closeButtonStyle: ViewStyle = {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surface[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const titleStyle: TextStyle = {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[900],
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: spacing[2],
+  };
+
+  const footerStyle: ViewStyle = {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.surface[100],
+    borderTopWidth: 1,
+    borderTopColor: colors.surface[100],
+    paddingHorizontal: spacing[6],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: Math.max(insets.bottom, 16),
+    paddingTop: 16,
+  };
+
+  const resetTextStyle: TextStyle = {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[900],
+    textDecorationLine: 'underline',
+  };
+
+  const saveButtonStyle: ViewStyle = {
+    paddingHorizontal: spacing[8],
+    paddingVertical: 14,
+    borderRadius: borderRadius.xl,
+    backgroundColor: isSaveDisabled || isLoading ? '#F3F4F6' : '#111827',
+  };
+
+  const saveTextStyle: TextStyle = {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: isSaveDisabled || isLoading ? '#9CA3AF' : colors.surface[100],
+  };
+
   return (
-    <View className="flex-1 bg-white">
-      <View
-        className="flex-row items-center justify-between px-6 border-b border-surface-100"
-        style={{ paddingTop: Math.max(insets.top, 12), paddingBottom: 12 }}
-      >
-        <TouchableOpacity
-          onPress={onClose}
-          className="w-10 h-10 rounded-full bg-surface-100 items-center justify-center"
-          disabled={isLoading}
-        >
+    <View style={{ flex: 1, backgroundColor: colors.surface[100] }}>
+      <View style={headerStyle}>
+        <TouchableOpacity onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
           <Symbol name="xmark" size={20} color="#111827" />
         </TouchableOpacity>
-        <Text
-          className="text-lg font-semibold text-surface-900 flex-1 text-center mx-2"
-          numberOfLines={1}
-        >
+        <Text style={titleStyle} numberOfLines={1}>
           {title}
         </Text>
-        <View className="w-10" />
+        <View style={{ width: 40 }} />
       </View>
 
       <KeyboardAvoidingView
         behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: 120,
+          }}
           showsVerticalScrollIndicator={false}
         >
           {children}
         </ScrollView>
 
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-surface-100 px-6 flex-row items-center justify-between"
-          style={{ paddingBottom: Math.max(insets.bottom, 16), paddingTop: 16 }}
-        >
+        <View style={footerStyle}>
           {showResetButton && onReset ? (
             <TouchableOpacity onPress={onReset} disabled={isLoading}>
-              <Text className="text-base font-semibold text-surface-900 underline">Reset</Text>
+              <Text style={resetTextStyle}>Reset</Text>
             </TouchableOpacity>
           ) : (
             <View />
@@ -186,19 +290,9 @@ export function FullScreenForm({
             <TouchableOpacity
               onPress={onSave}
               disabled={isSaveDisabled || isLoading}
-              className="px-8 py-3.5 rounded-xl"
-              style={{
-                backgroundColor: isSaveDisabled || isLoading ? '#F3F4F6' : '#111827',
-              }}
+              style={saveButtonStyle}
             >
-              <Text
-                className="text-base font-semibold"
-                style={{
-                  color: isSaveDisabled || isLoading ? '#9CA3AF' : '#FFFFFF',
-                }}
-              >
-                {isLoading ? 'Saving...' : saveLabel}
-              </Text>
+              <Text style={saveTextStyle}>{isLoading ? 'Saving...' : saveLabel}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -214,10 +308,27 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, subtitle, style }: SectionHeaderProps) {
+  const containerStyle: ViewStyle = {
+    marginBottom: spacing[6],
+  };
+
+  const titleTextStyle: TextStyle = {
+    fontSize: fontSize['3xl'],
+    fontWeight: fontWeight.bold,
+    color: colors.surface[900],
+    marginBottom: spacing[1],
+  };
+
+  const subtitleTextStyle: TextStyle = {
+    fontSize: fontSize.base,
+    color: colors.surface[500],
+    marginTop: spacing[1],
+  };
+
   return (
-    <View style={style} className="mb-6">
-      <Text className="text-3xl font-bold text-surface-900 mb-1">{title}</Text>
-      {subtitle && <Text className="text-base text-surface-500 mt-1">{subtitle}</Text>}
+    <View style={[containerStyle, style]}>
+      <Text style={titleTextStyle}>{title}</Text>
+      {subtitle && <Text style={subtitleTextStyle}>{subtitle}</Text>}
     </View>
   );
 }
@@ -252,31 +363,46 @@ export function PillSelector({
     return selectedValue === value;
   };
 
+  const containerStyle: ViewStyle = {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[3],
+    marginBottom: spacing[6],
+  };
+
+  const getPillStyle = (selected: boolean): ViewStyle => ({
+    paddingHorizontal: spacing[6],
+    paddingVertical: 14,
+    borderRadius: borderRadius.full,
+    borderWidth: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: selected ? '#111827' : '#E5E7EB',
+    backgroundColor: selected ? '#F9FAFB' : colors.surface[100],
+  });
+
+  const getPillTextStyle = (selected: boolean): TextStyle => ({
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.medium,
+    color: selected ? '#111827' : '#6B7280',
+  });
+
   return (
-    <View style={style} className="flex-row flex-wrap gap-3 mb-6">
+    <View style={[containerStyle, style]}>
       {options.map((option) => {
         const selected = isSelected(option.value);
         return (
           <TouchableOpacity
             key={option.value}
             onPress={() => onSelect(option.value)}
-            className="px-6 py-3.5 rounded-full border-2 flex-row items-center"
-            style={{
-              borderColor: selected ? '#111827' : '#E5E7EB',
-              backgroundColor: selected ? '#F9FAFB' : '#FFFFFF',
-            }}
+            style={getPillStyle(selected)}
           >
             {option.icon && (
               <View style={{ marginRight: 8 }}>
                 <Symbol name={option.icon} size={18} color={selected ? '#111827' : '#6B7280'} />
               </View>
             )}
-            <Text
-              className="text-base font-medium"
-              style={{ color: selected ? '#111827' : '#6B7280' }}
-            >
-              {option.label}
-            </Text>
+            <Text style={getPillTextStyle(selected)}>{option.label}</Text>
           </TouchableOpacity>
         );
       })}
@@ -296,25 +422,39 @@ interface SegmentedControlProps {
 }
 
 export function SegmentedControl({ options, selectedValue, onSelect }: SegmentedControlProps) {
+  const containerStyle: ViewStyle = {
+    flexDirection: 'row',
+    backgroundColor: colors.surface[100],
+    borderRadius: borderRadius.full,
+    padding: spacing[1],
+    marginBottom: spacing[6],
+  };
+
+  const getSegmentStyle = (selected: boolean): ViewStyle => ({
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    backgroundColor: selected ? colors.surface[100] : 'transparent',
+  });
+
+  const getSegmentTextStyle = (selected: boolean): TextStyle => ({
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: selected ? '#111827' : '#6B7280',
+  });
+
   return (
-    <View className="flex-row bg-surface-100 rounded-full p-1 mb-6">
+    <View style={containerStyle}>
       {options.map((option) => {
         const selected = selectedValue === option.value;
         return (
           <TouchableOpacity
             key={option.value}
             onPress={() => onSelect(option.value)}
-            className="flex-1 py-2.5 rounded-full items-center"
-            style={{
-              backgroundColor: selected ? '#FFFFFF' : 'transparent',
-            }}
+            style={getSegmentStyle(selected)}
           >
-            <Text
-              className="text-sm font-medium"
-              style={{ color: selected ? '#111827' : '#6B7280' }}
-            >
-              {option.label}
-            </Text>
+            <Text style={getSegmentTextStyle(selected)}>{option.label}</Text>
           </TouchableOpacity>
         );
       })}
@@ -346,25 +486,58 @@ export function CardSelector({
   columns = 2,
   style,
 }: CardSelectorProps) {
+  const containerStyle: ViewStyle = {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[3],
+    marginBottom: spacing[6],
+  };
+
+  const getCardStyle = (selected: boolean): ViewStyle => ({
+    width: columns === 2 ? '48%' : columns === 3 ? '31%' : '100%',
+    borderRadius: borderRadius['2xl'],
+    borderWidth: 2,
+    padding: spacing[3],
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: selected ? '#111827' : '#E5E7EB',
+    backgroundColor: selected ? '#F9FAFB' : colors.surface[100],
+  });
+
+  const iconContainerStyle: ViewStyle = {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing[2],
+  };
+
+  const getLabelTextStyle = (selected: boolean): TextStyle => ({
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    textAlign: 'center',
+    color: selected ? '#111827' : '#6B7280',
+  });
+
+  const sublabelTextStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    color: colors.surface[500],
+    textAlign: 'center',
+    marginTop: 2,
+  };
+
   return (
-    <View style={style} className="flex-row flex-wrap gap-3 mb-6">
+    <View style={[containerStyle, style]}>
       {options.map((option) => {
         const selected = selectedValue === option.value;
         return (
           <TouchableOpacity
             key={option.value}
             onPress={() => onSelect(option.value)}
-            className="rounded-2xl border-2 p-3 items-center justify-center"
-            style={{
-              width: columns === 2 ? '48%' : columns === 3 ? '31%' : '100%',
-              borderColor: selected ? '#111827' : '#E5E7EB',
-              backgroundColor: selected ? '#F9FAFB' : '#FFFFFF',
-            }}
+            style={getCardStyle(selected)}
           >
-            <View
-              className="w-12 h-12 rounded-full items-center justify-center mb-2"
-              style={{ backgroundColor: option.iconColor || '#F3F4F6' }}
-            >
+            <View style={[iconContainerStyle, { backgroundColor: option.iconColor || '#F3F4F6' }]}>
               {option.renderIcon ? (
                 option.renderIcon({
                   size: 24,
@@ -377,15 +550,8 @@ export function CardSelector({
                 <Symbol name="questionmark.circle" size={24} color="#9CA3AF" />
               )}
             </View>
-            <Text
-              className="text-sm font-semibold text-center"
-              style={{ color: selected ? '#111827' : '#6B7280' }}
-            >
-              {option.label}
-            </Text>
-            {option.sublabel && (
-              <Text className="text-xs text-surface-500 text-center mt-0.5">{option.sublabel}</Text>
-            )}
+            <Text style={getLabelTextStyle(selected)}>{option.label}</Text>
+            {option.sublabel && <Text style={sublabelTextStyle}>{option.sublabel}</Text>}
           </TouchableOpacity>
         );
       })}
@@ -422,17 +588,52 @@ export function FormInput({
   autoFocus = false,
   style,
 }: FormInputProps) {
+  const containerStyle: ViewStyle = {
+    marginBottom: spacing[6],
+  };
+
+  const labelStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.surface[700],
+    marginBottom: spacing[2],
+  };
+
+  const requiredStyle: TextStyle = {
+    color: colors.error,
+  };
+
+  const inputContainerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: multiline ? 'flex-start' : 'center',
+    backgroundColor: colors.surface[100],
+    borderWidth: 2,
+    borderColor: colors.surface[200],
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+  };
+
+  const prefixSuffixStyle: TextStyle = {
+    fontSize: fontSize.base,
+    color: colors.surface[500],
+  };
+
+  const inputStyle: TextStyle = {
+    flex: 1,
+    paddingHorizontal: spacing[4],
+    paddingVertical: 14,
+    fontSize: fontSize.base,
+    color: colors.surface[900],
+  };
+
   return (
-    <View style={style} className="mb-6">
-      <Text className="text-sm font-medium text-surface-700 mb-2">
+    <View style={[containerStyle, style]}>
+      <Text style={labelStyle}>
         {label}
-        {required && <Text className="text-red-500"> *</Text>}
+        {required && <Text style={requiredStyle}> *</Text>}
       </Text>
-      <View
-        className="flex-row items-center bg-white border-2 border-surface-200 rounded-xl overflow-hidden"
-        style={multiline ? { alignItems: 'flex-start' } : undefined}
-      >
-        {prefix && <Text className="text-base text-surface-500 pl-4">{prefix}</Text>}
+      <View style={inputContainerStyle}>
+        {prefix && <Text style={[prefixSuffixStyle, { paddingLeft: spacing[4] }]}>{prefix}</Text>}
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -442,12 +643,12 @@ export function FormInput({
           multiline={multiline}
           numberOfLines={numberOfLines}
           autoFocus={autoFocus}
-          className="flex-1 px-4 py-3.5 text-base text-surface-900"
-          style={
-            multiline ? { minHeight: numberOfLines * 24, textAlignVertical: 'top' } : undefined
-          }
+          style={[
+            inputStyle,
+            multiline && { minHeight: numberOfLines * 24, textAlignVertical: 'top' },
+          ]}
         />
-        {suffix && <Text className="text-base text-surface-500 pr-4">{suffix}</Text>}
+        {suffix && <Text style={[prefixSuffixStyle, { paddingRight: spacing[4] }]}>{suffix}</Text>}
       </View>
     </View>
   );
@@ -462,26 +663,65 @@ interface ToggleProps {
 }
 
 export function Toggle({ label, description, value, onValueChange, style }: ToggleProps) {
+  const containerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing[4],
+    marginBottom: spacing[4],
+  };
+
+  const labelContainerStyle: ViewStyle = {
+    flex: 1,
+    marginRight: spacing[4],
+  };
+
+  const labelTextStyle: TextStyle = {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.medium,
+    color: colors.surface[900],
+  };
+
+  const descriptionTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    color: colors.surface[500],
+    marginTop: spacing[1],
+  };
+
+  const toggleContainerStyle: ViewStyle = {
+    width: 56,
+    height: 32,
+    borderRadius: borderRadius.full,
+    padding: spacing[1],
+    justifyContent: 'center',
+    backgroundColor: value ? '#111827' : '#E5E7EB',
+  };
+
+  const toggleCircleStyle: ViewStyle = {
+    width: 24,
+    height: 24,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surface[100],
+  };
+
   return (
     <TouchableOpacity
       onPress={() => onValueChange(!value)}
-      style={style}
-      className="flex-row items-center justify-between py-4 mb-4"
+      style={[containerStyle, style]}
       activeOpacity={0.7}
     >
-      <View className="flex-1 mr-4">
-        <Text className="text-base font-medium text-surface-900">{label}</Text>
-        {description && <Text className="text-sm text-surface-500 mt-1">{description}</Text>}
+      <View style={labelContainerStyle}>
+        <Text style={labelTextStyle}>{label}</Text>
+        {description && <Text style={descriptionTextStyle}>{description}</Text>}
       </View>
-      <View
-        className="w-14 h-8 rounded-full p-1 justify-center"
-        style={{ backgroundColor: value ? '#111827' : '#E5E7EB' }}
-      >
+      <View style={toggleContainerStyle}>
         <Animated.View
-          className="w-6 h-6 rounded-full bg-white"
-          style={{
-            transform: [{ translateX: value ? 22 : 0 }],
-          }}
+          style={[
+            toggleCircleStyle,
+            {
+              transform: [{ translateX: value ? 22 : 0 }],
+            },
+          ]}
         />
       </View>
     </TouchableOpacity>
@@ -505,19 +745,43 @@ export function InfoCard({
   message,
   style,
 }: InfoCardProps) {
+  const containerStyle: ViewStyle = {
+    backgroundColor,
+    borderRadius: borderRadius['2xl'],
+    padding: spacing[4],
+    marginBottom: spacing[6],
+  };
+
+  const contentContainerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  };
+
+  const textContainerStyle: ViewStyle = {
+    flex: 1,
+    marginLeft: spacing[3],
+  };
+
+  const titleTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    marginBottom: spacing[1],
+    color: iconColor,
+  };
+
+  const messageTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    color: iconColor,
+    opacity: 0.8,
+  };
+
   return (
-    <View style={[{ backgroundColor }, style]} className="rounded-2xl p-4 mb-6">
-      <View className="flex-row items-start">
+    <View style={[containerStyle, style]}>
+      <View style={contentContainerStyle}>
         <Symbol name={icon} size={24} color={iconColor} />
-        <View className="flex-1 ml-3">
-          {title && (
-            <Text className="text-sm font-semibold mb-1" style={{ color: iconColor }}>
-              {title}
-            </Text>
-          )}
-          <Text className="text-sm" style={{ color: iconColor, opacity: 0.8 }}>
-            {message}
-          </Text>
+        <View style={textContainerStyle}>
+          {title && <Text style={titleTextStyle}>{title}</Text>}
+          <Text style={messageTextStyle}>{message}</Text>
         </View>
       </View>
     </View>
@@ -536,14 +800,50 @@ interface PreviewCardProps {
 }
 
 export function PreviewCard({ title, items, backgroundColor = '#F0FDF4' }: PreviewCardProps) {
+  const containerStyle: ViewStyle = {
+    borderRadius: borderRadius['2xl'],
+    padding: spacing[5],
+    marginBottom: spacing[6],
+    backgroundColor,
+  };
+
+  const titleTextStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.bold,
+    letterSpacing: 1.2,
+    color: colors.surface[600],
+    marginBottom: spacing[4],
+  };
+
+  const itemsContainerStyle: ViewStyle = {
+    gap: spacing[3],
+  };
+
+  const itemStyle: ViewStyle = {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  };
+
+  const labelTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    color: colors.surface[600],
+  };
+
+  const valueTextStyle: TextStyle = {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
+    color: colors.surface[900],
+  };
+
   return (
-    <View className="rounded-2xl p-5 mb-6" style={{ backgroundColor }}>
-      <Text className="text-xs font-bold tracking-wider text-surface-600 mb-4">{title}</Text>
-      <View className="gap-3">
+    <View style={containerStyle}>
+      <Text style={titleTextStyle}>{title}</Text>
+      <View style={itemsContainerStyle}>
         {items.map((item, index) => (
-          <View key={index} className="flex-row justify-between items-baseline">
-            <Text className="text-sm text-surface-600">{item.label}</Text>
-            <Text className="text-xl font-bold text-surface-900">{item.value}</Text>
+          <View key={index} style={itemStyle}>
+            <Text style={labelTextStyle}>{item.label}</Text>
+            <Text style={valueTextStyle}>{item.value}</Text>
           </View>
         ))}
       </View>

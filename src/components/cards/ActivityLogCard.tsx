@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
@@ -81,40 +81,77 @@ export function ActivityLogCard({
       })
     : date;
 
+  const containerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#ffffff',
+  };
+
+  const iconContainerStyle: ViewStyle = {
+    width: 40,
+    height: 40,
+    borderRadius: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    backgroundColor: `${logType.color}26`,
+  };
+
+  const contentContainerStyle: ViewStyle = {
+    flex: 1,
+  };
+
+  const descriptionTextStyle: TextStyle = {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+  };
+
+  const metaContainerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  };
+
+  const farmTextStyle: TextStyle = {
+    fontSize: 12,
+    color: '#8e8e93',
+  };
+
+  const separatorTextStyle: TextStyle = {
+    fontSize: 12,
+    marginHorizontal: 4,
+    color: '#c7c7cc',
+  };
+
+  const dateTextStyle: TextStyle = {
+    fontSize: 12,
+    color: '#c7c7cc',
+  };
+
   const content = (
-    <View
-      className="flex-row items-center rounded-xl px-3 py-2"
-      style={{
-        backgroundColor: '#ffffff',
-      }}
-    >
+    <View style={containerStyle}>
       {/* Icon */}
-      <View
-        className="w-10 h-10 rounded-full items-center justify-center mr-3"
-        style={{ backgroundColor: `${logType.color}26` }}
-      >
+      <View style={iconContainerStyle}>
         <Symbol name={logType.icon} size={18} color={logType.color} />
       </View>
 
       {/* Content */}
-      <View className="flex-1">
-        <Text className="text-sm font-semibold" style={{ color: '#000000' }} numberOfLines={1}>
+      <View style={contentContainerStyle}>
+        <Text style={descriptionTextStyle} numberOfLines={1}>
           {displayDescription || logType.label}
         </Text>
-        <View className="flex-row items-center mt-1">
+        <View style={metaContainerStyle}>
           {farmName && (
             <>
-              <Text className="text-xs" style={{ color: '#8e8e93' }}>
-                {farmName}
-              </Text>
-              <Text className="text-xs mx-1" style={{ color: '#c7c7cc' }}>
-                •
-              </Text>
+              <Text style={farmTextStyle}>{farmName}</Text>
+              <Text style={separatorTextStyle}>•</Text>
             </>
           )}
-          <Text className="text-xs" style={{ color: '#c7c7cc' }}>
-            {displayDate}
-          </Text>
+          <Text style={dateTextStyle}>{displayDate}</Text>
         </View>
       </View>
 
@@ -125,7 +162,7 @@ export function ActivityLogCard({
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} className="active:opacity-80">
+      <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
         {content}
       </Pressable>
     );
