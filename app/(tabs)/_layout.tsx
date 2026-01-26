@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores';
+import { Symbol } from '@/components/ui/Symbol';
 
 // Tab icon component
-function TabBarIcon({ name, color }: { name: keyof typeof Ionicons.glyphMap; color: string }) {
-  return <Ionicons name={name} size={24} color={color} />;
+function TabBarIcon({ name, color }: { name: string; color: string }) {
+  return <Symbol name={name} size={24} color={color} />;
 }
 
 export default function TabLayout() {
@@ -87,7 +87,10 @@ export default function TabLayout() {
           options={{
             title: 'Dashboard',
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'grid' : 'grid-outline'} color={color} />
+              <TabBarIcon
+                name={focused ? 'square.grid.2x2.fill' : 'square.grid.2x2'}
+                color={color}
+              />
             ),
           }}
         />
@@ -97,7 +100,7 @@ export default function TabLayout() {
             title: 'Explore',
             headerShown: false,
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'compass' : 'compass-outline'} color={color} />
+              <TabBarIcon name={focused ? 'compass.fill' : 'compass'} color={color} />
             ),
           }}
         />
@@ -106,7 +109,10 @@ export default function TabLayout() {
           options={{
             title: 'Tools',
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'calculator' : 'calculator-outline'} color={color} />
+              <TabBarIcon
+                name={focused ? 'wrench.and.screwdriver.fill' : 'wrench.and.screwdriver'}
+                color={color}
+              />
             ),
           }}
         />
@@ -115,7 +121,7 @@ export default function TabLayout() {
           options={{
             title: 'Settings',
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'settings' : 'settings-outline'} color={color} />
+              <TabBarIcon name={focused ? 'gearshape.fill' : 'gearshape'} color={color} />
             ),
           }}
         />

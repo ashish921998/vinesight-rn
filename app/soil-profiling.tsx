@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFarm } from '../src/hooks';
@@ -114,7 +114,7 @@ export default function SoilProfilingScreen() {
               </Text>
             </View>
             <TouchableOpacity onPress={() => handleDeleteProfile(profile)} className="p-2">
-              <Ionicons name="trash-outline" size={18} color="#ff3b30" />
+              <Symbol name="trash" size={18} color="#ff3b30" />
             </TouchableOpacity>
           </View>
         </View>
@@ -165,7 +165,7 @@ export default function SoilProfilingScreen() {
         className="w-20 h-20 rounded-full items-center justify-center"
         style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
       >
-        <Ionicons name="layers" size={40} color="rgba(64, 128, 89, 0.5)" />
+        <Symbol name="layers" size={40} color="rgba(64, 128, 89, 0.5)" />
       </View>
       <Text className="text-lg font-semibold mt-4" style={{ color: '#1c1c1e' }}>
         No Soil Profiles
@@ -178,7 +178,7 @@ export default function SoilProfilingScreen() {
         className="mt-4 px-6 py-3 rounded-full flex-row items-center"
         style={{ backgroundColor: '#408059' }}
       >
-        <Ionicons name="add" size={20} color="#ffffff" />
+        <Symbol name="plus" size={20} color="#ffffff" />
         <Text className="text-white font-semibold ml-1">Add First Profile</Text>
       </TouchableOpacity>
     </View>
@@ -188,7 +188,7 @@ export default function SoilProfilingScreen() {
     if (!trendsData || !profiles || profiles.length < 2) {
       return (
         <View className="flex-1 items-center justify-center py-16">
-          <Ionicons name="analytics-outline" size={48} color="#8e8e93" />
+          <Symbol name="analytics-outline" size={48} color="#8e8e93" />
           <Text className="text-lg font-semibold mt-4" style={{ color: '#1c1c1e' }}>
             Not Enough Data
           </Text>
@@ -239,7 +239,7 @@ export default function SoilProfilingScreen() {
             Recent Change
           </Text>
           <View className="flex-row items-center">
-            <Ionicons
+            <Symbol
               name={
                 trendsData.moistureChange !== null && trendsData.moistureChange >= 0
                   ? 'arrow-up'
@@ -297,7 +297,7 @@ export default function SoilProfilingScreen() {
     return (
       <SafeAreaView className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
         <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="layers-outline" size={64} color="#8e8e93" />
+          <Symbol name="layers-outline" size={64} color="#8e8e93" />
           <Text className="text-lg font-semibold mt-4" style={{ color: '#1c1c1e' }}>
             Select a Farm First
           </Text>
@@ -335,9 +335,9 @@ export default function SoilProfilingScreen() {
         }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mr-3">
-          <Ionicons name="arrow-back" size={24} color="#408059" />
+          <Symbol name="chevron.left" size={24} color="#408059" />
         </TouchableOpacity>
-        <Ionicons name="layers" size={24} color="#408059" />
+        <Symbol name="layers" size={24} color="#408059" />
         <View className="ml-2 flex-1">
           <Text className="text-xl font-bold" style={{ color: '#1c1c1e' }}>
             Soil Profiling
@@ -349,7 +349,7 @@ export default function SoilProfilingScreen() {
           )}
         </View>
         <TouchableOpacity onPress={() => setShowAddModal(true)} className="p-2">
-          <Ionicons name="add-circle" size={28} color="#408059" />
+          <Symbol name="add-circle" size={28} color="#408059" />
         </TouchableOpacity>
       </View>
 

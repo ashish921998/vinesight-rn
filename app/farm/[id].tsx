@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useFarm, useFarmRecords, useWeather, useDeleteFarm } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/useTasks';
 import { StatsCard, ActivityLogCard } from '@/components/cards';
@@ -27,17 +27,17 @@ import { PRIORITY_INFO } from '@/types/task';
 interface WorkboardAction {
   id: string;
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   color: string;
   route?: string;
 }
 
 const WORKBOARD_ACTIONS: WorkboardAction[] = [
-  { id: 'warehouse', title: 'Warehouse', icon: 'cube', color: '#4D857A' },
-  { id: 'ai', title: 'AI', icon: 'bulb', color: '#408059' },
-  { id: 'lab', title: 'Lab', icon: 'flask', color: '#598C6B' },
-  { id: 'reports', title: 'Reports', icon: 'stats-chart', color: '#669475' },
-  { id: 'soil', title: 'Soil Moisture', icon: 'layers', color: '#597A61' },
+  { id: 'warehouse', title: 'Warehouse', icon: 'cube.fill', color: '#4D857A' },
+  { id: 'ai', title: 'AI', icon: 'lightbulb.fill', color: '#408059' },
+  { id: 'lab', title: 'Lab', icon: 'flask.fill', color: '#598C6B' },
+  { id: 'reports', title: 'Reports', icon: 'chart.bar.fill', color: '#669475' },
+  { id: 'soil', title: 'Soil Moisture', icon: 'square.stack.3d.up.fill', color: '#597A61' },
 ];
 
 export default function FarmDetailScreen() {
@@ -303,7 +303,7 @@ export default function FarmDetailScreen() {
           padding: 32,
         }}
       >
-        <Ionicons name="alert-circle-outline" size={48} color="#9CA3AF" />
+        <Symbol name="alert-circle-outline" size={48} color="#9CA3AF" />
         <Text className="text-lg font-semibold text-surface-900 mt-4">Farm Not Found</Text>
         <TouchableOpacity onPress={() => router.back()} className="mt-4">
           <Text className="text-primary-600 font-medium">Go Back</Text>
@@ -326,7 +326,7 @@ export default function FarmDetailScreen() {
                 className="mr-4"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="create-outline" size={24} color="#408059" />
+                <Symbol name="create-outline" size={24} color="#408059" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleDeleteFarm}
@@ -338,7 +338,7 @@ export default function FarmDetailScreen() {
                 {deleteFarmMutation.isPending ? (
                   <ActivityIndicator size="small" color="#DC2626" />
                 ) : (
-                  <Ionicons name="trash-outline" size={24} color="#DC2626" />
+                  <Symbol name="trash" size={24} color="#DC2626" />
                 )}
               </TouchableOpacity>
             </View>
@@ -353,7 +353,7 @@ export default function FarmDetailScreen() {
                   className="flex-row items-center px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: '#408059' }}
                 >
-                  <Ionicons name="resize" size={10} color="#FFFFFF" />
+                  <Symbol name="resize" size={10} color="#FFFFFF" />
                   <Text className="text-xs font-bold text-white ml-1">
                     {farm.area?.toFixed(1)} acres
                   </Text>
@@ -386,7 +386,7 @@ export default function FarmDetailScreen() {
                 <View className="flex-1">
                   <View className="flex-row items-center">
                     <View className="w-12 h-12 bg-primary-100 rounded-xl items-center justify-center">
-                      <Ionicons name="leaf" size={24} color="#408059" />
+                      <Symbol name="leaf.fill" size={24} color="#408059" />
                     </View>
                     <View className="ml-3 flex-1">
                       <View className="flex-row items-center">
@@ -396,7 +396,7 @@ export default function FarmDetailScreen() {
                             className="ml-2 flex-row items-center px-2 py-0.5 rounded-full"
                             style={{ backgroundColor: '#F59E0B' }}
                           >
-                            <Ionicons name="cut-outline" size={10} color="#FFFFFF" />
+                            <Symbol name="cut-outline" size={10} color="#FFFFFF" />
                             <Text className="text-xs font-bold text-white ml-1">
                               {daysSincePruning}d
                             </Text>
@@ -411,7 +411,7 @@ export default function FarmDetailScreen() {
 
                   {farm.region && (
                     <View className="flex-row items-center mt-3">
-                      <Ionicons name="location-outline" size={16} color="#6B7280" />
+                      <Symbol name="location-outline" size={16} color="#6B7280" />
                       <Text className="text-sm text-surface-600 ml-1">{farm.region}</Text>
                     </View>
                   )}
@@ -424,7 +424,7 @@ export default function FarmDetailScreen() {
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center">
                       <View className="w-8 h-8 bg-sky-100 rounded-lg items-center justify-center">
-                        <Ionicons name="partly-sunny" size={16} color="#0284C7" />
+                        <Symbol name="partly-sunny" size={16} color="#0284C7" />
                       </View>
                       <View className="ml-2">
                         <Text className="text-xs text-surface-500">Current Weather</Text>
@@ -517,7 +517,7 @@ export default function FarmDetailScreen() {
                         backgroundColor: `${action.color}1A`,
                       }}
                     >
-                      <Ionicons name={action.icon} size={18} color={action.color} />
+                      <Symbol name={action.icon} size={18} color={action.color} />
                     </View>
                     <Text className="text-xs font-medium text-surface-600 text-center leading-tight">
                       {action.title}
@@ -575,7 +575,7 @@ export default function FarmDetailScreen() {
                     className="w-16 h-16 rounded-full items-center justify-center mb-4"
                     style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
                   >
-                    <Ionicons name="document-text-outline" size={32} color="#9CA3AF" />
+                    <Symbol name="doc.text" size={32} color="#9CA3AF" />
                   </View>
                   <Text className="text-base font-semibold text-surface-900">
                     No Activities Yet
@@ -609,7 +609,7 @@ export default function FarmDetailScreen() {
                             task.completed ? 'bg-green-500 border-green-500' : 'border-surface-300'
                           }`}
                         >
-                          {task.completed && <Ionicons name="checkmark" size={18} color="white" />}
+                          {task.completed && <Symbol name="checkmark" size={18} color="white" />}
                         </TouchableOpacity>
 
                         <View className="flex-1">
@@ -634,7 +634,7 @@ export default function FarmDetailScreen() {
                                 overdue ? 'bg-red-100' : 'bg-surface-100'
                               } px-2 py-0.5 rounded`}
                             >
-                              <Ionicons
+                              <Symbol
                                 name="calendar"
                                 size={12}
                                 color={overdue ? '#DC2626' : '#6B7280'}
@@ -666,7 +666,7 @@ export default function FarmDetailScreen() {
                             onPress={() => handleDeleteTask(task.id!, task.title)}
                             className="p-2"
                           >
-                            <Ionicons name="trash-outline" size={18} color="#DC2626" />
+                            <Symbol name="trash" size={18} color="#DC2626" />
                           </TouchableOpacity>
                         )}
                       </View>
@@ -685,7 +685,7 @@ export default function FarmDetailScreen() {
                   className="w-16 h-16 rounded-full items-center justify-center mb-4"
                   style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
                 >
-                  <Ionicons name="checkbox-outline" size={32} color="#9CA3AF" />
+                  <Symbol name="checkbox-outline" size={32} color="#9CA3AF" />
                 </View>
                 <Text className="text-base font-semibold text-surface-900">No Tasks Yet</Text>
                 <Text className="text-sm text-surface-500 text-center mt-1">
@@ -703,7 +703,7 @@ export default function FarmDetailScreen() {
         activeOpacity={0.8}
         onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
       >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
+        <Symbol name="plus" size={28} color="#FFFFFF" />
       </TouchableOpacity>
 
       {/* Add Entry Modal */}

@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { router } from 'expo-router';
 import { useOnboardingStore } from '../src/stores/onboardingStore';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
@@ -89,7 +89,7 @@ export default function OnboardingScreen() {
   const renderWelcomeStep = () => (
     <View className="flex-1 items-center justify-center px-8">
       <View className="w-32 h-32 rounded-full bg-green-100 items-center justify-center mb-8">
-        <Ionicons name="leaf" size={64} color="#1a5d1a" />
+        <Symbol name="leaf.fill" size={64} color="#1a5d1a" />
       </View>
       <Text className="text-3xl font-bold text-gray-800 text-center mb-3">
         Welcome to Vinesight
@@ -115,11 +115,7 @@ export default function OnboardingScreen() {
             className="w-12 h-12 rounded-xl items-center justify-center mr-4"
             style={{ backgroundColor: `${feature.color}15` }}
           >
-            <Ionicons
-              name={feature.icon as keyof typeof Ionicons.glyphMap}
-              size={24}
-              color={feature.color}
-            />
+            <Symbol name={feature.icon} size={24} color={feature.color} />
           </View>
           <View className="flex-1">
             <Text className="text-base font-semibold text-gray-800">{feature.title}</Text>
@@ -142,7 +138,7 @@ export default function OnboardingScreen() {
       {/* Country Selection */}
       <View className="mb-6">
         <View className="flex-row items-center mb-3">
-          <Ionicons name="globe" size={20} color="#1a5d1a" />
+          <Symbol name="globe" size={20} color="#1a5d1a" />
           <Text className="text-base font-semibold text-gray-800 ml-2">Country</Text>
         </View>
         <TouchableOpacity
@@ -152,11 +148,7 @@ export default function OnboardingScreen() {
           <Text className={`text-base ${selectedCountry ? 'text-gray-800' : 'text-gray-400'}`}>
             {selectedCountry || 'Select a country'}
           </Text>
-          <Ionicons
-            name={showCountryPicker ? 'chevron-up' : 'chevron-down'}
-            size={20}
-            color="#666"
-          />
+          <Symbol name={showCountryPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
         </TouchableOpacity>
 
         {showCountryPicker && (
@@ -188,7 +180,7 @@ export default function OnboardingScreen() {
       {/* Area Unit Selection */}
       <View className="mb-6">
         <View className="flex-row items-center mb-3">
-          <Ionicons name="resize" size={20} color="#1a5d1a" />
+          <Symbol name="resize" size={20} color="#1a5d1a" />
           <Text className="text-base font-semibold text-gray-800 ml-2">Area Unit</Text>
         </View>
         <View className="flex-row gap-3">
@@ -232,7 +224,7 @@ export default function OnboardingScreen() {
   const renderNotificationsStep = () => (
     <View className="flex-1 items-center justify-center px-8">
       <View className="w-24 h-24 rounded-full bg-blue-100 items-center justify-center mb-8">
-        <Ionicons name="notifications" size={48} color="#3B82F6" />
+        <Symbol name="notifications" size={48} color="#3B82F6" />
       </View>
       <Text className="text-2xl font-bold text-gray-800 text-center mb-3">Stay Updated</Text>
       <Text className="text-gray-500 text-center mb-6">
@@ -240,15 +232,15 @@ export default function OnboardingScreen() {
       </Text>
       <View className="bg-blue-50 p-4 rounded-xl">
         <View className="flex-row items-center mb-2">
-          <Ionicons name="water" size={20} color="#3B82F6" />
+          <Symbol name="drop.fill" size={20} color="#3B82F6" />
           <Text className="text-blue-700 ml-2">Irrigation reminders</Text>
         </View>
         <View className="flex-row items-center mb-2">
-          <Ionicons name="alarm" size={20} color="#3B82F6" />
+          <Symbol name="alarm" size={20} color="#3B82F6" />
           <Text className="text-blue-700 ml-2">Task deadlines</Text>
         </View>
         <View className="flex-row items-center">
-          <Ionicons name="warning" size={20} color="#3B82F6" />
+          <Symbol name="warning" size={20} color="#3B82F6" />
           <Text className="text-blue-700 ml-2">Weather alerts</Text>
         </View>
       </View>
@@ -258,7 +250,7 @@ export default function OnboardingScreen() {
   const renderCompleteStep = () => (
     <View className="flex-1 items-center justify-center px-8">
       <View className="w-24 h-24 rounded-full bg-green-100 items-center justify-center mb-8">
-        <Ionicons name="checkmark-circle" size={64} color="#1a5d1a" />
+        <Symbol name="checkmark.circle.fill" size={64} color="#1a5d1a" />
       </View>
       <Text className="text-2xl font-bold text-gray-800 text-center mb-3">
         You&apos;re All Set!

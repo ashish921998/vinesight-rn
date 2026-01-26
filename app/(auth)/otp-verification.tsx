@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores';
 import { Button, OTPInput } from '@/components/ui';
+import { Symbol } from '@/components/ui/Symbol';
 
 const RESEND_COOLDOWN = 60; // seconds
 
@@ -104,7 +104,7 @@ export default function OTPVerificationScreen() {
       {/* Header */}
       <View className="items-center mt-20 mb-8">
         <View className="w-20 h-20 rounded-full bg-primary-100 items-center justify-center mb-6">
-          <Ionicons name="shield-checkmark" size={40} color="#408059" />
+          <Symbol name="checkmark.shield.fill" size={40} color="#408059" />
         </View>
 
         <Text className="text-2xl font-bold text-surface-900 text-center">

@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCreateFarm } from '@/hooks';
@@ -46,7 +46,7 @@ function Section({
       >
         <Text className="text-base font-semibold text-surface-900">{title}</Text>
         {onToggle && (
-          <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#6B7280" />
+          <Symbol name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#6B7280" />
         )}
       </TouchableOpacity>
       {isExpanded && <View className="p-4">{children}</View>}
@@ -194,7 +194,7 @@ export default function AddFarmScreen() {
           headerTintColor: '#111827',
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="mr-4">
-              <Ionicons name="close" size={24} color="#111827" />
+              <Symbol name="xmark" size={24} color="#111827" />
             </TouchableOpacity>
           ),
         }}
@@ -213,7 +213,7 @@ export default function AddFarmScreen() {
             <View className="bg-white rounded-2xl p-4 mb-4 border border-surface-100">
               <View className="flex-row items-center">
                 <View className="w-10 h-10 rounded-xl items-center justify-center bg-primary-100">
-                  <Ionicons name="leaf-outline" size={20} color="#408059" />
+                  <Symbol name="leaf" size={20} color="#408059" />
                 </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-base font-semibold text-surface-900">Farm Details</Text>
@@ -295,7 +295,7 @@ export default function AddFarmScreen() {
                   >
                     {cropVariety || 'Select variety'}
                   </Text>
-                  <Ionicons name="chevron-down" size={20} color="#6B7280" />
+                  <Symbol name="chevron.down" size={20} color="#6B7280" />
                 </TouchableOpacity>
 
                 {cropVariety === 'Custom' && (
@@ -314,7 +314,7 @@ export default function AddFarmScreen() {
                   className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center"
                   onPress={() => setShowDatePicker(true)}
                 >
-                  <Ionicons name="calendar-outline" size={20} color="#6B7280" />
+                  <Symbol name="calendar" size={20} color="#6B7280" />
                   <Text className="text-base text-surface-900 ml-3">
                     {plantingDate.toLocaleDateString()}
                   </Text>
@@ -392,7 +392,7 @@ export default function AddFarmScreen() {
                   onPress={() => setShowPruningDatePicker(true)}
                 >
                   <View className="flex-row items-center">
-                    <Ionicons name="cut-outline" size={20} color="#6B7280" />
+                    <Symbol name="cut-outline" size={20} color="#6B7280" />
                     <Text
                       className={`text-base ml-3 ${
                         dateOfPruning ? 'text-surface-900' : 'text-surface-400'
@@ -406,7 +406,7 @@ export default function AddFarmScreen() {
                       onPress={() => setDateOfPruning(null)}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                      <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                      <Symbol name="xmark.circle.fill" size={20} color="#9CA3AF" />
                     </TouchableOpacity>
                   )}
                 </TouchableOpacity>
@@ -443,13 +443,13 @@ export default function AddFarmScreen() {
             <View className="flex-row items-center justify-between p-4 border-b border-surface-200">
               <Text className="text-lg font-semibold text-surface-900">Select Variety</Text>
               <TouchableOpacity onPress={() => setShowVarietyPicker(false)}>
-                <Ionicons name="close" size={24} color="#111827" />
+                <Symbol name="xmark" size={24} color="#111827" />
               </TouchableOpacity>
             </View>
 
             <View className="px-4 py-3 border-b border-surface-100">
               <View className="flex-row items-center bg-surface-50 rounded-xl px-4 py-2.5">
-                <Ionicons name="search" size={20} color="#9CA3AF" />
+                <Symbol name="search" size={20} color="#9CA3AF" />
                 <TextInput
                   className="flex-1 ml-2 text-base text-surface-900"
                   placeholder="Search varieties..."

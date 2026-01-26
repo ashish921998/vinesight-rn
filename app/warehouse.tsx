@@ -9,8 +9,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Symbol } from '@/components/ui/Symbol';
 import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import AddWarehouseItemModal from '../src/components/screens/AddWarehouseItemModal';
@@ -124,7 +124,7 @@ export default function WarehouseScreen() {
               }}
               className="mr-4"
             >
-              <Ionicons name="add-circle" size={28} color="#408059" />
+              <Symbol name="plus.circle.fill" size={28} color="#408059" />
             </TouchableOpacity>
           ),
         }}
@@ -149,8 +149,8 @@ export default function WarehouseScreen() {
                 backgroundColor: COLORS.glass,
               }}
             >
-              <Ionicons
-                name="warning"
+              <Symbol
+                name="exclamationmark.triangle.fill"
                 size={24}
                 color={lowStockItems.length > 0 ? COLORS.lowStock : COLORS.primary}
               />
@@ -165,7 +165,7 @@ export default function WarehouseScreen() {
                 backgroundColor: COLORS.glass,
               }}
             >
-              <Ionicons name="cash" size={24} color={COLORS.primary} />
+              <Symbol name="dollarsign.circle.fill" size={24} color={COLORS.primary} />
               <Text className="text-2xl font-bold text-surface-900 mt-2">
                 {currency === 'INR' ? '₹' : '$'}
                 {totals.value.toLocaleString()}
@@ -181,7 +181,7 @@ export default function WarehouseScreen() {
               style={{ backgroundColor: `${COLORS.lowStock}15` }}
             >
               <View className="flex-row items-center mb-3">
-                <Ionicons name="warning" size={20} color={COLORS.lowStock} />
+                <Symbol name="exclamationmark.triangle.fill" size={20} color={COLORS.lowStock} />
                 <Text className="text-base font-semibold ml-2" style={{ color: COLORS.lowStock }}>
                   Low Stock Alerts
                 </Text>
@@ -209,8 +209,8 @@ export default function WarehouseScreen() {
                         }}
                       >
                         <View className="flex-row items-center">
-                          <Ionicons
-                            name={item.type === 'fertilizer' ? 'leaf' : 'water'}
+                          <Symbol
+                            name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                             size={16}
                             color={COLORS.lowStock}
                           />
@@ -290,7 +290,7 @@ export default function WarehouseScreen() {
                 className="w-16 h-16 rounded-full items-center justify-center"
                 style={{ backgroundColor: `${COLORS.primary}33` }}
               >
-                <Ionicons name="cube-outline" size={32} color={COLORS.primary} />
+                <Symbol name="cube" size={32} color={COLORS.primary} />
               </View>
               <Text className="text-surface-900 font-semibold mt-4 text-center">
                 No items in warehouse
@@ -306,7 +306,7 @@ export default function WarehouseScreen() {
                 className="mt-4 px-6 py-3 rounded-xl flex-row items-center"
                 style={{ backgroundColor: COLORS.primary }}
               >
-                <Ionicons name="add-circle" size={20} color="white" />
+                <Symbol name="plus.circle.fill" size={20} color="white" />
                 <Text className="text-white font-semibold ml-2">Add Item</Text>
               </TouchableOpacity>
             </View>
@@ -340,8 +340,8 @@ export default function WarehouseScreen() {
                           }}
                         >
                           <View className="flex-row items-center">
-                            <Ionicons
-                              name={item.type === 'fertilizer' ? 'leaf' : 'water'}
+                            <Symbol
+                              name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                               size={12}
                               color={itemColor}
                             />
@@ -383,7 +383,7 @@ export default function WarehouseScreen() {
                             ]);
                           }}
                         >
-                          <Ionicons name="ellipsis-horizontal-circle" size={24} color="#6B7280" />
+                          <Symbol name="ellipsis.circle.fill" size={24} color="#6B7280" />
                         </TouchableOpacity>
                       </View>
                       <Text className="text-base font-semibold text-surface-900 mt-2">
@@ -438,7 +438,7 @@ export default function WarehouseScreen() {
           backgroundColor: COLORS.primary,
         }}
       >
-        <Ionicons name="add" size={28} color="white" />
+        <Symbol name="plus" size={28} color="white" />
       </TouchableOpacity>
 
       {/* Modals */}

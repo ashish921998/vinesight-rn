@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useFarms } from '../src/hooks';
 import { useWeatherData } from '../src/hooks/useWeather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
@@ -32,20 +32,20 @@ const SOIL_TYPES: { value: SoilType; label: string }[] = [
 ];
 
 // Weather condition icons
-function getWeatherIconName(conditionCode: number): keyof typeof Ionicons.glyphMap {
+function getWeatherIconName(conditionCode: number): string {
   switch (conditionCode) {
     case 1000:
-      return 'sunny';
+      return 'sun.max.fill';
     case 1003:
-      return 'partly-sunny';
+      return 'cloud.sun.fill';
     case 1006:
-      return 'cloudy';
+      return 'cloud.fill';
     case 1153:
-      return 'rainy';
+      return 'cloud.drizzle.fill';
     case 1186:
-      return 'rainy';
+      return 'cloud.rain.fill';
     default:
-      return 'cloudy';
+      return 'cloud.fill';
   }
 }
 
@@ -112,7 +112,7 @@ export default function WeatherScreen() {
   if (error) {
     return (
       <View className="flex-1 bg-surface-50 items-center justify-center p-6">
-        <Ionicons name="cloud-offline" size={48} color="#9CA3AF" />
+        <Symbol name="cloud.slash.fill" size={48} color="#9CA3AF" />
         <Text className="text-surface-600 mt-4 text-center">Unable to load weather data</Text>
         <Text className="text-surface-500 text-sm mt-2 text-center">{error.message}</Text>
         <TouchableOpacity
@@ -128,7 +128,7 @@ export default function WeatherScreen() {
   if (!farms || farms.length === 0) {
     return (
       <View className="flex-1 bg-surface-50 items-center justify-center p-6">
-        <Ionicons name="leaf" size={48} color="#9CA3AF" />
+        <Symbol name="leaf.fill" size={48} color="#9CA3AF" />
         <Text className="text-surface-600 mt-4 text-center">No farms available</Text>
         <Text className="text-surface-500 text-sm mt-2 text-center">
           Add a farm to see weather data for your location
@@ -156,7 +156,7 @@ export default function WeatherScreen() {
         >
           <View className="flex-row items-center">
             <View className="w-10 h-10 rounded-xl bg-primary-100 items-center justify-center">
-              <Ionicons name="leaf" size={20} color="#408059" />
+              <Symbol name="leaf.fill" size={20} color="#408059" />
             </View>
             <View className="ml-3">
               <Text className="text-base font-semibold text-surface-900">
@@ -169,11 +169,7 @@ export default function WeatherScreen() {
               )}
             </View>
           </View>
-          <Ionicons
-            name={showFarmPicker ? 'chevron-up' : 'chevron-down'}
-            size={20}
-            color="#9CA3AF"
-          />
+          <Symbol name={showFarmPicker ? 'chevron.up' : 'chevron.down'} size={20} color="#9CA3AF" />
         </TouchableOpacity>
         {showFarmPicker && (
           <View className="bg-white rounded-xl mt-2 overflow-hidden">
@@ -198,7 +194,7 @@ export default function WeatherScreen() {
                   {farm.name}
                 </Text>
                 {selectedFarmId === farm.id && (
-                  <Ionicons name="checkmark" size={20} color="#408059" />
+                  <Symbol name="checkmark" size={20} color="#408059" />
                 )}
               </TouchableOpacity>
             ))}
@@ -209,7 +205,7 @@ export default function WeatherScreen() {
       {/* No coordinates warning */}
       {!hasCoordinates && (
         <View className="bg-amber-50 rounded-xl p-4 mb-4 flex-row items-start">
-          <Ionicons name="warning" size={20} color="#F59E0B" />
+          <Symbol name="exclamationmark.triangle.fill" size={20} color="#F59E0B" />
           <Text className="text-amber-800 text-sm ml-3 flex-1">
             This farm doesn&apos;t have location coordinates. Weather data is showing default
             location (Nashik). Add GPS coordinates to get farm-specific weather.
@@ -231,7 +227,7 @@ export default function WeatherScreen() {
             <Text className="text-sm text-surface-900" numberOfLines={1}>
               {growthStage}
             </Text>
-            <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
+            <Symbol name="chevron.down" size={16} color="#9CA3AF" />
           </TouchableOpacity>
           {showGrowthPicker && (
             <View className="bg-white rounded-xl mt-2 absolute top-16 left-0 right-0 z-10 border border-gray-200">
@@ -271,7 +267,7 @@ export default function WeatherScreen() {
             <Text className="text-sm text-surface-900" numberOfLines={1}>
               {SOIL_TYPES.find((s) => s.value === soilType)?.label}
             </Text>
-            <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
+            <Symbol name="chevron.down" size={16} color="#9CA3AF" />
           </TouchableOpacity>
           {showSoilPicker && (
             <View className="bg-white rounded-xl mt-2 absolute top-16 left-0 right-0 z-10 border border-gray-200">
@@ -314,7 +310,7 @@ export default function WeatherScreen() {
               <Text className="text-primary-100 text-base mt-1">{weather.current.condition}</Text>
             </View>
             <View className="items-end">
-              <Ionicons
+              <Symbol
                 name={getWeatherIconName(weather.current.conditionCode)}
                 size={56}
                 color="rgba(255,255,255,0.9)"
@@ -326,28 +322,28 @@ export default function WeatherScreen() {
           </View>
           <View className="flex-row mt-4 pt-4 border-t border-primary-500">
             <View className="flex-1 items-center">
-              <Ionicons name="water" size={18} color="rgba(255,255,255,0.8)" />
+              <Symbol name="drop.fill" size={18} color="rgba(255,255,255,0.8)" />
               <Text className="text-white text-sm font-semibold mt-1">
                 {weather.current.humidity}%
               </Text>
               <Text className="text-primary-200 text-xs">Humidity</Text>
             </View>
             <View className="flex-1 items-center">
-              <Ionicons name="speedometer" size={18} color="rgba(255,255,255,0.8)" />
+              <Symbol name="gauge" size={18} color="rgba(255,255,255,0.8)" />
               <Text className="text-white text-sm font-semibold mt-1">
                 {weather.current.windSpeed} km/h
               </Text>
               <Text className="text-primary-200 text-xs">Wind</Text>
             </View>
             <View className="flex-1 items-center">
-              <Ionicons name="sunny" size={18} color="rgba(255,255,255,0.8)" />
+              <Symbol name="sun.max.fill" size={18} color="rgba(255,255,255,0.8)" />
               <Text className="text-white text-sm font-semibold mt-1">
                 {weather.current.uvIndex}
               </Text>
               <Text className="text-primary-200 text-xs">UV Index</Text>
             </View>
             <View className="flex-1 items-center">
-              <Ionicons name="rainy" size={18} color="rgba(255,255,255,0.8)" />
+              <Symbol name="cloud.rain.fill" size={18} color="rgba(255,255,255,0.8)" />
               <Text className="text-white text-sm font-semibold mt-1">
                 {weather.current.precipitation} mm
               </Text>
@@ -383,7 +379,7 @@ export default function WeatherScreen() {
                 >
                   {getDayName(day.date)}
                 </Text>
-                <Ionicons
+                <Symbol
                   name={getWeatherIconName(day.conditionCode)}
                   size={28}
                   color={index === 0 ? '#408059' : '#6B7280'}
@@ -393,7 +389,7 @@ export default function WeatherScreen() {
                 <Text className="text-xs text-surface-500">{day.minTemp}°</Text>
                 {day.precipitationProbability > 0 && (
                   <View className="flex-row items-center mt-1">
-                    <Ionicons name="water" size={10} color="#3B82F6" />
+                    <Symbol name="drop.fill" size={10} color="#3B82F6" />
                     <Text className="text-xs text-blue-600 ml-0.5">
                       {day.precipitationProbability}%
                     </Text>
@@ -410,7 +406,7 @@ export default function WeatherScreen() {
         <View className="bg-white rounded-2xl p-4 mb-4">
           <View className="flex-row items-center mb-3">
             <View className="w-10 h-10 rounded-xl bg-blue-100 items-center justify-center">
-              <Ionicons name="water" size={20} color="#3B82F6" />
+              <Symbol name="drop.fill" size={20} color="#3B82F6" />
             </View>
             <Text className="text-base font-semibold text-surface-900 ml-3">
               Water Requirements
@@ -454,7 +450,7 @@ export default function WeatherScreen() {
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center">
                 <View className="w-8 h-8 rounded-lg bg-blue-100 items-center justify-center">
-                  <Ionicons name="water" size={16} color="#3B82F6" />
+                  <Symbol name="drop.fill" size={16} color="#3B82F6" />
                 </View>
                 <Text className="text-sm font-semibold text-surface-900 ml-2">Irrigation</Text>
               </View>
@@ -473,7 +469,7 @@ export default function WeatherScreen() {
             <Text className="text-sm text-surface-700">{alerts.irrigation.reason}</Text>
             {alerts.irrigation.recommendations.map((rec, i) => (
               <View key={i} className="flex-row items-start mt-2">
-                <Ionicons name="checkmark-circle" size={14} color="#408059" />
+                <Symbol name="checkmark.circle.fill" size={14} color="#408059" />
                 <Text className="text-xs text-surface-600 ml-2 flex-1">{rec}</Text>
               </View>
             ))}
@@ -484,7 +480,7 @@ export default function WeatherScreen() {
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center">
                 <View className="w-8 h-8 rounded-lg bg-orange-100 items-center justify-center">
-                  <Ionicons name="bug" size={16} color="#F59E0B" />
+                  <Symbol name="ant.fill" size={16} color="#F59E0B" />
                 </View>
                 <Text className="text-sm font-semibold text-surface-900 ml-2">Pest & Disease</Text>
               </View>
@@ -507,7 +503,7 @@ export default function WeatherScreen() {
             ))}
             {alerts.pest.precautions.map((prec, i) => (
               <View key={i} className="flex-row items-start mt-2">
-                <Ionicons name="shield-checkmark" size={14} color="#F59E0B" />
+                <Symbol name="checkmark.shield.fill" size={14} color="#F59E0B" />
                 <Text className="text-xs text-surface-600 ml-2 flex-1">{prec}</Text>
               </View>
             ))}
@@ -518,7 +514,7 @@ export default function WeatherScreen() {
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center">
                 <View className="w-8 h-8 rounded-lg bg-purple-100 items-center justify-center">
-                  <Ionicons name="basket" size={16} color="#8B5CF6" />
+                  <Symbol name="basket.fill" size={16} color="#8B5CF6" />
                 </View>
                 <Text className="text-sm font-semibold text-surface-900 ml-2">
                   Harvest Conditions
@@ -541,7 +537,7 @@ export default function WeatherScreen() {
             <Text className="text-sm text-surface-700">{alerts.harvest.conditions}</Text>
             {alerts.harvest.recommendations.map((rec, i) => (
               <View key={i} className="flex-row items-start mt-2">
-                <Ionicons name="checkmark-circle" size={14} color="#8B5CF6" />
+                <Symbol name="checkmark.circle.fill" size={14} color="#8B5CF6" />
                 <Text className="text-xs text-surface-600 ml-2 flex-1">{rec}</Text>
               </View>
             ))}
@@ -568,8 +564,8 @@ export default function WeatherScreen() {
                         : '#DCFCE7',
                 }}
               >
-                <Ionicons
-                  name="water"
+                <Symbol
+                  name="drop.fill"
                   size={20}
                   color={
                     item.priority === 'high'

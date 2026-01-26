@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFarm } from '../src/hooks';
 import {
@@ -95,7 +95,7 @@ export default function LabTestsScreen() {
                 justifyContent: 'center',
               }}
             >
-              <Ionicons name={isSoil ? 'leaf' : 'leaf-outline'} size={20} color={color} />
+              <Symbol name={isSoil ? 'leaf' : 'leaf-outline'} size={20} color={color} />
             </View>
             <View className="ml-3">
               <Text
@@ -119,7 +119,7 @@ export default function LabTestsScreen() {
             }
             className="p-2"
           >
-            <Ionicons name="trash-outline" size={18} color="#ef4444" />
+            <Symbol name="trash" size={18} color="#ef4444" />
           </TouchableOpacity>
         </View>
 
@@ -179,7 +179,7 @@ export default function LabTestsScreen() {
 
     return (
       <View className="flex-1 items-center justify-center py-16">
-        <Ionicons
+        <Symbol
           name={type === 'soil' ? 'leaf' : 'leaf-outline'}
           size={48}
           color={color}
@@ -195,7 +195,7 @@ export default function LabTestsScreen() {
           onPress={() => setShowAddModal(true)}
           className="mt-4 bg-[#408059] px-6 py-3 rounded-full flex-row items-center"
         >
-          <Ionicons name="add" size={20} color="white" />
+          <Symbol name="plus" size={20} color="white" />
           <Text className="text-white font-semibold ml-1">
             Add {type === 'soil' ? 'Soil' : 'Petiole'} Test
           </Text>
@@ -208,7 +208,7 @@ export default function LabTestsScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
         <View className="flex-1 items-center justify-center">
-          <Ionicons name="alert-circle" size={48} color="#ef4444" />
+          <Symbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text className="text-lg font-semibold text-gray-700 mt-4">Invalid Farm</Text>
           <TouchableOpacity
             onPress={() => router.back()}
@@ -226,9 +226,9 @@ export default function LabTestsScreen() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white/80 backdrop-blur-lg">
         <TouchableOpacity onPress={() => router.back()} className="mr-3">
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Symbol name="chevron.left" size={24} color="#333" />
         </TouchableOpacity>
-        <Ionicons name="flask" size={24} color="#408059" />
+        <Symbol name="flask.fill" size={24} color="#408059" />
         <View className="ml-2 flex-1">
           <Text className="text-xl font-bold text-gray-800">Lab Tests</Text>
           {farm && <Text className="text-xs text-gray-500">{farm.name}</Text>}
@@ -243,14 +243,14 @@ export default function LabTestsScreen() {
           }}
           className="bg-[#408059] px-3 py-2 rounded-full flex-row items-center mr-2"
         >
-          <Ionicons name="trending-up" size={16} color="white" />
+          <Symbol name="arrow.up.right" size={16} color="white" />
           <Text className="text-white font-semibold ml-1.5 text-sm">View Trends</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setShowAddModal(true)}
           className="bg-[#408059] p-2 rounded-full"
         >
-          <Ionicons name="add" size={24} color="white" />
+          <Symbol name="plus" size={24} color="white" />
         </TouchableOpacity>
       </View>
 

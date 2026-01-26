@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCreateFarm } from '@/hooks';
@@ -134,18 +134,14 @@ export default function AddFarmScreen() {
       value: 'Grapes' as CropType,
       label: 'Grapes',
       sublabel: 'Vines',
-      renderIcon: ({ selected, size }) => (
-        <CropIcon name="grapes" size={size} muted={!selected} />
-      ),
+      renderIcon: ({ selected, size }) => <CropIcon name="grapes" size={size} muted={!selected} />,
       iconColor: '#DDD6FE',
     },
     {
       value: 'Mango' as CropType,
       label: 'Mango',
       sublabel: 'Trees',
-      renderIcon: ({ selected, size }) => (
-        <CropIcon name="mango" size={size} muted={!selected} />
-      ),
+      renderIcon: ({ selected, size }) => <CropIcon name="mango" size={size} muted={!selected} />,
       iconColor: '#FED7AA',
     },
     {
@@ -161,18 +157,14 @@ export default function AddFarmScreen() {
       value: 'Citrus' as CropType,
       label: 'Citrus',
       sublabel: 'Trees',
-      renderIcon: ({ selected, size }) => (
-        <CropIcon name="citrus" size={size} muted={!selected} />
-      ),
+      renderIcon: ({ selected, size }) => <CropIcon name="citrus" size={size} muted={!selected} />,
       iconColor: '#FEF08A',
     },
     {
       value: 'Banana' as CropType,
       label: 'Banana',
       sublabel: 'Plants',
-      renderIcon: ({ selected, size }) => (
-        <CropIcon name="banana" size={size} muted={!selected} />
-      ),
+      renderIcon: ({ selected, size }) => <CropIcon name="banana" size={size} muted={!selected} />,
       iconColor: '#FEF3C7',
     },
     {
@@ -264,7 +256,7 @@ export default function AddFarmScreen() {
             >
               {cropVariety || 'Select variety'}
             </Text>
-            <Ionicons name="chevron-down" size={20} color="#6B7280" />
+            <Symbol name="chevron.down" size={20} color="#6B7280" />
           </TouchableOpacity>
 
           {cropVariety === 'Custom' && (
@@ -285,7 +277,7 @@ export default function AddFarmScreen() {
             className="bg-white border-2 border-surface-200 rounded-xl px-4 py-4 flex-row items-center mb-5"
             onPress={() => setShowDatePicker(true)}
           >
-            <Ionicons name="calendar-outline" size={24} color="#6B7280" />
+            <Symbol name="calendar" size={24} color="#6B7280" />
             <Text className="text-base text-surface-900 font-medium ml-3">
               {plantingDate.toLocaleDateString('en-US', {
                 month: 'long',
@@ -354,7 +346,7 @@ export default function AddFarmScreen() {
             onPress={() => setShowPruningDatePicker(true)}
           >
             <View className="flex-row items-center flex-1">
-              <Ionicons name="cut-outline" size={24} color="#6B7280" />
+              <Symbol name="cut-outline" size={24} color="#6B7280" />
               <View className="ml-3 flex-1">
                 <Text className="text-sm text-surface-500">Pruning Date</Text>
                 <Text className="text-base text-surface-900 font-medium mt-0.5">
@@ -373,7 +365,7 @@ export default function AddFarmScreen() {
                 onPress={() => setDateOfPruning(null)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="close-circle" size={24} color="#9CA3AF" />
+                <Symbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
               </TouchableOpacity>
             )}
           </TouchableOpacity>
@@ -399,7 +391,7 @@ export default function AddFarmScreen() {
                 onPress={() => setShowVarietyPicker(false)}
                 className="w-10 h-10 rounded-full bg-surface-100 items-center justify-center"
               >
-                <Ionicons name="close" size={20} color="#111827" />
+                <Symbol name="xmark" size={20} color="#111827" />
               </TouchableOpacity>
             </View>
 
@@ -424,7 +416,7 @@ export default function AddFarmScreen() {
                     </Text>
                     {cropVariety === variety && (
                       <View className="w-6 h-6 rounded-full bg-surface-900 items-center justify-center">
-                        <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                        <Symbol name="checkmark" size={16} color="#FFFFFF" />
                       </View>
                     )}
                   </View>

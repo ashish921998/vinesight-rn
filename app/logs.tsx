@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -361,7 +361,7 @@ export default function LogsScreen() {
           headerRight: () =>
             selectedFarm && (
               <TouchableOpacity onPress={() => setShowAddModal(true)} className="mr-4">
-                <Ionicons name="add-circle" size={28} color="#408059" />
+                <Symbol name="plus.circle.fill" size={28} color="#408059" />
               </TouchableOpacity>
             ),
         }}
@@ -389,8 +389,10 @@ export default function LogsScreen() {
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center flex-1">
                     <View className="w-11 h-11 bg-[#408059]/15 rounded-full items-center justify-center">
-                      <Ionicons
-                        name={selectedFarmId === undefined ? 'layers' : 'leaf'}
+                      <Symbol
+                        name={
+                          selectedFarmId === undefined ? 'square.stack.3d.up.fill' : 'leaf.fill'
+                        }
                         size={22}
                         color="#408059"
                       />
@@ -413,7 +415,7 @@ export default function LogsScreen() {
                       )}
                     </View>
                   </View>
-                  <Ionicons name="chevron-down" size={20} color="#8e8e93" />
+                  <Symbol name="chevron.down" size={20} color="#8e8e93" />
                 </View>
               </TouchableOpacity>
             </View>
@@ -430,7 +432,7 @@ export default function LogsScreen() {
               >
                 {/* Search Bar */}
                 <View className="flex-row items-center bg-[#f9f9f9] rounded-xl px-3 py-2.5">
-                  <Ionicons name="search" size={18} color="#8e8e93" />
+                  <Symbol name="magnifyingglass" size={18} color="#8e8e93" />
                   <TextInput
                     placeholder="Search logs..."
                     value={searchQuery}
@@ -440,7 +442,7 @@ export default function LogsScreen() {
                   />
                   {searchQuery !== '' && (
                     <TouchableOpacity onPress={() => setSearchQuery('')}>
-                      <Ionicons name="close-circle" size={18} color="#8e8e93" />
+                      <Symbol name="xmark.circle.fill" size={18} color="#8e8e93" />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -492,8 +494,22 @@ export default function LogsScreen() {
                               isSelected ? 'bg-[#408059]' : 'bg-[#f9f9f9]'
                             }`}
                           >
-                            <Ionicons
-                              name={logType.icon as keyof typeof Ionicons.glyphMap}
+                            <Symbol
+                              name={
+                                logType.icon === 'water'
+                                  ? 'drop.fill'
+                                  : logType.icon === 'flask'
+                                    ? 'flask.fill'
+                                    : logType.icon === 'basket'
+                                      ? 'basket.fill'
+                                      : logType.icon === 'cash'
+                                        ? 'dollarsign.circle.fill'
+                                        : logType.icon === 'leaf'
+                                          ? 'leaf.fill'
+                                          : logType.icon === 'document-text'
+                                            ? 'doc.text.fill'
+                                            : 'doc.fill'
+                              }
                               size={14}
                               color={isSelected ? '#FFFFFF' : logType.color}
                             />
@@ -572,7 +588,7 @@ export default function LogsScreen() {
                     className="w-16 h-16 rounded-full items-center justify-center mb-4"
                     style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
                   >
-                    <Ionicons name="calendar-outline" size={32} color="#9CA3AF" />
+                    <Symbol name="calendar" size={32} color="#9CA3AF" />
                   </View>
                   <Text className="text-base font-semibold text-[#1c1c1e]">
                     No activity logs found
@@ -598,7 +614,7 @@ export default function LogsScreen() {
                       }}
                     >
                       <View className="flex-row items-center bg-[#f9f9f9] px-2 py-1 rounded-lg">
-                        <Ionicons name="options" size={14} color="#8e8e93" />
+                        <Symbol name="ellipsis" size={14} color="#8e8e93" />
                         <Text className="ml-1 text-xs text-[#8e8e93]">10 per page</Text>
                       </View>
                     </TouchableOpacity>
@@ -621,8 +637,22 @@ export default function LogsScreen() {
                               className="w-11 h-11 rounded-full items-center justify-center"
                               style={{ backgroundColor: `${logType?.color || '#408059'}1A` }}
                             >
-                              <Ionicons
-                                name={logType?.icon as keyof typeof Ionicons.glyphMap}
+                              <Symbol
+                                name={
+                                  logType?.icon === 'water'
+                                    ? 'drop.fill'
+                                    : logType?.icon === 'flask'
+                                      ? 'flask.fill'
+                                      : logType?.icon === 'basket'
+                                        ? 'basket.fill'
+                                        : logType?.icon === 'cash'
+                                          ? 'dollarsign.circle.fill'
+                                          : logType?.icon === 'leaf'
+                                            ? 'leaf.fill'
+                                            : logType?.icon === 'document-text'
+                                              ? 'doc.text.fill'
+                                              : 'doc.fill'
+                                }
                                 size={20}
                                 color={logType?.color || '#408059'}
                               />
@@ -663,7 +693,7 @@ export default function LogsScreen() {
                                   !(selectedFarm || (log.data as { farm_id?: number }).farm_id)
                                 }
                               >
-                                <Ionicons
+                                <Symbol
                                   name="pencil"
                                   size={20}
                                   color={
@@ -679,7 +709,7 @@ export default function LogsScreen() {
                                   setShowDeleteConfirmation(true);
                                 }}
                               >
-                                <Ionicons name="trash" size={20} color="#EF4444" />
+                                <Symbol name="trash" size={20} color="#EF4444" />
                               </TouchableOpacity>
                             </View>
                           </View>
@@ -700,8 +730,8 @@ export default function LogsScreen() {
                           opacity: currentPage === 1 ? 0.5 : 1,
                         }}
                       >
-                        <Ionicons
-                          name="chevron-back"
+                        <Symbol
+                          name="chevron.left"
                           size={18}
                           color={currentPage === 1 ? '#8e8e93' : '#FFFFFF'}
                         />
@@ -748,8 +778,8 @@ export default function LogsScreen() {
                           opacity: currentPage === totalPages ? 0.5 : 1,
                         }}
                       >
-                        <Ionicons
-                          name="chevron-forward"
+                        <Symbol
+                          name="chevron.right"
                           size={18}
                           color={currentPage === totalPages ? '#8e8e93' : '#FFFFFF'}
                         />
@@ -857,8 +887,8 @@ export default function LogsScreen() {
                           : 'rgba(64,128,89,0.15)',
                     }}
                   >
-                    <Ionicons
-                      name="layers"
+                    <Symbol
+                      name="square.stack.3d.up.fill"
                       size={20}
                       color={selectedFarmId === undefined ? '#FFFFFF' : '#408059'}
                     />
@@ -880,7 +910,7 @@ export default function LogsScreen() {
                     </Text>
                   </View>
                   {selectedFarmId === undefined && (
-                    <Ionicons name="checkmark-circle" size={22} color="#FFFFFF" />
+                    <Symbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
                   )}
                 </TouchableOpacity>
 
@@ -905,8 +935,8 @@ export default function LogsScreen() {
                             : 'rgba(64,128,89,0.15)',
                       }}
                     >
-                      <Ionicons
-                        name="leaf"
+                      <Symbol
+                        name="leaf.fill"
                         size={20}
                         color={selectedFarmId === farm.id ? '#FFFFFF' : '#408059'}
                       />
@@ -928,7 +958,7 @@ export default function LogsScreen() {
                       </Text>
                     </View>
                     {selectedFarmId === farm.id && (
-                      <Ionicons name="checkmark-circle" size={22} color="#FFFFFF" />
+                      <Symbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -995,7 +1025,7 @@ export default function LogsScreen() {
                 className="w-14 h-14 rounded-full items-center justify-center"
                 style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
               >
-                <Ionicons name="warning" size={28} color="#EF4444" />
+                <Symbol name="exclamationmark.triangle.fill" size={28} color="#EF4444" />
               </View>
             </View>
             <Text className="text-lg font-bold text-[#1c1c1e] text-center mb-2">Delete Log?</Text>

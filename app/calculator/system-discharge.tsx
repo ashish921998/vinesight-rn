@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 
 type SystemDischargeResults = {
   plantsPerHectare?: number | null;
@@ -160,7 +160,7 @@ export default function SystemDischargeScreen() {
             <View className="bg-white rounded-2xl p-4 shadow-sm">
               <View className="flex-row items-center mb-4">
                 <View className="w-8 h-8 bg-primary-100 rounded-lg items-center justify-center">
-                  <Ionicons name="speedometer" size={18} color="#408059" />
+                  <Symbol name="speedometer" size={18} color="#408059" />
                 </View>
                 <Text className="text-base font-semibold text-surface-900 ml-2">
                   System Parameters
@@ -191,7 +191,7 @@ export default function SystemDischargeScreen() {
               <View className="bg-white rounded-2xl p-4 shadow-sm">
                 <View className="flex-row items-center mb-4">
                   <View className="w-8 h-8 bg-primary-100 rounded-lg items-center justify-center">
-                    <Ionicons name="git-branch" size={18} color="#408059" />
+                    <Symbol name="git-branch" size={18} color="#408059" />
                   </View>
                   <Text className="text-base font-semibold text-surface-900 ml-2">
                     Select Calculation Method
@@ -218,7 +218,7 @@ export default function SystemDischargeScreen() {
                       </Text>
                     </View>
                     {selectedMethod === 1 ? (
-                      <Ionicons name="checkmark-circle" size={18} color="#408059" />
+                      <Symbol name="checkmark.circle.fill" size={18} color="#408059" />
                     ) : null}
                   </View>
                 </TouchableOpacity>
@@ -241,7 +241,7 @@ export default function SystemDischargeScreen() {
                       <Text className="text-xs text-surface-500">Using dripper spacing</Text>
                     </View>
                     {selectedMethod === 2 ? (
-                      <Ionicons name="checkmark-circle" size={18} color="#408059" />
+                      <Symbol name="checkmark.circle.fill" size={18} color="#408059" />
                     ) : null}
                   </View>
                 </TouchableOpacity>
@@ -252,7 +252,7 @@ export default function SystemDischargeScreen() {
               <View className="bg-white rounded-2xl p-4 shadow-sm">
                 <View className="flex-row items-center mb-4">
                   <View className="w-8 h-8 bg-primary-100 rounded-lg items-center justify-center">
-                    <Ionicons name="leaf" size={18} color="#408059" />
+                    <Symbol name="leaf.fill" size={18} color="#408059" />
                   </View>
                   <Text className="text-base font-semibold text-surface-900 ml-2">
                     Method 1: Plants per Hectare
@@ -311,7 +311,7 @@ export default function SystemDischargeScreen() {
               <View className="bg-white rounded-2xl p-4 shadow-sm">
                 <View className="flex-row items-center mb-4">
                   <View className="w-8 h-8 bg-primary-100 rounded-lg items-center justify-center">
-                    <Ionicons name="grid" size={18} color="#408059" />
+                    <Symbol name="square.grid.2x2.fill" size={18} color="#408059" />
                   </View>
                   <Text className="text-base font-semibold text-surface-900 ml-2">
                     Method 2: Dripper Spacing
@@ -369,7 +369,7 @@ export default function SystemDischargeScreen() {
               <View className="bg-white rounded-2xl p-4 shadow-sm">
                 <View className="flex-row items-center mb-4">
                   <View className="w-8 h-8 bg-primary-100 rounded-lg items-center justify-center">
-                    <Ionicons name="checkmark-circle" size={18} color="#408059" />
+                    <Symbol name="checkmark.circle.fill" size={18} color="#408059" />
                   </View>
                   <Text className="text-base font-semibold text-surface-900 ml-2">
                     Calculation Results
@@ -420,7 +420,7 @@ export default function SystemDischargeScreen() {
                 className="bg-white rounded-2xl py-4 items-center border border-surface-200"
               >
                 <View className="flex-row items-center">
-                  <Ionicons name="refresh" size={18} color="#6B7280" />
+                  <Symbol name="refresh" size={18} color="#6B7280" />
                   <Text className="text-surface-600 font-medium ml-2">Reset Calculator</Text>
                 </View>
               </TouchableOpacity>

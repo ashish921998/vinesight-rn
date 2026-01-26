@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useFarm } from '@/hooks/useFarms';
 import { usePetioleTestTrends, PETIOLE_DEFAULT_PARAMS } from '@/hooks/useLabTests';
 import ParameterSelector from '@/components/screens/ParameterSelector';
@@ -39,7 +39,7 @@ export default function PetioleTrendsScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
         <View className="flex-1 items-center justify-center">
-          <Ionicons name="alert-circle" size={48} color="#ef4444" />
+          <Symbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text className="text-lg font-semibold text-gray-700 mt-4">Invalid Farm</Text>
         </View>
       </SafeAreaView>
@@ -64,9 +64,9 @@ export default function PetioleTrendsScreen() {
       {/* Custom Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
         <TouchableOpacity onPress={() => router.back()} className="mr-3">
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Symbol name="chevron.left" size={24} color="#333" />
         </TouchableOpacity>
-        <Ionicons name="analytics" size={24} color="#4C806B" />
+        <Symbol name="chart.bar.fill" size={24} color="#4C806B" />
         <View className="ml-2 flex-1">
           <Text className="text-lg font-bold text-gray-800">Petiole Trends</Text>
           <Text className="text-xs text-gray-500">{farm?.name || 'Farm'}</Text>

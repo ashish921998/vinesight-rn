@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 
 export default function LAICalculatorScreen() {
   const [shootLength, setShootLength] = useState(''); // cm
@@ -117,7 +117,7 @@ export default function LAICalculatorScreen() {
             <View className="bg-white rounded-2xl p-4 shadow-sm">
               <View className="flex-row items-center mb-4">
                 <View className="w-8 h-8 bg-green-100 rounded-lg items-center justify-center">
-                  <Ionicons name="leaf" size={18} color="#22C55E" />
+                  <Symbol name="leaf.fill" size={18} color="#22C55E" />
                 </View>
                 <Text className="text-base font-semibold text-surface-900 ml-2">
                   Leaf Area Index Calculator
@@ -229,7 +229,7 @@ export default function LAICalculatorScreen() {
                 className="bg-white rounded-2xl py-4 items-center border border-surface-200"
               >
                 <View className="flex-row items-center">
-                  <Ionicons name="refresh" size={18} color="#6B7280" />
+                  <Symbol name="refresh" size={18} color="#6B7280" />
                   <Text className="text-surface-600 font-medium ml-2">Reset Calculator</Text>
                 </View>
               </TouchableOpacity>

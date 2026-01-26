@@ -10,9 +10,9 @@ import {
   Animated,
   ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Symbol } from '@/components/ui/Symbol';
 import {
   useFarms,
   useDeleteFarm,
@@ -35,20 +35,20 @@ type ExploreTab = 'farms' | 'workers' | 'warehouse';
 type WorkersSubTab = 'workers' | 'attendance' | 'analytics';
 type WarehouseFilter = 'all' | 'fertilizer' | 'spray';
 
-const EXPLORE_TABS: { id: ExploreTab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { id: 'farms', label: 'Farms', icon: 'leaf' },
-  { id: 'workers', label: 'Workers', icon: 'people' },
-  { id: 'warehouse', label: 'Warehouse', icon: 'cube' },
+const EXPLORE_TABS: { id: ExploreTab; label: string; icon: string }[] = [
+  { id: 'farms', label: 'Farms', icon: 'leaf.fill' },
+  { id: 'workers', label: 'Workers', icon: 'person.2.fill' },
+  { id: 'warehouse', label: 'Warehouse', icon: 'cube.fill' },
 ];
 
 const WORKER_SUB_TABS: {
   id: WorkersSubTab;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
 }[] = [
-  { id: 'workers', label: 'Workers', icon: 'people' },
+  { id: 'workers', label: 'Workers', icon: 'person.2.fill' },
   { id: 'attendance', label: 'Attendance', icon: 'calendar' },
-  { id: 'analytics', label: 'Analytics', icon: 'bar-chart' },
+  { id: 'analytics', label: 'Analytics', icon: 'chart.bar.fill' },
 ];
 
 const COLORS = {
@@ -405,7 +405,7 @@ export default function ExploreScreen() {
               className="w-20 h-20 rounded-full items-center justify-center mb-4"
               style={{ backgroundColor: '#f2f2f7' }}
             >
-              <Ionicons name="search-outline" size={36} color="#c7c7cc" />
+              <Symbol name="magnifyingglass" size={36} color="#c7c7cc" />
             </View>
             <Text className="text-lg font-semibold text-center" style={{ color: '#000000' }}>
               No Results Found
@@ -428,7 +428,7 @@ export default function ExploreScreen() {
             className="w-24 h-24 rounded-full items-center justify-center mb-6"
             style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
           >
-            <Ionicons name="leaf-outline" size={48} color="#408059" />
+            <Symbol name="leaf.fill" size={48} color="#408059" />
           </View>
           <Text className="text-xl font-semibold text-center" style={{ color: '#000000' }}>
             No Farms Yet
@@ -465,7 +465,7 @@ export default function ExploreScreen() {
                   className="w-8 h-8 rounded-lg items-center justify-center"
                   style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
                 >
-                  <Ionicons name="leaf" size={16} color="#408059" />
+                  <Symbol name="leaf.fill" size={16} color="#408059" />
                 </View>
                 <View className="ml-2">
                   <Text className="text-lg font-bold" style={{ color: '#000000' }}>
@@ -483,7 +483,7 @@ export default function ExploreScreen() {
                   className="w-8 h-8 rounded-lg items-center justify-center"
                   style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
                 >
-                  <Ionicons name="resize" size={16} color="#408059" />
+                  <Symbol name="arrow.up.left.and.arrow.down.right" size={16} color="#408059" />
                 </View>
                 <View className="ml-2">
                   <Text className="text-lg font-bold" style={{ color: '#000000' }}>
@@ -537,7 +537,7 @@ export default function ExploreScreen() {
               backgroundColor: '#408059',
             }}
           >
-            <Ionicons name="add" size={28} color="#FFFFFF" />
+            <Symbol name="plus" size={28} color="#FFFFFF" />
           </TouchableOpacity>
         )}
       </>
@@ -563,7 +563,7 @@ export default function ExploreScreen() {
           <View className="flex-1 ml-3">
             <Text className="text-base font-semibold text-surface-900">{item.name}</Text>
             <View className="flex-row items-center mt-1">
-              <Ionicons name="cash-outline" size={12} color="#6B7280" />
+              <Symbol name="dollarsign.circle" size={12} color="#6B7280" />
               <Text className="text-sm text-surface-500 ml-1">₹{item.daily_rate}/day</Text>
             </View>
           </View>
@@ -571,7 +571,7 @@ export default function ExploreScreen() {
           {/* Advance Balance */}
           {item.advance_balance > 0 && (
             <View className="flex-row items-center bg-orange-100 px-2 py-1 rounded-full mr-2">
-              <Ionicons name="arrow-up-circle" size={12} color="#F59E0B" />
+              <Symbol name="arrow.up.circle.fill" size={12} color="#F59E0B" />
               <Text className="text-xs font-semibold text-orange-600 ml-1">
                 ₹{item.advance_balance}
               </Text>
@@ -580,7 +580,7 @@ export default function ExploreScreen() {
 
           {/* Actions */}
           <TouchableOpacity onPress={() => handleDeleteWorker(item)} className="p-2">
-            <Ionicons name="trash-outline" size={18} color="#EF4444" />
+            <Symbol name="trash" size={18} color="#EF4444" />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -621,7 +621,7 @@ export default function ExploreScreen() {
           !workersLoading ? (
             <View className="flex-1 items-center justify-center p-8">
               <View className="w-20 h-20 bg-primary-100 rounded-full items-center justify-center mb-4">
-                <Ionicons name="people-outline" size={40} color="#408059" />
+                <Symbol name="person.2" size={40} color="#408059" />
               </View>
               <Text className="text-lg font-semibold text-surface-900 text-center">
                 No Workers Yet
@@ -659,7 +659,7 @@ export default function ExploreScreen() {
     const renderAnalyticsSubTab = () => (
       <View className="flex-1 items-center justify-center p-8">
         <View className="w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
-          <Ionicons name="bar-chart-outline" size={40} color="#8B5CF6" />
+          <Symbol name="chart.bar" size={40} color="#8B5CF6" />
         </View>
         <Text className="text-lg font-semibold text-surface-900 text-center">Labor Analytics</Text>
         <Text className="text-sm text-surface-500 text-center mt-2">
@@ -687,7 +687,7 @@ export default function ExploreScreen() {
                   selectedWorkerSubTab === tab.id ? 'bg-white' : ''
                 }`}
               >
-                <Ionicons
+                <Symbol
                   name={tab.icon}
                   size={16}
                   color={selectedWorkerSubTab === tab.id ? '#408059' : '#6B7280'}
@@ -716,7 +716,7 @@ export default function ExploreScreen() {
             className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
             activeOpacity={0.8}
           >
-            <Ionicons name="add" size={28} color="#FFFFFF" />
+            <Symbol name="plus" size={28} color="#FFFFFF" />
           </TouchableOpacity>
         )}
       </>
@@ -757,8 +757,8 @@ export default function ExploreScreen() {
                 backgroundColor: COLORS.glass,
               }}
             >
-              <Ionicons
-                name="warning"
+              <Symbol
+                name="exclamationmark.triangle.fill"
                 size={24}
                 color={lowStockItems.length > 0 ? COLORS.lowStock : COLORS.primary}
               />
@@ -773,7 +773,7 @@ export default function ExploreScreen() {
                 backgroundColor: COLORS.glass,
               }}
             >
-              <Ionicons name="cash" size={24} color={COLORS.primary} />
+              <Symbol name="dollarsign.circle.fill" size={24} color={COLORS.primary} />
               <Text className="text-2xl font-bold text-surface-900 mt-2">
                 {currency === 'INR' ? '₹' : '$'}
                 {warehouseTotals.value.toLocaleString()}
@@ -789,7 +789,7 @@ export default function ExploreScreen() {
               style={{ backgroundColor: `${COLORS.lowStock}15` }}
             >
               <View className="flex-row items-center mb-3">
-                <Ionicons name="warning" size={20} color={COLORS.lowStock} />
+                <Symbol name="exclamationmark.triangle.fill" size={20} color={COLORS.lowStock} />
                 <Text className="text-base font-semibold ml-2" style={{ color: COLORS.lowStock }}>
                   Low Stock Alerts
                 </Text>
@@ -817,8 +817,8 @@ export default function ExploreScreen() {
                         }}
                       >
                         <View className="flex-row items-center">
-                          <Ionicons
-                            name={item.type === 'fertilizer' ? 'leaf' : 'water'}
+                          <Symbol
+                            name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                             size={16}
                             color={COLORS.lowStock}
                           />
@@ -906,7 +906,7 @@ export default function ExploreScreen() {
                 className="w-16 h-16 rounded-full items-center justify-center"
                 style={{ backgroundColor: `${COLORS.primary}33` }}
               >
-                <Ionicons name="cube-outline" size={32} color={COLORS.primary} />
+                <Symbol name="cube" size={32} color={COLORS.primary} />
               </View>
               <Text className="text-surface-900 font-semibold mt-4 text-center">
                 No items in warehouse
@@ -922,7 +922,7 @@ export default function ExploreScreen() {
                 className="mt-4 px-6 py-3 rounded-xl flex-row items-center"
                 style={{ backgroundColor: COLORS.primary }}
               >
-                <Ionicons name="add-circle" size={20} color="white" />
+                <Symbol name="plus.circle.fill" size={20} color="white" />
                 <Text className="text-white font-semibold ml-2">Add Item</Text>
               </TouchableOpacity>
             </View>
@@ -956,8 +956,8 @@ export default function ExploreScreen() {
                           }}
                         >
                           <View className="flex-row items-center">
-                            <Ionicons
-                              name={item.type === 'fertilizer' ? 'leaf' : 'water'}
+                            <Symbol
+                              name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                               size={12}
                               color={itemColor}
                             />
@@ -999,7 +999,7 @@ export default function ExploreScreen() {
                             ]);
                           }}
                         >
-                          <Ionicons name="ellipsis-horizontal-circle" size={24} color="#6B7280" />
+                          <Symbol name="ellipsis.circle" size={24} color="#6B7280" />
                         </TouchableOpacity>
                       </View>
                       <Text className="text-base font-semibold text-surface-900 mt-2">
@@ -1053,7 +1053,7 @@ export default function ExploreScreen() {
             backgroundColor: COLORS.primary,
           }}
         >
-          <Ionicons name="add" size={28} color="white" />
+          <Symbol name="plus" size={28} color="white" />
         </TouchableOpacity>
       </>
     );
@@ -1083,8 +1083,8 @@ export default function ExploreScreen() {
             border ${isSearchFocused ? 'border-primary-500' : 'border-transparent'}
           `}
         >
-          <Ionicons
-            name="search-outline"
+          <Symbol
+            name="magnifyingglass"
             size={20}
             color={isSearchFocused ? '#408059' : '#c7c7cc'}
           />
@@ -1104,7 +1104,7 @@ export default function ExploreScreen() {
               onPress={() => handleSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="close-circle" size={20} color="#c7c7cc" />
+              <Symbol name="xmark.circle.fill" size={20} color="#c7c7cc" />
             </TouchableOpacity>
           )}
         </View>
@@ -1151,7 +1151,7 @@ export default function ExploreScreen() {
                         backgroundColor: isSelected ? 'rgba(64, 128, 89, 0.1)' : 'transparent',
                       }}
                     >
-                      <Ionicons
+                      <Symbol
                         name={tab.icon}
                         size={24}
                         color={isSelected ? '#408059' : '#9CA3AF'}

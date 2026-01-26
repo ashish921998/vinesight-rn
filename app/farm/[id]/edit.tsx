@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useFarm, useUpdateFarm } from '@/hooks';
 import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
@@ -37,7 +37,7 @@ function Section({
       >
         <Text className="text-base font-semibold text-surface-900">{title}</Text>
         {onToggle && (
-          <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#6B7280" />
+          <Symbol name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#6B7280" />
         )}
       </TouchableOpacity>
       {isExpanded && <View className="p-4">{children}</View>}
@@ -223,7 +223,7 @@ export default function EditFarmScreen() {
   if (!farm) {
     return (
       <View className="flex-1 bg-surface-50 justify-center items-center px-8">
-        <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
+        <Symbol name="alert-circle-outline" size={48} color="#EF4444" />
         <Text className="text-xl font-bold text-surface-900 mt-4">Farm Not Found</Text>
         <Text className="text-surface-500 text-center mt-2">
           The farm you&apos;re looking for doesn&apos;t exist or has been deleted.
@@ -247,7 +247,7 @@ export default function EditFarmScreen() {
           headerTintColor: '#111827',
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="mr-4">
-              <Ionicons name="close" size={24} color="#111827" />
+              <Symbol name="xmark" size={24} color="#111827" />
             </TouchableOpacity>
           ),
         }}
@@ -332,7 +332,7 @@ export default function EditFarmScreen() {
                 >
                   {cropVariety || 'Select variety'}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color="#6B7280" />
+                <Symbol name="chevron.down" size={20} color="#6B7280" />
               </TouchableOpacity>
 
               {cropVariety === 'Custom' && (
@@ -351,7 +351,7 @@ export default function EditFarmScreen() {
                 className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center"
                 onPress={() => setShowDatePicker(true)}
               >
-                <Ionicons name="calendar-outline" size={20} color="#6B7280" />
+                <Symbol name="calendar" size={20} color="#6B7280" />
                 <Text
                   className={`text-base ml-3 ${plantingDate ? 'text-surface-900' : 'text-surface-400'}`}
                 >
@@ -428,7 +428,7 @@ export default function EditFarmScreen() {
                 onPress={() => setShowPruningDatePicker(true)}
               >
                 <View className="flex-row items-center">
-                  <Ionicons name="cut-outline" size={20} color="#6B7280" />
+                  <Symbol name="cut-outline" size={20} color="#6B7280" />
                   <Text
                     className={`text-base ml-3 ${
                       dateOfPruning ? 'text-surface-900' : 'text-surface-400'
@@ -442,7 +442,7 @@ export default function EditFarmScreen() {
                     onPress={() => setDateOfPruning(null)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                    <Symbol name="xmark.circle.fill" size={20} color="#9CA3AF" />
                   </TouchableOpacity>
                 )}
               </TouchableOpacity>
@@ -478,13 +478,13 @@ export default function EditFarmScreen() {
               <View className="flex-row items-center justify-between p-4 border-b border-surface-200">
                 <Text className="text-lg font-semibold text-surface-900">Select Variety</Text>
                 <TouchableOpacity onPress={() => setShowVarietyPicker(false)}>
-                  <Ionicons name="close" size={24} color="#111827" />
+                  <Symbol name="xmark" size={24} color="#111827" />
                 </TouchableOpacity>
               </View>
 
               <View className="px-4 py-3 border-b border-surface-100">
                 <View className="flex-row items-center bg-surface-50 rounded-xl px-4 py-2.5">
-                  <Ionicons name="search" size={20} color="#9CA3AF" />
+                  <Symbol name="search" size={20} color="#9CA3AF" />
                   <TextInput
                     className="flex-1 ml-2 text-base text-surface-900"
                     placeholder="Search varieties..."

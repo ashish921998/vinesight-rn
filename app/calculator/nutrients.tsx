@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculatorModels';
 
 interface NutrientResult {
@@ -90,7 +90,7 @@ export default function NutrientCalculatorScreen() {
             <View className="bg-white rounded-2xl p-4 shadow-sm">
               <View className="flex-row items-center mb-4">
                 <View className="w-8 h-8 bg-purple-100 rounded-lg items-center justify-center">
-                  <Ionicons name="flask" size={18} color="#8B5CF6" />
+                  <Symbol name="flask.fill" size={18} color="#8B5CF6" />
                 </View>
                 <Text className="text-base font-semibold text-surface-900 ml-2">
                   Nutrient Calculator
@@ -207,7 +207,7 @@ export default function NutrientCalculatorScreen() {
                 className="bg-white rounded-2xl py-4 items-center border border-surface-200"
               >
                 <View className="flex-row items-center">
-                  <Ionicons name="refresh" size={18} color="#6B7280" />
+                  <Symbol name="refresh" size={18} color="#6B7280" />
                   <Text className="text-surface-600 font-medium ml-2">Reset Calculator</Text>
                 </View>
               </TouchableOpacity>

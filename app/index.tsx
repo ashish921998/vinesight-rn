@@ -1,9 +1,9 @@
 import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/AnimatedSplash';
+import { Symbol } from '@/components/ui/Symbol';
 
 /**
  * Entry point of the app
@@ -23,7 +23,7 @@ export default function Index() {
       <View className="flex-1 items-center justify-center bg-white p-6">
         <View className="items-center">
           <View className="w-20 h-20 rounded-3xl mb-6 items-center justify-center bg-red-50">
-            <Ionicons name="warning-outline" size={44} color="#EF4444" />
+            <Symbol name="exclamationmark.triangle" size={44} color="#EF4444" />
           </View>
 
           <Text className="text-2xl font-bold text-surface-900 mb-2">App not configured</Text>

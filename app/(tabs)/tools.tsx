@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 
 // Calculator data (Irrigation Planning section)
 const calculators = [
@@ -9,7 +9,7 @@ const calculators = [
     id: 'weather',
     title: 'Weather & Irrigation',
     description: 'Farm weather data, forecasts & irrigation needs',
-    icon: 'sunny' as const,
+    icon: 'sun.max.fill' as const,
     color: '#F59E0B',
     route: '/weather' as Href,
   },
@@ -17,7 +17,7 @@ const calculators = [
     id: 'mad',
     title: 'MAD Calculator',
     description: 'Maximum allowable deficit & tank requirements',
-    icon: 'speedometer' as const,
+    icon: 'gauge' as const,
     color: '#3B82F6',
     route: '/calculator/mad' as Href,
   },
@@ -25,7 +25,7 @@ const calculators = [
     id: 'system-discharge',
     title: 'System Discharge',
     description: 'Irrigation system design & discharge rates',
-    icon: 'water' as const,
+    icon: 'drop.fill' as const,
     color: '#408059',
     route: '/calculator/system-discharge' as Href,
   },
@@ -33,7 +33,7 @@ const calculators = [
     id: 'lai',
     title: 'LAI Calculator',
     description: 'Leaf area index & canopy management',
-    icon: 'leaf' as const,
+    icon: 'leaf.fill' as const,
     color: '#22C55E',
     route: '/calculator/lai' as Href,
   },
@@ -41,7 +41,7 @@ const calculators = [
     id: 'nutrients',
     title: 'Nutrient Calculator',
     description: 'Fertilizer requirements & application planning',
-    icon: 'flask' as const,
+    icon: 'flask.fill' as const,
     color: '#8B5CF6',
     route: '/calculator/nutrients' as Href,
   },
@@ -77,7 +77,7 @@ export default function ToolsScreen() {
               className="w-12 h-12 rounded-xl items-center justify-center"
               style={{ backgroundColor: `${calc.color}15` }}
             >
-              <Ionicons name={calc.icon} size={22} color={calc.color} />
+              <Symbol name={calc.icon} size={22} color={calc.color} />
             </View>
             <View className="flex-1 ml-3">
               <Text className="text-base font-semibold text-surface-900">{calc.title}</Text>
@@ -85,7 +85,7 @@ export default function ToolsScreen() {
                 {calc.description}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
+            <Symbol name="chevron.right" size={20} color="#D1D5DB" />
           </TouchableOpacity>
         ))}
       </View>

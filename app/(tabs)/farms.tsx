@@ -9,10 +9,10 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFarms, useDeleteFarm } from '@/hooks';
 import { FarmCard } from '@/components/cards';
+import { Symbol } from '@/components/ui/Symbol';
 import type { Farm } from '@/types';
 
 interface SearchHeaderProps {
@@ -44,8 +44,8 @@ const SearchHeader = React.memo<SearchHeaderProps>(
           border ${isSearchFocused ? 'border-primary-500' : 'border-gray-200'}
         `}
         >
-          <Ionicons
-            name="search-outline"
+          <Symbol
+            name="magnifyingglass"
             size={20}
             color={isSearchFocused ? '#408059' : '#c7c7cc'}
           />
@@ -65,7 +65,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
               onPress={() => onSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="close-circle" size={20} color="#c7c7cc" />
+              <Symbol name="xmark.circle.fill" size={20} color="#c7c7cc" />
             </TouchableOpacity>
           )}
         </View>
@@ -86,7 +86,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                   className="w-8 h-8 rounded-lg items-center justify-center"
                   style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
                 >
-                  <Ionicons name="leaf" size={16} color="#408059" />
+                  <Symbol name="leaf.fill" size={16} color="#408059" />
                 </View>
                 <View className="ml-2">
                   <Text className="text-lg font-bold" style={{ color: '#000000' }}>
@@ -104,7 +104,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                   className="w-8 h-8 rounded-lg items-center justify-center"
                   style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
                 >
-                  <Ionicons name="resize" size={16} color="#408059" />
+                  <Symbol name="arrow.up.left.and.arrow.down.right" size={16} color="#408059" />
                 </View>
                 <View className="ml-2">
                   <Text className="text-lg font-bold" style={{ color: '#000000' }}>
@@ -230,7 +230,7 @@ export default function FarmsScreen() {
             className="w-20 h-20 rounded-full items-center justify-center mb-4"
             style={{ backgroundColor: '#f2f2f7' }}
           >
-            <Ionicons name="search-outline" size={36} color="#c7c7cc" />
+            <Symbol name="magnifyingglass" size={36} color="#c7c7cc" />
           </View>
           <Text className="text-lg font-semibold text-center" style={{ color: '#000000' }}>
             No Results Found
@@ -253,7 +253,7 @@ export default function FarmsScreen() {
           className="w-24 h-24 rounded-full items-center justify-center mb-6"
           style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
         >
-          <Ionicons name="leaf-outline" size={48} color="#408059" />
+          <Symbol name="leaf.fill" size={48} color="#408059" />
         </View>
         <Text className="text-xl font-semibold text-center" style={{ color: '#000000' }}>
           No Farms Yet
@@ -315,7 +315,7 @@ export default function FarmsScreen() {
             backgroundColor: '#408059',
           }}
         >
-          <Ionicons name="add" size={28} color="#FFFFFF" />
+          <Symbol name="plus" size={28} color="#FFFFFF" />
         </TouchableOpacity>
       )}
     </View>

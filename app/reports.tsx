@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFarms } from '../src/hooks';
@@ -22,9 +22,9 @@ import { useReportData, useReportExport, getDefaultDateRange } from '../src/hook
 import { DateRange, ReportType, ReportFormat } from '../src/types/report';
 
 const REPORT_TYPES: { value: ReportType; label: string; icon: string }[] = [
-  { value: 'comprehensive', label: 'Comprehensive', icon: 'document-text' },
-  { value: 'operations', label: 'Operations', icon: 'water' },
-  { value: 'financial', label: 'Financial', icon: 'cash' },
+  { value: 'comprehensive', label: 'Comprehensive', icon: 'doc.text.fill' },
+  { value: 'operations', label: 'Operations', icon: 'drop.fill' },
+  { value: 'financial', label: 'Financial', icon: 'dollarsign.circle.fill' },
 ];
 
 export default function ReportsScreen() {
@@ -92,12 +92,12 @@ export default function ReportsScreen() {
       <SafeAreaView className="flex-1 bg-gray-50">
         <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
           <TouchableOpacity onPress={() => router.back()} className="mr-3">
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Symbol name="chevron.left" size={24} color="#333" />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-gray-800">Reports</Text>
         </View>
         <View className="flex-1 items-center justify-center p-6">
-          <Ionicons name="document-text-outline" size={64} color="#9ca3af" />
+          <Symbol name="doc.text" size={64} color="#9ca3af" />
           <Text className="text-lg font-semibold text-gray-600 mt-4">No Farms Found</Text>
           <Text className="text-gray-500 text-center mt-2">
             Add a farm first to generate reports
@@ -112,9 +112,9 @@ export default function ReportsScreen() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
         <TouchableOpacity onPress={() => router.back()} className="mr-3">
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Symbol name="chevron.left" size={24} color="#333" />
         </TouchableOpacity>
-        <Ionicons name="document-text" size={24} color="#1a5d1a" />
+        <Symbol name="doc.text.fill" size={24} color="#1a5d1a" />
         <Text className="text-xl font-bold text-gray-800 ml-2">Reports</Text>
       </View>
 
@@ -127,16 +127,12 @@ export default function ReportsScreen() {
             className="flex-row items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200"
           >
             <View className="flex-row items-center flex-1">
-              <Ionicons name="leaf" size={20} color="#1a5d1a" />
+              <Symbol name="leaf.fill" size={20} color="#1a5d1a" />
               <Text className="text-base font-medium text-gray-800 ml-2" numberOfLines={1}>
                 {selectedFarm?.name || 'Select a farm'}
               </Text>
             </View>
-            <Ionicons
-              name={showFarmPicker ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color="#666"
-            />
+            <Symbol name={showFarmPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
           </TouchableOpacity>
 
           {showFarmPicker && (
@@ -220,8 +216,8 @@ export default function ReportsScreen() {
                     : 'bg-gray-50 border-gray-200'
                 }`}
               >
-                <Ionicons
-                  name={type.icon as keyof typeof Ionicons.glyphMap}
+                <Symbol
+                  name={type.icon}
                   size={24}
                   color={reportType === type.value ? '#1a5d1a' : '#9ca3af'}
                   style={{ alignSelf: 'center' }}
@@ -320,7 +316,7 @@ export default function ReportsScreen() {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
-                  <Ionicons name="document" size={24} color="white" />
+                  <Symbol name="doc.fill" size={24} color="white" />
                   <Text className="text-white font-bold ml-2">PDF</Text>
                 </>
               )}
@@ -336,7 +332,7 @@ export default function ReportsScreen() {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
-                  <Ionicons name="grid" size={24} color="white" />
+                  <Symbol name="square.grid.2x2.fill" size={24} color="white" />
                   <Text className="text-white font-bold ml-2">CSV</Text>
                 </>
               )}

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/useTasks';
 import { TaskReminder, TASK_TYPE_INFO, PRIORITY_INFO } from '../src/types/task';
@@ -144,7 +144,7 @@ export default function TasksScreen() {
                   }}
                   className="mr-4"
                 >
-                  <Ionicons name="add-circle" size={28} color="#408059" />
+                  <Symbol name="plus.circle.fill" size={28} color="#408059" />
                 </TouchableOpacity>
               ),
             }}
@@ -201,7 +201,7 @@ export default function TasksScreen() {
             {/* Task List */}
             {filteredTasks.length === 0 ? (
               <View className="bg-white rounded-2xl p-8 items-center">
-                <Ionicons name="checkbox-outline" size={48} color="#9CA3AF" />
+                <Symbol name="square" size={48} color="#9CA3AF" />
                 <Text className="text-surface-600 mt-4 text-center">No tasks found</Text>
                 <Text className="text-surface-500 text-sm mt-1 text-center">
                   {filter === 'all'
@@ -242,7 +242,7 @@ export default function TasksScreen() {
                           task.completed ? 'bg-green-500 border-green-500' : 'border-surface-300'
                         }`}
                       >
-                        {task.completed && <Ionicons name="checkmark" size={16} color="white" />}
+                        {task.completed && <Symbol name="checkmark" size={16} color="white" />}
                       </TouchableOpacity>
 
                       <View className="flex-1">
@@ -252,8 +252,26 @@ export default function TasksScreen() {
                             className="w-6 h-6 rounded items-center justify-center mr-2"
                             style={{ backgroundColor: `${typeInfo.color}20` }}
                           >
-                            <Ionicons
-                              name={typeInfo.icon as keyof typeof Ionicons.glyphMap}
+                            <Symbol
+                              name={
+                                typeInfo.icon === 'water'
+                                  ? 'drop.fill'
+                                  : typeInfo.icon === 'flask'
+                                    ? 'flask.fill'
+                                    : typeInfo.icon === 'basket'
+                                      ? 'basket.fill'
+                                      : typeInfo.icon === 'cash'
+                                        ? 'dollarsign.circle.fill'
+                                        : typeInfo.icon === 'leaf'
+                                          ? 'leaf.fill'
+                                          : typeInfo.icon === 'layers'
+                                            ? 'square.stack.3d.up.fill'
+                                            : typeInfo.icon === 'analytics'
+                                              ? 'chart.bar.fill'
+                                              : typeInfo.icon === 'document-text'
+                                                ? 'doc.text.fill'
+                                                : 'doc.fill'
+                              }
                               size={14}
                               color={typeInfo.color}
                             />
@@ -278,7 +296,7 @@ export default function TasksScreen() {
                         {/* Farm & Due Date */}
                         <View className="flex-row items-center mt-2 flex-wrap" style={{ gap: 8 }}>
                           <View className="flex-row items-center">
-                            <Ionicons name="leaf" size={12} color="#6B7280" />
+                            <Symbol name="leaf.fill" size={12} color="#6B7280" />
                             <Text className="text-xs text-surface-500 ml-1">
                               {getFarmName(task.farm_id)}
                             </Text>
@@ -288,7 +306,7 @@ export default function TasksScreen() {
                               overdue ? 'bg-red-100' : 'bg-surface-100'
                             } px-2 py-0.5 rounded`}
                           >
-                            <Ionicons
+                            <Symbol
                               name="calendar"
                               size={12}
                               color={overdue ? '#DC2626' : '#6B7280'}
@@ -318,7 +336,7 @@ export default function TasksScreen() {
                       {/* Actions */}
                       {!task.completed && (
                         <TouchableOpacity onPress={() => handleDelete(task)} className="p-2">
-                          <Ionicons name="trash-outline" size={18} color="#DC2626" />
+                          <Symbol name="trash" size={18} color="#DC2626" />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -337,7 +355,7 @@ export default function TasksScreen() {
             className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center shadow-lg"
             style={{ elevation: 5 }}
           >
-            <Ionicons name="add" size={28} color="white" />
+            <Symbol name="plus" size={28} color="white" />
           </TouchableOpacity>
 
           {/* Add Task Modal */}

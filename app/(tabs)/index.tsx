@@ -8,7 +8,6 @@ import {
   Modal,
   TouchableOpacity,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -19,6 +18,7 @@ import {
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
 import { AddEntryModal } from '@/components/screens';
+import { Symbol } from '@/components/ui/Symbol';
 import type { LogTypeId } from '@/constants/calculatorModels';
 
 // ============================================================
@@ -177,7 +177,7 @@ export default function DashboardScreen() {
                   className="w-9 h-9 rounded-full items-center justify-center"
                   style={{ backgroundColor: 'rgba(255, 149, 0, 0.15)' }}
                 >
-                  <Ionicons name="water" size={18} color="#ff9500" />
+                  <Symbol name="drop.fill" size={18} color="#ff9500" />
                 </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-sm font-semibold" style={{ color: '#000000' }}>
@@ -187,7 +187,7 @@ export default function DashboardScreen() {
                     Water calculation needed
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#c7c7cc" />
+                <Symbol name="chevron.right" size={16} color="#c7c7cc" />
               </Pressable>
             ))}
           </View>
@@ -248,7 +248,7 @@ export default function DashboardScreen() {
             </View>
           ) : (
             <View className="rounded-2xl p-6 items-center" style={{ backgroundColor: '#ffffff' }}>
-              <Ionicons name="time-outline" size={48} color="#c7c7cc" />
+              <Symbol name="clock" size={48} color="#c7c7cc" />
               <Text className="text-center mt-4" style={{ color: '#8e8e93' }}>
                 No recent activity yet.{'\n'}Start by adding your first farm!
               </Text>
@@ -274,7 +274,7 @@ export default function DashboardScreen() {
                   Select Farm
                 </Text>
                 <Pressable onPress={() => setShowFarmPicker(false)}>
-                  <Ionicons name="close" size={24} color="#8e8e93" />
+                  <Symbol name="xmark" size={24} color="#8e8e93" />
                 </Pressable>
               </View>
 
@@ -302,7 +302,7 @@ export default function DashboardScreen() {
                           </Text>
                         )}
                       </View>
-                      <Ionicons name="chevron-forward" size={20} color="#c7c7cc" />
+                      <Symbol name="chevron.right" size={20} color="#c7c7cc" />
                     </TouchableOpacity>
                   ))
                 ) : (

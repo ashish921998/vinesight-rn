@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { LinearGradient } from 'expo-linear-gradient';
 import { REFILL_SPANS, SOIL_TYPES, type RefillSpanId } from '@/constants/calculatorModels';
 
@@ -121,7 +121,7 @@ export default function MADCalculatorScreen() {
                   className="w-8 h-8 rounded-lg items-center justify-center"
                   style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
                 >
-                  <Ionicons name="water" size={18} color="#408059" />
+                  <Symbol name="drop.fill" size={18} color="#408059" />
                 </View>
                 <Text className="text-base font-semibold ml-2" style={{ color: '#1c1c1e' }}>
                   Step 1: MAD Calculation
@@ -225,7 +225,7 @@ export default function MADCalculatorScreen() {
                     className="w-8 h-8 rounded-lg items-center justify-center"
                     style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
                   >
-                    <Ionicons name="arrow-up-circle" size={18} color="#408059" />
+                    <Symbol name="arrow-up-circle" size={18} color="#408059" />
                   </View>
                   <Text className="text-base font-semibold ml-2" style={{ color: '#1c1c1e' }}>
                     Step 2: Refill Tank Calculator
@@ -251,7 +251,7 @@ export default function MADCalculatorScreen() {
                       {span.label}
                     </Text>
                     {selectedRefillSpan === span.id && (
-                      <Ionicons name="checkmark-circle" size={20} color="#408059" />
+                      <Symbol name="checkmark.circle.fill" size={20} color="#408059" />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -334,7 +334,7 @@ export default function MADCalculatorScreen() {
                 }}
               >
                 <View className="flex-row items-center">
-                  <Ionicons name="refresh" size={18} color="#8e8e93" />
+                  <Symbol name="refresh" size={18} color="#8e8e93" />
                   <Text className="font-medium ml-2" style={{ color: '#8e8e93' }}>
                     Reset Calculator
                   </Text>

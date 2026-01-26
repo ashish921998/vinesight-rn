@@ -10,9 +10,9 @@ import {
   ImageSourcePropType,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
+import { Symbol } from '@/components/ui/Symbol';
 import playstoreLogo from '../../assets/playstore.png';
 
 export default function LoginScreen() {
@@ -145,7 +145,7 @@ export default function LoginScreen() {
                   className="flex-row items-center px-4 py-3 rounded-xl mb-2"
                   style={{ backgroundColor: 'rgba(255, 59, 48, 0.1)' }}
                 >
-                  <Ionicons name="alert-circle" size={18} color="#ff3b30" />
+                  <Symbol name="exclamationmark.circle.fill" size={18} color="#ff3b30" />
                   <Text className="text-sm ml-2 flex-1" style={{ color: '#ff3b30' }}>
                     {errorMessage}
                   </Text>
@@ -175,7 +175,7 @@ export default function LoginScreen() {
             <Button
               title="Continue with Google"
               variant="outline"
-              leftIcon={<Ionicons name="logo-google" size={20} color="#408059" />}
+              leftIcon={<Symbol name="g.circle.fill" size={20} color="#408059" />}
               onPress={signInWithGoogle}
               disabled={isLoading}
             />

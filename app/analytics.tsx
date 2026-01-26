@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useAnalytics } from '../src/hooks/useAnalytics';
 import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
@@ -24,11 +24,11 @@ const metricColors = {
 
 // Activity type icons
 const activityIcons: Record<string, { icon: string; color: string }> = {
-  irrigation: { icon: 'water', color: '#3B82F6' },
-  spray: { icon: 'flask', color: '#8B5CF6' },
-  harvest: { icon: 'basket', color: '#F59E0B' },
-  expense: { icon: 'cash', color: '#DC2626' },
-  fertigation: { icon: 'leaf', color: '#16A34A' },
+  irrigation: { icon: 'drop.fill', color: '#3B82F6' },
+  spray: { icon: 'flask.fill', color: '#8B5CF6' },
+  harvest: { icon: 'basket.fill', color: '#F59E0B' },
+  expense: { icon: 'dollarsign.circle.fill', color: '#DC2626' },
+  fertigation: { icon: 'leaf.fill', color: '#16A34A' },
 };
 
 export default function AnalyticsScreen() {
@@ -55,7 +55,7 @@ export default function AnalyticsScreen() {
     return (
       <View className="flex-1 bg-surface-50 items-center justify-center p-6">
         <Stack.Screen options={{ title: 'Analytics' }} />
-        <Ionicons name="analytics" size={48} color="#9CA3AF" />
+        <Symbol name="chart.bar.fill" size={48} color="#9CA3AF" />
         <Text className="text-surface-600 mt-4 text-center">No data available</Text>
         <Text className="text-surface-500 text-sm mt-2 text-center">
           Add farms and record activities to see analytics
@@ -103,7 +103,7 @@ export default function AnalyticsScreen() {
                 className="w-10 h-10 rounded-xl items-center justify-center mb-2"
                 style={{ backgroundColor: metricColors.irrigation.bg }}
               >
-                <Ionicons name="water" size={20} color={metricColors.irrigation.icon} />
+                <Symbol name="drop.fill" size={20} color={metricColors.irrigation.icon} />
               </View>
               <Text className="text-2xl font-bold text-surface-900">
                 {analytics.totalIrrigationHours.toFixed(1)}h
@@ -115,7 +115,7 @@ export default function AnalyticsScreen() {
                 className="w-10 h-10 rounded-xl items-center justify-center mb-2"
                 style={{ backgroundColor: metricColors.spray.bg }}
               >
-                <Ionicons name="flask" size={20} color={metricColors.spray.icon} />
+                <Symbol name="flask.fill" size={20} color={metricColors.spray.icon} />
               </View>
               <Text className="text-2xl font-bold text-surface-900">
                 {analytics.totalSprayCount}
@@ -127,7 +127,7 @@ export default function AnalyticsScreen() {
                 className="w-10 h-10 rounded-xl items-center justify-center mb-2"
                 style={{ backgroundColor: metricColors.harvest.bg }}
               >
-                <Ionicons name="basket" size={20} color={metricColors.harvest.icon} />
+                <Symbol name="basket.fill" size={20} color={metricColors.harvest.icon} />
               </View>
               <Text className="text-2xl font-bold text-surface-900">
                 {(analytics.totalHarvestQuantity / 1000).toFixed(1)}t
@@ -139,7 +139,7 @@ export default function AnalyticsScreen() {
                 className="w-10 h-10 rounded-xl items-center justify-center mb-2"
                 style={{ backgroundColor: metricColors.cost.bg }}
               >
-                <Ionicons name="cash" size={20} color={metricColors.cost.icon} />
+                <Symbol name="dollarsign.circle.fill" size={20} color={metricColors.cost.icon} />
               </View>
               <Text className="text-2xl font-bold text-surface-900">
                 {currencySymbol}
@@ -165,7 +165,7 @@ export default function AnalyticsScreen() {
                   <View key={key} className="bg-surface-50 rounded-xl p-3" style={{ width: '47%' }}>
                     <View className="flex-row items-center justify-between">
                       <Text className="text-xs text-surface-500 capitalize">{key}</Text>
-                      <Ionicons
+                      <Symbol
                         name={
                           value.trend === 'up'
                             ? 'trending-up'
@@ -289,7 +289,7 @@ export default function AnalyticsScreen() {
                   >
                     <View className="flex-row items-center">
                       <View className="w-8 h-8 bg-surface-100 rounded-lg items-center justify-center">
-                        <Ionicons name="receipt" size={16} color="#6B7280" />
+                        <Symbol name="doc.text.fill" size={16} color="#6B7280" />
                       </View>
                       <Text className="text-sm text-surface-700 ml-2 capitalize">
                         {expense.type}
@@ -309,12 +309,12 @@ export default function AnalyticsScreen() {
           {performanceMetrics && performanceMetrics.recommendations.length > 0 && (
             <View className="bg-blue-50 rounded-2xl p-4 mb-4">
               <View className="flex-row items-center mb-3">
-                <Ionicons name="bulb" size={20} color="#3B82F6" />
+                <Symbol name="lightbulb.fill" size={20} color="#3B82F6" />
                 <Text className="text-base font-semibold text-blue-900 ml-2">Recommendations</Text>
               </View>
               {performanceMetrics.recommendations.map((rec, index) => (
                 <View key={index} className="flex-row items-start mb-2">
-                  <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />
+                  <Symbol name="checkmark.circle.fill" size={16} color="#3B82F6" />
                   <Text className="text-sm text-blue-800 ml-2 flex-1">{rec}</Text>
                 </View>
               ))}
@@ -343,11 +343,7 @@ export default function AnalyticsScreen() {
                         className="w-10 h-10 rounded-xl items-center justify-center"
                         style={{ backgroundColor: `${iconInfo.color}15` }}
                       >
-                        <Ionicons
-                          name={iconInfo.icon as keyof typeof Ionicons.glyphMap}
-                          size={18}
-                          color={iconInfo.color}
-                        />
+                        <Symbol name={iconInfo.icon} size={18} color={iconInfo.color} />
                       </View>
                       <View className="flex-1 ml-3">
                         <Text className="text-sm font-medium text-surface-900">

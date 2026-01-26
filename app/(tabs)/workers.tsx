@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useWorkers, useDeleteWorker } from '@/hooks';
 import { AddWorkerModal } from '@/components/screens';
 import { AttendanceView } from '@/components/screens';
@@ -8,10 +8,10 @@ import type { Worker } from '@/types';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
-const TAB_DATA: { id: WorkersTab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { id: 'workers', label: 'Workers', icon: 'people' },
+const TAB_DATA: { id: WorkersTab; label: string; icon: string }[] = [
+  { id: 'workers', label: 'Workers', icon: 'person.2.fill' },
   { id: 'attendance', label: 'Attendance', icon: 'calendar' },
-  { id: 'analytics', label: 'Analytics', icon: 'bar-chart' },
+  { id: 'analytics', label: 'Analytics', icon: 'chart.bar.fill' },
 ];
 
 export default function WorkersScreen() {
@@ -73,7 +73,7 @@ export default function WorkersScreen() {
         <View className="flex-1 ml-3">
           <Text className="text-base font-semibold text-surface-900">{item.name}</Text>
           <View className="flex-row items-center mt-1">
-            <Ionicons name="cash-outline" size={12} color="#6B7280" />
+            <Symbol name="indianrupeesign.circle" size={12} color="#6B7280" />
             <Text className="text-sm text-surface-500 ml-1">₹{item.daily_rate}/day</Text>
           </View>
         </View>
@@ -81,7 +81,7 @@ export default function WorkersScreen() {
         {/* Advance Balance */}
         {item.advance_balance > 0 && (
           <View className="flex-row items-center bg-orange-100 px-2 py-1 rounded-full mr-2">
-            <Ionicons name="arrow-up-circle" size={12} color="#F59E0B" />
+            <Symbol name="arrow.up.circle.fill" size={12} color="#F59E0B" />
             <Text className="text-xs font-semibold text-orange-600 ml-1">
               ₹{item.advance_balance}
             </Text>
@@ -90,7 +90,7 @@ export default function WorkersScreen() {
 
         {/* Actions */}
         <TouchableOpacity onPress={() => handleDeleteWorker(item)} className="p-2">
-          <Ionicons name="trash-outline" size={18} color="#EF4444" />
+          <Symbol name="trash" size={18} color="#EF4444" />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -131,7 +131,7 @@ export default function WorkersScreen() {
         !isLoading ? (
           <View className="flex-1 items-center justify-center p-8">
             <View className="w-20 h-20 bg-primary-100 rounded-full items-center justify-center mb-4">
-              <Ionicons name="people-outline" size={40} color="#408059" />
+              <Symbol name="person.2" size={40} color="#408059" />
             </View>
             <Text className="text-lg font-semibold text-surface-900 text-center">
               No Workers Yet
@@ -161,7 +161,7 @@ export default function WorkersScreen() {
   const renderAnalyticsTab = () => (
     <View className="flex-1 items-center justify-center p-8">
       <View className="w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
-        <Ionicons name="bar-chart-outline" size={40} color="#8B5CF6" />
+        <Symbol name="chart.bar" size={40} color="#8B5CF6" />
       </View>
       <Text className="text-lg font-semibold text-surface-900 text-center">Labor Analytics</Text>
       <Text className="text-sm text-surface-500 text-center mt-2">
@@ -185,7 +185,7 @@ export default function WorkersScreen() {
                   selectedTab === tab.id ? 'bg-white border border-gray-200' : ''
                 }`}
               >
-                <Ionicons
+                <Symbol
                   name={tab.icon}
                   size={16}
                   color={selectedTab === tab.id ? '#408059' : '#6B7280'}
@@ -214,7 +214,7 @@ export default function WorkersScreen() {
             className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
             activeOpacity={0.8}
           >
-            <Ionicons name="add" size={28} color="#FFFFFF" />
+            <Symbol name="plus" size={28} color="#FFFFFF" />
           </TouchableOpacity>
         )}
       </View>

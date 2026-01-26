@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import Markdown from 'react-native-markdown-display';
 import { useFarm } from '@/hooks';
 import { aiService } from '@/services/aiService';
@@ -176,7 +176,7 @@ export default function AIChatScreen() {
           headerTintColor: '#000000',
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-2">
-              <Ionicons name="arrow-back" size={24} color="#000000" />
+              <Symbol name="chevron.left" size={24} color="#000000" />
             </TouchableOpacity>
           ),
         }}
@@ -198,7 +198,7 @@ export default function AIChatScreen() {
               {messages.length === 0 && (
                 <View className="flex-1 items-center justify-center py-8">
                   <View className="w-20 h-20 bg-primary-100 rounded-full items-center justify-center mb-4">
-                    <Ionicons name="bulb" size={40} color="#408059" />
+                    <Symbol name="lightbulb.fill" size={40} color="#408059" />
                   </View>
                   <Text className="text-xl font-bold text-surface-900 mb-2">Vinesight AI</Text>
                   <Text className="text-base text-surface-500 text-center mb-6 px-8">
@@ -231,7 +231,7 @@ export default function AIChatScreen() {
                 >
                   {message.role === 'assistant' && (
                     <View className="w-8 h-8 bg-primary-100 rounded-full items-center justify-center mr-2 mt-1">
-                      <Ionicons name="bulb" size={16} color="#408059" />
+                      <Symbol name="lightbulb.fill" size={16} color="#408059" />
                     </View>
                   )}
                   <View
@@ -265,7 +265,7 @@ export default function AIChatScreen() {
                   </View>
                   {message.role === 'user' && (
                     <View className="w-8 h-8 bg-primary-200 rounded-full items-center justify-center ml-2 mt-1">
-                      <Ionicons name="person" size={16} color="#408059" />
+                      <Symbol name="person.fill" size={16} color="#408059" />
                     </View>
                   )}
                 </View>
@@ -274,7 +274,7 @@ export default function AIChatScreen() {
               {isLoading && (
                 <View className="flex-row items-start justify-start mb-3">
                   <View className="w-8 h-8 bg-primary-100 rounded-full items-center justify-center mr-2 mt-1">
-                    <Ionicons name="bulb" size={16} color="#408059" />
+                    <Symbol name="lightbulb.fill" size={16} color="#408059" />
                   </View>
                   <View
                     className="px-4 py-3 bg-white rounded-2xl rounded-bl-sm"
@@ -329,8 +329,8 @@ export default function AIChatScreen() {
                     inputText.trim() && !isLoading ? 'bg-primary-600' : 'bg-surface-200'
                   }`}
                 >
-                  <Ionicons
-                    name="send"
+                  <Symbol
+                    name="paperplane.fill"
                     size={20}
                     color={inputText.trim() && !isLoading ? '#FFFFFF' : '#9CA3AF'}
                   />

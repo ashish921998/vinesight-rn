@@ -12,10 +12,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores';
 import { useProfile, useUpdateProfile } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculatorModels';
+import { Symbol } from '@/components/ui/Symbol';
 
 export default function SettingsScreen() {
   const { user, signOut, isLoading: authLoading } = useAuthStore();
@@ -129,7 +129,7 @@ export default function SettingsScreen() {
                 {userName.charAt(0).toUpperCase()}
               </Text>
             ) : (
-              <Ionicons name="person" size={32} color="#408059" />
+              <Symbol name="person.fill" size={32} color="#408059" />
             )}
           </View>
           <View className="flex-1 ml-4">
@@ -140,7 +140,7 @@ export default function SettingsScreen() {
             ) : null}
           </View>
           <TouchableOpacity onPress={() => setShowEditProfile(true)}>
-            <Ionicons name="create-outline" size={24} color="#408059" />
+            <Symbol name="pencil" size={24} color="#408059" />
           </TouchableOpacity>
         </View>
       </View>
@@ -149,17 +149,17 @@ export default function SettingsScreen() {
       <View className="mt-6 px-4">
         <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">GENERAL</Text>
         <View className="bg-white rounded-2xl overflow-hidden">
-          <SettingsItem icon="globe-outline" title="Language" value="System Default" disabled />
+          <SettingsItem icon="globe" title="Language" value="System Default" disabled />
           <TouchableOpacity onPress={() => setShowAreaPicker(true)}>
             <SettingsItem
-              icon="resize-outline"
+              icon="arrow.up.left.and.arrow.down.right"
               title="Area Unit"
               value={getAreaUnitLabel(selectedAreaUnit)}
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setShowCurrencyPicker(true)}>
             <SettingsItem
-              icon="cash-outline"
+              icon="dollarsign.circle"
               title="Currency"
               value={getCurrencyLabel(selectedCurrency)}
               isLast
@@ -197,10 +197,10 @@ export default function SettingsScreen() {
       <View className="mt-6 px-4">
         <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">SUPPORT</Text>
         <View className="bg-white rounded-2xl overflow-hidden">
-          <SettingsItem icon="help-circle-outline" title="Help Center" />
-          <SettingsItem icon="chatbubble-outline" title="Contact Support" />
-          <SettingsItem icon="document-text-outline" title="Privacy Policy" />
-          <SettingsItem icon="shield-checkmark-outline" title="Terms of Service" isLast />
+          <SettingsItem icon="questionmark.circle" title="Help Center" />
+          <SettingsItem icon="message" title="Contact Support" />
+          <SettingsItem icon="doc.text" title="Privacy Policy" />
+          <SettingsItem icon="checkmark.shield" title="Terms of Service" isLast />
         </View>
       </View>
 
@@ -214,7 +214,7 @@ export default function SettingsScreen() {
             className="flex-row items-center px-4 py-3.5"
           >
             <View className="w-9 h-9 rounded-lg bg-red-100 items-center justify-center">
-              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+              <Symbol name="rectangle.portrait.and.arrow.right" size={20} color="#EF4444" />
             </View>
             <Text className="flex-1 ml-3 text-base text-red-600">Sign Out</Text>
           </TouchableOpacity>
@@ -242,7 +242,7 @@ export default function SettingsScreen() {
             <View className="flex-row items-center justify-between">
               <Text className="text-lg font-bold text-surface-900">Edit Profile</Text>
               <TouchableOpacity onPress={() => setShowEditProfile(false)}>
-                <Ionicons name="close-circle" size={28} color="#9CA3AF" />
+                <Symbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -311,7 +311,7 @@ export default function SettingsScreen() {
             <View className="flex-row items-center justify-between">
               <Text className="text-lg font-bold text-surface-900">Select Currency</Text>
               <TouchableOpacity onPress={() => setShowCurrencyPicker(false)}>
-                <Ionicons name="close-circle" size={28} color="#9CA3AF" />
+                <Symbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -327,7 +327,7 @@ export default function SettingsScreen() {
                 >
                   <Text className="flex-1 text-base text-surface-900">{currency.label}</Text>
                   {selectedCurrency === currency.code && (
-                    <Ionicons name="checkmark-circle" size={22} color="#408059" />
+                    <Symbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -348,7 +348,7 @@ export default function SettingsScreen() {
             <View className="flex-row items-center justify-between">
               <Text className="text-lg font-bold text-surface-900">Select Area Unit</Text>
               <TouchableOpacity onPress={() => setShowAreaPicker(false)}>
-                <Ionicons name="close-circle" size={28} color="#9CA3AF" />
+                <Symbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -367,7 +367,7 @@ export default function SettingsScreen() {
                 >
                   <Text className="flex-1 text-base text-surface-900">{unit.label}</Text>
                   {selectedAreaUnit === unit.id && (
-                    <Ionicons name="checkmark-circle" size={22} color="#408059" />
+                    <Symbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -387,7 +387,7 @@ function SettingsItem({
   isLast,
   disabled,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   title: string;
   value?: string;
   isLast?: boolean;
@@ -400,11 +400,11 @@ function SettingsItem({
       }`}
     >
       <View className="w-9 h-9 rounded-lg bg-surface-100 items-center justify-center">
-        <Ionicons name={icon} size={20} color="#6B7280" />
+        <Symbol name={icon} size={20} color="#6B7280" />
       </View>
       <Text className="flex-1 ml-3 text-base text-surface-900">{title}</Text>
       {value && <Text className="text-sm text-surface-500 mr-2">{value}</Text>}
-      {!disabled && <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />}
+      {!disabled && <Symbol name="chevron.right" size={18} color="#D1D5DB" />}
     </View>
   );
 }

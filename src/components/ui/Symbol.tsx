@@ -1,6 +1,6 @@
 import { SymbolView, SymbolWeight } from 'expo-symbols';
 import React from 'react';
-import { View, Text, Platform } from 'react-native';
+import { View, Text, Platform, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SymbolProps {
@@ -8,6 +8,7 @@ interface SymbolProps {
   size?: number;
   color?: string;
   weight?: SymbolWeight;
+  style?: ViewStyle;
 }
 
 // Map SF Symbol names to Ionicons as fallback
@@ -113,7 +114,13 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'arrow.down': 'arrow-down',
 };
 
-export function Symbol({ name, size = 24, color = '#000', weight = 'regular' }: SymbolProps) {
+export function Symbol({
+  name,
+  size = 24,
+  color = '#000',
+  weight = 'regular',
+  style,
+}: SymbolProps) {
   // On iOS 17+, use SF Symbols
   if (Platform.OS === 'ios') {
     const fallbackIcon = SYMBOL_TO_IONICON[name] || 'ellipse-outline';
@@ -124,7 +131,8 @@ export function Symbol({ name, size = 24, color = '#000', weight = 'regular' }: 
         tintColor={color}
         weight={weight}
         type="monochrome"
-        fallback={<Ionicons name={fallbackIcon} size={size} color={color} />}
+        style={style}
+        fallback={<Ionicons name={fallbackIcon} size={size} color={color} style={style} />}
       />
     );
   }
@@ -132,12 +140,14 @@ export function Symbol({ name, size = 24, color = '#000', weight = 'regular' }: 
   // On Android/web, use Ionicons as fallback
   const ionicon = SYMBOL_TO_IONICON[name];
   if (ionicon) {
-    return <Ionicons name={ionicon} size={size} color={color} />;
+    return <Ionicons name={ionicon} size={size} color={color} style={style} />;
   }
 
   // Final fallback: show a placeholder
   return (
-    <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+    <View
+      style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}
+    >
       <Text style={{ fontSize: size * 0.6, color }}>•</Text>
     </View>
   );
