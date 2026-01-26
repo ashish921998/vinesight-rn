@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useFarms } from '../../hooks';
 import { useCreateTask, useUpdateTask } from '../../hooks/useTasks';
 import {
@@ -176,7 +176,7 @@ export default function AddTaskModal({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-surface-50" edges={['top']}>
+      <View className="flex-1 bg-surface-50">
         <KeyboardAvoidingView
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 bg-surface-50"
@@ -448,7 +448,7 @@ export default function AddTaskModal({
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

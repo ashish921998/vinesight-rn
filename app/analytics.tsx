@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { useAnalytics } from '../src/hooks/useAnalytics';
@@ -65,7 +65,7 @@ export default function AnalyticsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
+    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
       <View className="flex-1 bg-surface-50">
         <Stack.Screen options={{ title: 'Analytics' }} />
 
@@ -364,6 +364,6 @@ export default function AnalyticsScreen() {
           )}
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

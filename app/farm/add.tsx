@@ -8,7 +8,7 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useCreateFarm } from '@/hooks';
 import { CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
 import type { FarmInsert } from '@/types';
@@ -185,7 +185,7 @@ export default function AddFarmScreen() {
         }}
       />
 
-      <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
+      <View className="flex-1 bg-white">
         <FullScreenForm
           title="Add Farm"
           onClose={() => router.back()}
@@ -378,12 +378,12 @@ export default function AddFarmScreen() {
             message="You can always update these details later from your farm settings."
           />
         </FullScreenForm>
-      </SafeAreaView>
+      </View>
 
       {/* Variety Picker Modal */}
       {showVarietyPicker && (
         <View className="absolute inset-0 bg-black/50 justify-end">
-          <SafeAreaView edges={['bottom']} className="bg-white rounded-t-3xl max-h-[70%]">
+          <View className="bg-white rounded-t-3xl max-h-[70%]">
             <View className="flex-row items-center justify-between px-6 py-4 border-b border-surface-100">
               <View className="w-10" />
               <Text className="text-lg font-semibold text-surface-900">Select Variety</Text>
@@ -423,7 +423,7 @@ export default function AddFarmScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-          </SafeAreaView>
+          </View>
         </View>
       )}
 

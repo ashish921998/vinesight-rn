@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Symbol } from '@/components/ui/Symbol';
 import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
@@ -95,19 +95,18 @@ export default function WarehouseScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView
+      <View
         style={{
           flex: 1,
           backgroundColor: COLORS.background,
           justifyContent: 'center',
           alignItems: 'center',
         }}
-        edges={['top']}
       >
         <Stack.Screen options={{ title: 'Warehouse' }} />
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text className="text-surface-600 mt-4">Loading inventory...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -130,7 +129,7 @@ export default function WarehouseScreen() {
         }}
       />
 
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <View style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
           refreshControl={
@@ -425,7 +424,7 @@ export default function WarehouseScreen() {
             })
           )}
         </ScrollView>
-      </SafeAreaView>
+      </View>
 
       {/* FAB */}
       <TouchableOpacity

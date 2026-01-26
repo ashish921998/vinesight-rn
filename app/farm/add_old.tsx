@@ -12,7 +12,6 @@ import {
 import { useRouter, Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCreateFarm } from '@/hooks';
 import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
 import type { FarmInsert } from '@/types';
@@ -77,7 +76,6 @@ function FormField({
 export default function AddFarmScreen() {
   const router = useRouter();
   const createFarm = useCreateFarm();
-  const insets = useSafeAreaInsets();
 
   // Form state - Required
   const [name, setName] = useState('');
@@ -199,7 +197,7 @@ export default function AddFarmScreen() {
         }}
       />
 
-      <SafeAreaView className="flex-1 bg-surface-50" edges={['top', 'bottom']}>
+      <View className="flex-1 bg-surface-50">
         <KeyboardAvoidingView
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           className="flex-1"
@@ -416,7 +414,7 @@ export default function AddFarmScreen() {
           {/* Save Button */}
           <View
             className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-surface-200"
-            style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+            style={{ paddingBottom: 16 }}
           >
             <TouchableOpacity
               className={`py-4 rounded-xl items-center ${
@@ -433,7 +431,7 @@ export default function AddFarmScreen() {
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
 
       {/* Variety Picker Modal */}
       {showVarietyPicker && (

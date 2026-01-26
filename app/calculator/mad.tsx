@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -92,7 +92,7 @@ export default function MADCalculatorScreen() {
           headerTintColor: '#408059',
         }}
       />
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
         <KeyboardAvoidingView
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           className="flex-1"
@@ -342,7 +342,7 @@ export default function MADCalculatorScreen() {
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </>
   );
 }

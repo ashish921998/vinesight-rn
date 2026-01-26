@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Symbol } from '@/components/ui/Symbol';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -71,17 +71,17 @@ export default function ReportsScreen() {
 
   if (farmsLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-gray-50">
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#1a5d1a" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!farms || farms.length === 0) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-gray-50">
         <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
           <TouchableOpacity onPress={() => router.back()} className="mr-3">
             <Symbol name="chevron.left" size={24} color="#333" />
@@ -95,12 +95,12 @@ export default function ReportsScreen() {
             Add a farm first to generate reports
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+    <View className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
         <TouchableOpacity onPress={() => router.back()} className="mr-3">
@@ -332,6 +332,6 @@ export default function ReportsScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -9,7 +9,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -336,18 +336,17 @@ export default function LogsScreen() {
 
   if (farmsLoading) {
     return (
-      <SafeAreaView
+      <View
         style={{
           flex: 1,
           backgroundColor: '#f2f2f7',
           justifyContent: 'center',
           alignItems: 'center',
         }}
-        edges={['top']}
       >
         <ActivityIndicator size="large" color="#408059" />
         <Text className="mt-4 text-[#8e8e93]">Loading...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -367,7 +366,7 @@ export default function LogsScreen() {
         }}
       />
 
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
         <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
           <LinearGradient
             colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
@@ -790,7 +789,7 @@ export default function LogsScreen() {
             </View>
           </ScrollView>
         </View>
-      </SafeAreaView>
+      </View>
 
       {selectedFarm && (
         <AddEntryModal

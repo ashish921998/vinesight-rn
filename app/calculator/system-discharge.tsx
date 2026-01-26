@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 
@@ -145,7 +145,7 @@ export default function SystemDischargeScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
         <KeyboardAvoidingView
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 bg-surface-50"
@@ -426,7 +426,7 @@ export default function SystemDischargeScreen() {
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </>
   );
 }

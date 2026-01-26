@@ -8,7 +8,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { useFarms } from '../src/hooks';
@@ -131,7 +131,7 @@ export default function TasksScreen() {
 
   return (
     <>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
         <View className="flex-1 bg-surface-50">
           <Stack.Screen
             options={{
@@ -373,7 +373,7 @@ export default function TasksScreen() {
             }}
           />
         </View>
-      </SafeAreaView>
+      </View>
     </>
   );
 }

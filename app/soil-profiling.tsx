@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Symbol } from '@/components/ui/Symbol';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -295,7 +295,7 @@ export default function SoilProfilingScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <SafeAreaView className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
+      <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
         <View className="flex-1 items-center justify-center px-8">
           <Symbol name="layers-outline" size={64} color="#8e8e93" />
           <Text className="text-lg font-semibold mt-4" style={{ color: '#1c1c1e' }}>
@@ -315,12 +315,12 @@ export default function SoilProfilingScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1" edges={['top']} style={{ backgroundColor: '#f2f2f7' }}>
+    <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
       <LinearGradient
         colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
         style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
@@ -407,6 +407,6 @@ export default function SoilProfilingScreen() {
         onClose={() => setShowAddModal(false)}
         farmId={farmIdNum}
       />
-    </SafeAreaView>
+    </View>
   );
 }

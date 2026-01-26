@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Symbol } from '@/components/ui/Symbol';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFarm } from '../src/hooks';
@@ -206,7 +206,7 @@ export default function LabTestsScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-gray-50">
         <View className="flex-1 items-center justify-center">
           <Symbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text className="text-lg font-semibold text-gray-700 mt-4">Invalid Farm</Text>
@@ -217,12 +217,12 @@ export default function LabTestsScreen() {
             <Text className="text-gray-700 font-medium">Go Back</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#f2f2f7]" edges={['top']}>
+    <View className="flex-1 bg-[#f2f2f7]">
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white/80 backdrop-blur-lg">
         <TouchableOpacity onPress={() => router.back()} className="mr-3">
@@ -312,6 +312,6 @@ export default function LabTestsScreen() {
         farmId={farmIdNum}
         testType={selectedTab}
       />
-    </SafeAreaView>
+    </View>
   );
 }

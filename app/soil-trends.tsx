@@ -4,14 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  SafeAreaView,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { useFarm } from '@/hooks/useFarms';
@@ -35,28 +28,28 @@ export default function SoilTrendsScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-gray-50">
         <View className="flex-1 items-center justify-center">
           <Symbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text className="text-lg font-semibold text-gray-700 mt-4">Invalid Farm</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (farmLoading || trendsLoading || !trends || !trends.parameterTrends) {
     return (
-      <SafeAreaView className="flex-1 bg-[#f2f2f7]">
+      <View className="flex-1 bg-[#f2f2f7]">
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#597A61" />
           <Text className="text-gray-500 mt-4">Loading trends...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Custom Header */}
@@ -139,6 +132,6 @@ export default function SoilTrendsScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
