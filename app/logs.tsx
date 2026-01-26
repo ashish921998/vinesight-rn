@@ -426,8 +426,7 @@ export default function LogsScreen() {
                 className="rounded-2xl p-4"
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 5 },
+                  boxShadow: '0 5px 10px rgba(0, 0, 0, 0.08)',
                 }}
               >
                 {/* Search Bar */}

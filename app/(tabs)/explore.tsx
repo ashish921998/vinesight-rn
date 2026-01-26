@@ -1115,11 +1115,7 @@ export default function ExploreScreen() {
         className="bg-white"
         style={{
           height: headerHeight,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 3,
-          elevation: 3,
+          boxShadow: '0 2px 3px rgba(0, 0, 0, 0.05)',
         }}
       >
         <View className="flex-1 flex-row px-4">

@@ -377,8 +377,7 @@ export default function FarmDetailScreen() {
             className="mx-4 mt-16 rounded-2xl overflow-hidden"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
+              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
             }}
           >
             <View className="p-4">

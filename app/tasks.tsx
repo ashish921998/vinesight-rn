@@ -353,7 +353,7 @@ export default function TasksScreen() {
               setShowAddModal(true);
             }}
             className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center shadow-lg"
-            style={{ elevation: 5 }}
+            style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)' }}
           >
             <Symbol name="plus" size={28} color="white" />
           </TouchableOpacity>
