@@ -7,6 +7,8 @@ import {
   Pressable,
   Modal,
   TouchableOpacity,
+  type ViewStyle,
+  type TextStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +22,7 @@ import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/card
 import { AddEntryModal } from '@/components/screens';
 import { Symbol } from '@/components/ui/Symbol';
 import type { LogTypeId } from '@/constants/calculatorModels';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 // ============================================================
 // MARK: - Greeting Helper
@@ -99,21 +102,41 @@ export default function DashboardScreen() {
     router.push(`/farm/${farmId}`);
   };
 
+  const containerStyle: ViewStyle = {
+    paddingTop: insets.top + spacing[4],
+    paddingHorizontal: spacing[4],
+  };
+
+  const greetingStyle: TextStyle = {
+    fontSize: fontSize['2xl'],
+    fontWeight: fontWeight.bold,
+    color: colors.black,
+  };
+
+  const sectionTitleStyle: TextStyle = {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    marginBottom: spacing[3],
+    color: colors.black,
+  };
+
   return (
     <ScrollView
-      className="flex-1"
+      style={{ flex: 1 }}
       contentContainerStyle={{ paddingBottom: 100 }}
       refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#408059" />
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.primary}
+        />
       }
       scrollIndicatorInsets={{ top: insets.top }}
     >
-      <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 16 }}>
+      <View style={containerStyle}>
         {/* Welcome Header */}
-        <View className="mb-6">
-          <Text className="text-2xl font-bold" style={{ color: '#000000' }}>
-            {greeting}
-          </Text>
+        <View style={{ marginBottom: spacing[6] }}>
+          <Text style={greetingStyle}>{greeting}</Text>
         </View>
 
         {/* Stats Grid */}
@@ -158,48 +181,77 @@ export default function DashboardScreen() {
 
         {/* Farms Needing Attention */}
         {farmsNeedingAttention && farmsNeedingAttention.length > 0 && (
-          <View className="mb-6">
-            <Text className="text-base font-semibold mb-3" style={{ color: '#000000' }}>
-              Needs Attention
-            </Text>
+          <View style={{ marginBottom: spacing[6] }}>
+            <Text style={sectionTitleStyle}>Needs Attention</Text>
             {farmsNeedingAttention.slice(0, 3).map((item) => (
               <Pressable
                 key={item.farm.id}
                 onPress={() => item.farm.id && handleFarmAttention(item.farm.id)}
-                className="rounded-xl p-3 mb-2 flex-row items-center active:opacity-80"
-                style={{
+                style={({ pressed }) => ({
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[3],
+                  marginBottom: spacing[2],
+                  flexDirection: 'row',
+                  alignItems: 'center',
                   backgroundColor: 'rgba(255, 149, 0, 0.05)',
                   borderWidth: 1,
                   borderColor: 'rgba(255, 149, 0, 0.2)',
-                }}
+                  opacity: pressed ? 0.8 : 1,
+                })}
               >
                 <View
-                  className="w-9 h-9 rounded-full items-center justify-center"
-                  style={{ backgroundColor: 'rgba(255, 149, 0, 0.15)' }}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: borderRadius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(255, 149, 0, 0.15)',
+                  }}
                 >
                   <Symbol name="drop.fill" size={18} color="#ff9500" />
                 </View>
-                <View className="ml-3 flex-1">
-                  <Text className="text-sm font-semibold" style={{ color: '#000000' }}>
+                <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.black,
+                    }}
+                  >
                     {item.farm.name}
                   </Text>
-                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: colors.gray[400],
+                    }}
+                  >
                     Water calculation needed
                   </Text>
                 </View>
-                <Symbol name="chevron.right" size={16} color="#c7c7cc" />
+                <Symbol name="chevron.right" size={16} color={colors.gray[300]} />
               </Pressable>
             ))}
           </View>
         )}
 
         {/* Quick Actions */}
-        <View className="mb-6">
-          <Text className="text-base font-semibold mb-3" style={{ color: '#000000' }}>
-            Quick Actions
-          </Text>
-          <View className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff' }}>
-            <View className="flex-row justify-around">
+        <View style={{ marginBottom: spacing[6] }}>
+          <Text style={sectionTitleStyle}>Quick Actions</Text>
+          <View
+            style={{
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[4],
+              backgroundColor: colors.white,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+              }}
+            >
               <QuickActionButton
                 title="Irrigation"
                 icon="water"
@@ -221,7 +273,7 @@ export default function DashboardScreen() {
               <QuickActionButton
                 title="Note"
                 icon="document-text"
-                color="#408059"
+                color={colors.primary}
                 onPress={() => handleQuickAction('note')}
               />
             </View>
@@ -230,11 +282,16 @@ export default function DashboardScreen() {
 
         {/* Recent Activity */}
         <View>
-          <Text className="text-base font-semibold mb-3" style={{ color: '#000000' }}>
-            Recent Activity
-          </Text>
+          <Text style={sectionTitleStyle}>Recent Activity</Text>
           {recentActivities && recentActivities.length > 0 ? (
-            <View className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', gap: 8 }}>
+            <View
+              style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                backgroundColor: colors.white,
+                gap: spacing[2],
+              }}
+            >
               {recentActivities.map((activity) => (
                 <ActivityLogCard
                   key={activity.id}
@@ -247,9 +304,22 @@ export default function DashboardScreen() {
               ))}
             </View>
           ) : (
-            <View className="rounded-2xl p-6 items-center" style={{ backgroundColor: '#ffffff' }}>
-              <Symbol name="clock" size={48} color="#c7c7cc" />
-              <Text className="text-center mt-4" style={{ color: '#8e8e93' }}>
+            <View
+              style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[6],
+                alignItems: 'center',
+                backgroundColor: colors.white,
+              }}
+            >
+              <Symbol name="clock" size={48} color={colors.gray[300]} />
+              <Text
+                style={{
+                  textAlign: 'center',
+                  marginTop: spacing[4],
+                  color: colors.gray[400],
+                }}
+              >
                 No recent activity yet.{'\n'}Start by adding your first farm!
               </Text>
             </View>
@@ -263,18 +333,46 @@ export default function DashboardScreen() {
           animationType="slide"
           onRequestClose={() => setShowFarmPicker(false)}
         >
-          <View className="flex-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            }}
+          >
             <View
-              className="absolute bottom-0 left-0 right-0 rounded-t-3xl p-4 pt-6"
-              style={{ backgroundColor: '#ffffff', maxHeight: '80%' }}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                padding: spacing[4],
+                paddingTop: spacing[6],
+                backgroundColor: colors.white,
+                maxHeight: '80%',
+              }}
             >
               {/* Header */}
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-lg font-semibold" style={{ color: '#000000' }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[4],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.black,
+                  }}
+                >
                   Select Farm
                 </Text>
                 <Pressable onPress={() => setShowFarmPicker(false)}>
-                  <Symbol name="xmark" size={24} color="#8e8e93" />
+                  <Symbol name="xmark" size={24} color={colors.gray[400]} />
                 </Pressable>
               </View>
 
@@ -282,32 +380,55 @@ export default function DashboardScreen() {
               <ScrollView
                 showsVerticalScrollIndicator={true}
                 nestedScrollEnabled={true}
-                className="max-h-96"
+                style={{ maxHeight: 384 }}
               >
                 {farms && farms.length > 0 ? (
                   farms.map((farm) => (
                     <TouchableOpacity
                       key={farm.id}
                       onPress={() => farm.id && handleFarmSelection(farm.id)}
-                      className="p-4 border-b flex-row items-center justify-between"
-                      style={{ borderColor: '#e5e5ea' }}
+                      style={{
+                        padding: spacing[4],
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.gray[200],
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
                     >
-                      <View className="flex-1">
-                        <Text className="text-base font-medium" style={{ color: '#000000' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            fontSize: fontSize.base,
+                            fontWeight: fontWeight.medium,
+                            color: colors.black,
+                          }}
+                        >
                           {farm.name}
                         </Text>
                         {farm.region && (
-                          <Text className="text-sm mt-1" style={{ color: '#8e8e93' }}>
+                          <Text
+                            style={{
+                              fontSize: fontSize.sm,
+                              marginTop: spacing[1],
+                              color: colors.gray[400],
+                            }}
+                          >
                             {farm.region}
                           </Text>
                         )}
                       </View>
-                      <Symbol name="chevron.right" size={20} color="#c7c7cc" />
+                      <Symbol name="chevron.right" size={20} color={colors.gray[300]} />
                     </TouchableOpacity>
                   ))
                 ) : (
-                  <View className="p-6 items-center">
-                    <Text style={{ color: '#8e8e93' }}>No farms available</Text>
+                  <View
+                    style={{
+                      padding: spacing[6],
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text style={{ color: colors.gray[400] }}>No farms available</Text>
                   </View>
                 )}
               </ScrollView>
