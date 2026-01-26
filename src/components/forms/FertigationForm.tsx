@@ -7,7 +7,7 @@ import {
   type NativeSyntheticEvent,
   type TextInputFocusEventData,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { UnitPickerModal } from '../ui/UnitPickerModal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculatorModels';
 
@@ -60,7 +60,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
       {/* Header with icon */}
       <View className="flex-row items-center mb-4">
         <View className="w-10 h-10 rounded-full bg-green-100 items-center justify-center mr-3">
-          <Ionicons name="leaf" size={20} color="#22C55E" />
+          <Symbol name="leaf.fill" size={20} color="#22C55E" />
         </View>
         <View>
           <Text className="text-lg font-semibold text-surface-900">Fertigation</Text>
@@ -72,7 +72,9 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
       <View>
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center">
-            <Ionicons name="flask-outline" size={16} color="#408059" style={{ marginRight: 6 }} />
+            <View style={{ marginRight: 6 }}>
+              <Symbol name="flask" size={16} color="#408059" />
+            </View>
             <Text className="text-sm font-semibold text-surface-800">
               Fertilizers <Text className="text-red-500">*</Text>
             </Text>
@@ -105,7 +107,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
             className="flex-row items-center py-3 mt-2"
             activeOpacity={0.7}
           >
-            <Ionicons name="add-circle" size={20} color="#22C55E" />
+            <Symbol name="plus.circle.fill" size={20} color="#22C55E" />
             <Text className="text-sm font-medium text-green-600 ml-2">Add Fertilizer</Text>
           </TouchableOpacity>
         )}
@@ -130,8 +132,8 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
 
       {/* Validation indicator */}
       <View className="flex-row items-center mt-4 pt-4 border-t border-surface-100">
-        <Ionicons
-          name={isValid ? 'checkmark-circle' : 'alert-circle-outline'}
+        <Symbol
+          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
         />
@@ -209,7 +211,7 @@ function FertilizerRow({
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             activeOpacity={0.7}
           >
-            <Ionicons name="remove-circle" size={24} color="#9CA3AF" />
+            <Symbol name="minus.circle.fill" size={24} color="#9CA3AF" />
           </TouchableOpacity>
         )}
       </View>
@@ -241,7 +243,7 @@ function FertilizerRow({
           style={{ flex: 1 }}
         >
           <Text className="text-base text-surface-900">{fertilizer.unit}</Text>
-          <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+          <Symbol name="chevron.right" size={18} color="#6B7280" />
         </TouchableOpacity>
       </View>
 

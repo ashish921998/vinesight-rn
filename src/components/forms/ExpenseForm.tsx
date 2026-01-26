@@ -7,7 +7,7 @@ import {
   type NativeSyntheticEvent,
   type TextInputFocusEventData,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput } from './FormField';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculatorModels';
 
@@ -25,14 +25,14 @@ interface ExpenseFormProps {
 }
 
 // Icon mapping for expense types
-const EXPENSE_ICONS: Record<ExpenseTypeId, keyof typeof Ionicons.glyphMap> = {
-  Equipment: 'construct-outline',
-  Fuel: 'car-outline',
-  'Seeds/Plants': 'flower-outline',
-  Packaging: 'cube-outline',
-  Transport: 'bus-outline',
-  Maintenance: 'hammer-outline',
-  Other: 'ellipsis-horizontal-outline',
+const EXPENSE_ICONS: Record<ExpenseTypeId, string> = {
+  Equipment: 'wrench.and.screwdriver',
+  Fuel: 'car',
+  'Seeds/Plants': 'leaf',
+  Packaging: 'cube',
+  Transport: 'bus',
+  Maintenance: 'hammer',
+  Other: 'ellipsis',
 };
 
 export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) {
@@ -43,7 +43,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
       {/* Header with icon */}
       <View className="flex-row items-center mb-4">
         <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-3">
-          <Ionicons name="cash" size={20} color="#EF4444" />
+          <Symbol name="dollarsign.circle.fill" size={20} color="#EF4444" />
         </View>
         <View>
           <Text className="text-lg font-semibold text-surface-900">Expense</Text>
@@ -54,7 +54,9 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
       {/* Category Selection */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
-          <Ionicons name="list-outline" size={16} color="#408059" style={{ marginRight: 6 }} />
+          <View style={{ marginRight: 6 }}>
+            <Symbol name="list.bullet" size={16} color="#408059" />
+          </View>
           <Text className="text-sm font-semibold text-surface-800">
             Category <Text className="text-red-500">*</Text>
           </Text>
@@ -70,7 +72,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
               }`}
               activeOpacity={0.7}
             >
-              <Ionicons
+              <Symbol
                 name={EXPENSE_ICONS[type]}
                 size={16}
                 color={data.type === type ? '#FFFFFF' : '#6B7280'}
@@ -106,12 +108,9 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
       {/* Remarks Input (Optional) */}
       <View className="mb-4">
         <View className="flex-row items-center mb-1.5">
-          <Ionicons
-            name="document-text-outline"
-            size={16}
-            color="#408059"
-            style={{ marginRight: 6 }}
-          />
+          <View style={{ marginRight: 6 }}>
+            <Symbol name="doc.text" size={16} color="#408059" />
+          </View>
           <Text className="text-sm font-semibold text-surface-800">Remarks</Text>
         </View>
 
@@ -136,8 +135,8 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
         <View className="bg-red-50 rounded-xl p-4 mb-4">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
-              <Ionicons
-                name={data.type ? EXPENSE_ICONS[data.type] : 'cash'}
+              <Symbol
+                name={data.type ? EXPENSE_ICONS[data.type] : 'dollarsign.circle.fill'}
                 size={20}
                 color="#DC2626"
               />
@@ -150,8 +149,8 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
 
       {/* Validation indicator */}
       <View className="flex-row items-center pt-4 border-t border-surface-100">
-        <Ionicons
-          name={isValid ? 'checkmark-circle' : 'alert-circle-outline'}
+        <Symbol
+          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
         />

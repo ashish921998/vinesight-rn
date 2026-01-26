@@ -7,7 +7,7 @@ import {
   type NativeSyntheticEvent,
   type TextInputFocusEventData,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput } from './FormField';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculatorModels';
 
@@ -37,7 +37,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       {/* Header with icon */}
       <View className="flex-row items-center mb-4">
         <View className="w-10 h-10 rounded-full bg-amber-100 items-center justify-center mr-3">
-          <Ionicons name="basket" size={20} color="#F59E0B" />
+          <Symbol name="basket.fill" size={20} color="#F59E0B" />
         </View>
         <View>
           <Text className="text-lg font-semibold text-surface-900">Harvest</Text>
@@ -63,7 +63,9 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       {/* Grade Selection */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
-          <Ionicons name="star-outline" size={16} color="#408059" style={{ marginRight: 6 }} />
+          <View style={{ marginRight: 6 }}>
+            <Symbol name="star" size={16} color="#408059" />
+          </View>
           <Text className="text-sm font-semibold text-surface-800">
             Grade <Text className="text-red-500">*</Text>
           </Text>
@@ -110,12 +112,16 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       {/* Buyer Input (Optional) */}
       <View className="mb-4">
         <View className="flex-row items-center mb-1.5">
-          <Ionicons name="person-outline" size={16} color="#408059" style={{ marginRight: 6 }} />
+          <View style={{ marginRight: 6 }}>
+            <Symbol name="person" size={16} color="#408059" />
+          </View>
           <Text className="text-sm font-semibold text-surface-800">Buyer</Text>
         </View>
 
         <View className="flex-row items-center px-4 py-3 rounded-xl border border-surface-200 bg-white">
-          <Ionicons name="person-outline" size={20} color="#6B7280" style={{ marginRight: 10 }} />
+          <View style={{ marginRight: 10 }}>
+            <Symbol name="person" size={20} color="#6B7280" />
+          </View>
           <TextInput
             className="flex-1 text-base text-surface-900"
             placeholder="Enter buyer name (optional)"
@@ -159,8 +165,8 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
 
       {/* Validation indicator */}
       <View className="flex-row items-center pt-4 border-t border-surface-100">
-        <Ionicons
-          name={isValid ? 'checkmark-circle' : 'alert-circle-outline'}
+        <Symbol
+          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
         />

@@ -7,11 +7,11 @@ import {
   type NativeSyntheticEvent,
   type TextInputSubmitEditingEventData,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 
 interface FormFieldProps extends TextInputProps {
   label: string;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: string;
   iconColor?: string;
   error?: string;
   required?: boolean;
@@ -36,7 +36,11 @@ export function FormField({
   return (
     <View className="mb-4">
       <View className="flex-row items-center mb-1.5">
-        {icon && <Ionicons name={icon} size={16} color="#408059" style={{ marginRight: 6 }} />}
+        {icon && (
+          <View style={{ marginRight: 6 }}>
+            <Symbol name={icon} size={16} color="#408059" />
+          </View>
+        )}
         <Text className="text-sm font-semibold text-surface-800">
           {label}
           {required && <Text className="text-red-500"> *</Text>}
@@ -52,7 +56,11 @@ export function FormField({
           ${isDisabled ? 'bg-surface-100' : 'bg-white'}
         `}
       >
-        {icon && <Ionicons name={icon} size={20} color={iconColor} style={{ marginRight: 10 }} />}
+        {icon && (
+          <View style={{ marginRight: 10 }}>
+            <Symbol name={icon} size={20} color={iconColor} />
+          </View>
+        )}
 
         <TextInput
           className={`flex-1 text-base text-surface-900 ${className || ''}`}
@@ -74,7 +82,7 @@ export function FormField({
 
       {hasError && (
         <View className="flex-row items-center mt-1.5">
-          <Ionicons name="alert-circle" size={14} color="#EF4444" />
+          <Symbol name="exclamationmark.circle.fill" size={14} color="#EF4444" />
           <Text className="text-xs text-red-500 ml-1">{error}</Text>
         </View>
       )}
@@ -167,7 +175,9 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
     <View className="mb-4">
       <View className="flex-row items-center mb-1.5">
         {props.icon && (
-          <Ionicons name={props.icon} size={16} color="#408059" style={{ marginRight: 6 }} />
+          <View style={{ marginRight: 6 }}>
+            <Symbol name={props.icon} size={16} color="#408059" />
+          </View>
         )}
         <Text className="text-sm font-semibold text-surface-800">
           {props.label}
@@ -185,12 +195,9 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
         `}
       >
         {props.icon && (
-          <Ionicons
-            name={props.icon}
-            size={20}
-            color={props.iconColor || '#6B7280'}
-            style={{ marginRight: 10 }}
-          />
+          <View style={{ marginRight: 10 }}>
+            <Symbol name={props.icon} size={20} color={props.iconColor || '#6B7280'} />
+          </View>
         )}
 
         <TextInput
@@ -226,7 +233,7 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
 
       {props.error && (
         <View className="flex-row items-center mt-1.5">
-          <Ionicons name="alert-circle" size={14} color="#EF4444" />
+          <Symbol name="exclamationmark.circle.fill" size={14} color="#EF4444" />
           <Text className="text-xs text-red-500 ml-1">{props.error}</Text>
         </View>
       )}

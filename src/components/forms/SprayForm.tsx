@@ -7,7 +7,7 @@ import {
   type NativeSyntheticEvent,
   type TextInputFocusEventData,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput, type NumericInputHandle } from './FormField';
 import { UnitPickerModal } from '../ui/UnitPickerModal';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculatorModels';
@@ -119,7 +119,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
       {/* Header with icon */}
       <View className="flex-row items-center mb-4">
         <View className="w-10 h-10 rounded-full bg-purple-100 items-center justify-center mr-3">
-          <Ionicons name="flask" size={20} color="#8B5CF6" />
+          <Symbol name="flask.fill" size={20} color="#8B5CF6" />
         </View>
         <View>
           <Text className="text-lg font-semibold text-surface-900">Spray Application</Text>
@@ -149,7 +149,9 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
       {/* Chemicals Section */}
       <View className="mt-2">
         <View className="flex-row items-center mb-3">
-          <Ionicons name="beaker-outline" size={16} color="#408059" style={{ marginRight: 6 }} />
+          <View style={{ marginRight: 6 }}>
+            <Symbol name="flask" size={16} color="#408059" />
+          </View>
           <Text className="text-sm font-semibold text-surface-800">
             Chemicals <Text className="text-red-500">*</Text>
           </Text>
@@ -179,7 +181,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
             className="flex-row items-center py-3 mt-2"
             activeOpacity={0.7}
           >
-            <Ionicons name="add-circle" size={20} color="#8B5CF6" />
+            <Symbol name="plus.circle.fill" size={20} color="#8B5CF6" />
             <Text className="text-sm font-medium text-purple-600 ml-2">Add Chemical</Text>
           </TouchableOpacity>
         )}
@@ -187,8 +189,8 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
 
       {/* Validation indicator */}
       <View className="flex-row items-center mt-4 pt-4 border-t border-surface-100">
-        <Ionicons
-          name={isValid ? 'checkmark-circle' : 'alert-circle-outline'}
+        <Symbol
+          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
         />
@@ -292,7 +294,7 @@ function ChemicalRow({
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             activeOpacity={0.7}
           >
-            <Ionicons name="remove-circle" size={24} color="#9CA3AF" />
+            <Symbol name="minus.circle.fill" size={24} color="#9CA3AF" />
           </TouchableOpacity>
         )}
       </View>
@@ -328,7 +330,7 @@ function ChemicalRow({
           style={{ flex: 1 }}
         >
           <Text className="text-base text-surface-900">{chemical.unit}</Text>
-          <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+          <Symbol name="chevron.right" size={18} color="#6B7280" />
         </TouchableOpacity>
       </View>
 
