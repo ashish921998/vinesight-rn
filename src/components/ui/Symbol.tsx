@@ -31,6 +31,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   trash: 'trash',
   magnifyingglass: 'search',
   'arrow.clockwise': 'refresh',
+  'arrow.up.left.and.arrow.down.right': 'resize',
+  'arrow.up.circle.fill': 'arrow-up-circle',
 
   // UI Elements
   'square.grid.2x2': 'grid',
@@ -57,6 +59,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'clock.fill': 'time',
   location: 'location-outline',
   'location.fill': 'location',
+  'dollarsign.circle': 'cash-outline',
   'dollarsign.circle.fill': 'cash',
   receipt: 'receipt',
   'wallet.pass': 'wallet-outline',
@@ -84,6 +87,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'questionmark.circle': 'help-circle-outline',
 
   // Documents
+  document: 'document',
   'doc.fill': 'document',
   'doc.text': 'document-text-outline',
   'doc.text.fill': 'document-text',
@@ -100,6 +104,13 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'bell.fill': 'notifications',
   star: 'star-outline',
   'basket.fill': 'basket',
+
+  // Additional common mappings
+  'chevron.up.chevron.down': 'swap-vertical',
+  'arrow.left': 'arrow-back',
+  'arrow.right': 'arrow-forward',
+  'arrow.up': 'arrow-up',
+  'arrow.down': 'arrow-down',
 };
 
 export function Symbol({ name, size = 24, color = '#000', weight = 'regular' }: SymbolProps) {
