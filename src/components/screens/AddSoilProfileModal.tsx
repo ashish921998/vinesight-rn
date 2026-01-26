@@ -13,7 +13,6 @@ import {
   TextInput,
   Alert,
   KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Symbol } from '@/components/ui/Symbol';
@@ -95,7 +94,7 @@ export default function AddSoilProfileModal({
     if (date) {
       setSelectedDate(date);
     }
-    if (Platform.OS === 'android') {
+    if (process.env.EXPO_OS === 'android') {
       setShowDatePicker(false);
     }
   };
@@ -116,7 +115,7 @@ export default function AddSoilProfileModal({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
         style={{ backgroundColor: '#f2f2f7' }}
       >

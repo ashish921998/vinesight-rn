@@ -3,7 +3,6 @@ import {
   View,
   Text,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TouchableOpacity,
   Image,
@@ -72,7 +71,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-white"
     >
       <ScrollView

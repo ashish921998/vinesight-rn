@@ -11,7 +11,6 @@ import {
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -148,7 +147,7 @@ export default function SystemDischargeScreen() {
       />
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 bg-surface-50"
         >
           <ScrollView

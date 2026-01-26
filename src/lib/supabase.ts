@@ -2,7 +2,6 @@ import 'react-native-url-polyfill/auto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 
 // ============================================================
 // MARK: - Configuration
@@ -25,7 +24,7 @@ const SUPABASE_CONFIG_ERROR_MESSAGE =
 const ExpoSecureStoreAdapter = {
   getItem: async (key: string): Promise<string | null> => {
     try {
-      if (Platform.OS === 'web') {
+      if (process.env.EXPO_OS === 'web') {
         return AsyncStorage.getItem(key);
       }
       return await SecureStore.getItemAsync(key);
@@ -39,7 +38,7 @@ const ExpoSecureStoreAdapter = {
 
   setItem: async (key: string, value: string): Promise<void> => {
     try {
-      if (Platform.OS === 'web') {
+      if (process.env.EXPO_OS === 'web') {
         await AsyncStorage.setItem(key, value);
         return;
       }
@@ -53,7 +52,7 @@ const ExpoSecureStoreAdapter = {
 
   removeItem: async (key: string): Promise<void> => {
     try {
-      if (Platform.OS === 'web') {
+      if (process.env.EXPO_OS === 'web') {
         await AsyncStorage.removeItem(key);
         return;
       }

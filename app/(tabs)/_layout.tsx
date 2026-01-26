@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -59,8 +58,8 @@ export default function TabLayout() {
             borderTopColor: '#F3F4F6',
             borderTopWidth: 1,
             paddingTop: 8,
-            paddingBottom: Platform.OS === 'ios' ? 36 : Math.max(insets.bottom + 12, 20),
-            height: Platform.OS === 'ios' ? 96 : Math.max(insets.bottom + 64, 76),
+            paddingBottom: process.env.EXPO_OS === 'ios' ? 36 : Math.max(insets.bottom + 12, 20),
+            height: process.env.EXPO_OS === 'ios' ? 96 : Math.max(insets.bottom + 64, 76),
           },
           tabBarLabelStyle: {
             fontSize: 11,

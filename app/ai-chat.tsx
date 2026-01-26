@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -52,7 +51,7 @@ const markdownStyles = {
     color: '#1c1c1e',
     padding: 2,
     borderRadius: 4,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: process.env.EXPO_OS === 'ios' ? 'Courier' : 'monospace',
   },
   code_block: {
     backgroundColor: '#f0f0f0',
@@ -60,7 +59,7 @@ const markdownStyles = {
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: process.env.EXPO_OS === 'ios' ? 'Courier' : 'monospace',
   },
   blockquote: {
     backgroundColor: '#f5f5f5',
@@ -185,8 +184,8 @@ export default function AIChatScreen() {
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <KeyboardAvoidingView
           className="flex-1 bg-surface-50"
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={process.env.EXPO_OS === 'ios' ? 90 : 0}
         >
           <View className="flex-1">
             <ScrollView

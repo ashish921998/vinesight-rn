@@ -1,6 +1,6 @@
 import { SymbolView, SymbolWeight } from 'expo-symbols';
 import React from 'react';
-import { View, Text, Platform, ViewStyle } from 'react-native';
+import { View, Text, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SymbolProps {
@@ -122,7 +122,7 @@ export function Symbol({
   style,
 }: SymbolProps) {
   // On iOS 17+, use SF Symbols
-  if (Platform.OS === 'ios') {
+  if (process.env.EXPO_OS === 'ios') {
     const fallbackIcon = SYMBOL_TO_IONICON[name] || 'ellipse-outline';
     return (
       <SymbolView

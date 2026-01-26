@@ -4,15 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Platform,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/Symbol';
 import { router } from 'expo-router';
@@ -185,7 +177,7 @@ export default function ReportsScreen() {
             <DateTimePicker
               value={new Date(dateRange.from)}
               mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              display={process.env.EXPO_OS === 'ios' ? 'spinner' : 'default'}
               onChange={(_, date) => handleDateChange('from', date)}
               maximumDate={new Date(dateRange.to)}
             />
@@ -194,7 +186,7 @@ export default function ReportsScreen() {
             <DateTimePicker
               value={new Date(dateRange.to)}
               mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              display={process.env.EXPO_OS === 'ios' ? 'spinner' : 'default'}
               onChange={(_, date) => handleDateChange('to', date)}
               minimumDate={new Date(dateRange.from)}
               maximumDate={new Date()}

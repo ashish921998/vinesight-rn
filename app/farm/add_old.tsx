@@ -8,7 +8,6 @@ import {
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
@@ -202,7 +201,7 @@ export default function AddFarmScreen() {
 
       <SafeAreaView className="flex-1 bg-surface-50" edges={['top', 'bottom']}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           className="flex-1"
         >
           <ScrollView

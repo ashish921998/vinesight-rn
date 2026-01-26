@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { useAuthStore } from '@/stores';
 import { useProfile, useUpdateProfile } from '@/hooks';
@@ -235,7 +234,7 @@ export default function SettingsScreen() {
         onRequestClose={() => setShowEditProfile(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 bg-surface-50"
         >
           <View className="bg-white px-4 py-4 border-b border-surface-100">

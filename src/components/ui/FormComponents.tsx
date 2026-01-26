@@ -6,7 +6,6 @@ import {
   TextInput,
   Modal,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Animated,
   ViewStyle,
@@ -44,7 +43,7 @@ export function FormModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 bg-white"
       >
         <View
@@ -160,7 +159,7 @@ export function FullScreenForm({
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView

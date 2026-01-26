@@ -12,7 +12,6 @@ import {
   ScrollView,
   TextInput,
   Alert,
-  Platform,
   KeyboardAvoidingView,
   ActivityIndicator,
 } from 'react-native';
@@ -178,7 +177,7 @@ export default function AddLabTestModal({
   };
 
   const handleDateChange = (_: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
+    if (process.env.EXPO_OS === 'android') {
       setShowDatePicker(false);
     }
     if (selectedDate) {
@@ -349,7 +348,7 @@ export default function AddLabTestModal({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 bg-[#f2f2f7]"
       >
         {/* Header */}
@@ -544,7 +543,7 @@ export default function AddLabTestModal({
               <DateTimePicker
                 value={date}
                 mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                display={process.env.EXPO_OS === 'ios' ? 'spinner' : 'default'}
                 onChange={handleDateChange}
                 maximumDate={new Date()}
               />

@@ -7,7 +7,6 @@ import {
   TextInput,
   ScrollView,
   KeyboardAvoidingView,
-  Platform,
   Alert,
 } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
@@ -179,7 +178,7 @@ export default function AddTaskModal({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <SafeAreaView className="flex-1 bg-surface-50" edges={['top']}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 bg-surface-50"
         >
           {/* Header */}
