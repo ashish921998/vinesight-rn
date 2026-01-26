@@ -5,11 +5,11 @@
 
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 
 interface QuickActionButtonProps {
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   color: string;
   onPress: () => void;
 }
@@ -21,7 +21,7 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
         className="w-12 h-12 rounded-full items-center justify-center mb-2"
         style={{ backgroundColor: `${color}1A` }}
       >
-        <Ionicons name={icon} size={20} color={color} />
+        <Symbol name={icon} size={20} color={color} />
       </View>
       <Text className="text-xs font-medium text-center" style={{ color: '#000000' }}>
         {title}

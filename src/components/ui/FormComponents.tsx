@@ -11,7 +11,7 @@ import {
   Animated,
   ViewStyle,
 } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface FormModalProps {
@@ -56,7 +56,7 @@ export function FormModal({
             className="w-10 h-10 rounded-full bg-surface-100 items-center justify-center"
             disabled={isLoading}
           >
-            <Ionicons name="close" size={20} color="#111827" />
+            <Symbol name="xmark" size={20} color="#111827" />
           </TouchableOpacity>
           <Text
             className="text-lg font-semibold text-surface-900 flex-1 text-center mx-2"
@@ -148,7 +148,7 @@ export function FullScreenForm({
           className="w-10 h-10 rounded-full bg-surface-100 items-center justify-center"
           disabled={isLoading}
         >
-          <Ionicons name="close" size={20} color="#111827" />
+          <Symbol name="xmark" size={20} color="#111827" />
         </TouchableOpacity>
         <Text
           className="text-lg font-semibold text-surface-900 flex-1 text-center mx-2"
@@ -226,7 +226,7 @@ export function SectionHeader({ title, subtitle, style }: SectionHeaderProps) {
 interface PillOption {
   value: string;
   label: string;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: string;
 }
 
 interface PillSelectorProps {
@@ -268,12 +268,9 @@ export function PillSelector({
             }}
           >
             {option.icon && (
-              <Ionicons
-                name={option.icon}
-                size={18}
-                color={selected ? '#111827' : '#6B7280'}
-                style={{ marginRight: 8 }}
-              />
+              <View style={{ marginRight: 8 }}>
+                <Symbol name={option.icon} size={18} color={selected ? '#111827' : '#6B7280'} />
+              </View>
             )}
             <Text
               className="text-base font-medium"
@@ -330,9 +327,8 @@ interface CardOption {
   value: string;
   label: string;
   sublabel?: string;
-  icon?: keyof typeof Ionicons.glyphMap | keyof typeof MaterialCommunityIcons.glyphMap;
+  icon?: string;
   iconColor?: string;
-  iconLibrary?: 'ionicons' | 'material-community';
   renderIcon?: (props: { size: number; color: string; selected: boolean }) => React.ReactNode;
 }
 
@@ -376,20 +372,10 @@ export function CardSelector({
                   color: selected ? '#111827' : '#6B7280',
                   selected,
                 })
-              ) : option.iconLibrary === 'material-community' ? (
-                <MaterialCommunityIcons
-                  name={option.icon as keyof typeof MaterialCommunityIcons.glyphMap}
-                  size={24}
-                  color={selected ? '#111827' : '#6B7280'}
-                />
               ) : option.icon ? (
-                <Ionicons
-                  name={option.icon as keyof typeof Ionicons.glyphMap}
-                  size={24}
-                  color={selected ? '#111827' : '#6B7280'}
-                />
+                <Symbol name={option.icon} size={24} color={selected ? '#111827' : '#6B7280'} />
               ) : (
-                <Ionicons name="help-circle-outline" size={24} color="#9CA3AF" />
+                <Symbol name="questionmark.circle" size={24} color="#9CA3AF" />
               )}
             </View>
             <Text
@@ -504,7 +490,7 @@ export function Toggle({ label, description, value, onValueChange, style }: Togg
 }
 
 interface InfoCardProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   iconColor?: string;
   backgroundColor?: string;
   title?: string;
@@ -523,7 +509,7 @@ export function InfoCard({
   return (
     <View style={[{ backgroundColor }, style]} className="rounded-2xl p-4 mb-6">
       <View className="flex-row items-start">
-        <Ionicons name={icon} size={24} color={iconColor} />
+        <Symbol name={icon} size={24} color={iconColor} />
         <View className="flex-1 ml-3">
           {title && (
             <Text className="text-sm font-semibold mb-1" style={{ color: iconColor }}>

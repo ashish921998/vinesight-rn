@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { TextInput, View, Text, TouchableOpacity, type TextInputProps } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
-  leftIcon?: keyof typeof Ionicons.glyphMap;
-  rightIcon?: keyof typeof Ionicons.glyphMap;
+  leftIcon?: string;
+  rightIcon?: string;
   onRightIconPress?: () => void;
   isPassword?: boolean;
   containerClassName?: string;
@@ -56,12 +56,9 @@ export function Input({
         `}
       >
         {leftIcon && (
-          <Ionicons
-            name={leftIcon}
-            size={20}
-            color={isFocused ? '#408059' : '#c7c7cc'}
-            style={{ marginRight: 10 }}
-          />
+          <View style={{ marginRight: 10 }}>
+            <Symbol name={leftIcon} size={20} color={isFocused ? '#408059' : '#c7c7cc'} />
+          </View>
         )}
 
         <TextInput
@@ -89,11 +86,7 @@ export function Input({
             onPress={() => setShowPassword(!showPassword)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons
-              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-              size={20}
-              color="#c7c7cc"
-            />
+            <Symbol name={showPassword ? 'eye.slash' : 'eye'} size={20} color="#c7c7cc" />
           </TouchableOpacity>
         )}
 
@@ -103,14 +96,14 @@ export function Input({
             disabled={!onRightIconPress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name={rightIcon} size={20} color={isFocused ? '#408059' : '#c7c7cc'} />
+            <Symbol name={rightIcon} size={20} color={isFocused ? '#408059' : '#c7c7cc'} />
           </TouchableOpacity>
         )}
       </View>
 
       {hasError && (
         <View className="flex-row items-center mt-1.5">
-          <Ionicons name="alert-circle" size={14} color="#ff3b30" />
+          <Symbol name="exclamationmark.circle.fill" size={14} color="#ff3b30" />
           <Text className="text-xs ml-1 text-[#ff3b30]">{error}</Text>
         </View>
       )}

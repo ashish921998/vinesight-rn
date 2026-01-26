@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { View, Text, Pressable, TouchableOpacity, GestureResponderEvent } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import type { Farm } from '../../types';
 import { isLowWater } from '../../types';
 
@@ -46,7 +46,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="create-outline" size={18} color="#408059" />
+              <Symbol name="pencil" size={18} color="#408059" />
             </TouchableOpacity>
           )}
           {onDelete && (
@@ -59,7 +59,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               style={{ backgroundColor: 'rgba(255, 59, 48, 0.1)' }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="trash-outline" size={18} color="#ff3b30" />
+              <Symbol name="trash" size={18} color="#ff3b30" />
             </TouchableOpacity>
           )}
           <View className="px-2 py-1 rounded-full" style={{ backgroundColor: statusBg }}>
@@ -109,7 +109,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
         {/* Region Box */}
         <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: '#f2f2f7' }}>
           <View className="flex-row items-center gap-2">
-            <Ionicons name="location" size={12} color="#8e8e93" />
+            <Symbol name="location.fill" size={12} color="#8e8e93" />
             <View>
               <Text className="text-[10px] font-bold uppercase" style={{ color: '#8e8e93' }}>
                 REGION

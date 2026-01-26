@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 
 interface UnitPickerModalProps<T extends string> {
   visible: boolean;
@@ -54,7 +54,7 @@ export function UnitPickerModal<T extends string>({
                     {unit}
                   </Text>
                   {unit === selectedValue && (
-                    <Ionicons name="checkmark-circle" size={24} color="#408059" />
+                    <Symbol name="checkmark.circle.fill" size={24} color="#408059" />
                   )}
                 </View>
               </TouchableOpacity>

@@ -5,12 +5,12 @@
 
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 
 interface StatsCardProps {
   title: string;
   value: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   color?: string;
   iconColor?: string;
   subtitle?: string;
@@ -34,7 +34,7 @@ export function StatsCard({
       }}
     >
       <View className="flex-row items-center justify-between">
-        <Ionicons name={icon} size={20} color={finalColor} style={{ opacity: 1 }} />
+        <Symbol name={icon} size={20} color={finalColor} weight="semibold" />
         <Text className="text-2xl font-bold" style={{ color: '#000000' }}>
           {value}
         </Text>

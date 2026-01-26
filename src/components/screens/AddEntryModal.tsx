@@ -615,8 +615,15 @@ export function AddEntryModal({
   const renderTabs = () => {
     if (resolvedTabs.length < 2) return null;
     return (
-      <View style={{"paddingHorizontal": 16, "paddingTop": 8, "paddingBottom": 12}}>
-        <View style={{"backgroundColor": "#ffffff", "borderRadius": 999, "padding": 4, "flexDirection": "row"}}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 999,
+            padding: 4,
+            flexDirection: 'row',
+          }}
+        >
           {resolvedTabs.map((tab) => {
             const isActive = activeTab === tab;
             const label = tab === 'log' ? 'Farm Log' : 'Task';
@@ -625,7 +632,10 @@ export function AddEntryModal({
               <TouchableOpacity
                 key={tab}
                 onPress={() => setActiveTab(tab)}
-                style={[{"flex": 1, "borderRadius": 999, "overflow": "hidden"}, { marginHorizontal: 2 }]}
+                style={[
+                  { flex: 1, borderRadius: 999, overflow: 'hidden' },
+                  { marginHorizontal: 2 },
+                ]}
                 activeOpacity={0.8}
               >
                 {isActive ? (
@@ -644,7 +654,13 @@ export function AddEntryModal({
                     }}
                   >
                     <AppIcon name={iconName} size={16} color="#FFFFFF" />
-                    <Text selectable style={[{ marginLeft: 8, fontSize: 14, fontWeight: '600' }, { color: '#FFFFFF' }]}>
+                    <Text
+                      selectable
+                      style={[
+                        { marginLeft: 8, fontSize: 14, fontWeight: '600' },
+                        { color: '#FFFFFF' },
+                      ]}
+                    >
                       {label}
                     </Text>
                   </LinearGradient>
@@ -661,7 +677,13 @@ export function AddEntryModal({
                     }}
                   >
                     <AppIcon name={iconName} size={16} color="#6B7280" />
-                    <Text selectable style={[{ marginLeft: 8, fontSize: 14, fontWeight: '600' }, { color: '#6B7280' }]}>
+                    <Text
+                      selectable
+                      style={[
+                        { marginLeft: 8, fontSize: 14, fontWeight: '600' },
+                        { color: '#6B7280' },
+                      ]}
+                    >
                       {label}
                     </Text>
                   </View>
@@ -675,9 +697,14 @@ export function AddEntryModal({
   };
 
   const renderLogTypeSelector = () => (
-    <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16}}>
-      <Text selectable style={{"fontSize": 16, "fontWeight": "600", "color": "#2c2c2e", "marginBottom": 12}}>Activity Type</Text>
-      <View style={{"flexDirection": "row", "justifyContent": "space-between"}}>
+    <View style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+      <Text
+        selectable
+        style={{ fontSize: 16, fontWeight: '600', color: '#2c2c2e', marginBottom: 12 }}
+      >
+        Activity Type
+      </Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {ACTIVITY_TYPES.map((logType) => {
           const isSelected = selectedLogType === logType.id;
           return (
@@ -699,26 +726,24 @@ export function AddEntryModal({
               activeOpacity={0.8}
             >
               <View
-                style={[
-                  {
-                    width: 32,
-                    height: 32,
-                    borderRadius: 999,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 6,
-                    backgroundColor: isSelected ? `${logType.color}20` : `${logType.color}12`,
-                  },
-                ]}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 999,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 6,
+                  backgroundColor: isSelected ? `${logType.color}20` : `${logType.color}12`,
+                }}
               >
-                <AppIcon
-                  name={logType.icon}
-                  size={16}
-                  color={logType.color}
-                />
+                <AppIcon name={logType.icon} size={16} color={logType.color} />
               </View>
-              <Text selectable
-                style={[{"fontSize": 10, "fontWeight": "600", "textAlign": "center", "lineHeight": 12}, { color: isSelected ? '#1F4D36' : '#374151' }]}
+              <Text
+                selectable
+                style={[
+                  { fontSize: 10, fontWeight: '600', textAlign: 'center', lineHeight: 12 },
+                  { color: isSelected ? '#1F4D36' : '#374151' },
+                ]}
                 numberOfLines={2}
               >
                 {logType.label}
@@ -733,7 +758,7 @@ export function AddEntryModal({
   const renderLogForm = () => {
     if (!selectedLogType) return null;
     return (
-      <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16}}>
+      <View style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: 16 }}>
         {selectedLogType === 'irrigation' && (
           <IrrigationForm
             data={irrigationData}
@@ -769,14 +794,28 @@ export function AddEntryModal({
         <TouchableOpacity
           onPress={addLogToSession}
           disabled={!isLogFormValid || !activeFarm}
-          style={[{"marginTop": 16, "paddingVertical": 12, "borderRadius": 12, "alignItems": "center", "flexDirection": "row", "justifyContent": "center"}, {
-            backgroundColor: isLogFormValid && activeFarm ? '#408059' : '#E5E7EB',
-          }]}
+          style={[
+            {
+              marginTop: 16,
+              paddingVertical: 12,
+              borderRadius: 12,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+            },
+            {
+              backgroundColor: isLogFormValid && activeFarm ? '#408059' : '#E5E7EB',
+            },
+          ]}
           activeOpacity={0.8}
         >
           <AppIcon name="add-circle" size={20} color={isLogFormValid ? '#FFFFFF' : '#9CA3AF'} />
-          <Text selectable
-            style={[{"marginLeft": 8, "fontWeight": "600"}, { color: isLogFormValid ? '#FFFFFF' : '#9CA3AF' }]}
+          <Text
+            selectable
+            style={[
+              { marginLeft: 8, fontWeight: '600' },
+              { color: isLogFormValid ? '#FFFFFF' : '#9CA3AF' },
+            ]}
           >
             Add Entry
           </Text>
@@ -809,13 +848,22 @@ export function AddEntryModal({
             keyboardVerticalOffset={isIOS ? 0 : 20}
             style={{ flex: 1, backgroundColor: '#f2f2f7' }}
           >
-            <View style={{"backgroundColor": "#ffffff", "borderBottomWidth": 1, "borderColor": "#ffffff", "paddingHorizontal": 16, "paddingBottom": 12, "paddingTop": 8}}>
-              <View style={{"flexDirection": "row", "alignItems": "center"}}>
-                <View style={{"flex": 1}}>
-                  <Text selectable style={{"fontSize": 18, "fontWeight": "600", "color": "#2c2c2e"}}>
+            <View
+              style={{
+                backgroundColor: '#ffffff',
+                borderBottomWidth: 1,
+                borderColor: '#ffffff',
+                paddingHorizontal: 16,
+                paddingBottom: 12,
+                paddingTop: 8,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <Text selectable style={{ fontSize: 18, fontWeight: '600', color: '#2c2c2e' }}>
                     {logType?.label ?? 'Add Log'}
                   </Text>
-                  <Text selectable style={{"fontSize": 12, "color": "#8e8e93"}} numberOfLines={1}>
+                  <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
                     {activeFarm?.name}
                   </Text>
                 </View>
@@ -824,16 +872,17 @@ export function AddEntryModal({
                     setShowLogFormModal(false);
                     setSelectedLogType(null);
                   }}
-                  style={{"width": 40, "alignItems": "flex-end"}}
+                  style={{ width: 40, alignItems: 'flex-end' }}
                 >
                   <AppIcon name="close-circle" size={26} color="#9CA3AF" />
                 </TouchableOpacity>
               </View>
             </View>
 
-            <ScrollView contentInsetAdjustmentBehavior="automatic"
+            <ScrollView
+              contentInsetAdjustmentBehavior="automatic"
               ref={logFormScrollViewRef}
-              style={{"flex": 1}}
+              style={{ flex: 1 }}
               contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
               keyboardShouldPersistTaps="handled"
               onScroll={(event) => {
@@ -867,9 +916,18 @@ export function AddEntryModal({
         <TouchableOpacity
           onPress={addLogToSession}
           disabled={!isLogFormValid || !activeFarm}
-          style={[{"paddingVertical": 14, "borderRadius": 12, "alignItems": "center", "flexDirection": "row", "justifyContent": "center"}, {
-            backgroundColor: isLogFormValid && activeFarm ? '#408059' : '#E5E7EB',
-          }]}
+          style={[
+            {
+              paddingVertical: 14,
+              borderRadius: 12,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+            },
+            {
+              backgroundColor: isLogFormValid && activeFarm ? '#408059' : '#E5E7EB',
+            },
+          ]}
           activeOpacity={0.8}
         >
           <AppIcon
@@ -877,8 +935,12 @@ export function AddEntryModal({
             size={20}
             color={isLogFormValid && activeFarm ? '#FFFFFF' : '#9CA3AF'}
           />
-          <Text selectable
-            style={[{"marginLeft": 8, "fontWeight": "600", "fontSize": 16}, { color: isLogFormValid && activeFarm ? '#FFFFFF' : '#9CA3AF' }]}
+          <Text
+            selectable
+            style={[
+              { marginLeft: 8, fontWeight: '600', fontSize: 16 },
+              { color: isLogFormValid && activeFarm ? '#FFFFFF' : '#9CA3AF' },
+            ]}
           >
             Add Entry
           </Text>
@@ -890,8 +952,11 @@ export function AddEntryModal({
   const renderPendingLogs = () => {
     if (pendingLogs.length === 0) return null;
     return (
-      <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16}}>
-        <Text selectable style={{"fontSize": 16, "fontWeight": "600", "color": "#2c2c2e", "marginBottom": 12}}>
+      <View style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+        <Text
+          selectable
+          style={{ fontSize: 16, fontWeight: '600', color: '#2c2c2e', marginBottom: 12 }}
+        >
           Pending Logs ({pendingLogs.length})
         </Text>
         {pendingLogs.map((log) => {
@@ -899,25 +964,36 @@ export function AddEntryModal({
           return (
             <View
               key={log.id}
-              style={[{"flexDirection": "row", "alignItems": "center", "padding": 12, "borderRadius": 12, "marginBottom": 8}, { backgroundColor: '#F3F4F6' }]}
+              style={[
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 12,
+                  borderRadius: 12,
+                  marginBottom: 8,
+                },
+                { backgroundColor: '#F3F4F6' },
+              ]}
             >
               <View
-                style={[
-                  {
-                    width: 40,
-                    height: 40,
-                    borderRadius: 999,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: `${logType?.color}15`,
-                  },
-                ]}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 999,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: `${logType?.color}15`,
+                }}
               >
                 <AppIcon name={logType?.icon ?? 'document-text'} size={18} color={logType?.color} />
               </View>
-              <View style={{"flex": 1, "marginLeft": 12}}>
-                <Text selectable style={{"fontSize": 14, "fontWeight": "600", "color": "#2c2c2e"}}>{logType?.label}</Text>
-                <Text selectable style={{"fontSize": 12, "color": "#8e8e93"}}>{log.displayDescription}</Text>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text selectable style={{ fontSize: 14, fontWeight: '600', color: '#2c2c2e' }}>
+                  {logType?.label}
+                </Text>
+                <Text selectable style={{ fontSize: 12, color: '#8e8e93' }}>
+                  {log.displayDescription}
+                </Text>
               </View>
               <TouchableOpacity onPress={() => removeLogFromSession(log.id)}>
                 <AppIcon name="trash-outline" size={20} color="#EF4444" />
@@ -932,22 +1008,55 @@ export function AddEntryModal({
   const renderLogContent = () => (
     <>
       {!farm && (
-        <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16, "borderWidth": 1, "borderColor": "#ffffff"}}>
-          <Text selectable style={{"fontSize": 14, "fontWeight": "500", "color": "#48484a", "marginBottom": 8}}>Farm *</Text>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: '#ffffff',
+          }}
+        >
+          <Text
+            selectable
+            style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+          >
+            Farm *
+          </Text>
           <TouchableOpacity
             onPress={() => setShowLogFarmPicker(!showLogFarmPicker)}
-            style={{"backgroundColor": "#f2f2f7", "borderRadius": 12, "paddingHorizontal": 16, "paddingVertical": 12, "flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "borderWidth": 1, "borderColor": "#f2f2f7"}}
+            style={{
+              backgroundColor: '#f2f2f7',
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderWidth: 1,
+              borderColor: '#f2f2f7',
+            }}
           >
-            <View style={{"flexDirection": "row", "alignItems": "center"}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <AppIcon name="leaf" size={18} color="#408059" />
-              <Text selectable style={{"fontSize": 16, "color": "#2c2c2e", "marginLeft": 8}}>
+              <Text selectable style={{ fontSize: 16, color: '#2c2c2e', marginLeft: 8 }}>
                 {activeFarm?.name || 'Select farm'}
               </Text>
             </View>
             <AppIcon name="chevron-down" size={18} color="#9CA3AF" />
           </TouchableOpacity>
           {showLogFarmPicker && farms && (
-            <View style={{"backgroundColor": "#ffffff", "borderRadius": 12, "marginTop": 8, "borderWidth": 1, "borderColor": "#f2f2f7", "overflow": "hidden"}}>
+            <View
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: 12,
+                marginTop: 8,
+                borderWidth: 1,
+                borderColor: '#f2f2f7',
+                overflow: 'hidden',
+              }}
+            >
               {farms.map((f) => (
                 <TouchableOpacity
                   key={f.id}
@@ -962,7 +1071,8 @@ export function AddEntryModal({
                     backgroundColor: activeFarm?.id === f.id ? '#f0f5f2' : '#ffffff',
                   }}
                 >
-                  <Text selectable
+                  <Text
+                    selectable
                     style={{
                       color: activeFarm?.id === f.id ? '#2d5c3f' : '#48484a',
                       fontWeight: activeFarm?.id === f.id ? '500' : '400',
@@ -977,14 +1087,35 @@ export function AddEntryModal({
         </View>
       )}
 
-      <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16, "borderWidth": 1, "borderColor": "#ffffff"}}>
-        <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between"}}>
+      <View
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: 16,
+          padding: 16,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: '#ffffff',
+        }}
+      >
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+        >
           <TouchableOpacity
             onPress={() => setShowDatePicker(true)}
-            style={{"flexDirection": "row", "alignItems": "center", "backgroundColor": "#ffffff", "paddingHorizontal": 16, "paddingVertical": 8, "borderRadius": 10}}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#ffffff',
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 10,
+            }}
           >
             <AppIcon name="calendar" size={18} color="#408059" />
-            <Text selectable style={{"marginLeft": 8, "fontSize": 14, "fontWeight": "500", "color": "#2c2c2e"}}>
+            <Text
+              selectable
+              style={{ marginLeft: 8, fontSize: 14, fontWeight: '500', color: '#2c2c2e' }}
+            >
               {selectedDate.toLocaleDateString('en-US', {
                 weekday: 'short',
                 month: 'short',
@@ -994,9 +1125,21 @@ export function AddEntryModal({
           </TouchableOpacity>
 
           {pendingLogs.length > 0 && (
-            <View style={{"flexDirection": "row", "alignItems": "center", "backgroundColor": "#e1ebe5", "paddingHorizontal": 12, "paddingVertical": 6, "borderRadius": 999}}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: '#e1ebe5',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 999,
+              }}
+            >
               <AppIcon name="document-text" size={14} color="#408059" />
-              <Text selectable style={{"marginLeft": 4, "fontSize": 12, "fontWeight": "600", "color": "#2d5c3f"}}>
+              <Text
+                selectable
+                style={{ marginLeft: 4, fontSize: 12, fontWeight: '600', color: '#2d5c3f' }}
+              >
                 {pendingLogs.length} draft{pendingLogs.length !== 1 ? 's' : ''}
               </Text>
             </View>
@@ -1006,8 +1149,17 @@ export function AddEntryModal({
 
       {renderLogTypeSelector()}
       {selectedLogType === null && (
-        <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16, "borderWidth": 1, "borderColor": "#ffffff"}}>
-          <Text selectable style={{"fontSize": 14, "color": "#636366"}}>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: '#ffffff',
+          }}
+        >
+          <Text selectable style={{ fontSize: 14, color: '#636366' }}>
             Select an activity type to open the full-screen form.
           </Text>
         </View>
@@ -1021,20 +1173,34 @@ export function AddEntryModal({
       {!isEditingTask && (
         <TouchableOpacity
           onPress={() => setShowTemplates(!showTemplates)}
-          style={{"backgroundColor": "#f0f5f2", "borderRadius": 12, "padding": 16, "marginBottom": 16, "flexDirection": "row", "alignItems": "center"}}
+          style={{
+            backgroundColor: '#f0f5f2',
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
         >
           <AppIcon name="flash" size={20} color="#408059" />
-          <Text selectable style={{"color": "#2d5c3f", "fontWeight": "500", "marginLeft": 8, "flex": 1}}>Use Template</Text>
-          <AppIcon
-            name={showTemplates ? 'chevron-up' : 'chevron-down'}
-            size={20}
-            color="#408059"
-          />
+          <Text selectable style={{ color: '#2d5c3f', fontWeight: '500', marginLeft: 8, flex: 1 }}>
+            Use Template
+          </Text>
+          <AppIcon name={showTemplates ? 'chevron-up' : 'chevron-down'} size={20} color="#408059" />
         </TouchableOpacity>
       )}
 
       {showTemplates && (
-        <View style={{"backgroundColor": "#ffffff", "borderRadius": 12, "marginBottom": 16, "borderWidth": 1, "borderColor": "#f2f2f7", "overflow": "hidden"}}>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 12,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: '#f2f2f7',
+            overflow: 'hidden',
+          }}
+        >
           <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ maxHeight: 300 }}>
             {TASK_TEMPLATES.slice(0, 8).map((template) => {
               const typeInfo = TASK_TYPE_INFO[template.type];
@@ -1042,29 +1208,31 @@ export function AddEntryModal({
                 <TouchableOpacity
                   key={template.id}
                   onPress={() => applyTemplate(template)}
-                  style={{"padding": 16, "borderBottomWidth": 1, "borderColor": "#ffffff", "flexDirection": "row", "alignItems": "center"}}
+                  style={{
+                    padding: 16,
+                    borderBottomWidth: 1,
+                    borderColor: '#ffffff',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
                 >
                   <View
-                    style={[
-                      {
-                        width: 32,
-                        height: 32,
-                        borderRadius: 10,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: `${typeInfo.color}20`,
-                      },
-                    ]}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 10,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: `${typeInfo.color}20`,
+                    }}
                   >
-                    <AppIcon
-                      name={typeInfo.icon}
-                      size={16}
-                      color={typeInfo.color}
-                    />
+                    <AppIcon name={typeInfo.icon} size={16} color={typeInfo.color} />
                   </View>
-                  <View style={{"flex": 1, "marginLeft": 12}}>
-                    <Text selectable style={{"fontSize": 14, "fontWeight": "500", "color": "#2c2c2e"}}>{template.title}</Text>
-                    <Text selectable style={{"fontSize": 12, "color": "#8e8e93"}} numberOfLines={1}>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text selectable style={{ fontSize: 14, fontWeight: '500', color: '#2c2c2e' }}>
+                      {template.title}
+                    </Text>
+                    <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
                       {template.description}
                     </Text>
                   </View>
@@ -1076,22 +1244,46 @@ export function AddEntryModal({
       )}
 
       {!farm && (
-        <View style={{"marginBottom": 16}}>
-          <Text selectable style={{"fontSize": 14, "fontWeight": "500", "color": "#48484a", "marginBottom": 8}}>Farm *</Text>
+        <View style={{ marginBottom: 16 }}>
+          <Text
+            selectable
+            style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+          >
+            Farm *
+          </Text>
           <TouchableOpacity
             onPress={() => setShowTaskFarmPicker(!showTaskFarmPicker)}
-            style={{"backgroundColor": "#ffffff", "borderRadius": 12, "paddingHorizontal": 16, "paddingVertical": 12, "flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "borderWidth": 1, "borderColor": "#f2f2f7"}}
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderWidth: 1,
+              borderColor: '#f2f2f7',
+            }}
           >
-            <View style={{"flexDirection": "row", "alignItems": "center"}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <AppIcon name="leaf" size={20} color="#408059" />
-              <Text selectable style={{"fontSize": 16, "color": "#2c2c2e", "marginLeft": 8}}>
+              <Text selectable style={{ fontSize: 16, color: '#2c2c2e', marginLeft: 8 }}>
                 {selectedTaskFarm?.name || 'Select farm'}
               </Text>
             </View>
             <AppIcon name="chevron-down" size={20} color="#9CA3AF" />
           </TouchableOpacity>
           {showTaskFarmPicker && farms && (
-            <View style={{"backgroundColor": "#ffffff", "borderRadius": 12, "marginTop": 8, "borderWidth": 1, "borderColor": "#f2f2f7", "overflow": "hidden"}}>
+            <View
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: 12,
+                marginTop: 8,
+                borderWidth: 1,
+                borderColor: '#f2f2f7',
+                overflow: 'hidden',
+              }}
+            >
               {farms.map((f) => (
                 <TouchableOpacity
                   key={f.id}
@@ -1106,7 +1298,8 @@ export function AddEntryModal({
                     backgroundColor: taskFarmId === f.id ? '#f0f5f2' : '#ffffff',
                   }}
                 >
-                  <Text selectable
+                  <Text
+                    selectable
                     style={{
                       color: taskFarmId === f.id ? '#2d5c3f' : '#48484a',
                       fontWeight: taskFarmId === f.id ? '500' : '400',
@@ -1121,61 +1314,129 @@ export function AddEntryModal({
         </View>
       )}
 
-      <View style={{"marginBottom": 16}}>
-        <Text selectable style={{"fontSize": 14, "fontWeight": "500", "color": "#48484a", "marginBottom": 8}}>Title *</Text>
+      <View style={{ marginBottom: 16 }}>
+        <Text
+          selectable
+          style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+        >
+          Title *
+        </Text>
         <TextInput
           value={title}
           onChangeText={setTitle}
           placeholder="Enter task title"
-          style={{"backgroundColor": "#ffffff", "borderRadius": 12, "paddingHorizontal": 16, "paddingVertical": 12, "fontSize": 16, "color": "#2c2c2e", "borderWidth": 1, "borderColor": "#f2f2f7"}}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            fontSize: 16,
+            color: '#2c2c2e',
+            borderWidth: 1,
+            borderColor: '#f2f2f7',
+          }}
           placeholderTextColor="#9CA3AF"
         />
       </View>
 
-      <View style={{"marginBottom": 16}}>
-        <Text selectable style={{"fontSize": 14, "fontWeight": "500", "color": "#48484a", "marginBottom": 8}}>Description</Text>
+      <View style={{ marginBottom: 16 }}>
+        <Text
+          selectable
+          style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+        >
+          Description
+        </Text>
         <TextInput
           value={description}
           onChangeText={setDescription}
           placeholder="Add details about this task"
           multiline
           numberOfLines={3}
-          style={{"backgroundColor": "#ffffff", "borderRadius": 12, "paddingHorizontal": 16, "paddingVertical": 12, "fontSize": 16, "color": "#2c2c2e", "borderWidth": 1, "borderColor": "#f2f2f7"}}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            fontSize: 16,
+            color: '#2c2c2e',
+            borderWidth: 1,
+            borderColor: '#f2f2f7',
+            minHeight: 80,
+            textAlignVertical: 'top' as const,
+          }}
           placeholderTextColor="#9CA3AF"
-          style={{ minHeight: 80, textAlignVertical: 'top' }}
         />
       </View>
 
       <View style={{ flexDirection: 'row', marginBottom: 16, gap: 12 }}>
-        <View style={{"flex": 1}}>
-          <Text selectable style={{"fontSize": 14, "fontWeight": "500", "color": "#48484a", "marginBottom": 8}}>Type</Text>
+        <View style={{ flex: 1 }}>
+          <Text
+            selectable
+            style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+          >
+            Type
+          </Text>
           <TouchableOpacity
             onPress={() => setShowTypePicker(true)}
-            style={{"backgroundColor": "#ffffff", "borderRadius": 12, "paddingHorizontal": 16, "flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "borderWidth": 1, "borderColor": "#f2f2f7", "height": 48}}
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderWidth: 1,
+              borderColor: '#f2f2f7',
+              height: 48,
+            }}
           >
-            <View style={{"flexDirection": "row", "alignItems": "center"}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <AppIcon
                 name={TASK_TYPE_INFO[type].icon}
                 size={16}
                 color={TASK_TYPE_INFO[type].color}
               />
-              <Text selectable style={{"fontSize": 14, "color": "#2c2c2e", "marginLeft": 8}}>{TASK_TYPE_INFO[type].label}</Text>
+              <Text selectable style={{ fontSize: 14, color: '#2c2c2e', marginLeft: 8 }}>
+                {TASK_TYPE_INFO[type].label}
+              </Text>
             </View>
             <AppIcon name="chevron-down" size={16} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
 
-        <View style={{"flex": 1}}>
-          <Text selectable style={{"fontSize": 14, "fontWeight": "500", "color": "#48484a", "marginBottom": 8}}>Priority</Text>
+        <View style={{ flex: 1 }}>
+          <Text
+            selectable
+            style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+          >
+            Priority
+          </Text>
           <TouchableOpacity
             onPress={() => setShowPriorityPicker(true)}
-            style={{"backgroundColor": "#ffffff", "borderRadius": 12, "paddingHorizontal": 16, "flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "borderWidth": 1, "borderColor": "#f2f2f7", "height": 48}}
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderWidth: 1,
+              borderColor: '#f2f2f7',
+              height: 48,
+            }}
           >
             <View
-              style={[{"paddingHorizontal": 8, "paddingVertical": 2, "borderRadius": 6}, { backgroundColor: PRIORITY_INFO[priority].bgColor }]}
+              style={[
+                { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+                { backgroundColor: PRIORITY_INFO[priority].bgColor },
+              ]}
             >
-              <Text selectable
-                style={[{"fontSize": 14, "fontWeight": "500"}, { color: PRIORITY_INFO[priority].color }]}
+              <Text
+                selectable
+                style={[
+                  { fontSize: 14, fontWeight: '500' },
+                  { color: PRIORITY_INFO[priority].color },
+                ]}
               >
                 {PRIORITY_INFO[priority].label}
               </Text>
@@ -1185,19 +1446,32 @@ export function AddEntryModal({
         </View>
       </View>
 
-      <View style={{"marginBottom": 16}}>
-        <Text selectable style={{"fontSize": 14, "fontWeight": "500", "color": "#48484a", "marginBottom": 8}}>Due Date</Text>
+      <View style={{ marginBottom: 16 }}>
+        <Text
+          selectable
+          style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+        >
+          Due Date
+        </Text>
         <TouchableOpacity
           onPress={() => setShowDueDatePicker(true)}
-          style={{"backgroundColor": "#ffffff", "borderRadius": 12, "paddingHorizontal": 16, "paddingVertical": 12, "flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "borderWidth": 1, "borderColor": "#f2f2f7"}}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderWidth: 1,
+            borderColor: '#f2f2f7',
+          }}
         >
-          <View style={{"flexDirection": "row", "alignItems": "center", "flex": 1}}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
             <AppIcon name="calendar" size={18} color={dueDate ? '#408059' : '#9CA3AF'} />
-            <Text selectable
-              style={[
-                { marginLeft: 8, fontSize: 16 },
-                { color: dueDate ? '#111827' : '#9CA3AF' },
-              ]}
+            <Text
+              selectable
+              style={[{ marginLeft: 8, fontSize: 16 }, { color: dueDate ? '#111827' : '#9CA3AF' }]}
             >
               {dueDate
                 ? new Date(dueDate).toLocaleDateString('en-US', {
@@ -1210,7 +1484,7 @@ export function AddEntryModal({
             </Text>
           </View>
           {dueDate && (
-            <TouchableOpacity onPress={() => setDueDate('')} style={{"marginLeft": 8, "padding": 4}}>
+            <TouchableOpacity onPress={() => setDueDate('')} style={{ marginLeft: 8, padding: 4 }}>
               <AppIcon name="close-circle" size={20} color="#9CA3AF" />
             </TouchableOpacity>
           )}
@@ -1230,14 +1504,40 @@ export function AddEntryModal({
         {showDueDatePicker && isIOS && (
           <Pressable
             onPress={() => setShowDueDatePicker(false)}
-            style={{"position": "absolute", "top": 0, "right": 0, "bottom": 0, "left": 0, "backgroundColor": "rgba(0,0,0,0.5)", "zIndex": 50}}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 50,
+            }}
           >
             <View
-              style={{"position": "absolute", "bottom": 0, "left": 0, "right": 0, "backgroundColor": "#ffffff", "borderTopLeftRadius": 24, "borderTopRightRadius": 24, "padding": 16}}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: '#ffffff',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                padding: 16,
+              }}
               onStartShouldSetResponder={() => true}
             >
-              <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "marginBottom": 16}}>
-                <Text selectable style={{"fontSize": 18, "fontWeight": "700", "color": "#2c2c2e"}}>Select Due Date</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 16,
+                }}
+              >
+                <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                  Select Due Date
+                </Text>
                 <TouchableOpacity onPress={() => setShowDueDatePicker(false)}>
                   <AppIcon name="close" size={24} color="#9CA3AF" />
                 </TouchableOpacity>
@@ -1252,9 +1552,14 @@ export function AddEntryModal({
               />
               <TouchableOpacity
                 onPress={() => setShowDueDatePicker(false)}
-                style={[{"marginTop": 16, "paddingVertical": 12, "borderRadius": 12, "alignItems": "center"}, { backgroundColor: '#408059' }]}
+                style={[
+                  { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+                  { backgroundColor: '#408059' },
+                ]}
               >
-                <Text selectable style={{"fontWeight": "600", "color": "#ffffff"}}>Done</Text>
+                <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
+                  Done
+                </Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -1276,21 +1581,36 @@ export function AddEntryModal({
           keyboardVerticalOffset={isIOS ? 0 : 20}
           style={{ flex: 1, backgroundColor: '#f2f2f7' }}
         >
-          <View style={{"backgroundColor": "#ffffff", "borderBottomWidth": 1, "borderColor": "#ffffff", "paddingHorizontal": 16, "paddingBottom": 12, "paddingTop": 8}}>
-            <View style={{"alignItems": "center", "marginBottom": 8}}>
-              <View style={{"width": 48, "height": 6, "borderRadius": 999, "backgroundColor": "#f2f2f7"}} />
+          <View
+            style={{
+              backgroundColor: '#ffffff',
+              borderBottomWidth: 1,
+              borderColor: '#ffffff',
+              paddingHorizontal: 16,
+              paddingBottom: 12,
+              paddingTop: 8,
+            }}
+          >
+            <View style={{ alignItems: 'center', marginBottom: 8 }}>
+              <View
+                style={{ width: 48, height: 6, borderRadius: 999, backgroundColor: '#f2f2f7' }}
+              />
             </View>
-            <View style={{"flexDirection": "row", "alignItems": "center"}}>
-              <View style={{"width": 40}} />
-              <View style={{"flex": 1, "alignItems": "center"}}>
-                <Text selectable style={{"fontSize": 18, "fontWeight": "600", "color": "#2c2c2e"}} numberOfLines={1}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ width: 40 }} />
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text
+                  selectable
+                  style={{ fontSize: 18, fontWeight: '600', color: '#2c2c2e' }}
+                  numberOfLines={1}
+                >
                   {activeTab === 'log' ? 'Add Log' : isEditingTask ? 'Edit Task' : 'Add Task'}
                 </Text>
-                <Text selectable style={{"fontSize": 12, "color": "#8e8e93"}} numberOfLines={1}>
+                <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
                   {activeFarm?.name}
                 </Text>
               </View>
-              <TouchableOpacity onPress={handleClose} style={{"width": 40, "alignItems": "flex-end"}}>
+              <TouchableOpacity onPress={handleClose} style={{ width: 40, alignItems: 'flex-end' }}>
                 <AppIcon name="close-circle" size={26} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
@@ -1311,14 +1631,40 @@ export function AddEntryModal({
           {showDatePicker && isIOS && (
             <Pressable
               onPress={() => setShowDatePicker(false)}
-              style={{"position": "absolute", "top": 0, "right": 0, "bottom": 0, "left": 0, "backgroundColor": "rgba(0,0,0,0.5)", "zIndex": 50}}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                zIndex: 50,
+              }}
             >
               <View
-                style={{"position": "absolute", "bottom": 0, "left": 0, "right": 0, "backgroundColor": "#ffffff", "borderTopLeftRadius": 24, "borderTopRightRadius": 24, "padding": 16}}
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#ffffff',
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 16,
+                }}
                 onStartShouldSetResponder={() => true}
               >
-                <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "marginBottom": 16}}>
-                  <Text selectable style={{"fontSize": 18, "fontWeight": "700", "color": "#2c2c2e"}}>Select Date</Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 16,
+                  }}
+                >
+                  <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                    Select Date
+                  </Text>
                   <TouchableOpacity onPress={() => setShowDatePicker(false)}>
                     <AppIcon name="close" size={24} color="#9CA3AF" />
                   </TouchableOpacity>
@@ -1333,9 +1679,14 @@ export function AddEntryModal({
                 />
                 <TouchableOpacity
                   onPress={() => setShowDatePicker(false)}
-                  style={[{"marginTop": 16, "paddingVertical": 12, "borderRadius": 12, "alignItems": "center"}, { backgroundColor: '#408059' }]}
+                  style={[
+                    { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+                    { backgroundColor: '#408059' },
+                  ]}
                 >
-                  <Text selectable style={{"fontWeight": "600", "color": "#ffffff"}}>Done</Text>
+                  <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
+                    Done
+                  </Text>
                 </TouchableOpacity>
               </View>
             </Pressable>
@@ -1344,19 +1695,48 @@ export function AddEntryModal({
           {showTypePicker && (
             <Pressable
               onPress={() => setShowTypePicker(false)}
-              style={[{"position": "absolute", "top": 0, "right": 0, "bottom": 0, "left": 0, "backgroundColor": "rgba(0,0,0,0.4)", "zIndex": 50}, { zIndex: 60 }]}
+              style={[
+                {
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  left: 0,
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  zIndex: 50,
+                },
+                { zIndex: 60 },
+              ]}
             >
               <View
-                style={{"position": "absolute", "bottom": 0, "left": 0, "right": 0, "backgroundColor": "#ffffff", "borderTopLeftRadius": 24, "borderTopRightRadius": 24, "padding": 16}}
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#ffffff',
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 16,
+                }}
                 onStartShouldSetResponder={() => true}
               >
-                <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "marginBottom": 12}}>
-                  <Text selectable style={{"fontSize": 18, "fontWeight": "700", "color": "#2c2c2e"}}>Select Task Type</Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
+                  }}
+                >
+                  <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                    Select Task Type
+                  </Text>
                   <TouchableOpacity onPress={() => setShowTypePicker(false)}>
                     <AppIcon name="close" size={24} color="#9CA3AF" />
                   </TouchableOpacity>
                 </View>
-                <ScrollView contentInsetAdjustmentBehavior="automatic" style={{"maxHeight": 320}}>
+                <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ maxHeight: 320 }}>
                   {TASK_TYPES.map((taskType) => (
                     <TouchableOpacity
                       key={taskType}
@@ -1378,7 +1758,8 @@ export function AddEntryModal({
                         size={18}
                         color={TASK_TYPE_INFO[taskType].color}
                       />
-                      <Text selectable
+                      <Text
+                        selectable
                         style={{
                           marginLeft: 12,
                           color: type === taskType ? '#2d5c3f' : '#48484a',
@@ -1397,14 +1778,43 @@ export function AddEntryModal({
           {showPriorityPicker && (
             <Pressable
               onPress={() => setShowPriorityPicker(false)}
-              style={[{"position": "absolute", "top": 0, "right": 0, "bottom": 0, "left": 0, "backgroundColor": "rgba(0,0,0,0.4)", "zIndex": 50}, { zIndex: 60 }]}
+              style={[
+                {
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  left: 0,
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  zIndex: 50,
+                },
+                { zIndex: 60 },
+              ]}
             >
               <View
-                style={{"position": "absolute", "bottom": 0, "left": 0, "right": 0, "backgroundColor": "#ffffff", "borderTopLeftRadius": 24, "borderTopRightRadius": 24, "padding": 16}}
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#ffffff',
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 16,
+                }}
                 onStartShouldSetResponder={() => true}
               >
-                <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between", "marginBottom": 12}}>
-                  <Text selectable style={{"fontSize": 18, "fontWeight": "700", "color": "#2c2c2e"}}>Select Priority</Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
+                  }}
+                >
+                  <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                    Select Priority
+                  </Text>
                   <TouchableOpacity onPress={() => setShowPriorityPicker(false)}>
                     <AppIcon name="close" size={24} color="#9CA3AF" />
                   </TouchableOpacity>
@@ -1426,13 +1836,29 @@ export function AddEntryModal({
                     }}
                   >
                     <View
-                      style={[{"width": 28, "height": 28, "borderRadius": 6, "alignItems": "center", "justifyContent": "center"}, { backgroundColor: PRIORITY_INFO[p].bgColor }]}
+                      style={[
+                        {
+                          width: 28,
+                          height: 28,
+                          borderRadius: 6,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        },
+                        { backgroundColor: PRIORITY_INFO[p].bgColor },
+                      ]}
                     >
-                      <Text selectable style={[{ fontSize: 12, fontWeight: '700' }, { color: PRIORITY_INFO[p].color }]}>
+                      <Text
+                        selectable
+                        style={[
+                          { fontSize: 12, fontWeight: '700' },
+                          { color: PRIORITY_INFO[p].color },
+                        ]}
+                      >
                         {p.charAt(0).toUpperCase()}
                       </Text>
                     </View>
-                    <Text selectable
+                    <Text
+                      selectable
                       style={{
                         marginLeft: 12,
                         color: priority === p ? '#2d5c3f' : '#48484a',
@@ -1448,7 +1874,7 @@ export function AddEntryModal({
           )}
 
           <ScrollView
-            style={{"flex": 1}}
+            style={{ flex: 1 }}
             contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
             keyboardShouldPersistTaps="handled"
             contentInsetAdjustmentBehavior="automatic"
@@ -1463,24 +1889,51 @@ export function AddEntryModal({
           {/* Sticky Add Entry button above keyboard */}
           {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
 
-          <View style={{"backgroundColor": "#ffffff", "paddingHorizontal": 16, "paddingVertical": 16, "borderTopWidth": 1, "borderColor": "#ffffff"}}>
+          <View
+            style={{
+              backgroundColor: '#ffffff',
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+              borderTopWidth: 1,
+              borderColor: '#ffffff',
+            }}
+          >
             {activeTab === 'log' ? (
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
                   onPress={handleClose}
-                  style={{"flex": 1, "paddingVertical": 14, "borderRadius": 12, "borderWidth": 1, "borderColor": "#f2f2f7", "alignItems": "center"}}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: '#f2f2f7',
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text selectable style={{"fontWeight": "600", "color": "#636366"}}>Cancel</Text>
+                  <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={saveAllLogs}
                   disabled={pendingLogs.length === 0 || isSubmittingLogs || !activeFarm}
-                  style={[{"flex": 1, "paddingVertical": 14, "borderRadius": 12, "alignItems": "center", "flexDirection": "row", "justifyContent": "center"}, {
-                    backgroundColor:
-                      pendingLogs.length > 0 && !isSubmittingLogs && activeFarm
-                        ? '#408059'
-                        : '#E5E7EB',
-                  }]}
+                  style={[
+                    {
+                      flex: 1,
+                      paddingVertical: 14,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                    },
+                    {
+                      backgroundColor:
+                        pendingLogs.length > 0 && !isSubmittingLogs && activeFarm
+                          ? '#408059'
+                          : '#E5E7EB',
+                    },
+                  ]}
                 >
                   {isSubmittingLogs ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
@@ -1491,8 +1944,12 @@ export function AddEntryModal({
                         size={18}
                         color={pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF'}
                       />
-                      <Text selectable
-                        style={[{"marginLeft": 8, "fontWeight": "600"}, { color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' }]}
+                      <Text
+                        selectable
+                        style={[
+                          { marginLeft: 8, fontWeight: '600' },
+                          { color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' },
+                        ]}
                       >
                         {pendingLogs.length > 0 ? `Save Logs (${pendingLogs.length})` : 'Save'}
                       </Text>
@@ -1504,22 +1961,45 @@ export function AddEntryModal({
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
                   onPress={handleClose}
-                  style={{"flex": 1, "paddingVertical": 14, "borderRadius": 12, "borderWidth": 1, "borderColor": "#f2f2f7", "alignItems": "center"}}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: '#f2f2f7',
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text selectable style={{"fontWeight": "600", "color": "#636366"}}>Cancel</Text>
+                  <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleTaskSubmit}
                   disabled={!isTaskValid || isTaskSaving}
-                  style={[{"flex": 1, "paddingVertical": 14, "borderRadius": 12, "alignItems": "center", "flexDirection": "row", "justifyContent": "center"}, { backgroundColor: isTaskValid && !isTaskSaving ? '#408059' : '#E5E7EB' }]}
+                  style={[
+                    {
+                      flex: 1,
+                      paddingVertical: 14,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                    },
+                    { backgroundColor: isTaskValid && !isTaskSaving ? '#408059' : '#E5E7EB' },
+                  ]}
                 >
                   {isTaskSaving ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <>
                       <AppIcon name="save" size={18} color={isTaskValid ? '#FFFFFF' : '#9CA3AF'} />
-                      <Text selectable
-                        style={[{"marginLeft": 8, "fontWeight": "600"}, { color: isTaskValid ? '#FFFFFF' : '#9CA3AF' }]}
+                      <Text
+                        selectable
+                        style={[
+                          { marginLeft: 8, fontWeight: '600' },
+                          { color: isTaskValid ? '#FFFFFF' : '#9CA3AF' },
+                        ]}
                       >
                         Save Task
                       </Text>

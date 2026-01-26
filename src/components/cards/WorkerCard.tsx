@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import type { Worker } from '../../types';
 
 interface WorkerCardProps {
@@ -44,7 +44,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
       <View className="flex-1">
         <Text className="text-base font-semibold text-gray-900">{worker.name}</Text>
         <View className="flex-row items-center mt-1">
-          <Ionicons name="cash-outline" size={12} color="#6B7280" />
+          <Symbol name="dollarsign.circle" size={12} color="#6B7280" />
           <Text className="text-sm text-gray-500 ml-1">
             {formattedRate}
             <Text className="text-xs text-gray-400"> /day</Text>
@@ -55,7 +55,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
       {/* Advance Balance (if any) */}
       {worker.advance_balance > 0 && (
         <View className="flex-row items-center">
-          <Ionicons name="arrow-up-circle" size={12} color="#F59E0B" />
+          <Symbol name="arrow.up.circle.fill" size={12} color="#F59E0B" />
           <Text className="text-sm font-semibold text-amber-500 ml-1">{formattedAdvance}</Text>
         </View>
       )}
@@ -65,12 +65,12 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
         <View className="flex-row items-center ml-3 gap-2">
           {onEdit && (
             <Pressable onPress={onEdit} className="p-2">
-              <Ionicons name="pencil" size={18} color="#3B82F6" />
+              <Symbol name="pencil" size={18} color="#3B82F6" />
             </Pressable>
           )}
           {onDelete && (
             <Pressable onPress={onDelete} className="p-2">
-              <Ionicons name="trash" size={18} color="#EF4444" />
+              <Symbol name="trash" size={18} color="#EF4444" />
             </Pressable>
           )}
         </View>

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
 import type {
@@ -93,11 +93,7 @@ export function ActivityLogCard({
         className="w-10 h-10 rounded-full items-center justify-center mr-3"
         style={{ backgroundColor: `${logType.color}26` }}
       >
-        <Ionicons
-          name={logType.icon as keyof typeof Ionicons.glyphMap}
-          size={18}
-          color={logType.color}
-        />
+        <Symbol name={logType.icon} size={18} color={logType.color} />
       </View>
 
       {/* Content */}
@@ -123,7 +119,7 @@ export function ActivityLogCard({
       </View>
 
       {/* Chevron */}
-      <Ionicons name="chevron-forward" size={16} color="#c7c7cc" />
+      <Symbol name="chevron.right" size={16} color="#c7c7cc" />
     </View>
   );
 
