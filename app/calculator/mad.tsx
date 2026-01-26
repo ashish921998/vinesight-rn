@@ -105,7 +105,7 @@ export default function MADCalculatorScreen() {
           <ScrollView
             className="flex-1"
             contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
-            contentInsetAdjustmentBehavior="never"
+            contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
           >
             {/* Step 1: MAD Calculation Card */}

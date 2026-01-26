@@ -153,7 +153,7 @@ export default function SystemDischargeScreen() {
           <ScrollView
             className="flex-1"
             contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
-            contentInsetAdjustmentBehavior="never"
+            contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
           >
             <View className="bg-white rounded-2xl p-4 shadow-sm">

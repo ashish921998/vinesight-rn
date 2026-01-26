@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 
 const monthNames = [
@@ -102,78 +102,78 @@ export default function TrendsTable({ trendData, parameterTrends, selectedParams
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
-    backgroundColor: 'white',
+    backgroundColor: 'white' as const,
     margin: 16,
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: 'hidden' as const,
   },
   headerRow: {
-    flexDirection: 'row',
-    backgroundColor: '#f2f2f7',
+    flexDirection: 'row' as const,
+    backgroundColor: '#f2f2f7' as const,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#e5e7eb' as const,
   },
   headerCell: {
     flex: 1,
     fontSize: 12,
-    fontWeight: '700',
-    color: '#374151',
-    textAlign: 'center',
+    fontWeight: '700' as const,
+    color: '#374151' as const,
+    textAlign: 'center' as const,
   },
   nutrientCell: {
     flex: 1.2,
-    textAlign: 'left',
+    textAlign: 'left' as const,
     paddingLeft: 12,
   },
   nutrientLabel: {
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: '600' as const,
+    color: '#374151' as const,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'row' as const,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: '#f3f4f6' as const,
   },
   rowEven: {
-    backgroundColor: '#fafafa',
+    backgroundColor: '#fafafa' as const,
   },
   cell: {
     flex: 1,
     fontSize: 13,
-    color: '#1f2937',
-    textAlign: 'center',
+    color: '#1f2937' as const,
+    textAlign: 'center' as const,
   },
   increase: {
-    color: '#10B981',
+    color: '#10B981' as const,
     fontSize: 10,
   },
   decrease: {
-    color: '#EF4444',
+    color: '#EF4444' as const,
     fontSize: 10,
   },
   headerDateContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     paddingVertical: 4,
   },
   headerDateMonth: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: '600' as const,
+    color: '#374151' as const,
   },
   headerDateDay: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#374151',
+    fontWeight: '700' as const,
+    color: '#374151' as const,
   },
   headerDateYear: {
     fontSize: 10,
-    fontWeight: '500',
-    color: '#6B7280',
+    fontWeight: '500' as const,
+    color: '#6B7280' as const,
   },
-});
+};

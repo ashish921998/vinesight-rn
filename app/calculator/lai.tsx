@@ -109,7 +109,7 @@ export default function LAICalculatorScreen() {
           <ScrollView
             className="flex-1"
             contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
-            contentInsetAdjustmentBehavior="never"
+            contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
           >
             {/* Calculator Card */}

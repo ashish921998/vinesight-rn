@@ -4,12 +4,11 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { PARAMETER_COLORS } from '../../hooks/useLabTests';
 
-const screenWidth = Dimensions.get('window').width;
 const monthNames = [
   'Jan',
   'Feb',
@@ -38,6 +37,7 @@ export default function TrendsChart({
   selectedParams,
   onToggleParam,
 }: Props) {
+  const { width: screenWidth } = useWindowDimensions();
   const [selectedPoint, setSelectedPoint] = useState<{ index: number; date: string } | null>(null);
 
   const labels = useMemo(() => {
