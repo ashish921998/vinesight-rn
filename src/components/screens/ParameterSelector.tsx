@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../../hooks/useLabTests';
 
 interface Props {
@@ -62,8 +62,8 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
                 isSelected ? 'bg-[#408059] border-[#408059]' : 'bg-white border-gray-300'
               }`}
             >
-              <Ionicons
-                name={isSelected ? 'checkbox' : 'square-outline'}
+              <Symbol
+                name={isSelected ? 'checkmark.square.fill' : 'square'}
                 size={16}
                 color={isSelected ? 'white' : '#666'}
               />

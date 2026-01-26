@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import type { Farm } from '@/types';
 import { useUpdateFarmWaterLevel } from '@/hooks';
 import { WATER_GROWTH_STAGES } from '@/constants/calculatorModels';
@@ -114,7 +114,7 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
         <View className="bg-white px-4 py-4 border-b border-gray-200">
           <View className="flex-row items-center justify-between">
             <TouchableOpacity onPress={handleClose} className="p-2">
-              <Ionicons name="close" size={24} color="#8e8e93" />
+              <Symbol name="xmark" size={24} color="#8e8e93" />
             </TouchableOpacity>
             <Text className="text-lg font-bold text-[#1c1c1e]">Update Soil Water Level</Text>
             <TouchableOpacity onPress={handleCalculate} className="p-2">
@@ -156,7 +156,7 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
                 <Text className="text-lg text-white/80 ml-1">mm</Text>
               </View>
               <View className="mt-2 flex-row items-center">
-                <Ionicons name="trending-down" size={16} color="white" />
+                <Symbol name="chart.line.downtrend.xyaxis" size={16} color="white" />
                 <Text className="text-sm text-white ml-1">
                   Change: {((farm.remaining_water ?? 0) - calculatedWaterLevel).toFixed(1)} mm
                 </Text>
@@ -190,7 +190,7 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
                   !useManual ? 'border-[#408059] bg-[#408059]' : 'border-[#c7c7cc]'
                 }`}
               >
-                {!useManual && <Ionicons name="checkmark" size={14} color="#fff" />}
+                {!useManual && <Symbol name="checkmark" size={14} color="#fff" />}
               </View>
             </TouchableOpacity>
             <View className="h-px bg-gray-200" />
@@ -213,7 +213,7 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
                   useManual ? 'border-[#408059] bg-[#408059]' : 'border-[#c7c7cc]'
                 }`}
               >
-                {useManual && <Ionicons name="checkmark" size={14} color="#fff" />}
+                {useManual && <Symbol name="checkmark" size={14} color="#fff" />}
               </View>
             </TouchableOpacity>
           </View>
@@ -253,7 +253,7 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
                     ? `${selectedGrowthStage.label} (Kc: ${selectedGrowthStage.kc.toFixed(2)})`
                     : 'Select growth stage'}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color="#8e8e93" />
+                <Symbol name="chevron.down" size={20} color="#8e8e93" />
               </TouchableOpacity>
             </View>
           )}
@@ -291,7 +291,7 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
             }}
           >
             <View className="flex-row items-start">
-              <Ionicons name="information-circle" size={20} color="#408059" />
+              <Symbol name="info.circle" size={20} color="#408059" />
               <View className="ml-3 flex-1">
                 <Text className="text-sm font-semibold text-[#1c1c1e] mb-1">
                   About Soil Water Levels
@@ -368,7 +368,7 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
                         </Text>
                       </View>
                       {selectedGrowthStage?.id === stage.id && (
-                        <Ionicons name="checkmark-circle" size={24} color="#408059" />
+                        <Symbol name="checkmark.circle.fill" size={24} color="#408059" />
                       )}
                     </View>
                   </TouchableOpacity>

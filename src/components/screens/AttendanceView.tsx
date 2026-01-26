@@ -11,7 +11,7 @@ import {
   FlatList,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFarms } from '@/hooks';
 import { supabase } from '@/lib/supabase';
@@ -100,7 +100,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
           className="w-24 h-24 rounded-3xl items-center justify-center mb-4"
           style={{ backgroundColor: UI.primarySoft }}
         >
-          <Ionicons name="people-outline" size={48} color={UI.primary} />
+          <Symbol name="person.2" size={48} color={UI.primary} />
         </View>
         <Text className="text-lg font-bold text-center" style={{ color: UI.text }}>
           No Active Workers
@@ -135,8 +135,8 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                 }`}
                 style={activeTab === 'mark' ? { backgroundColor: UI.primary } : {}}
               >
-                <Ionicons
-                  name="create-outline"
+                <Symbol
+                  name="pencil"
                   size={18}
                   color={activeTab === 'mark' ? '#FFFFFF' : UI.muted}
                 />
@@ -156,8 +156,8 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                 }`}
                 style={activeTab === 'calendar' ? { backgroundColor: UI.primary } : {}}
               >
-                <Ionicons
-                  name="calendar-outline"
+                <Symbol
+                  name="calendar"
                   size={18}
                   color={activeTab === 'calendar' ? '#FFFFFF' : UI.muted}
                 />
@@ -495,7 +495,7 @@ function MarkAttendanceTab({
             Mark daily status quickly
           </Text>
           <View className="flex-row items-center mt-2">
-            <Ionicons name="information-circle-outline" size={16} color={UI.muted} />
+            <Symbol name="info.circle" size={16} color={UI.muted} />
             <Text className="text-xs ml-2" style={{ color: UI.muted }}>
               Tap a day to cycle Full • Half • Absent • Clear
             </Text>
@@ -520,7 +520,7 @@ function MarkAttendanceTab({
               style={{ backgroundColor: '#FFFFFF', borderColor: UI.border }}
             >
               <View className="flex-row items-center">
-                <Ionicons name="person-outline" size={16} color={UI.primary} />
+                <Symbol name="person" size={16} color={UI.primary} />
                 <Text className="text-xs font-semibold ml-2" style={{ color: UI.muted }}>
                   Worker
                 </Text>
@@ -529,7 +529,7 @@ function MarkAttendanceTab({
                 <Text className="text-sm font-semibold" style={{ color: UI.text }}>
                   {selectedWorker?.name || 'All Workers'}
                 </Text>
-                <Ionicons name="chevron-down" size={14} color={UI.muted} className="ml-1" />
+                <Symbol name="chevron.down" size={14} color={UI.muted} />
               </View>
             </TouchableOpacity>
             <TouchableOpacity
@@ -539,7 +539,7 @@ function MarkAttendanceTab({
               style={{ backgroundColor: '#FFFFFF', borderColor: UI.border }}
             >
               <View className="flex-row items-center">
-                <Ionicons name="leaf-outline" size={16} color={UI.primary} />
+                <Symbol name="leaf" size={16} color={UI.primary} />
                 <Text className="text-xs font-semibold ml-2" style={{ color: UI.muted }}>
                   Farms
                 </Text>
@@ -548,7 +548,7 @@ function MarkAttendanceTab({
                 <Text className="text-sm font-semibold" style={{ color: UI.text }}>
                   {selectedFarmIds.length > 0 ? `${selectedFarmIds.length} selected` : 'All Farms'}
                 </Text>
-                <Ionicons name="chevron-down" size={14} color={UI.muted} className="ml-1" />
+                <Symbol name="chevron.down" size={14} color={UI.muted} />
               </View>
             </TouchableOpacity>
           </View>
@@ -646,7 +646,7 @@ function MarkAttendanceTab({
             className="flex-1 py-3 rounded-2xl flex-row items-center justify-center"
             style={{ backgroundColor: 'rgba(34, 197, 94, 0.12)' }}
           >
-            <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
+            <Symbol name="checkmark.circle.fill" size={18} color="#22C55E" />
             <Text className="text-sm font-bold ml-2" style={{ color: '#166534' }}>
               All Full
             </Text>
@@ -657,7 +657,7 @@ function MarkAttendanceTab({
             className="flex-1 py-3 rounded-2xl flex-row items-center justify-center"
             style={{ backgroundColor: 'rgba(245, 158, 11, 0.12)' }}
           >
-            <Ionicons name="time" size={18} color="#F59E0B" />
+            <Symbol name="clock.fill" size={18} color="#F59E0B" />
             <Text className="text-sm font-bold ml-2" style={{ color: '#B45309' }}>
               All Half
             </Text>
@@ -668,7 +668,7 @@ function MarkAttendanceTab({
             className="flex-1 py-3 rounded-2xl flex-row items-center justify-center"
             style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)' }}
           >
-            <Ionicons name="close-circle" size={18} color="#EF4444" />
+            <Symbol name="xmark.circle.fill" size={18} color="#EF4444" />
             <Text className="text-sm font-bold ml-2" style={{ color: '#B91C1C' }}>
               All Off
             </Text>
@@ -691,8 +691,8 @@ function MarkAttendanceTab({
                   selectedWorkerIndex === 0 ? 'rgba(229, 231, 235, 0.5)' : UI.primarySoft,
               }}
             >
-              <Ionicons
-                name="chevron-back"
+              <Symbol
+                name="chevron.left"
                 size={22}
                 color={selectedWorkerIndex === 0 ? '#D1D5DB' : UI.primary}
               />
@@ -703,7 +703,7 @@ function MarkAttendanceTab({
                 {selectedWorker?.name}
               </Text>
               <View className="flex-row items-center mt-1">
-                <Ionicons name="wallet-outline" size={14} color={UI.primary} />
+                <Symbol name="wallet.pass" size={14} color={UI.primary} />
                 <Text className="text-sm font-semibold ml-1" style={{ color: UI.muted }}>
                   ₹{selectedWorker?.daily_rate}/day
                 </Text>
@@ -735,8 +735,8 @@ function MarkAttendanceTab({
                     : UI.primarySoft,
               }}
             >
-              <Ionicons
-                name="chevron-forward"
+              <Symbol
+                name="chevron.right"
                 size={22}
                 color={selectedWorkerIndex === workers.length - 1 ? '#D1D5DB' : UI.primary}
               />
@@ -759,7 +759,7 @@ function MarkAttendanceTab({
             </View>
           ) : hasModifications ? (
             <View className="flex-row items-center justify-center">
-              <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+              <Symbol name="checkmark.circle.fill" size={20} color="#FFFFFF" />
               <Text className="text-sm font-bold text-white ml-2">
                 {selectedWorkerIndex < workers.length - 1 ? 'Save & Next' : 'Save & Finish'}
               </Text>
@@ -922,12 +922,12 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
             style={{ backgroundColor: '#FFFFFF', borderColor: UI.border }}
           >
             <View className="flex-row items-center">
-              <Ionicons name="person-outline" size={16} color={UI.primary} />
+              <Symbol name="person" size={16} color={UI.primary} />
               <Text className="text-sm font-semibold ml-2" style={{ color: UI.text }}>
                 {selectedWorker?.name || 'All Workers'}
               </Text>
             </View>
-            <Ionicons name="chevron-down" size={14} color={UI.muted} />
+            <Symbol name="chevron.down" size={14} color={UI.muted} />
           </TouchableOpacity>
         </View>
       </View>
@@ -949,7 +949,7 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
               className="w-10 h-10 items-center justify-center rounded-full"
               style={{ backgroundColor: UI.primarySoft }}
             >
-              <Ionicons name="chevron-back" size={22} color={UI.primary} />
+              <Symbol name="chevron.left" size={22} color={UI.primary} />
             </TouchableOpacity>
 
             <Text className="text-lg font-bold" style={{ color: UI.text }}>
@@ -977,7 +977,7 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
                 className="w-10 h-10 items-center justify-center rounded-full"
                 style={{ backgroundColor: UI.primarySoft }}
               >
-                <Ionicons name="chevron-forward" size={22} color={UI.primary} />
+                <Symbol name="chevron.right" size={22} color={UI.primary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -1160,7 +1160,7 @@ function WorkerSelectSheet({
                 className="w-9 h-9 rounded-full items-center justify-center"
                 style={{ backgroundColor: UI.primarySoft }}
               >
-                <Ionicons name="close" size={18} color={UI.primary} />
+                <Symbol name="xmark" size={18} color={UI.primary} />
               </TouchableOpacity>
             </View>
 
@@ -1191,8 +1191,8 @@ function WorkerSelectSheet({
                         </Text>
                       ) : null}
                     </View>
-                    <Ionicons
-                      name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                    <Symbol
+                      name={isSelected ? 'checkmark.circle.fill' : 'circle'}
                       size={20}
                       color={isSelected ? UI.primary : '#D1D5DB'}
                     />
@@ -1282,7 +1282,7 @@ function FarmSelectSheet({
                 className="w-9 h-9 rounded-full items-center justify-center"
                 style={{ backgroundColor: UI.primarySoft }}
               >
-                <Ionicons name="close" size={18} color={UI.primary} />
+                <Symbol name="xmark" size={18} color={UI.primary} />
               </TouchableOpacity>
             </View>
 
@@ -1312,8 +1312,8 @@ function FarmSelectSheet({
                         {item.region}
                       </Text>
                     </View>
-                    <Ionicons
-                      name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                    <Symbol
+                      name={isSelected ? 'checkmark.circle.fill' : 'circle'}
                       size={20}
                       color={isSelected ? UI.primary : '#D1D5DB'}
                     />

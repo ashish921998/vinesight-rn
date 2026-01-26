@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Alert, View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useUpdateWarehouseItem, useProfile } from '../../hooks';
 import { WarehouseItem } from '../../types';
 import { FormModal, SectionHeader, FormInput, PreviewCard } from '../ui/FormComponents';
@@ -96,8 +96,8 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
               item.type === 'fertilizer' ? 'bg-green-100' : 'bg-blue-100'
             }`}
           >
-            <Ionicons
-              name={item.type === 'fertilizer' ? 'flask' : 'water'}
+            <Symbol
+              name={item.type === 'fertilizer' ? 'flask.fill' : 'drop.fill'}
               size={24}
               color={item.type === 'fertilizer' ? '#16A34A' : '#3B82F6'}
             />

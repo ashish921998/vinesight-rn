@@ -10,7 +10,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFarms } from '../../hooks';
 import { useCreateTask, useUpdateTask } from '../../hooks/useTasks';
@@ -213,10 +213,10 @@ export default function AddTaskModal({
                 onPress={() => setShowTemplates(!showTemplates)}
                 className="bg-primary-50 rounded-xl p-4 mb-4 flex-row items-center"
               >
-                <Ionicons name="flash" size={20} color="#408059" />
+                <Symbol name="bolt.fill" size={20} color="#408059" />
                 <Text className="text-primary-700 font-medium ml-2 flex-1">Use Template</Text>
-                <Ionicons
-                  name={showTemplates ? 'chevron-up' : 'chevron-down'}
+                <Symbol
+                  name={showTemplates ? 'chevron.up' : 'chevron.down'}
                   size={20}
                   color="#408059"
                 />
@@ -239,11 +239,7 @@ export default function AddTaskModal({
                           className="w-8 h-8 rounded-lg items-center justify-center"
                           style={{ backgroundColor: `${typeInfo.color}20` }}
                         >
-                          <Ionicons
-                            name={typeInfo.icon as keyof typeof Ionicons.glyphMap}
-                            size={16}
-                            color={typeInfo.color}
-                          />
+                          <Symbol name={typeInfo.icon} size={16} color={typeInfo.color} />
                         </View>
                         <View className="flex-1 ml-3">
                           <Text className="text-sm font-medium text-surface-900">
@@ -268,12 +264,12 @@ export default function AddTaskModal({
                 className="bg-white rounded-xl px-4 py-3 flex-row items-center justify-between border border-surface-200"
               >
                 <View className="flex-row items-center">
-                  <Ionicons name="leaf" size={20} color="#408059" />
+                  <Symbol name="leaf.fill" size={20} color="#408059" />
                   <Text className="text-base text-surface-900 ml-2">
                     {selectedFarm?.name || 'Select farm'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+                <Symbol name="chevron.down" size={20} color="#9CA3AF" />
               </TouchableOpacity>
               {showFarmPicker && farms && (
                 <View className="bg-white rounded-xl mt-2 border border-surface-200 overflow-hidden">
@@ -338,8 +334,8 @@ export default function AddTaskModal({
                   className="bg-white rounded-xl px-4 py-3 flex-row items-center justify-between border border-surface-200"
                 >
                   <View className="flex-row items-center">
-                    <Ionicons
-                      name={TASK_TYPE_INFO[type].icon as keyof typeof Ionicons.glyphMap}
+                    <Symbol
+                      name={TASK_TYPE_INFO[type].icon}
                       size={16}
                       color={TASK_TYPE_INFO[type].color}
                     />
@@ -347,7 +343,7 @@ export default function AddTaskModal({
                       {TASK_TYPE_INFO[type].label}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
+                  <Symbol name="chevron.down" size={16} color="#9CA3AF" />
                 </TouchableOpacity>
               </View>
 
@@ -369,7 +365,7 @@ export default function AddTaskModal({
                       {PRIORITY_INFO[priority].label}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
+                  <Symbol name="chevron.down" size={16} color="#9CA3AF" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -388,8 +384,8 @@ export default function AddTaskModal({
                       type === taskType ? 'bg-primary-50' : ''
                     }`}
                   >
-                    <Ionicons
-                      name={TASK_TYPE_INFO[taskType].icon as keyof typeof Ionicons.glyphMap}
+                    <Symbol
+                      name={TASK_TYPE_INFO[taskType].icon}
                       size={18}
                       color={TASK_TYPE_INFO[taskType].color}
                     />

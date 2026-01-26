@@ -16,7 +16,7 @@ import {
   Platform,
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/useSoilProfiles';
 import { SoilSectionData } from '../../types/database';
 
@@ -167,7 +167,7 @@ export default function AddSoilProfileModal({
                   day: 'numeric',
                 })}
               </Text>
-              <Ionicons name="calendar" size={20} color="#8e8e93" />
+              <Symbol name="calendar" size={20} color="#8e8e93" />
             </TouchableOpacity>
           </View>
 

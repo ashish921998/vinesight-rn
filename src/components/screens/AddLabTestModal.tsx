@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/Symbol';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -518,7 +518,7 @@ export default function AddLabTestModal({
               </View>
             ) : (
               <View className="flex-row items-center justify-center">
-                <Ionicons name="document" size={24} color="#408059" />
+                <Symbol name="document" size={24} color="#408059" />
                 <Text className="text-base font-medium text-[#408059] ml-2">
                   Upload Lab Report (Photo, Image, or PDF)
                 </Text>
@@ -534,10 +534,10 @@ export default function AddLabTestModal({
               className="flex-row items-center justify-between bg-[#f2f2f7] p-3 rounded-lg"
             >
               <View className="flex-row items-center">
-                <Ionicons name="calendar" size={20} color="#666" />
+                <Symbol name="calendar" size={20} color="#666" />
                 <Text className="text-base text-gray-800 ml-2">{date.toLocaleDateString()}</Text>
               </View>
-              <Ionicons name="chevron-down" size={20} color="#666" />
+              <Symbol name="chevron.down" size={20} color="#666" />
             </TouchableOpacity>
 
             {showDatePicker && (
