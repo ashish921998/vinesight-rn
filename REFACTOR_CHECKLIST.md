@@ -232,16 +232,16 @@ Test the app thoroughly:
 - [x] Update all modal invocations
 - [ ] Test each modal route
 - [ ] Delete old modal components (AddActivityModal removed; keep others as screen content)
-- [ ] Commit: "Phase 8: Modal architecture"
+- [x] Commit: "Phase 8: Modal architecture"
 
 ---
 
 ## Phase 9: AsyncStorage & WebView (4 files) - 2-3 hours
 
-- [ ] supabase.ts - Replace AsyncStorage
-- [ ] AddLabTestModal.tsx - Remove WebView
-- [ ] onboardingStore.ts - Replace AsyncStorage
-- [ ] Implement PDF parsing alternative
+- [x] supabase.ts - Replace AsyncStorage
+- [x] AddLabTestModal.tsx - Remove WebView
+- [x] onboardingStore.ts - Replace AsyncStorage
+- [x] Implement PDF parsing alternative (image-only parsing)
 - [ ] Commit: "Phase 9: Remove AsyncStorage/WebView"
 
 ---

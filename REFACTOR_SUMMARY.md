@@ -3,8 +3,8 @@
 ## 📊 Current Status
 
 **Branch:** `refactor/native-ui-strict`  
-**Progress:** Phases 1-7 complete (tests pending). Phase 8 modal architecture in progress.  
-**Last Commit:** `7cc4e26` - Phase 7: NativeWind removal
+**Progress:** Phases 1-8 complete (tests pending). Phase 9 in progress.  
+**Last Commit:** `4fc5216` - Phase 8: Modal architecture
 
 ---
 
@@ -40,11 +40,11 @@
 
 ## 📋 What's Next
 
-### Immediate Next Steps (Phase 8 - Modal Architecture)
+### Immediate Next Steps (Phase 9 - AsyncStorage & WebView)
 
-- Test each modal route in app (Add Entry, Edit Activity, Add Worker, Add Stock, Add Warehouse Item, Add Lab Test, Add Soil Profile, Water Level, Add Task)
-- Remove any remaining obsolete modal-only components
-- Commit Phase 8
+- Replace AsyncStorage in supabase + onboarding store
+- Remove WebView PDF parsing (image-only parsing)
+- Commit Phase 9
 
 **After completing phases 2-6, re-evaluate if you want to continue with the major architectural changes (phases 7-12).**
 

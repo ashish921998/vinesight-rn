@@ -3,7 +3,7 @@
  * Modal for adding soil or petiole test records
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,12 +15,9 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Symbol } from '@/components/ui/Symbol';
-import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import {
   useCreateSoilTest,
@@ -28,7 +25,7 @@ import {
   SOIL_PARAMETERS,
   PETIOLE_PARAMETERS,
 } from '../../hooks/useLabTests';
-import { parseLabTestFromImage, parseLabTestFromText } from '../../utils/pdfParser';
+import { parseLabTestFromImage } from '../../utils/pdfParser';
 
 function normalizeParameterKey(key: string, isSoil: boolean): string {
   if (isSoil) {
@@ -89,7 +86,6 @@ export default function AddLabTestModal({
   const isVisible = visible ?? true;
   const createSoilTest = useCreateSoilTest();
   const createPetioleTest = useCreatePetioleTest();
-  const webViewRef = useRef<WebView>(null);
 
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -97,43 +93,10 @@ export default function AddLabTestModal({
   const [recommendations, setRecommendations] = useState('');
   const [notes, setNotes] = useState('');
   const [isParsingPDF, setIsParsingPDF] = useState(false);
-  const [showPDFWebView, setShowPDFWebView] = useState(false);
-  const [currentPDFBase64, setCurrentPDFBase64] = useState<string | null>(null);
-
-  const PDF_PARSE_TIMEOUT_MS = 30000;
 
   const isSoil = testType === 'soil';
   const parameterList = isSoil ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
   const isLoading = createSoilTest.isPending || createPetioleTest.isPending;
-
-  useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    if (showPDFWebView) {
-      timeoutId = setTimeout(() => {
-        setShowPDFWebView(false);
-        setIsParsingPDF(false);
-        setCurrentPDFBase64(null);
-        Alert.alert(
-          'Timeout',
-          'PDF parsing timed out. Please try converting the PDF to an image or take screenshots.',
-          [{ text: 'OK' }],
-        );
-      }, PDF_PARSE_TIMEOUT_MS);
-    }
-
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [showPDFWebView]);
-
-  useEffect(() => {
-    if (showPDFWebView && currentPDFBase64 && webViewRef.current) {
-      webViewRef.current.postMessage(currentPDFBase64);
-    }
-  }, [showPDFWebView, currentPDFBase64]);
 
   const resetForm = () => {
     setDate(new Date());
@@ -207,10 +170,6 @@ export default function AddLabTestModal({
         onPress: () => handleSelectImage(),
       },
       {
-        text: 'Select PDF',
-        onPress: () => handleSelectPDF(),
-      },
-      {
         text: 'Cancel',
         style: 'cancel',
       },
@@ -256,33 +215,6 @@ export default function AddLabTestModal({
     } catch (error) {
       console.error('Error selecting image:', error);
       Alert.alert('Error', 'Failed to select image. Please try again.');
-    }
-  };
-
-  const handleSelectPDF = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/pdf',
-        copyToCacheDirectory: true,
-      });
-
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        return;
-      }
-
-      const file = result.assets[0];
-      setIsParsingPDF(true);
-
-      const fileData = await FileSystem.readAsStringAsync(file.uri, {
-        encoding: 'base64',
-      });
-
-      const pdfBase64 = `data:application/pdf;base64,${fileData}`;
-      setCurrentPDFBase64(pdfBase64);
-      setShowPDFWebView(true);
-    } catch (error) {
-      console.error('Error selecting PDF:', error);
-      Alert.alert('Error', 'Failed to select PDF. Please try again.');
     }
   };
 
@@ -386,135 +318,6 @@ export default function AddLabTestModal({
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Hidden WebView for PDF parsing */}
-      {showPDFWebView && currentPDFBase64 && (
-        <WebView
-          ref={webViewRef}
-          source={{
-            html: `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="utf-8">
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-              </head>
-              <body>
-                <script>
-                  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                  window.__PDF_BASE64__ = null;
-
-                  async function extractText() {
-                    if (!window.__PDF_BASE64__) {
-                      window.ReactNativeWebView.postMessage('PDF_PARSE_ERROR');
-                      return;
-                    }
-                    try {
-                      const loadingTask = pdfjsLib.getDocument(window.__PDF_BASE64__);
-                      const pdf = await loadingTask.promise;
-                      let fullText = '';
-
-                      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                        const page = await pdf.getPage(pageNum);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map((item) => item.str).join(' ');
-                        fullText += pageText + '\\n';
-                      }
-
-                      window.ReactNativeWebView.postMessage('PDF_TEXT:' + fullText);
-                    } catch (error) {
-                      window.ReactNativeWebView.postMessage('PDF_PARSE_ERROR');
-                    }
-                  }
-
-                  window.addEventListener('message', (event) => {
-                    window.__PDF_BASE64__ = event.data;
-                    extractText();
-                  });
-                </script>
-              </body>
-              </html>
-            `,
-          }}
-          onMessage={async (event) => {
-            if (event.nativeEvent.data === 'PDF_PARSE_ERROR') {
-              setShowPDFWebView(false);
-              setIsParsingPDF(false);
-              Alert.alert(
-                'Error',
-                'Could not parse PDF. Please try converting it to an image or take screenshots.',
-                [{ text: 'OK' }],
-              );
-            } else if (event.nativeEvent.data.startsWith('PDF_TEXT:')) {
-              const text = event.nativeEvent.data.replace('PDF_TEXT:', '');
-              setShowPDFWebView(false);
-
-              if (!text || text.trim().length < 50) {
-                setIsParsingPDF(false);
-                Alert.alert(
-                  'No Data Found',
-                  'Could not extract sufficient text from the PDF. Please try a different file.',
-                  [{ text: 'OK' }],
-                );
-                return;
-              }
-
-              try {
-                const parsedData = await parseLabTestFromText(text, testType);
-
-                if (Object.keys(parsedData.parameters).length === 0) {
-                  Alert.alert('No Data Found', 'Could not extract test parameters from the PDF.', [
-                    { text: 'OK' },
-                  ]);
-                  setIsParsingPDF(false);
-                  return;
-                }
-
-                if (parsedData.testDate) {
-                  const parsedDate = new Date(parsedData.testDate);
-                  if (!isNaN(parsedDate.getTime())) {
-                    setDate(parsedDate);
-                  }
-                }
-
-                if (parsedData.parameters) {
-                  const stringParams: Record<string, string> = {};
-                  Object.entries(parsedData.parameters).forEach(([key, value]) => {
-                    const normalizedKey = normalizeParameterKey(key, isSoil);
-                    stringParams[normalizedKey] = value.toString();
-                  });
-                  setParameters(stringParams);
-                }
-
-                if (parsedData.recommendations) {
-                  setRecommendations(parsedData.recommendations);
-                }
-
-                if (parsedData.notes) {
-                  setNotes(parsedData.notes);
-                }
-
-                Alert.alert(
-                  'Success',
-                  `Successfully extracted ${Object.keys(parsedData.parameters).length} parameters. Please review and save.`,
-                  [{ text: 'OK' }],
-                );
-              } catch (error) {
-                console.error('Parsing error:', error);
-                Alert.alert(
-                  'Parsing Failed',
-                  'Could not parse extracted text. Please try a different file.',
-                  [{ text: 'OK' }],
-                );
-              }
-              setIsParsingPDF(false);
-            }
-          }}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          style={{ display: 'none' }}
-        />
-      )}
 
       <ScrollView
         style={{ flex: 1 }}

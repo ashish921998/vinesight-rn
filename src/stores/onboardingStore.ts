@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import {
   OnboardingState,
   OnboardingStep,
@@ -30,6 +30,34 @@ const initialState: OnboardingState = {
     country: '',
     areaUnit: 'acres',
     notificationsEnabled: false,
+  },
+};
+
+const isWeb = process.env.EXPO_OS === 'web';
+
+const onboardingStorage = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (isWeb) {
+      if (typeof localStorage === 'undefined') return null;
+      return localStorage.getItem(key);
+    }
+    return SecureStore.getItemAsync(key);
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (isWeb) {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem(key, value);
+      return;
+    }
+    await SecureStore.setItemAsync(key, value);
+  },
+  removeItem: async (key: string): Promise<void> => {
+    if (isWeb) {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.removeItem(key);
+      return;
+    }
+    await SecureStore.deleteItemAsync(key);
   },
 };
 
@@ -71,7 +99,7 @@ export const useOnboardingStore = create<OnboardingStore>()(
     }),
     {
       name: 'vinesight-onboarding',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => onboardingStorage),
     },
   ),
 );
