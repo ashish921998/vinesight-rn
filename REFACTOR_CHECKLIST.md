@@ -250,7 +250,7 @@ Test the app thoroughly:
 
 - [x] Update (tabs)/_layout.tsx to use NativeTabs
 - [ ] Test thoroughly
-- [ ] Commit: "Phase 10: Migrate to NativeTabs"
+- [x] Commit: "Phase 10: Migrate to NativeTabs"
 
 ---
 
