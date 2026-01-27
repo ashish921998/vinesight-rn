@@ -10,7 +10,7 @@ import {
   Modal,
 } from 'react-native';
 
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,7 +29,7 @@ import {
   useFertigationRecordsByFarms,
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculatorModels';
-import { AddEntryModal, EditActivityModal } from '@/components/screens';
+import { useModalStore } from '@/stores';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -48,6 +48,8 @@ interface CombinedLog {
 }
 
 export default function LogsScreen() {
+  const router = useRouter();
+  const { setAddEntry, setEditActivity } = useModalStore();
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
 
   const { data: farms = [], isLoading: farmsLoading } = useFarms();
@@ -76,7 +78,6 @@ export default function LogsScreen() {
     expenseRecords = [],
     fertigationRecords = [],
     isLoading: recordsLoading,
-    refetch: refetchRecords,
   } = useFarmRecords(selectedFarmId);
 
   const allFarmIds = useMemo(
@@ -135,8 +136,6 @@ export default function LogsScreen() {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingLog, setEditingLog] = useState<CombinedLog | undefined>();
   const [deletingLog, setDeletingLog] = useState<CombinedLog | undefined>();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showDatePickerFrom, setShowDatePickerFrom] = useState(false);
@@ -359,9 +358,23 @@ export default function LogsScreen() {
           headerStyle: { backgroundColor: '#f2f2f7' },
           headerTintColor: '#000000',
           headerRight: () =>
-            selectedFarm && (
+            selectedFarmId !== undefined && (
               <TouchableOpacity
-                onPress={() => setShowAddModal(true)}
+                onPress={() => {
+                  setAddEntry({
+                    tabs: ['log'],
+                    initialTab: 'log',
+                    initialFarmId: selectedFarmId,
+                  });
+                  router.push({
+                    pathname: '/add-entry',
+                    params: {
+                      farmId: selectedFarmId.toString(),
+                      tabs: 'log',
+                      initialTab: 'log',
+                    },
+                  });
+                }}
                 style={{ marginRight: spacing[4] }}
               >
                 <Symbol name="plus.circle.fill" size={28} color="#408059" />
@@ -910,19 +923,21 @@ export default function LogsScreen() {
                             <View style={{ flexDirection: 'row', gap: spacing[2] }}>
                               <TouchableOpacity
                                 onPress={() => {
-                                  if (selectedFarm) {
-                                    setEditingLog(log);
-                                  } else {
-                                    const logFarm = farms.find(
+                                  const logFarm =
+                                    selectedFarm ||
+                                    farms.find(
                                       (f) => f.id === (log.data as { farm_id?: number }).farm_id,
                                     );
-                                    if (logFarm) {
-                                      setSelectedFarmId(logFarm.id);
-                                      setEditingLog(log);
-                                    } else {
-                                      Alert.alert('Error', 'Farm not found for this log');
-                                    }
+                                  if (!logFarm) {
+                                    Alert.alert('Error', 'Farm not found for this log');
+                                    return;
                                   }
+                                  setEditActivity({
+                                    farm: logFarm,
+                                    logType: log.type,
+                                    record: log.data,
+                                  });
+                                  router.push(`/edit-activity/${log.id}`);
                                 }}
                                 disabled={
                                   !(selectedFarm || (log.data as { farm_id?: number }).farm_id)
@@ -1047,32 +1062,7 @@ export default function LogsScreen() {
         </View>
       </View>
 
-      {selectedFarm && (
-        <AddEntryModal
-          visible={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          farm={selectedFarm}
-          tabs={['log']}
-          initialTab="log"
-          onLogSaveSuccess={() => {
-            refetchRecords();
-          }}
-        />
-      )}
-
-      {selectedFarm && editingLog && (
-        <EditActivityModal
-          visible={!!editingLog}
-          onClose={() => setEditingLog(undefined)}
-          farm={selectedFarm}
-          logType={editingLog.type}
-          record={editingLog.data}
-          onSaveSuccess={() => {
-            setEditingLog(undefined);
-            refetchRecords();
-          }}
-        />
-      )}
+      {/* Modals are now route-based */}
 
       {showDatePickerFrom && (
         <Modal

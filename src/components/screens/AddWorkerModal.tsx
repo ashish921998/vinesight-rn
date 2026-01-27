@@ -11,13 +11,21 @@ import type { Worker } from '@/types';
 import { FormModal, SectionHeader, FormInput, Toggle, InfoCard } from '@/components/ui';
 
 interface AddWorkerModalProps {
-  visible: boolean;
+  visible?: boolean;
   onClose: () => void;
   worker?: Worker; // If provided, edit mode
   onSaveSuccess?: () => void;
+  presentation?: 'modal' | 'screen';
 }
 
-export function AddWorkerModal({ visible, onClose, worker, onSaveSuccess }: AddWorkerModalProps) {
+export function AddWorkerModal({
+  visible,
+  onClose,
+  worker,
+  onSaveSuccess,
+  presentation = 'modal',
+}: AddWorkerModalProps) {
+  const isVisible = visible ?? true;
   const [name, setName] = useState('');
   const [dailyRate, setDailyRate] = useState('');
   const [advanceBalance, setAdvanceBalance] = useState('');
@@ -41,7 +49,7 @@ export function AddWorkerModal({ visible, onClose, worker, onSaveSuccess }: AddW
       setAdvanceBalance('0');
       setIsActive(true);
     }
-  }, [worker, visible]);
+  }, [worker, isVisible]);
 
   const isValid = name.trim().length > 0 && parseFloat(dailyRate) > 0;
 
@@ -92,7 +100,7 @@ export function AddWorkerModal({ visible, onClose, worker, onSaveSuccess }: AddW
 
   return (
     <FormModal
-      visible={visible}
+      visible={isVisible}
       onClose={onClose}
       title={isEditMode ? 'Edit Worker' : 'Add Worker'}
       onSave={handleSave}
@@ -101,6 +109,7 @@ export function AddWorkerModal({ visible, onClose, worker, onSaveSuccess }: AddW
       isSaveDisabled={!isValid}
       showResetButton={!isEditMode}
       onReset={handleReset}
+      presentation={presentation}
     >
       {/* Worker Details */}
       <SectionHeader title="Worker Details" style={{ marginBottom: 16 }} />

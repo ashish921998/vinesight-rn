@@ -5,6 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Symbol } from '@/components/ui/Symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -21,6 +22,7 @@ const REPORT_TYPES: { value: ReportType; label: string; icon: string }[] = [
 ];
 
 export default function ReportsScreen() {
+  const insets = useSafeAreaInsets();
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
@@ -88,7 +90,8 @@ export default function ReportsScreen() {
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: spacing[4],
-            paddingVertical: spacing[3],
+            paddingTop: spacing[3] + insets.top,
+            paddingBottom: spacing[3],
             borderBottomWidth: 1,
             borderBottomColor: colors.gray[200],
             backgroundColor: colors.white,
@@ -137,7 +140,8 @@ export default function ReportsScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: spacing[4],
-          paddingVertical: spacing[3],
+          paddingTop: spacing[3] + insets.top,
+          paddingBottom: spacing[3],
           borderBottomWidth: 1,
           borderBottomColor: colors.gray[200],
           backgroundColor: colors.white,

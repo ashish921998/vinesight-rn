@@ -8,13 +8,12 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 
 import { Symbol } from '@/components/ui/Symbol';
 import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
-import AddWarehouseItemModal from '../src/components/screens/AddWarehouseItemModal';
-import AddStockModal from '../src/components/screens/AddStockModal';
+import { useModalStore } from '@/stores';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
@@ -29,17 +28,25 @@ const COLORS = {
 };
 
 export default function WarehouseScreen() {
+  const router = useRouter();
+  const { setAddWarehouseItem, setAddStock } = useModalStore();
   const { data: profile } = useProfile();
   const { data: items, isLoading, refetch, isRefetching } = useWarehouseItems();
   const deleteItemMutation = useDeleteWarehouseItem();
 
   const [filter, setFilter] = useState<FilterType>('all');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showStockModal, setShowStockModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<WarehouseItem | null>(null);
-  const [stockItem, setStockItem] = useState<WarehouseItem | null>(null);
 
   const currency = profile?.preferred_currency || 'INR';
+
+  const openAddItem = (item?: WarehouseItem | null) => {
+    setAddWarehouseItem({ editingItem: item ?? null });
+    router.push('/add-warehouse-item');
+  };
+
+  const openAddStock = (item: WarehouseItem) => {
+    setAddStock({ item });
+    router.push('/add-stock');
+  };
 
   // Filter items
   const filteredItems = useMemo(() => {
@@ -85,13 +92,11 @@ export default function WarehouseScreen() {
   };
 
   const handleAddStock = (item: WarehouseItem) => {
-    setStockItem(item);
-    setShowStockModal(true);
+    openAddStock(item);
   };
 
   const handleEditItem = (item: WarehouseItem) => {
-    setEditingItem(item);
-    setShowAddModal(true);
+    openAddItem(item);
   };
 
   if (isLoading) {
@@ -121,8 +126,7 @@ export default function WarehouseScreen() {
           headerRight: () => (
             <TouchableOpacity
               onPress={() => {
-                setEditingItem(null);
-                setShowAddModal(true);
+                openAddItem(null);
               }}
               style={{ marginRight: spacing[4] }}
             >
@@ -407,8 +411,7 @@ export default function WarehouseScreen() {
               </Text>
               <TouchableOpacity
                 onPress={() => {
-                  setEditingItem(null);
-                  setShowAddModal(true);
+                  openAddItem(null);
                 }}
                 style={{
                   marginTop: spacing[4],
@@ -601,8 +604,7 @@ export default function WarehouseScreen() {
       {/* FAB */}
       <TouchableOpacity
         onPress={() => {
-          setEditingItem(null);
-          setShowAddModal(true);
+          openAddItem(null);
         }}
         style={{
           position: 'absolute',
@@ -620,23 +622,7 @@ export default function WarehouseScreen() {
       </TouchableOpacity>
 
       {/* Modals */}
-      <AddWarehouseItemModal
-        visible={showAddModal}
-        onClose={() => {
-          setShowAddModal(false);
-          setEditingItem(null);
-        }}
-        editingItem={editingItem}
-      />
-
-      <AddStockModal
-        visible={showStockModal}
-        onClose={() => {
-          setShowStockModal(false);
-          setStockItem(null);
-        }}
-        item={stockItem}
-      />
+      {/* Warehouse modals are now route-based */}
     </View>
   );
 }

@@ -9,12 +9,12 @@ import {
   RefreshControl,
 } from 'react-native';
 
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/useTasks';
 import { TaskReminder, TASK_TYPE_INFO, PRIORITY_INFO } from '../src/types/task';
-import { AddEntryModal } from '../src/components/screens';
+import { useModalStore } from '@/stores';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
@@ -26,14 +26,14 @@ const startOfDay = (date: Date) => {
 };
 
 export default function TasksScreen() {
+  const router = useRouter();
+  const { setAddEntry } = useModalStore();
   const { data: farms } = useFarms();
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
 
   const [filter, setFilter] = useState<FilterType>('all');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingTask, setEditingTask] = useState<TaskReminder | null>(null);
 
   // Get farm name by ID
   const getFarmName = (farmId: number) => {
@@ -147,8 +147,11 @@ export default function TasksScreen() {
               headerRight: () => (
                 <TouchableOpacity
                   onPress={() => {
-                    setEditingTask(null);
-                    setShowAddModal(true);
+                    setAddEntry({ tabs: ['task'], initialTab: 'task' });
+                    router.push({
+                      pathname: '/add-entry',
+                      params: { tabs: 'task', initialTab: 'task' },
+                    });
                   }}
                   style={{ marginRight: spacing[4] }}
                 >
@@ -294,8 +297,11 @@ export default function TasksScreen() {
                 {filter === 'all' && (
                   <TouchableOpacity
                     onPress={() => {
-                      setEditingTask(null);
-                      setShowAddModal(true);
+                      setAddEntry({ tabs: ['task'], initialTab: 'task' });
+                      router.push({
+                        pathname: '/add-entry',
+                        params: { tabs: 'task', initialTab: 'task' },
+                      });
                     }}
                     style={{
                       marginTop: spacing[4],
@@ -498,8 +504,11 @@ export default function TasksScreen() {
           {/* FAB */}
           <TouchableOpacity
             onPress={() => {
-              setEditingTask(null);
-              setShowAddModal(true);
+              setAddEntry({ tabs: ['task'], initialTab: 'task' });
+              router.push({
+                pathname: '/add-entry',
+                params: { tabs: 'task', initialTab: 'task' },
+              });
             }}
             style={{
               position: 'absolute',
@@ -517,20 +526,7 @@ export default function TasksScreen() {
             <Symbol name="plus" size={28} color="white" />
           </TouchableOpacity>
 
-          {/* Add Task Modal */}
-          <AddEntryModal
-            visible={showAddModal}
-            onClose={() => {
-              setShowAddModal(false);
-              setEditingTask(null);
-            }}
-            tabs={['task']}
-            initialTab="task"
-            editingTask={editingTask}
-            onTaskSaveSuccess={() => {
-              refetch();
-            }}
-          />
+          {/* Add Task handled via route */}
         </View>
       </View>
     </>

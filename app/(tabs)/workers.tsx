@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { useWorkers, useDeleteWorker } from '@/hooks';
-import { AddWorkerModal } from '@/components/screens';
+import { useModalStore } from '@/stores';
 import { AttendanceView } from '@/components/screens';
 import type { Worker } from '@/types';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -16,12 +17,12 @@ const TAB_DATA: { id: WorkersTab; label: string; icon: string }[] = [
 ];
 
 export default function WorkersScreen() {
+  const router = useRouter();
+  const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
   const deleteWorker = useDeleteWorker();
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [workerToEdit, setWorkerToEdit] = useState<Worker | undefined>(undefined);
 
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
 
@@ -47,13 +48,8 @@ export default function WorkersScreen() {
   };
 
   const handleEditWorker = (worker: Worker) => {
-    setWorkerToEdit(worker);
-    setShowAddModal(true);
-  };
-
-  const handleAddModalClose = () => {
-    setShowAddModal(false);
-    setWorkerToEdit(undefined);
+    setAddWorker({ worker });
+    router.push('/add-worker');
   };
 
   const renderWorker = ({ item }: { item: Worker }) => (
@@ -261,7 +257,10 @@ export default function WorkersScreen() {
               Add workers to track attendance,{`\n`}payments, and settlements.
             </Text>
             <TouchableOpacity
-              onPress={() => setShowAddModal(true)}
+              onPress={() => {
+                setAddWorker({ worker: null });
+                router.push('/add-worker');
+              }}
               style={{
                 backgroundColor: colors.primary[500],
                 paddingHorizontal: spacing[6],
@@ -422,7 +421,10 @@ export default function WorkersScreen() {
         {/* FAB */}
         {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
           <TouchableOpacity
-            onPress={() => setShowAddModal(true)}
+            onPress={() => {
+              setAddWorker({ worker: null });
+              router.push('/add-worker');
+            }}
             style={{
               position: 'absolute',
               bottom: spacing[6],
@@ -441,13 +443,7 @@ export default function WorkersScreen() {
         )}
       </View>
 
-      {/* Add/Edit Worker Modal */}
-      <AddWorkerModal
-        visible={showAddModal}
-        onClose={handleAddModalClose}
-        worker={workerToEdit}
-        onSaveSuccess={refetch}
-      />
+      {/* Add/Edit Worker handled via route */}
     </>
   );
 }

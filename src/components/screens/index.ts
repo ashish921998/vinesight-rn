@@ -2,7 +2,6 @@
  * Screen Components - Barrel Export
  */
 
-export { AddActivityModal } from './AddActivityModal';
 export { AddEntryModal } from './AddEntryModal';
 export { EditActivityModal } from './EditActivityModal';
 export { AddWorkerModal } from './AddWorkerModal';

@@ -21,6 +21,8 @@ import {
   UIManager,
   findNodeHandle,
 } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/ui/app-icon';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -55,6 +57,7 @@ import {
   useCreateFertigationRecord,
   useUpdateFarmWaterLevel,
   useFarms,
+  queryKeys,
 } from '@/hooks';
 import { useCreateTask, useUpdateTask } from '@/hooks/useTasks';
 import {
@@ -72,7 +75,7 @@ import type { Farm } from '@/types';
 type EntryTab = 'log' | 'task';
 
 interface AddEntryModalProps {
-  visible: boolean;
+  visible?: boolean;
   onClose: () => void;
   tabs?: EntryTab[];
   initialTab?: EntryTab;
@@ -82,6 +85,7 @@ interface AddEntryModalProps {
   editingTask?: TaskReminder | null;
   onLogSaveSuccess?: () => void;
   onTaskSaveSuccess?: () => void;
+  presentation?: 'modal' | 'screen';
 }
 
 interface PendingLog {
@@ -122,7 +126,11 @@ export function AddEntryModal({
   editingTask,
   onLogSaveSuccess,
   onTaskSaveSuccess,
+  presentation = 'modal',
 }: AddEntryModalProps) {
+  const isVisible = visible ?? true;
+  const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const isIOS = process.env.EXPO_OS === 'ios';
   const resolvedTabs = useMemo<EntryTab[]>(
@@ -144,7 +152,7 @@ export function AddEntryModal({
   const activeFarm = farm ?? farms?.find((f) => f.id === selectedFarmId) ?? null;
 
   useEffect(() => {
-    if (!visible) return;
+    if (!isVisible) return;
     setActiveTab(defaultTab);
     if (farm?.id) {
       setSelectedFarmId(farm.id);
@@ -157,7 +165,7 @@ export function AddEntryModal({
     if (!selectedFarmId && farms && farms.length > 0 && farms[0].id) {
       setSelectedFarmId(farms[0].id);
     }
-  }, [visible, defaultTab, farm?.id, farms, initialFarmId, selectedFarmId]);
+  }, [isVisible, defaultTab, farm?.id, farms, initialFarmId, selectedFarmId]);
 
   // Log state
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -231,11 +239,11 @@ export function AddEntryModal({
 
   // Set initial log type if provided
   useEffect(() => {
-    if (visible && initialLogType) {
+    if (isVisible && initialLogType) {
       setSelectedLogType(initialLogType);
       setShowLogFormModal(true);
     }
-  }, [visible, initialLogType]);
+  }, [isVisible, initialLogType]);
 
   type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
 
@@ -451,6 +459,7 @@ export function AddEntryModal({
       }
 
       setPendingLogs([]);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       onLogSaveSuccess?.();
       onClose();
     } catch (error) {
@@ -493,8 +502,8 @@ export function AddEntryModal({
   };
 
   useEffect(() => {
-    if (!visible) {
-      prevVisibleRef.current = visible;
+    if (!isVisible) {
+      prevVisibleRef.current = isVisible;
       return;
     }
     const shouldUpdate =
@@ -524,10 +533,10 @@ export function AddEntryModal({
       }
     }
 
-    prevVisibleRef.current = visible;
+    prevVisibleRef.current = isVisible;
     prevEditingTaskIdRef.current = editingTask?.id;
     prevEditingTaskUpdatedAtRef.current = editingTask?.updated_at;
-  }, [visible, editingTask, farms, initialFarmId, farm?.id]);
+  }, [isVisible, editingTask, farms, initialFarmId, farm?.id]);
 
   const applyTemplate = (template: TaskTemplate) => {
     setTitle(template.title);
@@ -578,6 +587,7 @@ export function AddEntryModal({
       } else {
         await createTask.mutateAsync(taskData);
       }
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       onTaskSaveSuccess?.();
       onClose();
     } catch (_error) {
@@ -862,7 +872,7 @@ export function AddEntryModal({
                 borderColor: '#ffffff',
                 paddingHorizontal: 16,
                 paddingBottom: 12,
-                paddingTop: 8,
+                paddingTop: 8 + insets.top,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1575,263 +1585,178 @@ export function AddEntryModal({
     </>
   );
 
-  return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
+  const content = (
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
+      style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
+      <KeyboardAvoidingView
+        behavior={isIOS ? 'padding' : 'height'}
+        keyboardVerticalOffset={isIOS ? 0 : 20}
         style={{ flex: 1, backgroundColor: '#f2f2f7' }}
-        contentContainerStyle={{ flexGrow: 1 }}
       >
-        <KeyboardAvoidingView
-          behavior={isIOS ? 'padding' : 'height'}
-          keyboardVerticalOffset={isIOS ? 0 : 20}
-          style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderBottomWidth: 1,
+            borderColor: '#ffffff',
+            paddingHorizontal: 16,
+            paddingBottom: 12,
+            paddingTop: 8 + insets.top,
+          }}
         >
-          <View
+          <View style={{ alignItems: 'center', marginBottom: 8 }}>
+            <View style={{ width: 48, height: 6, borderRadius: 999, backgroundColor: '#f2f2f7' }} />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ width: 40 }} />
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text
+                selectable
+                style={{ fontSize: 18, fontWeight: '600', color: '#2c2c2e' }}
+                numberOfLines={1}
+              >
+                {activeTab === 'log' ? 'Add Log' : isEditingTask ? 'Edit Task' : 'Add Task'}
+              </Text>
+              <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
+                {activeFarm?.name}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={handleClose} style={{ width: 40, alignItems: 'flex-end' }}>
+              <AppIcon name="close-circle" size={26} color="#9CA3AF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {renderTabs()}
+
+        {showDatePicker && !isIOS && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            onChange={(_, date) => {
+              setShowDatePicker(false);
+              if (date) setSelectedDate(date);
+            }}
+          />
+        )}
+        {showDatePicker && isIOS && (
+          <Pressable
+            onPress={() => setShowDatePicker(false)}
             style={{
-              backgroundColor: '#ffffff',
-              borderBottomWidth: 1,
-              borderColor: '#ffffff',
-              paddingHorizontal: 16,
-              paddingBottom: 12,
-              paddingTop: 8,
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 50,
             }}
           >
-            <View style={{ alignItems: 'center', marginBottom: 8 }}>
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: '#ffffff',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                padding: 16,
+              }}
+              onStartShouldSetResponder={() => true}
+            >
               <View
-                style={{ width: 48, height: 6, borderRadius: 999, backgroundColor: '#f2f2f7' }}
-              />
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ width: 40 }} />
-              <View style={{ flex: 1, alignItems: 'center' }}>
-                <Text
-                  selectable
-                  style={{ fontSize: 18, fontWeight: '600', color: '#2c2c2e' }}
-                  numberOfLines={1}
-                >
-                  {activeTab === 'log' ? 'Add Log' : isEditingTask ? 'Edit Task' : 'Add Task'}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 16,
+                }}
+              >
+                <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                  Select Date
                 </Text>
-                <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
-                  {activeFarm?.name}
-                </Text>
+                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                  <AppIcon name="close" size={24} color="#9CA3AF" />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={handleClose} style={{ width: 40, alignItems: 'flex-end' }}>
-                <AppIcon name="close-circle" size={26} color="#9CA3AF" />
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="inline"
+                onChange={(_, date) => {
+                  if (date) setSelectedDate(date);
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(false)}
+                style={[
+                  { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+                  { backgroundColor: '#408059' },
+                ]}
+              >
+                <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
+                  Done
+                </Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Pressable>
+        )}
 
-          {renderTabs()}
-
-          {showDatePicker && !isIOS && (
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              onChange={(_, date) => {
-                setShowDatePicker(false);
-                if (date) setSelectedDate(date);
-              }}
-            />
-          )}
-          {showDatePicker && isIOS && (
-            <Pressable
-              onPress={() => setShowDatePicker(false)}
-              style={{
+        {showTypePicker && (
+          <Pressable
+            onPress={() => setShowTypePicker(false)}
+            style={[
+              {
                 position: 'absolute',
                 top: 0,
                 right: 0,
                 bottom: 0,
                 left: 0,
-                backgroundColor: 'rgba(0,0,0,0.5)',
+                backgroundColor: 'rgba(0,0,0,0.4)',
                 zIndex: 50,
+              },
+              { zIndex: 60 },
+            ]}
+          >
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: '#ffffff',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                padding: 16,
               }}
+              onStartShouldSetResponder={() => true}
             >
               <View
                 style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  backgroundColor: '#ffffff',
-                  borderTopLeftRadius: 24,
-                  borderTopRightRadius: 24,
-                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
                 }}
-                onStartShouldSetResponder={() => true}
               >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 16,
-                  }}
-                >
-                  <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
-                    Select Date
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                    <AppIcon name="close" size={24} color="#9CA3AF" />
-                  </TouchableOpacity>
-                </View>
-                <DateTimePicker
-                  value={selectedDate}
-                  mode="date"
-                  display="inline"
-                  onChange={(_, date) => {
-                    if (date) setSelectedDate(date);
-                  }}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowDatePicker(false)}
-                  style={[
-                    { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
-                    { backgroundColor: '#408059' },
-                  ]}
-                >
-                  <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
-                    Done
-                  </Text>
+                <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                  Select Task Type
+                </Text>
+                <TouchableOpacity onPress={() => setShowTypePicker(false)}>
+                  <AppIcon name="close" size={24} color="#9CA3AF" />
                 </TouchableOpacity>
               </View>
-            </Pressable>
-          )}
-
-          {showTypePicker && (
-            <Pressable
-              onPress={() => setShowTypePicker(false)}
-              style={[
-                {
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  bottom: 0,
-                  left: 0,
-                  backgroundColor: 'rgba(0,0,0,0.4)',
-                  zIndex: 50,
-                },
-                { zIndex: 60 },
-              ]}
-            >
-              <View
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  backgroundColor: '#ffffff',
-                  borderTopLeftRadius: 24,
-                  borderTopRightRadius: 24,
-                  padding: 16,
-                }}
-                onStartShouldSetResponder={() => true}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 12,
-                  }}
-                >
-                  <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
-                    Select Task Type
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowTypePicker(false)}>
-                    <AppIcon name="close" size={24} color="#9CA3AF" />
-                  </TouchableOpacity>
-                </View>
-                <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ maxHeight: 320 }}>
-                  {TASK_TYPES.map((taskType) => (
-                    <TouchableOpacity
-                      key={taskType}
-                      onPress={() => {
-                        setType(taskType);
-                        setShowTypePicker(false);
-                      }}
-                      style={{
-                        padding: 16,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        borderBottomWidth: 1,
-                        borderColor: '#ffffff',
-                        backgroundColor: type === taskType ? '#f0f5f2' : '#ffffff',
-                      }}
-                    >
-                      <AppIcon
-                        name={TASK_TYPE_INFO[taskType].icon}
-                        size={18}
-                        color={TASK_TYPE_INFO[taskType].color}
-                      />
-                      <Text
-                        selectable
-                        style={{
-                          marginLeft: 12,
-                          color: type === taskType ? '#2d5c3f' : '#48484a',
-                          fontWeight: type === taskType ? '500' : '400',
-                        }}
-                      >
-                        {TASK_TYPE_INFO[taskType].label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </Pressable>
-          )}
-
-          {showPriorityPicker && (
-            <Pressable
-              onPress={() => setShowPriorityPicker(false)}
-              style={[
-                {
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  bottom: 0,
-                  left: 0,
-                  backgroundColor: 'rgba(0,0,0,0.4)',
-                  zIndex: 50,
-                },
-                { zIndex: 60 },
-              ]}
-            >
-              <View
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  backgroundColor: '#ffffff',
-                  borderTopLeftRadius: 24,
-                  borderTopRightRadius: 24,
-                  padding: 16,
-                }}
-                onStartShouldSetResponder={() => true}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 12,
-                  }}
-                >
-                  <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
-                    Select Priority
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowPriorityPicker(false)}>
-                    <AppIcon name="close" size={24} color="#9CA3AF" />
-                  </TouchableOpacity>
-                </View>
-                {PRIORITIES.map((p) => (
+              <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ maxHeight: 320 }}>
+                {TASK_TYPES.map((taskType) => (
                   <TouchableOpacity
-                    key={p}
+                    key={taskType}
                     onPress={() => {
-                      setPriority(p);
-                      setShowPriorityPicker(false);
+                      setType(taskType);
+                      setShowTypePicker(false);
                     }}
                     style={{
                       padding: 16,
@@ -1839,185 +1764,276 @@ export function AddEntryModal({
                       alignItems: 'center',
                       borderBottomWidth: 1,
                       borderColor: '#ffffff',
-                      backgroundColor: priority === p ? '#f0f5f2' : '#ffffff',
+                      backgroundColor: type === taskType ? '#f0f5f2' : '#ffffff',
                     }}
                   >
-                    <View
-                      style={[
-                        {
-                          width: 28,
-                          height: 28,
-                          borderRadius: 6,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        },
-                        { backgroundColor: PRIORITY_INFO[p].bgColor },
-                      ]}
-                    >
-                      <Text
-                        selectable
-                        style={[
-                          { fontSize: 12, fontWeight: '700' },
-                          { color: PRIORITY_INFO[p].color },
-                        ]}
-                      >
-                        {p.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
+                    <AppIcon
+                      name={TASK_TYPE_INFO[taskType].icon}
+                      size={18}
+                      color={TASK_TYPE_INFO[taskType].color}
+                    />
                     <Text
                       selectable
                       style={{
                         marginLeft: 12,
-                        color: priority === p ? '#2d5c3f' : '#48484a',
-                        fontWeight: priority === p ? '500' : '400',
+                        color: type === taskType ? '#2d5c3f' : '#48484a',
+                        fontWeight: type === taskType ? '500' : '400',
                       }}
                     >
-                      {PRIORITY_INFO[p].label}
+                      {TASK_TYPE_INFO[taskType].label}
                     </Text>
                   </TouchableOpacity>
                 ))}
+              </ScrollView>
+            </View>
+          </Pressable>
+        )}
+
+        {showPriorityPicker && (
+          <Pressable
+            onPress={() => setShowPriorityPicker(false)}
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                backgroundColor: 'rgba(0,0,0,0.4)',
+                zIndex: 50,
+              },
+              { zIndex: 60 },
+            ]}
+          >
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: '#ffffff',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                padding: 16,
+              }}
+              onStartShouldSetResponder={() => true}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                }}
+              >
+                <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                  Select Priority
+                </Text>
+                <TouchableOpacity onPress={() => setShowPriorityPicker(false)}>
+                  <AppIcon name="close" size={24} color="#9CA3AF" />
+                </TouchableOpacity>
               </View>
-            </Pressable>
+              {PRIORITIES.map((p) => (
+                <TouchableOpacity
+                  key={p}
+                  onPress={() => {
+                    setPriority(p);
+                    setShowPriorityPicker(false);
+                  }}
+                  style={{
+                    padding: 16,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    borderBottomWidth: 1,
+                    borderColor: '#ffffff',
+                    backgroundColor: priority === p ? '#f0f5f2' : '#ffffff',
+                  }}
+                >
+                  <View
+                    style={[
+                      {
+                        width: 28,
+                        height: 28,
+                        borderRadius: 6,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      },
+                      { backgroundColor: PRIORITY_INFO[p].bgColor },
+                    ]}
+                  >
+                    <Text
+                      selectable
+                      style={[
+                        { fontSize: 12, fontWeight: '700' },
+                        { color: PRIORITY_INFO[p].color },
+                      ]}
+                    >
+                      {p.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text
+                    selectable
+                    style={{
+                      marginLeft: 12,
+                      color: priority === p ? '#2d5c3f' : '#48484a',
+                      fontWeight: priority === p ? '500' : '400',
+                    }}
+                  >
+                    {PRIORITY_INFO[p].label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Pressable>
+        )}
+
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
+          keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="automatic"
+          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+          showsVerticalScrollIndicator={true}
+        >
+          {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
+        </ScrollView>
+
+        {activeTab === 'log' && renderLogFormModal()}
+
+        {/* Sticky Add Entry button above keyboard */}
+        {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
+
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+            borderTopWidth: 1,
+            borderColor: '#ffffff',
+          }}
+        >
+          {activeTab === 'log' ? (
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: '#f2f2f7',
+                  alignItems: 'center',
+                }}
+              >
+                <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={saveAllLogs}
+                disabled={pendingLogs.length === 0 || isSubmittingLogs || !activeFarm}
+                style={[
+                  {
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                  },
+                  {
+                    backgroundColor:
+                      pendingLogs.length > 0 && !isSubmittingLogs && activeFarm
+                        ? '#408059'
+                        : '#E5E7EB',
+                  },
+                ]}
+              >
+                {isSubmittingLogs ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <AppIcon
+                      name="save"
+                      size={18}
+                      color={pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF'}
+                    />
+                    <Text
+                      selectable
+                      style={[
+                        { marginLeft: 8, fontWeight: '600' },
+                        { color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' },
+                      ]}
+                    >
+                      {pendingLogs.length > 0 ? `Save Logs (${pendingLogs.length})` : 'Save'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: '#f2f2f7',
+                  alignItems: 'center',
+                }}
+              >
+                <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleTaskSubmit}
+                disabled={!isTaskValid || isTaskSaving}
+                style={[
+                  {
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                  },
+                  { backgroundColor: isTaskValid && !isTaskSaving ? '#408059' : '#E5E7EB' },
+                ]}
+              >
+                {isTaskSaving ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <AppIcon name="save" size={18} color={isTaskValid ? '#FFFFFF' : '#9CA3AF'} />
+                    <Text
+                      selectable
+                      style={[
+                        { marginLeft: 8, fontWeight: '600' },
+                        { color: isTaskValid ? '#FFFFFF' : '#9CA3AF' },
+                      ]}
+                    >
+                      Save Task
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           )}
+        </View>
+      </KeyboardAvoidingView>
+    </ScrollView>
+  );
 
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
-            keyboardShouldPersistTaps="handled"
-            contentInsetAdjustmentBehavior="automatic"
-            maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
-            showsVerticalScrollIndicator={true}
-          >
-            {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
-          </ScrollView>
+  if (presentation === 'screen') {
+    return content;
+  }
 
-          {activeTab === 'log' && renderLogFormModal()}
-
-          {/* Sticky Add Entry button above keyboard */}
-          {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
-
-          <View
-            style={{
-              backgroundColor: '#ffffff',
-              paddingHorizontal: 16,
-              paddingVertical: 16,
-              borderTopWidth: 1,
-              borderColor: '#ffffff',
-            }}
-          >
-            {activeTab === 'log' ? (
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 14,
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: '#f2f2f7',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={saveAllLogs}
-                  disabled={pendingLogs.length === 0 || isSubmittingLogs || !activeFarm}
-                  style={[
-                    {
-                      flex: 1,
-                      paddingVertical: 14,
-                      borderRadius: 12,
-                      alignItems: 'center',
-                      flexDirection: 'row',
-                      justifyContent: 'center',
-                    },
-                    {
-                      backgroundColor:
-                        pendingLogs.length > 0 && !isSubmittingLogs && activeFarm
-                          ? '#408059'
-                          : '#E5E7EB',
-                    },
-                  ]}
-                >
-                  {isSubmittingLogs ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <>
-                      <AppIcon
-                        name="save"
-                        size={18}
-                        color={pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF'}
-                      />
-                      <Text
-                        selectable
-                        style={[
-                          { marginLeft: 8, fontWeight: '600' },
-                          { color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' },
-                        ]}
-                      >
-                        {pendingLogs.length > 0 ? `Save Logs (${pendingLogs.length})` : 'Save'}
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 14,
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: '#f2f2f7',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleTaskSubmit}
-                  disabled={!isTaskValid || isTaskSaving}
-                  style={[
-                    {
-                      flex: 1,
-                      paddingVertical: 14,
-                      borderRadius: 12,
-                      alignItems: 'center',
-                      flexDirection: 'row',
-                      justifyContent: 'center',
-                    },
-                    { backgroundColor: isTaskValid && !isTaskSaving ? '#408059' : '#E5E7EB' },
-                  ]}
-                >
-                  {isTaskSaving ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <>
-                      <AppIcon name="save" size={18} color={isTaskValid ? '#FFFFFF' : '#9CA3AF'} />
-                      <Text
-                        selectable
-                        style={[
-                          { marginLeft: 8, fontWeight: '600' },
-                          { color: isTaskValid ? '#FFFFFF' : '#9CA3AF' },
-                        ]}
-                      >
-                        Save Task
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </ScrollView>
+  return (
+    <Modal visible={isVisible} animationType="slide" presentationStyle="pageSheet">
+      {content}
     </Modal>
   );
 }

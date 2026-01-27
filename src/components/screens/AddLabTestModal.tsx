@@ -72,10 +72,11 @@ function normalizeParameterKey(key: string, isSoil: boolean): string {
 }
 
 interface AddLabTestModalProps {
-  visible: boolean;
+  visible?: boolean;
   onClose: () => void;
   farmId: number;
   testType: 'soil' | 'petiole';
+  presentation?: 'modal' | 'screen';
 }
 
 export default function AddLabTestModal({
@@ -83,7 +84,9 @@ export default function AddLabTestModal({
   onClose,
   farmId,
   testType,
+  presentation = 'modal',
 }: AddLabTestModalProps) {
+  const isVisible = visible ?? true;
   const createSoilTest = useCreateSoilTest();
   const createPetioleTest = useCreatePetioleTest();
   const webViewRef = useRef<WebView>(null);
@@ -341,61 +344,55 @@ export default function AddLabTestModal({
     }
   };
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
+  const content = (
+    <KeyboardAvoidingView
+      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: colors.surface[50] }}
     >
-      <KeyboardAvoidingView
-        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1, backgroundColor: colors.surface[50] }}
+      {/* Header */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: spacing[4],
+          paddingVertical: spacing[4],
+          backgroundColor: 'rgba(255,255,255,0.8)',
+          borderBottomWidth: 1,
+          borderBottomColor: colors.gray[200],
+        }}
       >
-        {/* Header */}
-        <View
+        <TouchableOpacity onPress={onClose}>
+          <Text style={{ color: colors.gray[600], fontSize: fontSize.base }}>Cancel</Text>
+        </TouchableOpacity>
+        <Text
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[4],
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            borderBottomWidth: 1,
-            borderBottomColor: colors.gray[200],
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.bold,
+            color: colors.primary[500],
           }}
         >
-          <TouchableOpacity onPress={onClose}>
-            <Text style={{ color: colors.gray[600], fontSize: fontSize.base }}>Cancel</Text>
-          </TouchableOpacity>
+          Add {isSoil ? 'Soil' : 'Petiole'} Test
+        </Text>
+        <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
           <Text
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.bold,
-              color: colors.primary[500],
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: isLoading ? colors.gray[400] : colors.primary[500],
             }}
           >
-            Add {isSoil ? 'Soil' : 'Petiole'} Test
+            {isLoading ? 'Saving...' : 'Save'}
           </Text>
-          <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
-            <Text
-              style={{
-                fontSize: fontSize.base,
-                fontWeight: fontWeight.semibold,
-                color: isLoading ? colors.gray[400] : colors.primary[500],
-              }}
-            >
-              {isLoading ? 'Saving...' : 'Save'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
+      </View>
 
-        {/* Hidden WebView for PDF parsing */}
-        {showPDFWebView && currentPDFBase64 && (
-          <WebView
-            ref={webViewRef}
-            source={{
-              html: `
+      {/* Hidden WebView for PDF parsing */}
+      {showPDFWebView && currentPDFBase64 && (
+        <WebView
+          ref={webViewRef}
+          source={{
+            html: `
               <!DOCTYPE html>
               <html>
               <head>
@@ -438,345 +435,353 @@ export default function AddLabTestModal({
               </body>
               </html>
             `,
-            }}
-            onMessage={async (event) => {
-              if (event.nativeEvent.data === 'PDF_PARSE_ERROR') {
-                setShowPDFWebView(false);
+          }}
+          onMessage={async (event) => {
+            if (event.nativeEvent.data === 'PDF_PARSE_ERROR') {
+              setShowPDFWebView(false);
+              setIsParsingPDF(false);
+              Alert.alert(
+                'Error',
+                'Could not parse PDF. Please try converting it to an image or take screenshots.',
+                [{ text: 'OK' }],
+              );
+            } else if (event.nativeEvent.data.startsWith('PDF_TEXT:')) {
+              const text = event.nativeEvent.data.replace('PDF_TEXT:', '');
+              setShowPDFWebView(false);
+
+              if (!text || text.trim().length < 50) {
                 setIsParsingPDF(false);
                 Alert.alert(
-                  'Error',
-                  'Could not parse PDF. Please try converting it to an image or take screenshots.',
+                  'No Data Found',
+                  'Could not extract sufficient text from the PDF. Please try a different file.',
                   [{ text: 'OK' }],
                 );
-              } else if (event.nativeEvent.data.startsWith('PDF_TEXT:')) {
-                const text = event.nativeEvent.data.replace('PDF_TEXT:', '');
-                setShowPDFWebView(false);
+                return;
+              }
 
-                if (!text || text.trim().length < 50) {
+              try {
+                const parsedData = await parseLabTestFromText(text, testType);
+
+                if (Object.keys(parsedData.parameters).length === 0) {
+                  Alert.alert('No Data Found', 'Could not extract test parameters from the PDF.', [
+                    { text: 'OK' },
+                  ]);
                   setIsParsingPDF(false);
-                  Alert.alert(
-                    'No Data Found',
-                    'Could not extract sufficient text from the PDF. Please try a different file.',
-                    [{ text: 'OK' }],
-                  );
                   return;
                 }
 
-                try {
-                  const parsedData = await parseLabTestFromText(text, testType);
-
-                  if (Object.keys(parsedData.parameters).length === 0) {
-                    Alert.alert(
-                      'No Data Found',
-                      'Could not extract test parameters from the PDF.',
-                      [{ text: 'OK' }],
-                    );
-                    setIsParsingPDF(false);
-                    return;
+                if (parsedData.testDate) {
+                  const parsedDate = new Date(parsedData.testDate);
+                  if (!isNaN(parsedDate.getTime())) {
+                    setDate(parsedDate);
                   }
-
-                  if (parsedData.testDate) {
-                    const parsedDate = new Date(parsedData.testDate);
-                    if (!isNaN(parsedDate.getTime())) {
-                      setDate(parsedDate);
-                    }
-                  }
-
-                  if (parsedData.parameters) {
-                    const stringParams: Record<string, string> = {};
-                    Object.entries(parsedData.parameters).forEach(([key, value]) => {
-                      const normalizedKey = normalizeParameterKey(key, isSoil);
-                      stringParams[normalizedKey] = value.toString();
-                    });
-                    setParameters(stringParams);
-                  }
-
-                  if (parsedData.recommendations) {
-                    setRecommendations(parsedData.recommendations);
-                  }
-
-                  if (parsedData.notes) {
-                    setNotes(parsedData.notes);
-                  }
-
-                  Alert.alert(
-                    'Success',
-                    `Successfully extracted ${Object.keys(parsedData.parameters).length} parameters. Please review and save.`,
-                    [{ text: 'OK' }],
-                  );
-                } catch (error) {
-                  console.error('Parsing error:', error);
-                  Alert.alert(
-                    'Parsing Failed',
-                    'Could not parse extracted text. Please try a different file.',
-                    [{ text: 'OK' }],
-                  );
                 }
-                setIsParsingPDF(false);
-              }
-            }}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            style={{ display: 'none' }}
-          />
-        )}
 
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: spacing[4] }}
-          showsVerticalScrollIndicator={false}
+                if (parsedData.parameters) {
+                  const stringParams: Record<string, string> = {};
+                  Object.entries(parsedData.parameters).forEach(([key, value]) => {
+                    const normalizedKey = normalizeParameterKey(key, isSoil);
+                    stringParams[normalizedKey] = value.toString();
+                  });
+                  setParameters(stringParams);
+                }
+
+                if (parsedData.recommendations) {
+                  setRecommendations(parsedData.recommendations);
+                }
+
+                if (parsedData.notes) {
+                  setNotes(parsedData.notes);
+                }
+
+                Alert.alert(
+                  'Success',
+                  `Successfully extracted ${Object.keys(parsedData.parameters).length} parameters. Please review and save.`,
+                  [{ text: 'OK' }],
+                );
+              } catch (error) {
+                console.error('Parsing error:', error);
+                Alert.alert(
+                  'Parsing Failed',
+                  'Could not parse extracted text. Please try a different file.',
+                  [{ text: 'OK' }],
+                );
+              }
+              setIsParsingPDF(false);
+            }
+          }}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          style={{ display: 'none' }}
+        />
+      )}
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: spacing[4] }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Upload Button */}
+        <TouchableOpacity
+          onPress={handleUploadFile}
+          disabled={isParsingPDF || isLoading}
+          style={{
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            marginTop: spacing[4],
+            borderWidth: 2,
+            borderStyle: 'dashed',
+            borderColor: 'rgba(64, 128, 89, 0.3)',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          }}
         >
-          {/* Upload Button */}
-          <TouchableOpacity
-            onPress={handleUploadFile}
-            disabled={isParsingPDF || isLoading}
+          {isParsingPDF ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              <ActivityIndicator color="#408059" size="small" />
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.medium,
+                  color: colors.primary[500],
+                  marginLeft: spacing[2],
+                }}
+              >
+                Parsing with AI...
+              </Text>
+            </View>
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              <Symbol name="document" size={24} color="#408059" />
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.medium,
+                  color: colors.primary[500],
+                  marginLeft: spacing[2],
+                }}
+              >
+                Upload Lab Report (Photo, Image, or PDF)
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Date Picker */}
+        <View
+          style={{
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            marginTop: spacing[4],
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          }}
+        >
+          <Text
             style={{
-              backgroundColor: colors.white,
-              borderRadius: borderRadius.xl,
-              padding: spacing[4],
-              marginTop: spacing[4],
-              borderWidth: 2,
-              borderStyle: 'dashed',
-              borderColor: 'rgba(64, 128, 89, 0.3)',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.gray[500],
+              marginBottom: spacing[2],
             }}
           >
-            {isParsingPDF ? (
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+            Test Date
+          </Text>
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: colors.surface[50],
+              padding: spacing[3],
+              borderRadius: borderRadius.lg,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Symbol name="calendar" size={20} color="#666" />
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  color: colors.gray[800],
+                  marginLeft: spacing[2],
+                }}
               >
-                <ActivityIndicator color="#408059" size="small" />
-                <Text
-                  style={{
-                    fontSize: fontSize.base,
-                    fontWeight: fontWeight.medium,
-                    color: colors.primary[500],
-                    marginLeft: spacing[2],
-                  }}
-                >
-                  Parsing with AI...
-                </Text>
-              </View>
-            ) : (
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Symbol name="document" size={24} color="#408059" />
-                <Text
-                  style={{
-                    fontSize: fontSize.base,
-                    fontWeight: fontWeight.medium,
-                    color: colors.primary[500],
-                    marginLeft: spacing[2],
-                  }}
-                >
-                  Upload Lab Report (Photo, Image, or PDF)
-                </Text>
-              </View>
-            )}
+                {date.toLocaleDateString()}
+              </Text>
+            </View>
+            <Symbol name="chevron.down" size={20} color="#666" />
           </TouchableOpacity>
 
-          {/* Date Picker */}
-          <View
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={process.env.EXPO_OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleDateChange}
+              maximumDate={new Date()}
+            />
+          )}
+        </View>
+
+        {/* Parameters */}
+        <View
+          style={{
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            marginTop: spacing[4],
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          }}
+        >
+          <Text
             style={{
-              backgroundColor: colors.white,
-              borderRadius: borderRadius.xl,
-              padding: spacing[4],
-              marginTop: spacing[4],
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.gray[500],
+              marginBottom: spacing[3],
             }}
           >
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.medium,
-                color: colors.gray[500],
-                marginBottom: spacing[2],
-              }}
-            >
-              Test Date
-            </Text>
-            <TouchableOpacity
-              onPress={() => setShowDatePicker(true)}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: colors.surface[50],
-                padding: spacing[3],
-                borderRadius: borderRadius.lg,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Symbol name="calendar" size={20} color="#666" />
+            Test Parameters
+          </Text>
+          <Text
+            style={{ fontSize: fontSize.xs, color: colors.gray[400], marginBottom: spacing[4] }}
+          >
+            Enter values for the parameters you have. Leave empty for unknown values.
+          </Text>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
+            {parameterList.map((param) => (
+              <View key={param.key} style={{ width: '48%' }}>
                 <Text
                   style={{
-                    fontSize: fontSize.base,
-                    color: colors.gray[800],
-                    marginLeft: spacing[2],
+                    fontSize: fontSize.xs,
+                    color: colors.gray[500],
+                    marginBottom: spacing[1],
                   }}
                 >
-                  {date.toLocaleDateString()}
+                  {param.label} {param.unit && `(${param.unit})`}
                 </Text>
+                <TextInput
+                  style={{
+                    backgroundColor: colors.surface[50],
+                    borderWidth: 1,
+                    borderColor: colors.gray[200],
+                    borderRadius: borderRadius.lg,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    color: colors.gray[800],
+                    fontSize: fontSize.base,
+                  }}
+                  placeholder="0.00"
+                  placeholderTextColor="#9ca3af"
+                  keyboardType="decimal-pad"
+                  value={parameters[param.key] || ''}
+                  onChangeText={(value) => updateParameter(param.key, value)}
+                />
               </View>
-              <Symbol name="chevron.down" size={20} color="#666" />
-            </TouchableOpacity>
-
-            {showDatePicker && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display={process.env.EXPO_OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleDateChange}
-                maximumDate={new Date()}
-              />
-            )}
+            ))}
           </View>
+        </View>
 
-          {/* Parameters */}
-          <View
+        {/* Recommendations */}
+        <View
+          style={{
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            marginTop: spacing[4],
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          }}
+        >
+          <Text
             style={{
-              backgroundColor: colors.white,
-              borderRadius: borderRadius.xl,
-              padding: spacing[4],
-              marginTop: spacing[4],
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.gray[500],
+              marginBottom: spacing[2],
             }}
           >
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.medium,
-                color: colors.gray[500],
-                marginBottom: spacing[3],
-              }}
-            >
-              Test Parameters
-            </Text>
-            <Text
-              style={{ fontSize: fontSize.xs, color: colors.gray[400], marginBottom: spacing[4] }}
-            >
-              Enter values for the parameters you have. Leave empty for unknown values.
-            </Text>
-
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
-              {parameterList.map((param) => (
-                <View key={param.key} style={{ width: '48%' }}>
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      color: colors.gray[500],
-                      marginBottom: spacing[1],
-                    }}
-                  >
-                    {param.label} {param.unit && `(${param.unit})`}
-                  </Text>
-                  <TextInput
-                    style={{
-                      backgroundColor: colors.surface[50],
-                      borderWidth: 1,
-                      borderColor: colors.gray[200],
-                      borderRadius: borderRadius.lg,
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[2],
-                      color: colors.gray[800],
-                      fontSize: fontSize.base,
-                    }}
-                    placeholder="0.00"
-                    placeholderTextColor="#9ca3af"
-                    keyboardType="decimal-pad"
-                    value={parameters[param.key] || ''}
-                    onChangeText={(value) => updateParameter(param.key, value)}
-                  />
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Recommendations */}
-          <View
+            Recommendations (Optional)
+          </Text>
+          <TextInput
             style={{
-              backgroundColor: colors.white,
-              borderRadius: borderRadius.xl,
-              padding: spacing[4],
-              marginTop: spacing[4],
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              backgroundColor: colors.surface[50],
+              borderWidth: 1,
+              borderColor: colors.gray[200],
+              borderRadius: borderRadius.lg,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[3],
+              color: colors.gray[800],
+              fontSize: fontSize.base,
+              minHeight: 80,
+            }}
+            placeholder="Enter lab recommendations..."
+            placeholderTextColor="#9ca3af"
+            multiline
+            textAlignVertical="top"
+            value={recommendations}
+            onChangeText={setRecommendations}
+          />
+        </View>
+
+        {/* Notes */}
+        <View
+          style={{
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            marginTop: spacing[4],
+            marginBottom: spacing[8],
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.gray[500],
+              marginBottom: spacing[2],
             }}
           >
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.medium,
-                color: colors.gray[500],
-                marginBottom: spacing[2],
-              }}
-            >
-              Recommendations (Optional)
-            </Text>
-            <TextInput
-              style={{
-                backgroundColor: colors.surface[50],
-                borderWidth: 1,
-                borderColor: colors.gray[200],
-                borderRadius: borderRadius.lg,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                color: colors.gray[800],
-                fontSize: fontSize.base,
-                minHeight: 80,
-              }}
-              placeholder="Enter lab recommendations..."
-              placeholderTextColor="#9ca3af"
-              multiline
-              textAlignVertical="top"
-              value={recommendations}
-              onChangeText={setRecommendations}
-            />
-          </View>
-
-          {/* Notes */}
-          <View
+            Notes (Optional)
+          </Text>
+          <TextInput
             style={{
-              backgroundColor: colors.white,
-              borderRadius: borderRadius.xl,
-              padding: spacing[4],
-              marginTop: spacing[4],
-              marginBottom: spacing[8],
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              backgroundColor: colors.surface[50],
+              borderWidth: 1,
+              borderColor: colors.gray[200],
+              borderRadius: borderRadius.lg,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[3],
+              color: colors.gray[800],
+              fontSize: fontSize.base,
+              minHeight: 60,
             }}
-          >
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.medium,
-                color: colors.gray[500],
-                marginBottom: spacing[2],
-              }}
-            >
-              Notes (Optional)
-            </Text>
-            <TextInput
-              style={{
-                backgroundColor: colors.surface[50],
-                borderWidth: 1,
-                borderColor: colors.gray[200],
-                borderRadius: borderRadius.lg,
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[3],
-                color: colors.gray[800],
-                fontSize: fontSize.base,
-                minHeight: 60,
-              }}
-              placeholder="Add any additional notes..."
-              placeholderTextColor="#9ca3af"
-              multiline
-              textAlignVertical="top"
-              value={notes}
-              onChangeText={setNotes}
-            />
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            placeholder="Add any additional notes..."
+            placeholderTextColor="#9ca3af"
+            multiline
+            textAlignVertical="top"
+            value={notes}
+            onChangeText={setNotes}
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+
+  if (presentation === 'screen') {
+    return content;
+  }
+
+  return (
+    <Modal
+      visible={isVisible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      {content}
     </Modal>
   );
 }

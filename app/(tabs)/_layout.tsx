@@ -8,7 +8,15 @@ import { Symbol } from '@/components/ui/Symbol';
 
 // Tab icon component
 function TabBarIcon({ name, color }: { name: string; color: string }) {
-  return <Symbol name={name} size={24} color={color} />;
+  const isAndroid = process.env.EXPO_OS === 'android';
+  const scaleMap: Record<string, number> = {
+    compass: 1.1,
+    'compass.fill': 1.1,
+    'wrench.and.screwdriver': 0.9,
+    'wrench.and.screwdriver.fill': 0.9,
+  };
+  const scale = isAndroid ? (scaleMap[name] ?? 1) : 1;
+  return <Symbol name={name} size={24} color={color} style={{ transform: [{ scale }] }} />;
 }
 
 export default function TabLayout() {

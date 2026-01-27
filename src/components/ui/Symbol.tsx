@@ -101,10 +101,16 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   flask: 'flask-outline',
   'flask.fill': 'flask',
   cube: 'cube-outline',
+  'cube.fill': 'cube',
+  'square.stack.3d.up': 'cube-outline',
+  'square.stack.3d.up.fill': 'cube',
+  'wrench.and.screwdriver': 'build-outline',
+  'wrench.and.screwdriver.fill': 'build',
 
   // Settings
   gearshape: 'settings-outline',
   'gearshape.fill': 'settings',
+  'rectangle.portrait.and.arrow.right': 'log-out-outline',
 
   // Misc
   'bell.fill': 'notifications',
@@ -112,6 +118,12 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'indianrupeesign.circle': 'cash',
   star: 'star-outline',
   'basket.fill': 'basket',
+  compass: 'compass-outline',
+  'compass.fill': 'compass',
+  'checkmark.shield.fill': 'shield-checkmark',
+  'lightbulb.fill': 'bulb',
+  'ant.fill': 'bug',
+  'paperplane.fill': 'paper-plane',
 
   // Additional common mappings
   'chevron.up.chevron.down': 'swap-vertical',

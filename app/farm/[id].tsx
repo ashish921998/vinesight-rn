@@ -13,7 +13,6 @@ import { Symbol } from '@/components/ui/Symbol';
 import { useFarm, useFarmRecords, useWeather, useDeleteFarm } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/useTasks';
 import { StatsCard, ActivityLogCard } from '@/components/cards';
-import { AddEntryModal, WaterLevelModal } from '@/components/screens';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -63,9 +62,6 @@ export default function FarmDetailScreen() {
   const deleteFarmMutation = useDeleteFarm();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
-  const [addEntryTab, setAddEntryTab] = useState<'log' | 'task'>('log');
-  const [showWaterLevelModal, setShowWaterLevelModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
 
   // Calculate stats
@@ -150,22 +146,27 @@ export default function FarmDetailScreen() {
   };
 
   const handleAddActivity = () => {
-    setAddEntryTab('log');
-    setShowAddEntryModal(true);
-  };
-
-  const handleActivitySaveSuccess = () => {
-    // Refresh records after saving
-    refetchRecords();
+    if (!farm?.id) return;
+    router.push({
+      pathname: '/add-entry',
+      params: {
+        farmId: farm.id.toString(),
+        initialTab: 'log',
+        tabs: 'log,task',
+      },
+    });
   };
 
   const handleAddTask = () => {
-    setAddEntryTab('task');
-    setShowAddEntryModal(true);
-  };
-
-  const handleTaskSaveSuccess = () => {
-    refetchTasks();
+    if (!farm?.id) return;
+    router.push({
+      pathname: '/add-entry',
+      params: {
+        farmId: farm.id.toString(),
+        initialTab: 'task',
+        tabs: 'log,task',
+      },
+    });
   };
 
   const handleCompleteTask = (taskId: number) => {
@@ -616,7 +617,10 @@ export default function FarmDetailScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={{ flex: 1 }}
-                onPress={() => setShowWaterLevelModal(true)}
+                onPress={() => {
+                  if (!farm?.id) return;
+                  router.push({ pathname: '/water-level', params: { farmId: farm.id.toString() } });
+                }}
                 activeOpacity={0.7}
               >
                 <StatsCard
@@ -983,27 +987,7 @@ export default function FarmDetailScreen() {
         <Symbol name="plus" size={28} color="#FFFFFF" />
       </TouchableOpacity>
 
-      {/* Add Entry Modal */}
-      {farm && (
-        <AddEntryModal
-          visible={showAddEntryModal}
-          onClose={() => setShowAddEntryModal(false)}
-          farm={farm}
-          tabs={['log', 'task']}
-          initialTab={addEntryTab}
-          onLogSaveSuccess={handleActivitySaveSuccess}
-          onTaskSaveSuccess={handleTaskSaveSuccess}
-        />
-      )}
-
-      {/* Water Level Modal */}
-      {farm && (
-        <WaterLevelModal
-          visible={showWaterLevelModal}
-          onClose={() => setShowWaterLevelModal(false)}
-          farm={farm}
-        />
-      )}
+      {/* Add Entry + Water Level handled via routes */}
     </>
   );
 }

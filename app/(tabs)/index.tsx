@@ -19,7 +19,6 @@ import {
   useFarms,
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
-import { AddEntryModal } from '@/components/screens';
 import { Symbol } from '@/components/ui/Symbol';
 import type { LogTypeId } from '@/constants/calculatorModels';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -52,9 +51,7 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showFarmPicker, setShowFarmPicker] = useState(false);
-  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
   const [selectedQuickAction, setSelectedQuickAction] = useState<LogTypeId | null>(null);
-  const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
 
   // Data hooks
   const { data: stats, refetch: refetchStats } = useDashboardStats();
@@ -83,19 +80,16 @@ export default function DashboardScreen() {
 
   const handleFarmSelection = (farmId: number) => {
     setShowFarmPicker(false);
-    setSelectedFarmId(farmId);
-    setShowAddEntryModal(true);
-  };
-
-  const handleAddEntryModalClose = () => {
-    setShowAddEntryModal(false);
+    router.push({
+      pathname: '/add-entry',
+      params: {
+        farmId: farmId.toString(),
+        initialLogType: selectedQuickAction ?? undefined,
+        initialTab: 'log',
+        tabs: 'log',
+      },
+    });
     setSelectedQuickAction(null);
-    setSelectedFarmId(null);
-  };
-
-  const handleLogSaveSuccess = () => {
-    handleAddEntryModalClose();
-    refetchActivities();
   };
 
   const handleFarmAttention = (farmId: number) => {
@@ -437,17 +431,7 @@ export default function DashboardScreen() {
         </Modal>
 
         {/* Add Entry Modal */}
-        {selectedFarmId && selectedQuickAction && (
-          <AddEntryModal
-            visible={showAddEntryModal}
-            onClose={handleAddEntryModalClose}
-            initialFarmId={selectedFarmId}
-            initialLogType={selectedQuickAction}
-            tabs={['log']}
-            initialTab="log"
-            onLogSaveSuccess={handleLogSaveSuccess}
-          />
-        )}
+        {/* Add Entry handled via route */}
       </View>
     </ScrollView>
   );

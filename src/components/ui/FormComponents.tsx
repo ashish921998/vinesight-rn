@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface FormModalProps {
-  visible: boolean;
+  visible?: boolean;
   onClose: () => void;
   title: string;
   onSave?: () => void;
@@ -26,10 +26,11 @@ interface FormModalProps {
   children: React.ReactNode;
   showResetButton?: boolean;
   onReset?: () => void;
+  presentation?: 'modal' | 'screen';
 }
 
 export function FormModal({
-  visible,
+  visible = true,
   onClose,
   title,
   onSave,
@@ -39,6 +40,7 @@ export function FormModal({
   children,
   showResetButton = false,
   onReset,
+  presentation = 'modal',
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
 
@@ -107,54 +109,62 @@ export function FormModal({
     color: isSaveDisabled || isLoading ? '#9CA3AF' : colors.surface[100],
   };
 
+  const content = (
+    <KeyboardAvoidingView
+      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: colors.surface[100] }}
+    >
+      <View style={headerStyle}>
+        <TouchableOpacity onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
+          <Symbol name="xmark" size={20} color="#111827" />
+        </TouchableOpacity>
+        <Text style={titleStyle} numberOfLines={1}>
+          {title}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: 120,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </ScrollView>
+
+      <View style={footerStyle}>
+        {showResetButton && onReset ? (
+          <TouchableOpacity onPress={onReset} disabled={isLoading}>
+            <Text style={resetTextStyle}>Reset</Text>
+          </TouchableOpacity>
+        ) : (
+          <View />
+        )}
+
+        {onSave && (
+          <TouchableOpacity
+            onPress={onSave}
+            disabled={isSaveDisabled || isLoading}
+            style={saveButtonStyle}
+          >
+            <Text style={saveTextStyle}>{isLoading ? 'Saving...' : saveLabel}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </KeyboardAvoidingView>
+  );
+
+  if (presentation === 'screen') {
+    return content;
+  }
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <KeyboardAvoidingView
-        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1, backgroundColor: colors.surface[100] }}
-      >
-        <View style={headerStyle}>
-          <TouchableOpacity onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
-            <Symbol name="xmark" size={20} color="#111827" />
-          </TouchableOpacity>
-          <Text style={titleStyle} numberOfLines={1}>
-            {title}
-          </Text>
-          <View style={{ width: 40 }} />
-        </View>
-
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{
-            paddingHorizontal: 24,
-            paddingTop: 24,
-            paddingBottom: 120,
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          {children}
-        </ScrollView>
-
-        <View style={footerStyle}>
-          {showResetButton && onReset ? (
-            <TouchableOpacity onPress={onReset} disabled={isLoading}>
-              <Text style={resetTextStyle}>Reset</Text>
-            </TouchableOpacity>
-          ) : (
-            <View />
-          )}
-
-          {onSave && (
-            <TouchableOpacity
-              onPress={onSave}
-              disabled={isSaveDisabled || isLoading}
-              style={saveButtonStyle}
-            >
-              <Text style={saveTextStyle}>{isLoading ? 'Saving...' : saveLabel}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </KeyboardAvoidingView>
+      {content}
     </Modal>
   );
 }

@@ -5,9 +5,10 @@
 
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Symbol } from '@/components/ui/Symbol';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFarm } from '../src/hooks';
 import {
   useSoilTests,
@@ -17,12 +18,13 @@ import {
   formatParameterKey,
 } from '../src/hooks/useLabTests';
 import { SoilTestRecord, PetioleTestRecord } from '../src/types/database';
-import AddLabTestModal from '../src/components/screens/AddLabTestModal';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type TestType = 'soil' | 'petiole';
 
 export default function LabTestsScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
   const farmIdNum = farmId ? parseInt(farmId, 10) : 0;
 
@@ -33,7 +35,6 @@ export default function LabTestsScreen() {
   const deletePetioleTest = useDeletePetioleTest();
 
   const [selectedTab, setSelectedTab] = useState<TestType>('soil');
-  const [showAddModal, setShowAddModal] = useState(false);
 
   const isLoading = farmLoading || soilLoading || petioleLoading;
 
@@ -243,7 +244,15 @@ export default function LabTestsScreen() {
           Add a {type === 'soil' ? 'soil' : 'petiole'} test to track nutrient levels.
         </Text>
         <TouchableOpacity
-          onPress={() => setShowAddModal(true)}
+          onPress={() =>
+            router.push({
+              pathname: '/add-lab-test',
+              params: {
+                farmId: farmIdNum.toString(),
+                testType: type,
+              },
+            })
+          }
           style={{
             marginTop: spacing[4],
             backgroundColor: '#408059',
@@ -305,7 +314,8 @@ export default function LabTestsScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: spacing[4],
-          paddingVertical: spacing[3],
+          paddingTop: spacing[3] + insets.top,
+          paddingBottom: spacing[3],
           borderBottomWidth: 1,
           borderBottomColor: colors.gray[200],
           backgroundColor: 'rgba(255,255,255,0.8)',
@@ -356,7 +366,15 @@ export default function LabTestsScreen() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => setShowAddModal(true)}
+          onPress={() =>
+            router.push({
+              pathname: '/add-lab-test',
+              params: {
+                farmId: farmIdNum.toString(),
+                testType: selectedTab,
+              },
+            })
+          }
           style={{
             backgroundColor: '#408059',
             padding: spacing[2],
@@ -447,12 +465,7 @@ export default function LabTestsScreen() {
       )}
 
       {/* Add Modal */}
-      <AddLabTestModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        farmId={farmIdNum}
-        testType={selectedTab}
-      />
+      {/* Lab test creation handled via route */}
     </View>
   );
 }

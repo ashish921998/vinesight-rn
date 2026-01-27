@@ -227,11 +227,11 @@ Test the app thoroughly:
 
 **⚠️ MAJOR CHANGE - Changes entire navigation flow**
 
-- [ ] Plan data flow strategy (params vs stores)
-- [ ] Create route files for all modals
-- [ ] Update all modal invocations
+- [x] Plan data flow strategy (params + store)
+- [x] Create route files for all modals
+- [x] Update all modal invocations
 - [ ] Test each modal route
-- [ ] Delete old modal components
+- [ ] Delete old modal components (AddActivityModal removed; keep others as screen content)
 - [ ] Commit: "Phase 8: Modal architecture"
 
 ---

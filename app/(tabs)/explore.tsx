@@ -24,12 +24,8 @@ import {
   useDeleteWarehouseItem,
 } from '@/hooks';
 import { FarmCard } from '@/components/cards';
-import {
-  AddWorkerModal,
-  AttendanceView,
-  AddWarehouseItemModal,
-  AddStockModal,
-} from '@/components/screens';
+import { AttendanceView } from '@/components/screens';
+import { useModalStore } from '@/stores';
 import type { Farm, Worker, WarehouseItem } from '@/types';
 
 type ExploreTab = 'farms' | 'workers' | 'warehouse';
@@ -63,6 +59,7 @@ const COLORS = {
 
 export default function ExploreScreen() {
   const router = useRouter();
+  const { setAddWorker, setAddWarehouseItem, setAddStock } = useModalStore();
   const insets = useSafeAreaInsets();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
 
@@ -90,8 +87,6 @@ export default function ExploreScreen() {
   const { data: workers, isLoading: workersLoading, refetch: refetchWorkers } = useWorkers();
   const deleteWorker = useDeleteWorker();
   const [selectedWorkerSubTab, setSelectedWorkerSubTab] = useState<WorkersSubTab>('workers');
-  const [showAddWorkerModal, setShowAddWorkerModal] = useState(false);
-  const [workerToEdit, setWorkerToEdit] = useState<Worker | undefined>(undefined);
 
   // Warehouse state & hooks
   const {
@@ -103,12 +98,23 @@ export default function ExploreScreen() {
   const { data: profile } = useProfile();
   const deleteItemMutation = useDeleteWarehouseItem();
   const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilter>('all');
-  const [showAddWarehouseModal, setShowAddWarehouseModal] = useState(false);
-  const [showStockModal, setShowStockModal] = useState(false);
-  const [editingWarehouseItem, setEditingWarehouseItem] = useState<WarehouseItem | null>(null);
-  const [stockItem, setStockItem] = useState<WarehouseItem | null>(null);
 
   const currency = profile?.preferred_currency || 'INR';
+
+  const openAddWorker = (worker?: Worker | null) => {
+    setAddWorker({ worker: worker ?? null });
+    router.push('/add-worker');
+  };
+
+  const openWarehouseItem = (item?: WarehouseItem | null) => {
+    setAddWarehouseItem({ editingItem: item ?? null });
+    router.push('/add-warehouse-item');
+  };
+
+  const openAddStock = (item: WarehouseItem) => {
+    setAddStock({ item });
+    router.push('/add-stock');
+  };
 
   // ============================================================
   // TAB SWITCHING WITH ANIMATION
@@ -290,13 +296,7 @@ export default function ExploreScreen() {
   };
 
   const handleEditWorker = (worker: Worker) => {
-    setWorkerToEdit(worker);
-    setShowAddWorkerModal(true);
-  };
-
-  const handleAddWorkerModalClose = () => {
-    setShowAddWorkerModal(false);
-    setWorkerToEdit(undefined);
+    openAddWorker(worker);
   };
 
   // ============================================================
@@ -362,13 +362,11 @@ export default function ExploreScreen() {
   };
 
   const handleAddStock = (item: WarehouseItem) => {
-    setStockItem(item);
-    setShowStockModal(true);
+    openAddStock(item);
   };
 
   const handleEditWarehouseItem = (item: WarehouseItem) => {
-    setEditingWarehouseItem(item);
-    setShowAddWarehouseModal(true);
+    openWarehouseItem(item);
   };
 
   // ============================================================
@@ -854,7 +852,7 @@ export default function ExploreScreen() {
                 Add workers to track attendance,{`\n`}payments, and settlements.
               </Text>
               <TouchableOpacity
-                onPress={() => setShowAddWorkerModal(true)}
+                onPress={() => openAddWorker(null)}
                 style={{
                   backgroundColor: colors.primary[600],
                   paddingHorizontal: spacing[6],
@@ -1010,7 +1008,7 @@ export default function ExploreScreen() {
         {/* FAB */}
         {selectedWorkerSubTab === 'workers' && (workers?.length || 0) > 0 && (
           <TouchableOpacity
-            onPress={() => setShowAddWorkerModal(true)}
+            onPress={() => openAddWorker(null)}
             activeOpacity={0.8}
             style={{
               position: 'absolute',
@@ -1344,8 +1342,7 @@ export default function ExploreScreen() {
               </Text>
               <TouchableOpacity
                 onPress={() => {
-                  setEditingWarehouseItem(null);
-                  setShowAddWarehouseModal(true);
+                  openWarehouseItem(null);
                 }}
                 style={{
                   marginTop: spacing[4],
@@ -1545,8 +1542,7 @@ export default function ExploreScreen() {
         {/* FAB */}
         <TouchableOpacity
           onPress={() => {
-            setEditingWarehouseItem(null);
-            setShowAddWarehouseModal(true);
+            openWarehouseItem(null);
           }}
           style={{
             position: 'absolute',
@@ -1727,31 +1723,7 @@ export default function ExploreScreen() {
         {selectedTab === 'warehouse' && renderWarehouseTab()}
       </Animated.View>
 
-      {/* Modals */}
-      <AddWorkerModal
-        visible={showAddWorkerModal}
-        onClose={handleAddWorkerModalClose}
-        worker={workerToEdit}
-        onSaveSuccess={refetchWorkers}
-      />
-
-      <AddWarehouseItemModal
-        visible={showAddWarehouseModal}
-        onClose={() => {
-          setShowAddWarehouseModal(false);
-          setEditingWarehouseItem(null);
-        }}
-        editingItem={editingWarehouseItem}
-      />
-
-      <AddStockModal
-        visible={showStockModal}
-        onClose={() => {
-          setShowStockModal(false);
-          setStockItem(null);
-        }}
-        item={stockItem}
-      />
+      {/* Modals are now route-based */}
     </View>
   );
 }

@@ -12,9 +12,10 @@ import {
 } from '../ui/FormComponents';
 
 interface Props {
-  visible: boolean;
+  visible?: boolean;
   onClose: () => void;
   editingItem: WarehouseItem | null;
+  presentation?: 'modal' | 'screen';
 }
 
 const ITEM_TYPES = [
@@ -53,7 +54,13 @@ const UNITS = [
   },
 ];
 
-export default function AddWarehouseItemModal({ visible, onClose, editingItem }: Props) {
+export default function AddWarehouseItemModal({
+  visible,
+  onClose,
+  editingItem,
+  presentation = 'modal',
+}: Props) {
+  const isVisible = visible ?? true;
   const { data: profile } = useProfile();
   const createMutation = useCreateWarehouseItem();
   const updateMutation = useUpdateWarehouseItem();
@@ -70,7 +77,7 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
   const isEditing = !!editingItem;
 
   // Track previous state to prevent unnecessary updates
-  const prevVisibleRef = useRef(visible);
+  const prevVisibleRef = useRef(isVisible);
   const prevEditingItemIdRef = useRef(editingItem?.id);
 
   const resetForm = () => {
@@ -91,7 +98,7 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // Only update when modal becomes visible or editingItem changes
-    if (visible) {
+    if (isVisible) {
       const shouldUpdate =
         !prevVisibleRef.current || editingItem?.id !== prevEditingItemIdRef.current;
 
@@ -109,9 +116,9 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
         }
       }
     }
-    prevVisibleRef.current = visible;
+    prevVisibleRef.current = isVisible;
     prevEditingItemIdRef.current = editingItem?.id;
-  }, [visible, editingItem]);
+  }, [isVisible, editingItem]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSubmit = async () => {
@@ -163,7 +170,7 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
 
   return (
     <FormModal
-      visible={visible}
+      visible={isVisible}
       onClose={onClose}
       title={isEditing ? 'Edit Item' : 'Add Item'}
       onSave={handleSubmit}
@@ -172,6 +179,7 @@ export default function AddWarehouseItemModal({ visible, onClose, editingItem }:
       isSaveDisabled={!isValid}
       showResetButton={!isEditing}
       onReset={handleReset}
+      presentation={presentation}
     >
       {/* Item Details */}
       <SectionHeader title="Item Details" style={{ marginBottom: 16 }} />

@@ -5,9 +5,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Symbol } from '@/components/ui/Symbol';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFarm } from '../src/hooks';
 import {
@@ -21,12 +22,13 @@ import {
   SECTION_NAMES,
 } from '../src/hooks/useSoilProfiles';
 import { SoilProfile } from '../src/types/database';
-import AddSoilProfileModal from '../src/components/screens/AddSoilProfileModal';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type TabType = 'history' | 'trends';
 
 export default function SoilProfilingScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
   const farmIdNum = farmId ? parseInt(farmId, 10) : 0;
 
@@ -35,7 +37,6 @@ export default function SoilProfilingScreen() {
   const deleteProfile = useDeleteSoilProfile();
 
   const [selectedTab, setSelectedTab] = useState<TabType>('history');
-  const [showAddModal, setShowAddModal] = useState(false);
 
   const isLoading = farmLoading || profilesLoading;
 
@@ -261,7 +262,9 @@ export default function SoilProfilingScreen() {
         Add soil moisture profiles to track your farm&apos;s soil health over time.
       </Text>
       <TouchableOpacity
-        onPress={() => setShowAddModal(true)}
+        onPress={() =>
+          router.push({ pathname: '/add-soil-profile', params: { farmId: farmIdNum.toString() } })
+        }
         style={{
           marginTop: spacing[4],
           paddingHorizontal: spacing[6],
@@ -524,7 +527,8 @@ export default function SoilProfilingScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: spacing[4],
-          paddingVertical: spacing[3],
+          paddingTop: spacing[3] + insets.top,
+          paddingBottom: spacing[3],
         }}
       >
         <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
@@ -545,7 +549,12 @@ export default function SoilProfilingScreen() {
             <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>{farm.name}</Text>
           )}
         </View>
-        <TouchableOpacity onPress={() => setShowAddModal(true)} style={{ padding: spacing[2] }}>
+        <TouchableOpacity
+          onPress={() =>
+            router.push({ pathname: '/add-soil-profile', params: { farmId: farmIdNum.toString() } })
+          }
+          style={{ padding: spacing[2] }}
+        >
           <Symbol name="add-circle" size={28} color="#408059" />
         </TouchableOpacity>
       </View>
@@ -628,11 +637,7 @@ export default function SoilProfilingScreen() {
       )}
 
       {/* Add Modal */}
-      <AddSoilProfileModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        farmId={farmIdNum}
-      />
+      {/* Soil profile creation handled via route */}
     </View>
   );
 }

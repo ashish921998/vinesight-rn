@@ -7,12 +7,14 @@ import { FormModal, SectionHeader, FormInput, PreviewCard } from '../ui/FormComp
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface Props {
-  visible: boolean;
+  visible?: boolean;
   onClose: () => void;
   item: WarehouseItem | null;
+  presentation?: 'modal' | 'screen';
 }
 
-export default function AddStockModal({ visible, onClose, item }: Props) {
+export default function AddStockModal({ visible, onClose, item, presentation = 'modal' }: Props) {
+  const isVisible = visible ?? true;
   const { data: profile } = useProfile();
   const updateMutation = useUpdateWarehouseItem();
 
@@ -22,22 +24,22 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
   const currency = profile?.preferred_currency || 'INR';
 
   // Track previous visible/item state to prevent unnecessary updates
-  const prevVisibleRef = useRef(visible);
+  const prevVisibleRef = useRef(isVisible);
   const prevItemIdRef = useRef(item?.id);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // Only update when modal becomes visible or item changes
-    if (visible && item) {
+    if (isVisible && item) {
       const shouldUpdate = !prevVisibleRef.current || item.id !== prevItemIdRef.current;
       if (shouldUpdate) {
         setQuantityToAdd('');
         setNewUnitPrice(item.unit_price.toString());
       }
     }
-    prevVisibleRef.current = visible;
+    prevVisibleRef.current = isVisible;
     prevItemIdRef.current = item?.id;
-  }, [visible, item]);
+  }, [isVisible, item]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const newQuantity = (item?.quantity || 0) + parseFloat(quantityToAdd || '0');
@@ -79,7 +81,7 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
 
   return (
     <FormModal
-      visible={visible}
+      visible={isVisible}
       onClose={onClose}
       title="Add Stock"
       onSave={handleSubmit}
@@ -88,6 +90,7 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
       isSaveDisabled={!isValid}
       showResetButton
       onReset={handleReset}
+      presentation={presentation}
     >
       {/* Item Info Card */}
       <View

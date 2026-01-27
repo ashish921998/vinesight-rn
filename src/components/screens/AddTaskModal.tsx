@@ -25,11 +25,12 @@ import { TASK_TEMPLATES } from '../../constants/taskTemplates';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface Props {
-  visible: boolean;
+  visible?: boolean;
   onClose: () => void;
   editingTask: TaskReminder | null;
   initialFarmId?: number | null;
   onSaveSuccess?: () => void;
+  presentation?: 'modal' | 'screen';
 }
 
 const TASK_TYPES: TaskType[] = [
@@ -51,7 +52,9 @@ export default function AddTaskModal({
   editingTask,
   initialFarmId,
   onSaveSuccess,
+  presentation = 'modal',
 }: Props) {
+  const isVisible = visible ?? true;
   const { data: farms } = useFarms();
   const createMutation = useCreateTask();
   const updateMutation = useUpdateTask();
@@ -89,7 +92,7 @@ export default function AddTaskModal({
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // Update when modal becomes visible, editingTask changes, or task data is updated
-    if (visible) {
+    if (isVisible) {
       const shouldUpdate =
         !prevVisibleRef.current ||
         editingTask?.id !== prevEditingTaskIdRef.current ||
@@ -114,10 +117,10 @@ export default function AddTaskModal({
         }
       }
     }
-    prevVisibleRef.current = visible;
+    prevVisibleRef.current = isVisible;
     prevEditingTaskIdRef.current = editingTask?.id;
     prevEditingTaskUpdatedAtRef.current = editingTask?.updated_at;
-  }, [visible, editingTask, farms, initialFarmId]);
+  }, [isVisible, editingTask, farms, initialFarmId]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const applyTemplate = (template: TaskTemplate) => {
@@ -175,166 +178,310 @@ export default function AddTaskModal({
   const isLoading = createMutation.isPending || updateMutation.isPending;
   const selectedFarm = farms?.find((f) => f.id === farmId);
 
-  return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
-        <KeyboardAvoidingView
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1, backgroundColor: colors.surface[50] }}
+  const content = (
+    <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+      <KeyboardAvoidingView
+        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1, backgroundColor: colors.surface[50] }}
+      >
+        {/* Header */}
+        <View
+          style={{
+            backgroundColor: colors.white,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.surface[200],
+            paddingHorizontal: spacing[4],
+            paddingBottom: spacing[3],
+            paddingTop: spacing[2],
+          }}
         >
-          {/* Header */}
-          <View
-            style={{
-              backgroundColor: colors.white,
-              borderBottomWidth: 1,
-              borderBottomColor: colors.surface[200],
-              paddingHorizontal: spacing[4],
-              paddingBottom: spacing[3],
-              paddingTop: spacing[2],
-            }}
-          >
-            <View style={{ alignItems: 'center', marginBottom: spacing[3] }}>
-              <View
-                style={{
-                  width: 48,
-                  height: 6,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: colors.surface[200],
-                }}
-              />
-            </View>
+          <View style={{ alignItems: 'center', marginBottom: spacing[3] }}>
             <View
               style={{
+                width: 48,
+                height: 6,
+                borderRadius: borderRadius.full,
+                backgroundColor: colors.surface[200],
+              }}
+            />
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <TouchableOpacity onPress={onClose} disabled={isLoading}>
+              <Text style={{ color: colors.primary[600], fontSize: fontSize.base }}>Cancel</Text>
+            </TouchableOpacity>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[900],
+              }}
+              numberOfLines={1}
+            >
+              {isEditing ? 'Edit Task' : 'Add Task'}
+            </Text>
+            <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: isLoading ? colors.surface[400] : colors.primary[600],
+                }}
+              >
+                {isLoading ? 'Saving...' : 'Save'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+          {/* Templates Button */}
+          {!isEditing && (
+            <TouchableOpacity
+              onPress={() => setShowTemplates(!showTemplates)}
+              style={{
+                backgroundColor: colors.primary[50],
+                borderRadius: borderRadius.xl,
+                padding: spacing[4],
+                marginBottom: spacing[4],
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <Symbol name="bolt.fill" size={20} color="#408059" />
+              <Text
+                style={{
+                  color: colors.primary[700],
+                  fontWeight: fontWeight.medium,
+                  marginLeft: spacing[2],
+                  flex: 1,
+                }}
+              >
+                Use Template
+              </Text>
+              <Symbol
+                name={showTemplates ? 'chevron.up' : 'chevron.down'}
+                size={20}
+                color="#408059"
+              />
+            </TouchableOpacity>
+          )}
+
+          {/* Templates List */}
+          {showTemplates && (
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                marginBottom: spacing[4],
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+                overflow: 'hidden',
+              }}
+            >
+              <ScrollView style={{ maxHeight: 300 }}>
+                {TASK_TEMPLATES.slice(0, 8).map((template) => {
+                  const typeInfo = TASK_TYPE_INFO[template.type];
+                  return (
+                    <TouchableOpacity
+                      key={template.id}
+                      onPress={() => applyTemplate(template)}
+                      style={{
+                        padding: spacing[4],
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.surface[100],
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: borderRadius.lg,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: `${typeInfo.color}20`,
+                        }}
+                      >
+                        <Symbol name={typeInfo.icon} size={16} color={typeInfo.color} />
+                      </View>
+                      <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                        <Text
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: fontWeight.medium,
+                            color: colors.surface[900],
+                          }}
+                        >
+                          {template.title}
+                        </Text>
+                        <Text
+                          style={{ fontSize: fontSize.xs, color: colors.surface[500] }}
+                          numberOfLines={1}
+                        >
+                          {template.description}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Farm Selector */}
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: colors.surface[700],
+                marginBottom: spacing[2],
+              }}
+            >
+              Farm *
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowFarmPicker(!showFarmPicker)}
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[3],
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                borderWidth: 1,
+                borderColor: colors.surface[200],
               }}
             >
-              <TouchableOpacity onPress={onClose} disabled={isLoading}>
-                <Text style={{ color: colors.primary[600], fontSize: fontSize.base }}>Cancel</Text>
-              </TouchableOpacity>
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
-                }}
-                numberOfLines={1}
-              >
-                {isEditing ? 'Edit Task' : 'Add Task'}
-              </Text>
-              <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Symbol name="leaf.fill" size={20} color="#408059" />
                 <Text
                   style={{
                     fontSize: fontSize.base,
-                    fontWeight: fontWeight.semibold,
-                    color: isLoading ? colors.surface[400] : colors.primary[600],
-                  }}
-                >
-                  {isLoading ? 'Saving...' : 'Save'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
-            {/* Templates Button */}
-            {!isEditing && (
-              <TouchableOpacity
-                onPress={() => setShowTemplates(!showTemplates)}
-                style={{
-                  backgroundColor: colors.primary[50],
-                  borderRadius: borderRadius.xl,
-                  padding: spacing[4],
-                  marginBottom: spacing[4],
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <Symbol name="bolt.fill" size={20} color="#408059" />
-                <Text
-                  style={{
-                    color: colors.primary[700],
-                    fontWeight: fontWeight.medium,
+                    color: colors.surface[900],
                     marginLeft: spacing[2],
-                    flex: 1,
                   }}
                 >
-                  Use Template
+                  {selectedFarm?.name || 'Select farm'}
                 </Text>
-                <Symbol
-                  name={showTemplates ? 'chevron.up' : 'chevron.down'}
-                  size={20}
-                  color="#408059"
-                />
-              </TouchableOpacity>
-            )}
-
-            {/* Templates List */}
-            {showTemplates && (
+              </View>
+              <Symbol name="chevron.down" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+            {showFarmPicker && farms && (
               <View
                 style={{
                   backgroundColor: colors.white,
                   borderRadius: borderRadius.xl,
-                  marginBottom: spacing[4],
+                  marginTop: spacing[2],
                   borderWidth: 1,
                   borderColor: colors.surface[200],
                   overflow: 'hidden',
                 }}
               >
-                <ScrollView style={{ maxHeight: 300 }}>
-                  {TASK_TEMPLATES.slice(0, 8).map((template) => {
-                    const typeInfo = TASK_TYPE_INFO[template.type];
-                    return (
-                      <TouchableOpacity
-                        key={template.id}
-                        onPress={() => applyTemplate(template)}
-                        style={{
-                          padding: spacing[4],
-                          borderBottomWidth: 1,
-                          borderBottomColor: colors.surface[100],
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: borderRadius.lg,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: `${typeInfo.color}20`,
-                          }}
-                        >
-                          <Symbol name={typeInfo.icon} size={16} color={typeInfo.color} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                          <Text
-                            style={{
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.medium,
-                              color: colors.surface[900],
-                            }}
-                          >
-                            {template.title}
-                          </Text>
-                          <Text
-                            style={{ fontSize: fontSize.xs, color: colors.surface[500] }}
-                            numberOfLines={1}
-                          >
-                            {template.description}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+                {farms.map((farm) => (
+                  <TouchableOpacity
+                    key={farm.id}
+                    onPress={() => {
+                      if (farm.id) setFarmId(farm.id);
+                      setShowFarmPicker(false);
+                    }}
+                    style={{
+                      padding: spacing[4],
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor: farmId === farm.id ? colors.primary[50] : 'transparent',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: farmId === farm.id ? colors.primary[700] : colors.surface[700],
+                        fontWeight: farmId === farm.id ? fontWeight.medium : fontWeight.normal,
+                      }}
+                    >
+                      {farm.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             )}
+          </View>
 
-            {/* Farm Selector */}
-            <View style={{ marginBottom: spacing[4] }}>
+          {/* Title */}
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: colors.surface[700],
+                marginBottom: spacing[2],
+              }}
+            >
+              Title *
+            </Text>
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Enter task title"
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[3],
+                fontSize: fontSize.base,
+                color: colors.surface[900],
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+              }}
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
+
+          {/* Description */}
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: colors.surface[700],
+                marginBottom: spacing[2],
+              }}
+            >
+              Description
+            </Text>
+            <TextInput
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Add details about this task"
+              multiline
+              numberOfLines={3}
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[3],
+                fontSize: fontSize.base,
+                color: colors.surface[900],
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+                minHeight: 80,
+                textAlignVertical: 'top',
+              }}
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
+
+          {/* Type & Priority */}
+          <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: spacing[3] }}>
+            {/* Type */}
+            <View style={{ flex: 1 }}>
               <Text
                 style={{
                   fontSize: fontSize.sm,
@@ -343,10 +490,10 @@ export default function AddTaskModal({
                   marginBottom: spacing[2],
                 }}
               >
-                Farm *
+                Type
               </Text>
               <TouchableOpacity
-                onPress={() => setShowFarmPicker(!showFarmPicker)}
+                onPress={() => setShowTypePicker(!showTypePicker)}
                 style={{
                   backgroundColor: colors.white,
                   borderRadius: borderRadius.xl,
@@ -360,365 +507,229 @@ export default function AddTaskModal({
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Symbol name="leaf.fill" size={20} color="#408059" />
+                  <Symbol
+                    name={TASK_TYPE_INFO[type].icon}
+                    size={16}
+                    color={TASK_TYPE_INFO[type].color}
+                  />
                   <Text
                     style={{
-                      fontSize: fontSize.base,
+                      fontSize: fontSize.sm,
                       color: colors.surface[900],
                       marginLeft: spacing[2],
                     }}
                   >
-                    {selectedFarm?.name || 'Select farm'}
+                    {TASK_TYPE_INFO[type].label}
                   </Text>
                 </View>
-                <Symbol name="chevron.down" size={20} color="#9CA3AF" />
+                <Symbol name="chevron.down" size={16} color="#9CA3AF" />
               </TouchableOpacity>
-              {showFarmPicker && farms && (
+            </View>
+
+            {/* Priority */}
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: colors.surface[700],
+                  marginBottom: spacing[2],
+                }}
+              >
+                Priority
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowPriorityPicker(!showPriorityPicker)}
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
+              >
                 <View
                   style={{
-                    backgroundColor: colors.white,
-                    borderRadius: borderRadius.xl,
-                    marginTop: spacing[2],
-                    borderWidth: 1,
-                    borderColor: colors.surface[200],
-                    overflow: 'hidden',
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: 2,
+                    borderRadius: borderRadius.sm,
+                    backgroundColor: PRIORITY_INFO[priority].bgColor,
                   }}
                 >
-                  {farms.map((farm) => (
-                    <TouchableOpacity
-                      key={farm.id}
-                      onPress={() => {
-                        if (farm.id) setFarmId(farm.id);
-                        setShowFarmPicker(false);
-                      }}
-                      style={{
-                        padding: spacing[4],
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.surface[100],
-                        backgroundColor: farmId === farm.id ? colors.primary[50] : 'transparent',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: farmId === farm.id ? colors.primary[700] : colors.surface[700],
-                          fontWeight: farmId === farm.id ? fontWeight.medium : fontWeight.normal,
-                        }}
-                      >
-                        {farm.name}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.medium,
+                      color: PRIORITY_INFO[priority].color,
+                    }}
+                  >
+                    {PRIORITY_INFO[priority].label}
+                  </Text>
                 </View>
-              )}
+                <Symbol name="chevron.down" size={16} color="#9CA3AF" />
+              </TouchableOpacity>
             </View>
+          </View>
 
-            {/* Title */}
-            <View style={{ marginBottom: spacing[4] }}>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: colors.surface[700],
-                  marginBottom: spacing[2],
-                }}
-              >
-                Title *
-              </Text>
-              <TextInput
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Enter task title"
-                style={{
-                  backgroundColor: colors.white,
-                  borderRadius: borderRadius.xl,
-                  paddingHorizontal: spacing[4],
-                  paddingVertical: spacing[3],
-                  fontSize: fontSize.base,
-                  color: colors.surface[900],
-                  borderWidth: 1,
-                  borderColor: colors.surface[200],
-                }}
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-
-            {/* Description */}
-            <View style={{ marginBottom: spacing[4] }}>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: colors.surface[700],
-                  marginBottom: spacing[2],
-                }}
-              >
-                Description
-              </Text>
-              <TextInput
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Add details about this task"
-                multiline
-                numberOfLines={3}
-                style={{
-                  backgroundColor: colors.white,
-                  borderRadius: borderRadius.xl,
-                  paddingHorizontal: spacing[4],
-                  paddingVertical: spacing[3],
-                  fontSize: fontSize.base,
-                  color: colors.surface[900],
-                  borderWidth: 1,
-                  borderColor: colors.surface[200],
-                  minHeight: 80,
-                  textAlignVertical: 'top',
-                }}
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-
-            {/* Type & Priority */}
-            <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: spacing[3] }}>
-              {/* Type */}
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.medium,
-                    color: colors.surface[700],
-                    marginBottom: spacing[2],
-                  }}
-                >
-                  Type
-                </Text>
+          {/* Type Picker */}
+          {showTypePicker && (
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                marginBottom: spacing[4],
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+                overflow: 'hidden',
+              }}
+            >
+              {TASK_TYPES.map((taskType) => (
                 <TouchableOpacity
-                  onPress={() => setShowTypePicker(!showTypePicker)}
+                  key={taskType}
+                  onPress={() => {
+                    setType(taskType);
+                    setShowTypePicker(false);
+                  }}
                   style={{
-                    backgroundColor: colors.white,
-                    borderRadius: borderRadius.xl,
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[3],
+                    padding: spacing[4],
                     flexDirection: 'row',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    borderWidth: 1,
-                    borderColor: colors.surface[200],
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.surface[100],
+                    backgroundColor: type === taskType ? colors.primary[50] : 'transparent',
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Symbol
-                      name={TASK_TYPE_INFO[type].icon}
-                      size={16}
-                      color={TASK_TYPE_INFO[type].color}
-                    />
-                    <Text
-                      style={{
-                        fontSize: fontSize.sm,
-                        color: colors.surface[900],
-                        marginLeft: spacing[2],
-                      }}
-                    >
-                      {TASK_TYPE_INFO[type].label}
-                    </Text>
-                  </View>
-                  <Symbol name="chevron.down" size={16} color="#9CA3AF" />
+                  <Symbol
+                    name={TASK_TYPE_INFO[taskType].icon}
+                    size={18}
+                    color={TASK_TYPE_INFO[taskType].color}
+                  />
+                  <Text
+                    style={{
+                      marginLeft: spacing[3],
+                      color: type === taskType ? colors.primary[700] : colors.surface[700],
+                      fontWeight: type === taskType ? fontWeight.medium : fontWeight.normal,
+                    }}
+                  >
+                    {TASK_TYPE_INFO[taskType].label}
+                  </Text>
                 </TouchableOpacity>
-              </View>
+              ))}
+            </View>
+          )}
 
-              {/* Priority */}
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.medium,
-                    color: colors.surface[700],
-                    marginBottom: spacing[2],
-                  }}
-                >
-                  Priority
-                </Text>
+          {/* Priority Picker */}
+          {showPriorityPicker && (
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                marginBottom: spacing[4],
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+                overflow: 'hidden',
+              }}
+            >
+              {PRIORITIES.map((p) => (
                 <TouchableOpacity
-                  onPress={() => setShowPriorityPicker(!showPriorityPicker)}
+                  key={p}
+                  onPress={() => {
+                    setPriority(p);
+                    setShowPriorityPicker(false);
+                  }}
                   style={{
-                    backgroundColor: colors.white,
-                    borderRadius: borderRadius.xl,
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[3],
+                    padding: spacing[4],
                     flexDirection: 'row',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    borderWidth: 1,
-                    borderColor: colors.surface[200],
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.surface[100],
+                    backgroundColor: priority === p ? colors.primary[50] : 'transparent',
                   }}
                 >
                   <View
                     style={{
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: 2,
+                      width: 24,
+                      height: 24,
                       borderRadius: borderRadius.sm,
-                      backgroundColor: PRIORITY_INFO[priority].bgColor,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: PRIORITY_INFO[p].bgColor,
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.medium,
-                        color: PRIORITY_INFO[priority].color,
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.bold,
+                        color: PRIORITY_INFO[p].color,
                       }}
                     >
-                      {PRIORITY_INFO[priority].label}
+                      {p.charAt(0).toUpperCase()}
                     </Text>
                   </View>
-                  <Symbol name="chevron.down" size={16} color="#9CA3AF" />
+                  <Text
+                    style={{
+                      marginLeft: spacing[3],
+                      color: priority === p ? colors.primary[700] : colors.surface[700],
+                      fontWeight: priority === p ? fontWeight.medium : fontWeight.normal,
+                    }}
+                  >
+                    {PRIORITY_INFO[p].label}
+                  </Text>
                 </TouchableOpacity>
-              </View>
+              ))}
             </View>
+          )}
 
-            {/* Type Picker */}
-            {showTypePicker && (
-              <View
-                style={{
-                  backgroundColor: colors.white,
-                  borderRadius: borderRadius.xl,
-                  marginBottom: spacing[4],
-                  borderWidth: 1,
-                  borderColor: colors.surface[200],
-                  overflow: 'hidden',
-                }}
-              >
-                {TASK_TYPES.map((taskType) => (
-                  <TouchableOpacity
-                    key={taskType}
-                    onPress={() => {
-                      setType(taskType);
-                      setShowTypePicker(false);
-                    }}
-                    style={{
-                      padding: spacing[4],
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      borderBottomWidth: 1,
-                      borderBottomColor: colors.surface[100],
-                      backgroundColor: type === taskType ? colors.primary[50] : 'transparent',
-                    }}
-                  >
-                    <Symbol
-                      name={TASK_TYPE_INFO[taskType].icon}
-                      size={18}
-                      color={TASK_TYPE_INFO[taskType].color}
-                    />
-                    <Text
-                      style={{
-                        marginLeft: spacing[3],
-                        color: type === taskType ? colors.primary[700] : colors.surface[700],
-                        fontWeight: type === taskType ? fontWeight.medium : fontWeight.normal,
-                      }}
-                    >
-                      {TASK_TYPE_INFO[taskType].label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+          {/* Due Date */}
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: colors.surface[700],
+                marginBottom: spacing[2],
+              }}
+            >
+              Due Date
+            </Text>
+            <TextInput
+              value={dueDate}
+              onChangeText={setDueDate}
+              placeholder="YYYY-MM-DD (e.g., 2024-01-25)"
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[3],
+                fontSize: fontSize.base,
+                color: colors.surface[900],
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+              }}
+              placeholderTextColor="#9CA3AF"
+            />
+            <Text
+              style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}
+            >
+              Enter date in YYYY-MM-DD format
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
 
-            {/* Priority Picker */}
-            {showPriorityPicker && (
-              <View
-                style={{
-                  backgroundColor: colors.white,
-                  borderRadius: borderRadius.xl,
-                  marginBottom: spacing[4],
-                  borderWidth: 1,
-                  borderColor: colors.surface[200],
-                  overflow: 'hidden',
-                }}
-              >
-                {PRIORITIES.map((p) => (
-                  <TouchableOpacity
-                    key={p}
-                    onPress={() => {
-                      setPriority(p);
-                      setShowPriorityPicker(false);
-                    }}
-                    style={{
-                      padding: spacing[4],
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      borderBottomWidth: 1,
-                      borderBottomColor: colors.surface[100],
-                      backgroundColor: priority === p ? colors.primary[50] : 'transparent',
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: borderRadius.sm,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: PRIORITY_INFO[p].bgColor,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.xs,
-                          fontWeight: fontWeight.bold,
-                          color: PRIORITY_INFO[p].color,
-                        }}
-                      >
-                        {p.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                    <Text
-                      style={{
-                        marginLeft: spacing[3],
-                        color: priority === p ? colors.primary[700] : colors.surface[700],
-                        fontWeight: priority === p ? fontWeight.medium : fontWeight.normal,
-                      }}
-                    >
-                      {PRIORITY_INFO[p].label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+  if (presentation === 'screen') {
+    return content;
+  }
 
-            {/* Due Date */}
-            <View style={{ marginBottom: spacing[4] }}>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: colors.surface[700],
-                  marginBottom: spacing[2],
-                }}
-              >
-                Due Date
-              </Text>
-              <TextInput
-                value={dueDate}
-                onChangeText={setDueDate}
-                placeholder="YYYY-MM-DD (e.g., 2024-01-25)"
-                style={{
-                  backgroundColor: colors.white,
-                  borderRadius: borderRadius.xl,
-                  paddingHorizontal: spacing[4],
-                  paddingVertical: spacing[3],
-                  fontSize: fontSize.base,
-                  color: colors.surface[900],
-                  borderWidth: 1,
-                  borderColor: colors.surface[200],
-                }}
-                placeholderTextColor="#9CA3AF"
-              />
-              <Text
-                style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}
-              >
-                Enter date in YYYY-MM-DD format
-              </Text>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
+  return (
+    <Modal visible={isVisible} animationType="slide" presentationStyle="pageSheet">
+      {content}
     </Modal>
   );
 }
