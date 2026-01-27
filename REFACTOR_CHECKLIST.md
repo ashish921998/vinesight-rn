@@ -248,7 +248,7 @@ Test the app thoroughly:
 
 ## Phase 10: Tabs Migration (1 file) - 1-2 hours
 
-- [ ] Update (tabs)/_layout.tsx to use NativeTabs
+- [x] Update (tabs)/_layout.tsx to use NativeTabs
 - [ ] Test thoroughly
 - [ ] Commit: "Phase 10: Migrate to NativeTabs"
 

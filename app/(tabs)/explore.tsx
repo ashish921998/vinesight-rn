@@ -10,7 +10,7 @@ import {
   Animated,
   ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/Symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -1578,6 +1578,7 @@ export default function ExploreScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <Stack.Screen options={{ headerShown: false }} />
       {/* Global Search Bar */}
       <View
         style={{

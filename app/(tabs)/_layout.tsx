@@ -1,30 +1,50 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { useRouter } from 'expo-router';
-import { Tabs } from 'expo-router';
+import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import type { SFSymbol } from 'sf-symbols-typescript';
 import { useAuthStore } from '@/stores';
-import { Symbol } from '@/components/ui/Symbol';
-
-// Tab icon component
-function TabBarIcon({ name, color }: { name: string; color: string }) {
-  const isAndroid = process.env.EXPO_OS === 'android';
-  const scaleMap: Record<string, number> = {
-    compass: 1.1,
-    'compass.fill': 1.1,
-    'wrench.and.screwdriver': 0.9,
-    'wrench.and.screwdriver.fill': 0.9,
-  };
-  const scale = isAndroid ? (scaleMap[name] ?? 1) : 1;
-  return <Symbol name={name} size={24} color={color} style={{ transform: [{ scale }] }} />;
-}
 
 export default function TabLayout() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
   const [hasRedirected, setHasRedirected] = useState(false);
+  const defaultHeaderOptions = useMemo(
+    () => ({
+      headerStyle: {
+        backgroundColor: '#FFFFFF',
+        boxShadow: 'none',
+        borderBottomWidth: 0,
+      },
+      headerTitleStyle: {
+        fontWeight: '600',
+        fontSize: 18,
+        color: '#111827',
+      },
+      headerTintColor: '#408059',
+      headerTransparent: false,
+    }),
+    [],
+  );
+
+  const sf = (name: string) => name as SFSymbol;
+
+  const renderTabIcon = (
+    sfDefault: SFSymbol,
+    sfSelected: SFSymbol,
+    ionDefault: ComponentProps<typeof Ionicons>['name'],
+    ionSelected: ComponentProps<typeof Ionicons>['name'],
+  ) => (
+    <Icon
+      sf={{ default: sfDefault, selected: sfSelected }}
+      androidSrc={{
+        default: <VectorIcon family={Ionicons} name={ionDefault} />,
+        selected: <VectorIcon family={Ionicons} name={ionSelected} />,
+      }}
+    />
+  );
 
   useEffect(() => {
     if (isLoading) return;
@@ -57,93 +77,54 @@ export default function TabLayout() {
   return (
     <>
       <StatusBar style="dark" />
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: '#408059',
-          tabBarInactiveTintColor: '#9CA3AF',
-          tabBarStyle: {
-            backgroundColor: '#FFFFFF',
-            borderTopColor: '#F3F4F6',
-            borderTopWidth: 1,
-            paddingTop: 8,
-            paddingBottom: process.env.EXPO_OS === 'ios' ? 36 : Math.max(insets.bottom + 12, 20),
-            height: process.env.EXPO_OS === 'ios' ? 96 : Math.max(insets.bottom + 64, 76),
-          },
-          tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: '500',
-            marginTop: 4,
-          },
-          headerStyle: {
-            backgroundColor: '#FFFFFF',
-            boxShadow: 'none',
-            borderBottomWidth: 0,
-          },
-          headerTitleStyle: {
-            fontWeight: '600',
-            fontSize: 18,
-            color: '#111827',
-          },
-          headerTintColor: '#408059',
-          headerTransparent: false,
-        }}
+      <NativeTabs
+        tintColor="#408059"
+        iconColor="#9CA3AF"
+        labelStyle={{ fontSize: 11, fontWeight: '500' }}
+        backgroundColor="#FFFFFF"
+        shadowColor="rgba(0, 0, 0, 0.05)"
       >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Dashboard',
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon
-                name={focused ? 'square.grid.2x2.fill' : 'square.grid.2x2'}
-                color={color}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="explore"
-          options={{
-            title: 'Explore',
-            headerShown: false,
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'compass.fill' : 'compass'} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="tools"
-          options={{
-            title: 'Tools',
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon
-                name={focused ? 'wrench.and.screwdriver.fill' : 'wrench.and.screwdriver'}
-                color={color}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
+        <NativeTabs.Trigger name="index" options={{ ...defaultHeaderOptions, title: 'Dashboard' }}>
+          {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
+          <Label>Dashboard</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="explore" options={{ ...defaultHeaderOptions, title: 'Explore' }}>
+          {renderTabIcon(sf('compass'), sf('compass.fill'), 'compass-outline', 'compass')}
+          <Label>Explore</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="tools" options={{ ...defaultHeaderOptions, title: 'Tools' }}>
+          {renderTabIcon(
+            sf('wrench.and.screwdriver'),
+            sf('wrench.and.screwdriver.fill'),
+            'build-outline',
+            'build',
+          )}
+          <Label>Tools</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger
           name="settings"
-          options={{
-            title: 'Settings',
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'gearshape.fill' : 'gearshape'} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
+          options={{ ...defaultHeaderOptions, title: 'Settings' }}
+        >
+          {renderTabIcon(sf('gearshape'), sf('gearshape.fill'), 'settings-outline', 'settings')}
+          <Label>Settings</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger
           name="farms"
-          options={{
-            href: null,
-          }}
-        />
-        <Tabs.Screen
+          hidden
+          options={{ ...defaultHeaderOptions, title: 'Farms' }}
+        >
+          {renderTabIcon(sf('leaf'), sf('leaf.fill'), 'leaf-outline', 'leaf')}
+          <Label>Farms</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger
           name="workers"
-          options={{
-            href: null,
-          }}
-        />
-      </Tabs>
+          hidden
+          options={{ ...defaultHeaderOptions, title: 'Workers' }}
+        >
+          {renderTabIcon(sf('person.2'), sf('person.2.fill'), 'people-outline', 'people')}
+          <Label>Workers</Label>
+        </NativeTabs.Trigger>
+      </NativeTabs>
     </>
   );
 }
