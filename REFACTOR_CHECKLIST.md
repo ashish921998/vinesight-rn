@@ -259,7 +259,7 @@ Test the app thoroughly:
 - [ ] Find all TouchableOpacity: `grep -rn "TouchableOpacity" app/ src/`
 - [x] Convert batch by batch
 - [ ] Test press interactions
-- [ ] Commit: "Phase 11: Replace TouchableOpacity"
+- [x] Commit: "Phase 11: Replace TouchableOpacity"
 
 ---
 
