@@ -3,8 +3,8 @@
 ## 📊 Current Status
 
 **Branch:** `refactor/native-ui-strict`  
-**Progress:** Phases 1-11 complete (tests pending). Phase 12 in progress (renames done).  
-**Last Commit:** `dad9b78` - Docs: update refactor status
+**Progress:** Phases 1-12 complete (tests pending). Phase 13 in progress.  
+**Last Commit:** `af81c60` - Phase 12: Rename files to kebab-case
 
 ---
 
@@ -40,10 +40,10 @@
 
 ## 📋 What's Next
 
-### Immediate Next Steps (Phase 12 - File Renaming)
+### Immediate Next Steps (Phase 13 - Testing & Verification)
 
-- Commit Phase 12
-- Run quick smoke checks for critical flows
+- Run typecheck/lint/format
+- Smoke test core flows and screens
 
 **After completing phases 2-6, re-evaluate if you want to continue with the major architectural changes (phases 7-12).**
 

@@ -272,7 +272,7 @@ Test the app thoroughly:
 - [x] Fix all imports
 - [x] Update barrel exports
 - [x] Run typecheck
-- [ ] Commit: "Phase 12: Rename files to kebab-case"
+- [x] Commit: "Phase 12: Rename files to kebab-case"
 
 ---
 
