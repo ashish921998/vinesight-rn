@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { useFarms } from '../src/hooks';
 import { useWeatherData } from '../src/hooks/useWeather';
@@ -150,7 +143,7 @@ export default function WeatherScreen() {
         >
           {error.message}
         </Text>
-        <TouchableOpacity
+        <Pressable
           onPress={() => refetch()}
           style={{
             marginTop: spacing[4],
@@ -161,7 +154,7 @@ export default function WeatherScreen() {
           }}
         >
           <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>Try Again</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -224,7 +217,7 @@ export default function WeatherScreen() {
         >
           FARM
         </Text>
-        <TouchableOpacity
+        <Pressable
           onPress={() => setShowFarmPicker(!showFarmPicker)}
           style={{
             backgroundColor: colors.white,
@@ -266,7 +259,7 @@ export default function WeatherScreen() {
             </View>
           </View>
           <Symbol name={showFarmPicker ? 'chevron.up' : 'chevron.down'} size={20} color="#9CA3AF" />
-        </TouchableOpacity>
+        </Pressable>
         {showFarmPicker && (
           <View
             style={{
@@ -277,7 +270,7 @@ export default function WeatherScreen() {
             }}
           >
             {farms.map((farm) => (
-              <TouchableOpacity
+              <Pressable
                 key={farm.id}
                 onPress={() => {
                   if (farm.id !== undefined) setSelectedFarmId(farm.id);
@@ -305,7 +298,7 @@ export default function WeatherScreen() {
                 {selectedFarmId === farm.id && (
                   <Symbol name="checkmark" size={20} color="#408059" />
                 )}
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         )}
@@ -353,7 +346,7 @@ export default function WeatherScreen() {
           >
             GROWTH STAGE
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowGrowthPicker(!showGrowthPicker)}
             style={{
               backgroundColor: colors.white,
@@ -368,7 +361,7 @@ export default function WeatherScreen() {
               {growthStage}
             </Text>
             <Symbol name="chevron.down" size={16} color="#9CA3AF" />
-          </TouchableOpacity>
+          </Pressable>
           {showGrowthPicker && (
             <View
               style={{
@@ -386,7 +379,7 @@ export default function WeatherScreen() {
             >
               <ScrollView style={{ maxHeight: 200 }}>
                 {GROWTH_STAGES.map((stage) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={stage}
                     onPress={() => {
                       setGrowthStage(stage);
@@ -407,7 +400,7 @@ export default function WeatherScreen() {
                     >
                       {stage}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </ScrollView>
             </View>
@@ -427,7 +420,7 @@ export default function WeatherScreen() {
           >
             SOIL TYPE
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowSoilPicker(!showSoilPicker)}
             style={{
               backgroundColor: colors.white,
@@ -442,7 +435,7 @@ export default function WeatherScreen() {
               {SOIL_TYPES.find((s) => s.value === soilType)?.label}
             </Text>
             <Symbol name="chevron.down" size={16} color="#9CA3AF" />
-          </TouchableOpacity>
+          </Pressable>
           {showSoilPicker && (
             <View
               style={{
@@ -459,7 +452,7 @@ export default function WeatherScreen() {
               }}
             >
               {SOIL_TYPES.map((type) => (
-                <TouchableOpacity
+                <Pressable
                   key={type.value}
                   onPress={() => {
                     setSoilType(type.value);
@@ -480,7 +473,7 @@ export default function WeatherScreen() {
                   >
                     {type.label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}

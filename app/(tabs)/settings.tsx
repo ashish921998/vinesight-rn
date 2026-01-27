@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Alert,
   TextInput,
   Switch,
@@ -133,9 +133,9 @@ export default function SettingsScreen() {
             <Text style={styles.profileEmail}>{userEmail}</Text>
             {userPhone ? <Text style={styles.profilePhone}>{userPhone}</Text> : null}
           </View>
-          <TouchableOpacity onPress={() => setShowEditProfile(true)}>
+          <Pressable onPress={() => setShowEditProfile(true)}>
             <Symbol name="pencil" size={24} color="#408059" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -144,21 +144,21 @@ export default function SettingsScreen() {
         <Text style={styles.sectionHeader}>GENERAL</Text>
         <View style={styles.sectionContent}>
           <SettingsItem icon="globe" title="Language" value="System Default" disabled />
-          <TouchableOpacity onPress={() => setShowAreaPicker(true)}>
+          <Pressable onPress={() => setShowAreaPicker(true)}>
             <SettingsItem
               icon="arrow.up.left.and.arrow.down.right"
               title="Area Unit"
               value={getAreaUnitLabel(selectedAreaUnit)}
             />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowCurrencyPicker(true)}>
+          </Pressable>
+          <Pressable onPress={() => setShowCurrencyPicker(true)}>
             <SettingsItem
               icon="dollarsign.circle"
               title="Currency"
               value={getCurrencyLabel(selectedCurrency)}
               isLast
             />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -198,16 +198,12 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionHeader}>ACCOUNT</Text>
         <View style={styles.sectionContent}>
-          <TouchableOpacity
-            onPress={handleSignOut}
-            disabled={authLoading}
-            style={styles.settingsItem}
-          >
+          <Pressable onPress={handleSignOut} disabled={authLoading} style={styles.settingsItem}>
             <View style={styles.signOutIcon}>
               <Symbol name="rectangle.portrait.and.arrow.right" size={20} color="#EF4444" />
             </View>
             <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -231,9 +227,9 @@ export default function SettingsScreen() {
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text style={styles.modalTitle}>Edit Profile</Text>
-              <TouchableOpacity onPress={() => setShowEditProfile(false)}>
+              <Pressable onPress={() => setShowEditProfile(false)}>
                 <Symbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
 
@@ -273,7 +269,7 @@ export default function SettingsScreen() {
           </ScrollView>
 
           <View style={styles.modalFooter}>
-            <TouchableOpacity
+            <Pressable
               onPress={handleSaveProfile}
               disabled={isSaving}
               style={[styles.saveButton, { backgroundColor: colors.primary[600] }]}
@@ -283,7 +279,7 @@ export default function SettingsScreen() {
               ) : (
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -299,15 +295,15 @@ export default function SettingsScreen() {
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text style={styles.modalTitle}>Select Currency</Text>
-              <TouchableOpacity onPress={() => setShowCurrencyPicker(false)}>
+              <Pressable onPress={() => setShowCurrencyPicker(false)}>
                 <Symbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
           <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
             <View style={styles.sectionContent}>
               {CURRENCIES.map((currency, index) => (
-                <TouchableOpacity
+                <Pressable
                   key={currency.code}
                   onPress={() => handleCurrencySelect(currency.code)}
                   style={[
@@ -319,7 +315,7 @@ export default function SettingsScreen() {
                   {selectedCurrency === currency.code && (
                     <Symbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </ScrollView>
@@ -337,15 +333,15 @@ export default function SettingsScreen() {
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text style={styles.modalTitle}>Select Area Unit</Text>
-              <TouchableOpacity onPress={() => setShowAreaPicker(false)}>
+              <Pressable onPress={() => setShowAreaPicker(false)}>
                 <Symbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
           <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
             <View style={styles.sectionContent}>
               {AREA_UNITS.map((unit, index) => (
-                <TouchableOpacity
+                <Pressable
                   key={unit.id}
                   onPress={() => {
                     setSelectedAreaUnit(unit.id);
@@ -360,7 +356,7 @@ export default function SettingsScreen() {
                   {selectedAreaUnit === unit.id && (
                     <Symbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </ScrollView>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, TextInput, type TextInputProps } from 'react-native';
+import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput } from './FormField';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculatorModels';
@@ -84,7 +84,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
           {EXPENSE_TYPES.map((type) => (
-            <TouchableOpacity
+            <Pressable
               key={type}
               onPress={() => onChange({ ...data, type })}
               style={{
@@ -97,7 +97,6 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
                 backgroundColor: data.type === type ? '#EF4444' : colors.white,
                 borderColor: data.type === type ? '#EF4444' : colors.surface[200],
               }}
-              activeOpacity={0.7}
             >
               <Symbol
                 name={EXPENSE_ICONS[type]}
@@ -114,7 +113,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
               >
                 {type}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>

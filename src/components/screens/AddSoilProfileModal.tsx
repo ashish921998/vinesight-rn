@@ -8,7 +8,7 @@ import {
   View,
   Text,
   Modal,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   TextInput,
   Alert,
@@ -129,9 +129,9 @@ export default function AddSoilProfileModal({
           borderBottomColor: 'rgba(0, 0, 0, 0.1)',
         }}
       >
-        <TouchableOpacity onPress={onClose}>
+        <Pressable onPress={onClose}>
           <Text style={{ color: colors.surface[500], fontSize: fontSize.base }}>Cancel</Text>
-        </TouchableOpacity>
+        </Pressable>
         <Text
           style={{
             fontSize: fontSize.lg,
@@ -141,7 +141,7 @@ export default function AddSoilProfileModal({
         >
           Add Soil Profile
         </Text>
-        <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
+        <Pressable onPress={handleSubmit} disabled={isLoading}>
           <Text
             style={{
               fontSize: fontSize.base,
@@ -151,7 +151,7 @@ export default function AddSoilProfileModal({
           >
             {isLoading ? 'Saving...' : 'Save'}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <ScrollView
@@ -187,7 +187,7 @@ export default function AddSoilProfileModal({
           >
             Select the date when this soil profile was taken.
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowDatePicker(true)}
             style={{
               backgroundColor: '#f9f9f9',
@@ -209,7 +209,7 @@ export default function AddSoilProfileModal({
               })}
             </Text>
             <Symbol name="calendar" size={20} color="#8e8e93" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Date Picker Modal */}
@@ -253,7 +253,7 @@ export default function AddSoilProfileModal({
                 onChange={handleDateChange}
                 style={{ width: '100%' }}
               />
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowDatePicker(false)}
                 style={{
                   marginTop: spacing[4],
@@ -264,7 +264,7 @@ export default function AddSoilProfileModal({
                 }}
               >
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </Modal>

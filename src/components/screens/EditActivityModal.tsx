@@ -9,7 +9,7 @@ import {
   View,
   Text,
   Modal,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   Alert,
   ActivityIndicator,
@@ -500,12 +500,12 @@ export function EditActivityModal({
                 {farm.name}
               </Text>
             </View>
-            <TouchableOpacity onPress={handleClose}>
+            <Pressable onPress={handleClose}>
               <AppIcon name="close-circle" size={28} color="#9CA3AF" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowDatePicker(true)}
             style={{
               flexDirection: 'row',
@@ -528,7 +528,7 @@ export function EditActivityModal({
                 day: 'numeric',
               })}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {showDatePicker && (
@@ -607,7 +607,7 @@ export function EditActivityModal({
           }}
         >
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity
+            <Pressable
               onPress={handleClose}
               style={{
                 flex: 1,
@@ -621,8 +621,8 @@ export function EditActivityModal({
               <Text selectable style={{ fontWeight: '600', color: '#8e8e93' }}>
                 Cancel
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Pressable>
+            <Pressable
               onPress={handleSave}
               disabled={!isFormValid || isSubmitting}
               style={[
@@ -659,7 +659,7 @@ export function EditActivityModal({
                   </Text>
                 </>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </KeyboardAvoidingView>

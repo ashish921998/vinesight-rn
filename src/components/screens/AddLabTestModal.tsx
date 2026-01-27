@@ -8,7 +8,7 @@ import {
   View,
   Text,
   Modal,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   TextInput,
   Alert,
@@ -294,9 +294,9 @@ export default function AddLabTestModal({
           borderBottomColor: colors.gray[200],
         }}
       >
-        <TouchableOpacity onPress={onClose}>
+        <Pressable onPress={onClose}>
           <Text style={{ color: colors.gray[600], fontSize: fontSize.base }}>Cancel</Text>
-        </TouchableOpacity>
+        </Pressable>
         <Text
           style={{
             fontSize: fontSize.lg,
@@ -306,7 +306,7 @@ export default function AddLabTestModal({
         >
           Add {isSoil ? 'Soil' : 'Petiole'} Test
         </Text>
-        <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
+        <Pressable onPress={handleSubmit} disabled={isLoading}>
           <Text
             style={{
               fontSize: fontSize.base,
@@ -316,7 +316,7 @@ export default function AddLabTestModal({
           >
             {isLoading ? 'Saving...' : 'Save'}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <ScrollView
@@ -325,7 +325,7 @@ export default function AddLabTestModal({
         showsVerticalScrollIndicator={false}
       >
         {/* Upload Button */}
-        <TouchableOpacity
+        <Pressable
           onPress={handleUploadFile}
           disabled={isParsingPDF || isLoading}
           style={{
@@ -368,7 +368,7 @@ export default function AddLabTestModal({
               </Text>
             </View>
           )}
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Date Picker */}
         <View
@@ -390,7 +390,7 @@ export default function AddLabTestModal({
           >
             Test Date
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowDatePicker(true)}
             style={{
               flexDirection: 'row',
@@ -414,7 +414,7 @@ export default function AddLabTestModal({
               </Text>
             </View>
             <Symbol name="chevron.down" size={20} color="#666" />
-          </TouchableOpacity>
+          </Pressable>
 
           {showDatePicker && (
             <DateTimePicker

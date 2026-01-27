@@ -1,5 +1,5 @@
 import React, { Component, ReactNode } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -142,9 +142,8 @@ export class ErrorBoundary extends Component<Props, State> {
             </ScrollView>
           )}
 
-          <TouchableOpacity
+          <Pressable
             onPress={this.handleReset}
-            activeOpacity={0.8}
             style={{
               backgroundColor: colors.primary[600],
               paddingHorizontal: spacing[8],
@@ -161,7 +160,7 @@ export class ErrorBoundary extends Component<Props, State> {
             >
               Try Again
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       );
     }

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Symbol } from '@/components/ui/Symbol';
@@ -141,12 +141,9 @@ export default function SoilProfilingScreen() {
                 {status.label}
               </Text>
             </View>
-            <TouchableOpacity
-              onPress={() => handleDeleteProfile(profile)}
-              style={{ padding: spacing[2] }}
-            >
+            <Pressable onPress={() => handleDeleteProfile(profile)} style={{ padding: spacing[2] }}>
               <Symbol name="trash" size={18} color="#ff3b30" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
@@ -261,7 +258,7 @@ export default function SoilProfilingScreen() {
       >
         Add soil moisture profiles to track your farm&apos;s soil health over time.
       </Text>
-      <TouchableOpacity
+      <Pressable
         onPress={() =>
           router.push({ pathname: '/add-soil-profile', params: { farmId: farmIdNum.toString() } })
         }
@@ -281,7 +278,7 @@ export default function SoilProfilingScreen() {
         >
           Add First Profile
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 
@@ -493,7 +490,7 @@ export default function SoilProfilingScreen() {
             Soil profiles are associated with specific farms. Please select a farm to view its soil
             profiles.
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => router.push('/(tabs)/farms')}
             style={{
               marginTop: spacing[6],
@@ -506,7 +503,7 @@ export default function SoilProfilingScreen() {
             <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
               Go to Farms
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     );
@@ -531,9 +528,9 @@ export default function SoilProfilingScreen() {
           paddingBottom: spacing[3],
         }}
       >
-        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
+        <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <Symbol name="chevron.left" size={24} color="#408059" />
-        </TouchableOpacity>
+        </Pressable>
         <Symbol name="layers" size={24} color="#408059" />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
@@ -549,14 +546,14 @@ export default function SoilProfilingScreen() {
             <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>{farm.name}</Text>
           )}
         </View>
-        <TouchableOpacity
+        <Pressable
           onPress={() =>
             router.push({ pathname: '/add-soil-profile', params: { farmId: farmIdNum.toString() } })
           }
           style={{ padding: spacing[2] }}
         >
           <Symbol name="add-circle" size={28} color="#408059" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Tabs */}
@@ -568,7 +565,7 @@ export default function SoilProfilingScreen() {
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => setSelectedTab('history')}
           style={{
             flex: 1,
@@ -589,8 +586,8 @@ export default function SoilProfilingScreen() {
           >
             History
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Pressable>
+        <Pressable
           onPress={() => setSelectedTab('trends')}
           style={{
             flex: 1,
@@ -610,7 +607,7 @@ export default function SoilProfilingScreen() {
           >
             Trends
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Content */}

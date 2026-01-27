@@ -8,7 +8,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   Modal,
   ScrollView,
   ActivityIndicator,
@@ -125,9 +125,9 @@ export function WaterLevelModal({
         <View
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
         >
-          <TouchableOpacity onPress={handleClose} style={{ padding: spacing[2] }}>
+          <Pressable onPress={handleClose} style={{ padding: spacing[2] }}>
             <Symbol name="xmark" size={24} color="#8e8e93" />
-          </TouchableOpacity>
+          </Pressable>
           <Text
             style={{
               fontSize: fontSize.lg,
@@ -137,11 +137,11 @@ export function WaterLevelModal({
           >
             Update Soil Water Level
           </Text>
-          <TouchableOpacity onPress={handleCalculate} style={{ padding: spacing[2] }}>
+          <Pressable onPress={handleCalculate} style={{ padding: spacing[2] }}>
             <Text style={{ fontWeight: fontWeight.semibold, color: colors.primary[500] }}>
               Calculate
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -245,7 +245,7 @@ export function WaterLevelModal({
             backgroundColor: 'rgba(255, 255, 255, 0.8)',
           }}
         >
-          <TouchableOpacity
+          <Pressable
             onPress={() => setUseManual(false)}
             style={{
               flexDirection: 'row',
@@ -290,9 +290,9 @@ export function WaterLevelModal({
             >
               {!useManual && <Symbol name="checkmark" size={14} color="#fff" />}
             </View>
-          </TouchableOpacity>
+          </Pressable>
           <View style={{ height: 1, backgroundColor: colors.gray[200] }} />
-          <TouchableOpacity
+          <Pressable
             onPress={() => setUseManual(true)}
             style={{
               flexDirection: 'row',
@@ -337,7 +337,7 @@ export function WaterLevelModal({
             >
               {useManual && <Symbol name="checkmark" size={14} color="#fff" />}
             </View>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* ET0 Calculation Form */}
@@ -400,7 +400,7 @@ export function WaterLevelModal({
             >
               Growth Stage
             </Text>
-            <TouchableOpacity
+            <Pressable
               onPress={() => setShowGrowthStagePicker(true)}
               style={{
                 flexDirection: 'row',
@@ -423,7 +423,7 @@ export function WaterLevelModal({
                   : 'Select growth stage'}
               </Text>
               <Symbol name="chevron.down" size={20} color="#8e8e93" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
 
@@ -517,7 +517,7 @@ export function WaterLevelModal({
           borderTopColor: colors.gray[200],
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={handleSave}
           disabled={isSaving || calculatedWaterLevel === null}
           style={{
@@ -535,7 +535,7 @@ export function WaterLevelModal({
               Save Water Level
             </Text>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Growth Stage Picker Modal */}
@@ -583,7 +583,7 @@ export function WaterLevelModal({
             </View>
             <ScrollView style={{ maxHeight: 400 }}>
               {WATER_GROWTH_STAGES.map((stage) => (
-                <TouchableOpacity
+                <Pressable
                   key={stage.id}
                   onPress={() => {
                     setSelectedGrowthStage(stage);
@@ -634,10 +634,10 @@ export function WaterLevelModal({
                       <Symbol name="checkmark.circle.fill" size={24} color="#408059" />
                     )}
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </ScrollView>
-            <TouchableOpacity
+            <Pressable
               onPress={() => setShowGrowthStagePicker(false)}
               style={{
                 paddingVertical: spacing[4],
@@ -654,7 +654,7 @@ export function WaterLevelModal({
               >
                 Cancel
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Modal>

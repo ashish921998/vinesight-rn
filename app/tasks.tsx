@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
   RefreshControl,
@@ -145,7 +145,7 @@ export default function TasksScreen() {
             options={{
               title: 'Tasks',
               headerRight: () => (
-                <TouchableOpacity
+                <Pressable
                   onPress={() => {
                     setAddEntry({ tabs: ['task'], initialTab: 'task' });
                     router.push({
@@ -156,7 +156,7 @@ export default function TasksScreen() {
                   style={{ marginRight: spacing[4] }}
                 >
                   <Symbol name="plus.circle.fill" size={28} color="#408059" />
-                </TouchableOpacity>
+                </Pressable>
               ),
             }}
           />
@@ -239,7 +239,7 @@ export default function TasksScreen() {
               style={{ marginBottom: spacing[4] }}
             >
               {(['all', 'pending', 'overdue', 'completed'] as FilterType[]).map((type) => (
-                <TouchableOpacity
+                <Pressable
                   key={type}
                   onPress={() => setFilter(type)}
                   style={{
@@ -258,7 +258,7 @@ export default function TasksScreen() {
                   >
                     {type.charAt(0).toUpperCase() + type.slice(1)} ({counts[type]})
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </ScrollView>
 
@@ -295,7 +295,7 @@ export default function TasksScreen() {
                     : `No ${filter} tasks`}
                 </Text>
                 {filter === 'all' && (
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => {
                       setAddEntry({ tabs: ['task'], initialTab: 'task' });
                       router.push({
@@ -314,7 +314,7 @@ export default function TasksScreen() {
                     <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
                       Add Task
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 )}
               </View>
             ) : (
@@ -338,7 +338,7 @@ export default function TasksScreen() {
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                       {/* Complete Checkbox */}
-                      <TouchableOpacity
+                      <Pressable
                         onPress={() => !task.completed && handleComplete(task)}
                         disabled={task.completed}
                         style={{
@@ -355,7 +355,7 @@ export default function TasksScreen() {
                         }}
                       >
                         {task.completed && <Symbol name="checkmark" size={16} color="white" />}
-                      </TouchableOpacity>
+                      </Pressable>
 
                       <View style={{ flex: 1 }}>
                         {/* Title & Type */}
@@ -487,12 +487,12 @@ export default function TasksScreen() {
 
                       {/* Actions */}
                       {!task.completed && (
-                        <TouchableOpacity
+                        <Pressable
                           onPress={() => handleDelete(task)}
                           style={{ padding: spacing[2] }}
                         >
                           <Symbol name="trash" size={18} color="#DC2626" />
-                        </TouchableOpacity>
+                        </Pressable>
                       )}
                     </View>
                   </View>
@@ -502,7 +502,7 @@ export default function TasksScreen() {
           </ScrollView>
 
           {/* FAB */}
-          <TouchableOpacity
+          <Pressable
             onPress={() => {
               setAddEntry({ tabs: ['task'], initialTab: 'task' });
               router.push({
@@ -524,7 +524,7 @@ export default function TasksScreen() {
             }}
           >
             <Symbol name="plus" size={28} color="white" />
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Add Task handled via route */}
         </View>

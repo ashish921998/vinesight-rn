@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Pressable, Alert } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -258,7 +258,7 @@ export default function AddFarmScreen() {
           {/* Variety Selection */}
           <SectionHeader title="Variety" style={{ marginBottom: 16 }} />
 
-          <TouchableOpacity
+          <Pressable
             style={{
               backgroundColor: colors.white,
               borderWidth: 2,
@@ -283,7 +283,7 @@ export default function AddFarmScreen() {
               {cropVariety || 'Select variety'}
             </Text>
             <Symbol name="chevron.down" size={20} color="#6B7280" />
-          </TouchableOpacity>
+          </Pressable>
 
           {cropVariety === 'Custom' && (
             <FormInput
@@ -299,7 +299,7 @@ export default function AddFarmScreen() {
           {/* Planting Date */}
           <SectionHeader title="Planting Date" style={{ marginBottom: 16 }} />
 
-          <TouchableOpacity
+          <Pressable
             style={{
               backgroundColor: colors.white,
               borderWidth: 2,
@@ -328,7 +328,7 @@ export default function AddFarmScreen() {
                 year: 'numeric',
               })}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Optional: Spacing */}
           <SectionHeader title="Plant Spacing (Optional)" style={{ marginBottom: 16 }} />
@@ -384,7 +384,7 @@ export default function AddFarmScreen() {
           {/* Optional: Pruning Date */}
           <SectionHeader title="Pruning Date (Optional)" style={{ marginBottom: 16 }} />
 
-          <TouchableOpacity
+          <Pressable
             style={{
               backgroundColor: colors.white,
               borderWidth: 2,
@@ -424,14 +424,14 @@ export default function AddFarmScreen() {
               </View>
             </View>
             {dateOfPruning && (
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setDateOfPruning(null)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Symbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
-              </TouchableOpacity>
+              </Pressable>
             )}
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Info Card */}
           <InfoCard
@@ -485,7 +485,7 @@ export default function AddFarmScreen() {
               >
                 Select Variety
               </Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowVarietyPicker(false)}
                 style={{
                   width: 40,
@@ -497,12 +497,12 @@ export default function AddFarmScreen() {
                 }}
               >
                 <Symbol name="xmark" size={20} color="#111827" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             <View style={{ maxHeight: 384 }}>
               {varieties.map((variety) => (
-                <TouchableOpacity
+                <Pressable
                   key={variety}
                   style={{
                     paddingHorizontal: spacing[6],
@@ -545,7 +545,7 @@ export default function AddFarmScreen() {
                       </View>
                     )}
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </View>

@@ -5,9 +5,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  TouchableOpacity,
-  Modal,
   Pressable,
+  Modal,
   FlatList,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -164,9 +163,8 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
             <View
               style={{ flexDirection: 'row', overflow: 'hidden', borderRadius: borderRadius.xl }}
             >
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setActiveTab('mark')}
-                activeOpacity={0.7}
                 style={{
                   flex: 1,
                   flexDirection: 'row',
@@ -191,10 +189,9 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                 >
                   Mark
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={() => setActiveTab('calendar')}
-                activeOpacity={0.7}
                 style={{
                   flex: 1,
                   flexDirection: 'row',
@@ -219,7 +216,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                 >
                   Calendar
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -593,9 +590,8 @@ function MarkAttendanceTab({
             Filters
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
-            <TouchableOpacity
+            <Pressable
               onPress={handleWorkerSelect}
-              activeOpacity={0.7}
               style={{
                 flex: 1,
                 paddingHorizontal: spacing[4],
@@ -627,10 +623,9 @@ function MarkAttendanceTab({
                 </Text>
                 <Symbol name="chevron.down" size={14} color={UI.muted} />
               </View>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Pressable>
+            <Pressable
               onPress={() => setFarmSheetVisible(true)}
-              activeOpacity={0.7}
               style={{
                 flex: 1,
                 paddingHorizontal: spacing[4],
@@ -662,7 +657,7 @@ function MarkAttendanceTab({
                 </Text>
                 <Symbol name="chevron.down" size={14} color={UI.muted} />
               </View>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -709,7 +704,7 @@ function MarkAttendanceTab({
                 {formatShortDate(dateRange[0])} - {formatShortDate(dateRange[dateRange.length - 1])}
               </Text>
             </View>
-            <TouchableOpacity
+            <Pressable
               style={{
                 paddingHorizontal: spacing[3],
                 paddingVertical: 6,
@@ -722,7 +717,7 @@ function MarkAttendanceTab({
               >
                 {hasModifications ? 'Unsaved Changes' : 'Up to Date'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
@@ -736,10 +731,9 @@ function MarkAttendanceTab({
               const hasStatus = cell?.status !== null;
 
               return (
-                <TouchableOpacity
+                <Pressable
                   key={dateStr}
                   onPress={() => handleDayCellClick(date)}
-                  activeOpacity={0.7}
                   style={{
                     width: '31%',
                     aspectRatio: 1,
@@ -804,7 +798,7 @@ function MarkAttendanceTab({
                       {statusInfo.label}
                     </Text>
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </View>
@@ -823,9 +817,8 @@ function MarkAttendanceTab({
             borderWidth: 1,
           }}
         >
-          <TouchableOpacity
+          <Pressable
             onPress={() => handleQuickAction('full_day')}
-            activeOpacity={0.7}
             style={{
               flex: 1,
               paddingVertical: spacing[3],
@@ -847,10 +840,9 @@ function MarkAttendanceTab({
             >
               All Full
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             onPress={() => handleQuickAction('half_day')}
-            activeOpacity={0.7}
             style={{
               flex: 1,
               paddingVertical: spacing[3],
@@ -872,10 +864,9 @@ function MarkAttendanceTab({
             >
               All Half
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             onPress={() => handleQuickAction('absent')}
-            activeOpacity={0.7}
             style={{
               flex: 1,
               paddingVertical: spacing[3],
@@ -897,7 +888,7 @@ function MarkAttendanceTab({
             >
               All Off
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Worker Selector */}
@@ -914,9 +905,8 @@ function MarkAttendanceTab({
           <View
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <TouchableOpacity
+            <Pressable
               onPress={goToPrevWorker}
-              activeOpacity={0.7}
               disabled={selectedWorkerIndex === 0}
               style={{
                 width: 48,
@@ -933,7 +923,7 @@ function MarkAttendanceTab({
                 size={22}
                 color={selectedWorkerIndex === 0 ? '#D1D5DB' : UI.primary}
               />
-            </TouchableOpacity>
+            </Pressable>
 
             <View style={{ flex: 1, marginHorizontal: spacing[4], alignItems: 'center' }}>
               <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: UI.text }}>
@@ -952,9 +942,8 @@ function MarkAttendanceTab({
                   ₹{selectedWorker?.daily_rate}/day
                 </Text>
               </View>
-              <TouchableOpacity
+              <Pressable
                 onPress={handleWorkerSelect}
-                activeOpacity={0.7}
                 style={{
                   marginTop: spacing[2],
                   paddingHorizontal: spacing[3],
@@ -969,7 +958,7 @@ function MarkAttendanceTab({
                 >
                   Select Worker
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
               <Text
                 style={{
                   fontSize: 11,
@@ -982,9 +971,8 @@ function MarkAttendanceTab({
               </Text>
             </View>
 
-            <TouchableOpacity
+            <Pressable
               onPress={goToNextWorker}
-              activeOpacity={0.7}
               disabled={selectedWorkerIndex === workers.length - 1}
               style={{
                 width: 48,
@@ -1003,14 +991,13 @@ function MarkAttendanceTab({
                 size={22}
                 color={selectedWorkerIndex === workers.length - 1 ? '#D1D5DB' : UI.primary}
               />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
         {/* Save Button */}
-        <TouchableOpacity
+        <Pressable
           onPress={handleSaveAndNext}
-          activeOpacity={0.8}
           disabled={saving}
           style={{
             borderRadius: borderRadius['3xl'],
@@ -1057,7 +1044,7 @@ function MarkAttendanceTab({
               </Text>
             </View>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
       <WorkerSelectSheet
         visible={workerSheetVisible}
@@ -1210,9 +1197,8 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
           >
             Worker
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={handleWorkerSelect}
-            activeOpacity={0.7}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -1240,7 +1226,7 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
               </Text>
             </View>
             <Symbol name="chevron.down" size={14} color={UI.muted} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -1258,13 +1244,12 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
           <View
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <TouchableOpacity
+            <Pressable
               onPress={() => {
                 const newMonth = new Date(calendarMonth);
                 newMonth.setMonth(newMonth.getMonth() - 1);
                 setCalendarMonth(newMonth);
               }}
-              activeOpacity={0.7}
               style={{
                 width: 40,
                 height: 40,
@@ -1275,16 +1260,15 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
               }}
             >
               <Symbol name="chevron.left" size={22} color={UI.primary} />
-            </TouchableOpacity>
+            </Pressable>
 
             <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: UI.text }}>
               {monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
             </Text>
 
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setCalendarMonth(new Date())}
-                activeOpacity={0.7}
                 style={{
                   paddingHorizontal: spacing[3],
                   paddingVertical: 6,
@@ -1298,14 +1282,13 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
                 >
                   Today
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={() => {
                   const newMonth = new Date(calendarMonth);
                   newMonth.setMonth(newMonth.getMonth() + 1);
                   setCalendarMonth(newMonth);
                 }}
-                activeOpacity={0.7}
                 style={{
                   width: 40,
                   height: 40,
@@ -1316,7 +1299,7 @@ function CalendarAttendanceTab({ workers }: { workers: Worker[] }) {
                 }}
               >
                 <Symbol name="chevron.right" size={22} color={UI.primary} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -1584,9 +1567,8 @@ function WorkerSelectSheet({
                   {subtitle}
                 </Text>
               </View>
-              <TouchableOpacity
+              <Pressable
                 onPress={onClose}
-                activeOpacity={0.7}
                 style={{
                   backgroundColor: UI.primarySoft,
                   width: 36,
@@ -1597,7 +1579,7 @@ function WorkerSelectSheet({
                 }}
               >
                 <Symbol name="xmark" size={18} color={UI.primary} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             <FlatList
@@ -1608,9 +1590,8 @@ function WorkerSelectSheet({
               renderItem={({ item }) => {
                 const isSelected = item.id === selectedWorkerId;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => item.id && onSelect(item.id)}
-                    activeOpacity={0.7}
                     style={{
                       backgroundColor: isSelected ? UI.primarySoft : '#F9FAFB',
                       borderColor: isSelected ? 'rgba(47, 107, 79, 0.35)' : UI.border,
@@ -1651,14 +1632,13 @@ function WorkerSelectSheet({
                       size={20}
                       color={isSelected ? UI.primary : '#D1D5DB'}
                     />
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               }}
             />
 
-            <TouchableOpacity
+            <Pressable
               onPress={onClose}
-              activeOpacity={0.7}
               style={{
                 marginTop: spacing[3],
                 paddingVertical: spacing[3],
@@ -1671,7 +1651,7 @@ function WorkerSelectSheet({
               <Text style={{ color: UI.text, fontSize: fontSize.sm, fontWeight: fontWeight.bold }}>
                 Cancel
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </Pressable>
         </View>
       </Pressable>
@@ -1752,9 +1732,8 @@ function FarmSelectSheet({
                   Choose farms to apply attendance
                 </Text>
               </View>
-              <TouchableOpacity
+              <Pressable
                 onPress={onClose}
-                activeOpacity={0.7}
                 style={{
                   backgroundColor: UI.primarySoft,
                   width: 36,
@@ -1765,7 +1744,7 @@ function FarmSelectSheet({
                 }}
               >
                 <Symbol name="xmark" size={18} color={UI.primary} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             <FlatList
@@ -1777,9 +1756,8 @@ function FarmSelectSheet({
                 const farmId = item.id ?? 0;
                 const isSelected = draftIds.includes(farmId);
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => item.id && toggleFarm(item.id)}
-                    activeOpacity={0.7}
                     style={{
                       backgroundColor: isSelected ? UI.primarySoft : '#F9FAFB',
                       borderColor: isSelected ? 'rgba(47, 107, 79, 0.35)' : UI.border,
@@ -1818,17 +1796,16 @@ function FarmSelectSheet({
                       size={20}
                       color={isSelected ? UI.primary : '#D1D5DB'}
                     />
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               }}
             />
 
             <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => {
                   setDraftIds(farms.map((farm) => farm.id!).filter(Boolean));
                 }}
-                activeOpacity={0.7}
                 style={{
                   flex: 1,
                   paddingVertical: spacing[3],
@@ -1843,10 +1820,9 @@ function FarmSelectSheet({
                 >
                   Select All
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={handleApply}
-                activeOpacity={0.7}
                 style={{
                   flex: 1,
                   paddingVertical: spacing[3],
@@ -1860,7 +1836,7 @@ function FarmSelectSheet({
                 >
                   Apply
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </Pressable>
         </View>

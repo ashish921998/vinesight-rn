@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Symbol } from '@/components/ui/Symbol';
@@ -97,9 +97,9 @@ export default function ReportsScreen() {
             backgroundColor: colors.white,
           }}
         >
-          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
+          <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
             <Symbol name="chevron.left" size={24} color="#333" />
-          </TouchableOpacity>
+          </Pressable>
           <Text
             style={{
               fontSize: fontSize.xl,
@@ -147,9 +147,9 @@ export default function ReportsScreen() {
           backgroundColor: colors.white,
         }}
       >
-        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
+        <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <Symbol name="chevron.left" size={24} color="#333" />
-        </TouchableOpacity>
+        </Pressable>
         <Symbol name="doc.text.fill" size={24} color="#1a5d1a" />
         <Text
           style={{
@@ -184,7 +184,7 @@ export default function ReportsScreen() {
           >
             Select Farm
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowFarmPicker(!showFarmPicker)}
             style={{
               flexDirection: 'row',
@@ -212,7 +212,7 @@ export default function ReportsScreen() {
               </Text>
             </View>
             <Symbol name={showFarmPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
-          </TouchableOpacity>
+          </Pressable>
 
           {showFarmPicker && (
             <View
@@ -225,7 +225,7 @@ export default function ReportsScreen() {
               }}
             >
               {farms.map((f) => (
-                <TouchableOpacity
+                <Pressable
                   key={f.id}
                   onPress={() => {
                     setSelectedFarmId(f.id ?? null);
@@ -247,7 +247,7 @@ export default function ReportsScreen() {
                   >
                     {f.name} ({f.area} acres)
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}
@@ -274,7 +274,7 @@ export default function ReportsScreen() {
             Date Range
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-            <TouchableOpacity
+            <Pressable
               onPress={() => setShowFromPicker(true)}
               style={{
                 flex: 1,
@@ -299,8 +299,8 @@ export default function ReportsScreen() {
               >
                 {dateRange.from}
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Pressable>
+            <Pressable
               onPress={() => setShowToPicker(true)}
               style={{
                 flex: 1,
@@ -325,7 +325,7 @@ export default function ReportsScreen() {
               >
                 {dateRange.to}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {showFromPicker && (
@@ -371,7 +371,7 @@ export default function ReportsScreen() {
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing[2] }}>
             {REPORT_TYPES.map((type) => (
-              <TouchableOpacity
+              <Pressable
                 key={type.value}
                 onPress={() => setReportType(type.value)}
                 style={{
@@ -400,7 +400,7 @@ export default function ReportsScreen() {
                 >
                   {type.label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -605,7 +605,7 @@ export default function ReportsScreen() {
             Export As
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-            <TouchableOpacity
+            <Pressable
               onPress={() => handleExport('pdf')}
               disabled={!preview || isExporting}
               style={{
@@ -634,8 +634,8 @@ export default function ReportsScreen() {
                   </Text>
                 </>
               )}
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Pressable>
+            <Pressable
               onPress={() => handleExport('csv')}
               disabled={!preview || isExporting}
               style={{
@@ -664,7 +664,7 @@ export default function ReportsScreen() {
                   </Text>
                 </>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </ScrollView>

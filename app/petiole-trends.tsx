@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { useFarm } from '@/hooks/useFarms';
@@ -76,9 +76,9 @@ export default function PetioleTrendsScreen() {
           backgroundColor: colors.white,
         }}
       >
-        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
+        <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <Symbol name="chevron.left" size={24} color="#333" />
-        </TouchableOpacity>
+        </Pressable>
         <Symbol name="chart.bar.fill" size={24} color="#4C806B" />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
@@ -113,7 +113,7 @@ export default function PetioleTrendsScreen() {
             borderBottomColor: colors.gray[200],
           }}
         >
-          <TouchableOpacity
+          <Pressable
             onPress={() => setViewMode('table')}
             style={{
               flex: 1,
@@ -134,8 +134,8 @@ export default function PetioleTrendsScreen() {
             >
               Table
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             onPress={() => setViewMode('chart')}
             style={{
               flex: 1,
@@ -156,7 +156,7 @@ export default function PetioleTrendsScreen() {
             >
               Chart
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Content */}

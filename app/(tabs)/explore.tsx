@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   RefreshControl,
   TextInput,
   ActivityIndicator,
@@ -449,11 +449,11 @@ export default function ExploreScreen() {
             >
               Try a different search term
             </Text>
-            <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginTop: spacing[4] }}>
+            <Pressable onPress={() => setSearchQuery('')} style={{ marginTop: spacing[4] }}>
               <Text style={{ color: colors.primary[500], fontWeight: fontWeight.medium }}>
                 Clear Search
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         );
       }
@@ -500,7 +500,7 @@ export default function ExploreScreen() {
           >
             Add your first farm to start tracking irrigation, sprays, and harvests.
           </Text>
-          <TouchableOpacity
+          <Pressable
             style={{
               paddingHorizontal: spacing[6],
               paddingVertical: spacing[3],
@@ -511,7 +511,7 @@ export default function ExploreScreen() {
             onPress={handleAddFarm}
           >
             <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>Add Farm</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       );
     };
@@ -638,8 +638,7 @@ export default function ExploreScreen() {
 
         {/* FAB */}
         {(farms?.length || 0) > 0 && (
-          <TouchableOpacity
-            activeOpacity={0.8}
+          <Pressable
             onPress={handleAddFarm}
             style={{
               position: 'absolute',
@@ -654,7 +653,7 @@ export default function ExploreScreen() {
             }}
           >
             <Symbol name="plus" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
+          </Pressable>
         )}
       </>
     );
@@ -662,8 +661,7 @@ export default function ExploreScreen() {
 
   const renderWorkersTab = () => {
     const renderWorker = ({ item }: { item: Worker }) => (
-      <TouchableOpacity
-        activeOpacity={0.7}
+      <Pressable
         onPress={() => handleEditWorker(item)}
         style={{
           backgroundColor: colors.surface[100],
@@ -749,14 +747,11 @@ export default function ExploreScreen() {
           )}
 
           {/* Actions */}
-          <TouchableOpacity
-            onPress={() => handleDeleteWorker(item)}
-            style={{ padding: spacing[2] }}
-          >
+          <Pressable onPress={() => handleDeleteWorker(item)} style={{ padding: spacing[2] }}>
             <Symbol name="trash" size={18} color="#EF4444" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     );
 
     const renderWorkersSubTab = () => (
@@ -851,7 +846,7 @@ export default function ExploreScreen() {
               >
                 Add workers to track attendance,{`\n`}payments, and settlements.
               </Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => openAddWorker(null)}
                 style={{
                   backgroundColor: colors.primary[600],
@@ -864,7 +859,7 @@ export default function ExploreScreen() {
                 <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
                   Add Worker
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ) : null
         }
@@ -965,7 +960,7 @@ export default function ExploreScreen() {
             }}
           >
             {WORKER_SUB_TABS.map((tab) => (
-              <TouchableOpacity
+              <Pressable
                 key={tab.id}
                 onPress={() => setSelectedWorkerSubTab(tab.id)}
                 style={{
@@ -995,7 +990,7 @@ export default function ExploreScreen() {
                 >
                   {tab.label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -1007,9 +1002,8 @@ export default function ExploreScreen() {
 
         {/* FAB */}
         {selectedWorkerSubTab === 'workers' && (workers?.length || 0) > 0 && (
-          <TouchableOpacity
+          <Pressable
             onPress={() => openAddWorker(null)}
-            activeOpacity={0.8}
             style={{
               position: 'absolute',
               bottom: spacing[6],
@@ -1023,7 +1017,7 @@ export default function ExploreScreen() {
             }}
           >
             <Symbol name="plus" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
+          </Pressable>
         )}
       </>
     );
@@ -1166,7 +1160,7 @@ export default function ExploreScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   {lowStockItems.map((item) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={item.id}
                       onPress={() => handleAddStock(item)}
                       style={{ width: 160 }}
@@ -1238,7 +1232,7 @@ export default function ExploreScreen() {
                           </Text>
                         </View>
                       </View>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </View>
               </ScrollView>
@@ -1270,7 +1264,7 @@ export default function ExploreScreen() {
             }}
           >
             {(['all', 'fertilizer', 'spray'] as WarehouseFilter[]).map((type) => (
-              <TouchableOpacity
+              <Pressable
                 key={type}
                 onPress={() => setWarehouseFilter(type)}
                 style={{
@@ -1294,7 +1288,7 @@ export default function ExploreScreen() {
                       ? `FERTILIZERS (${warehouseTotals.fertilizers})`
                       : `SPRAYS (${warehouseTotals.sprays})`}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
 
@@ -1340,7 +1334,7 @@ export default function ExploreScreen() {
               >
                 Tap the + button to add your first inventory item
               </Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => {
                   openWarehouseItem(null);
                 }}
@@ -1364,7 +1358,7 @@ export default function ExploreScreen() {
                 >
                   Add Item
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ) : (
             filteredWarehouseItems.map((item) => {
@@ -1438,7 +1432,7 @@ export default function ExploreScreen() {
                             </Text>
                           </View>
                         )}
-                        <TouchableOpacity
+                        <Pressable
                           onPress={() => {
                             Alert.alert('Actions', `${item.name}`, [
                               {
@@ -1459,7 +1453,7 @@ export default function ExploreScreen() {
                           }}
                         >
                           <Symbol name="ellipsis.circle" size={24} color="#6B7280" />
-                        </TouchableOpacity>
+                        </Pressable>
                       </View>
                       <Text
                         style={{
@@ -1540,7 +1534,7 @@ export default function ExploreScreen() {
         </Animated.ScrollView>
 
         {/* FAB */}
-        <TouchableOpacity
+        <Pressable
           onPress={() => {
             openWarehouseItem(null);
           }}
@@ -1557,7 +1551,7 @@ export default function ExploreScreen() {
           }}
         >
           <Symbol name="plus" size={28} color="white" />
-        </TouchableOpacity>
+        </Pressable>
       </>
     );
   };
@@ -1621,12 +1615,12 @@ export default function ExploreScreen() {
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity
+            <Pressable
               onPress={() => handleSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Symbol name="xmark.circle.fill" size={20} color="#c7c7cc" />
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
       </View>
@@ -1650,9 +1644,8 @@ export default function ExploreScreen() {
                   transform: [{ scale: tabScaleAnims[tab.id] }],
                 }}
               >
-                <TouchableOpacity
+                <Pressable
                   onPress={() => handleTabChange(tab.id)}
-                  activeOpacity={0.7}
                   style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
                 >
                   <Animated.View
@@ -1705,7 +1698,7 @@ export default function ExploreScreen() {
                       }}
                     />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               </Animated.View>
             );
           })}

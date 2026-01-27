@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, type TextInputProps } from 'react-native';
+import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput, type NumericInputHandle } from './FormField';
 import { UnitPickerModal } from '../ui/UnitPickerModal';
@@ -196,7 +196,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
 
         {/* Add Chemical Button */}
         {data.chemicals.length < 10 && (
-          <TouchableOpacity
+          <Pressable
             onPress={addChemical}
             style={{
               flexDirection: 'row',
@@ -204,7 +204,6 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
               paddingVertical: spacing[3],
               marginTop: spacing[2],
             }}
-            activeOpacity={0.7}
           >
             <Symbol name="plus.circle.fill" size={20} color="#8B5CF6" />
             <Text
@@ -217,7 +216,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
             >
               Add Chemical
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
 
@@ -350,14 +349,13 @@ function ChemicalRow({
           blurOnSubmit={false}
         />
         {showRemove && (
-          <TouchableOpacity
+          <Pressable
             onPress={onRemove}
             style={{ marginLeft: spacing[2], padding: spacing[2] }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            activeOpacity={0.7}
           >
             <Symbol name="minus.circle.fill" size={24} color="#9CA3AF" />
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
 
@@ -393,9 +391,8 @@ function ChemicalRow({
         />
 
         {/* Unit Picker */}
-        <TouchableOpacity
+        <Pressable
           onPress={() => setShowUnitPicker(true)}
-          activeOpacity={0.7}
           style={{
             flex: 1,
             flexDirection: 'row',
@@ -414,7 +411,7 @@ function ChemicalRow({
             {chemical.unit}
           </Text>
           <Symbol name="chevron.right" size={18} color="#6B7280" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Unit Picker Modal */}

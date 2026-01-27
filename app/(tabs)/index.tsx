@@ -6,7 +6,6 @@ import {
   RefreshControl,
   Pressable,
   Modal,
-  TouchableOpacity,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -378,7 +377,7 @@ export default function DashboardScreen() {
               >
                 {farms && farms.length > 0 ? (
                   farms.map((farm) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={farm.id}
                       onPress={() => farm.id && handleFarmSelection(farm.id)}
                       style={{
@@ -413,7 +412,7 @@ export default function DashboardScreen() {
                         )}
                       </View>
                       <Symbol name="chevron.right" size={20} color={colors.gray[300]} />
-                    </TouchableOpacity>
+                    </Pressable>
                   ))
                 ) : (
                   <View

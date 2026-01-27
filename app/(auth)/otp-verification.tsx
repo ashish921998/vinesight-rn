@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, type ViewStyle, type TextStyle } from 'react-native';
+import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, OTPInput } from '@/components/ui';
@@ -234,7 +234,7 @@ export default function OTPVerificationScreen() {
 
       {/* Resend & Back */}
       <View style={actionsContainerStyle}>
-        <TouchableOpacity
+        <Pressable
           onPress={handleResend}
           disabled={resendCooldown > 0 || isLoading}
           style={buttonWrapperStyle}
@@ -244,11 +244,11 @@ export default function OTPVerificationScreen() {
           ) : (
             <Text style={resendEnabledTextStyle}>Resend Code</Text>
           )}
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity onPress={handleBack} disabled={isLoading} style={backButtonWrapperStyle}>
+        <Pressable onPress={handleBack} disabled={isLoading} style={backButtonWrapperStyle}>
           <Text style={backButtonTextStyle}>Use Different Email</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

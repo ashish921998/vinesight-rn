@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
@@ -111,7 +111,7 @@ export default function AnalyticsScreen() {
             style={{ marginBottom: spacing[4] }}
           >
             {TIME_RANGES.map((range) => (
-              <TouchableOpacity
+              <Pressable
                 key={range.value}
                 onPress={() => setTimeRange(range.value)}
                 style={{
@@ -130,7 +130,7 @@ export default function AnalyticsScreen() {
                 >
                   {range.label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </ScrollView>
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { useWorkers, useDeleteWorker } from '@/hooks';
@@ -53,7 +53,7 @@ export default function WorkersScreen() {
   };
 
   const renderWorker = ({ item }: { item: Worker }) => (
-    <TouchableOpacity
+    <Pressable
       style={{
         backgroundColor: colors.white,
         marginHorizontal: spacing[4],
@@ -61,7 +61,6 @@ export default function WorkersScreen() {
         borderRadius: borderRadius['2xl'],
         overflow: 'hidden',
       }}
-      activeOpacity={0.7}
       onPress={() => handleEditWorker(item)}
     >
       <View
@@ -157,11 +156,11 @@ export default function WorkersScreen() {
         )}
 
         {/* Actions */}
-        <TouchableOpacity onPress={() => handleDeleteWorker(item)} style={{ padding: spacing[2] }}>
+        <Pressable onPress={() => handleDeleteWorker(item)} style={{ padding: spacing[2] }}>
           <Symbol name="trash" size={18} color={colors.error} />
-        </TouchableOpacity>
+        </Pressable>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   const renderWorkersTab = () => (
@@ -256,7 +255,7 @@ export default function WorkersScreen() {
             >
               Add workers to track attendance,{`\n`}payments, and settlements.
             </Text>
-            <TouchableOpacity
+            <Pressable
               onPress={() => {
                 setAddWorker({ worker: null });
                 router.push('/add-worker');
@@ -277,7 +276,7 @@ export default function WorkersScreen() {
               >
                 Add Worker
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         ) : null
       }
@@ -377,7 +376,7 @@ export default function WorkersScreen() {
             {TAB_DATA.map((tab) => {
               const isSelected = selectedTab === tab.id;
               return (
-                <TouchableOpacity
+                <Pressable
                   key={tab.id}
                   onPress={() => setSelectedTab(tab.id)}
                   style={{
@@ -407,7 +406,7 @@ export default function WorkersScreen() {
                   >
                     {tab.label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </View>
@@ -420,7 +419,7 @@ export default function WorkersScreen() {
 
         {/* FAB */}
         {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
-          <TouchableOpacity
+          <Pressable
             onPress={() => {
               setAddWorker({ worker: null });
               router.push('/add-worker');
@@ -436,10 +435,9 @@ export default function WorkersScreen() {
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            activeOpacity={0.8}
           >
             <Symbol name="plus" size={28} color={colors.white} />
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
 

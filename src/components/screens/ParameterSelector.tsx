@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../../hooks/useLabTests';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -63,7 +63,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
         >
           Parameters ({selected.size} selected)
         </Text>
-        <TouchableOpacity onPress={toggleAll}>
+        <Pressable onPress={toggleAll}>
           <Text
             style={{
               fontSize: fontSize.sm,
@@ -73,7 +73,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
           >
             {selected.size === parameters.length ? 'Deselect All' : 'Select All'}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
       <ScrollView
         horizontal
@@ -83,7 +83,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
         {parameters.map((param) => {
           const isSelected = selected.has(param.key);
           return (
-            <TouchableOpacity
+            <Pressable
               key={param.key}
               onPress={() => toggleParam(param.key)}
               style={{
@@ -112,7 +112,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
               >
                 {param.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </ScrollView>

@@ -4,7 +4,7 @@ import {
   Text,
   KeyboardAvoidingView,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Image,
   ImageSourcePropType,
   type ViewStyle,
@@ -270,12 +270,12 @@ export default function LoginScreen() {
           </View>
 
           {/* Toggle Sign Up/Sign In */}
-          <TouchableOpacity onPress={toggleMode} style={toggleContainerStyle} disabled={isLoading}>
+          <Pressable onPress={toggleMode} style={toggleContainerStyle} disabled={isLoading}>
             <Text style={toggleTextStyle}>
               {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
               <Text style={toggleLinkStyle}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

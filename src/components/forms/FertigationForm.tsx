@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, type TextInputProps } from 'react-native';
+import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { UnitPickerModal } from '../ui/UnitPickerModal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculatorModels';
@@ -138,7 +138,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
 
         {/* Add Fertilizer Button */}
         {data.fertilizers.length < 10 && (
-          <TouchableOpacity
+          <Pressable
             onPress={addFertilizer}
             style={{
               flexDirection: 'row',
@@ -146,7 +146,6 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
               paddingVertical: spacing[3],
               marginTop: spacing[2],
             }}
-            activeOpacity={0.7}
           >
             <Symbol name="plus.circle.fill" size={20} color="#22C55E" />
             <Text
@@ -159,7 +158,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
             >
               Add Fertilizer
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
 
@@ -309,14 +308,13 @@ function FertilizerRow({
           onBlur={() => setIsNameFocused(false)}
         />
         {showRemove && (
-          <TouchableOpacity
+          <Pressable
             onPress={onRemove}
             style={{ marginLeft: spacing[2], padding: spacing[2] }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            activeOpacity={0.7}
           >
             <Symbol name="minus.circle.fill" size={24} color="#9CA3AF" />
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
 
@@ -348,9 +346,8 @@ function FertilizerRow({
         />
 
         {/* Unit Picker */}
-        <TouchableOpacity
+        <Pressable
           onPress={() => setShowUnitPicker(true)}
-          activeOpacity={0.7}
           style={{
             flex: 1,
             flexDirection: 'row',
@@ -369,7 +366,7 @@ function FertilizerRow({
             {fertilizer.unit}
           </Text>
           <Symbol name="chevron.right" size={18} color="#6B7280" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Unit Picker Modal */}

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { PARAMETER_COLORS } from '../../hooks/useLabTests';
@@ -254,7 +254,7 @@ export default function TrendsChart({
             const color = PARAMETER_COLORS[idx % PARAMETER_COLORS.length];
             const trend = param.trend;
             return (
-              <TouchableOpacity
+              <Pressable
                 key={param.key}
                 onPress={() => onToggleParam(param.key)}
                 style={{
@@ -292,7 +292,7 @@ export default function TrendsChart({
                       : 'N/A'}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>

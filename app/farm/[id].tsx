@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   RefreshControl,
   ActivityIndicator,
   Alert,
@@ -316,9 +316,9 @@ export default function FarmDetailScreen() {
         >
           Farm Not Found
         </Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: spacing[4] }}>
+        <Pressable onPress={() => router.back()} style={{ marginTop: spacing[4] }}>
           <Text style={{ color: colors.primary[600], fontWeight: fontWeight.medium }}>Go Back</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -332,14 +332,14 @@ export default function FarmDetailScreen() {
           headerTintColor: '#000000',
           headerRight: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => router.push(`/farm/${id}/edit`)}
                 style={{ marginRight: spacing[4] }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Symbol name="create-outline" size={24} color="#408059" />
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={handleDeleteFarm}
                 style={{
                   marginRight: spacing[2],
@@ -353,7 +353,7 @@ export default function FarmDetailScreen() {
                 ) : (
                   <Symbol name="trash" size={24} color="#DC2626" />
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ),
           headerTitle: () => (
@@ -602,11 +602,7 @@ export default function FarmDetailScreen() {
           {/* Stats Grid - iOS Style */}
           <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
             <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-              <TouchableOpacity
-                style={{ flex: 1 }}
-                onPress={() => router.push(`/logs?farmId=${id}`)}
-                activeOpacity={0.7}
-              >
+              <Pressable style={{ flex: 1 }} onPress={() => router.push(`/logs?farmId=${id}`)}>
                 <StatsCard
                   title="Log Entries"
                   value={totalRecords.toString()}
@@ -614,14 +610,13 @@ export default function FarmDetailScreen() {
                   iconColor="#4D8561"
                   subtitle="Records"
                 />
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 style={{ flex: 1 }}
                 onPress={() => {
                   if (!farm?.id) return;
                   router.push({ pathname: '/water-level', params: { farmId: farm.id.toString() } });
                 }}
-                activeOpacity={0.7}
               >
                 <StatsCard
                   title="Soil Water"
@@ -630,7 +625,7 @@ export default function FarmDetailScreen() {
                   iconColor="#4D857A"
                   subtitle="mm"
                 />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
 
@@ -667,10 +662,9 @@ export default function FarmDetailScreen() {
             >
               <View style={{ flexDirection: 'row' }}>
                 {WORKBOARD_ACTIONS.map((action) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={action.id}
                     style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}
-                    activeOpacity={0.7}
                     onPress={() => handleWorkboardAction(action)}
                   >
                     <View
@@ -697,7 +691,7 @@ export default function FarmDetailScreen() {
                     >
                       {action.title}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             </View>
@@ -707,7 +701,7 @@ export default function FarmDetailScreen() {
           <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
             <View style={{ flexDirection: 'row' }}>
               {(['activities', 'tasks'] as const).map((tab) => (
-                <TouchableOpacity
+                <Pressable
                   key={tab}
                   style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[3] }}
                   onPress={() => setSelectedTab(tab)}
@@ -732,7 +726,7 @@ export default function FarmDetailScreen() {
                       backgroundColor: selectedTab === tab ? colors.primary[600] : 'transparent',
                     }}
                   />
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </View>
@@ -814,7 +808,7 @@ export default function FarmDetailScreen() {
                       }}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                        <TouchableOpacity
+                        <Pressable
                           onPress={() => !task.completed && handleCompleteTask(task.id!)}
                           disabled={task.completed}
                           style={{
@@ -831,7 +825,7 @@ export default function FarmDetailScreen() {
                           }}
                         >
                           {task.completed && <Symbol name="checkmark" size={18} color="white" />}
-                        </TouchableOpacity>
+                        </Pressable>
 
                         <View style={{ flex: 1 }}>
                           <Text
@@ -909,12 +903,12 @@ export default function FarmDetailScreen() {
                         </View>
 
                         {!task.completed && (
-                          <TouchableOpacity
+                          <Pressable
                             onPress={() => handleDeleteTask(task.id!, task.title)}
                             style={{ padding: spacing[2] }}
                           >
                             <Symbol name="trash" size={18} color="#DC2626" />
-                          </TouchableOpacity>
+                          </Pressable>
                         )}
                       </View>
                     </View>
@@ -969,8 +963,7 @@ export default function FarmDetailScreen() {
       </View>
 
       {/* FAB for adding activity or task */}
-      <TouchableOpacity
-        activeOpacity={0.8}
+      <Pressable
         onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
         style={{
           position: 'absolute',
@@ -985,7 +978,7 @@ export default function FarmDetailScreen() {
         }}
       >
         <Symbol name="plus" size={28} color="#FFFFFF" />
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Add Entry + Water Level handled via routes */}
     </>

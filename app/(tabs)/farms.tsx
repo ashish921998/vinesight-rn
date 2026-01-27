@@ -3,7 +3,7 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
+  Pressable,
   RefreshControl,
   TextInput,
   ActivityIndicator,
@@ -81,12 +81,12 @@ const SearchHeader = React.memo<SearchHeaderProps>(
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity
+            <Pressable
               onPress={() => onSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Symbol name="xmark.circle.fill" size={20} color={colors.gray[300]} />
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
 
@@ -361,7 +361,7 @@ export default function FarmsScreen() {
           >
             Try a different search term
           </Text>
-          <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginTop: spacing[4] }}>
+          <Pressable onPress={() => setSearchQuery('')} style={{ marginTop: spacing[4] }}>
             <Text
               style={{
                 fontWeight: fontWeight.medium,
@@ -370,7 +370,7 @@ export default function FarmsScreen() {
             >
               Clear Search
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       );
     }
@@ -410,7 +410,7 @@ export default function FarmsScreen() {
         >
           Add your first farm to start tracking irrigation, sprays, and harvests.
         </Text>
-        <TouchableOpacity
+        <Pressable
           style={{
             paddingHorizontal: spacing[6],
             paddingVertical: spacing[3],
@@ -428,7 +428,7 @@ export default function FarmsScreen() {
           >
             Add Farm
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   };
@@ -473,7 +473,7 @@ export default function FarmsScreen() {
 
       {/* FAB */}
       {(farms?.length || 0) > 0 && (
-        <TouchableOpacity
+        <Pressable
           style={{
             position: 'absolute',
             bottom: spacing[6],
@@ -485,11 +485,10 @@ export default function FarmsScreen() {
             justifyContent: 'center',
             backgroundColor: colors.primary[500],
           }}
-          activeOpacity={0.8}
           onPress={handleAddFarm}
         >
           <Symbol name="plus" size={28} color={colors.white} />
-        </TouchableOpacity>
+        </Pressable>
       )}
     </View>
   );

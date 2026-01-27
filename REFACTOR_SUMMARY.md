@@ -42,7 +42,6 @@
 
 ### Immediate Next Steps (Phase 11 - Pressable Migration)
 
-- Replace TouchableOpacity with Pressable in app/ and src/
 - Test press interactions
 - Commit Phase 11
 

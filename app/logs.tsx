@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   TextInput,
   ActivityIndicator,
   Alert,
@@ -359,7 +359,7 @@ export default function LogsScreen() {
           headerTintColor: '#000000',
           headerRight: () =>
             selectedFarmId !== undefined && (
-              <TouchableOpacity
+              <Pressable
                 onPress={() => {
                   setAddEntry({
                     tabs: ['log'],
@@ -378,7 +378,7 @@ export default function LogsScreen() {
                 style={{ marginRight: spacing[4] }}
               >
                 <Symbol name="plus.circle.fill" size={28} color="#408059" />
-              </TouchableOpacity>
+              </Pressable>
             ),
         }}
       />
@@ -403,7 +403,7 @@ export default function LogsScreen() {
               >
                 SELECTED FARM
               </Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowFarmSelector(true)}
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.8)',
@@ -464,7 +464,7 @@ export default function LogsScreen() {
                   </View>
                   <Symbol name="chevron.down" size={20} color="#8e8e93" />
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {/* Search & Filters */}
@@ -501,9 +501,9 @@ export default function LogsScreen() {
                     }}
                   />
                   {searchQuery !== '' && (
-                    <TouchableOpacity onPress={() => setSearchQuery('')}>
+                    <Pressable onPress={() => setSearchQuery('')}>
                       <Symbol name="xmark.circle.fill" size={18} color="#8e8e93" />
-                    </TouchableOpacity>
+                    </Pressable>
                   )}
                 </View>
 
@@ -516,7 +516,7 @@ export default function LogsScreen() {
                     marginTop: spacing[3],
                   }}
                 >
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => setShowFilters(!showFilters)}
                     style={{ flexDirection: 'row', alignItems: 'center' }}
                   >
@@ -550,10 +550,10 @@ export default function LogsScreen() {
                         </Text>
                       </View>
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
 
                   {hasActiveFilters && (
-                    <TouchableOpacity onPress={clearFilters}>
+                    <Pressable onPress={clearFilters}>
                       <Text
                         style={{
                           fontSize: fontSize.sm,
@@ -563,7 +563,7 @@ export default function LogsScreen() {
                       >
                         Clear All
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   )}
                 </View>
 
@@ -591,7 +591,7 @@ export default function LogsScreen() {
                       {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
                         const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
                         return (
-                          <TouchableOpacity
+                          <Pressable
                             key={logType.id}
                             onPress={() => {
                               const newSet = new Set(selectedLogTypes);
@@ -643,7 +643,7 @@ export default function LogsScreen() {
                             >
                               {logType.label}
                             </Text>
-                          </TouchableOpacity>
+                          </Pressable>
                         );
                       })}
                     </View>
@@ -656,7 +656,7 @@ export default function LogsScreen() {
                         marginTop: spacing[4],
                       }}
                     >
-                      <TouchableOpacity
+                      <Pressable
                         onPress={() => setShowDatePickerFrom(true)}
                         style={{ flex: 1, marginRight: spacing[2] }}
                       >
@@ -686,9 +686,9 @@ export default function LogsScreen() {
                               : 'Select date'}
                           </Text>
                         </View>
-                      </TouchableOpacity>
+                      </Pressable>
 
-                      <TouchableOpacity
+                      <Pressable
                         onPress={() => setShowDatePickerTo(true)}
                         style={{ flex: 1, marginLeft: spacing[2] }}
                       >
@@ -718,7 +718,7 @@ export default function LogsScreen() {
                               : 'Select date'}
                           </Text>
                         </View>
-                      </TouchableOpacity>
+                      </Pressable>
                     </View>
                   </View>
                 )}
@@ -806,7 +806,7 @@ export default function LogsScreen() {
                       {Math.min(currentPage * itemsPerPage, filteredLogs.length)} of{' '}
                       {filteredLogs.length}
                     </Text>
-                    <TouchableOpacity
+                    <Pressable
                       onPress={() => {
                         setCurrentPage(1);
                         setShowFilters(true);
@@ -833,7 +833,7 @@ export default function LogsScreen() {
                           10 per page
                         </Text>
                       </View>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
 
                   <View style={{ gap: spacing[3] }}>
@@ -921,7 +921,7 @@ export default function LogsScreen() {
                               </Text>
                             </View>
                             <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-                              <TouchableOpacity
+                              <Pressable
                                 onPress={() => {
                                   const logFarm =
                                     selectedFarm ||
@@ -952,15 +952,15 @@ export default function LogsScreen() {
                                       : '#c7c7cc'
                                   }
                                 />
-                              </TouchableOpacity>
-                              <TouchableOpacity
+                              </Pressable>
+                              <Pressable
                                 onPress={() => {
                                   setDeletingLog(log);
                                   setShowDeleteConfirmation(true);
                                 }}
                               >
                                 <Symbol name="trash" size={20} color="#EF4444" />
-                              </TouchableOpacity>
+                              </Pressable>
                             </View>
                           </View>
                         </View>
@@ -978,7 +978,7 @@ export default function LogsScreen() {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <TouchableOpacity
+                      <Pressable
                         onPress={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                         style={{
@@ -994,7 +994,7 @@ export default function LogsScreen() {
                           size={18}
                           color={currentPage === 1 ? '#8e8e93' : '#FFFFFF'}
                         />
-                      </TouchableOpacity>
+                      </Pressable>
 
                       <View style={{ flexDirection: 'row' }}>
                         {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -1009,7 +1009,7 @@ export default function LogsScreen() {
                             pageNum = currentPage - 2 + i;
                           }
                           return (
-                            <TouchableOpacity
+                            <Pressable
                               key={pageNum}
                               onPress={() => setCurrentPage(pageNum)}
                               style={{
@@ -1031,12 +1031,12 @@ export default function LogsScreen() {
                               >
                                 {pageNum}
                               </Text>
-                            </TouchableOpacity>
+                            </Pressable>
                           );
                         })}
                       </View>
 
-                      <TouchableOpacity
+                      <Pressable
                         onPress={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                         style={{
@@ -1052,7 +1052,7 @@ export default function LogsScreen() {
                           size={18}
                           color={currentPage === totalPages ? '#8e8e93' : '#FFFFFF'}
                         />
-                      </TouchableOpacity>
+                      </Pressable>
                     </View>
                   )}
                 </>
@@ -1108,7 +1108,7 @@ export default function LogsScreen() {
                 }}
                 style={{ width: '100%' }}
               />
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowDatePickerFrom(false)}
                 style={{
                   marginTop: spacing[4],
@@ -1119,7 +1119,7 @@ export default function LogsScreen() {
                 }}
               >
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </Modal>
@@ -1169,7 +1169,7 @@ export default function LogsScreen() {
               <ScrollView
                 style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[6] }}
               >
-                <TouchableOpacity
+                <Pressable
                   onPress={() => {
                     setSelectedFarmId(undefined);
                     setCurrentPage(1);
@@ -1228,10 +1228,10 @@ export default function LogsScreen() {
                   {selectedFarmId === undefined && (
                     <Symbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
                   )}
-                </TouchableOpacity>
+                </Pressable>
 
                 {farms.map((farm) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={farm.id}
                     onPress={() => {
                       setSelectedFarmId(farm.id);
@@ -1291,10 +1291,10 @@ export default function LogsScreen() {
                     {selectedFarmId === farm.id && (
                       <Symbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </ScrollView>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowFarmSelector(false)}
                 style={{
                   marginHorizontal: spacing[4],
@@ -1308,7 +1308,7 @@ export default function LogsScreen() {
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
                   Cancel
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </Modal>
@@ -1358,7 +1358,7 @@ export default function LogsScreen() {
                 }}
                 style={{ width: '100%' }}
               />
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowDatePickerTo(false)}
                 style={{
                   marginTop: spacing[4],
@@ -1369,7 +1369,7 @@ export default function LogsScreen() {
                 }}
               >
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </Modal>
@@ -1441,7 +1441,7 @@ export default function LogsScreen() {
               ?
             </Text>
             <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowDeleteConfirmation(false)}
                 style={{
                   flex: 1,
@@ -1455,8 +1455,8 @@ export default function LogsScreen() {
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
                   Cancel
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={handleDeleteLog}
                 style={{
                   flex: 1,
@@ -1467,7 +1467,7 @@ export default function LogsScreen() {
                 }}
               >
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Delete</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>

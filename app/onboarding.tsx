@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 
 import { Symbol } from '@/components/ui/Symbol';
 import { router } from 'expo-router';
@@ -238,7 +238,7 @@ export default function OnboardingScreen() {
             Country
           </Text>
         </View>
-        <TouchableOpacity
+        <Pressable
           onPress={() => setShowCountryPicker(!showCountryPicker)}
           style={{
             backgroundColor: colors.white,
@@ -258,7 +258,7 @@ export default function OnboardingScreen() {
             {selectedCountry || 'Select a country'}
           </Text>
           <Symbol name={showCountryPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
-        </TouchableOpacity>
+        </Pressable>
 
         {showCountryPicker && (
           <View
@@ -272,7 +272,7 @@ export default function OnboardingScreen() {
             }}
           >
             {COUNTRIES.map((country) => (
-              <TouchableOpacity
+              <Pressable
                 key={country}
                 onPress={() => {
                   setSelectedCountry(country);
@@ -295,7 +295,7 @@ export default function OnboardingScreen() {
                 >
                   {country}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         )}
@@ -317,7 +317,7 @@ export default function OnboardingScreen() {
           </Text>
         </View>
         <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setSelectedAreaUnit('acres')}
             style={{
               flex: 1,
@@ -337,8 +337,8 @@ export default function OnboardingScreen() {
             >
               Acres
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             onPress={() => setSelectedAreaUnit('hectares')}
             style={{
               flex: 1,
@@ -358,7 +358,7 @@ export default function OnboardingScreen() {
             >
               Hectares
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </ScrollView>
@@ -482,12 +482,12 @@ export default function OnboardingScreen() {
 
       {/* Skip Button */}
       {!isLastStep && (
-        <TouchableOpacity
+        <Pressable
           onPress={handleSkip}
           style={{ position: 'absolute', right: spacing[4], top: spacing[12], zIndex: 10 }}
         >
           <Text style={{ color: colors.gray[500], fontSize: fontSize.base }}>Skip</Text>
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       {/* Content */}
@@ -497,7 +497,7 @@ export default function OnboardingScreen() {
       <View style={{ paddingHorizontal: spacing[6], paddingBottom: spacing[6] }}>
         <View style={{ flexDirection: 'row', gap: spacing[3] }}>
           {!isFirstStep && !isLastStep && (
-            <TouchableOpacity
+            <Pressable
               onPress={previousStep}
               style={{
                 flex: 1,
@@ -515,9 +515,9 @@ export default function OnboardingScreen() {
               >
                 Back
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
-          <TouchableOpacity
+          <Pressable
             onPress={handleNext}
             style={{
               paddingVertical: spacing[4],
@@ -540,7 +540,7 @@ export default function OnboardingScreen() {
                   ? 'Enable Notifications'
                   : 'Continue'}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </View>

@@ -8,13 +8,12 @@ import {
   View,
   Text,
   Modal,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   TextInput,
   KeyboardAvoidingView,
   Alert,
   ActivityIndicator,
-  Pressable,
   type TextInputProps,
   Keyboard,
   useWindowDimensions,
@@ -646,14 +645,13 @@ export function AddEntryModal({
             const label = tab === 'log' ? 'Farm Log' : 'Task';
             const iconName = tab === 'log' ? 'document-text' : 'checkbox-outline';
             return (
-              <TouchableOpacity
+              <Pressable
                 key={tab}
                 onPress={() => setActiveTab(tab)}
                 style={[
                   { flex: 1, borderRadius: 999, overflow: 'hidden' },
                   { marginHorizontal: 2 },
                 ]}
-                activeOpacity={0.8}
               >
                 {isActive ? (
                   <LinearGradient
@@ -705,7 +703,7 @@ export function AddEntryModal({
                     </Text>
                   </View>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>
@@ -725,7 +723,7 @@ export function AddEntryModal({
         {ACTIVITY_TYPES.map((logType) => {
           const isSelected = selectedLogType === logType.id;
           return (
-            <TouchableOpacity
+            <Pressable
               key={logType.id}
               onPress={() => {
                 setSelectedLogType(logType.id as LogTypeId);
@@ -740,7 +738,6 @@ export function AddEntryModal({
                 backgroundColor: isSelected ? '#f0f5f2' : '#f2f2f7',
                 borderColor: isSelected ? '#c3d6cc' : '#f2f2f7',
               }}
-              activeOpacity={0.8}
             >
               <View
                 style={{
@@ -765,7 +762,7 @@ export function AddEntryModal({
               >
                 {logType.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
@@ -808,7 +805,7 @@ export function AddEntryModal({
           />
         )}
 
-        <TouchableOpacity
+        <Pressable
           onPress={addLogToSession}
           disabled={!isLogFormValid || !activeFarm}
           style={[
@@ -824,7 +821,6 @@ export function AddEntryModal({
               backgroundColor: isLogFormValid && activeFarm ? '#408059' : '#E5E7EB',
             },
           ]}
-          activeOpacity={0.8}
         >
           <AppIcon name="add-circle" size={20} color={isLogFormValid ? '#FFFFFF' : '#9CA3AF'} />
           <Text
@@ -836,7 +832,7 @@ export function AddEntryModal({
           >
             Add Entry
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   };
@@ -884,7 +880,7 @@ export function AddEntryModal({
                     {activeFarm?.name}
                   </Text>
                 </View>
-                <TouchableOpacity
+                <Pressable
                   onPress={() => {
                     setShowLogFormModal(false);
                     setSelectedLogType(null);
@@ -892,7 +888,7 @@ export function AddEntryModal({
                   style={{ width: 40, alignItems: 'flex-end' }}
                 >
                   <AppIcon name="close-circle" size={26} color="#9CA3AF" />
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
 
@@ -930,7 +926,7 @@ export function AddEntryModal({
           boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.08)',
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={addLogToSession}
           disabled={!isLogFormValid || !activeFarm}
           style={[
@@ -945,7 +941,6 @@ export function AddEntryModal({
               backgroundColor: isLogFormValid && activeFarm ? '#408059' : '#E5E7EB',
             },
           ]}
-          activeOpacity={0.8}
         >
           <AppIcon
             name="add-circle"
@@ -961,7 +956,7 @@ export function AddEntryModal({
           >
             Add Entry
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   };
@@ -1012,9 +1007,9 @@ export function AddEntryModal({
                   {log.displayDescription}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => removeLogFromSession(log.id)}>
+              <Pressable onPress={() => removeLogFromSession(log.id)}>
                 <AppIcon name="trash-outline" size={20} color="#EF4444" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           );
         })}
@@ -1041,7 +1036,7 @@ export function AddEntryModal({
           >
             Farm *
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowLogFarmPicker(!showLogFarmPicker)}
             style={{
               backgroundColor: '#f2f2f7',
@@ -1062,7 +1057,7 @@ export function AddEntryModal({
               </Text>
             </View>
             <AppIcon name="chevron-down" size={18} color="#9CA3AF" />
-          </TouchableOpacity>
+          </Pressable>
           {showLogFarmPicker && farms && (
             <View
               style={{
@@ -1075,7 +1070,7 @@ export function AddEntryModal({
               }}
             >
               {farms.map((f) => (
-                <TouchableOpacity
+                <Pressable
                   key={f.id}
                   onPress={() => {
                     if (f.id) setSelectedFarmId(f.id);
@@ -1097,7 +1092,7 @@ export function AddEntryModal({
                   >
                     {f.name}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}
@@ -1117,7 +1112,7 @@ export function AddEntryModal({
         <View
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
         >
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowDatePicker(true)}
             style={{
               flexDirection: 'row',
@@ -1139,7 +1134,7 @@ export function AddEntryModal({
                 day: 'numeric',
               })}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {pendingLogs.length > 0 && (
             <View
@@ -1188,7 +1183,7 @@ export function AddEntryModal({
   const renderTaskContent = () => (
     <>
       {!isEditingTask && (
-        <TouchableOpacity
+        <Pressable
           onPress={() => setShowTemplates(!showTemplates)}
           style={{
             backgroundColor: '#f0f5f2',
@@ -1204,7 +1199,7 @@ export function AddEntryModal({
             Use Template
           </Text>
           <AppIcon name={showTemplates ? 'chevron-up' : 'chevron-down'} size={20} color="#408059" />
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       {showTemplates && (
@@ -1222,7 +1217,7 @@ export function AddEntryModal({
             {TASK_TEMPLATES.slice(0, 8).map((template) => {
               const typeInfo = TASK_TYPE_INFO[template.type];
               return (
-                <TouchableOpacity
+                <Pressable
                   key={template.id}
                   onPress={() => applyTemplate(template)}
                   style={{
@@ -1253,7 +1248,7 @@ export function AddEntryModal({
                       {template.description}
                     </Text>
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </ScrollView>
@@ -1268,7 +1263,7 @@ export function AddEntryModal({
           >
             Farm *
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowTaskFarmPicker(!showTaskFarmPicker)}
             style={{
               backgroundColor: '#ffffff',
@@ -1289,7 +1284,7 @@ export function AddEntryModal({
               </Text>
             </View>
             <AppIcon name="chevron-down" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
+          </Pressable>
           {showTaskFarmPicker && farms && (
             <View
               style={{
@@ -1302,7 +1297,7 @@ export function AddEntryModal({
               }}
             >
               {farms.map((f) => (
-                <TouchableOpacity
+                <Pressable
                   key={f.id}
                   onPress={() => {
                     if (f.id) setTaskFarmId(f.id);
@@ -1324,7 +1319,7 @@ export function AddEntryModal({
                   >
                     {f.name}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}
@@ -1393,7 +1388,7 @@ export function AddEntryModal({
           >
             Type
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowTypePicker(true)}
             style={{
               backgroundColor: '#ffffff',
@@ -1418,7 +1413,7 @@ export function AddEntryModal({
               </Text>
             </View>
             <AppIcon name="chevron-down" size={16} color="#9CA3AF" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <View style={{ flex: 1 }}>
@@ -1428,7 +1423,7 @@ export function AddEntryModal({
           >
             Priority
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowPriorityPicker(true)}
             style={{
               backgroundColor: '#ffffff',
@@ -1459,7 +1454,7 @@ export function AddEntryModal({
               </Text>
             </View>
             <AppIcon name="chevron-down" size={16} color="#9CA3AF" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -1470,7 +1465,7 @@ export function AddEntryModal({
         >
           Due Date
         </Text>
-        <TouchableOpacity
+        <Pressable
           onPress={() => setShowDueDatePicker(true)}
           style={{
             backgroundColor: '#ffffff',
@@ -1501,11 +1496,11 @@ export function AddEntryModal({
             </Text>
           </View>
           {dueDate && (
-            <TouchableOpacity onPress={() => setDueDate('')} style={{ marginLeft: 8, padding: 4 }}>
+            <Pressable onPress={() => setDueDate('')} style={{ marginLeft: 8, padding: 4 }}>
               <AppIcon name="close-circle" size={20} color="#9CA3AF" />
-            </TouchableOpacity>
+            </Pressable>
           )}
-        </TouchableOpacity>
+        </Pressable>
         {showDueDatePicker && !isIOS && (
           <DateTimePicker
             value={dueDate ? new Date(dueDate) : new Date()}
@@ -1555,9 +1550,9 @@ export function AddEntryModal({
                 <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
                   Select Due Date
                 </Text>
-                <TouchableOpacity onPress={() => setShowDueDatePicker(false)}>
+                <Pressable onPress={() => setShowDueDatePicker(false)}>
                   <AppIcon name="close" size={24} color="#9CA3AF" />
-                </TouchableOpacity>
+                </Pressable>
               </View>
               <DateTimePicker
                 value={dueDate ? new Date(dueDate) : new Date()}
@@ -1567,7 +1562,7 @@ export function AddEntryModal({
                   if (date) setDueDate(date.toISOString().split('T')[0]);
                 }}
               />
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowDueDatePicker(false)}
                 style={[
                   { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
@@ -1577,7 +1572,7 @@ export function AddEntryModal({
                 <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
                   Done
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </Pressable>
         )}
@@ -1624,9 +1619,9 @@ export function AddEntryModal({
                 {activeFarm?.name}
               </Text>
             </View>
-            <TouchableOpacity onPress={handleClose} style={{ width: 40, alignItems: 'flex-end' }}>
+            <Pressable onPress={handleClose} style={{ width: 40, alignItems: 'flex-end' }}>
               <AppIcon name="close-circle" size={26} color="#9CA3AF" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
@@ -1679,9 +1674,9 @@ export function AddEntryModal({
                 <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
                   Select Date
                 </Text>
-                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <Pressable onPress={() => setShowDatePicker(false)}>
                   <AppIcon name="close" size={24} color="#9CA3AF" />
-                </TouchableOpacity>
+                </Pressable>
               </View>
               <DateTimePicker
                 value={selectedDate}
@@ -1691,7 +1686,7 @@ export function AddEntryModal({
                   if (date) setSelectedDate(date);
                 }}
               />
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowDatePicker(false)}
                 style={[
                   { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
@@ -1701,7 +1696,7 @@ export function AddEntryModal({
                 <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
                   Done
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </Pressable>
         )}
@@ -1746,13 +1741,13 @@ export function AddEntryModal({
                 <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
                   Select Task Type
                 </Text>
-                <TouchableOpacity onPress={() => setShowTypePicker(false)}>
+                <Pressable onPress={() => setShowTypePicker(false)}>
                   <AppIcon name="close" size={24} color="#9CA3AF" />
-                </TouchableOpacity>
+                </Pressable>
               </View>
               <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ maxHeight: 320 }}>
                 {TASK_TYPES.map((taskType) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={taskType}
                     onPress={() => {
                       setType(taskType);
@@ -1782,7 +1777,7 @@ export function AddEntryModal({
                     >
                       {TASK_TYPE_INFO[taskType].label}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </ScrollView>
             </View>
@@ -1829,12 +1824,12 @@ export function AddEntryModal({
                 <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
                   Select Priority
                 </Text>
-                <TouchableOpacity onPress={() => setShowPriorityPicker(false)}>
+                <Pressable onPress={() => setShowPriorityPicker(false)}>
                   <AppIcon name="close" size={24} color="#9CA3AF" />
-                </TouchableOpacity>
+                </Pressable>
               </View>
               {PRIORITIES.map((p) => (
-                <TouchableOpacity
+                <Pressable
                   key={p}
                   onPress={() => {
                     setPriority(p);
@@ -1881,7 +1876,7 @@ export function AddEntryModal({
                   >
                     {PRIORITY_INFO[p].label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </Pressable>
@@ -1914,7 +1909,7 @@ export function AddEntryModal({
         >
           {activeTab === 'log' ? (
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity
+              <Pressable
                 onPress={handleClose}
                 style={{
                   flex: 1,
@@ -1928,8 +1923,8 @@ export function AddEntryModal({
                 <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
                   Cancel
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={saveAllLogs}
                 disabled={pendingLogs.length === 0 || isSubmittingLogs || !activeFarm}
                 style={[
@@ -1969,11 +1964,11 @@ export function AddEntryModal({
                     </Text>
                   </>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ) : (
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity
+              <Pressable
                 onPress={handleClose}
                 style={{
                   flex: 1,
@@ -1987,8 +1982,8 @@ export function AddEntryModal({
                 <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
                   Cancel
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={handleTaskSubmit}
                 disabled={!isTaskValid || isTaskSaving}
                 style={[
@@ -2019,7 +2014,7 @@ export function AddEntryModal({
                     </Text>
                   </>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
           )}
         </View>

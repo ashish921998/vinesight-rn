@@ -3,7 +3,7 @@ import {
   View,
   Text,
   Modal,
-  TouchableOpacity,
+  Pressable,
   TextInput,
   ScrollView,
   KeyboardAvoidingView,
@@ -212,9 +212,9 @@ export default function AddTaskModal({
               justifyContent: 'space-between',
             }}
           >
-            <TouchableOpacity onPress={onClose} disabled={isLoading}>
+            <Pressable onPress={onClose} disabled={isLoading}>
               <Text style={{ color: colors.primary[600], fontSize: fontSize.base }}>Cancel</Text>
-            </TouchableOpacity>
+            </Pressable>
             <Text
               style={{
                 fontSize: fontSize.lg,
@@ -225,7 +225,7 @@ export default function AddTaskModal({
             >
               {isEditing ? 'Edit Task' : 'Add Task'}
             </Text>
-            <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
+            <Pressable onPress={handleSubmit} disabled={isLoading}>
               <Text
                 style={{
                   fontSize: fontSize.base,
@@ -235,14 +235,14 @@ export default function AddTaskModal({
               >
                 {isLoading ? 'Saving...' : 'Save'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
           {/* Templates Button */}
           {!isEditing && (
-            <TouchableOpacity
+            <Pressable
               onPress={() => setShowTemplates(!showTemplates)}
               style={{
                 backgroundColor: colors.primary[50],
@@ -269,7 +269,7 @@ export default function AddTaskModal({
                 size={20}
                 color="#408059"
               />
-            </TouchableOpacity>
+            </Pressable>
           )}
 
           {/* Templates List */}
@@ -288,7 +288,7 @@ export default function AddTaskModal({
                 {TASK_TEMPLATES.slice(0, 8).map((template) => {
                   const typeInfo = TASK_TYPE_INFO[template.type];
                   return (
-                    <TouchableOpacity
+                    <Pressable
                       key={template.id}
                       onPress={() => applyTemplate(template)}
                       style={{
@@ -328,7 +328,7 @@ export default function AddTaskModal({
                           {template.description}
                         </Text>
                       </View>
-                    </TouchableOpacity>
+                    </Pressable>
                   );
                 })}
               </ScrollView>
@@ -347,7 +347,7 @@ export default function AddTaskModal({
             >
               Farm *
             </Text>
-            <TouchableOpacity
+            <Pressable
               onPress={() => setShowFarmPicker(!showFarmPicker)}
               style={{
                 backgroundColor: colors.white,
@@ -374,7 +374,7 @@ export default function AddTaskModal({
                 </Text>
               </View>
               <Symbol name="chevron.down" size={20} color="#9CA3AF" />
-            </TouchableOpacity>
+            </Pressable>
             {showFarmPicker && farms && (
               <View
                 style={{
@@ -387,7 +387,7 @@ export default function AddTaskModal({
                 }}
               >
                 {farms.map((farm) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={farm.id}
                     onPress={() => {
                       if (farm.id) setFarmId(farm.id);
@@ -408,7 +408,7 @@ export default function AddTaskModal({
                     >
                       {farm.name}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             )}
@@ -492,7 +492,7 @@ export default function AddTaskModal({
               >
                 Type
               </Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowTypePicker(!showTypePicker)}
                 style={{
                   backgroundColor: colors.white,
@@ -523,7 +523,7 @@ export default function AddTaskModal({
                   </Text>
                 </View>
                 <Symbol name="chevron.down" size={16} color="#9CA3AF" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {/* Priority */}
@@ -538,7 +538,7 @@ export default function AddTaskModal({
               >
                 Priority
               </Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowPriorityPicker(!showPriorityPicker)}
                 style={{
                   backgroundColor: colors.white,
@@ -571,7 +571,7 @@ export default function AddTaskModal({
                   </Text>
                 </View>
                 <Symbol name="chevron.down" size={16} color="#9CA3AF" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
 
@@ -588,7 +588,7 @@ export default function AddTaskModal({
               }}
             >
               {TASK_TYPES.map((taskType) => (
-                <TouchableOpacity
+                <Pressable
                   key={taskType}
                   onPress={() => {
                     setType(taskType);
@@ -617,7 +617,7 @@ export default function AddTaskModal({
                   >
                     {TASK_TYPE_INFO[taskType].label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}
@@ -635,7 +635,7 @@ export default function AddTaskModal({
               }}
             >
               {PRIORITIES.map((p) => (
-                <TouchableOpacity
+                <Pressable
                   key={p}
                   onPress={() => {
                     setPriority(p);
@@ -679,7 +679,7 @@ export default function AddTaskModal({
                   >
                     {PRIORITY_INFO[p].label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}

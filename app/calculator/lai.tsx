@@ -4,14 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
@@ -203,7 +196,7 @@ export default function LAICalculatorScreen() {
               </View>
 
               {/* Calculate Button */}
-              <TouchableOpacity
+              <Pressable
                 onPress={calculate}
                 disabled={!canCalculate || result !== null}
                 style={{
@@ -222,7 +215,7 @@ export default function LAICalculatorScreen() {
                 >
                   Calculate LAI
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
 
               {/* Results */}
               {result !== null && (
@@ -332,7 +325,7 @@ export default function LAICalculatorScreen() {
 
             {/* Reset Button */}
             {result !== null && (
-              <TouchableOpacity
+              <Pressable
                 onPress={reset}
                 style={{
                   backgroundColor: colors.white,
@@ -355,7 +348,7 @@ export default function LAICalculatorScreen() {
                     Reset Calculator
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </ScrollView>
         </KeyboardAvoidingView>

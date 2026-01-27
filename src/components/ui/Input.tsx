@@ -3,7 +3,7 @@ import {
   TextInput,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   type TextInputProps,
   type ViewStyle,
   type TextStyle,
@@ -121,7 +121,7 @@ export function Input({
         />
 
         {isPassword && (
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowPassword(!showPassword)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -130,11 +130,11 @@ export function Input({
               size={20}
               color={colors.surface[400]}
             />
-          </TouchableOpacity>
+          </Pressable>
         )}
 
         {!isPassword && rightIcon && (
-          <TouchableOpacity
+          <Pressable
             onPress={onRightIconPress}
             disabled={!onRightIconPress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -144,7 +144,7 @@ export function Input({
               size={20}
               color={isFocused ? colors.primary[500] : colors.surface[400]}
             />
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
 

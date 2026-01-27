@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Symbol } from '@/components/ui/Symbol';
@@ -128,7 +128,7 @@ export default function LabTestsScreen() {
               </Text>
             </View>
           </View>
-          <TouchableOpacity
+          <Pressable
             onPress={() =>
               isSoil
                 ? handleDeleteSoilTest(test as SoilTestRecord)
@@ -137,7 +137,7 @@ export default function LabTestsScreen() {
             style={{ padding: spacing[2] }}
           >
             <Symbol name="trash" size={18} color="#ef4444" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Parameters Grid */}
@@ -243,7 +243,7 @@ export default function LabTestsScreen() {
         >
           Add a {type === 'soil' ? 'soil' : 'petiole'} test to track nutrient levels.
         </Text>
-        <TouchableOpacity
+        <Pressable
           onPress={() =>
             router.push({
               pathname: '/add-lab-test',
@@ -269,7 +269,7 @@ export default function LabTestsScreen() {
           >
             Add {type === 'soil' ? 'Soil' : 'Petiole'} Test
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   };
@@ -289,7 +289,7 @@ export default function LabTestsScreen() {
           >
             Invalid Farm
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => router.back()}
             style={{
               marginTop: spacing[4],
@@ -300,7 +300,7 @@ export default function LabTestsScreen() {
             }}
           >
             <Text style={{ color: colors.gray[700], fontWeight: fontWeight.medium }}>Go Back</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     );
@@ -321,9 +321,9 @@ export default function LabTestsScreen() {
           backgroundColor: 'rgba(255,255,255,0.8)',
         }}
       >
-        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
+        <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <Symbol name="chevron.left" size={24} color="#333" />
-        </TouchableOpacity>
+        </Pressable>
         <Symbol name="flask.fill" size={24} color="#408059" />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
@@ -335,7 +335,7 @@ export default function LabTestsScreen() {
             <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>{farm.name}</Text>
           )}
         </View>
-        <TouchableOpacity
+        <Pressable
           onPress={() => {
             if (selectedTab === 'soil') {
               router.push(`/soil-trends?farmId=${farmId}`);
@@ -364,8 +364,8 @@ export default function LabTestsScreen() {
           >
             View Trends
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Pressable>
+        <Pressable
           onPress={() =>
             router.push({
               pathname: '/add-lab-test',
@@ -382,7 +382,7 @@ export default function LabTestsScreen() {
           }}
         >
           <Symbol name="plus" size={24} color="white" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Tabs */}
@@ -396,7 +396,7 @@ export default function LabTestsScreen() {
           borderBottomColor: colors.gray[200],
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => setSelectedTab('soil')}
           style={{
             flex: 1,
@@ -417,8 +417,8 @@ export default function LabTestsScreen() {
           >
             Soil ({soilTests?.length || 0})
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Pressable>
+        <Pressable
           onPress={() => setSelectedTab('petiole')}
           style={{
             flex: 1,
@@ -439,7 +439,7 @@ export default function LabTestsScreen() {
           >
             Petiole ({petioleTests?.length || 0})
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Content */}

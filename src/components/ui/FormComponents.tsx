@@ -2,7 +2,7 @@ import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   TextInput,
   Modal,
   KeyboardAvoidingView,
@@ -115,9 +115,9 @@ export function FormModal({
       style={{ flex: 1, backgroundColor: colors.surface[100] }}
     >
       <View style={headerStyle}>
-        <TouchableOpacity onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
+        <Pressable onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
           <Symbol name="xmark" size={20} color="#111827" />
-        </TouchableOpacity>
+        </Pressable>
         <Text style={titleStyle} numberOfLines={1}>
           {title}
         </Text>
@@ -138,21 +138,21 @@ export function FormModal({
 
       <View style={footerStyle}>
         {showResetButton && onReset ? (
-          <TouchableOpacity onPress={onReset} disabled={isLoading}>
+          <Pressable onPress={onReset} disabled={isLoading}>
             <Text style={resetTextStyle}>Reset</Text>
-          </TouchableOpacity>
+          </Pressable>
         ) : (
           <View />
         )}
 
         {onSave && (
-          <TouchableOpacity
+          <Pressable
             onPress={onSave}
             disabled={isSaveDisabled || isLoading}
             style={saveButtonStyle}
           >
             <Text style={saveTextStyle}>{isLoading ? 'Saving...' : saveLabel}</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
     </KeyboardAvoidingView>
@@ -262,9 +262,9 @@ export function FullScreenForm({
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface[100] }}>
       <View style={headerStyle}>
-        <TouchableOpacity onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
+        <Pressable onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
           <Symbol name="xmark" size={20} color="#111827" />
-        </TouchableOpacity>
+        </Pressable>
         <Text style={titleStyle} numberOfLines={1}>
           {title}
         </Text>
@@ -289,21 +289,21 @@ export function FullScreenForm({
 
         <View style={footerStyle}>
           {showResetButton && onReset ? (
-            <TouchableOpacity onPress={onReset} disabled={isLoading}>
+            <Pressable onPress={onReset} disabled={isLoading}>
               <Text style={resetTextStyle}>Reset</Text>
-            </TouchableOpacity>
+            </Pressable>
           ) : (
             <View />
           )}
 
           {onSave && (
-            <TouchableOpacity
+            <Pressable
               onPress={onSave}
               disabled={isSaveDisabled || isLoading}
               style={saveButtonStyle}
             >
               <Text style={saveTextStyle}>{isLoading ? 'Saving...' : saveLabel}</Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
       </KeyboardAvoidingView>
@@ -402,7 +402,7 @@ export function PillSelector({
       {options.map((option) => {
         const selected = isSelected(option.value);
         return (
-          <TouchableOpacity
+          <Pressable
             key={option.value}
             onPress={() => onSelect(option.value)}
             style={getPillStyle(selected)}
@@ -413,7 +413,7 @@ export function PillSelector({
               </View>
             )}
             <Text style={getPillTextStyle(selected)}>{option.label}</Text>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>
@@ -459,13 +459,13 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
       {options.map((option) => {
         const selected = selectedValue === option.value;
         return (
-          <TouchableOpacity
+          <Pressable
             key={option.value}
             onPress={() => onSelect(option.value)}
             style={getSegmentStyle(selected)}
           >
             <Text style={getSegmentTextStyle(selected)}>{option.label}</Text>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>
@@ -542,7 +542,7 @@ export function CardSelector({
       {options.map((option) => {
         const selected = selectedValue === option.value;
         return (
-          <TouchableOpacity
+          <Pressable
             key={option.value}
             onPress={() => onSelect(option.value)}
             style={getCardStyle(selected)}
@@ -562,7 +562,7 @@ export function CardSelector({
             </View>
             <Text style={getLabelTextStyle(selected)}>{option.label}</Text>
             {option.sublabel && <Text style={sublabelTextStyle}>{option.sublabel}</Text>}
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>
@@ -715,11 +715,7 @@ export function Toggle({ label, description, value, onValueChange, style }: Togg
   };
 
   return (
-    <TouchableOpacity
-      onPress={() => onValueChange(!value)}
-      style={[containerStyle, style]}
-      activeOpacity={0.7}
-    >
+    <Pressable onPress={() => onValueChange(!value)} style={[containerStyle, style]}>
       <View style={labelContainerStyle}>
         <Text style={labelTextStyle}>{label}</Text>
         {description && <Text style={descriptionTextStyle}>{description}</Text>}
@@ -734,7 +730,7 @@ export function Toggle({ label, description, value, onValueChange, style }: Togg
           ]}
         />
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 

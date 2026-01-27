@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, TextInput, type TextInputProps } from 'react-native';
+import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput } from './FormField';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculatorModels';
@@ -93,7 +93,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
           {HARVEST_GRADES.map((grade) => (
-            <TouchableOpacity
+            <Pressable
               key={grade}
               onPress={() => onChange({ ...data, grade })}
               style={{
@@ -104,7 +104,6 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                 backgroundColor: data.grade === grade ? '#F59E0B' : colors.white,
                 borderColor: data.grade === grade ? '#F59E0B' : colors.surface[200],
               }}
-              activeOpacity={0.7}
             >
               <Text
                 style={{
@@ -115,7 +114,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
               >
                 {grade}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>

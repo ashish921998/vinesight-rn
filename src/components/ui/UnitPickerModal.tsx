@@ -2,7 +2,7 @@ import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   Modal,
   ScrollView,
   type ViewStyle,
@@ -101,16 +101,16 @@ export function UnitPickerModal<T extends string>({
       <View style={overlayStyle}>
         <View style={containerStyle}>
           <View style={headerStyle}>
-            <TouchableOpacity onPress={onClose} style={cancelButtonStyle}>
+            <Pressable onPress={onClose} style={cancelButtonStyle}>
               <Text style={cancelTextStyle}>Cancel</Text>
-            </TouchableOpacity>
+            </Pressable>
             <Text style={titleTextStyle}>{title}</Text>
           </View>
           <ScrollView style={{ maxHeight: 400 }}>
             {options.map((unit) => {
               const isSelected = unit === selectedValue;
               return (
-                <TouchableOpacity
+                <Pressable
                   key={unit}
                   onPress={() => handleSelect(unit)}
                   style={getOptionStyle(isSelected)}
@@ -121,7 +121,7 @@ export function UnitPickerModal<T extends string>({
                       <Symbol name="checkmark.circle.fill" size={24} color={colors.primary[500]} />
                     )}
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </ScrollView>

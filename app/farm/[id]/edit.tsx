@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   TextInput,
   Alert,
   ActivityIndicator,
@@ -37,7 +37,7 @@ function Section({
         overflow: 'hidden',
       }}
     >
-      <TouchableOpacity
+      <Pressable
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -47,7 +47,6 @@ function Section({
           borderBottomColor: colors.surface[100],
         }}
         onPress={onToggle}
-        activeOpacity={onToggle ? 0.7 : 1}
       >
         <Text
           style={{
@@ -61,7 +60,7 @@ function Section({
         {onToggle && (
           <Symbol name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#6B7280" />
         )}
-      </TouchableOpacity>
+      </Pressable>
       {isExpanded && <View style={{ padding: spacing[4] }}>{children}</View>}
     </View>
   );
@@ -281,7 +280,7 @@ export default function EditFarmScreen() {
         <Text style={{ color: colors.surface[500], textAlign: 'center', marginTop: spacing[2] }}>
           The farm you&apos;re looking for doesn&apos;t exist or has been deleted.
         </Text>
-        <TouchableOpacity
+        <Pressable
           onPress={() => router.back()}
           style={{
             marginTop: spacing[6],
@@ -292,7 +291,7 @@ export default function EditFarmScreen() {
           }}
         >
           <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>Go Back</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -305,9 +304,9 @@ export default function EditFarmScreen() {
           headerStyle: { backgroundColor: '#F9FAFB' },
           headerTintColor: '#111827',
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[4] }}>
+            <Pressable onPress={() => router.back()} style={{ marginRight: spacing[4] }}>
               <Symbol name="xmark" size={24} color="#111827" />
-            </TouchableOpacity>
+            </Pressable>
           ),
         }}
       />
@@ -383,7 +382,7 @@ export default function EditFarmScreen() {
             <FormField label="Crop Type" required>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
                 {CROPS.map((crop) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={crop}
                     style={{
                       paddingHorizontal: spacing[4],
@@ -409,13 +408,13 @@ export default function EditFarmScreen() {
                     >
                       {crop}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             </FormField>
 
             <FormField label="Variety" required>
-              <TouchableOpacity
+              <Pressable
                 style={{
                   backgroundColor: colors.surface[50],
                   borderRadius: borderRadius.xl,
@@ -438,7 +437,7 @@ export default function EditFarmScreen() {
                   {cropVariety || 'Select variety'}
                 </Text>
                 <Symbol name="chevron.down" size={20} color="#6B7280" />
-              </TouchableOpacity>
+              </Pressable>
 
               {cropVariety === 'Custom' && (
                 <TextInput
@@ -462,7 +461,7 @@ export default function EditFarmScreen() {
             </FormField>
 
             <FormField label="Planting Date">
-              <TouchableOpacity
+              <Pressable
                 style={{
                   backgroundColor: colors.surface[50],
                   borderRadius: borderRadius.xl,
@@ -485,7 +484,7 @@ export default function EditFarmScreen() {
                 >
                   {plantingDate ? plantingDate.toLocaleDateString() : 'Select date'}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </FormField>
           </Section>
 
@@ -587,7 +586,7 @@ export default function EditFarmScreen() {
             onToggle={() => handleToggleSection('dates')}
           >
             <FormField label="Date of Pruning">
-              <TouchableOpacity
+              <Pressable
                 style={{
                   backgroundColor: colors.surface[50],
                   borderRadius: borderRadius.xl,
@@ -614,14 +613,14 @@ export default function EditFarmScreen() {
                   </Text>
                 </View>
                 {dateOfPruning && (
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => setDateOfPruning(null)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
                     <Symbol name="xmark.circle.fill" size={20} color="#9CA3AF" />
-                  </TouchableOpacity>
+                  </Pressable>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </FormField>
           </Section>
         </ScrollView>
@@ -638,7 +637,7 @@ export default function EditFarmScreen() {
             borderTopColor: colors.surface[200],
           }}
         >
-          <TouchableOpacity
+          <Pressable
             style={{
               paddingVertical: spacing[4],
               borderRadius: borderRadius.xl,
@@ -662,12 +661,12 @@ export default function EditFarmScreen() {
                 Save Changes
               </Text>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
 
       {showVarietyPicker && (
-        <TouchableOpacity
+        <Pressable
           style={{
             position: 'absolute',
             top: 0,
@@ -677,10 +676,9 @@ export default function EditFarmScreen() {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             justifyContent: 'flex-end',
           }}
-          activeOpacity={1}
           onPress={() => setShowVarietyPicker(false)}
         >
-          <TouchableOpacity activeOpacity={1}>
+          <Pressable>
             <View
               style={{
                 backgroundColor: colors.white,
@@ -708,9 +706,9 @@ export default function EditFarmScreen() {
                 >
                   Select Variety
                 </Text>
-                <TouchableOpacity onPress={() => setShowVarietyPicker(false)}>
+                <Pressable onPress={() => setShowVarietyPicker(false)}>
                   <Symbol name="xmark" size={24} color="#111827" />
-                </TouchableOpacity>
+                </Pressable>
               </View>
 
               <View
@@ -749,7 +747,7 @@ export default function EditFarmScreen() {
 
               <ScrollView style={{ maxHeight: 320 }}>
                 {filteredVarieties.map((variety) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={variety}
                     style={{
                       paddingHorizontal: spacing[4],
@@ -769,12 +767,12 @@ export default function EditFarmScreen() {
                     >
                       {variety}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </ScrollView>
             </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
+          </Pressable>
+        </Pressable>
       )}
 
       {showDatePicker && (

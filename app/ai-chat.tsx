@@ -4,7 +4,7 @@ import {
   Text,
   TextInput,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
   ActivityIndicator,
   Alert,
@@ -175,9 +175,9 @@ export default function AIChatScreen() {
           headerStyle: { backgroundColor: '#f2f2f7' },
           headerTintColor: '#000000',
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: spacing[2] }}>
+            <Pressable onPress={() => router.back()} style={{ marginLeft: spacing[2] }}>
               <Symbol name="chevron.left" size={24} color="#000000" />
-            </TouchableOpacity>
+            </Pressable>
           ),
         }}
       />
@@ -241,7 +241,7 @@ export default function AIChatScreen() {
                 </Text>
                 <View style={{ width: '100%', gap: spacing[2] }}>
                   {DEFAULT_SUGGESTIONS.map((suggestion, index) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={index}
                       onPress={() => handleSuggestionPress(suggestion)}
                       style={{
@@ -261,7 +261,7 @@ export default function AIChatScreen() {
                       >
                         {suggestion}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </View>
               </View>
@@ -404,7 +404,7 @@ export default function AIChatScreen() {
                   contentContainerStyle={{ flexDirection: 'row' }}
                 >
                   {suggestions.map((suggestion, index) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={index}
                       onPress={() => handleSuggestionPress(suggestion)}
                       style={{
@@ -418,7 +418,7 @@ export default function AIChatScreen() {
                       <Text style={{ color: colors.primary[700], fontSize: fontSize.sm }}>
                         {suggestion}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </ScrollView>
               </View>
@@ -455,7 +455,7 @@ export default function AIChatScreen() {
                 returnKeyType="send"
                 onSubmitEditing={() => handleSendMessage()}
               />
-              <TouchableOpacity
+              <Pressable
                 onPress={() => handleSendMessage()}
                 disabled={!inputText.trim() || isLoading}
                 style={{
@@ -473,7 +473,7 @@ export default function AIChatScreen() {
                   size={20}
                   color={inputText.trim() && !isLoading ? '#FFFFFF' : '#9CA3AF'}
                 />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>

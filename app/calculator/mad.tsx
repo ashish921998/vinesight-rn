@@ -5,14 +5,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
@@ -200,7 +193,7 @@ export default function MADCalculatorScreen() {
               </View>
 
               {/* Calculate Button */}
-              <TouchableOpacity
+              <Pressable
                 onPress={calculateMAD}
                 disabled={!canCalculateMAD || madResult !== null}
                 style={{
@@ -219,7 +212,7 @@ export default function MADCalculatorScreen() {
                 >
                   Calculate MAD
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
 
               {/* MAD Result */}
               {madResult !== null && (
@@ -322,7 +315,7 @@ export default function MADCalculatorScreen() {
                   Select Refill Span
                 </Text>
                 {REFILL_SPANS.map((span) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={span.id}
                     onPress={() => setSelectedRefillSpan(span.id)}
                     style={{
@@ -343,7 +336,7 @@ export default function MADCalculatorScreen() {
                     {selectedRefillSpan === span.id && (
                       <Symbol name="checkmark.circle.fill" size={20} color="#408059" />
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
 
                 {/* Guidance */}
@@ -377,7 +370,7 @@ export default function MADCalculatorScreen() {
                 </View>
 
                 {/* Calculate Button */}
-                <TouchableOpacity
+                <Pressable
                   onPress={calculateRefillTank}
                   disabled={!canCalculateRefillTank || refillTankResult !== null}
                   style={{
@@ -397,7 +390,7 @@ export default function MADCalculatorScreen() {
                   >
                     Calculate Refill Tank
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
 
                 {/* Refill Tank Result */}
                 {refillTankResult !== null && (
@@ -459,7 +452,7 @@ export default function MADCalculatorScreen() {
 
             {/* Reset Button */}
             {madResult !== null && refillTankResult !== null && (
-              <TouchableOpacity
+              <Pressable
                 onPress={resetCalculator}
                 style={{
                   borderRadius: borderRadius['2xl'],
@@ -482,7 +475,7 @@ export default function MADCalculatorScreen() {
                     Reset Calculator
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </ScrollView>
         </KeyboardAvoidingView>

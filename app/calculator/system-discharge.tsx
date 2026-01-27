@@ -4,14 +4,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
@@ -249,7 +242,7 @@ export default function SystemDischargeScreen() {
                   </Text>
                 </View>
 
-                <TouchableOpacity
+                <Pressable
                   onPress={() => {
                     setSelectedMethod(1);
                     setResults(null);
@@ -280,9 +273,9 @@ export default function SystemDischargeScreen() {
                       <Symbol name="checkmark.circle.fill" size={18} color="#408059" />
                     ) : null}
                   </View>
-                </TouchableOpacity>
+                </Pressable>
 
-                <TouchableOpacity
+                <Pressable
                   onPress={() => {
                     setSelectedMethod(2);
                     setResults(null);
@@ -312,7 +305,7 @@ export default function SystemDischargeScreen() {
                       <Symbol name="checkmark.circle.fill" size={18} color="#408059" />
                     ) : null}
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
 
@@ -398,7 +391,7 @@ export default function SystemDischargeScreen() {
                   </Text>
                 </View>
 
-                <TouchableOpacity
+                <Pressable
                   onPress={calculateMethod1}
                   disabled={!canCalculateMethod1 || results !== null}
                   style={{
@@ -418,7 +411,7 @@ export default function SystemDischargeScreen() {
                   >
                     Calculate
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
 
@@ -503,7 +496,7 @@ export default function SystemDischargeScreen() {
                   </Text>
                 </View>
 
-                <TouchableOpacity
+                <Pressable
                   onPress={calculateMethod2}
                   disabled={!canCalculateMethod2 || results !== null}
                   style={{
@@ -523,7 +516,7 @@ export default function SystemDischargeScreen() {
                   >
                     Calculate
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
 
@@ -676,7 +669,7 @@ export default function SystemDischargeScreen() {
             )}
 
             {results && (
-              <TouchableOpacity
+              <Pressable
                 onPress={reset}
                 style={{
                   backgroundColor: colors.white,
@@ -700,7 +693,7 @@ export default function SystemDischargeScreen() {
                     Reset Calculator
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </ScrollView>
         </KeyboardAvoidingView>

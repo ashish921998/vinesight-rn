@@ -1,16 +1,16 @@
 import React from 'react';
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
   ActivityIndicator,
   View,
-  type TouchableOpacityProps,
+  type PressableProps,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
-interface ButtonProps extends TouchableOpacityProps {
+interface ButtonProps extends PressableProps {
   title: string;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
@@ -105,13 +105,13 @@ export function Button({
     ...textVariantStyles[variant],
   };
 
+  const resolvedStyle: PressableProps['style'] = (state) => [
+    containerStyle,
+    typeof style === 'function' ? style(state) : style,
+  ];
+
   return (
-    <TouchableOpacity
-      disabled={isDisabled}
-      style={[containerStyle, style]}
-      activeOpacity={0.8}
-      {...props}
-    >
+    <Pressable disabled={isDisabled} style={resolvedStyle} {...props}>
       {isLoading ? (
         <ActivityIndicator
           color={variant === 'primary' ? colors.surface[100] : colors.primary[500]}
@@ -124,6 +124,6 @@ export function Button({
           {rightIcon && <View style={{ marginLeft: spacing[2] }}>{rightIcon}</View>}
         </>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -77,10 +77,9 @@ export default function ToolsScreen() {
           CALCULATORS
         </Text>
         {calculators.map((calc) => (
-          <TouchableOpacity
+          <Pressable
             key={calc.id}
             onPress={() => router.push(calc.route)}
-            activeOpacity={0.7}
             style={{
               backgroundColor: colors.surface[100],
               borderRadius: borderRadius['2xl'],
@@ -120,7 +119,7 @@ export default function ToolsScreen() {
               </Text>
             </View>
             <Symbol name="chevron.right" size={20} color="#D1D5DB" />
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </View>
     </ScrollView>

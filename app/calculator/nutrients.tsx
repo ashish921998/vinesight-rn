@@ -4,14 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
@@ -157,7 +150,7 @@ export default function NutrientCalculatorScreen() {
                 }}
               >
                 {GRAPE_GROWTH_STAGES.map((stage) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={stage.id}
                     onPress={() => setSelectedStage(stage.id)}
                     style={{
@@ -177,7 +170,7 @@ export default function NutrientCalculatorScreen() {
                     >
                       {stage.label}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
 
@@ -206,7 +199,7 @@ export default function NutrientCalculatorScreen() {
               </View>
 
               {/* Calculate Button */}
-              <TouchableOpacity
+              <Pressable
                 onPress={calculate}
                 disabled={!canCalculate || result !== null}
                 style={{
@@ -225,7 +218,7 @@ export default function NutrientCalculatorScreen() {
                 >
                   Calculate Requirements
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
 
               {/* Results */}
               {result !== null && (
@@ -290,7 +283,7 @@ export default function NutrientCalculatorScreen() {
 
             {/* Reset Button */}
             {result !== null && (
-              <TouchableOpacity
+              <Pressable
                 onPress={reset}
                 style={{
                   backgroundColor: colors.white,
@@ -314,7 +307,7 @@ export default function NutrientCalculatorScreen() {
                     Reset Calculator
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </ScrollView>
         </KeyboardAvoidingView>

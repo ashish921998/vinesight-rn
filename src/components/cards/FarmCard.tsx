@@ -8,7 +8,6 @@ import {
   View,
   Text,
   Pressable,
-  TouchableOpacity,
   GestureResponderEvent,
   type ViewStyle,
   type TextStyle,
@@ -90,7 +89,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
         <Text style={nameStyle}>{farm.name}</Text>
         <View style={actionsStyle}>
           {onEdit && (
-            <TouchableOpacity
+            <Pressable
               onPress={(e: GestureResponderEvent) => {
                 e.stopPropagation();
                 onEdit();
@@ -99,10 +98,10 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Symbol name="pencil" size={18} color={colors.primary[500]} />
-            </TouchableOpacity>
+            </Pressable>
           )}
           {onDelete && (
-            <TouchableOpacity
+            <Pressable
               onPress={(e: GestureResponderEvent) => {
                 e.stopPropagation();
                 onDelete();
@@ -111,7 +110,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Symbol name="trash" size={18} color={colors.error} />
-            </TouchableOpacity>
+            </Pressable>
           )}
           <View style={statusBadgeStyle}>
             <Text style={statusTextStyle}>{statusText}</Text>

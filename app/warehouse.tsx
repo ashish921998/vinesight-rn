@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
   RefreshControl,
@@ -124,14 +124,14 @@ export default function WarehouseScreen() {
         options={{
           title: 'Warehouse',
           headerRight: () => (
-            <TouchableOpacity
+            <Pressable
               onPress={() => {
                 openAddItem(null);
               }}
               style={{ marginRight: spacing[4] }}
             >
               <Symbol name="plus.circle.fill" size={28} color="#408059" />
-            </TouchableOpacity>
+            </Pressable>
           ),
         }}
       />
@@ -249,7 +249,7 @@ export default function WarehouseScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   {lowStockItems.map((item) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={item.id}
                       onPress={() => handleAddStock(item)}
                       style={{ width: 160 }}
@@ -321,7 +321,7 @@ export default function WarehouseScreen() {
                           </Text>
                         </View>
                       </View>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </View>
               </ScrollView>
@@ -339,7 +339,7 @@ export default function WarehouseScreen() {
             }}
           >
             {(['all', 'fertilizer', 'spray'] as FilterType[]).map((type) => (
-              <TouchableOpacity
+              <Pressable
                 key={type}
                 onPress={() => setFilter(type)}
                 style={{
@@ -363,7 +363,7 @@ export default function WarehouseScreen() {
                       ? `FERTILIZERS (${totals.fertilizers})`
                       : `SPRAYS (${totals.sprays})`}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
 
@@ -409,7 +409,7 @@ export default function WarehouseScreen() {
               >
                 Tap the + button to add your first inventory item
               </Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => {
                   openAddItem(null);
                 }}
@@ -433,7 +433,7 @@ export default function WarehouseScreen() {
                 >
                   Add Item
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ) : (
             filteredItems.map((item) => {
@@ -499,7 +499,7 @@ export default function WarehouseScreen() {
                             <Text style={{ color: COLORS.lowStock }}>Low</Text>
                           </View>
                         )}
-                        <TouchableOpacity
+                        <Pressable
                           onPress={() => {
                             Alert.alert('Actions', `${item.name}`, [
                               {
@@ -520,7 +520,7 @@ export default function WarehouseScreen() {
                           }}
                         >
                           <Symbol name="ellipsis.circle.fill" size={24} color="#6B7280" />
-                        </TouchableOpacity>
+                        </Pressable>
                       </View>
                       <Text
                         style={{
@@ -602,7 +602,7 @@ export default function WarehouseScreen() {
       </View>
 
       {/* FAB */}
-      <TouchableOpacity
+      <Pressable
         onPress={() => {
           openAddItem(null);
         }}
@@ -619,7 +619,7 @@ export default function WarehouseScreen() {
         }}
       >
         <Symbol name="plus" size={28} color="white" />
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Modals */}
       {/* Warehouse modals are now route-based */}
