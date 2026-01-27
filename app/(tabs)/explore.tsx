@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/Symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import {
   useFarms,
   useDeleteFarm,
@@ -376,7 +377,7 @@ export default function ExploreScreen() {
 
   const renderFarmsTab = () => {
     const renderFarm = ({ item }: { item: Farm }) => (
-      <View className="px-4 mb-3">
+      <View style={{ paddingHorizontal: spacing[4], marginBottom: spacing[3] }}>
         <FarmCard
           farm={item}
           onPress={() => handleFarmPress(item)}
@@ -389,9 +390,18 @@ export default function ExploreScreen() {
     const renderEmpty = () => {
       if (farmsLoading) {
         return (
-          <View className="flex-1 items-center justify-center p-8">
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: spacing[8],
+            }}
+          >
             <ActivityIndicator size="large" color="#408059" />
-            <Text className="text-base mt-4" style={{ color: '#8e8e93' }}>
+            <Text
+              style={{ color: colors.surface[500], fontSize: fontSize.base, marginTop: spacing[4] }}
+            >
               Loading farms...
             </Text>
           </View>
@@ -400,21 +410,49 @@ export default function ExploreScreen() {
 
       if (searchQuery.trim()) {
         return (
-          <View className="flex-1 items-center justify-center p-8">
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: spacing[8],
+            }}
+          >
             <View
-              className="w-20 h-20 rounded-full items-center justify-center mb-4"
-              style={{ backgroundColor: '#f2f2f7' }}
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: spacing[4],
+                backgroundColor: colors.surface[50],
+              }}
             >
               <Symbol name="magnifyingglass" size={36} color="#c7c7cc" />
             </View>
-            <Text className="text-lg font-semibold text-center" style={{ color: '#000000' }}>
+            <Text
+              style={{
+                color: colors.black,
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                textAlign: 'center',
+              }}
+            >
               No Results Found
             </Text>
-            <Text className="text-base text-center mt-2" style={{ color: '#8e8e93' }}>
+            <Text
+              style={{
+                color: colors.surface[500],
+                fontSize: fontSize.base,
+                textAlign: 'center',
+                marginTop: spacing[2],
+              }}
+            >
               Try a different search term
             </Text>
-            <TouchableOpacity onPress={() => setSearchQuery('')} className="mt-4">
-              <Text className="font-medium" style={{ color: '#408059' }}>
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginTop: spacing[4] }}>
+              <Text style={{ color: colors.primary[500], fontWeight: fontWeight.medium }}>
                 Clear Search
               </Text>
             </TouchableOpacity>
@@ -423,73 +461,146 @@ export default function ExploreScreen() {
       }
 
       return (
-        <View className="flex-1 items-center justify-center p-8">
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: spacing[8],
+          }}
+        >
           <View
-            className="w-24 h-24 rounded-full items-center justify-center mb-6"
-            style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: spacing[6],
+              backgroundColor: 'rgba(64, 128, 89, 0.1)',
+            }}
           >
             <Symbol name="leaf.fill" size={48} color="#408059" />
           </View>
-          <Text className="text-xl font-semibold text-center" style={{ color: '#000000' }}>
+          <Text
+            style={{
+              color: colors.black,
+              fontSize: fontSize.xl,
+              fontWeight: fontWeight.semibold,
+              textAlign: 'center',
+            }}
+          >
             No Farms Yet
           </Text>
-          <Text className="text-base text-center mt-2" style={{ color: '#8e8e93' }}>
+          <Text
+            style={{
+              color: colors.surface[500],
+              fontSize: fontSize.base,
+              textAlign: 'center',
+              marginTop: spacing[2],
+            }}
+          >
             Add your first farm to start tracking irrigation, sprays, and harvests.
           </Text>
           <TouchableOpacity
-            className="px-6 py-3 rounded-xl mt-6"
-            style={{ backgroundColor: '#408059' }}
+            style={{
+              paddingHorizontal: spacing[6],
+              paddingVertical: spacing[3],
+              borderRadius: borderRadius.xl,
+              marginTop: spacing[6],
+              backgroundColor: colors.primary[500],
+            }}
             onPress={handleAddFarm}
           >
-            <Text className="text-white font-semibold">Add Farm</Text>
+            <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>Add Farm</Text>
           </TouchableOpacity>
         </View>
       );
     };
 
     const StatsHeader = () => (
-      <View className="px-4 pb-2">
+      <View style={{ paddingHorizontal: spacing[4], paddingBottom: spacing[2] }}>
         {/* Results Count */}
         {searchQuery.trim() && (
-          <Text className="text-sm mt-2" style={{ color: '#8e8e93' }}>
+          <Text
+            style={{ color: colors.surface[500], fontSize: fontSize.sm, marginTop: spacing[2] }}
+          >
             {filteredFarms.length} farm{filteredFarms.length !== 1 ? 's' : ''} found
           </Text>
         )}
 
         {/* Quick Stats */}
         {!searchQuery.trim() && farms && farms.length > 0 && (
-          <View className="flex-row mt-2 gap-3">
-            <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: '#ffffff' }}>
-              <View className="flex-row items-center">
+          <View style={{ flexDirection: 'row', marginTop: spacing[2], gap: spacing[3] }}>
+            <View
+              style={{
+                flex: 1,
+                borderRadius: borderRadius.xl,
+                padding: spacing[3],
+                backgroundColor: colors.surface[100],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View
-                  className="w-8 h-8 rounded-lg items-center justify-center"
-                  style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: borderRadius.lg,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                  }}
                 >
                   <Symbol name="leaf.fill" size={16} color="#408059" />
                 </View>
-                <View className="ml-2">
-                  <Text className="text-lg font-bold" style={{ color: '#000000' }}>
+                <View style={{ marginLeft: spacing[2] }}>
+                  <Text
+                    style={{
+                      color: colors.black,
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                    }}
+                  >
                     {farms.length}
                   </Text>
-                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                  <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
                     Total Farms
                   </Text>
                 </View>
               </View>
             </View>
-            <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: '#ffffff' }}>
-              <View className="flex-row items-center">
+            <View
+              style={{
+                flex: 1,
+                borderRadius: borderRadius.xl,
+                padding: spacing[3],
+                backgroundColor: colors.surface[100],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View
-                  className="w-8 h-8 rounded-lg items-center justify-center"
-                  style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: borderRadius.lg,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                  }}
                 >
                   <Symbol name="arrow.up.left.and.arrow.down.right" size={16} color="#408059" />
                 </View>
-                <View className="ml-2">
-                  <Text className="text-lg font-bold" style={{ color: '#000000' }}>
+                <View style={{ marginLeft: spacing[2] }}>
+                  <Text
+                    style={{
+                      color: colors.black,
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                    }}
+                  >
                     {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}
                   </Text>
-                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                  <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
                     Total Acres
                   </Text>
                 </View>
@@ -530,11 +641,18 @@ export default function ExploreScreen() {
         {/* FAB */}
         {(farms?.length || 0) > 0 && (
           <TouchableOpacity
-            className="absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center"
             activeOpacity={0.8}
             onPress={handleAddFarm}
             style={{
-              backgroundColor: '#408059',
+              position: 'absolute',
+              bottom: spacing[6],
+              right: spacing[6],
+              width: 56,
+              height: 56,
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: colors.primary[500],
             }}
           >
             <Symbol name="plus" size={28} color="#FFFFFF" />
@@ -547,39 +665,96 @@ export default function ExploreScreen() {
   const renderWorkersTab = () => {
     const renderWorker = ({ item }: { item: Worker }) => (
       <TouchableOpacity
-        className="bg-white mx-4 mb-3 rounded-2xl overflow-hidden"
         activeOpacity={0.7}
         onPress={() => handleEditWorker(item)}
+        style={{
+          backgroundColor: colors.surface[100],
+          marginHorizontal: spacing[4],
+          marginBottom: spacing[3],
+          borderRadius: borderRadius['2xl'],
+          overflow: 'hidden',
+        }}
       >
-        <View className="flex-row items-center p-4">
+        <View style={{ flexDirection: 'row', alignItems: 'center', padding: spacing[4] }}>
           {/* Avatar */}
-          <View className="w-12 h-12 bg-primary-100 rounded-full items-center justify-center">
-            <Text className="text-lg font-bold text-primary-600">
+          <View
+            style={{
+              width: 48,
+              height: 48,
+              backgroundColor: colors.primary[100],
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+                color: colors.primary[600],
+              }}
+            >
               {item.name.charAt(0).toUpperCase()}
             </Text>
           </View>
 
           {/* Info */}
-          <View className="flex-1 ml-3">
-            <Text className="text-base font-semibold text-surface-900">{item.name}</Text>
-            <View className="flex-row items-center mt-1">
+          <View style={{ flex: 1, marginLeft: spacing[3] }}>
+            <Text
+              style={{
+                fontSize: fontSize.base,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[900],
+              }}
+            >
+              {item.name}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}>
               <Symbol name="dollarsign.circle" size={12} color="#6B7280" />
-              <Text className="text-sm text-surface-500 ml-1">₹{item.daily_rate}/day</Text>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  color: colors.surface[500],
+                  marginLeft: spacing[1],
+                }}
+              >
+                ₹{item.daily_rate}/day
+              </Text>
             </View>
           </View>
 
           {/* Advance Balance */}
           {item.advance_balance > 0 && (
-            <View className="flex-row items-center bg-orange-100 px-2 py-1 rounded-full mr-2">
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: '#FEF3C7',
+                paddingHorizontal: spacing[2],
+                paddingVertical: spacing[1],
+                borderRadius: borderRadius.full,
+                marginRight: spacing[2],
+              }}
+            >
               <Symbol name="arrow.up.circle.fill" size={12} color="#F59E0B" />
-              <Text className="text-xs font-semibold text-orange-600 ml-1">
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.semibold,
+                  color: '#F59E0B',
+                  marginLeft: spacing[1],
+                }}
+              >
                 ₹{item.advance_balance}
               </Text>
             </View>
           )}
 
           {/* Actions */}
-          <TouchableOpacity onPress={() => handleDeleteWorker(item)} className="p-2">
+          <TouchableOpacity
+            onPress={() => handleDeleteWorker(item)}
+            style={{ padding: spacing[2] }}
+          >
             <Symbol name="trash" size={18} color="#EF4444" />
           </TouchableOpacity>
         </View>
@@ -598,19 +773,37 @@ export default function ExploreScreen() {
         }}
         ListHeaderComponent={
           activeWorkers.length > 0 ? (
-            <Text className="text-xs font-bold text-surface-500 tracking-wider mx-4 mb-2">
+            <Text
+              style={{
+                color: colors.surface[500],
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                letterSpacing: 1,
+                marginHorizontal: spacing[4],
+                marginBottom: spacing[2],
+              }}
+            >
               ACTIVE WORKERS ({activeWorkers.length})
             </Text>
           ) : null
         }
         ListFooterComponent={
           inactiveWorkers.length > 0 ? (
-            <View className="mt-4">
-              <Text className="text-xs font-bold text-surface-500 tracking-wider mx-4 mb-2">
+            <View style={{ marginTop: spacing[4] }}>
+              <Text
+                style={{
+                  color: colors.surface[500],
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.bold,
+                  letterSpacing: 1,
+                  marginHorizontal: spacing[4],
+                  marginBottom: spacing[2],
+                }}
+              >
                 INACTIVE WORKERS ({inactiveWorkers.length})
               </Text>
               {inactiveWorkers.map((worker) => (
-                <View key={String(worker.id)} className="opacity-60">
+                <View key={String(worker.id)} style={{ opacity: 0.6 }}>
                   {renderWorker({ item: worker })}
                 </View>
               ))}
@@ -619,21 +812,60 @@ export default function ExploreScreen() {
         }
         ListEmptyComponent={
           !workersLoading ? (
-            <View className="flex-1 items-center justify-center p-8">
-              <View className="w-20 h-20 bg-primary-100 rounded-full items-center justify-center mb-4">
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: spacing[8],
+              }}
+            >
+              <View
+                style={{
+                  width: 80,
+                  height: 80,
+                  backgroundColor: colors.primary[100],
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: spacing[4],
+                }}
+              >
                 <Symbol name="person.2" size={40} color="#408059" />
               </View>
-              <Text className="text-lg font-semibold text-surface-900 text-center">
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  textAlign: 'center',
+                }}
+              >
                 No Workers Yet
               </Text>
-              <Text className="text-sm text-surface-500 text-center mt-2">
+              <Text
+                style={{
+                  color: colors.surface[500],
+                  fontSize: fontSize.sm,
+                  textAlign: 'center',
+                  marginTop: spacing[2],
+                }}
+              >
                 Add workers to track attendance,{`\n`}payments, and settlements.
               </Text>
               <TouchableOpacity
                 onPress={() => setShowAddWorkerModal(true)}
-                className="bg-primary-600 px-6 py-3 rounded-xl mt-4"
+                style={{
+                  backgroundColor: colors.primary[600],
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  marginTop: spacing[4],
+                }}
               >
-                <Text className="text-white font-semibold">Add Worker</Text>
+                <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
+                  Add Worker
+                </Text>
               </TouchableOpacity>
             </View>
           ) : null
@@ -657,35 +889,97 @@ export default function ExploreScreen() {
     );
 
     const renderAnalyticsSubTab = () => (
-      <View className="flex-1 items-center justify-center p-8">
-        <View className="w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing[8],
+        }}
+      >
+        <View
+          style={{
+            width: 80,
+            height: 80,
+            backgroundColor: '#EDE9FE',
+            borderRadius: borderRadius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: spacing[4],
+          }}
+        >
           <Symbol name="chart.bar" size={40} color="#8B5CF6" />
         </View>
-        <Text className="text-lg font-semibold text-surface-900 text-center">Labor Analytics</Text>
-        <Text className="text-sm text-surface-500 text-center mt-2">
+        <Text
+          style={{
+            color: colors.surface[900],
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.semibold,
+            textAlign: 'center',
+          }}
+        >
+          Labor Analytics
+        </Text>
+        <Text
+          style={{
+            color: colors.surface[500],
+            fontSize: fontSize.sm,
+            textAlign: 'center',
+            marginTop: spacing[2],
+          }}
+        >
           View labor costs, productivity,{`\n`}and attendance patterns.
         </Text>
-        <Text className="text-xs text-surface-400 mt-4">Coming soon in a future update</Text>
+        <Text style={{ color: colors.surface[400], fontSize: fontSize.xs, marginTop: spacing[4] }}>
+          Coming soon in a future update
+        </Text>
       </View>
     );
 
     return (
       <>
         {/* Workers Sub-Tabs */}
-        <View className="bg-white px-4 pt-2 pb-3">
+        <View
+          style={{
+            backgroundColor: colors.surface[100],
+            paddingHorizontal: spacing[4],
+            paddingTop: spacing[2],
+            paddingBottom: spacing[3],
+          }}
+        >
           {searchQuery.trim() && selectedWorkerSubTab === 'workers' && (
-            <Text className="text-sm mb-2" style={{ color: '#8e8e93' }}>
+            <Text
+              style={{
+                color: colors.surface[500],
+                fontSize: fontSize.sm,
+                marginBottom: spacing[2],
+              }}
+            >
               {filteredWorkers.length} worker{filteredWorkers.length !== 1 ? 's' : ''} found
             </Text>
           )}
-          <View className="flex-row bg-surface-100 rounded-xl p-1">
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: colors.surface[50],
+              borderRadius: borderRadius.xl,
+              padding: spacing[1],
+            }}
+          >
             {WORKER_SUB_TABS.map((tab) => (
               <TouchableOpacity
                 key={tab.id}
                 onPress={() => setSelectedWorkerSubTab(tab.id)}
-                className={`flex-1 flex-row items-center justify-center py-2.5 rounded-lg ${
-                  selectedWorkerSubTab === tab.id ? 'bg-white' : ''
-                }`}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 10,
+                  borderRadius: borderRadius.lg,
+                  backgroundColor:
+                    selectedWorkerSubTab === tab.id ? colors.surface[100] : 'transparent',
+                }}
               >
                 <Symbol
                   name={tab.icon}
@@ -693,9 +987,13 @@ export default function ExploreScreen() {
                   color={selectedWorkerSubTab === tab.id ? '#408059' : '#6B7280'}
                 />
                 <Text
-                  className={`text-sm font-medium ml-1.5 ${
-                    selectedWorkerSubTab === tab.id ? 'text-primary-600' : 'text-surface-500'
-                  }`}
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    marginLeft: spacing[1],
+                    color:
+                      selectedWorkerSubTab === tab.id ? colors.primary[600] : colors.surface[500],
+                  }}
                 >
                   {tab.label}
                 </Text>
@@ -713,8 +1011,18 @@ export default function ExploreScreen() {
         {selectedWorkerSubTab === 'workers' && (workers?.length || 0) > 0 && (
           <TouchableOpacity
             onPress={() => setShowAddWorkerModal(true)}
-            className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
             activeOpacity={0.8}
+            style={{
+              position: 'absolute',
+              bottom: spacing[6],
+              right: spacing[6],
+              width: 56,
+              height: 56,
+              backgroundColor: colors.primary[600],
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <Symbol name="plus" size={28} color="#FFFFFF" />
           </TouchableOpacity>
@@ -726,9 +1034,11 @@ export default function ExploreScreen() {
   const renderWarehouseTab = () => {
     if (warehouseLoading) {
       return (
-        <View className="flex-1 items-center justify-center">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text className="text-surface-600 mt-4">Loading inventory...</Text>
+          <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+            Loading inventory...
+          </Text>
         </View>
       );
     }
@@ -750,10 +1060,19 @@ export default function ExploreScreen() {
           scrollEventThrottle={16}
         >
           {/* Summary Cards */}
-          <View className="flex-row mb-4 mt-4" style={{ gap: 12 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              marginBottom: spacing[4],
+              marginTop: spacing[4],
+              gap: 12,
+            }}
+          >
             <View
-              className="flex-1 rounded-2xl p-4"
               style={{
+                flex: 1,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
                 backgroundColor: COLORS.glass,
               }}
             >
@@ -762,48 +1081,92 @@ export default function ExploreScreen() {
                 size={24}
                 color={lowStockItems.length > 0 ? COLORS.lowStock : COLORS.primary}
               />
-              <Text className="text-2xl font-bold text-surface-900 mt-2">
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontSize: fontSize['2xl'],
+                  fontWeight: fontWeight.bold,
+                  marginTop: spacing[2],
+                }}
+              >
                 {lowStockItems.length}
               </Text>
-              <Text className="text-xs text-surface-500">Low Stock</Text>
+              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>Low Stock</Text>
             </View>
             <View
-              className="flex-1 rounded-2xl p-4"
               style={{
+                flex: 1,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
                 backgroundColor: COLORS.glass,
               }}
             >
               <Symbol name="dollarsign.circle.fill" size={24} color={COLORS.primary} />
-              <Text className="text-2xl font-bold text-surface-900 mt-2">
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontSize: fontSize['2xl'],
+                  fontWeight: fontWeight.bold,
+                  marginTop: spacing[2],
+                }}
+              >
                 {currency === 'INR' ? '₹' : '$'}
                 {warehouseTotals.value.toLocaleString()}
               </Text>
-              <Text className="text-xs text-surface-500">Value</Text>
+              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>Value</Text>
             </View>
           </View>
 
           {/* Low Stock Alert */}
           {lowStockItems.length > 0 && (
             <View
-              className="rounded-2xl p-4 mb-4"
-              style={{ backgroundColor: `${COLORS.lowStock}15` }}
+              style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
+                backgroundColor: `${COLORS.lowStock}15`,
+              }}
             >
-              <View className="flex-row items-center mb-3">
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: spacing[3],
+                }}
+              >
                 <Symbol name="exclamationmark.triangle.fill" size={20} color={COLORS.lowStock} />
-                <Text className="text-base font-semibold ml-2" style={{ color: COLORS.lowStock }}>
+                <Text
+                  style={{
+                    color: COLORS.lowStock,
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    marginLeft: spacing[2],
+                  }}
+                >
                   Low Stock Alerts
                 </Text>
                 <View
-                  className="px-2 py-0.5 rounded-full ml-auto"
-                  style={{ backgroundColor: `${COLORS.lowStock}30` }}
+                  style={{
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: 2,
+                    borderRadius: borderRadius.full,
+                    marginLeft: 'auto',
+                    backgroundColor: `${COLORS.lowStock}30`,
+                  }}
                 >
-                  <Text className="text-xs font-medium" style={{ color: COLORS.lowStock }}>
+                  <Text
+                    style={{
+                      color: COLORS.lowStock,
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                    }}
+                  >
                     {lowStockItems.length} items
                   </Text>
                 </View>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View className="flex-row" style={{ gap: 12 }}>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
                   {lowStockItems.map((item) => (
                     <TouchableOpacity
                       key={item.id}
@@ -811,40 +1174,66 @@ export default function ExploreScreen() {
                       style={{ width: 160 }}
                     >
                       <View
-                        className="rounded-xl p-3"
                         style={{
+                          borderRadius: borderRadius.xl,
+                          padding: spacing[3],
                           backgroundColor: COLORS.glass,
                         }}
                       >
-                        <View className="flex-row items-center">
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Symbol
                             name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                             size={16}
                             color={COLORS.lowStock}
                           />
                           <Text
-                            className="text-sm font-semibold text-surface-900 ml-2"
+                            style={{
+                              color: colors.surface[900],
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.semibold,
+                              marginLeft: spacing[2],
+                            }}
                             numberOfLines={1}
                           >
                             {item.name}
                           </Text>
                         </View>
-                        <Text className="text-xs text-surface-600 mt-1">
+                        <Text
+                          style={{
+                            color: colors.surface[600],
+                            fontSize: fontSize.xs,
+                            marginTop: spacing[1],
+                          }}
+                        >
                           {item.quantity} {item.unit}
                         </Text>
                         {item.reorder_quantity && (
-                          <Text className="text-xs text-surface-500 mt-0.5">
+                          <Text
+                            style={{
+                              color: colors.surface[500],
+                              fontSize: fontSize.xs,
+                              marginTop: 2,
+                            }}
+                          >
                             Reorder at: {item.reorder_quantity} {item.unit}
                           </Text>
                         )}
                         <View
-                          className="mt-2 py-1.5 px-3 rounded-full items-center self-start"
-                          style={{ backgroundColor: COLORS.primary }}
+                          style={{
+                            marginTop: spacing[2],
+                            paddingVertical: 6,
+                            paddingHorizontal: spacing[3],
+                            borderRadius: borderRadius.full,
+                            alignItems: 'center',
+                            alignSelf: 'flex-start',
+                            backgroundColor: COLORS.primary,
+                          }}
                         >
                           <Text
-                            className="text-xs font-medium"
                             style={{
                               color: 'white',
+                              fontSize: fontSize.xs,
+                              fontWeight: fontWeight.medium,
                             }}
                           >
                             Add Stock
@@ -860,7 +1249,13 @@ export default function ExploreScreen() {
 
           {/* Search Results Count */}
           {searchQuery.trim() && (
-            <Text className="text-sm mb-3" style={{ color: '#8e8e93' }}>
+            <Text
+              style={{
+                color: colors.surface[500],
+                fontSize: fontSize.sm,
+                marginBottom: spacing[3],
+              }}
+            >
               {filteredWarehouseItems.length} item{filteredWarehouseItems.length !== 1 ? 's' : ''}{' '}
               found
             </Text>
@@ -868,8 +1263,11 @@ export default function ExploreScreen() {
 
           {/* Filter Tabs */}
           <View
-            className="flex-row rounded-xl p-1 mb-4"
             style={{
+              flexDirection: 'row',
+              borderRadius: borderRadius.xl,
+              padding: spacing[1],
+              marginBottom: spacing[4],
               backgroundColor: 'rgba(0, 0, 0, 0.05)',
             }}
           >
@@ -877,12 +1275,20 @@ export default function ExploreScreen() {
               <TouchableOpacity
                 key={type}
                 onPress={() => setWarehouseFilter(type)}
-                className={`flex-1 py-2.5 rounded-lg ${warehouseFilter === type ? 'bg-white' : ''}`}
+                style={{
+                  flex: 1,
+                  paddingVertical: 10,
+                  borderRadius: borderRadius.lg,
+                  backgroundColor: warehouseFilter === type ? colors.surface[100] : 'transparent',
+                }}
               >
                 <Text
-                  className={`text-center text-sm font-medium ${
-                    warehouseFilter === type ? 'text-surface-900' : 'text-surface-600'
-                  }`}
+                  style={{
+                    textAlign: 'center',
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: warehouseFilter === type ? colors.surface[900] : colors.surface[600],
+                  }}
                 >
                   {type === 'all'
                     ? `ALL (${warehouseTotals.count})`
@@ -897,21 +1303,43 @@ export default function ExploreScreen() {
           {/* Inventory List */}
           {filteredWarehouseItems.length === 0 ? (
             <View
-              className="rounded-2xl p-8 items-center"
               style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[8],
+                alignItems: 'center',
                 backgroundColor: COLORS.glass,
               }}
             >
               <View
-                className="w-16 h-16 rounded-full items-center justify-center"
-                style={{ backgroundColor: `${COLORS.primary}33` }}
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: `${COLORS.primary}33`,
+                }}
               >
                 <Symbol name="cube" size={32} color={COLORS.primary} />
               </View>
-              <Text className="text-surface-900 font-semibold mt-4 text-center">
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontWeight: fontWeight.semibold,
+                  marginTop: spacing[4],
+                  textAlign: 'center',
+                }}
+              >
                 No items in warehouse
               </Text>
-              <Text className="text-surface-500 text-sm mt-1 text-center">
+              <Text
+                style={{
+                  color: colors.surface[500],
+                  fontSize: fontSize.sm,
+                  marginTop: spacing[1],
+                  textAlign: 'center',
+                }}
+              >
                 Tap the + button to add your first inventory item
               </Text>
               <TouchableOpacity
@@ -919,11 +1347,26 @@ export default function ExploreScreen() {
                   setEditingWarehouseItem(null);
                   setShowAddWarehouseModal(true);
                 }}
-                className="mt-4 px-6 py-3 rounded-xl flex-row items-center"
-                style={{ backgroundColor: COLORS.primary }}
+                style={{
+                  marginTop: spacing[4],
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: COLORS.primary,
+                }}
               >
                 <Symbol name="plus.circle.fill" size={20} color="white" />
-                <Text className="text-white font-semibold ml-2">Add Item</Text>
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontWeight: fontWeight.semibold,
+                    marginLeft: spacing[2],
+                  }}
+                >
+                  Add Item
+                </Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -936,44 +1379,63 @@ export default function ExploreScreen() {
               return (
                 <View
                   key={item.id}
-                  className="rounded-2xl p-4 mb-3"
                   style={{
+                    borderRadius: borderRadius['2xl'],
+                    padding: spacing[4],
+                    marginBottom: spacing[3],
                     backgroundColor: isLowStock ? `${COLORS.lowStock}0D` : COLORS.glass,
                     borderColor: isLowStock ? `${COLORS.lowStock}4D` : 'transparent',
                     borderWidth: isLowStock ? 1 : 0,
                   }}
                 >
-                  <View className="flex-row items-start">
-                    <View className="flex-1">
-                      <View className="flex-row items-center">
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <View
-                          className="px-2.5 py-1 rounded-full"
                           style={{
+                            paddingHorizontal: 10,
+                            paddingVertical: spacing[1],
+                            borderRadius: borderRadius.full,
                             backgroundColor:
                               item.type === 'fertilizer'
                                 ? `${COLORS.warehouseFertilizer}33`
                                 : `${COLORS.warehouseSpray}33`,
                           }}
                         >
-                          <View className="flex-row items-center">
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Symbol
                               name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                               size={12}
                               color={itemColor}
                             />
-                            <Text className="text-xs font-medium ml-1" style={{ color: itemColor }}>
+                            <Text
+                              style={{
+                                color: itemColor,
+                                fontSize: fontSize.xs,
+                                fontWeight: fontWeight.medium,
+                                marginLeft: spacing[1],
+                              }}
+                            >
                               {item.type === 'fertilizer' ? 'FERTILIZER' : 'SPRAY'}
                             </Text>
                           </View>
                         </View>
                         {isLowStock && (
                           <View
-                            className="ml-2 px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: `${COLORS.lowStock}33` }}
+                            style={{
+                              marginLeft: spacing[2],
+                              paddingHorizontal: spacing[2],
+                              paddingVertical: 2,
+                              borderRadius: borderRadius.full,
+                              backgroundColor: `${COLORS.lowStock}33`,
+                            }}
                           >
                             <Text
-                              className="text-xs font-medium"
-                              style={{ color: COLORS.lowStock }}
+                              style={{
+                                color: COLORS.lowStock,
+                                fontSize: fontSize.xs,
+                                fontWeight: fontWeight.medium,
+                              }}
                             >
                               Low
                             </Text>
@@ -1002,29 +1464,60 @@ export default function ExploreScreen() {
                           <Symbol name="ellipsis.circle" size={24} color="#6B7280" />
                         </TouchableOpacity>
                       </View>
-                      <Text className="text-base font-semibold text-surface-900 mt-2">
+                      <Text
+                        style={{
+                          color: colors.surface[900],
+                          fontSize: fontSize.base,
+                          fontWeight: fontWeight.semibold,
+                          marginTop: spacing[2],
+                        }}
+                      >
                         {item.name}
                       </Text>
                     </View>
                   </View>
 
-                  <View className="flex-row mt-3">
-                    <View className="flex-1">
-                      <Text className="text-xs text-surface-500">Quantity</Text>
-                      <Text className="text-sm font-semibold text-surface-900">
+                  <View style={{ flexDirection: 'row', marginTop: spacing[3] }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                        Quantity
+                      </Text>
+                      <Text
+                        style={{
+                          color: colors.surface[900],
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
                         {item.quantity} {item.unit}
                       </Text>
                     </View>
-                    <View className="flex-1 items-center">
-                      <Text className="text-xs text-surface-500">Unit Price</Text>
-                      <Text className="text-sm font-medium text-surface-900">
+                    <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                        Unit Price
+                      </Text>
+                      <Text
+                        style={{
+                          color: colors.surface[900],
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.medium,
+                        }}
+                      >
                         {currency === 'INR' ? '₹' : '$'}
                         {item.unit_price.toLocaleString()}/{item.unit}
                       </Text>
                     </View>
-                    <View className="flex-1 items-end">
-                      <Text className="text-xs text-surface-500">Total Value</Text>
-                      <Text className="text-sm font-semibold" style={{ color: COLORS.primary }}>
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                        Total Value
+                      </Text>
+                      <Text
+                        style={{
+                          color: COLORS.primary,
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
                         {currency === 'INR' ? '₹' : '$'}
                         {itemValue.toLocaleString()}
                       </Text>
@@ -1032,7 +1525,14 @@ export default function ExploreScreen() {
                   </View>
 
                   {item.notes && (
-                    <Text className="text-xs text-surface-600 mt-2" numberOfLines={2}>
+                    <Text
+                      style={{
+                        color: colors.surface[600],
+                        fontSize: fontSize.xs,
+                        marginTop: spacing[2],
+                      }}
+                      numberOfLines={2}
+                    >
                       {item.notes}
                     </Text>
                   )}
@@ -1048,8 +1548,15 @@ export default function ExploreScreen() {
             setEditingWarehouseItem(null);
             setShowAddWarehouseModal(true);
           }}
-          className="absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center"
           style={{
+            position: 'absolute',
+            bottom: spacing[6],
+            right: spacing[6],
+            width: 56,
+            height: 56,
+            borderRadius: borderRadius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
             backgroundColor: COLORS.primary,
           }}
         >
@@ -1074,14 +1581,27 @@ export default function ExploreScreen() {
   }, [selectedTab]);
 
   return (
-    <View className="flex-1" style={{ backgroundColor: COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       {/* Global Search Bar */}
-      <View className="bg-white px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
+      <View
+        style={{
+          backgroundColor: colors.surface[100],
+          paddingHorizontal: spacing[4],
+          paddingBottom: spacing[3],
+          paddingTop: insets.top + spacing[3],
+        }}
+      >
         <View
-          className={`
-            flex-row items-center bg-surface-50 rounded-2xl px-4 py-2
-            border ${isSearchFocused ? 'border-primary-500' : 'border-transparent'}
-          `}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface[50],
+            borderRadius: borderRadius['2xl'],
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[2],
+            borderWidth: 1,
+            borderColor: isSearchFocused ? colors.primary[500] : 'transparent',
+          }}
         >
           <Symbol
             name="magnifyingglass"
@@ -1089,8 +1609,12 @@ export default function ExploreScreen() {
             color={isSearchFocused ? '#408059' : '#c7c7cc'}
           />
           <TextInput
-            className="flex-1 ml-3 text-base"
-            style={{ color: '#000000' }}
+            style={{
+              flex: 1,
+              marginLeft: spacing[3],
+              fontSize: fontSize.base,
+              color: colors.black,
+            }}
             placeholder={searchPlaceholder}
             placeholderTextColor="#c7c7cc"
             value={searchQuery}
@@ -1112,38 +1636,43 @@ export default function ExploreScreen() {
 
       {/* Animated Sticky Header with Tabs */}
       <Animated.View
-        className="bg-white"
         style={{
           height: headerHeight,
+          backgroundColor: colors.surface[100],
           boxShadow: '0 2px 3px rgba(0, 0, 0, 0.05)',
         }}
       >
-        <View className="flex-1 flex-row px-4">
+        <View style={{ flex: 1, flexDirection: 'row', paddingHorizontal: spacing[4] }}>
           {EXPLORE_TABS.map((tab) => {
             const isSelected = selectedTab === tab.id;
             return (
               <Animated.View
                 key={tab.id}
-                className="flex-1"
                 style={{
+                  flex: 1,
                   transform: [{ scale: tabScaleAnims[tab.id] }],
                 }}
               >
                 <TouchableOpacity
                   onPress={() => handleTabChange(tab.id)}
-                  className="flex-1 items-center justify-center"
                   activeOpacity={0.7}
+                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
                 >
                   <Animated.View
-                    className="items-center overflow-hidden"
                     style={{
+                      alignItems: 'center',
+                      overflow: 'hidden',
                       height: iconContainerHeight,
                       opacity: iconOpacity,
                     }}
                   >
                     <View
-                      className="w-12 h-12 rounded-2xl items-center justify-center"
                       style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: borderRadius['2xl'],
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         backgroundColor: isSelected ? 'rgba(64, 128, 89, 0.1)' : 'transparent',
                       }}
                     >
@@ -1156,8 +1685,9 @@ export default function ExploreScreen() {
                   </Animated.View>
 
                   <Animated.Text
-                    className={`text-sm font-semibold`}
                     style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
                       color: isSelected ? '#408059' : '#6B7280',
                       marginTop: textMargin,
                     }}
@@ -1168,8 +1698,11 @@ export default function ExploreScreen() {
                   {/* Active Indicator */}
                   {isSelected && (
                     <View
-                      className="absolute bottom-0 h-0.5 rounded-full"
                       style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        height: 2,
+                        borderRadius: borderRadius.full,
                         width: '60%',
                         backgroundColor: '#408059',
                       }}
@@ -1184,8 +1717,8 @@ export default function ExploreScreen() {
 
       {/* Tab Content with Fade Animation */}
       <Animated.View
-        className="flex-1"
         style={{
+          flex: 1,
           opacity: tabSwitchAnim,
         }}
       >

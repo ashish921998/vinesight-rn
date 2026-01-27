@@ -128,7 +128,7 @@ export default function DashboardScreen() {
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
-          tintColor={colors.primary}
+          tintColor={colors.primary[500]}
         />
       }
       scrollIndicatorInsets={{ top: insets.top }}
@@ -273,7 +273,7 @@ export default function DashboardScreen() {
               <QuickActionButton
                 title="Note"
                 icon="document-text"
-                color={colors.primary}
+                color={colors.primary[500]}
                 onPress={() => handleQuickAction('note')}
               />
             </View>

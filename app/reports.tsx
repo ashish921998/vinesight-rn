@@ -7,6 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 
 import { Symbol } from '@/components/ui/Symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFarms } from '../src/hooks';
@@ -71,8 +72,8 @@ export default function ReportsScreen() {
 
   if (farmsLoading) {
     return (
-      <View className="flex-1 bg-gray-50">
-        <View className="flex-1 items-center justify-center">
+      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#1a5d1a" />
         </View>
       </View>
@@ -81,17 +82,46 @@ export default function ReportsScreen() {
 
   if (!farms || farms.length === 0) {
     return (
-      <View className="flex-1 bg-gray-50">
-        <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3">
+      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[3],
+            borderBottomWidth: 1,
+            borderBottomColor: colors.gray[200],
+            backgroundColor: colors.white,
+          }}
+        >
+          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
             <Symbol name="chevron.left" size={24} color="#333" />
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-800">Reports</Text>
+          <Text
+            style={{
+              fontSize: fontSize.xl,
+              fontWeight: fontWeight.bold,
+              color: colors.gray[800],
+            }}
+          >
+            Reports
+          </Text>
         </View>
-        <View className="flex-1 items-center justify-center p-6">
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] }}
+        >
           <Symbol name="doc.text" size={64} color="#9ca3af" />
-          <Text className="text-lg font-semibold text-gray-600 mt-4">No Farms Found</Text>
-          <Text className="text-gray-500 text-center mt-2">
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              color: colors.gray[600],
+              marginTop: spacing[4],
+            }}
+          >
+            No Farms Found
+          </Text>
+          <Text style={{ color: colors.gray[500], textAlign: 'center', marginTop: spacing[2] }}>
             Add a farm first to generate reports
           </Text>
         </View>
@@ -100,27 +130,80 @@ export default function ReportsScreen() {
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
       {/* Header */}
-      <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[4],
+          paddingVertical: spacing[3],
+          borderBottomWidth: 1,
+          borderBottomColor: colors.gray[200],
+          backgroundColor: colors.white,
+        }}
+      >
+        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <Symbol name="chevron.left" size={24} color="#333" />
         </TouchableOpacity>
         <Symbol name="doc.text.fill" size={24} color="#1a5d1a" />
-        <Text className="text-xl font-bold text-gray-800 ml-2">Reports</Text>
+        <Text
+          style={{
+            fontSize: fontSize.xl,
+            fontWeight: fontWeight.bold,
+            color: colors.gray[800],
+            marginLeft: spacing[2],
+          }}
+        >
+          Reports
+        </Text>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         {/* Farm Selector */}
-        <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-sm">
-          <Text className="text-sm font-medium text-gray-500 mb-2">Select Farm</Text>
+        <View
+          style={{
+            backgroundColor: colors.white,
+            marginHorizontal: spacing[4],
+            marginTop: spacing[4],
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.gray[500],
+              marginBottom: spacing[2],
+            }}
+          >
+            Select Farm
+          </Text>
           <TouchableOpacity
             onPress={() => setShowFarmPicker(!showFarmPicker)}
-            className="flex-row items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: colors.gray[50],
+              padding: spacing[3],
+              borderRadius: borderRadius.lg,
+              borderWidth: 1,
+              borderColor: colors.gray[200],
+            }}
           >
-            <View className="flex-row items-center flex-1">
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
               <Symbol name="leaf.fill" size={20} color="#1a5d1a" />
-              <Text className="text-base font-medium text-gray-800 ml-2" numberOfLines={1}>
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.medium,
+                  color: colors.gray[800],
+                  marginLeft: spacing[2],
+                }}
+                numberOfLines={1}
+              >
                 {selectedFarm?.name || 'Select a farm'}
               </Text>
             </View>
@@ -128,7 +211,15 @@ export default function ReportsScreen() {
           </TouchableOpacity>
 
           {showFarmPicker && (
-            <View className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
+            <View
+              style={{
+                marginTop: spacing[2],
+                borderWidth: 1,
+                borderColor: colors.gray[200],
+                borderRadius: borderRadius.lg,
+                overflow: 'hidden',
+              }}
+            >
               {farms.map((f) => (
                 <TouchableOpacity
                   key={f.id}
@@ -136,14 +227,19 @@ export default function ReportsScreen() {
                     setSelectedFarmId(f.id ?? null);
                     setShowFarmPicker(false);
                   }}
-                  className={`p-3 border-b border-gray-100 ${
-                    f.id === selectedFarmId ? 'bg-green-50' : 'bg-white'
-                  }`}
+                  style={{
+                    padding: spacing[3],
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.gray[100],
+                    backgroundColor: f.id === selectedFarmId ? colors.primary[50] : colors.white,
+                  }}
                 >
                   <Text
-                    className={`text-base ${
-                      f.id === selectedFarmId ? 'text-green-700 font-semibold' : 'text-gray-700'
-                    }`}
+                    style={{
+                      fontSize: fontSize.base,
+                      color: f.id === selectedFarmId ? colors.primary[700] : colors.gray[700],
+                      fontWeight: f.id === selectedFarmId ? fontWeight.semibold : fontWeight.normal,
+                    }}
                   >
                     {f.name} ({f.area} acres)
                   </Text>
@@ -154,22 +250,77 @@ export default function ReportsScreen() {
         </View>
 
         {/* Date Range */}
-        <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-sm">
-          <Text className="text-sm font-medium text-gray-500 mb-3">Date Range</Text>
-          <View className="flex-row gap-3">
+        <View
+          style={{
+            backgroundColor: colors.white,
+            marginHorizontal: spacing[4],
+            marginTop: spacing[4],
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.gray[500],
+              marginBottom: spacing[3],
+            }}
+          >
+            Date Range
+          </Text>
+          <View style={{ flexDirection: 'row', gap: spacing[3] }}>
             <TouchableOpacity
               onPress={() => setShowFromPicker(true)}
-              className="flex-1 bg-gray-50 p-3 rounded-lg border border-gray-200"
+              style={{
+                flex: 1,
+                backgroundColor: colors.gray[50],
+                padding: spacing[3],
+                borderRadius: borderRadius.lg,
+                borderWidth: 1,
+                borderColor: colors.gray[200],
+              }}
             >
-              <Text className="text-xs text-gray-500 mb-1">From</Text>
-              <Text className="text-base font-medium text-gray-800">{dateRange.from}</Text>
+              <Text
+                style={{ fontSize: fontSize.xs, color: colors.gray[500], marginBottom: spacing[1] }}
+              >
+                From
+              </Text>
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.medium,
+                  color: colors.gray[800],
+                }}
+              >
+                {dateRange.from}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setShowToPicker(true)}
-              className="flex-1 bg-gray-50 p-3 rounded-lg border border-gray-200"
+              style={{
+                flex: 1,
+                backgroundColor: colors.gray[50],
+                padding: spacing[3],
+                borderRadius: borderRadius.lg,
+                borderWidth: 1,
+                borderColor: colors.gray[200],
+              }}
             >
-              <Text className="text-xs text-gray-500 mb-1">To</Text>
-              <Text className="text-base font-medium text-gray-800">{dateRange.to}</Text>
+              <Text
+                style={{ fontSize: fontSize.xs, color: colors.gray[500], marginBottom: spacing[1] }}
+              >
+                To
+              </Text>
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.medium,
+                  color: colors.gray[800],
+                }}
+              >
+                {dateRange.to}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -195,18 +346,38 @@ export default function ReportsScreen() {
         </View>
 
         {/* Report Type */}
-        <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-sm">
-          <Text className="text-sm font-medium text-gray-500 mb-3">Report Type</Text>
-          <View className="flex-row gap-2">
+        <View
+          style={{
+            backgroundColor: colors.white,
+            marginHorizontal: spacing[4],
+            marginTop: spacing[4],
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.gray[500],
+              marginBottom: spacing[3],
+            }}
+          >
+            Report Type
+          </Text>
+          <View style={{ flexDirection: 'row', gap: spacing[2] }}>
             {REPORT_TYPES.map((type) => (
               <TouchableOpacity
                 key={type.value}
                 onPress={() => setReportType(type.value)}
-                className={`flex-1 p-3 rounded-lg border ${
-                  reportType === type.value
-                    ? 'bg-green-50 border-green-500'
-                    : 'bg-gray-50 border-gray-200'
-                }`}
+                style={{
+                  flex: 1,
+                  padding: spacing[3],
+                  borderRadius: borderRadius.lg,
+                  borderWidth: 1,
+                  backgroundColor: reportType === type.value ? colors.primary[50] : colors.gray[50],
+                  borderColor: reportType === type.value ? colors.primary[500] : colors.gray[200],
+                }}
               >
                 <Symbol
                   name={type.icon}
@@ -215,9 +386,13 @@ export default function ReportsScreen() {
                   style={{ alignSelf: 'center' }}
                 />
                 <Text
-                  className={`text-xs text-center mt-1 ${
-                    reportType === type.value ? 'text-green-700 font-semibold' : 'text-gray-600'
-                  }`}
+                  style={{
+                    fontSize: fontSize.xs,
+                    textAlign: 'center',
+                    marginTop: spacing[1],
+                    color: reportType === type.value ? colors.primary[700] : colors.gray[600],
+                    fontWeight: reportType === type.value ? fontWeight.semibold : fontWeight.normal,
+                  }}
                 >
                   {type.label}
                 </Text>
@@ -228,64 +403,182 @@ export default function ReportsScreen() {
 
         {/* Preview Summary */}
         {dataLoading ? (
-          <View className="bg-white mx-4 mt-4 rounded-xl p-6 shadow-sm items-center">
+          <View
+            style={{
+              backgroundColor: colors.white,
+              marginHorizontal: spacing[4],
+              marginTop: spacing[4],
+              borderRadius: borderRadius.xl,
+              padding: spacing[6],
+              alignItems: 'center',
+            }}
+          >
             <ActivityIndicator size="small" color="#1a5d1a" />
-            <Text className="text-gray-500 mt-2">Loading report data...</Text>
+            <Text style={{ color: colors.gray[500], marginTop: spacing[2] }}>
+              Loading report data...
+            </Text>
           </View>
         ) : preview ? (
-          <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-3">Preview Summary</Text>
+          <View
+            style={{
+              backgroundColor: colors.white,
+              marginHorizontal: spacing[4],
+              marginTop: spacing[4],
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: colors.gray[500],
+                marginBottom: spacing[3],
+              }}
+            >
+              Preview Summary
+            </Text>
 
-            <View className="flex-row flex-wrap gap-3">
-              <View className="bg-blue-50 p-3 rounded-lg flex-1 min-w-[45%]">
-                <Text className="text-2xl font-bold text-blue-600">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
+              <View
+                style={{
+                  backgroundColor: '#EFF6FF',
+                  padding: spacing[3],
+                  borderRadius: borderRadius.lg,
+                  flex: 1,
+                  minWidth: '45%',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: fontWeight.bold,
+                    color: '#2563EB',
+                  }}
+                >
                   {preview.summary.totalRecords}
                 </Text>
-                <Text className="text-xs text-blue-600">Total Records</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>Total Records</Text>
               </View>
-              <View className="bg-cyan-50 p-3 rounded-lg flex-1 min-w-[45%]">
-                <Text className="text-2xl font-bold text-cyan-600">
+              <View
+                style={{
+                  backgroundColor: '#ECFEFF',
+                  padding: spacing[3],
+                  borderRadius: borderRadius.lg,
+                  flex: 1,
+                  minWidth: '45%',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: fontWeight.bold,
+                    color: '#0891B2',
+                  }}
+                >
                   {preview.summary.totalWaterUsage.toLocaleString()}L
                 </Text>
-                <Text className="text-xs text-cyan-600">Water Usage</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#0891B2' }}>Water Usage</Text>
               </View>
-              <View className="bg-purple-50 p-3 rounded-lg flex-1 min-w-[45%]">
-                <Text className="text-2xl font-bold text-purple-600">
+              <View
+                style={{
+                  backgroundColor: '#F5F3FF',
+                  padding: spacing[3],
+                  borderRadius: borderRadius.lg,
+                  flex: 1,
+                  minWidth: '45%',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: fontWeight.bold,
+                    color: '#7C3AED',
+                  }}
+                >
                   {preview.summary.totalHarvest}kg
                 </Text>
-                <Text className="text-xs text-purple-600">Total Harvest</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#7C3AED' }}>Total Harvest</Text>
               </View>
-              <View className="bg-green-50 p-3 rounded-lg flex-1 min-w-[45%]">
+              <View
+                style={{
+                  backgroundColor: colors.primary[50],
+                  padding: spacing[3],
+                  borderRadius: borderRadius.lg,
+                  flex: 1,
+                  minWidth: '45%',
+                }}
+              >
                 <Text
-                  className={`text-2xl font-bold ${
-                    preview.summary.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: fontWeight.bold,
+                    color: preview.summary.netProfit >= 0 ? '#16A34A' : '#DC2626',
+                  }}
                 >
                   ₹{preview.summary.netProfit.toLocaleString()}
                 </Text>
-                <Text className="text-xs text-green-600">Net Profit</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>Net Profit</Text>
               </View>
             </View>
 
             {/* Record counts */}
-            <View className="flex-row flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
-              <View className="bg-gray-100 px-3 py-1 rounded-full">
-                <Text className="text-xs text-gray-600">
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: spacing[2],
+                marginTop: spacing[4],
+                paddingTop: spacing[4],
+                borderTopWidth: 1,
+                borderTopColor: colors.gray[100],
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: colors.gray[100],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  borderRadius: borderRadius.full,
+                }}
+              >
+                <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
                   💧 {preview.summary.irrigationCount} irrigations
                 </Text>
               </View>
-              <View className="bg-gray-100 px-3 py-1 rounded-full">
-                <Text className="text-xs text-gray-600">
+              <View
+                style={{
+                  backgroundColor: colors.gray[100],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  borderRadius: borderRadius.full,
+                }}
+              >
+                <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
                   🧪 {preview.summary.sprayCount} sprays
                 </Text>
               </View>
-              <View className="bg-gray-100 px-3 py-1 rounded-full">
-                <Text className="text-xs text-gray-600">
+              <View
+                style={{
+                  backgroundColor: colors.gray[100],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  borderRadius: borderRadius.full,
+                }}
+              >
+                <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
                   🍇 {preview.summary.harvestCount} harvests
                 </Text>
               </View>
-              <View className="bg-gray-100 px-3 py-1 rounded-full">
-                <Text className="text-xs text-gray-600">
+              <View
+                style={{
+                  backgroundColor: colors.gray[100],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  borderRadius: borderRadius.full,
+                }}
+              >
+                <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
                   💰 {preview.summary.expenseCount} expenses
                 </Text>
               </View>
@@ -294,38 +587,77 @@ export default function ReportsScreen() {
         ) : null}
 
         {/* Export Buttons */}
-        <View className="mx-4 mt-6 mb-8">
-          <Text className="text-sm font-medium text-gray-500 mb-3">Export As</Text>
-          <View className="flex-row gap-3">
+        <View
+          style={{ marginHorizontal: spacing[4], marginTop: spacing[6], marginBottom: spacing[8] }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.gray[500],
+              marginBottom: spacing[3],
+            }}
+          >
+            Export As
+          </Text>
+          <View style={{ flexDirection: 'row', gap: spacing[3] }}>
             <TouchableOpacity
               onPress={() => handleExport('pdf')}
               disabled={!preview || isExporting}
-              className={`flex-1 flex-row items-center justify-center p-4 rounded-xl ${
-                !preview || isExporting ? 'bg-gray-200' : 'bg-red-500'
-              }`}
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: spacing[4],
+                borderRadius: borderRadius.xl,
+                backgroundColor: !preview || isExporting ? colors.gray[200] : '#EF4444',
+              }}
             >
               {isExporting ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
                   <Symbol name="doc.fill" size={24} color="white" />
-                  <Text className="text-white font-bold ml-2">PDF</Text>
+                  <Text
+                    style={{
+                      color: colors.white,
+                      fontWeight: fontWeight.bold,
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    PDF
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleExport('csv')}
               disabled={!preview || isExporting}
-              className={`flex-1 flex-row items-center justify-center p-4 rounded-xl ${
-                !preview || isExporting ? 'bg-gray-200' : 'bg-green-600'
-              }`}
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: spacing[4],
+                borderRadius: borderRadius.xl,
+                backgroundColor: !preview || isExporting ? colors.gray[200] : '#16A34A',
+              }}
             >
               {isExporting ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
                   <Symbol name="square.grid.2x2.fill" size={24} color="white" />
-                  <Text className="text-white font-bold ml-2">CSV</Text>
+                  <Text
+                    style={{
+                      color: colors.white,
+                      fontWeight: fontWeight.bold,
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    CSV
+                  </Text>
                 </>
               )}
             </TouchableOpacity>

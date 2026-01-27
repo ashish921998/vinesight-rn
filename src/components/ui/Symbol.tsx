@@ -1,14 +1,14 @@
-import { SymbolView, SymbolWeight } from 'expo-symbols';
+import { SymbolView, type SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import React from 'react';
-import { View, Text, ViewStyle } from 'react-native';
+import { View, Text, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SymbolProps {
-  name: string;
+  name: SymbolViewProps['name'] | string;
   size?: number;
   color?: string;
   weight?: SymbolWeight;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 // Map SF Symbol names to Ionicons as fallback
@@ -20,6 +20,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'chevron.down': 'chevron-down',
   xmark: 'close',
   'xmark.circle.fill': 'close-circle',
+  'arrow.up.right': 'arrow-up',
 
   // Actions
   plus: 'add',
@@ -37,9 +38,11 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 
   // UI Elements
   'square.grid.2x2': 'grid',
+  'square.grid.2x2.fill': 'grid',
   'list.bullet': 'list',
   ellipsis: 'ellipsis-horizontal',
   'ellipsis.circle': 'ellipsis-horizontal-circle',
+  'ellipsis.circle.fill': 'ellipsis-horizontal-circle',
   'line.3.horizontal': 'menu',
   square: 'square-outline',
   circle: 'ellipse-outline',
@@ -52,6 +55,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'sun.max.fill': 'sunny',
   'cloud.sun.fill': 'partly-sunny',
   'cloud.rain.fill': 'rainy',
+  'cloud.slash.fill': 'cloud-offline',
   'bolt.fill': 'flash',
 
   // Business
@@ -96,6 +100,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   // Tools & Science
   flask: 'flask-outline',
   'flask.fill': 'flask',
+  cube: 'cube-outline',
 
   // Settings
   gearshape: 'settings-outline',
@@ -103,6 +108,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 
   // Misc
   'bell.fill': 'notifications',
+  'g.circle.fill': 'logo-google',
+  'indianrupeesign.circle': 'cash',
   star: 'star-outline',
   'basket.fill': 'basket',
 
@@ -121,33 +128,49 @@ export function Symbol({
   weight = 'regular',
   style,
 }: SymbolProps) {
+  const directIonicon = Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, name)
+    ? (name as keyof typeof Ionicons.glyphMap)
+    : undefined;
+
   // On iOS 17+, use SF Symbols
   if (process.env.EXPO_OS === 'ios') {
-    const fallbackIcon = SYMBOL_TO_IONICON[name] || 'ellipse-outline';
+    const fallbackIcon = SYMBOL_TO_IONICON[name] || directIonicon || 'ellipse-outline';
     return (
       <SymbolView
-        name={name}
+        name={name as SymbolViewProps['name']}
         size={size}
         tintColor={color}
         weight={weight}
         type="monochrome"
         style={style}
-        fallback={<Ionicons name={fallbackIcon} size={size} color={color} style={style} />}
+        fallback={
+          <Ionicons
+            name={fallbackIcon}
+            size={size}
+            color={color}
+            style={style as StyleProp<TextStyle>}
+          />
+        }
       />
     );
   }
 
   // On Android/web, use Ionicons as fallback
-  const ionicon = SYMBOL_TO_IONICON[name];
+  const ionicon = SYMBOL_TO_IONICON[name] || directIonicon;
   if (ionicon) {
-    return <Ionicons name={ionicon} size={size} color={color} style={style} />;
+    return (
+      <Ionicons name={ionicon} size={size} color={color} style={style as StyleProp<TextStyle>} />
+    );
   }
 
   // Final fallback: show a placeholder
+  const containerStyle: StyleProp<ViewStyle> = [
+    { width: size, height: size, justifyContent: 'center', alignItems: 'center' },
+    style,
+  ];
+
   return (
-    <View
-      style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}
-    >
+    <View style={containerStyle}>
       <Text style={{ fontSize: size * 0.6, color }}>•</Text>
     </View>
   );

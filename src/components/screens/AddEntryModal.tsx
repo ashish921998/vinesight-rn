@@ -15,9 +15,8 @@ import {
   Alert,
   ActivityIndicator,
   Pressable,
+  type TextInputProps,
   Keyboard,
-  NativeSyntheticEvent,
-  TextInputFocusEventData,
   useWindowDimensions,
   UIManager,
   findNodeHandle,
@@ -188,30 +187,35 @@ export function AddEntryModal({
   const createFertigation = useCreateFertigationRecord();
   const updateWaterLevel = useUpdateFarmWaterLevel();
 
-  const scrollToNode = useCallback((nodeHandle: number) => {
-    if (!keyboardHeightRef.current) return;
-    const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
-    UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
-      const keyboardTop = windowHeight - keyboardHeightRef.current;
-      const inputBottom = y + height;
-      const buffer = 24;
-      if (inputBottom > keyboardTop - buffer) {
-        const scrollBy = inputBottom - (keyboardTop - buffer);
-        logFormScrollViewRef.current?.scrollTo({
-          y: Math.max(0, scrollOffsetRef.current + scrollBy),
-          animated: true,
-        });
-      }
-    });
-  }, []);
+  const scrollToNode = useCallback(
+    (nodeHandle: number) => {
+      if (!keyboardHeightRef.current) return;
+      const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
+      if (typeof resolvedHandle !== 'number') return;
+      UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
+        const keyboardTop = windowHeight - keyboardHeightRef.current;
+        const inputBottom = y + height;
+        const buffer = 24;
+        if (inputBottom > keyboardTop - buffer) {
+          const scrollBy = inputBottom - (keyboardTop - buffer);
+          logFormScrollViewRef.current?.scrollTo({
+            y: Math.max(0, scrollOffsetRef.current + scrollBy),
+            animated: true,
+          });
+        }
+      });
+    },
+    [windowHeight],
+  );
 
   // Track keyboard visibility
   useEffect(() => {
     const keyboardShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
       keyboardHeightRef.current = event.endCoordinates.height;
       setIsKeyboardVisible(true);
-      if (focusedInputRef.current) {
-        requestAnimationFrame(() => scrollToNode(focusedInputRef.current as number));
+      const focusedNode = focusedInputRef.current;
+      if (focusedNode != null) {
+        requestAnimationFrame(() => scrollToNode(focusedNode));
       }
     });
     const keyboardHideListener = Keyboard.addListener('keyboardDidHide', () => {
@@ -233,10 +237,13 @@ export function AddEntryModal({
     }
   }, [visible, initialLogType]);
 
+  type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
+
   const scrollToFocusedInput = useCallback(
-    (event: NativeSyntheticEvent<TextInputFocusEventData>) => {
-      const nodeHandle = event.target;
-      if (!nodeHandle) return;
+    (event: OnFocusEvent) => {
+      const target = (event as { target?: unknown }).target ?? null;
+      const nodeHandle = findNodeHandle(target as unknown as number | React.Component | null);
+      if (typeof nodeHandle !== 'number') return;
       focusedInputRef.current = nodeHandle;
       requestAnimationFrame(() => scrollToNode(nodeHandle));
     },

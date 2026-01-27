@@ -1,15 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  type NativeSyntheticEvent,
-  type TextInputFocusEventData,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput } from './FormField';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculatorModels';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export interface ExpenseFormData {
   type: ExpenseTypeId | '';
@@ -21,7 +15,7 @@ export interface ExpenseFormData {
 interface ExpenseFormProps {
   data: ExpenseFormData;
   onChange: (data: ExpenseFormData) => void;
-  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onInputFocus?: TextInputProps['onFocus'];
 }
 
 // Icon mapping for expense types
@@ -41,47 +35,82 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
   return (
     <View>
       {/* Header with icon */}
-      <View className="flex-row items-center mb-4">
-        <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-3">
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: borderRadius.full,
+            backgroundColor: '#FEE2E2',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: spacing[3],
+          }}
+        >
           <Symbol name="dollarsign.circle.fill" size={20} color="#EF4444" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">Expense</Text>
-          <Text className="text-sm text-surface-500">Log farm expense</Text>
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[900],
+            }}
+          >
+            Expense
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+            Log farm expense
+          </Text>
         </View>
       </View>
 
       {/* Category Selection */}
-      <View className="mb-4">
-        <View className="flex-row items-center mb-2">
+      <View style={{ marginBottom: spacing[4] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
           <View style={{ marginRight: 6 }}>
             <Symbol name="list.bullet" size={16} color="#408059" />
           </View>
-          <Text className="text-sm font-semibold text-surface-800">
-            Category <Text className="text-red-500">*</Text>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[800],
+            }}
+          >
+            Category <Text style={{ color: colors.error }}>*</Text>
           </Text>
         </View>
 
-        <View className="flex-row flex-wrap gap-2">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
           {EXPENSE_TYPES.map((type) => (
             <TouchableOpacity
               key={type}
               onPress={() => onChange({ ...data, type })}
-              className={`flex-row items-center px-3 py-2.5 rounded-xl border ${
-                data.type === type ? 'bg-red-500 border-red-500' : 'bg-white border-surface-200'
-              }`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: spacing[3],
+                paddingVertical: 10,
+                borderRadius: borderRadius.xl,
+                borderWidth: 1,
+                backgroundColor: data.type === type ? '#EF4444' : colors.white,
+                borderColor: data.type === type ? '#EF4444' : colors.surface[200],
+              }}
               activeOpacity={0.7}
             >
               <Symbol
                 name={EXPENSE_ICONS[type]}
                 size={16}
-                color={data.type === type ? '#FFFFFF' : '#6B7280'}
+                color={data.type === type ? colors.white : colors.surface[500]}
                 style={{ marginRight: 6 }}
               />
               <Text
-                className={`text-sm font-medium ${
-                  data.type === type ? 'text-white' : 'text-surface-700'
-                }`}
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: data.type === type ? colors.white : colors.surface[700],
+                }}
               >
                 {type}
               </Text>
@@ -106,17 +135,34 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
       />
 
       {/* Remarks Input (Optional) */}
-      <View className="mb-4">
-        <View className="flex-row items-center mb-1.5">
+      <View style={{ marginBottom: spacing[4] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ marginRight: 6 }}>
             <Symbol name="doc.text" size={16} color="#408059" />
           </View>
-          <Text className="text-sm font-semibold text-surface-800">Remarks</Text>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[800],
+            }}
+          >
+            Remarks
+          </Text>
         </View>
 
-        <View className="px-4 py-3 rounded-xl border border-surface-200 bg-white">
+        <View
+          style={{
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[3],
+            borderRadius: borderRadius.xl,
+            borderWidth: 1,
+            borderColor: colors.surface[200],
+            backgroundColor: colors.white,
+          }}
+        >
           <TextInput
-            className="text-base text-surface-900"
+            style={{ fontSize: fontSize.base, color: colors.surface[900] }}
             placeholder="Add notes about this expense (optional)"
             placeholderTextColor="#9CA3AF"
             value={data.remarks || ''}
@@ -127,34 +173,70 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
             onFocus={onInputFocus}
           />
         </View>
-        <Text className="text-xs text-surface-500 mt-1">Optional - describe the expense</Text>
+        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
+          Optional - describe the expense
+        </Text>
       </View>
 
       {/* Summary */}
       {data.type && data.cost > 0 && (
-        <View className="bg-red-50 rounded-xl p-4 mb-4">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center">
+        <View
+          style={{
+            backgroundColor: '#FEF2F2',
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            marginBottom: spacing[4],
+          }}
+        >
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Symbol
                 name={data.type ? EXPENSE_ICONS[data.type] : 'dollarsign.circle.fill'}
                 size={20}
                 color="#DC2626"
               />
-              <Text className="text-sm font-medium text-red-700 ml-2">{data.type}</Text>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: '#B91C1C',
+                  marginLeft: spacing[2],
+                }}
+              >
+                {data.type}
+              </Text>
             </View>
-            <Text className="text-lg font-bold text-red-700">₹{data.cost.toLocaleString()}</Text>
+            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#B91C1C' }}>
+              ₹{data.cost.toLocaleString()}
+            </Text>
           </View>
         </View>
       )}
 
       {/* Validation indicator */}
-      <View className="flex-row items-center pt-4 border-t border-surface-100">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingTop: spacing[4],
+          borderTopWidth: 1,
+          borderTopColor: colors.surface[100],
+        }}
+      >
         <Symbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
         />
-        <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            marginLeft: spacing[2],
+            color: isValid ? '#16A34A' : colors.surface[500],
+          }}
+        >
           {isValid ? 'Ready to add' : 'Select category and enter amount'}
         </Text>
       </View>

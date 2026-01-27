@@ -18,6 +18,7 @@ import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
 import { LinearGradient } from 'expo-linear-gradient';
 import { REFILL_SPANS, SOIL_TYPES, type RefillSpanId } from '@/constants/calculatorModels';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export default function MADCalculatorScreen() {
   // Step 1: MAD Calculation inputs
@@ -95,34 +96,50 @@ export default function MADCalculatorScreen() {
       <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
         <KeyboardAvoidingView
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
-          style={{ backgroundColor: '#f2f2f7' }}
+          style={{ flex: 1, backgroundColor: '#f2f2f7' }}
         >
           <LinearGradient
             colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
             style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
           />
           <ScrollView
-            className="flex-1"
+            style={{ flex: 1 }}
             contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
             contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
           >
             {/* Step 1: MAD Calculation Card */}
             <View
-              className="rounded-2xl p-4 overflow-hidden"
               style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                overflow: 'hidden',
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
               }}
             >
-              <View className="flex-row items-center mb-4">
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
+              >
                 <View
-                  className="w-8 h-8 rounded-lg items-center justify-center"
-                  style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: borderRadius.lg,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                  }}
                 >
                   <Symbol name="drop.fill" size={18} color="#408059" />
                 </View>
-                <Text className="text-base font-semibold ml-2" style={{ color: '#1c1c1e' }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    marginLeft: spacing[2],
+                    color: '#1c1c1e',
+                  }}
+                >
                   Step 1: MAD Calculation
                 </Text>
               </View>
@@ -157,12 +174,26 @@ export default function MADCalculatorScreen() {
               />
 
               {/* Soil type guidance */}
-              <View className="rounded-xl p-3 mt-3" style={{ backgroundColor: '#f9f9f9' }}>
-                <Text className="text-xs font-medium mb-2" style={{ color: '#8e8e93' }}>
+              <View
+                style={{
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[3],
+                  marginTop: spacing[3],
+                  backgroundColor: '#f9f9f9',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.medium,
+                    marginBottom: spacing[2],
+                    color: '#8e8e93',
+                  }}
+                >
                   Typical water retention by soil type:
                 </Text>
                 {SOIL_TYPES.map((soil) => (
-                  <Text key={soil.id} className="text-xs" style={{ color: '#8e8e93' }}>
+                  <Text key={soil.id} style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
                     • {soil.label}: {soil.waterRetentionMin}-{soil.waterRetentionMax}%
                   </Text>
                 ))}
@@ -172,14 +203,19 @@ export default function MADCalculatorScreen() {
               <TouchableOpacity
                 onPress={calculateMAD}
                 disabled={!canCalculateMAD || madResult !== null}
-                className="mt-4 py-3 rounded-xl items-center"
                 style={{
+                  marginTop: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
                   backgroundColor: canCalculateMAD && !madResult ? '#408059' : '#e5e5ea',
                 }}
               >
                 <Text
-                  className="font-semibold"
-                  style={{ color: canCalculateMAD && !madResult ? '#ffffff' : '#8e8e93' }}
+                  style={{
+                    fontWeight: fontWeight.semibold,
+                    color: canCalculateMAD && !madResult ? '#ffffff' : '#8e8e93',
+                  }}
                 >
                   Calculate MAD
                 </Text>
@@ -187,23 +223,49 @@ export default function MADCalculatorScreen() {
 
               {/* MAD Result */}
               {madResult !== null && (
-                <View className="mt-4">
+                <View style={{ marginTop: spacing[4] }}>
                   <View
-                    className="rounded-xl p-4 items-center"
-                    style={{ backgroundColor: 'rgba(64, 128, 89, 0.08)' }}
+                    style={{
+                      borderRadius: borderRadius.xl,
+                      padding: spacing[4],
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(64, 128, 89, 0.08)',
+                    }}
                   >
-                    <Text className="text-3xl font-bold" style={{ color: '#408059' }}>
+                    <Text
+                      style={{
+                        fontSize: fontSize['3xl'],
+                        fontWeight: fontWeight.bold,
+                        color: '#408059',
+                      }}
+                    >
                       {madResult.toFixed(4)}
                     </Text>
-                    <Text className="text-sm mt-1" style={{ color: '#408059' }}>
+                    <Text
+                      style={{ fontSize: fontSize.sm, marginTop: spacing[1], color: '#408059' }}
+                    >
                       Maximum Allowable Deficit
                     </Text>
                   </View>
-                  <View className="rounded-xl p-3 mt-3" style={{ backgroundColor: '#f9f9f9' }}>
-                    <Text className="text-xs font-medium mb-1" style={{ color: '#8e8e93' }}>
+                  <View
+                    style={{
+                      borderRadius: borderRadius.xl,
+                      padding: spacing[3],
+                      marginTop: spacing[3],
+                      backgroundColor: '#f9f9f9',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                        marginBottom: spacing[1],
+                        color: '#8e8e93',
+                      }}
+                    >
                       Interpretation
                     </Text>
-                    <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                    <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
                       {interpretMAD(madResult)}
                     </Text>
                   </View>
@@ -214,39 +276,68 @@ export default function MADCalculatorScreen() {
             {/* Step 2: Refill Tank Calculator */}
             {madResult !== null && (
               <View
-                className="rounded-2xl p-4 overflow-hidden"
                 style={{
+                  borderRadius: borderRadius['2xl'],
+                  padding: spacing[4],
+                  overflow: 'hidden',
                   backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  marginTop: spacing[4],
                 }}
               >
-                <View className="flex-row items-center mb-4">
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
+                >
                   <View
-                    className="w-8 h-8 rounded-lg items-center justify-center"
-                    style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: borderRadius.lg,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                    }}
                   >
                     <Symbol name="arrow-up-circle" size={18} color="#408059" />
                   </View>
-                  <Text className="text-base font-semibold ml-2" style={{ color: '#1c1c1e' }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      fontWeight: fontWeight.semibold,
+                      marginLeft: spacing[2],
+                      color: '#1c1c1e',
+                    }}
+                  >
                     Step 2: Refill Tank Calculator
                   </Text>
                 </View>
 
-                <Text className="text-sm font-medium mb-2" style={{ color: '#3a3a3c' }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    marginBottom: spacing[2],
+                    color: '#3a3a3c',
+                  }}
+                >
                   Select Refill Span
                 </Text>
                 {REFILL_SPANS.map((span) => (
                   <TouchableOpacity
                     key={span.id}
                     onPress={() => setSelectedRefillSpan(span.id)}
-                    className="flex-row items-center p-3 rounded-xl mb-2"
                     style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      padding: spacing[3],
+                      borderRadius: borderRadius.xl,
+                      marginBottom: spacing[2],
                       backgroundColor:
                         selectedRefillSpan === span.id ? 'rgba(64, 128, 89, 0.08)' : '#f9f9f9',
                       borderWidth: 1,
                       borderColor: selectedRefillSpan === span.id ? '#408059' : '#e5e5ea',
                     }}
                   >
-                    <Text className="flex-1 text-sm" style={{ color: '#1c1c1e' }}>
+                    <Text style={{ flex: 1, fontSize: fontSize.sm, color: '#1c1c1e' }}>
                       {span.label}
                     </Text>
                     {selectedRefillSpan === span.id && (
@@ -256,17 +347,31 @@ export default function MADCalculatorScreen() {
                 ))}
 
                 {/* Guidance */}
-                <View className="rounded-xl p-3 mt-2" style={{ backgroundColor: '#f9f9f9' }}>
-                  <Text className="text-xs font-medium mb-2" style={{ color: '#8e8e93' }}>
+                <View
+                  style={{
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                    marginTop: spacing[2],
+                    backgroundColor: '#f9f9f9',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                      marginBottom: spacing[2],
+                      color: '#8e8e93',
+                    }}
+                  >
                     Refill span guidance:
                   </Text>
-                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                  <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
                     • Heavy Growth (0.2): Fruit set - maintain turgor
                   </Text>
-                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                  <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
                     • Normal Growth (0.3): Flowering - balance growth/stress
                   </Text>
-                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                  <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
                     • Controlled Stress (0.4): Veraison - improve quality/sugar
                   </Text>
                 </View>
@@ -275,15 +380,18 @@ export default function MADCalculatorScreen() {
                 <TouchableOpacity
                   onPress={calculateRefillTank}
                   disabled={!canCalculateRefillTank || refillTankResult !== null}
-                  className="mt-4 py-3 rounded-xl items-center"
                   style={{
                     backgroundColor:
                       canCalculateRefillTank && !refillTankResult ? '#408059' : '#e5e5ea',
+                    marginTop: spacing[4],
+                    paddingVertical: spacing[3],
+                    borderRadius: borderRadius.xl,
+                    alignItems: 'center',
                   }}
                 >
                   <Text
-                    className="font-semibold"
                     style={{
+                      fontWeight: fontWeight.semibold,
                       color: canCalculateRefillTank && !refillTankResult ? '#ffffff' : '#8e8e93',
                     }}
                   >
@@ -293,23 +401,49 @@ export default function MADCalculatorScreen() {
 
                 {/* Refill Tank Result */}
                 {refillTankResult !== null && (
-                  <View className="mt-4">
+                  <View style={{ marginTop: spacing[4] }}>
                     <View
-                      className="rounded-xl p-4 items-center"
-                      style={{ backgroundColor: 'rgba(64, 128, 89, 0.08)' }}
+                      style={{
+                        borderRadius: borderRadius.xl,
+                        padding: spacing[4],
+                        alignItems: 'center',
+                        backgroundColor: 'rgba(64, 128, 89, 0.08)',
+                      }}
                     >
-                      <Text className="text-3xl font-bold" style={{ color: '#408059' }}>
+                      <Text
+                        style={{
+                          fontSize: fontSize['3xl'],
+                          fontWeight: fontWeight.bold,
+                          color: '#408059',
+                        }}
+                      >
                         {refillTankResult.toFixed(4)}
                       </Text>
-                      <Text className="text-sm mt-1" style={{ color: '#408059' }}>
+                      <Text
+                        style={{ fontSize: fontSize.sm, marginTop: spacing[1], color: '#408059' }}
+                      >
                         Refill Tank Requirement
                       </Text>
                     </View>
-                    <View className="rounded-xl p-3 mt-3" style={{ backgroundColor: '#f9f9f9' }}>
-                      <Text className="text-xs font-medium mb-1" style={{ color: '#8e8e93' }}>
+                    <View
+                      style={{
+                        borderRadius: borderRadius.xl,
+                        padding: spacing[3],
+                        marginTop: spacing[3],
+                        backgroundColor: '#f9f9f9',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: fontSize.xs,
+                          fontWeight: fontWeight.medium,
+                          marginBottom: spacing[1],
+                          color: '#8e8e93',
+                        }}
+                      >
                         What this means
                       </Text>
-                      <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                      <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
                         Apply {refillTankResult.toFixed(4)} units of water when soil moisture drops
                         to{' '}
                         {(
@@ -327,14 +461,24 @@ export default function MADCalculatorScreen() {
             {madResult !== null && refillTankResult !== null && (
               <TouchableOpacity
                 onPress={resetCalculator}
-                className="rounded-2xl py-4 items-center overflow-hidden"
                 style={{
+                  borderRadius: borderRadius['2xl'],
+                  paddingVertical: spacing[4],
+                  alignItems: 'center',
+                  overflow: 'hidden',
                   backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  marginTop: spacing[4],
                 }}
               >
-                <View className="flex-row items-center">
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Symbol name="refresh" size={18} color="#8e8e93" />
-                  <Text className="font-medium ml-2" style={{ color: '#8e8e93' }}>
+                  <Text
+                    style={{
+                      fontWeight: fontWeight.medium,
+                      marginLeft: spacing[2],
+                      color: '#8e8e93',
+                    }}
+                  >
                     Reset Calculator
                   </Text>
                 </View>
@@ -362,21 +506,33 @@ function InputRow({
   placeholder: string;
 }) {
   return (
-    <View className="mb-3">
-      <Text className="text-sm mb-1" style={{ color: '#8e8e93' }}>
+    <View style={{ marginBottom: spacing[3] }}>
+      <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1], color: '#8e8e93' }}>
         {label}
       </Text>
-      <View className="flex-row items-center rounded-xl" style={{ backgroundColor: '#f9f9f9' }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          borderRadius: borderRadius.xl,
+          backgroundColor: '#f9f9f9',
+        }}
+      >
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor="#8e8e93"
           keyboardType="decimal-pad"
-          className="flex-1 px-4 py-3 text-base"
-          style={{ color: '#1c1c1e' }}
+          style={{
+            flex: 1,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[3],
+            fontSize: fontSize.base,
+            color: '#1c1c1e',
+          }}
         />
-        <Text className="text-sm pr-4" style={{ color: '#8e8e93' }}>
+        <Text style={{ fontSize: fontSize.sm, paddingRight: spacing[4], color: '#8e8e93' }}>
           {unit}
         </Text>
       </View>

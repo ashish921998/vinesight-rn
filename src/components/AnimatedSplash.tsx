@@ -10,6 +10,7 @@ import Animated, {
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
+import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 
 interface SplashProps {
   onComplete?: () => void;
@@ -77,23 +78,47 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
   }
 
   return (
-    <Animated.View entering={FadeIn} exiting={FadeOut} style={containerStyle} className="flex-1">
-      <View className="flex-1 items-center justify-center bg-primary-500">
-        <Animated.View style={logoContainerStyle} className="items-center">
-          <Animated.View style={logoStyle} className="mb-8 items-center justify-center">
+    <Animated.View entering={FadeIn} exiting={FadeOut} style={[containerStyle, { flex: 1 }]}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.primary[500],
+        }}
+      >
+        <Animated.View style={[logoContainerStyle, { alignItems: 'center' }]}>
+          <Animated.View
+            style={[
+              logoStyle,
+              { marginBottom: spacing[8], alignItems: 'center', justifyContent: 'center' },
+            ]}
+          >
             <Image
               // eslint-disable-next-line @typescript-eslint/no-require-imports
               source={require('../../assets/splash-icon.png')}
-              className="w-32 h-32"
+              style={{ width: 128, height: 128 }}
               resizeMode="contain"
             />
           </Animated.View>
 
-          <Animated.Text style={textOpacity} className="text-4xl font-bold text-white mb-2">
+          <Animated.Text
+            style={[
+              textOpacity,
+              {
+                fontSize: fontSize['4xl'],
+                fontWeight: fontWeight.bold,
+                color: colors.white,
+                marginBottom: spacing[2],
+              },
+            ]}
+          >
             Vinesight
           </Animated.Text>
 
-          <Animated.Text style={textOpacity} className="text-white/80 text-lg">
+          <Animated.Text
+            style={[textOpacity, { color: 'rgba(255, 255, 255, 0.8)', fontSize: fontSize.lg }]}
+          >
             Farm Management
           </Animated.Text>
         </Animated.View>

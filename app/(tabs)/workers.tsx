@@ -90,7 +90,7 @@ export default function WorkersScreen() {
             style={{
               fontSize: fontSize.lg,
               fontWeight: fontWeight.bold,
-              color: colors.primary,
+              color: colors.primary[500],
             }}
           >
             {item.name.charAt(0).toUpperCase()}
@@ -238,7 +238,7 @@ export default function WorkersScreen() {
                 marginBottom: spacing[4],
               }}
             >
-              <Symbol name="person.2" size={40} color={colors.primary} />
+              <Symbol name="person.2" size={40} color={colors.primary[500]} />
             </View>
             <Text
               style={{
@@ -263,7 +263,7 @@ export default function WorkersScreen() {
             <TouchableOpacity
               onPress={() => setShowAddModal(true)}
               style={{
-                backgroundColor: colors.primary,
+                backgroundColor: colors.primary[500],
                 paddingHorizontal: spacing[6],
                 paddingVertical: spacing[3],
                 borderRadius: borderRadius.xl,
@@ -283,7 +283,11 @@ export default function WorkersScreen() {
         ) : null
       }
       refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />
+        <RefreshControl
+          refreshing={isLoading}
+          onRefresh={refetch}
+          tintColor={colors.primary[500]}
+        />
       }
     />
   );
@@ -392,14 +396,14 @@ export default function WorkersScreen() {
                   <Symbol
                     name={tab.icon}
                     size={16}
-                    color={isSelected ? colors.primary : colors.gray[400]}
+                    color={isSelected ? colors.primary[500] : colors.gray[400]}
                   />
                   <Text
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.medium,
                       marginLeft: 6,
-                      color: isSelected ? colors.primary : colors.gray[400],
+                      color: isSelected ? colors.primary[500] : colors.gray[400],
                     }}
                   >
                     {tab.label}
@@ -425,7 +429,7 @@ export default function WorkersScreen() {
               right: spacing[6],
               width: 56,
               height: 56,
-              backgroundColor: colors.primary,
+              backgroundColor: colors.primary[500],
               borderRadius: borderRadius.full,
               alignItems: 'center',
               justifyContent: 'center',

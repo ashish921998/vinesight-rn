@@ -1,15 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  type NativeSyntheticEvent,
-  type TextInputFocusEventData,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput } from './FormField';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculatorModels';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export interface HarvestFormData {
   quantity: number;
@@ -22,7 +16,7 @@ export interface HarvestFormData {
 interface HarvestFormProps {
   data: HarvestFormData;
   onChange: (data: HarvestFormData) => void;
-  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onInputFocus?: TextInputProps['onFocus'];
 }
 
 export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) {
@@ -35,13 +29,33 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
   return (
     <View>
       {/* Header with icon */}
-      <View className="flex-row items-center mb-4">
-        <View className="w-10 h-10 rounded-full bg-amber-100 items-center justify-center mr-3">
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: borderRadius.full,
+            backgroundColor: '#FEF3C7',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: spacing[3],
+          }}
+        >
           <Symbol name="basket.fill" size={20} color="#F59E0B" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">Harvest</Text>
-          <Text className="text-sm text-surface-500">Log harvest quantity and details</Text>
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[900],
+            }}
+          >
+            Harvest
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+            Log harvest quantity and details
+          </Text>
         </View>
       </View>
 
@@ -61,32 +75,43 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       />
 
       {/* Grade Selection */}
-      <View className="mb-4">
-        <View className="flex-row items-center mb-2">
+      <View style={{ marginBottom: spacing[4] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
           <View style={{ marginRight: 6 }}>
             <Symbol name="star" size={16} color="#408059" />
           </View>
-          <Text className="text-sm font-semibold text-surface-800">
-            Grade <Text className="text-red-500">*</Text>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[800],
+            }}
+          >
+            Grade <Text style={{ color: colors.error }}>*</Text>
           </Text>
         </View>
 
-        <View className="flex-row flex-wrap gap-2">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
           {HARVEST_GRADES.map((grade) => (
             <TouchableOpacity
               key={grade}
               onPress={() => onChange({ ...data, grade })}
-              className={`px-4 py-2.5 rounded-xl border ${
-                data.grade === grade
-                  ? 'bg-amber-500 border-amber-500'
-                  : 'bg-white border-surface-200'
-              }`}
+              style={{
+                paddingHorizontal: spacing[4],
+                paddingVertical: 10,
+                borderRadius: borderRadius.xl,
+                borderWidth: 1,
+                backgroundColor: data.grade === grade ? '#F59E0B' : colors.white,
+                borderColor: data.grade === grade ? '#F59E0B' : colors.surface[200],
+              }}
               activeOpacity={0.7}
             >
               <Text
-                className={`text-sm font-medium ${
-                  data.grade === grade ? 'text-white' : 'text-surface-700'
-                }`}
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: data.grade === grade ? colors.white : colors.surface[700],
+                }}
               >
                 {grade}
               </Text>
@@ -110,20 +135,39 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       />
 
       {/* Buyer Input (Optional) */}
-      <View className="mb-4">
-        <View className="flex-row items-center mb-1.5">
+      <View style={{ marginBottom: spacing[4] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ marginRight: 6 }}>
             <Symbol name="person" size={16} color="#408059" />
           </View>
-          <Text className="text-sm font-semibold text-surface-800">Buyer</Text>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[800],
+            }}
+          >
+            Buyer
+          </Text>
         </View>
 
-        <View className="flex-row items-center px-4 py-3 rounded-xl border border-surface-200 bg-white">
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[3],
+            borderRadius: borderRadius.xl,
+            borderWidth: 1,
+            borderColor: colors.surface[200],
+            backgroundColor: colors.white,
+          }}
+        >
           <View style={{ marginRight: 10 }}>
             <Symbol name="person" size={20} color="#6B7280" />
           </View>
           <TextInput
-            className="flex-1 text-base text-surface-900"
+            style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
             placeholder="Enter buyer name (optional)"
             placeholderTextColor="#9CA3AF"
             value={data.buyer || ''}
@@ -131,32 +175,72 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             onFocus={onInputFocus}
           />
         </View>
-        <Text className="text-xs text-surface-500 mt-1">Optional - who bought the harvest</Text>
+        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
+          Optional - who bought the harvest
+        </Text>
       </View>
 
       {/* Summary Card */}
       {(totalValue || data.grade) && (
-        <View className="bg-amber-50 rounded-xl p-4 mb-4">
-          <Text className="text-sm font-semibold text-amber-700 mb-2">Summary</Text>
-          <View className="flex-row flex-wrap gap-4">
+        <View
+          style={{
+            backgroundColor: '#FFFBEB',
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            marginBottom: spacing[4],
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: '#B45309',
+              marginBottom: spacing[2],
+            }}
+          >
+            Summary
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[4] }}>
             {data.quantity > 0 && (
               <View>
-                <Text className="text-xs text-amber-600">Quantity</Text>
-                <Text className="text-base font-semibold text-amber-800">
+                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>Quantity</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: '#92400E',
+                  }}
+                >
                   {data.quantity.toFixed(1)} kg
                 </Text>
               </View>
             )}
             {data.grade && (
               <View>
-                <Text className="text-xs text-amber-600">Grade</Text>
-                <Text className="text-base font-semibold text-amber-800">{data.grade}</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>Grade</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: '#92400E',
+                  }}
+                >
+                  {data.grade}
+                </Text>
               </View>
             )}
             {totalValue && (
               <View>
-                <Text className="text-xs text-amber-600">Total Value</Text>
-                <Text className="text-base font-semibold text-amber-800">₹{totalValue}</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>Total Value</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: '#92400E',
+                  }}
+                >
+                  ₹{totalValue}
+                </Text>
               </View>
             )}
           </View>
@@ -164,13 +248,27 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       )}
 
       {/* Validation indicator */}
-      <View className="flex-row items-center pt-4 border-t border-surface-100">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingTop: spacing[4],
+          borderTopWidth: 1,
+          borderTopColor: colors.surface[100],
+        }}
+      >
         <Symbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
         />
-        <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            marginLeft: spacing[2],
+            color: isValid ? '#16A34A' : colors.surface[500],
+          }}
+        >
           {isValid ? 'Ready to add' : 'Enter quantity and select grade'}
         </Text>
       </View>

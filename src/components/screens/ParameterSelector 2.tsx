@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../../hooks/useLabTests';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface Props {
   testType: 'soil' | 'petiole';
@@ -36,13 +37,40 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
   };
 
   return (
-    <View className="bg-white/80 px-4 py-3 border-b border-gray-200">
-      <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-sm font-semibold text-gray-800">
+    <View
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        paddingHorizontal: spacing[4],
+        paddingVertical: spacing[3],
+        borderBottomWidth: 1,
+        borderBottomColor: colors.gray[200],
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: spacing[3],
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+            color: colors.gray[800],
+          }}
+        >
           Parameters ({selected.size} selected)
         </Text>
         <TouchableOpacity onPress={toggleAll}>
-          <Text className="text-sm text-[#408059] font-medium">
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.medium,
+              color: colors.primary[500],
+            }}
+          >
             {selected.size === parameters.length ? 'Deselect All' : 'Select All'}
           </Text>
         </TouchableOpacity>
@@ -58,9 +86,16 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
             <TouchableOpacity
               key={param.key}
               onPress={() => toggleParam(param.key)}
-              className={`flex-row items-center px-3 py-2 rounded-full border ${
-                isSelected ? 'bg-[#408059] border-[#408059]' : 'bg-white border-gray-300'
-              }`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[2],
+                borderRadius: borderRadius.full,
+                borderWidth: 1,
+                backgroundColor: isSelected ? colors.primary[500] : colors.white,
+                borderColor: isSelected ? colors.primary[500] : colors.gray[300],
+              }}
             >
               <Symbol
                 name={isSelected ? 'checkmark.square.fill' : 'square'}
@@ -68,9 +103,12 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
                 color={isSelected ? 'white' : '#666'}
               />
               <Text
-                className={`ml-2 text-xs font-medium ${
-                  isSelected ? 'text-white' : 'text-gray-700'
-                }`}
+                style={{
+                  marginLeft: spacing[2],
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.medium,
+                  color: isSelected ? colors.white : colors.gray[700],
+                }}
               >
                 {param.label}
               </Text>

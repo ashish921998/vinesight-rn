@@ -8,6 +8,7 @@ import {
   type TextInputSubmitEditingEventData,
 } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface FormFieldProps extends TextInputProps {
   label: string;
@@ -25,36 +26,50 @@ export function FormField({
   error,
   required = false,
   hint,
-  className,
   editable = true,
   ...props
 }: FormFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
   const hasError = !!error;
   const isDisabled = !editable;
+  const borderColor = hasError
+    ? colors.error
+    : isFocused
+      ? colors.primary[500]
+      : colors.surface[300];
+  const backgroundColor = isDisabled ? colors.surface[100] : colors.white;
 
   return (
-    <View className="mb-4">
-      <View className="flex-row items-center mb-1.5">
+    <View style={{ marginBottom: spacing[4] }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
         {icon && (
           <View style={{ marginRight: 6 }}>
             <Symbol name={icon} size={16} color="#408059" />
           </View>
         )}
-        <Text className="text-sm font-semibold text-surface-800">
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+            color: colors.surface[800],
+          }}
+        >
           {label}
-          {required && <Text className="text-red-500"> *</Text>}
+          {required && <Text style={{ color: colors.error }}> *</Text>}
         </Text>
       </View>
 
       <View
-        className={`
-          flex-row items-center
-          px-4 py-3 rounded-xl
-          border
-          ${hasError ? 'border-red-500' : isFocused ? 'border-primary-500' : 'border-surface-200'}
-          ${isDisabled ? 'bg-surface-100' : 'bg-white'}
-        `}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[4],
+          paddingVertical: spacing[3],
+          borderRadius: borderRadius.xl,
+          borderWidth: 1,
+          borderColor,
+          backgroundColor,
+        }}
       >
         {icon && (
           <View style={{ marginRight: 10 }}>
@@ -63,7 +78,7 @@ export function FormField({
         )}
 
         <TextInput
-          className={`flex-1 text-base text-surface-900 ${className || ''}`}
+          style={[{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }, props.style]}
           placeholderTextColor="#9CA3AF"
           editable={editable}
           onFocus={(e) => {
@@ -78,12 +93,18 @@ export function FormField({
         />
       </View>
 
-      {hint && !hasError && <Text className="text-xs text-surface-500 mt-1">{hint}</Text>}
+      {hint && !hasError && (
+        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
+          {hint}
+        </Text>
+      )}
 
       {hasError && (
-        <View className="flex-row items-center mt-1.5">
-          <Symbol name="exclamationmark.circle.fill" size={14} color="#EF4444" />
-          <Text className="text-xs text-red-500 ml-1">{error}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+          <Symbol name="exclamationmark.circle.fill" size={14} color={colors.error} />
+          <Text style={{ fontSize: fontSize.xs, color: colors.error, marginLeft: spacing[1] }}>
+            {error}
+          </Text>
         </View>
       )}
     </View>
@@ -134,6 +155,12 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
   const internalRef = useRef<TextInput>(null);
   const hasError = !!props.error;
   const isDisabled = !editable;
+  const borderColor = hasError
+    ? colors.error
+    : isFocused
+      ? colors.primary[500]
+      : colors.surface[300];
+  const backgroundColor = isDisabled ? colors.surface[100] : colors.white;
 
   useEffect(() => {
     if (!isEditing) {
@@ -172,27 +199,36 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
   };
 
   return (
-    <View className="mb-4">
-      <View className="flex-row items-center mb-1.5">
+    <View style={{ marginBottom: spacing[4] }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
         {props.icon && (
           <View style={{ marginRight: 6 }}>
             <Symbol name={props.icon} size={16} color="#408059" />
           </View>
         )}
-        <Text className="text-sm font-semibold text-surface-800">
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+            color: colors.surface[800],
+          }}
+        >
           {props.label}
-          {props.required && <Text className="text-red-500"> *</Text>}
+          {props.required && <Text style={{ color: colors.error }}> *</Text>}
         </Text>
       </View>
 
       <View
-        className={`
-          flex-row items-center
-          px-4 py-2 rounded-xl
-          border
-          ${hasError ? 'border-red-500' : isFocused ? 'border-primary-500' : 'border-surface-200'}
-          ${isDisabled ? 'bg-surface-100' : 'bg-white'}
-        `}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[4],
+          paddingVertical: spacing[2],
+          borderRadius: borderRadius.xl,
+          borderWidth: 1,
+          borderColor,
+          backgroundColor,
+        }}
       >
         {props.icon && (
           <View style={{ marginRight: 10 }}>
@@ -202,7 +238,7 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
 
         <TextInput
           ref={internalRef}
-          className="flex-1 text-base text-surface-900"
+          style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"
           value={textValue}
@@ -224,17 +260,27 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
           }}
         />
 
-        {unit && <Text className="text-sm text-surface-500 ml-2">{unit}</Text>}
+        {unit && (
+          <Text
+            style={{ fontSize: fontSize.sm, color: colors.surface[500], marginLeft: spacing[2] }}
+          >
+            {unit}
+          </Text>
+        )}
       </View>
 
       {props.hint && !props.error && (
-        <Text className="text-xs text-surface-500 mt-1">{props.hint}</Text>
+        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
+          {props.hint}
+        </Text>
       )}
 
       {props.error && (
-        <View className="flex-row items-center mt-1.5">
-          <Symbol name="exclamationmark.circle.fill" size={14} color="#EF4444" />
-          <Text className="text-xs text-red-500 ml-1">{props.error}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+          <Symbol name="exclamationmark.circle.fill" size={14} color={colors.error} />
+          <Text style={{ fontSize: fontSize.xs, color: colors.error, marginLeft: spacing[1] }}>
+            {props.error}
+          </Text>
         </View>
       )}
     </View>

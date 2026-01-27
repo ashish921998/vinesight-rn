@@ -83,7 +83,6 @@ module.exports = [
       'web-build/',
       'babel.config.js',
       'metro.config.js',
-      'tailwind.config.js',
       'app.config.js',
       'eas.json',
     ],

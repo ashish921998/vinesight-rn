@@ -15,6 +15,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { useFarm, useUpdateFarm } from '@/hooks';
 import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
 import type { FarmUpdate } from '@/types';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 function Section({
   title,
@@ -28,18 +29,40 @@ function Section({
   onToggle?: () => void;
 }) {
   return (
-    <View className="bg-white rounded-2xl mb-4 overflow-hidden">
+    <View
+      style={{
+        backgroundColor: colors.white,
+        borderRadius: borderRadius['2xl'],
+        marginBottom: spacing[4],
+        overflow: 'hidden',
+      }}
+    >
       <TouchableOpacity
-        className="flex-row items-center justify-between p-4 border-b border-surface-100"
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: spacing[4],
+          borderBottomWidth: 1,
+          borderBottomColor: colors.surface[100],
+        }}
         onPress={onToggle}
         activeOpacity={onToggle ? 0.7 : 1}
       >
-        <Text className="text-base font-semibold text-surface-900">{title}</Text>
+        <Text
+          style={{
+            fontSize: fontSize.base,
+            fontWeight: fontWeight.semibold,
+            color: colors.surface[900],
+          }}
+        >
+          {title}
+        </Text>
         {onToggle && (
           <Symbol name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#6B7280" />
         )}
       </TouchableOpacity>
-      {isExpanded && <View className="p-4">{children}</View>}
+      {isExpanded && <View style={{ padding: spacing[4] }}>{children}</View>}
     </View>
   );
 }
@@ -54,10 +77,17 @@ function FormField({
   children: React.ReactNode;
 }) {
   return (
-    <View className="mb-4">
-      <Text className="text-sm font-medium text-surface-700 mb-1.5">
+    <View style={{ marginBottom: spacing[4] }}>
+      <Text
+        style={{
+          fontSize: fontSize.sm,
+          fontWeight: fontWeight.medium,
+          color: colors.surface[700],
+          marginBottom: spacing[2] - 1,
+        }}
+      >
         {label}
-        {required && <Text className="text-red-500"> *</Text>}
+        {required && <Text style={{ color: colors.error }}> *</Text>}
       </Text>
       {children}
     </View>
@@ -212,26 +242,56 @@ export default function EditFarmScreen() {
 
   if (farmLoading) {
     return (
-      <View className="flex-1 bg-surface-50 justify-center items-center">
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.surface[50],
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         <ActivityIndicator size="large" color="#408059" />
-        <Text className="text-surface-500 mt-4">Loading farm...</Text>
+        <Text style={{ color: colors.surface[500], marginTop: spacing[4] }}>Loading farm...</Text>
       </View>
     );
   }
 
   if (!farm) {
     return (
-      <View className="flex-1 bg-surface-50 justify-center items-center px-8">
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.surface[50],
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: spacing[8],
+        }}
+      >
         <Symbol name="alert-circle-outline" size={48} color="#EF4444" />
-        <Text className="text-xl font-bold text-surface-900 mt-4">Farm Not Found</Text>
-        <Text className="text-surface-500 text-center mt-2">
+        <Text
+          style={{
+            fontSize: fontSize.xl,
+            fontWeight: fontWeight.bold,
+            color: colors.surface[900],
+            marginTop: spacing[4],
+          }}
+        >
+          Farm Not Found
+        </Text>
+        <Text style={{ color: colors.surface[500], textAlign: 'center', marginTop: spacing[2] }}>
           The farm you&apos;re looking for doesn&apos;t exist or has been deleted.
         </Text>
         <TouchableOpacity
           onPress={() => router.back()}
-          className="mt-6 bg-primary-500 px-6 py-3 rounded-xl"
+          style={{
+            marginTop: spacing[6],
+            backgroundColor: colors.primary[500],
+            paddingHorizontal: spacing[6],
+            paddingVertical: spacing[3],
+            borderRadius: borderRadius.xl,
+          }}
         >
-          <Text className="text-white font-semibold">Go Back</Text>
+          <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -245,7 +305,7 @@ export default function EditFarmScreen() {
           headerStyle: { backgroundColor: '#F9FAFB' },
           headerTintColor: '#111827',
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="mr-4">
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[4] }}>
               <Symbol name="xmark" size={24} color="#111827" />
             </TouchableOpacity>
           ),
@@ -254,17 +314,26 @@ export default function EditFarmScreen() {
 
       <KeyboardAvoidingView
         behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <ScrollView
-          className="flex-1 bg-surface-50"
+          style={{ flex: 1, backgroundColor: colors.surface[50] }}
           contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         >
           <Section title="Basic Information" isExpanded={expandedSections.basic}>
             <FormField label="Farm Name" required>
               <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
                 placeholder="Enter farm name"
                 placeholderTextColor="#9CA3AF"
                 value={name}
@@ -274,7 +343,16 @@ export default function EditFarmScreen() {
 
             <FormField label="Region / Location" required>
               <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
                 placeholder="Enter region or location"
                 placeholderTextColor="#9CA3AF"
                 value={region}
@@ -284,7 +362,16 @@ export default function EditFarmScreen() {
 
             <FormField label="Area (acres)" required>
               <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
                 placeholder="Enter area in acres"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="decimal-pad"
@@ -294,15 +381,19 @@ export default function EditFarmScreen() {
             </FormField>
 
             <FormField label="Crop Type" required>
-              <View className="flex-row flex-wrap gap-2">
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
                 {CROPS.map((crop) => (
                   <TouchableOpacity
                     key={crop}
-                    className={`px-4 py-2.5 rounded-xl border ${
-                      selectedCrop === crop
-                        ? 'bg-primary-500 border-primary-500'
-                        : 'bg-white border-surface-200'
-                    }`}
+                    style={{
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: 10,
+                      borderRadius: borderRadius.xl,
+                      borderWidth: 1,
+                      backgroundColor: selectedCrop === crop ? colors.primary[500] : colors.white,
+                      borderColor:
+                        selectedCrop === crop ? colors.primary[500] : colors.surface[200],
+                    }}
                     onPress={() => {
                       setSelectedCrop(crop);
                       setCropVariety('');
@@ -310,9 +401,11 @@ export default function EditFarmScreen() {
                     }}
                   >
                     <Text
-                      className={`text-sm font-medium ${
-                        selectedCrop === crop ? 'text-white' : 'text-surface-700'
-                      }`}
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.medium,
+                        color: selectedCrop === crop ? colors.white : colors.surface[700],
+                      }}
                     >
                       {crop}
                     </Text>
@@ -323,11 +416,24 @@ export default function EditFarmScreen() {
 
             <FormField label="Variety" required>
               <TouchableOpacity
-                className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center justify-between"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
                 onPress={() => setShowVarietyPicker(true)}
               >
                 <Text
-                  className={`text-base ${cropVariety ? 'text-surface-900' : 'text-surface-400'}`}
+                  style={{
+                    fontSize: fontSize.base,
+                    color: cropVariety ? colors.surface[900] : colors.surface[400],
+                  }}
                 >
                   {cropVariety || 'Select variety'}
                 </Text>
@@ -336,7 +442,17 @@ export default function EditFarmScreen() {
 
               {cropVariety === 'Custom' && (
                 <TextInput
-                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200 mt-3"
+                  style={{
+                    backgroundColor: colors.surface[50],
+                    borderRadius: borderRadius.xl,
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[3],
+                    fontSize: fontSize.base,
+                    color: colors.surface[900],
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                    marginTop: spacing[3],
+                  }}
                   placeholder="Enter custom variety name"
                   placeholderTextColor="#9CA3AF"
                   value={customVariety}
@@ -347,12 +463,25 @@ export default function EditFarmScreen() {
 
             <FormField label="Planting Date">
               <TouchableOpacity
-                className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
                 onPress={() => setShowDatePicker(true)}
               >
                 <Symbol name="calendar" size={20} color="#6B7280" />
                 <Text
-                  className={`text-base ml-3 ${plantingDate ? 'text-surface-900' : 'text-surface-400'}`}
+                  style={{
+                    fontSize: fontSize.base,
+                    marginLeft: spacing[3],
+                    color: plantingDate ? colors.surface[900] : colors.surface[400],
+                  }}
                 >
                   {plantingDate ? plantingDate.toLocaleDateString() : 'Select date'}
                 </Text>
@@ -367,7 +496,16 @@ export default function EditFarmScreen() {
           >
             <FormField label="Vine Spacing (feet)">
               <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
                 placeholder="Distance between vines"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="decimal-pad"
@@ -378,7 +516,16 @@ export default function EditFarmScreen() {
 
             <FormField label="Row Spacing (feet)">
               <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
                 placeholder="Distance between rows"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="decimal-pad"
@@ -395,7 +542,16 @@ export default function EditFarmScreen() {
           >
             <FormField label="Total Tank Capacity (mm)">
               <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
                 placeholder="Available water storage capacity"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="decimal-pad"
@@ -406,7 +562,16 @@ export default function EditFarmScreen() {
 
             <FormField label="System Discharge (mm/hr)">
               <TextInput
-                className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
                 placeholder="Irrigation system discharge rate"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="decimal-pad"
@@ -423,15 +588,27 @@ export default function EditFarmScreen() {
           >
             <FormField label="Date of Pruning">
               <TouchableOpacity
-                className="bg-surface-50 rounded-xl px-4 py-3 border border-surface-200 flex-row items-center justify-between"
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
                 onPress={() => setShowPruningDatePicker(true)}
               >
-                <View className="flex-row items-center">
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Symbol name="cut-outline" size={20} color="#6B7280" />
                   <Text
-                    className={`text-base ml-3 ${
-                      dateOfPruning ? 'text-surface-900' : 'text-surface-400'
-                    }`}
+                    style={{
+                      fontSize: fontSize.base,
+                      marginLeft: spacing[3],
+                      color: dateOfPruning ? colors.surface[900] : colors.surface[400],
+                    }}
                   >
                     {dateOfPruning ? dateOfPruning.toLocaleDateString() : 'Select date'}
                   </Text>
@@ -449,18 +626,41 @@ export default function EditFarmScreen() {
           </Section>
         </ScrollView>
 
-        <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-surface-200">
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: spacing[4],
+            backgroundColor: colors.white,
+            borderTopWidth: 1,
+            borderTopColor: colors.surface[200],
+          }}
+        >
           <TouchableOpacity
-            className={`py-4 rounded-xl items-center ${
-              isValid && !updateFarm.isPending ? 'bg-primary-600' : 'bg-surface-300'
-            }`}
+            style={{
+              paddingVertical: spacing[4],
+              borderRadius: borderRadius.xl,
+              alignItems: 'center',
+              backgroundColor:
+                isValid && !updateFarm.isPending ? colors.primary[600] : colors.surface[300],
+            }}
             onPress={handleSave}
             disabled={!isValid || updateFarm.isPending}
           >
             {updateFarm.isPending ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text className="text-base font-semibold text-white">Save Changes</Text>
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.white,
+                }}
+              >
+                Save Changes
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -468,24 +668,77 @@ export default function EditFarmScreen() {
 
       {showVarietyPicker && (
         <TouchableOpacity
-          className="absolute inset-0 bg-black/50 justify-end"
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'flex-end',
+          }}
           activeOpacity={1}
           onPress={() => setShowVarietyPicker(false)}
         >
           <TouchableOpacity activeOpacity={1}>
-            <View className="bg-white rounded-t-3xl max-h-[70%]">
-              <View className="flex-row items-center justify-between p-4 border-b border-surface-200">
-                <Text className="text-lg font-semibold text-surface-900">Select Variety</Text>
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                maxHeight: '70%',
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.surface[200],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  Select Variety
+                </Text>
                 <TouchableOpacity onPress={() => setShowVarietyPicker(false)}>
                   <Symbol name="xmark" size={24} color="#111827" />
                 </TouchableOpacity>
               </View>
 
-              <View className="px-4 py-3 border-b border-surface-100">
-                <View className="flex-row items-center bg-surface-50 rounded-xl px-4 py-2.5">
+              <View
+                style={{
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.surface[100],
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: colors.surface[50],
+                    borderRadius: borderRadius.xl,
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: 10,
+                  }}
+                >
                   <Symbol name="search" size={20} color="#9CA3AF" />
                   <TextInput
-                    className="flex-1 ml-2 text-base text-surface-900"
+                    style={{
+                      flex: 1,
+                      marginLeft: spacing[2],
+                      fontSize: fontSize.base,
+                      color: colors.surface[900],
+                    }}
                     placeholder="Search varieties..."
                     placeholderTextColor="#9CA3AF"
                     value={varietySearchText}
@@ -494,21 +747,25 @@ export default function EditFarmScreen() {
                 </View>
               </View>
 
-              <ScrollView className="max-h-80">
+              <ScrollView style={{ maxHeight: 320 }}>
                 {filteredVarieties.map((variety) => (
                   <TouchableOpacity
                     key={variety}
-                    className={`px-4 py-3.5 border-b border-surface-100 ${
-                      cropVariety === variety ? 'bg-primary-50' : ''
-                    }`}
+                    style={{
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: 14,
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor: cropVariety === variety ? colors.primary[50] : colors.white,
+                    }}
                     onPress={() => handleSelectVariety(variety)}
                   >
                     <Text
-                      className={`text-base ${
-                        cropVariety === variety
-                          ? 'text-primary-600 font-medium'
-                          : 'text-surface-900'
-                      }`}
+                      style={{
+                        fontSize: fontSize.base,
+                        color: cropVariety === variety ? colors.primary[600] : colors.surface[900],
+                        fontWeight: cropVariety === variety ? fontWeight.medium : fontWeight.normal,
+                      }}
                     >
                       {variety}
                     </Text>

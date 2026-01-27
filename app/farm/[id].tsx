@@ -22,6 +22,7 @@ import type {
   FertigationRecord,
 } from '@/types';
 import { PRIORITY_INFO } from '@/types/task';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 // Workboard action type
 interface WorkboardAction {
@@ -287,7 +288,7 @@ export default function FarmDetailScreen() {
         }}
       >
         <ActivityIndicator size="large" color="#408059" />
-        <Text className="text-surface-500 mt-4">Loading farm...</Text>
+        <Text style={{ color: colors.surface[500], marginTop: spacing[4] }}>Loading farm...</Text>
       </View>
     );
   }
@@ -304,9 +305,18 @@ export default function FarmDetailScreen() {
         }}
       >
         <Symbol name="alert-circle-outline" size={48} color="#9CA3AF" />
-        <Text className="text-lg font-semibold text-surface-900 mt-4">Farm Not Found</Text>
-        <TouchableOpacity onPress={() => router.back()} className="mt-4">
-          <Text className="text-primary-600 font-medium">Go Back</Text>
+        <Text
+          style={{
+            color: colors.surface[900],
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.semibold,
+            marginTop: spacing[4],
+          }}
+        >
+          Farm Not Found
+        </Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: spacing[4] }}>
+          <Text style={{ color: colors.primary[600], fontWeight: fontWeight.medium }}>Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -320,20 +330,22 @@ export default function FarmDetailScreen() {
           headerStyle: { backgroundColor: '#f2f2f7' },
           headerTintColor: '#000000',
           headerRight: () => (
-            <View className="flex-row items-center">
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity
                 onPress={() => router.push(`/farm/${id}/edit`)}
-                className="mr-4"
+                style={{ marginRight: spacing[4] }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Symbol name="create-outline" size={24} color="#408059" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleDeleteFarm}
-                className="mr-2"
+                style={{
+                  marginRight: spacing[2],
+                  opacity: deleteFarmMutation.isPending ? 0.5 : 1,
+                }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 disabled={deleteFarmMutation.isPending}
-                style={{ opacity: deleteFarmMutation.isPending ? 0.5 : 1 }}
               >
                 {deleteFarmMutation.isPending ? (
                   <ActivityIndicator size="small" color="#DC2626" />
@@ -344,17 +356,48 @@ export default function FarmDetailScreen() {
             </View>
           ),
           headerTitle: () => (
-            <View className="items-center">
-              <Text className="text-lg font-bold text-surface-900">{farm.name}</Text>
-              <View className="flex-row items-center">
-                <Text className="text-xs text-surface-500">{farm.crop_variety || farm.crop}</Text>
-                <Text className="text-xs text-surface-500 mx-1">•</Text>
+            <View style={{ alignItems: 'center' }}>
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.bold,
+                }}
+              >
+                {farm.name}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                  {farm.crop_variety || farm.crop}
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[500],
+                    fontSize: fontSize.xs,
+                    marginHorizontal: spacing[1],
+                  }}
+                >
+                  •
+                </Text>
                 <View
-                  className="flex-row items-center px-2 py-0.5 rounded-full"
-                  style={{ backgroundColor: '#408059' }}
+                  style={{
+                    backgroundColor: '#408059',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: 2,
+                    borderRadius: borderRadius.full,
+                  }}
                 >
                   <Symbol name="resize" size={10} color="#FFFFFF" />
-                  <Text className="text-xs font-bold text-white ml-1">
+                  <Text
+                    style={{
+                      color: colors.white,
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.bold,
+                      marginLeft: spacing[1],
+                    }}
+                  >
                     {farm.area?.toFixed(1)} acres
                   </Text>
                 </View>
@@ -364,9 +407,9 @@ export default function FarmDetailScreen() {
         }}
       />
 
-      <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
         <ScrollView
-          className="flex-1"
+          style={{ flex: 1 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#408059" />
           }
@@ -374,44 +417,98 @@ export default function FarmDetailScreen() {
         >
           {/* Farm Header Card - iOS Style Glass Effect */}
           <View
-            className="mx-4 mt-16 rounded-2xl overflow-hidden"
             style={{
+              marginHorizontal: spacing[4],
+              marginTop: spacing[16],
+              borderRadius: borderRadius['2xl'],
+              overflow: 'hidden',
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
               boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <View className="p-4">
-              <View className="flex-row items-start justify-between">
-                <View className="flex-1">
-                  <View className="flex-row items-center">
-                    <View className="w-12 h-12 bg-primary-100 rounded-xl items-center justify-center">
+            <View style={{ padding: spacing[4] }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View
+                      style={{
+                        width: 48,
+                        height: 48,
+                        backgroundColor: colors.primary[100],
+                        borderRadius: borderRadius.xl,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       <Symbol name="leaf.fill" size={24} color="#408059" />
                     </View>
-                    <View className="ml-3 flex-1">
-                      <View className="flex-row items-center">
-                        <Text className="text-xl font-bold text-surface-900">{farm.name}</Text>
+                    <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text
+                          style={{
+                            color: colors.surface[900],
+                            fontSize: fontSize.xl,
+                            fontWeight: fontWeight.bold,
+                          }}
+                        >
+                          {farm.name}
+                        </Text>
                         {daysSincePruning !== null && (
                           <View
-                            className="ml-2 flex-row items-center px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: '#F59E0B' }}
+                            style={{
+                              marginLeft: spacing[2],
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              paddingHorizontal: spacing[2],
+                              paddingVertical: 2,
+                              borderRadius: borderRadius.full,
+                              backgroundColor: '#F59E0B',
+                            }}
                           >
                             <Symbol name="cut-outline" size={10} color="#FFFFFF" />
-                            <Text className="text-xs font-bold text-white ml-1">
+                            <Text
+                              style={{
+                                color: colors.white,
+                                fontSize: fontSize.xs,
+                                fontWeight: fontWeight.bold,
+                                marginLeft: spacing[1],
+                              }}
+                            >
                               {daysSincePruning}d
                             </Text>
                           </View>
                         )}
                       </View>
-                      <Text className="text-sm text-surface-500">
+                      <Text style={{ color: colors.surface[500], fontSize: fontSize.sm }}>
                         {farm.crop_variety || farm.crop}
                       </Text>
                     </View>
                   </View>
 
                   {farm.region && (
-                    <View className="flex-row items-center mt-3">
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginTop: spacing[3],
+                      }}
+                    >
                       <Symbol name="location-outline" size={16} color="#6B7280" />
-                      <Text className="text-sm text-surface-600 ml-1">{farm.region}</Text>
+                      <Text
+                        style={{
+                          color: colors.surface[600],
+                          fontSize: fontSize.sm,
+                          marginLeft: spacing[1],
+                        }}
+                      >
+                        {farm.region}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -419,32 +516,80 @@ export default function FarmDetailScreen() {
 
               {/* Weather info */}
               {weather && (
-                <View className="mt-4 pt-4 border-t border-surface-100">
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center">
-                      <View className="w-8 h-8 bg-sky-100 rounded-lg items-center justify-center">
+                <View
+                  style={{
+                    marginTop: spacing[4],
+                    paddingTop: spacing[4],
+                    borderTopWidth: 1,
+                    borderTopColor: colors.surface[100],
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View
+                        style={{
+                          width: 32,
+                          height: 32,
+                          backgroundColor: '#E0F2FE',
+                          borderRadius: borderRadius.lg,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
                         <Symbol name="partly-sunny" size={16} color="#0284C7" />
                       </View>
-                      <View className="ml-2">
-                        <Text className="text-xs text-surface-500">Current Weather</Text>
-                        <Text className="text-base font-semibold text-surface-900">
+                      <View style={{ marginLeft: spacing[2] }}>
+                        <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                          Current Weather
+                        </Text>
+                        <Text
+                          style={{
+                            color: colors.surface[900],
+                            fontSize: fontSize.base,
+                            fontWeight: fontWeight.semibold,
+                          }}
+                        >
                           {weather.current.condition}
                         </Text>
                       </View>
                     </View>
-                    <View className="flex-row items-center gap-3">
-                      <View className="items-center">
-                        <Text className="text-lg font-bold text-surface-900">
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3] }}>
+                      <View style={{ alignItems: 'center' }}>
+                        <Text
+                          style={{
+                            color: colors.surface[900],
+                            fontSize: fontSize.lg,
+                            fontWeight: fontWeight.bold,
+                          }}
+                        >
                           {weather.current.temperature}°
                         </Text>
-                        <Text className="text-xs text-surface-500">Temperature</Text>
+                        <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                          Temperature
+                        </Text>
                       </View>
-                      <View className="w-px h-8 bg-surface-200" />
-                      <View className="items-center">
-                        <Text className="text-lg font-bold text-surface-900">
+                      <View
+                        style={{ width: 1, height: 32, backgroundColor: colors.surface[200] }}
+                      />
+                      <View style={{ alignItems: 'center' }}>
+                        <Text
+                          style={{
+                            color: colors.surface[900],
+                            fontSize: fontSize.lg,
+                            fontWeight: fontWeight.bold,
+                          }}
+                        >
                           {weather.forecast[0]?.et0 ?? 0}
                         </Text>
-                        <Text className="text-xs text-surface-500">ET0 (mm)</Text>
+                        <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                          ET0 (mm)
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -454,10 +599,10 @@ export default function FarmDetailScreen() {
           </View>
 
           {/* Stats Grid - iOS Style */}
-          <View className="px-4 mt-4">
-            <View className="flex-row gap-3">
+          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
+            <View style={{ flexDirection: 'row', gap: spacing[3] }}>
               <TouchableOpacity
-                className="flex-1"
+                style={{ flex: 1 }}
                 onPress={() => router.push(`/logs?farmId=${id}`)}
                 activeOpacity={0.7}
               >
@@ -470,7 +615,7 @@ export default function FarmDetailScreen() {
                 />
               </TouchableOpacity>
               <TouchableOpacity
-                className="flex-1"
+                style={{ flex: 1 }}
                 onPress={() => setShowWaterLevelModal(true)}
                 activeOpacity={0.7}
               >
@@ -486,17 +631,33 @@ export default function FarmDetailScreen() {
           </View>
 
           {/* Workboard Section */}
-          <View className="px-4 mt-6">
-            <Text className="text-xs font-bold text-surface-500 tracking-wider mb-1">
+          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
+            <Text
+              style={{
+                color: colors.surface[500],
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                letterSpacing: 1,
+                marginBottom: spacing[1],
+              }}
+            >
               WORKBOARD
             </Text>
-            <Text className="text-sm text-surface-500 mb-2">
+            <Text
+              style={{
+                color: colors.surface[500],
+                fontSize: fontSize.sm,
+                marginBottom: spacing[2],
+              }}
+            >
               Quick access to tools and resources.
             </Text>
 
             <View
-              className="rounded-2xl p-4 mt-2"
               style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginTop: spacing[2],
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
               }}
             >
@@ -509,8 +670,11 @@ export default function FarmDetailScreen() {
                     onPress={() => handleWorkboardAction(action)}
                   >
                     <View
-                      className="rounded-full items-center justify-center mb-2"
                       style={{
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: spacing[2],
                         width: 40,
                         height: 40,
                         backgroundColor: `${action.color}1A`,
@@ -518,7 +682,15 @@ export default function FarmDetailScreen() {
                     >
                       <Symbol name={action.icon} size={18} color={action.color} />
                     </View>
-                    <Text className="text-xs font-medium text-surface-600 text-center leading-tight">
+                    <Text
+                      style={{
+                        color: colors.surface[600],
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                        textAlign: 'center',
+                        lineHeight: 16,
+                      }}
+                    >
                       {action.title}
                     </Text>
                   </TouchableOpacity>
@@ -528,26 +700,33 @@ export default function FarmDetailScreen() {
           </View>
 
           {/* Tabs */}
-          <View className="px-4 mt-6">
-            <View className="flex-row">
+          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
+            <View style={{ flexDirection: 'row' }}>
               {(['activities', 'tasks'] as const).map((tab) => (
                 <TouchableOpacity
                   key={tab}
-                  className="flex-1 items-center py-3"
+                  style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[3] }}
                   onPress={() => setSelectedTab(tab)}
                 >
                   <Text
-                    className={`text-sm font-bold uppercase text-center ${
-                      selectedTab === tab ? 'text-primary-600' : 'text-surface-400'
-                    }`}
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      textTransform: 'uppercase',
+                      textAlign: 'center',
+                      color: selectedTab === tab ? colors.primary[600] : colors.surface[400],
+                    }}
                   >
                     {tab === 'activities' ? 'Activities' : 'Tasks'}
                   </Text>
                   <View
-                    className={`h-0.5 rounded-full mt-2 ${
-                      selectedTab === tab ? 'bg-primary-600' : 'bg-transparent'
-                    }`}
-                    style={{ width: 30 }}
+                    style={{
+                      height: 2,
+                      borderRadius: borderRadius.full,
+                      marginTop: spacing[2],
+                      width: 30,
+                      backgroundColor: selectedTab === tab ? colors.primary[600] : 'transparent',
+                    }}
                   />
                 </TouchableOpacity>
               ))}
@@ -555,37 +734,65 @@ export default function FarmDetailScreen() {
           </View>
 
           {/* Tab Content */}
-          <View className="px-4 mt-4 pb-28">
+          <View
+            style={{
+              paddingHorizontal: spacing[4],
+              marginTop: spacing[4],
+              paddingBottom: spacing[24] + spacing[4],
+            }}
+          >
             {selectedTab === 'activities' ? (
               recentLogs.length > 0 ? (
-                <View className="gap-3">
+                <View style={{ gap: spacing[3] }}>
                   {recentLogs.map((log) => (
                     <ActivityLogCard key={log.id} type={log.type} date={log.date} data={log.data} />
                   ))}
                 </View>
               ) : (
                 <View
-                  className="rounded-2xl items-center p-10"
                   style={{
+                    borderRadius: borderRadius['2xl'],
+                    alignItems: 'center',
+                    padding: spacing[10],
                     backgroundColor: 'rgba(255, 255, 255, 0.6)',
                   }}
                 >
                   <View
-                    className="w-16 h-16 rounded-full items-center justify-center mb-4"
-                    style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
+                    style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing[4],
+                      backgroundColor: 'rgba(142, 142, 147, 0.2)',
+                    }}
                   >
                     <Symbol name="doc.text" size={32} color="#9CA3AF" />
                   </View>
-                  <Text className="text-base font-semibold text-surface-900">
+                  <Text
+                    style={{
+                      color: colors.surface[900],
+                      fontSize: fontSize.base,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
                     No Activities Yet
                   </Text>
-                  <Text className="text-sm text-surface-500 text-center mt-1">
+                  <Text
+                    style={{
+                      color: colors.surface[500],
+                      fontSize: fontSize.sm,
+                      textAlign: 'center',
+                      marginTop: spacing[1],
+                    }}
+                  >
                     Start logging activities to see them here
                   </Text>
                 </View>
               )
             ) : tasks && tasks.length > 0 ? (
-              <View className="gap-3">
+              <View style={{ gap: spacing[3] }}>
                 {tasks.map((task) => {
                   const priorityInfo = PRIORITY_INFO[task.priority];
                   const overdue = isOverdue(task);
@@ -593,45 +800,79 @@ export default function FarmDetailScreen() {
                   return (
                     <View
                       key={task.id}
-                      className={`rounded-2xl p-4 ${
-                        overdue ? 'border-2 border-amber-300' : ''
-                      } ${task.completed ? 'opacity-60' : ''}`}
                       style={{
+                        borderRadius: borderRadius['2xl'],
+                        padding: spacing[4],
                         backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        borderWidth: overdue ? 2 : 0,
+                        borderColor: overdue ? '#FCD34D' : 'transparent',
+                        opacity: task.completed ? 0.6 : 1,
                       }}
                     >
-                      <View className="flex-row items-start">
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                         <TouchableOpacity
                           onPress={() => !task.completed && handleCompleteTask(task.id!)}
                           disabled={task.completed}
-                          className={`w-7 h-7 rounded-full border-2 items-center justify-center mr-3 mt-0.5 ${
-                            task.completed ? 'bg-green-500 border-green-500' : 'border-surface-300'
-                          }`}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: borderRadius.full,
+                            borderWidth: 2,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginRight: spacing[3],
+                            marginTop: 2,
+                            backgroundColor: task.completed ? '#22C55E' : 'transparent',
+                            borderColor: task.completed ? '#22C55E' : colors.surface[300],
+                          }}
                         >
                           {task.completed && <Symbol name="checkmark" size={18} color="white" />}
                         </TouchableOpacity>
 
-                        <View className="flex-1">
+                        <View style={{ flex: 1 }}>
                           <Text
-                            className={`text-base font-semibold ${
-                              task.completed ? 'text-surface-500 line-through' : 'text-surface-900'
-                            }`}
                             numberOfLines={2}
+                            style={{
+                              fontSize: fontSize.base,
+                              fontWeight: fontWeight.semibold,
+                              color: task.completed ? colors.surface[500] : colors.surface[900],
+                              textDecorationLine: task.completed ? 'line-through' : 'none',
+                            }}
                           >
                             {task.title}
                           </Text>
 
                           {task.description && (
-                            <Text className="text-sm text-surface-500 mt-1" numberOfLines={2}>
+                            <Text
+                              style={{
+                                color: colors.surface[500],
+                                fontSize: fontSize.sm,
+                                marginTop: spacing[1],
+                              }}
+                              numberOfLines={2}
+                            >
                               {task.description}
                             </Text>
                           )}
 
-                          <View className="flex-row items-center mt-2 flex-wrap" style={{ gap: 8 }}>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              marginTop: spacing[2],
+                              flexWrap: 'wrap',
+                              gap: 8,
+                            }}
+                          >
                             <View
-                              className={`flex-row items-center ${
-                                overdue ? 'bg-red-100' : 'bg-surface-100'
-                              } px-2 py-0.5 rounded`}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                paddingHorizontal: spacing[2],
+                                paddingVertical: 2,
+                                borderRadius: borderRadius.sm,
+                                backgroundColor: overdue ? '#FEE2E2' : colors.surface[100],
+                              }}
                             >
                               <Symbol
                                 name="calendar"
@@ -639,20 +880,23 @@ export default function FarmDetailScreen() {
                                 color={overdue ? '#DC2626' : '#6B7280'}
                               />
                               <Text
-                                className={`text-xs ml-1 ${
-                                  overdue ? 'text-red-600 font-medium' : 'text-surface-500'
-                                }`}
+                                style={{
+                                  marginLeft: spacing[1],
+                                  fontSize: fontSize.xs,
+                                  color: overdue ? '#DC2626' : colors.surface[500],
+                                  fontWeight: overdue ? fontWeight.medium : fontWeight.normal,
+                                }}
                               >
                                 {formatDueDate(task.due_date)}
                               </Text>
                             </View>
-                            <View
-                              className="px-2 py-0.5 rounded"
-                              style={{ backgroundColor: priorityInfo.bgColor }}
-                            >
+                            <View style={{ backgroundColor: priorityInfo.bgColor }}>
                               <Text
-                                className="text-xs font-medium"
-                                style={{ color: priorityInfo.color }}
+                                style={{
+                                  color: priorityInfo.color,
+                                  fontSize: fontSize.xs,
+                                  fontWeight: fontWeight.medium,
+                                }}
                               >
                                 {priorityInfo.label}
                               </Text>
@@ -663,7 +907,7 @@ export default function FarmDetailScreen() {
                         {!task.completed && (
                           <TouchableOpacity
                             onPress={() => handleDeleteTask(task.id!, task.title)}
-                            className="p-2"
+                            style={{ padding: spacing[2] }}
                           >
                             <Symbol name="trash" size={18} color="#DC2626" />
                           </TouchableOpacity>
@@ -675,19 +919,43 @@ export default function FarmDetailScreen() {
               </View>
             ) : (
               <View
-                className="rounded-2xl items-center p-10"
                 style={{
+                  borderRadius: borderRadius['2xl'],
+                  alignItems: 'center',
+                  padding: spacing[10],
                   backgroundColor: 'rgba(255, 255, 255, 0.6)',
                 }}
               >
                 <View
-                  className="w-16 h-16 rounded-full items-center justify-center mb-4"
-                  style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: borderRadius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: spacing[4],
+                    backgroundColor: 'rgba(142, 142, 147, 0.2)',
+                  }}
                 >
                   <Symbol name="checkbox-outline" size={32} color="#9CA3AF" />
                 </View>
-                <Text className="text-base font-semibold text-surface-900">No Tasks Yet</Text>
-                <Text className="text-sm text-surface-500 text-center mt-1">
+                <Text
+                  style={{
+                    color: colors.surface[900],
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  No Tasks Yet
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[500],
+                    fontSize: fontSize.sm,
+                    textAlign: 'center',
+                    marginTop: spacing[1],
+                  }}
+                >
                   Tap the + button to create tasks
                 </Text>
               </View>
@@ -698,9 +966,19 @@ export default function FarmDetailScreen() {
 
       {/* FAB for adding activity or task */}
       <TouchableOpacity
-        className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
         activeOpacity={0.8}
         onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
+        style={{
+          position: 'absolute',
+          bottom: spacing[6],
+          right: spacing[6],
+          width: 56,
+          height: 56,
+          backgroundColor: colors.primary[600],
+          borderRadius: borderRadius.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
         <Symbol name="plus" size={28} color="#FFFFFF" />
       </TouchableOpacity>

@@ -46,7 +46,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
       paddingHorizontal: spacing[4],
       paddingVertical: spacing[3],
       borderWidth: 1,
-      borderColor: isSearchFocused ? colors.primary : colors.gray[200],
+      borderColor: isSearchFocused ? colors.primary[500] : colors.gray[200],
     };
 
     const searchInputStyle: TextStyle = {
@@ -68,7 +68,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
           <Symbol
             name="magnifyingglass"
             size={20}
-            color={isSearchFocused ? colors.primary : colors.gray[300]}
+            color={isSearchFocused ? colors.primary[500] : colors.gray[300]}
           />
           <TextInput
             style={searchInputStyle}
@@ -131,7 +131,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
                   }}
                 >
-                  <Symbol name="leaf.fill" size={16} color={colors.primary} />
+                  <Symbol name="leaf.fill" size={16} color={colors.primary[500]} />
                 </View>
                 <View style={{ marginLeft: spacing[2] }}>
                   <Text
@@ -176,7 +176,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                   <Symbol
                     name="arrow.up.left.and.arrow.down.right"
                     size={16}
-                    color={colors.primary}
+                    color={colors.primary[500]}
                   />
                 </View>
                 <View style={{ marginLeft: spacing[2] }}>
@@ -311,7 +311,7 @@ export default function FarmsScreen() {
     if (isLoading) {
       return (
         <View style={emptyContainerStyle}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text
             style={{
               fontSize: fontSize.base,
@@ -365,7 +365,7 @@ export default function FarmsScreen() {
             <Text
               style={{
                 fontWeight: fontWeight.medium,
-                color: colors.primary,
+                color: colors.primary[500],
               }}
             >
               Clear Search
@@ -388,7 +388,7 @@ export default function FarmsScreen() {
             backgroundColor: 'rgba(64, 128, 89, 0.1)',
           }}
         >
-          <Symbol name="leaf.fill" size={48} color={colors.primary} />
+          <Symbol name="leaf.fill" size={48} color={colors.primary[500]} />
         </View>
         <Text
           style={{
@@ -416,7 +416,7 @@ export default function FarmsScreen() {
             paddingVertical: spacing[3],
             borderRadius: borderRadius.xl,
             marginTop: spacing[6],
-            backgroundColor: colors.primary,
+            backgroundColor: colors.primary[500],
           }}
           onPress={handleAddFarm}
         >
@@ -465,7 +465,7 @@ export default function FarmsScreen() {
           <RefreshControl
             refreshing={isLoading && !searchQuery}
             onRefresh={refetch}
-            tintColor={colors.primary}
+            tintColor={colors.primary[500]}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -483,7 +483,7 @@ export default function FarmsScreen() {
             borderRadius: borderRadius.full,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: colors.primary,
+            backgroundColor: colors.primary[500],
           }}
           activeOpacity={0.8}
           onPress={handleAddFarm}

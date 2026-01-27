@@ -20,6 +20,7 @@ import {
   InfoCard,
   CropIcon,
 } from '@/components/ui';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 const formatLocalDate = (date: Date): string => {
   const year = date.getFullYear();
@@ -129,7 +130,17 @@ export default function AddFarmScreen() {
   };
 
   // Crop options with specific icons for card selector
-  const cropOptions = [
+  type CropOption = {
+    value: CropType;
+    label: string;
+    sublabel: string;
+    renderIcon?: (args: { selected: boolean; size: number }) => React.ReactNode;
+    icon?: string;
+    iconColor: string;
+    iconLibrary?: 'ionicons' | 'symbols';
+  };
+
+  const cropOptions: CropOption[] = [
     {
       value: 'Grapes' as CropType,
       label: 'Grapes',
@@ -185,7 +196,7 @@ export default function AddFarmScreen() {
         }}
       />
 
-      <View className="flex-1 bg-white">
+      <View style={{ flex: 1, backgroundColor: colors.white }}>
         <FullScreenForm
           title="Add Farm"
           onClose={() => router.back()}
@@ -248,11 +259,26 @@ export default function AddFarmScreen() {
           <SectionHeader title="Variety" style={{ marginBottom: 16 }} />
 
           <TouchableOpacity
-            className="bg-white border-2 border-surface-200 rounded-xl px-4 py-4 flex-row items-center justify-between mb-5"
+            style={{
+              backgroundColor: colors.white,
+              borderWidth: 2,
+              borderColor: colors.surface[200],
+              borderRadius: borderRadius.xl,
+              paddingHorizontal: spacing[4],
+              paddingVertical: spacing[4],
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: spacing[5],
+            }}
             onPress={() => setShowVarietyPicker(true)}
           >
             <Text
-              className={`text-base ${cropVariety ? 'text-surface-900 font-medium' : 'text-surface-400'}`}
+              style={{
+                fontSize: fontSize.base,
+                color: cropVariety ? colors.surface[900] : colors.surface[400],
+                fontWeight: cropVariety ? fontWeight.medium : fontWeight.normal,
+              }}
             >
               {cropVariety || 'Select variety'}
             </Text>
@@ -274,11 +300,28 @@ export default function AddFarmScreen() {
           <SectionHeader title="Planting Date" style={{ marginBottom: 16 }} />
 
           <TouchableOpacity
-            className="bg-white border-2 border-surface-200 rounded-xl px-4 py-4 flex-row items-center mb-5"
+            style={{
+              backgroundColor: colors.white,
+              borderWidth: 2,
+              borderColor: colors.surface[200],
+              borderRadius: borderRadius.xl,
+              paddingHorizontal: spacing[4],
+              paddingVertical: spacing[4],
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: spacing[5],
+            }}
             onPress={() => setShowDatePicker(true)}
           >
             <Symbol name="calendar" size={24} color="#6B7280" />
-            <Text className="text-base text-surface-900 font-medium ml-3">
+            <Text
+              style={{
+                fontSize: fontSize.base,
+                color: colors.surface[900],
+                fontWeight: fontWeight.medium,
+                marginLeft: spacing[3],
+              }}
+            >
               {plantingDate.toLocaleDateString('en-US', {
                 month: 'long',
                 day: 'numeric',
@@ -290,8 +333,8 @@ export default function AddFarmScreen() {
           {/* Optional: Spacing */}
           <SectionHeader title="Plant Spacing (Optional)" style={{ marginBottom: 16 }} />
 
-          <View className="flex-row gap-3 mb-5">
-            <View className="flex-1">
+          <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
+            <View style={{ flex: 1 }}>
               <FormInput
                 label="Vine Spacing"
                 value={vineSpacing}
@@ -302,7 +345,7 @@ export default function AddFarmScreen() {
                 style={{ marginBottom: 0 }}
               />
             </View>
-            <View className="flex-1">
+            <View style={{ flex: 1 }}>
               <FormInput
                 label="Row Spacing"
                 value={rowSpacing}
@@ -342,14 +385,34 @@ export default function AddFarmScreen() {
           <SectionHeader title="Pruning Date (Optional)" style={{ marginBottom: 16 }} />
 
           <TouchableOpacity
-            className="bg-white border-2 border-surface-200 rounded-xl px-4 py-4 flex-row items-center justify-between mb-5"
+            style={{
+              backgroundColor: colors.white,
+              borderWidth: 2,
+              borderColor: colors.surface[200],
+              borderRadius: borderRadius.xl,
+              paddingHorizontal: spacing[4],
+              paddingVertical: spacing[4],
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: spacing[5],
+            }}
             onPress={() => setShowPruningDatePicker(true)}
           >
-            <View className="flex-row items-center flex-1">
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
               <Symbol name="cut-outline" size={24} color="#6B7280" />
-              <View className="ml-3 flex-1">
-                <Text className="text-sm text-surface-500">Pruning Date</Text>
-                <Text className="text-base text-surface-900 font-medium mt-0.5">
+              <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                  Pruning Date
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    color: colors.surface[900],
+                    fontWeight: fontWeight.medium,
+                    marginTop: 2,
+                  }}
+                >
                   {dateOfPruning
                     ? dateOfPruning.toLocaleDateString('en-US', {
                         month: 'long',
@@ -382,40 +445,102 @@ export default function AddFarmScreen() {
 
       {/* Variety Picker Modal */}
       {showVarietyPicker && (
-        <View className="absolute inset-0 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[70%]">
-            <View className="flex-row items-center justify-between px-6 py-4 border-b border-surface-100">
-              <View className="w-10" />
-              <Text className="text-lg font-semibold text-surface-900">Select Variety</Text>
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderTopLeftRadius: borderRadius['3xl'],
+              borderTopRightRadius: borderRadius['3xl'],
+              maxHeight: '70%',
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[4],
+                borderBottomWidth: 1,
+                borderBottomColor: colors.surface[100],
+              }}
+            >
+              <View style={{ width: 40 }} />
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                }}
+              >
+                Select Variety
+              </Text>
               <TouchableOpacity
                 onPress={() => setShowVarietyPicker(false)}
-                className="w-10 h-10 rounded-full bg-surface-100 items-center justify-center"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: colors.surface[100],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
                 <Symbol name="xmark" size={20} color="#111827" />
               </TouchableOpacity>
             </View>
 
-            <View className="max-h-96">
+            <View style={{ maxHeight: 384 }}>
               {varieties.map((variety) => (
                 <TouchableOpacity
                   key={variety}
-                  className={`px-6 py-4 border-b border-surface-100 ${
-                    cropVariety === variety ? 'bg-surface-50' : ''
-                  }`}
+                  style={{
+                    paddingHorizontal: spacing[6],
+                    paddingVertical: spacing[4],
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.surface[100],
+                    backgroundColor: cropVariety === variety ? colors.surface[50] : colors.white,
+                  }}
                   onPress={() => handleSelectVariety(variety)}
                 >
-                  <View className="flex-row items-center justify-between">
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
                     <Text
-                      className={`text-base ${
-                        cropVariety === variety
-                          ? 'text-surface-900 font-semibold'
-                          : 'text-surface-700'
-                      }`}
+                      style={{
+                        fontSize: fontSize.base,
+                        color: cropVariety === variety ? colors.surface[900] : colors.surface[700],
+                        fontWeight:
+                          cropVariety === variety ? fontWeight.semibold : fontWeight.normal,
+                      }}
                     >
                       {variety}
                     </Text>
                     {cropVariety === variety && (
-                      <View className="w-6 h-6 rounded-full bg-surface-900 items-center justify-center">
+                      <View
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: borderRadius.full,
+                          backgroundColor: colors.surface[900],
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
                         <Symbol name="checkmark" size={16} color="#FFFFFF" />
                       </View>
                     )}

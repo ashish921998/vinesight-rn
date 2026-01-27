@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  type NativeSyntheticEvent,
-  type TextInputFocusEventData,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { UnitPickerModal } from '../ui/UnitPickerModal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculatorModels';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export interface FertilizerEntry {
   name: string;
@@ -25,7 +19,7 @@ export interface FertigationFormData {
 interface FertigationFormProps {
   data: FertigationFormData;
   onChange: (data: FertigationFormData) => void;
-  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onInputFocus?: TextInputProps['onFocus'];
 }
 
 export function FertigationForm({ data, onChange, onInputFocus }: FertigationFormProps) {
@@ -58,30 +52,72 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
   return (
     <View>
       {/* Header with icon */}
-      <View className="flex-row items-center mb-4">
-        <View className="w-10 h-10 rounded-full bg-green-100 items-center justify-center mr-3">
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: borderRadius.full,
+            backgroundColor: '#DCFCE7',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: spacing[3],
+          }}
+        >
           <Symbol name="leaf.fill" size={20} color="#22C55E" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">Fertigation</Text>
-          <Text className="text-sm text-surface-500">Log fertilizer application</Text>
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[900],
+            }}
+          >
+            Fertigation
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+            Log fertilizer application
+          </Text>
         </View>
       </View>
 
       {/* Fertilizers Section */}
       <View>
-        <View className="flex-row items-center justify-between mb-3">
-          <View className="flex-row items-center">
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: spacing[3],
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ marginRight: 6 }}>
               <Symbol name="flask" size={16} color="#408059" />
             </View>
-            <Text className="text-sm font-semibold text-surface-800">
-              Fertilizers <Text className="text-red-500">*</Text>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[800],
+              }}
+            >
+              Fertilizers <Text style={{ color: colors.error }}>*</Text>
             </Text>
           </View>
           {totalInputs > 0 && (
-            <View className="bg-green-100 px-2.5 py-1 rounded-full">
-              <Text className="text-xs font-medium text-green-700">
+            <View
+              style={{
+                backgroundColor: '#DCFCE7',
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: borderRadius.full,
+              }}
+            >
+              <Text
+                style={{ fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: '#15803D' }}
+              >
                 {totalInputs} input{totalInputs !== 1 ? 's' : ''}
               </Text>
             </View>
@@ -104,25 +140,65 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
         {data.fertilizers.length < 10 && (
           <TouchableOpacity
             onPress={addFertilizer}
-            className="flex-row items-center py-3 mt-2"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: spacing[3],
+              marginTop: spacing[2],
+            }}
             activeOpacity={0.7}
           >
             <Symbol name="plus.circle.fill" size={20} color="#22C55E" />
-            <Text className="text-sm font-medium text-green-600 ml-2">Add Fertilizer</Text>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: '#16A34A',
+                marginLeft: spacing[2],
+              }}
+            >
+              Add Fertilizer
+            </Text>
           </TouchableOpacity>
         )}
       </View>
 
       {/* Summary */}
       {totalInputs > 0 && (
-        <View className="bg-green-50 rounded-xl p-4 mt-4">
-          <Text className="text-sm font-semibold text-green-700 mb-2">Fertilizers Summary</Text>
+        <View
+          style={{
+            backgroundColor: '#ECFDF3',
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            marginTop: spacing[4],
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: '#15803D',
+              marginBottom: spacing[2],
+            }}
+          >
+            Fertilizers Summary
+          </Text>
           {data.fertilizers
             .filter((f) => f.name.trim() && f.quantity > 0)
             .map((f, idx) => (
-              <View key={idx} className="flex-row items-center justify-between py-1">
-                <Text className="text-sm text-green-800">{f.name}</Text>
-                <Text className="text-sm font-medium text-green-700">
+              <View
+                key={idx}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingVertical: spacing[1],
+                }}
+              >
+                <Text style={{ fontSize: fontSize.sm, color: '#166534' }}>{f.name}</Text>
+                <Text
+                  style={{ fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: '#15803D' }}
+                >
                   {f.quantity} {f.unit}
                 </Text>
               </View>
@@ -131,13 +207,28 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
       )}
 
       {/* Validation indicator */}
-      <View className="flex-row items-center mt-4 pt-4 border-t border-surface-100">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: spacing[4],
+          paddingTop: spacing[4],
+          borderTopWidth: 1,
+          borderTopColor: colors.surface[100],
+        }}
+      >
         <Symbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
         />
-        <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            marginLeft: spacing[2],
+            color: isValid ? '#16A34A' : colors.surface[500],
+          }}
+        >
           {isValid ? 'Ready to add' : 'Add at least one fertilizer with quantity'}
         </Text>
       </View>
@@ -151,7 +242,7 @@ interface FertilizerRowProps {
   onUpdate: (updates: Partial<FertilizerEntry>) => void;
   onRemove: () => void;
   showRemove: boolean;
-  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onInputFocus?: TextInputProps['onFocus'];
 }
 
 function FertilizerRow({
@@ -184,16 +275,29 @@ function FertilizerRow({
 
   return (
     <View
-      className={`rounded-xl p-3 mb-3 border ${
-        isRowComplete ? 'bg-green-50 border-green-200' : 'bg-surface-50 border-transparent'
-      }`}
+      style={{
+        borderRadius: borderRadius.xl,
+        padding: spacing[3],
+        marginBottom: spacing[3],
+        borderWidth: 1,
+        backgroundColor: isRowComplete ? '#ECFDF3' : colors.surface[50],
+        borderColor: isRowComplete ? '#BBF7D0' : 'transparent',
+      }}
     >
       {/* Fertilizer Name Row */}
-      <View className="flex-row items-center">
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <TextInput
-          className={`flex-1 rounded-lg px-3 py-2.5 text-base text-surface-900 bg-white border ${
-            isNameFocused ? 'border-green-400' : 'border-surface-200'
-          }`}
+          style={{
+            flex: 1,
+            borderRadius: borderRadius.lg,
+            paddingHorizontal: spacing[3],
+            paddingVertical: 10,
+            fontSize: fontSize.base,
+            color: colors.surface[900],
+            backgroundColor: colors.white,
+            borderWidth: 1,
+            borderColor: isNameFocused ? '#4ADE80' : colors.surface[200],
+          }}
           placeholder="Fertilizer name"
           placeholderTextColor="#9CA3AF"
           value={fertilizer.name}
@@ -207,7 +311,7 @@ function FertilizerRow({
         {showRemove && (
           <TouchableOpacity
             onPress={onRemove}
-            className="ml-2 p-2"
+            style={{ marginLeft: spacing[2], padding: spacing[2] }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             activeOpacity={0.7}
           >
@@ -217,11 +321,20 @@ function FertilizerRow({
       </View>
 
       {/* Quantity and Unit Row */}
-      <View className="flex-row items-center mt-2">
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}>
         <TextInput
-          className={`rounded-lg px-3 py-2.5 text-base text-surface-900 text-center bg-white border ${
-            isQuantityFocused ? 'border-green-400' : 'border-surface-200'
-          }`}
+          style={{
+            flex: 1,
+            borderRadius: borderRadius.lg,
+            paddingHorizontal: spacing[3],
+            paddingVertical: 10,
+            fontSize: fontSize.base,
+            color: colors.surface[900],
+            textAlign: 'center',
+            backgroundColor: colors.white,
+            borderWidth: 1,
+            borderColor: isQuantityFocused ? '#4ADE80' : colors.surface[200],
+          }}
           placeholder="Qty"
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"
@@ -232,17 +345,29 @@ function FertilizerRow({
             onInputFocus?.(event);
           }}
           onBlur={() => setIsQuantityFocused(false)}
-          style={{ flex: 1 }}
         />
 
         {/* Unit Picker */}
         <TouchableOpacity
           onPress={() => setShowUnitPicker(true)}
           activeOpacity={0.7}
-          className="flex-row items-center justify-between bg-white rounded-lg px-3 py-2.5 ml-2 border border-surface-200"
-          style={{ flex: 1 }}
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.lg,
+            paddingHorizontal: spacing[3],
+            paddingVertical: 10,
+            marginLeft: spacing[2],
+            borderWidth: 1,
+            borderColor: colors.surface[200],
+          }}
         >
-          <Text className="text-base text-surface-900">{fertilizer.unit}</Text>
+          <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
+            {fertilizer.unit}
+          </Text>
           <Symbol name="chevron.right" size={18} color="#6B7280" />
         </TouchableOpacity>
       </View>

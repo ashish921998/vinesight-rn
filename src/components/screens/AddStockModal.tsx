@@ -4,6 +4,7 @@ import { Symbol } from '@/components/ui/Symbol';
 import { useUpdateWarehouseItem, useProfile } from '../../hooks';
 import { WarehouseItem } from '../../types';
 import { FormModal, SectionHeader, FormInput, PreviewCard } from '../ui/FormComponents';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface Props {
   visible: boolean;
@@ -89,12 +90,24 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
       onReset={handleReset}
     >
       {/* Item Info Card */}
-      <View className="bg-surface-50 rounded-2xl p-5 mb-5">
-        <View className="flex-row items-center">
+      <View
+        style={{
+          backgroundColor: colors.surface[50],
+          borderRadius: borderRadius['2xl'],
+          padding: spacing[5],
+          marginBottom: spacing[5],
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View
-            className={`w-12 h-12 rounded-xl items-center justify-center ${
-              item.type === 'fertilizer' ? 'bg-green-100' : 'bg-blue-100'
-            }`}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: borderRadius.xl,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: item.type === 'fertilizer' ? '#DCFCE7' : '#DBEAFE',
+            }}
           >
             <Symbol
               name={item.type === 'fertilizer' ? 'flask.fill' : 'drop.fill'}
@@ -102,9 +115,17 @@ export default function AddStockModal({ visible, onClose, item }: Props) {
               color={item.type === 'fertilizer' ? '#16A34A' : '#3B82F6'}
             />
           </View>
-          <View className="flex-1 ml-3">
-            <Text className="text-lg font-bold text-surface-900">{item.name}</Text>
-            <Text className="text-sm text-surface-500 mt-0.5">
+          <View style={{ flex: 1, marginLeft: spacing[3] }}>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+                color: colors.surface[900],
+              }}
+            >
+              {item.name}
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: colors.surface[500], marginTop: 2 }}>
               Current: {item.quantity} {item.unit}
             </Text>
           </View>

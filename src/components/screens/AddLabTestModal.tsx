@@ -21,6 +21,7 @@ import { Symbol } from '@/components/ui/Symbol';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import {
   useCreateSoilTest,
   useCreatePetioleTest,
@@ -349,21 +350,40 @@ export default function AddLabTestModal({
     >
       <KeyboardAvoidingView
         behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-[#f2f2f7]"
+        style={{ flex: 1, backgroundColor: colors.surface[50] }}
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 py-4 bg-white/80 border-b border-gray-200 backdrop-blur-lg">
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[4],
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            borderBottomWidth: 1,
+            borderBottomColor: colors.gray[200],
+          }}
+        >
           <TouchableOpacity onPress={onClose}>
-            <Text className="text-gray-600 text-base">Cancel</Text>
+            <Text style={{ color: colors.gray[600], fontSize: fontSize.base }}>Cancel</Text>
           </TouchableOpacity>
-          <Text className="text-lg font-bold text-[#408059]">
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.bold,
+              color: colors.primary[500],
+            }}
+          >
             Add {isSoil ? 'Soil' : 'Petiole'} Test
           </Text>
           <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
             <Text
-              className={`text-base font-semibold ${
-                isLoading ? 'text-gray-400' : 'text-[#408059]'
-              }`}
+              style={{
+                fontSize: fontSize.base,
+                fontWeight: fontWeight.semibold,
+                color: isLoading ? colors.gray[400] : colors.primary[500],
+              }}
             >
               {isLoading ? 'Saving...' : 'Save'}
             </Text>
@@ -501,24 +521,55 @@ export default function AddLabTestModal({
           />
         )}
 
-        <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: spacing[4] }}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Upload Button */}
           <TouchableOpacity
             onPress={handleUploadFile}
             disabled={isParsingPDF || isLoading}
-            className="bg-white rounded-xl p-4 mt-4 shadow-sm border-2 border-dashed border-[#408059] border-opacity-30"
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
+              marginTop: spacing[4],
+              borderWidth: 2,
+              borderStyle: 'dashed',
+              borderColor: 'rgba(64, 128, 89, 0.3)',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            }}
           >
             {isParsingPDF ? (
-              <View className="flex-row items-center justify-center">
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+              >
                 <ActivityIndicator color="#408059" size="small" />
-                <Text className="text-base font-medium text-[#408059] ml-2">
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.medium,
+                    color: colors.primary[500],
+                    marginLeft: spacing[2],
+                  }}
+                >
                   Parsing with AI...
                 </Text>
               </View>
             ) : (
-              <View className="flex-row items-center justify-center">
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+              >
                 <Symbol name="document" size={24} color="#408059" />
-                <Text className="text-base font-medium text-[#408059] ml-2">
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.medium,
+                    color: colors.primary[500],
+                    marginLeft: spacing[2],
+                  }}
+                >
                   Upload Lab Report (Photo, Image, or PDF)
                 </Text>
               </View>
@@ -526,15 +577,47 @@ export default function AddLabTestModal({
           </TouchableOpacity>
 
           {/* Date Picker */}
-          <View className="bg-white rounded-xl p-4 mt-4 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-2">Test Date</Text>
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
+              marginTop: spacing[4],
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: colors.gray[500],
+                marginBottom: spacing[2],
+              }}
+            >
+              Test Date
+            </Text>
             <TouchableOpacity
               onPress={() => setShowDatePicker(true)}
-              className="flex-row items-center justify-between bg-[#f2f2f7] p-3 rounded-lg"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: colors.surface[50],
+                padding: spacing[3],
+                borderRadius: borderRadius.lg,
+              }}
             >
-              <View className="flex-row items-center">
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Symbol name="calendar" size={20} color="#666" />
-                <Text className="text-base text-gray-800 ml-2">{date.toLocaleDateString()}</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    color: colors.gray[800],
+                    marginLeft: spacing[2],
+                  }}
+                >
+                  {date.toLocaleDateString()}
+                </Text>
               </View>
               <Symbol name="chevron.down" size={20} color="#666" />
             </TouchableOpacity>
@@ -551,20 +634,54 @@ export default function AddLabTestModal({
           </View>
 
           {/* Parameters */}
-          <View className="bg-white rounded-xl p-4 mt-4 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-3">Test Parameters</Text>
-            <Text className="text-xs text-gray-400 mb-4">
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
+              marginTop: spacing[4],
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: colors.gray[500],
+                marginBottom: spacing[3],
+              }}
+            >
+              Test Parameters
+            </Text>
+            <Text
+              style={{ fontSize: fontSize.xs, color: colors.gray[400], marginBottom: spacing[4] }}
+            >
               Enter values for the parameters you have. Leave empty for unknown values.
             </Text>
 
-            <View className="flex-row flex-wrap gap-3">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
               {parameterList.map((param) => (
-                <View key={param.key} className="w-[48%]">
-                  <Text className="text-xs text-gray-500 mb-1">
+                <View key={param.key} style={{ width: '48%' }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: colors.gray[500],
+                      marginBottom: spacing[1],
+                    }}
+                  >
                     {param.label} {param.unit && `(${param.unit})`}
                   </Text>
                   <TextInput
-                    className="bg-[#f2f2f7] border border-gray-200 rounded-lg px-3 py-2 text-gray-800"
+                    style={{
+                      backgroundColor: colors.surface[50],
+                      borderWidth: 1,
+                      borderColor: colors.gray[200],
+                      borderRadius: borderRadius.lg,
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[2],
+                      color: colors.gray[800],
+                      fontSize: fontSize.base,
+                    }}
                     placeholder="0.00"
                     placeholderTextColor="#9ca3af"
                     keyboardType="decimal-pad"
@@ -577,12 +694,37 @@ export default function AddLabTestModal({
           </View>
 
           {/* Recommendations */}
-          <View className="bg-white rounded-xl p-4 mt-4 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-2">
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
+              marginTop: spacing[4],
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: colors.gray[500],
+                marginBottom: spacing[2],
+              }}
+            >
               Recommendations (Optional)
             </Text>
             <TextInput
-              className="bg-[#f2f2f7] border border-gray-200 rounded-lg px-3 py-3 text-gray-800 min-h-[80px]"
+              style={{
+                backgroundColor: colors.surface[50],
+                borderWidth: 1,
+                borderColor: colors.gray[200],
+                borderRadius: borderRadius.lg,
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[3],
+                color: colors.gray[800],
+                fontSize: fontSize.base,
+                minHeight: 80,
+              }}
               placeholder="Enter lab recommendations..."
               placeholderTextColor="#9ca3af"
               multiline
@@ -593,10 +735,38 @@ export default function AddLabTestModal({
           </View>
 
           {/* Notes */}
-          <View className="bg-white rounded-xl p-4 mt-4 mb-8 shadow-sm">
-            <Text className="text-sm font-medium text-gray-500 mb-2">Notes (Optional)</Text>
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
+              marginTop: spacing[4],
+              marginBottom: spacing[8],
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: colors.gray[500],
+                marginBottom: spacing[2],
+              }}
+            >
+              Notes (Optional)
+            </Text>
             <TextInput
-              className="bg-[#f2f2f7] border border-gray-200 rounded-lg px-3 py-3 text-gray-800 min-h-[60px]"
+              style={{
+                backgroundColor: colors.surface[50],
+                borderWidth: 1,
+                borderColor: colors.gray[200],
+                borderRadius: borderRadius.lg,
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[3],
+                color: colors.gray[800],
+                fontSize: fontSize.base,
+                minHeight: 60,
+              }}
               placeholder="Add any additional notes..."
               placeholderTextColor="#9ca3af"
               multiline

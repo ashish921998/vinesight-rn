@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, type NativeSyntheticEvent, type TextInputFocusEventData } from 'react-native';
+import { View, Text, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput } from './FormField';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export interface IrrigationFormData {
   duration: number;
@@ -13,7 +14,7 @@ interface IrrigationFormProps {
   onChange: (data: IrrigationFormData) => void;
   farmArea?: number;
   systemDischarge?: number;
-  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onInputFocus?: TextInputProps['onFocus'];
 }
 
 export function IrrigationForm({
@@ -32,13 +33,33 @@ export function IrrigationForm({
   return (
     <View>
       {/* Header with icon */}
-      <View className="flex-row items-center mb-4">
-        <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center mr-3">
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: borderRadius.full,
+            backgroundColor: '#DBEAFE',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: spacing[3],
+          }}
+        >
           <Symbol name="drop.fill" size={20} color="#3B82F6" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">Irrigation</Text>
-          <Text className="text-sm text-surface-500">Log irrigation duration</Text>
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[900],
+            }}
+          >
+            Irrigation
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+            Log irrigation duration
+          </Text>
         </View>
       </View>
 
@@ -59,39 +80,96 @@ export function IrrigationForm({
 
       {/* Info cards */}
       {(farmArea || estimatedWater) && (
-        <View className="flex-row flex-wrap gap-3 mt-2">
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3], marginTop: spacing[2] }}
+        >
           {farmArea && (
-            <View className="flex-1 min-w-[140px] bg-surface-50 rounded-xl p-3">
-              <View className="flex-row items-center mb-1">
+            <View
+              style={{
+                flex: 1,
+                minWidth: 140,
+                backgroundColor: colors.surface[50],
+                borderRadius: borderRadius.xl,
+                padding: spacing[3],
+              }}
+            >
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[1] }}
+              >
                 <Symbol name="arrow.up.left.and.arrow.down.right" size={14} color="#6B7280" />
-                <Text className="text-xs text-surface-500 ml-1">Area</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colors.surface[500],
+                    marginLeft: spacing[1],
+                  }}
+                >
+                  Area
+                </Text>
               </View>
-              <Text className="text-sm font-semibold text-surface-900">
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                }}
+              >
                 {farmArea.toFixed(2)} acres
               </Text>
             </View>
           )}
 
           {estimatedWater && (
-            <View className="flex-1 min-w-[140px] bg-blue-50 rounded-xl p-3">
-              <View className="flex-row items-center mb-1">
+            <View
+              style={{
+                flex: 1,
+                minWidth: 140,
+                backgroundColor: '#EFF6FF',
+                borderRadius: borderRadius.xl,
+                padding: spacing[3],
+              }}
+            >
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[1] }}
+              >
                 <Symbol name="drop" size={14} color="#3B82F6" />
-                <Text className="text-xs text-blue-600 ml-1">Est. Water</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#2563EB', marginLeft: spacing[1] }}>
+                  Est. Water
+                </Text>
               </View>
-              <Text className="text-sm font-semibold text-blue-700">{estimatedWater} mm</Text>
+              <Text
+                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: '#1D4ED8' }}
+              >
+                {estimatedWater} mm
+              </Text>
             </View>
           )}
         </View>
       )}
 
       {/* Validation indicator */}
-      <View className="flex-row items-center mt-4 pt-4 border-t border-surface-100">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: spacing[4],
+          paddingTop: spacing[4],
+          borderTopWidth: 1,
+          borderTopColor: colors.surface[100],
+        }}
+      >
         <Symbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
         />
-        <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            marginLeft: spacing[2],
+            color: isValid ? '#16A34A' : colors.surface[500],
+          }}
+        >
           {isValid ? 'Ready to add' : 'Enter duration to continue'}
         </Text>
       </View>

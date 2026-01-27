@@ -1,7 +1,8 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import * as Sentry from '@sentry/react-native';
+import { Symbol } from '@/components/ui/Symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface Props {
   children: ReactNode;
@@ -66,29 +67,77 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <View className="flex-1 bg-gray-50 items-center justify-center p-6">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: colors.gray[50],
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: spacing[6],
+          }}
+        >
           <View
-            className="w-24 h-24 rounded-3xl items-center justify-center mb-6"
-            style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: borderRadius['3xl'],
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: spacing[6],
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            }}
           >
-            <Ionicons name="alert-circle" size={56} color="#EF4444" />
+            <Symbol name="exclamationmark.circle.fill" size={56} color="#EF4444" />
           </View>
 
-          <Text className="text-2xl font-bold text-gray-900 text-center mb-2">
+          <Text
+            style={{
+              fontSize: fontSize['2xl'],
+              fontWeight: fontWeight.bold,
+              color: colors.gray[900],
+              textAlign: 'center',
+              marginBottom: spacing[2],
+            }}
+          >
             Oops! Something went wrong
           </Text>
 
-          <Text className="text-base text-gray-600 text-center mb-6">
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              color: colors.gray[600],
+              textAlign: 'center',
+              marginBottom: spacing[6],
+            }}
+          >
             We&apos;re sorry for the inconvenience. The app encountered an unexpected error.
           </Text>
 
           {__DEV__ && this.state.error && (
-            <ScrollView className="w-full max-h-48 mb-6 bg-red-50 rounded-2xl p-4">
-              <Text className="text-xs font-mono text-red-900 mb-2">
+            <ScrollView
+              style={{
+                width: '100%',
+                maxHeight: 192,
+                marginBottom: spacing[6],
+                backgroundColor: '#FEE2E2',
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontFamily: 'Courier',
+                  color: '#7F1D1D',
+                  marginBottom: spacing[2],
+                }}
+              >
                 {this.state.error.toString()}
               </Text>
               {this.state.errorInfo && (
-                <Text className="text-xs font-mono text-red-700">{this.state.errorInfo}</Text>
+                <Text style={{ fontSize: fontSize.xs, fontFamily: 'Courier', color: '#B91C1C' }}>
+                  {this.state.errorInfo}
+                </Text>
               )}
             </ScrollView>
           )}
@@ -96,9 +145,22 @@ export class ErrorBoundary extends Component<Props, State> {
           <TouchableOpacity
             onPress={this.handleReset}
             activeOpacity={0.8}
-            className="bg-green-600 px-8 py-4 rounded-2xl"
+            style={{
+              backgroundColor: colors.primary[600],
+              paddingHorizontal: spacing[8],
+              paddingVertical: spacing[4],
+              borderRadius: borderRadius['2xl'],
+            }}
           >
-            <Text className="text-white text-base font-semibold">Try Again</Text>
+            <Text
+              style={{
+                color: colors.white,
+                fontSize: fontSize.base,
+                fontWeight: fontWeight.semibold,
+              }}
+            >
+              Try Again
+            </Text>
           </TouchableOpacity>
         </View>
       );

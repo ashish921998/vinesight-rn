@@ -37,6 +37,7 @@ import type {
   ExpenseRecord,
   FertigationRecord,
 } from '@/types';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface CombinedLog {
   id: string;
@@ -345,7 +346,7 @@ export default function LogsScreen() {
         }}
       >
         <ActivityIndicator size="large" color="#408059" />
-        <Text className="mt-4 text-[#8e8e93]">Loading...</Text>
+        <Text style={{ marginTop: spacing[4], color: colors.surface[500] }}>Loading...</Text>
       </View>
     );
   }
@@ -359,7 +360,10 @@ export default function LogsScreen() {
           headerTintColor: '#000000',
           headerRight: () =>
             selectedFarm && (
-              <TouchableOpacity onPress={() => setShowAddModal(true)} className="mr-4">
+              <TouchableOpacity
+                onPress={() => setShowAddModal(true)}
+                style={{ marginRight: spacing[4] }}
+              >
                 <Symbol name="plus.circle.fill" size={28} color="#408059" />
               </TouchableOpacity>
             ),
@@ -367,27 +371,52 @@ export default function LogsScreen() {
       />
 
       <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
-        <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
+        <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
           <LinearGradient
             colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
             style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
           />
 
-          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             {/* Farm Selector */}
-            <View className="mx-4 mt-4">
-              <Text className="text-xs font-bold text-[#8e8e93] mb-2">SELECTED FARM</Text>
-              <TouchableOpacity
-                onPress={() => setShowFarmSelector(true)}
-                className="rounded-2xl px-4 py-3"
+            <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
+              <Text
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  borderRadius: 12,
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[500],
+                  marginBottom: spacing[2],
                 }}
               >
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center flex-1">
-                    <View className="w-11 h-11 bg-[#408059]/15 rounded-full items-center justify-center">
+                SELECTED FARM
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowFarmSelector(true)}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  borderRadius: borderRadius['2xl'],
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <View
+                      style={{
+                        width: 44,
+                        height: 44,
+                        backgroundColor: 'rgba(64, 128, 89, 0.15)',
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       <Symbol
                         name={
                           selectedFarmId === undefined ? 'square.stack.3d.up.fill' : 'leaf.fill'
@@ -396,19 +425,25 @@ export default function LogsScreen() {
                         color="#408059"
                       />
                     </View>
-                    <View className="ml-3">
-                      <Text className="text-base font-semibold text-[#1c1c1e]">
+                    <View style={{ marginLeft: spacing[3] }}>
+                      <Text
+                        style={{
+                          fontSize: fontSize.base,
+                          fontWeight: fontWeight.semibold,
+                          color: colors.surface[900],
+                        }}
+                      >
                         {selectedFarmId === undefined
                           ? 'All Farms'
                           : selectedFarm?.name || 'Select farm'}
                       </Text>
                       {selectedFarm && (
-                        <Text className="text-xs text-[#8e8e93]">
+                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                           {selectedFarm.crop} • {selectedFarm.area.toFixed(1)} acres
                         </Text>
                       )}
                       {selectedFarmId === undefined && (
-                        <Text className="text-xs text-[#8e8e93]">
+                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                           {farms.length} farm{farms.length !== 1 ? 's' : ''}
                         </Text>
                       )}
@@ -420,23 +455,37 @@ export default function LogsScreen() {
             </View>
 
             {/* Search & Filters */}
-            <View className="mx-4 mt-4">
+            <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
               <View
-                className="rounded-2xl p-4"
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.8)',
                   boxShadow: '0 5px 10px rgba(0, 0, 0, 0.08)',
+                  borderRadius: borderRadius['2xl'],
+                  padding: spacing[4],
                 }}
               >
                 {/* Search Bar */}
-                <View className="flex-row items-center bg-[#f9f9f9] rounded-xl px-3 py-2.5">
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: colors.surface[50],
+                    borderRadius: borderRadius.xl,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                  }}
+                >
                   <Symbol name="magnifyingglass" size={18} color="#8e8e93" />
                   <TextInput
                     placeholder="Search logs..."
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     placeholderTextColor="#8e8e93"
-                    className="flex-1 ml-2 text-[#1c1c1e]"
+                    style={{
+                      flex: 1,
+                      marginLeft: spacing[2],
+                      color: colors.surface[900],
+                    }}
                   />
                   {searchQuery !== '' && (
                     <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -446,15 +495,44 @@ export default function LogsScreen() {
                 </View>
 
                 {/* Filter Toggle */}
-                <View className="flex-row items-center justify-between mt-3">
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: spacing[3],
+                  }}
+                >
                   <TouchableOpacity
                     onPress={() => setShowFilters(!showFilters)}
-                    className="flex-row items-center"
+                    style={{ flexDirection: 'row', alignItems: 'center' }}
                   >
-                    <Text className="text-sm font-semibold text-[#408059]">Filter</Text>
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                        color: colors.primary[600],
+                      }}
+                    >
+                      Filter
+                    </Text>
                     {hasActiveFilters && (
-                      <View className="ml-2 bg-[#408059]/15 px-2 py-0.5 rounded-full">
-                        <Text className="text-xs font-bold text-[#408059]">
+                      <View
+                        style={{
+                          marginLeft: spacing[2],
+                          backgroundColor: 'rgba(64, 128, 89, 0.15)',
+                          paddingHorizontal: spacing[2],
+                          paddingVertical: 2,
+                          borderRadius: borderRadius.full,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: fontSize.xs,
+                            fontWeight: fontWeight.bold,
+                            color: colors.primary[600],
+                          }}
+                        >
                           {selectedLogTypes.size + (dateFrom || dateTo ? 1 : 0)}
                         </Text>
                       </View>
@@ -463,16 +541,40 @@ export default function LogsScreen() {
 
                   {hasActiveFilters && (
                     <TouchableOpacity onPress={clearFilters}>
-                      <Text className="text-sm font-semibold text-red-500">Clear All</Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                          color: '#EF4444',
+                        }}
+                      >
+                        Clear All
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>
 
                 {/* Filter Panel */}
                 {showFilters && (
-                  <View className="mt-4 pt-4 border-t border-[#e5e5ea]">
-                    <Text className="text-xs font-bold text-[#8e8e93] mb-2">ACTIVITY TYPES</Text>
-                    <View className="flex-row flex-wrap gap-2">
+                  <View
+                    style={{
+                      marginTop: spacing[4],
+                      paddingTop: spacing[4],
+                      borderTopWidth: 1,
+                      borderTopColor: colors.surface[200],
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.bold,
+                        color: colors.surface[500],
+                        marginBottom: spacing[2],
+                      }}
+                    >
+                      ACTIVITY TYPES
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
                       {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
                         const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
                         return (
@@ -488,9 +590,16 @@ export default function LogsScreen() {
                               setSelectedLogTypes(newSet);
                               setCurrentPage(1);
                             }}
-                            className={`flex-row items-center px-3 py-1.5 rounded-full ${
-                              isSelected ? 'bg-[#408059]' : 'bg-[#f9f9f9]'
-                            }`}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              paddingHorizontal: spacing[3],
+                              paddingVertical: 6,
+                              borderRadius: borderRadius.full,
+                              backgroundColor: isSelected
+                                ? colors.primary[600]
+                                : colors.surface[50],
+                            }}
                           >
                             <Symbol
                               name={
@@ -512,9 +621,12 @@ export default function LogsScreen() {
                               color={isSelected ? '#FFFFFF' : logType.color}
                             />
                             <Text
-                              className={`ml-1 text-xs font-semibold ${
-                                isSelected ? 'text-white' : 'text-[#374151]'
-                              }`}
+                              style={{
+                                marginLeft: spacing[1],
+                                fontSize: fontSize.xs,
+                                fontWeight: fontWeight.semibold,
+                                color: isSelected ? colors.white : colors.gray[700],
+                              }}
                             >
                               {logType.label}
                             </Text>
@@ -523,14 +635,36 @@ export default function LogsScreen() {
                       })}
                     </View>
 
-                    <View className="flex-row items-center justify-between mt-4">
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginTop: spacing[4],
+                      }}
+                    >
                       <TouchableOpacity
                         onPress={() => setShowDatePickerFrom(true)}
-                        className="flex-1 mr-2"
+                        style={{ flex: 1, marginRight: spacing[2] }}
                       >
-                        <View className="bg-[#f9f9f9] px-3 py-2.5 rounded-xl">
-                          <Text className="text-xs text-[#8e8e93]">From</Text>
-                          <Text className="text-sm font-semibold text-[#1c1c1e]">
+                        <View
+                          style={{
+                            backgroundColor: colors.surface[50],
+                            paddingHorizontal: spacing[3],
+                            paddingVertical: spacing[2],
+                            borderRadius: borderRadius.xl,
+                          }}
+                        >
+                          <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                            From
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.semibold,
+                              color: colors.surface[900],
+                            }}
+                          >
                             {dateFrom
                               ? dateFrom.toLocaleDateString('en-US', {
                                   month: 'short',
@@ -543,11 +677,26 @@ export default function LogsScreen() {
 
                       <TouchableOpacity
                         onPress={() => setShowDatePickerTo(true)}
-                        className="flex-1 ml-2"
+                        style={{ flex: 1, marginLeft: spacing[2] }}
                       >
-                        <View className="bg-[#f9f9f9] px-3 py-2.5 rounded-xl">
-                          <Text className="text-xs text-[#8e8e93]">To</Text>
-                          <Text className="text-sm font-semibold text-[#1c1c1e]">
+                        <View
+                          style={{
+                            backgroundColor: colors.surface[50],
+                            paddingHorizontal: spacing[3],
+                            paddingVertical: spacing[2],
+                            borderRadius: borderRadius.xl,
+                          }}
+                        >
+                          <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                            To
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.semibold,
+                              color: colors.surface[900],
+                            }}
+                          >
                             {dateTo
                               ? dateTo.toLocaleDateString('en-US', {
                                   month: 'short',
@@ -564,34 +713,65 @@ export default function LogsScreen() {
             </View>
 
             {/* Logs List */}
-            <View className="mx-4 mt-4 pb-32">
+            <View
+              style={{
+                marginHorizontal: spacing[4],
+                marginTop: spacing[4],
+                paddingBottom: spacing[8],
+              }}
+            >
               {isLoadingAllRecords ? (
-                <View className="gap-3">
+                <View style={{ gap: spacing[3] }}>
                   {[1, 2, 3].map((i) => (
                     <View
                       key={i}
-                      className="h-20 rounded-2xl"
-                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)' }}
+                      style={{
+                        height: 80,
+                        borderRadius: borderRadius['2xl'],
+                        backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                      }}
                     />
                   ))}
                 </View>
               ) : paginatedLogs.length === 0 ? (
                 <View
-                  className="rounded-2xl items-center p-10"
                   style={{
+                    borderRadius: borderRadius['2xl'],
+                    alignItems: 'center',
+                    padding: spacing[10],
                     backgroundColor: 'rgba(255, 255, 255, 0.6)',
                   }}
                 >
                   <View
-                    className="w-16 h-16 rounded-full items-center justify-center mb-4"
-                    style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
+                    style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing[4],
+                      backgroundColor: 'rgba(142, 142, 147, 0.2)',
+                    }}
                   >
                     <Symbol name="calendar" size={32} color="#9CA3AF" />
                   </View>
-                  <Text className="text-base font-semibold text-[#1c1c1e]">
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.surface[900],
+                    }}
+                  >
                     No activity logs found
                   </Text>
-                  <Text className="text-sm text-[#8e8e93] text-center mt-1">
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      color: colors.surface[500],
+                      textAlign: 'center',
+                      marginTop: spacing[1],
+                    }}
+                  >
                     {hasActiveFilters || searchQuery
                       ? 'Try adjusting your filters'
                       : 'Start logging activities to see them here'}
@@ -599,8 +779,16 @@ export default function LogsScreen() {
                 </View>
               ) : (
                 <>
-                  <View className="flex-row items-center justify-between mb-3 px-1">
-                    <Text className="text-xs text-[#8e8e93]">
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: spacing[3],
+                      paddingHorizontal: spacing[1],
+                    }}
+                  >
+                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                       Showing {(currentPage - 1) * itemsPerPage + 1}-
                       {Math.min(currentPage * itemsPerPage, filteredLogs.length)} of{' '}
                       {filteredLogs.length}
@@ -611,29 +799,59 @@ export default function LogsScreen() {
                         setShowFilters(true);
                       }}
                     >
-                      <View className="flex-row items-center bg-[#f9f9f9] px-2 py-1 rounded-lg">
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: colors.surface[50],
+                          paddingHorizontal: spacing[2],
+                          paddingVertical: spacing[1],
+                          borderRadius: borderRadius.lg,
+                        }}
+                      >
                         <Symbol name="ellipsis" size={14} color="#8e8e93" />
-                        <Text className="ml-1 text-xs text-[#8e8e93]">10 per page</Text>
+                        <Text
+                          style={{
+                            marginLeft: spacing[1],
+                            fontSize: fontSize.xs,
+                            color: colors.surface[500],
+                          }}
+                        >
+                          10 per page
+                        </Text>
                       </View>
                     </TouchableOpacity>
                   </View>
 
-                  <View className="gap-3">
+                  <View style={{ gap: spacing[3] }}>
                     {paginatedLogs.map((log) => {
                       const logType = LOG_TYPES.find((lt) => lt.id === log.type);
                       const parsedDate = new Date(log.date);
                       return (
                         <View
                           key={log.id}
-                          className="rounded-2xl overflow-hidden"
                           style={{
                             backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                            borderRadius: borderRadius['2xl'],
+                            overflow: 'hidden',
                           }}
                         >
-                          <View className="flex-row items-center p-4">
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              padding: spacing[4],
+                            }}
+                          >
                             <View
-                              className="w-11 h-11 rounded-full items-center justify-center"
-                              style={{ backgroundColor: `${logType?.color || '#408059'}1A` }}
+                              style={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: borderRadius.full,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: `${logType?.color || '#408059'}1A`,
+                              }}
                             >
                               <Symbol
                                 name={
@@ -655,14 +873,33 @@ export default function LogsScreen() {
                                 color={logType?.color || '#408059'}
                               />
                             </View>
-                            <View className="flex-1 ml-3">
-                              <Text className="text-sm font-semibold text-[#1c1c1e]">
+                            <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                              <Text
+                                style={{
+                                  fontSize: fontSize.sm,
+                                  fontWeight: fontWeight.semibold,
+                                  color: colors.surface[900],
+                                }}
+                              >
                                 {logType?.label}
                               </Text>
-                              <Text className="text-xs text-[#8e8e93] mt-0.5" numberOfLines={1}>
+                              <Text
+                                style={{
+                                  fontSize: fontSize.xs,
+                                  color: colors.surface[500],
+                                  marginTop: 2,
+                                }}
+                                numberOfLines={1}
+                              >
                                 {log.description}
                               </Text>
-                              <Text className="text-xs text-[#c7c7cc] mt-1">
+                              <Text
+                                style={{
+                                  fontSize: fontSize.xs,
+                                  color: colors.surface[300],
+                                  marginTop: spacing[1],
+                                }}
+                              >
                                 {parsedDate.toLocaleDateString('en-US', {
                                   weekday: 'short',
                                   month: 'short',
@@ -670,7 +907,7 @@ export default function LogsScreen() {
                                 })}
                               </Text>
                             </View>
-                            <View className="flex-row gap-2">
+                            <View style={{ flexDirection: 'row', gap: spacing[2] }}>
                               <TouchableOpacity
                                 onPress={() => {
                                   if (selectedFarm) {
@@ -718,12 +955,21 @@ export default function LogsScreen() {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <View className="mt-4 flex-row items-center justify-between">
+                    <View
+                      style={{
+                        marginTop: spacing[4],
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
                       <TouchableOpacity
                         onPress={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
-                        className="px-4 py-2 rounded-xl"
                         style={{
+                          paddingHorizontal: spacing[4],
+                          paddingVertical: spacing[2],
+                          borderRadius: borderRadius.xl,
                           backgroundColor: currentPage === 1 ? '#f9f9f9' : '#408059',
                           opacity: currentPage === 1 ? 0.5 : 1,
                         }}
@@ -735,7 +981,7 @@ export default function LogsScreen() {
                         />
                       </TouchableOpacity>
 
-                      <View className="flex-row">
+                      <View style={{ flexDirection: 'row' }}>
                         {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                           let pageNum;
                           if (totalPages <= 5) {
@@ -751,14 +997,22 @@ export default function LogsScreen() {
                             <TouchableOpacity
                               key={pageNum}
                               onPress={() => setCurrentPage(pageNum)}
-                              className={`w-8 h-8 rounded-lg items-center justify-center mx-0.5 ${
-                                currentPage === pageNum ? 'bg-[#408059]' : 'bg-[#f9f9f9]'
-                              }`}
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: borderRadius.lg,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginHorizontal: 2,
+                                backgroundColor: currentPage === pageNum ? '#408059' : '#f9f9f9',
+                              }}
                             >
                               <Text
-                                className={`text-xs font-semibold ${
-                                  currentPage === pageNum ? 'text-white' : 'text-[#374151]'
-                                }`}
+                                style={{
+                                  fontSize: fontSize.xs,
+                                  fontWeight: fontWeight.semibold,
+                                  color: currentPage === pageNum ? colors.white : colors.gray[700],
+                                }}
                               >
                                 {pageNum}
                               </Text>
@@ -770,8 +1024,10 @@ export default function LogsScreen() {
                       <TouchableOpacity
                         onPress={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
-                        className="px-4 py-2 rounded-xl"
                         style={{
+                          paddingHorizontal: spacing[4],
+                          paddingVertical: spacing[2],
+                          borderRadius: borderRadius.xl,
                           backgroundColor: currentPage === totalPages ? '#f9f9f9' : '#408059',
                           opacity: currentPage === totalPages ? 0.5 : 1,
                         }}
@@ -825,9 +1081,31 @@ export default function LogsScreen() {
           onRequestClose={() => setShowDatePickerFrom(false)}
           animationType="fade"
         >
-          <View className="flex-1 bg-black/30 items-center justify-center">
-            <View className="bg-white rounded-2xl p-4" style={{ width: '85%' }}>
-              <Text className="text-lg font-semibold text-[#1c1c1e] mb-4 text-center">
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                width: '85%',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginBottom: spacing[4],
+                  textAlign: 'center',
+                }}
+              >
                 Select From Date
               </Text>
               <DateTimePicker
@@ -842,10 +1120,15 @@ export default function LogsScreen() {
               />
               <TouchableOpacity
                 onPress={() => setShowDatePickerFrom(false)}
-                className="mt-4 py-3 rounded-xl items-center"
-                style={{ backgroundColor: '#408059' }}
+                style={{
+                  marginTop: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  backgroundColor: '#408059',
+                }}
               >
-                <Text className="font-semibold text-white">Done</Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -859,26 +1142,65 @@ export default function LogsScreen() {
           onRequestClose={() => setShowFarmSelector(false)}
           animationType="slide"
         >
-          <View className="flex-1 bg-black/30">
-            <View className="flex-1 mt-auto bg-white rounded-t-3xl overflow-hidden">
-              <View className="w-12 h-1 bg-[#e5e5ea] rounded-full mx-auto mt-3 mb-2" />
-              <Text className="text-lg font-semibold text-[#1c1c1e] px-6 pt-2 pb-4">
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }}>
+            <View
+              style={{
+                flex: 1,
+                marginTop: 'auto',
+                backgroundColor: colors.white,
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                overflow: 'hidden',
+              }}
+            >
+              <View
+                style={{
+                  width: 48,
+                  height: 4,
+                  backgroundColor: colors.surface[200],
+                  borderRadius: borderRadius.full,
+                  marginHorizontal: 'auto',
+                  marginTop: spacing[3],
+                  marginBottom: spacing[2],
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  paddingHorizontal: spacing[6],
+                  paddingTop: spacing[2],
+                  paddingBottom: spacing[4],
+                }}
+              >
                 Select Farm
               </Text>
-              <ScrollView className="flex-1 px-4 pb-6">
+              <ScrollView
+                style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[6] }}
+              >
                 <TouchableOpacity
                   onPress={() => {
                     setSelectedFarmId(undefined);
                     setCurrentPage(1);
                     setShowFarmSelector(false);
                   }}
-                  className={`flex-row items-center p-4 rounded-2xl mb-2 ${
-                    selectedFarmId === undefined ? 'bg-[#408059]' : 'bg-[#f9f9f9]'
-                  }`}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: spacing[4],
+                    borderRadius: borderRadius['2xl'],
+                    marginBottom: spacing[2],
+                    backgroundColor: selectedFarmId === undefined ? '#408059' : '#f9f9f9',
+                  }}
                 >
                   <View
-                    className="w-10 h-10 rounded-full items-center justify-center"
                     style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       backgroundColor:
                         selectedFarmId === undefined
                           ? 'rgba(255,255,255,0.2)'
@@ -891,18 +1213,24 @@ export default function LogsScreen() {
                       color={selectedFarmId === undefined ? '#FFFFFF' : '#408059'}
                     />
                   </View>
-                  <View className="ml-3 flex-1">
+                  <View style={{ marginLeft: spacing[3], flex: 1 }}>
                     <Text
-                      className={`text-base font-semibold ${
-                        selectedFarmId === undefined ? 'text-white' : 'text-[#1c1c1e]'
-                      }`}
+                      style={{
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.semibold,
+                        color: selectedFarmId === undefined ? colors.white : colors.surface[900],
+                      }}
                     >
                       All Farms
                     </Text>
                     <Text
-                      className={`text-xs ${
-                        selectedFarmId === undefined ? 'text-white/80' : 'text-[#8e8e93]'
-                      }`}
+                      style={{
+                        fontSize: fontSize.xs,
+                        color:
+                          selectedFarmId === undefined
+                            ? 'rgba(255,255,255,0.8)'
+                            : colors.surface[500],
+                      }}
                     >
                       {farms.length} farm{farms.length !== 1 ? 's' : ''}
                     </Text>
@@ -920,13 +1248,22 @@ export default function LogsScreen() {
                       setCurrentPage(1);
                       setShowFarmSelector(false);
                     }}
-                    className={`flex-row items-center p-4 rounded-2xl mb-2 ${
-                      selectedFarmId === farm.id ? 'bg-[#408059]' : 'bg-[#f9f9f9]'
-                    }`}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      padding: spacing[4],
+                      borderRadius: borderRadius['2xl'],
+                      marginBottom: spacing[2],
+                      backgroundColor: selectedFarmId === farm.id ? '#408059' : '#f9f9f9',
+                    }}
                   >
                     <View
-                      className="w-10 h-10 rounded-full items-center justify-center"
                       style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         backgroundColor:
                           selectedFarmId === farm.id
                             ? 'rgba(255,255,255,0.2)'
@@ -939,18 +1276,24 @@ export default function LogsScreen() {
                         color={selectedFarmId === farm.id ? '#FFFFFF' : '#408059'}
                       />
                     </View>
-                    <View className="ml-3 flex-1">
+                    <View style={{ marginLeft: spacing[3], flex: 1 }}>
                       <Text
-                        className={`text-base font-semibold ${
-                          selectedFarmId === farm.id ? 'text-white' : 'text-[#1c1c1e]'
-                        }`}
+                        style={{
+                          fontSize: fontSize.base,
+                          fontWeight: fontWeight.semibold,
+                          color: selectedFarmId === farm.id ? colors.white : colors.surface[900],
+                        }}
                       >
                         {farm.name}
                       </Text>
                       <Text
-                        className={`text-xs ${
-                          selectedFarmId === farm.id ? 'text-white/80' : 'text-[#8e8e93]'
-                        }`}
+                        style={{
+                          fontSize: fontSize.xs,
+                          color:
+                            selectedFarmId === farm.id
+                              ? 'rgba(255,255,255,0.8)'
+                              : colors.surface[500],
+                        }}
                       >
                         {farm.crop} • {farm.area.toFixed(1)} acres
                       </Text>
@@ -963,10 +1306,18 @@ export default function LogsScreen() {
               </ScrollView>
               <TouchableOpacity
                 onPress={() => setShowFarmSelector(false)}
-                className="mx-4 mb-6 py-3.5 rounded-xl items-center"
-                style={{ backgroundColor: '#f9f9f9' }}
+                style={{
+                  marginHorizontal: spacing[4],
+                  marginBottom: spacing[6],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  backgroundColor: colors.surface[50],
+                }}
               >
-                <Text className="font-semibold text-[#374151]">Cancel</Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -980,9 +1331,31 @@ export default function LogsScreen() {
           onRequestClose={() => setShowDatePickerTo(false)}
           animationType="fade"
         >
-          <View className="flex-1 bg-black/30 items-center justify-center">
-            <View className="bg-white rounded-2xl p-4" style={{ width: '85%' }}>
-              <Text className="text-lg font-semibold text-[#1c1c1e] mb-4 text-center">
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                width: '85%',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginBottom: spacing[4],
+                  textAlign: 'center',
+                }}
+              >
                 Select To Date
               </Text>
               <DateTimePicker
@@ -997,10 +1370,15 @@ export default function LogsScreen() {
               />
               <TouchableOpacity
                 onPress={() => setShowDatePickerTo(false)}
-                className="mt-4 py-3 rounded-xl items-center"
-                style={{ backgroundColor: '#408059' }}
+                style={{
+                  marginTop: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  backgroundColor: '#408059',
+                }}
               >
-                <Text className="font-semibold text-white">Done</Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1013,21 +1391,56 @@ export default function LogsScreen() {
         animationType="fade"
         onRequestClose={() => setShowDeleteConfirmation(false)}
       >
-        <View className="flex-1 items-center justify-center bg-black/50 px-8">
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            paddingHorizontal: spacing[8],
+          }}
+        >
           <View
-            className="rounded-2xl p-6 w-full"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+            style={{
+              width: '100%',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[6],
+            }}
           >
-            <View className="items-center mb-4">
+            <View style={{ alignItems: 'center', marginBottom: spacing[4] }}>
               <View
-                className="w-14 h-14 rounded-full items-center justify-center"
-                style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                }}
               >
                 <Symbol name="exclamationmark.triangle.fill" size={28} color="#EF4444" />
               </View>
             </View>
-            <Text className="text-lg font-bold text-[#1c1c1e] text-center mb-2">Delete Log?</Text>
-            <Text className="text-sm text-[#8e8e93] text-center mb-6">
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+                color: colors.surface[900],
+                textAlign: 'center',
+                marginBottom: spacing[2],
+              }}
+            >
+              Delete Log?
+            </Text>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                color: colors.surface[500],
+                textAlign: 'center',
+                marginBottom: spacing[6],
+              }}
+            >
               Are you sure you want to delete this {deletingLog?.type} log from{' '}
               {deletingLog
                 ? new Date(deletingLog.date).toLocaleDateString('en-US', {
@@ -1037,19 +1450,33 @@ export default function LogsScreen() {
                 : ''}
               ?
             </Text>
-            <View className="flex-row gap-3">
+            <View style={{ flexDirection: 'row', gap: spacing[3] }}>
               <TouchableOpacity
                 onPress={() => setShowDeleteConfirmation(false)}
-                className="flex-1 py-3 rounded-xl items-center border border-[#e5e5ea]"
+                style={{
+                  flex: 1,
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
               >
-                <Text className="font-semibold text-[#374151]">Cancel</Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleDeleteLog}
-                className="flex-1 py-3 rounded-xl items-center"
-                style={{ backgroundColor: '#EF4444' }}
+                style={{
+                  flex: 1,
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  backgroundColor: '#EF4444',
+                }}
               >
-                <Text className="font-semibold text-white">Delete</Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -15,6 +15,7 @@ import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/ho
 import { WarehouseItem } from '../src/types';
 import AddWarehouseItemModal from '../src/components/screens/AddWarehouseItemModal';
 import AddStockModal from '../src/components/screens/AddStockModal';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
 
@@ -105,13 +106,15 @@ export default function WarehouseScreen() {
       >
         <Stack.Screen options={{ title: 'Warehouse' }} />
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text className="text-surface-600 mt-4">Loading inventory...</Text>
+        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+          Loading inventory...
+        </Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <Stack.Screen
         options={{
           title: 'Warehouse',
@@ -121,7 +124,7 @@ export default function WarehouseScreen() {
                 setEditingItem(null);
                 setShowAddModal(true);
               }}
-              className="mr-4"
+              style={{ marginRight: spacing[4] }}
             >
               <Symbol name="plus.circle.fill" size={28} color="#408059" />
             </TouchableOpacity>
@@ -141,10 +144,12 @@ export default function WarehouseScreen() {
           }
         >
           {/* Summary Cards */}
-          <View className="flex-row mb-4" style={{ gap: 12 }}>
+          <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: 12 }}>
             <View
-              className="flex-1 rounded-2xl p-4"
               style={{
+                flex: 1,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
                 backgroundColor: COLORS.glass,
               }}
             >
@@ -153,48 +158,92 @@ export default function WarehouseScreen() {
                 size={24}
                 color={lowStockItems.length > 0 ? COLORS.lowStock : COLORS.primary}
               />
-              <Text className="text-2xl font-bold text-surface-900 mt-2">
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontSize: fontSize['2xl'],
+                  fontWeight: fontWeight.bold,
+                  marginTop: spacing[2],
+                }}
+              >
                 {lowStockItems.length}
               </Text>
-              <Text className="text-xs text-surface-500">Low Stock</Text>
+              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>Low Stock</Text>
             </View>
             <View
-              className="flex-1 rounded-2xl p-4"
               style={{
+                flex: 1,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
                 backgroundColor: COLORS.glass,
               }}
             >
               <Symbol name="dollarsign.circle.fill" size={24} color={COLORS.primary} />
-              <Text className="text-2xl font-bold text-surface-900 mt-2">
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontSize: fontSize['2xl'],
+                  fontWeight: fontWeight.bold,
+                  marginTop: spacing[2],
+                }}
+              >
                 {currency === 'INR' ? '₹' : '$'}
                 {totals.value.toLocaleString()}
               </Text>
-              <Text className="text-xs text-surface-500">Value</Text>
+              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>Value</Text>
             </View>
           </View>
 
           {/* Low Stock Alert */}
           {lowStockItems.length > 0 && (
             <View
-              className="rounded-2xl p-4 mb-4"
-              style={{ backgroundColor: `${COLORS.lowStock}15` }}
+              style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
+                backgroundColor: `${COLORS.lowStock}15`,
+              }}
             >
-              <View className="flex-row items-center mb-3">
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: spacing[3],
+                }}
+              >
                 <Symbol name="exclamationmark.triangle.fill" size={20} color={COLORS.lowStock} />
-                <Text className="text-base font-semibold ml-2" style={{ color: COLORS.lowStock }}>
+                <Text
+                  style={{
+                    color: COLORS.lowStock,
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    marginLeft: spacing[2],
+                  }}
+                >
                   Low Stock Alerts
                 </Text>
                 <View
-                  className="px-2 py-0.5 rounded-full ml-auto"
-                  style={{ backgroundColor: `${COLORS.lowStock}30` }}
+                  style={{
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: 2,
+                    borderRadius: borderRadius.full,
+                    marginLeft: 'auto',
+                    backgroundColor: `${COLORS.lowStock}30`,
+                  }}
                 >
-                  <Text className="text-xs font-medium" style={{ color: COLORS.lowStock }}>
+                  <Text
+                    style={{
+                      color: COLORS.lowStock,
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                    }}
+                  >
                     {lowStockItems.length} items
                   </Text>
                 </View>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View className="flex-row" style={{ gap: 12 }}>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
                   {lowStockItems.map((item) => (
                     <TouchableOpacity
                       key={item.id}
@@ -202,40 +251,66 @@ export default function WarehouseScreen() {
                       style={{ width: 160 }}
                     >
                       <View
-                        className="rounded-xl p-3"
                         style={{
+                          borderRadius: borderRadius.xl,
+                          padding: spacing[3],
                           backgroundColor: COLORS.glass,
                         }}
                       >
-                        <View className="flex-row items-center">
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Symbol
                             name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                             size={16}
                             color={COLORS.lowStock}
                           />
                           <Text
-                            className="text-sm font-semibold text-surface-900 ml-2"
+                            style={{
+                              color: colors.surface[900],
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.semibold,
+                              marginLeft: spacing[2],
+                            }}
                             numberOfLines={1}
                           >
                             {item.name}
                           </Text>
                         </View>
-                        <Text className="text-xs text-surface-600 mt-1">
+                        <Text
+                          style={{
+                            color: colors.surface[600],
+                            fontSize: fontSize.xs,
+                            marginTop: spacing[1],
+                          }}
+                        >
                           {item.quantity} {item.unit}
                         </Text>
                         {item.reorder_quantity && (
-                          <Text className="text-xs text-surface-500 mt-0.5">
+                          <Text
+                            style={{
+                              color: colors.surface[500],
+                              fontSize: fontSize.xs,
+                              marginTop: 2,
+                            }}
+                          >
                             Reorder at: {item.reorder_quantity} {item.unit}
                           </Text>
                         )}
                         <View
-                          className="mt-2 py-1.5 px-3 rounded-full items-center self-start"
-                          style={{ backgroundColor: COLORS.primary }}
+                          style={{
+                            marginTop: spacing[2],
+                            paddingVertical: 6,
+                            paddingHorizontal: spacing[3],
+                            borderRadius: borderRadius.full,
+                            alignItems: 'center',
+                            alignSelf: 'flex-start',
+                            backgroundColor: COLORS.primary,
+                          }}
                         >
                           <Text
-                            className="text-xs font-medium"
                             style={{
                               color: 'white',
+                              fontSize: fontSize.xs,
+                              fontWeight: fontWeight.medium,
                             }}
                           >
                             Add Stock
@@ -251,8 +326,11 @@ export default function WarehouseScreen() {
 
           {/* Filter Tabs - Segmented style */}
           <View
-            className="flex-row rounded-xl p-1 mb-4"
             style={{
+              flexDirection: 'row',
+              borderRadius: borderRadius.xl,
+              padding: spacing[1],
+              marginBottom: spacing[4],
               backgroundColor: 'rgba(0, 0, 0, 0.05)',
             }}
           >
@@ -260,12 +338,20 @@ export default function WarehouseScreen() {
               <TouchableOpacity
                 key={type}
                 onPress={() => setFilter(type)}
-                className={`flex-1 py-2.5 rounded-lg ${filter === type ? 'bg-white' : ''}`}
+                style={{
+                  flex: 1,
+                  paddingVertical: 10,
+                  borderRadius: borderRadius.lg,
+                  backgroundColor: filter === type ? colors.surface[100] : 'transparent',
+                }}
               >
                 <Text
-                  className={`text-center text-sm font-medium ${
-                    filter === type ? 'text-surface-900' : 'text-surface-600'
-                  }`}
+                  style={{
+                    textAlign: 'center',
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: filter === type ? colors.surface[900] : colors.surface[600],
+                  }}
                 >
                   {type === 'all'
                     ? `ALL (${totals.count})`
@@ -280,21 +366,43 @@ export default function WarehouseScreen() {
           {/* Inventory List */}
           {filteredItems.length === 0 ? (
             <View
-              className="rounded-2xl p-8 items-center"
               style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[8],
+                alignItems: 'center',
                 backgroundColor: COLORS.glass,
               }}
             >
               <View
-                className="w-16 h-16 rounded-full items-center justify-center"
-                style={{ backgroundColor: `${COLORS.primary}33` }}
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: `${COLORS.primary}33`,
+                }}
               >
                 <Symbol name="cube" size={32} color={COLORS.primary} />
               </View>
-              <Text className="text-surface-900 font-semibold mt-4 text-center">
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontWeight: fontWeight.semibold,
+                  marginTop: spacing[4],
+                  textAlign: 'center',
+                }}
+              >
                 No items in warehouse
               </Text>
-              <Text className="text-surface-500 text-sm mt-1 text-center">
+              <Text
+                style={{
+                  color: colors.surface[500],
+                  fontSize: fontSize.sm,
+                  marginTop: spacing[1],
+                  textAlign: 'center',
+                }}
+              >
                 Tap the + button to add your first inventory item
               </Text>
               <TouchableOpacity
@@ -302,11 +410,26 @@ export default function WarehouseScreen() {
                   setEditingItem(null);
                   setShowAddModal(true);
                 }}
-                className="mt-4 px-6 py-3 rounded-xl flex-row items-center"
-                style={{ backgroundColor: COLORS.primary }}
+                style={{
+                  marginTop: spacing[4],
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: COLORS.primary,
+                }}
               >
                 <Symbol name="plus.circle.fill" size={20} color="white" />
-                <Text className="text-white font-semibold ml-2">Add Item</Text>
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontWeight: fontWeight.semibold,
+                    marginLeft: spacing[2],
+                  }}
+                >
+                  Add Item
+                </Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -319,47 +442,58 @@ export default function WarehouseScreen() {
               return (
                 <View
                   key={item.id}
-                  className="rounded-2xl p-4 mb-3"
                   style={{
+                    borderRadius: borderRadius['2xl'],
+                    padding: spacing[4],
+                    marginBottom: spacing[3],
                     backgroundColor: isLowStock ? `${COLORS.lowStock}0D` : COLORS.glass,
                     borderColor: isLowStock ? `${COLORS.lowStock}4D` : 'transparent',
                     borderWidth: isLowStock ? 1 : 0,
                   }}
                 >
-                  <View className="flex-row items-start">
-                    <View className="flex-1">
-                      <View className="flex-row items-center">
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <View
-                          className="px-2.5 py-1 rounded-full"
                           style={{
+                            paddingHorizontal: 10,
+                            paddingVertical: spacing[1],
+                            borderRadius: borderRadius.full,
                             backgroundColor:
                               item.type === 'fertilizer'
                                 ? `${COLORS.warehouseFertilizer}33`
                                 : `${COLORS.warehouseSpray}33`,
                           }}
                         >
-                          <View className="flex-row items-center">
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Symbol
                               name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                               size={12}
                               color={itemColor}
                             />
-                            <Text className="text-xs font-medium ml-1" style={{ color: itemColor }}>
+                            <Text
+                              style={{
+                                color: itemColor,
+                                fontSize: fontSize.xs,
+                                fontWeight: fontWeight.medium,
+                                marginLeft: spacing[1],
+                              }}
+                            >
                               {item.type === 'fertilizer' ? 'FERTILIZER' : 'SPRAY'}
                             </Text>
                           </View>
                         </View>
                         {isLowStock && (
                           <View
-                            className="ml-2 px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: `${COLORS.lowStock}33` }}
+                            style={{
+                              marginLeft: spacing[2],
+                              paddingHorizontal: spacing[2],
+                              paddingVertical: 2,
+                              borderRadius: borderRadius.full,
+                              backgroundColor: `${COLORS.lowStock}33`,
+                            }}
                           >
-                            <Text
-                              className="text-xs font-medium"
-                              style={{ color: COLORS.lowStock }}
-                            >
-                              Low
-                            </Text>
+                            <Text style={{ color: COLORS.lowStock }}>Low</Text>
                           </View>
                         )}
                         <TouchableOpacity
@@ -385,29 +519,60 @@ export default function WarehouseScreen() {
                           <Symbol name="ellipsis.circle.fill" size={24} color="#6B7280" />
                         </TouchableOpacity>
                       </View>
-                      <Text className="text-base font-semibold text-surface-900 mt-2">
+                      <Text
+                        style={{
+                          color: colors.surface[900],
+                          fontSize: fontSize.base,
+                          fontWeight: fontWeight.semibold,
+                          marginTop: spacing[2],
+                        }}
+                      >
                         {item.name}
                       </Text>
                     </View>
                   </View>
 
-                  <View className="flex-row mt-3">
-                    <View className="flex-1">
-                      <Text className="text-xs text-surface-500">Quantity</Text>
-                      <Text className="text-sm font-semibold text-surface-900">
+                  <View style={{ flexDirection: 'row', marginTop: spacing[3] }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                        Quantity
+                      </Text>
+                      <Text
+                        style={{
+                          color: colors.surface[900],
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
                         {item.quantity} {item.unit}
                       </Text>
                     </View>
-                    <View className="flex-1 items-center">
-                      <Text className="text-xs text-surface-500">Unit Price</Text>
-                      <Text className="text-sm font-medium text-surface-900">
+                    <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                        Unit Price
+                      </Text>
+                      <Text
+                        style={{
+                          color: colors.surface[900],
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.medium,
+                        }}
+                      >
                         {currency === 'INR' ? '₹' : '$'}
                         {item.unit_price.toLocaleString()}/{item.unit}
                       </Text>
                     </View>
-                    <View className="flex-1 items-end">
-                      <Text className="text-xs text-surface-500">Total Value</Text>
-                      <Text className="text-sm font-semibold" style={{ color: COLORS.primary }}>
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                        Total Value
+                      </Text>
+                      <Text
+                        style={{
+                          color: COLORS.primary,
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
                         {currency === 'INR' ? '₹' : '$'}
                         {itemValue.toLocaleString()}
                       </Text>
@@ -415,7 +580,14 @@ export default function WarehouseScreen() {
                   </View>
 
                   {item.notes && (
-                    <Text className="text-xs text-surface-600 mt-2" numberOfLines={2}>
+                    <Text
+                      style={{
+                        color: colors.surface[600],
+                        fontSize: fontSize.xs,
+                        marginTop: spacing[2],
+                      }}
+                      numberOfLines={2}
+                    >
                       {item.notes}
                     </Text>
                   )}
@@ -432,8 +604,15 @@ export default function WarehouseScreen() {
           setEditingItem(null);
           setShowAddModal(true);
         }}
-        className="absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center"
         style={{
+          position: 'absolute',
+          bottom: spacing[6],
+          right: spacing[6],
+          width: 56,
+          height: 56,
+          borderRadius: borderRadius.full,
+          alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: COLORS.primary,
         }}
       >

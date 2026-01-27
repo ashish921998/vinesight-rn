@@ -28,7 +28,7 @@ interface FarmCardProps {
 export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
   const needsAttention = isLowWater(farm);
   const statusText = needsAttention ? 'NEEDS ATTENTION' : 'HEALTHY';
-  const statusColor = needsAttention ? colors.error : colors.primary;
+  const statusColor = needsAttention ? colors.error : colors.primary[500];
   const statusBg = needsAttention ? 'rgba(255, 59, 48, 0.1)' : 'rgba(64, 128, 89, 0.1)';
 
   const cardStyle: ViewStyle = {
@@ -98,7 +98,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               style={[actionButtonStyle, { backgroundColor: 'rgba(64, 128, 89, 0.1)' }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Symbol name="pencil" size={18} color={colors.primary} />
+              <Symbol name="pencil" size={18} color={colors.primary[500]} />
             </TouchableOpacity>
           )}
           {onDelete && (
@@ -142,7 +142,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
                 textTransform: 'uppercase',
-                color: colors.primary,
+                color: colors.primary[500],
               }}
             >
               {farm.crop_variety}

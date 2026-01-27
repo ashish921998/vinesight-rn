@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'rea
 
 import { Stack } from 'expo-router';
 import { Symbol } from '@/components/ui/Symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/useAnalytics';
 import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
@@ -43,21 +44,53 @@ export default function AnalyticsScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-surface-50 items-center justify-center">
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.surface[50],
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Stack.Screen options={{ title: 'Analytics' }} />
         <ActivityIndicator size="large" color="#408059" />
-        <Text className="text-surface-600 mt-4">Loading analytics...</Text>
+        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+          Loading analytics...
+        </Text>
       </View>
     );
   }
 
   if (!analytics) {
     return (
-      <View className="flex-1 bg-surface-50 items-center justify-center p-6">
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.surface[50],
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing[6],
+        }}
+      >
         <Stack.Screen options={{ title: 'Analytics' }} />
         <Symbol name="chart.bar.fill" size={48} color="#9CA3AF" />
-        <Text className="text-surface-600 mt-4 text-center">No data available</Text>
-        <Text className="text-surface-500 text-sm mt-2 text-center">
+        <Text
+          style={{
+            color: colors.surface[600],
+            marginTop: spacing[4],
+            textAlign: 'center',
+          }}
+        >
+          No data available
+        </Text>
+        <Text
+          style={{
+            color: colors.surface[500],
+            fontSize: fontSize.sm,
+            marginTop: spacing[2],
+            textAlign: 'center',
+          }}
+        >
           Add farms and record activities to see analytics
         </Text>
       </View>
@@ -66,29 +99,34 @@ export default function AnalyticsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
-      <View className="flex-1 bg-surface-50">
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <Stack.Screen options={{ title: 'Analytics' }} />
 
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+        <ScrollView contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}>
           {/* Time Range Selector */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="mb-4"
-            contentContainerStyle={{ gap: 8 }}
+            contentContainerStyle={{ gap: spacing[2] }}
+            style={{ marginBottom: spacing[4] }}
           >
             {TIME_RANGES.map((range) => (
               <TouchableOpacity
                 key={range.value}
                 onPress={() => setTimeRange(range.value)}
-                className={`px-4 py-2 rounded-full ${
-                  timeRange === range.value ? 'bg-primary-600' : 'bg-white'
-                }`}
+                style={{
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[2],
+                  borderRadius: borderRadius.full,
+                  backgroundColor: timeRange === range.value ? colors.primary[600] : colors.white,
+                }}
               >
                 <Text
-                  className={`text-sm font-medium ${
-                    timeRange === range.value ? 'text-white' : 'text-surface-600'
-                  }`}
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: timeRange === range.value ? colors.white : colors.surface[600],
+                  }}
                 >
                   {range.label}
                 </Text>
@@ -97,74 +135,226 @@ export default function AnalyticsScreen() {
           </ScrollView>
 
           {/* Overview Stats */}
-          <View className="flex-row flex-wrap mb-4" style={{ gap: 12 }}>
-            <View className="bg-white rounded-2xl p-4" style={{ width: '47%' }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              marginBottom: spacing[4],
+              gap: 12,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                width: '47%',
+              }}
+            >
               <View
-                className="w-10 h-10 rounded-xl items-center justify-center mb-2"
-                style={{ backgroundColor: metricColors.irrigation.bg }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: spacing[2],
+                  backgroundColor: metricColors.irrigation.bg,
+                }}
               >
                 <Symbol name="drop.fill" size={20} color={metricColors.irrigation.icon} />
               </View>
-              <Text className="text-2xl font-bold text-surface-900">
+              <Text
+                style={{
+                  fontSize: fontSize['2xl'],
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[900],
+                }}
+              >
                 {analytics.totalIrrigationHours.toFixed(1)}h
               </Text>
-              <Text className="text-xs text-surface-500">Irrigation Hours</Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                Irrigation Hours
+              </Text>
             </View>
-            <View className="bg-white rounded-2xl p-4" style={{ width: '47%' }}>
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                width: '47%',
+              }}
+            >
               <View
-                className="w-10 h-10 rounded-xl items-center justify-center mb-2"
-                style={{ backgroundColor: metricColors.spray.bg }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: spacing[2],
+                  backgroundColor: metricColors.spray.bg,
+                }}
               >
                 <Symbol name="flask.fill" size={20} color={metricColors.spray.icon} />
               </View>
-              <Text className="text-2xl font-bold text-surface-900">
+              <Text
+                style={{
+                  fontSize: fontSize['2xl'],
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[900],
+                }}
+              >
                 {analytics.totalSprayCount}
               </Text>
-              <Text className="text-xs text-surface-500">Spray Applications</Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                Spray Applications
+              </Text>
             </View>
-            <View className="bg-white rounded-2xl p-4" style={{ width: '47%' }}>
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                width: '47%',
+              }}
+            >
               <View
-                className="w-10 h-10 rounded-xl items-center justify-center mb-2"
-                style={{ backgroundColor: metricColors.harvest.bg }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: spacing[2],
+                  backgroundColor: metricColors.harvest.bg,
+                }}
               >
                 <Symbol name="basket.fill" size={20} color={metricColors.harvest.icon} />
               </View>
-              <Text className="text-2xl font-bold text-surface-900">
+              <Text
+                style={{
+                  fontSize: fontSize['2xl'],
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[900],
+                }}
+              >
                 {(analytics.totalHarvestQuantity / 1000).toFixed(1)}t
               </Text>
-              <Text className="text-xs text-surface-500">Total Harvest</Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                Total Harvest
+              </Text>
             </View>
-            <View className="bg-white rounded-2xl p-4" style={{ width: '47%' }}>
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                width: '47%',
+              }}
+            >
               <View
-                className="w-10 h-10 rounded-xl items-center justify-center mb-2"
-                style={{ backgroundColor: metricColors.cost.bg }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: spacing[2],
+                  backgroundColor: metricColors.cost.bg,
+                }}
               >
                 <Symbol name="dollarsign.circle.fill" size={20} color={metricColors.cost.icon} />
               </View>
-              <Text className="text-2xl font-bold text-surface-900">
+              <Text
+                style={{
+                  fontSize: fontSize['2xl'],
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[900],
+                }}
+              >
                 {currencySymbol}
                 {(analytics.totalHarvestValue / 1000).toFixed(0)}k
               </Text>
-              <Text className="text-xs text-surface-500">Harvest Value</Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                Harvest Value
+              </Text>
             </View>
           </View>
 
           {/* Performance Score */}
           {performanceMetrics && (
-            <View className="bg-white rounded-2xl p-4 mb-4">
-              <View className="flex-row items-center justify-between mb-3">
-                <Text className="text-base font-semibold text-surface-900">Performance Score</Text>
-                <View className="bg-primary-100 px-3 py-1 rounded-full">
-                  <Text className="text-lg font-bold text-primary-700">
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[3],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  Performance Score
+                </Text>
+                <View
+                  style={{
+                    backgroundColor: colors.primary[100],
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.full,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      color: colors.primary[700],
+                    }}
+                  >
                     {performanceMetrics.overallScore}
                   </Text>
                 </View>
               </View>
-              <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {Object.entries(performanceMetrics.categories).map(([key, value]) => (
-                  <View key={key} className="bg-surface-50 rounded-xl p-3" style={{ width: '47%' }}>
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-xs text-surface-500 capitalize">{key}</Text>
+                  <View
+                    key={key}
+                    style={{
+                      backgroundColor: colors.surface[50],
+                      borderRadius: borderRadius.xl,
+                      padding: spacing[3],
+                      width: '47%',
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: fontSize.xs,
+                          color: colors.surface[500],
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {key}
+                      </Text>
                       <Symbol
                         name={
                           value.trend === 'up'
@@ -183,8 +373,19 @@ export default function AnalyticsScreen() {
                         }
                       />
                     </View>
-                    <Text className="text-lg font-bold text-surface-900">{value.score}</Text>
-                    <Text className="text-xs text-surface-500" numberOfLines={1}>
+                    <Text
+                      style={{
+                        fontSize: fontSize.lg,
+                        fontWeight: fontWeight.bold,
+                        color: colors.surface[900],
+                      }}
+                    >
+                      {value.score}
+                    </Text>
+                    <Text
+                      style={{ fontSize: fontSize.xs, color: colors.surface[500] }}
+                      numberOfLines={1}
+                    >
                       {value.description}
                     </Text>
                   </View>
@@ -195,41 +396,95 @@ export default function AnalyticsScreen() {
 
           {/* Cost Analysis */}
           {costAnalysis && (
-            <View className="bg-white rounded-2xl p-4 mb-4">
-              <Text className="text-base font-semibold text-surface-900 mb-3">Cost Analysis</Text>
-              <View className="flex-row mb-3" style={{ gap: 12 }}>
-                <View className="flex-1 bg-green-50 rounded-xl p-3">
-                  <Text className="text-xs text-green-600">Revenue</Text>
-                  <Text className="text-lg font-bold text-green-700">
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginBottom: spacing[3],
+                }}
+              >
+                Cost Analysis
+              </Text>
+              <View style={{ flexDirection: 'row', marginBottom: spacing[3], gap: 12 }}>
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#ECFDF3',
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>Revenue</Text>
+                  <Text
+                    style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#15803D' }}
+                  >
                     {currencySymbol}
                     {costAnalysis.totalRevenue.toLocaleString()}
                   </Text>
                 </View>
-                <View className="flex-1 bg-red-50 rounded-xl p-3">
-                  <Text className="text-xs text-red-600">Expenses</Text>
-                  <Text className="text-lg font-bold text-red-700">
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#FEF2F2',
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: '#DC2626' }}>Expenses</Text>
+                  <Text
+                    style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#B91C1C' }}
+                  >
                     {currencySymbol}
                     {costAnalysis.totalCosts.toLocaleString()}
                   </Text>
                 </View>
               </View>
-              <View className="flex-row" style={{ gap: 12 }}>
-                <View className="flex-1 bg-surface-50 rounded-xl p-3">
-                  <Text className="text-xs text-surface-500">Profit Margin</Text>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.surface[50],
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    Profit Margin
+                  </Text>
                   <Text
-                    className={`text-lg font-bold ${
-                      costAnalysis.profitMargin >= 0 ? 'text-green-700' : 'text-red-700'
-                    }`}
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      color: costAnalysis.profitMargin >= 0 ? '#15803D' : '#B91C1C',
+                    }}
                   >
                     {costAnalysis.profitMargin.toFixed(1)}%
                   </Text>
                 </View>
-                <View className="flex-1 bg-surface-50 rounded-xl p-3">
-                  <Text className="text-xs text-surface-500">ROI</Text>
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.surface[50],
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>ROI</Text>
                   <Text
-                    className={`text-lg font-bold ${
-                      costAnalysis.roi >= 0 ? 'text-green-700' : 'text-red-700'
-                    }`}
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      color: costAnalysis.roi >= 0 ? '#15803D' : '#B91C1C',
+                    }}
                   >
                     {costAnalysis.roi.toFixed(1)}%
                   </Text>
@@ -240,31 +495,107 @@ export default function AnalyticsScreen() {
 
           {/* Yield Analysis */}
           {yieldAnalysis && (
-            <View className="bg-white rounded-2xl p-4 mb-4">
-              <Text className="text-base font-semibold text-surface-900 mb-3">Yield Analysis</Text>
-              <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-                <View className="bg-surface-50 rounded-xl p-3" style={{ width: '47%' }}>
-                  <Text className="text-xs text-surface-500">Total Yield</Text>
-                  <Text className="text-lg font-bold text-surface-900">
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginBottom: spacing[3],
+                }}
+              >
+                Yield Analysis
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                <View
+                  style={{
+                    backgroundColor: colors.surface[50],
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                    width: '47%',
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    Total Yield
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      color: colors.surface[900],
+                    }}
+                  >
                     {yieldAnalysis.currentYield.toLocaleString()} kg
                   </Text>
                 </View>
-                <View className="bg-surface-50 rounded-xl p-3" style={{ width: '47%' }}>
-                  <Text className="text-xs text-surface-500">Yield/Acre</Text>
-                  <Text className="text-lg font-bold text-surface-900">
+                <View
+                  style={{
+                    backgroundColor: colors.surface[50],
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                    width: '47%',
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    Yield/Acre
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      color: colors.surface[900],
+                    }}
+                  >
                     {yieldAnalysis.yieldPerAcre.toFixed(1)} kg
                   </Text>
                 </View>
-                <View className="bg-surface-50 rounded-xl p-3" style={{ width: '47%' }}>
-                  <Text className="text-xs text-surface-500">Avg Price</Text>
-                  <Text className="text-lg font-bold text-surface-900">
+                <View
+                  style={{
+                    backgroundColor: colors.surface[50],
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                    width: '47%',
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    Avg Price
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      color: colors.surface[900],
+                    }}
+                  >
                     {currencySymbol}
                     {yieldAnalysis.avgPricePerKg.toFixed(2)}/kg
                   </Text>
                 </View>
-                <View className="bg-surface-50 rounded-xl p-3" style={{ width: '47%' }}>
-                  <Text className="text-xs text-surface-500">Total Area</Text>
-                  <Text className="text-lg font-bold text-surface-900">
+                <View
+                  style={{
+                    backgroundColor: colors.surface[50],
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                    width: '47%',
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    Total Area
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      color: colors.surface[900],
+                    }}
+                  >
                     {yieldAnalysis.totalArea.toFixed(1)} acres
                   </Text>
                 </View>
@@ -274,8 +605,22 @@ export default function AnalyticsScreen() {
 
           {/* Expense Breakdown */}
           {analytics.expensesByType.length > 0 && (
-            <View className="bg-white rounded-2xl p-4 mb-4">
-              <Text className="text-base font-semibold text-surface-900 mb-3">
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginBottom: spacing[3],
+                }}
+              >
                 Expense Breakdown
               </Text>
               {(() => {
@@ -283,19 +628,47 @@ export default function AnalyticsScreen() {
                 return displayed.map((expense, index) => (
                   <View
                     key={expense.type}
-                    className={`flex-row items-center justify-between py-2 ${
-                      index < displayed.length - 1 ? 'border-b border-surface-100' : ''
-                    }`}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingVertical: spacing[2],
+                      borderBottomWidth: index < displayed.length - 1 ? 1 : 0,
+                      borderBottomColor:
+                        index < displayed.length - 1 ? colors.surface[100] : 'transparent',
+                    }}
                   >
-                    <View className="flex-row items-center">
-                      <View className="w-8 h-8 bg-surface-100 rounded-lg items-center justify-center">
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View
+                        style={{
+                          width: 32,
+                          height: 32,
+                          backgroundColor: colors.surface[100],
+                          borderRadius: borderRadius.lg,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
                         <Symbol name="doc.text.fill" size={16} color="#6B7280" />
                       </View>
-                      <Text className="text-sm text-surface-700 ml-2 capitalize">
+                      <Text
+                        style={{
+                          fontSize: fontSize.sm,
+                          color: colors.surface[700],
+                          marginLeft: spacing[2],
+                          textTransform: 'capitalize',
+                        }}
+                      >
                         {expense.type}
                       </Text>
                     </View>
-                    <Text className="text-sm font-semibold text-surface-900">
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                        color: colors.surface[900],
+                      }}
+                    >
                       {currencySymbol}
                       {expense.amount.toLocaleString()}
                     </Text>
@@ -307,15 +680,49 @@ export default function AnalyticsScreen() {
 
           {/* Recommendations */}
           {performanceMetrics && performanceMetrics.recommendations.length > 0 && (
-            <View className="bg-blue-50 rounded-2xl p-4 mb-4">
-              <View className="flex-row items-center mb-3">
+            <View
+              style={{
+                backgroundColor: '#EFF6FF',
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
+              }}
+            >
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}
+              >
                 <Symbol name="lightbulb.fill" size={20} color="#3B82F6" />
-                <Text className="text-base font-semibold text-blue-900 ml-2">Recommendations</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: '#1E3A8A',
+                    marginLeft: spacing[2],
+                  }}
+                >
+                  Recommendations
+                </Text>
               </View>
               {performanceMetrics.recommendations.map((rec, index) => (
-                <View key={index} className="flex-row items-start mb-2">
+                <View
+                  key={index}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'flex-start',
+                    marginBottom: spacing[2],
+                  }}
+                >
                   <Symbol name="checkmark.circle.fill" size={16} color="#3B82F6" />
-                  <Text className="text-sm text-blue-800 ml-2 flex-1">{rec}</Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      color: '#1E40AF',
+                      marginLeft: spacing[2],
+                      flex: 1,
+                    }}
+                  >
+                    {rec}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -323,8 +730,23 @@ export default function AnalyticsScreen() {
 
           {/* Recent Activity */}
           {analytics.recentActivity.length > 0 && (
-            <View className="bg-white rounded-2xl p-4">
-              <Text className="text-base font-semibold text-surface-900 mb-3">Recent Activity</Text>
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginBottom: spacing[3],
+                }}
+              >
+                Recent Activity
+              </Text>
               {(() => {
                 const recentItems = analytics.recentActivity.slice(0, 5);
                 return recentItems.map((activity, index) => {
@@ -335,25 +757,45 @@ export default function AnalyticsScreen() {
                   return (
                     <View
                       key={index}
-                      className={`flex-row items-center py-3 ${
-                        index < recentItems.length - 1 ? 'border-b border-surface-100' : ''
-                      }`}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingVertical: spacing[3],
+                        borderBottomWidth: index < recentItems.length - 1 ? 1 : 0,
+                        borderBottomColor:
+                          index < recentItems.length - 1 ? colors.surface[100] : 'transparent',
+                      }}
                     >
                       <View
-                        className="w-10 h-10 rounded-xl items-center justify-center"
-                        style={{ backgroundColor: `${iconInfo.color}15` }}
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: borderRadius.xl,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: `${iconInfo.color}15`,
+                        }}
                       >
                         <Symbol name={iconInfo.icon} size={18} color={iconInfo.color} />
                       </View>
-                      <View className="flex-1 ml-3">
-                        <Text className="text-sm font-medium text-surface-900">
+                      <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                        <Text
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: fontWeight.medium,
+                            color: colors.surface[900],
+                          }}
+                        >
                           {activity.farmName}
                         </Text>
-                        <Text className="text-xs text-surface-500" numberOfLines={1}>
+                        <Text
+                          style={{ fontSize: fontSize.xs, color: colors.surface[500] }}
+                          numberOfLines={1}
+                        >
                           {activity.details}
                         </Text>
                       </View>
-                      <Text className="text-xs text-surface-400">
+                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[400] }}>
                         {new Date(activity.date).toLocaleDateString()}
                       </Text>
                     </View>

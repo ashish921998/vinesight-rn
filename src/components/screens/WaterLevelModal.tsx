@@ -19,6 +19,7 @@ import type { Farm } from '@/types';
 import { useUpdateFarmWaterLevel } from '@/hooks';
 import { WATER_GROWTH_STAGES } from '@/constants/calculatorModels';
 import type { WaterGrowthStage } from '@/constants/calculatorModels';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface WaterLevelModalProps {
   visible: boolean;
@@ -109,55 +110,127 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <View className="flex-1 bg-[#f2f2f7]">
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         {/* Header */}
-        <View className="bg-white px-4 py-4 border-b border-gray-200">
-          <View className="flex-row items-center justify-between">
-            <TouchableOpacity onPress={handleClose} className="p-2">
+        <View
+          style={{
+            backgroundColor: colors.white,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[4],
+            borderBottomWidth: 1,
+            borderBottomColor: colors.gray[200],
+          }}
+        >
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <TouchableOpacity onPress={handleClose} style={{ padding: spacing[2] }}>
               <Symbol name="xmark" size={24} color="#8e8e93" />
             </TouchableOpacity>
-            <Text className="text-lg font-bold text-[#1c1c1e]">Update Soil Water Level</Text>
-            <TouchableOpacity onPress={handleCalculate} className="p-2">
-              <Text className="font-semibold text-[#408059]">Calculate</Text>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+                color: colors.surface[900],
+              }}
+            >
+              Update Soil Water Level
+            </Text>
+            <TouchableOpacity onPress={handleCalculate} style={{ padding: spacing[2] }}>
+              <Text style={{ fontWeight: fontWeight.semibold, color: colors.primary[500] }}>
+                Calculate
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <ScrollView className="flex-1 p-4">
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing[4] }}>
           {/* Current Water Level */}
           <View
-            className="rounded-2xl p-4 mb-4"
             style={{
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[4],
+              marginBottom: spacing[4],
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
             }}
           >
-            <Text className="text-xs font-semibold text-[#8e8e93] mb-1">CURRENT WATER LEVEL</Text>
-            <View className="flex-row items-baseline">
-              <Text className="text-3xl font-bold text-[#1c1c1e]">
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[500],
+                marginBottom: spacing[1],
+              }}
+            >
+              CURRENT WATER LEVEL
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+              <Text
+                style={{
+                  fontSize: fontSize['3xl'],
+                  fontWeight: fontWeight.bold,
+                  color: colors.surface[900],
+                }}
+              >
                 {farm.remaining_water?.toFixed(1) || '--'}
               </Text>
-              <Text className="text-lg text-[#8e8e93] ml-1">mm</Text>
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  color: colors.surface[500],
+                  marginLeft: spacing[1],
+                }}
+              >
+                mm
+              </Text>
             </View>
           </View>
 
           {/* Calculated Water Level */}
           {calculatedWaterLevel !== null && (
             <View
-              className="rounded-2xl p-4 mb-4"
               style={{
-                backgroundColor: '#408059',
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
+                backgroundColor: colors.primary[500],
               }}
             >
-              <Text className="text-xs font-semibold text-white/80 mb-1">NEW WATER LEVEL</Text>
-              <View className="flex-row items-baseline">
-                <Text className="text-3xl font-bold text-white">
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.semibold,
+                  color: 'rgba(255,255,255,0.8)',
+                  marginBottom: spacing[1],
+                }}
+              >
+                NEW WATER LEVEL
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                <Text
+                  style={{
+                    fontSize: fontSize['3xl'],
+                    fontWeight: fontWeight.bold,
+                    color: colors.white,
+                  }}
+                >
                   {calculatedWaterLevel.toFixed(1)}
                 </Text>
-                <Text className="text-lg text-white/80 ml-1">mm</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    color: 'rgba(255,255,255,0.8)',
+                    marginLeft: spacing[1],
+                  }}
+                >
+                  mm
+                </Text>
               </View>
-              <View className="mt-2 flex-row items-center">
+              <View style={{ marginTop: spacing[2], flexDirection: 'row', alignItems: 'center' }}>
                 <Symbol name="chart.line.downtrend.xyaxis" size={16} color="white" />
-                <Text className="text-sm text-white ml-1">
+                <Text
+                  style={{ fontSize: fontSize.sm, color: colors.white, marginLeft: spacing[1] }}
+                >
                   Change: {((farm.remaining_water ?? 0) - calculatedWaterLevel).toFixed(1)} mm
                 </Text>
               </View>
@@ -166,52 +239,102 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
 
           {/* Calculation Method Toggle */}
           <View
-            className="rounded-2xl overflow-hidden mb-4"
             style={{
+              borderRadius: borderRadius['2xl'],
+              overflow: 'hidden',
+              marginBottom: spacing[4],
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
             }}
           >
             <TouchableOpacity
               onPress={() => setUseManual(false)}
-              className={`flex-row items-center justify-between px-4 py-4 ${!useManual ? 'bg-[#408059]/10' : ''}`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[4],
+                backgroundColor: !useManual ? 'rgba(64, 128, 89, 0.1)' : 'transparent',
+              }}
             >
-              <View className="flex-1">
+              <View style={{ flex: 1 }}>
                 <Text
-                  className={`text-sm font-semibold ${!useManual ? 'text-[#408059]' : 'text-[#1c1c1e]'}`}
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    color: !useManual ? colors.primary[500] : colors.surface[900],
+                  }}
                 >
                   Calculate with ET0
                 </Text>
-                <Text className="text-xs text-[#8e8e93] mt-1">
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colors.surface[500],
+                    marginTop: spacing[1],
+                  }}
+                >
                   Enter ET0 and select growth stage to calculate
                 </Text>
               </View>
               <View
-                className={`w-6 h-6 rounded-full items-center justify-center border-2 ${
-                  !useManual ? 'border-[#408059] bg-[#408059]' : 'border-[#c7c7cc]'
-                }`}
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 2,
+                  borderColor: !useManual ? colors.primary[500] : '#c7c7cc',
+                  backgroundColor: !useManual ? colors.primary[500] : 'transparent',
+                }}
               >
                 {!useManual && <Symbol name="checkmark" size={14} color="#fff" />}
               </View>
             </TouchableOpacity>
-            <View className="h-px bg-gray-200" />
+            <View style={{ height: 1, backgroundColor: colors.gray[200] }} />
             <TouchableOpacity
               onPress={() => setUseManual(true)}
-              className={`flex-row items-center justify-between px-4 py-4 ${useManual ? 'bg-[#408059]/10' : ''}`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[4],
+                backgroundColor: useManual ? 'rgba(64, 128, 89, 0.1)' : 'transparent',
+              }}
             >
-              <View className="flex-1">
+              <View style={{ flex: 1 }}>
                 <Text
-                  className={`text-sm font-semibold ${useManual ? 'text-[#408059]' : 'text-[#1c1c1e]'}`}
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    color: useManual ? colors.primary[500] : colors.surface[900],
+                  }}
                 >
                   Manual Entry
                 </Text>
-                <Text className="text-xs text-[#8e8e93] mt-1">
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colors.surface[500],
+                    marginTop: spacing[1],
+                  }}
+                >
                   Set the soil water level directly
                 </Text>
               </View>
               <View
-                className={`w-6 h-6 rounded-full items-center justify-center border-2 ${
-                  useManual ? 'border-[#408059] bg-[#408059]' : 'border-[#c7c7cc]'
-                }`}
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 2,
+                  borderColor: useManual ? colors.primary[500] : '#c7c7cc',
+                  backgroundColor: useManual ? colors.primary[500] : 'transparent',
+                }}
               >
                 {useManual && <Symbol name="checkmark" size={14} color="#fff" />}
               </View>
@@ -221,33 +344,80 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
           {/* ET0 Calculation Form */}
           {!useManual && (
             <View
-              className="rounded-2xl p-4 mb-4"
               style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
               }}
             >
-              <Text className="text-sm font-semibold text-[#1c1c1e] mb-3">
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginBottom: spacing[3],
+                }}
+              >
                 ET0 (Reference Evapotranspiration)
               </Text>
-              <View className="flex-row items-center bg-[#f9f9f9] rounded-xl px-4 py-3">
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: '#f9f9f9',
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                }}
+              >
                 <TextInput
-                  className="flex-1 text-base text-[#1c1c1e]"
+                  style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
                   placeholder="Enter ET0 value"
                   value={eto}
                   onChangeText={setEto}
                   keyboardType="decimal-pad"
                   placeholderTextColor="#c7c7cc"
                 />
-                <Text className="text-sm text-[#8e8e93] ml-2">mm/day</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    color: colors.surface[500],
+                    marginLeft: spacing[2],
+                  }}
+                >
+                  mm/day
+                </Text>
               </View>
 
-              <Text className="text-sm font-semibold text-[#1c1c1e] mt-4 mb-3">Growth Stage</Text>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginTop: spacing[4],
+                  marginBottom: spacing[3],
+                }}
+              >
+                Growth Stage
+              </Text>
               <TouchableOpacity
                 onPress={() => setShowGrowthStagePicker(true)}
-                className="flex-row items-center justify-between bg-[#f9f9f9] rounded-xl px-4 py-3"
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: '#f9f9f9',
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                }}
               >
                 <Text
-                  className={`text-base ${selectedGrowthStage ? 'text-[#1c1c1e]' : 'text-[#c7c7cc]'}`}
+                  style={{
+                    fontSize: fontSize.base,
+                    color: selectedGrowthStage ? colors.surface[900] : '#c7c7cc',
+                  }}
                 >
                   {selectedGrowthStage
                     ? `${selectedGrowthStage.label} (Kc: ${selectedGrowthStage.kc.toFixed(2)})`
@@ -261,42 +431,76 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
           {/* Manual Entry Form */}
           {useManual && (
             <View
-              className="rounded-2xl p-4 mb-4"
               style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[4],
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
               }}
             >
-              <Text className="text-sm font-semibold text-[#1c1c1e] mb-3">
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginBottom: spacing[3],
+                }}
+              >
                 Soil Water Level (mm)
               </Text>
-              <View className="flex-row items-center bg-[#f9f9f9] rounded-xl px-4 py-3">
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: '#f9f9f9',
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                }}
+              >
                 <TextInput
-                  className="flex-1 text-base text-[#1c1c1e]"
+                  style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
                   placeholder="Enter water level"
                   value={manualWaterLevel}
                   onChangeText={setManualWaterLevel}
                   keyboardType="decimal-pad"
                   placeholderTextColor="#c7c7cc"
                 />
-                <Text className="text-sm text-[#8e8e93] ml-2">mm</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    color: colors.surface[500],
+                    marginLeft: spacing[2],
+                  }}
+                >
+                  mm
+                </Text>
               </View>
             </View>
           )}
 
           {/* Info Box */}
           <View
-            className="rounded-2xl p-4"
             style={{
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[4],
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
             }}
           >
-            <View className="flex-row items-start">
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <Symbol name="info.circle" size={20} color="#408059" />
-              <View className="ml-3 flex-1">
-                <Text className="text-sm font-semibold text-[#1c1c1e] mb-1">
+              <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                    marginBottom: spacing[1],
+                  }}
+                >
                   About Soil Water Levels
                 </Text>
-                <Text className="text-xs text-[#8e8e93] leading-5">
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], lineHeight: 20 }}>
                   Critical: &lt;6mm | Low: 6-10mm | Medium: 10-25mm | Good: &gt;25mm
                 </Text>
               </View>
@@ -305,18 +509,32 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
         </ScrollView>
 
         {/* Save Button */}
-        <View className="bg-white px-4 py-4 border-t border-gray-200">
+        <View
+          style={{
+            backgroundColor: colors.white,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[4],
+            borderTopWidth: 1,
+            borderTopColor: colors.gray[200],
+          }}
+        >
           <TouchableOpacity
             onPress={handleSave}
             disabled={isSaving || calculatedWaterLevel === null}
-            className={`py-4 rounded-xl items-center ${
-              isSaving || calculatedWaterLevel === null ? 'bg-gray-300' : 'bg-[#408059]'
-            }`}
+            style={{
+              paddingVertical: spacing[4],
+              borderRadius: borderRadius.xl,
+              alignItems: 'center',
+              backgroundColor:
+                isSaving || calculatedWaterLevel === null ? colors.gray[300] : colors.primary[500],
+            }}
           >
             {isSaving ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text className="font-semibold text-white">Save Water Level</Text>
+              <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
+                Save Water Level
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -328,15 +546,39 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
           animationType="fade"
           onRequestClose={() => setShowGrowthStagePicker(false)}
         >
-          <View className="flex-1 bg-black/30 items-center justify-center px-4">
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: spacing[4],
+            }}
+          >
             <View
-              className="bg-white rounded-2xl w-full"
               style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                width: '100%',
                 maxHeight: '60%',
               }}
             >
-              <View className="px-4 py-4 border-b border-gray-200">
-                <Text className="text-lg font-bold text-[#1c1c1e] text-center">
+              <View
+                style={{
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.gray[200],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.bold,
+                    color: colors.surface[900],
+                    textAlign: 'center',
+                  }}
+                >
                   Select Growth Stage
                 </Text>
               </View>
@@ -348,22 +590,44 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
                       setSelectedGrowthStage(stage);
                       setShowGrowthStagePicker(false);
                     }}
-                    className={`px-4 py-3 border-b border-gray-100 ${
-                      selectedGrowthStage?.id === stage.id ? 'bg-[#408059]/10' : ''
-                    }`}
+                    style={{
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: spacing[3],
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.gray[100],
+                      backgroundColor:
+                        selectedGrowthStage?.id === stage.id
+                          ? 'rgba(64, 128, 89, 0.1)'
+                          : 'transparent',
+                    }}
                   >
-                    <View className="flex-row items-center justify-between">
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
                       <View>
                         <Text
-                          className={`text-base font-medium ${
-                            selectedGrowthStage?.id === stage.id
-                              ? 'text-[#408059]'
-                              : 'text-[#1c1c1e]'
-                          }`}
+                          style={{
+                            fontSize: fontSize.base,
+                            fontWeight: fontWeight.medium,
+                            color:
+                              selectedGrowthStage?.id === stage.id
+                                ? colors.primary[500]
+                                : colors.surface[900],
+                          }}
                         >
                           {stage.label}
                         </Text>
-                        <Text className="text-sm text-[#8e8e93] mt-0.5">
+                        <Text
+                          style={{
+                            fontSize: fontSize.sm,
+                            color: colors.surface[500],
+                            marginTop: 2,
+                          }}
+                        >
                           Kc: {stage.kc.toFixed(2)}
                         </Text>
                       </View>
@@ -376,9 +640,21 @@ export function WaterLevelModal({ visible, onClose, farm }: WaterLevelModalProps
               </ScrollView>
               <TouchableOpacity
                 onPress={() => setShowGrowthStagePicker(false)}
-                className="py-4 border-t border-gray-200"
+                style={{
+                  paddingVertical: spacing[4],
+                  borderTopWidth: 1,
+                  borderTopColor: colors.gray[200],
+                }}
               >
-                <Text className="text-center font-semibold text-[#8e8e93]">Cancel</Text>
+                <Text
+                  style={{
+                    textAlign: 'center',
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[500],
+                  }}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

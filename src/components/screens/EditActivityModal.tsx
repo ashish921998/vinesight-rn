@@ -14,8 +14,7 @@ import {
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
-  NativeSyntheticEvent,
-  TextInputFocusEventData,
+  type TextInputProps,
   Keyboard,
   useWindowDimensions,
   UIManager,
@@ -130,28 +129,33 @@ export function EditActivityModal({
     }
   }, [logType, irrigationData, sprayData, harvestData, expenseData, fertigationData]);
 
-  const scrollToNode = useCallback((nodeHandle: number) => {
-    if (!keyboardHeightRef.current) return;
-    const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
-    UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
-      const keyboardTop = windowHeight - keyboardHeightRef.current;
-      const inputBottom = y + height;
-      const buffer = 24;
-      if (inputBottom > keyboardTop - buffer) {
-        const scrollBy = inputBottom - (keyboardTop - buffer);
-        scrollViewRef.current?.scrollTo({
-          y: Math.max(0, scrollOffsetRef.current + scrollBy),
-          animated: true,
-        });
-      }
-    });
-  }, []);
+  const scrollToNode = useCallback(
+    (nodeHandle: number) => {
+      if (!keyboardHeightRef.current) return;
+      const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
+      if (typeof resolvedHandle !== 'number') return;
+      UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
+        const keyboardTop = windowHeight - keyboardHeightRef.current;
+        const inputBottom = y + height;
+        const buffer = 24;
+        if (inputBottom > keyboardTop - buffer) {
+          const scrollBy = inputBottom - (keyboardTop - buffer);
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, scrollOffsetRef.current + scrollBy),
+            animated: true,
+          });
+        }
+      });
+    },
+    [windowHeight],
+  );
 
   useEffect(() => {
     const keyboardShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
       keyboardHeightRef.current = event.endCoordinates.height;
-      if (focusedInputRef.current) {
-        requestAnimationFrame(() => scrollToNode(focusedInputRef.current as number));
+      const focusedNode = focusedInputRef.current;
+      if (focusedNode != null) {
+        requestAnimationFrame(() => scrollToNode(focusedNode));
       }
     });
     return () => {
@@ -159,10 +163,13 @@ export function EditActivityModal({
     };
   }, [scrollToNode]);
 
+  type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
+
   const scrollToFocusedInput = useCallback(
-    (event: NativeSyntheticEvent<TextInputFocusEventData>) => {
-      const nodeHandle = event.target;
-      if (!nodeHandle) return;
+    (event: OnFocusEvent) => {
+      const target = (event as { target?: unknown }).target ?? null;
+      const nodeHandle = findNodeHandle(target as unknown as number | React.Component | null);
+      if (typeof nodeHandle !== 'number') return;
       focusedInputRef.current = nodeHandle;
       requestAnimationFrame(() => scrollToNode(nodeHandle));
     },
@@ -410,15 +417,19 @@ export function EditActivityModal({
   const renderForm = () => {
     if (!isInitialized) {
       return (
-        <View style={{"flex": 1, "alignItems": "center", "justifyContent": "center", "paddingVertical": 80}}>
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80 }}
+        >
           <ActivityIndicator size="large" color="#408059" />
-          <Text selectable style={{"marginTop": 16, "color": "#8e8e93"}}>Loading...</Text>
+          <Text selectable style={{ marginTop: 16, color: '#8e8e93' }}>
+            Loading...
+          </Text>
         </View>
       );
     }
 
     return (
-      <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16}}>
+      <View style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 16 }}>
         {logType === 'irrigation' && (
           <IrrigationForm
             data={irrigationData}
@@ -471,116 +482,177 @@ export function EditActivityModal({
           behavior={isIOS ? 'padding' : 'height'}
           style={{ flex: 1, backgroundColor: '#f2f2f7' }}
         >
-        <LinearGradient
-          colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
-          style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
-        />
+          <LinearGradient
+            colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
+            style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
+          />
 
-        <View style={{"paddingHorizontal": 16, "paddingTop": 48, "paddingBottom": 16}}>
-          <View style={{"flexDirection": "row", "alignItems": "center", "justifyContent": "space-between"}}>
-            <View style={{"flex": 1}}>
-              <Text selectable style={{"fontSize": 18, "fontWeight": "700", "color": "#1c1c1e"}}>Edit Log</Text>
-              <Text selectable style={{"fontSize": 14, "color": "#8e8e93"}} numberOfLines={1}>
-                {farm.name}
-              </Text>
+          <View style={{ paddingHorizontal: 16, paddingTop: 48, paddingBottom: 16 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#1c1c1e' }}>
+                  Edit Log
+                </Text>
+                <Text selectable style={{ fontSize: 14, color: '#8e8e93' }} numberOfLines={1}>
+                  {farm.name}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={handleClose}>
+                <AppIcon name="close-circle" size={28} color="#9CA3AF" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={handleClose}>
-              <AppIcon name="close-circle" size={28} color="#9CA3AF" />
+
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: 12,
+                backgroundColor: '#f9f9f9',
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 12,
+              }}
+            >
+              <AppIcon name="calendar" size={18} color="#408059" />
+              <Text
+                selectable
+                style={{ marginLeft: 8, fontSize: 14, fontWeight: '500', color: '#1c1c1e' }}
+              >
+                {selectedDate.toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            onPress={() => setShowDatePicker(true)}
-            style={{"flexDirection": "row", "alignItems": "center", "marginTop": 12, "backgroundColor": "#f9f9f9", "paddingHorizontal": 16, "paddingVertical": 8, "borderRadius": 12}}
-          >
-            <AppIcon name="calendar" size={18} color="#408059" />
-            <Text selectable style={{"marginLeft": 8, "fontSize": 14, "fontWeight": "500", "color": "#1c1c1e"}}>
-              {selectedDate.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="default"
+              onChange={(_, date) => {
+                setShowDatePicker(false);
+                if (date) setSelectedDate(date);
+              }}
+            />
+          )}
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display="default"
-            onChange={(_, date) => {
-              setShowDatePicker(false);
-              if (date) setSelectedDate(date);
+          <ScrollView
+            contentInsetAdjustmentBehavior="automatic"
+            ref={scrollViewRef}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 16 }}
+            keyboardShouldPersistTaps="handled"
+            onScroll={(event) => {
+              scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
             }}
-          />
-        )}
-
-        <ScrollView contentInsetAdjustmentBehavior="automatic"
-          ref={scrollViewRef}
-          style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16 }}
-          keyboardShouldPersistTaps="handled"
-          onScroll={(event) => {
-            scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
-          }}
-          scrollEventThrottle={16}
-        >
-          <View style={{"backgroundColor": "#ffffff", "borderRadius": 16, "padding": 16, "marginBottom": 16}}>
-            <Text selectable style={{"fontSize": 16, "fontWeight": "600", "color": "#1c1c1e", "marginBottom": 12}}>Log Type</Text>
-            <View style={{"flexDirection": "row", "alignItems": "center"}}>
-              <View
-                style={[
-                  {
+            scrollEventThrottle={16}
+          >
+            <View
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 16,
+              }}
+            >
+              <Text
+                selectable
+                style={{ fontSize: 16, fontWeight: '600', color: '#1c1c1e', marginBottom: 12 }}
+              >
+                Log Type
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View
+                  style={{
                     width: 40,
                     height: 40,
                     borderRadius: 999,
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: `${logTypeConfig?.color || '#408059'}15`,
+                  }}
+                >
+                  <AppIcon
+                    name={logTypeConfig?.icon ?? 'leaf'}
+                    size={20}
+                    color={logTypeConfig?.color || '#408059'}
+                  />
+                </View>
+                <Text
+                  selectable
+                  style={{ marginLeft: 12, fontSize: 16, fontWeight: '600', color: '#1c1c1e' }}
+                >
+                  {logTypeConfig?.label}
+                </Text>
+              </View>
+            </View>
+
+            {renderForm()}
+          </ScrollView>
+
+          <View
+            style={{
+              backgroundColor: '#ffffff',
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+              borderTopWidth: 1,
+              borderColor: '#e5e5ea',
+            }}
+          >
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: '#e5e5ea',
+                  alignItems: 'center',
+                }}
+              >
+                <Text selectable style={{ fontWeight: '600', color: '#8e8e93' }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSave}
+                disabled={!isFormValid || isSubmitting}
+                style={[
+                  {
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                  },
+                  {
+                    backgroundColor: isFormValid && !isSubmitting ? '#408059' : '#e5e5ea',
                   },
                 ]}
               >
-                <AppIcon
-                  name={logTypeConfig?.icon}
-                  size={20}
-                  color={logTypeConfig?.color || '#408059'}
-                />
-              </View>
-              <Text selectable style={{"marginLeft": 12, "fontSize": 16, "fontWeight": "600", "color": "#1c1c1e"}}>
-                {logTypeConfig?.label}
-              </Text>
-            </View>
-          </View>
-
-          {renderForm()}
-        </ScrollView>
-
-        <View style={{ backgroundColor: '#ffffff', paddingHorizontal: 16, paddingVertical: 16, borderTopWidth: 1, borderColor: '#e5e5ea' }}>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity
-              onPress={handleClose}
-              style={{ flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#e5e5ea', alignItems: 'center' }}
-            >
-              <Text selectable style={{ fontWeight: '600', color: '#8e8e93' }}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSave}
-              disabled={!isFormValid || isSubmitting}
-              style={[{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }, {
-                backgroundColor: isFormValid && !isSubmitting ? '#408059' : '#e5e5ea',
-              }]}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <AppIcon
-                    name="save"
-                    size={18}
-                    color={isFormValid && !isSubmitting ? '#FFFFFF' : '#9CA3AF'}
-                  />
-                    <Text selectable
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <AppIcon
+                      name="save"
+                      size={18}
+                      color={isFormValid && !isSubmitting ? '#FFFFFF' : '#9CA3AF'}
+                    />
+                    <Text
+                      selectable
                       style={[
                         { marginLeft: 8, fontWeight: '600' },
                         { color: isFormValid && !isSubmitting ? '#FFFFFF' : '#9CA3AF' },
@@ -588,11 +660,11 @@ export function EditActivityModal({
                     >
                       Save
                     </Text>
-                </>
-              )}
-            </TouchableOpacity>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
         </KeyboardAvoidingView>
       </ScrollView>
     </Modal>

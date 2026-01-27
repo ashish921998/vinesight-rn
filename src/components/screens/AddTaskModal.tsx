@@ -22,6 +22,7 @@ import {
   PRIORITY_INFO,
 } from '../../types/task';
 import { TASK_TEMPLATES } from '../../constants/taskTemplates';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface Props {
   visible: boolean;
@@ -176,28 +177,59 @@ export default function AddTaskModal({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View className="flex-1 bg-surface-50">
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <KeyboardAvoidingView
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1 bg-surface-50"
+          style={{ flex: 1, backgroundColor: colors.surface[50] }}
         >
           {/* Header */}
-          <View className="bg-white border-b border-surface-200 px-4 pb-3 pt-2">
-            <View className="items-center mb-3">
-              <View className="w-12 h-1.5 rounded-full bg-surface-200" />
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.surface[200],
+              paddingHorizontal: spacing[4],
+              paddingBottom: spacing[3],
+              paddingTop: spacing[2],
+            }}
+          >
+            <View style={{ alignItems: 'center', marginBottom: spacing[3] }}>
+              <View
+                style={{
+                  width: 48,
+                  height: 6,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: colors.surface[200],
+                }}
+              />
             </View>
-            <View className="flex-row items-center justify-between">
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <TouchableOpacity onPress={onClose} disabled={isLoading}>
-                <Text className="text-primary-600 text-base">Cancel</Text>
+                <Text style={{ color: colors.primary[600], fontSize: fontSize.base }}>Cancel</Text>
               </TouchableOpacity>
-              <Text className="text-lg font-semibold text-surface-900" numberOfLines={1}>
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                }}
+                numberOfLines={1}
+              >
                 {isEditing ? 'Edit Task' : 'Add Task'}
               </Text>
               <TouchableOpacity onPress={handleSubmit} disabled={isLoading}>
                 <Text
-                  className={`text-base font-semibold ${
-                    isLoading ? 'text-surface-400' : 'text-primary-600'
-                  }`}
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: isLoading ? colors.surface[400] : colors.primary[600],
+                  }}
                 >
                   {isLoading ? 'Saving...' : 'Save'}
                 </Text>
@@ -210,10 +242,26 @@ export default function AddTaskModal({
             {!isEditing && (
               <TouchableOpacity
                 onPress={() => setShowTemplates(!showTemplates)}
-                className="bg-primary-50 rounded-xl p-4 mb-4 flex-row items-center"
+                style={{
+                  backgroundColor: colors.primary[50],
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[4],
+                  marginBottom: spacing[4],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
               >
                 <Symbol name="bolt.fill" size={20} color="#408059" />
-                <Text className="text-primary-700 font-medium ml-2 flex-1">Use Template</Text>
+                <Text
+                  style={{
+                    color: colors.primary[700],
+                    fontWeight: fontWeight.medium,
+                    marginLeft: spacing[2],
+                    flex: 1,
+                  }}
+                >
+                  Use Template
+                </Text>
                 <Symbol
                   name={showTemplates ? 'chevron.up' : 'chevron.down'}
                   size={20}
@@ -224,7 +272,16 @@ export default function AddTaskModal({
 
             {/* Templates List */}
             {showTemplates && (
-              <View className="bg-white rounded-xl mb-4 border border-surface-200 overflow-hidden">
+              <View
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  marginBottom: spacing[4],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  overflow: 'hidden',
+                }}
+              >
                 <ScrollView style={{ maxHeight: 300 }}>
                   {TASK_TEMPLATES.slice(0, 8).map((template) => {
                     const typeInfo = TASK_TYPE_INFO[template.type];
@@ -232,19 +289,40 @@ export default function AddTaskModal({
                       <TouchableOpacity
                         key={template.id}
                         onPress={() => applyTemplate(template)}
-                        className="p-4 border-b border-surface-100 flex-row items-center"
+                        style={{
+                          padding: spacing[4],
+                          borderBottomWidth: 1,
+                          borderBottomColor: colors.surface[100],
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                        }}
                       >
                         <View
-                          className="w-8 h-8 rounded-lg items-center justify-center"
-                          style={{ backgroundColor: `${typeInfo.color}20` }}
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: borderRadius.lg,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: `${typeInfo.color}20`,
+                          }}
                         >
                           <Symbol name={typeInfo.icon} size={16} color={typeInfo.color} />
                         </View>
-                        <View className="flex-1 ml-3">
-                          <Text className="text-sm font-medium text-surface-900">
+                        <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                          <Text
+                            style={{
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.medium,
+                              color: colors.surface[900],
+                            }}
+                          >
                             {template.title}
                           </Text>
-                          <Text className="text-xs text-surface-500" numberOfLines={1}>
+                          <Text
+                            style={{ fontSize: fontSize.xs, color: colors.surface[500] }}
+                            numberOfLines={1}
+                          >
                             {template.description}
                           </Text>
                         </View>
@@ -256,22 +334,56 @@ export default function AddTaskModal({
             )}
 
             {/* Farm Selector */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-surface-700 mb-2">Farm *</Text>
+            <View style={{ marginBottom: spacing[4] }}>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: colors.surface[700],
+                  marginBottom: spacing[2],
+                }}
+              >
+                Farm *
+              </Text>
               <TouchableOpacity
                 onPress={() => setShowFarmPicker(!showFarmPicker)}
-                className="bg-white rounded-xl px-4 py-3 flex-row items-center justify-between border border-surface-200"
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
               >
-                <View className="flex-row items-center">
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Symbol name="leaf.fill" size={20} color="#408059" />
-                  <Text className="text-base text-surface-900 ml-2">
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      color: colors.surface[900],
+                      marginLeft: spacing[2],
+                    }}
+                  >
                     {selectedFarm?.name || 'Select farm'}
                   </Text>
                 </View>
                 <Symbol name="chevron.down" size={20} color="#9CA3AF" />
               </TouchableOpacity>
               {showFarmPicker && farms && (
-                <View className="bg-white rounded-xl mt-2 border border-surface-200 overflow-hidden">
+                <View
+                  style={{
+                    backgroundColor: colors.white,
+                    borderRadius: borderRadius.xl,
+                    marginTop: spacing[2],
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                    overflow: 'hidden',
+                  }}
+                >
                   {farms.map((farm) => (
                     <TouchableOpacity
                       key={farm.id}
@@ -279,14 +391,18 @@ export default function AddTaskModal({
                         if (farm.id) setFarmId(farm.id);
                         setShowFarmPicker(false);
                       }}
-                      className={`p-4 border-b border-surface-100 ${
-                        farmId === farm.id ? 'bg-primary-50' : ''
-                      }`}
+                      style={{
+                        padding: spacing[4],
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.surface[100],
+                        backgroundColor: farmId === farm.id ? colors.primary[50] : 'transparent',
+                      }}
                     >
                       <Text
-                        className={
-                          farmId === farm.id ? 'text-primary-700 font-medium' : 'text-surface-700'
-                        }
+                        style={{
+                          color: farmId === farm.id ? colors.primary[700] : colors.surface[700],
+                          fontWeight: farmId === farm.id ? fontWeight.medium : fontWeight.normal,
+                        }}
                       >
                         {farm.name}
                       </Text>
@@ -297,48 +413,110 @@ export default function AddTaskModal({
             </View>
 
             {/* Title */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-surface-700 mb-2">Title *</Text>
+            <View style={{ marginBottom: spacing[4] }}>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: colors.surface[700],
+                  marginBottom: spacing[2],
+                }}
+              >
+                Title *
+              </Text>
               <TextInput
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Enter task title"
-                className="bg-white rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
                 placeholderTextColor="#9CA3AF"
               />
             </View>
 
             {/* Description */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-surface-700 mb-2">Description</Text>
+            <View style={{ marginBottom: spacing[4] }}>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: colors.surface[700],
+                  marginBottom: spacing[2],
+                }}
+              >
+                Description
+              </Text>
               <TextInput
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Add details about this task"
                 multiline
                 numberOfLines={3}
-                className="bg-white rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  minHeight: 80,
+                  textAlignVertical: 'top',
+                }}
                 placeholderTextColor="#9CA3AF"
-                style={{ minHeight: 80, textAlignVertical: 'top' }}
               />
             </View>
 
             {/* Type & Priority */}
-            <View className="flex-row mb-4" style={{ gap: 12 }}>
+            <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: spacing[3] }}>
               {/* Type */}
-              <View className="flex-1">
-                <Text className="text-sm font-medium text-surface-700 mb-2">Type</Text>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: colors.surface[700],
+                    marginBottom: spacing[2],
+                  }}
+                >
+                  Type
+                </Text>
                 <TouchableOpacity
                   onPress={() => setShowTypePicker(!showTypePicker)}
-                  className="bg-white rounded-xl px-4 py-3 flex-row items-center justify-between border border-surface-200"
+                  style={{
+                    backgroundColor: colors.white,
+                    borderRadius: borderRadius.xl,
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[3],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                  }}
                 >
-                  <View className="flex-row items-center">
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Symbol
                       name={TASK_TYPE_INFO[type].icon}
                       size={16}
                       color={TASK_TYPE_INFO[type].color}
                     />
-                    <Text className="text-sm text-surface-900 ml-2">
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        color: colors.surface[900],
+                        marginLeft: spacing[2],
+                      }}
+                    >
                       {TASK_TYPE_INFO[type].label}
                     </Text>
                   </View>
@@ -347,19 +525,45 @@ export default function AddTaskModal({
               </View>
 
               {/* Priority */}
-              <View className="flex-1">
-                <Text className="text-sm font-medium text-surface-700 mb-2">Priority</Text>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: colors.surface[700],
+                    marginBottom: spacing[2],
+                  }}
+                >
+                  Priority
+                </Text>
                 <TouchableOpacity
                   onPress={() => setShowPriorityPicker(!showPriorityPicker)}
-                  className="bg-white rounded-xl px-4 py-3 flex-row items-center justify-between border border-surface-200"
+                  style={{
+                    backgroundColor: colors.white,
+                    borderRadius: borderRadius.xl,
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[3],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                  }}
                 >
                   <View
-                    className="px-2 py-0.5 rounded"
-                    style={{ backgroundColor: PRIORITY_INFO[priority].bgColor }}
+                    style={{
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: 2,
+                      borderRadius: borderRadius.sm,
+                      backgroundColor: PRIORITY_INFO[priority].bgColor,
+                    }}
                   >
                     <Text
-                      className="text-sm font-medium"
-                      style={{ color: PRIORITY_INFO[priority].color }}
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.medium,
+                        color: PRIORITY_INFO[priority].color,
+                      }}
                     >
                       {PRIORITY_INFO[priority].label}
                     </Text>
@@ -371,7 +575,16 @@ export default function AddTaskModal({
 
             {/* Type Picker */}
             {showTypePicker && (
-              <View className="bg-white rounded-xl mb-4 border border-surface-200 overflow-hidden">
+              <View
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  marginBottom: spacing[4],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  overflow: 'hidden',
+                }}
+              >
                 {TASK_TYPES.map((taskType) => (
                   <TouchableOpacity
                     key={taskType}
@@ -379,9 +592,14 @@ export default function AddTaskModal({
                       setType(taskType);
                       setShowTypePicker(false);
                     }}
-                    className={`p-4 flex-row items-center border-b border-surface-100 ${
-                      type === taskType ? 'bg-primary-50' : ''
-                    }`}
+                    style={{
+                      padding: spacing[4],
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor: type === taskType ? colors.primary[50] : 'transparent',
+                    }}
                   >
                     <Symbol
                       name={TASK_TYPE_INFO[taskType].icon}
@@ -389,9 +607,11 @@ export default function AddTaskModal({
                       color={TASK_TYPE_INFO[taskType].color}
                     />
                     <Text
-                      className={`ml-3 ${
-                        type === taskType ? 'text-primary-700 font-medium' : 'text-surface-700'
-                      }`}
+                      style={{
+                        marginLeft: spacing[3],
+                        color: type === taskType ? colors.primary[700] : colors.surface[700],
+                        fontWeight: type === taskType ? fontWeight.medium : fontWeight.normal,
+                      }}
                     >
                       {TASK_TYPE_INFO[taskType].label}
                     </Text>
@@ -402,7 +622,16 @@ export default function AddTaskModal({
 
             {/* Priority Picker */}
             {showPriorityPicker && (
-              <View className="bg-white rounded-xl mb-4 border border-surface-200 overflow-hidden">
+              <View
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  marginBottom: spacing[4],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  overflow: 'hidden',
+                }}
+              >
                 {PRIORITIES.map((p) => (
                   <TouchableOpacity
                     key={p}
@@ -410,22 +639,41 @@ export default function AddTaskModal({
                       setPriority(p);
                       setShowPriorityPicker(false);
                     }}
-                    className={`p-4 flex-row items-center border-b border-surface-100 ${
-                      priority === p ? 'bg-primary-50' : ''
-                    }`}
+                    style={{
+                      padding: spacing[4],
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor: priority === p ? colors.primary[50] : 'transparent',
+                    }}
                   >
                     <View
-                      className="w-6 h-6 rounded items-center justify-center"
-                      style={{ backgroundColor: PRIORITY_INFO[p].bgColor }}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: borderRadius.sm,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: PRIORITY_INFO[p].bgColor,
+                      }}
                     >
-                      <Text className="text-xs font-bold" style={{ color: PRIORITY_INFO[p].color }}>
+                      <Text
+                        style={{
+                          fontSize: fontSize.xs,
+                          fontWeight: fontWeight.bold,
+                          color: PRIORITY_INFO[p].color,
+                        }}
+                      >
                         {p.charAt(0).toUpperCase()}
                       </Text>
                     </View>
                     <Text
-                      className={`ml-3 ${
-                        priority === p ? 'text-primary-700 font-medium' : 'text-surface-700'
-                      }`}
+                      style={{
+                        marginLeft: spacing[3],
+                        color: priority === p ? colors.primary[700] : colors.surface[700],
+                        fontWeight: priority === p ? fontWeight.medium : fontWeight.normal,
+                      }}
                     >
                       {PRIORITY_INFO[p].label}
                     </Text>
@@ -435,16 +683,38 @@ export default function AddTaskModal({
             )}
 
             {/* Due Date */}
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-surface-700 mb-2">Due Date</Text>
+            <View style={{ marginBottom: spacing[4] }}>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: colors.surface[700],
+                  marginBottom: spacing[2],
+                }}
+              >
+                Due Date
+              </Text>
               <TextInput
                 value={dueDate}
                 onChangeText={setDueDate}
                 placeholder="YYYY-MM-DD (e.g., 2024-01-25)"
-                className="bg-white rounded-xl px-4 py-3 text-base text-surface-900 border border-surface-200"
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  fontSize: fontSize.base,
+                  color: colors.surface[900],
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                }}
                 placeholderTextColor="#9CA3AF"
               />
-              <Text className="text-xs text-surface-500 mt-1">Enter date in YYYY-MM-DD format</Text>
+              <Text
+                style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}
+              >
+                Enter date in YYYY-MM-DD format
+              </Text>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

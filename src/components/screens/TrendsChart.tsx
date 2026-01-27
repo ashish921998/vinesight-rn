@@ -8,6 +8,7 @@ import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'r
 import { LineChart } from 'react-native-chart-kit';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { PARAMETER_COLORS } from '../../hooks/useLabTests';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 const monthNames = [
   'Jan',
@@ -88,17 +89,54 @@ export default function TrendsChart({
 
   if (!parameterTrends || Object.keys(parameterTrends).length === 0) {
     return (
-      <View className="flex-1 items-center justify-center py-16">
-        <Text className="text-lg font-semibold text-gray-800">No Data Available</Text>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: spacing[16],
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.semibold,
+            color: colors.gray[800],
+          }}
+        >
+          No Data Available
+        </Text>
       </View>
     );
   }
 
   if (trendData.length < 2) {
     return (
-      <View className="flex-1 items-center justify-center py-16">
-        <Text className="text-lg font-semibold text-gray-800">Need More Data</Text>
-        <Text className="text-gray-500 text-center mt-2 px-8">
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: spacing[16],
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.semibold,
+            color: colors.gray[800],
+          }}
+        >
+          Need More Data
+        </Text>
+        <Text
+          style={{
+            color: colors.gray[500],
+            textAlign: 'center',
+            marginTop: spacing[2],
+            paddingHorizontal: spacing[8],
+          }}
+        >
           Add at least 2 lab tests to view chart
         </Text>
       </View>
@@ -107,9 +145,31 @@ export default function TrendsChart({
 
   if (selectedParams.size === 0) {
     return (
-      <View className="flex-1 items-center justify-center py-16">
-        <Text className="text-lg font-semibold text-gray-800">No Parameters Selected</Text>
-        <Text className="text-gray-500 text-center mt-2 px-8">
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: spacing[16],
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.semibold,
+            color: colors.gray[800],
+          }}
+        >
+          No Parameters Selected
+        </Text>
+        <Text
+          style={{
+            color: colors.gray[500],
+            textAlign: 'center',
+            marginTop: spacing[2],
+            paddingHorizontal: spacing[8],
+          }}
+        >
           Select at least one parameter to view chart
         </Text>
       </View>
@@ -117,151 +177,256 @@ export default function TrendsChart({
   }
 
   return (
-    <ScrollView className="flex-1 pt-4">
-      <View className="px-4 pb-4">
-        <LineChart
-          data={{
-            labels,
-            datasets,
-          }}
-          width={screenWidth - 32}
-          height={300}
-          chartConfig={chartConfig}
-          bezier
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{
+        paddingTop: spacing[4],
+        paddingHorizontal: spacing[4],
+        paddingBottom: spacing[4],
+      }}
+    >
+      <LineChart
+        data={{
+          labels,
+          datasets,
+        }}
+        width={screenWidth - 32}
+        height={300}
+        chartConfig={chartConfig}
+        bezier
+        style={{
+          marginVertical: 8,
+          borderRadius: 16,
+        }}
+        onDataPointClick={(data) => {
+          setSelectedPoint({ index: data.index, date: trendData[data.index].date });
+        }}
+      />
+
+      {/* Selected Point Info */}
+      {selectedPoint && (
+        <View
           style={{
-            marginVertical: 8,
-            borderRadius: 16,
+            backgroundColor: '#EFF6FF',
+            padding: spacing[4],
+            borderRadius: borderRadius.xl,
+            marginBottom: spacing[4],
           }}
-          onDataPointClick={(data) => {
-            setSelectedPoint({ index: data.index, date: trendData[data.index].date });
-          }}
-        />
-
-        {/* Selected Point Info */}
-        {selectedPoint && (
-          <View className="bg-blue-50 p-4 rounded-xl mb-4">
-            <Text className="text-sm font-semibold text-blue-900 mb-2">
-              {new Date(selectedPoint.date).getDate()}{' '}
-              {monthNames[new Date(selectedPoint.date).getMonth()]}
-            </Text>
-            {params.map((param) => {
-              const value = trendData[selectedPoint.index].parameters[param.key];
-              return (
-                <Text key={param.key} className="text-sm text-blue-800">
-                  {param.trend.label}:{' '}
-                  {value != null && typeof value === 'number' ? value.toFixed(2) : '-'}{' '}
-                  {param.trend.unit}
-                </Text>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Legend */}
-        <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-800 mb-3">Legend</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {params.map((param, idx) => {
-              const color = PARAMETER_COLORS[idx % PARAMETER_COLORS.length];
-              const trend = param.trend;
-              return (
-                <TouchableOpacity
-                  key={param.key}
-                  onPress={() => onToggleParam(param.key)}
-                  className="flex-row items-center px-3 py-2 rounded-lg bg-white border border-gray-200"
-                >
-                  <View
-                    style={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: 6,
-                      backgroundColor: color,
-                    }}
-                  />
-                  <View className="ml-2">
-                    <Text className="text-xs font-semibold text-gray-800">{trend.label}</Text>
-                    <Text className="text-xs text-gray-500">
-                      {trend.change !== null
-                        ? `${trend.change > 0 ? '+' : ''}${trend.change.toFixed(1)}%`
-                        : 'N/A'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+        >
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: '#1E3A8A',
+              marginBottom: spacing[2],
+            }}
+          >
+            {new Date(selectedPoint.date).getDate()}{' '}
+            {monthNames[new Date(selectedPoint.date).getMonth()]}
+          </Text>
+          {params.map((param) => {
+            const value = trendData[selectedPoint.index].parameters[param.key];
+            return (
+              <Text key={param.key} style={{ fontSize: fontSize.sm, color: '#1E40AF' }}>
+                {param.trend.label}:{' '}
+                {value != null && typeof value === 'number' ? value.toFixed(2) : '-'}{' '}
+                {param.trend.unit}
+              </Text>
+            );
+          })}
         </View>
+      )}
 
-        {/* Stats Summary */}
-        <View className="mb-8">
-          <Text className="text-sm font-semibold text-gray-800 mb-3">Summary</Text>
+      {/* Legend */}
+      <View style={{ marginBottom: spacing[4] }}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+            color: colors.gray[800],
+            marginBottom: spacing[3],
+          }}
+        >
+          Legend
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
           {params.map((param, idx) => {
             const color = PARAMETER_COLORS[idx % PARAMETER_COLORS.length];
             const trend = param.trend;
             return (
-              <View key={param.key} className="bg-white rounded-xl p-4 mb-3 border border-gray-100">
-                <View className="flex-row items-center">
-                  <View
+              <TouchableOpacity
+                key={param.key}
+                onPress={() => onToggleParam(param.key)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  borderRadius: borderRadius.lg,
+                  backgroundColor: colors.white,
+                  borderWidth: 1,
+                  borderColor: colors.gray[200],
+                }}
+              >
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: color,
+                  }}
+                />
+                <View style={{ marginLeft: spacing[2] }}>
+                  <Text
                     style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: color,
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.gray[800],
                     }}
-                  />
-                  <Text className="flex-1 ml-2 text-sm font-semibold text-gray-800">
+                  >
                     {trend.label}
                   </Text>
-                  <Text
-                    className={`text-xs font-semibold ${
-                      trend.change === null
-                        ? 'text-gray-400'
-                        : trend.change > 0
-                          ? 'text-green-600'
-                          : trend.change < 0
-                            ? 'text-red-600'
-                            : 'text-gray-400'
-                    }`}
-                  >
-                    {trend.change === null
-                      ? 'N/A'
-                      : trend.change > 0
-                        ? `↑ ${Math.abs(trend.change).toFixed(1)}%`
-                        : trend.change < 0
-                          ? `↓ ${Math.abs(trend.change).toFixed(1)}%`
-                          : `— ${Math.abs(trend.change).toFixed(1)}%`}
+                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                    {trend.change !== null
+                      ? `${trend.change > 0 ? '+' : ''}${trend.change.toFixed(1)}%`
+                      : 'N/A'}
                   </Text>
                 </View>
-                <View className="flex-row justify-between mt-3">
-                  <View>
-                    <Text className="text-xs text-gray-500">Current</Text>
-                    <Text className="text-sm font-semibold text-gray-800">
-                      {trend.values.length > 0 ? (trend.values.at(-1)?.toFixed(2) ?? '-') : '-'}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="text-xs text-gray-500">Avg</Text>
-                    <Text className="text-sm font-semibold text-gray-800">
-                      {trend.avg.toFixed(2)}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="text-xs text-gray-500">Min</Text>
-                    <Text className="text-sm font-semibold text-green-600">
-                      {trend.min.toFixed(2)}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="text-xs text-gray-500">Max</Text>
-                    <Text className="text-sm font-semibold text-red-600">
-                      {trend.max.toFixed(2)}
-                    </Text>
-                  </View>
-                </View>
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>
+      </View>
+
+      {/* Stats Summary */}
+      <View style={{ marginBottom: spacing[8] }}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.semibold,
+            color: colors.gray[800],
+            marginBottom: spacing[3],
+          }}
+        >
+          Summary
+        </Text>
+        {params.map((param, idx) => {
+          const color = PARAMETER_COLORS[idx % PARAMETER_COLORS.length];
+          const trend = param.trend;
+          return (
+            <View
+              key={param.key}
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                padding: spacing[4],
+                marginBottom: spacing[3],
+                borderWidth: 1,
+                borderColor: colors.gray[100],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: color,
+                  }}
+                />
+                <Text
+                  style={{
+                    flex: 1,
+                    marginLeft: spacing[2],
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.gray[800],
+                  }}
+                >
+                  {trend.label}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.semibold,
+                    color:
+                      trend.change === null
+                        ? colors.gray[400]
+                        : trend.change > 0
+                          ? '#16A34A'
+                          : trend.change < 0
+                            ? '#DC2626'
+                            : colors.gray[400],
+                  }}
+                >
+                  {trend.change === null
+                    ? 'N/A'
+                    : trend.change > 0
+                      ? `↑ ${Math.abs(trend.change).toFixed(1)}%`
+                      : trend.change < 0
+                        ? `↓ ${Math.abs(trend.change).toFixed(1)}%`
+                        : `— ${Math.abs(trend.change).toFixed(1)}%`}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginTop: spacing[3],
+                }}
+              >
+                <View>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>Current</Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.gray[800],
+                    }}
+                  >
+                    {trend.values.length > 0 ? (trend.values.at(-1)?.toFixed(2) ?? '-') : '-'}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>Avg</Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.gray[800],
+                    }}
+                  >
+                    {trend.avg.toFixed(2)}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>Min</Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: '#16A34A',
+                    }}
+                  >
+                    {trend.min.toFixed(2)}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>Max</Text>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: '#DC2626',
+                    }}
+                  >
+                    {trend.max.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          );
+        })}
       </View>
     </ScrollView>
   );

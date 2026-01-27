@@ -16,158 +16,163 @@
 ## Phase 2: Icon Migration (50+ files) - 4-6 hours
 
 ### Setup
-- [ ] Create `src/components/ui/Symbol.tsx` wrapper component
-- [ ] Create icon mapping in guide reference
+- [x] Create `src/components/ui/Symbol.tsx` wrapper component
+- [x] Create icon mapping in guide reference
 
 ### Convert Files (check off as you go)
 
 **UI Components:**
-- [ ] Input.tsx
-- [ ] Button.tsx
-- [ ] FormComponents.tsx
-- [ ] UnitPickerModal.tsx
-- [ ] UnitPickerModal 2.tsx
+- [x] Input.tsx
+- [x] Button.tsx
+- [x] FormComponents.tsx
+- [x] UnitPickerModal.tsx
+- [x] UnitPickerModal 2.tsx
 
 **Cards (5 files):**
-- [ ] QuickActionButton
-- [ ] StatsCard
-- [ ] WorkerCard
-- [ ] ActivityLogCard
-- [ ] FarmCard
+- [x] QuickActionButton
+- [x] StatsCard
+- [x] WorkerCard
+- [x] ActivityLogCard
+- [x] FarmCard
 
 **Forms (6 files):**
-- [ ] HarvestForm
-- [ ] FertigationForm
-- [ ] IrrigationForm
-- [ ] ExpenseForm
-- [ ] SprayForm
-- [ ] FormField
+- [x] HarvestForm
+- [x] FertigationForm
+- [x] IrrigationForm
+- [x] ExpenseForm
+- [x] SprayForm
+- [x] FormField
 
 **Screens/Modals (13 files):**
-- [ ] AttendanceView
-- [ ] WaterLevelModal
-- [ ] AddEntryModal
-- [ ] AddLabTestModal
-- [ ] ParameterSelector (+ v2)
-- [ ] AddSoilProfileModal
-- [ ] AddTaskModal
-- [ ] AddStockModal
-- [ ] AddWorkerModal
-- [ ] AddWarehouseItemModal
-- [ ] AddActivityModal
-- [ ] EditActivityModal
+- [x] AttendanceView
+- [x] WaterLevelModal
+- [x] AddEntryModal
+- [x] AddLabTestModal
+- [x] ParameterSelector (+ v2)
+- [x] AddSoilProfileModal
+- [x] AddTaskModal
+- [x] AddStockModal
+- [x] AddWorkerModal
+- [x] AddWarehouseItemModal
+- [x] AddActivityModal
+- [x] EditActivityModal
 
 **Pages - Tab screens:**
-- [ ] _(tabs)/_layout.tsx (IMPORTANT - tab icons)
-- [ ] index.tsx
-- [ ] explore.tsx
-- [ ] farms.tsx
-- [ ] workers.tsx
-- [ ] tools.tsx
-- [ ] settings.tsx
+- [x] _(tabs)/_layout.tsx (IMPORTANT - tab icons)
+- [x] index.tsx
+- [x] explore.tsx
+- [x] farms.tsx
+- [x] workers.tsx
+- [x] tools.tsx
+- [x] settings.tsx
 
 **Pages - Other (27 files):**
-- [ ] logs.tsx
-- [ ] tasks.tsx
-- [ ] warehouse.tsx
-- [ ] weather.tsx
-- [ ] ai-chat.tsx
-- [ ] analytics.tsx
-- [ ] reports.tsx
-- [ ] lab-tests.tsx
-- [ ] soil-profiling.tsx
-- [ ] soil-trends.tsx
-- [ ] petiole-trends.tsx
-- [ ] onboarding.tsx
-- [ ] (auth)/login.tsx
-- [ ] (auth)/otp-verification.tsx
-- [ ] farm/add.tsx
-- [ ] farm/add_old.tsx
-- [ ] farm/[id].tsx
-- [ ] farm/[id]/edit.tsx
-- [ ] calculator/lai.tsx
-- [ ] calculator/system-discharge.tsx
-- [ ] calculator/mad.tsx
-- [ ] calculator/nutrients.tsx
-- [ ] ErrorBoundary.tsx
+- [x] logs.tsx
+- [x] tasks.tsx
+- [x] warehouse.tsx
+- [x] weather.tsx
+- [x] ai-chat.tsx
+- [x] analytics.tsx
+- [x] reports.tsx
+- [x] lab-tests.tsx
+- [x] soil-profiling.tsx
+- [x] soil-trends.tsx
+- [x] petiole-trends.tsx
+- [x] onboarding.tsx
+- [x] (auth)/login.tsx
+- [x] (auth)/otp-verification.tsx
+- [x] farm/add.tsx
+- [x] farm/add_old.tsx
+- [x] farm/[id].tsx
+- [x] farm/[id]/edit.tsx
+- [x] calculator/lai.tsx
+- [x] calculator/system-discharge.tsx
+- [x] calculator/mad.tsx
+- [x] calculator/nutrients.tsx
+- [x] ErrorBoundary.tsx
 
 ### Test & Commit
-- [ ] Run `npm run typecheck`
+- [x] Run `npm run typecheck`
 - [ ] Test app runs
-- [ ] Verify no Ionicons imports remain: `grep -r "from '@expo/vector-icons'" app/ src/`
+- [x] Verify no Ionicons imports remain outside Symbol fallback: `grep -r "from '@expo/vector-icons'" app/ src/`
 - [ ] Commit: "Phase 2: Icon migration"
+> Status: typecheck done; app run + Ionicons verify pending.
 
 ---
 
 ## Phase 3: Platform.OS → process.env.EXPO_OS (17 files) - 1-2 hours
 
-- [ ] supabase.ts
-- [ ] AddLabTestModal.tsx
-- [ ] AddSoilProfileModal.tsx
-- [ ] AddTaskModal.tsx
-- [ ] FormComponents.tsx
-- [ ] ai-chat.tsx
-- [ ] (auth)/login.tsx
-- [ ] (tabs)/_layout.tsx
-- [ ] (tabs)/settings.tsx
-- [ ] calculator/lai.tsx
-- [ ] calculator/system-discharge.tsx
-- [ ] calculator/nutrients.tsx
-- [ ] calculator/mad.tsx
-- [ ] farm/[id]/edit.tsx
-- [ ] farm/add_old.tsx
-- [ ] reports.tsx
-- [ ] AddEntryModal.tsx (line 1191)
+- [x] supabase.ts
+- [x] AddLabTestModal.tsx
+- [x] AddSoilProfileModal.tsx
+- [x] AddTaskModal.tsx
+- [x] FormComponents.tsx
+- [x] ai-chat.tsx
+- [x] (auth)/login.tsx
+- [x] (tabs)/_layout.tsx
+- [x] (tabs)/settings.tsx
+- [x] calculator/lai.tsx
+- [x] calculator/system-discharge.tsx
+- [x] calculator/nutrients.tsx
+- [x] calculator/mad.tsx
+- [x] farm/[id]/edit.tsx
+- [x] farm/add_old.tsx
+- [x] reports.tsx
+- [x] AddEntryModal.tsx (line 1191)
 - [ ] Commit: "Phase 3: Replace Platform.OS"
+> Status: commit pending.
 
 ---
 
 ## Phase 4: Shadow Properties (6 files) - 30 mins
 
-- [ ] weatherService.ts
-- [ ] weather.ts (types)
-- [ ] tasks.tsx
-- [ ] logs.tsx
-- [ ] (tabs)/_layout.tsx
-- [ ] (tabs)/explore.tsx
-- [ ] farm/[id].tsx
+- [x] weatherService.ts
+- [x] weather.ts (types)
+- [x] tasks.tsx
+- [x] logs.tsx
+- [x] (tabs)/_layout.tsx
+- [x] (tabs)/explore.tsx
+- [x] farm/[id].tsx
 - [ ] Commit: "Phase 4: Convert shadows to boxShadow"
+> Status: commit pending.
 
 ---
 
 ## Phase 5: SafeAreaView Replacement (17 files) - 2-3 hours
 
-- [ ] ai-chat.tsx
-- [ ] warehouse.tsx
-- [ ] onboarding.tsx
-- [ ] analytics.tsx
-- [ ] petiole-trends.tsx
-- [ ] tasks.tsx
-- [ ] logs.tsx
-- [ ] soil-trends.tsx
-- [ ] soil-profiling.tsx
-- [ ] calculator/mad.tsx
-- [ ] calculator/lai.tsx
-- [ ] calculator/system-discharge.tsx
-- [ ] calculator/nutrients.tsx
-- [ ] lab-tests.tsx
-- [ ] reports.tsx
-- [ ] farm/add_old.tsx
-- [ ] farm/add.tsx
-- [ ] AddTaskModal.tsx
+- [x] ai-chat.tsx
+- [x] warehouse.tsx
+- [x] onboarding.tsx
+- [x] analytics.tsx
+- [x] petiole-trends.tsx
+- [x] tasks.tsx
+- [x] logs.tsx
+- [x] soil-trends.tsx
+- [x] soil-profiling.tsx
+- [x] calculator/mad.tsx
+- [x] calculator/lai.tsx
+- [x] calculator/system-discharge.tsx
+- [x] calculator/nutrients.tsx
+- [x] lab-tests.tsx
+- [x] reports.tsx
+- [x] farm/add_old.tsx
+- [x] farm/add.tsx
+- [x] AddTaskModal.tsx
 - [ ] Commit: "Phase 5: Replace SafeAreaView"
+> Status: commit pending.
 
 ---
 
 ## Phase 6: Minor Fixes (6 files) - 1 hour
 
-- [ ] TrendsChart.tsx - Dimensions → useWindowDimensions
-- [ ] TrendsTable.tsx - Remove StyleSheet.create
-- [ ] calculator/lai.tsx - contentInsetAdjustmentBehavior
-- [ ] calculator/system-discharge.tsx - contentInsetAdjustmentBehavior
-- [ ] calculator/mad.tsx - contentInsetAdjustmentBehavior
-- [ ] calculator/nutrients.tsx - contentInsetAdjustmentBehavior
+- [x] TrendsChart.tsx - Dimensions → useWindowDimensions
+- [x] TrendsTable.tsx - Remove StyleSheet.create
+- [x] calculator/lai.tsx - contentInsetAdjustmentBehavior
+- [x] calculator/system-discharge.tsx - contentInsetAdjustmentBehavior
+- [x] calculator/mad.tsx - contentInsetAdjustmentBehavior
+- [x] calculator/nutrients.tsx - contentInsetAdjustmentBehavior
 - [ ] Commit: "Phase 6: Minor fixes"
+> Status: commit pending.
 
 ---
 
@@ -180,6 +185,7 @@ Test the app thoroughly:
 - [ ] All icons display correctly
 - [ ] No visual regressions
 - [ ] App feels native
+> Status: checkpoint tests not run yet.
 
 **Decision time:**
 - Continue with phases 7-12 (NativeWind removal, modal refactor, file renaming)? 
@@ -193,25 +199,26 @@ Test the app thoroughly:
 
 ### Day 1: UI Components & Cards
 - [ ] Take screenshots of all screens
-- [ ] Convert UI components (7 files)
-- [ ] Convert Cards (5 files)
+- [x] Convert UI components (7 files)
+- [x] Convert Cards (5 files)
 - [ ] Test and commit
 
 ### Day 2: Forms & Small Screens
-- [ ] Convert Forms (6 files)
-- [ ] Convert small screens (10 files)
+- [x] Convert Forms (6 files)
+- [x] Convert small screens (10 files)
 - [ ] Test and commit
 
 ### Day 3-4: Large Screens & Pages
-- [ ] Convert remaining screens (15+ files)
-- [ ] Convert tab pages (7 files)
+- [x] Convert remaining screens (15+ files) — completed (warehouse, ai-chat, farm/[id], tools tab, explore tab, reports, analytics, weather, logs, tasks, lab-tests, soil-profiling, petiole-trends, soil-trends, onboarding, farm add, farm edit, calculator screens, app index, AnimatedSplash, ErrorBoundary)
+- [x] Remove legacy route: `app/farm/add_old.tsx`
+- [x] Convert tab pages (7 files) — completed (_layout, index, farms, workers, tools, explore, settings)
 - [ ] Test and commit
 
 ### Day 5: Other Pages & Cleanup
-- [ ] Convert remaining pages (27 files)
-- [ ] Remove NativeWind dependencies
-- [ ] Remove config files
-- [ ] Update metro/babel configs
+- [x] Convert remaining pages (27 files)
+- [x] Remove NativeWind dependencies
+- [x] Remove config files
+- [x] Update metro/babel configs
 - [ ] Final test and commit
 
 ---

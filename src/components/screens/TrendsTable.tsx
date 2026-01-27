@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { TrendData, ParameterTrend } from '../../types/analytics';
+import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 
 const monthNames = [
   'Jan',
@@ -31,18 +32,66 @@ interface Props {
 export default function TrendsTable({ trendData, parameterTrends, selectedParams }: Props) {
   if (trendData.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center py-16">
-        <Text className="text-lg font-semibold text-gray-800">No Data Available</Text>
-        <Text className="text-gray-500 text-center mt-2 px-8">Add lab tests to view trends</Text>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: spacing[16],
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.semibold,
+            color: colors.gray[800],
+          }}
+        >
+          No Data Available
+        </Text>
+        <Text
+          style={{
+            color: colors.gray[500],
+            textAlign: 'center',
+            marginTop: spacing[2],
+            paddingHorizontal: spacing[8],
+          }}
+        >
+          Add lab tests to view trends
+        </Text>
       </View>
     );
   }
 
   if (!parameterTrends || Object.keys(parameterTrends).length === 0) {
     return (
-      <View className="flex-1 items-center justify-center py-16">
-        <Text className="text-lg font-semibold text-gray-800">No Parameter Data</Text>
-        <Text className="text-gray-500 text-center mt-2 px-8">Unable to load parameter trends</Text>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: spacing[16],
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.semibold,
+            color: colors.gray[800],
+          }}
+        >
+          No Parameter Data
+        </Text>
+        <Text
+          style={{
+            color: colors.gray[500],
+            textAlign: 'center',
+            marginTop: spacing[2],
+            paddingHorizontal: spacing[8],
+          }}
+        >
+          Unable to load parameter trends
+        </Text>
       </View>
     );
   }
@@ -53,7 +102,7 @@ export default function TrendsTable({ trendData, parameterTrends, selectedParams
     .filter(Boolean) as ParameterTrend[];
 
   return (
-    <ScrollView className="flex-1" nestedScrollEnabled>
+    <ScrollView style={{ flex: 1 }} nestedScrollEnabled>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.headerRow}>
@@ -97,7 +146,7 @@ export default function TrendsTable({ trendData, parameterTrends, selectedParams
           </View>
         ))}
       </View>
-      <View className="h-8" />
+      <View style={{ height: spacing[8] }} />
     </ScrollView>
   );
 }

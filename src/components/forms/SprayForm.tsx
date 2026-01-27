@@ -1,16 +1,10 @@
 import React, { useState, useRef, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  type NativeSyntheticEvent,
-  type TextInputFocusEventData,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/Symbol';
 import { NumericInput, type NumericInputHandle } from './FormField';
 import { UnitPickerModal } from '../ui/UnitPickerModal';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculatorModels';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export interface ChemicalEntry {
   id: string;
@@ -32,7 +26,7 @@ export interface SprayFormData {
 interface SprayFormProps {
   data: SprayFormData;
   onChange: (data: SprayFormData) => void;
-  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onInputFocus?: TextInputProps['onFocus'];
 }
 
 export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
@@ -117,13 +111,33 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
   return (
     <View>
       {/* Header with icon */}
-      <View className="flex-row items-center mb-4">
-        <View className="w-10 h-10 rounded-full bg-purple-100 items-center justify-center mr-3">
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: borderRadius.full,
+            backgroundColor: '#F3E8FF',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: spacing[3],
+          }}
+        >
           <Symbol name="flask.fill" size={20} color="#8B5CF6" />
         </View>
         <View>
-          <Text className="text-lg font-semibold text-surface-900">Spray Application</Text>
-          <Text className="text-sm text-surface-500">Log chemicals and water volume</Text>
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[900],
+            }}
+          >
+            Spray Application
+          </Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+            Log chemicals and water volume
+          </Text>
         </View>
       </View>
 
@@ -147,13 +161,19 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
       />
 
       {/* Chemicals Section */}
-      <View className="mt-2">
-        <View className="flex-row items-center mb-3">
+      <View style={{ marginTop: spacing[2] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
           <View style={{ marginRight: 6 }}>
             <Symbol name="flask" size={16} color="#408059" />
           </View>
-          <Text className="text-sm font-semibold text-surface-800">
-            Chemicals <Text className="text-red-500">*</Text>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              color: colors.surface[800],
+            }}
+          >
+            Chemicals <Text style={{ color: colors.error }}>*</Text>
           </Text>
         </View>
 
@@ -178,23 +198,52 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
         {data.chemicals.length < 10 && (
           <TouchableOpacity
             onPress={addChemical}
-            className="flex-row items-center py-3 mt-2"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: spacing[3],
+              marginTop: spacing[2],
+            }}
             activeOpacity={0.7}
           >
             <Symbol name="plus.circle.fill" size={20} color="#8B5CF6" />
-            <Text className="text-sm font-medium text-purple-600 ml-2">Add Chemical</Text>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.medium,
+                color: '#7C3AED',
+                marginLeft: spacing[2],
+              }}
+            >
+              Add Chemical
+            </Text>
           </TouchableOpacity>
         )}
       </View>
 
       {/* Validation indicator */}
-      <View className="flex-row items-center mt-4 pt-4 border-t border-surface-100">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: spacing[4],
+          paddingTop: spacing[4],
+          borderTopWidth: 1,
+          borderTopColor: colors.surface[100],
+        }}
+      >
         <Symbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
         />
-        <Text className={`text-sm ml-2 ${isValid ? 'text-green-600' : 'text-surface-500'}`}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            marginLeft: spacing[2],
+            color: isValid ? '#16A34A' : colors.surface[500],
+          }}
+        >
           {isValid ? 'Ready to add' : 'Add water volume and at least one chemical'}
         </Text>
       </View>
@@ -213,7 +262,7 @@ interface ChemicalRowProps {
   nameRef: React.RefObject<TextInput | null>;
   quantityRef: React.RefObject<TextInput | null>;
   onNextChemical: (index: number) => void;
-  onInputFocus?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onInputFocus?: TextInputProps['onFocus'];
 }
 
 function ChemicalRow({
@@ -263,17 +312,30 @@ function ChemicalRow({
 
   return (
     <View
-      className={`rounded-xl p-3 mb-3 border ${
-        isRowComplete ? 'bg-green-50 border-green-200' : 'bg-surface-50 border-transparent'
-      }`}
+      style={{
+        borderRadius: borderRadius.xl,
+        padding: spacing[3],
+        marginBottom: spacing[3],
+        borderWidth: 1,
+        backgroundColor: isRowComplete ? '#F5F3FF' : colors.surface[50],
+        borderColor: isRowComplete ? '#DDD6FE' : 'transparent',
+      }}
     >
       {/* Chemical Name Row */}
-      <View className="flex-row items-center">
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <TextInput
           ref={nameRef}
-          className={`flex-1 rounded-lg px-3 py-2.5 text-base text-surface-900 bg-white border ${
-            isNameFocused ? 'border-purple-400' : 'border-surface-200'
-          }`}
+          style={{
+            flex: 1,
+            borderRadius: borderRadius.lg,
+            paddingHorizontal: spacing[3],
+            paddingVertical: 10,
+            fontSize: fontSize.base,
+            color: colors.surface[900],
+            backgroundColor: colors.white,
+            borderWidth: 1,
+            borderColor: isNameFocused ? '#A78BFA' : colors.surface[200],
+          }}
           placeholder="Chemical name"
           placeholderTextColor="#9CA3AF"
           value={chemical.name}
@@ -290,7 +352,7 @@ function ChemicalRow({
         {showRemove && (
           <TouchableOpacity
             onPress={onRemove}
-            className="ml-2 p-2"
+            style={{ marginLeft: spacing[2], padding: spacing[2] }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             activeOpacity={0.7}
           >
@@ -300,12 +362,21 @@ function ChemicalRow({
       </View>
 
       {/* Quantity and Unit Row */}
-      <View className="flex-row items-center mt-2">
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}>
         <TextInput
           ref={quantityRef}
-          className={`rounded-lg px-3 py-2.5 text-base text-surface-900 text-center bg-white border ${
-            isQuantityFocused ? 'border-purple-400' : 'border-surface-200'
-          }`}
+          style={{
+            flex: 1,
+            borderRadius: borderRadius.lg,
+            paddingHorizontal: spacing[3],
+            paddingVertical: 10,
+            fontSize: fontSize.base,
+            color: colors.surface[900],
+            textAlign: 'center',
+            backgroundColor: colors.white,
+            borderWidth: 1,
+            borderColor: isQuantityFocused ? '#A78BFA' : colors.surface[200],
+          }}
           placeholder="Qty"
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"
@@ -319,17 +390,29 @@ function ChemicalRow({
           onSubmitEditing={handleQuantitySubmit}
           returnKeyType={index < chemicalCount - 1 ? 'next' : 'done'}
           blurOnSubmit={index >= chemicalCount - 1}
-          style={{ flex: 1 }}
         />
 
         {/* Unit Picker */}
         <TouchableOpacity
           onPress={() => setShowUnitPicker(true)}
           activeOpacity={0.7}
-          className="flex-row items-center justify-between bg-white rounded-lg px-3 py-2.5 ml-2 border border-surface-200"
-          style={{ flex: 1 }}
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.lg,
+            paddingHorizontal: spacing[3],
+            paddingVertical: 10,
+            marginLeft: spacing[2],
+            borderWidth: 1,
+            borderColor: colors.surface[200],
+          }}
         >
-          <Text className="text-base text-surface-900">{chemical.unit}</Text>
+          <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
+            {chemical.unit}
+          </Text>
           <Symbol name="chevron.right" size={18} color="#6B7280" />
         </TouchableOpacity>
       </View>

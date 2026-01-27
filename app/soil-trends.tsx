@@ -12,6 +12,7 @@ import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/useLabTests';
 import ParameterSelector from '@/components/screens/ParameterSelector';
 import TrendsTable from '@/components/screens/TrendsTable';
 import TrendsChart from '@/components/screens/TrendsChart';
+import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 
 type ViewMode = 'table' | 'chart';
 
@@ -28,10 +29,19 @@ export default function SoilTrendsScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <View className="flex-1 bg-gray-50">
-        <View className="flex-1 items-center justify-center">
+      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Symbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
-          <Text className="text-lg font-semibold text-gray-700 mt-4">Invalid Farm</Text>
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              color: colors.gray[700],
+              marginTop: spacing[4],
+            }}
+          >
+            Invalid Farm
+          </Text>
         </View>
       </View>
     );
@@ -39,10 +49,10 @@ export default function SoilTrendsScreen() {
 
   if (farmLoading || trendsLoading || !trends || !trends.parameterTrends) {
     return (
-      <View className="flex-1 bg-[#f2f2f7]">
-        <View className="flex-1 items-center justify-center">
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#597A61" />
-          <Text className="text-gray-500 mt-4">Loading trends...</Text>
+          <Text style={{ color: colors.gray[500], marginTop: spacing[4] }}>Loading trends...</Text>
         </View>
       </View>
     );
@@ -53,20 +63,36 @@ export default function SoilTrendsScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Custom Header */}
-      <View className="flex-row items-center px-4 py-3 border-b border-gray-200 bg-white">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[4],
+          paddingVertical: spacing[3],
+          borderBottomWidth: 1,
+          borderBottomColor: colors.gray[200],
+          backgroundColor: colors.white,
+        }}
+      >
+        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <Symbol name="chevron.left" size={24} color="#333" />
         </TouchableOpacity>
         <Symbol name="chart.bar.fill" size={24} color="#597A61" />
-        <View className="ml-2 flex-1">
-          <Text className="text-lg font-bold text-gray-800">Soil Trends</Text>
-          <Text className="text-xs text-gray-500">{farm?.name || 'Farm'}</Text>
+        <View style={{ marginLeft: spacing[2], flex: 1 }}>
+          <Text
+            style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.gray[800] }}
+          >
+            Soil Trends
+          </Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+            {farm?.name || 'Farm'}
+          </Text>
         </View>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         {/* Parameter Selector */}
-        <View className="pt-2">
+        <View style={{ paddingTop: spacing[2] }}>
           <ParameterSelector
             testType="soil"
             selected={selectedParams}
@@ -75,31 +101,56 @@ export default function SoilTrendsScreen() {
         </View>
 
         {/* View Toggle */}
-        <View className="flex-row bg-white/80 px-4 py-2 border-b border-gray-200">
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[2],
+            borderBottomWidth: 1,
+            borderBottomColor: colors.gray[200],
+          }}
+        >
           <TouchableOpacity
             onPress={() => setViewMode('table')}
-            className={`flex-1 py-2 mr-2 ${
-              viewMode === 'table' ? 'border-b-2 border-[#597A61]' : ''
-            }`}
+            style={{
+              flex: 1,
+              paddingVertical: spacing[2],
+              marginRight: spacing[2],
+              borderBottomWidth: viewMode === 'table' ? 2 : 0,
+              borderBottomColor: viewMode === 'table' ? '#597A61' : 'transparent',
+            }}
           >
             <Text
-              className={`text-center text-sm font-semibold uppercase ${
-                viewMode === 'table' ? 'text-[#597A61]' : 'text-gray-400'
-              }`}
+              style={{
+                textAlign: 'center',
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                textTransform: 'uppercase',
+                color: viewMode === 'table' ? '#597A61' : colors.gray[400],
+              }}
             >
               Table
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setViewMode('chart')}
-            className={`flex-1 py-2 ml-2 ${
-              viewMode === 'chart' ? 'border-b-2 border-[#597A61]' : ''
-            }`}
+            style={{
+              flex: 1,
+              paddingVertical: spacing[2],
+              marginLeft: spacing[2],
+              borderBottomWidth: viewMode === 'chart' ? 2 : 0,
+              borderBottomColor: viewMode === 'chart' ? '#597A61' : 'transparent',
+            }}
           >
             <Text
-              className={`text-center text-sm font-semibold uppercase ${
-                viewMode === 'chart' ? 'text-[#597A61]' : 'text-gray-400'
-              }`}
+              style={{
+                textAlign: 'center',
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                textTransform: 'uppercase',
+                color: viewMode === 'chart' ? '#597A61' : colors.gray[400],
+              }}
             >
               Chart
             </Text>
@@ -107,7 +158,7 @@ export default function SoilTrendsScreen() {
         </View>
 
         {/* Content */}
-        <View className="flex-1 min-h-[500px]">
+        <View style={{ flex: 1, minHeight: 500 }}>
           {viewMode === 'table' ? (
             <TrendsTable
               trendData={trends.tests}
