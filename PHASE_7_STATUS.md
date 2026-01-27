@@ -3,6 +3,7 @@
 ## ✅ Completed (Checkpoint 2)
 
 ### Files Converted (9 total):
+
 1. **src/components/ui/Button.tsx** - Full theme integration
 2. **src/components/ui/Input.tsx** - Legacy containerClassName support added
 3. **src/components/ui/OTPInput.tsx** - Dynamic styling with proper types
@@ -14,6 +15,7 @@
 9. **app/(auth)/login.tsx** - Auth screen converted
 
 ### Stats:
+
 - **Lines changed**: ~1,400+ insertions, ~400 deletions
 - **Progress**: 9/50 files with className (18%)
 - **Remaining**: 41 files with ~1,850 className usages
@@ -21,6 +23,7 @@
 ## 📋 Remaining Work - Priority Order
 
 ### High Priority (User-Facing Screens)
+
 1. **app/(auth)/otp-verification.tsx** (162 lines, 17 className usages)
 2. **src/components/cards/WorkerCard.tsx** (80 lines, 13 usages)
 3. **src/components/cards/FarmCard.tsx** (127 lines, 22 usages)
@@ -31,6 +34,7 @@
 8. **app/(tabs)/settings.tsx** (72 usages)
 
 ### Medium Priority (Feature Screens)
+
 9. **app/logs.tsx** (102 usages) - LARGE
 10. **app/tasks.tsx** (39 usages)
 11. **app/warehouse.tsx** (54 usages)
@@ -41,44 +45,19 @@
 16. **app/onboarding.tsx** (57 usages)
 
 ### Low Priority (Forms & Modals)
-17-22. **Forms** (6 files, 133 total usages)
-    - HarvestForm.tsx (28)
-    - FertigationForm.tsx (27)
-    - ExpenseForm.tsx (24)
-    - SprayForm.tsx (20)
-    - FormField.tsx (19)
-    - IrrigationForm.tsx (15)
 
-23-32. **Screens/Modals** (10 files, 390 total usages)
-    - AttendanceView.tsx (147) - LARGEST
-    - WaterLevelModal.tsx (63)
-    - AddTaskModal.tsx (53)
-    - AddSoilProfileModal.tsx (37)
-    - TrendsChart.tsx (35)
-    - AddLabTestModal.tsx (29)
-    - TrendsTable.tsx (8)
-    - AddStockModal.tsx (6)
-    - ParameterSelector.tsx (6)
-    - ParameterSelector 2.tsx (6)
+17-22. **Forms** (6 files, 133 total usages) - HarvestForm.tsx (28) - FertigationForm.tsx (27) - ExpenseForm.tsx (24) - SprayForm.tsx (20) - FormField.tsx (19) - IrrigationForm.tsx (15)
 
-33-40. **Calculators & Farm Routes** (8 files)
-    - calculator/system-discharge.tsx (64)
-    - calculator/mad.tsx (47)
-    - calculator/nutrients.tsx (32)
-    - calculator/lai.tsx (32)
-    - farm/[id].tsx (84)
-    - farm/add.tsx (24)
-    - farm/add_old.tsx (48)
-    - farm/[id]/edit.tsx (48)
+23-32. **Screens/Modals** (10 files, 390 total usages) - AttendanceView.tsx (147) - LARGEST - WaterLevelModal.tsx (63) - AddTaskModal.tsx (53) - AddSoilProfileModal.tsx (37) - TrendsChart.tsx (35) - AddLabTestModal.tsx (29) - TrendsTable.tsx (8) - AddStockModal.tsx (6) - ParameterSelector.tsx (6) - ParameterSelector 2.tsx (6)
 
-41-43. **Misc**
-    - lab-tests.tsx (36)
-    - soil-profiling.tsx (66)
-    - soil-trends.tsx, petiole-trends.tsx (19 each)
+33-40. **Calculators & Farm Routes** (8 files) - calculator/system-discharge.tsx (64) - calculator/mad.tsx (47) - calculator/nutrients.tsx (32) - calculator/lai.tsx (32) - farm/[id].tsx (84) - farm/add.tsx (24) - farm/add_old.tsx (48) - farm/[id]/edit.tsx (48)
+
+41-43. **Misc** - lab-tests.tsx (36) - soil-profiling.tsx (66) - soil-trends.tsx, petiole-trends.tsx (19 each)
 
 ## 🔧 Conversion Pattern
 
 For each file:
+
 ```typescript
 // 1. Add imports
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -135,6 +114,7 @@ const containerStyle: ViewStyle = {
 ## 📊 Analysis Tool
 
 Run the analysis script to see detailed className usage:
+
 ```bash
 node scripts/convert-nativewind.js
 ```
@@ -154,6 +134,7 @@ node scripts/convert-nativewind.js
 5. Create Checkpoint 3 commit
 
 Estimated time for remaining work: 4-6 hours total
+
 - High priority screens: 2-3 hours
 - Forms & modals: 2-3 hours
 - Final cleanup & testing: 1 hour

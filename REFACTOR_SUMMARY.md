@@ -11,6 +11,7 @@
 ## ✅ What's Done
 
 ### Phase 1: Foundation Setup (Complete)
+
 - ✅ Branch created: `refactor/native-ui-strict`
 - ✅ Installed `expo-symbols` package
 - ✅ Created complete theme system in `src/styles/`
@@ -22,6 +23,7 @@
   - `REFACTOR_SUMMARY.md` - This file
 
 ### Phases 2-6: Easy Wins (Complete, tests/commits pending)
+
 - ✅ Phase 2: Icon migration (expo-symbols + Symbol wrapper)
 - ✅ Phase 3: `Platform.OS` replaced with `process.env.EXPO_OS`
 - ✅ Phase 4: Shadow props conversion (where used)
@@ -32,6 +34,7 @@
 **Commits:** 7+ (Phase 7 commit: `7cc4e26`)
 
 ### Phase 7: NativeWind Removal (Complete, tests pending)
+
 - ✅ Converted all UI components, screens, and pages to inline styles
 - ✅ Removed NativeWind dependencies/config
 - ✅ Cleaned legacy routes and files
@@ -53,11 +56,11 @@
 
 These phases are **high-risk, high-effort** architectural changes:
 
-| Phase | Task | Files | Time | Risk | Impact |
-|-------|------|-------|------|------|--------|
-| 7 | NativeWind removal | 70+ | 3-5 days | 🔴 High | Complete styling rewrite |
-| 8 | Modal architecture | 15+ | 3-4 days | 🔴 High | Navigation flow changes |
-| 12 | File renaming | 50+ | 2-3 days | 🔴 High | All imports change |
+| Phase | Task               | Files | Time     | Risk    | Impact                   |
+| ----- | ------------------ | ----- | -------- | ------- | ------------------------ |
+| 7     | NativeWind removal | 70+   | 3-5 days | 🔴 High | Complete styling rewrite |
+| 8     | Modal architecture | 15+   | 3-4 days | 🔴 High | Navigation flow changes  |
+| 12    | File renaming      | 50+   | 2-3 days | 🔴 High | All imports change       |
 
 **Total for phases 7-12:** 2-3 weeks
 
@@ -111,9 +114,11 @@ cat REFACTOR_SUMMARY.md
 ## 📖 Documentation Overview
 
 ### 1. REFACTOR_GUIDE.md
+
 **Purpose:** Detailed implementation guide  
 **Use When:** Actually doing the refactor work  
 **Contains:**
+
 - Step-by-step instructions for each phase
 - Code examples and patterns
 - Scripts to help automate tasks
@@ -121,17 +126,21 @@ cat REFACTOR_SUMMARY.md
 - Rollback instructions
 
 ### 2. REFACTOR_CHECKLIST.md
+
 **Purpose:** Quick progress tracking  
 **Use When:** Checking off completed work  
 **Contains:**
+
 - Checkbox lists for all files
 - Phase completion tracking
 - Time tracking table
 
 ### 3. REFACTOR_SUMMARY.md
+
 **Purpose:** High-level overview (this file)  
 **Use When:** Deciding what to do next  
 **Contains:**
+
 - Current status
 - Recommended approach
 - Quick start instructions
@@ -143,12 +152,14 @@ cat REFACTOR_SUMMARY.md
 ### Decision 1: Do the "Easy Wins" (Phases 2-6)?
 
 **YES if:**
+
 - ✅ You want better native patterns
 - ✅ You have ~12 hours over 2-3 days
 - ✅ You're comfortable with systematic changes
 - ✅ You want to use SF Symbols instead of Ionicons
 
 **NO if:**
+
 - ❌ Current code works fine
 - ❌ You don't have time right now
 - ❌ You prefer Ionicons icons
@@ -157,6 +168,7 @@ cat REFACTOR_SUMMARY.md
 ### Decision 2: Do the Major Changes (Phases 7-12)?
 
 **YES if:**
+
 - ✅ You completed phases 2-6 successfully
 - ✅ You want to eliminate NativeWind
 - ✅ You prefer route-based modals
@@ -165,6 +177,7 @@ cat REFACTOR_SUMMARY.md
 - ✅ You can handle extensive testing
 
 **NO if:**
+
 - ❌ NativeWind works well for you
 - ❌ Custom modals are fine
 - ❌ You don't have 2-3 weeks
@@ -176,17 +189,20 @@ cat REFACTOR_SUMMARY.md
 ## 💡 Recommendations
 
 ### For Solo Developers
+
 1. **Do phases 2-6** (the easy wins) now
 2. **Wait on phases 7-12** until you have a slower period
 3. **Consider skipping phases 7-12 entirely** - they're massive changes for questionable benefit
 
 ### For Teams
+
 1. **Get team buy-in** before starting
 2. **Assign phases to different people** (e.g., one person does icons, another does Platform.OS)
 3. **Do code reviews** after each phase
 4. **Pause after phase 6** and discuss as a team
 
 ### For Production Apps
+
 1. **Create a test branch** first (already done!)
 2. **Test extensively** after each phase
 3. **Consider feature freeze** during major phases (7, 8, 12)
@@ -200,9 +216,11 @@ cat REFACTOR_SUMMARY.md
 The refactor addresses these conflicts between current code and native UI guidelines:
 
 ### Already Fixed ✅
+
 - Theme system infrastructure
 
 ### Easy to Fix (Phases 2-6) ✅
+
 - Icon library choice (Ionicons → SF Symbols)
 - Platform detection approach
 - Shadow property syntax
@@ -210,6 +228,7 @@ The refactor addresses these conflicts between current code and native UI guidel
 - Minor API usage
 
 ### Hard to Fix (Phases 7-12) ⚠️
+
 - **NativeWind vs inline styles** - This is 70+ files and ~80% of your UI
 - **Custom modals vs routes** - This changes your entire navigation architecture
 - **File naming conventions** - This touches every component import
@@ -223,18 +242,21 @@ The refactor addresses these conflicts between current code and native UI guidel
 Instead of the full refactor, consider these alternatives:
 
 ### Alternative 1: Hybrid Approach
+
 - Keep NativeWind (it works!)
 - Keep custom modals (they're fine!)
 - Do only phases 2-6 (the easy, valuable changes)
 - Accept that not everything needs to be "strictly native"
 
 ### Alternative 2: Gradual Migration
+
 - Do new features with native patterns
 - Refactor old code opportunistically
 - Don't try to change everything at once
 - Complete migration over 6-12 months
 
 ### Alternative 3: Update the Guidelines
+
 - Modify the "building-native-ui" skill to accept NativeWind
 - Define when custom modals are appropriate
 - Accept PascalCase for React components
@@ -245,6 +267,7 @@ Instead of the full refactor, consider these alternatives:
 ## 📞 When to Ask for Help
 
 **Ask Factory/AI for help when:**
+
 - You get stuck on a specific phase
 - TypeScript errors are overwhelming
 - You need help writing migration scripts
@@ -252,6 +275,7 @@ Instead of the full refactor, consider these alternatives:
 - You want to discuss alternatives
 
 **Come prepared with:**
+
 - Current phase number
 - Specific error messages or issues
 - What you've tried already
@@ -274,6 +298,7 @@ Instead of the full refactor, consider these alternatives:
 ## 📊 Success Metrics
 
 **After Phases 2-6:**
+
 - ✅ All icons use SF Symbols
 - ✅ No Platform.OS usage
 - ✅ Modern shadow syntax
@@ -282,6 +307,7 @@ Instead of the full refactor, consider these alternatives:
 - ⏱️ ~12 hours invested
 
 **After Phases 7-12:**
+
 - ✅ No NativeWind dependency
 - ✅ Route-based modal architecture
 - ✅ Kebab-case file naming

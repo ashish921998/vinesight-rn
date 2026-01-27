@@ -25,6 +25,7 @@ git log --oneline -1
 **Status:** ✅ Done (Committed: 2b0da94)
 
 **What was done:**
+
 - ✅ Created branch `refactor/native-ui-strict`
 - ✅ Installed `expo-symbols` package
 - ✅ Created `src/styles/theme.ts` with complete design system
@@ -32,6 +33,7 @@ git log --oneline -1
 - ✅ Ported all Tailwind config to native styles
 
 **Files created:**
+
 - `src/styles/theme.ts`
 - `src/styles/utils.ts`
 - `src/styles/index.ts`
@@ -57,115 +59,115 @@ export const ICON_MAPPING: Record<string, string> = {
   'chevron-back': 'chevron.left',
   'chevron-forward': 'chevron.right',
   'chevron-down': 'chevron.down',
-  'close': 'xmark',
+  close: 'xmark',
   'close-circle': 'xmark.circle.fill',
-  
+
   // Actions
-  'add': 'plus',
+  add: 'plus',
   'add-circle': 'plus.circle.fill',
   'remove-circle': 'minus.circle.fill',
-  'checkmark': 'checkmark',
+  checkmark: 'checkmark',
   'checkmark-circle': 'checkmark.circle.fill',
   'create-outline': 'pencil',
-  'pencil': 'pencil',
-  'trash': 'trash',
+  pencil: 'pencil',
+  trash: 'trash',
   'trash-outline': 'trash',
-  'search': 'magnifyingglass',
+  search: 'magnifyingglass',
   'search-outline': 'magnifyingglass',
-  'refresh': 'arrow.clockwise',
-  
+  refresh: 'arrow.clockwise',
+
   // UI Elements
-  'grid': 'square.grid.2x2',
+  grid: 'square.grid.2x2',
   'grid-outline': 'square.grid.2x2',
   'list-outline': 'list.bullet',
-  'options': 'ellipsis',
+  options: 'ellipsis',
   'ellipsis-horizontal-circle': 'ellipsis.circle',
-  'menu': 'line.3.horizontal',
-  
+  menu: 'line.3.horizontal',
+
   // Farm & Agriculture
-  'leaf': 'leaf.fill',
+  leaf: 'leaf.fill',
   'leaf-outline': 'leaf',
-  'water': 'drop.fill',
+  water: 'drop.fill',
   'water-outline': 'drop',
-  'sunny': 'sun.max.fill',
+  sunny: 'sun.max.fill',
   'partly-sunny': 'cloud.sun.fill',
-  'rainy': 'cloud.rain.fill',
-  'flash': 'bolt.fill',
-  
+  rainy: 'cloud.rain.fill',
+  flash: 'bolt.fill',
+
   // Business
-  'calendar': 'calendar',
+  calendar: 'calendar',
   'calendar-outline': 'calendar',
-  'time': 'clock.fill',
+  time: 'clock.fill',
   'time-outline': 'clock',
-  'location': 'location.fill',
+  location: 'location.fill',
   'location-outline': 'location',
-  'cash': 'dollarsign.circle.fill',
+  cash: 'dollarsign.circle.fill',
   'cash-outline': 'dollarsign.circle',
-  'receipt': 'receipt',
+  receipt: 'receipt',
   'wallet-outline': 'wallet.pass',
-  
+
   // People
-  'people': 'person.2.fill',
+  people: 'person.2.fill',
   'people-outline': 'person.2',
-  'person': 'person.fill',
+  person: 'person.fill',
   'person-outline': 'person',
-  
+
   // Analytics
-  'analytics': 'chart.bar.fill',
+  analytics: 'chart.bar.fill',
   'analytics-outline': 'chart.bar',
   'bar-chart-outline': 'chart.bar',
   'trending-up': 'chart.line.uptrend.xyaxis',
   'trending-down': 'chart.line.downtrend.xyaxis',
-  'speedometer': 'gauge',
-  
+  speedometer: 'gauge',
+
   // Info & Alerts
   'information-circle': 'info.circle.fill',
   'information-circle-outline': 'info.circle',
   'alert-circle': 'exclamationmark.circle.fill',
   'alert-circle-outline': 'exclamationmark.circle',
-  'warning': 'exclamationmark.triangle.fill',
+  warning: 'exclamationmark.triangle.fill',
   'warning-outline': 'exclamationmark.triangle',
   'help-circle-outline': 'questionmark.circle',
-  
+
   // Documents
-  'document': 'doc.fill',
+  document: 'doc.fill',
   'document-text': 'doc.text.fill',
   'document-text-outline': 'doc.text',
-  
+
   // Tools & Science
-  'flask': 'flask.fill',
+  flask: 'flask.fill',
   'flask-outline': 'flask',
   'beaker-outline': 'flask',
-  'layers': 'square.stack.3d.up.fill',
+  layers: 'square.stack.3d.up.fill',
   'layers-outline': 'square.stack.3d.up',
   'cube-outline': 'cube',
-  
+
   // Settings
-  'settings': 'gearshape.fill',
+  settings: 'gearshape.fill',
   'settings-outline': 'gearshape',
   'shield-checkmark': 'checkmark.shield.fill',
   'log-out-outline': 'rectangle.portrait.and.arrow.right',
-  
+
   // Misc
-  'notifications': 'bell.fill',
+  notifications: 'bell.fill',
   'star-outline': 'star',
   'checkbox-outline': 'square',
-  'alarm': 'alarm.fill',
-  'bulb': 'lightbulb.fill',
-  'bug': 'ant.fill',
-  'basket': 'basket.fill',
+  alarm: 'alarm.fill',
+  bulb: 'lightbulb.fill',
+  bug: 'ant.fill',
+  basket: 'basket.fill',
   'cut-outline': 'scissors',
-  'resize': 'arrow.up.left.and.arrow.down.right',
+  resize: 'arrow.up.left.and.arrow.down.right',
   'resize-outline': 'arrow.up.left.and.arrow.down.right',
   'git-branch': 'arrow.triangle.branch',
-  'globe': 'globe',
+  globe: 'globe',
   'cloud-offline': 'cloud.slash',
   'arrow-up-circle': 'arrow.up.circle.fill',
-  'calculator': 'function',
+  calculator: 'function',
   'calculator-outline': 'function',
-  'compass': 'compass.fill',
+  compass: 'compass.fill',
   'compass-outline': 'compass',
-  'save': 'square.and.arrow.down.fill',
+  save: 'square.and.arrow.down.fill',
 };
 ```
 
@@ -230,6 +232,7 @@ grep -r "Ionicons" app/ src/ --include="*.tsx" --include="*.ts" | wc -l
 ### Files to Update (in order)
 
 #### UI Components (Priority 1)
+
 - [ ] `src/components/ui/Input.tsx`
 - [ ] `src/components/ui/Button.tsx`
 - [ ] `src/components/ui/FormComponents.tsx`
@@ -237,6 +240,7 @@ grep -r "Ionicons" app/ src/ --include="*.tsx" --include="*.ts" | wc -l
 - [ ] `src/components/ui/UnitPickerModal 2.tsx`
 
 #### Cards (Priority 2)
+
 - [ ] `src/components/cards/QuickActionButton.tsx`
 - [ ] `src/components/cards/StatsCard.tsx`
 - [ ] `src/components/cards/WorkerCard.tsx`
@@ -244,6 +248,7 @@ grep -r "Ionicons" app/ src/ --include="*.tsx" --include="*.ts" | wc -l
 - [ ] `src/components/cards/FarmCard.tsx`
 
 #### Forms (Priority 3)
+
 - [ ] `src/components/forms/HarvestForm.tsx`
 - [ ] `src/components/forms/FertigationForm.tsx`
 - [ ] `src/components/forms/IrrigationForm.tsx`
@@ -252,6 +257,7 @@ grep -r "Ionicons" app/ src/ --include="*.tsx" --include="*.ts" | wc -l
 - [ ] `src/components/forms/FormField.tsx`
 
 #### Screens/Modals (Priority 4)
+
 - [ ] `src/components/screens/AttendanceView.tsx`
 - [ ] `src/components/screens/WaterLevelModal.tsx`
 - [ ] `src/components/screens/AddEntryModal.tsx`
@@ -267,6 +273,7 @@ grep -r "Ionicons" app/ src/ --include="*.tsx" --include="*.ts" | wc -l
 - [ ] `src/components/screens/EditActivityModal.tsx`
 
 #### Pages (Priority 5)
+
 - [ ] `app/(tabs)/_layout.tsx` - **IMPORTANT: Tab icons**
 - [ ] `app/(tabs)/index.tsx`
 - [ ] `app/(tabs)/explore.tsx`
@@ -543,6 +550,7 @@ const styles = {
 ### 6.3: Fix contentInsetAdjustmentBehavior in Calculators
 
 Change `contentInsetAdjustmentBehavior="never"` to `"automatic"` in:
+
 - [ ] `app/calculator/lai.tsx`
 - [ ] `app/calculator/system-discharge.tsx`
 - [ ] `app/calculator/mad.tsx`
@@ -590,26 +598,26 @@ const tailwindToStyle = {
   'bg-white/80': { backgroundColor: 'rgba(255, 255, 255, 0.8)' },
   'bg-primary-600': { backgroundColor: '#346a4a' },
   'bg-surface-50': { backgroundColor: '#f2f2f7' },
-  
+
   // Padding
   'p-4': { padding: 16 },
   'px-4': { paddingHorizontal: 16 },
   'py-3': { paddingVertical: 12 },
   'pt-2': { paddingTop: 8 },
   'pb-4': { paddingBottom: 16 },
-  
+
   // Margin
   'm-2': { margin: 8 },
   'mx-4': { marginHorizontal: 16 },
   'my-2': { marginVertical: 8 },
   'mt-4': { marginTop: 16 },
   'mb-2': { marginBottom: 8 },
-  
+
   // Border radius
   'rounded-xl': { borderRadius: 16 },
   'rounded-2xl': { borderRadius: 20 },
   'rounded-full': { borderRadius: 9999 },
-  
+
   // Flex
   'flex': { display: 'flex' },
   'flex-row': { flexDirection: 'row' },
@@ -617,7 +625,7 @@ const tailwindToStyle = {
   'items-center': { alignItems: 'center' },
   'justify-center': { justifyContent: 'center' },
   'justify-between': { justifyContent: 'space-between' },
-  
+
   // Text
   'text-lg': { fontSize: 18 },
   'text-base': { fontSize: 16 },
@@ -636,6 +644,7 @@ EOF
 ### File-by-File Checklist
 
 #### UI Components
+
 - [ ] `src/components/ui/Button.tsx`
 - [ ] `src/components/ui/Input.tsx`
 - [ ] `src/components/ui/FormComponents.tsx`
@@ -645,6 +654,7 @@ EOF
 - [ ] `src/components/ui/CropIcon.tsx`
 
 #### Cards
+
 - [ ] `src/components/cards/QuickActionButton.tsx`
 - [ ] `src/components/cards/StatsCard.tsx`
 - [ ] `src/components/cards/WorkerCard.tsx`
@@ -652,6 +662,7 @@ EOF
 - [ ] `src/components/cards/FarmCard.tsx`
 
 #### Forms
+
 - [ ] `src/components/forms/HarvestForm.tsx`
 - [ ] `src/components/forms/FertigationForm.tsx`
 - [ ] `src/components/forms/IrrigationForm.tsx`
@@ -660,6 +671,7 @@ EOF
 - [ ] `src/components/forms/FormField.tsx`
 
 #### Screens/Modals (15+ files)
+
 - [ ] `src/components/screens/AttendanceView.tsx`
 - [ ] `src/components/screens/WaterLevelModal.tsx`
 - [ ] `src/components/screens/AddEntryModal.tsx`
@@ -677,6 +689,7 @@ EOF
 - [ ] `src/components/screens/AddWarehouseItemModal.tsx`
 
 #### Pages (35+ files)
+
 - [ ] `app/(tabs)/index.tsx`
 - [ ] `app/(tabs)/explore.tsx`
 - [ ] `app/(tabs)/farms.tsx`
@@ -787,7 +800,7 @@ import { Stack } from 'expo-router';
 
 export default function AddWorkerScreen() {
   const router = useRouter();
-  
+
   return (
     <>
       <Stack.Screen
@@ -823,14 +836,16 @@ export default function AddWorkerScreen() {
 For modals that need to pass data:
 
 1. **Option A: Route params** (for simple data)
+
 ```typescript
 router.push({
   pathname: '/edit-activity/[id]',
-  params: { id: activity.id, type: activity.type }
+  params: { id: activity.id, type: activity.type },
 });
 ```
 
 2. **Option B: Zustand store** (for complex data/callbacks)
+
 ```typescript
 // src/stores/modalStore.ts
 interface ModalStore {
@@ -884,6 +899,7 @@ import * as FileSystem from 'expo-file-system';
 **File:** `src/components/screens/AddLabTestModal.tsx`
 
 **Options:**
+
 1. **Server-side parsing** (Recommended)
    - Upload PDF to Supabase Storage
    - Parse on backend with proper PDF library
@@ -1063,11 +1079,11 @@ while IFS= read -r line; do
   # Skip comments and empty lines
   [[ "$line" =~ ^#.*$ ]] && continue
   [[ -z "$line" ]] && continue
-  
+
   # Parse old and new paths
   old_path=$(echo "$line" | awk '{print $1}')
   new_path=$(echo "$line" | awk '{print $3}')
-  
+
   # Rename with git mv (preserves history)
   if [ -f "$old_path" ]; then
     echo "Renaming: $old_path → $new_path"
@@ -1116,17 +1132,20 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 ### Testing Checklist
 
 #### 13.1: Static Analysis
+
 - [ ] `npm run typecheck` - No TypeScript errors
 - [ ] `npm run lint` - No ESLint errors
 - [ ] `npm run format` - Code formatted
 
 #### 13.2: Build Tests
+
 - [ ] `npm start` - Dev server starts
 - [ ] `npx expo start --ios` - iOS build works
 - [ ] `npx expo start --android` - Android build works
 - [ ] `npm run web` - Web build works
 
 #### 13.3: Screen Testing (iOS)
+
 - [ ] Splash screen
 - [ ] Login / OTP verification
 - [ ] Onboarding
@@ -1146,9 +1165,11 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 - [ ] Logs screen
 
 #### 13.4: Screen Testing (Android)
+
 - [ ] Repeat all iOS tests on Android
 
 #### 13.5: Functionality Testing
+
 - [ ] User authentication flow
 - [ ] Farm CRUD operations
 - [ ] Worker management
@@ -1162,6 +1183,7 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 - [ ] AI chat functionality
 
 #### 13.6: Visual Regression Testing
+
 - [ ] Compare screenshots before/after
 - [ ] Check spacing, colors, fonts
 - [ ] Verify glass effects still work
@@ -1169,6 +1191,7 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 - [ ] Verify responsive layouts
 
 #### 13.7: Performance Testing
+
 - [ ] App launch time
 - [ ] Navigation performance
 - [ ] List scrolling performance
@@ -1183,15 +1206,19 @@ Create a `BUGS.md` file to track issues:
 # Refactor Bugs
 
 ## Critical
+
 - [ ] Issue 1
 
 ## High Priority
+
 - [ ] Issue 2
 
 ## Medium Priority
+
 - [ ] Issue 3
 
 ## Low Priority / Polish
+
 - [ ] Issue 4
 ```
 
@@ -1246,21 +1273,21 @@ git tag -a "pre-native-ui-refactor" HEAD~1 -m "Code before native UI refactor"
 
 ## 📊 Progress Tracking
 
-| Phase | Status | Time Spent | Notes |
-|-------|--------|------------|-------|
-| 1. Foundation | ✅ Complete | - | Theme system created |
-| 2. Icon Migration | ⬜ Pending | - | 50+ files |
-| 3. Platform.OS | ⬜ Pending | - | 17 files |
-| 4. Shadows | ⬜ Pending | - | 6 files |
-| 5. SafeAreaView | ⬜ Pending | - | 17 files |
-| 6. Minor Fixes | ⬜ Pending | - | 6 files |
-| 7. NativeWind | ⬜ Pending | - | 70+ files - MAJOR |
-| 8. Modal Architecture | ⬜ Pending | - | 15+ files - MAJOR |
-| 9. AsyncStorage/WebView | ⬜ Pending | - | 4 files |
-| 10. Tabs Migration | ⬜ Pending | - | 1 file |
-| 11. TouchableOpacity | ⬜ Pending | - | 50+ files |
-| 12. File Renaming | ⬜ Pending | - | 50+ files - MAJOR |
-| 13. Testing | ⬜ Pending | - | Comprehensive |
+| Phase                   | Status      | Time Spent | Notes                |
+| ----------------------- | ----------- | ---------- | -------------------- |
+| 1. Foundation           | ✅ Complete | -          | Theme system created |
+| 2. Icon Migration       | ⬜ Pending  | -          | 50+ files            |
+| 3. Platform.OS          | ⬜ Pending  | -          | 17 files             |
+| 4. Shadows              | ⬜ Pending  | -          | 6 files              |
+| 5. SafeAreaView         | ⬜ Pending  | -          | 17 files             |
+| 6. Minor Fixes          | ⬜ Pending  | -          | 6 files              |
+| 7. NativeWind           | ⬜ Pending  | -          | 70+ files - MAJOR    |
+| 8. Modal Architecture   | ⬜ Pending  | -          | 15+ files - MAJOR    |
+| 9. AsyncStorage/WebView | ⬜ Pending  | -          | 4 files              |
+| 10. Tabs Migration      | ⬜ Pending  | -          | 1 file               |
+| 11. TouchableOpacity    | ⬜ Pending  | -          | 50+ files            |
+| 12. File Renaming       | ⬜ Pending  | -          | 50+ files - MAJOR    |
+| 13. Testing             | ⬜ Pending  | -          | Comprehensive        |
 
 **Total Estimated Time:** 2-3 weeks  
 **Current Progress:** ~8%
