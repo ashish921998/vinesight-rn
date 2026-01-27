@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 
 import { Stack, useRouter } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
-import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/useTasks';
+import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-tasks';
 import { TaskReminder, TASK_TYPE_INFO, PRIORITY_INFO } from '../src/types/task';
 import { useModalStore } from '@/stores';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';

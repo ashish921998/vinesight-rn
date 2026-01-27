@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
-import AddLabTestModal from '@/components/screens/AddLabTestModal';
+import AddLabTestModal from '@/components/screens/add-lab-test-modal';
 
 export default function AddLabTestRoute() {
   const router = useRouter();

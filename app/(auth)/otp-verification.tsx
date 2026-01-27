@@ -3,7 +3,7 @@ import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-nat
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, OTPInput } from '@/components/ui';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 const RESEND_COOLDOWN = 60; // seconds

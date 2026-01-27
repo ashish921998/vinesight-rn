@@ -6,9 +6,9 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { router } from 'expo-router';
-import { useOnboardingStore } from '../src/stores/onboardingStore';
+import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 

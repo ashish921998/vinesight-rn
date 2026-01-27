@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 
-import { AddWorkerModal } from '@/components/screens/AddWorkerModal';
+import { AddWorkerModal } from '@/components/screens/add-worker-modal';
 import { useModalStore } from '@/stores';
 
 export default function AddWorkerRoute() {

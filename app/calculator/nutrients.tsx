@@ -7,8 +7,8 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
-import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculatorModels';
+import { Symbol } from '@/components/ui/symbol';
+import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface NutrientResult {

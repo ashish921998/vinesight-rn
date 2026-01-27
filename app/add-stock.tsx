@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 
-import AddStockModal from '@/components/screens/AddStockModal';
+import AddStockModal from '@/components/screens/add-stock-modal';
 import { useModalStore } from '@/stores';
 
 export default function AddStockRoute() {

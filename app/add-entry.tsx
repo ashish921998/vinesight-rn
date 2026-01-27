@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
-import { AddEntryModal } from '@/components/screens/AddEntryModal';
+import { AddEntryModal } from '@/components/screens/add-entry-modal';
 import { useModalStore } from '@/stores';
-import type { LogTypeId } from '@/constants/calculatorModels';
+import type { LogTypeId } from '@/constants/calculator-models';
 
 const parseTabs = (value?: string | string[]) => {
   if (!value) return undefined;

@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
-import { WaterLevelModal } from '@/components/screens/WaterLevelModal';
+import { WaterLevelModal } from '@/components/screens/water-level-modal';
 import { useFarm } from '@/hooks';
 
 export default function WaterLevelRoute() {

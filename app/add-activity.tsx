@@ -1,7 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
-import { AddEntryModal } from '@/components/screens/AddEntryModal';
-import type { LogTypeId } from '@/constants/calculatorModels';
+import { AddEntryModal } from '@/components/screens/add-entry-modal';
+import type { LogTypeId } from '@/constants/calculator-models';
 
 export default function AddActivityRoute() {
   const router = useRouter();

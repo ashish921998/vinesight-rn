@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
-import AddSoilProfileModal from '@/components/screens/AddSoilProfileModal';
+import AddSoilProfileModal from '@/components/screens/add-soil-profile-modal';
 
 export default function AddSoilProfileRoute() {
   const router = useRouter();

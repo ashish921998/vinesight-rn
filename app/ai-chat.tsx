@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import Markdown from 'react-native-markdown-display';
 import { useFarm } from '@/hooks';
-import { aiService } from '@/services/aiService';
+import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 

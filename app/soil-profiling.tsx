@@ -7,7 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFarm } from '../src/hooks';
@@ -20,7 +20,7 @@ import {
   getMoistureStatus,
   SECTION_INFO,
   SECTION_NAMES,
-} from '../src/hooks/useSoilProfiles';
+} from '../src/hooks/use-soil-profiles';
 import { SoilProfile } from '../src/types/database';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 

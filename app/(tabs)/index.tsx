@@ -18,8 +18,8 @@ import {
   useFarms,
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
-import { Symbol } from '@/components/ui/Symbol';
-import type { LogTypeId } from '@/constants/calculatorModels';
+import { Symbol } from '@/components/ui/symbol';
+import type { LogTypeId } from '@/constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 // ============================================================

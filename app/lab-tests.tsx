@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFarm } from '../src/hooks';
 import {
@@ -16,7 +16,7 @@ import {
   useDeleteSoilTest,
   useDeletePetioleTest,
   formatParameterKey,
-} from '../src/hooks/useLabTests';
+} from '../src/hooks/use-lab-tests';
 import { SoilTestRecord, PetioleTestRecord } from '../src/types/database';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 

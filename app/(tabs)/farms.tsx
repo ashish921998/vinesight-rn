@@ -14,7 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useFarms, useDeleteFarm } from '@/hooks';
 import { FarmCard } from '@/components/cards';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import type { Farm } from '@/types';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 

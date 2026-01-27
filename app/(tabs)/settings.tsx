@@ -15,8 +15,8 @@ import {
 } from 'react-native';
 import { useAuthStore } from '@/stores';
 import { useProfile, useUpdateProfile } from '@/hooks';
-import { CURRENCIES, AREA_UNITS } from '@/constants/calculatorModels';
-import { Symbol } from '@/components/ui/Symbol';
+import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
+import { Symbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export default function SettingsScreen() {

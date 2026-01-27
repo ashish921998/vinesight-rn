@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -28,7 +28,7 @@ import {
   useExpenseRecordsByFarms,
   useFertigationRecordsByFarms,
 } from '@/hooks';
-import { LOG_TYPES, type LogTypeId } from '@/constants/calculatorModels';
+import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { useModalStore } from '@/stores';
 import type {
   IrrigationRecord,

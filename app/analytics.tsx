@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 
 import { Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useAnalytics } from '../src/hooks/useAnalytics';
+import { useAnalytics } from '../src/hooks/use-analytics';
 import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
 

@@ -3,8 +3,8 @@
 ## 📊 Current Status
 
 **Branch:** `refactor/native-ui-strict`  
-**Progress:** Phases 1-11 complete (tests pending). Phase 12 in progress.  
-**Last Commit:** `df95d94` - Phase 11: Replace TouchableOpacity
+**Progress:** Phases 1-11 complete (tests pending). Phase 12 in progress (renames done).  
+**Last Commit:** `dad9b78` - Docs: update refactor status
 
 ---
 
@@ -42,9 +42,8 @@
 
 ### Immediate Next Steps (Phase 12 - File Renaming)
 
-- Create rename mapping for PascalCase → kebab-case
-- Run rename script and fix imports
 - Commit Phase 12
+- Run quick smoke checks for critical flows
 
 **After completing phases 2-6, re-evaluate if you want to continue with the major architectural changes (phases 7-12).**
 

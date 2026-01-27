@@ -6,12 +6,12 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
-import { useFarm } from '@/hooks/useFarms';
-import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/useLabTests';
-import ParameterSelector from '@/components/screens/ParameterSelector';
-import TrendsTable from '@/components/screens/TrendsTable';
-import TrendsChart from '@/components/screens/TrendsChart';
+import { Symbol } from '@/components/ui/symbol';
+import { useFarm } from '@/hooks/use-farms';
+import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
+import ParameterSelector from '@/components/screens/parameter-selector';
+import TrendsTable from '@/components/screens/trends-table';
+import TrendsChart from '@/components/screens/trends-chart';
 import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 
 type ViewMode = 'table' | 'chart';

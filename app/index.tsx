@@ -2,8 +2,8 @@ import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { getConfigurationStatus } from '@/lib/supabase';
-import { AnimatedSplash } from '@/components/AnimatedSplash';
-import { Symbol } from '@/components/ui/Symbol';
+import { AnimatedSplash } from '@/components/animated-splash';
+import { Symbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 /**

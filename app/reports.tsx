@@ -7,12 +7,12 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFarms } from '../src/hooks';
-import { useReportData, useReportExport, getDefaultDateRange } from '../src/hooks/useReports';
+import { useReportData, useReportExport, getDefaultDateRange } from '../src/hooks/use-reports';
 import { DateRange, ReportType, ReportFormat } from '../src/types/report';
 
 const REPORT_TYPES: { value: ReportType; label: string; icon: string }[] = [

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { useWorkers, useDeleteWorker } from '@/hooks';
 import { useModalStore } from '@/stores';
 import { AttendanceView } from '@/components/screens';

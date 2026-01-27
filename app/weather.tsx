@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
-import { useWeatherData } from '../src/hooks/useWeather';
+import { useWeatherData } from '../src/hooks/use-weather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 

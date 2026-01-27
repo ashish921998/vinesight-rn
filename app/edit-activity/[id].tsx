@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
-import { EditActivityModal } from '@/components/screens/EditActivityModal';
+import { EditActivityModal } from '@/components/screens/edit-activity-modal';
 import { useModalStore } from '@/stores';
 
 export default function EditActivityRoute() {

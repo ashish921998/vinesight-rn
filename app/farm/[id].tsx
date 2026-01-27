@@ -9,9 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { useFarm, useFarmRecords, useWeather, useDeleteFarm } from '@/hooks';
-import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/useTasks';
+import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
 import { StatsCard, ActivityLogCard } from '@/components/cards';
 import type {
   IrrigationRecord,

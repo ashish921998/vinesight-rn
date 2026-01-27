@@ -10,10 +10,10 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useFarm, useUpdateFarm } from '@/hooks';
-import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/cropVarieties';
+import { CROPS, CROP_VARIETIES, type CropType } from '@/constants/crop-varieties';
 import type { FarmUpdate } from '@/types';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 

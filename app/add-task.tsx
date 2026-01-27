@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
-import AddTaskModal from '@/components/screens/AddTaskModal';
+import AddTaskModal from '@/components/screens/add-task-modal';
 import { useModalStore } from '@/stores';
 
 export default function AddTaskRoute() {

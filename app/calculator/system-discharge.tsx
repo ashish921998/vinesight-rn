@@ -7,7 +7,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/Symbol';
+import { Symbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type SystemDischargeResults = {

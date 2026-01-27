@@ -1,8 +1,8 @@
-export { Button } from './Button';
-export { CropIcon } from './CropIcon';
-export { Input } from './Input';
-export { OTPInput } from './OTPInput';
-export { UnitPickerModal } from './UnitPickerModal';
+export { Button } from './button';
+export { CropIcon } from './crop-icon';
+export { Input } from './input';
+export { OTPInput } from './otp-input';
+export { UnitPickerModal } from './unit-picker-modal';
 export {
   FormModal,
   FullScreenForm,
@@ -14,4 +14,4 @@ export {
   Toggle,
   InfoCard,
   PreviewCard,
-} from './FormComponents';
+} from './form-components';

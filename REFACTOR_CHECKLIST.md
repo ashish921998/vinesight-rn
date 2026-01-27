@@ -267,11 +267,11 @@ Test the app thoroughly:
 
 **⚠️ HIGH RISK - Use git mv to preserve history**
 
-- [ ] Create complete rename mapping
-- [ ] Run rename script
-- [ ] Fix all imports
-- [ ] Update barrel exports
-- [ ] Run typecheck
+- [x] Create complete rename mapping
+- [x] Run rename script
+- [x] Fix all imports
+- [x] Update barrel exports
+- [x] Run typecheck
 - [ ] Commit: "Phase 12: Rename files to kebab-case"
 
 ---

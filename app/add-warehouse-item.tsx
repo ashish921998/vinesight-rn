@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 
-import AddWarehouseItemModal from '@/components/screens/AddWarehouseItemModal';
+import AddWarehouseItemModal from '@/components/screens/add-warehouse-item-modal';
 import { useModalStore } from '@/stores';
 
 export default function AddWarehouseItemRoute() {

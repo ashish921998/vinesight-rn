@@ -4,7 +4,7 @@
  */
 
 // Query Keys
-export { queryKeys } from './queryKeys';
+export { queryKeys } from './query-keys';
 
 // Farm Hooks
 export {
@@ -15,7 +15,7 @@ export {
   useUpdateFarmWaterLevel,
   useDeleteFarm,
   usePrefetchFarm,
-} from './useFarms';
+} from './use-farms';
 
 // Record Hooks (Irrigation, Spray, Fertigation, Harvest, Expense)
 export {
@@ -49,7 +49,7 @@ export {
   useCreateExpenseRecord,
   useUpdateExpenseRecord,
   useDeleteExpenseRecord,
-} from './useRecords';
+} from './use-records';
 
 // Worker Hooks
 export {
@@ -80,7 +80,7 @@ export {
   useTemporaryWorkerEntries,
   useCreateTemporaryWorkerEntry,
   useDeleteTemporaryWorkerEntry,
-} from './useWorkers';
+} from './use-workers';
 
 // Profile & Misc Hooks
 export {
@@ -110,7 +110,7 @@ export {
   // Calculation History
   useCalculationHistory,
   useCreateCalculationHistory,
-} from './useProfile';
+} from './use-profile';
 
 // Dashboard Hooks
 export {
@@ -120,10 +120,10 @@ export {
   type DashboardStats,
   type FarmNeedingAttention,
   type RecentActivity,
-} from './useDashboardStats';
+} from './use-dashboard-stats';
 
 // Composite Farm Records Hook
-export { useFarmRecords } from './useFarmRecords';
+export { useFarmRecords } from './use-farm-records';
 
 // Weather Hooks
 export {
@@ -133,7 +133,7 @@ export {
   useIrrigationSchedule,
   useWeatherData,
   weatherQueryKeys,
-} from './useWeather';
+} from './use-weather';
 
 // Task Hooks
 export {
@@ -144,13 +144,13 @@ export {
   useCompleteTask,
   useDeleteTask,
   taskQueryKeys,
-} from './useTasks';
+} from './use-tasks';
 
 // Analytics Hooks
-export { useAnalytics } from './useAnalytics';
+export { useAnalytics } from './use-analytics';
 
 // Report Hooks
-export { useReportData, useReportExport, getDefaultDateRange } from './useReports';
+export { useReportData, useReportExport, getDefaultDateRange } from './use-reports';
 
 // Lab Tests Hooks
 export {
@@ -165,7 +165,7 @@ export {
   PETIOLE_PARAMETERS,
   formatParameterKey,
   getParameterUnit,
-} from './useLabTests';
+} from './use-lab-tests';
 
 // Soil Profile Utilities (Hooks already exported from useProfile)
 export {
@@ -177,4 +177,4 @@ export {
   formatProfileDate,
   getMoistureStatus,
   type SectionName,
-} from './useSoilProfiles';
+} from './use-soil-profiles';
