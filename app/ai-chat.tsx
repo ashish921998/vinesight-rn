@@ -17,6 +17,7 @@ import { useFarm } from '@/hooks';
 import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const markdownStyles = {
   body: { fontSize: 16, color: '#1c1c1e', lineHeight: 24 },
@@ -87,6 +88,7 @@ export default function AIChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
 
   const DEFAULT_SUGGESTIONS = [
     'How much water do I need?',
@@ -191,7 +193,7 @@ export default function AIChatScreen() {
           <ScrollView
             ref={scrollViewRef}
             style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[4] }}
-            contentContainerStyle={{ paddingTop: spacing[4] }}
+            contentContainerStyle={{ paddingTop: spacing[4] + insets.top }}
             contentInsetAdjustmentBehavior="automatic"
             showsVerticalScrollIndicator={false}
           >
