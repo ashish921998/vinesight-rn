@@ -1,6 +1,8 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View, Text, Pressable } from 'react-native';
 
-import AddLabTestModal from '@/components/screens/add-lab-test-modal';
+import LabTestForm from '@/components/screens/lab-test-form';
+import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 
 export default function AddLabTestRoute() {
   const router = useRouter();
@@ -10,13 +12,58 @@ export default function AddLabTestRoute() {
   const testType = params.testType === 'petiole' ? 'petiole' : 'soil';
 
   if (!Number.isFinite(farmId)) {
-    return null;
+    const farmIdLabel = params.farmId ?? 'missing';
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing[6],
+          backgroundColor: colors.surface[50],
+        }}
+      >
+        <Text
+          style={{
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.semibold,
+            color: colors.surface[900],
+            textAlign: 'center',
+          }}
+        >
+          Unable to open lab test form
+        </Text>
+        <Text
+          style={{
+            fontSize: fontSize.base,
+            color: colors.surface[600],
+            textAlign: 'center',
+            marginTop: spacing[2],
+          }}
+        >
+          Invalid farmId: {farmIdLabel}
+        </Text>
+        <Pressable
+          onPress={() => router.push('/lab-tests')}
+          style={{
+            marginTop: spacing[4],
+            paddingHorizontal: spacing[6],
+            paddingVertical: spacing[3],
+            backgroundColor: colors.primary[500],
+            borderRadius: spacing[3],
+          }}
+        >
+          <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
+            Back to Lab Tests
+          </Text>
+        </Pressable>
+      </View>
+    );
   }
 
   return (
     <>
-      <Stack.Screen options={{ presentation: 'modal', headerShown: false }} />
-      <AddLabTestModal
+      <LabTestForm
         onClose={() => router.back()}
         presentation="screen"
         farmId={farmId}

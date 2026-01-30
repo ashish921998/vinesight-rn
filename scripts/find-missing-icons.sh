@@ -11,7 +11,7 @@ grep -rh 'Symbol.*name="[^"]*"' src/components app/ 2>/dev/null | \
   sort -u | \
   while read -r icon; do
     # Check if it exists in Symbol.tsx mapping
-    if grep -q "'$icon'" src/components/ui/Symbol.tsx; then
+    if grep -q "'$icon'" src/components/ui/symbol.tsx; then
       echo "✅ $icon"
     else
       echo "❌ MISSING: $icon"
@@ -23,4 +23,4 @@ echo "Legend:"
 echo "✅ = Icon has mapping"
 echo "❌ = Icon missing from SYMBOL_TO_IONICON mapping"
 echo ""
-echo "To add missing icons, edit src/components/ui/Symbol.tsx"
+echo "To add missing icons, edit src/components/ui/symbol.tsx"

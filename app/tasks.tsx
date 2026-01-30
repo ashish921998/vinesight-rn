@@ -520,7 +520,11 @@ export default function TasksScreen() {
               borderRadius: borderRadius.full,
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
+              elevation: 4,
             }}
           >
             <Symbol name="plus" size={28} color="white" />

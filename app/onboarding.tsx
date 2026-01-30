@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { router } from 'expo-router';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
@@ -118,7 +118,7 @@ export default function OnboardingScreen() {
           marginBottom: spacing[8],
         }}
       >
-        <Symbol name="leaf.fill" size={64} color="#1a5d1a" />
+        <SymbolIcon name="leaf.fill" size={64} color="#1a5d1a" />
       </View>
       <Text
         style={{
@@ -181,7 +181,7 @@ export default function OnboardingScreen() {
               backgroundColor: `${feature.color}15`,
             }}
           >
-            <Symbol name={feature.icon} size={24} color={feature.color} />
+            <SymbolIcon name={feature.icon} size={24} color={feature.color} />
           </View>
           <View style={{ flex: 1 }}>
             <Text
@@ -226,7 +226,7 @@ export default function OnboardingScreen() {
       {/* Country Selection */}
       <View style={{ marginBottom: spacing[6] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
-          <Symbol name="globe" size={20} color="#1a5d1a" />
+          <SymbolIcon name="globe" size={20} color="#1a5d1a" />
           <Text
             style={{
               fontSize: fontSize.base,
@@ -257,7 +257,11 @@ export default function OnboardingScreen() {
           >
             {selectedCountry || 'Select a country'}
           </Text>
-          <Symbol name={showCountryPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
+          <SymbolIcon
+            name={showCountryPicker ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color="#666"
+          />
         </Pressable>
 
         {showCountryPicker && (
@@ -304,7 +308,7 @@ export default function OnboardingScreen() {
       {/* Area Unit Selection */}
       <View style={{ marginBottom: spacing[6] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
-          <Symbol name="resize" size={20} color="#1a5d1a" />
+          <SymbolIcon name="resize" size={20} color="#1a5d1a" />
           <Text
             style={{
               fontSize: fontSize.base,
@@ -384,7 +388,7 @@ export default function OnboardingScreen() {
           marginBottom: spacing[8],
         }}
       >
-        <Symbol name="notifications" size={48} color="#3B82F6" />
+        <SymbolIcon name="notifications" size={48} color="#3B82F6" />
       </View>
       <Text
         style={{
@@ -404,15 +408,15 @@ export default function OnboardingScreen() {
         style={{ backgroundColor: '#EFF6FF', padding: spacing[4], borderRadius: borderRadius.xl }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-          <Symbol name="drop.fill" size={20} color="#3B82F6" />
+          <SymbolIcon name="drop.fill" size={20} color="#3B82F6" />
           <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Irrigation reminders</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-          <Symbol name="alarm" size={20} color="#3B82F6" />
+          <SymbolIcon name="alarm" size={20} color="#3B82F6" />
           <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Task deadlines</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Symbol name="warning" size={20} color="#3B82F6" />
+          <SymbolIcon name="warning" size={20} color="#3B82F6" />
           <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Weather alerts</Text>
         </View>
       </View>
@@ -439,7 +443,7 @@ export default function OnboardingScreen() {
           marginBottom: spacing[8],
         }}
       >
-        <Symbol name="checkmark.circle.fill" size={64} color="#1a5d1a" />
+        <SymbolIcon name="checkmark.circle.fill" size={64} color="#1a5d1a" />
       </View>
       <Text
         style={{

@@ -32,7 +32,7 @@ export default function MADCalculatorScreen() {
     const depthVal = parseFloat(rootDepth);
     const widthVal = parseFloat(rootWidth);
     const retentionVal = parseFloat(waterRetention);
-    return dblVal > 0 && depthVal > 0 && widthVal > 0 && retentionVal > 0 && retentionVal <= 100;
+    return dblVal > 0 && depthVal > 0 && widthVal > 0 && retentionVal > 0 && retentionVal <= 3000;
   }, [dbl, rootDepth, rootWidth, waterRetention]);
 
   const canCalculateRefillTank = madResult !== null && selectedRefillSpan !== null;

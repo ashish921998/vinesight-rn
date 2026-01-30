@@ -7,7 +7,8 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { LabTestDetailsModal } from '@/components/screens/lab-test-details-modal';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFarm } from '../src/hooks';
 import {
@@ -26,7 +27,8 @@ export default function LabTestsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
-  const farmIdNum = farmId ? parseInt(farmId, 10) : 0;
+  const parsedFarmId = farmId ? parseInt(farmId, 10) : 0;
+  const farmIdNum = Number.isNaN(parsedFarmId) ? 0 : parsedFarmId;
 
   const { data: farm, isLoading: farmLoading } = useFarm(farmIdNum);
   const { data: soilTests, isLoading: soilLoading } = useSoilTests(farmIdNum);
@@ -35,6 +37,9 @@ export default function LabTestsScreen() {
   const deletePetioleTest = useDeletePetioleTest();
 
   const [selectedTab, setSelectedTab] = useState<TestType>('soil');
+  const [detailsVisible, setDetailsVisible] = useState(false);
+  const [selectedTest, setSelectedTest] = useState<SoilTestRecord | PetioleTestRecord | null>(null);
+  const [selectedType, setSelectedType] = useState<TestType>('soil');
 
   const isLoading = farmLoading || soilLoading || petioleLoading;
 
@@ -74,8 +79,13 @@ export default function LabTestsScreen() {
     const color = isSoil ? '#597A61' : '#4C806B';
 
     return (
-      <View
+      <Pressable
         key={test.id}
+        onPress={() => {
+          setSelectedTest(test);
+          setSelectedType(type);
+          setDetailsVisible(true);
+        }}
         style={{
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
           borderRadius: borderRadius['2xl'],
@@ -104,7 +114,7 @@ export default function LabTestsScreen() {
                 justifyContent: 'center',
               }}
             >
-              <Symbol name={isSoil ? 'leaf' : 'leaf-outline'} size={20} color={color} />
+              <IconSymbol name={isSoil ? 'leaf' : 'leaf-outline'} size={20} color={color} />
             </View>
             <View style={{ marginLeft: spacing[3] }}>
               <Text
@@ -129,14 +139,17 @@ export default function LabTestsScreen() {
             </View>
           </View>
           <Pressable
-            onPress={() =>
-              isSoil
-                ? handleDeleteSoilTest(test as SoilTestRecord)
-                : handleDeletePetioleTest(test as PetioleTestRecord)
-            }
+            onPress={(event) => {
+              event.stopPropagation();
+              if (isSoil) {
+                handleDeleteSoilTest(test as SoilTestRecord);
+              } else {
+                handleDeletePetioleTest(test as PetioleTestRecord);
+              }
+            }}
             style={{ padding: spacing[2] }}
           >
-            <Symbol name="trash" size={18} color="#ef4444" />
+            <IconSymbol name="trash" size={18} color="#ef4444" />
           </Pressable>
         </View>
 
@@ -201,7 +214,7 @@ export default function LabTestsScreen() {
             {test.notes}
           </Text>
         )}
-      </View>
+      </Pressable>
     );
   };
 
@@ -217,7 +230,7 @@ export default function LabTestsScreen() {
           paddingVertical: spacing[16],
         }}
       >
-        <Symbol
+        <IconSymbol
           name={type === 'soil' ? 'leaf' : 'leaf-outline'}
           size={48}
           color={color}
@@ -263,7 +276,7 @@ export default function LabTestsScreen() {
             alignItems: 'center',
           }}
         >
-          <Symbol name="plus" size={20} color="white" />
+          <IconSymbol name="plus" size={20} color="white" />
           <Text
             style={{ color: colors.white, fontWeight: fontWeight.semibold, marginLeft: spacing[1] }}
           >
@@ -278,7 +291,7 @@ export default function LabTestsScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Symbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
+          <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text
             style={{
               fontSize: fontSize.lg,
@@ -322,9 +335,9 @@ export default function LabTestsScreen() {
         }}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <Symbol name="chevron.left" size={24} color="#333" />
+          <IconSymbol name="chevron.left" size={24} color="#333" />
         </Pressable>
-        <Symbol name="flask.fill" size={24} color="#408059" />
+        <IconSymbol name="flask.fill" size={24} color="#408059" />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.gray[800] }}
@@ -353,7 +366,7 @@ export default function LabTestsScreen() {
             marginRight: spacing[2],
           }}
         >
-          <Symbol name="arrow.up.right" size={16} color="white" />
+          <IconSymbol name="arrow.up.right" size={16} color="white" />
           <Text
             style={{
               color: colors.white,
@@ -381,7 +394,7 @@ export default function LabTestsScreen() {
             borderRadius: borderRadius.full,
           }}
         >
-          <Symbol name="plus" size={24} color="white" />
+          <IconSymbol name="plus" size={24} color="white" />
         </Pressable>
       </View>
 
@@ -466,6 +479,12 @@ export default function LabTestsScreen() {
 
       {/* Add Modal */}
       {/* Lab test creation handled via route */}
+      <LabTestDetailsModal
+        visible={detailsVisible}
+        test={selectedTest}
+        testType={selectedType}
+        onClose={() => setDetailsVisible(false)}
+      />
     </View>
   );
 }

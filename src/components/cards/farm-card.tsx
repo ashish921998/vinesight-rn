@@ -156,7 +156,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
             color: colors.gray[400],
           }}
         >
-          {farm.area.toFixed(1)} Acres
+          {farm.area != null ? `${farm.area.toFixed(1)} Acres` : '— Acres'}
         </Text>
       </View>
 

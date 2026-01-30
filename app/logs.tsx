@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -49,8 +50,9 @@ interface CombinedLog {
 
 export default function LogsScreen() {
   const router = useRouter();
-  const { setAddEntry, setEditActivity } = useModalStore();
+  const { setEditActivity } = useModalStore();
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
+  const insets = useSafeAreaInsets();
 
   const { data: farms = [], isLoading: farmsLoading } = useFarms();
   const [selectedFarmId, setSelectedFarmId] = useState<number | undefined>(() => {
@@ -361,17 +363,10 @@ export default function LogsScreen() {
             selectedFarmId !== undefined && (
               <Pressable
                 onPress={() => {
-                  setAddEntry({
-                    tabs: ['log'],
-                    initialTab: 'log',
-                    initialFarmId: selectedFarmId,
-                  });
                   router.push({
-                    pathname: '/add-entry',
+                    pathname: '/log-entry/add',
                     params: {
                       farmId: selectedFarmId.toString(),
-                      tabs: 'log',
-                      initialTab: 'log',
                     },
                   });
                 }}
@@ -383,7 +378,7 @@ export default function LogsScreen() {
         }}
       />
 
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7', paddingTop: insets.top }}>
         <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
           <LinearGradient
             colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
@@ -937,7 +932,7 @@ export default function LogsScreen() {
                                     logType: log.type,
                                     record: log.data,
                                   });
-                                  router.push(`/edit-activity/${log.id}`);
+                                  router.push(`/log-entry/edit/${log.id}`);
                                 }}
                                 disabled={
                                   !(selectedFarm || (log.data as { farm_id?: number }).farm_id)
@@ -1071,42 +1066,54 @@ export default function LogsScreen() {
           onRequestClose={() => setShowDatePickerFrom(false)}
           animationType="fade"
         >
-          <View
+          <Pressable
             style={{
               flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.3)',
-              alignItems: 'center',
-              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.5)',
             }}
+            onPress={() => setShowDatePickerFrom(false)}
           >
             <View
               style={{
                 backgroundColor: colors.white,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                width: '85%',
+                margin: spacing[4],
+                marginTop: 'auto',
+                marginBottom: 40,
               }}
+              onStartShouldSetResponder={() => true}
             >
-              <Text
+              <View
                 style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   marginBottom: spacing[4],
-                  textAlign: 'center',
                 }}
               >
-                Select From Date
-              </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  Select From Date
+                </Text>
+                <Pressable onPress={() => setShowDatePickerFrom(false)}>
+                  <Symbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                </Pressable>
+              </View>
               <DateTimePicker
                 value={dateFrom || new Date()}
                 mode="date"
-                display="spinner"
+                display="default"
                 onChange={(_, date) => {
-                  setShowDatePickerFrom(false);
                   if (date) setDateFrom(date);
                 }}
-                style={{ width: '100%' }}
+                style={{ width: '100%', height: 200 }}
+                textColor="#2c2c2e"
               />
               <Pressable
                 onPress={() => setShowDatePickerFrom(false)}
@@ -1121,7 +1128,7 @@ export default function LogsScreen() {
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
               </Pressable>
             </View>
-          </View>
+          </Pressable>
         </Modal>
       )}
 
@@ -1321,42 +1328,54 @@ export default function LogsScreen() {
           onRequestClose={() => setShowDatePickerTo(false)}
           animationType="fade"
         >
-          <View
+          <Pressable
             style={{
               flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.3)',
-              alignItems: 'center',
-              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.5)',
             }}
+            onPress={() => setShowDatePickerTo(false)}
           >
             <View
               style={{
                 backgroundColor: colors.white,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                width: '85%',
+                margin: spacing[4],
+                marginTop: 'auto',
+                marginBottom: 40,
               }}
+              onStartShouldSetResponder={() => true}
             >
-              <Text
+              <View
                 style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   marginBottom: spacing[4],
-                  textAlign: 'center',
                 }}
               >
-                Select To Date
-              </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  Select To Date
+                </Text>
+                <Pressable onPress={() => setShowDatePickerTo(false)}>
+                  <Symbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                </Pressable>
+              </View>
               <DateTimePicker
                 value={dateTo || new Date()}
                 mode="date"
-                display="spinner"
+                display="default"
                 onChange={(_, date) => {
-                  setShowDatePickerTo(false);
                   if (date) setDateTo(date);
                 }}
-                style={{ width: '100%' }}
+                style={{ width: '100%', height: 200 }}
+                textColor="#2c2c2e"
               />
               <Pressable
                 onPress={() => setShowDatePickerTo(false)}
@@ -1371,7 +1390,7 @@ export default function LogsScreen() {
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
               </Pressable>
             </View>
-          </View>
+          </Pressable>
         </Modal>
       )}
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 
-import AddStockModal from '@/components/screens/add-stock-modal';
+import StockForm from '@/components/screens/stock-form';
 import { useModalStore } from '@/stores';
 
 export default function AddStockRoute() {
@@ -14,8 +14,7 @@ export default function AddStockRoute() {
 
   return (
     <>
-      <Stack.Screen options={{ presentation: 'modal', headerShown: false }} />
-      <AddStockModal
+      <StockForm
         onClose={() => router.back()}
         presentation="screen"
         item={addStock?.item ?? null}

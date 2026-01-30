@@ -24,6 +24,7 @@ export function StatsCard({
   icon,
   color = '#408059',
   iconColor,
+  subtitle,
   onPress,
 }: StatsCardProps) {
   const finalColor = iconColor || color;
@@ -32,6 +33,8 @@ export function StatsCard({
     borderRadius: borderRadius.xl,
     padding: spacing[4],
     backgroundColor: colors.surface[100],
+    borderWidth: 1,
+    borderColor: colors.surface[200],
   };
 
   const headerStyle: ViewStyle = {
@@ -52,6 +55,12 @@ export function StatsCard({
     color: colors.surface[500],
   };
 
+  const subtitleTextStyle: TextStyle = {
+    fontSize: fontSize.xs,
+    marginTop: 2,
+    color: colors.surface[400],
+  };
+
   const content = (
     <View style={containerStyle}>
       <View style={headerStyle}>
@@ -59,6 +68,7 @@ export function StatsCard({
         <Text style={valueTextStyle}>{value}</Text>
       </View>
       <Text style={titleTextStyle}>{title}</Text>
+      {subtitle && <Text style={subtitleTextStyle}>{subtitle}</Text>}
     </View>
   );
 

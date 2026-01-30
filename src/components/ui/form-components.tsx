@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
@@ -45,32 +45,28 @@ export function FormModal({
   const insets = useSafeAreaInsets();
 
   const headerStyle: ViewStyle = {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing[6],
     borderBottomWidth: 1,
     borderBottomColor: colors.surface[100],
     paddingTop: Math.max(insets.top, 12),
     paddingBottom: 12,
+    paddingHorizontal: spacing[6],
+    backgroundColor: colors.white,
   };
 
-  const closeButtonStyle: ViewStyle = {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.full,
+  const handleStyle: ViewStyle = {
+    alignSelf: 'center',
+    width: 48,
+    height: 6,
+    borderRadius: 999,
     backgroundColor: colors.surface[100],
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 8,
   };
 
   const titleStyle: TextStyle = {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
     color: colors.surface[900],
-    flex: 1,
     textAlign: 'center',
-    marginHorizontal: spacing[2],
   };
 
   const footerStyle: ViewStyle = {
@@ -115,13 +111,18 @@ export function FormModal({
       style={{ flex: 1, backgroundColor: colors.surface[100] }}
     >
       <View style={headerStyle}>
-        <Pressable onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
-          <Symbol name="xmark" size={20} color="#111827" />
-        </Pressable>
-        <Text style={titleStyle} numberOfLines={1}>
-          {title}
-        </Text>
-        <View style={{ width: 40 }} />
+        <View style={handleStyle} />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ width: 40 }} />
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={titleStyle} numberOfLines={1}>
+              {title}
+            </Text>
+          </View>
+          <Pressable onPress={onClose} style={{ width: 40, alignItems: 'flex-end' }}>
+            <IconSymbol name="xmark.circle.fill" size={26} color={colors.surface[300]} />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView
@@ -195,32 +196,28 @@ export function FullScreenForm({
   const insets = useSafeAreaInsets();
 
   const headerStyle: ViewStyle = {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing[6],
     borderBottomWidth: 1,
     borderBottomColor: colors.surface[100],
     paddingTop: Math.max(insets.top, 12),
     paddingBottom: 12,
+    paddingHorizontal: spacing[6],
+    backgroundColor: colors.white,
   };
 
-  const closeButtonStyle: ViewStyle = {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.full,
+  const handleStyle: ViewStyle = {
+    alignSelf: 'center',
+    width: 48,
+    height: 6,
+    borderRadius: 999,
     backgroundColor: colors.surface[100],
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 8,
   };
 
   const titleStyle: TextStyle = {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
     color: colors.surface[900],
-    flex: 1,
     textAlign: 'center',
-    marginHorizontal: spacing[2],
   };
 
   const footerStyle: ViewStyle = {
@@ -262,13 +259,18 @@ export function FullScreenForm({
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface[100] }}>
       <View style={headerStyle}>
-        <Pressable onPress={onClose} style={closeButtonStyle} disabled={isLoading}>
-          <Symbol name="xmark" size={20} color="#111827" />
-        </Pressable>
-        <Text style={titleStyle} numberOfLines={1}>
-          {title}
-        </Text>
-        <View style={{ width: 40 }} />
+        <View style={handleStyle} />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ width: 40 }} />
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={titleStyle} numberOfLines={1}>
+              {title}
+            </Text>
+          </View>
+          <Pressable onPress={onClose} style={{ width: 40, alignItems: 'flex-end' }}>
+            <IconSymbol name="xmark.circle.fill" size={26} color={colors.surface[300]} />
+          </Pressable>
+        </View>
       </View>
 
       <KeyboardAvoidingView
@@ -409,7 +411,7 @@ export function PillSelector({
           >
             {option.icon && (
               <View style={{ marginRight: 8 }}>
-                <Symbol name={option.icon} size={18} color={selected ? '#111827' : '#6B7280'} />
+                <IconSymbol name={option.icon} size={18} color={selected ? '#111827' : '#6B7280'} />
               </View>
             )}
             <Text style={getPillTextStyle(selected)}>{option.label}</Text>
@@ -434,7 +436,9 @@ interface SegmentedControlProps {
 export function SegmentedControl({ options, selectedValue, onSelect }: SegmentedControlProps) {
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
-    backgroundColor: colors.surface[100],
+    backgroundColor: colors.surface[200],
+    borderColor: colors.surface[300],
+    borderWidth: 1,
     borderRadius: borderRadius.full,
     padding: spacing[1],
     marginBottom: spacing[6],
@@ -445,7 +449,14 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
     paddingVertical: 10,
     borderRadius: borderRadius.full,
     alignItems: 'center',
-    backgroundColor: selected ? colors.surface[100] : 'transparent',
+    backgroundColor: selected ? colors.white : 'transparent',
+    borderWidth: selected ? 1 : 0,
+    borderColor: selected ? colors.surface[300] : 'transparent',
+    shadowColor: selected ? '#000' : 'transparent',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: selected ? 0.08 : 0,
+    shadowRadius: 4,
+    elevation: selected ? 2 : 0,
   });
 
   const getSegmentTextStyle = (selected: boolean): TextStyle => ({
@@ -555,9 +566,9 @@ export function CardSelector({
                   selected,
                 })
               ) : option.icon ? (
-                <Symbol name={option.icon} size={24} color={selected ? '#111827' : '#6B7280'} />
+                <IconSymbol name={option.icon} size={24} color={selected ? '#111827' : '#6B7280'} />
               ) : (
-                <Symbol name="questionmark.circle" size={24} color="#9CA3AF" />
+                <IconSymbol name="questionmark.circle" size={24} color="#9CA3AF" />
               )}
             </View>
             <Text style={getLabelTextStyle(selected)}>{option.label}</Text>
@@ -673,6 +684,16 @@ interface ToggleProps {
 }
 
 export function Toggle({ label, description, value, onValueChange, style }: ToggleProps) {
+  const translateXAnim = useMemo(() => new Animated.Value(value ? 22 : 0), [value]);
+
+  useEffect(() => {
+    Animated.timing(translateXAnim, {
+      toValue: value ? 22 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [value, translateXAnim]);
+
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
@@ -725,7 +746,7 @@ export function Toggle({ label, description, value, onValueChange, style }: Togg
           style={[
             toggleCircleStyle,
             {
-              transform: [{ translateX: value ? 22 : 0 }],
+              transform: [{ translateX: translateXAnim }],
             },
           ]}
         />
@@ -784,7 +805,7 @@ export function InfoCard({
   return (
     <View style={[containerStyle, style]}>
       <View style={contentContainerStyle}>
-        <Symbol name={icon} size={24} color={iconColor} />
+        <IconSymbol name={icon} size={24} color={iconColor} />
         <View style={textContainerStyle}>
           {title && <Text style={titleTextStyle}>{title}</Text>}
           <Text style={messageTextStyle}>{message}</Text>

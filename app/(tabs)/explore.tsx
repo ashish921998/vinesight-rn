@@ -10,42 +10,28 @@ import {
   Animated,
   ScrollView,
 } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
 import {
   useFarms,
   useDeleteFarm,
-  useWorkers,
-  useDeleteWorker,
   useWarehouseItems,
   useProfile,
   useDeleteWarehouseItem,
 } from '@/hooks';
 import { FarmCard } from '@/components/cards';
-import { AttendanceView } from '@/components/screens';
 import { useModalStore } from '@/stores';
-import type { Farm, Worker, WarehouseItem } from '@/types';
+import type { Farm, WarehouseItem } from '@/types';
 
-type ExploreTab = 'farms' | 'workers' | 'warehouse';
-type WorkersSubTab = 'workers' | 'attendance' | 'analytics';
+type ExploreTab = 'farms' | 'warehouse';
 type WarehouseFilter = 'all' | 'fertilizer' | 'spray';
 
 const EXPLORE_TABS: { id: ExploreTab; label: string; icon: string }[] = [
   { id: 'farms', label: 'Farms', icon: 'leaf.fill' },
-  { id: 'workers', label: 'Workers', icon: 'person.2.fill' },
   { id: 'warehouse', label: 'Warehouse', icon: 'cube.fill' },
-];
-
-const WORKER_SUB_TABS: {
-  id: WorkersSubTab;
-  label: string;
-  icon: string;
-}[] = [
-  { id: 'workers', label: 'Workers', icon: 'person.2.fill' },
-  { id: 'attendance', label: 'Attendance', icon: 'calendar' },
-  { id: 'analytics', label: 'Analytics', icon: 'chart.bar.fill' },
 ];
 
 const COLORS = {
@@ -59,8 +45,9 @@ const COLORS = {
 
 export default function ExploreScreen() {
   const router = useRouter();
-  const { setAddWorker, setAddWarehouseItem, setAddStock } = useModalStore();
+  const { setAddWarehouseItem, setAddStock } = useModalStore();
   const insets = useSafeAreaInsets();
+  const fabBottomInset = useFabBottomInset();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
 
   // Scroll animation values
@@ -69,7 +56,6 @@ export default function ExploreScreen() {
   const tabScaleAnims = useMemo(
     () => ({
       farms: new Animated.Value(1),
-      workers: new Animated.Value(1),
       warehouse: new Animated.Value(1),
     }),
     [],
@@ -83,11 +69,6 @@ export default function ExploreScreen() {
   const { data: farms, isLoading: farmsLoading, refetch: refetchFarms } = useFarms();
   const deleteFarm = useDeleteFarm();
 
-  // Workers state & hooks
-  const { data: workers, isLoading: workersLoading, refetch: refetchWorkers } = useWorkers();
-  const deleteWorker = useDeleteWorker();
-  const [selectedWorkerSubTab, setSelectedWorkerSubTab] = useState<WorkersSubTab>('workers');
-
   // Warehouse state & hooks
   const {
     data: warehouseItems,
@@ -100,11 +81,6 @@ export default function ExploreScreen() {
   const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilter>('all');
 
   const currency = profile?.preferred_currency || 'INR';
-
-  const openAddWorker = (worker?: Worker | null) => {
-    setAddWorker({ worker: worker ?? null });
-    router.push('/add-worker');
-  };
 
   const openWarehouseItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });
@@ -253,50 +229,6 @@ export default function ExploreScreen() {
         },
       ],
     );
-  };
-
-  // ============================================================
-  // WORKERS TAB LOGIC
-  // ============================================================
-
-  const filteredWorkers = useMemo(() => {
-    if (!workers) return [];
-    if (!searchQuery.trim()) return workers;
-
-    const query = searchQuery.toLowerCase().trim();
-    return workers.filter((worker) => worker.name.toLowerCase().includes(query));
-  }, [workers, searchQuery]);
-
-  const activeWorkers = useMemo(
-    () => filteredWorkers.filter((w) => w.is_active),
-    [filteredWorkers],
-  );
-  const inactiveWorkers = useMemo(
-    () => filteredWorkers.filter((w) => !w.is_active),
-    [filteredWorkers],
-  );
-
-  const handleDeleteWorker = (worker: Worker) => {
-    Alert.alert(
-      'Delete Worker?',
-      `This will permanently delete ${worker.name} and all their associated records.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            if (worker.id) {
-              await deleteWorker.mutateAsync(worker.id);
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const handleEditWorker = (worker: Worker) => {
-    openAddWorker(worker);
   };
 
   // ============================================================
@@ -529,21 +461,35 @@ export default function ExploreScreen() {
 
         {/* Quick Stats */}
         {!searchQuery.trim() && farms && farms.length > 0 && (
-          <View style={{ flexDirection: 'row', marginTop: spacing[2], gap: spacing[3] }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: spacing[4],
+              gap: spacing[3],
+            }}
+          >
             <View
               style={{
                 flex: 1,
                 borderRadius: borderRadius.xl,
-                padding: spacing[3],
+                borderCurve: 'continuous',
+                height: 72,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[2],
+                justifyContent: 'center',
                 backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[200],
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                 <View
                   style={{
                     width: 32,
                     height: 32,
-                    borderRadius: borderRadius.lg,
+                    borderRadius: borderRadius.full,
+                    borderCurve: 'continuous',
+                    overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
@@ -551,17 +497,25 @@ export default function ExploreScreen() {
                 >
                   <Symbol name="leaf.fill" size={16} color="#408059" />
                 </View>
-                <View style={{ marginLeft: spacing[2] }}>
+                <View style={{ flex: 1 }}>
                   <Text
                     style={{
                       color: colors.black,
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
+                      fontVariant: ['tabular-nums'],
+                      lineHeight: 22,
                     }}
                   >
                     {farms.length}
                   </Text>
-                  <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                  <Text
+                    style={{
+                      color: colors.surface[500],
+                      fontSize: fontSize.xs,
+                      lineHeight: 16,
+                    }}
+                  >
                     Total Farms
                   </Text>
                 </View>
@@ -571,16 +525,24 @@ export default function ExploreScreen() {
               style={{
                 flex: 1,
                 borderRadius: borderRadius.xl,
-                padding: spacing[3],
+                borderCurve: 'continuous',
+                height: 72,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[2],
+                justifyContent: 'center',
                 backgroundColor: colors.surface[100],
+                borderWidth: 1,
+                borderColor: colors.surface[200],
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                 <View
                   style={{
                     width: 32,
                     height: 32,
-                    borderRadius: borderRadius.lg,
+                    borderRadius: borderRadius.full,
+                    borderCurve: 'continuous',
+                    overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
@@ -588,17 +550,25 @@ export default function ExploreScreen() {
                 >
                   <Symbol name="arrow.up.left.and.arrow.down.right" size={16} color="#408059" />
                 </View>
-                <View style={{ marginLeft: spacing[2] }}>
+                <View style={{ flex: 1 }}>
                   <Text
                     style={{
                       color: colors.black,
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
+                      fontVariant: ['tabular-nums'],
+                      lineHeight: 22,
                     }}
                   >
                     {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}
                   </Text>
-                  <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                  <Text
+                    style={{
+                      color: colors.surface[500],
+                      fontSize: fontSize.xs,
+                      lineHeight: 16,
+                    }}
+                  >
                     Total Acres
                   </Text>
                 </View>
@@ -642,7 +612,7 @@ export default function ExploreScreen() {
             onPress={handleAddFarm}
             style={{
               position: 'absolute',
-              bottom: spacing[6],
+              bottom: spacing[14] + fabBottomInset,
               right: spacing[6],
               width: 56,
               height: 56,
@@ -650,370 +620,6 @@ export default function ExploreScreen() {
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: colors.primary[500],
-            }}
-          >
-            <Symbol name="plus" size={28} color="#FFFFFF" />
-          </Pressable>
-        )}
-      </>
-    );
-  };
-
-  const renderWorkersTab = () => {
-    const renderWorker = ({ item }: { item: Worker }) => (
-      <Pressable
-        onPress={() => handleEditWorker(item)}
-        style={{
-          backgroundColor: colors.surface[100],
-          marginHorizontal: spacing[4],
-          marginBottom: spacing[3],
-          borderRadius: borderRadius['2xl'],
-          overflow: 'hidden',
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', padding: spacing[4] }}>
-          {/* Avatar */}
-          <View
-            style={{
-              width: 48,
-              height: 48,
-              backgroundColor: colors.primary[100],
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: fontSize.lg,
-                fontWeight: fontWeight.bold,
-                color: colors.primary[600],
-              }}
-            >
-              {item.name.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-
-          {/* Info */}
-          <View style={{ flex: 1, marginLeft: spacing[3] }}>
-            <Text
-              style={{
-                fontSize: fontSize.base,
-                fontWeight: fontWeight.semibold,
-                color: colors.surface[900],
-              }}
-            >
-              {item.name}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}>
-              <Symbol name="dollarsign.circle" size={12} color="#6B7280" />
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  color: colors.surface[500],
-                  marginLeft: spacing[1],
-                }}
-              >
-                ₹{item.daily_rate}/day
-              </Text>
-            </View>
-          </View>
-
-          {/* Advance Balance */}
-          {item.advance_balance > 0 && (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: '#FEF3C7',
-                paddingHorizontal: spacing[2],
-                paddingVertical: spacing[1],
-                borderRadius: borderRadius.full,
-                marginRight: spacing[2],
-              }}
-            >
-              <Symbol name="arrow.up.circle.fill" size={12} color="#F59E0B" />
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.semibold,
-                  color: '#F59E0B',
-                  marginLeft: spacing[1],
-                }}
-              >
-                ₹{item.advance_balance}
-              </Text>
-            </View>
-          )}
-
-          {/* Actions */}
-          <Pressable onPress={() => handleDeleteWorker(item)} style={{ padding: spacing[2] }}>
-            <Symbol name="trash" size={18} color="#EF4444" />
-          </Pressable>
-        </View>
-      </Pressable>
-    );
-
-    const renderWorkersSubTab = () => (
-      <Animated.FlatList
-        data={activeWorkers}
-        renderItem={renderWorker}
-        keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={{
-          paddingTop: 16,
-          paddingBottom: 100,
-          flexGrow: 1,
-        }}
-        ListHeaderComponent={
-          activeWorkers.length > 0 ? (
-            <Text
-              style={{
-                color: colors.surface[500],
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.bold,
-                letterSpacing: 1,
-                marginHorizontal: spacing[4],
-                marginBottom: spacing[2],
-              }}
-            >
-              ACTIVE WORKERS ({activeWorkers.length})
-            </Text>
-          ) : null
-        }
-        ListFooterComponent={
-          inactiveWorkers.length > 0 ? (
-            <View style={{ marginTop: spacing[4] }}>
-              <Text
-                style={{
-                  color: colors.surface[500],
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.bold,
-                  letterSpacing: 1,
-                  marginHorizontal: spacing[4],
-                  marginBottom: spacing[2],
-                }}
-              >
-                INACTIVE WORKERS ({inactiveWorkers.length})
-              </Text>
-              {inactiveWorkers.map((worker) => (
-                <View key={String(worker.id)} style={{ opacity: 0.6 }}>
-                  {renderWorker({ item: worker })}
-                </View>
-              ))}
-            </View>
-          ) : null
-        }
-        ListEmptyComponent={
-          !workersLoading ? (
-            <View
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: spacing[8],
-              }}
-            >
-              <View
-                style={{
-                  width: 80,
-                  height: 80,
-                  backgroundColor: colors.primary[100],
-                  borderRadius: borderRadius.full,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: spacing[4],
-                }}
-              >
-                <Symbol name="person.2" size={40} color="#408059" />
-              </View>
-              <Text
-                style={{
-                  color: colors.surface[900],
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  textAlign: 'center',
-                }}
-              >
-                No Workers Yet
-              </Text>
-              <Text
-                style={{
-                  color: colors.surface[500],
-                  fontSize: fontSize.sm,
-                  textAlign: 'center',
-                  marginTop: spacing[2],
-                }}
-              >
-                Add workers to track attendance,{`\n`}payments, and settlements.
-              </Text>
-              <Pressable
-                onPress={() => openAddWorker(null)}
-                style={{
-                  backgroundColor: colors.primary[600],
-                  paddingHorizontal: spacing[6],
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius.xl,
-                  marginTop: spacing[4],
-                }}
-              >
-                <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
-                  Add Worker
-                </Text>
-              </Pressable>
-            </View>
-          ) : null
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={workersLoading}
-            onRefresh={refetchWorkers}
-            tintColor="#408059"
-          />
-        }
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: false,
-        })}
-        scrollEventThrottle={16}
-      />
-    );
-
-    const renderAttendanceSubTab = () => (
-      <AttendanceView workers={activeWorkers} onSaveSuccess={refetchWorkers} />
-    );
-
-    const renderAnalyticsSubTab = () => (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: spacing[8],
-        }}
-      >
-        <View
-          style={{
-            width: 80,
-            height: 80,
-            backgroundColor: '#EDE9FE',
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: spacing[4],
-          }}
-        >
-          <Symbol name="chart.bar" size={40} color="#8B5CF6" />
-        </View>
-        <Text
-          style={{
-            color: colors.surface[900],
-            fontSize: fontSize.lg,
-            fontWeight: fontWeight.semibold,
-            textAlign: 'center',
-          }}
-        >
-          Labor Analytics
-        </Text>
-        <Text
-          style={{
-            color: colors.surface[500],
-            fontSize: fontSize.sm,
-            textAlign: 'center',
-            marginTop: spacing[2],
-          }}
-        >
-          View labor costs, productivity,{`\n`}and attendance patterns.
-        </Text>
-        <Text style={{ color: colors.surface[400], fontSize: fontSize.xs, marginTop: spacing[4] }}>
-          Coming soon in a future update
-        </Text>
-      </View>
-    );
-
-    return (
-      <>
-        {/* Workers Sub-Tabs */}
-        <View
-          style={{
-            backgroundColor: colors.surface[100],
-            paddingHorizontal: spacing[4],
-            paddingTop: spacing[2],
-            paddingBottom: spacing[3],
-          }}
-        >
-          {searchQuery.trim() && selectedWorkerSubTab === 'workers' && (
-            <Text
-              style={{
-                color: colors.surface[500],
-                fontSize: fontSize.sm,
-                marginBottom: spacing[2],
-              }}
-            >
-              {filteredWorkers.length} worker{filteredWorkers.length !== 1 ? 's' : ''} found
-            </Text>
-          )}
-          <View
-            style={{
-              flexDirection: 'row',
-              backgroundColor: colors.surface[50],
-              borderRadius: borderRadius.xl,
-              padding: spacing[1],
-            }}
-          >
-            {WORKER_SUB_TABS.map((tab) => (
-              <Pressable
-                key={tab.id}
-                onPress={() => setSelectedWorkerSubTab(tab.id)}
-                style={{
-                  flex: 1,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 10,
-                  borderRadius: borderRadius.lg,
-                  backgroundColor:
-                    selectedWorkerSubTab === tab.id ? colors.surface[100] : 'transparent',
-                }}
-              >
-                <Symbol
-                  name={tab.icon}
-                  size={16}
-                  color={selectedWorkerSubTab === tab.id ? '#408059' : '#6B7280'}
-                />
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.medium,
-                    marginLeft: spacing[1],
-                    color:
-                      selectedWorkerSubTab === tab.id ? colors.primary[600] : colors.surface[500],
-                  }}
-                >
-                  {tab.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Workers Sub-Tab Content */}
-        {selectedWorkerSubTab === 'workers' && renderWorkersSubTab()}
-        {selectedWorkerSubTab === 'attendance' && renderAttendanceSubTab()}
-        {selectedWorkerSubTab === 'analytics' && renderAnalyticsSubTab()}
-
-        {/* FAB */}
-        {selectedWorkerSubTab === 'workers' && (workers?.length || 0) > 0 && (
-          <Pressable
-            onPress={() => openAddWorker(null)}
-            style={{
-              position: 'absolute',
-              bottom: spacing[6],
-              right: spacing[6],
-              width: 56,
-              height: 56,
-              backgroundColor: colors.primary[600],
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
             }}
           >
             <Symbol name="plus" size={28} color="#FFFFFF" />
@@ -1432,28 +1038,20 @@ export default function ExploreScreen() {
                             </Text>
                           </View>
                         )}
-                        <Pressable
-                          onPress={() => {
-                            Alert.alert('Actions', `${item.name}`, [
-                              {
-                                text: 'Add Stock',
-                                onPress: () => handleAddStock(item),
-                              },
-                              {
-                                text: 'Edit',
-                                onPress: () => handleEditWarehouseItem(item),
-                              },
-                              {
-                                text: 'Delete',
-                                style: 'destructive',
-                                onPress: () => handleDeleteWarehouseItem(item),
-                              },
-                              { text: 'Cancel', style: 'cancel' },
-                            ]);
-                          }}
-                        >
-                          <Symbol name="ellipsis.circle" size={24} color="#6B7280" />
-                        </Pressable>
+                        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                          <Pressable
+                            onPress={() => handleEditWarehouseItem(item)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Symbol name="pencil" size={20} color="#408059" />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => handleDeleteWarehouseItem(item)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Symbol name="trash" size={20} color="#EF4444" />
+                          </Pressable>
+                        </View>
                       </View>
                       <Text
                         style={{
@@ -1540,7 +1138,7 @@ export default function ExploreScreen() {
           }}
           style={{
             position: 'absolute',
-            bottom: spacing[6],
+            bottom: spacing[14] + fabBottomInset,
             right: spacing[6],
             width: 56,
             height: 56,
@@ -1561,8 +1159,6 @@ export default function ExploreScreen() {
     switch (selectedTab) {
       case 'farms':
         return 'Search farms...';
-      case 'workers':
-        return 'Search workers...';
       case 'warehouse':
         return 'Search inventory...';
       default:
@@ -1572,7 +1168,6 @@ export default function ExploreScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <Stack.Screen options={{ headerShown: false }} />
       {/* Global Search Bar */}
       <View
         style={{
@@ -1660,7 +1255,9 @@ export default function ExploreScreen() {
                       style={{
                         width: 48,
                         height: 48,
-                        borderRadius: borderRadius['2xl'],
+                        borderRadius: borderRadius.full,
+                        borderCurve: 'continuous',
+                        overflow: 'hidden',
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: isSelected ? 'rgba(64, 128, 89, 0.1)' : 'transparent',
@@ -1713,7 +1310,6 @@ export default function ExploreScreen() {
         }}
       >
         {selectedTab === 'farms' && renderFarmsTab()}
-        {selectedTab === 'workers' && renderWorkersTab()}
         {selectedTab === 'warehouse' && renderWarehouseTab()}
       </Animated.View>
 

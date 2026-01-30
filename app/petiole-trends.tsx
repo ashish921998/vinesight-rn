@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { Symbol } from '@/components/ui/symbol';
+import { SafeScreen } from '@/components/ui/safe-screen';
 import { useFarm } from '@/hooks/use-farms';
 import { usePetioleTestTrends, PETIOLE_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
 import ParameterSelector from '@/components/screens/parameter-selector';
@@ -31,7 +32,7 @@ export default function PetioleTrendsScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+      <SafeScreen backgroundColor={colors.gray[50]}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Symbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text
@@ -45,23 +46,23 @@ export default function PetioleTrendsScreen() {
             Invalid Farm
           </Text>
         </View>
-      </View>
+      </SafeScreen>
     );
   }
 
   if (farmLoading || trendsLoading || !trends || !trends.parameterTrends) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <SafeScreen backgroundColor="#f2f2f7">
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#4C806B" />
           <Text style={{ color: colors.gray[500], marginTop: spacing[4] }}>Loading trends...</Text>
         </View>
-      </View>
+      </SafeScreen>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <SafeScreen backgroundColor="#f2f2f7">
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Custom Header */}
@@ -185,6 +186,6 @@ export default function PetioleTrendsScreen() {
           )}
         </View>
       </ScrollView>
-    </View>
+    </SafeScreen>
   );
 }

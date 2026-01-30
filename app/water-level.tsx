@@ -1,6 +1,6 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { WaterLevelModal } from '@/components/screens/water-level-modal';
+import { WaterLevelSheet } from '@/components/screens/water-level-sheet';
 import { useFarm } from '@/hooks';
 
 export default function WaterLevelRoute() {
@@ -20,8 +20,7 @@ export default function WaterLevelRoute() {
 
   return (
     <>
-      <Stack.Screen options={{ presentation: 'modal', headerShown: false }} />
-      <WaterLevelModal onClose={() => router.back()} presentation="screen" farm={farm} />
+      <WaterLevelSheet onClose={() => router.back()} presentation="screen" farm={farm} />
     </>
   );
 }

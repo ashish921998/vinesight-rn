@@ -83,6 +83,21 @@ export default Sentry.wrap(function RootLayout() {
               <Stack.Screen name="index" />
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="add-activity" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-entry" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
+              <Stack.Screen
+                name="add-warehouse-item"
+                options={{ presentation: 'modal', headerShown: false }}
+              />
+              <Stack.Screen name="add-lab-test" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="water-level" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
             </Stack>
           </QueryClientProvider>
         </SafeAreaProvider>

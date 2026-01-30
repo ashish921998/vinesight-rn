@@ -7,7 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as Icon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export default function LAICalculatorScreen() {
@@ -95,7 +95,7 @@ export default function LAICalculatorScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <KeyboardAvoidingView
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1, backgroundColor: colors.surface[50] }}
@@ -127,7 +127,7 @@ export default function LAICalculatorScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Symbol name="leaf.fill" size={18} color="#22C55E" />
+                  <Icon name="leaf.fill" size={18} color="#22C55E" />
                 </View>
                 <Text
                   style={{
@@ -334,10 +334,11 @@ export default function LAICalculatorScreen() {
                   alignItems: 'center',
                   borderWidth: 1,
                   borderColor: colors.surface[200],
+                  marginTop: spacing[4],
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Symbol name="refresh" size={18} color="#6B7280" />
+                  <Icon name="refresh" size={18} color="#6B7280" />
                   <Text
                     style={{
                       color: colors.surface[600],

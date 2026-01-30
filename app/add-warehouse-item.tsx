@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 
-import AddWarehouseItemModal from '@/components/screens/add-warehouse-item-modal';
+import WarehouseItemForm from '@/components/screens/warehouse-item-form';
 import { useModalStore } from '@/stores';
 
 export default function AddWarehouseItemRoute() {
@@ -14,8 +14,7 @@ export default function AddWarehouseItemRoute() {
 
   return (
     <>
-      <Stack.Screen options={{ presentation: 'modal', headerShown: false }} />
-      <AddWarehouseItemModal
+      <WarehouseItemForm
         onClose={() => router.back()}
         presentation="screen"
         editingItem={addWarehouseItem?.editingItem ?? null}

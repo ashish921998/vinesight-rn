@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
-
-import { AddWorkerModal } from '@/components/screens/add-worker-modal';
+import { useRouter } from 'expo-router';
+import { WorkerForm } from '@/components/screens/worker-form';
 import { useModalStore } from '@/stores';
 
 export default function AddWorkerRoute() {
@@ -14,8 +13,7 @@ export default function AddWorkerRoute() {
 
   return (
     <>
-      <Stack.Screen options={{ presentation: 'modal', headerShown: false }} />
-      <AddWorkerModal
+      <WorkerForm
         onClose={() => router.back()}
         presentation="screen"
         worker={addWorker?.worker ?? undefined}

@@ -33,7 +33,6 @@ interface WorkboardAction {
 }
 
 const WORKBOARD_ACTIONS: WorkboardAction[] = [
-  { id: 'warehouse', title: 'Warehouse', icon: 'cube.fill', color: '#4D857A' },
   { id: 'ai', title: 'AI', icon: 'lightbulb.fill', color: '#408059' },
   { id: 'lab', title: 'Lab', icon: 'flask.fill', color: '#598C6B' },
   { id: 'reports', title: 'Reports', icon: 'chart.bar.fill', color: '#669475' },
@@ -148,11 +147,9 @@ export default function FarmDetailScreen() {
   const handleAddActivity = () => {
     if (!farm?.id) return;
     router.push({
-      pathname: '/add-entry',
+      pathname: '/log-entry/add',
       params: {
         farmId: farm.id.toString(),
-        initialTab: 'log',
-        tabs: 'log,task',
       },
     });
   };
@@ -260,9 +257,6 @@ export default function FarmDetailScreen() {
 
   const handleWorkboardAction = (action: WorkboardAction) => {
     switch (action.id) {
-      case 'warehouse':
-        router.push('/warehouse');
-        break;
       case 'ai':
         router.push(`/ai-chat?id=${id}`);
         break;
@@ -888,7 +882,16 @@ export default function FarmDetailScreen() {
                                 {formatDueDate(task.due_date)}
                               </Text>
                             </View>
-                            <View style={{ backgroundColor: priorityInfo.bgColor }}>
+                            <View
+                              style={{
+                                backgroundColor: priorityInfo.bgColor,
+                                paddingHorizontal: spacing[2],
+                                paddingVertical: 2,
+                                borderRadius: borderRadius.sm,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
                               <Text
                                 style={{
                                   color: priorityInfo.color,

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export interface FertilizerEntry {
+  id?: string;
   name: string;
   quantity: number;
   unit: FertilizerUnit;
@@ -30,7 +31,15 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
     if (data.fertilizers.length < 10) {
       onChange({
         ...data,
-        fertilizers: [...data.fertilizers, { name: '', quantity: 0, unit: 'kg/acre' }],
+        fertilizers: [
+          ...data.fertilizers,
+          {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            name: '',
+            quantity: 0,
+            unit: 'kg/acre',
+          },
+        ],
       });
     }
   };
@@ -64,7 +73,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
             marginRight: spacing[3],
           }}
         >
-          <Symbol name="leaf.fill" size={20} color="#22C55E" />
+          <IconSymbol name="leaf.fill" size={20} color="#22C55E" />
         </View>
         <View>
           <Text
@@ -94,7 +103,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
         >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ marginRight: 6 }}>
-              <Symbol name="flask" size={16} color="#408059" />
+              <IconSymbol name="flask" size={16} color="#408059" />
             </View>
             <Text
               style={{
@@ -127,7 +136,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
         {/* Fertilizers List */}
         {data.fertilizers.map((fertilizer, index) => (
           <FertilizerRow
-            key={`${fertilizer.name}-${fertilizer.quantity}-${fertilizer.unit}`}
+            key={fertilizer.id ?? index}
             fertilizer={fertilizer}
             onUpdate={(updates) => updateFertilizer(index, updates)}
             onRemove={() => removeFertilizer(index)}
@@ -147,7 +156,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
               marginTop: spacing[2],
             }}
           >
-            <Symbol name="plus.circle.fill" size={20} color="#22C55E" />
+            <IconSymbol name="plus.circle.fill" size={20} color="#22C55E" />
             <Text
               style={{
                 fontSize: fontSize.sm,
@@ -216,7 +225,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
           borderTopColor: colors.surface[100],
         }}
       >
-        <Symbol
+        <IconSymbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
@@ -257,6 +266,11 @@ function FertilizerRow({
   const [quantityText, setQuantityText] = useState(
     fertilizer.quantity > 0 ? fertilizer.quantity.toString() : '',
   );
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setQuantityText(fertilizer.quantity > 0 ? fertilizer.quantity.toString() : '');
+  }, [fertilizer.quantity]);
 
   const handleQuantityChange = (text: string) => {
     const cleanText = text.replace(/[^0-9.]/g, '');
@@ -313,7 +327,7 @@ function FertilizerRow({
             style={{ marginLeft: spacing[2], padding: spacing[2] }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Symbol name="minus.circle.fill" size={24} color="#9CA3AF" />
+            <IconSymbol name="minus.circle.fill" size={24} color="#9CA3AF" />
           </Pressable>
         )}
       </View>
@@ -365,7 +379,7 @@ function FertilizerRow({
           <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
             {fertilizer.unit}
           </Text>
-          <Symbol name="chevron.right" size={18} color="#6B7280" />
+          <IconSymbol name="chevron.right" size={18} color="#6B7280" />
         </Pressable>
       </View>
 

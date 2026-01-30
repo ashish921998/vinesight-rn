@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as Icon } from '@/components/ui/symbol';
 import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import { useModalStore } from '@/stores';
@@ -130,7 +130,7 @@ export default function WarehouseScreen() {
               }}
               style={{ marginRight: spacing[4] }}
             >
-              <Symbol name="plus.circle.fill" size={28} color="#408059" />
+              <Icon name="plus.circle.fill" size={28} color="#408059" />
             </Pressable>
           ),
         }}
@@ -157,7 +157,7 @@ export default function WarehouseScreen() {
                 backgroundColor: COLORS.glass,
               }}
             >
-              <Symbol
+              <Icon
                 name="exclamationmark.triangle.fill"
                 size={24}
                 color={lowStockItems.length > 0 ? COLORS.lowStock : COLORS.primary}
@@ -182,7 +182,7 @@ export default function WarehouseScreen() {
                 backgroundColor: COLORS.glass,
               }}
             >
-              <Symbol name="dollarsign.circle.fill" size={24} color={COLORS.primary} />
+              <Icon name="dollarsign.circle.fill" size={24} color={COLORS.primary} />
               <Text
                 style={{
                   color: colors.surface[900],
@@ -215,7 +215,7 @@ export default function WarehouseScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                <Symbol name="exclamationmark.triangle.fill" size={20} color={COLORS.lowStock} />
+                <Icon name="exclamationmark.triangle.fill" size={20} color={COLORS.lowStock} />
                 <Text
                   style={{
                     color: COLORS.lowStock,
@@ -262,7 +262,7 @@ export default function WarehouseScreen() {
                         }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Symbol
+                          <Icon
                             name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                             size={16}
                             color={COLORS.lowStock}
@@ -387,7 +387,7 @@ export default function WarehouseScreen() {
                   backgroundColor: `${COLORS.primary}33`,
                 }}
               >
-                <Symbol name="cube" size={32} color={COLORS.primary} />
+                <Icon name="cube" size={32} color={COLORS.primary} />
               </View>
               <Text
                 style={{
@@ -423,7 +423,7 @@ export default function WarehouseScreen() {
                   backgroundColor: COLORS.primary,
                 }}
               >
-                <Symbol name="plus.circle.fill" size={20} color="white" />
+                <Icon name="plus.circle.fill" size={20} color="white" />
                 <Text
                   style={{
                     color: colors.white,
@@ -469,7 +469,7 @@ export default function WarehouseScreen() {
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Symbol
+                            <Icon
                               name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                               size={12}
                               color={itemColor}
@@ -499,28 +499,20 @@ export default function WarehouseScreen() {
                             <Text style={{ color: COLORS.lowStock }}>Low</Text>
                           </View>
                         )}
-                        <Pressable
-                          onPress={() => {
-                            Alert.alert('Actions', `${item.name}`, [
-                              {
-                                text: 'Add Stock',
-                                onPress: () => handleAddStock(item),
-                              },
-                              {
-                                text: 'Edit',
-                                onPress: () => handleEditItem(item),
-                              },
-                              {
-                                text: 'Delete',
-                                style: 'destructive',
-                                onPress: () => handleDeleteItem(item),
-                              },
-                              { text: 'Cancel', style: 'cancel' },
-                            ]);
-                          }}
-                        >
-                          <Symbol name="ellipsis.circle.fill" size={24} color="#6B7280" />
-                        </Pressable>
+                        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                          <Pressable
+                            onPress={() => handleEditItem(item)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Icon name="pencil" size={20} color="#408059" />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => handleDeleteItem(item)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Icon name="trash" size={20} color="#DC2626" />
+                          </Pressable>
+                        </View>
                       </View>
                       <Text
                         style={{
@@ -618,7 +610,7 @@ export default function WarehouseScreen() {
           backgroundColor: COLORS.primary,
         }}
       >
-        <Symbol name="plus" size={28} color="white" />
+        <Icon name="plus" size={28} color="white" />
       </Pressable>
 
       {/* Modals */}

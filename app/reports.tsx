@@ -7,7 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as Icon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -98,7 +98,7 @@ export default function ReportsScreen() {
           }}
         >
           <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-            <Symbol name="chevron.left" size={24} color="#333" />
+            <Icon name="chevron.left" size={24} color="#333" />
           </Pressable>
           <Text
             style={{
@@ -113,7 +113,7 @@ export default function ReportsScreen() {
         <View
           style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] }}
         >
-          <Symbol name="doc.text" size={64} color="#9ca3af" />
+          <Icon name="doc.text" size={64} color="#9ca3af" />
           <Text
             style={{
               fontSize: fontSize.lg,
@@ -148,9 +148,9 @@ export default function ReportsScreen() {
         }}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <Symbol name="chevron.left" size={24} color="#333" />
+          <Icon name="chevron.left" size={24} color="#333" />
         </Pressable>
-        <Symbol name="doc.text.fill" size={24} color="#1a5d1a" />
+        <Icon name="doc.text.fill" size={24} color="#1a5d1a" />
         <Text
           style={{
             fontSize: fontSize.xl,
@@ -198,7 +198,7 @@ export default function ReportsScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <Symbol name="leaf.fill" size={20} color="#1a5d1a" />
+              <Icon name="leaf.fill" size={20} color="#1a5d1a" />
               <Text
                 style={{
                   fontSize: fontSize.base,
@@ -211,7 +211,7 @@ export default function ReportsScreen() {
                 {selectedFarm?.name || 'Select a farm'}
               </Text>
             </View>
-            <Symbol name={showFarmPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
+            <Icon name={showFarmPicker ? 'chevron.up' : 'chevron.down'} size={20} color="#666" />
           </Pressable>
 
           {showFarmPicker && (
@@ -383,7 +383,7 @@ export default function ReportsScreen() {
                   borderColor: reportType === type.value ? colors.primary[500] : colors.gray[200],
                 }}
               >
-                <Symbol
+                <Icon
                   name={type.icon}
                   size={24}
                   color={reportType === type.value ? '#1a5d1a' : '#9ca3af'}
@@ -622,7 +622,7 @@ export default function ReportsScreen() {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
-                  <Symbol name="doc.fill" size={24} color="white" />
+                  <Icon name="doc.fill" size={24} color="white" />
                   <Text
                     style={{
                       color: colors.white,
@@ -652,7 +652,7 @@ export default function ReportsScreen() {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
-                  <Symbol name="square.grid.2x2.fill" size={24} color="white" />
+                  <Icon name="square.grid.2x2.fill" size={24} color="white" />
                   <Text
                     style={{
                       color: colors.white,

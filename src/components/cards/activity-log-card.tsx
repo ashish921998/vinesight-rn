@@ -88,6 +88,8 @@ export function ActivityLogCard({
     paddingHorizontal: 12,
     paddingVertical: 8,
     backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#f2f2f7',
   };
 
   const iconContainerStyle: ViewStyle = {

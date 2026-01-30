@@ -1,12 +1,11 @@
 import { useEffect } from 'react';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 
-import { EditActivityModal } from '@/components/screens/edit-activity-modal';
+import { ActivityEditForm } from '@/components/screens/activity-edit-form';
 import { useModalStore } from '@/stores';
 
 export default function EditActivityRoute() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id?: string }>();
   const { editActivity, setEditActivity } = useModalStore();
 
   useEffect(() => {
@@ -22,14 +21,7 @@ export default function EditActivityRoute() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          presentation: 'modal',
-          headerShown: false,
-          title: id ? `Edit Activity ${id}` : 'Edit Activity',
-        }}
-      />
-      <EditActivityModal
+      <ActivityEditForm
         onClose={() => router.back()}
         presentation="screen"
         farm={editActivity.farm}

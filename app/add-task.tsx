@@ -1,6 +1,6 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import AddTaskModal from '@/components/screens/add-task-modal';
+import TaskForm from '@/components/screens/task-form';
 import { useModalStore } from '@/stores';
 
 export default function AddTaskRoute() {
@@ -11,8 +11,7 @@ export default function AddTaskRoute() {
 
   return (
     <>
-      <Stack.Screen options={{ presentation: 'modal', headerShown: false }} />
-      <AddTaskModal
+      <TaskForm
         onClose={() => router.back()}
         presentation="screen"
         editingTask={addEntry?.editingTask ?? null}

@@ -2,6 +2,7 @@ import { SymbolView, type SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import React from 'react';
 import { View, Text, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { ICON_MAPPING } from '@/utils/icon-mapping';
 
 interface SymbolProps {
   name: SymbolViewProps['name'] | string;
@@ -140,20 +141,25 @@ export function Symbol({
   weight = 'regular',
   style,
 }: SymbolProps) {
+  const resolvedName = ICON_MAPPING[name] ?? name;
   const directIonicon = Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, name)
     ? (name as keyof typeof Ionicons.glyphMap)
     : undefined;
 
   // On iOS 17+, use SF Symbols
   if (process.env.EXPO_OS === 'ios') {
-    const fallbackIcon = SYMBOL_TO_IONICON[name] || directIonicon || 'ellipse-outline';
+    const fallbackIcon =
+      SYMBOL_TO_IONICON[resolvedName] ||
+      SYMBOL_TO_IONICON[name] ||
+      directIonicon ||
+      'ellipse-outline';
     return (
       <SymbolView
-        name={name as SymbolViewProps['name']}
+        name={resolvedName as SymbolViewProps['name']}
         size={size}
         tintColor={color}
         weight={weight}
-        type="monochrome"
+        type="hierarchical"
         style={style}
         fallback={
           <Ionicons
@@ -168,7 +174,7 @@ export function Symbol({
   }
 
   // On Android/web, use Ionicons as fallback
-  const ionicon = SYMBOL_TO_IONICON[name] || directIonicon;
+  const ionicon = SYMBOL_TO_IONICON[resolvedName] || SYMBOL_TO_IONICON[name] || directIonicon;
   if (ionicon) {
     return (
       <Ionicons name={ionicon} size={size} color={color} style={style as StyleProp<TextStyle>} />

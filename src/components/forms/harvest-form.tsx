@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as Icon } from '@/components/ui/symbol';
 import { NumericInput } from './form-field';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -41,7 +41,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             marginRight: spacing[3],
           }}
         >
-          <Symbol name="basket.fill" size={20} color="#F59E0B" />
+          <Icon name="basket.fill" size={20} color="#F59E0B" />
         </View>
         <View>
           <Text
@@ -78,7 +78,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
           <View style={{ marginRight: 6 }}>
-            <Symbol name="star" size={16} color="#408059" />
+            <Icon name="star" size={16} color="#408059" />
           </View>
           <Text
             style={{
@@ -137,7 +137,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ marginRight: 6 }}>
-            <Symbol name="person" size={16} color="#408059" />
+            <Icon name="person" size={16} color="#408059" />
           </View>
           <Text
             style={{
@@ -163,7 +163,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
           }}
         >
           <View style={{ marginRight: 10 }}>
-            <Symbol name="person" size={20} color="#6B7280" />
+            <Icon name="person" size={20} color="#6B7280" />
           </View>
           <TextInput
             style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
@@ -256,7 +256,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
           borderTopColor: colors.surface[100],
         }}
       >
-        <Symbol
+        <Icon
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}

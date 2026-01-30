@@ -3,7 +3,7 @@ import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-nat
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, OTPInput } from '@/components/ui';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 const RESEND_COOLDOWN = 60; // seconds
@@ -140,11 +140,13 @@ export default function OTPVerificationScreen() {
   };
 
   const emailBadgeStyle: ViewStyle = {
-    backgroundColor: colors.surface[100],
+    backgroundColor: colors.surface[200],
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: borderRadius.lg,
     marginTop: spacing[2],
+    borderWidth: 1,
+    borderColor: colors.surface[300],
   };
 
   const emailTextStyle: TextStyle = {
@@ -201,7 +203,7 @@ export default function OTPVerificationScreen() {
       {/* Header */}
       <View style={headerContainerStyle}>
         <View style={iconContainerStyle}>
-          <Symbol name="checkmark.shield.fill" size={40} color={colors.primary[500]} />
+          <IconSymbol name="checkmark.shield.fill" size={40} color={colors.primary[500]} />
         </View>
 
         <Text style={titleTextStyle}>Enter Verification Code</Text>

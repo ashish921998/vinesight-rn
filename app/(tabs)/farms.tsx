@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useFarms, useDeleteFarm } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol } from '@/components/ui/symbol';
+import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
 import type { Farm } from '@/types';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
@@ -116,16 +117,24 @@ const SearchHeader = React.memo<SearchHeaderProps>(
               style={{
                 flex: 1,
                 borderRadius: borderRadius.xl,
-                padding: spacing[3],
+                borderCurve: 'continuous',
+                height: 72,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[2],
+                justifyContent: 'center',
                 backgroundColor: colors.white,
+                borderWidth: 1,
+                borderColor: colors.surface[200],
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                 <View
                   style={{
                     width: 32,
                     height: 32,
-                    borderRadius: borderRadius.lg,
+                    borderRadius: borderRadius.full,
+                    borderCurve: 'continuous',
+                    overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
@@ -133,20 +142,23 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                 >
                   <Symbol name="leaf.fill" size={16} color={colors.primary[500]} />
                 </View>
-                <View style={{ marginLeft: spacing[2] }}>
+                <View style={{ flex: 1 }}>
                   <Text
                     style={{
+                      color: colors.black,
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: colors.black,
+                      fontVariant: ['tabular-nums'],
+                      lineHeight: 22,
                     }}
                   >
                     {farms.length}
                   </Text>
                   <Text
                     style={{
+                      color: colors.surface[500],
                       fontSize: fontSize.xs,
-                      color: colors.gray[400],
+                      lineHeight: 16,
                     }}
                   >
                     Total Farms
@@ -158,16 +170,24 @@ const SearchHeader = React.memo<SearchHeaderProps>(
               style={{
                 flex: 1,
                 borderRadius: borderRadius.xl,
-                padding: spacing[3],
+                borderCurve: 'continuous',
+                height: 72,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[2],
+                justifyContent: 'center',
                 backgroundColor: colors.white,
+                borderWidth: 1,
+                borderColor: colors.surface[200],
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                 <View
                   style={{
                     width: 32,
                     height: 32,
-                    borderRadius: borderRadius.lg,
+                    borderRadius: borderRadius.full,
+                    borderCurve: 'continuous',
+                    overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
@@ -179,20 +199,23 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                     color={colors.primary[500]}
                   />
                 </View>
-                <View style={{ marginLeft: spacing[2] }}>
+                <View style={{ flex: 1 }}>
                   <Text
                     style={{
+                      color: colors.black,
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: colors.black,
+                      fontVariant: ['tabular-nums'],
+                      lineHeight: 22,
                     }}
                   >
                     {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}
                   </Text>
                   <Text
                     style={{
+                      color: colors.surface[500],
                       fontSize: fontSize.xs,
-                      color: colors.gray[400],
+                      lineHeight: 16,
                     }}
                   >
                     Total Acres
@@ -211,6 +234,7 @@ SearchHeader.displayName = 'SearchHeader';
 
 export default function FarmsScreen() {
   const router = useRouter();
+  const fabBottomInset = useFabBottomInset();
   const { data: farms, isLoading, refetch } = useFarms();
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
@@ -476,7 +500,7 @@ export default function FarmsScreen() {
         <Pressable
           style={{
             position: 'absolute',
-            bottom: spacing[6],
+            bottom: spacing[14] + fabBottomInset,
             right: spacing[6],
             width: 56,
             height: 56,

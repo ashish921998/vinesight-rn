@@ -1,6 +1,6 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import AddSoilProfileModal from '@/components/screens/add-soil-profile-modal';
+import SoilProfileForm from '@/components/screens/soil-profile-form';
 
 export default function AddSoilProfileRoute() {
   const router = useRouter();
@@ -13,8 +13,7 @@ export default function AddSoilProfileRoute() {
 
   return (
     <>
-      <Stack.Screen options={{ presentation: 'modal', headerShown: false }} />
-      <AddSoilProfileModal onClose={() => router.back()} presentation="screen" farmId={farmId} />
+      <SoilProfileForm onClose={() => router.back()} presentation="screen" farmId={farmId} />
     </>
   );
 }

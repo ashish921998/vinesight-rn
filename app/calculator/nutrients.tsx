@@ -7,7 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as Icon } from '@/components/ui/symbol';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
@@ -68,7 +68,7 @@ export default function NutrientCalculatorScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <KeyboardAvoidingView
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1, backgroundColor: colors.surface[50] }}
@@ -100,7 +100,7 @@ export default function NutrientCalculatorScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Symbol name="flask.fill" size={18} color="#8B5CF6" />
+                  <Icon name="flask.fill" size={18} color="#8B5CF6" />
                 </View>
                 <Text
                   style={{
@@ -296,7 +296,7 @@ export default function NutrientCalculatorScreen() {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Symbol name="refresh" size={18} color="#6B7280" />
+                  <Icon name="refresh" size={18} color="#6B7280" />
                   <Text
                     style={{
                       color: colors.surface[600],

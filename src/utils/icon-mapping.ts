@@ -61,6 +61,7 @@ export const ICON_MAPPING: Record<string, string> = {
   // Analytics
   analytics: 'chart.bar.fill',
   'analytics-outline': 'chart.bar',
+  'bar-chart': 'chart.bar.fill',
   'bar-chart-outline': 'chart.bar',
   'trending-up': 'chart.line.uptrend.xyaxis',
   'trending-down': 'chart.line.downtrend.xyaxis',

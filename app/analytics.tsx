@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 
 import { Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/use-analytics';
 import { useProfile } from '../src/hooks';
@@ -73,7 +73,7 @@ export default function AnalyticsScreen() {
         }}
       >
         <Stack.Screen options={{ title: 'Analytics' }} />
-        <Symbol name="chart.bar.fill" size={48} color="#9CA3AF" />
+        <SymbolIcon name="chart.bar.fill" size={48} color="#9CA3AF" />
         <Text
           style={{
             color: colors.surface[600],
@@ -162,7 +162,7 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.irrigation.bg,
                 }}
               >
-                <Symbol name="drop.fill" size={20} color={metricColors.irrigation.icon} />
+                <SymbolIcon name="drop.fill" size={20} color={metricColors.irrigation.icon} />
               </View>
               <Text
                 style={{
@@ -196,7 +196,7 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.spray.bg,
                 }}
               >
-                <Symbol name="flask.fill" size={20} color={metricColors.spray.icon} />
+                <SymbolIcon name="flask.fill" size={20} color={metricColors.spray.icon} />
               </View>
               <Text
                 style={{
@@ -230,7 +230,7 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.harvest.bg,
                 }}
               >
-                <Symbol name="basket.fill" size={20} color={metricColors.harvest.icon} />
+                <SymbolIcon name="basket.fill" size={20} color={metricColors.harvest.icon} />
               </View>
               <Text
                 style={{
@@ -264,7 +264,11 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.cost.bg,
                 }}
               >
-                <Symbol name="dollarsign.circle.fill" size={20} color={metricColors.cost.icon} />
+                <SymbolIcon
+                  name="dollarsign.circle.fill"
+                  size={20}
+                  color={metricColors.cost.icon}
+                />
               </View>
               <Text
                 style={{
@@ -355,7 +359,7 @@ export default function AnalyticsScreen() {
                       >
                         {key}
                       </Text>
-                      <Symbol
+                      <SymbolIcon
                         name={
                           value.trend === 'up'
                             ? 'trending-up'
@@ -649,7 +653,7 @@ export default function AnalyticsScreen() {
                           justifyContent: 'center',
                         }}
                       >
-                        <Symbol name="doc.text.fill" size={16} color="#6B7280" />
+                        <SymbolIcon name="doc.text.fill" size={16} color="#6B7280" />
                       </View>
                       <Text
                         style={{
@@ -691,7 +695,7 @@ export default function AnalyticsScreen() {
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}
               >
-                <Symbol name="lightbulb.fill" size={20} color="#3B82F6" />
+                <SymbolIcon name="lightbulb.fill" size={20} color="#3B82F6" />
                 <Text
                   style={{
                     fontSize: fontSize.base,
@@ -712,7 +716,7 @@ export default function AnalyticsScreen() {
                     marginBottom: spacing[2],
                   }}
                 >
-                  <Symbol name="checkmark.circle.fill" size={16} color="#3B82F6" />
+                  <SymbolIcon name="checkmark.circle.fill" size={16} color="#3B82F6" />
                   <Text
                     style={{
                       fontSize: fontSize.sm,
@@ -776,7 +780,7 @@ export default function AnalyticsScreen() {
                           backgroundColor: `${iconInfo.color}15`,
                         }}
                       >
-                        <Symbol name={iconInfo.icon} size={18} color={iconInfo.color} />
+                        <SymbolIcon name={iconInfo.icon} size={18} color={iconInfo.color} />
                       </View>
                       <View style={{ flex: 1, marginLeft: spacing[3] }}>
                         <Text

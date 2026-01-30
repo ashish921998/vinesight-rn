@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { AddEntryModal } from '@/components/screens/add-entry-modal';
+import { EntryForm } from '@/components/screens/entry-form';
 import { useModalStore } from '@/stores';
 import type { LogTypeId } from '@/constants/calculator-models';
 
@@ -42,8 +42,7 @@ export default function AddEntryRoute() {
 
   return (
     <>
-      <Stack.Screen options={{ presentation: 'modal', headerShown: false }} />
-      <AddEntryModal
+      <EntryForm
         onClose={() => router.back()}
         presentation="screen"
         tabs={tabs}

@@ -1,23 +1,28 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol } from '@/components/ui/symbol';
 import { useWorkers, useDeleteWorker } from '@/hooks';
+import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
 import { useModalStore } from '@/stores';
 import { AttendanceView } from '@/components/screens';
+import { SegmentedControl } from '@/components/ui';
 import type { Worker } from '@/types';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
-const TAB_DATA: { id: WorkersTab; label: string; icon: string }[] = [
-  { id: 'workers', label: 'Workers', icon: 'person.2.fill' },
-  { id: 'attendance', label: 'Attendance', icon: 'calendar' },
-  { id: 'analytics', label: 'Analytics', icon: 'chart.bar.fill' },
+const TAB_DATA: { id: WorkersTab; label: string }[] = [
+  { id: 'workers', label: 'Workers' },
+  { id: 'attendance', label: 'Attendance' },
+  { id: 'analytics', label: 'Analytics' },
 ];
 
 export default function WorkersScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const fabBottomInset = useFabBottomInset();
   const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
   const deleteWorker = useDeleteWorker();
@@ -156,9 +161,14 @@ export default function WorkersScreen() {
         )}
 
         {/* Actions */}
-        <Pressable onPress={() => handleDeleteWorker(item)} style={{ padding: spacing[2] }}>
-          <Symbol name="trash" size={18} color={colors.error} />
-        </Pressable>
+        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+          <Pressable onPress={() => handleEditWorker(item)} style={{ padding: spacing[2] }}>
+            <Symbol name="pencil" size={18} color="#408059" />
+          </Pressable>
+          <Pressable onPress={() => handleDeleteWorker(item)} style={{ padding: spacing[2] }}>
+            <Symbol name="trash" size={18} color={colors.error} />
+          </Pressable>
+        </View>
       </View>
     </Pressable>
   );
@@ -354,6 +364,7 @@ export default function WorkersScreen() {
         style={{
           flex: 1,
           backgroundColor: colors.gray[100],
+          paddingTop: insets.top + spacing[2],
         }}
       >
         {/* Tab Selector */}
@@ -365,51 +376,11 @@ export default function WorkersScreen() {
             paddingBottom: spacing[3],
           }}
         >
-          <View
-            style={{
-              flexDirection: 'row',
-              backgroundColor: colors.gray[100],
-              borderRadius: borderRadius.xl,
-              padding: spacing[1],
-            }}
-          >
-            {TAB_DATA.map((tab) => {
-              const isSelected = selectedTab === tab.id;
-              return (
-                <Pressable
-                  key={tab.id}
-                  onPress={() => setSelectedTab(tab.id)}
-                  style={{
-                    flex: 1,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    paddingVertical: 10,
-                    borderRadius: borderRadius.lg,
-                    backgroundColor: isSelected ? colors.white : 'transparent',
-                    borderWidth: isSelected ? 1 : 0,
-                    borderColor: isSelected ? colors.gray[200] : 'transparent',
-                  }}
-                >
-                  <Symbol
-                    name={tab.icon}
-                    size={16}
-                    color={isSelected ? colors.primary[500] : colors.gray[400]}
-                  />
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.medium,
-                      marginLeft: 6,
-                      color: isSelected ? colors.primary[500] : colors.gray[400],
-                    }}
-                  >
-                    {tab.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <SegmentedControl
+            options={TAB_DATA.map((tab) => ({ value: tab.id, label: tab.label }))}
+            selectedValue={selectedTab}
+            onSelect={(value) => setSelectedTab(value as WorkersTab)}
+          />
         </View>
 
         {/* Tab Content */}
@@ -426,7 +397,7 @@ export default function WorkersScreen() {
             }}
             style={{
               position: 'absolute',
-              bottom: spacing[6],
+              bottom: spacing[14] + fabBottomInset,
               right: spacing[6],
               width: 56,
               height: 56,

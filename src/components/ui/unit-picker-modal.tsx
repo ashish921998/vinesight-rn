@@ -8,7 +8,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface UnitPickerModalProps<T extends string> {
@@ -118,7 +118,11 @@ export function UnitPickerModal<T extends string>({
                   <View style={optionContentStyle}>
                     <Text style={getOptionTextStyle(isSelected)}>{unit}</Text>
                     {isSelected && (
-                      <Symbol name="checkmark.circle.fill" size={24} color={colors.primary[500]} />
+                      <SymbolIcon
+                        name="checkmark.circle.fill"
+                        size={24}
+                        color={colors.primary[500]}
+                      />
                     )}
                   </View>
                 </Pressable>

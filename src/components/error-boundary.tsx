@@ -1,7 +1,7 @@
 import React, { Component, ReactNode } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, Platform } from 'react-native';
 import * as Sentry from '@sentry/react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface Props {
@@ -62,6 +62,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const monospaceFont =
+        Platform.select({ ios: 'Courier', android: 'monospace', default: 'monospace' }) ??
+        'monospace';
       if (this.props.fallback) {
         return this.props.fallback;
       }
@@ -87,7 +90,7 @@ export class ErrorBoundary extends Component<Props, State> {
               backgroundColor: 'rgba(239, 68, 68, 0.1)',
             }}
           >
-            <Symbol name="exclamationmark.circle.fill" size={56} color="#EF4444" />
+            <IconSymbol name="exclamationmark.circle.fill" size={56} color="#EF4444" />
           </View>
 
           <Text
@@ -127,7 +130,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <Text
                 style={{
                   fontSize: fontSize.xs,
-                  fontFamily: 'Courier',
+                  fontFamily: monospaceFont,
                   color: '#7F1D1D',
                   marginBottom: spacing[2],
                 }}
@@ -135,7 +138,9 @@ export class ErrorBoundary extends Component<Props, State> {
                 {this.state.error.toString()}
               </Text>
               {this.state.errorInfo && (
-                <Text style={{ fontSize: fontSize.xs, fontFamily: 'Courier', color: '#B91C1C' }}>
+                <Text
+                  style={{ fontSize: fontSize.xs, fontFamily: monospaceFont, color: '#B91C1C' }}
+                >
                   {this.state.errorInfo}
                 </Text>
               )}

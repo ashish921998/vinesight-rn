@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as Icon } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
 import { useWeatherData } from '../src/hooks/use-weather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
@@ -123,7 +123,7 @@ export default function WeatherScreen() {
           padding: spacing[6],
         }}
       >
-        <Symbol name="cloud.slash.fill" size={48} color="#9CA3AF" />
+        <Icon name="cloud.slash.fill" size={48} color="#9CA3AF" />
         <Text
           style={{
             color: colors.surface[600],
@@ -170,7 +170,7 @@ export default function WeatherScreen() {
           padding: spacing[6],
         }}
       >
-        <Symbol name="leaf.fill" size={48} color="#9CA3AF" />
+        <Icon name="leaf.fill" size={48} color="#9CA3AF" />
         <Text
           style={{
             color: colors.surface[600],
@@ -239,7 +239,7 @@ export default function WeatherScreen() {
                 justifyContent: 'center',
               }}
             >
-              <Symbol name="leaf.fill" size={20} color="#408059" />
+              <Icon name="leaf.fill" size={20} color="#408059" />
             </View>
             <View style={{ marginLeft: spacing[3] }}>
               <Text
@@ -258,7 +258,7 @@ export default function WeatherScreen() {
               )}
             </View>
           </View>
-          <Symbol name={showFarmPicker ? 'chevron.up' : 'chevron.down'} size={20} color="#9CA3AF" />
+          <Icon name={showFarmPicker ? 'chevron.up' : 'chevron.down'} size={20} color="#9CA3AF" />
         </Pressable>
         {showFarmPicker && (
           <View
@@ -295,9 +295,7 @@ export default function WeatherScreen() {
                 >
                   {farm.name}
                 </Text>
-                {selectedFarmId === farm.id && (
-                  <Symbol name="checkmark" size={20} color="#408059" />
-                )}
+                {selectedFarmId === farm.id && <Icon name="checkmark" size={20} color="#408059" />}
               </Pressable>
             ))}
           </View>
@@ -316,7 +314,7 @@ export default function WeatherScreen() {
             alignItems: 'flex-start',
           }}
         >
-          <Symbol name="exclamationmark.triangle.fill" size={20} color="#F59E0B" />
+          <Icon name="exclamationmark.triangle.fill" size={20} color="#F59E0B" />
           <Text
             style={{
               color: '#92400E',
@@ -360,7 +358,7 @@ export default function WeatherScreen() {
             <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }} numberOfLines={1}>
               {growthStage}
             </Text>
-            <Symbol name="chevron.down" size={16} color="#9CA3AF" />
+            <Icon name="chevron.down" size={16} color="#9CA3AF" />
           </Pressable>
           {showGrowthPicker && (
             <View
@@ -434,7 +432,7 @@ export default function WeatherScreen() {
             <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }} numberOfLines={1}>
               {SOIL_TYPES.find((s) => s.value === soilType)?.label}
             </Text>
-            <Symbol name="chevron.down" size={16} color="#9CA3AF" />
+            <Icon name="chevron.down" size={16} color="#9CA3AF" />
           </Pressable>
           {showSoilPicker && (
             <View
@@ -522,7 +520,7 @@ export default function WeatherScreen() {
               </Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Symbol
+              <Icon
                 name={getWeatherIconName(weather.current.conditionCode)}
                 size={56}
                 color="rgba(255,255,255,0.9)"
@@ -544,7 +542,7 @@ export default function WeatherScreen() {
             }}
           >
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <Symbol name="drop.fill" size={18} color="rgba(255,255,255,0.8)" />
+              <Icon name="drop.fill" size={18} color="rgba(255,255,255,0.8)" />
               <Text
                 style={{
                   color: colors.white,
@@ -558,7 +556,7 @@ export default function WeatherScreen() {
               <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>Humidity</Text>
             </View>
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <Symbol name="gauge" size={18} color="rgba(255,255,255,0.8)" />
+              <Icon name="gauge" size={18} color="rgba(255,255,255,0.8)" />
               <Text
                 style={{
                   color: colors.white,
@@ -572,7 +570,7 @@ export default function WeatherScreen() {
               <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>Wind</Text>
             </View>
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <Symbol name="sun.max.fill" size={18} color="rgba(255,255,255,0.8)" />
+              <Icon name="sun.max.fill" size={18} color="rgba(255,255,255,0.8)" />
               <Text
                 style={{
                   color: colors.white,
@@ -586,7 +584,7 @@ export default function WeatherScreen() {
               <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>UV Index</Text>
             </View>
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <Symbol name="cloud.rain.fill" size={18} color="rgba(255,255,255,0.8)" />
+              <Icon name="cloud.rain.fill" size={18} color="rgba(255,255,255,0.8)" />
               <Text
                 style={{
                   color: colors.white,
@@ -644,7 +642,7 @@ export default function WeatherScreen() {
                 >
                   {getDayName(day.date)}
                 </Text>
-                <Symbol
+                <Icon
                   name={getWeatherIconName(day.conditionCode)}
                   size={28}
                   color={index === 0 ? '#408059' : '#6B7280'}
@@ -666,7 +664,7 @@ export default function WeatherScreen() {
                   <View
                     style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}
                   >
-                    <Symbol name="drop.fill" size={10} color="#3B82F6" />
+                    <Icon name="drop.fill" size={10} color="#3B82F6" />
                     <Text style={{ fontSize: fontSize.xs, color: '#2563EB', marginLeft: 2 }}>
                       {day.precipitationProbability}%
                     </Text>
@@ -699,7 +697,7 @@ export default function WeatherScreen() {
                 justifyContent: 'center',
               }}
             >
-              <Symbol name="drop.fill" size={20} color="#3B82F6" />
+              <Icon name="drop.fill" size={20} color="#3B82F6" />
             </View>
             <Text
               style={{
@@ -827,7 +825,7 @@ export default function WeatherScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Symbol name="drop.fill" size={16} color="#3B82F6" />
+                  <Icon name="drop.fill" size={16} color="#3B82F6" />
                 </View>
                 <Text
                   style={{
@@ -867,7 +865,7 @@ export default function WeatherScreen() {
                 key={i}
                 style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
               >
-                <Symbol name="checkmark.circle.fill" size={14} color="#408059" />
+                <Icon name="checkmark.circle.fill" size={14} color="#408059" />
                 <Text
                   style={{
                     fontSize: fontSize.xs,
@@ -910,7 +908,7 @@ export default function WeatherScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Symbol name="ant.fill" size={16} color="#F59E0B" />
+                  <Icon name="ant.fill" size={16} color="#F59E0B" />
                 </View>
                 <Text
                   style={{
@@ -952,7 +950,7 @@ export default function WeatherScreen() {
                 key={i}
                 style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
               >
-                <Symbol name="checkmark.shield.fill" size={14} color="#F59E0B" />
+                <Icon name="checkmark.shield.fill" size={14} color="#F59E0B" />
                 <Text
                   style={{
                     fontSize: fontSize.xs,
@@ -994,7 +992,7 @@ export default function WeatherScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Symbol name="basket.fill" size={16} color="#8B5CF6" />
+                  <Icon name="basket.fill" size={16} color="#8B5CF6" />
                 </View>
                 <Text
                   style={{
@@ -1028,7 +1026,7 @@ export default function WeatherScreen() {
                 key={i}
                 style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
               >
-                <Symbol name="checkmark.circle.fill" size={14} color="#8B5CF6" />
+                <Icon name="checkmark.circle.fill" size={14} color="#8B5CF6" />
                 <Text
                   style={{
                     fontSize: fontSize.xs,
@@ -1086,7 +1084,7 @@ export default function WeatherScreen() {
                         : '#DCFCE7',
                 }}
               >
-                <Symbol
+                <Icon
                   name="drop.fill"
                   size={20}
                   color={
