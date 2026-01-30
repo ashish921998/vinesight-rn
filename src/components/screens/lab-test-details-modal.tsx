@@ -184,7 +184,7 @@ export function LabTestDetailsModal({
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
                       {available.map(([key, value]) => (
                         <View
-                          key={key}
+                          key={String(key)}
                           style={{
                             flexBasis: '48%',
                             backgroundColor: colors.gray[50],
