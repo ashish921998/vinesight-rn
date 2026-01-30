@@ -215,7 +215,7 @@ export default function LoginScreen() {
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
-                leftIcon="envelope.fill"
+                leftIcon="mail"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 textContentType="emailAddress"
@@ -227,7 +227,7 @@ export default function LoginScreen() {
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                leftIcon="lock.fill"
+                leftIcon="lock-closed"
                 isPassword
                 textContentType={isSignUp ? 'newPassword' : 'password'}
                 autoComplete={isSignUp ? 'password-new' : 'password'}

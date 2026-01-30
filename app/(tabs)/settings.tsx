@@ -220,10 +220,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowEditProfile(false)}
       >
-        <KeyboardAvoidingView
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
+        <KeyboardAvoidingView behavior="padding" style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text style={styles.modalTitle}>Edit Profile</Text>

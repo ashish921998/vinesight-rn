@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, SafeAreaView } from 'react-native';
 
 import { Stack } from 'expo-router';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
@@ -98,7 +98,7 @@ export default function AnalyticsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
       <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <Stack.Screen options={{ title: 'Analytics' }} />
 
@@ -810,6 +810,6 @@ export default function AnalyticsScreen() {
           )}
         </ScrollView>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

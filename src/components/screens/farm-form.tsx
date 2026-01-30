@@ -64,7 +64,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const [selectedCrop, setSelectedCrop] = useState<CropType>('Grapes');
   const [cropVariety, setCropVariety] = useState('');
   const [customVariety, setCustomVariety] = useState('');
-  const [plantingDate, setPlantingDate] = useState(new Date());
+  const [plantingDate, setPlantingDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [vineSpacing, setVineSpacing] = useState('');
   const [rowSpacing, setRowSpacing] = useState('');
@@ -73,6 +73,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const [dateOfPruning, setDateOfPruning] = useState<Date | null>(null);
   const [showPruningDatePicker, setShowPruningDatePicker] = useState(false);
   const [showVarietyPicker, setShowVarietyPicker] = useState(false);
+  const [plantingDateChanged, setPlantingDateChanged] = useState(false);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -92,6 +93,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     setTotalTankCapacity(initial.totalTankCapacity);
     setSystemDischarge(initial.systemDischarge);
     setDateOfPruning(initial.dateOfPruning);
+    setPlantingDateChanged(false);
   }, [farm, isEdit]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -150,12 +152,12 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         area: parseFloat(area),
         crop: selectedCrop,
         crop_variety: finalVariety,
-        planting_date: formatLocalDate(plantingDate),
-        vine_spacing: vineSpacing ? parseFloat(vineSpacing) : null,
-        row_spacing: rowSpacing ? parseFloat(rowSpacing) : null,
-        total_tank_capacity: totalTankCapacity ? parseFloat(totalTankCapacity) : null,
-        system_discharge: systemDischarge ? parseFloat(systemDischarge) : null,
-        date_of_pruning: dateOfPruning ? formatLocalDate(dateOfPruning) : null,
+        ...(plantingDateChanged && { planting_date: formatLocalDate(plantingDate as Date) }),
+        vine_spacing: vineSpacing ? parseFloat(vineSpacing) : undefined,
+        row_spacing: rowSpacing ? parseFloat(rowSpacing) : undefined,
+        total_tank_capacity: totalTankCapacity ? parseFloat(totalTankCapacity) : undefined,
+        system_discharge: systemDischarge ? parseFloat(systemDischarge) : undefined,
+        date_of_pruning: dateOfPruning ? formatLocalDate(dateOfPruning) : undefined,
       };
       try {
         await updateFarm.mutateAsync({ id: farmId, updates });
@@ -175,11 +177,11 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       crop: selectedCrop,
       crop_variety: finalVariety,
       planting_date: formatLocalDate(plantingDate),
-      vine_spacing: vineSpacing ? parseFloat(vineSpacing) : null,
-      row_spacing: rowSpacing ? parseFloat(rowSpacing) : null,
-      total_tank_capacity: totalTankCapacity ? parseFloat(totalTankCapacity) : null,
-      system_discharge: systemDischarge ? parseFloat(systemDischarge) : null,
-      date_of_pruning: dateOfPruning ? formatLocalDate(dateOfPruning) : null,
+      vine_spacing: vineSpacing ? parseFloat(vineSpacing) : undefined,
+      row_spacing: rowSpacing ? parseFloat(rowSpacing) : undefined,
+      total_tank_capacity: totalTankCapacity ? parseFloat(totalTankCapacity) : undefined,
+      system_discharge: systemDischarge ? parseFloat(systemDischarge) : undefined,
+      date_of_pruning: dateOfPruning ? formatLocalDate(dateOfPruning) : undefined,
     };
 
     try {
@@ -381,11 +383,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               marginLeft: spacing[3],
             }}
           >
-            {plantingDate.toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            {plantingDate
+              ? plantingDate.toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })
+              : 'Select date'}
           </Text>
         </Pressable>
 
@@ -502,7 +506,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           mode="date"
           onChange={(_, date) => {
             setShowDatePicker(false);
-            if (date) setPlantingDate(date);
+            if (date) {
+              setPlantingDate(date);
+              setPlantingDateChanged(true);
+            }
           }}
         />
       )}

@@ -70,7 +70,7 @@ export default function NutrientCalculatorScreen() {
       />
       <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <KeyboardAvoidingView
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           style={{ flex: 1, backgroundColor: colors.surface[50] }}
         >
           <ScrollView

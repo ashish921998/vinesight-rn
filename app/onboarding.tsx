@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, SafeAreaView } from 'react-native';
 
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { router } from 'expo-router';
@@ -480,7 +480,7 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.gray[50] }}>
       {/* Progress Indicator */}
       {renderProgressIndicator()}
 
@@ -547,6 +547,6 @@ export default function OnboardingScreen() {
           </Pressable>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

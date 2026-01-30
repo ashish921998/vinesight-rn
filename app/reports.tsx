@@ -332,7 +332,7 @@ export default function ReportsScreen() {
             <DateTimePicker
               value={new Date(dateRange.from)}
               mode="date"
-              display={process.env.EXPO_OS === 'ios' ? 'spinner' : 'default'}
+              display="default"
               onChange={(_, date) => handleDateChange('from', date)}
               maximumDate={new Date(dateRange.to)}
             />
@@ -341,7 +341,7 @@ export default function ReportsScreen() {
             <DateTimePicker
               value={new Date(dateRange.to)}
               mode="date"
-              display={process.env.EXPO_OS === 'ios' ? 'spinner' : 'default'}
+              display="default"
               onChange={(_, date) => handleDateChange('to', date)}
               minimumDate={new Date(dateRange.from)}
               maximumDate={new Date()}

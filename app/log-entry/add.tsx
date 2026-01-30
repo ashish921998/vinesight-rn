@@ -10,7 +10,7 @@ export const screenOptions = {
 export default function AddLogEntryRoute() {
   const router = useRouter();
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
-  const farmIdNum = farmId ? parseInt(farmId, 10) : undefined;
+  const farmIdNum = farmId && !isNaN(Number(farmId)) ? parseInt(farmId, 10) : undefined;
 
   return (
     <>

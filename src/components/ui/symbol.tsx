@@ -36,6 +36,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'arrow.clockwise': 'refresh',
   'arrow.up.left.and.arrow.down.right': 'resize',
   'arrow.up.circle.fill': 'arrow-up-circle',
+  'envelope.fill': 'mail',
+  'lock.fill': 'lock-closed',
 
   // UI Elements
   'square.grid.2x2': 'grid',

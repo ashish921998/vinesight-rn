@@ -7,7 +7,8 @@ export default function AddTaskRoute() {
   const router = useRouter();
   const { addEntry } = useModalStore();
   const params = useLocalSearchParams<{ farmId?: string }>();
-  const initialFarmId = params.farmId ? parseInt(params.farmId, 10) : undefined;
+  const initialFarmId =
+    params.farmId && !isNaN(Number(params.farmId)) ? parseInt(params.farmId, 10) : undefined;
 
   return (
     <>

@@ -6,7 +6,8 @@ import type { LogTypeId } from '@/constants/calculator-models';
 export default function AddActivityRoute() {
   const router = useRouter();
   const params = useLocalSearchParams<{ farmId?: string; logType?: LogTypeId }>();
-  const farmId = params.farmId ? parseInt(params.farmId, 10) : undefined;
+  const farmId =
+    params.farmId && !isNaN(Number(params.farmId)) ? parseInt(params.farmId, 10) : undefined;
 
   return (
     <>
@@ -15,7 +16,7 @@ export default function AddActivityRoute() {
         presentation="screen"
         tabs={['log']}
         initialTab="log"
-        initialFarmId={farmId ?? null}
+        initialFarmId={farmId && !isNaN(farmId) ? farmId : null}
         initialLogType={params.logType ?? null}
       />
     </>
