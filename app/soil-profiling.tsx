@@ -4,10 +4,11 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { Symbol } from '@/components/ui/symbol';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFarm } from '../src/hooks';
 import {
@@ -19,13 +20,15 @@ import {
   getMoistureStatus,
   SECTION_INFO,
   SECTION_NAMES,
-} from '../src/hooks/useSoilProfiles';
+} from '../src/hooks/use-soil-profiles';
 import { SoilProfile } from '../src/types/database';
-import AddSoilProfileModal from '../src/components/screens/AddSoilProfileModal';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type TabType = 'history' | 'trends';
 
 export default function SoilProfilingScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
   const farmIdNum = farmId ? parseInt(farmId, 10) : 0;
 
@@ -34,7 +37,6 @@ export default function SoilProfilingScreen() {
   const deleteProfile = useDeleteSoilProfile();
 
   const [selectedTab, setSelectedTab] = useState<TabType>('history');
-  const [showAddModal, setShowAddModal] = useState(false);
 
   const isLoading = farmLoading || profilesLoading;
 
@@ -88,67 +90,123 @@ export default function SoilProfilingScreen() {
     return (
       <View
         key={profile.id}
-        className="rounded-xl p-4 mb-3"
         style={{
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderRadius: borderRadius.xl,
+          padding: spacing[4],
+          marginBottom: spacing[3],
         }}
       >
-        <View className="flex-row items-center justify-between mb-3">
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: spacing[3],
+          }}
+        >
           <View>
-            <Text className="text-sm font-semibold" style={{ color: '#1c1c1e' }}>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[900],
+              }}
+            >
               {formatProfileDate(profile.created_at)}
             </Text>
             {profile.fusarium_pct !== null && profile.fusarium_pct !== undefined && (
-              <Text className="text-xs" style={{ color: '#ff9500' }}>
+              <Text style={{ fontSize: fontSize.xs, color: '#ff9500' }}>
                 Fusarium: {profile.fusarium_pct}%
               </Text>
             )}
           </View>
-          <View className="flex-row items-center">
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View
-              className="px-3 py-1 rounded-full mr-2"
-              style={{ backgroundColor: `${status.color}20` }}
+              style={{
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[1],
+                borderRadius: borderRadius.full,
+                marginRight: spacing[2],
+                backgroundColor: `${status.color}20`,
+              }}
             >
-              <Text style={{ color: status.color }} className="text-xs font-semibold">
+              <Text
+                style={{
+                  color: status.color,
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
                 {status.label}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => handleDeleteProfile(profile)} className="p-2">
-              <Ionicons name="trash-outline" size={18} color="#ff3b30" />
-            </TouchableOpacity>
+            <Pressable onPress={() => handleDeleteProfile(profile)} style={{ padding: spacing[2] }}>
+              <Symbol name="trash" size={18} color="#ff3b30" />
+            </Pressable>
           </View>
         </View>
 
         {/* Average Moisture */}
         <View
-          className="p-3 rounded-lg mb-3"
-          style={{ backgroundColor: 'rgba(64, 128, 89, 0.08)' }}
+          style={{
+            backgroundColor: 'rgba(64, 128, 89, 0.08)',
+            padding: spacing[3],
+            borderRadius: borderRadius.lg,
+            marginBottom: spacing[3],
+          }}
         >
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm" style={{ color: '#408059' }}>
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <Text style={{ fontSize: fontSize.sm, color: colors.primary[600] }}>
               Average Moisture
             </Text>
-            <Text className="text-xl font-bold" style={{ color: '#408059' }}>
+            <Text
+              style={{
+                fontSize: fontSize.xl,
+                fontWeight: fontWeight.bold,
+                color: colors.primary[600],
+              }}
+            >
               {avgMoisture}%
             </Text>
           </View>
         </View>
 
         {/* Section Indicators */}
-        <View className="flex-row gap-2">
+        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
           {SECTION_NAMES.map((name) => {
             const value = getSectionValue(profile.sections, name);
             const info = SECTION_INFO[name];
             return (
               <View
                 key={name}
-                className="flex-1 p-2 rounded-lg"
-                style={{ backgroundColor: 'rgba(64, 128, 89, 0.08)' }}
+                style={{
+                  backgroundColor: 'rgba(64, 128, 89, 0.08)',
+                  flex: 1,
+                  padding: spacing[2],
+                  borderRadius: borderRadius.lg,
+                }}
               >
-                <Text className="text-xs font-bold text-center" style={{ color: '#408059' }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.bold,
+                    textAlign: 'center',
+                    color: colors.primary[600],
+                  }}
+                >
                   {info.abbr}
                 </Text>
-                <Text className="text-sm font-semibold text-center" style={{ color: '#408059' }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    textAlign: 'center',
+                    color: colors.primary[600],
+                  }}
+                >
                   {value !== null ? `${value}%` : '-'}
                 </Text>
               </View>
@@ -160,39 +218,100 @@ export default function SoilProfilingScreen() {
   };
 
   const renderEmptyState = () => (
-    <View className="flex-1 items-center justify-center py-16">
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: spacing[16],
+      }}
+    >
       <View
-        className="w-20 h-20 rounded-full items-center justify-center"
-        style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+        style={{
+          width: 80,
+          height: 80,
+          borderRadius: borderRadius.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(64, 128, 89, 0.1)',
+        }}
       >
-        <Ionicons name="layers" size={40} color="rgba(64, 128, 89, 0.5)" />
+        <Symbol name="layers" size={40} color="rgba(64, 128, 89, 0.5)" />
       </View>
-      <Text className="text-lg font-semibold mt-4" style={{ color: '#1c1c1e' }}>
+      <Text
+        style={{
+          fontSize: fontSize.lg,
+          fontWeight: fontWeight.semibold,
+          marginTop: spacing[4],
+          color: colors.surface[900],
+        }}
+      >
         No Soil Profiles
       </Text>
-      <Text className="text-center mt-2 px-8" style={{ color: '#8e8e93' }}>
+      <Text
+        style={{
+          textAlign: 'center',
+          marginTop: spacing[2],
+          paddingHorizontal: spacing[8],
+          color: colors.surface[500],
+        }}
+      >
         Add soil moisture profiles to track your farm&apos;s soil health over time.
       </Text>
-      <TouchableOpacity
-        onPress={() => setShowAddModal(true)}
-        className="mt-4 px-6 py-3 rounded-full flex-row items-center"
-        style={{ backgroundColor: '#408059' }}
+      <Pressable
+        onPress={() =>
+          router.push({ pathname: '/add-soil-profile', params: { farmId: farmIdNum.toString() } })
+        }
+        style={{
+          marginTop: spacing[4],
+          paddingHorizontal: spacing[6],
+          paddingVertical: spacing[3],
+          borderRadius: borderRadius.full,
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#408059',
+        }}
       >
-        <Ionicons name="add" size={20} color="#ffffff" />
-        <Text className="text-white font-semibold ml-1">Add First Profile</Text>
-      </TouchableOpacity>
+        <Symbol name="plus" size={20} color="#ffffff" />
+        <Text
+          style={{ color: colors.white, fontWeight: fontWeight.semibold, marginLeft: spacing[1] }}
+        >
+          Add First Profile
+        </Text>
+      </Pressable>
     </View>
   );
 
   const renderTrends = () => {
     if (!trendsData || !profiles || profiles.length < 2) {
       return (
-        <View className="flex-1 items-center justify-center py-16">
-          <Ionicons name="analytics-outline" size={48} color="#8e8e93" />
-          <Text className="text-lg font-semibold mt-4" style={{ color: '#1c1c1e' }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: spacing[16],
+          }}
+        >
+          <Symbol name="analytics-outline" size={48} color="#8e8e93" />
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              marginTop: spacing[4],
+              color: colors.surface[900],
+            }}
+          >
             Not Enough Data
           </Text>
-          <Text className="text-center mt-2 px-8" style={{ color: '#8e8e93' }}>
+          <Text
+            style={{
+              textAlign: 'center',
+              marginTop: spacing[2],
+              paddingHorizontal: spacing[8],
+              color: colors.surface[500],
+            }}
+          >
             Add at least 2 profiles to see trends.
           </Text>
         </View>
@@ -200,46 +319,85 @@ export default function SoilProfilingScreen() {
     }
 
     return (
-      <View className="px-4 pt-4">
+      <View style={{ paddingHorizontal: spacing[4], paddingTop: spacing[4] }}>
         {/* Overview Cards */}
-        <View className="flex-row gap-3 mb-4">
+        <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[4] }}>
           <View
-            className="flex-1 rounded-xl p-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              flex: 1,
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
             }}
           >
-            <Text className="text-xs mb-1" style={{ color: '#8e8e93' }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                marginBottom: spacing[1],
+                color: colors.surface[500],
+              }}
+            >
               Avg Moisture
             </Text>
-            <Text className="text-2xl font-bold" style={{ color: '#408059' }}>
+            <Text
+              style={{
+                fontSize: fontSize['2xl'],
+                fontWeight: fontWeight.bold,
+                color: colors.primary[600],
+              }}
+            >
               {trendsData.avgMoisture}%
             </Text>
           </View>
           <View
-            className="flex-1 rounded-xl p-4"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              flex: 1,
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
             }}
           >
-            <Text className="text-xs mb-1" style={{ color: '#8e8e93' }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                marginBottom: spacing[1],
+                color: colors.surface[500],
+              }}
+            >
               Total Profiles
             </Text>
-            <Text className="text-2xl font-bold" style={{ color: '#408059' }}>
+            <Text
+              style={{
+                fontSize: fontSize['2xl'],
+                fontWeight: fontWeight.bold,
+                color: colors.primary[600],
+              }}
+            >
               {trendsData.profileCount}
             </Text>
           </View>
         </View>
 
         <View
-          className="bg-white rounded-t-3xl p-4 mb-4"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: borderRadius['3xl'],
+            padding: spacing[4],
+            marginBottom: spacing[4],
+          }}
         >
-          <Text className="text-sm font-semibold mb-2" style={{ color: '#8e8e93' }}>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: fontWeight.semibold,
+              marginBottom: spacing[2],
+              color: colors.surface[500],
+            }}
+          >
             Recent Change
           </Text>
-          <View className="flex-row items-center">
-            <Ionicons
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Symbol
               name={
                 trendsData.moistureChange !== null && trendsData.moistureChange >= 0
                   ? 'arrow-up'
@@ -253,8 +411,10 @@ export default function SoilProfilingScreen() {
               }
             />
             <Text
-              className="text-2xl font-bold ml-2"
               style={{
+                fontSize: fontSize['2xl'],
+                fontWeight: fontWeight.bold,
+                marginLeft: spacing[2],
                 color:
                   trendsData.moistureChange !== null && trendsData.moistureChange >= 0
                     ? '#10B981'
@@ -266,7 +426,7 @@ export default function SoilProfilingScreen() {
                 : '0.0'}
               %
             </Text>
-            <Text className="ml-2" style={{ color: '#8e8e93' }}>
+            <Text style={{ marginLeft: spacing[2], color: colors.surface[500] }}>
               from last profile
             </Text>
           </View>
@@ -274,18 +434,29 @@ export default function SoilProfilingScreen() {
 
         {/* Latest Profile */}
         <View
-          className="rounded-xl p-4"
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
           }}
         >
-          <Text className="text-sm mb-2" style={{ color: '#8e8e93' }}>
+          <Text
+            style={{ fontSize: fontSize.sm, marginBottom: spacing[2], color: colors.surface[500] }}
+          >
             Latest Moisture
           </Text>
-          <Text className="text-3xl font-bold" style={{ color: '#408059' }}>
+          <Text
+            style={{
+              fontSize: fontSize['3xl'],
+              fontWeight: fontWeight.bold,
+              color: colors.primary[600],
+            }}
+          >
             {trendsData.latestMoisture}%
           </Text>
-          <Text className="text-xs mt-1" style={{ color: '#c7c7cc' }}>
+          <Text
+            style={{ fontSize: fontSize.xs, marginTop: spacing[1], color: colors.surface[300] }}
+          >
             {profiles[0] && formatProfileDate(profiles[0].created_at)}
           </Text>
         </View>
@@ -295,118 +466,175 @@ export default function SoilProfilingScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <SafeAreaView className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
-        <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="layers-outline" size={64} color="#8e8e93" />
-          <Text className="text-lg font-semibold mt-4" style={{ color: '#1c1c1e' }}>
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: spacing[8],
+          }}
+        >
+          <Symbol name="layers-outline" size={64} color="#8e8e93" />
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              marginTop: spacing[4],
+              color: colors.surface[900],
+            }}
+          >
             Select a Farm First
           </Text>
-          <Text className="text-center mt-2" style={{ color: '#8e8e93' }}>
+          <Text style={{ textAlign: 'center', marginTop: spacing[2], color: colors.surface[500] }}>
             Soil profiles are associated with specific farms. Please select a farm to view its soil
             profiles.
           </Text>
-          <TouchableOpacity
+          <Pressable
             onPress={() => router.push('/(tabs)/farms')}
-            className="mt-6 px-6 py-3 rounded-full"
-            style={{ backgroundColor: '#408059' }}
+            style={{
+              marginTop: spacing[6],
+              paddingHorizontal: spacing[6],
+              paddingVertical: spacing[3],
+              borderRadius: borderRadius.full,
+              backgroundColor: '#408059',
+            }}
           >
-            <Text className="font-semibold" style={{ color: '#ffffff' }}>
+            <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
               Go to Farms
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1" edges={['top']} style={{ backgroundColor: '#f2f2f7' }}>
+    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
       <LinearGradient
         colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
         style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
       />
       {/* Header */}
       <View
-        className="flex-row items-center px-4 py-3"
         style={{
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
           borderBottomWidth: 0.5,
           borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing[4],
+          paddingTop: spacing[3] + insets.top,
+          paddingBottom: spacing[3],
         }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mr-3">
-          <Ionicons name="arrow-back" size={24} color="#408059" />
-        </TouchableOpacity>
-        <Ionicons name="layers" size={24} color="#408059" />
-        <View className="ml-2 flex-1">
-          <Text className="text-xl font-bold" style={{ color: '#1c1c1e' }}>
+        <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
+          <Symbol name="chevron.left" size={24} color="#408059" />
+        </Pressable>
+        <Symbol name="layers" size={24} color="#408059" />
+        <View style={{ marginLeft: spacing[2], flex: 1 }}>
+          <Text
+            style={{
+              fontSize: fontSize.xl,
+              fontWeight: fontWeight.bold,
+              color: colors.surface[900],
+            }}
+          >
             Soil Profiling
           </Text>
           {farm && (
-            <Text className="text-xs" style={{ color: '#8e8e93' }}>
-              {farm.name}
-            </Text>
+            <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>{farm.name}</Text>
           )}
         </View>
-        <TouchableOpacity onPress={() => setShowAddModal(true)} className="p-2">
-          <Ionicons name="add-circle" size={28} color="#408059" />
-        </TouchableOpacity>
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: '/add-soil-profile', params: { farmId: farmIdNum.toString() } })
+          }
+          style={{ padding: spacing[2] }}
+        >
+          <Symbol name="add-circle" size={28} color="#408059" />
+        </Pressable>
       </View>
 
       {/* Tabs */}
-      <View className="flex-row px-4 py-2" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
-        <TouchableOpacity
+      <View
+        style={{
+          flexDirection: 'row',
+          paddingHorizontal: spacing[4],
+          paddingVertical: spacing[2],
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        }}
+      >
+        <Pressable
           onPress={() => setSelectedTab('history')}
-          className={`flex-1 py-3 mr-4 ${selectedTab === 'history' ? 'border-b-2 border-[#408059]' : ''}`}
+          style={{
+            flex: 1,
+            paddingVertical: spacing[3],
+            marginRight: spacing[4],
+            borderBottomWidth: selectedTab === 'history' ? 2 : 0,
+            borderBottomColor: selectedTab === 'history' ? '#408059' : 'transparent',
+          }}
         >
           <Text
-            className={`text-center font-semibold text-sm uppercase ${
-              selectedTab === 'history' ? 'text-[#408059]' : 'text-[#8e8e93]'
-            }`}
+            style={{
+              textAlign: 'center',
+              fontWeight: fontWeight.semibold,
+              fontSize: fontSize.sm,
+              textTransform: 'uppercase',
+              color: selectedTab === 'history' ? '#408059' : '#8e8e93',
+            }}
           >
             History
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Pressable>
+        <Pressable
           onPress={() => setSelectedTab('trends')}
-          className={`flex-1 py-3 ${selectedTab === 'trends' ? 'border-b-2 border-[#408059]' : ''}`}
+          style={{
+            flex: 1,
+            paddingVertical: spacing[3],
+            borderBottomWidth: selectedTab === 'trends' ? 2 : 0,
+            borderBottomColor: selectedTab === 'trends' ? '#408059' : 'transparent',
+          }}
         >
           <Text
-            className={`text-center font-semibold text-sm uppercase ${
-              selectedTab === 'trends' ? 'text-[#408059]' : 'text-[#8e8e93]'
-            }`}
+            style={{
+              textAlign: 'center',
+              fontWeight: fontWeight.semibold,
+              fontSize: fontSize.sm,
+              textTransform: 'uppercase',
+              color: selectedTab === 'trends' ? '#408059' : '#8e8e93',
+            }}
           >
             Trends
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Content */}
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#408059" />
-          <Text className="mt-2" style={{ color: '#8e8e93' }}>
+          <Text style={{ marginTop: spacing[2], color: colors.surface[500] }}>
             Loading profiles...
           </Text>
         </View>
       ) : selectedTab === 'history' ? (
-        <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={{ flex: 1, paddingHorizontal: spacing[4], paddingTop: spacing[4] }}
+          showsVerticalScrollIndicator={false}
+        >
           {profiles && profiles.length > 0 ? profiles.map(renderProfileCard) : renderEmptyState()}
-          <View className="h-8" />
+          <View style={{ height: spacing[8] }} />
         </ScrollView>
       ) : (
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
           {renderTrends()}
-          <View className="h-8" />
+          <View style={{ height: spacing[8] }} />
         </ScrollView>
       )}
 
       {/* Add Modal */}
-      <AddSoilProfileModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        farmId={farmIdNum}
-      />
-    </SafeAreaView>
+      {/* Soil profile creation handled via route */}
+    </View>
   );
 }

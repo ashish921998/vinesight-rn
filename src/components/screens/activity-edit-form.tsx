@@ -1,0 +1,559 @@
+/**
+ * Edit Activity Modal
+ * Modal for editing farm activities (irrigation, spray, harvest, expense, fertigation)
+ * Ported from iOS EditCloudActivityLogView.swift
+ */
+
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  type TextInputProps,
+  Keyboard,
+  useWindowDimensions,
+  UIManager,
+  findNodeHandle,
+} from 'react-native';
+import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { FormModal, SectionHeader } from '@/components/ui';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+
+function generateId(): string {
+  return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+import {
+  IrrigationForm,
+  SprayForm,
+  HarvestForm,
+  ExpenseForm,
+  FertigationForm,
+  validateIrrigationForm,
+  validateSprayForm,
+  validateHarvestForm,
+  validateExpenseForm,
+  validateFertigationForm,
+  createEmptySprayFormData,
+  createEmptyHarvestFormData,
+  createEmptyExpenseFormData,
+  createEmptyFertigationFormData,
+  type IrrigationFormData,
+  type SprayFormData,
+  type HarvestFormData,
+  type ExpenseFormData,
+  type FertigationFormData,
+} from '@/components/forms';
+import { type LogTypeId } from '@/constants/calculator-models';
+import {
+  useUpdateIrrigationRecord,
+  useUpdateSprayRecord,
+  useUpdateHarvestRecord,
+  useUpdateExpenseRecord,
+  useUpdateFertigationRecord,
+} from '@/hooks';
+import { toSupabaseDateString, fromSupabaseDateString } from '@/types';
+import type {
+  Farm,
+  IrrigationRecord,
+  SprayRecord,
+  HarvestRecord,
+  ExpenseRecord,
+  FertigationRecord,
+} from '@/types';
+
+interface ActivityEditFormProps {
+  visible?: boolean;
+  onClose: () => void;
+  farm: Farm;
+  logType: LogTypeId;
+  record: IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
+  onSaveSuccess?: () => void;
+  presentation?: 'modal' | 'screen';
+}
+
+export function ActivityEditForm({
+  visible,
+  onClose,
+  farm,
+  logType,
+  record,
+  onSaveSuccess,
+  presentation = 'modal',
+}: ActivityEditFormProps) {
+  const isVisible = visible ?? true;
+  const { height: windowHeight } = useWindowDimensions();
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [initializedRecordId, setInitializedRecordId] = useState<number | undefined>(undefined);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const focusedInputRef = useRef<number | null>(null);
+  const scrollOffsetRef = useRef(0);
+  const keyboardHeightRef = useRef(0);
+
+  const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
+  const [sprayData, setSprayData] = useState<SprayFormData>(createEmptySprayFormData());
+  const [harvestData, setHarvestData] = useState<HarvestFormData>(createEmptyHarvestFormData());
+  const [expenseData, setExpenseData] = useState<ExpenseFormData>(createEmptyExpenseFormData());
+  const [fertigationData, setFertigationData] = useState<FertigationFormData>(
+    createEmptyFertigationFormData(),
+  );
+
+  const updateIrrigation = useUpdateIrrigationRecord();
+  const updateSpray = useUpdateSprayRecord();
+  const updateHarvest = useUpdateHarvestRecord();
+  const updateExpense = useUpdateExpenseRecord();
+  const updateFertigation = useUpdateFertigationRecord();
+
+  const isFormValid = useMemo(() => {
+    switch (logType) {
+      case 'irrigation':
+        return validateIrrigationForm(irrigationData);
+      case 'spray':
+        return validateSprayForm(sprayData);
+      case 'harvest':
+        return validateHarvestForm(harvestData);
+      case 'expense':
+        return validateExpenseForm(expenseData);
+      case 'fertigation':
+        return validateFertigationForm(fertigationData);
+      default:
+        return false;
+    }
+  }, [logType, irrigationData, sprayData, harvestData, expenseData, fertigationData]);
+
+  const scrollToNode = useCallback(
+    (nodeHandle: number) => {
+      if (!keyboardHeightRef.current) return;
+      const resolvedHandle = findNodeHandle(nodeHandle) ?? nodeHandle;
+      if (typeof resolvedHandle !== 'number') return;
+      UIManager.measureInWindow(resolvedHandle, (_x, y, _width, height) => {
+        const keyboardTop = windowHeight - keyboardHeightRef.current;
+        const inputBottom = y + height;
+        const buffer = 24;
+        if (inputBottom > keyboardTop - buffer) {
+          const scrollBy = inputBottom - (keyboardTop - buffer);
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, scrollOffsetRef.current + scrollBy),
+            animated: true,
+          });
+        }
+      });
+    },
+    [windowHeight],
+  );
+
+  useEffect(() => {
+    const keyboardShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      keyboardHeightRef.current = event.endCoordinates.height;
+      const focusedNode = focusedInputRef.current;
+      if (focusedNode != null) {
+        requestAnimationFrame(() => scrollToNode(focusedNode));
+      }
+    });
+    return () => {
+      keyboardShowListener.remove();
+    };
+  }, [scrollToNode]);
+
+  type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
+
+  const scrollToFocusedInput = useCallback(
+    (event: OnFocusEvent) => {
+      const target = (event as { target?: unknown }).target ?? null;
+      const nodeHandle = findNodeHandle(target as unknown as number | React.Component | null);
+      if (typeof nodeHandle !== 'number') return;
+      focusedInputRef.current = nodeHandle;
+      requestAnimationFrame(() => scrollToNode(nodeHandle));
+    },
+    [scrollToNode],
+  );
+
+  useEffect(() => {
+    if (isVisible && (!isInitialized || initializedRecordId !== record.id)) {
+      const parsedDate = fromSupabaseDateString(record.date);
+      if (parsedDate) setSelectedDate(parsedDate);
+
+      switch (logType) {
+        case 'irrigation': {
+          const r = record as IrrigationRecord;
+          setIrrigationData({ duration: r.duration || 0 });
+          break;
+        }
+        case 'spray': {
+          const r = record as SprayRecord;
+          const data = createEmptySprayFormData();
+
+          if (r.dose && r.dose.includes('Water:')) {
+            const waterMatch = r.dose.match(/Water:\s*(\d+(?:\.\d+)?)/);
+            if (waterMatch) {
+              const parsedVolume = parseFloat(waterMatch[1]);
+              data.waterVolume = isNaN(parsedVolume) ? 0 : parsedVolume;
+            } else {
+              console.warn('[EditActivityModal] Water volume parsing failed:', r.dose);
+            }
+          }
+
+          const allowedUnits = ['gm/L', 'ml/L', 'gm/acre', 'ml/acre', 'ppm'] as const;
+          type AllowedUnit = (typeof allowedUnits)[number];
+
+          if (r.chemical) {
+            const chemicalParts = r.chemical.split(',').map((part) => part.trim());
+            const chemicals = chemicalParts.map((part) => {
+              const match = part.match(/(.+?)\s*\((\d+\.?\d*)\s*(.+?)\)/);
+              if (match) {
+                const unit = match[3].trim() as AllowedUnit;
+                const parsedQuantity = parseFloat(match[2]);
+                if (isNaN(parsedQuantity)) {
+                  console.warn('[EditActivityModal] Invalid chemical quantity:', match[2]);
+                  return {
+                    id: generateId(),
+                    name: part,
+                    quantity: 0,
+                    unit: 'ml/L' as const,
+                  };
+                }
+                if (!allowedUnits.includes(unit)) {
+                  console.warn('[EditActivityModal] Invalid unit, using default:', match[3]);
+                  return {
+                    id: generateId(),
+                    name: match[1].trim(),
+                    quantity: parsedQuantity,
+                    unit: 'ml/L' as const,
+                  };
+                }
+                return {
+                  id: generateId(),
+                  name: match[1].trim(),
+                  quantity: parsedQuantity,
+                  unit,
+                };
+              }
+              console.warn('[EditActivityModal] Chemical parsing failed, using defaults:', part);
+              return {
+                id: generateId(),
+                name: part,
+                quantity: 0,
+                unit: 'ml/L' as const,
+              };
+            });
+            data.chemicals = chemicals;
+          }
+          setSprayData(data);
+          break;
+        }
+        case 'harvest': {
+          const r = record as HarvestRecord;
+          setHarvestData({
+            quantity: r.quantity || 0,
+            grade: (r.grade || '') as
+              | ''
+              | 'A'
+              | 'B'
+              | 'C'
+              | 'Export Quality'
+              | 'Premium'
+              | 'Standard'
+              | 'Reject',
+            price: r.price || 0,
+            buyer: r.buyer || '',
+          });
+          break;
+        }
+        case 'expense': {
+          const r = record as ExpenseRecord;
+          setExpenseData({
+            type: (r.type || '') as
+              | ''
+              | 'Equipment'
+              | 'Fuel'
+              | 'Seeds/Plants'
+              | 'Packaging'
+              | 'Transport'
+              | 'Maintenance'
+              | 'Other',
+            cost: r.cost || 0,
+            remarks: r.remarks || '',
+          });
+          break;
+        }
+        case 'fertigation': {
+          const r = record as FertigationRecord;
+          const data = createEmptyFertigationFormData();
+          if (r.fertilizers && r.fertilizers.length > 0) {
+            data.fertilizers = r.fertilizers.map((f) => ({
+              name: f.name,
+              quantity: f.quantity ?? 0,
+              unit: f.unit as 'kg/acre' | 'liter/acre',
+            }));
+          }
+          setFertigationData(data);
+          break;
+        }
+      }
+      setInitializedRecordId(record.id);
+      setIsInitialized(true);
+    }
+  }, [isVisible, isInitialized, initializedRecordId, logType, record]);
+
+  const handleSave = async () => {
+    if (!isFormValid) return;
+
+    setIsSubmitting(true);
+    const dateStr = toSupabaseDateString(selectedDate);
+
+    try {
+      switch (logType) {
+        case 'irrigation': {
+          const r = record as IrrigationRecord;
+          if (r.id == null) {
+            throw new Error('Record ID is missing');
+          }
+          await updateIrrigation.mutateAsync({
+            id: r.id,
+            updates: {
+              duration: irrigationData.duration,
+              date: dateStr,
+            },
+          });
+          break;
+        }
+        case 'spray': {
+          const r = record as SprayRecord;
+          if (r.id == null) {
+            throw new Error('Record ID is missing');
+          }
+          const chemicalStr = sprayData.chemicals
+            .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
+            .join(', ');
+          const doseStr = `Water: ${sprayData.waterVolume}L`;
+          await updateSpray.mutateAsync({
+            id: r.id,
+            updates: {
+              chemical: chemicalStr,
+              dose: doseStr,
+              date: dateStr,
+            },
+          });
+          break;
+        }
+        case 'harvest': {
+          const r = record as HarvestRecord;
+          if (r.id == null) {
+            throw new Error('Record ID is missing');
+          }
+          await updateHarvest.mutateAsync({
+            id: r.id,
+            updates: {
+              quantity: harvestData.quantity,
+              grade: harvestData.grade,
+              price: harvestData.price || undefined,
+              buyer: harvestData.buyer || undefined,
+              date: dateStr,
+            },
+          });
+          break;
+        }
+        case 'expense': {
+          const r = record as ExpenseRecord;
+          if (r.id == null) {
+            throw new Error('Record ID is missing');
+          }
+          await updateExpense.mutateAsync({
+            id: r.id,
+            updates: {
+              type: expenseData.type,
+              cost: expenseData.cost,
+              remarks: expenseData.remarks || undefined,
+              date: dateStr,
+            },
+          });
+          break;
+        }
+        case 'fertigation': {
+          const r = record as FertigationRecord;
+          if (r.id == null) {
+            throw new Error('Record ID is missing');
+          }
+          await updateFertigation.mutateAsync({
+            id: r.id,
+            updates: {
+              fertilizers: fertigationData.fertilizers.map((f) => ({
+                name: f.name,
+                unit: f.unit,
+                quantity: f.quantity ?? 0,
+              })),
+              date: dateStr,
+            },
+          });
+          break;
+        }
+      }
+
+      onSaveSuccess?.();
+      setIsInitialized(false);
+      onClose();
+    } catch (error) {
+      console.error('Error updating log:', error);
+      Alert.alert('Error', 'Failed to update log. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setIsInitialized(false);
+    setInitializedRecordId(undefined);
+    onClose();
+  };
+
+  const renderForm = () => {
+    if (!isInitialized) {
+      return (
+        <View
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: spacing[10],
+          }}
+        >
+          <ActivityIndicator size="large" color="#408059" />
+          <Text selectable style={{ marginTop: spacing[4], color: colors.surface[500] }}>
+            Loading...
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={{ marginTop: spacing[4] }}>
+        {logType === 'irrigation' && (
+          <IrrigationForm
+            data={irrigationData}
+            onChange={setIrrigationData}
+            onInputFocus={scrollToFocusedInput}
+          />
+        )}
+        {logType === 'spray' && (
+          <SprayForm data={sprayData} onChange={setSprayData} onInputFocus={scrollToFocusedInput} />
+        )}
+        {logType === 'harvest' && (
+          <HarvestForm
+            data={harvestData}
+            onChange={setHarvestData}
+            onInputFocus={scrollToFocusedInput}
+          />
+        )}
+        {logType === 'expense' && (
+          <ExpenseForm
+            data={expenseData}
+            onChange={setExpenseData}
+            onInputFocus={scrollToFocusedInput}
+          />
+        )}
+        {logType === 'fertigation' && (
+          <FertigationForm
+            data={fertigationData}
+            onChange={setFertigationData}
+            onInputFocus={scrollToFocusedInput}
+          />
+        )}
+      </View>
+    );
+  };
+
+  return (
+    <FormModal
+      visible={isVisible}
+      onClose={handleClose}
+      title="Edit Log"
+      onSave={handleSave}
+      saveLabel="Save Changes"
+      isLoading={isSubmitting}
+      isSaveDisabled={!isFormValid}
+      presentation={presentation}
+      scrollViewRef={scrollViewRef}
+      scrollViewProps={{
+        keyboardShouldPersistTaps: 'handled',
+        onScroll: (event) => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+        },
+        scrollEventThrottle: 16,
+      }}
+    >
+      <SectionHeader
+        title="Log Details"
+        subtitle={farm.name}
+        style={{ marginBottom: spacing[4] }}
+      />
+
+      <View style={{ marginBottom: spacing[6] }}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.medium,
+            color: colors.surface[700],
+            marginBottom: spacing[2],
+          }}
+        >
+          Date
+        </Text>
+        <Pressable
+          onPress={() => setShowDatePicker(true)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface[100],
+            borderRadius: borderRadius.xl,
+            borderWidth: 2,
+            borderColor: colors.surface[200],
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[3],
+          }}
+        >
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: colors.primary[50],
+              marginRight: spacing[3],
+            }}
+          >
+            <UISymbol name="calendar" size={16} color={colors.primary[600]} />
+          </View>
+          <Text style={{ fontSize: fontSize.base, fontWeight: fontWeight.medium }}>
+            {selectedDate.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </Text>
+        </Pressable>
+      </View>
+
+      {renderForm()}
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={(_, date) => {
+            setShowDatePicker(false);
+            if (date) setSelectedDate(date);
+          }}
+        />
+      )}
+    </FormModal>
+  );
+}

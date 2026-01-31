@@ -3,18 +3,19 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+
+import { Stack, useRouter } from 'expo-router';
+import { Symbol as SFSymbol } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
-import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/useTasks';
+import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-tasks';
 import { TaskReminder, TASK_TYPE_INFO, PRIORITY_INFO } from '../src/types/task';
-import { AddEntryModal } from '../src/components/screens';
+import { useModalStore } from '@/stores';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
 
@@ -25,14 +26,14 @@ const startOfDay = (date: Date) => {
 };
 
 export default function TasksScreen() {
+  const router = useRouter();
+  const { setAddEntry } = useModalStore();
   const { data: farms } = useFarms();
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
 
   const [filter, setFilter] = useState<FilterType>('all');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingTask, setEditingTask] = useState<TaskReminder | null>(null);
 
   // Get farm name by ID
   const getFarmName = (farmId: number) => {
@@ -121,54 +122,112 @@ export default function TasksScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-surface-50 items-center justify-center">
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.surface[50],
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Stack.Screen options={{ title: 'Tasks' }} />
         <ActivityIndicator size="large" color="#408059" />
-        <Text className="text-surface-600 mt-4">Loading tasks...</Text>
+        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>Loading tasks...</Text>
       </View>
     );
   }
 
   return (
     <>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
-        <View className="flex-1 bg-surface-50">
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+        <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
           <Stack.Screen
             options={{
               title: 'Tasks',
               headerRight: () => (
-                <TouchableOpacity
+                <Pressable
                   onPress={() => {
-                    setEditingTask(null);
-                    setShowAddModal(true);
+                    setAddEntry({ tabs: ['task'], initialTab: 'task' });
+                    router.push({
+                      pathname: '/add-entry',
+                      params: { tabs: 'task', initialTab: 'task' },
+                    });
                   }}
-                  className="mr-4"
+                  style={{ marginRight: spacing[4] }}
                 >
-                  <Ionicons name="add-circle" size={28} color="#408059" />
-                </TouchableOpacity>
+                  <SFSymbol name="plus.circle.fill" size={28} color="#408059" />
+                </Pressable>
               ),
             }}
           />
 
           <ScrollView
-            contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+            contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[24] }}
             refreshControl={
               <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
             }
           >
             {/* Stats Cards */}
-            <View className="flex-row mb-4" style={{ gap: 8 }}>
-              <View className="flex-1 bg-white rounded-xl p-3 items-center">
-                <Text className="text-2xl font-bold text-surface-900">{counts.pending}</Text>
-                <Text className="text-xs text-surface-500">Pending</Text>
+            <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: spacing[2] }}>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[3],
+                  alignItems: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: fontWeight.bold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  {counts.pending}
+                </Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>Pending</Text>
               </View>
-              <View className="flex-1 bg-amber-50 rounded-xl p-3 items-center">
-                <Text className="text-2xl font-bold text-amber-700">{counts.overdue}</Text>
-                <Text className="text-xs text-amber-600">Overdue</Text>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: '#FFFBEB',
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[3],
+                  alignItems: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: fontWeight.bold,
+                    color: '#B45309',
+                  }}
+                >
+                  {counts.overdue}
+                </Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>Overdue</Text>
               </View>
-              <View className="flex-1 bg-green-50 rounded-xl p-3 items-center">
-                <Text className="text-2xl font-bold text-green-700">{counts.completed}</Text>
-                <Text className="text-xs text-green-600">Completed</Text>
+              <View
+                style={{
+                  flex: 1,
+                  backgroundColor: '#ECFDF3',
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[3],
+                  alignItems: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize['2xl'],
+                    fontWeight: fontWeight.bold,
+                    color: '#15803D',
+                  }}
+                >
+                  {counts.completed}
+                </Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>Completed</Text>
               </View>
             </View>
 
@@ -176,48 +235,86 @@ export default function TasksScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              className="mb-4"
-              contentContainerStyle={{ gap: 8 }}
+              contentContainerStyle={{ gap: spacing[2] }}
+              style={{ marginBottom: spacing[4] }}
             >
               {(['all', 'pending', 'overdue', 'completed'] as FilterType[]).map((type) => (
-                <TouchableOpacity
+                <Pressable
                   key={type}
                   onPress={() => setFilter(type)}
-                  className={`px-4 py-2 rounded-full ${
-                    filter === type ? 'bg-primary-600' : 'bg-white'
-                  }`}
+                  style={{
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[2],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: filter === type ? colors.primary[600] : colors.white,
+                  }}
                 >
                   <Text
-                    className={`text-sm font-medium ${
-                      filter === type ? 'text-white' : 'text-surface-600'
-                    }`}
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.medium,
+                      color: filter === type ? colors.white : colors.surface[600],
+                    }}
                   >
                     {type.charAt(0).toUpperCase() + type.slice(1)} ({counts[type]})
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </ScrollView>
 
             {/* Task List */}
             {filteredTasks.length === 0 ? (
-              <View className="bg-white rounded-2xl p-8 items-center">
-                <Ionicons name="checkbox-outline" size={48} color="#9CA3AF" />
-                <Text className="text-surface-600 mt-4 text-center">No tasks found</Text>
-                <Text className="text-surface-500 text-sm mt-1 text-center">
+              <View
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius['2xl'],
+                  padding: spacing[8],
+                  alignItems: 'center',
+                }}
+              >
+                <SFSymbol name="square" size={48} color="#9CA3AF" />
+                <Text
+                  style={{
+                    color: colors.surface[600],
+                    marginTop: spacing[4],
+                    textAlign: 'center',
+                  }}
+                >
+                  No tasks found
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[500],
+                    fontSize: fontSize.sm,
+                    marginTop: spacing[1],
+                    textAlign: 'center',
+                  }}
+                >
                   {filter === 'all'
                     ? 'Create your first task to get started'
                     : `No ${filter} tasks`}
                 </Text>
                 {filter === 'all' && (
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => {
-                      setEditingTask(null);
-                      setShowAddModal(true);
+                      setAddEntry({ tabs: ['task'], initialTab: 'task' });
+                      router.push({
+                        pathname: '/add-entry',
+                        params: { tabs: 'task', initialTab: 'task' },
+                      });
                     }}
-                    className="mt-4 bg-primary-600 px-6 py-3 rounded-xl"
+                    style={{
+                      marginTop: spacing[4],
+                      backgroundColor: colors.primary[600],
+                      paddingHorizontal: spacing[6],
+                      paddingVertical: spacing[3],
+                      borderRadius: borderRadius.xl,
+                    }}
                   >
-                    <Text className="text-white font-semibold">Add Task</Text>
-                  </TouchableOpacity>
+                    <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
+                      Add Task
+                    </Text>
+                  </Pressable>
                 )}
               </View>
             ) : (
@@ -229,40 +326,84 @@ export default function TasksScreen() {
                 return (
                   <View
                     key={task.id}
-                    className={`bg-white rounded-2xl p-4 mb-3 ${
-                      overdue ? 'border-2 border-amber-300' : ''
-                    } ${task.completed ? 'opacity-60' : ''}`}
+                    style={{
+                      backgroundColor: colors.white,
+                      borderRadius: borderRadius['2xl'],
+                      padding: spacing[4],
+                      marginBottom: spacing[3],
+                      borderWidth: overdue ? 2 : 0,
+                      borderColor: overdue ? '#FCD34D' : 'transparent',
+                      opacity: task.completed ? 0.6 : 1,
+                    }}
                   >
-                    <View className="flex-row items-start">
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                       {/* Complete Checkbox */}
-                      <TouchableOpacity
+                      <Pressable
                         onPress={() => !task.completed && handleComplete(task)}
                         disabled={task.completed}
-                        className={`w-6 h-6 rounded-full border-2 items-center justify-center mr-3 mt-0.5 ${
-                          task.completed ? 'bg-green-500 border-green-500' : 'border-surface-300'
-                        }`}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: borderRadius.full,
+                          borderWidth: 2,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginRight: spacing[3],
+                          marginTop: 2,
+                          backgroundColor: task.completed ? '#22C55E' : 'transparent',
+                          borderColor: task.completed ? '#22C55E' : colors.surface[300],
+                        }}
                       >
-                        {task.completed && <Ionicons name="checkmark" size={16} color="white" />}
-                      </TouchableOpacity>
+                        {task.completed && <SFSymbol name="checkmark" size={16} color="white" />}
+                      </Pressable>
 
-                      <View className="flex-1">
+                      <View style={{ flex: 1 }}>
                         {/* Title & Type */}
-                        <View className="flex-row items-center">
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <View
-                            className="w-6 h-6 rounded items-center justify-center mr-2"
-                            style={{ backgroundColor: `${typeInfo.color}20` }}
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: borderRadius.sm,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              marginRight: spacing[2],
+                              backgroundColor: `${typeInfo.color}20`,
+                            }}
                           >
-                            <Ionicons
-                              name={typeInfo.icon as keyof typeof Ionicons.glyphMap}
+                            <SFSymbol
+                              name={
+                                typeInfo.icon === 'water'
+                                  ? 'drop.fill'
+                                  : typeInfo.icon === 'flask'
+                                    ? 'flask.fill'
+                                    : typeInfo.icon === 'basket'
+                                      ? 'basket.fill'
+                                      : typeInfo.icon === 'cash'
+                                        ? 'dollarsign.circle.fill'
+                                        : typeInfo.icon === 'leaf'
+                                          ? 'leaf.fill'
+                                          : typeInfo.icon === 'layers'
+                                            ? 'square.stack.3d.up.fill'
+                                            : typeInfo.icon === 'analytics'
+                                              ? 'chart.bar.fill'
+                                              : typeInfo.icon === 'document-text'
+                                                ? 'doc.text.fill'
+                                                : 'doc.fill'
+                              }
                               size={14}
                               color={typeInfo.color}
                             />
                           </View>
                           <Text
-                            className={`text-base font-semibold flex-1 ${
-                              task.completed ? 'text-surface-500 line-through' : 'text-surface-900'
-                            }`}
                             numberOfLines={1}
+                            style={{
+                              fontSize: fontSize.base,
+                              fontWeight: fontWeight.semibold,
+                              flex: 1,
+                              color: task.completed ? colors.surface[500] : colors.surface[900],
+                              textDecorationLine: task.completed ? 'line-through' : 'none',
+                            }}
                           >
                             {task.title}
                           </Text>
@@ -270,44 +411,80 @@ export default function TasksScreen() {
 
                         {/* Description */}
                         {task.description && (
-                          <Text className="text-sm text-surface-500 mt-1" numberOfLines={2}>
+                          <Text
+                            style={{
+                              fontSize: fontSize.sm,
+                              color: colors.surface[500],
+                              marginTop: spacing[1],
+                            }}
+                            numberOfLines={2}
+                          >
                             {task.description}
                           </Text>
                         )}
 
                         {/* Farm & Due Date */}
-                        <View className="flex-row items-center mt-2 flex-wrap" style={{ gap: 8 }}>
-                          <View className="flex-row items-center">
-                            <Ionicons name="leaf" size={12} color="#6B7280" />
-                            <Text className="text-xs text-surface-500 ml-1">
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginTop: spacing[2],
+                            flexWrap: 'wrap',
+                            gap: 8,
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <SFSymbol name="leaf.fill" size={12} color="#6B7280" />
+                            <Text
+                              style={{
+                                fontSize: fontSize.xs,
+                                color: colors.surface[500],
+                                marginLeft: spacing[1],
+                              }}
+                            >
                               {getFarmName(task.farm_id)}
                             </Text>
                           </View>
                           <View
-                            className={`flex-row items-center ${
-                              overdue ? 'bg-red-100' : 'bg-surface-100'
-                            } px-2 py-0.5 rounded`}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              paddingHorizontal: spacing[2],
+                              paddingVertical: 2,
+                              borderRadius: borderRadius.sm,
+                              backgroundColor: overdue ? '#FEE2E2' : colors.surface[100],
+                            }}
                           >
-                            <Ionicons
+                            <SFSymbol
                               name="calendar"
                               size={12}
                               color={overdue ? '#DC2626' : '#6B7280'}
                             />
                             <Text
-                              className={`text-xs ml-1 ${
-                                overdue ? 'text-red-600 font-medium' : 'text-surface-500'
-                              }`}
+                              style={{
+                                fontSize: fontSize.xs,
+                                marginLeft: spacing[1],
+                                color: overdue ? '#DC2626' : colors.surface[500],
+                                fontWeight: overdue ? fontWeight.medium : fontWeight.normal,
+                              }}
                             >
                               {formatDueDate(task.due_date)}
                             </Text>
                           </View>
                           <View
-                            className="px-2 py-0.5 rounded"
-                            style={{ backgroundColor: priorityInfo.bgColor }}
+                            style={{
+                              backgroundColor: priorityInfo.bgColor,
+                              paddingHorizontal: spacing[2],
+                              paddingVertical: 2,
+                              borderRadius: borderRadius.sm,
+                            }}
                           >
                             <Text
-                              className="text-xs font-medium"
-                              style={{ color: priorityInfo.color }}
+                              style={{
+                                fontSize: fontSize.xs,
+                                fontWeight: fontWeight.medium,
+                                color: priorityInfo.color,
+                              }}
                             >
                               {priorityInfo.label}
                             </Text>
@@ -317,9 +494,12 @@ export default function TasksScreen() {
 
                       {/* Actions */}
                       {!task.completed && (
-                        <TouchableOpacity onPress={() => handleDelete(task)} className="p-2">
-                          <Ionicons name="trash-outline" size={18} color="#DC2626" />
-                        </TouchableOpacity>
+                        <Pressable
+                          onPress={() => handleDelete(task)}
+                          style={{ padding: spacing[2] }}
+                        >
+                          <SFSymbol name="trash" size={18} color="#DC2626" />
+                        </Pressable>
                       )}
                     </View>
                   </View>
@@ -329,33 +509,37 @@ export default function TasksScreen() {
           </ScrollView>
 
           {/* FAB */}
-          <TouchableOpacity
+          <Pressable
             onPress={() => {
-              setEditingTask(null);
-              setShowAddModal(true);
+              setAddEntry({ tabs: ['task'], initialTab: 'task' });
+              router.push({
+                pathname: '/add-entry',
+                params: { tabs: 'task', initialTab: 'task' },
+              });
             }}
-            className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center shadow-lg"
-            style={{ elevation: 5 }}
+            style={{
+              position: 'absolute',
+              bottom: spacing[6],
+              right: spacing[6],
+              width: 56,
+              height: 56,
+              backgroundColor: colors.primary[600],
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
           >
-            <Ionicons name="add" size={28} color="white" />
-          </TouchableOpacity>
+            <SFSymbol name="plus" size={28} color="white" />
+          </Pressable>
 
-          {/* Add Task Modal */}
-          <AddEntryModal
-            visible={showAddModal}
-            onClose={() => {
-              setShowAddModal(false);
-              setEditingTask(null);
-            }}
-            tabs={['task']}
-            initialTab="task"
-            editingTask={editingTask}
-            onTaskSaveSuccess={() => {
-              refetch();
-            }}
-          />
+          {/* Add Task handled via route */}
         </View>
-      </SafeAreaView>
+      </View>
     </>
   );
 }

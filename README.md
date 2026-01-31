@@ -8,7 +8,7 @@ React Native mobile application built with Expo SDK 54 for vineyard management. 
 - **Navigation**: [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routing)
 - **Backend**: [Supabase](https://supabase.com/)
 - **Data Fetching**: [TanStack React Query](https://tanstack.com/query/latest)
-- **Styling**: [NativeWind v4](https://www.nativewind.dev/) (TailwindCSS)
+- **Styling**: Inline styles + theme tokens (`src/styles/theme.ts`)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 - **Maps**: [React Native Maps](https://github.com/react-native-maps/react-native-maps) + [Expo Location](https://docs.expo.dev/versions/latest/sdk/location/)
 
@@ -56,9 +56,9 @@ vinesight-rn/
 │   ├── stores/             # Zustand stores
 │   ├── types/              # TypeScript types
 │   ├── utils/              # Utility functions
-│   └── global.css          # Tailwind CSS
+│   └── styles/             # Design system tokens
 ├── assets/                 # Static assets
-└── tailwind.config.js      # Tailwind configuration
+└── metro.config.js         # Metro bundler config
 ```
 
 ## Features

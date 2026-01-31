@@ -1,26 +1,33 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Symbol } from '@/components/ui/symbol';
 import { useWorkers, useDeleteWorker } from '@/hooks';
-import { AddWorkerModal } from '@/components/screens';
+import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
+import { useModalStore } from '@/stores';
 import { AttendanceView } from '@/components/screens';
+import { SegmentedControl } from '@/components/ui';
 import type { Worker } from '@/types';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
-const TAB_DATA: { id: WorkersTab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { id: 'workers', label: 'Workers', icon: 'people' },
-  { id: 'attendance', label: 'Attendance', icon: 'calendar' },
-  { id: 'analytics', label: 'Analytics', icon: 'bar-chart' },
+const TAB_DATA: { id: WorkersTab; label: string }[] = [
+  { id: 'workers', label: 'Workers' },
+  { id: 'attendance', label: 'Attendance' },
+  { id: 'analytics', label: 'Analytics' },
 ];
 
 export default function WorkersScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const fabBottomInset = useFabBottomInset();
+  const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
   const deleteWorker = useDeleteWorker();
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [workerToEdit, setWorkerToEdit] = useState<Worker | undefined>(undefined);
 
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
 
@@ -37,7 +44,13 @@ export default function WorkersScreen() {
           style: 'destructive',
           onPress: async () => {
             if (worker.id) {
-              await deleteWorker.mutateAsync(worker.id);
+              try {
+                await deleteWorker.mutateAsync(worker.id);
+              } catch (error: unknown) {
+                const errorMessage =
+                  error instanceof Error ? error.message : 'Failed to delete worker';
+                Alert.alert('Error', errorMessage);
+              }
             }
           },
         },
@@ -46,54 +59,124 @@ export default function WorkersScreen() {
   };
 
   const handleEditWorker = (worker: Worker) => {
-    setWorkerToEdit(worker);
-    setShowAddModal(true);
-  };
-
-  const handleAddModalClose = () => {
-    setShowAddModal(false);
-    setWorkerToEdit(undefined);
+    setAddWorker({ worker });
+    router.push('/add-worker');
   };
 
   const renderWorker = ({ item }: { item: Worker }) => (
-    <TouchableOpacity
-      className="bg-white mx-4 mb-3 rounded-2xl overflow-hidden"
-      activeOpacity={0.7}
+    <Pressable
+      style={{
+        backgroundColor: colors.white,
+        marginHorizontal: spacing[4],
+        marginBottom: spacing[3],
+        borderRadius: borderRadius['2xl'],
+        overflow: 'hidden',
+      }}
       onPress={() => handleEditWorker(item)}
     >
-      <View className="flex-row items-center p-4">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: spacing[4],
+        }}
+      >
         {/* Avatar */}
-        <View className="w-12 h-12 bg-primary-100 rounded-full items-center justify-center">
-          <Text className="text-lg font-bold text-primary-600">
+        <View
+          style={{
+            width: 48,
+            height: 48,
+            backgroundColor: 'rgba(64, 128, 89, 0.1)',
+            borderRadius: borderRadius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.bold,
+              color: colors.primary[500],
+            }}
+          >
             {item.name.charAt(0).toUpperCase()}
           </Text>
         </View>
 
         {/* Info */}
-        <View className="flex-1 ml-3">
-          <Text className="text-base font-semibold text-surface-900">{item.name}</Text>
-          <View className="flex-row items-center mt-1">
-            <Ionicons name="cash-outline" size={12} color="#6B7280" />
-            <Text className="text-sm text-surface-500 ml-1">₹{item.daily_rate}/day</Text>
+        <View
+          style={{
+            flex: 1,
+            marginLeft: spacing[3],
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: colors.black,
+            }}
+          >
+            {item.name}
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginTop: spacing[1],
+            }}
+          >
+            <Symbol name="indianrupeesign.circle" size={12} color={colors.gray[400]} />
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                color: colors.gray[400],
+                marginLeft: spacing[1],
+              }}
+            >
+              ₹{item.daily_rate}/day
+            </Text>
           </View>
         </View>
 
         {/* Advance Balance */}
         {item.advance_balance > 0 && (
-          <View className="flex-row items-center bg-orange-100 px-2 py-1 rounded-full mr-2">
-            <Ionicons name="arrow-up-circle" size={12} color="#F59E0B" />
-            <Text className="text-xs font-semibold text-orange-600 ml-1">
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: 'rgba(251, 146, 60, 0.1)',
+              paddingHorizontal: spacing[2],
+              paddingVertical: spacing[1],
+              borderRadius: borderRadius.full,
+              marginRight: spacing[2],
+            }}
+          >
+            <Symbol name="arrow.up.circle.fill" size={12} color="#F59E0B" />
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                color: '#EA580C',
+                marginLeft: spacing[1],
+              }}
+            >
               ₹{item.advance_balance}
             </Text>
           </View>
         )}
 
         {/* Actions */}
-        <TouchableOpacity onPress={() => handleDeleteWorker(item)} className="p-2">
-          <Ionicons name="trash-outline" size={18} color="#EF4444" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+          <Pressable onPress={() => handleEditWorker(item)} style={{ padding: spacing[2] }}>
+            <Symbol name="pencil" size={18} color="#408059" />
+          </Pressable>
+          <Pressable onPress={() => handleDeleteWorker(item)} style={{ padding: spacing[2] }}>
+            <Symbol name="trash" size={18} color={colors.error} />
+          </Pressable>
+        </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   const renderWorkersTab = () => (
@@ -102,25 +185,43 @@ export default function WorkersScreen() {
       renderItem={renderWorker}
       keyExtractor={(item) => String(item.id)}
       contentContainerStyle={{
-        paddingTop: 16,
+        paddingTop: spacing[4],
         paddingBottom: 100,
         flexGrow: 1,
       }}
       ListHeaderComponent={
         activeWorkers.length > 0 ? (
-          <Text className="text-xs font-bold text-surface-500 tracking-wider mx-4 mb-2">
+          <Text
+            style={{
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.bold,
+              color: colors.gray[400],
+              letterSpacing: 0.5,
+              marginHorizontal: spacing[4],
+              marginBottom: spacing[2],
+            }}
+          >
             ACTIVE WORKERS ({activeWorkers.length})
           </Text>
         ) : null
       }
       ListFooterComponent={
         inactiveWorkers.length > 0 ? (
-          <View className="mt-4">
-            <Text className="text-xs font-bold text-surface-500 tracking-wider mx-4 mb-2">
+          <View style={{ marginTop: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: colors.gray[400],
+                letterSpacing: 0.5,
+                marginHorizontal: spacing[4],
+                marginBottom: spacing[2],
+              }}
+            >
               INACTIVE WORKERS ({inactiveWorkers.length})
             </Text>
             {inactiveWorkers.map((worker) => (
-              <View key={String(worker.id)} className="opacity-60">
+              <View key={String(worker.id)} style={{ opacity: 0.6 }}>
                 {renderWorker({ item: worker })}
               </View>
             ))}
@@ -129,27 +230,78 @@ export default function WorkersScreen() {
       }
       ListEmptyComponent={
         !isLoading ? (
-          <View className="flex-1 items-center justify-center p-8">
-            <View className="w-20 h-20 bg-primary-100 rounded-full items-center justify-center mb-4">
-              <Ionicons name="people-outline" size={40} color="#408059" />
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: spacing[8],
+            }}
+          >
+            <View
+              style={{
+                width: 80,
+                height: 80,
+                backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: spacing[4],
+              }}
+            >
+              <Symbol name="person.2" size={40} color={colors.primary[500]} />
             </View>
-            <Text className="text-lg font-semibold text-surface-900 text-center">
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: colors.black,
+                textAlign: 'center',
+              }}
+            >
               No Workers Yet
             </Text>
-            <Text className="text-sm text-surface-500 text-center mt-2">
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                color: colors.gray[400],
+                textAlign: 'center',
+                marginTop: spacing[2],
+              }}
+            >
               Add workers to track attendance,{`\n`}payments, and settlements.
             </Text>
-            <TouchableOpacity
-              onPress={() => setShowAddModal(true)}
-              className="bg-primary-600 px-6 py-3 rounded-xl mt-4"
+            <Pressable
+              onPress={() => {
+                setAddWorker({ worker: null });
+                router.push('/add-worker');
+              }}
+              style={{
+                backgroundColor: colors.primary[500],
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.xl,
+                marginTop: spacing[4],
+              }}
             >
-              <Text className="text-white font-semibold">Add Worker</Text>
-            </TouchableOpacity>
+              <Text
+                style={{
+                  color: colors.white,
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
+                Add Worker
+              </Text>
+            </Pressable>
           </View>
         ) : null
       }
       refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#408059" />
+        <RefreshControl
+          refreshing={isLoading}
+          onRefresh={refetch}
+          tintColor={colors.primary[500]}
+        />
       }
     />
   );
@@ -159,47 +311,82 @@ export default function WorkersScreen() {
   );
 
   const renderAnalyticsTab = () => (
-    <View className="flex-1 items-center justify-center p-8">
-      <View className="w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
-        <Ionicons name="bar-chart-outline" size={40} color="#8B5CF6" />
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: spacing[8],
+      }}
+    >
+      <View
+        style={{
+          width: 80,
+          height: 80,
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderRadius: borderRadius.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: spacing[4],
+        }}
+      >
+        <Symbol name="chart.bar" size={40} color="#8B5CF6" />
       </View>
-      <Text className="text-lg font-semibold text-surface-900 text-center">Labor Analytics</Text>
-      <Text className="text-sm text-surface-500 text-center mt-2">
+      <Text
+        style={{
+          fontSize: fontSize.lg,
+          fontWeight: fontWeight.semibold,
+          color: colors.black,
+          textAlign: 'center',
+        }}
+      >
+        Labor Analytics
+      </Text>
+      <Text
+        style={{
+          fontSize: fontSize.sm,
+          color: colors.gray[400],
+          textAlign: 'center',
+          marginTop: spacing[2],
+        }}
+      >
         View labor costs, productivity,{`\n`}and attendance patterns.
       </Text>
-      <Text className="text-xs text-surface-400 mt-4">Coming soon in a future update</Text>
+      <Text
+        style={{
+          fontSize: fontSize.xs,
+          color: colors.gray[300],
+          marginTop: spacing[4],
+        }}
+      >
+        Coming soon in a future update
+      </Text>
     </View>
   );
 
   return (
     <>
-      <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.gray[100],
+          paddingTop: insets.top + spacing[2],
+        }}
+      >
         {/* Tab Selector */}
-        <View className="bg-white px-4 pt-2 pb-3">
-          <View className="flex-row bg-surface-100 rounded-xl p-1">
-            {TAB_DATA.map((tab) => (
-              <TouchableOpacity
-                key={tab.id}
-                onPress={() => setSelectedTab(tab.id)}
-                className={`flex-1 flex-row items-center justify-center py-2.5 rounded-lg ${
-                  selectedTab === tab.id ? 'bg-white border border-gray-200' : ''
-                }`}
-              >
-                <Ionicons
-                  name={tab.icon}
-                  size={16}
-                  color={selectedTab === tab.id ? '#408059' : '#6B7280'}
-                />
-                <Text
-                  className={`text-sm font-medium ml-1.5 ${
-                    selectedTab === tab.id ? 'text-primary-600' : 'text-surface-500'
-                  }`}
-                >
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <View
+          style={{
+            backgroundColor: colors.white,
+            paddingHorizontal: spacing[4],
+            paddingTop: spacing[2],
+            paddingBottom: spacing[3],
+          }}
+        >
+          <SegmentedControl
+            options={TAB_DATA.map((tab) => ({ value: tab.id, label: tab.label }))}
+            selectedValue={selectedTab}
+            onSelect={(value) => setSelectedTab(value as WorkersTab)}
+          />
         </View>
 
         {/* Tab Content */}
@@ -209,23 +396,29 @@ export default function WorkersScreen() {
 
         {/* FAB */}
         {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
-          <TouchableOpacity
-            onPress={() => setShowAddModal(true)}
-            className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
-            activeOpacity={0.8}
+          <Pressable
+            onPress={() => {
+              setAddWorker({ worker: null });
+              router.push('/add-worker');
+            }}
+            style={{
+              position: 'absolute',
+              bottom: spacing[14] + fabBottomInset,
+              right: spacing[6],
+              width: 56,
+              height: 56,
+              backgroundColor: colors.primary[500],
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <Ionicons name="add" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
+            <Symbol name="plus" size={28} color={colors.white} />
+          </Pressable>
         )}
       </View>
 
-      {/* Add/Edit Worker Modal */}
-      <AddWorkerModal
-        visible={showAddModal}
-        onClose={handleAddModalClose}
-        worker={workerToEdit}
-        onSaveSuccess={refetch}
-      />
+      {/* Add/Edit Worker handled via route */}
     </>
   );
 }

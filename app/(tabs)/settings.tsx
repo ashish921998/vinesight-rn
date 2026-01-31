@@ -3,22 +3,24 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Alert,
   TextInput,
   Switch,
   ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
-  Platform,
+  type ViewStyle,
+  type TextStyle,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores';
 import { useProfile, useUpdateProfile } from '@/hooks';
-import { CURRENCIES, AREA_UNITS } from '@/constants/calculatorModels';
+import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
+import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export default function SettingsScreen() {
-  const { user, signOut, isLoading: authLoading } = useAuthStore();
+  const { user, signOut, updateUserAreaUnit, isLoading: authLoading } = useAuthStore();
   const { data: profile, refetch: refetchProfile } = useProfile();
   const updateProfile = useUpdateProfile();
 
@@ -115,65 +117,55 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView
-      className="flex-1 bg-surface-50"
-      contentContainerStyle={{ paddingBottom: 32 }}
-      style={{ backgroundColor: '#f2f2f7' }}
-    >
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Profile Section */}
-      <View className="bg-white mx-4 mt-4 rounded-2xl p-4">
-        <View className="flex-row items-center">
-          <View className="w-16 h-16 bg-primary-100 rounded-full items-center justify-center">
+      <View style={styles.profileCard}>
+        <View style={styles.rowCenter}>
+          <View style={styles.profileAvatar}>
             {userName ? (
-              <Text className="text-2xl font-bold text-primary-600">
-                {userName.charAt(0).toUpperCase()}
-              </Text>
+              <Text style={styles.profileInitial}>{userName.charAt(0).toUpperCase()}</Text>
             ) : (
-              <Ionicons name="person" size={32} color="#408059" />
+              <UISymbol name="person.fill" size={32} color="#408059" />
             )}
           </View>
-          <View className="flex-1 ml-4">
-            <Text className="text-lg font-semibold text-surface-900">{userName}</Text>
-            <Text className="text-sm text-surface-500">{userEmail}</Text>
-            {userPhone ? (
-              <Text className="text-xs text-surface-400 mt-0.5">{userPhone}</Text>
-            ) : null}
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>{userName}</Text>
+            <Text style={styles.profileEmail}>{userEmail}</Text>
+            {userPhone ? <Text style={styles.profilePhone}>{userPhone}</Text> : null}
           </View>
-          <TouchableOpacity onPress={() => setShowEditProfile(true)}>
-            <Ionicons name="create-outline" size={24} color="#408059" />
-          </TouchableOpacity>
+          <Pressable onPress={() => setShowEditProfile(true)}>
+            <UISymbol name="pencil" size={24} color="#408059" />
+          </Pressable>
         </View>
       </View>
 
       {/* General Section */}
-      <View className="mt-6 px-4">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">GENERAL</Text>
-        <View className="bg-white rounded-2xl overflow-hidden">
-          <SettingsItem icon="globe-outline" title="Language" value="System Default" disabled />
-          <TouchableOpacity onPress={() => setShowAreaPicker(true)}>
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>GENERAL</Text>
+        <View style={styles.sectionContent}>
+          <SettingsItem icon="globe" title="Language" value="System Default" disabled />
+          <Pressable onPress={() => setShowAreaPicker(true)}>
             <SettingsItem
-              icon="resize-outline"
+              icon="arrow.up.left.and.arrow.down.right"
               title="Area Unit"
               value={getAreaUnitLabel(selectedAreaUnit)}
             />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowCurrencyPicker(true)}>
+          </Pressable>
+          <Pressable onPress={() => setShowCurrencyPicker(true)}>
             <SettingsItem
-              icon="cash-outline"
+              icon="dollarsign.circle"
               title="Currency"
               value={getCurrencyLabel(selectedCurrency)}
               isLast
             />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
       {/* Notifications Section */}
-      <View className="mt-6 px-4">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">
-          NOTIFICATIONS
-        </Text>
-        <View className="bg-white rounded-2xl overflow-hidden">
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>NOTIFICATIONS</Text>
+        <View style={styles.sectionContent}>
           <NotificationToggle
             title="Daily Water Reminder"
             subtitle="Remind to check water levels"
@@ -188,43 +180,37 @@ export default function SettingsScreen() {
             isLast
           />
         </View>
-        <Text className="text-xs text-surface-400 mt-2 px-2">
-          Notification settings are stored locally
-        </Text>
+        <Text style={styles.notificationNote}>Notification settings are stored locally</Text>
       </View>
 
       {/* Support Section */}
-      <View className="mt-6 px-4">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">SUPPORT</Text>
-        <View className="bg-white rounded-2xl overflow-hidden">
-          <SettingsItem icon="help-circle-outline" title="Help Center" />
-          <SettingsItem icon="chatbubble-outline" title="Contact Support" />
-          <SettingsItem icon="document-text-outline" title="Privacy Policy" />
-          <SettingsItem icon="shield-checkmark-outline" title="Terms of Service" isLast />
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>SUPPORT</Text>
+        <View style={styles.sectionContent}>
+          <SettingsItem icon="questionmark.circle" title="Help Center" />
+          <SettingsItem icon="message" title="Contact Support" />
+          <SettingsItem icon="doc.text" title="Privacy Policy" />
+          <SettingsItem icon="checkmark.shield" title="Terms of Service" isLast />
         </View>
       </View>
 
       {/* Account Section */}
-      <View className="mt-6 px-4">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2 px-2">ACCOUNT</Text>
-        <View className="bg-white rounded-2xl overflow-hidden">
-          <TouchableOpacity
-            onPress={handleSignOut}
-            disabled={authLoading}
-            className="flex-row items-center px-4 py-3.5"
-          >
-            <View className="w-9 h-9 rounded-lg bg-red-100 items-center justify-center">
-              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>ACCOUNT</Text>
+        <View style={styles.sectionContent}>
+          <Pressable onPress={handleSignOut} disabled={authLoading} style={styles.settingsItem}>
+            <View style={styles.signOutIcon}>
+              <UISymbol name="rectangle.portrait.and.arrow.right" size={20} color="#EF4444" />
             </View>
-            <Text className="flex-1 ml-3 text-base text-red-600">Sign Out</Text>
-          </TouchableOpacity>
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </Pressable>
         </View>
       </View>
 
       {/* App Version */}
-      <View className="items-center mt-8">
-        <Text className="text-sm text-surface-400">Vinesight v1.0.0</Text>
-        <Text className="text-xs text-surface-300 mt-1">Made for vineyard management</Text>
+      <View style={styles.appVersionContainer}>
+        <Text style={styles.appVersion}>Vinesight v1.0.0</Text>
+        <Text style={styles.appVersionSubtitle}>Made for vineyard management</Text>
       </View>
 
       {/* Edit Profile Modal */}
@@ -234,67 +220,63 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowEditProfile(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1 bg-surface-50"
-        >
-          <View className="bg-white px-4 py-4 border-b border-surface-100">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-lg font-bold text-surface-900">Edit Profile</Text>
-              <TouchableOpacity onPress={() => setShowEditProfile(false)}>
-                <Ionicons name="close-circle" size={28} color="#9CA3AF" />
-              </TouchableOpacity>
+        <KeyboardAvoidingView behavior="padding" style={styles.container}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderInner}>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <Pressable onPress={() => setShowEditProfile(false)}>
+                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+              </Pressable>
             </View>
           </View>
 
-          <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
-            <View className="bg-white rounded-2xl p-4">
-              <View className="mb-4">
-                <Text className="text-sm font-medium text-surface-700 mb-2">Email</Text>
-                <View className="bg-surface-100 rounded-xl px-4 py-3">
-                  <Text className="text-base text-surface-500">{userEmail}</Text>
+          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+            <View style={styles.formCard}>
+              <View style={styles.mb4}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <View style={styles.inputDisabled}>
+                  <Text style={styles.inputDisabledText}>{userEmail}</Text>
                 </View>
-                <Text className="text-xs text-surface-400 mt-1">Email cannot be changed</Text>
+                <Text style={styles.inputHint}>Email cannot be changed</Text>
               </View>
 
-              <View className="mb-4">
-                <Text className="text-sm font-medium text-surface-700 mb-2">Full Name</Text>
+              <View style={styles.mb4}>
+                <Text style={styles.inputLabel}>Full Name</Text>
                 <TextInput
                   value={editName}
                   onChangeText={setEditName}
                   placeholder="Enter your name"
                   placeholderTextColor="#9CA3AF"
-                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900"
+                  style={styles.input}
                 />
               </View>
 
-              <View className="mb-4">
-                <Text className="text-sm font-medium text-surface-700 mb-2">Phone</Text>
+              <View style={styles.mb4}>
+                <Text style={styles.inputLabel}>Phone</Text>
                 <TextInput
                   value={editPhone}
                   onChangeText={setEditPhone}
                   placeholder="Enter phone number"
                   placeholderTextColor="#9CA3AF"
                   keyboardType="phone-pad"
-                  className="bg-surface-50 rounded-xl px-4 py-3 text-base text-surface-900"
+                  style={styles.input}
                 />
               </View>
             </View>
           </ScrollView>
 
-          <View className="bg-white px-4 py-4 border-t border-surface-100">
-            <TouchableOpacity
+          <View style={styles.modalFooter}>
+            <Pressable
               onPress={handleSaveProfile}
               disabled={isSaving}
-              className="py-3.5 rounded-xl items-center"
-              style={{ backgroundColor: '#408059' }}
+              style={[styles.saveButton, { backgroundColor: colors.primary[600] }]}
             >
               {isSaving ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text className="text-white font-semibold">Save Changes</Text>
+                <Text style={styles.saveButtonText}>Save Changes</Text>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -306,30 +288,31 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowCurrencyPicker(false)}
       >
-        <View className="flex-1 bg-surface-50">
-          <View className="bg-white px-4 py-4 border-b border-surface-100">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-lg font-bold text-surface-900">Select Currency</Text>
-              <TouchableOpacity onPress={() => setShowCurrencyPicker(false)}>
-                <Ionicons name="close-circle" size={28} color="#9CA3AF" />
-              </TouchableOpacity>
+        <View style={styles.container}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderInner}>
+              <Text style={styles.modalTitle}>Select Currency</Text>
+              <Pressable onPress={() => setShowCurrencyPicker(false)}>
+                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+              </Pressable>
             </View>
           </View>
-          <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
-            <View className="bg-white rounded-2xl overflow-hidden">
+          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+            <View style={styles.sectionContent}>
               {CURRENCIES.map((currency, index) => (
-                <TouchableOpacity
+                <Pressable
                   key={currency.code}
                   onPress={() => handleCurrencySelect(currency.code)}
-                  className={`flex-row items-center px-4 py-3.5 ${
-                    index < CURRENCIES.length - 1 ? 'border-b border-surface-100' : ''
-                  }`}
+                  style={[
+                    styles.settingsItem,
+                    index < CURRENCIES.length - 1 && styles.borderBottom,
+                  ]}
                 >
-                  <Text className="flex-1 text-base text-surface-900">{currency.label}</Text>
+                  <Text style={styles.pickerItemText}>{currency.label}</Text>
                   {selectedCurrency === currency.code && (
-                    <Ionicons name="checkmark-circle" size={22} color="#408059" />
+                    <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </ScrollView>
@@ -343,33 +326,42 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowAreaPicker(false)}
       >
-        <View className="flex-1 bg-surface-50">
-          <View className="bg-white px-4 py-4 border-b border-surface-100">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-lg font-bold text-surface-900">Select Area Unit</Text>
-              <TouchableOpacity onPress={() => setShowAreaPicker(false)}>
-                <Ionicons name="close-circle" size={28} color="#9CA3AF" />
-              </TouchableOpacity>
+        <View style={styles.container}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderInner}>
+              <Text style={styles.modalTitle}>Select Area Unit</Text>
+              <Pressable onPress={() => setShowAreaPicker(false)}>
+                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+              </Pressable>
             </View>
           </View>
-          <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
-            <View className="bg-white rounded-2xl overflow-hidden">
+          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+            <View style={styles.sectionContent}>
               {AREA_UNITS.map((unit, index) => (
-                <TouchableOpacity
+                <Pressable
                   key={unit.id}
-                  onPress={() => {
-                    setSelectedAreaUnit(unit.id);
-                    setShowAreaPicker(false);
+                  onPress={async () => {
+                    try {
+                      await updateUserAreaUnit(unit.id as 'hectares' | 'acres');
+                      setSelectedAreaUnit(unit.id);
+                      setShowAreaPicker(false);
+                    } catch (error) {
+                      if (__DEV__) {
+                        console.error('Failed to update area unit:', error);
+                      }
+                      Alert.alert('Error', 'Failed to update area unit');
+                    }
                   }}
-                  className={`flex-row items-center px-4 py-3.5 ${
-                    index < AREA_UNITS.length - 1 ? 'border-b border-surface-100' : ''
-                  }`}
+                  style={[
+                    styles.settingsItem,
+                    index < AREA_UNITS.length - 1 && styles.borderBottom,
+                  ]}
                 >
-                  <Text className="flex-1 text-base text-surface-900">{unit.label}</Text>
+                  <Text style={styles.pickerItemText}>{unit.label}</Text>
                   {selectedAreaUnit === unit.id && (
-                    <Ionicons name="checkmark-circle" size={22} color="#408059" />
+                    <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </ScrollView>
@@ -387,24 +379,20 @@ function SettingsItem({
   isLast,
   disabled,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   title: string;
   value?: string;
   isLast?: boolean;
   disabled?: boolean;
 }) {
   return (
-    <View
-      className={`flex-row items-center px-4 py-3.5 ${
-        !isLast ? 'border-b border-surface-100' : ''
-      }`}
-    >
-      <View className="w-9 h-9 rounded-lg bg-surface-100 items-center justify-center">
-        <Ionicons name={icon} size={20} color="#6B7280" />
+    <View style={[styles.settingsItem, !isLast && styles.borderBottom]}>
+      <View style={styles.settingsIcon}>
+        <UISymbol name={icon} size={20} color="#6B7280" />
       </View>
-      <Text className="flex-1 ml-3 text-base text-surface-900">{title}</Text>
-      {value && <Text className="text-sm text-surface-500 mr-2">{value}</Text>}
-      {!disabled && <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />}
+      <Text style={styles.settingsTitle}>{title}</Text>
+      {value && <Text style={styles.settingsValue}>{value}</Text>}
+      {!disabled && <UISymbol name="chevron.right" size={18} color="#D1D5DB" />}
     </View>
   );
 }
@@ -422,12 +410,10 @@ function NotificationToggle({
   const [enabled, setEnabled] = useState(false);
 
   return (
-    <View
-      className={`flex-row items-center px-4 py-3 ${!isLast ? 'border-b border-surface-100' : ''}`}
-    >
-      <View className="flex-1">
-        <Text className="text-base text-surface-900">{title}</Text>
-        <Text className="text-xs text-surface-500 mt-0.5">{subtitle}</Text>
+    <View style={[styles.notificationItem, !isLast && styles.borderBottom]}>
+      <View style={styles.flex1}>
+        <Text style={styles.notificationTitle}>{title}</Text>
+        <Text style={styles.notificationSubtitle}>{subtitle}</Text>
       </View>
       <Switch
         value={enabled}
@@ -438,3 +424,188 @@ function NotificationToggle({
     </View>
   );
 }
+
+const styles = {
+  container: { flex: 1, backgroundColor: colors.surface[50] } as ViewStyle,
+  profileCard: {
+    backgroundColor: colors.surface[100],
+    marginHorizontal: spacing[4],
+    marginTop: spacing[4],
+    borderRadius: borderRadius['2xl'],
+    padding: spacing[4],
+  } as ViewStyle,
+  rowCenter: { flexDirection: 'row', alignItems: 'center' } as ViewStyle,
+  profileAvatar: {
+    width: 64,
+    height: 64,
+    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  profileInitial: {
+    fontSize: fontSize['2xl'],
+    fontWeight: fontWeight.bold,
+    color: colors.primary[600],
+  } as TextStyle,
+  profileInfo: { flex: 1, marginLeft: spacing[4] } as ViewStyle,
+  profileName: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[900],
+  } as TextStyle,
+  profileEmail: { fontSize: fontSize.sm, color: colors.surface[500] } as TextStyle,
+  profilePhone: { fontSize: fontSize.xs, color: colors.surface[400], marginTop: 2 } as TextStyle,
+
+  section: { marginTop: spacing[6], paddingHorizontal: spacing[4] } as ViewStyle,
+  sectionHeader: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.bold,
+    color: colors.surface[500],
+    letterSpacing: 0.5,
+    marginBottom: spacing[2],
+    paddingHorizontal: spacing[2],
+  } as TextStyle,
+  sectionContent: {
+    backgroundColor: colors.surface[100],
+    borderRadius: borderRadius['2xl'],
+    overflow: 'hidden',
+  } as ViewStyle,
+
+  settingsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[4],
+    paddingVertical: 14,
+  } as ViewStyle,
+  settingsIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  signOutIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  settingsTitle: {
+    flex: 1,
+    marginLeft: spacing[3],
+    fontSize: fontSize.base,
+    color: colors.surface[900],
+  } as TextStyle,
+  signOutText: {
+    flex: 1,
+    marginLeft: spacing[3],
+    fontSize: fontSize.base,
+    color: '#DC2626',
+  } as TextStyle,
+  settingsValue: {
+    fontSize: fontSize.sm,
+    color: colors.surface[500],
+    marginRight: spacing[2],
+  } as TextStyle,
+  borderBottom: { borderBottomWidth: 1, borderBottomColor: colors.surface[50] } as ViewStyle,
+
+  notificationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+  } as ViewStyle,
+  flex1: { flex: 1 } as ViewStyle,
+  notificationTitle: { fontSize: fontSize.base, color: colors.surface[900] } as TextStyle,
+  notificationSubtitle: {
+    fontSize: fontSize.xs,
+    color: colors.surface[500],
+    marginTop: 2,
+  } as TextStyle,
+  notificationNote: {
+    fontSize: fontSize.xs,
+    color: colors.surface[400],
+    marginTop: spacing[2],
+    paddingHorizontal: spacing[2],
+  } as TextStyle,
+
+  appVersionContainer: { alignItems: 'center', marginTop: spacing[8] } as ViewStyle,
+  appVersion: { fontSize: fontSize.sm, color: colors.surface[400] } as TextStyle,
+  appVersionSubtitle: {
+    fontSize: fontSize.xs,
+    color: '#D1D5DB',
+    marginTop: spacing[1],
+  } as TextStyle,
+
+  modalContainer: { flex: 1, backgroundColor: colors.surface[50] } as ViewStyle,
+  modalHeader: {
+    backgroundColor: colors.surface[100],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surface[50],
+  } as ViewStyle,
+  modalHeaderInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  } as ViewStyle,
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.surface[900],
+  } as TextStyle,
+
+  formCard: {
+    backgroundColor: colors.surface[100],
+    borderRadius: borderRadius['2xl'],
+    padding: spacing[4],
+  } as ViewStyle,
+  mb4: { marginBottom: spacing[4] } as ViewStyle,
+  inputLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.surface[700],
+    marginBottom: spacing[2],
+  } as TextStyle,
+  inputDisabled: {
+    backgroundColor: colors.surface[50],
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+  } as ViewStyle,
+  inputDisabledText: { fontSize: fontSize.base, color: colors.surface[500] } as TextStyle,
+  inputHint: {
+    fontSize: fontSize.xs,
+    color: colors.surface[400],
+    marginTop: spacing[1],
+  } as TextStyle,
+  input: {
+    backgroundColor: colors.surface[50],
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    fontSize: fontSize.base,
+    color: colors.surface[900],
+  } as ViewStyle & TextStyle,
+
+  modalFooter: {
+    backgroundColor: colors.surface[100],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: colors.surface[50],
+  } as ViewStyle,
+  saveButton: {
+    paddingVertical: 14,
+    borderRadius: borderRadius.xl,
+    alignItems: 'center',
+  } as ViewStyle,
+  saveButtonText: { color: colors.surface[100], fontWeight: fontWeight.semibold } as TextStyle,
+
+  pickerItemText: { flex: 1, fontSize: fontSize.base, color: colors.surface[900] } as TextStyle,
+};

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores';
 import { Button, OTPInput } from '@/components/ui';
+import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 const RESEND_COOLDOWN = 60; // seconds
 
@@ -91,37 +92,131 @@ export default function OTPVerificationScreen() {
     router.back();
   };
 
+  const containerStyle: ViewStyle = {
+    flex: 1,
+    backgroundColor: colors.surface[100],
+    paddingHorizontal: spacing[8],
+  };
+
+  const errorContainerStyle: ViewStyle = {
+    flex: 1,
+    backgroundColor: colors.surface[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const errorTextStyle: TextStyle = {
+    color: colors.surface[500],
+  };
+
+  const headerContainerStyle: ViewStyle = {
+    alignItems: 'center',
+    marginTop: 80,
+    marginBottom: spacing[8],
+  };
+
+  const iconContainerStyle: ViewStyle = {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing[6],
+  };
+
+  const titleTextStyle: TextStyle = {
+    fontSize: fontSize['2xl'],
+    fontWeight: fontWeight.bold,
+    color: colors.surface[900],
+    textAlign: 'center',
+  };
+
+  const subtitleTextStyle: TextStyle = {
+    fontSize: fontSize.base,
+    color: colors.surface[500],
+    textAlign: 'center',
+    marginTop: spacing[3],
+  };
+
+  const emailBadgeStyle: ViewStyle = {
+    backgroundColor: colors.surface[200],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderRadius: borderRadius.lg,
+    marginTop: spacing[2],
+    borderWidth: 1,
+    borderColor: colors.surface[300],
+  };
+
+  const emailTextStyle: TextStyle = {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[900],
+  };
+
+  const otpContainerStyle: ViewStyle = {
+    marginTop: spacing[8],
+  };
+
+  const actionsContainerStyle: ViewStyle = {
+    alignItems: 'center',
+    marginTop: spacing[8],
+    gap: spacing[3],
+  };
+
+  const buttonWrapperStyle: ViewStyle = {
+    paddingVertical: spacing[2],
+  };
+
+  const resendDisabledTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    color: colors.surface[400],
+  };
+
+  const resendEnabledTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    color: colors.primary[600],
+    fontWeight: fontWeight.medium,
+  };
+
+  const backButtonTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    color: colors.surface[500],
+  };
+
+  const backButtonWrapperStyle: ViewStyle = {
+    paddingVertical: spacing[2],
+    marginTop: spacing[2],
+  };
+
   if (!email) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
-        <Text className="text-surface-500">Invalid email</Text>
+      <View style={errorContainerStyle}>
+        <Text style={errorTextStyle}>Invalid email</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-white px-8">
+    <View style={containerStyle}>
       {/* Header */}
-      <View className="items-center mt-20 mb-8">
-        <View className="w-20 h-20 rounded-full bg-primary-100 items-center justify-center mb-6">
-          <Ionicons name="shield-checkmark" size={40} color="#408059" />
+      <View style={headerContainerStyle}>
+        <View style={iconContainerStyle}>
+          <IconSymbol name="checkmark.shield.fill" size={40} color={colors.primary[500]} />
         </View>
 
-        <Text className="text-2xl font-bold text-surface-900 text-center">
-          Enter Verification Code
-        </Text>
+        <Text style={titleTextStyle}>Enter Verification Code</Text>
 
-        <Text className="text-base text-surface-500 text-center mt-3">
-          We sent a 6-digit code to
-        </Text>
+        <Text style={subtitleTextStyle}>We sent a 6-digit code to</Text>
 
-        <View className="bg-surface-100 px-4 py-2 rounded-lg mt-2">
-          <Text className="text-base font-semibold text-surface-900">{email}</Text>
+        <View style={emailBadgeStyle}>
+          <Text style={emailTextStyle}>{email}</Text>
         </View>
       </View>
 
       {/* OTP Input */}
-      <View className="mt-8">
+      <View style={otpContainerStyle}>
         <OTPInput
           value={otpCode}
           onChange={setOtpCode}
@@ -136,26 +231,26 @@ export default function OTPVerificationScreen() {
         onPress={handleVerify}
         isLoading={isLoading}
         disabled={otpCode.length !== 6 || isLoading}
-        className="mt-8"
+        style={{ marginTop: spacing[8] }}
       />
 
       {/* Resend & Back */}
-      <View className="items-center mt-8 space-y-3">
-        <TouchableOpacity
+      <View style={actionsContainerStyle}>
+        <Pressable
           onPress={handleResend}
           disabled={resendCooldown > 0 || isLoading}
-          className="py-2"
+          style={buttonWrapperStyle}
         >
           {resendCooldown > 0 ? (
-            <Text className="text-sm text-surface-400">Resend code in {resendCooldown}s</Text>
+            <Text style={resendDisabledTextStyle}>Resend code in {resendCooldown}s</Text>
           ) : (
-            <Text className="text-sm text-primary-600 font-medium">Resend Code</Text>
+            <Text style={resendEnabledTextStyle}>Resend Code</Text>
           )}
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity onPress={handleBack} disabled={isLoading} className="py-2 mt-2">
-          <Text className="text-sm text-surface-500">Use Different Email</Text>
-        </TouchableOpacity>
+        <Pressable onPress={handleBack} disabled={isLoading} style={backButtonWrapperStyle}>
+          <Text style={backButtonTextStyle}>Use Different Email</Text>
+        </Pressable>
       </View>
     </View>
   );

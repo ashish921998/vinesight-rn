@@ -75,7 +75,7 @@ jobs:
             const profile = '${{ steps.build-profile.outputs.profile }}';
             const projectId = 'ede2bb37-3ad0-4503-9522-02bd1539e79b';
             const buildUrl = `https://expo.dev/accounts/ashishhuddar/projects/vinesight-rn/builds`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

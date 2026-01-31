@@ -1,8 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 
 // ============================================================
 // MARK: - Configuration
@@ -18,15 +16,32 @@ const SUPABASE_CONFIG_ERROR_MESSAGE =
 // MARK: - Secure Storage Adapter
 // ============================================================
 
+const isWeb = process.env.EXPO_OS === 'web';
+
+const WebStorageAdapter = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (typeof localStorage === 'undefined') return null;
+    return localStorage.getItem(key);
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(key, value);
+  },
+  removeItem: async (key: string): Promise<void> => {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.removeItem(key);
+  },
+};
+
 /**
  * Custom storage adapter that uses SecureStore on native platforms
- * and AsyncStorage on web (SecureStore is not available on web)
+ * and localStorage on web (SecureStore is not available on web)
  */
 const ExpoSecureStoreAdapter = {
   getItem: async (key: string): Promise<string | null> => {
     try {
-      if (Platform.OS === 'web') {
-        return AsyncStorage.getItem(key);
+      if (isWeb) {
+        return WebStorageAdapter.getItem(key);
       }
       return await SecureStore.getItemAsync(key);
     } catch (error) {
@@ -39,8 +54,8 @@ const ExpoSecureStoreAdapter = {
 
   setItem: async (key: string, value: string): Promise<void> => {
     try {
-      if (Platform.OS === 'web') {
-        await AsyncStorage.setItem(key, value);
+      if (isWeb) {
+        await WebStorageAdapter.setItem(key, value);
         return;
       }
       await SecureStore.setItemAsync(key, value);
@@ -53,8 +68,8 @@ const ExpoSecureStoreAdapter = {
 
   removeItem: async (key: string): Promise<void> => {
     try {
-      if (Platform.OS === 'web') {
-        await AsyncStorage.removeItem(key);
+      if (isWeb) {
+        await WebStorageAdapter.removeItem(key);
         return;
       }
       await SecureStore.deleteItemAsync(key);

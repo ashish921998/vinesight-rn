@@ -2,13 +2,14 @@
  * Screen Components - Barrel Export
  */
 
-export { AddActivityModal } from './AddActivityModal';
-export { AddEntryModal } from './AddEntryModal';
-export { EditActivityModal } from './EditActivityModal';
-export { AddWorkerModal } from './AddWorkerModal';
-export { WaterLevelModal } from './WaterLevelModal';
-export { default as AddTaskModal } from './AddTaskModal';
-export { AttendanceView } from './AttendanceView';
-export { default as ParameterSelector } from './ParameterSelector';
-export { default as TrendsTable } from './TrendsTable';
-export { default as TrendsChart } from './TrendsChart';
+export { EntryForm } from './entry-form';
+export { ActivityEditForm } from './activity-edit-form';
+export { WorkerForm } from './worker-form';
+export { WaterLevelSheet } from './water-level-sheet';
+export { default as TaskForm } from './task-form';
+export { AttendanceView } from './attendance-view';
+export { default as ParameterSelector } from './parameter-selector';
+export { default as TrendsTable } from './trends-table';
+export { default as TrendsChart } from './trends-chart';
+export { default as WarehouseItemForm } from './warehouse-item-form';
+export { default as StockForm } from './stock-form';

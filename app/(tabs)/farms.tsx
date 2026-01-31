@@ -3,17 +3,21 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
+  Pressable,
   RefreshControl,
   TextInput,
   ActivityIndicator,
   Alert,
+  type ViewStyle,
+  type TextStyle,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFarms, useDeleteFarm } from '@/hooks';
 import { FarmCard } from '@/components/cards';
+import { Symbol } from '@/components/ui/symbol';
+import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
 import type { Farm } from '@/types';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -35,25 +39,42 @@ const SearchHeader = React.memo<SearchHeaderProps>(
     filteredFarms,
     farms,
   }) => {
+    const searchBarStyle: ViewStyle = {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.white,
+      borderRadius: borderRadius.xl,
+      paddingHorizontal: spacing[4],
+      paddingVertical: spacing[3],
+      borderWidth: 1,
+      borderColor: isSearchFocused ? colors.primary[500] : colors.gray[200],
+    };
+
+    const searchInputStyle: TextStyle = {
+      flex: 1,
+      marginLeft: spacing[3],
+      fontSize: fontSize.base,
+      color: colors.black,
+    };
+
     return (
-      <View className="px-4 pb-4">
+      <View
+        style={{
+          paddingHorizontal: spacing[4],
+          paddingBottom: spacing[4],
+        }}
+      >
         {/* Search Bar */}
-        <View
-          className={`
-          flex-row items-center bg-white rounded-xl px-4 py-3
-          border ${isSearchFocused ? 'border-primary-500' : 'border-gray-200'}
-        `}
-        >
-          <Ionicons
-            name="search-outline"
+        <View style={searchBarStyle}>
+          <Symbol
+            name="magnifyingglass"
             size={20}
-            color={isSearchFocused ? '#408059' : '#c7c7cc'}
+            color={isSearchFocused ? colors.primary[500] : colors.gray[300]}
           />
           <TextInput
-            className="flex-1 ml-3 text-base"
-            style={{ color: '#000000' }}
+            style={searchInputStyle}
             placeholder="Search farms..."
-            placeholderTextColor="#c7c7cc"
+            placeholderTextColor={colors.gray[300]}
             value={searchQuery}
             onChangeText={onSearchChange}
             onFocus={onSearchFocus}
@@ -61,56 +82,138 @@ const SearchHeader = React.memo<SearchHeaderProps>(
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity
+            <Pressable
               onPress={() => onSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="close-circle" size={20} color="#c7c7cc" />
-            </TouchableOpacity>
+              <Symbol name="xmark.circle.fill" size={20} color={colors.gray[300]} />
+            </Pressable>
           )}
         </View>
 
         {/* Results Count */}
         {searchQuery.trim() && (
-          <Text className="text-sm mt-3" style={{ color: '#8e8e93' }}>
+          <Text
+            style={{
+              fontSize: fontSize.sm,
+              marginTop: spacing[3],
+              color: colors.gray[400],
+            }}
+          >
             {filteredFarms.length} farm{filteredFarms.length !== 1 ? 's' : ''} found
           </Text>
         )}
 
         {/* Quick Stats */}
         {!searchQuery.trim() && farms && farms.length > 0 && (
-          <View className="flex-row mt-4 gap-3">
-            <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: '#ffffff' }}>
-              <View className="flex-row items-center">
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: spacing[4],
+              gap: spacing[3],
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+                borderRadius: borderRadius.xl,
+                borderCurve: 'continuous',
+                minHeight: 72,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[3],
+                justifyContent: 'center',
+                backgroundColor: colors.white,
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                 <View
-                  className="w-8 h-8 rounded-lg items-center justify-center"
-                  style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: borderRadius.full,
+                    borderCurve: 'continuous',
+                    overflow: 'hidden',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                  }}
                 >
-                  <Ionicons name="leaf" size={16} color="#408059" />
+                  <Symbol name="leaf.fill" size={16} color={colors.primary[500]} />
                 </View>
-                <View className="ml-2">
-                  <Text className="text-lg font-bold" style={{ color: '#000000' }}>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: colors.black,
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      fontVariant: ['tabular-nums'],
+                    }}
+                  >
                     {farms.length}
                   </Text>
-                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                  <Text
+                    style={{
+                      color: colors.surface[500],
+                      fontSize: fontSize.xs,
+                    }}
+                  >
                     Total Farms
                   </Text>
                 </View>
               </View>
             </View>
-            <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: '#ffffff' }}>
-              <View className="flex-row items-center">
+            <View
+              style={{
+                flex: 1,
+                borderRadius: borderRadius.xl,
+                borderCurve: 'continuous',
+                minHeight: 72,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[3],
+                justifyContent: 'center',
+                backgroundColor: colors.white,
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                 <View
-                  className="w-8 h-8 rounded-lg items-center justify-center"
-                  style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: borderRadius.full,
+                    borderCurve: 'continuous',
+                    overflow: 'hidden',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                  }}
                 >
-                  <Ionicons name="resize" size={16} color="#408059" />
+                  <Symbol
+                    name="arrow.up.left.and.arrow.down.right"
+                    size={16}
+                    color={colors.primary[500]}
+                  />
                 </View>
-                <View className="ml-2">
-                  <Text className="text-lg font-bold" style={{ color: '#000000' }}>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: colors.black,
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      fontVariant: ['tabular-nums'],
+                    }}
+                  >
                     {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}
                   </Text>
-                  <Text className="text-xs" style={{ color: '#8e8e93' }}>
+                  <Text
+                    style={{
+                      color: colors.surface[500],
+                      fontSize: fontSize.xs,
+                    }}
+                  >
                     Total Acres
                   </Text>
                 </View>
@@ -127,6 +230,7 @@ SearchHeader.displayName = 'SearchHeader';
 
 export default function FarmsScreen() {
   const router = useRouter();
+  const fabBottomInset = useFabBottomInset();
   const { data: farms, isLoading, refetch } = useFarms();
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,7 +305,12 @@ export default function FarmsScreen() {
   };
 
   const renderFarm = ({ item }: { item: Farm }) => (
-    <View className="px-4 mb-3">
+    <View
+      style={{
+        paddingHorizontal: spacing[4],
+        marginBottom: spacing[3],
+      }}
+    >
       <FarmCard
         farm={item}
         onPress={() => handleFarmPress(item)}
@@ -212,11 +321,24 @@ export default function FarmsScreen() {
   );
 
   const renderEmpty = () => {
+    const emptyContainerStyle: ViewStyle = {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing[8],
+    };
+
     if (isLoading) {
       return (
-        <View className="flex-1 items-center justify-center p-8">
-          <ActivityIndicator size="large" color="#408059" />
-          <Text className="text-base mt-4" style={{ color: '#8e8e93' }}>
+        <View style={emptyContainerStyle}>
+          <ActivityIndicator size="large" color={colors.primary[500]} />
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              marginTop: spacing[4],
+              color: colors.gray[400],
+            }}
+          >
             Loading farms...
           </Text>
         </View>
@@ -225,61 +347,125 @@ export default function FarmsScreen() {
 
     if (searchQuery.trim()) {
       return (
-        <View className="flex-1 items-center justify-center p-8">
+        <View style={emptyContainerStyle}>
           <View
-            className="w-20 h-20 rounded-full items-center justify-center mb-4"
-            style={{ backgroundColor: '#f2f2f7' }}
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: spacing[4],
+              backgroundColor: colors.gray[100],
+            }}
           >
-            <Ionicons name="search-outline" size={36} color="#c7c7cc" />
+            <Symbol name="magnifyingglass" size={36} color={colors.gray[300]} />
           </View>
-          <Text className="text-lg font-semibold text-center" style={{ color: '#000000' }}>
+          <Text
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.semibold,
+              textAlign: 'center',
+              color: colors.black,
+            }}
+          >
             No Results Found
           </Text>
-          <Text className="text-base text-center mt-2" style={{ color: '#8e8e93' }}>
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              textAlign: 'center',
+              marginTop: spacing[2],
+              color: colors.gray[400],
+            }}
+          >
             Try a different search term
           </Text>
-          <TouchableOpacity onPress={() => setSearchQuery('')} className="mt-4">
-            <Text className="font-medium" style={{ color: '#408059' }}>
+          <Pressable onPress={() => setSearchQuery('')} style={{ marginTop: spacing[4] }}>
+            <Text
+              style={{
+                fontWeight: fontWeight.medium,
+                color: colors.primary[500],
+              }}
+            >
               Clear Search
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       );
     }
 
     return (
-      <View className="flex-1 items-center justify-center p-8">
+      <View style={emptyContainerStyle}>
         <View
-          className="w-24 h-24 rounded-full items-center justify-center mb-6"
-          style={{ backgroundColor: 'rgba(64, 128, 89, 0.1)' }}
+          style={{
+            width: 96,
+            height: 96,
+            borderRadius: borderRadius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: spacing[6],
+            backgroundColor: 'rgba(64, 128, 89, 0.1)',
+          }}
         >
-          <Ionicons name="leaf-outline" size={48} color="#408059" />
+          <Symbol name="leaf.fill" size={48} color={colors.primary[500]} />
         </View>
-        <Text className="text-xl font-semibold text-center" style={{ color: '#000000' }}>
+        <Text
+          style={{
+            fontSize: fontSize.xl,
+            fontWeight: fontWeight.semibold,
+            textAlign: 'center',
+            color: colors.black,
+          }}
+        >
           No Farms Yet
         </Text>
-        <Text className="text-base text-center mt-2" style={{ color: '#8e8e93' }}>
+        <Text
+          style={{
+            fontSize: fontSize.base,
+            textAlign: 'center',
+            marginTop: spacing[2],
+            color: colors.gray[400],
+          }}
+        >
           Add your first farm to start tracking irrigation, sprays, and harvests.
         </Text>
-        <TouchableOpacity
-          className="px-6 py-3 rounded-xl mt-6"
-          style={{ backgroundColor: '#408059' }}
+        <Pressable
+          style={{
+            paddingHorizontal: spacing[6],
+            paddingVertical: spacing[3],
+            borderRadius: borderRadius.xl,
+            marginTop: spacing[6],
+            backgroundColor: colors.primary[500],
+          }}
           onPress={handleAddFarm}
         >
-          <Text className="text-white font-semibold">Add Farm</Text>
-        </TouchableOpacity>
+          <Text
+            style={{
+              color: colors.white,
+              fontWeight: fontWeight.semibold,
+            }}
+          >
+            Add Farm
+          </Text>
+        </Pressable>
       </View>
     );
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.gray[100],
+      }}
+    >
       <FlatList
         data={filteredFarms}
         renderItem={renderFarm}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{
-          paddingTop: 16,
+          paddingTop: spacing[4],
           paddingBottom: 100,
           flexGrow: 1,
         }}
@@ -299,7 +485,7 @@ export default function FarmsScreen() {
           <RefreshControl
             refreshing={isLoading && !searchQuery}
             onRefresh={refetch}
-            tintColor="#408059"
+            tintColor={colors.primary[500]}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -307,16 +493,22 @@ export default function FarmsScreen() {
 
       {/* FAB */}
       {(farms?.length || 0) > 0 && (
-        <TouchableOpacity
-          className="absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center"
-          activeOpacity={0.8}
-          onPress={handleAddFarm}
+        <Pressable
           style={{
-            backgroundColor: '#408059',
+            position: 'absolute',
+            bottom: spacing[14] + fabBottomInset,
+            right: spacing[6],
+            width: 56,
+            height: 56,
+            borderRadius: borderRadius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.primary[500],
           }}
+          onPress={handleAddFarm}
         >
-          <Ionicons name="add" size={28} color="#FFFFFF" />
-        </TouchableOpacity>
+          <Symbol name="plus" size={28} color={colors.white} />
+        </Pressable>
       )}
     </View>
   );

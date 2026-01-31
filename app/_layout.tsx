@@ -1,16 +1,26 @@
-import '../src/global.css';
-
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Text, TextInput } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuthStore, initAuthListener, cleanupAuthListener } from '@/stores';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/error-boundary';
+
+// Configure app-wide font scaling policy for accessibility
+// Allow system font size changes without a global cap
+Text.defaultProps = {
+  ...(Text.defaultProps ?? {}),
+  allowFontScaling: true,
+};
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps ?? {}),
+  allowFontScaling: true,
+};
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -85,6 +95,21 @@ export default Sentry.wrap(function RootLayout() {
               <Stack.Screen name="index" />
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="add-activity" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-entry" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
+              <Stack.Screen
+                name="add-warehouse-item"
+                options={{ presentation: 'modal', headerShown: false }}
+              />
+              <Stack.Screen name="add-lab-test" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="water-level" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
             </Stack>
           </QueryClientProvider>
         </SafeAreaProvider>

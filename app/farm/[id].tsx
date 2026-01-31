@@ -3,17 +3,16 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   RefreshControl,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/symbol';
 import { useFarm, useFarmRecords, useWeather, useDeleteFarm } from '@/hooks';
-import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/useTasks';
+import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
 import { StatsCard, ActivityLogCard } from '@/components/cards';
-import { AddEntryModal, WaterLevelModal } from '@/components/screens';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -22,22 +21,22 @@ import type {
   FertigationRecord,
 } from '@/types';
 import { PRIORITY_INFO } from '@/types/task';
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 
 // Workboard action type
 interface WorkboardAction {
   id: string;
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   color: string;
   route?: string;
 }
 
 const WORKBOARD_ACTIONS: WorkboardAction[] = [
-  { id: 'warehouse', title: 'Warehouse', icon: 'cube', color: '#4D857A' },
-  { id: 'ai', title: 'AI', icon: 'bulb', color: '#408059' },
-  { id: 'lab', title: 'Lab', icon: 'flask', color: '#598C6B' },
-  { id: 'reports', title: 'Reports', icon: 'stats-chart', color: '#669475' },
-  { id: 'soil', title: 'Soil Moisture', icon: 'layers', color: '#597A61' },
+  { id: 'ai', title: 'AI', icon: 'lightbulb.fill', color: '#408059' },
+  { id: 'lab', title: 'Lab', icon: 'flask.fill', color: '#598C6B' },
+  { id: 'reports', title: 'Reports', icon: 'chart.bar.fill', color: '#669475' },
+  { id: 'soil', title: 'Soil Moisture', icon: 'square.stack.3d.up.fill', color: '#597A61' },
 ];
 
 export default function FarmDetailScreen() {
@@ -62,9 +61,6 @@ export default function FarmDetailScreen() {
   const deleteFarmMutation = useDeleteFarm();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
-  const [addEntryTab, setAddEntryTab] = useState<'log' | 'task'>('log');
-  const [showWaterLevelModal, setShowWaterLevelModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
 
   // Calculate stats
@@ -77,6 +73,25 @@ export default function FarmDetailScreen() {
       (fertigationRecords?.length || 0),
     [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords],
   );
+
+  const totalWaterUsed = useMemo(() => {
+    if (!irrigationRecords) return null;
+    return irrigationRecords.reduce(
+      (sum, record) => sum + (record.duration || 0) * (record.system_discharge || 0),
+      0,
+    );
+  }, [irrigationRecords]);
+
+  const formatWaterUsage = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return 'No irrigation logged yet';
+    const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+    return `${value.toFixed(digits)} mm used`;
+  };
+
+  const waterUsageCaption =
+    totalWaterUsed !== null
+      ? `${formatWaterUsage(totalWaterUsed)} this season`
+      : 'Log irrigation to monitor water use';
 
   // Days since pruning
   const daysSincePruning = useMemo(() => {
@@ -149,22 +164,25 @@ export default function FarmDetailScreen() {
   };
 
   const handleAddActivity = () => {
-    setAddEntryTab('log');
-    setShowAddEntryModal(true);
-  };
-
-  const handleActivitySaveSuccess = () => {
-    // Refresh records after saving
-    refetchRecords();
+    if (!farm?.id) return;
+    router.push({
+      pathname: '/log-entry/add',
+      params: {
+        farmId: farm.id.toString(),
+      },
+    });
   };
 
   const handleAddTask = () => {
-    setAddEntryTab('task');
-    setShowAddEntryModal(true);
-  };
-
-  const handleTaskSaveSuccess = () => {
-    refetchTasks();
+    if (!farm?.id) return;
+    router.push({
+      pathname: '/add-entry',
+      params: {
+        farmId: farm.id.toString(),
+        initialTab: 'task',
+        tabs: 'log,task',
+      },
+    });
   };
 
   const handleCompleteTask = (taskId: number) => {
@@ -258,9 +276,6 @@ export default function FarmDetailScreen() {
 
   const handleWorkboardAction = (action: WorkboardAction) => {
     switch (action.id) {
-      case 'warehouse':
-        router.push('/warehouse');
-        break;
       case 'ai':
         router.push(`/ai-chat?id=${id}`);
         break;
@@ -287,7 +302,7 @@ export default function FarmDetailScreen() {
         }}
       >
         <ActivityIndicator size="large" color="#408059" />
-        <Text className="text-surface-500 mt-4">Loading farm...</Text>
+        <Text style={{ color: colors.surface[500], marginTop: spacing[4] }}>Loading farm...</Text>
       </View>
     );
   }
@@ -303,11 +318,20 @@ export default function FarmDetailScreen() {
           padding: 32,
         }}
       >
-        <Ionicons name="alert-circle-outline" size={48} color="#9CA3AF" />
-        <Text className="text-lg font-semibold text-surface-900 mt-4">Farm Not Found</Text>
-        <TouchableOpacity onPress={() => router.back()} className="mt-4">
-          <Text className="text-primary-600 font-medium">Go Back</Text>
-        </TouchableOpacity>
+        <Symbol name="alert-circle-outline" size={48} color="#9CA3AF" />
+        <Text
+          style={{
+            color: colors.surface[900],
+            fontSize: fontSize.lg,
+            fontWeight: fontWeight.semibold,
+            marginTop: spacing[4],
+          }}
+        >
+          Farm Not Found
+        </Text>
+        <Pressable onPress={() => router.back()} style={{ marginTop: spacing[4] }}>
+          <Text style={{ color: colors.primary[600], fontWeight: fontWeight.medium }}>Go Back</Text>
+        </Pressable>
       </View>
     );
   }
@@ -320,41 +344,74 @@ export default function FarmDetailScreen() {
           headerStyle: { backgroundColor: '#f2f2f7' },
           headerTintColor: '#000000',
           headerRight: () => (
-            <View className="flex-row items-center">
-              <TouchableOpacity
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Pressable
                 onPress={() => router.push(`/farm/${id}/edit`)}
-                className="mr-4"
+                style={{ marginRight: spacing[4] }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="create-outline" size={24} color="#408059" />
-              </TouchableOpacity>
-              <TouchableOpacity
+                <Symbol name="create-outline" size={24} color="#408059" />
+              </Pressable>
+              <Pressable
                 onPress={handleDeleteFarm}
-                className="mr-2"
+                style={{
+                  marginRight: spacing[2],
+                  opacity: deleteFarmMutation.isPending ? 0.5 : 1,
+                }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 disabled={deleteFarmMutation.isPending}
-                style={{ opacity: deleteFarmMutation.isPending ? 0.5 : 1 }}
               >
                 {deleteFarmMutation.isPending ? (
                   <ActivityIndicator size="small" color="#DC2626" />
                 ) : (
-                  <Ionicons name="trash-outline" size={24} color="#DC2626" />
+                  <Symbol name="trash" size={24} color="#DC2626" />
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ),
           headerTitle: () => (
-            <View className="items-center">
-              <Text className="text-lg font-bold text-surface-900">{farm.name}</Text>
-              <View className="flex-row items-center">
-                <Text className="text-xs text-surface-500">{farm.crop_variety || farm.crop}</Text>
-                <Text className="text-xs text-surface-500 mx-1">•</Text>
-                <View
-                  className="flex-row items-center px-2 py-0.5 rounded-full"
-                  style={{ backgroundColor: '#408059' }}
+            <View style={{ alignItems: 'center' }}>
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.bold,
+                }}
+              >
+                {farm.name}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                  {farm.crop_variety || farm.crop}
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[500],
+                    fontSize: fontSize.xs,
+                    marginHorizontal: spacing[1],
+                  }}
                 >
-                  <Ionicons name="resize" size={10} color="#FFFFFF" />
-                  <Text className="text-xs font-bold text-white ml-1">
+                  •
+                </Text>
+                <View
+                  style={{
+                    backgroundColor: '#408059',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: 2,
+                    borderRadius: borderRadius.full,
+                  }}
+                >
+                  <Symbol name="resize" size={10} color="#FFFFFF" />
+                  <Text
+                    style={{
+                      color: colors.white,
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.bold,
+                      marginLeft: spacing[1],
+                    }}
+                  >
                     {farm.area?.toFixed(1)} acres
                   </Text>
                 </View>
@@ -364,9 +421,9 @@ export default function FarmDetailScreen() {
         }}
       />
 
-      <View className="flex-1" style={{ backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
         <ScrollView
-          className="flex-1"
+          style={{ flex: 1 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#408059" />
           }
@@ -374,45 +431,98 @@ export default function FarmDetailScreen() {
         >
           {/* Farm Header Card - iOS Style Glass Effect */}
           <View
-            className="mx-4 mt-16 rounded-2xl overflow-hidden"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
+              marginHorizontal: spacing[4],
+              marginTop: spacing[16],
+              borderRadius: borderRadius['2xl'],
+              overflow: 'hidden',
+              backgroundColor: 'rgba(255,255,255, 0.8)',
+              ...shadows.lg,
             }}
           >
-            <View className="p-4">
-              <View className="flex-row items-start justify-between">
-                <View className="flex-1">
-                  <View className="flex-row items-center">
-                    <View className="w-12 h-12 bg-primary-100 rounded-xl items-center justify-center">
-                      <Ionicons name="leaf" size={24} color="#408059" />
+            <View style={{ padding: spacing[4] }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View
+                      style={{
+                        width: 48,
+                        height: 48,
+                        backgroundColor: colors.primary[100],
+                        borderRadius: borderRadius.xl,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Symbol name="leaf.fill" size={24} color="#408059" />
                     </View>
-                    <View className="ml-3 flex-1">
-                      <View className="flex-row items-center">
-                        <Text className="text-xl font-bold text-surface-900">{farm.name}</Text>
+                    <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text
+                          style={{
+                            color: colors.surface[900],
+                            fontSize: fontSize.xl,
+                            fontWeight: fontWeight.bold,
+                          }}
+                        >
+                          {farm.name}
+                        </Text>
                         {daysSincePruning !== null && (
                           <View
-                            className="ml-2 flex-row items-center px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: '#F59E0B' }}
+                            style={{
+                              marginLeft: spacing[2],
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              paddingHorizontal: spacing[2],
+                              paddingVertical: 2,
+                              borderRadius: borderRadius.full,
+                              backgroundColor: '#F59E0B',
+                            }}
                           >
-                            <Ionicons name="cut-outline" size={10} color="#FFFFFF" />
-                            <Text className="text-xs font-bold text-white ml-1">
+                            <Symbol name="cut-outline" size={10} color="#FFFFFF" />
+                            <Text
+                              style={{
+                                color: colors.white,
+                                fontSize: fontSize.xs,
+                                fontWeight: fontWeight.bold,
+                                marginLeft: spacing[1],
+                              }}
+                            >
                               {daysSincePruning}d
                             </Text>
                           </View>
                         )}
                       </View>
-                      <Text className="text-sm text-surface-500">
+                      <Text style={{ color: colors.surface[500], fontSize: fontSize.sm }}>
                         {farm.crop_variety || farm.crop}
                       </Text>
                     </View>
                   </View>
 
                   {farm.region && (
-                    <View className="flex-row items-center mt-3">
-                      <Ionicons name="location-outline" size={16} color="#6B7280" />
-                      <Text className="text-sm text-surface-600 ml-1">{farm.region}</Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginTop: spacing[3],
+                      }}
+                    >
+                      <Symbol name="location-outline" size={16} color="#6B7280" />
+                      <Text
+                        style={{
+                          color: colors.surface[600],
+                          fontSize: fontSize.sm,
+                          marginLeft: spacing[1],
+                        }}
+                      >
+                        {farm.region}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -420,32 +530,80 @@ export default function FarmDetailScreen() {
 
               {/* Weather info */}
               {weather && (
-                <View className="mt-4 pt-4 border-t border-surface-100">
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center">
-                      <View className="w-8 h-8 bg-sky-100 rounded-lg items-center justify-center">
-                        <Ionicons name="partly-sunny" size={16} color="#0284C7" />
+                <View
+                  style={{
+                    marginTop: spacing[4],
+                    paddingTop: spacing[4],
+                    borderTopWidth: 1,
+                    borderTopColor: colors.surface[100],
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View
+                        style={{
+                          width: 32,
+                          height: 32,
+                          backgroundColor: '#E0F2FE',
+                          borderRadius: borderRadius.lg,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Symbol name="partly-sunny" size={16} color="#0284C7" />
                       </View>
-                      <View className="ml-2">
-                        <Text className="text-xs text-surface-500">Current Weather</Text>
-                        <Text className="text-base font-semibold text-surface-900">
+                      <View style={{ marginLeft: spacing[2] }}>
+                        <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                          Current Weather
+                        </Text>
+                        <Text
+                          style={{
+                            color: colors.surface[900],
+                            fontSize: fontSize.base,
+                            fontWeight: fontWeight.semibold,
+                          }}
+                        >
                           {weather.current.condition}
                         </Text>
                       </View>
                     </View>
-                    <View className="flex-row items-center gap-3">
-                      <View className="items-center">
-                        <Text className="text-lg font-bold text-surface-900">
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3] }}>
+                      <View style={{ alignItems: 'center' }}>
+                        <Text
+                          style={{
+                            color: colors.surface[900],
+                            fontSize: fontSize.lg,
+                            fontWeight: fontWeight.bold,
+                          }}
+                        >
                           {weather.current.temperature}°
                         </Text>
-                        <Text className="text-xs text-surface-500">Temperature</Text>
+                        <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                          Temperature
+                        </Text>
                       </View>
-                      <View className="w-px h-8 bg-surface-200" />
-                      <View className="items-center">
-                        <Text className="text-lg font-bold text-surface-900">
+                      <View
+                        style={{ width: 1, height: 32, backgroundColor: colors.surface[200] }}
+                      />
+                      <View style={{ alignItems: 'center' }}>
+                        <Text
+                          style={{
+                            color: colors.surface[900],
+                            fontSize: fontSize.lg,
+                            fontWeight: fontWeight.bold,
+                          }}
+                        >
                           {weather.forecast[0]?.et0 ?? 0}
                         </Text>
-                        <Text className="text-xs text-surface-500">ET0 (mm)</Text>
+                        <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                          ET0 (mm)
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -455,13 +613,9 @@ export default function FarmDetailScreen() {
           </View>
 
           {/* Stats Grid - iOS Style */}
-          <View className="px-4 mt-4">
-            <View className="flex-row gap-3">
-              <TouchableOpacity
-                className="flex-1"
-                onPress={() => router.push(`/logs?farmId=${id}`)}
-                activeOpacity={0.7}
-              >
+          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[4] }}>
+            <View style={{ flexDirection: 'row', gap: spacing[3] }}>
+              <Pressable style={{ flex: 1 }} onPress={() => router.push(`/logs?farmId=${id}`)}>
                 <StatsCard
                   title="Log Entries"
                   value={totalRecords.toString()}
@@ -469,124 +623,187 @@ export default function FarmDetailScreen() {
                   iconColor="#4D8561"
                   subtitle="Records"
                 />
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="flex-1"
-                onPress={() => setShowWaterLevelModal(true)}
-                activeOpacity={0.7}
+              </Pressable>
+              <Pressable
+                style={{ flex: 1 }}
+                onPress={() => {
+                  if (!farm?.id) return;
+                  router.push({ pathname: '/water-level', params: { farmId: farm.id.toString() } });
+                }}
               >
                 <StatsCard
                   title="Soil Water"
                   value={farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
                   icon="water"
                   iconColor="#4D857A"
-                  subtitle="mm"
+                  subtitle={waterUsageCaption}
                 />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
 
           {/* Workboard Section */}
-          <View className="px-4 mt-6">
-            <Text className="text-xs font-bold text-surface-500 tracking-wider mb-1">
+          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
+            <Text
+              style={{
+                color: colors.surface[500],
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                letterSpacing: 1,
+                marginBottom: spacing[1],
+              }}
+            >
               WORKBOARD
             </Text>
-            <Text className="text-sm text-surface-500 mb-2">
+            <Text
+              style={{
+                color: colors.surface[500],
+                fontSize: fontSize.sm,
+                marginBottom: spacing[2],
+              }}
+            >
               Quick access to tools and resources.
             </Text>
 
             <View
-              className="rounded-2xl p-4 mt-2"
               style={{
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginTop: spacing[2],
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
               }}
             >
               <View style={{ flexDirection: 'row' }}>
                 {WORKBOARD_ACTIONS.map((action) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={action.id}
                     style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}
-                    activeOpacity={0.7}
                     onPress={() => handleWorkboardAction(action)}
                   >
                     <View
-                      className="rounded-full items-center justify-center mb-2"
                       style={{
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: spacing[2],
                         width: 40,
                         height: 40,
                         backgroundColor: `${action.color}1A`,
                       }}
                     >
-                      <Ionicons name={action.icon} size={18} color={action.color} />
+                      <Symbol name={action.icon} size={18} color={action.color} />
                     </View>
-                    <Text className="text-xs font-medium text-surface-600 text-center leading-tight">
+                    <Text
+                      style={{
+                        color: colors.surface[600],
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                        textAlign: 'center',
+                        lineHeight: 16,
+                      }}
+                    >
                       {action.title}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             </View>
           </View>
 
           {/* Tabs */}
-          <View className="px-4 mt-6">
-            <View className="flex-row">
+          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
+            <View style={{ flexDirection: 'row' }}>
               {(['activities', 'tasks'] as const).map((tab) => (
-                <TouchableOpacity
+                <Pressable
                   key={tab}
-                  className="flex-1 items-center py-3"
+                  style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[3] }}
                   onPress={() => setSelectedTab(tab)}
                 >
                   <Text
-                    className={`text-sm font-bold uppercase text-center ${
-                      selectedTab === tab ? 'text-primary-600' : 'text-surface-400'
-                    }`}
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      textTransform: 'uppercase',
+                      textAlign: 'center',
+                      color: selectedTab === tab ? colors.primary[600] : colors.surface[400],
+                    }}
                   >
                     {tab === 'activities' ? 'Activities' : 'Tasks'}
                   </Text>
                   <View
-                    className={`h-0.5 rounded-full mt-2 ${
-                      selectedTab === tab ? 'bg-primary-600' : 'bg-transparent'
-                    }`}
-                    style={{ width: 30 }}
+                    style={{
+                      height: 2,
+                      borderRadius: borderRadius.full,
+                      marginTop: spacing[2],
+                      width: 30,
+                      backgroundColor: selectedTab === tab ? colors.primary[600] : 'transparent',
+                    }}
                   />
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </View>
 
           {/* Tab Content */}
-          <View className="px-4 mt-4 pb-28">
+          <View
+            style={{
+              paddingHorizontal: spacing[4],
+              marginTop: spacing[4],
+              paddingBottom: spacing[24] + spacing[4],
+            }}
+          >
             {selectedTab === 'activities' ? (
               recentLogs.length > 0 ? (
-                <View className="gap-3">
+                <View style={{ gap: spacing[3] }}>
                   {recentLogs.map((log) => (
                     <ActivityLogCard key={log.id} type={log.type} date={log.date} data={log.data} />
                   ))}
                 </View>
               ) : (
                 <View
-                  className="rounded-2xl items-center p-10"
                   style={{
+                    borderRadius: borderRadius['2xl'],
+                    alignItems: 'center',
+                    padding: spacing[10],
                     backgroundColor: 'rgba(255, 255, 255, 0.6)',
                   }}
                 >
                   <View
-                    className="w-16 h-16 rounded-full items-center justify-center mb-4"
-                    style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
+                    style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing[4],
+                      backgroundColor: 'rgba(142, 142, 147, 0.2)',
+                    }}
                   >
-                    <Ionicons name="document-text-outline" size={32} color="#9CA3AF" />
+                    <Symbol name="doc.text" size={32} color="#9CA3AF" />
                   </View>
-                  <Text className="text-base font-semibold text-surface-900">
+                  <Text
+                    style={{
+                      color: colors.surface[900],
+                      fontSize: fontSize.base,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
                     No Activities Yet
                   </Text>
-                  <Text className="text-sm text-surface-500 text-center mt-1">
+                  <Text
+                    style={{
+                      color: colors.surface[500],
+                      fontSize: fontSize.sm,
+                      textAlign: 'center',
+                      marginTop: spacing[1],
+                    }}
+                  >
                     Start logging activities to see them here
                   </Text>
                 </View>
               )
             ) : tasks && tasks.length > 0 ? (
-              <View className="gap-3">
+              <View style={{ gap: spacing[3] }}>
                 {tasks.map((task) => {
                   const priorityInfo = PRIORITY_INFO[task.priority];
                   const overdue = isOverdue(task);
@@ -594,66 +811,112 @@ export default function FarmDetailScreen() {
                   return (
                     <View
                       key={task.id}
-                      className={`rounded-2xl p-4 ${
-                        overdue ? 'border-2 border-amber-300' : ''
-                      } ${task.completed ? 'opacity-60' : ''}`}
                       style={{
+                        borderRadius: borderRadius['2xl'],
+                        padding: spacing[4],
                         backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        borderWidth: overdue ? 2 : 0,
+                        borderColor: overdue ? '#FCD34D' : 'transparent',
+                        opacity: task.completed ? 0.6 : 1,
                       }}
                     >
-                      <View className="flex-row items-start">
-                        <TouchableOpacity
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                        <Pressable
                           onPress={() => !task.completed && handleCompleteTask(task.id!)}
                           disabled={task.completed}
-                          className={`w-7 h-7 rounded-full border-2 items-center justify-center mr-3 mt-0.5 ${
-                            task.completed ? 'bg-green-500 border-green-500' : 'border-surface-300'
-                          }`}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: borderRadius.full,
+                            borderWidth: 2,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginRight: spacing[3],
+                            marginTop: 2,
+                            backgroundColor: task.completed ? '#22C55E' : 'transparent',
+                            borderColor: task.completed ? '#22C55E' : colors.surface[300],
+                          }}
                         >
-                          {task.completed && <Ionicons name="checkmark" size={18} color="white" />}
-                        </TouchableOpacity>
+                          {task.completed && <Symbol name="checkmark" size={18} color="white" />}
+                        </Pressable>
 
-                        <View className="flex-1">
+                        <View style={{ flex: 1 }}>
                           <Text
-                            className={`text-base font-semibold ${
-                              task.completed ? 'text-surface-500 line-through' : 'text-surface-900'
-                            }`}
                             numberOfLines={2}
+                            style={{
+                              fontSize: fontSize.base,
+                              fontWeight: fontWeight.semibold,
+                              color: task.completed ? colors.surface[500] : colors.surface[900],
+                              textDecorationLine: task.completed ? 'line-through' : 'none',
+                            }}
                           >
                             {task.title}
                           </Text>
 
                           {task.description && (
-                            <Text className="text-sm text-surface-500 mt-1" numberOfLines={2}>
+                            <Text
+                              style={{
+                                color: colors.surface[500],
+                                fontSize: fontSize.sm,
+                                marginTop: spacing[1],
+                              }}
+                              numberOfLines={2}
+                            >
                               {task.description}
                             </Text>
                           )}
 
-                          <View className="flex-row items-center mt-2 flex-wrap" style={{ gap: 8 }}>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              marginTop: spacing[2],
+                              flexWrap: 'wrap',
+                              gap: 8,
+                            }}
+                          >
                             <View
-                              className={`flex-row items-center ${
-                                overdue ? 'bg-red-100' : 'bg-surface-100'
-                              } px-2 py-0.5 rounded`}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                paddingHorizontal: spacing[2],
+                                paddingVertical: 2,
+                                borderRadius: borderRadius.sm,
+                                backgroundColor: overdue ? '#FEE2E2' : colors.surface[100],
+                              }}
                             >
-                              <Ionicons
+                              <Symbol
                                 name="calendar"
                                 size={12}
                                 color={overdue ? '#DC2626' : '#6B7280'}
                               />
                               <Text
-                                className={`text-xs ml-1 ${
-                                  overdue ? 'text-red-600 font-medium' : 'text-surface-500'
-                                }`}
+                                style={{
+                                  marginLeft: spacing[1],
+                                  fontSize: fontSize.xs,
+                                  color: overdue ? '#DC2626' : colors.surface[500],
+                                  fontWeight: overdue ? fontWeight.medium : fontWeight.normal,
+                                }}
                               >
                                 {formatDueDate(task.due_date)}
                               </Text>
                             </View>
                             <View
-                              className="px-2 py-0.5 rounded"
-                              style={{ backgroundColor: priorityInfo.bgColor }}
+                              style={{
+                                backgroundColor: priorityInfo.bgColor,
+                                paddingHorizontal: spacing[2],
+                                paddingVertical: 2,
+                                borderRadius: borderRadius.sm,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
                             >
                               <Text
-                                className="text-xs font-medium"
-                                style={{ color: priorityInfo.color }}
+                                style={{
+                                  color: priorityInfo.color,
+                                  fontSize: fontSize.xs,
+                                  fontWeight: fontWeight.medium,
+                                }}
                               >
                                 {priorityInfo.label}
                               </Text>
@@ -662,12 +925,12 @@ export default function FarmDetailScreen() {
                         </View>
 
                         {!task.completed && (
-                          <TouchableOpacity
+                          <Pressable
                             onPress={() => handleDeleteTask(task.id!, task.title)}
-                            className="p-2"
+                            style={{ padding: spacing[2] }}
                           >
-                            <Ionicons name="trash-outline" size={18} color="#DC2626" />
-                          </TouchableOpacity>
+                            <Symbol name="trash" size={18} color="#DC2626" />
+                          </Pressable>
                         )}
                       </View>
                     </View>
@@ -676,19 +939,43 @@ export default function FarmDetailScreen() {
               </View>
             ) : (
               <View
-                className="rounded-2xl items-center p-10"
                 style={{
+                  borderRadius: borderRadius['2xl'],
+                  alignItems: 'center',
+                  padding: spacing[10],
                   backgroundColor: 'rgba(255, 255, 255, 0.6)',
                 }}
               >
                 <View
-                  className="w-16 h-16 rounded-full items-center justify-center mb-4"
-                  style={{ backgroundColor: 'rgba(142, 142, 147, 0.2)' }}
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: borderRadius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: spacing[4],
+                    backgroundColor: 'rgba(142, 142, 147, 0.2)',
+                  }}
                 >
-                  <Ionicons name="checkbox-outline" size={32} color="#9CA3AF" />
+                  <Symbol name="checkbox-outline" size={32} color="#9CA3AF" />
                 </View>
-                <Text className="text-base font-semibold text-surface-900">No Tasks Yet</Text>
-                <Text className="text-sm text-surface-500 text-center mt-1">
+                <Text
+                  style={{
+                    color: colors.surface[900],
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  No Tasks Yet
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[500],
+                    fontSize: fontSize.sm,
+                    textAlign: 'center',
+                    marginTop: spacing[1],
+                  }}
+                >
                   Tap the + button to create tasks
                 </Text>
               </View>
@@ -698,35 +985,24 @@ export default function FarmDetailScreen() {
       </View>
 
       {/* FAB for adding activity or task */}
-      <TouchableOpacity
-        className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center"
-        activeOpacity={0.8}
+      <Pressable
         onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
+        style={{
+          position: 'absolute',
+          bottom: spacing[6],
+          right: spacing[6],
+          width: 56,
+          height: 56,
+          backgroundColor: colors.primary[600],
+          borderRadius: borderRadius.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
-      </TouchableOpacity>
+        <Symbol name="plus" size={28} color="#FFFFFF" />
+      </Pressable>
 
-      {/* Add Entry Modal */}
-      {farm && (
-        <AddEntryModal
-          visible={showAddEntryModal}
-          onClose={() => setShowAddEntryModal(false)}
-          farm={farm}
-          tabs={['log', 'task']}
-          initialTab={addEntryTab}
-          onLogSaveSuccess={handleActivitySaveSuccess}
-          onTaskSaveSuccess={handleTaskSaveSuccess}
-        />
-      )}
-
-      {/* Water Level Modal */}
-      {farm && (
-        <WaterLevelModal
-          visible={showWaterLevelModal}
-          onClose={() => setShowWaterLevelModal(false)}
-          farm={farm}
-        />
-      )}
+      {/* Add Entry + Water Level handled via routes */}
     </>
   );
 }

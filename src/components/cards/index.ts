@@ -2,8 +2,8 @@
  * Cards barrel export
  */
 
-export { StatsCard } from './StatsCard';
-export { FarmCard } from './FarmCard';
-export { QuickActionButton } from './QuickActionButton';
-export { ActivityLogCard } from './ActivityLogCard';
-export { WorkerCard } from './WorkerCard';
+export { StatsCard } from './stats-card';
+export { FarmCard } from './farm-card';
+export { QuickActionButton } from './quick-action-button';
+export { ActivityLogCard } from './activity-log-card';
+export { WorkerCard } from './worker-card';

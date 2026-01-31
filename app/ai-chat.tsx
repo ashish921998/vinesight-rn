@@ -4,19 +4,19 @@ import {
   Text,
   TextInput,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import Markdown from 'react-native-markdown-display';
 import { useFarm } from '@/hooks';
-import { aiService } from '@/services/aiService';
+import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 const markdownStyles = {
   body: { fontSize: 16, color: '#1c1c1e', lineHeight: 24 },
@@ -52,7 +52,7 @@ const markdownStyles = {
     color: '#1c1c1e',
     padding: 2,
     borderRadius: 4,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: process.env.EXPO_OS === 'ios' ? 'Courier' : 'monospace',
   },
   code_block: {
     backgroundColor: '#f0f0f0',
@@ -60,7 +60,7 @@ const markdownStyles = {
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: process.env.EXPO_OS === 'ios' ? 'Courier' : 'monospace',
   },
   blockquote: {
     backgroundColor: '#f5f5f5',
@@ -175,171 +175,309 @@ export default function AIChatScreen() {
           headerStyle: { backgroundColor: '#f2f2f7' },
           headerTintColor: '#000000',
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-2">
-              <Ionicons name="arrow-back" size={24} color="#000000" />
-            </TouchableOpacity>
+            <Pressable onPress={() => router.back()} style={{ marginLeft: spacing[2] }}>
+              <UiSymbol name="chevron.left" size={24} color="#000000" />
+            </Pressable>
           ),
         }}
       />
 
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <KeyboardAvoidingView
-          className="flex-1 bg-surface-50"
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        >
-          <View className="flex-1">
-            <ScrollView
-              ref={scrollViewRef}
-              className="flex-1 px-4 pb-4"
-              contentContainerStyle={{ paddingTop: 16 }}
-              showsVerticalScrollIndicator={false}
-            >
-              {messages.length === 0 && (
-                <View className="flex-1 items-center justify-center py-8">
-                  <View className="w-20 h-20 bg-primary-100 rounded-full items-center justify-center mb-4">
-                    <Ionicons name="bulb" size={40} color="#408059" />
-                  </View>
-                  <Text className="text-xl font-bold text-surface-900 mb-2">Vinesight AI</Text>
-                  <Text className="text-base text-surface-500 text-center mb-6 px-8">
-                    Your personal farming assistant. Ask me anything about grape farming,
-                    irrigation, diseases, or harvest!
-                  </Text>
-                  <View className="w-full gap-2">
-                    {DEFAULT_SUGGESTIONS.map((suggestion, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => handleSuggestionPress(suggestion)}
-                        className="p-3 bg-white rounded-xl border border-surface-100"
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: colors.surface[50] }}
+        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={process.env.EXPO_OS === 'ios' ? 90 : 0}
+      >
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            ref={scrollViewRef}
+            style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[4] }}
+            contentContainerStyle={{ paddingTop: spacing[4] }}
+            contentInsetAdjustmentBehavior="automatic"
+            showsVerticalScrollIndicator={false}
+          >
+            {messages.length === 0 && (
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: spacing[8],
+                }}
+              >
+                <View
+                  style={{
+                    width: 80,
+                    height: 80,
+                    backgroundColor: colors.primary[100],
+                    borderRadius: borderRadius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: spacing[4],
+                  }}
+                >
+                  <UiSymbol name="lightbulb.fill" size={40} color="#408059" />
+                </View>
+                <Text
+                  style={{
+                    color: colors.surface[900],
+                    fontSize: fontSize.xl,
+                    fontWeight: fontWeight.bold,
+                    marginBottom: spacing[2],
+                  }}
+                >
+                  Vinesight AI
+                </Text>
+                <Text
+                  style={{
+                    color: colors.surface[500],
+                    fontSize: fontSize.base,
+                    textAlign: 'center',
+                    marginBottom: spacing[6],
+                    paddingHorizontal: spacing[8],
+                  }}
+                >
+                  Your personal farming assistant. Ask me anything about grape farming, irrigation,
+                  diseases, or harvest!
+                </Text>
+                <View style={{ width: '100%', gap: spacing[2] }}>
+                  {DEFAULT_SUGGESTIONS.map((suggestion, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => handleSuggestionPress(suggestion)}
+                      style={{
+                        padding: spacing[3],
+                        borderRadius: borderRadius.xl,
+                        borderWidth: 1,
+                        borderColor: colors.surface[100],
+                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                      }}
+                    >
+                      <Text
                         style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                          color: colors.surface[700],
+                          fontSize: fontSize.sm,
+                          textAlign: 'center',
                         }}
                       >
-                        <Text className="text-sm text-surface-700 text-center">{suggestion}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                        {suggestion}
+                      </Text>
+                    </Pressable>
+                  ))}
                 </View>
-              )}
+              </View>
+            )}
 
-              {messages.map((message) => (
-                <View
-                  key={message.id}
-                  className={`flex-row mb-3 ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  {message.role === 'assistant' && (
-                    <View className="w-8 h-8 bg-primary-100 rounded-full items-center justify-center mr-2 mt-1">
-                      <Ionicons name="bulb" size={16} color="#408059" />
-                    </View>
-                  )}
+            {messages.map((message) => (
+              <View
+                key={message.id}
+                style={{
+                  flexDirection: 'row',
+                  marginBottom: spacing[3],
+                  justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+                }}
+              >
+                {message.role === 'assistant' && (
                   <View
-                    className={`max-w-[80%] rounded-2xl p-3 ${
-                      message.role === 'user'
-                        ? 'bg-primary-600 rounded-br-sm'
-                        : 'bg-white rounded-bl-sm'
-                    }`}
-                    style={
-                      message.role === 'assistant'
-                        ? {
-                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                          }
-                        : {}
-                    }
-                  >
-                    {message.role === 'assistant' ? (
-                      <Markdown style={markdownStyles} mergeStyle={true}>
-                        {message.content}
-                      </Markdown>
-                    ) : (
-                      <Text className="text-base text-white">{message.content}</Text>
-                    )}
-                    <Text
-                      className={`text-xs mt-1 ${
-                        message.role === 'user' ? 'text-white/70' : 'text-surface-400'
-                      }`}
-                    >
-                      {formatMessageTime(message.timestamp)}
-                    </Text>
-                  </View>
-                  {message.role === 'user' && (
-                    <View className="w-8 h-8 bg-primary-200 rounded-full items-center justify-center ml-2 mt-1">
-                      <Ionicons name="person" size={16} color="#408059" />
-                    </View>
-                  )}
-                </View>
-              ))}
-
-              {isLoading && (
-                <View className="flex-row items-start justify-start mb-3">
-                  <View className="w-8 h-8 bg-primary-100 rounded-full items-center justify-center mr-2 mt-1">
-                    <Ionicons name="bulb" size={16} color="#408059" />
-                  </View>
-                  <View
-                    className="px-4 py-3 bg-white rounded-2xl rounded-bl-sm"
                     style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                      width: 32,
+                      height: 32,
+                      backgroundColor: colors.primary[100],
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: spacing[2],
+                      marginTop: spacing[1],
                     }}
                   >
-                    <ActivityIndicator size="small" color="#408059" />
+                    <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
                   </View>
-                </View>
-              )}
-
-              {suggestions.length > 0 && !isLoading && messages.length > 0 && (
-                <View className="mt-4 pt-4 border-t border-surface-100">
-                  <Text className="text-xs text-surface-500 mb-2">Suggested questions:</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    className="flex-row"
-                  >
-                    {suggestions.map((suggestion, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => handleSuggestionPress(suggestion)}
-                        className="mr-2 px-4 py-2 bg-primary-50 rounded-full"
-                      >
-                        <Text className="text-sm text-primary-700">{suggestion}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
-            </ScrollView>
-
-            <View className="p-4 bg-white border-t border-surface-100">
-              <View className="flex-row items-end gap-2">
-                <TextInput
-                  value={inputText}
-                  onChangeText={setInputText}
-                  placeholder="Ask about farming..."
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  className="flex-1 min-h-[44px] max-h-[120px] px-4 py-3 bg-surface-100 rounded-2xl text-surface-900 text-base"
-                  textAlignVertical="top"
-                  returnKeyType="send"
-                  onSubmitEditing={() => handleSendMessage()}
-                />
-                <TouchableOpacity
-                  onPress={() => handleSendMessage()}
-                  disabled={!inputText.trim() || isLoading}
-                  className={`w-12 h-12 rounded-full items-center justify-center ${
-                    inputText.trim() && !isLoading ? 'bg-primary-600' : 'bg-surface-200'
-                  }`}
+                )}
+                <View
+                  style={{
+                    maxWidth: '80%',
+                    borderRadius: borderRadius['2xl'],
+                    padding: spacing[3],
+                    backgroundColor:
+                      message.role === 'user' ? colors.primary[600] : 'rgba(255, 255, 255, 0.8)',
+                    ...(message.role === 'user'
+                      ? { borderBottomRightRadius: borderRadius.sm }
+                      : { borderBottomLeftRadius: borderRadius.sm }),
+                  }}
                 >
-                  <Ionicons
-                    name="send"
-                    size={20}
-                    color={inputText.trim() && !isLoading ? '#FFFFFF' : '#9CA3AF'}
-                  />
-                </TouchableOpacity>
+                  {message.role === 'assistant' ? (
+                    <Markdown style={markdownStyles} mergeStyle={true}>
+                      {message.content}
+                    </Markdown>
+                  ) : (
+                    <Text style={{ fontSize: fontSize.base, color: colors.white }}>
+                      {message.content}
+                    </Text>
+                  )}
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      marginTop: spacing[1],
+                      color:
+                        message.role === 'user' ? 'rgba(255, 255, 255, 0.7)' : colors.surface[400],
+                    }}
+                  >
+                    {formatMessageTime(message.timestamp)}
+                  </Text>
+                </View>
+                {message.role === 'user' && (
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      backgroundColor: colors.primary[200],
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginLeft: spacing[2],
+                      marginTop: spacing[1],
+                    }}
+                  >
+                    <UiSymbol name="person.fill" size={16} color="#408059" />
+                  </View>
+                )}
               </View>
+            ))}
+
+            {isLoading && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  justifyContent: 'flex-start',
+                  marginBottom: spacing[3],
+                }}
+              >
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    backgroundColor: colors.primary[100],
+                    borderRadius: borderRadius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: spacing[2],
+                    marginTop: spacing[1],
+                  }}
+                >
+                  <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
+                </View>
+                <View
+                  style={{
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[3],
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderRadius: borderRadius['2xl'],
+                    borderBottomLeftRadius: borderRadius.sm,
+                  }}
+                >
+                  <ActivityIndicator size="small" color="#408059" />
+                </View>
+              </View>
+            )}
+
+            {suggestions.length > 0 && !isLoading && messages.length > 0 && (
+              <View
+                style={{
+                  marginTop: spacing[4],
+                  paddingTop: spacing[4],
+                  borderTopWidth: 1,
+                  borderTopColor: colors.surface[100],
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.surface[500],
+                    fontSize: fontSize.xs,
+                    marginBottom: spacing[2],
+                  }}
+                >
+                  Suggested questions:
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ flexDirection: 'row' }}
+                >
+                  {suggestions.map((suggestion, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => handleSuggestionPress(suggestion)}
+                      style={{
+                        marginRight: spacing[2],
+                        paddingHorizontal: spacing[4],
+                        paddingVertical: spacing[2],
+                        backgroundColor: colors.primary[50],
+                        borderRadius: borderRadius.full,
+                      }}
+                    >
+                      <Text style={{ color: colors.primary[700], fontSize: fontSize.sm }}>
+                        {suggestion}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </ScrollView>
+
+          <View
+            style={{
+              padding: spacing[4],
+              backgroundColor: colors.surface[100],
+              borderTopWidth: 1,
+              borderTopColor: colors.surface[100],
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] }}>
+              <TextInput
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Ask about farming..."
+                placeholderTextColor="#9CA3AF"
+                multiline
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  maxHeight: 120,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  backgroundColor: colors.surface[100],
+                  borderRadius: borderRadius['2xl'],
+                  color: colors.surface[900],
+                  fontSize: fontSize.base,
+                }}
+                textAlignVertical="top"
+                returnKeyType="send"
+                onSubmitEditing={() => handleSendMessage()}
+              />
+              <Pressable
+                onPress={() => handleSendMessage()}
+                disabled={!inputText.trim() || isLoading}
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor:
+                    inputText.trim() && !isLoading ? colors.primary[600] : colors.surface[200],
+                }}
+              >
+                <UiSymbol
+                  name="paperplane.fill"
+                  size={20}
+                  color={inputText.trim() && !isLoading ? '#FFFFFF' : '#9CA3AF'}
+                />
+              </Pressable>
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+        </View>
+      </KeyboardAvoidingView>
     </>
   );
 }

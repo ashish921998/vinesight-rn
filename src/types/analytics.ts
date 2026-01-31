@@ -90,7 +90,10 @@ export interface TrendData {
 export interface ParameterTrend {
   key: string;
   label: string;
+  shortLabel: string;
   unit: string;
+  optimalMin: number;
+  optimalMax: number;
   values: number[];
   min: number;
   max: number;

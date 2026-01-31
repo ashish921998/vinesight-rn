@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol } from '@/components/ui/symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 // Calculator data (Irrigation Planning section)
 const calculators = [
@@ -9,7 +10,7 @@ const calculators = [
     id: 'weather',
     title: 'Weather & Irrigation',
     description: 'Farm weather data, forecasts & irrigation needs',
-    icon: 'sunny' as const,
+    icon: 'sun.max.fill' as const,
     color: '#F59E0B',
     route: '/weather' as Href,
   },
@@ -17,7 +18,7 @@ const calculators = [
     id: 'mad',
     title: 'MAD Calculator',
     description: 'Maximum allowable deficit & tank requirements',
-    icon: 'speedometer' as const,
+    icon: 'gauge' as const,
     color: '#3B82F6',
     route: '/calculator/mad' as Href,
   },
@@ -25,7 +26,7 @@ const calculators = [
     id: 'system-discharge',
     title: 'System Discharge',
     description: 'Irrigation system design & discharge rates',
-    icon: 'water' as const,
+    icon: 'drop.fill' as const,
     color: '#408059',
     route: '/calculator/system-discharge' as Href,
   },
@@ -33,7 +34,7 @@ const calculators = [
     id: 'lai',
     title: 'LAI Calculator',
     description: 'Leaf area index & canopy management',
-    icon: 'leaf' as const,
+    icon: 'leaf.fill' as const,
     color: '#22C55E',
     route: '/calculator/lai' as Href,
   },
@@ -41,7 +42,7 @@ const calculators = [
     id: 'nutrients',
     title: 'Nutrient Calculator',
     description: 'Fertilizer requirements & application planning',
-    icon: 'flask' as const,
+    icon: 'flask.fill' as const,
     color: '#8B5CF6',
     route: '/calculator/nutrients' as Href,
   },
@@ -52,41 +53,73 @@ export default function ToolsScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-surface-50"
-      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+      contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
       style={{ backgroundColor: '#f2f2f7' }}
     >
       {/* Header */}
-      <View className="mb-4">
-        <Text className="text-base text-surface-500">
+      <View style={{ marginBottom: spacing[4] }}>
+        <Text style={{ color: colors.surface[500], fontSize: fontSize.base }}>
           Scientific calculators for precision vineyard management
         </Text>
       </View>
 
       {/* Calculators Section */}
-      <View className="mb-6">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-3">CALCULATORS</Text>
+      <View style={{ marginBottom: spacing[6] }}>
+        <Text
+          style={{
+            color: colors.surface[500],
+            fontSize: fontSize.xs,
+            fontWeight: fontWeight.bold,
+            letterSpacing: 1,
+            marginBottom: spacing[3],
+          }}
+        >
+          CALCULATORS
+        </Text>
         {calculators.map((calc) => (
-          <TouchableOpacity
+          <Pressable
             key={calc.id}
             onPress={() => router.push(calc.route)}
-            className="bg-white rounded-2xl p-4 mb-3 flex-row items-center"
-            activeOpacity={0.7}
+            style={{
+              backgroundColor: colors.surface[100],
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[4],
+              marginBottom: spacing[3],
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
           >
             <View
-              className="w-12 h-12 rounded-xl items-center justify-center"
-              style={{ backgroundColor: `${calc.color}15` }}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: borderRadius.xl,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: `${calc.color}15`,
+              }}
             >
-              <Ionicons name={calc.icon} size={22} color={calc.color} />
+              <Symbol name={calc.icon} size={22} color={calc.color} />
             </View>
-            <View className="flex-1 ml-3">
-              <Text className="text-base font-semibold text-surface-900">{calc.title}</Text>
-              <Text className="text-xs text-surface-500 mt-0.5" numberOfLines={1}>
+            <View style={{ flex: 1, marginLeft: spacing[3] }}>
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
+                {calc.title}
+              </Text>
+              <Text
+                style={{ color: colors.surface[500], fontSize: fontSize.xs, marginTop: 2 }}
+                numberOfLines={2}
+              >
                 {calc.description}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
-          </TouchableOpacity>
+            <Symbol name="chevron.right" size={20} color="#D1D5DB" />
+          </Pressable>
         ))}
       </View>
     </ScrollView>

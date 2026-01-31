@@ -11,7 +11,7 @@ VineSight is a vineyard management mobile application built with Expo SDK 54 and
 - **Framework**: Expo (SDK 54), React Native 0.81.5
 - **Language**: TypeScript (Strict mode enabled)
 - **Navigation**: Expo Router (file-based routing)
-- **Styling**: NativeWind v4 (TailwindCSS)
+- **Styling**: Inline styles + theme tokens (`src/styles/theme.ts`)
 - **State Management**: Zustand
 - **Backend**: Supabase
 - **Data Fetching**: TanStack Query (React Query)
@@ -65,9 +65,8 @@ vinesight-rn/
 │   │   └── index.ts        # Barrel exports
 │   ├── utils/              # Utility functions
 │   ├── constants/          # App constants
-│   └── global.css          # Tailwind CSS
+│   └── styles/             # Design system tokens
 ├── assets/                 # Static assets
-├── tailwind.config.js      # Tailwind configuration
 ├── metro.config.js         # Metro bundler config
 ├── babel.config.js         # Babel config
 └── app.json                # Expo configuration
@@ -85,14 +84,9 @@ This project uses Expo Router for file-based navigation. Routes are in the `app/
 - `app/(auth)/` - Authentication screens
 - `app/[id].tsx` - Dynamic routes
 
-### NativeWind Setup
+### Styling Setup
 
-NativeWind v4 is configured with:
-
-- `tailwind.config.js` - Custom Vinesight color palette
-- `src/global.css` - Base Tailwind styles
-- `metro.config.js` - NativeWind Metro config
-- `babel.config.js` - NativeWind Babel preset
+Styling is handled via inline styles and the theme tokens in `src/styles/theme.ts`.
 
 ### Supabase Integration
 
@@ -120,7 +114,7 @@ Key files for reference:
 
 - **Linting & Formatting**: ESLint and Prettier are enforced via pre-commit hooks (Husky + lint-staged). Always run `npm run lint` before submitting changes.
 - **Environment Variables**: Required variables are documented in `.env.example`. Ensure you have a local `.env` file for development.
-- **Styling**: Use Tailwind classes via NativeWind's `className` prop. Avoid inline styles where possible.
+- **Styling**: Use inline styles with tokens from `src/styles/theme.ts`. Avoid `className`.
 - **Types**: Use strict typing. Avoid `any` at all costs. Prefer interfaces over types for object definitions.
 - **Data Fetching**: Always use TanStack Query hooks in `src/hooks/` for backend interactions.
 

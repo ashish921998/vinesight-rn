@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '1.0.5',
+    version: '1.0.6',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
@@ -33,7 +33,8 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 6,
+      versionCode: 7,
+      softwareKeyboardLayoutMode: 'resize',
       adaptiveIcon: {
         foregroundImage: './assets/playstore.png',
         backgroundColor: '#408059',

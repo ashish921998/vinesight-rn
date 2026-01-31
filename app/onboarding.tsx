@@ -4,12 +4,13 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, ScrollView, Pressable, SafeAreaView } from 'react-native';
+
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { router } from 'expo-router';
-import { useOnboardingStore } from '../src/stores/onboardingStore';
+import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export default function OnboardingScreen() {
   const { currentStep, preferences, nextStep, previousStep, setPreferences, completeOnboarding } =
@@ -75,55 +76,126 @@ export default function OnboardingScreen() {
   };
 
   const renderProgressIndicator = () => (
-    <View className="flex-row justify-center py-4 gap-2">
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+        paddingVertical: spacing[4],
+        gap: spacing[2],
+      }}
+    >
       {ONBOARDING_STEPS.map((step, index) => (
         <View
           key={step}
-          className={`h-1 rounded-full ${index <= currentIndex ? 'bg-green-600' : 'bg-gray-300'}`}
-          style={{ width: index <= currentIndex ? 32 : 24 }}
+          style={{
+            height: 4,
+            borderRadius: borderRadius.full,
+            backgroundColor: index <= currentIndex ? colors.primary[600] : colors.gray[300],
+            width: index <= currentIndex ? 32 : 24,
+          }}
         />
       ))}
     </View>
   );
 
   const renderWelcomeStep = () => (
-    <View className="flex-1 items-center justify-center px-8">
-      <View className="w-32 h-32 rounded-full bg-green-100 items-center justify-center mb-8">
-        <Ionicons name="leaf" size={64} color="#1a5d1a" />
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: spacing[8],
+      }}
+    >
+      <View
+        style={{
+          width: 128,
+          height: 128,
+          borderRadius: borderRadius.full,
+          backgroundColor: colors.primary[100],
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: spacing[8],
+        }}
+      >
+        <SymbolIcon name="leaf.fill" size={64} color="#1a5d1a" />
       </View>
-      <Text className="text-3xl font-bold text-gray-800 text-center mb-3">
+      <Text
+        style={{
+          fontSize: fontSize['3xl'],
+          fontWeight: fontWeight.bold,
+          color: colors.gray[800],
+          textAlign: 'center',
+          marginBottom: spacing[3],
+        }}
+      >
         Welcome to Vinesight
       </Text>
-      <Text className="text-lg text-gray-500 text-center">Your smart farming companion</Text>
+      <Text style={{ fontSize: fontSize.lg, color: colors.gray[500], textAlign: 'center' }}>
+        Your smart farming companion
+      </Text>
     </View>
   );
 
   const renderFeaturesStep = () => (
     <ScrollView
-      className="flex-1 px-6"
+      style={{ flex: 1, paddingHorizontal: spacing[6] }}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingVertical: 24 }}
+      contentContainerStyle={{ paddingVertical: spacing[6] }}
     >
-      <Text className="text-2xl font-bold text-gray-800 text-center mb-2">How It Works</Text>
-      <Text className="text-gray-500 text-center mb-6">
+      <Text
+        style={{
+          fontSize: fontSize['2xl'],
+          fontWeight: fontWeight.bold,
+          color: colors.gray[800],
+          textAlign: 'center',
+          marginBottom: spacing[2],
+        }}
+      >
+        How It Works
+      </Text>
+      <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[6] }}>
         Everything you need to manage your farm
       </Text>
 
       {filteredFeatures.map((feature, index) => (
-        <View key={index} className="bg-white rounded-2xl p-4 mb-3 flex-row items-center">
+        <View
+          key={index}
+          style={{
+            backgroundColor: colors.white,
+            borderRadius: borderRadius['2xl'],
+            padding: spacing[4],
+            marginBottom: spacing[3],
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
           <View
-            className="w-12 h-12 rounded-xl items-center justify-center mr-4"
-            style={{ backgroundColor: `${feature.color}15` }}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: borderRadius.xl,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: spacing[4],
+              backgroundColor: `${feature.color}15`,
+            }}
           >
-            <Ionicons
-              name={feature.icon as keyof typeof Ionicons.glyphMap}
-              size={24}
-              color={feature.color}
-            />
+            <SymbolIcon name={feature.icon} size={24} color={feature.color} />
           </View>
-          <View className="flex-1">
-            <Text className="text-base font-semibold text-gray-800">{feature.title}</Text>
-            <Text className="text-sm text-gray-500 mt-1">{feature.description}</Text>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: fontSize.base,
+                fontWeight: fontWeight.semibold,
+                color: colors.gray[800],
+              }}
+            >
+              {feature.title}
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: colors.gray[500], marginTop: spacing[1] }}>
+              {feature.description}
+            </Text>
           </View>
         </View>
       ))}
@@ -132,138 +204,259 @@ export default function OnboardingScreen() {
 
   const renderPreferencesStep = () => (
     <ScrollView
-      className="flex-1 px-6"
+      style={{ flex: 1, paddingHorizontal: spacing[6] }}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingVertical: 24 }}
+      contentContainerStyle={{ paddingVertical: spacing[6] }}
     >
-      <Text className="text-2xl font-bold text-gray-800 text-center mb-2">Farm Preferences</Text>
-      <Text className="text-gray-500 text-center mb-8">Help us customize your experience</Text>
+      <Text
+        style={{
+          fontSize: fontSize['2xl'],
+          fontWeight: fontWeight.bold,
+          color: colors.gray[800],
+          textAlign: 'center',
+          marginBottom: spacing[2],
+        }}
+      >
+        Farm Preferences
+      </Text>
+      <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[8] }}>
+        Help us customize your experience
+      </Text>
 
       {/* Country Selection */}
-      <View className="mb-6">
-        <View className="flex-row items-center mb-3">
-          <Ionicons name="globe" size={20} color="#1a5d1a" />
-          <Text className="text-base font-semibold text-gray-800 ml-2">Country</Text>
+      <View style={{ marginBottom: spacing[6] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
+          <SymbolIcon name="globe" size={20} color="#1a5d1a" />
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: colors.gray[800],
+              marginLeft: spacing[2],
+            }}
+          >
+            Country
+          </Text>
         </View>
-        <TouchableOpacity
+        <Pressable
           onPress={() => setShowCountryPicker(!showCountryPicker)}
-          className="bg-white rounded-xl p-4 flex-row items-center justify-between"
+          style={{
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
         >
-          <Text className={`text-base ${selectedCountry ? 'text-gray-800' : 'text-gray-400'}`}>
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              color: selectedCountry ? colors.gray[800] : colors.gray[400],
+            }}
+          >
             {selectedCountry || 'Select a country'}
           </Text>
-          <Ionicons
-            name={showCountryPicker ? 'chevron-up' : 'chevron-down'}
+          <SymbolIcon
+            name={showCountryPicker ? 'chevron.up' : 'chevron.down'}
             size={20}
             color="#666"
           />
-        </TouchableOpacity>
+        </Pressable>
 
         {showCountryPicker && (
-          <View className="bg-white rounded-xl mt-2 overflow-hidden border border-gray-200">
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              marginTop: spacing[2],
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: colors.gray[200],
+            }}
+          >
             {COUNTRIES.map((country) => (
-              <TouchableOpacity
+              <Pressable
                 key={country}
                 onPress={() => {
                   setSelectedCountry(country);
                   setShowCountryPicker(false);
                 }}
-                className={`p-4 border-b border-gray-100 ${
-                  selectedCountry === country ? 'bg-green-50' : ''
-                }`}
+                style={{
+                  padding: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.gray[100],
+                  backgroundColor: selectedCountry === country ? colors.primary[50] : colors.white,
+                }}
               >
                 <Text
-                  className={`text-base ${
-                    selectedCountry === country ? 'text-green-700 font-semibold' : 'text-gray-700'
-                  }`}
+                  style={{
+                    fontSize: fontSize.base,
+                    color: selectedCountry === country ? colors.primary[700] : colors.gray[700],
+                    fontWeight:
+                      selectedCountry === country ? fontWeight.semibold : fontWeight.normal,
+                  }}
                 >
                   {country}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         )}
       </View>
 
       {/* Area Unit Selection */}
-      <View className="mb-6">
-        <View className="flex-row items-center mb-3">
-          <Ionicons name="resize" size={20} color="#1a5d1a" />
-          <Text className="text-base font-semibold text-gray-800 ml-2">Area Unit</Text>
+      <View style={{ marginBottom: spacing[6] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
+          <SymbolIcon name="arrow.up.left.and.arrow.down.right" size={20} color="#1a5d1a" />
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: colors.gray[800],
+              marginLeft: spacing[2],
+            }}
+          >
+            Area Unit
+          </Text>
         </View>
-        <View className="flex-row gap-3">
-          <TouchableOpacity
+        <View style={{ flexDirection: 'row', gap: spacing[3] }}>
+          <Pressable
             onPress={() => setSelectedAreaUnit('acres')}
-            className={`flex-1 p-4 rounded-xl border-2 ${
-              selectedAreaUnit === 'acres'
-                ? 'border-green-600 bg-green-50'
-                : 'border-gray-200 bg-white'
-            }`}
+            style={{
+              flex: 1,
+              padding: spacing[4],
+              borderRadius: borderRadius.xl,
+              borderWidth: 2,
+              borderColor: selectedAreaUnit === 'acres' ? colors.primary[600] : colors.gray[200],
+              backgroundColor: selectedAreaUnit === 'acres' ? colors.primary[50] : colors.white,
+            }}
           >
             <Text
-              className={`text-center font-semibold ${
-                selectedAreaUnit === 'acres' ? 'text-green-700' : 'text-gray-600'
-              }`}
+              style={{
+                textAlign: 'center',
+                fontWeight: fontWeight.semibold,
+                color: selectedAreaUnit === 'acres' ? colors.primary[700] : colors.gray[600],
+              }}
             >
               Acres
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             onPress={() => setSelectedAreaUnit('hectares')}
-            className={`flex-1 p-4 rounded-xl border-2 ${
-              selectedAreaUnit === 'hectares'
-                ? 'border-green-600 bg-green-50'
-                : 'border-gray-200 bg-white'
-            }`}
+            style={{
+              flex: 1,
+              padding: spacing[4],
+              borderRadius: borderRadius.xl,
+              borderWidth: 2,
+              borderColor: selectedAreaUnit === 'hectares' ? colors.primary[600] : colors.gray[200],
+              backgroundColor: selectedAreaUnit === 'hectares' ? colors.primary[50] : colors.white,
+            }}
           >
             <Text
-              className={`text-center font-semibold ${
-                selectedAreaUnit === 'hectares' ? 'text-green-700' : 'text-gray-600'
-              }`}
+              style={{
+                textAlign: 'center',
+                fontWeight: fontWeight.semibold,
+                color: selectedAreaUnit === 'hectares' ? colors.primary[700] : colors.gray[600],
+              }}
             >
               Hectares
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </ScrollView>
   );
 
   const renderNotificationsStep = () => (
-    <View className="flex-1 items-center justify-center px-8">
-      <View className="w-24 h-24 rounded-full bg-blue-100 items-center justify-center mb-8">
-        <Ionicons name="notifications" size={48} color="#3B82F6" />
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: spacing[8],
+      }}
+    >
+      <View
+        style={{
+          width: 96,
+          height: 96,
+          borderRadius: borderRadius.full,
+          backgroundColor: '#DBEAFE',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: spacing[8],
+        }}
+      >
+        <SymbolIcon name="bell.fill" size={48} color="#3B82F6" />
       </View>
-      <Text className="text-2xl font-bold text-gray-800 text-center mb-3">Stay Updated</Text>
-      <Text className="text-gray-500 text-center mb-6">
+      <Text
+        style={{
+          fontSize: fontSize['2xl'],
+          fontWeight: fontWeight.bold,
+          color: colors.gray[800],
+          textAlign: 'center',
+          marginBottom: spacing[3],
+        }}
+      >
+        Stay Updated
+      </Text>
+      <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[6] }}>
         Get reminders for irrigation schedules, task deadlines, and important farm alerts.
       </Text>
-      <View className="bg-blue-50 p-4 rounded-xl">
-        <View className="flex-row items-center mb-2">
-          <Ionicons name="water" size={20} color="#3B82F6" />
-          <Text className="text-blue-700 ml-2">Irrigation reminders</Text>
+      <View
+        style={{ backgroundColor: '#EFF6FF', padding: spacing[4], borderRadius: borderRadius.xl }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
+          <SymbolIcon name="drop.fill" size={20} color="#3B82F6" />
+          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Irrigation reminders</Text>
         </View>
-        <View className="flex-row items-center mb-2">
-          <Ionicons name="alarm" size={20} color="#3B82F6" />
-          <Text className="text-blue-700 ml-2">Task deadlines</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
+          <SymbolIcon name="alarm.fill" size={20} color="#3B82F6" />
+          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Task deadlines</Text>
         </View>
-        <View className="flex-row items-center">
-          <Ionicons name="warning" size={20} color="#3B82F6" />
-          <Text className="text-blue-700 ml-2">Weather alerts</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <SymbolIcon name="exclamationmark.triangle.fill" size={20} color="#3B82F6" />
+          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Weather alerts</Text>
         </View>
       </View>
     </View>
   );
 
   const renderCompleteStep = () => (
-    <View className="flex-1 items-center justify-center px-8">
-      <View className="w-24 h-24 rounded-full bg-green-100 items-center justify-center mb-8">
-        <Ionicons name="checkmark-circle" size={64} color="#1a5d1a" />
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: spacing[8],
+      }}
+    >
+      <View
+        style={{
+          width: 96,
+          height: 96,
+          borderRadius: borderRadius.full,
+          backgroundColor: colors.primary[100],
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: spacing[8],
+        }}
+      >
+        <SymbolIcon name="checkmark.circle.fill" size={64} color="#1a5d1a" />
       </View>
-      <Text className="text-2xl font-bold text-gray-800 text-center mb-3">
+      <Text
+        style={{
+          fontSize: fontSize['2xl'],
+          fontWeight: fontWeight.bold,
+          color: colors.gray[800],
+          textAlign: 'center',
+          marginBottom: spacing[3],
+        }}
+      >
         You&apos;re All Set!
       </Text>
-      <Text className="text-gray-500 text-center">
+      <Text style={{ color: colors.gray[500], textAlign: 'center' }}>
         Start managing your farms with Vinesight. Add your first farm to get started.
       </Text>
     </View>
@@ -287,42 +480,71 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.gray[50] }}>
       {/* Progress Indicator */}
       {renderProgressIndicator()}
 
       {/* Skip Button */}
       {!isLastStep && (
-        <TouchableOpacity onPress={handleSkip} className="absolute right-4 top-12 z-10">
-          <Text className="text-gray-500 text-base">Skip</Text>
-        </TouchableOpacity>
+        <Pressable
+          onPress={handleSkip}
+          style={{ position: 'absolute', right: spacing[4], top: spacing[12], zIndex: 10 }}
+        >
+          <Text style={{ color: colors.gray[500], fontSize: fontSize.base }}>Skip</Text>
+        </Pressable>
       )}
 
       {/* Content */}
       {renderCurrentStep()}
 
       {/* Navigation Buttons */}
-      <View className="px-6 pb-6">
-        <View className="flex-row gap-3">
+      <View style={{ paddingHorizontal: spacing[6], paddingBottom: spacing[6] }}>
+        <View style={{ flexDirection: 'row', gap: spacing[3] }}>
           {!isFirstStep && !isLastStep && (
-            <TouchableOpacity onPress={previousStep} className="flex-1 py-4 rounded-xl bg-gray-200">
-              <Text className="text-gray-700 text-center font-semibold">Back</Text>
-            </TouchableOpacity>
+            <Pressable
+              onPress={previousStep}
+              style={{
+                flex: 1,
+                paddingVertical: spacing[4],
+                borderRadius: borderRadius.xl,
+                backgroundColor: colors.gray[200],
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.gray[700],
+                  textAlign: 'center',
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
+                Back
+              </Text>
+            </Pressable>
           )}
-          <TouchableOpacity
+          <Pressable
             onPress={handleNext}
-            className={`py-4 rounded-xl bg-green-600 ${
-              isFirstStep || isLastStep ? 'flex-1' : 'flex-1'
-            }`}
+            style={{
+              paddingVertical: spacing[4],
+              borderRadius: borderRadius.xl,
+              backgroundColor: colors.primary[600],
+              flex: 1,
+            }}
           >
-            <Text className="text-white text-center font-semibold text-lg">
+            <Text
+              style={{
+                color: colors.white,
+                textAlign: 'center',
+                fontWeight: fontWeight.semibold,
+                fontSize: fontSize.lg,
+              }}
+            >
               {isLastStep
                 ? 'Get Started'
                 : currentStep === 'notifications'
                   ? 'Enable Notifications'
                   : 'Continue'}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>

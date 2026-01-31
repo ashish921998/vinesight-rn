@@ -1,16 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Symbol as Icon } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
-import { useWeatherData } from '../src/hooks/useWeather';
+import { useWeatherData } from '../src/hooks/use-weather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 // Growth stages
 const GROWTH_STAGES: GrapeGrowthStage[] = [
@@ -32,20 +27,20 @@ const SOIL_TYPES: { value: SoilType; label: string }[] = [
 ];
 
 // Weather condition icons
-function getWeatherIconName(conditionCode: number): keyof typeof Ionicons.glyphMap {
+function getWeatherIconName(conditionCode: number): string {
   switch (conditionCode) {
     case 1000:
-      return 'sunny';
+      return 'sun.max.fill';
     case 1003:
-      return 'partly-sunny';
+      return 'cloud.sun.fill';
     case 1006:
-      return 'cloudy';
+      return 'cloud.fill';
     case 1153:
-      return 'rainy';
+      return 'cloud.drizzle.fill';
     case 1186:
-      return 'rainy';
+      return 'cloud.rain.fill';
     default:
-      return 'cloudy';
+      return 'cloud.fill';
   }
 }
 
@@ -102,516 +97,1062 @@ export default function WeatherScreen() {
 
   if (farmsLoading || isLoading) {
     return (
-      <View className="flex-1 bg-surface-50 items-center justify-center">
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.surface[50],
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <ActivityIndicator size="large" color="#408059" />
-        <Text className="text-surface-600 mt-4">Loading weather data...</Text>
+        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+          Loading weather data...
+        </Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View className="flex-1 bg-surface-50 items-center justify-center p-6">
-        <Ionicons name="cloud-offline" size={48} color="#9CA3AF" />
-        <Text className="text-surface-600 mt-4 text-center">Unable to load weather data</Text>
-        <Text className="text-surface-500 text-sm mt-2 text-center">{error.message}</Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          className="mt-4 bg-primary-600 px-6 py-3 rounded-xl"
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.surface[50],
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing[6],
+        }}
+      >
+        <Icon name="cloud.slash.fill" size={48} color="#9CA3AF" />
+        <Text
+          style={{
+            color: colors.surface[600],
+            marginTop: spacing[4],
+            textAlign: 'center',
+          }}
         >
-          <Text className="text-white font-semibold">Try Again</Text>
-        </TouchableOpacity>
+          Unable to load weather data
+        </Text>
+        <Text
+          style={{
+            color: colors.surface[500],
+            fontSize: fontSize.sm,
+            marginTop: spacing[2],
+            textAlign: 'center',
+          }}
+        >
+          {error.message}
+        </Text>
+        <Pressable
+          onPress={() => refetch()}
+          style={{
+            marginTop: spacing[4],
+            backgroundColor: colors.primary[600],
+            paddingHorizontal: spacing[6],
+            paddingVertical: spacing[3],
+            borderRadius: borderRadius.xl,
+          }}
+        >
+          <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>Try Again</Text>
+        </Pressable>
       </View>
     );
   }
 
   if (!farms || farms.length === 0) {
     return (
-      <View className="flex-1 bg-surface-50 items-center justify-center p-6">
-        <Ionicons name="leaf" size={48} color="#9CA3AF" />
-        <Text className="text-surface-600 mt-4 text-center">No farms available</Text>
-        <Text className="text-surface-500 text-sm mt-2 text-center">
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.surface[50],
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing[6],
+        }}
+      >
+        <Icon name="leaf.fill" size={48} color="#9CA3AF" />
+        <Text
+          style={{
+            color: colors.surface[600],
+            marginTop: spacing[4],
+            textAlign: 'center',
+          }}
+        >
+          No farms available
+        </Text>
+        <Text
+          style={{
+            color: colors.surface[500],
+            fontSize: fontSize.sm,
+            marginTop: spacing[2],
+            textAlign: 'center',
+          }}
+        >
           Add a farm to see weather data for your location
         </Text>
       </View>
     );
   }
 
-  const hasCoordinates = selectedFarm?.latitude && selectedFarm?.longitude;
+  const hasCoordinates =
+    Number.isFinite(selectedFarm?.latitude) && Number.isFinite(selectedFarm?.longitude);
 
   return (
-    <ScrollView
-      className="flex-1 bg-surface-50"
-      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-      refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
-      }
-    >
-      {/* Farm Selector */}
-      <View className="mb-4">
-        <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2">FARM</Text>
-        <TouchableOpacity
-          onPress={() => setShowFarmPicker(!showFarmPicker)}
-          className="bg-white rounded-xl p-4 flex-row items-center justify-between"
-        >
-          <View className="flex-row items-center">
-            <View className="w-10 h-10 rounded-xl bg-primary-100 items-center justify-center">
-              <Ionicons name="leaf" size={20} color="#408059" />
-            </View>
-            <View className="ml-3">
-              <Text className="text-base font-semibold text-surface-900">
-                {selectedFarm?.name || 'Select Farm'}
-              </Text>
-              {hasCoordinates && (
-                <Text className="text-xs text-surface-500">
-                  {selectedFarm?.latitude?.toFixed(4)}, {selectedFarm?.longitude?.toFixed(4)}
-                </Text>
-              )}
-            </View>
-          </View>
-          <Ionicons
-            name={showFarmPicker ? 'chevron-up' : 'chevron-down'}
-            size={20}
-            color="#9CA3AF"
-          />
-        </TouchableOpacity>
-        {showFarmPicker && (
-          <View className="bg-white rounded-xl mt-2 overflow-hidden">
-            {farms.map((farm) => (
-              <TouchableOpacity
-                key={farm.id}
-                onPress={() => {
-                  if (farm.id !== undefined) setSelectedFarmId(farm.id);
-                  setShowFarmPicker(false);
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface[50] }} edges={['top']}>
+      <ScrollView
+        contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
+        style={{ backgroundColor: colors.surface[50] }}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
+        }
+      >
+        {/* Farm Selector */}
+        <View style={{ marginBottom: spacing[4] }}>
+          <Text
+            style={{
+              fontSize: fontSize.xs,
+              fontWeight: fontWeight.bold,
+              color: colors.surface[500],
+              letterSpacing: 1,
+              marginBottom: spacing[2],
+            }}
+          >
+            FARM
+          </Text>
+          <Pressable
+            onPress={() => setShowFarmPicker(!showFarmPicker)}
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: colors.primary[100],
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
-                className={`p-4 border-b border-surface-100 flex-row items-center ${
-                  selectedFarmId === farm.id ? 'bg-primary-50' : ''
-                }`}
               >
+                <Icon name="leaf.fill" size={20} color="#408059" />
+              </View>
+              <View style={{ marginLeft: spacing[3] }}>
                 <Text
-                  className={`flex-1 ${
-                    selectedFarmId === farm.id
-                      ? 'text-primary-700 font-semibold'
-                      : 'text-surface-700'
-                  }`}
-                >
-                  {farm.name}
-                </Text>
-                {selectedFarmId === farm.id && (
-                  <Ionicons name="checkmark" size={20} color="#408059" />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
-
-      {/* No coordinates warning */}
-      {!hasCoordinates && (
-        <View className="bg-amber-50 rounded-xl p-4 mb-4 flex-row items-start">
-          <Ionicons name="warning" size={20} color="#F59E0B" />
-          <Text className="text-amber-800 text-sm ml-3 flex-1">
-            This farm doesn&apos;t have location coordinates. Weather data is showing default
-            location (Nashik). Add GPS coordinates to get farm-specific weather.
-          </Text>
-        </View>
-      )}
-
-      {/* Settings Row */}
-      <View className="flex-row mb-4" style={{ gap: 12 }}>
-        {/* Growth Stage Picker */}
-        <View className="flex-1">
-          <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2">
-            GROWTH STAGE
-          </Text>
-          <TouchableOpacity
-            onPress={() => setShowGrowthPicker(!showGrowthPicker)}
-            className="bg-white rounded-xl p-3 flex-row items-center justify-between"
-          >
-            <Text className="text-sm text-surface-900" numberOfLines={1}>
-              {growthStage}
-            </Text>
-            <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
-          </TouchableOpacity>
-          {showGrowthPicker && (
-            <View className="bg-white rounded-xl mt-2 absolute top-16 left-0 right-0 z-10 border border-gray-200">
-              <ScrollView style={{ maxHeight: 200 }}>
-                {GROWTH_STAGES.map((stage) => (
-                  <TouchableOpacity
-                    key={stage}
-                    onPress={() => {
-                      setGrowthStage(stage);
-                      setShowGrowthPicker(false);
-                    }}
-                    className={`p-3 border-b border-surface-100 ${
-                      growthStage === stage ? 'bg-primary-50' : ''
-                    }`}
-                  >
-                    <Text
-                      className={
-                        growthStage === stage ? 'text-primary-700 font-medium' : 'text-surface-700'
-                      }
-                    >
-                      {stage}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-
-        {/* Soil Type Picker */}
-        <View className="flex-1">
-          <Text className="text-xs font-bold text-surface-500 tracking-wider mb-2">SOIL TYPE</Text>
-          <TouchableOpacity
-            onPress={() => setShowSoilPicker(!showSoilPicker)}
-            className="bg-white rounded-xl p-3 flex-row items-center justify-between"
-          >
-            <Text className="text-sm text-surface-900" numberOfLines={1}>
-              {SOIL_TYPES.find((s) => s.value === soilType)?.label}
-            </Text>
-            <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
-          </TouchableOpacity>
-          {showSoilPicker && (
-            <View className="bg-white rounded-xl mt-2 absolute top-16 left-0 right-0 z-10 border border-gray-200">
-              {SOIL_TYPES.map((type) => (
-                <TouchableOpacity
-                  key={type.value}
-                  onPress={() => {
-                    setSoilType(type.value);
-                    setShowSoilPicker(false);
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
                   }}
-                  className={`p-3 border-b border-surface-100 ${
-                    soilType === type.value ? 'bg-primary-50' : ''
-                  }`}
+                >
+                  {selectedFarm?.name || 'Select Farm'}
+                </Text>
+                {hasCoordinates && (
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    {selectedFarm?.latitude?.toFixed(4)}, {selectedFarm?.longitude?.toFixed(4)}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <Icon name={showFarmPicker ? 'chevron.up' : 'chevron.down'} size={20} color="#9CA3AF" />
+          </Pressable>
+          {showFarmPicker && (
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                marginTop: spacing[2],
+                overflow: 'hidden',
+              }}
+            >
+              {farms.map((farm) => (
+                <Pressable
+                  key={farm.id}
+                  onPress={() => {
+                    if (farm.id !== undefined) setSelectedFarmId(farm.id);
+                    setShowFarmPicker(false);
+                  }}
+                  style={{
+                    padding: spacing[4],
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.surface[100],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: selectedFarmId === farm.id ? colors.primary[50] : colors.white,
+                  }}
                 >
                   <Text
-                    className={
-                      soilType === type.value ? 'text-primary-700 font-medium' : 'text-surface-700'
-                    }
+                    style={{
+                      flex: 1,
+                      color: selectedFarmId === farm.id ? colors.primary[700] : colors.surface[700],
+                      fontWeight:
+                        selectedFarmId === farm.id ? fontWeight.semibold : fontWeight.normal,
+                    }}
                   >
-                    {type.label}
+                    {farm.name}
                   </Text>
-                </TouchableOpacity>
+                  {selectedFarmId === farm.id && (
+                    <Icon name="checkmark" size={20} color="#408059" />
+                  )}
+                </Pressable>
               ))}
             </View>
           )}
         </View>
-      </View>
 
-      {/* Current Weather Card */}
-      {weather && (
-        <View className="bg-primary-600 rounded-2xl p-5 mb-4">
-          <View className="flex-row items-start justify-between">
-            <View>
-              <Text className="text-primary-100 text-sm">
-                {weather.location.name || 'Current Location'}
-              </Text>
-              <Text className="text-white text-5xl font-bold mt-1">
-                {weather.current.temperature}°
-              </Text>
-              <Text className="text-primary-100 text-base mt-1">{weather.current.condition}</Text>
-            </View>
-            <View className="items-end">
-              <Ionicons
-                name={getWeatherIconName(weather.current.conditionCode)}
-                size={56}
-                color="rgba(255,255,255,0.9)"
-              />
-              <Text className="text-primary-100 text-xs mt-2">
-                Feels like {weather.current.feelsLike}°
-              </Text>
-            </View>
-          </View>
-          <View className="flex-row mt-4 pt-4 border-t border-primary-500">
-            <View className="flex-1 items-center">
-              <Ionicons name="water" size={18} color="rgba(255,255,255,0.8)" />
-              <Text className="text-white text-sm font-semibold mt-1">
-                {weather.current.humidity}%
-              </Text>
-              <Text className="text-primary-200 text-xs">Humidity</Text>
-            </View>
-            <View className="flex-1 items-center">
-              <Ionicons name="speedometer" size={18} color="rgba(255,255,255,0.8)" />
-              <Text className="text-white text-sm font-semibold mt-1">
-                {weather.current.windSpeed} km/h
-              </Text>
-              <Text className="text-primary-200 text-xs">Wind</Text>
-            </View>
-            <View className="flex-1 items-center">
-              <Ionicons name="sunny" size={18} color="rgba(255,255,255,0.8)" />
-              <Text className="text-white text-sm font-semibold mt-1">
-                {weather.current.uvIndex}
-              </Text>
-              <Text className="text-primary-200 text-xs">UV Index</Text>
-            </View>
-            <View className="flex-1 items-center">
-              <Ionicons name="rainy" size={18} color="rgba(255,255,255,0.8)" />
-              <Text className="text-white text-sm font-semibold mt-1">
-                {weather.current.precipitation} mm
-              </Text>
-              <Text className="text-primary-200 text-xs">Rain</Text>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {/* 7-Day Forecast */}
-      {weather && (
-        <View className="mb-4">
-          <Text className="text-xs font-bold text-surface-500 tracking-wider mb-3">
-            7-DAY FORECAST
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 10 }}
+        {/* No coordinates warning */}
+        {!hasCoordinates && (
+          <View
+            style={{
+              backgroundColor: '#FFFBEB',
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
+              marginBottom: spacing[4],
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+            }}
           >
-            {weather.forecast.map((day, index) => (
-              <View
-                key={day.date}
-                className={`bg-white rounded-xl p-3 items-center ${
-                  index === 0 ? 'border-2 border-primary-500' : ''
-                }`}
-                style={{ width: 80 }}
-              >
-                <Text
-                  className={`text-xs font-semibold ${
-                    index === 0 ? 'text-primary-600' : 'text-surface-600'
-                  }`}
-                >
-                  {getDayName(day.date)}
-                </Text>
-                <Ionicons
-                  name={getWeatherIconName(day.conditionCode)}
-                  size={28}
-                  color={index === 0 ? '#408059' : '#6B7280'}
-                  style={{ marginVertical: 8 }}
-                />
-                <Text className="text-sm font-bold text-surface-900">{day.maxTemp}°</Text>
-                <Text className="text-xs text-surface-500">{day.minTemp}°</Text>
-                {day.precipitationProbability > 0 && (
-                  <View className="flex-row items-center mt-1">
-                    <Ionicons name="water" size={10} color="#3B82F6" />
-                    <Text className="text-xs text-blue-600 ml-0.5">
-                      {day.precipitationProbability}%
-                    </Text>
-                  </View>
-                )}
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* ETc & Irrigation Card */}
-      {etc && (
-        <View className="bg-white rounded-2xl p-4 mb-4">
-          <View className="flex-row items-center mb-3">
-            <View className="w-10 h-10 rounded-xl bg-blue-100 items-center justify-center">
-              <Ionicons name="water" size={20} color="#3B82F6" />
-            </View>
-            <Text className="text-base font-semibold text-surface-900 ml-3">
-              Water Requirements
+            <Icon name="exclamationmark.triangle.fill" size={20} color="#F59E0B" />
+            <Text
+              style={{
+                color: '#92400E',
+                fontSize: fontSize.sm,
+                marginLeft: spacing[3],
+                flex: 1,
+              }}
+            >
+              This farm doesn&apos;t have location coordinates. Weather data is showing default
+              location (Nashik). Add GPS coordinates to get farm-specific weather.
             </Text>
           </View>
-          <View className="flex-row flex-wrap" style={{ gap: 12 }}>
-            <View className="bg-surface-50 rounded-xl p-3 flex-1" style={{ minWidth: '45%' }}>
-              <Text className="text-xs text-surface-500">Daily ETc</Text>
-              <Text className="text-xl font-bold text-surface-900">{etc.dailyETc} mm</Text>
-              <Text className="text-xs text-surface-500">Kc: {etc.cropCoefficient}</Text>
-            </View>
-            <View className="bg-surface-50 rounded-xl p-3 flex-1" style={{ minWidth: '45%' }}>
-              <Text className="text-xs text-surface-500">Weekly Need</Text>
-              <Text className="text-xl font-bold text-surface-900">{etc.weeklyETc} mm</Text>
-              <Text className="text-xs text-surface-500">ET₀: {etc.referenceET} mm</Text>
-            </View>
-            {irrigationSchedule && (
-              <View className="bg-blue-50 rounded-xl p-3 flex-1" style={{ minWidth: '45%' }}>
-                <Text className="text-xs text-blue-600">Total (7 days)</Text>
-                <Text className="text-xl font-bold text-blue-700">
-                  {irrigationSchedule.totalWaterNeed} mm
-                </Text>
-                <Text className="text-xs text-blue-600">
-                  {irrigationSchedule.schedule.length} irrigations
-                </Text>
+        )}
+
+        {/* Settings Row */}
+        <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: 12 }}>
+          {/* Growth Stage Picker */}
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: colors.surface[500],
+                letterSpacing: 1,
+                marginBottom: spacing[2],
+              }}
+            >
+              GROWTH STAGE
+            </Text>
+            <Pressable
+              onPress={() => setShowGrowthPicker(!showGrowthPicker)}
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                padding: spacing[3],
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }} numberOfLines={1}>
+                {growthStage}
+              </Text>
+              <Icon name="chevron.down" size={16} color="#9CA3AF" />
+            </Pressable>
+            {showGrowthPicker && (
+              <View
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  marginTop: spacing[2],
+                  position: 'absolute',
+                  top: 64,
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  borderWidth: 1,
+                  borderColor: colors.gray[200],
+                }}
+              >
+                <ScrollView style={{ maxHeight: 200 }}>
+                  {GROWTH_STAGES.map((stage) => (
+                    <Pressable
+                      key={stage}
+                      onPress={() => {
+                        setGrowthStage(stage);
+                        setShowGrowthPicker(false);
+                      }}
+                      style={{
+                        padding: spacing[3],
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.surface[100],
+                        backgroundColor: growthStage === stage ? colors.primary[50] : colors.white,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: growthStage === stage ? colors.primary[700] : colors.surface[700],
+                          fontWeight: growthStage === stage ? fontWeight.medium : fontWeight.normal,
+                        }}
+                      >
+                        {stage}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          {/* Soil Type Picker */}
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: colors.surface[500],
+                letterSpacing: 1,
+                marginBottom: spacing[2],
+              }}
+            >
+              SOIL TYPE
+            </Text>
+            <Pressable
+              onPress={() => setShowSoilPicker(!showSoilPicker)}
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.xl,
+                padding: spacing[3],
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }} numberOfLines={1}>
+                {SOIL_TYPES.find((s) => s.value === soilType)?.label}
+              </Text>
+              <Icon name="chevron.down" size={16} color="#9CA3AF" />
+            </Pressable>
+            {showSoilPicker && (
+              <View
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  marginTop: spacing[2],
+                  position: 'absolute',
+                  top: 64,
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  borderWidth: 1,
+                  borderColor: colors.gray[200],
+                }}
+              >
+                {SOIL_TYPES.map((type) => (
+                  <Pressable
+                    key={type.value}
+                    onPress={() => {
+                      setSoilType(type.value);
+                      setShowSoilPicker(false);
+                    }}
+                    style={{
+                      padding: spacing[3],
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor: soilType === type.value ? colors.primary[50] : colors.white,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: soilType === type.value ? colors.primary[700] : colors.surface[700],
+                        fontWeight: soilType === type.value ? fontWeight.medium : fontWeight.normal,
+                      }}
+                    >
+                      {type.label}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
             )}
           </View>
         </View>
-      )}
 
-      {/* Weather Alerts */}
-      {alerts && (
-        <View className="mb-4">
-          <Text className="text-xs font-bold text-surface-500 tracking-wider mb-3">
-            ALERTS &amp; RECOMMENDATIONS
-          </Text>
-
-          {/* Irrigation Alert */}
-          <View className="bg-white rounded-2xl p-4 mb-3">
-            <View className="flex-row items-center justify-between mb-2">
-              <View className="flex-row items-center">
-                <View className="w-8 h-8 rounded-lg bg-blue-100 items-center justify-center">
-                  <Ionicons name="water" size={16} color="#3B82F6" />
-                </View>
-                <Text className="text-sm font-semibold text-surface-900 ml-2">Irrigation</Text>
-              </View>
-              <View
-                className="px-2 py-1 rounded-full"
-                style={{ backgroundColor: urgencyColors[alerts.irrigation.urgency].bg }}
-              >
+        {/* Current Weather Card */}
+        {weather && (
+          <View
+            style={{
+              backgroundColor: colors.primary[600],
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[5],
+              marginBottom: spacing[4],
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View>
+                <Text style={{ color: colors.primary[100], fontSize: fontSize.sm }}>
+                  {weather.location.name || 'Current Location'}
+                </Text>
                 <Text
-                  className="text-xs font-medium"
-                  style={{ color: urgencyColors[alerts.irrigation.urgency].text }}
+                  style={{
+                    color: colors.white,
+                    fontSize: 48,
+                    fontWeight: fontWeight.bold,
+                    marginTop: spacing[1],
+                  }}
                 >
-                  {alerts.irrigation.urgency.toUpperCase()}
+                  {weather.current.temperature}°
                 </Text>
-              </View>
-            </View>
-            <Text className="text-sm text-surface-700">{alerts.irrigation.reason}</Text>
-            {alerts.irrigation.recommendations.map((rec, i) => (
-              <View key={i} className="flex-row items-start mt-2">
-                <Ionicons name="checkmark-circle" size={14} color="#408059" />
-                <Text className="text-xs text-surface-600 ml-2 flex-1">{rec}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Pest Alert */}
-          <View className="bg-white rounded-2xl p-4 mb-3">
-            <View className="flex-row items-center justify-between mb-2">
-              <View className="flex-row items-center">
-                <View className="w-8 h-8 rounded-lg bg-orange-100 items-center justify-center">
-                  <Ionicons name="bug" size={16} color="#F59E0B" />
-                </View>
-                <Text className="text-sm font-semibold text-surface-900 ml-2">Pest & Disease</Text>
-              </View>
-              <View
-                className="px-2 py-1 rounded-full"
-                style={{ backgroundColor: urgencyColors[alerts.pest.riskLevel].bg }}
-              >
                 <Text
-                  className="text-xs font-medium"
-                  style={{ color: urgencyColors[alerts.pest.riskLevel].text }}
+                  style={{
+                    color: colors.primary[100],
+                    fontSize: fontSize.base,
+                    marginTop: spacing[1],
+                  }}
                 >
-                  {alerts.pest.riskLevel.toUpperCase()} RISK
+                  {weather.current.condition}
                 </Text>
               </View>
-            </View>
-            {alerts.pest.conditions.map((cond, i) => (
-              <Text key={i} className="text-sm text-surface-700">
-                {cond}
-              </Text>
-            ))}
-            {alerts.pest.precautions.map((prec, i) => (
-              <View key={i} className="flex-row items-start mt-2">
-                <Ionicons name="shield-checkmark" size={14} color="#F59E0B" />
-                <Text className="text-xs text-surface-600 ml-2 flex-1">{prec}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Harvest Alert */}
-          <View className="bg-white rounded-2xl p-4">
-            <View className="flex-row items-center justify-between mb-2">
-              <View className="flex-row items-center">
-                <View className="w-8 h-8 rounded-lg bg-purple-100 items-center justify-center">
-                  <Ionicons name="basket" size={16} color="#8B5CF6" />
-                </View>
-                <Text className="text-sm font-semibold text-surface-900 ml-2">
-                  Harvest Conditions
-                </Text>
-              </View>
-              <View
-                className="px-2 py-1 rounded-full"
-                style={{
-                  backgroundColor: alerts.harvest.isOptimal ? '#DCFCE7' : '#FEF3C7',
-                }}
-              >
-                <Text
-                  className="text-xs font-medium"
-                  style={{ color: alerts.harvest.isOptimal ? '#166534' : '#92400E' }}
-                >
-                  {alerts.harvest.isOptimal ? 'OPTIMAL' : 'MODERATE'}
-                </Text>
-              </View>
-            </View>
-            <Text className="text-sm text-surface-700">{alerts.harvest.conditions}</Text>
-            {alerts.harvest.recommendations.map((rec, i) => (
-              <View key={i} className="flex-row items-start mt-2">
-                <Ionicons name="checkmark-circle" size={14} color="#8B5CF6" />
-                <Text className="text-xs text-surface-600 ml-2 flex-1">{rec}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Irrigation Schedule */}
-      {irrigationSchedule && irrigationSchedule.schedule.length > 0 && (
-        <View className="mb-4">
-          <Text className="text-xs font-bold text-surface-500 tracking-wider mb-3">
-            IRRIGATION SCHEDULE
-          </Text>
-          {irrigationSchedule.schedule.map((item, i) => (
-            <View key={i} className="bg-white rounded-xl p-4 mb-2 flex-row items-center">
-              <View
-                className="w-10 h-10 rounded-xl items-center justify-center"
-                style={{
-                  backgroundColor:
-                    item.priority === 'high'
-                      ? '#FEE2E2'
-                      : item.priority === 'medium'
-                        ? '#FEF3C7'
-                        : '#DCFCE7',
-                }}
-              >
-                <Ionicons
-                  name="water"
-                  size={20}
-                  color={
-                    item.priority === 'high'
-                      ? '#DC2626'
-                      : item.priority === 'medium'
-                        ? '#D97706'
-                        : '#16A34A'
-                  }
+              <View style={{ alignItems: 'flex-end' }}>
+                <Icon
+                  name={getWeatherIconName(weather.current.conditionCode)}
+                  size={56}
+                  color="rgba(255,255,255,0.9)"
                 />
-              </View>
-              <View className="flex-1 ml-3">
-                <Text className="text-sm font-semibold text-surface-900">
-                  {getDayName(item.date)} - {item.amount} mm
-                </Text>
-                <Text className="text-xs text-surface-500">
-                  {item.duration.toFixed(1)} hours • {item.reason}
-                </Text>
-              </View>
-              <View
-                className="px-2 py-1 rounded-full"
-                style={{ backgroundColor: urgencyColors[item.priority].bg }}
-              >
                 <Text
-                  className="text-xs font-medium"
-                  style={{ color: urgencyColors[item.priority].text }}
+                  style={{
+                    color: colors.primary[100],
+                    fontSize: fontSize.xs,
+                    marginTop: spacing[2],
+                  }}
                 >
-                  {item.priority.toUpperCase()}
+                  Feels like {weather.current.feelsLike}°
                 </Text>
               </View>
             </View>
-          ))}
-        </View>
-      )}
+            <View
+              style={{
+                flexDirection: 'row',
+                marginTop: spacing[4],
+                paddingTop: spacing[4],
+                borderTopWidth: 1,
+                borderTopColor: colors.primary[500],
+              }}
+            >
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Icon name="drop.fill" size={18} color="rgba(255,255,255,0.8)" />
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    marginTop: spacing[1],
+                  }}
+                >
+                  {weather.current.humidity}%
+                </Text>
+                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>Humidity</Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Icon name="gauge" size={18} color="rgba(255,255,255,0.8)" />
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    marginTop: spacing[1],
+                  }}
+                >
+                  {weather.current.windSpeed} km/h
+                </Text>
+                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>Wind</Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Icon name="sun.max.fill" size={18} color="rgba(255,255,255,0.8)" />
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    marginTop: spacing[1],
+                  }}
+                >
+                  {weather.current.uvIndex}
+                </Text>
+                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>UV Index</Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Icon name="cloud.rain.fill" size={18} color="rgba(255,255,255,0.8)" />
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    marginTop: spacing[1],
+                  }}
+                >
+                  {weather.current.precipitation} mm
+                </Text>
+                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>Rain</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
-      {/* Last Updated */}
-      {weather && (
-        <View className="items-center mt-2">
-          <Text className="text-xs text-surface-400">
-            Last updated: {new Date(weather.lastUpdated).toLocaleTimeString()}
-          </Text>
-        </View>
-      )}
-    </ScrollView>
+        {/* 7-Day Forecast */}
+        {weather && (
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: colors.surface[500],
+                letterSpacing: 1,
+                marginBottom: spacing[3],
+              }}
+            >
+              7-DAY FORECAST
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 10 }}
+            >
+              {weather.forecast.map((day, index) => (
+                <View
+                  key={day.date}
+                  style={{
+                    width: 80,
+                    backgroundColor: colors.white,
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                    alignItems: 'center',
+                    borderWidth: index === 0 ? 2 : 0,
+                    borderColor: index === 0 ? colors.primary[500] : 'transparent',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      color: index === 0 ? colors.primary[600] : colors.surface[600],
+                    }}
+                  >
+                    {getDayName(day.date)}
+                  </Text>
+                  <Icon
+                    name={getWeatherIconName(day.conditionCode)}
+                    size={28}
+                    color={index === 0 ? '#408059' : '#6B7280'}
+                    style={{ marginVertical: 8 }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      color: colors.surface[900],
+                    }}
+                  >
+                    {day.maxTemp}°
+                  </Text>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    {day.minTemp}°
+                  </Text>
+                  {day.precipitationProbability > 0 && (
+                    <View
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}
+                    >
+                      <Icon name="drop.fill" size={10} color="#3B82F6" />
+                      <Text style={{ fontSize: fontSize.xs, color: '#2563EB', marginLeft: 2 }}>
+                        {day.precipitationProbability}%
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* ETc & Irrigation Card */}
+        {etc && (
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[4],
+              marginBottom: spacing[4],
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: '#DBEAFE',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Icon name="drop.fill" size={20} color="#3B82F6" />
+              </View>
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  marginLeft: spacing[3],
+                }}
+              >
+                Water Requirements
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+              <View
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[3],
+                  flex: 1,
+                  minWidth: '45%',
+                }}
+              >
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>Daily ETc</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xl,
+                    fontWeight: fontWeight.bold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  {etc.dailyETc} mm
+                </Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  Kc: {etc.cropCoefficient}
+                </Text>
+              </View>
+              <View
+                style={{
+                  backgroundColor: colors.surface[50],
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[3],
+                  flex: 1,
+                  minWidth: '45%',
+                }}
+              >
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  Weekly Need
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xl,
+                    fontWeight: fontWeight.bold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  {etc.weeklyETc} mm
+                </Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  ET₀: {etc.referenceET} mm
+                </Text>
+              </View>
+              {irrigationSchedule && (
+                <View
+                  style={{
+                    backgroundColor: '#EFF6FF',
+                    borderRadius: borderRadius.xl,
+                    padding: spacing[3],
+                    flex: 1,
+                    minWidth: '45%',
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>Total (7 days)</Text>
+                  <Text
+                    style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: '#1D4ED8' }}
+                  >
+                    {irrigationSchedule.totalWaterNeed} mm
+                  </Text>
+                  <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>
+                    {irrigationSchedule.schedule.length} irrigations
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Weather Alerts */}
+        {alerts && (
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: colors.surface[500],
+                letterSpacing: 1,
+                marginBottom: spacing[3],
+              }}
+            >
+              ALERTS &amp; RECOMMENDATIONS
+            </Text>
+
+            {/* Irrigation Alert */}
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[3],
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[2],
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: borderRadius.lg,
+                      backgroundColor: '#DBEAFE',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon name="drop.fill" size={16} color="#3B82F6" />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.surface[900],
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    Irrigation
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: urgencyColors[alerts.irrigation.urgency].bg,
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.full,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: urgencyColors[alerts.irrigation.urgency].text,
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                    }}
+                  >
+                    {alerts.irrigation.urgency.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+              <Text style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>
+                {alerts.irrigation.reason}
+              </Text>
+              {alerts.irrigation.recommendations.map((rec, i) => (
+                <View
+                  key={i}
+                  style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
+                >
+                  <Icon name="checkmark.circle.fill" size={14} color="#408059" />
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: colors.surface[600],
+                      marginLeft: spacing[2],
+                      flex: 1,
+                    }}
+                  >
+                    {rec}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Pest Alert */}
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+                marginBottom: spacing[3],
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[2],
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: borderRadius.lg,
+                      backgroundColor: '#FEF3C7',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon name="ant.fill" size={16} color="#F59E0B" />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.surface[900],
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    Pest & Disease
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: urgencyColors[alerts.pest.riskLevel].bg,
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.full,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: urgencyColors[alerts.pest.riskLevel].text,
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                    }}
+                  >
+                    {alerts.pest.riskLevel.toUpperCase()} RISK
+                  </Text>
+                </View>
+              </View>
+              {alerts.pest.conditions.map((cond, i) => (
+                <Text key={i} style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>
+                  {cond}
+                </Text>
+              ))}
+              {alerts.pest.precautions.map((prec, i) => (
+                <View
+                  key={i}
+                  style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
+                >
+                  <Icon name="checkmark.shield.fill" size={14} color="#F59E0B" />
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: colors.surface[600],
+                      marginLeft: spacing[2],
+                      flex: 1,
+                    }}
+                  >
+                    {prec}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Harvest Alert */}
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[2],
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: borderRadius.lg,
+                      backgroundColor: '#EDE9FE',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon name="basket.fill" size={16} color="#8B5CF6" />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.surface[900],
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    Harvest Conditions
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: alerts.harvest.isOptimal ? '#DCFCE7' : '#FEF3C7',
+                  }}
+                >
+                  <Text style={{ color: alerts.harvest.isOptimal ? '#166534' : '#92400E' }}>
+                    {alerts.harvest.isOptimal ? 'OPTIMAL' : 'MODERATE'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>
+                {alerts.harvest.conditions}
+              </Text>
+              {alerts.harvest.recommendations.map((rec, i) => (
+                <View
+                  key={i}
+                  style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
+                >
+                  <Icon name="checkmark.circle.fill" size={14} color="#8B5CF6" />
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: colors.surface[600],
+                      marginLeft: spacing[2],
+                      flex: 1,
+                    }}
+                  >
+                    {rec}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Irrigation Schedule */}
+        {irrigationSchedule && irrigationSchedule.schedule.length > 0 && (
+          <View style={{ marginBottom: spacing[4] }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                color: colors.surface[500],
+                letterSpacing: 1,
+                marginBottom: spacing[3],
+              }}
+            >
+              IRRIGATION SCHEDULE
+            </Text>
+            {irrigationSchedule.schedule.map((item, i) => (
+              <View
+                key={i}
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[4],
+                  marginBottom: spacing[2],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: borderRadius.xl,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor:
+                      item.priority === 'high'
+                        ? '#FEE2E2'
+                        : item.priority === 'medium'
+                          ? '#FEF3C7'
+                          : '#DCFCE7',
+                  }}
+                >
+                  <Icon
+                    name="drop.fill"
+                    size={20}
+                    color={
+                      item.priority === 'high'
+                        ? '#DC2626'
+                        : item.priority === 'medium'
+                          ? '#D97706'
+                          : '#16A34A'
+                    }
+                  />
+                </View>
+                <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.surface[900],
+                    }}
+                  >
+                    {getDayName(item.date)} - {item.amount} mm
+                  </Text>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    {item.duration.toFixed(1)} hours • {item.reason}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: urgencyColors[item.priority].bg,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.medium,
+                      color: urgencyColors[item.priority].text,
+                    }}
+                  >
+                    {item.priority.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Last Updated */}
+        {weather && (
+          <View style={{ alignItems: 'center', marginTop: spacing[2] }}>
+            <Text style={{ fontSize: fontSize.xs, color: colors.surface[400] }}>
+              Last updated: {new Date(weather.lastUpdated).toLocaleTimeString()}
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }

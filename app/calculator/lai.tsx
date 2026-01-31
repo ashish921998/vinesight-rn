@@ -4,18 +4,11 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
+
 import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Symbol as Icon } from '@/components/ui/symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export default function LAICalculatorScreen() {
   const [shootLength, setShootLength] = useState(''); // cm
@@ -102,24 +95,52 @@ export default function LAICalculatorScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1 bg-surface-50"
+          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1, backgroundColor: colors.surface[50] }}
         >
           <ScrollView
-            className="flex-1"
-            contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
-            contentInsetAdjustmentBehavior="never"
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingTop: spacing[4],
+              paddingHorizontal: 16,
+              paddingBottom: 32,
+            }}
+            contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
           >
             {/* Calculator Card */}
-            <View className="bg-white rounded-2xl p-4 shadow-sm">
-              <View className="flex-row items-center mb-4">
-                <View className="w-8 h-8 bg-green-100 rounded-lg items-center justify-center">
-                  <Ionicons name="leaf" size={18} color="#22C55E" />
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+              }}
+            >
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
+              >
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    backgroundColor: colors.primary[100],
+                    borderRadius: borderRadius.lg,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon name="leaf.fill" size={18} color="#22C55E" />
                 </View>
-                <Text className="text-base font-semibold text-surface-900 ml-2">
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                    marginLeft: spacing[2],
+                  }}
+                >
                   Leaf Area Index Calculator
                 </Text>
               </View>
@@ -154,46 +175,107 @@ export default function LAICalculatorScreen() {
               />
 
               {/* Info */}
-              <View className="bg-green-50 rounded-xl p-3 mt-3">
-                <Text className="text-xs font-medium text-green-700 mb-1">About LAI</Text>
-                <Text className="text-xs text-green-600">
+              <View
+                style={{
+                  backgroundColor: colors.primary[50],
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[3],
+                  marginTop: spacing[3],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.medium,
+                    color: colors.primary[700],
+                    marginBottom: spacing[1],
+                  }}
+                >
+                  About LAI
+                </Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.primary[600] }}>
                   Leaf Area Index is the ratio of total leaf area to ground area. Optimal LAI for
                   table grapes is 1.5-2.5.
                 </Text>
               </View>
 
               {/* Calculate Button */}
-              <TouchableOpacity
+              <Pressable
                 onPress={calculate}
                 disabled={!canCalculate || result !== null}
-                className="mt-4 py-3 rounded-xl items-center"
                 style={{
-                  backgroundColor: canCalculate && !result ? '#408059' : '#E5E7EB',
+                  backgroundColor: canCalculate && !result ? colors.primary[600] : colors.gray[200],
+                  marginTop: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
                 }}
               >
                 <Text
-                  className="font-semibold"
-                  style={{ color: canCalculate && !result ? '#FFFFFF' : '#9CA3AF' }}
+                  style={{
+                    fontWeight: fontWeight.semibold,
+                    color: canCalculate && !result ? colors.white : colors.gray[400],
+                  }}
                 >
                   Calculate LAI
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
 
               {/* Results */}
               {result !== null && (
-                <View className="mt-4">
-                  <View className="flex-row gap-3">
-                    <View className="flex-1 bg-primary-50 rounded-xl p-4 items-center">
-                      <Text className="text-2xl font-bold text-primary-700">
+                <View style={{ marginTop: spacing[4] }}>
+                  <View style={{ flexDirection: 'row', gap: spacing[3] }}>
+                    <View
+                      style={{
+                        flex: 1,
+                        backgroundColor: colors.primary[50],
+                        borderRadius: borderRadius.xl,
+                        padding: spacing[4],
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: fontSize['2xl'],
+                          fontWeight: fontWeight.bold,
+                          color: colors.primary[700],
+                        }}
+                      >
                         {result.lai.toFixed(2)}
                       </Text>
-                      <Text className="text-xs text-primary-600 mt-1">Leaf Area Index</Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.xs,
+                          color: colors.primary[600],
+                          marginTop: spacing[1],
+                        }}
+                      >
+                        Leaf Area Index
+                      </Text>
                     </View>
-                    <View className="flex-1 bg-blue-50 rounded-xl p-4 items-center">
-                      <Text className="text-2xl font-bold text-blue-700">
+                    <View
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#EFF6FF',
+                        borderRadius: borderRadius.xl,
+                        padding: spacing[4],
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: fontSize['2xl'],
+                          fontWeight: fontWeight.bold,
+                          color: '#1D4ED8',
+                        }}
+                      >
                         {result.canopyWidth.toFixed(1)} m
                       </Text>
-                      <Text className="text-xs text-blue-600 mt-1">Est. Canopy Width</Text>
+                      <Text
+                        style={{ fontSize: fontSize.xs, color: '#2563EB', marginTop: spacing[1] }}
+                      >
+                        Est. Canopy Width
+                      </Text>
                     </View>
                   </View>
 
@@ -202,19 +284,42 @@ export default function LAICalculatorScreen() {
                     const interp = getLAIInterpretation(result.lai);
                     return (
                       <View
-                        className="rounded-xl p-3 mt-3"
-                        style={{ backgroundColor: `${interp.color}15` }}
+                        style={{
+                          borderRadius: borderRadius.xl,
+                          padding: spacing[3],
+                          marginTop: spacing[3],
+                          backgroundColor: `${interp.color}15`,
+                        }}
                       >
-                        <View className="flex-row items-center mb-1">
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginBottom: spacing[1],
+                          }}
+                        >
                           <View
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: interp.color }}
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: borderRadius.full,
+                              marginRight: spacing[2],
+                              backgroundColor: interp.color,
+                            }}
                           />
-                          <Text className="text-sm font-semibold" style={{ color: interp.color }}>
+                          <Text
+                            style={{
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.semibold,
+                              color: interp.color,
+                            }}
+                          >
                             {interp.label}
                           </Text>
                         </View>
-                        <Text className="text-xs text-surface-600">{interp.message}</Text>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[600] }}>
+                          {interp.message}
+                        </Text>
                       </View>
                     );
                   })()}
@@ -224,19 +329,35 @@ export default function LAICalculatorScreen() {
 
             {/* Reset Button */}
             {result !== null && (
-              <TouchableOpacity
+              <Pressable
                 onPress={reset}
-                className="bg-white rounded-2xl py-4 items-center border border-surface-200"
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius['2xl'],
+                  paddingVertical: spacing[4],
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  marginTop: spacing[4],
+                }}
               >
-                <View className="flex-row items-center">
-                  <Ionicons name="refresh" size={18} color="#6B7280" />
-                  <Text className="text-surface-600 font-medium ml-2">Reset Calculator</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Icon name="refresh" size={18} color="#6B7280" />
+                  <Text
+                    style={{
+                      color: colors.surface[600],
+                      fontWeight: fontWeight.medium,
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    Reset Calculator
+                  </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </>
   );
 }
@@ -255,19 +376,48 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
+  const handleChangeText = (text: string) => {
+    if (text === '.') {
+      onChangeText('0.');
+    } else {
+      onChangeText(text);
+    }
+  };
+
   return (
-    <View className="mb-3">
-      <Text className="text-sm text-surface-600 mb-1">{label}</Text>
-      <View className="flex-row items-center bg-surface-50 rounded-xl">
+    <View style={{ marginBottom: spacing[3] }}>
+      <Text style={{ fontSize: fontSize.sm, color: colors.surface[600], marginBottom: spacing[1] }}>
+        {label}
+      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: colors.surface[50],
+          borderRadius: borderRadius.xl,
+        }}
+      >
         <TextInput
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={handleChangeText}
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"
-          className="flex-1 px-4 py-3 text-base text-surface-900"
+          style={{
+            flex: 1,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[3],
+            fontSize: fontSize.base,
+            color: colors.surface[900],
+          }}
         />
-        {unit ? <Text className="text-sm text-surface-500 pr-4">{unit}</Text> : null}
+        {unit ? (
+          <Text
+            style={{ fontSize: fontSize.sm, color: colors.surface[500], paddingRight: spacing[4] }}
+          >
+            {unit}
+          </Text>
+        ) : null}
       </View>
     </View>
   );

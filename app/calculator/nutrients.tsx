@@ -4,19 +4,12 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
+
 import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculatorModels';
+import { Symbol as Icon } from '@/components/ui/symbol';
+import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface NutrientResult {
   nitrogen: number;
@@ -75,24 +68,52 @@ export default function NutrientCalculatorScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }} edges={['top']}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1 bg-surface-50"
+          behavior="padding"
+          style={{ flex: 1, backgroundColor: colors.surface[50] }}
         >
           <ScrollView
-            className="flex-1"
-            contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
-            contentInsetAdjustmentBehavior="never"
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingTop: spacing[4],
+              paddingHorizontal: 16,
+              paddingBottom: 32,
+            }}
+            contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
           >
             {/* Calculator Card */}
-            <View className="bg-white rounded-2xl p-4 shadow-sm">
-              <View className="flex-row items-center mb-4">
-                <View className="w-8 h-8 bg-purple-100 rounded-lg items-center justify-center">
-                  <Ionicons name="flask" size={18} color="#8B5CF6" />
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[4],
+              }}
+            >
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
+              >
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    backgroundColor: '#EDE9FE',
+                    borderRadius: borderRadius.lg,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon name="flask.fill" size={18} color="#8B5CF6" />
                 </View>
-                <Text className="text-base font-semibold text-surface-900 ml-2">
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                    marginLeft: spacing[2],
+                  }}
+                >
                   Nutrient Calculator
                 </Text>
               </View>
@@ -113,62 +134,110 @@ export default function NutrientCalculatorScreen() {
               />
 
               {/* Growth Stage Selection */}
-              <Text className="text-sm font-medium text-surface-700 mb-2 mt-2">Growth Stage</Text>
-              <View className="flex-row flex-wrap gap-2 mb-3">
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: colors.surface[700],
+                  marginBottom: spacing[2],
+                  marginTop: spacing[2],
+                }}
+              >
+                Growth Stage
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: spacing[2],
+                  marginBottom: spacing[3],
+                }}
+              >
                 {GRAPE_GROWTH_STAGES.map((stage) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={stage.id}
                     onPress={() => setSelectedStage(stage.id)}
-                    className="px-3 py-2 rounded-lg"
                     style={{
-                      backgroundColor: selectedStage === stage.id ? '#408059' : '#F3F4F6',
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[2],
+                      borderRadius: borderRadius.lg,
+                      backgroundColor:
+                        selectedStage === stage.id ? colors.primary[600] : colors.gray[100],
                     }}
                   >
                     <Text
-                      className="text-xs font-medium"
                       style={{
-                        color: selectedStage === stage.id ? '#FFFFFF' : '#374151',
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                        color: selectedStage === stage.id ? colors.white : colors.gray[700],
                       }}
                     >
                       {stage.label}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
 
               {/* Info */}
-              <View className="bg-purple-50 rounded-xl p-3">
-                <Text className="text-xs font-medium text-purple-700 mb-1">How it works</Text>
-                <Text className="text-xs text-purple-600">
+              <View
+                style={{
+                  backgroundColor: '#F5F3FF',
+                  borderRadius: borderRadius.xl,
+                  padding: spacing[3],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.medium,
+                    color: '#6D28D9',
+                    marginBottom: spacing[1],
+                  }}
+                >
+                  How it works
+                </Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#7C3AED' }}>
                   Nutrient requirements vary by growth stage. The calculator adjusts N-P-K
                   recommendations based on crop demand at each stage.
                 </Text>
               </View>
 
               {/* Calculate Button */}
-              <TouchableOpacity
+              <Pressable
                 onPress={calculate}
                 disabled={!canCalculate || result !== null}
-                className="mt-4 py-3 rounded-xl items-center"
                 style={{
-                  backgroundColor: canCalculate && !result ? '#408059' : '#E5E7EB',
+                  marginTop: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  alignItems: 'center',
+                  backgroundColor: canCalculate && !result ? colors.primary[600] : colors.gray[200],
                 }}
               >
                 <Text
-                  className="font-semibold"
-                  style={{ color: canCalculate && !result ? '#FFFFFF' : '#9CA3AF' }}
+                  style={{
+                    fontWeight: fontWeight.semibold,
+                    color: canCalculate && !result ? colors.white : colors.gray[400],
+                  }}
                 >
                   Calculate Requirements
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
 
               {/* Results */}
               {result !== null && (
-                <View className="mt-4">
-                  <Text className="text-sm font-semibold text-surface-700 mb-3">
+                <View style={{ marginTop: spacing[4] }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.surface[700],
+                      marginBottom: spacing[3],
+                    }}
+                  >
                     Recommended Nutrients
                   </Text>
-                  <View className="gap-2">
+                  <View style={{ gap: spacing[2] }}>
                     <NutrientRow
                       label="Nitrogen (N)"
                       value={result.nitrogen}
@@ -189,9 +258,25 @@ export default function NutrientCalculatorScreen() {
                     />
                   </View>
 
-                  <View className="bg-surface-50 rounded-xl p-3 mt-3">
-                    <Text className="text-xs font-medium text-surface-600 mb-1">Note</Text>
-                    <Text className="text-xs text-surface-500">
+                  <View
+                    style={{
+                      backgroundColor: colors.surface[50],
+                      borderRadius: borderRadius.xl,
+                      padding: spacing[3],
+                      marginTop: spacing[3],
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                        color: colors.surface[600],
+                        marginBottom: spacing[1],
+                      }}
+                    >
+                      Note
+                    </Text>
+                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                       These are estimated values. For precise recommendations, conduct soil and
                       petiole tests and consult an agronomist.
                     </Text>
@@ -202,19 +287,35 @@ export default function NutrientCalculatorScreen() {
 
             {/* Reset Button */}
             {result !== null && (
-              <TouchableOpacity
+              <Pressable
                 onPress={reset}
-                className="bg-white rounded-2xl py-4 items-center border border-surface-200"
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: borderRadius['2xl'],
+                  paddingVertical: spacing[4],
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  marginTop: spacing[4],
+                }}
               >
-                <View className="flex-row items-center">
-                  <Ionicons name="refresh" size={18} color="#6B7280" />
-                  <Text className="text-surface-600 font-medium ml-2">Reset Calculator</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Icon name="refresh" size={18} color="#6B7280" />
+                  <Text
+                    style={{
+                      color: colors.surface[600],
+                      fontWeight: fontWeight.medium,
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    Reset Calculator
+                  </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </>
   );
 }
@@ -233,19 +334,46 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
+  const handleChangeText = (text: string) => {
+    if (text === '.') {
+      onChangeText('0.');
+    } else {
+      onChangeText(text);
+    }
+  };
+
   return (
-    <View className="mb-3">
-      <Text className="text-sm text-surface-600 mb-1">{label}</Text>
-      <View className="flex-row items-center bg-surface-50 rounded-xl">
+    <View style={{ marginBottom: spacing[3] }}>
+      <Text style={{ fontSize: fontSize.sm, color: colors.surface[600], marginBottom: spacing[1] }}>
+        {label}
+      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: colors.surface[50],
+          borderRadius: borderRadius.xl,
+        }}
+      >
         <TextInput
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={handleChangeText}
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"
-          className="flex-1 px-4 py-3 text-base text-surface-900"
+          style={{
+            flex: 1,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[3],
+            fontSize: fontSize.base,
+            color: colors.surface[900],
+          }}
         />
-        <Text className="text-sm text-surface-500 pr-4">{unit}</Text>
+        <Text
+          style={{ fontSize: fontSize.sm, color: colors.surface[500], paddingRight: spacing[4] }}
+        >
+          {unit}
+        </Text>
       </View>
     </View>
   );
@@ -265,11 +393,17 @@ function NutrientRow({
 }) {
   return (
     <View
-      className="flex-row items-center justify-between p-3 rounded-xl"
-      style={{ backgroundColor: bgColor }}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: spacing[3],
+        borderRadius: borderRadius.xl,
+        backgroundColor: bgColor,
+      }}
     >
-      <Text className="text-sm text-surface-700">{label}</Text>
-      <Text className="text-lg font-bold" style={{ color }}>
+      <Text style={{ fontSize: fontSize.sm, color: colors.surface[700] }}>{label}</Text>
+      <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color }}>
         {value.toFixed(1)} kg
       </Text>
     </View>
