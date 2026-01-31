@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 
 interface FormModalProps {
   visible?: boolean;
@@ -470,28 +470,26 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
     borderWidth: 1,
     borderRadius: borderRadius.full,
     padding: spacing[1],
-    marginBottom: spacing[6],
+    gap: spacing[1],
+    borderCurve: 'continuous',
   };
 
-  const getSegmentStyle = (selected: boolean): ViewStyle => ({
+  const getSegmentStyle = (selected: boolean, pressed: boolean): ViewStyle => ({
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: spacing[2],
     borderRadius: borderRadius.full,
     alignItems: 'center',
-    backgroundColor: selected ? colors.white : 'transparent',
+    backgroundColor: selected ? colors.white : pressed ? colors.surface[300] : 'transparent',
     borderWidth: selected ? 1 : 0,
     borderColor: selected ? colors.surface[300] : 'transparent',
-    shadowColor: selected ? '#000' : 'transparent',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: selected ? 0.08 : 0,
-    shadowRadius: 4,
-    elevation: selected ? 2 : 0,
+    borderCurve: 'continuous',
+    ...(selected ? { ...shadows.sm, elevation: 2 } : null),
   });
 
   const getSegmentTextStyle = (selected: boolean): TextStyle => ({
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: selected ? '#111827' : '#6B7280',
+    fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
+    color: selected ? colors.gray[900] : colors.gray[500],
   });
 
   return (
@@ -502,7 +500,7 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
           <Pressable
             key={option.value}
             onPress={() => onSelect(option.value)}
-            style={getSegmentStyle(selected)}
+            style={({ pressed }) => getSegmentStyle(selected, pressed)}
           >
             <Text style={getSegmentTextStyle(selected)}>{option.label}</Text>
           </Pressable>

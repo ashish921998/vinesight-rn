@@ -76,6 +76,9 @@ export const colors = {
   // Status Colors
   warning: '#ff9500',
   error: '#ff3b30',
+  errorRed: {
+    500: '#ef4444',
+  },
   success: '#34c759',
   // Water Status
   water: {
@@ -167,6 +170,101 @@ export const shadows = {
   },
 } as const;
 
+// Material Design 3 (M3-ish) semantic roles (light theme starter)
+// Use these roles from screens/components instead of raw hex values.
+export const m3 = {
+  colorScheme: {
+    primary: colors.primary[500],
+    onPrimary: colors.surface[100],
+    primaryContainer: colors.primary[100],
+    onPrimaryContainer: colors.primary[900],
+
+    secondary: colors.secondary[500],
+    onSecondary: colors.surface[100],
+    secondaryContainer: colors.primary[50],
+    onSecondaryContainer: colors.primary[900],
+
+    tertiary: colors.harvest[500],
+    onTertiary: colors.surface[100],
+    tertiaryContainer: colors.primary[50],
+    onTertiaryContainer: colors.primary[900],
+
+    error: colors.error,
+    onError: colors.surface[100],
+    errorContainer: '#FDE8E8',
+    onErrorContainer: '#7F1D1D',
+
+    background: colors.surface[50],
+    onBackground: colors.gray[900],
+
+    surface: colors.surface[50],
+    onSurface: colors.gray[900],
+    surfaceVariant: colors.gray[100],
+    onSurfaceVariant: colors.gray[700],
+
+    outline: colors.gray[300],
+    outlineVariant: colors.gray[200],
+
+    inverseSurface: colors.gray[900],
+    inverseOnSurface: colors.gray[50],
+    inversePrimary: colors.primary[200],
+
+    shadow: '#000000',
+    scrim: '#000000',
+
+    // Not an official role; used for “Needs attention” affordances.
+    warning: colors.warning,
+    onWarning: colors.surface[100],
+  },
+  surface: {
+    surfaceDim: colors.surface[200],
+    surfaceBright: colors.surface[50],
+    surfaceContainerLowest: colors.surface[50],
+    surfaceContainerLow: colors.surface[100],
+    surfaceContainer: colors.gray[50],
+    surfaceContainerHigh: colors.gray[100],
+    surfaceContainerHighest: colors.gray[200],
+  },
+  stateLayerOpacity: {
+    pressed: 0.12,
+    focus: 0.12,
+    hover: 0.08,
+    dragged: 0.16,
+  },
+  typography: {
+    headlineSmall: {
+      fontSize: fontSize['2xl'],
+      lineHeight: 32,
+      fontWeight: fontWeight.bold,
+    },
+    titleMedium: {
+      fontSize: fontSize.base,
+      lineHeight: 24,
+      fontWeight: fontWeight.semibold,
+    },
+    bodyMedium: {
+      fontSize: fontSize.sm,
+      lineHeight: 20,
+      fontWeight: fontWeight.normal,
+    },
+    labelLarge: {
+      fontSize: fontSize.sm,
+      lineHeight: 20,
+      fontWeight: fontWeight.medium,
+    },
+    labelSmall: {
+      fontSize: fontSize.xs,
+      lineHeight: 16,
+      fontWeight: fontWeight.medium,
+    },
+  },
+  shape: {
+    cornerSmall: borderRadius.md,
+    cornerMedium: borderRadius.xl,
+    cornerLarge: borderRadius['2xl'],
+  },
+} as const;
+
 // Common component styles
 export const commonStyles = {
   // Glass effect cards
@@ -241,6 +339,7 @@ export const commonStyles = {
 
 export const theme = {
   colors,
+  m3,
   spacing,
   borderRadius,
   fontSize,

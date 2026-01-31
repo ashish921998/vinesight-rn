@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
+import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface StatsCardProps {
   title: string;
@@ -30,11 +31,12 @@ export function StatsCard({
   const finalColor = iconColor || color;
 
   const containerStyle: ViewStyle = {
-    borderRadius: borderRadius.xl,
+    borderRadius: m3.shape.cornerMedium,
     padding: spacing[4],
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.surface.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: colors.surface[200],
+    borderColor: m3.colorScheme.outlineVariant,
+    overflow: 'hidden',
   };
 
   const headerStyle: ViewStyle = {
@@ -46,22 +48,60 @@ export function StatsCard({
   const valueTextStyle: TextStyle = {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: '#000000',
+    color: m3.colorScheme.onSurface,
   };
 
   const titleTextStyle: TextStyle = {
-    fontSize: fontSize.xs,
+    ...m3.typography.labelSmall,
     marginTop: spacing[3],
-    color: colors.surface[500],
+    color: m3.colorScheme.onSurfaceVariant,
   };
 
   const subtitleTextStyle: TextStyle = {
-    fontSize: fontSize.xs,
+    ...m3.typography.labelSmall,
     marginTop: spacing[0],
-    color: colors.surface[400],
+    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),
   };
 
-  const content = (
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${title}: ${value}${subtitle ? `, ${subtitle}` : ''}`}
+      >
+        {({ pressed }) => (
+          <View style={containerStyle}>
+            <View style={headerStyle}>
+              <UiSymbol name={icon} size={20} color={finalColor} weight="semibold" />
+              <Text style={valueTextStyle}>{value}</Text>
+            </View>
+            <Text style={titleTextStyle} numberOfLines={1} ellipsizeMode="tail">
+              {title}
+            </Text>
+            {subtitle && (
+              <Text style={subtitleTextStyle} numberOfLines={1} ellipsizeMode="tail">
+                {subtitle}
+              </Text>
+            )}
+            <View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFillObject,
+                {
+                  backgroundColor: pressed
+                    ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                    : 'transparent',
+                },
+              ]}
+            />
+          </View>
+        )}
+      </Pressable>
+    );
+  }
+
+  return (
     <View style={containerStyle}>
       <View style={headerStyle}>
         <UiSymbol name={icon} size={20} color={finalColor} weight="semibold" />
@@ -77,14 +117,4 @@ export function StatsCard({
       )}
     </View>
   );
-
-  if (onPress) {
-    return (
-      <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
-        {content}
-      </Pressable>
-    );
-  }
-
-  return content;
 }

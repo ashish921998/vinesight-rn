@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  StyleSheet,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -15,9 +16,11 @@ import { useRouter } from 'expo-router';
 import { useFarms, useDeleteFarm } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol } from '@/components/ui/symbol';
+import { Button } from '@/components/ui';
 import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
 import type { Farm } from '@/types';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -42,19 +45,19 @@ const SearchHeader = React.memo<SearchHeaderProps>(
     const searchBarStyle: ViewStyle = {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.white,
-      borderRadius: borderRadius.xl,
+      backgroundColor: m3.surface.surfaceContainerLow,
+      borderRadius: m3.shape.cornerMedium,
       paddingHorizontal: spacing[4],
       paddingVertical: spacing[3],
       borderWidth: 1,
-      borderColor: isSearchFocused ? colors.primary[500] : colors.gray[200],
+      borderColor: isSearchFocused ? m3.colorScheme.primary : m3.colorScheme.outlineVariant,
     };
 
     const searchInputStyle: TextStyle = {
       flex: 1,
       marginLeft: spacing[3],
       fontSize: fontSize.base,
-      color: colors.black,
+      color: m3.colorScheme.onSurface,
     };
 
     return (
@@ -69,12 +72,16 @@ const SearchHeader = React.memo<SearchHeaderProps>(
           <Symbol
             name="magnifyingglass"
             size={20}
-            color={isSearchFocused ? colors.primary[500] : colors.gray[300]}
+            color={
+              isSearchFocused
+                ? m3.colorScheme.primary
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+            }
           />
           <TextInput
             style={searchInputStyle}
             placeholder="Search farms..."
-            placeholderTextColor={colors.gray[300]}
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
             value={searchQuery}
             onChangeText={onSearchChange}
             onFocus={onSearchFocus}
@@ -85,8 +92,14 @@ const SearchHeader = React.memo<SearchHeaderProps>(
             <Pressable
               onPress={() => onSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
             >
-              <Symbol name="xmark.circle.fill" size={20} color={colors.gray[300]} />
+              <Symbol
+                name="xmark.circle.fill"
+                size={20}
+                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+              />
             </Pressable>
           )}
         </View>
@@ -97,7 +110,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
             style={{
               fontSize: fontSize.sm,
               marginTop: spacing[3],
-              color: colors.gray[400],
+              color: m3.colorScheme.onSurfaceVariant,
             }}
           >
             {filteredFarms.length} farm{filteredFarms.length !== 1 ? 's' : ''} found
@@ -122,9 +135,9 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 justifyContent: 'center',
-                backgroundColor: colors.white,
+                backgroundColor: m3.surface.surfaceContainerLow,
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.colorScheme.outlineVariant,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
@@ -137,15 +150,15 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                     overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   }}
                 >
-                  <Symbol name="leaf.fill" size={16} color={colors.primary[500]} />
+                  <Symbol name="leaf.fill" size={16} color={m3.colorScheme.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      color: colors.black,
+                      color: m3.colorScheme.onSurface,
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
@@ -155,8 +168,8 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                   </Text>
                   <Text
                     style={{
-                      color: colors.surface[500],
-                      fontSize: fontSize.xs,
+                      color: m3.colorScheme.onSurfaceVariant,
+                      ...m3.typography.labelSmall,
                     }}
                   >
                     Total Farms
@@ -173,9 +186,9 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 justifyContent: 'center',
-                backgroundColor: colors.white,
+                backgroundColor: m3.surface.surfaceContainerLow,
                 borderWidth: 1,
-                borderColor: colors.surface[200],
+                borderColor: m3.colorScheme.outlineVariant,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
@@ -188,19 +201,19 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                     overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   }}
                 >
                   <Symbol
                     name="arrow.up.left.and.arrow.down.right"
                     size={16}
-                    color={colors.primary[500]}
+                    color={m3.colorScheme.primary}
                   />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      color: colors.black,
+                      color: m3.colorScheme.onSurface,
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
@@ -210,8 +223,8 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                   </Text>
                   <Text
                     style={{
-                      color: colors.surface[500],
-                      fontSize: fontSize.xs,
+                      color: m3.colorScheme.onSurfaceVariant,
+                      ...m3.typography.labelSmall,
                     }}
                   >
                     Total Acres
@@ -235,6 +248,7 @@ export default function FarmsScreen() {
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const isAndroid = process.env.EXPO_OS === 'android';
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchQuery(text);
@@ -331,12 +345,12 @@ export default function FarmsScreen() {
     if (isLoading) {
       return (
         <View style={emptyContainerStyle}>
-          <ActivityIndicator size="large" color={colors.primary[500]} />
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
           <Text
             style={{
               fontSize: fontSize.base,
               marginTop: spacing[4],
-              color: colors.gray[400],
+              color: m3.colorScheme.onSurfaceVariant,
             }}
           >
             Loading farms...
@@ -356,17 +370,21 @@ export default function FarmsScreen() {
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: spacing[4],
-              backgroundColor: colors.gray[100],
+              backgroundColor: m3.surface.surfaceContainerHigh,
             }}
           >
-            <Symbol name="magnifyingglass" size={36} color={colors.gray[300]} />
+            <Symbol
+              name="magnifyingglass"
+              size={36}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            />
           </View>
           <Text
             style={{
               fontSize: fontSize.lg,
               fontWeight: fontWeight.semibold,
               textAlign: 'center',
-              color: colors.black,
+              color: m3.colorScheme.onSurface,
             }}
           >
             No Results Found
@@ -376,20 +394,39 @@ export default function FarmsScreen() {
               fontSize: fontSize.base,
               textAlign: 'center',
               marginTop: spacing[2],
-              color: colors.gray[400],
+              color: m3.colorScheme.onSurfaceVariant,
             }}
           >
             Try a different search term
           </Text>
-          <Pressable onPress={() => setSearchQuery('')} style={{ marginTop: spacing[4] }}>
-            <Text
-              style={{
-                fontWeight: fontWeight.medium,
-                color: colors.primary[500],
-              }}
-            >
-              Clear Search
-            </Text>
+          <Pressable
+            onPress={() => setSearchQuery('')}
+            style={{
+              marginTop: spacing[4],
+              borderRadius: m3.shape.cornerMedium,
+              overflow: 'hidden',
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+          >
+            {({ pressed }) => (
+              <View style={{ paddingHorizontal: spacing[3], paddingVertical: spacing[2] }}>
+                <Text style={{ fontWeight: fontWeight.medium, color: m3.colorScheme.primary }}>
+                  Clear Search
+                </Text>
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </View>
+            )}
           </Pressable>
         </View>
       );
@@ -405,17 +442,17 @@ export default function FarmsScreen() {
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: spacing[6],
-            backgroundColor: 'rgba(64, 128, 89, 0.1)',
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
           }}
         >
-          <Symbol name="leaf.fill" size={48} color={colors.primary[500]} />
+          <Symbol name="leaf.fill" size={48} color={m3.colorScheme.primary} />
         </View>
         <Text
           style={{
             fontSize: fontSize.xl,
             fontWeight: fontWeight.semibold,
             textAlign: 'center',
-            color: colors.black,
+            color: m3.colorScheme.onSurface,
           }}
         >
           No Farms Yet
@@ -425,39 +462,29 @@ export default function FarmsScreen() {
             fontSize: fontSize.base,
             textAlign: 'center',
             marginTop: spacing[2],
-            color: colors.gray[400],
+            color: m3.colorScheme.onSurfaceVariant,
           }}
         >
           Add your first farm to start tracking irrigation, sprays, and harvests.
         </Text>
-        <Pressable
-          style={{
-            paddingHorizontal: spacing[6],
-            paddingVertical: spacing[3],
-            borderRadius: borderRadius.xl,
-            marginTop: spacing[6],
-            backgroundColor: colors.primary[500],
-          }}
-          onPress={handleAddFarm}
-        >
-          <Text
-            style={{
-              color: colors.white,
-              fontWeight: fontWeight.semibold,
-            }}
-          >
-            Add Farm
-          </Text>
-        </Pressable>
+        <View style={{ marginTop: spacing[6], width: '100%', maxWidth: 360 }}>
+          <Button title="Add Farm" onPress={handleAddFarm} />
+        </View>
       </View>
     );
   };
+
+  const showFab = isAndroid && (farms?.length || 0) > 0;
+  const listBottomPadding = Math.max(
+    spacing[16] + fabBottomInset,
+    (showFab ? spacing[14] + fabBottomInset + 56 : 0) + spacing[8],
+  );
 
   return (
     <View
       style={{
         flex: 1,
-        backgroundColor: colors.gray[100],
+        backgroundColor: m3.colorScheme.surface,
       }}
     >
       <FlatList
@@ -466,7 +493,7 @@ export default function FarmsScreen() {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{
           paddingTop: spacing[4],
-          paddingBottom: 100,
+          paddingBottom: listBottomPadding,
           flexGrow: 1,
         }}
         ListHeaderComponent={
@@ -485,14 +512,14 @@ export default function FarmsScreen() {
           <RefreshControl
             refreshing={isLoading && !searchQuery}
             onRefresh={refetch}
-            tintColor={colors.primary[500]}
+            tintColor={m3.colorScheme.primary}
           />
         }
         showsVerticalScrollIndicator={false}
       />
 
       {/* FAB */}
-      {(farms?.length || 0) > 0 && (
+      {showFab && (
         <Pressable
           style={{
             position: 'absolute',
@@ -503,11 +530,29 @@ export default function FarmsScreen() {
             borderRadius: borderRadius.full,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: colors.primary[500],
+            backgroundColor: m3.colorScheme.primary,
+            overflow: 'hidden',
           }}
           onPress={handleAddFarm}
+          accessibilityRole="button"
+          accessibilityLabel="Add farm"
         >
-          <Symbol name="plus" size={28} color={colors.white} />
+          {({ pressed }) => (
+            <>
+              <Symbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  },
+                ]}
+              />
+            </>
+          )}
         </Pressable>
       )}
     </View>

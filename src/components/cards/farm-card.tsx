@@ -8,6 +8,7 @@ import {
   View,
   Text,
   Pressable,
+  StyleSheet,
   GestureResponderEvent,
   type ViewStyle,
   type TextStyle,
@@ -15,7 +16,8 @@ import {
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Farm } from '../../types';
 import { isLowWater } from '../../types';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface FarmCardProps {
   farm: Farm;
@@ -27,13 +29,18 @@ interface FarmCardProps {
 export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
   const needsAttention = isLowWater(farm);
   const statusText = needsAttention ? 'NEEDS ATTENTION' : 'HEALTHY';
-  const statusColor = needsAttention ? colors.error : colors.primary[500];
-  const statusBg = needsAttention ? 'rgba(255, 59, 48, 0.1)' : 'rgba(64, 128, 89, 0.1)';
+  const statusColor = needsAttention ? m3.colorScheme.error : m3.colorScheme.primary;
+  const statusBg = needsAttention
+    ? colorWithOpacity(m3.colorScheme.error, 0.12)
+    : colorWithOpacity(m3.colorScheme.primary, 0.12);
 
   const cardStyle: ViewStyle = {
-    borderRadius: borderRadius.xl,
+    borderRadius: m3.shape.cornerLarge,
     padding: spacing[4],
-    backgroundColor: colors.white,
+    backgroundColor: m3.surface.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: m3.colorScheme.outlineVariant,
+    overflow: 'hidden',
   };
 
   const headerStyle: ViewStyle = {
@@ -48,7 +55,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
     fontWeight: fontWeight.medium,
     flex: 1,
     marginRight: spacing[2],
-    color: colors.black,
+    color: m3.colorScheme.onSurface,
     numberOfLines: 1,
   } as TextStyle;
 
@@ -64,6 +71,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
     borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   };
 
   const statusBadgeStyle: ViewStyle = {
@@ -74,17 +82,14 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
   };
 
   const statusTextStyle: TextStyle = {
-    fontSize: fontSize.xs,
+    ...m3.typography.labelSmall,
     fontWeight: fontWeight.bold,
     textTransform: 'uppercase',
     color: statusColor,
   };
 
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [cardStyle, { opacity: pressed ? 0.9 : 1 }]}
-    >
+  const renderCardContent = (pressed: boolean) => (
+    <View style={cardStyle}>
       {/* Header: Name & Status */}
       <View style={headerStyle}>
         <Text style={nameStyle} numberOfLines={1}>
@@ -97,10 +102,23 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 e.stopPropagation();
                 onEdit();
               }}
-              style={[actionButtonStyle, { backgroundColor: 'rgba(64, 128, 89, 0.1)' }]}
+              style={({ pressed: actionPressed }) => [
+                actionButtonStyle,
+                { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12) },
+                actionPressed
+                  ? {
+                      backgroundColor: colorWithOpacity(
+                        m3.colorScheme.primary,
+                        0.12 + m3.stateLayerOpacity.pressed,
+                      ),
+                    }
+                  : null,
+              ]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${farm.name}`}
             >
-              <UiSymbol name="pencil" size={18} color={colors.primary[500]} />
+              <UiSymbol name="pencil" size={18} color={m3.colorScheme.primary} />
             </Pressable>
           )}
           {onDelete && (
@@ -109,10 +127,23 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 e.stopPropagation();
                 onDelete();
               }}
-              style={[actionButtonStyle, { backgroundColor: 'rgba(255, 59, 48, 0.1)' }]}
+              style={({ pressed: actionPressed }) => [
+                actionButtonStyle,
+                { backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12) },
+                actionPressed
+                  ? {
+                      backgroundColor: colorWithOpacity(
+                        m3.colorScheme.error,
+                        0.12 + m3.stateLayerOpacity.pressed,
+                      ),
+                    }
+                  : null,
+              ]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${farm.name}`}
             >
-              <UiSymbol name="trash" size={18} color={colors.error} />
+              <UiSymbol name="trash" size={18} color={m3.colorScheme.error} />
             </Pressable>
           )}
           <View style={statusBadgeStyle}>
@@ -136,15 +167,15 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               paddingHorizontal: spacing[2],
               paddingVertical: spacing[1],
               borderRadius: borderRadius.md,
-              backgroundColor: 'rgba(64, 128, 89, 0.1)',
+              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
             }}
           >
             <Text
               style={{
-                fontSize: fontSize.xs,
+                ...m3.typography.labelSmall,
                 fontWeight: fontWeight.bold,
                 textTransform: 'uppercase',
-                color: colors.primary[500],
+                color: m3.colorScheme.primary,
               }}
               numberOfLines={1}
             >
@@ -157,7 +188,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
         <Text
           style={{
             fontSize: fontSize.sm,
-            color: colors.gray[400],
+            color: m3.colorScheme.onSurfaceVariant,
           }}
         >
           {farm.area != null ? `${farm.area.toFixed(1)} Acres` : '— Acres'}
@@ -170,9 +201,11 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
         <View
           style={{
             flex: 1,
-            borderRadius: borderRadius.xl,
+            borderRadius: m3.shape.cornerMedium,
             padding: spacing[3],
-            backgroundColor: colors.gray[100],
+            backgroundColor: m3.surface.surfaceContainerHigh,
+            borderWidth: 1,
+            borderColor: m3.colorScheme.outlineVariant,
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
@@ -183,16 +216,16 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 minWidth: 12,
                 minHeight: 12,
                 borderRadius: borderRadius.full,
-                backgroundColor: '#669475',
+                backgroundColor: colors.harvest[500],
               }}
             />
             <View>
               <Text
                 style={{
-                  fontSize: fontSize.xs,
+                  ...m3.typography.labelSmall,
                   fontWeight: fontWeight.bold,
                   textTransform: 'uppercase',
-                  color: colors.gray[400],
+                  color: m3.colorScheme.onSurfaceVariant,
                 }}
                 numberOfLines={1}
               >
@@ -202,7 +235,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.black,
+                  color: m3.colorScheme.onSurface,
                 }}
               >
                 {farm.remaining_water != null ? `${farm.remaining_water.toFixed(1)} mm` : '—'}
@@ -215,20 +248,26 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
         <View
           style={{
             flex: 1,
-            borderRadius: borderRadius.xl,
+            borderRadius: m3.shape.cornerMedium,
             padding: spacing[3],
-            backgroundColor: colors.gray[100],
+            backgroundColor: m3.surface.surfaceContainerHigh,
+            borderWidth: 1,
+            borderColor: m3.colorScheme.outlineVariant,
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-            <UiSymbol name="location.fill" size={12} color={colors.gray[400]} />
+            <UiSymbol
+              name="location.fill"
+              size={12}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            />
             <View>
               <Text
                 style={{
-                  fontSize: fontSize.xs,
+                  ...m3.typography.labelSmall,
                   fontWeight: fontWeight.bold,
                   textTransform: 'uppercase',
-                  color: colors.gray[400],
+                  color: m3.colorScheme.onSurfaceVariant,
                 }}
                 numberOfLines={1}
               >
@@ -238,7 +277,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: colors.black,
+                  color: m3.colorScheme.onSurface,
                 }}
                 numberOfLines={1}
               >
@@ -248,6 +287,27 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
           </View>
         </View>
       </View>
-    </Pressable>
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            backgroundColor: pressed
+              ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+              : 'transparent',
+          },
+        ]}
+      />
+    </View>
   );
+
+  if (onPress) {
+    return (
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={farm.name}>
+        {({ pressed }) => renderCardContent(pressed)}
+      </Pressable>
+    );
+  }
+
+  return renderCardContent(false);
 }

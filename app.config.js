@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '1.0.6',
+    version: '2.3',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
@@ -19,21 +19,40 @@ module.exports = {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.vinesight.app',
+      bundleIdentifier: 'com.vinesight.ios',
       scheme: 'vinesight',
+      usesAppleSignIn: true,
+      buildNumber: '1.1.4',
       config: {
         usesNonExemptEncryption: false,
       },
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
-          'Vinesight needs your location to show nearby farms and provide weather data.',
-        NSLocationAlwaysUsageDescription:
-          'Vinesight needs your location to provide weather updates for your farms.',
+          'Vinesight uses your location to show nearby farms and local weather.',
+      },
+      privacyManifests: {
+        NSPrivacyTracking: false,
+        NSPrivacyTrackingDomains: [],
+        NSPrivacyCollectedDataTypes: [],
+        NSPrivacyAccessedAPITypes: [
+          {
+            NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+            NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+          },
+          {
+            NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+            NSPrivacyAccessedAPITypeReasons: ['0A2A.1', '3B52.1', 'C617.1'],
+          },
+          {
+            NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+            NSPrivacyAccessedAPITypeReasons: ['85F4.1', 'E174.1'],
+          },
+        ],
       },
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 7,
+      versionCode: 8,
       softwareKeyboardLayoutMode: 'resize',
       adaptiveIcon: {
         foregroundImage: './assets/playstore.png',
@@ -41,7 +60,6 @@ module.exports = {
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: true,
-      permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
       intentFilters: [
         {
           action: 'VIEW',
@@ -73,7 +91,18 @@ module.exports = {
       [
         'expo-location',
         {
-          locationAlwaysAndWhenInUsePermission: 'Allow Vinesight to use your location.',
+          locationAlwaysAndWhenInUsePermission: false,
+          locationAlwaysPermission: false,
+          locationWhenInUsePermission: 'Allow Vinesight to use your location.',
+        },
+      ],
+      [
+        'expo-image-picker',
+        {
+          photosPermission:
+            'Allow Vinesight to access your photos to attach lab reports and images.',
+          cameraPermission: 'Allow Vinesight to use your camera to capture lab reports and photos.',
+          microphonePermission: false,
         },
       ],
     ],

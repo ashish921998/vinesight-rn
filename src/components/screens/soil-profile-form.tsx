@@ -40,27 +40,29 @@ export default function SoilProfileForm({
   const createProfile = useCreateSoilProfile();
 
   const [sections, setSections] = useState<Record<string, string>>({
-    left: '',
-    center: '',
+    top: '',
+    bottom: '',
     right: '',
-    down: '',
+    left: '',
   });
   const [fusariumPct, setFusariumPct] = useState('');
   const [ecValues, setEcValues] = useState<Record<string, string>>({
-    left: '',
-    center: '',
+    top: '',
+    bottom: '',
     right: '',
-    down: '',
+    left: '',
   });
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [fieldPositions, setFieldPositions] = useState<Record<string, number>>({});
+  const scrollRef = React.useRef<ScrollView>(null);
 
   const isLoading = createProfile.isPending;
 
   const resetForm = () => {
-    setSections({ left: '', center: '', right: '', down: '' });
+    setSections({ top: '', bottom: '', right: '', left: '' });
     setFusariumPct('');
-    setEcValues({ left: '', center: '', right: '', down: '' });
+    setEcValues({ top: '', bottom: '', right: '', left: '' });
     setSelectedDate(new Date());
     setShowDatePicker(false);
   };
@@ -114,9 +116,30 @@ export default function SoilProfileForm({
     setEcValues((prev) => ({ ...prev, [name]: value }));
   };
 
+  const recordFieldPosition = (key: string, y: number) => {
+    setFieldPositions((prev) => {
+      if (prev[key] === y) {
+        return prev;
+      }
+      return { ...prev, [key]: y };
+    });
+  };
+
+  const scrollToField = (key: string) => {
+    const y = fieldPositions[key];
+    if (y === undefined) {
+      return;
+    }
+    scrollRef.current?.scrollTo({
+      y: Math.max(0, y - spacing[6]),
+      animated: true,
+    });
+  };
+
   const content = (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
       style={{ flex: 1, backgroundColor: colors.surface[50] }}
     >
       {/* Header */}
@@ -159,9 +182,17 @@ export default function SoilProfileForm({
       </View>
 
       <ScrollView
+        ref={scrollRef}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing[4] }}
+        contentInsetAdjustmentBehavior="automatic"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+        contentContainerStyle={{
+          paddingHorizontal: spacing[4],
+          paddingBottom: spacing[16] + insets.bottom,
+        }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         {/* Date Picker */}
         <View
@@ -305,8 +336,15 @@ export default function SoilProfileForm({
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
             {SECTION_NAMES.map((name) => {
               const info = SECTION_INFO[name];
+              const fieldKey = `moisture-${name}`;
               return (
-                <View key={name} style={{ width: '48%' }}>
+                <View
+                  key={name}
+                  style={{ width: '48%' }}
+                  onLayout={(event) =>
+                    recordFieldPosition(fieldKey, event.nativeEvent.layout.y ?? 0)
+                  }
+                >
                   <View
                     style={{
                       flexDirection: 'row',
@@ -355,6 +393,7 @@ export default function SoilProfileForm({
                     keyboardType="decimal-pad"
                     value={sections[name]}
                     onChangeText={(value) => updateSection(name, value)}
+                    onFocus={() => scrollToField(fieldKey)}
                   />
                 </View>
               );
@@ -394,8 +433,15 @@ export default function SoilProfileForm({
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
             {SECTION_NAMES.map((name) => {
               const info = SECTION_INFO[name];
+              const fieldKey = `ec-${name}`;
               return (
-                <View key={`ec-${name}`} style={{ width: '48%' }}>
+                <View
+                  key={`ec-${name}`}
+                  style={{ width: '48%' }}
+                  onLayout={(event) =>
+                    recordFieldPosition(fieldKey, event.nativeEvent.layout.y ?? 0)
+                  }
+                >
                   <Text
                     style={{
                       fontSize: fontSize.xs,
@@ -421,6 +467,7 @@ export default function SoilProfileForm({
                     keyboardType="decimal-pad"
                     value={ecValues[name]}
                     onChangeText={(value) => updateEc(name, value)}
+                    onFocus={() => scrollToField(fieldKey)}
                   />
                 </View>
               );
@@ -437,6 +484,7 @@ export default function SoilProfileForm({
             marginBottom: spacing[8],
             backgroundColor: 'rgba(255, 255, 255, 0.8)',
           }}
+          onLayout={(event) => recordFieldPosition('fusarium', event.nativeEvent.layout.y ?? 0)}
         >
           <Text
             style={{
@@ -473,6 +521,7 @@ export default function SoilProfileForm({
             keyboardType="decimal-pad"
             value={fusariumPct}
             onChangeText={setFusariumPct}
+            onFocus={() => scrollToField('fusarium')}
           />
         </View>
       </ScrollView>

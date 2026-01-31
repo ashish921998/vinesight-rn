@@ -95,7 +95,7 @@ export interface AuthActions {
   signOut: () => Promise<void>;
 
   /** Delete account */
-  deleteAccount: () => Promise<void>;
+  deleteAccount: (deleteReason: string) => Promise<void>;
 
   /** Refresh session (e.g., when app comes to foreground) */
   refreshSessionIfNeeded: () => Promise<void>;

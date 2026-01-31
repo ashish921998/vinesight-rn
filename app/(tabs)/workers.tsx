@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, Pressable, RefreshControl, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useWorkers, useDeleteWorker } from '@/hooks';
 import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { useModalStore } from '@/stores';
 import { AttendanceView } from '@/components/screens';
-import { SegmentedControl } from '@/components/ui';
+import { Button, SegmentedControl } from '@/components/ui';
 import type { Worker } from '@/types';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { WorkerCard } from '@/components/cards';
+import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
@@ -23,9 +26,12 @@ export default function WorkersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fabBottomInset = useFabBottomInset();
+  const tabBarInset = useTabBarInset();
   const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
   const deleteWorker = useDeleteWorker();
+  const isAndroid = process.env.EXPO_OS === 'android';
+  const iosBottomActionBarHeight = 72;
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
 
@@ -64,119 +70,14 @@ export default function WorkersScreen() {
   };
 
   const renderWorker = ({ item }: { item: Worker }) => (
-    <Pressable
-      style={{
-        backgroundColor: colors.white,
-        marginHorizontal: spacing[4],
-        marginBottom: spacing[3],
-        borderRadius: borderRadius['2xl'],
-        overflow: 'hidden',
-      }}
-      onPress={() => handleEditWorker(item)}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: spacing[4],
-        }}
-      >
-        {/* Avatar */}
-        <View
-          style={{
-            width: 48,
-            height: 48,
-            backgroundColor: 'rgba(64, 128, 89, 0.1)',
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.bold,
-              color: colors.primary[500],
-            }}
-          >
-            {item.name.charAt(0).toUpperCase()}
-          </Text>
-        </View>
-
-        {/* Info */}
-        <View
-          style={{
-            flex: 1,
-            marginLeft: spacing[3],
-          }}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.base,
-              fontWeight: fontWeight.semibold,
-              color: colors.black,
-            }}
-          >
-            {item.name}
-          </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginTop: spacing[1],
-            }}
-          >
-            <Symbol name="indianrupeesign.circle" size={12} color={colors.gray[400]} />
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                color: colors.gray[400],
-                marginLeft: spacing[1],
-              }}
-            >
-              ₹{item.daily_rate}/day
-            </Text>
-          </View>
-        </View>
-
-        {/* Advance Balance */}
-        {item.advance_balance > 0 && (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: 'rgba(251, 146, 60, 0.1)',
-              paddingHorizontal: spacing[2],
-              paddingVertical: spacing[1],
-              borderRadius: borderRadius.full,
-              marginRight: spacing[2],
-            }}
-          >
-            <Symbol name="arrow.up.circle.fill" size={12} color="#F59E0B" />
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.semibold,
-                color: '#EA580C',
-                marginLeft: spacing[1],
-              }}
-            >
-              ₹{item.advance_balance}
-            </Text>
-          </View>
-        )}
-
-        {/* Actions */}
-        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-          <Pressable onPress={() => handleEditWorker(item)} style={{ padding: spacing[2] }}>
-            <Symbol name="pencil" size={18} color="#408059" />
-          </Pressable>
-          <Pressable onPress={() => handleDeleteWorker(item)} style={{ padding: spacing[2] }}>
-            <Symbol name="trash" size={18} color={colors.error} />
-          </Pressable>
-        </View>
-      </View>
-    </Pressable>
+    <View style={{ marginHorizontal: spacing[4], marginBottom: spacing[3] }}>
+      <WorkerCard
+        worker={item}
+        onPress={() => handleEditWorker(item)}
+        onEdit={() => handleEditWorker(item)}
+        onDelete={() => handleDeleteWorker(item)}
+      />
+    </View>
   );
 
   const renderWorkersTab = () => (
@@ -186,7 +87,9 @@ export default function WorkersScreen() {
       keyExtractor={(item) => String(item.id)}
       contentContainerStyle={{
         paddingTop: spacing[4],
-        paddingBottom: 100,
+        paddingBottom: isAndroid
+          ? spacing[16] + fabBottomInset + spacing[10]
+          : iosBottomActionBarHeight + tabBarInset + spacing[6],
         flexGrow: 1,
       }}
       ListHeaderComponent={
@@ -195,7 +98,7 @@ export default function WorkersScreen() {
             style={{
               fontSize: fontSize.xs,
               fontWeight: fontWeight.bold,
-              color: colors.gray[400],
+              color: m3.colorScheme.onSurfaceVariant,
               letterSpacing: 0.5,
               marginHorizontal: spacing[4],
               marginBottom: spacing[2],
@@ -212,7 +115,7 @@ export default function WorkersScreen() {
               style={{
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.bold,
-                color: colors.gray[400],
+                color: m3.colorScheme.onSurfaceVariant,
                 letterSpacing: 0.5,
                 marginHorizontal: spacing[4],
                 marginBottom: spacing[2],
@@ -242,20 +145,20 @@ export default function WorkersScreen() {
               style={{
                 width: 80,
                 height: 80,
-                backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                 borderRadius: borderRadius.full,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: spacing[4],
               }}
             >
-              <Symbol name="person.2" size={40} color={colors.primary[500]} />
+              <UiSymbol name="person.2" size={40} color={m3.colorScheme.primary} />
             </View>
             <Text
               style={{
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.semibold,
-                color: colors.black,
+                color: m3.colorScheme.onSurface,
                 textAlign: 'center',
               }}
             >
@@ -264,35 +167,22 @@ export default function WorkersScreen() {
             <Text
               style={{
                 fontSize: fontSize.sm,
-                color: colors.gray[400],
+                color: m3.colorScheme.onSurfaceVariant,
                 textAlign: 'center',
                 marginTop: spacing[2],
               }}
             >
               Add workers to track attendance,{`\n`}payments, and settlements.
             </Text>
-            <Pressable
-              onPress={() => {
-                setAddWorker({ worker: null });
-                router.push('/add-worker');
-              }}
-              style={{
-                backgroundColor: colors.primary[500],
-                paddingHorizontal: spacing[6],
-                paddingVertical: spacing[3],
-                borderRadius: borderRadius.xl,
-                marginTop: spacing[4],
-              }}
-            >
-              <Text
-                style={{
-                  color: colors.white,
-                  fontWeight: fontWeight.semibold,
+            <View style={{ marginTop: spacing[4], width: '100%', maxWidth: 360 }}>
+              <Button
+                title="Add Worker"
+                onPress={() => {
+                  setAddWorker({ worker: null });
+                  router.push('/add-worker');
                 }}
-              >
-                Add Worker
-              </Text>
-            </Pressable>
+              />
+            </View>
           </View>
         ) : null
       }
@@ -300,7 +190,7 @@ export default function WorkersScreen() {
         <RefreshControl
           refreshing={isLoading}
           onRefresh={refetch}
-          tintColor={colors.primary[500]}
+          tintColor={m3.colorScheme.primary}
         />
       }
     />
@@ -323,20 +213,20 @@ export default function WorkersScreen() {
         style={{
           width: 80,
           height: 80,
-          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.12),
           borderRadius: borderRadius.full,
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: spacing[4],
         }}
       >
-        <Symbol name="chart.bar" size={40} color="#8B5CF6" />
+        <UiSymbol name="chart.bar" size={40} color={m3.colorScheme.tertiary} />
       </View>
       <Text
         style={{
           fontSize: fontSize.lg,
           fontWeight: fontWeight.semibold,
-          color: colors.black,
+          color: m3.colorScheme.onSurface,
           textAlign: 'center',
         }}
       >
@@ -345,7 +235,7 @@ export default function WorkersScreen() {
       <Text
         style={{
           fontSize: fontSize.sm,
-          color: colors.gray[400],
+          color: m3.colorScheme.onSurfaceVariant,
           textAlign: 'center',
           marginTop: spacing[2],
         }}
@@ -355,7 +245,7 @@ export default function WorkersScreen() {
       <Text
         style={{
           fontSize: fontSize.xs,
-          color: colors.gray[300],
+          color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
           marginTop: spacing[4],
         }}
       >
@@ -369,17 +259,17 @@ export default function WorkersScreen() {
       <View
         style={{
           flex: 1,
-          backgroundColor: colors.gray[100],
+          backgroundColor: m3.colorScheme.surface,
           paddingTop: insets.top + spacing[2],
         }}
       >
         {/* Tab Selector */}
         <View
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: m3.colorScheme.surface,
             paddingHorizontal: spacing[4],
-            paddingTop: spacing[2],
-            paddingBottom: spacing[3],
+            paddingTop: spacing[3],
+            paddingBottom: spacing[2],
           }}
         >
           <SegmentedControl
@@ -394,8 +284,8 @@ export default function WorkersScreen() {
         {selectedTab === 'attendance' && renderAttendanceTab()}
         {selectedTab === 'analytics' && renderAnalyticsTab()}
 
-        {/* FAB */}
-        {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
+        {/* Primary action */}
+        {selectedTab === 'workers' && (workers?.length || 0) > 0 && isAndroid && (
           <Pressable
             onPress={() => {
               setAddWorker({ worker: null });
@@ -407,14 +297,57 @@ export default function WorkersScreen() {
               right: spacing[6],
               width: 56,
               height: 56,
-              backgroundColor: colors.primary[500],
+              backgroundColor: m3.colorScheme.primary,
               borderRadius: borderRadius.full,
               alignItems: 'center',
               justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Add worker"
+          >
+            {({ pressed }) => (
+              <>
+                <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </>
+            )}
+          </Pressable>
+        )}
+
+        {selectedTab === 'workers' && (workers?.length || 0) > 0 && !isAndroid && (
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: tabBarInset,
+              paddingHorizontal: spacing[4],
+              paddingTop: spacing[3],
+              paddingBottom: spacing[3],
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderTopWidth: 1,
+              borderTopColor: m3.colorScheme.outlineVariant,
             }}
           >
-            <Symbol name="plus" size={28} color={colors.white} />
-          </Pressable>
+            <Button
+              title="Add Worker"
+              onPress={() => {
+                setAddWorker({ worker: null });
+                router.push('/add-worker');
+              }}
+            />
+          </View>
         )}
       </View>
 

@@ -4,10 +4,11 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
+import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as CardSymbol } from '@/components/ui/symbol';
 import type { Worker } from '../../types';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface WorkerCardProps {
   worker: Worker;
@@ -34,10 +35,13 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface[50],
-    borderRadius: borderRadius['2xl'],
+    backgroundColor: m3.surface.surfaceContainerLow,
+    borderRadius: m3.shape.cornerLarge,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
+    borderWidth: 1,
+    borderColor: m3.colorScheme.outlineVariant,
+    overflow: 'hidden',
   };
 
   const avatarStyle: ViewStyle = {
@@ -46,7 +50,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
     minWidth: 48,
     minHeight: 48,
     borderRadius: borderRadius.full,
-    backgroundColor: `${colors.primary[500]}33`,
+    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing[3],
@@ -55,7 +59,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const avatarTextStyle: TextStyle = {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.primary[500],
+    color: m3.colorScheme.primary,
   };
 
   const infoContainerStyle: ViewStyle = {
@@ -65,7 +69,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const nameTextStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[900],
+    color: m3.colorScheme.onSurface,
   };
 
   const rateContainerStyle: ViewStyle = {
@@ -76,13 +80,13 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
 
   const rateTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: colors.surface[600],
+    color: m3.colorScheme.onSurfaceVariant,
     marginLeft: spacing[1],
   };
 
   const dayTextStyle: TextStyle = {
     fontSize: fontSize.xs,
-    color: colors.surface[400],
+    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
   };
 
   const advanceContainerStyle: ViewStyle = {
@@ -93,7 +97,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const advanceTextStyle: TextStyle = {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: '#F59E0B',
+    color: m3.colorScheme.warning,
     marginLeft: spacing[1],
   };
 
@@ -106,25 +110,26 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
 
   const actionButtonStyle: ViewStyle = {
     padding: spacing[2],
+    borderRadius: m3.shape.cornerMedium,
+    overflow: 'hidden',
   };
 
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [containerStyle, { opacity: pressed ? 0.8 : 1 }]}
-    >
-      {/* Avatar */}
+  const renderCardContent = (pressed: boolean) => (
+    <View style={containerStyle}>
       <View style={avatarStyle}>
         <Text style={avatarTextStyle}>{initial}</Text>
       </View>
 
-      {/* Info */}
       <View style={infoContainerStyle}>
         <Text style={nameTextStyle} numberOfLines={1}>
           {worker.name}
         </Text>
         <View style={rateContainerStyle}>
-          <CardSymbol name="dollarsign.circle" size={12} color={colors.surface[600]} />
+          <CardSymbol
+            name="dollarsign.circle"
+            size={12}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)}
+          />
           <Text style={rateTextStyle} numberOfLines={1}>
             {formattedRate}
             <Text style={dayTextStyle}> /day</Text>
@@ -132,35 +137,81 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
         </View>
       </View>
 
-      {/* Advance Balance (if any) */}
       {worker.advance_balance > 0 && (
         <View style={advanceContainerStyle}>
-          <CardSymbol name="arrow.up.circle.fill" size={12} color="#F59E0B" />
+          <CardSymbol name="arrow.up.circle.fill" size={12} color={m3.colorScheme.warning} />
           <Text style={advanceTextStyle}>{formattedAdvance}</Text>
         </View>
       )}
 
-      {/* Actions */}
       {(onEdit || onDelete) && (
         <View style={actionsContainerStyle}>
           {onEdit && (
             <Pressable
               onPress={onEdit}
-              style={({ pressed }) => [actionButtonStyle, { opacity: pressed ? 0.6 : 1 }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${worker.name}`}
+              style={({ pressed: actionPressed }) => [
+                actionButtonStyle,
+                actionPressed
+                  ? {
+                      backgroundColor: colorWithOpacity(
+                        m3.colorScheme.onSurface,
+                        m3.stateLayerOpacity.pressed,
+                      ),
+                    }
+                  : null,
+              ]}
             >
-              <CardSymbol name="pencil" size={18} color="#3B82F6" />
+              <CardSymbol name="pencil" size={18} color={m3.colorScheme.primary} />
             </Pressable>
           )}
           {onDelete && (
             <Pressable
               onPress={onDelete}
-              style={({ pressed }) => [actionButtonStyle, { opacity: pressed ? 0.6 : 1 }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${worker.name}`}
+              style={({ pressed: actionPressed }) => [
+                actionButtonStyle,
+                actionPressed
+                  ? {
+                      backgroundColor: colorWithOpacity(
+                        m3.colorScheme.onSurface,
+                        m3.stateLayerOpacity.pressed,
+                      ),
+                    }
+                  : null,
+              ]}
             >
-              <CardSymbol name="trash" size={18} color="#EF4444" />
+              <CardSymbol name="trash" size={18} color={m3.colorScheme.error} />
             </Pressable>
           )}
         </View>
       )}
-    </Pressable>
+
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            backgroundColor: pressed
+              ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+              : 'transparent',
+          },
+        ]}
+      />
+    </View>
   );
+
+  if (onPress) {
+    return (
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={worker.name}>
+        {({ pressed }) => renderCardContent(pressed)}
+      </Pressable>
+    );
+  }
+
+  return renderCardContent(false);
 }

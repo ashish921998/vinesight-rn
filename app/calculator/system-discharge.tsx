@@ -155,6 +155,7 @@ export default function SystemDischargeScreen() {
                 backgroundColor: colors.white,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
+                marginTop: spacing[4],
               }}
             >
               <View

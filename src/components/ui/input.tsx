@@ -9,7 +9,8 @@ import {
   type TextStyle,
 } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -42,22 +43,22 @@ export function Input({
 
   // Border color based on state
   const getBorderColor = () => {
-    if (hasError) return colors.error;
-    if (isFocused) return colors.primary[500];
-    return colors.surface[300];
+    if (hasError) return m3.colorScheme.error;
+    if (isFocused) return m3.colorScheme.primary;
+    return m3.colorScheme.outlineVariant;
   };
 
   // Background color based on state
   const getBackgroundColor = () => {
-    if (isDisabled) return colors.surface[50];
-    return colors.surface[100];
+    if (isDisabled) return m3.surface.surfaceContainerLowest;
+    return m3.surface.surfaceContainerLow;
   };
 
   const labelStyle: TextStyle = {
-    fontSize: fontSize.sm,
+    ...m3.typography.labelLarge,
     fontWeight: fontWeight.medium,
     marginBottom: spacing[1],
-    color: colors.surface[900],
+    color: m3.colorScheme.onSurface,
   };
 
   const inputContainerStyle: ViewStyle = {
@@ -65,7 +66,7 @@ export function Input({
     alignItems: 'center',
     paddingHorizontal: spacing[4],
     borderRadius: borderRadius.xl,
-    borderWidth: 1,
+    borderWidth: isFocused ? 2 : 1,
     borderColor: getBorderColor(),
     backgroundColor: getBackgroundColor(),
   };
@@ -74,7 +75,7 @@ export function Input({
     flex: 1,
     paddingVertical: spacing[3],
     fontSize: fontSize.base,
-    color: colors.surface[900],
+    color: m3.colorScheme.onSurface,
   };
 
   const errorContainerStyle: ViewStyle = {
@@ -86,7 +87,7 @@ export function Input({
   const errorTextStyle: TextStyle = {
     fontSize: fontSize.xs,
     marginLeft: spacing[1],
-    color: colors.error,
+    color: m3.colorScheme.error,
   };
 
   return (
@@ -99,14 +100,18 @@ export function Input({
             <Symbol
               name={leftIcon}
               size={20}
-              color={isFocused ? colors.primary[500] : colors.surface[400]}
+              color={
+                isFocused
+                  ? m3.colorScheme.primary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+              }
             />
           </View>
         )}
 
         <TextInput
           style={[inputStyle, style]}
-          placeholderTextColor={colors.surface[400]}
+          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
           editable={editable}
           secureTextEntry={isPassword && !showPassword}
           onFocus={(e) => {
@@ -124,11 +129,13 @@ export function Input({
           <Pressable
             onPress={() => setShowPassword(!showPassword)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
           >
             <Symbol
               name={showPassword ? 'eye.slash' : 'eye'}
               size={20}
-              color={colors.surface[400]}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
             />
           </Pressable>
         )}
@@ -138,11 +145,17 @@ export function Input({
             onPress={onRightIconPress}
             disabled={!onRightIconPress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Input action"
           >
             <Symbol
               name={rightIcon}
               size={20}
-              color={isFocused ? colors.primary[500] : colors.surface[400]}
+              color={
+                isFocused
+                  ? m3.colorScheme.primary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+              }
             />
           </Pressable>
         )}
@@ -150,7 +163,7 @@ export function Input({
 
       {hasError && (
         <View style={errorContainerStyle}>
-          <Symbol name="exclamationmark.circle.fill" size={14} color={colors.error} />
+          <Symbol name="exclamationmark.circle.fill" size={14} color={m3.colorScheme.error} />
           <Text style={errorTextStyle}>{error}</Text>
         </View>
       )}

@@ -4,11 +4,12 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
+import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
-import { spacing } from '@/styles/theme';
+import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -74,6 +75,7 @@ export function ActivityLogCard({
   farmName,
   onPress,
 }: ActivityLogCardProps) {
+  const isInteractive = Boolean(onPress);
   const logType = getLogType(type);
   const parsedDate = fromSupabaseDateString(date);
   const displayDescription = description || getDescriptionFromData(type, data);
@@ -87,12 +89,13 @@ export function ActivityLogCard({
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#ffffff',
+    borderRadius: m3.shape.cornerMedium,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    backgroundColor: m3.surface.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: '#f2f2f7',
+    borderColor: m3.colorScheme.outlineVariant,
+    overflow: 'hidden',
   };
 
   const iconContainerStyle: ViewStyle = {
@@ -103,8 +106,8 @@ export function ActivityLogCard({
     borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
-    backgroundColor: `${logType.color}26`,
+    marginRight: spacing[3],
+    backgroundColor: colorWithOpacity(logType.color, 0.14),
   };
 
   const contentContainerStyle: ViewStyle = {
@@ -112,9 +115,9 @@ export function ActivityLogCard({
   };
 
   const descriptionTextStyle: TextStyle = {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: m3.colorScheme.onSurface,
   };
 
   const metaContainerStyle: ViewStyle = {
@@ -125,28 +128,77 @@ export function ActivityLogCard({
 
   const farmTextStyle: TextStyle = {
     fontSize: 12,
-    color: '#8e8e93',
+    color: m3.colorScheme.onSurfaceVariant,
   };
 
   const separatorTextStyle: TextStyle = {
     fontSize: 12,
     marginHorizontal: 4,
-    color: '#c7c7cc',
+    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
   };
 
   const dateTextStyle: TextStyle = {
     fontSize: 12,
-    color: '#c7c7cc',
+    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
   };
 
-  const content = (
+  if (isInteractive) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${displayDescription || logType.label}${farmName ? `, ${farmName}` : ''}. ${displayDate}.`}
+      >
+        {({ pressed }) => (
+          <View style={containerStyle}>
+            <View style={iconContainerStyle}>
+              <UiSymbol name={logType.icon} size={18} color={logType.color} />
+            </View>
+
+            <View style={contentContainerStyle}>
+              <Text style={descriptionTextStyle} numberOfLines={1}>
+                {displayDescription || logType.label}
+              </Text>
+              <View style={metaContainerStyle}>
+                {farmName && (
+                  <>
+                    <Text style={farmTextStyle} numberOfLines={1}>
+                      {farmName}
+                    </Text>
+                    <Text style={separatorTextStyle}>•</Text>
+                  </>
+                )}
+                <Text style={dateTextStyle}>{displayDate}</Text>
+              </View>
+            </View>
+
+            <UiSymbol
+              name="chevron.right"
+              size={16}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            />
+            <View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFillObject,
+                {
+                  backgroundColor: pressed
+                    ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                    : 'transparent',
+                },
+              ]}
+            />
+          </View>
+        )}
+      </Pressable>
+    );
+  }
+
+  return (
     <View style={containerStyle}>
-      {/* Icon */}
       <View style={iconContainerStyle}>
         <UiSymbol name={logType.icon} size={18} color={logType.color} />
       </View>
-
-      {/* Content */}
       <View style={contentContainerStyle}>
         <Text style={descriptionTextStyle} numberOfLines={1}>
           {displayDescription || logType.label}
@@ -163,19 +215,6 @@ export function ActivityLogCard({
           <Text style={dateTextStyle}>{displayDate}</Text>
         </View>
       </View>
-
-      {/* Chevron */}
-      <UiSymbol name="chevron.right" size={16} color="#c7c7cc" />
     </View>
   );
-
-  if (onPress) {
-    return (
-      <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
-        {content}
-      </Pressable>
-    );
-  }
-
-  return content;
 }

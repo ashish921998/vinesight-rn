@@ -4,7 +4,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, OTPInput } from '@/components/ui';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 const RESEND_COOLDOWN = 60; // seconds
 
@@ -94,19 +95,19 @@ export default function OTPVerificationScreen() {
 
   const containerStyle: ViewStyle = {
     flex: 1,
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.colorScheme.surface,
     paddingHorizontal: spacing[8],
   };
 
   const errorContainerStyle: ViewStyle = {
     flex: 1,
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.colorScheme.surface,
     alignItems: 'center',
     justifyContent: 'center',
   };
 
   const errorTextStyle: TextStyle = {
-    color: colors.surface[500],
+    color: m3.colorScheme.onSurfaceVariant,
   };
 
   const headerContainerStyle: ViewStyle = {
@@ -119,7 +120,7 @@ export default function OTPVerificationScreen() {
     width: 80,
     height: 80,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.primary[100],
+    backgroundColor: m3.colorScheme.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[6],
@@ -128,31 +129,31 @@ export default function OTPVerificationScreen() {
   const titleTextStyle: TextStyle = {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.surface[900],
+    color: m3.colorScheme.onSurface,
     textAlign: 'center',
   };
 
   const subtitleTextStyle: TextStyle = {
     fontSize: fontSize.base,
-    color: colors.surface[500],
+    color: m3.colorScheme.onSurfaceVariant,
     textAlign: 'center',
     marginTop: spacing[3],
   };
 
   const emailBadgeStyle: ViewStyle = {
-    backgroundColor: colors.surface[200],
+    backgroundColor: m3.surface.surfaceContainerHigh,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: borderRadius.lg,
     marginTop: spacing[2],
     borderWidth: 1,
-    borderColor: colors.surface[300],
+    borderColor: m3.colorScheme.outlineVariant,
   };
 
   const emailTextStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.surface[900],
+    color: m3.colorScheme.onSurface,
   };
 
   const otpContainerStyle: ViewStyle = {
@@ -171,18 +172,18 @@ export default function OTPVerificationScreen() {
 
   const resendDisabledTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: colors.surface[400],
+    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
   };
 
   const resendEnabledTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: colors.primary[600],
+    color: m3.colorScheme.primary,
     fontWeight: fontWeight.medium,
   };
 
   const backButtonTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: colors.surface[500],
+    color: m3.colorScheme.onSurfaceVariant,
   };
 
   const backButtonWrapperStyle: ViewStyle = {
@@ -203,7 +204,7 @@ export default function OTPVerificationScreen() {
       {/* Header */}
       <View style={headerContainerStyle}>
         <View style={iconContainerStyle}>
-          <IconSymbol name="checkmark.shield.fill" size={40} color={colors.primary[500]} />
+          <IconSymbol name="checkmark.shield.fill" size={40} color={m3.colorScheme.primary} />
         </View>
 
         <Text style={titleTextStyle}>Enter Verification Code</Text>
@@ -239,7 +240,20 @@ export default function OTPVerificationScreen() {
         <Pressable
           onPress={handleResend}
           disabled={resendCooldown > 0 || isLoading}
-          style={buttonWrapperStyle}
+          style={({ pressed }) => [
+            buttonWrapperStyle,
+            {
+              backgroundColor: pressed
+                ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                : 'transparent',
+              borderRadius: m3.shape.cornerMedium,
+              paddingHorizontal: spacing[2],
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={
+            resendCooldown > 0 ? `Resend code in ${resendCooldown} seconds` : 'Resend code'
+          }
         >
           {resendCooldown > 0 ? (
             <Text style={resendDisabledTextStyle}>Resend code in {resendCooldown}s</Text>
@@ -248,7 +262,22 @@ export default function OTPVerificationScreen() {
           )}
         </Pressable>
 
-        <Pressable onPress={handleBack} disabled={isLoading} style={backButtonWrapperStyle}>
+        <Pressable
+          onPress={handleBack}
+          disabled={isLoading}
+          style={({ pressed }) => [
+            backButtonWrapperStyle,
+            {
+              backgroundColor: pressed
+                ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                : 'transparent',
+              borderRadius: m3.shape.cornerMedium,
+              paddingHorizontal: spacing[2],
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Use different email"
+        >
           <Text style={backButtonTextStyle}>Use Different Email</Text>
         </Pressable>
       </View>

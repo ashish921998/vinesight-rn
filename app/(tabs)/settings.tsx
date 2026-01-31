@@ -18,20 +18,35 @@ import { useProfile, useUpdateProfile } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { supabase } from '@/lib/supabase';
 
 export default function SettingsScreen() {
-  const { user, signOut, updateUserAreaUnit, isLoading: authLoading } = useAuthStore();
+  const {
+    user,
+    signOut,
+    deleteAccount,
+    updateUserAreaUnit,
+    isLoading: authLoading,
+  } = useAuthStore();
   const { data: profile, refetch: refetchProfile } = useProfile();
   const updateProfile = useUpdateProfile();
 
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [showAreaPicker, setShowAreaPicker] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
 
   // Edit profile form state
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Delete account form state
+  const [deleteEmail, setDeleteEmail] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Local preferences state
   const [selectedCurrency, setSelectedCurrency] = useState('INR');
@@ -71,6 +86,59 @@ export default function SettingsScreen() {
         },
       },
     ]);
+  };
+
+  const handleDeleteAccount = () => {
+    setDeleteEmail(userEmail);
+    setShowDeleteAccount(true);
+  };
+
+  const handleConfirmDeleteAccount = async () => {
+    if (deleteEmail !== userEmail) {
+      Alert.alert('Error', 'Email does not match your account email');
+      return;
+    }
+
+    if (!deletePassword) {
+      Alert.alert('Error', 'Please enter your password');
+      return;
+    }
+
+    if (!deleteConfirmed) {
+      Alert.alert('Error', 'Please confirm you understand the consequences');
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: deleteEmail.toLowerCase(),
+        password: deletePassword,
+      });
+
+      if (verifyError) {
+        setIsDeleting(false);
+        Alert.alert('Error', 'Invalid password');
+        return;
+      }
+
+      await deleteAccount(deleteReason);
+      setIsDeleting(false);
+      setDeletePassword('');
+      setShowDeleteAccount(false);
+      Alert.alert(
+        'Account Deletion Requested',
+        'Your account deletion request has been submitted. Your account will be deleted within 30 days. If you change your mind, please contact support immediately.',
+      );
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Delete account error:', error);
+      }
+      setIsDeleting(false);
+      setDeletePassword('');
+      Alert.alert('Error', 'Failed to submit deletion request. Please try again.');
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -183,17 +251,6 @@ export default function SettingsScreen() {
         <Text style={styles.notificationNote}>Notification settings are stored locally</Text>
       </View>
 
-      {/* Support Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>SUPPORT</Text>
-        <View style={styles.sectionContent}>
-          <SettingsItem icon="questionmark.circle" title="Help Center" />
-          <SettingsItem icon="message" title="Contact Support" />
-          <SettingsItem icon="doc.text" title="Privacy Policy" />
-          <SettingsItem icon="checkmark.shield" title="Terms of Service" isLast />
-        </View>
-      </View>
-
       {/* Account Section */}
       <View style={styles.section}>
         <Text style={styles.sectionHeader}>ACCOUNT</Text>
@@ -203,6 +260,12 @@ export default function SettingsScreen() {
               <UISymbol name="rectangle.portrait.and.arrow.right" size={20} color="#EF4444" />
             </View>
             <Text style={styles.signOutText}>Sign Out</Text>
+          </Pressable>
+          <Pressable onPress={handleDeleteAccount} style={styles.settingsItem}>
+            <View style={styles.deleteIcon}>
+              <UISymbol name="trash" size={20} color="#DC2626" />
+            </View>
+            <Text style={styles.deleteText}>Delete Account</Text>
           </Pressable>
         </View>
       </View>
@@ -367,6 +430,127 @@ export default function SettingsScreen() {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={showDeleteAccount}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowDeleteAccount(false)}
+      >
+        <KeyboardAvoidingView behavior="padding" style={styles.container}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderInner}>
+              <Text style={styles.modalTitle}>Delete Account</Text>
+              <Pressable onPress={() => setShowDeleteAccount(false)}>
+                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+              </Pressable>
+            </View>
+          </View>
+
+          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+            <View style={[styles.alertBox, styles.dangerAlert]}>
+              <UISymbol name="exclamationmark.triangle.fill" size={20} color="#DC2626" />
+              <Text style={styles.alertTitle}>Warning: This action is irreversible</Text>
+              <Text style={styles.alertText}>
+                Deleting your account will permanently remove all your data including:
+              </Text>
+            </View>
+
+            <View style={styles.deleteWarnings}>
+              <Text style={styles.deleteWarningItem}>
+                • All farm data (farms, crops, soil profiles, lab tests)
+              </Text>
+              <Text style={styles.deleteWarningItem}>
+                • All records (irrigation, spray, fertigation, harvest, expenses)
+              </Text>
+              <Text style={styles.deleteWarningItem}>
+                • Worker information and attendance records
+              </Text>
+              <Text style={styles.deleteWarningItem}>
+                • Organization memberships and connections
+              </Text>
+              <Text style={styles.deleteWarningItem}>
+                • All uploaded files (soil test reports, photos, documents)
+              </Text>
+              <Text style={styles.deleteWarningItem}>
+                • Your profile, preferences, and authentication data
+              </Text>
+            </View>
+
+            <View style={styles.formCard}>
+              <View style={styles.mb4}>
+                <Text style={styles.inputLabel}>Confirm your email</Text>
+                <TextInput
+                  value={deleteEmail}
+                  onChangeText={setDeleteEmail}
+                  placeholder="Enter your email"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  style={styles.input}
+                />
+                <Text style={styles.inputHint}>Enter your account email to confirm deletion</Text>
+              </View>
+
+              <View style={styles.mb4}>
+                <Text style={styles.inputLabel}>Confirm your password</Text>
+                <TextInput
+                  value={deletePassword}
+                  onChangeText={setDeletePassword}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#9CA3AF"
+                  secureTextEntry
+                  style={styles.input}
+                />
+                <Text style={styles.inputHint}>Enter your password to verify your identity</Text>
+              </View>
+
+              <View style={styles.mb4}>
+                <Text style={styles.inputLabel}>Reason for deletion (optional)</Text>
+                <TextInput
+                  value={deleteReason}
+                  onChangeText={setDeleteReason}
+                  placeholder="Tell us why you're leaving..."
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                  numberOfLines={3}
+                  style={[styles.input, { height: 80 }]}
+                />
+                <Text style={styles.inputHint}>This helps us improve the service</Text>
+              </View>
+
+              <Pressable
+                onPress={() => setDeleteConfirmed(!deleteConfirmed)}
+                style={styles.checkboxContainer}
+              >
+                <View style={[styles.checkbox, deleteConfirmed && styles.checkboxChecked]}>
+                  {deleteConfirmed && <UISymbol name="checkmark" size={14} color="white" />}
+                </View>
+                <Text style={styles.checkboxText}>
+                  I understand that my account and all associated data will be{' '}
+                  <Text style={styles.checkboxBold}>permanently deleted</Text> and cannot be
+                  recovered. I also understand that this action cannot be undone.
+                </Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+
+          <View style={styles.modalFooter}>
+            <Pressable
+              onPress={handleConfirmDeleteAccount}
+              disabled={isDeleting}
+              style={[styles.deleteButton, { backgroundColor: '#DC2626' }]}
+            >
+              {isDeleting ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.deleteButtonText}>Delete My Account</Text>
+              )}
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </ScrollView>
   );
 }
@@ -494,6 +678,14 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
+  deleteIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FECACA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
   settingsTitle: {
     flex: 1,
     marginLeft: spacing[3],
@@ -505,6 +697,12 @@ const styles = {
     marginLeft: spacing[3],
     fontSize: fontSize.base,
     color: '#DC2626',
+  } as TextStyle,
+  deleteText: {
+    flex: 1,
+    marginLeft: spacing[3],
+    fontSize: fontSize.base,
+    color: '#B91C1C',
   } as TextStyle,
   settingsValue: {
     fontSize: fontSize.sm,
@@ -608,4 +806,70 @@ const styles = {
   saveButtonText: { color: colors.surface[100], fontWeight: fontWeight.semibold } as TextStyle,
 
   pickerItemText: { flex: 1, fontSize: fontSize.base, color: colors.surface[900] } as TextStyle,
+
+  alertBox: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: borderRadius['2xl'],
+    padding: spacing[4],
+    marginBottom: spacing[4],
+  } as ViewStyle,
+  dangerAlert: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#DC2626',
+  } as ViewStyle,
+  alertTitle: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.bold,
+    color: '#DC2626',
+    marginTop: spacing[2],
+  } as TextStyle,
+  alertText: {
+    fontSize: fontSize.sm,
+    color: colors.surface[700],
+    marginTop: spacing[1],
+  } as TextStyle,
+  deleteWarnings: {
+    marginBottom: spacing[4],
+  } as ViewStyle,
+  deleteWarningItem: {
+    fontSize: fontSize.sm,
+    color: colors.surface[600],
+    marginBottom: spacing[2],
+    paddingLeft: spacing[1],
+  } as TextStyle,
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing[3],
+  } as ViewStyle,
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  } as ViewStyle,
+  checkboxChecked: {
+    backgroundColor: '#DC2626',
+    borderColor: '#DC2626',
+  } as ViewStyle,
+  checkboxText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    color: colors.surface[700],
+    lineHeight: 20,
+  } as TextStyle,
+  checkboxBold: {
+    fontWeight: fontWeight.bold,
+    color: '#DC2626',
+  } as TextStyle,
+  deleteButton: {
+    paddingVertical: 14,
+    borderRadius: borderRadius.xl,
+    alignItems: 'center',
+  } as ViewStyle,
+  deleteButtonText: { color: colors.surface[100], fontWeight: fontWeight.semibold } as TextStyle,
 };

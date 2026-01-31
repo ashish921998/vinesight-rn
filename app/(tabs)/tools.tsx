@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { Symbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { colors, m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 // Calculator data (Irrigation Planning section)
 const calculators = [
@@ -11,7 +13,7 @@ const calculators = [
     title: 'Weather & Irrigation',
     description: 'Farm weather data, forecasts & irrigation needs',
     icon: 'sun.max.fill' as const,
-    color: '#F59E0B',
+    color: colors.warning,
     route: '/weather' as Href,
   },
   {
@@ -19,7 +21,7 @@ const calculators = [
     title: 'MAD Calculator',
     description: 'Maximum allowable deficit & tank requirements',
     icon: 'gauge' as const,
-    color: '#3B82F6',
+    color: colors.spray[500],
     route: '/calculator/mad' as Href,
   },
   {
@@ -27,7 +29,7 @@ const calculators = [
     title: 'System Discharge',
     description: 'Irrigation system design & discharge rates',
     icon: 'drop.fill' as const,
-    color: '#408059',
+    color: colors.primary[500],
     route: '/calculator/system-discharge' as Href,
   },
   {
@@ -35,7 +37,7 @@ const calculators = [
     title: 'LAI Calculator',
     description: 'Leaf area index & canopy management',
     icon: 'leaf.fill' as const,
-    color: '#22C55E',
+    color: colors.success,
     route: '/calculator/lai' as Href,
   },
   {
@@ -43,22 +45,24 @@ const calculators = [
     title: 'Nutrient Calculator',
     description: 'Fertilizer requirements & application planning',
     icon: 'flask.fill' as const,
-    color: '#8B5CF6',
+    color: colors.observation[500],
     route: '/calculator/nutrients' as Href,
   },
 ];
 
 export default function ToolsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom + spacing[8], spacing[12]);
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
-      style={{ backgroundColor: '#f2f2f7' }}
+      contentContainerStyle={{ padding: spacing[4], paddingBottom: bottomPadding }}
+      style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
     >
       {/* Header */}
       <View style={{ marginBottom: spacing[4] }}>
-        <Text style={{ color: colors.surface[500], fontSize: fontSize.base }}>
+        <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
           Scientific calculators for precision vineyard management
         </Text>
       </View>
@@ -67,8 +71,8 @@ export default function ToolsScreen() {
       <View style={{ marginBottom: spacing[6] }}>
         <Text
           style={{
-            color: colors.surface[500],
-            fontSize: fontSize.xs,
+            color: m3.colorScheme.onSurfaceVariant,
+            ...m3.typography.labelSmall,
             fontWeight: fontWeight.bold,
             letterSpacing: 1,
             marginBottom: spacing[3],
@@ -80,45 +84,73 @@ export default function ToolsScreen() {
           <Pressable
             key={calc.id}
             onPress={() => router.push(calc.route)}
+            accessibilityRole="button"
+            accessibilityLabel={`${calc.title}. ${calc.description}`}
             style={{
-              backgroundColor: colors.surface[100],
-              borderRadius: borderRadius['2xl'],
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderRadius: m3.shape.cornerLarge,
               padding: spacing[4],
               marginBottom: spacing[3],
               flexDirection: 'row',
               alignItems: 'center',
+              borderWidth: 1,
+              borderColor: m3.colorScheme.outlineVariant,
+              overflow: 'hidden',
             }}
           >
-            <View
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: borderRadius.xl,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: `${calc.color}15`,
-              }}
-            >
-              <Symbol name={calc.icon} size={22} color={calc.color} />
-            </View>
-            <View style={{ flex: 1, marginLeft: spacing[3] }}>
-              <Text
-                style={{
-                  color: colors.surface[900],
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.semibold,
-                }}
-              >
-                {calc.title}
-              </Text>
-              <Text
-                style={{ color: colors.surface[500], fontSize: fontSize.xs, marginTop: 2 }}
-                numberOfLines={2}
-              >
-                {calc.description}
-              </Text>
-            </View>
-            <Symbol name="chevron.right" size={20} color="#D1D5DB" />
+            {({ pressed }) => (
+              <>
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: m3.shape.cornerMedium,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: colorWithOpacity(calc.color, 0.12),
+                  }}
+                >
+                  <SymbolIcon name={calc.icon} size={22} color={calc.color} />
+                </View>
+                <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                  <Text
+                    style={{
+                      color: m3.colorScheme.onSurface,
+                      fontSize: fontSize.base,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {calc.title}
+                  </Text>
+                  <Text
+                    style={{
+                      color: m3.colorScheme.onSurfaceVariant,
+                      ...m3.typography.labelSmall,
+                      marginTop: 2,
+                    }}
+                    numberOfLines={2}
+                  >
+                    {calc.description}
+                  </Text>
+                </View>
+                <SymbolIcon
+                  name="chevron.right"
+                  size={20}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </>
+            )}
           </Pressable>
         ))}
       </View>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Symbol } from '@/components/ui/symbol';
 import { useFarms } from '@/hooks';
@@ -88,91 +88,89 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
         style={{ height: 200, position: 'absolute', top: 0, left: 0, right: 0 }}
       />
 
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-        <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
-          <View
-            style={{
-              borderRadius: borderRadius['2xl'],
-              padding: 6,
-              backgroundColor: UI.surfaceSoft,
-              borderColor: UI.border,
-              borderWidth: 1,
-            }}
-          >
-            <View
-              style={{ flexDirection: 'row', overflow: 'hidden', borderRadius: borderRadius.xl }}
+      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
+        <View
+          style={{
+            borderRadius: borderRadius['2xl'],
+            padding: 6,
+            backgroundColor: UI.surfaceSoft,
+            borderColor: UI.border,
+            borderWidth: 1,
+          }}
+        >
+          <View style={{ flexDirection: 'row', overflow: 'hidden', borderRadius: borderRadius.xl }}>
+            <Pressable
+              onPress={() => setActiveTab('mark')}
+              accessibilityRole="button"
+              accessibilityLabel="Mark tab"
+              accessibilityState={{ selected: activeTab === 'mark' }}
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: spacing[3],
+                backgroundColor: activeTab === 'mark' ? UI.primary : 'transparent',
+              }}
             >
-              <Pressable
-                onPress={() => setActiveTab('mark')}
+              <Symbol name="pencil" size={18} color={activeTab === 'mark' ? '#FFFFFF' : UI.muted} />
+              <Text
                 style={{
-                  flex: 1,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: spacing[3],
-                  backgroundColor: activeTab === 'mark' ? UI.primary : 'transparent',
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  marginLeft: spacing[2],
+                  color: activeTab === 'mark' ? '#FFFFFF' : UI.muted,
                 }}
               >
-                <Symbol
-                  name="pencil"
-                  size={18}
-                  color={activeTab === 'mark' ? '#FFFFFF' : UI.muted}
-                />
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
-                    marginLeft: spacing[2],
-                    color: activeTab === 'mark' ? '#FFFFFF' : '#6B7280',
-                  }}
-                >
-                  Mark
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setActiveTab('calendar')}
+                Mark
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setActiveTab('calendar')}
+              accessibilityRole="button"
+              accessibilityLabel="Calendar tab"
+              accessibilityState={{ selected: activeTab === 'calendar' }}
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: spacing[3],
+                backgroundColor: activeTab === 'calendar' ? UI.primary : 'transparent',
+              }}
+            >
+              <Symbol
+                name="calendar"
+                size={18}
+                color={activeTab === 'calendar' ? '#FFFFFF' : UI.muted}
+              />
+              <Text
                 style={{
-                  flex: 1,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: spacing[3],
-                  backgroundColor: activeTab === 'calendar' ? UI.primary : 'transparent',
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  marginLeft: spacing[2],
+                  color: activeTab === 'calendar' ? '#FFFFFF' : UI.muted,
                 }}
               >
-                <Symbol
-                  name="calendar"
-                  size={18}
-                  color={activeTab === 'calendar' ? '#FFFFFF' : UI.muted}
-                />
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
-                    marginLeft: spacing[2],
-                    color: activeTab === 'calendar' ? '#FFFFFF' : '#6B7280',
-                  }}
-                >
-                  Calendar
-                </Text>
-              </Pressable>
-            </View>
+                Calendar
+              </Text>
+            </Pressable>
           </View>
         </View>
+      </View>
 
-        <View style={{ flex: 1 }}>
-          {activeTab === 'mark' && farms && (
-            <MarkAttendanceTab
-              workers={activeWorkers}
-              farms={farms}
-              selectedWorkerIndex={selectedWorkerIndex}
-              onWorkerIndexChange={setSelectedWorkerIndex}
-              onSaveSuccess={onSaveSuccess}
-            />
-          )}
-          {activeTab === 'calendar' && <CalendarAttendanceTab workers={activeWorkers} />}
-        </View>
-      </ScrollView>
+      <View style={{ flex: 1 }}>
+        {activeTab === 'mark' && farms && (
+          <MarkAttendanceTab
+            workers={activeWorkers}
+            farms={farms}
+            selectedWorkerIndex={selectedWorkerIndex}
+            onWorkerIndexChange={setSelectedWorkerIndex}
+            onSaveSuccess={onSaveSuccess}
+          />
+        )}
+        {activeTab === 'calendar' && <CalendarAttendanceTab workers={activeWorkers} />}
+      </View>
     </View>
   );
 }

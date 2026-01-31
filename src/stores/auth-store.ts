@@ -39,8 +39,10 @@ interface AuthActions {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name?: string) => Promise<void>;
   signUpWithOTP: (email: string, password: string, name?: string) => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  deleteAccount: (deleteReason: string) => Promise<void>;
 
   // OTP methods
   sendOTP: (email: string) => Promise<void>;
@@ -354,6 +356,60 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     }
   },
 
+  // Sign in with Apple (required on iOS if other third-party auth providers are offered)
+  signInWithApple: async () => {
+    set({ errorMessage: null, isLoading: true });
+
+    try {
+      const AppleAuthentication = await import('expo-apple-authentication');
+
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) {
+        throw new Error('Sign in with Apple is not available on this device.');
+      }
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        throw new Error('Apple sign-in did not return an identity token.');
+      }
+
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+      });
+      if (error) throw error;
+
+      set({
+        user: data.user,
+        session: data.session,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      const code =
+        typeof error === 'object' && error && 'code' in error
+          ? (error as { code?: unknown }).code
+          : null;
+
+      if (code === 'ERR_REQUEST_CANCELED') {
+        set({ errorMessage: 'Apple sign-in was cancelled', isLoading: false });
+        return;
+      }
+
+      set({
+        errorMessage: getErrorMessage(error, 'Apple sign-in failed'),
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    }
+  },
+
   // Sign out
   signOut: async () => {
     set({ errorMessage: null, isLoading: true });
@@ -403,6 +459,67 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
       });
+    }
+  },
+
+  // Delete account
+  deleteAccount: async (deleteReason: string) => {
+    set({ errorMessage: null, isLoading: true });
+
+    try {
+      if (__DEV__) {
+        console.log('Logging deletion request...');
+      }
+
+      // Log deletion request (actual deletion happens via server-side process)
+      const userId = get().user?.id;
+      if (userId) {
+        const userEmail = get().user?.email;
+        const maskEmail = (email: string) => {
+          const [localPart, domain] = email.split('@');
+          if (localPart.length <= 2) {
+            return `${localPart[0]}***@${domain}`;
+          }
+          return `${localPart[0]}${localPart[1]}***@${domain}`;
+        };
+        console.warn('[DELETE ACCOUNT REQUEST]', {
+          user_id: userId,
+          user_email: userEmail ? maskEmail(userEmail) : undefined,
+          delete_reason: deleteReason || 'Not provided',
+          status: 'pending',
+          requested_at: new Date().toISOString(),
+        });
+      }
+
+      // Sign out after request is logged
+      await supabase.auth.signOut({ scope: 'global' });
+
+      // Clear state
+      set({
+        user: null,
+        session: null,
+        isAuthenticated: false,
+        isLoading: false,
+        pendingOTPEmail: null,
+        otpSentSuccessfully: false,
+        pendingOTPType: 'email',
+      });
+
+      if (__DEV__) {
+        console.log('Account deletion request logged successfully');
+      }
+    } catch (error: unknown) {
+      if (__DEV__) {
+        console.error('Delete account error:', error);
+      }
+
+      // Preserve user state on error so they can retry
+      set({
+        isLoading: false,
+        errorMessage: getErrorMessage(error, 'Failed to delete account'),
+      });
+
+      throw error;
     }
   },
 

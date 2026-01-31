@@ -79,6 +79,16 @@ const formatValue = (value: unknown) => {
   return String(value);
 };
 
+const formatDate = (dateString: string): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return dateString;
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 const normalizeParamKey = (key: string) => {
   const keyMap: Record<string, string> = {
     organic_carbon: 'organicCarbon',
@@ -216,7 +226,9 @@ export function LabTestDetailsModal({
                 >
                   {testType === 'soil' ? 'Soil Test Details' : 'Petiole Test Details'}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>{test.date}</Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                  {formatDate(test.date)}
+                </Text>
               </View>
               <Pressable
                 onPress={onClose}
@@ -260,6 +272,14 @@ export function LabTestDetailsModal({
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
                       {available.map(([key, value]) => {
                         const paramOption = getParamOption(String(key), testType);
+                        const numericValue =
+                          typeof value === 'number' ? value : parseFloat(String(value));
+                        const isNumeric = !Number.isNaN(numericValue);
+                        const isOutOfRange =
+                          isNumeric && paramOption
+                            ? numericValue < paramOption.optimalMin ||
+                              numericValue > paramOption.optimalMax
+                            : false;
 
                         return (
                           <View
@@ -271,7 +291,7 @@ export function LabTestDetailsModal({
                               paddingHorizontal: spacing[3],
                               paddingVertical: spacing[2],
                               borderWidth: 1,
-                              borderColor: colors.gray[200],
+                              borderColor: isOutOfRange ? colors.errorRed[500] : colors.gray[200],
                             }}
                           >
                             <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
@@ -281,7 +301,7 @@ export function LabTestDetailsModal({
                               style={{
                                 fontSize: fontSize.base,
                                 fontWeight: fontWeight.semibold,
-                                color: accentColor,
+                                color: isOutOfRange ? colors.errorRed[500] : accentColor,
                                 marginTop: spacing[1],
                               }}
                             >
@@ -291,7 +311,7 @@ export function LabTestDetailsModal({
                               <Text
                                 style={{
                                   fontSize: fontSize.xs,
-                                  color: colors.gray[400],
+                                  color: isOutOfRange ? colors.errorRed[500] : colors.gray[400],
                                   marginTop: spacing[1],
                                 }}
                               >

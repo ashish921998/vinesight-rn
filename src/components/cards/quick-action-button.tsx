@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
+import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { m3, spacing, borderRadius, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface QuickActionButtonProps {
   title: string;
@@ -16,48 +17,13 @@ interface QuickActionButtonProps {
 }
 
 export function QuickActionButton({ title, icon, color, onPress }: QuickActionButtonProps) {
-  const buildTranslucentColor = (input: string, alpha = 0.1) => {
-    const normalized = input.trim();
-    const hexMatch = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.exec(normalized);
-    if (hexMatch) {
-      let hex = hexMatch[1];
-      if (hex.length === 3) {
-        hex = hex
-          .split('')
-          .map((c) => `${c}${c}`)
-          .join('');
-      }
-      if (hex.length === 8) {
-        hex = hex.slice(0, 6);
-      }
-      const r = parseInt(hex.slice(0, 2), 16);
-      const g = parseInt(hex.slice(2, 4), 16);
-      const b = parseInt(hex.slice(4, 6), 16);
-      if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) {
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      }
-    }
-
-    const rgbMatch = /^rgba?\(([^)]+)\)$/.exec(normalized);
-    if (rgbMatch) {
-      const parts = rgbMatch[1]
-        .split(',')
-        .map((part) => part.trim())
-        .filter(Boolean);
-      if (parts.length >= 3) {
-        const r = Number(parts[0]);
-        const g = Number(parts[1]);
-        const b = Number(parts[2]);
-        if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) {
-          return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-      }
-    }
-
-    return `rgba(0, 0, 0, ${alpha})`;
-  };
   const containerStyle: ViewStyle = {
     alignItems: 'center',
+    minWidth: 72,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[2],
+    borderRadius: m3.shape.cornerMedium,
+    overflow: 'hidden',
   };
 
   const iconContainerStyle: ViewStyle = {
@@ -67,27 +33,44 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[2],
-    backgroundColor: buildTranslucentColor(color, 0.1),
+    backgroundColor: colorWithOpacity(color, 0.12),
   };
 
   const textStyle: TextStyle = {
-    fontSize: fontSize.xs,
+    ...m3.typography.labelSmall,
     fontWeight: fontWeight.medium,
     textAlign: 'center',
-    color: '#000000',
+    color: m3.colorScheme.onSurface,
   };
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [containerStyle, { opacity: pressed ? 0.7 : 1 }]}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
-      <View style={iconContainerStyle}>
-        <IconSymbol name={icon} size={20} color={color} />
-      </View>
-      <Text style={textStyle} numberOfLines={2}>
-        {title}
-      </Text>
+      {({ pressed }) => (
+        <View style={containerStyle}>
+          <View style={iconContainerStyle}>
+            <IconSymbol name={icon} size={20} color={color} />
+          </View>
+          <Text style={textStyle} numberOfLines={2}>
+            {title}
+          </Text>
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor: pressed
+                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  : 'transparent',
+              },
+            ]}
+          />
+        </View>
+      )}
     </Pressable>
   );
 }

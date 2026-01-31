@@ -8,7 +8,8 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface OTPInputProps {
   length?: number;
@@ -66,7 +67,7 @@ export function OTPInput({ length = 6, value, onChange, autoFocus = true, error 
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 10,
+    gap: spacing[2],
   };
 
   const getBoxStyle = (index: number): ViewStyle => {
@@ -74,24 +75,24 @@ export function OTPInput({ length = 6, value, onChange, autoFocus = true, error 
     const isActive = isDigitActive(index);
     const isFilled = digit !== '';
 
-    let borderColor: string = colors.surface[200];
-    let backgroundColor: string = colors.surface[50];
+    let borderColor: string = m3.colorScheme.outlineVariant;
+    let backgroundColor: string = m3.surface.surfaceContainerLow;
 
     if (error) {
-      borderColor = 'rgba(239, 68, 68, 0.6)';
-      backgroundColor = 'rgba(254, 242, 242, 1)';
+      borderColor = colorWithOpacity(m3.colorScheme.error, 0.6);
+      backgroundColor = m3.colorScheme.errorContainer;
     } else if (isActive) {
-      borderColor = colors.primary[500];
-      backgroundColor = colors.primary[50];
+      borderColor = m3.colorScheme.primary;
+      backgroundColor = m3.colorScheme.primaryContainer;
     } else if (isFilled) {
-      borderColor = colors.primary[300];
-      backgroundColor = colors.surface[100];
+      borderColor = colorWithOpacity(m3.colorScheme.primary, 0.5);
+      backgroundColor = m3.surface.surfaceContainerLow;
     }
 
     return {
       width: 48,
       minHeight: 56,
-      borderRadius: borderRadius.xl,
+      borderRadius: m3.shape.cornerMedium,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 2,
@@ -104,7 +105,7 @@ export function OTPInput({ length = 6, value, onChange, autoFocus = true, error 
   const digitTextStyle: TextStyle = {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.surface[900],
+    color: m3.colorScheme.onSurface,
   };
 
   const errorContainerStyle: ViewStyle = {
@@ -116,7 +117,7 @@ export function OTPInput({ length = 6, value, onChange, autoFocus = true, error 
 
   const errorTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: colors.error,
+    color: m3.colorScheme.error,
   };
 
   return (
@@ -158,7 +159,7 @@ export function OTPInput({ length = 6, value, onChange, autoFocus = true, error 
                     style={{
                       width: 2,
                       height: 24,
-                      backgroundColor: colors.primary[500],
+                      backgroundColor: m3.colorScheme.primary,
                       opacity: cursorAnim,
                     }}
                   />

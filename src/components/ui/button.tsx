@@ -4,13 +4,17 @@ import {
   Text,
   ActivityIndicator,
   View,
+  StyleSheet,
   type PressableProps,
+  type PressableStateCallbackType,
+  type StyleProp,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
-interface ButtonProps extends PressableProps {
+interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
@@ -18,6 +22,7 @@ interface ButtonProps extends PressableProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  style?: StyleProp<ViewStyle> | ((state: PressableStateCallbackType) => StyleProp<ViewStyle>);
 }
 
 export function Button({
@@ -39,27 +44,30 @@ export function Button({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: borderRadius.xl,
+    borderRadius: m3.shape.cornerMedium,
+    overflow: 'hidden',
   };
 
   // Size styles
   const sizeStyles: Record<string, ViewStyle> = {
-    sm: { paddingHorizontal: spacing[4], paddingVertical: spacing[2] },
-    md: { paddingHorizontal: spacing[6], paddingVertical: spacing[3] },
-    lg: { paddingHorizontal: spacing[8], paddingVertical: spacing[4] },
+    sm: { paddingHorizontal: spacing[4], paddingVertical: spacing[2], minHeight: 40 },
+    md: { paddingHorizontal: spacing[6], paddingVertical: spacing[3], minHeight: 48 },
+    lg: { paddingHorizontal: spacing[8], paddingVertical: spacing[4], minHeight: 56 },
   };
 
   // Variant styles
   const variantStyles: Record<string, ViewStyle> = {
     primary: {
-      backgroundColor: isDisabled ? colors.surface[300] : colors.primary[500],
+      backgroundColor: isDisabled ? m3.colorScheme.surfaceVariant : m3.colorScheme.primary,
     },
     secondary: {
-      backgroundColor: isDisabled ? colors.surface[200] : colors.surface[100],
+      backgroundColor: isDisabled
+        ? m3.surface.surfaceContainerHigh
+        : m3.surface.surfaceContainerLow,
     },
     outline: {
       borderWidth: 1,
-      borderColor: isDisabled ? colors.surface[300] : colors.primary[500],
+      borderColor: isDisabled ? m3.colorScheme.outlineVariant : m3.colorScheme.outline,
       backgroundColor: 'transparent',
     },
     ghost: {
@@ -76,19 +84,19 @@ export function Button({
 
   const textVariantStyles: Record<string, TextStyle> = {
     primary: {
-      color: isDisabled ? colors.surface[500] : colors.surface[100],
+      color: isDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onPrimary,
       fontWeight: fontWeight.semibold,
     },
     secondary: {
-      color: isDisabled ? colors.surface[400] : colors.surface[700],
+      color: isDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onSurface,
       fontWeight: fontWeight.semibold,
     },
     outline: {
-      color: isDisabled ? colors.surface[400] : colors.primary[500],
+      color: isDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.primary,
       fontWeight: fontWeight.semibold,
     },
     ghost: {
-      color: isDisabled ? colors.surface[400] : colors.primary[500],
+      color: isDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.primary,
       fontWeight: fontWeight.medium,
     },
   };
@@ -105,23 +113,42 @@ export function Button({
     ...textVariantStyles[variant],
   };
 
-  const resolvedStyle: PressableProps['style'] = (state) => [
-    containerStyle,
-    typeof style === 'function' ? style(state) : style,
-  ];
+  const stateLayerColor =
+    variant === 'primary' ? m3.colorScheme.onPrimary : m3.colorScheme.onSurface;
 
   return (
-    <Pressable disabled={isDisabled} style={resolvedStyle} {...props}>
-      {isLoading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? colors.surface[100] : colors.primary[500]}
-          size={size === 'sm' ? 'small' : 'small'}
-        />
-      ) : (
+    <Pressable
+      disabled={isDisabled}
+      accessibilityRole={props.accessibilityRole ?? 'button'}
+      style={(state) => [containerStyle, typeof style === 'function' ? style(state) : style]}
+      {...props}
+    >
+      {(state) => (
         <>
-          {leftIcon && <View style={{ marginRight: spacing[2] }}>{leftIcon}</View>}
-          <Text style={textStyle}>{title}</Text>
-          {rightIcon && <View style={{ marginLeft: spacing[2] }}>{rightIcon}</View>}
+          {isLoading ? (
+            <ActivityIndicator
+              color={variant === 'primary' ? m3.colorScheme.onPrimary : m3.colorScheme.primary}
+              size="small"
+            />
+          ) : (
+            <>
+              {leftIcon && <View style={{ marginRight: spacing[2] }}>{leftIcon}</View>}
+              <Text style={textStyle}>{title}</Text>
+              {rightIcon && <View style={{ marginLeft: spacing[2] }}>{rightIcon}</View>}
+            </>
+          )}
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor:
+                  state.pressed && !isDisabled
+                    ? colorWithOpacity(stateLayerColor, m3.stateLayerOpacity.pressed)
+                    : 'transparent',
+              },
+            ]}
+          />
         </>
       )}
     </Pressable>

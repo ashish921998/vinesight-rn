@@ -7,6 +7,7 @@ import {
   Pressable,
   Image,
   ImageSourcePropType,
+  StyleSheet,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -14,8 +15,9 @@ import { router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import playstoreLogo from '../../assets/playstore.png';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import appIcon from '../../assets/icon.png';
+import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -31,6 +33,7 @@ export default function LoginScreen() {
     signUpWithOTP,
     clearError,
     isAuthenticated,
+    signInWithApple,
     signInWithGoogle,
   } = useAuthStore();
 
@@ -74,20 +77,20 @@ export default function LoginScreen() {
 
   const containerStyle: ViewStyle = {
     flex: 1,
-    backgroundColor: colors.surface[100],
+    backgroundColor: m3.colorScheme.surface,
   };
 
   const contentContainerStyle: ViewStyle = {
     flex: 1,
     paddingHorizontal: spacing[8],
-    paddingTop: 64,
+    paddingTop: spacing[16],
     paddingBottom: spacing[8],
   };
 
   const logoContainerStyle: ViewStyle = {
     alignItems: 'center',
     marginTop: spacing[8],
-    marginBottom: 48,
+    marginBottom: spacing[12],
   };
 
   const logoBoxStyle: ViewStyle = {
@@ -97,19 +100,19 @@ export default function LoginScreen() {
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[4],
-    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
   };
 
   const titleTextStyle: TextStyle = {
     fontSize: fontSize['3xl'],
     fontWeight: fontWeight.bold,
-    color: '#000000',
+    color: m3.colorScheme.onSurface,
   };
 
   const subtitleTextStyle: TextStyle = {
     fontSize: fontSize.base,
     marginTop: spacing[1],
-    color: colors.surface[500],
+    color: m3.colorScheme.onSurfaceVariant,
   };
 
   const formContainerStyle: ViewStyle = {
@@ -128,14 +131,16 @@ export default function LoginScreen() {
     paddingVertical: spacing[3],
     borderRadius: borderRadius.xl,
     marginBottom: spacing[2],
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+    borderWidth: 1,
+    borderColor: colorWithOpacity(m3.colorScheme.error, 0.25),
   };
 
   const errorTextStyle: TextStyle = {
     fontSize: fontSize.sm,
     marginLeft: spacing[2],
     flex: 1,
-    color: colors.error,
+    color: m3.colorScheme.error,
   };
 
   const dividerContainerStyle: ViewStyle = {
@@ -147,13 +152,13 @@ export default function LoginScreen() {
   const dividerLineStyle: ViewStyle = {
     flex: 1,
     height: 1,
-    backgroundColor: colors.surface[300],
+    backgroundColor: m3.colorScheme.outlineVariant,
   };
 
   const dividerTextStyle: TextStyle = {
     fontSize: fontSize.sm,
     marginHorizontal: spacing[4],
-    color: colors.surface[400],
+    color: m3.colorScheme.onSurfaceVariant,
   };
 
   const toggleContainerStyle: ViewStyle = {
@@ -164,12 +169,12 @@ export default function LoginScreen() {
 
   const toggleTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: colors.surface[500],
+    color: m3.colorScheme.onSurfaceVariant,
   };
 
   const toggleLinkStyle: TextStyle = {
     fontWeight: fontWeight.semibold,
-    color: colors.primary[500],
+    color: m3.colorScheme.primary,
   };
 
   return (
@@ -187,7 +192,7 @@ export default function LoginScreen() {
           <View style={logoContainerStyle}>
             <View style={logoBoxStyle}>
               <Image
-                source={playstoreLogo as ImageSourcePropType}
+                source={appIcon as ImageSourcePropType}
                 style={{ width: 80, height: 80 }}
                 resizeMode="contain"
               />
@@ -227,7 +232,7 @@ export default function LoginScreen() {
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                leftIcon="lock-closed"
+                leftIcon="lock.fill"
                 isPassword
                 textContentType={isSignUp ? 'newPassword' : 'password'}
                 autoComplete={isSignUp ? 'password-new' : 'password'}
@@ -237,7 +242,11 @@ export default function LoginScreen() {
               {/* Error Message */}
               {errorMessage && (
                 <View style={errorContainerStyle}>
-                  <UiSymbol name="exclamationmark.circle.fill" size={18} color={colors.error} />
+                  <UiSymbol
+                    name="exclamationmark.circle.fill"
+                    size={18}
+                    color={m3.colorScheme.error}
+                  />
                   <Text style={errorTextStyle}>{errorMessage}</Text>
                 </View>
               )}
@@ -259,22 +268,56 @@ export default function LoginScreen() {
               <View style={dividerLineStyle} />
             </View>
 
+            {/* Apple Sign In (required on iOS if Google is offered) */}
+            {process.env.EXPO_OS === 'ios' && (
+              <Button
+                title="Continue with Apple"
+                variant="outline"
+                leftIcon={<UiSymbol name="apple.logo" size={20} color={m3.colorScheme.primary} />}
+                onPress={signInWithApple}
+                disabled={isLoading}
+                style={{ marginBottom: spacing[3] }}
+              />
+            )}
+
             {/* Google Sign In */}
             <Button
               title="Continue with Google"
               variant="outline"
-              leftIcon={<UiSymbol name="g.circle.fill" size={20} color={colors.primary[500]} />}
+              leftIcon={<UiSymbol name="g.circle.fill" size={20} color={m3.colorScheme.primary} />}
               onPress={signInWithGoogle}
               disabled={isLoading}
             />
           </View>
 
           {/* Toggle Sign Up/Sign In */}
-          <Pressable onPress={toggleMode} style={toggleContainerStyle} disabled={isLoading}>
-            <Text style={toggleTextStyle}>
-              {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-              <Text style={toggleLinkStyle}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
-            </Text>
+          <Pressable
+            onPress={toggleMode}
+            style={toggleContainerStyle}
+            disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityLabel={isSignUp ? 'Switch to sign in' : 'Switch to sign up'}
+          >
+            {({ pressed }) => (
+              <View style={{ paddingVertical: spacing[2], paddingHorizontal: spacing[2] }}>
+                <Text style={toggleTextStyle}>
+                  {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+                  <Text style={toggleLinkStyle}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
+                </Text>
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                      borderRadius: m3.shape.cornerMedium,
+                    },
+                  ]}
+                />
+              </View>
+            )}
           </Pressable>
         </View>
       </ScrollView>

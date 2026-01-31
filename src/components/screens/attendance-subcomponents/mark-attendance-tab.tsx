@@ -1,9 +1,20 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Alert, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Platform,
+} from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
+import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { WorkerSelectSheet, FarmSelectSheet } from './index';
 
 type AttendanceStatus = WorkStatus | null;
@@ -20,50 +31,51 @@ interface CellData {
 
 const STATUS_CYCLE: AttendanceStatus[] = ['full_day', 'half_day', 'absent', null];
 
-const UI = {
-  bg: '#F4F6F8',
-  surface: '#FFFFFF',
-  surfaceSoft: 'rgba(255, 255, 255, 0.9)',
-  border: 'rgba(15, 23, 42, 0.08)',
-  primary: '#2F6B4F',
-  primarySoft: 'rgba(47, 107, 79, 0.12)',
-  text: '#0F172A',
-  muted: '#6B7280',
-  accent: '#2563EB',
-};
-
-const getStatusDisplay = (status: AttendanceStatus) => {
+const getStatusDisplay = (
+  status: AttendanceStatus,
+): {
+  label: string;
+  bgColor: string;
+  badgeColor: string;
+  badgeTextColor: string;
+  textColor: string;
+  fullLabel: string;
+} => {
   switch (status) {
     case 'full_day':
       return {
         label: 'F',
-        bgColor: '#DCFCE7',
-        badgeColor: '#22C55E',
-        textColor: '#166534',
+        bgColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+        badgeColor: m3.colorScheme.primary,
+        badgeTextColor: m3.colorScheme.onPrimary,
+        textColor: m3.colorScheme.primary,
         fullLabel: 'Full Day',
       };
     case 'half_day':
       return {
         label: 'H',
-        bgColor: '#FEF3C7',
-        badgeColor: '#F59E0B',
-        textColor: '#B45309',
+        bgColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
+        badgeColor: m3.colorScheme.warning,
+        badgeTextColor: m3.colorScheme.onWarning,
+        textColor: m3.colorScheme.warning,
         fullLabel: 'Half Day',
       };
     case 'absent':
       return {
         label: 'A',
-        bgColor: '#FEE2E2',
-        badgeColor: '#EF4444',
-        textColor: '#B91C1C',
+        bgColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+        badgeColor: m3.colorScheme.error,
+        badgeTextColor: m3.colorScheme.onError,
+        textColor: m3.colorScheme.error,
         fullLabel: 'Absent',
       };
     default:
       return {
         label: '-',
-        bgColor: '#F9FAFB',
-        badgeColor: '#E5E7EB',
-        textColor: '#6B7280',
+        bgColor: m3.surface.surfaceContainerLowest,
+        badgeColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.18),
+        badgeTextColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
+        textColor: m3.colorScheme.onSurfaceVariant,
         fullLabel: 'Not Set',
       };
   }
@@ -84,6 +96,8 @@ export function MarkAttendanceTab({
   onWorkerIndexChange,
   onSaveSuccess,
 }: MarkAttendanceTabProps) {
+  const tabBarInset = useTabBarInset();
+  const bottomActionBarHeight = 88;
   const [cellData, setCellData] = useState<Map<string, CellData>>(new Map());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -102,7 +116,7 @@ export function MarkAttendanceTab({
     const offset = (dayOfWeek + 6) % 7;
     const monday = new Date(today);
     monday.setDate(today.getDate() - offset);
-    return Array.from({ length: 6 }, (_, i) => {
+    return Array.from({ length: 7 }, (_, i) => {
       const date = new Date(monday);
       date.setDate(monday.getDate() + i);
       return date;
@@ -314,12 +328,6 @@ export function MarkAttendanceTab({
     }
   };
 
-  const goToPrevWorker = () => {
-    if (selectedWorkerIndex > 0) {
-      onWorkerIndexChange(selectedWorkerIndex - 1);
-    }
-  };
-
   const handleWorkerSelect = () => {
     if (workers.length === 0) return;
     setWorkerSheetVisible(true);
@@ -347,535 +355,611 @@ export function MarkAttendanceTab({
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={UI.primary} />
+        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
       </View>
     );
   }
 
   if (!selectedWorker) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Text>No workers available</Text>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: m3.colorScheme.surface,
+          padding: spacing[6],
+        }}
+      >
+        <UiSymbol
+          name="person.2"
+          size={28}
+          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+        />
+        <Text style={{ marginTop: spacing[3], color: m3.colorScheme.onSurfaceVariant }}>
+          No workers available
+        </Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: UI.bg }} showsVerticalScrollIndicator={false}>
-      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
-        <View
-          style={{
-            borderRadius: borderRadius['3xl'],
-            padding: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
-            borderWidth: 1,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.xs,
-              fontWeight: fontWeight.bold,
-              textTransform: 'uppercase',
-              letterSpacing: 0.6,
-              color: UI.muted,
-            }}
-          >
-            Attendance
-          </Text>
-          <Text
-            style={{
-              fontSize: fontSize.xl,
-              fontWeight: fontWeight.bold,
-              marginTop: spacing[1],
-              color: UI.text,
-            }}
-          >
-            Mark daily status quickly
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}>
-            <UiSymbol name="info.circle" size={16} color={UI.muted} />
-            <Text style={{ fontSize: fontSize.xs, marginLeft: spacing[2], color: UI.muted }}>
-              Tap a day to cycle Full • Half • Absent • Clear
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
-        <View
-          style={{
-            borderRadius: borderRadius['3xl'],
-            padding: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
-            borderWidth: 1,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.xs,
-              fontWeight: fontWeight.bold,
-              textTransform: 'uppercase',
-              letterSpacing: 0.6,
-              color: UI.muted,
-            }}
-          >
-            Filters
-          </Text>
-          <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
-            <Pressable
-              onPress={handleWorkerSelect}
-              style={{
-                flex: 1,
-                paddingHorizontal: spacing[4],
-                paddingVertical: spacing[3],
-                borderRadius: borderRadius['2xl'],
-                borderWidth: 1,
-                backgroundColor: colors.white,
-                borderColor: UI.border,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <UiSymbol name="person" size={16} color={UI.primary} />
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.semibold,
-                    marginLeft: spacing[2],
-                    color: UI.muted,
-                  }}
-                >
-                  Worker
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}>
-                <Text
-                  style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: UI.text }}
-                >
-                  {selectedWorker?.name || 'All Workers'}
-                </Text>
-                <UiSymbol name="chevron.down" size={14} color={UI.muted} />
-              </View>
-            </Pressable>
-            <Pressable
-              onPress={() => setFarmSheetVisible(true)}
-              style={{
-                flex: 1,
-                paddingHorizontal: spacing[4],
-                paddingVertical: spacing[3],
-                borderRadius: borderRadius['2xl'],
-                borderWidth: 1,
-                backgroundColor: colors.white,
-                borderColor: UI.border,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <UiSymbol name="leaf" size={16} color={UI.primary} />
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.semibold,
-                    marginLeft: spacing[2],
-                    color: UI.muted,
-                  }}
-                >
-                  Farms
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}>
-                <Text
-                  style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: UI.text }}
-                >
-                  {selectedFarmIds.length > 0 ? `${selectedFarmIds.length} selected` : 'All Farms'}
-                </Text>
-                <UiSymbol name="chevron.down" size={14} color={UI.muted} />
-              </View>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-
-      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
-        <View
-          style={{
-            borderRadius: borderRadius['3xl'],
-            padding: spacing[4],
-            marginBottom: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
-            borderWidth: 1,
-          }}
-        >
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingBottom: bottomActionBarHeight + tabBarInset + spacing[4],
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
           <View
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: spacing[4],
+              borderRadius: m3.shape.cornerLarge,
+              padding: spacing[4],
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderColor: m3.colorScheme.outlineVariant,
+              borderWidth: 1,
             }}
           >
-            <View>
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  fontWeight: fontWeight.bold,
-                  textTransform: 'uppercase',
-                  color: UI.muted,
-                }}
-              >
-                This Week
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.semibold,
-                  marginTop: spacing[1],
-                  color: UI.text,
-                }}
-              >
-                {formatShortDate(dateRange[0])} - {formatShortDate(dateRange[dateRange.length - 1])}
-              </Text>
-            </View>
-            <Pressable
+            <Text
               style={{
-                paddingHorizontal: spacing[3],
-                paddingVertical: 6,
-                borderRadius: borderRadius.full,
-                backgroundColor: UI.primarySoft,
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.bold,
+                textTransform: 'uppercase',
+                letterSpacing: 0.6,
+                color: m3.colorScheme.onSurfaceVariant,
               }}
             >
-              <Text
-                style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: UI.primary }}
+              Filters
+            </Text>
+            <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
+              <Pressable
+                onPress={handleWorkerSelect}
+                accessibilityRole="button"
+                accessibilityLabel="Select worker"
+                style={({ pressed }) => ({
+                  flex: 1,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderRadius: m3.shape.cornerMedium,
+                  borderWidth: 1,
+                  backgroundColor: m3.surface.surfaceContainerLowest,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  overflow: 'hidden',
+                  ...(pressed
+                    ? {
+                        backgroundColor: colorWithOpacity(
+                          m3.colorScheme.onSurface,
+                          m3.stateLayerOpacity.pressed,
+                        ),
+                      }
+                    : null),
+                })}
               >
-                {hasModifications ? 'Unsaved Changes' : 'Up to Date'}
-              </Text>
-            </Pressable>
-          </View>
-
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-            {dateRange.map((date) => {
-              const dateStr = formatDate(date);
-              const key = getCellKey(selectedWorker?.id || 0, dateStr);
-              const cell = cellData.get(key);
-              const statusInfo = getStatusDisplay(cell?.status ?? null);
-              const modified = cell?.isModified ?? false;
-              const isTodayDate = isToday(date);
-              const hasStatus = cell?.status !== null;
-
-              return (
-                <Pressable
-                  key={dateStr}
-                  onPress={() => handleDayCellClick(date)}
-                  style={{
-                    width: '31%',
-                    aspectRatio: 1,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: spacing[3],
-                    borderRadius: borderRadius['2xl'],
-                    backgroundColor: hasStatus ? statusInfo.bgColor : 'rgba(249, 250, 251, 0.9)',
-                    borderWidth: isTodayDate ? 1 : 0,
-                    borderColor: isTodayDate ? UI.accent : 'transparent',
-                  }}
-                >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <UiSymbol name="person" size={16} color={m3.colorScheme.primary} />
                   <Text
                     style={{
-                      fontSize: 10,
+                      fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
-                      textTransform: 'uppercase',
-                      marginBottom: spacing[1],
-                      color: isTodayDate ? UI.accent : '#9CA3AF',
+                      marginLeft: spacing[2],
+                      color: m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    {getDayName(date)}
+                    Worker
                   </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}>
                   <Text
                     style={{
-                      fontSize: fontSize.lg,
-                      fontWeight: fontWeight.bold,
-                      color: isTodayDate ? '#2563EB' : '#111827',
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.onSurface,
                     }}
                   >
-                    {date.getDate()}
+                    {selectedWorker?.name || 'All Workers'}
                   </Text>
-                  {modified ? (
-                    <View
-                      style={{
-                        position: 'absolute',
-                        top: spacing[2],
-                        right: spacing[2],
-                        width: 8,
-                        height: 8,
-                        borderRadius: borderRadius.full,
-                        backgroundColor: UI.primary,
-                      }}
-                    />
-                  ) : null}
-                  <View
+                  <UiSymbol
+                    name="chevron.down"
+                    size={14}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)}
+                  />
+                </View>
+              </Pressable>
+              <Pressable
+                onPress={() => setFarmSheetVisible(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Select farms"
+                style={({ pressed }) => ({
+                  flex: 1,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                  borderRadius: m3.shape.cornerMedium,
+                  borderWidth: 1,
+                  backgroundColor: m3.surface.surfaceContainerLowest,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  overflow: 'hidden',
+                  ...(pressed
+                    ? {
+                        backgroundColor: colorWithOpacity(
+                          m3.colorScheme.onSurface,
+                          m3.stateLayerOpacity.pressed,
+                        ),
+                      }
+                    : null),
+                })}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <UiSymbol name="leaf" size={16} color={m3.colorScheme.primary} />
+                  <Text
                     style={{
-                      marginTop: spacing[1],
-                      paddingHorizontal: spacing[2],
-                      paddingVertical: 2,
-                      borderRadius: borderRadius.full,
-                      backgroundColor: hasStatus ? statusInfo.badgeColor : 'transparent',
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      marginLeft: spacing[2],
+                      color: m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: fontSize.xs,
-                        fontWeight: fontWeight.bold,
-                        color: hasStatus ? colors.white : 'transparent',
-                      }}
-                    >
-                      {statusInfo.label}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
+                    Farms
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}>
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.onSurface,
+                    }}
+                  >
+                    {selectedFarmIds.length > 0
+                      ? `${selectedFarmIds.length} selected`
+                      : 'All Farms'}
+                  </Text>
+                  <UiSymbol
+                    name="chevron.down"
+                    size={14}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)}
+                  />
+                </View>
+              </Pressable>
+            </View>
           </View>
         </View>
 
-        <View
-          style={{
-            borderRadius: borderRadius['3xl'],
-            padding: spacing[3],
-            marginBottom: spacing[4],
-            flexDirection: 'row',
-            gap: spacing[3],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
-            borderWidth: 1,
-          }}
-        >
-          <Pressable
-            onPress={() => handleQuickAction('full_day')}
-            style={{
-              flex: 1,
-              paddingVertical: spacing[3],
-              borderRadius: borderRadius['2xl'],
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(34, 197, 94, 0.12)',
-            }}
-          >
-            <UiSymbol name="checkmark.circle.fill" size={18} color="#22C55E" />
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.bold,
-                marginLeft: spacing[2],
-                color: '#166534',
-              }}
-            >
-              All Full
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => handleQuickAction('half_day')}
-            style={{
-              flex: 1,
-              paddingVertical: spacing[3],
-              borderRadius: borderRadius['2xl'],
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(245, 158, 11, 0.12)',
-            }}
-          >
-            <UiSymbol name="clock.fill" size={18} color="#F59E0B" />
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.bold,
-                marginLeft: spacing[2],
-                color: '#B45309',
-              }}
-            >
-              All Half
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => handleQuickAction('absent')}
-            style={{
-              flex: 1,
-              paddingVertical: spacing[3],
-              borderRadius: borderRadius['2xl'],
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(239, 68, 68, 0.12)',
-            }}
-          >
-            <UiSymbol name="xmark.circle.fill" size={18} color="#EF4444" />
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.bold,
-                marginLeft: spacing[2],
-                color: '#B91C1C',
-              }}
-            >
-              All Off
-            </Text>
-          </Pressable>
-        </View>
-
-        <View
-          style={{
-            borderRadius: borderRadius['3xl'],
-            padding: spacing[4],
-            marginBottom: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
-            borderWidth: 1,
-          }}
-        >
+        <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
           <View
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+            style={{
+              borderRadius: m3.shape.cornerLarge,
+              padding: spacing[6],
+              marginBottom: spacing[4],
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderColor: m3.colorScheme.outlineVariant,
+              borderWidth: 1,
+            }}
           >
-            <Pressable
-              onPress={goToPrevWorker}
-              disabled={selectedWorkerIndex === 0}
+            <View
               style={{
-                width: 48,
-                height: 48,
-                borderRadius: borderRadius.full,
+                flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor:
-                  selectedWorkerIndex === 0 ? 'rgba(229, 231, 235, 0.5)' : UI.primarySoft,
+                justifyContent: 'space-between',
+                marginBottom: spacing[4],
               }}
             >
-              <UiSymbol
-                name="chevron.left"
-                size={22}
-                color={selectedWorkerIndex === 0 ? '#D1D5DB' : UI.primary}
-              />
-            </Pressable>
-
-            <View style={{ flex: 1, marginHorizontal: spacing[4], alignItems: 'center' }}>
-              <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: UI.text }}>
-                {selectedWorker?.name}
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}>
-                <UiSymbol name="wallet.pass" size={14} color={UI.primary} />
+              <View>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.bold,
+                    textTransform: 'uppercase',
+                    color: m3.colorScheme.onSurfaceVariant,
+                  }}
+                >
+                  This Week
+                </Text>
                 <Text
                   style={{
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
-                    marginLeft: spacing[1],
-                    color: UI.muted,
+                    marginTop: spacing[1],
+                    color: m3.colorScheme.onSurface,
                   }}
                 >
-                  ₹{selectedWorker?.daily_rate}/day
+                  {formatShortDate(dateRange[0])} -{' '}
+                  {formatShortDate(dateRange[dateRange.length - 1])}
                 </Text>
               </View>
-              <Pressable
-                onPress={handleWorkerSelect}
+              <View
                 style={{
-                  marginTop: spacing[2],
                   paddingHorizontal: spacing[3],
                   paddingVertical: 6,
                   borderRadius: borderRadius.full,
-                  borderWidth: 1,
-                  borderColor: 'rgba(47, 107, 79, 0.3)',
+                  backgroundColor: hasModifications
+                    ? colorWithOpacity(m3.colorScheme.warning, 0.18)
+                    : m3.colorScheme.primaryContainer,
                 }}
               >
                 <Text
-                  style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: UI.primary }}
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.bold,
+                    color: hasModifications ? m3.colorScheme.warning : m3.colorScheme.primary,
+                  }}
                 >
-                  Select Worker
+                  {hasModifications ? 'Unsaved Changes' : 'Up to Date'}
                 </Text>
-              </Pressable>
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: fontWeight.semibold,
-                  marginTop: spacing[2],
-                  color: '#9CA3AF',
-                }}
-              >
-                {selectedWorkerIndex + 1} of {workers.length}
-              </Text>
+              </View>
             </View>
 
-            <Pressable
-              onPress={goToNextWorker}
-              disabled={selectedWorkerIndex === workers.length - 1}
+            <View
               style={{
-                width: 48,
-                height: 48,
-                borderRadius: borderRadius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor:
-                  selectedWorkerIndex === workers.length - 1
-                    ? 'rgba(229, 231, 235, 0.5)'
-                    : UI.primarySoft,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginTop: spacing[2],
+                marginBottom: spacing[4],
               }}
             >
-              <UiSymbol
-                name="chevron.right"
-                size={22}
-                color={selectedWorkerIndex === workers.length - 1 ? '#D1D5DB' : UI.primary}
-              />
+              {selectedWorker && selectedWorker.id
+                ? (() => {
+                    const workerId = selectedWorker.id;
+                    return dateRange.map((date) => {
+                      const dateStr = formatDate(date);
+                      const key = getCellKey(workerId, dateStr);
+                      const cell = cellData.get(key);
+                      const statusInfo = getStatusDisplay(cell?.status ?? null);
+                      const isTodayDate = isToday(date);
+                      const hasStatus = cell?.status !== null;
+
+                      return (
+                        <Pressable
+                          key={dateStr}
+                          onPress={() => handleDayCellClick(date)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${getDayName(date)} ${date.getDate()}. ${statusInfo.fullLabel}.`}
+                          style={{
+                            width: '13%',
+                            aspectRatio: 0.78,
+                            borderRadius: m3.shape.cornerMedium,
+                            borderWidth: 1,
+                            borderColor: isTodayDate
+                              ? m3.colorScheme.primary
+                              : m3.colorScheme.outlineVariant,
+                            backgroundColor: hasStatus
+                              ? statusInfo.bgColor
+                              : m3.surface.surfaceContainerLowest,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {({ pressed }) => (
+                            <View
+                              style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: fontWeight.semibold,
+                                  textTransform: 'uppercase',
+                                  color: isTodayDate
+                                    ? m3.colorScheme.primary
+                                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
+                                }}
+                              >
+                                {getDayName(date)}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: 14,
+                                  fontWeight: fontWeight.bold,
+                                  marginTop: 2,
+                                  color: isTodayDate
+                                    ? m3.colorScheme.primary
+                                    : m3.colorScheme.onSurface,
+                                }}
+                              >
+                                {date.getDate()}
+                              </Text>
+                              <View
+                                style={{
+                                  marginTop: spacing[1],
+                                  width: 34,
+                                  height: 34,
+                                  borderRadius: borderRadius.full,
+                                  backgroundColor: hasStatus
+                                    ? statusInfo.badgeColor
+                                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    fontSize: 15,
+                                    lineHeight: 16,
+                                    fontWeight: fontWeight.bold,
+                                    textAlign: 'center',
+                                    ...(Platform.OS === 'android'
+                                      ? { includeFontPadding: false, textAlignVertical: 'center' }
+                                      : null),
+                                    color: hasStatus
+                                      ? statusInfo.badgeTextColor
+                                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
+                                  }}
+                                >
+                                  {statusInfo.label}
+                                </Text>
+                              </View>
+                              <View
+                                pointerEvents="none"
+                                style={[
+                                  StyleSheet.absoluteFillObject,
+                                  {
+                                    backgroundColor: pressed
+                                      ? colorWithOpacity(
+                                          m3.colorScheme.onSurface,
+                                          m3.stateLayerOpacity.pressed,
+                                        )
+                                      : 'transparent',
+                                  },
+                                ]}
+                              />
+                            </View>
+                          )}
+                        </Pressable>
+                      );
+                    });
+                  })()
+                : null}
+            </View>
+          </View>
+
+          <View
+            style={{
+              borderRadius: m3.shape.cornerLarge,
+              padding: spacing[3],
+              marginBottom: spacing[4],
+              flexDirection: 'row',
+              gap: spacing[3],
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderColor: m3.colorScheme.outlineVariant,
+              borderWidth: 1,
+            }}
+          >
+            <Pressable
+              onPress={() => handleQuickAction('full_day')}
+              accessibilityRole="button"
+              accessibilityLabel="Set all days to full day"
+              style={{
+                flex: 1,
+                paddingVertical: spacing[3],
+                borderRadius: m3.shape.cornerMedium,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                overflow: 'hidden',
+              }}
+            >
+              {({ pressed }) => (
+                <>
+                  <UiSymbol name="checkmark.circle.fill" size={18} color={m3.colorScheme.primary} />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      marginLeft: spacing[2],
+                      color: m3.colorScheme.primary,
+                    }}
+                  >
+                    All Full
+                  </Text>
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </>
+              )}
+            </Pressable>
+            <Pressable
+              onPress={() => handleQuickAction('half_day')}
+              accessibilityRole="button"
+              accessibilityLabel="Set all days to half day"
+              style={{
+                flex: 1,
+                paddingVertical: spacing[3],
+                borderRadius: m3.shape.cornerMedium,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
+                overflow: 'hidden',
+              }}
+            >
+              {({ pressed }) => (
+                <>
+                  <UiSymbol name="clock.fill" size={18} color={m3.colorScheme.warning} />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      marginLeft: spacing[2],
+                      color: m3.colorScheme.warning,
+                    }}
+                  >
+                    All Half
+                  </Text>
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </>
+              )}
+            </Pressable>
+            <Pressable
+              onPress={() => handleQuickAction('absent')}
+              accessibilityRole="button"
+              accessibilityLabel="Set all days to absent"
+              style={{
+                flex: 1,
+                paddingVertical: spacing[3],
+                borderRadius: m3.shape.cornerMedium,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+                overflow: 'hidden',
+              }}
+            >
+              {({ pressed }) => (
+                <>
+                  <UiSymbol name="xmark.circle.fill" size={18} color={m3.colorScheme.error} />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      marginLeft: spacing[2],
+                      color: m3.colorScheme.error,
+                    }}
+                  >
+                    All Off
+                  </Text>
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </>
+              )}
             </Pressable>
           </View>
         </View>
+      </ScrollView>
 
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: tabBarInset,
+          paddingHorizontal: spacing[4],
+          paddingTop: spacing[3],
+          paddingBottom: spacing[3],
+          backgroundColor: m3.surface.surfaceContainerLow,
+          borderTopWidth: 1,
+          borderTopColor: m3.colorScheme.outlineVariant,
+        }}
+      >
         <Pressable
           onPress={handleSaveAndNext}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel={
+            saving
+              ? 'Saving attendance'
+              : hasModifications
+                ? selectedWorkerIndex < workers.length - 1
+                  ? 'Save attendance and go to next worker'
+                  : 'Save attendance and finish'
+                : selectedWorkerIndex < workers.length - 1
+                  ? 'Go to next worker'
+                  : 'Done'
+          }
           style={{
-            borderRadius: borderRadius['3xl'],
+            borderRadius: m3.shape.cornerLarge,
             paddingVertical: spacing[4],
-            marginBottom: spacing[6],
-            backgroundColor: UI.primary,
-            opacity: saving ? 0.6 : 1,
+            backgroundColor: m3.colorScheme.primary,
+            overflow: 'hidden',
+            opacity: saving ? 0.7 : 1,
           }}
         >
-          {saving ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-              <ActivityIndicator size="small" color="#FFFFFF" />
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.bold,
-                  color: colors.white,
-                  marginLeft: spacing[2],
-                }}
-              >
-                Saving...
-              </Text>
-            </View>
-          ) : hasModifications ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-              <UiSymbol name="checkmark.circle.fill" size={20} color="#FFFFFF" />
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.bold,
-                  color: colors.white,
-                  marginLeft: spacing[2],
-                }}
-              >
-                {selectedWorkerIndex < workers.length - 1 ? 'Save & Next' : 'Save & Finish'}
-              </Text>
-            </View>
-          ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-              <Text
-                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, color: colors.white }}
-              >
-                {selectedWorkerIndex < workers.length - 1 ? 'Next Worker' : 'Done'}
-              </Text>
-            </View>
+          {({ pressed }) => (
+            <>
+              {saving ? (
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      color: m3.colorScheme.onPrimary,
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    Saving...
+                  </Text>
+                </View>
+              ) : hasModifications ? (
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <UiSymbol
+                    name="checkmark.circle.fill"
+                    size={20}
+                    color={m3.colorScheme.onPrimary}
+                  />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      color: m3.colorScheme.onPrimary,
+                      marginLeft: spacing[2],
+                    }}
+                  >
+                    {selectedWorkerIndex < workers.length - 1 ? 'Save & Next' : 'Save & Finish'}
+                  </Text>
+                </View>
+              ) : (
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.bold,
+                      color: m3.colorScheme.onPrimary,
+                    }}
+                  >
+                    {selectedWorkerIndex < workers.length - 1 ? 'Next Worker' : 'Done'}
+                  </Text>
+                </View>
+              )}
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    backgroundColor:
+                      pressed && !saving
+                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                  },
+                ]}
+              />
+            </>
           )}
         </Pressable>
       </View>
+
       <WorkerSelectSheet
         visible={workerSheetVisible}
         title="Select Worker"
@@ -899,7 +983,7 @@ export function MarkAttendanceTab({
         }}
         onClose={() => setFarmSheetVisible(false)}
       />
-    </ScrollView>
+    </View>
   );
 }
 

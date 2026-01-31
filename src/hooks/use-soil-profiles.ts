@@ -82,15 +82,15 @@ export function useDeleteSoilProfile() {
 }
 
 // Section names
-export const SECTION_NAMES = ['left', 'center', 'right', 'down'] as const;
+export const SECTION_NAMES = ['top', 'bottom', 'right', 'left'] as const;
 export type SectionName = (typeof SECTION_NAMES)[number];
 
 // Section display info
 export const SECTION_INFO: Record<SectionName, { label: string; abbr: string; color: string }> = {
-  left: { label: 'Left', abbr: 'L', color: '#3B82F6' },
-  center: { label: 'Center', abbr: 'C', color: '#10B981' },
+  top: { label: 'Top', abbr: 'T', color: '#10B981' },
+  bottom: { label: 'Bottom', abbr: 'B', color: '#8B5CF6' },
   right: { label: 'Right', abbr: 'R', color: '#F59E0B' },
-  down: { label: 'Down', abbr: 'D', color: '#8B5CF6' },
+  left: { label: 'Left', abbr: 'L', color: '#3B82F6' },
 };
 
 /**
@@ -106,7 +106,13 @@ export function calculateAverageMoisture(sections: SoilSectionData[]): number {
  * Get section value by name
  */
 export function getSectionValue(sections: SoilSectionData[], name: SectionName): number | null {
-  const section = sections.find((s) => s.name === name);
+  const legacyMap: Record<SectionName, string[]> = {
+    top: ['top', 'center'],
+    bottom: ['bottom', 'down'],
+    right: ['right'],
+    left: ['left'],
+  };
+  const section = sections.find((s) => legacyMap[name].includes(s.name));
   return section ? section.moisture_pct_user : null;
 }
 

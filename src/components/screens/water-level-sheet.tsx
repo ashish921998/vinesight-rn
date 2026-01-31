@@ -12,7 +12,6 @@ import {
   SectionHeader,
   SegmentedControl,
   FormInput,
-  InfoCard,
   PreviewCard,
 } from '@/components/ui';
 import type { Farm } from '@/types';
@@ -55,7 +54,7 @@ export function WaterLevelSheet({
   const formatWaterUsed = (value: number | null) => {
     if (value === null || value === undefined) return '--';
     const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
-    return `${value.toFixed(digits)} L`;
+    return `${value.toFixed(digits)} mm`;
   };
 
   const handleCalculate = () => {
@@ -280,14 +279,6 @@ export function WaterLevelSheet({
           Calculate Water Level
         </Text>
       </Pressable>
-
-      <InfoCard
-        icon="information-circle"
-        iconColor={colors.primary[600]}
-        backgroundColor={colors.primary[50]}
-        title="About Soil Water Levels"
-        message="Critical: <6mm | Low: 6-10mm | Medium: 10-25mm | Good: >25mm"
-      />
 
       <Modal
         visible={showGrowthStagePicker}
