@@ -1,6 +1,29 @@
 #!/bin/bash
 
-FILE="/Users/ashishhuddar/Desktop/vinesight-rn/app/(tabs)/settings.tsx"
+# Accept an optional CLI argument for file path
+FILE="${1:-./app/(tabs)/settings.tsx}"
+
+# Show usage if help is requested
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $0 [file_path]"
+  echo "Convert settings.tsx from className to inline styles."
+  echo ""
+  echo "Arguments:"
+  echo "  file_path    Optional path to the settings file (default: ./app/(tabs)/settings.tsx)"
+  echo ""
+  echo "Examples:"
+  echo "  $0"
+  echo "  $0 ./app/(tabs)/settings.tsx"
+  exit 0
+fi
+
+# Validate file exists
+if [ ! -f "$FILE" ]; then
+  echo "Error: File not found: $FILE"
+  echo "Usage: $0 [file_path]"
+  echo "  Use -h or --help for more information."
+  exit 1
+fi
 
 # Container styles
 sed -i '' 's/className="flex-1 bg-surface-50"/style={styles.container}/g' "$FILE"

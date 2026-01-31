@@ -7,7 +7,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 type SystemDischargeResults = {
@@ -170,7 +170,7 @@ export default function SystemDischargeScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Symbol name="speedometer" size={18} color="#408059" />
+                  <UISymbol name="speedometer" size={18} color="#408059" />
                 </View>
                 <Text
                   style={{
@@ -228,7 +228,7 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Symbol name="git-branch" size={18} color="#408059" />
+                    <UISymbol name="git-branch" size={18} color="#408059" />
                   </View>
                   <Text
                     style={{
@@ -270,7 +270,7 @@ export default function SystemDischargeScreen() {
                       </Text>
                     </View>
                     {selectedMethod === 1 ? (
-                      <Symbol name="checkmark.circle.fill" size={18} color="#408059" />
+                      <UISymbol name="checkmark.circle.fill" size={18} color="#408059" />
                     ) : null}
                   </View>
                 </Pressable>
@@ -302,7 +302,7 @@ export default function SystemDischargeScreen() {
                       </Text>
                     </View>
                     {selectedMethod === 2 ? (
-                      <Symbol name="checkmark.circle.fill" size={18} color="#408059" />
+                      <UISymbol name="checkmark.circle.fill" size={18} color="#408059" />
                     ) : null}
                   </View>
                 </Pressable>
@@ -331,7 +331,7 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Symbol name="leaf.fill" size={18} color="#408059" />
+                    <UISymbol name="leaf.fill" size={18} color="#408059" />
                   </View>
                   <Text
                     style={{
@@ -437,7 +437,7 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Symbol name="square.grid.2x2.fill" size={18} color="#408059" />
+                    <UISymbol name="square.grid.2x2.fill" size={18} color="#408059" />
                   </View>
                   <Text
                     style={{
@@ -542,7 +542,7 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Symbol name="checkmark.circle.fill" size={18} color="#408059" />
+                    <UISymbol name="checkmark.circle.fill" size={18} color="#408059" />
                   </View>
                   <Text
                     style={{
@@ -682,7 +682,7 @@ export default function SystemDischargeScreen() {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Symbol name="refresh" size={18} color="#6B7280" />
+                  <UISymbol name="refresh" size={18} color="#6B7280" />
                   <Text
                     style={{
                       color: colors.surface[600],

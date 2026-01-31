@@ -9,7 +9,7 @@ import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/th
 export interface ChemicalEntry {
   id: string;
   name: string;
-  quantity: number;
+  quantity: number | undefined;
   unit: ChemicalUnit;
 }
 
@@ -18,7 +18,7 @@ function generateId(): string {
 }
 
 export interface SprayFormData {
-  waterVolume: number;
+  waterVolume: number | undefined;
   chemicals: ChemicalEntry[];
   notes?: string;
 }
@@ -31,9 +31,10 @@ interface SprayFormProps {
 
 export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
   const isValid =
+    data.waterVolume !== undefined &&
     data.waterVolume > 0 &&
     data.chemicals.length > 0 &&
-    data.chemicals.every((c) => c.name.trim() && c.quantity > 0);
+    data.chemicals.every((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0);
 
   const chemicalRefsMapRef = useRef<
     Map<
@@ -78,7 +79,10 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
     if (data.chemicals.length < 10) {
       onChange({
         ...data,
-        chemicals: [...data.chemicals, { id: generateId(), name: '', quantity: 0, unit: 'gm/L' }],
+        chemicals: [
+          ...data.chemicals,
+          { id: generateId(), name: '', quantity: undefined, unit: 'gm/L' },
+        ],
       });
     }
   };
@@ -278,7 +282,7 @@ function ChemicalRow({
 }: ChemicalRowProps) {
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [quantityText, setQuantityText] = useState(
-    chemical.quantity > 0 ? chemical.quantity.toString() : '',
+    chemical.quantity !== undefined && chemical.quantity > 0 ? chemical.quantity.toString() : '',
   );
   const [isNameFocused, setIsNameFocused] = useState(false);
   const [isQuantityFocused, setIsQuantityFocused] = useState(false);
@@ -291,11 +295,12 @@ function ChemicalRow({
       sanitizedText += '.' + parts[1].slice(0, 2);
     }
     setQuantityText(sanitizedText);
-    const qty = parseFloat(sanitizedText) || 0;
+    const qty = sanitizedText === '' ? undefined : parseFloat(sanitizedText);
     onUpdate({ quantity: qty });
   };
 
-  const isRowComplete = chemical.name.trim() && chemical.quantity > 0;
+  const isRowComplete =
+    chemical.name.trim() && chemical.quantity !== undefined && chemical.quantity > 0;
 
   const handleNameSubmit = () => {
     if (quantityRef.current) {
@@ -429,16 +434,17 @@ function ChemicalRow({
 
 export function validateSprayForm(data: SprayFormData): boolean {
   return (
+    data.waterVolume !== undefined &&
     data.waterVolume > 0 &&
     data.chemicals.length > 0 &&
-    data.chemicals.every((c) => c.name.trim() && c.quantity > 0)
+    data.chemicals.every((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
   );
 }
 
 // Create empty spray form data
 export function createEmptySprayFormData(): SprayFormData {
   return {
-    waterVolume: 0,
-    chemicals: [{ id: generateId(), name: '', quantity: 0, unit: 'gm/L' }],
+    waterVolume: undefined,
+    chemicals: [{ id: generateId(), name: '', quantity: undefined, unit: 'gm/L' }],
   };
 }

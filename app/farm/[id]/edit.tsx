@@ -5,7 +5,8 @@ import { FarmForm } from '@/components/screens/farm-form';
 export default function EditFarmScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const farmId = id ? parseInt(id, 10) : undefined;
+  const parsedId = typeof id === 'string' ? parseInt(id, 10) : NaN;
+  const farmId = typeof id === 'string' && !Number.isNaN(parsedId) ? parsedId : undefined;
 
   return (
     <>

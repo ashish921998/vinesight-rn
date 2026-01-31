@@ -5,9 +5,10 @@
 
 import React from 'react';
 import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
+import { spacing } from '@/styles/theme';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -39,7 +40,9 @@ function getDescriptionFromData(type: LogTypeId, data?: RecordData): string {
   switch (type) {
     case 'irrigation': {
       const irrigation = data as IrrigationRecord;
-      return `${irrigation.duration?.toFixed(1) || 0}h duration`;
+      const duration = irrigation.duration ?? 0;
+      const displayDuration = Number.isInteger(duration) ? duration : duration.toFixed(1);
+      return `${displayDuration}h`;
     }
     case 'spray': {
       const spray = data as SprayRecord;
@@ -95,6 +98,8 @@ export function ActivityLogCard({
   const iconContainerStyle: ViewStyle = {
     width: 40,
     height: 40,
+    minWidth: 40,
+    minHeight: 40,
     borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
@@ -115,7 +120,7 @@ export function ActivityLogCard({
   const metaContainerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: spacing[1],
   };
 
   const farmTextStyle: TextStyle = {
@@ -138,7 +143,7 @@ export function ActivityLogCard({
     <View style={containerStyle}>
       {/* Icon */}
       <View style={iconContainerStyle}>
-        <Symbol name={logType.icon} size={18} color={logType.color} />
+        <UiSymbol name={logType.icon} size={18} color={logType.color} />
       </View>
 
       {/* Content */}
@@ -149,7 +154,9 @@ export function ActivityLogCard({
         <View style={metaContainerStyle}>
           {farmName && (
             <>
-              <Text style={farmTextStyle}>{farmName}</Text>
+              <Text style={farmTextStyle} numberOfLines={1}>
+                {farmName}
+              </Text>
               <Text style={separatorTextStyle}>•</Text>
             </>
           )}
@@ -158,7 +165,7 @@ export function ActivityLogCard({
       </View>
 
       {/* Chevron */}
-      <Symbol name="chevron.right" size={16} color="#c7c7cc" />
+      <UiSymbol name="chevron.right" size={16} color="#c7c7cc" />
     </View>
   );
 

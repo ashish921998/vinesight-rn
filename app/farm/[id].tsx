@@ -21,7 +21,7 @@ import type {
   FertigationRecord,
 } from '@/types';
 import { PRIORITY_INFO } from '@/types/task';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 
 // Workboard action type
 interface WorkboardAction {
@@ -73,6 +73,25 @@ export default function FarmDetailScreen() {
       (fertigationRecords?.length || 0),
     [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords],
   );
+
+  const totalWaterUsed = useMemo(() => {
+    if (!irrigationRecords) return null;
+    return irrigationRecords.reduce(
+      (sum, record) => sum + (record.duration || 0) * (record.system_discharge || 0),
+      0,
+    );
+  }, [irrigationRecords]);
+
+  const formatWaterUsage = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return 'No irrigation logged yet';
+    const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+    return `${value.toFixed(digits)} mm used`;
+  };
+
+  const waterUsageCaption =
+    totalWaterUsed !== null
+      ? `${formatWaterUsage(totalWaterUsed)} this season`
+      : 'Log irrigation to monitor water use';
 
   // Days since pruning
   const daysSincePruning = useMemo(() => {
@@ -417,8 +436,8 @@ export default function FarmDetailScreen() {
               marginTop: spacing[16],
               borderRadius: borderRadius['2xl'],
               overflow: 'hidden',
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
+              backgroundColor: 'rgba(255,255,255, 0.8)',
+              ...shadows.lg,
             }}
           >
             <View style={{ padding: spacing[4] }}>
@@ -617,7 +636,7 @@ export default function FarmDetailScreen() {
                   value={farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
                   icon="water"
                   iconColor="#4D857A"
-                  subtitle="mm"
+                  subtitle={waterUsageCaption}
                 />
               </Pressable>
             </View>

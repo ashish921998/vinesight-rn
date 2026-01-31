@@ -180,7 +180,7 @@ export function EntryForm({
   const scrollOffsetRef = useRef(0);
   const keyboardHeightRef = useRef(0);
 
-  const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: 0 });
+  const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
   const [sprayData, setSprayData] = useState<SprayFormData>(createEmptySprayFormData());
   const [harvestData, setHarvestData] = useState<HarvestFormData>(createEmptyHarvestFormData());
   const [expenseData, setExpenseData] = useState<ExpenseFormData>(createEmptyExpenseFormData());
@@ -310,7 +310,7 @@ export function EntryForm({
     switch (selectedLogType) {
       case 'irrigation':
         data = { ...irrigationData };
-        setIrrigationData({ duration: 0 });
+        setIrrigationData({ duration: undefined });
         break;
       case 'spray':
         data = { ...sprayData };
@@ -376,7 +376,7 @@ export function EntryForm({
             await createIrrigation.mutateAsync({
               farm_id: farmId,
               date: dateStr,
-              duration: data.duration,
+              duration: data.duration!,
               area: activeFarm.area ?? 0,
               growth_stage: '',
               moisture_status: '',
@@ -390,7 +390,7 @@ export function EntryForm({
               activeFarm.total_tank_capacity > 0 &&
               activeFarm.system_discharge > 0
             ) {
-              const waterAdded = data.duration * activeFarm.system_discharge;
+              const waterAdded = data.duration! * activeFarm.system_discharge;
               const currentWater = activeFarm.remaining_water ?? 0;
               const newWaterLevel = Math.min(
                 activeFarm.total_tank_capacity,
@@ -425,7 +425,7 @@ export function EntryForm({
             await createHarvest.mutateAsync({
               farm_id: farmId,
               date: dateStr,
-              quantity: data.quantity,
+              quantity: data.quantity!,
               grade: data.grade,
               price: data.price || undefined,
               buyer: data.buyer || undefined,
@@ -439,7 +439,7 @@ export function EntryForm({
               farm_id: farmId,
               date: dateStr,
               type: data.type,
-              cost: data.cost,
+              cost: data.cost!,
               date_of_pruning: activeFarm.date_of_pruning,
               remarks: data.remarks || undefined,
             });
@@ -453,7 +453,7 @@ export function EntryForm({
               fertilizers: data.fertilizers.map((f) => ({
                 name: f.name,
                 unit: f.unit,
-                quantity: f.quantity,
+                quantity: f.quantity!,
               })),
               area: activeFarm.area ?? 0,
               date_of_pruning: activeFarm.date_of_pruning,
@@ -873,12 +873,7 @@ export function EntryForm({
           setSelectedLogType(null);
         }}
       >
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardShouldPersistTaps="handled"
-          style={{ flex: 1, backgroundColor: '#f2f2f7' }}
-          contentContainerStyle={{ flexGrow: 1 }}
-        >
+        <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
           <KeyboardAvoidingView
             behavior={isIOS ? 'padding' : 'height'}
             keyboardVerticalOffset={isIOS ? 0 : 20}
@@ -929,7 +924,7 @@ export function EntryForm({
               {renderLogForm()}
             </ScrollView>
           </KeyboardAvoidingView>
-        </ScrollView>
+        </View>
       </Modal>
     );
   };
@@ -1598,12 +1593,7 @@ export function EntryForm({
   );
 
   const content = (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-      style={{ flex: 1, backgroundColor: '#f2f2f7' }}
-      contentContainerStyle={{ flexGrow: 1 }}
-    >
+    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
       <KeyboardAvoidingView
         behavior={isIOS ? 'padding' : 'height'}
         keyboardVerticalOffset={isIOS ? 0 : 20}
@@ -1721,18 +1711,15 @@ export function EntryForm({
         {showTypePicker && (
           <Pressable
             onPress={() => setShowTypePicker(false)}
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                backgroundColor: 'rgba(0,0,0,0.4)',
-                zIndex: 50,
-              },
-              { zIndex: 60 },
-            ]}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: 'rgba(0,0,0,0.4)',
+              zIndex: 60,
+            }}
           >
             <View
               style={{
@@ -2036,7 +2023,7 @@ export function EntryForm({
           )}
         </View>
       </KeyboardAvoidingView>
-    </ScrollView>
+    </View>
   );
 
   if (presentation === 'screen') {

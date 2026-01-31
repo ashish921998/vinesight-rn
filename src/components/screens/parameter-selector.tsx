@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../../hooks/use-lab-tests';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
@@ -97,7 +97,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
                 borderColor: isSelected ? colors.primary[500] : colors.gray[300],
               }}
             >
-              <Symbol
+              <SymbolIcon
                 name={isSelected ? 'checkmark.square.fill' : 'square'}
                 size={16}
                 color={isSelected ? 'white' : '#666'}

@@ -90,13 +90,14 @@ export function OTPInput({ length = 6, value, onChange, autoFocus = true, error 
 
     return {
       width: 48,
-      height: 56,
+      minHeight: 56,
       borderRadius: borderRadius.xl,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 2,
       borderColor,
       backgroundColor,
+      paddingVertical: spacing[2],
     };
   };
 

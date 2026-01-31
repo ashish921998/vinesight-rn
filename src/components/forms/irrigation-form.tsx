@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, type TextInputProps } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { NumericInput } from './form-field';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export interface IrrigationFormData {
-  duration: number;
+  duration: number | undefined;
   notes?: string;
 }
 
@@ -24,11 +24,13 @@ export function IrrigationForm({
   systemDischarge,
   onInputFocus,
 }: IrrigationFormProps) {
-  const isValid = data.duration > 0;
+  const isValid = data.duration !== undefined && data.duration > 0;
 
   // Calculate estimated water applied
   const estimatedWater =
-    systemDischarge && data.duration > 0 ? (data.duration * systemDischarge).toFixed(1) : null;
+    systemDischarge && data.duration !== undefined && data.duration > 0
+      ? (data.duration * systemDischarge).toFixed(1)
+      : null;
 
   return (
     <View>
@@ -45,7 +47,7 @@ export function IrrigationForm({
             marginRight: spacing[3],
           }}
         >
-          <Symbol name="drop.fill" size={20} color="#3B82F6" />
+          <SymbolIcon name="drop.fill" size={20} color="#3B82F6" />
         </View>
         <View>
           <Text
@@ -96,7 +98,7 @@ export function IrrigationForm({
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[1] }}
               >
-                <Symbol name="arrow.up.left.and.arrow.down.right" size={14} color="#6B7280" />
+                <SymbolIcon name="arrow.up.left.and.arrow.down.right" size={14} color="#6B7280" />
                 <Text
                   style={{
                     fontSize: fontSize.xs,
@@ -132,7 +134,7 @@ export function IrrigationForm({
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[1] }}
               >
-                <Symbol name="drop" size={14} color="#3B82F6" />
+                <SymbolIcon name="drop" size={14} color="#3B82F6" />
                 <Text style={{ fontSize: fontSize.xs, color: '#2563EB', marginLeft: spacing[1] }}>
                   Est. Water
                 </Text>
@@ -158,7 +160,7 @@ export function IrrigationForm({
           borderTopColor: colors.surface[100],
         }}
       >
-        <Symbol
+        <SymbolIcon
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
@@ -178,5 +180,5 @@ export function IrrigationForm({
 }
 
 export function validateIrrigationForm(data: IrrigationFormData): boolean {
-  return data.duration > 0;
+  return (data.duration ?? 0) > 0;
 }

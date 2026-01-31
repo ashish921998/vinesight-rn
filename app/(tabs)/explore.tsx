@@ -9,11 +9,12 @@ import {
   Alert,
   Animated,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Symbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { Symbol as Icon } from '@/components/ui/symbol';
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
 import {
   useFarms,
@@ -34,21 +35,13 @@ const EXPLORE_TABS: { id: ExploreTab; label: string; icon: string }[] = [
   { id: 'warehouse', label: 'Warehouse', icon: 'cube.fill' },
 ];
 
-const COLORS = {
-  primary: '#408059',
-  background: '#f2f2f7',
-  glass: 'rgba(255, 255, 255, 0.8)',
-  lowStock: '#D9731F',
-  warehouseFertilizer: '#598C6B',
-  warehouseSpray: '#408059',
-};
-
 export default function ExploreScreen() {
   const router = useRouter();
   const { setAddWarehouseItem, setAddStock } = useModalStore();
   const insets = useSafeAreaInsets();
   const fabBottomInset = useFabBottomInset();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
+  const { fontScale } = useWindowDimensions();
 
   // Scroll animation values
   const scrollY = useMemo(() => new Animated.Value(0), []);
@@ -136,15 +129,19 @@ export default function ExploreScreen() {
   );
 
   // Header animation values
+  const headerMinHeight = fontScale > 1.3 ? 70 : 50;
+  const headerMaxHeight = fontScale > 1.3 ? 90 : 70;
+  const iconMinHeight = fontScale > 1.3 ? 48 : 0;
+
   const headerHeight = scrollY.interpolate({
     inputRange: [0, 50],
-    outputRange: [70, 50],
+    outputRange: [headerMaxHeight, headerMinHeight],
     extrapolate: 'clamp',
   });
 
   const iconContainerHeight = scrollY.interpolate({
     inputRange: [0, 30],
-    outputRange: [48, 0],
+    outputRange: [48, iconMinHeight],
     extrapolate: 'clamp',
   });
 
@@ -359,7 +356,7 @@ export default function ExploreScreen() {
                 backgroundColor: colors.surface[50],
               }}
             >
-              <Symbol name="magnifyingglass" size={36} color="#c7c7cc" />
+              <Icon name="magnifyingglass" size={36} color="#c7c7cc" />
             </View>
             <Text
               style={{
@@ -410,7 +407,7 @@ export default function ExploreScreen() {
               backgroundColor: 'rgba(64, 128, 89, 0.1)',
             }}
           >
-            <Symbol name="leaf.fill" size={48} color="#408059" />
+            <Icon name="leaf.fill" size={48} color="#408059" />
           </View>
           <Text
             style={{
@@ -473,9 +470,9 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius.xl,
                 borderCurve: 'continuous',
-                height: 72,
+                minHeight: 72,
                 paddingHorizontal: spacing[4],
-                paddingVertical: spacing[2],
+                paddingVertical: spacing[3],
                 justifyContent: 'center',
                 backgroundColor: colors.surface[100],
                 borderWidth: 1,
@@ -495,7 +492,7 @@ export default function ExploreScreen() {
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
                   }}
                 >
-                  <Symbol name="leaf.fill" size={16} color="#408059" />
+                  <Icon name="leaf.fill" size={16} color="#408059" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -504,7 +501,6 @@ export default function ExploreScreen() {
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
-                      lineHeight: 22,
                     }}
                   >
                     {farms.length}
@@ -513,7 +509,6 @@ export default function ExploreScreen() {
                     style={{
                       color: colors.surface[500],
                       fontSize: fontSize.xs,
-                      lineHeight: 16,
                     }}
                   >
                     Total Farms
@@ -526,9 +521,9 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius.xl,
                 borderCurve: 'continuous',
-                height: 72,
+                minHeight: 72,
                 paddingHorizontal: spacing[4],
-                paddingVertical: spacing[2],
+                paddingVertical: spacing[3],
                 justifyContent: 'center',
                 backgroundColor: colors.surface[100],
                 borderWidth: 1,
@@ -548,7 +543,7 @@ export default function ExploreScreen() {
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
                   }}
                 >
-                  <Symbol name="arrow.up.left.and.arrow.down.right" size={16} color="#408059" />
+                  <Icon name="arrow.up.left.and.arrow.down.right" size={16} color="#408059" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -557,7 +552,6 @@ export default function ExploreScreen() {
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
-                      lineHeight: 22,
                     }}
                   >
                     {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}
@@ -566,7 +560,6 @@ export default function ExploreScreen() {
                     style={{
                       color: colors.surface[500],
                       fontSize: fontSize.xs,
-                      lineHeight: 16,
                     }}
                   >
                     Total Acres
@@ -622,7 +615,7 @@ export default function ExploreScreen() {
               backgroundColor: colors.primary[500],
             }}
           >
-            <Symbol name="plus" size={28} color="#FFFFFF" />
+            <Icon name="plus" size={28} color="#FFFFFF" />
           </Pressable>
         )}
       </>
@@ -633,7 +626,7 @@ export default function ExploreScreen() {
     if (warehouseLoading) {
       return (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
             Loading inventory...
           </Text>
@@ -649,7 +642,7 @@ export default function ExploreScreen() {
             <RefreshControl
               refreshing={warehouseRefetching}
               onRefresh={refetchWarehouse}
-              tintColor={COLORS.primary}
+              tintColor={colors.primary[500]}
             />
           }
           onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
@@ -671,13 +664,13 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: COLORS.glass,
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
               }}
             >
-              <Symbol
+              <Icon
                 name="exclamationmark.triangle.fill"
                 size={24}
-                color={lowStockItems.length > 0 ? COLORS.lowStock : COLORS.primary}
+                color={lowStockItems.length > 0 ? '#D9731F' : colors.primary[500]}
               />
               <Text
                 style={{
@@ -696,10 +689,10 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: COLORS.glass,
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
               }}
             >
-              <Symbol name="dollarsign.circle.fill" size={24} color={COLORS.primary} />
+              <Icon name="dollarsign.circle.fill" size={24} color={colors.primary[500]} />
               <Text
                 style={{
                   color: colors.surface[900],
@@ -722,7 +715,7 @@ export default function ExploreScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
-                backgroundColor: `${COLORS.lowStock}15`,
+                backgroundColor: `${'#D9731F'}15`,
               }}
             >
               <View
@@ -732,10 +725,10 @@ export default function ExploreScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                <Symbol name="exclamationmark.triangle.fill" size={20} color={COLORS.lowStock} />
+                <Icon name="exclamationmark.triangle.fill" size={20} color={'#D9731F'} />
                 <Text
                   style={{
-                    color: COLORS.lowStock,
+                    color: '#D9731F',
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
                     marginLeft: spacing[2],
@@ -749,12 +742,12 @@ export default function ExploreScreen() {
                     paddingVertical: 2,
                     borderRadius: borderRadius.full,
                     marginLeft: 'auto',
-                    backgroundColor: `${COLORS.lowStock}30`,
+                    backgroundColor: `${'#D9731F'}30`,
                   }}
                 >
                   <Text
                     style={{
-                      color: COLORS.lowStock,
+                      color: '#D9731F',
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
                     }}
@@ -775,14 +768,14 @@ export default function ExploreScreen() {
                         style={{
                           borderRadius: borderRadius.xl,
                           padding: spacing[3],
-                          backgroundColor: COLORS.glass,
+                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
                         }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Symbol
+                          <Icon
                             name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                             size={16}
-                            color={COLORS.lowStock}
+                            color={'#D9731F'}
                           />
                           <Text
                             style={{
@@ -790,8 +783,10 @@ export default function ExploreScreen() {
                               fontSize: fontSize.sm,
                               fontWeight: fontWeight.semibold,
                               marginLeft: spacing[2],
+                              flexShrink: 1,
                             }}
-                            numberOfLines={1}
+                            numberOfLines={2}
+                            accessibilityLabel={item.name}
                           >
                             {item.name}
                           </Text>
@@ -824,7 +819,7 @@ export default function ExploreScreen() {
                             borderRadius: borderRadius.full,
                             alignItems: 'center',
                             alignSelf: 'flex-start',
-                            backgroundColor: COLORS.primary,
+                            backgroundColor: colors.primary[500],
                           }}
                         >
                           <Text
@@ -905,7 +900,7 @@ export default function ExploreScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[8],
                 alignItems: 'center',
-                backgroundColor: COLORS.glass,
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
               }}
             >
               <View
@@ -915,10 +910,10 @@ export default function ExploreScreen() {
                   borderRadius: borderRadius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: `${COLORS.primary}33`,
+                  backgroundColor: `${colors.primary[500]}33`,
                 }}
               >
-                <Symbol name="cube" size={32} color={COLORS.primary} />
+                <Icon name="cube" size={32} color={colors.primary[500]} />
               </View>
               <Text
                 style={{
@@ -951,10 +946,10 @@ export default function ExploreScreen() {
                   borderRadius: borderRadius.xl,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: COLORS.primary,
+                  backgroundColor: colors.primary[500],
                 }}
               >
-                <Symbol name="plus.circle.fill" size={20} color="white" />
+                <Icon name="plus.circle.fill" size={20} color="white" />
                 <Text
                   style={{
                     color: colors.white,
@@ -971,7 +966,7 @@ export default function ExploreScreen() {
               const isLowStock = item.reorder_quantity && item.quantity <= item.reorder_quantity;
               const itemValue = item.quantity * item.unit_price;
               const itemColor =
-                item.type === 'fertilizer' ? COLORS.warehouseFertilizer : COLORS.warehouseSpray;
+                item.type === 'fertilizer' ? colors.secondary[500] : colors.primary[500];
 
               return (
                 <View
@@ -980,8 +975,8 @@ export default function ExploreScreen() {
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
                     marginBottom: spacing[3],
-                    backgroundColor: isLowStock ? `${COLORS.lowStock}0D` : COLORS.glass,
-                    borderColor: isLowStock ? `${COLORS.lowStock}4D` : 'transparent',
+                    backgroundColor: isLowStock ? `${'#D9731F'}0D` : 'rgba(255, 255, 255, 0.8)',
+                    borderColor: isLowStock ? `${'#D9731F'}4D` : 'transparent',
                     borderWidth: isLowStock ? 1 : 0,
                   }}
                 >
@@ -995,12 +990,12 @@ export default function ExploreScreen() {
                             borderRadius: borderRadius.full,
                             backgroundColor:
                               item.type === 'fertilizer'
-                                ? `${COLORS.warehouseFertilizer}33`
-                                : `${COLORS.warehouseSpray}33`,
+                                ? `${colors.secondary[500]}33`
+                                : `${colors.primary[500]}33`,
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Symbol
+                            <Icon
                               name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                               size={12}
                               color={itemColor}
@@ -1024,12 +1019,12 @@ export default function ExploreScreen() {
                               paddingHorizontal: spacing[2],
                               paddingVertical: 2,
                               borderRadius: borderRadius.full,
-                              backgroundColor: `${COLORS.lowStock}33`,
+                              backgroundColor: `${'#D9731F'}33`,
                             }}
                           >
                             <Text
                               style={{
-                                color: COLORS.lowStock,
+                                color: '#D9731F',
                                 fontSize: fontSize.xs,
                                 fontWeight: fontWeight.medium,
                               }}
@@ -1042,14 +1037,18 @@ export default function ExploreScreen() {
                           <Pressable
                             onPress={() => handleEditWarehouseItem(item)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Edit ${item.name}`}
                           >
-                            <Symbol name="pencil" size={20} color="#408059" />
+                            <Icon name="pencil" size={20} color="#408059" />
                           </Pressable>
                           <Pressable
                             onPress={() => handleDeleteWarehouseItem(item)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Delete ${item.name}`}
                           >
-                            <Symbol name="trash" size={20} color="#EF4444" />
+                            <Icon name="trash" size={20} color="#EF4444" />
                           </Pressable>
                         </View>
                       </View>
@@ -1059,7 +1058,10 @@ export default function ExploreScreen() {
                           fontSize: fontSize.base,
                           fontWeight: fontWeight.semibold,
                           marginTop: spacing[2],
+                          flexShrink: 1,
                         }}
+                        numberOfLines={2}
+                        accessibilityLabel={item.name}
                       >
                         {item.name}
                       </Text>
@@ -1102,7 +1104,7 @@ export default function ExploreScreen() {
                       </Text>
                       <Text
                         style={{
-                          color: COLORS.primary,
+                          color: colors.primary[500],
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.semibold,
                         }}
@@ -1145,10 +1147,10 @@ export default function ExploreScreen() {
             borderRadius: borderRadius.full,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: COLORS.primary,
+            backgroundColor: colors.primary[500],
           }}
         >
-          <Symbol name="plus" size={28} color="white" />
+          <Icon name="plus" size={28} color="white" />
         </Pressable>
       </>
     );
@@ -1167,7 +1169,7 @@ export default function ExploreScreen() {
   }, [selectedTab]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
       {/* Global Search Bar */}
       <View
         style={{
@@ -1189,11 +1191,7 @@ export default function ExploreScreen() {
             borderColor: isSearchFocused ? colors.primary[500] : 'transparent',
           }}
         >
-          <Symbol
-            name="magnifyingglass"
-            size={20}
-            color={isSearchFocused ? '#408059' : '#c7c7cc'}
-          />
+          <Icon name="magnifyingglass" size={20} color={isSearchFocused ? '#408059' : '#c7c7cc'} />
           <TextInput
             style={{
               flex: 1,
@@ -1214,7 +1212,7 @@ export default function ExploreScreen() {
               onPress={() => handleSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Symbol name="xmark.circle.fill" size={20} color="#c7c7cc" />
+              <Icon name="xmark.circle.fill" size={20} color="#c7c7cc" />
             </Pressable>
           )}
         </View>
@@ -1225,7 +1223,7 @@ export default function ExploreScreen() {
         style={{
           height: headerHeight,
           backgroundColor: colors.surface[100],
-          boxShadow: '0 2px 3px rgba(0, 0, 0, 0.05)',
+          ...shadows.sm,
         }}
       >
         <View style={{ flex: 1, flexDirection: 'row', paddingHorizontal: spacing[4] }}>
@@ -1263,11 +1261,7 @@ export default function ExploreScreen() {
                         backgroundColor: isSelected ? 'rgba(64, 128, 89, 0.1)' : 'transparent',
                       }}
                     >
-                      <Symbol
-                        name={tab.icon}
-                        size={24}
-                        color={isSelected ? '#408059' : '#9CA3AF'}
-                      />
+                      <Icon name={tab.icon} size={24} color={isSelected ? '#408059' : '#9CA3AF'} />
                     </View>
                   </Animated.View>
 

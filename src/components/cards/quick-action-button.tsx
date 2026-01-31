@@ -38,7 +38,7 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
       }
     }
 
-    const rgbMatch = /^rgba?\\(([^)]+)\\)$/.exec(normalized);
+    const rgbMatch = /^rgba?\(([^)]+)\)$/.exec(normalized);
     if (rgbMatch) {
       const parts = rgbMatch[1]
         .split(',')
@@ -85,7 +85,9 @@ export function QuickActionButton({ title, icon, color, onPress }: QuickActionBu
       <View style={iconContainerStyle}>
         <IconSymbol name={icon} size={20} color={color} />
       </View>
-      <Text style={textStyle}>{title}</Text>
+      <Text style={textStyle} numberOfLines={2}>
+        {title}
+      </Text>
     </Pressable>
   );
 }

@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { SafeScreen } from '@/components/ui/safe-screen';
 import { useFarm } from '@/hooks/use-farms';
 import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
@@ -32,7 +32,7 @@ export default function SoilTrendsScreen() {
     return (
       <SafeScreen backgroundColor={colors.gray[50]}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Symbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
+          <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text
             style={{
               fontSize: fontSize.lg,
@@ -76,9 +76,9 @@ export default function SoilTrendsScreen() {
         }}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <Symbol name="chevron.left" size={24} color="#333" />
+          <IconSymbol name="chevron.left" size={24} color="#333" />
         </Pressable>
-        <Symbol name="chart.bar.fill" size={24} color="#597A61" />
+        <IconSymbol name="chart.bar.fill" size={24} color="#597A61" />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.gray[800] }}
@@ -165,6 +165,7 @@ export default function SoilTrendsScreen() {
               trendData={trends.tests}
               parameterTrends={trends.parameterTrends}
               selectedParams={selectedParams}
+              testType="soil"
             />
           ) : (
             <TrendsChart

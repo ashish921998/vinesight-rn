@@ -122,8 +122,8 @@ export interface NumericInputProps extends Omit<
   FormFieldProps,
   'value' | 'onChangeText' | 'keyboardType'
 > {
-  value: number;
-  onValueChange: (value: number) => void;
+  value?: number;
+  onValueChange: (value: number | undefined) => void;
   min?: number;
   max?: number;
   decimals?: number;
@@ -191,9 +191,13 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
 
     setTextValue(sanitizedText);
 
-    const numValue = parseFloat(sanitizedText) || 0;
+    const numValue = sanitizedText === '' ? undefined : parseFloat(sanitizedText);
     const clampedValue =
-      max !== undefined ? Math.min(Math.max(numValue, min), max) : Math.max(numValue, min);
+      numValue !== undefined && Number.isFinite(numValue)
+        ? max !== undefined
+          ? Math.min(Math.max(numValue, min), max)
+          : Math.max(numValue, min)
+        : undefined;
 
     onValueChange(clampedValue);
   };

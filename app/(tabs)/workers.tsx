@@ -44,7 +44,13 @@ export default function WorkersScreen() {
           style: 'destructive',
           onPress: async () => {
             if (worker.id) {
-              await deleteWorker.mutateAsync(worker.id);
+              try {
+                await deleteWorker.mutateAsync(worker.id);
+              } catch (error: unknown) {
+                const errorMessage =
+                  error instanceof Error ? error.message : 'Failed to delete worker';
+                Alert.alert('Error', errorMessage);
+              }
             }
           },
         },

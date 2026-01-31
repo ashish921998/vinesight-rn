@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Text, TextInput } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
@@ -9,6 +10,17 @@ import * as Sentry from '@sentry/react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuthStore, initAuthListener, cleanupAuthListener } from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
+
+// Configure app-wide font scaling policy for accessibility
+// Allow system font size changes without a global cap
+Text.defaultProps = {
+  ...(Text.defaultProps ?? {}),
+  allowFontScaling: true,
+};
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps ?? {}),
+  allowFontScaling: true,
+};
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 

@@ -11,13 +11,12 @@ import {
 } from 'react-native';
 
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import Markdown from 'react-native-markdown-display';
 import { useFarm } from '@/hooks';
 import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const markdownStyles = {
   body: { fontSize: 16, color: '#1c1c1e', lineHeight: 24 },
@@ -88,7 +87,6 @@ export default function AIChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
-  const insets = useSafeAreaInsets();
 
   const DEFAULT_SUGGESTIONS = [
     'How much water do I need?',
@@ -178,7 +176,7 @@ export default function AIChatScreen() {
           headerTintColor: '#000000',
           headerLeft: () => (
             <Pressable onPress={() => router.back()} style={{ marginLeft: spacing[2] }}>
-              <Symbol name="chevron.left" size={24} color="#000000" />
+              <UiSymbol name="chevron.left" size={24} color="#000000" />
             </Pressable>
           ),
         }}
@@ -193,7 +191,7 @@ export default function AIChatScreen() {
           <ScrollView
             ref={scrollViewRef}
             style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[4] }}
-            contentContainerStyle={{ paddingTop: spacing[4] + insets.top }}
+            contentContainerStyle={{ paddingTop: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
             showsVerticalScrollIndicator={false}
           >
@@ -217,7 +215,7 @@ export default function AIChatScreen() {
                     marginBottom: spacing[4],
                   }}
                 >
-                  <Symbol name="lightbulb.fill" size={40} color="#408059" />
+                  <UiSymbol name="lightbulb.fill" size={40} color="#408059" />
                 </View>
                 <Text
                   style={{
@@ -291,7 +289,7 @@ export default function AIChatScreen() {
                       marginTop: spacing[1],
                     }}
                   >
-                    <Symbol name="lightbulb.fill" size={16} color="#408059" />
+                    <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
                   </View>
                 )}
                 <View
@@ -339,7 +337,7 @@ export default function AIChatScreen() {
                       marginTop: spacing[1],
                     }}
                   >
-                    <Symbol name="person.fill" size={16} color="#408059" />
+                    <UiSymbol name="person.fill" size={16} color="#408059" />
                   </View>
                 )}
               </View>
@@ -366,7 +364,7 @@ export default function AIChatScreen() {
                     marginTop: spacing[1],
                   }}
                 >
-                  <Symbol name="lightbulb.fill" size={16} color="#408059" />
+                  <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
                 </View>
                 <View
                   style={{
@@ -470,7 +468,7 @@ export default function AIChatScreen() {
                     inputText.trim() && !isLoading ? colors.primary[600] : colors.surface[200],
                 }}
               >
-                <Symbol
+                <UiSymbol
                   name="paperplane.fill"
                   size={20}
                   color={inputText.trim() && !isLoading ? '#FFFFFF' : '#9CA3AF'}

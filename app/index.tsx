@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 /**
@@ -42,7 +42,7 @@ export default function Index() {
               backgroundColor: '#FEE2E2',
             }}
           >
-            <Symbol name="exclamationmark.triangle" size={44} color="#EF4444" />
+            <SymbolIcon name="exclamationmark.triangle" size={44} color="#EF4444" />
           </View>
 
           <Text

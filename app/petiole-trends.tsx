@@ -167,6 +167,7 @@ export default function PetioleTrendsScreen() {
               trendData={trends.tests}
               parameterTrends={trends.parameterTrends}
               selectedParams={selectedParams}
+              testType="petiole"
             />
           ) : (
             <TrendsChart

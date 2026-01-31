@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 interface StatsCardProps {
@@ -57,18 +57,24 @@ export function StatsCard({
 
   const subtitleTextStyle: TextStyle = {
     fontSize: fontSize.xs,
-    marginTop: 2,
+    marginTop: spacing[0],
     color: colors.surface[400],
   };
 
   const content = (
     <View style={containerStyle}>
       <View style={headerStyle}>
-        <Symbol name={icon} size={20} color={finalColor} weight="semibold" />
+        <UiSymbol name={icon} size={20} color={finalColor} weight="semibold" />
         <Text style={valueTextStyle}>{value}</Text>
       </View>
-      <Text style={titleTextStyle}>{title}</Text>
-      {subtitle && <Text style={subtitleTextStyle}>{subtitle}</Text>}
+      <Text style={titleTextStyle} numberOfLines={1} ellipsizeMode="tail">
+        {title}
+      </Text>
+      {subtitle && (
+        <Text style={subtitleTextStyle} numberOfLines={1} ellipsizeMode="tail">
+          {subtitle}
+        </Text>
+      )}
     </View>
   );
 

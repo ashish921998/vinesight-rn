@@ -18,7 +18,7 @@ import {
   useFarms,
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import type { LogTypeId } from '@/constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
@@ -202,7 +202,7 @@ export default function DashboardScreen() {
                     backgroundColor: 'rgba(255, 149, 0, 0.15)',
                   }}
                 >
-                  <Symbol name="drop.fill" size={18} color="#ff9500" />
+                  <SymbolIcon name="drop.fill" size={18} color="#ff9500" />
                 </View>
                 <View style={{ marginLeft: spacing[3], flex: 1 }}>
                   <Text
@@ -223,7 +223,7 @@ export default function DashboardScreen() {
                     Water calculation needed
                   </Text>
                 </View>
-                <Symbol name="chevron.right" size={16} color={colors.gray[300]} />
+                <SymbolIcon name="chevron.right" size={16} color={colors.gray[300]} />
               </Pressable>
             ))}
           </View>
@@ -305,7 +305,7 @@ export default function DashboardScreen() {
                 backgroundColor: colors.white,
               }}
             >
-              <Symbol name="clock" size={48} color={colors.gray[300]} />
+              <SymbolIcon name="clock" size={48} color={colors.gray[300]} />
               <Text
                 style={{
                   textAlign: 'center',
@@ -365,7 +365,7 @@ export default function DashboardScreen() {
                   Select Farm
                 </Text>
                 <Pressable onPress={() => setShowFarmPicker(false)}>
-                  <Symbol name="xmark" size={24} color={colors.gray[400]} />
+                  <SymbolIcon name="xmark" size={24} color={colors.gray[400]} />
                 </Pressable>
               </View>
 
@@ -411,7 +411,7 @@ export default function DashboardScreen() {
                           </Text>
                         )}
                       </View>
-                      <Symbol name="chevron.right" size={20} color={colors.gray[300]} />
+                      <SymbolIcon name="chevron.right" size={20} color={colors.gray[300]} />
                     </Pressable>
                   ))
                 ) : (

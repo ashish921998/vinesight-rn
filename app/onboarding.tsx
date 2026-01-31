@@ -258,7 +258,7 @@ export default function OnboardingScreen() {
             {selectedCountry || 'Select a country'}
           </Text>
           <SymbolIcon
-            name={showCountryPicker ? 'chevron-up' : 'chevron-down'}
+            name={showCountryPicker ? 'chevron.up' : 'chevron.down'}
             size={20}
             color="#666"
           />
@@ -308,7 +308,7 @@ export default function OnboardingScreen() {
       {/* Area Unit Selection */}
       <View style={{ marginBottom: spacing[6] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
-          <SymbolIcon name="resize" size={20} color="#1a5d1a" />
+          <SymbolIcon name="arrow.up.left.and.arrow.down.right" size={20} color="#1a5d1a" />
           <Text
             style={{
               fontSize: fontSize.base,
@@ -388,7 +388,7 @@ export default function OnboardingScreen() {
           marginBottom: spacing[8],
         }}
       >
-        <SymbolIcon name="notifications" size={48} color="#3B82F6" />
+        <SymbolIcon name="bell.fill" size={48} color="#3B82F6" />
       </View>
       <Text
         style={{
@@ -412,11 +412,11 @@ export default function OnboardingScreen() {
           <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Irrigation reminders</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-          <SymbolIcon name="alarm" size={20} color="#3B82F6" />
+          <SymbolIcon name="alarm.fill" size={20} color="#3B82F6" />
           <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Task deadlines</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <SymbolIcon name="warning" size={20} color="#3B82F6" />
+          <SymbolIcon name="exclamationmark.triangle.fill" size={20} color="#3B82F6" />
           <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Weather alerts</Text>
         </View>
       </View>

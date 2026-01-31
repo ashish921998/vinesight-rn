@@ -56,7 +56,7 @@ export function Input({
   const labelStyle: TextStyle = {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    marginBottom: 6,
+    marginBottom: spacing[1],
     color: colors.surface[900],
   };
 
@@ -72,7 +72,7 @@ export function Input({
 
   const inputStyle: TextStyle = {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: spacing[3],
     fontSize: fontSize.base,
     color: colors.surface[900],
   };
@@ -80,7 +80,7 @@ export function Input({
   const errorContainerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: spacing[1],
   };
 
   const errorTextStyle: TextStyle = {
@@ -95,7 +95,7 @@ export function Input({
 
       <View style={inputContainerStyle}>
         {leftIcon && (
-          <View style={{ marginRight: 10 }}>
+          <View style={{ marginRight: spacing[2] }}>
             <Symbol
               name={leftIcon}
               size={20}

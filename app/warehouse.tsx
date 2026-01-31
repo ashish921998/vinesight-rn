@@ -499,7 +499,7 @@ export default function WarehouseScreen() {
                             <Text style={{ color: COLORS.lowStock }}>Low</Text>
                           </View>
                         )}
-                        <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                        <View style={{ flexDirection: 'row', gap: spacing[2], marginLeft: 'auto' }}>
                           <Pressable
                             onPress={() => handleEditItem(item)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

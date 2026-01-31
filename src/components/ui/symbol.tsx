@@ -1,6 +1,6 @@
 import { SymbolView, type SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import React from 'react';
-import { View, Text, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { View, Text, Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ICON_MAPPING } from '@/utils/icon-mapping';
 
@@ -136,7 +136,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'arrow.down': 'arrow-down',
 };
 
-export function Symbol({
+export function SymbolComponent({
   name,
   size = 24,
   color = '#000',
@@ -149,7 +149,7 @@ export function Symbol({
     : undefined;
 
   // On iOS 17+, use SF Symbols
-  if (process.env.EXPO_OS === 'ios') {
+  if (Platform.OS === 'ios') {
     const fallbackIcon =
       SYMBOL_TO_IONICON[resolvedName] ||
       SYMBOL_TO_IONICON[name] ||
@@ -195,3 +195,5 @@ export function Symbol({
     </View>
   );
 }
+
+export { SymbolComponent as Symbol, SymbolComponent as Icon };

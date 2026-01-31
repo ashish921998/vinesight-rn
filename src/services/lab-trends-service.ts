@@ -61,6 +61,7 @@ export class LabTrendsService {
       Mo: 'molybdenum',
       Na: 'sodium',
       Cl: 'chloride',
+      ammonical_nitrogen: 'ammoniacal_nitrogen',
     };
 
     const mapped: Record<string, number> = {};
@@ -73,7 +74,14 @@ export class LabTrendsService {
 
   private static calculateTrends<T extends SoilTestRecord | PetioleTestRecord>(
     tests: T[],
-    paramDefinitions: Array<{ key: string; label: string; unit: string }>,
+    paramDefinitions: Array<{
+      key: string;
+      label: string;
+      shortLabel: string;
+      unit: string;
+      optimalMin: number;
+      optimalMax: number;
+    }>,
     parameterMapper?: (params: Record<string, number>) => Record<string, number>,
   ): TestTrendsResponse {
     const trendData: TrendData[] = [...tests]
@@ -104,7 +112,10 @@ export class LabTrendsService {
         parameterTrends[param.key] = {
           key: param.key,
           label: param.label,
+          shortLabel: param.shortLabel,
           unit: param.unit,
+          optimalMin: param.optimalMin,
+          optimalMax: param.optimalMax,
           values,
           min,
           max,

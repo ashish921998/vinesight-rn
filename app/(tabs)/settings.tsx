@@ -16,11 +16,11 @@ import {
 import { useAuthStore } from '@/stores';
 import { useProfile, useUpdateProfile } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export default function SettingsScreen() {
-  const { user, signOut, isLoading: authLoading } = useAuthStore();
+  const { user, signOut, updateUserAreaUnit, isLoading: authLoading } = useAuthStore();
   const { data: profile, refetch: refetchProfile } = useProfile();
   const updateProfile = useUpdateProfile();
 
@@ -125,7 +125,7 @@ export default function SettingsScreen() {
             {userName ? (
               <Text style={styles.profileInitial}>{userName.charAt(0).toUpperCase()}</Text>
             ) : (
-              <Symbol name="person.fill" size={32} color="#408059" />
+              <UISymbol name="person.fill" size={32} color="#408059" />
             )}
           </View>
           <View style={styles.profileInfo}>
@@ -134,7 +134,7 @@ export default function SettingsScreen() {
             {userPhone ? <Text style={styles.profilePhone}>{userPhone}</Text> : null}
           </View>
           <Pressable onPress={() => setShowEditProfile(true)}>
-            <Symbol name="pencil" size={24} color="#408059" />
+            <UISymbol name="pencil" size={24} color="#408059" />
           </Pressable>
         </View>
       </View>
@@ -200,7 +200,7 @@ export default function SettingsScreen() {
         <View style={styles.sectionContent}>
           <Pressable onPress={handleSignOut} disabled={authLoading} style={styles.settingsItem}>
             <View style={styles.signOutIcon}>
-              <Symbol name="rectangle.portrait.and.arrow.right" size={20} color="#EF4444" />
+              <UISymbol name="rectangle.portrait.and.arrow.right" size={20} color="#EF4444" />
             </View>
             <Text style={styles.signOutText}>Sign Out</Text>
           </Pressable>
@@ -225,7 +225,7 @@ export default function SettingsScreen() {
             <View style={styles.modalHeaderInner}>
               <Text style={styles.modalTitle}>Edit Profile</Text>
               <Pressable onPress={() => setShowEditProfile(false)}>
-                <Symbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </Pressable>
             </View>
           </View>
@@ -293,7 +293,7 @@ export default function SettingsScreen() {
             <View style={styles.modalHeaderInner}>
               <Text style={styles.modalTitle}>Select Currency</Text>
               <Pressable onPress={() => setShowCurrencyPicker(false)}>
-                <Symbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </Pressable>
             </View>
           </View>
@@ -310,7 +310,7 @@ export default function SettingsScreen() {
                 >
                   <Text style={styles.pickerItemText}>{currency.label}</Text>
                   {selectedCurrency === currency.code && (
-                    <Symbol name="checkmark.circle.fill" size={22} color="#408059" />
+                    <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
                 </Pressable>
               ))}
@@ -331,7 +331,7 @@ export default function SettingsScreen() {
             <View style={styles.modalHeaderInner}>
               <Text style={styles.modalTitle}>Select Area Unit</Text>
               <Pressable onPress={() => setShowAreaPicker(false)}>
-                <Symbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </Pressable>
             </View>
           </View>
@@ -340,9 +340,17 @@ export default function SettingsScreen() {
               {AREA_UNITS.map((unit, index) => (
                 <Pressable
                   key={unit.id}
-                  onPress={() => {
-                    setSelectedAreaUnit(unit.id);
-                    setShowAreaPicker(false);
+                  onPress={async () => {
+                    try {
+                      await updateUserAreaUnit(unit.id as 'hectares' | 'acres');
+                      setSelectedAreaUnit(unit.id);
+                      setShowAreaPicker(false);
+                    } catch (error) {
+                      if (__DEV__) {
+                        console.error('Failed to update area unit:', error);
+                      }
+                      Alert.alert('Error', 'Failed to update area unit');
+                    }
                   }}
                   style={[
                     styles.settingsItem,
@@ -351,7 +359,7 @@ export default function SettingsScreen() {
                 >
                   <Text style={styles.pickerItemText}>{unit.label}</Text>
                   {selectedAreaUnit === unit.id && (
-                    <Symbol name="checkmark.circle.fill" size={22} color="#408059" />
+                    <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
                 </Pressable>
               ))}
@@ -380,11 +388,11 @@ function SettingsItem({
   return (
     <View style={[styles.settingsItem, !isLast && styles.borderBottom]}>
       <View style={styles.settingsIcon}>
-        <Symbol name={icon} size={20} color="#6B7280" />
+        <UISymbol name={icon} size={20} color="#6B7280" />
       </View>
       <Text style={styles.settingsTitle}>{title}</Text>
       {value && <Text style={styles.settingsValue}>{value}</Text>}
-      {!disabled && <Symbol name="chevron.right" size={18} color="#D1D5DB" />}
+      {!disabled && <UISymbol name="chevron.right" size={18} color="#D1D5DB" />}
     </View>
   );
 }

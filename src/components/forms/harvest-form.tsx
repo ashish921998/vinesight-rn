@@ -6,7 +6,7 @@ import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculator-mo
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export interface HarvestFormData {
-  quantity: number;
+  quantity: number | undefined;
   grade: HarvestGrade | '';
   price?: number;
   buyer?: string;
@@ -20,11 +20,13 @@ interface HarvestFormProps {
 }
 
 export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) {
-  const isValid = data.quantity > 0 && data.grade !== '';
+  const isValid = data.quantity !== undefined && data.quantity > 0 && data.grade !== '';
 
   // Calculate total value if price is set
   const totalValue =
-    data.price && data.quantity > 0 ? (data.quantity * data.price).toFixed(0) : null;
+    data.price && data.quantity !== undefined && data.quantity > 0
+      ? (data.quantity * data.price).toFixed(0)
+      : null;
 
   return (
     <View>
@@ -125,8 +127,8 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
         icon="cash-outline"
         iconColor="#22C55E"
         placeholder="Enter price"
-        value={data.price || 0}
-        onValueChange={(price) => onChange({ ...data, price: price || undefined })}
+        value={data.price}
+        onValueChange={(price) => onChange({ ...data, price })}
         unit="₹"
         decimals={0}
         hint="Optional - price per kilogram"
@@ -200,7 +202,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             Summary
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[4] }}>
-            {data.quantity > 0 && (
+            {data.quantity !== undefined && data.quantity > 0 && (
               <View>
                 <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>Quantity</Text>
                 <Text
@@ -210,7 +212,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                     color: '#92400E',
                   }}
                 >
-                  {data.quantity.toFixed(1)} kg
+                  {data.quantity!.toFixed(1)} kg
                 </Text>
               </View>
             )}
@@ -276,13 +278,13 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
 }
 
 export function validateHarvestForm(data: HarvestFormData): boolean {
-  return data.quantity > 0 && data.grade !== '';
+  return (data.quantity ?? 0) > 0 && data.grade !== '';
 }
 
 // Create empty harvest form data
 export function createEmptyHarvestFormData(): HarvestFormData {
   return {
-    quantity: 0,
+    quantity: undefined,
     grade: '',
   };
 }

@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { View, Text, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCreateFarm, useFarm, useUpdateFarm } from '@/hooks';
@@ -580,7 +580,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               </Pressable>
             </View>
 
-            <View style={{ maxHeight: 384 }}>
+            <ScrollView style={{ maxHeight: 384 }}>
               {varieties.map((variety) => (
                 <Pressable
                   key={variety}
@@ -616,7 +616,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   </View>
                 </Pressable>
               ))}
-            </View>
+            </ScrollView>
           </View>
         </View>
       )}

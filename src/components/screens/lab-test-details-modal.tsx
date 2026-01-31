@@ -1,9 +1,14 @@
 import React from 'react';
 import { Modal, View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatParameterKey } from '@/hooks/use-lab-tests';
+import {
+  soilParamOptions,
+  petioleParamOptions,
+  type ParamOption,
+} from '@/constants/lab-test-parameters';
 import type { SoilTestRecord, PetioleTestRecord } from '@/types/database';
 
 type TestType = 'soil' | 'petiole';
@@ -21,11 +26,26 @@ type Section = {
 };
 
 const soilSections: Section[] = [
-  { title: '🧪 Chemical Properties', params: ['ph', 'ec', 'organicCarbon', 'organicMatter'] },
-  { title: '🌿 Major Nutrients', params: ['nitrogen', 'phosphorus', 'potassium'] },
-  { title: '⚗️ Secondary Nutrients', params: ['calcium', 'magnesium', 'sulfur'] },
-  { title: '💧 Micro Nutrients', params: ['iron', 'manganese', 'zinc', 'copper', 'boron'] },
-  { title: '📋 Other', params: ['sodium', 'chloride'] },
+  {
+    title: '🧪 Chemical Properties',
+    params: ['ph', 'ec', 'organic_carbon', 'calcium_carbonate', 'carbonate', 'bicarbonate'],
+  },
+  {
+    title: '🌿 Major Nutrients',
+    params: ['nitrogen', 'phosphorus', 'potassium'],
+  },
+  {
+    title: '⚗️ Secondary Nutrients',
+    params: ['calcium', 'magnesium', 'sulfur'],
+  },
+  {
+    title: '💧 Micro Nutrients',
+    params: ['iron', 'manganese', 'zinc', 'copper', 'boron', 'molybdenum'],
+  },
+  {
+    title: '📋 Other',
+    params: ['sodium', 'chloride'],
+  },
 ];
 
 const petioleSections: Section[] = [
@@ -39,9 +59,18 @@ const petioleSections: Section[] = [
       'potassium',
     ],
   },
-  { title: '⚗️ Secondary Nutrients', params: ['calcium', 'magnesium', 'sulfur'] },
-  { title: '💧 Micro Nutrients', params: ['iron', 'manganese', 'zinc', 'copper', 'boron'] },
-  { title: '📋 Other', params: ['molybdenum', 'sodium', 'chloride'] },
+  {
+    title: '⚗️ Secondary Nutrients',
+    params: ['calcium', 'magnesium', 'sulfur'],
+  },
+  {
+    title: '💧 Micro Nutrients',
+    params: ['iron', 'manganese', 'zinc', 'copper', 'boron', 'molybdenum'],
+  },
+  {
+    title: '📋 Other',
+    params: ['sodium', 'chloride'],
+  },
 ];
 
 const formatValue = (value: unknown) => {
@@ -51,27 +80,37 @@ const formatValue = (value: unknown) => {
 };
 
 const normalizeParamKey = (key: string) => {
-  if (key === 'ammonical_nitrogen') return 'ammoniacal_nitrogen';
-  if (key === 'organic_carbon') return 'organicCarbon';
-  if (key === 'organic_matter') return 'organicMatter';
-  return key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
+  const keyMap: Record<string, string> = {
+    organic_carbon: 'organicCarbon',
+    organic_matter: 'organicMatter',
+    ammonical_nitrogen: 'ammoniacal_nitrogen',
+    calcium_carbonate: 'calciumCarbonate',
+    total_nitrogen: 'totalNitrogen',
+    nitrate_nitrogen: 'nitrateNitrogen',
+  };
+  return keyMap[key] || key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
 };
 
 const normalizeParameters = (parameters: Record<string, unknown>) => {
   const normalized: Record<string, unknown> = {};
   Object.entries(parameters).forEach(([key, value]) => {
-    const normalizedKey = normalizeParamKey(key);
-    if (normalized[normalizedKey] === undefined) {
-      normalized[normalizedKey] = value;
-    }
+    normalized[key] = value;
   });
   return normalized;
 };
 
 const getSections = (testType: TestType, parameters: Record<string, unknown>): Section[] => {
   const baseSections = testType === 'soil' ? soilSections : petioleSections;
-  const knownKeys = baseSections.flatMap((section) => section.params);
-  const unknownParams = Object.keys(parameters).filter((key) => !knownKeys.includes(key));
+
+  // Create a set of normalized known keys (convert both snake_case and camelCase to a canonical form)
+  const knownKeys = new Set(baseSections.flatMap((section) => section.params));
+
+  // Check each parameter against known keys (both original and normalized forms)
+  const unknownParams = Object.keys(parameters).filter((key) => {
+    const normalizedKey = normalizeParamKey(key);
+    // Check if either the original key or normalized key is in known keys
+    return !knownKeys.has(key) && !knownKeys.has(normalizedKey);
+  });
 
   if (unknownParams.length === 0) {
     return baseSections;
@@ -84,6 +123,39 @@ const getSections = (testType: TestType, parameters: Record<string, unknown>): S
       params: unknownParams,
     },
   ];
+};
+
+const getParamValue = (
+  key: string,
+  parameters: Record<string, unknown>,
+): [string, unknown] | null => {
+  const aliasMap: Record<string, string[]> = {
+    ammoniacal_nitrogen: ['ammonical_nitrogen'],
+    ammonical_nitrogen: ['ammoniacal_nitrogen'],
+  };
+
+  // Try the key as-is first
+  if (parameters[key] !== undefined) {
+    return [key, parameters[key]];
+  }
+  // Try normalized key
+  const normalizedKey = normalizeParamKey(key);
+  if (parameters[normalizedKey] !== undefined) {
+    return [key, parameters[normalizedKey]];
+  }
+  // Try known aliases for legacy keys
+  const aliases = aliasMap[key] ?? aliasMap[normalizedKey] ?? [];
+  for (const alias of aliases) {
+    if (parameters[alias] !== undefined) {
+      return [key, parameters[alias]];
+    }
+  }
+  return null;
+};
+
+const getParamOption = (key: string, testType: TestType): ParamOption | null => {
+  const options = testType === 'soil' ? soilParamOptions : petioleParamOptions;
+  return options.find((opt) => opt.key === key) || null;
 };
 
 export function LabTestDetailsModal({
@@ -157,15 +229,19 @@ export function LabTestDetailsModal({
                   backgroundColor: colors.gray[100],
                 }}
               >
-                <Symbol name="xmark" size={16} color={colors.gray[700]} />
+                <SymbolIcon name="xmark" size={16} color={colors.gray[700]} />
               </Pressable>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {sections.map((section) => {
                 const available = section.params
-                  .map((key) => [key, parameters[key]])
-                  .filter(([, value]) => value !== null && value !== undefined && value !== '');
+                  .map((key) => getParamValue(key, parameters))
+                  .filter((item): item is NonNullable<typeof item> => item !== null)
+                  .filter((item) => {
+                    const [, value] = item;
+                    return value !== null && value !== undefined && value !== '';
+                  });
 
                 if (available.length === 0) return null;
 
@@ -182,34 +258,50 @@ export function LabTestDetailsModal({
                       {section.title}
                     </Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-                      {available.map(([key, value]) => (
-                        <View
-                          key={String(key)}
-                          style={{
-                            flexBasis: '48%',
-                            backgroundColor: colors.gray[50],
-                            borderRadius: borderRadius.lg,
-                            paddingHorizontal: spacing[3],
-                            paddingVertical: spacing[2],
-                            borderWidth: 1,
-                            borderColor: colors.gray[200],
-                          }}
-                        >
-                          <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
-                            {formatParameterKey(String(key), testType)}
-                          </Text>
-                          <Text
+                      {available.map(([key, value]) => {
+                        const paramOption = getParamOption(String(key), testType);
+
+                        return (
+                          <View
+                            key={String(key)}
                             style={{
-                              fontSize: fontSize.base,
-                              fontWeight: fontWeight.semibold,
-                              color: accentColor,
-                              marginTop: spacing[1],
+                              flexBasis: '48%',
+                              backgroundColor: colors.gray[50],
+                              borderRadius: borderRadius.lg,
+                              paddingHorizontal: spacing[3],
+                              paddingVertical: spacing[2],
+                              borderWidth: 1,
+                              borderColor: colors.gray[200],
                             }}
                           >
-                            {formatValue(value)}
-                          </Text>
-                        </View>
-                      ))}
+                            <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                              {formatParameterKey(String(key), testType)}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: fontSize.base,
+                                fontWeight: fontWeight.semibold,
+                                color: accentColor,
+                                marginTop: spacing[1],
+                              }}
+                            >
+                              {formatValue(value)}
+                            </Text>
+                            {paramOption && (
+                              <Text
+                                style={{
+                                  fontSize: fontSize.xs,
+                                  color: colors.gray[400],
+                                  marginTop: spacing[1],
+                                }}
+                              >
+                                Optimal: {paramOption.optimalMin}-{paramOption.optimalMax}
+                                {paramOption.unit && ` ${paramOption.unit}`}
+                              </Text>
+                            )}
+                          </View>
+                        );
+                      })}
                     </View>
                   </View>
                 );

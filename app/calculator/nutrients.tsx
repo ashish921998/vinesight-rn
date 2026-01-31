@@ -75,7 +75,11 @@ export default function NutrientCalculatorScreen() {
         >
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
+            contentContainerStyle={{
+              paddingTop: spacing[4],
+              paddingHorizontal: 16,
+              paddingBottom: 32,
+            }}
             contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
           >
@@ -330,6 +334,14 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
+  const handleChangeText = (text: string) => {
+    if (text === '.') {
+      onChangeText('0.');
+    } else {
+      onChangeText(text);
+    }
+  };
+
   return (
     <View style={{ marginBottom: spacing[3] }}>
       <Text style={{ fontSize: fontSize.sm, color: colors.surface[600], marginBottom: spacing[1] }}>
@@ -345,7 +357,7 @@ function InputRow({
       >
         <TextInput
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={handleChangeText}
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"

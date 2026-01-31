@@ -8,21 +8,20 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import {
   View,
   Text,
-  Modal,
   Pressable,
   ScrollView,
   Alert,
   ActivityIndicator,
-  KeyboardAvoidingView,
   type TextInputProps,
   Keyboard,
   useWindowDimensions,
   UIManager,
   findNodeHandle,
 } from 'react-native';
-import { AppIcon } from '@/components/ui/app-icon';
+import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { FormModal, SectionHeader } from '@/components/ui';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -49,7 +48,7 @@ import {
   type ExpenseFormData,
   type FertigationFormData,
 } from '@/components/forms';
-import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
+import { type LogTypeId } from '@/constants/calculator-models';
 import {
   useUpdateIrrigationRecord,
   useUpdateSprayRecord,
@@ -88,7 +87,6 @@ export function ActivityEditForm({
 }: ActivityEditFormProps) {
   const isVisible = visible ?? true;
   const { height: windowHeight } = useWindowDimensions();
-  const isIOS = process.env.EXPO_OS === 'ios';
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,7 +97,7 @@ export function ActivityEditForm({
   const scrollOffsetRef = useRef(0);
   const keyboardHeightRef = useRef(0);
 
-  const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: 0 });
+  const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
   const [sprayData, setSprayData] = useState<SprayFormData>(createEmptySprayFormData());
   const [harvestData, setHarvestData] = useState<HarvestFormData>(createEmptyHarvestFormData());
   const [expenseData, setExpenseData] = useState<ExpenseFormData>(createEmptyExpenseFormData());
@@ -112,8 +110,6 @@ export function ActivityEditForm({
   const updateHarvest = useUpdateHarvestRecord();
   const updateExpense = useUpdateExpenseRecord();
   const updateFertigation = useUpdateFertigationRecord();
-
-  const logTypeConfig = LOG_TYPES.find((lt) => lt.id === logType);
 
   const isFormValid = useMemo(() => {
     switch (logType) {
@@ -293,7 +289,7 @@ export function ActivityEditForm({
           if (r.fertilizers && r.fertilizers.length > 0) {
             data.fertilizers = r.fertilizers.map((f) => ({
               name: f.name,
-              quantity: f.quantity,
+              quantity: f.quantity ?? 0,
               unit: f.unit as 'kg/acre' | 'liter/acre',
             }));
           }
@@ -391,7 +387,7 @@ export function ActivityEditForm({
               fertilizers: fertigationData.fertilizers.map((f) => ({
                 name: f.name,
                 unit: f.unit,
-                quantity: f.quantity,
+                quantity: f.quantity ?? 0,
               })),
               date: dateStr,
             },
@@ -421,10 +417,14 @@ export function ActivityEditForm({
     if (!isInitialized) {
       return (
         <View
-          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80 }}
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: spacing[10],
+          }}
         >
           <ActivityIndicator size="large" color="#408059" />
-          <Text selectable style={{ marginTop: 16, color: '#8e8e93' }}>
+          <Text selectable style={{ marginTop: spacing[4], color: colors.surface[500] }}>
             Loading...
           </Text>
         </View>
@@ -432,7 +432,7 @@ export function ActivityEditForm({
     }
 
     return (
-      <View style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+      <View style={{ marginTop: spacing[4] }}>
         {logType === 'irrigation' && (
           <IrrigationForm
             data={irrigationData}
@@ -468,216 +468,92 @@ export function ActivityEditForm({
     );
   };
 
-  const content = (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-      style={{ flex: 1, backgroundColor: '#f2f2f7' }}
-      contentContainerStyle={{ flexGrow: 1 }}
-    >
-      <KeyboardAvoidingView
-        behavior={isIOS ? 'padding' : 'height'}
-        style={{ flex: 1, backgroundColor: '#f2f2f7' }}
-      >
-        <LinearGradient
-          colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
-          style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
-        />
-
-        <View style={{ paddingHorizontal: 16, paddingTop: 48, paddingBottom: 16 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#1c1c1e' }}>
-                Edit Log
-              </Text>
-              <Text selectable style={{ fontSize: 14, color: '#8e8e93' }} numberOfLines={1}>
-                {farm.name}
-              </Text>
-            </View>
-            <Pressable onPress={handleClose}>
-              <AppIcon name="close-circle" size={28} color="#9CA3AF" />
-            </Pressable>
-          </View>
-
-          <Pressable
-            onPress={() => setShowDatePicker(true)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginTop: 12,
-              backgroundColor: '#f9f9f9',
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              borderRadius: 12,
-            }}
-          >
-            <AppIcon name="calendar" size={18} color="#408059" />
-            <Text
-              selectable
-              style={{ marginLeft: 8, fontSize: 14, fontWeight: '500', color: '#1c1c1e' }}
-            >
-              {selectedDate.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </Text>
-          </Pressable>
-        </View>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display="default"
-            onChange={(_, date) => {
-              setShowDatePicker(false);
-              if (date) setSelectedDate(date);
-            }}
-          />
-        )}
-
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          ref={scrollViewRef}
-          style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16 }}
-          keyboardShouldPersistTaps="handled"
-          onScroll={(event) => {
-            scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
-          }}
-          scrollEventThrottle={16}
-        >
-          <View
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: 16,
-              padding: 16,
-              marginBottom: 16,
-            }}
-          >
-            <Text
-              selectable
-              style={{ fontSize: 16, fontWeight: '600', color: '#1c1c1e', marginBottom: 12 }}
-            >
-              Log Type
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 999,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: `${logTypeConfig?.color || '#408059'}15`,
-                }}
-              >
-                <AppIcon
-                  name={logTypeConfig?.icon ?? 'leaf'}
-                  size={20}
-                  color={logTypeConfig?.color || '#408059'}
-                />
-              </View>
-              <Text
-                selectable
-                style={{ marginLeft: 12, fontSize: 16, fontWeight: '600', color: '#1c1c1e' }}
-              >
-                {logTypeConfig?.label}
-              </Text>
-            </View>
-          </View>
-
-          {renderForm()}
-        </ScrollView>
-
-        <View
-          style={{
-            backgroundColor: '#ffffff',
-            paddingHorizontal: 16,
-            paddingVertical: 16,
-            borderTopWidth: 1,
-            borderColor: '#e5e5ea',
-          }}
-        >
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Pressable
-              onPress={handleClose}
-              style={{
-                flex: 1,
-                paddingVertical: 14,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: '#e5e5ea',
-                alignItems: 'center',
-              }}
-            >
-              <Text selectable style={{ fontWeight: '600', color: '#8e8e93' }}>
-                Cancel
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={handleSave}
-              disabled={!isFormValid || isSubmitting}
-              style={[
-                {
-                  flex: 1,
-                  paddingVertical: 14,
-                  borderRadius: 12,
-                  alignItems: 'center',
-                  flexDirection: 'row',
-                  justifyContent: 'center',
-                },
-                {
-                  backgroundColor: isFormValid && !isSubmitting ? '#408059' : '#e5e5ea',
-                },
-              ]}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <AppIcon
-                    name="save"
-                    size={18}
-                    color={isFormValid && !isSubmitting ? '#FFFFFF' : '#9CA3AF'}
-                  />
-                  <Text
-                    selectable
-                    style={[
-                      { marginLeft: 8, fontWeight: '600' },
-                      { color: isFormValid && !isSubmitting ? '#FFFFFF' : '#9CA3AF' },
-                    ]}
-                  >
-                    Save
-                  </Text>
-                </>
-              )}
-            </Pressable>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </ScrollView>
-  );
-
-  if (presentation === 'screen') {
-    return content;
-  }
-
   return (
-    <Modal
+    <FormModal
       visible={isVisible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={handleClose}
+      onClose={handleClose}
+      title="Edit Log"
+      onSave={handleSave}
+      saveLabel="Save Changes"
+      isLoading={isSubmitting}
+      isSaveDisabled={!isFormValid}
+      presentation={presentation}
+      scrollViewRef={scrollViewRef}
+      scrollViewProps={{
+        keyboardShouldPersistTaps: 'handled',
+        onScroll: (event) => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+        },
+        scrollEventThrottle: 16,
+      }}
     >
-      {content}
-    </Modal>
+      <SectionHeader
+        title="Log Details"
+        subtitle={farm.name}
+        style={{ marginBottom: spacing[4] }}
+      />
+
+      <View style={{ marginBottom: spacing[6] }}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            fontWeight: fontWeight.medium,
+            color: colors.surface[700],
+            marginBottom: spacing[2],
+          }}
+        >
+          Date
+        </Text>
+        <Pressable
+          onPress={() => setShowDatePicker(true)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface[100],
+            borderRadius: borderRadius.xl,
+            borderWidth: 2,
+            borderColor: colors.surface[200],
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[3],
+          }}
+        >
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: colors.primary[50],
+              marginRight: spacing[3],
+            }}
+          >
+            <UISymbol name="calendar" size={16} color={colors.primary[600]} />
+          </View>
+          <Text style={{ fontSize: fontSize.base, fontWeight: fontWeight.medium }}>
+            {selectedDate.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </Text>
+        </Pressable>
+      </View>
+
+      {renderForm()}
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={(_, date) => {
+            setShowDatePicker(false);
+            if (date) setSelectedDate(date);
+          }}
+        />
+      )}
+    </FormModal>
   );
 }

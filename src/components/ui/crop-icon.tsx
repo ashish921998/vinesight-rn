@@ -89,6 +89,23 @@ export function CropIcon({ name, size = 24, muted = false }: CropIconProps) {
     );
   }
 
+  if (name === 'banana') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path
+          d="M6.5 17c-1.5-2-2.5-4.5-1.5-7 .5-1.5 2-2.5 3.5-3 2-.5 3.5.5 4.5 2 .5 1.5 0 3-1 4.5-1.5.5-3.5-.5-5.5-3.5Z"
+          fill="#FFE135"
+          opacity={opacity}
+        />
+        <Path
+          d="M5.5 16c-1-1.5-1-3.5 0-5 .5-1.5 1.5-2 3-2.5 1.5-.5 2.5.5 3 1.5 0 1 0 2.5-1 3.5-1 .5-2.5-.5-4-2.5Z"
+          fill="#FFD700"
+          opacity={opacity}
+        />
+      </Svg>
+    );
+  }
+
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path

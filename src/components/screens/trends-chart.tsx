@@ -199,7 +199,14 @@ export default function TrendsChart({
           borderRadius: 16,
         }}
         onDataPointClick={(data) => {
-          setSelectedPoint({ index: data.index, date: trendData[data.index].date });
+          if (
+            data &&
+            typeof data.index === 'number' &&
+            data.index >= 0 &&
+            data.index < trendData.length
+          ) {
+            setSelectedPoint({ index: data.index, date: trendData[data.index].date });
+          }
         }}
       />
 

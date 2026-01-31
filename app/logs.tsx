@@ -8,11 +8,12 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
 } from 'react-native';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -53,6 +54,22 @@ export default function LogsScreen() {
   const { setEditActivity } = useModalStore();
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
+  const filterCardStyle = Platform.select({
+    ios: {
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+    },
+    android: {
+      backgroundColor: colors.surface[100],
+      elevation: 2,
+    },
+    default: {
+      backgroundColor: colors.surface[100],
+    },
+  });
 
   const { data: farms = [], isLoading: farmsLoading } = useFarms();
   const [selectedFarmId, setSelectedFarmId] = useState<number | undefined>(() => {
@@ -137,12 +154,13 @@ export default function LogsScreen() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [deletingLog, setDeletingLog] = useState<CombinedLog | undefined>();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showDatePickerFrom, setShowDatePickerFrom] = useState(false);
   const [showDatePickerTo, setShowDatePickerTo] = useState(false);
   const [showFarmSelector, setShowFarmSelector] = useState(false);
+  const [showRecordsPerPageSelector, setShowRecordsPerPageSelector] = useState(false);
 
   const deleteIrrigation = useDeleteIrrigationRecord();
   const deleteSpray = useDeleteSprayRecord();
@@ -153,15 +171,17 @@ export default function LogsScreen() {
   const combinedLogs = useMemo<CombinedLog[]>(() => {
     const logs: CombinedLog[] = [];
 
-    displayIrrigationRecords.forEach((r) =>
+    displayIrrigationRecords.forEach((r) => {
+      const duration = r.duration ?? 0;
+      const displayDuration = Number.isInteger(duration) ? duration : duration.toFixed(1);
       logs.push({
         id: `irrigation-${r.id}`,
         type: 'irrigation',
         date: r.date,
-        description: `${r.duration?.toFixed(1) || 0}h duration`,
+        description: `${displayDuration}h`,
         data: r,
-      }),
-    );
+      });
+    });
 
     displaySprayRecords.forEach((r) =>
       logs.push({
@@ -334,6 +354,12 @@ export default function LogsScreen() {
     setCurrentPage(1);
   }, []);
 
+  const handleItemsPerPageChange = useCallback((value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
+    setShowRecordsPerPageSelector(false);
+  }, []);
+
   const hasActiveFilters = selectedLogTypes.size > 0 || dateFrom || dateTo;
 
   if (farmsLoading) {
@@ -372,7 +398,7 @@ export default function LogsScreen() {
                 }}
                 style={{ marginRight: spacing[4] }}
               >
-                <Symbol name="plus.circle.fill" size={28} color="#408059" />
+                <UiSymbol name="plus.circle.fill" size={28} color="#408059" />
               </Pressable>
             ),
         }}
@@ -425,7 +451,7 @@ export default function LogsScreen() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Symbol
+                      <UiSymbol
                         name={
                           selectedFarmId === undefined ? 'square.stack.3d.up.fill' : 'leaf.fill'
                         }
@@ -457,7 +483,7 @@ export default function LogsScreen() {
                       )}
                     </View>
                   </View>
-                  <Symbol name="chevron.down" size={20} color="#8e8e93" />
+                  <UiSymbol name="chevron.down" size={20} color="#8e8e93" />
                 </View>
               </Pressable>
             </View>
@@ -466,14 +492,9 @@ export default function LogsScreen() {
             <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
               <View
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 5 },
-                  shadowOpacity: 0.08,
-                  shadowRadius: 10,
-                  elevation: 5,
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
+                  ...(filterCardStyle ?? {}),
                 }}
               >
                 {/* Search Bar */}
@@ -487,7 +508,7 @@ export default function LogsScreen() {
                     paddingVertical: spacing[2],
                   }}
                 >
-                  <Symbol name="magnifyingglass" size={18} color="#8e8e93" />
+                  <UiSymbol name="magnifyingglass" size={18} color="#8e8e93" />
                   <TextInput
                     placeholder="Search logs..."
                     value={searchQuery}
@@ -501,7 +522,7 @@ export default function LogsScreen() {
                   />
                   {searchQuery !== '' && (
                     <Pressable onPress={() => setSearchQuery('')}>
-                      <Symbol name="xmark.circle.fill" size={18} color="#8e8e93" />
+                      <UiSymbol name="xmark.circle.fill" size={18} color="#8e8e93" />
                     </Pressable>
                   )}
                 </View>
@@ -613,7 +634,7 @@ export default function LogsScreen() {
                                 : colors.surface[50],
                             }}
                           >
-                            <Symbol
+                            <UiSymbol
                               name={
                                 logType.icon === 'water'
                                   ? 'drop.fill'
@@ -765,7 +786,7 @@ export default function LogsScreen() {
                       backgroundColor: 'rgba(142, 142, 147, 0.2)',
                     }}
                   >
-                    <Symbol name="calendar" size={32} color="#9CA3AF" />
+                    <UiSymbol name="calendar" size={32} color="#9CA3AF" />
                   </View>
                   <Text
                     style={{
@@ -806,32 +827,30 @@ export default function LogsScreen() {
                       {filteredLogs.length}
                     </Text>
                     <Pressable
-                      onPress={() => {
-                        setCurrentPage(1);
-                        setShowFilters(true);
-                      }}
+                      onPress={() => setShowRecordsPerPageSelector(true)}
+                      style={({ pressed }) => ({
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: pressed ? colors.surface[200] : colors.surface[50],
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: spacing[2],
+                        borderRadius: borderRadius.lg,
+                      })}
                     >
-                      <View
+                      <Text
                         style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          backgroundColor: colors.surface[50],
-                          paddingHorizontal: spacing[2],
-                          paddingVertical: spacing[1],
-                          borderRadius: borderRadius.lg,
+                          fontSize: fontSize.xs,
+                          color: colors.surface[500],
                         }}
                       >
-                        <Symbol name="ellipsis" size={14} color="#8e8e93" />
-                        <Text
-                          style={{
-                            marginLeft: spacing[1],
-                            fontSize: fontSize.xs,
-                            color: colors.surface[500],
-                          }}
-                        >
-                          10 per page
-                        </Text>
-                      </View>
+                        {itemsPerPage} per page
+                      </Text>
+                      <UiSymbol
+                        name="chevron.down"
+                        size={12}
+                        color="#8e8e93"
+                        style={{ marginLeft: spacing[1] }}
+                      />
                     </Pressable>
                   </View>
 
@@ -865,7 +884,7 @@ export default function LogsScreen() {
                                 backgroundColor: `${logType?.color || '#408059'}1A`,
                               }}
                             >
-                              <Symbol
+                              <UiSymbol
                                 name={
                                   logType?.icon === 'water'
                                     ? 'drop.fill'
@@ -908,7 +927,7 @@ export default function LogsScreen() {
                               <Text
                                 style={{
                                   fontSize: fontSize.xs,
-                                  color: colors.surface[300],
+                                  color: colors.surface[500],
                                   marginTop: spacing[1],
                                 }}
                               >
@@ -941,8 +960,22 @@ export default function LogsScreen() {
                                 disabled={
                                   !(selectedFarm || (log.data as { farm_id?: number }).farm_id)
                                 }
+                                style={({ pressed }) => ({
+                                  width: 44,
+                                  height: 44,
+                                  borderRadius: borderRadius.xl,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  backgroundColor: pressed
+                                    ? 'rgba(64, 128, 89, 0.1)'
+                                    : 'transparent',
+                                  opacity:
+                                    selectedFarm || (log.data as { farm_id?: number }).farm_id
+                                      ? 1
+                                      : 0.5,
+                                })}
                               >
-                                <Symbol
+                                <UiSymbol
                                   name="pencil"
                                   size={20}
                                   color={
@@ -957,8 +990,18 @@ export default function LogsScreen() {
                                   setDeletingLog(log);
                                   setShowDeleteConfirmation(true);
                                 }}
+                                style={({ pressed }) => ({
+                                  width: 44,
+                                  height: 44,
+                                  borderRadius: borderRadius.xl,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  backgroundColor: pressed
+                                    ? 'rgba(239, 68, 68, 0.1)'
+                                    : 'transparent',
+                                })}
                               >
-                                <Symbol name="trash" size={20} color="#EF4444" />
+                                <UiSymbol name="trash" size={20} color="#EF4444" />
                               </Pressable>
                             </View>
                           </View>
@@ -988,7 +1031,7 @@ export default function LogsScreen() {
                           opacity: currentPage === 1 ? 0.5 : 1,
                         }}
                       >
-                        <Symbol
+                        <UiSymbol
                           name="chevron.left"
                           size={18}
                           color={currentPage === 1 ? '#8e8e93' : '#FFFFFF'}
@@ -1046,7 +1089,7 @@ export default function LogsScreen() {
                           opacity: currentPage === totalPages ? 0.5 : 1,
                         }}
                       >
-                        <Symbol
+                        <UiSymbol
                           name="chevron.right"
                           size={18}
                           color={currentPage === totalPages ? '#8e8e93' : '#FFFFFF'}
@@ -1106,7 +1149,7 @@ export default function LogsScreen() {
                   Select From Date
                 </Text>
                 <Pressable onPress={() => setShowDatePickerFrom(false)}>
-                  <Symbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                  <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
                 </Pressable>
               </View>
               <DateTimePicker
@@ -1208,7 +1251,7 @@ export default function LogsScreen() {
                           : 'rgba(64,128,89,0.15)',
                     }}
                   >
-                    <Symbol
+                    <UiSymbol
                       name="square.stack.3d.up.fill"
                       size={20}
                       color={selectedFarmId === undefined ? '#FFFFFF' : '#408059'}
@@ -1237,7 +1280,7 @@ export default function LogsScreen() {
                     </Text>
                   </View>
                   {selectedFarmId === undefined && (
-                    <Symbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
+                    <UiSymbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
                   )}
                 </Pressable>
 
@@ -1271,7 +1314,7 @@ export default function LogsScreen() {
                             : 'rgba(64,128,89,0.15)',
                       }}
                     >
-                      <Symbol
+                      <UiSymbol
                         name="leaf.fill"
                         size={20}
                         color={selectedFarmId === farm.id ? '#FFFFFF' : '#408059'}
@@ -1300,7 +1343,7 @@ export default function LogsScreen() {
                       </Text>
                     </View>
                     {selectedFarmId === farm.id && (
-                      <Symbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
+                      <UiSymbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
                     )}
                   </Pressable>
                 ))}
@@ -1322,6 +1365,85 @@ export default function LogsScreen() {
               </Pressable>
             </View>
           </View>
+        </Modal>
+      )}
+
+      {showRecordsPerPageSelector && (
+        <Modal
+          transparent
+          visible={showRecordsPerPageSelector}
+          onRequestClose={() => setShowRecordsPerPageSelector(false)}
+          animationType="fade"
+        >
+          <Pressable
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => setShowRecordsPerPageSelector(false)}
+          >
+            <View
+              style={{
+                width: '80%',
+                maxWidth: 320,
+                backgroundColor: colors.white,
+                borderRadius: borderRadius['2xl'],
+                padding: spacing[6],
+              }}
+              onStartShouldSetResponder={() => true}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[4],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  Records per page
+                </Text>
+                <Pressable onPress={() => setShowRecordsPerPageSelector(false)}>
+                  <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                </Pressable>
+              </View>
+              {[10, 50, 100].map((value) => (
+                <Pressable
+                  key={value}
+                  onPress={() => handleItemsPerPageChange(value)}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: spacing[3],
+                    borderRadius: borderRadius.xl,
+                    backgroundColor: pressed ? colors.surface[100] : 'transparent',
+                    marginBottom: spacing[2],
+                  })}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      color: colors.surface[900],
+                    }}
+                  >
+                    {value}
+                  </Text>
+                  {itemsPerPage === value && (
+                    <UiSymbol name="checkmark.circle.fill" size={20} color="#408059" />
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          </Pressable>
         </Modal>
       )}
 
@@ -1368,7 +1490,7 @@ export default function LogsScreen() {
                   Select To Date
                 </Text>
                 <Pressable onPress={() => setShowDatePickerTo(false)}>
-                  <Symbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                  <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
                 </Pressable>
               </View>
               <DateTimePicker
@@ -1432,7 +1554,7 @@ export default function LogsScreen() {
                   backgroundColor: 'rgba(239, 68, 68, 0.1)',
                 }}
               >
-                <Symbol name="exclamationmark.triangle.fill" size={28} color="#EF4444" />
+                <UiSymbol name="exclamationmark.triangle.fill" size={28} color="#EF4444" />
               </View>
             </View>
             <Text

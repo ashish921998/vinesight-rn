@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { NumericInput } from './form-field';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export interface ExpenseFormData {
   type: ExpenseTypeId | '';
-  cost: number;
+  cost: number | undefined;
   remarks?: string;
   notes?: string;
 }
@@ -30,7 +30,7 @@ const EXPENSE_ICONS: Record<ExpenseTypeId, string> = {
 };
 
 export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) {
-  const isValid = data.cost > 0 && data.type !== '';
+  const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
 
   return (
     <View>
@@ -47,7 +47,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
             marginRight: spacing[3],
           }}
         >
-          <Symbol name="dollarsign.circle.fill" size={20} color="#EF4444" />
+          <SymbolIcon name="dollarsign.circle.fill" size={20} color="#EF4444" />
         </View>
         <View>
           <Text
@@ -69,7 +69,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
           <View style={{ marginRight: 6 }}>
-            <Symbol name="list.bullet" size={16} color="#408059" />
+            <SymbolIcon name="list.bullet" size={16} color="#408059" />
           </View>
           <Text
             style={{
@@ -98,7 +98,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
                 borderColor: data.type === type ? '#EF4444' : colors.surface[200],
               }}
             >
-              <Symbol
+              <SymbolIcon
                 name={EXPENSE_ICONS[type]}
                 size={16}
                 color={data.type === type ? colors.white : colors.surface[500]}
@@ -137,7 +137,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ marginRight: 6 }}>
-            <Symbol name="doc.text" size={16} color="#408059" />
+            <SymbolIcon name="doc.text" size={16} color="#408059" />
           </View>
           <Text
             style={{
@@ -178,7 +178,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
       </View>
 
       {/* Summary */}
-      {data.type && data.cost > 0 && (
+      {data.type && data.cost !== undefined && data.cost > 0 && (
         <View
           style={{
             backgroundColor: '#FEF2F2',
@@ -191,7 +191,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Symbol
+              <SymbolIcon
                 name={data.type ? EXPENSE_ICONS[data.type] : 'dollarsign.circle.fill'}
                 size={20}
                 color="#DC2626"
@@ -208,7 +208,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
               </Text>
             </View>
             <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#B91C1C' }}>
-              ₹{data.cost.toLocaleString()}
+              ₹{data.cost!.toLocaleString()}
             </Text>
           </View>
         </View>
@@ -224,7 +224,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
           borderTopColor: colors.surface[100],
         }}
       >
-        <Symbol
+        <SymbolIcon
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
           color={isValid ? '#22C55E' : '#9CA3AF'}
@@ -244,13 +244,13 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
 }
 
 export function validateExpenseForm(data: ExpenseFormData): boolean {
-  return data.cost > 0 && data.type !== '';
+  return (data.cost ?? 0) > 0 && data.type !== '';
 }
 
 // Create empty expense form data
 export function createEmptyExpenseFormData(): ExpenseFormData {
   return {
     type: '',
-    cost: 0,
+    cost: undefined,
   };
 }

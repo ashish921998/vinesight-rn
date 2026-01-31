@@ -113,7 +113,7 @@ export default function ToolsScreen() {
               </Text>
               <Text
                 style={{ color: colors.surface[500], fontSize: fontSize.xs, marginTop: 2 }}
-                numberOfLines={1}
+                numberOfLines={2}
               >
                 {calc.description}
               </Text>

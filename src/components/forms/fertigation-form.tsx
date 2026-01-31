@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
@@ -264,13 +264,22 @@ function FertilizerRow({
   const [isNameFocused, setIsNameFocused] = useState(false);
   const [isQuantityFocused, setIsQuantityFocused] = useState(false);
   const [quantityText, setQuantityText] = useState(
-    fertilizer.quantity > 0 ? fertilizer.quantity.toString() : '',
+    fertilizer.quantity !== undefined && fertilizer.quantity > 0
+      ? fertilizer.quantity.toString()
+      : '',
   );
+  const [isQuantityEditing, setIsQuantityEditing] = useState(false);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setQuantityText(fertilizer.quantity > 0 ? fertilizer.quantity.toString() : '');
-  }, [fertilizer.quantity]);
+  // Sync quantityText with fertilizer.quantity when not editing
+  if (!isQuantityEditing) {
+    const syncedText =
+      fertilizer.quantity !== undefined && fertilizer.quantity > 0
+        ? fertilizer.quantity.toString()
+        : '';
+    if (quantityText !== syncedText) {
+      setQuantityText(syncedText);
+    }
+  }
 
   const handleQuantityChange = (text: string) => {
     const cleanText = text.replace(/[^0-9.]/g, '');
@@ -280,7 +289,7 @@ function FertilizerRow({
       sanitizedText += '.' + parts[1].slice(0, 2);
     }
     setQuantityText(sanitizedText);
-    const qty = parseFloat(sanitizedText) || 0;
+    const qty = sanitizedText === '' ? undefined : parseFloat(sanitizedText);
     onUpdate({ quantity: qty });
   };
 
@@ -354,9 +363,13 @@ function FertilizerRow({
           onChangeText={handleQuantityChange}
           onFocus={(event) => {
             setIsQuantityFocused(true);
+            setIsQuantityEditing(true);
             onInputFocus?.(event);
           }}
-          onBlur={() => setIsQuantityFocused(false)}
+          onBlur={() => {
+            setIsQuantityFocused(false);
+            setIsQuantityEditing(false);
+          }}
         />
 
         {/* Unit Picker */}

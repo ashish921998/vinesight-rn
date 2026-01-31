@@ -8,9 +8,9 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
 
 import { Stack } from 'expo-router';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LinearGradient } from 'expo-linear-gradient';
-import { REFILL_SPANS, SOIL_TYPES, type RefillSpanId } from '@/constants/calculator-models';
+import { REFILL_SPANS, type RefillSpanId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 export default function MADCalculatorScreen() {
@@ -97,7 +97,11 @@ export default function MADCalculatorScreen() {
           />
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
+            contentContainerStyle={{
+              paddingTop: spacing[4],
+              paddingHorizontal: 16,
+              paddingBottom: 32,
+            }}
             contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
           >
@@ -123,7 +127,7 @@ export default function MADCalculatorScreen() {
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
                   }}
                 >
-                  <Symbol name="drop.fill" size={18} color="#408059" />
+                  <IconSymbol name="drop.fill" size={18} color="#408059" />
                 </View>
                 <Text
                   style={{
@@ -165,32 +169,6 @@ export default function MADCalculatorScreen() {
                 unit="%"
                 placeholder="15"
               />
-
-              {/* Soil type guidance */}
-              <View
-                style={{
-                  borderRadius: borderRadius.xl,
-                  padding: spacing[3],
-                  marginTop: spacing[3],
-                  backgroundColor: '#f9f9f9',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.medium,
-                    marginBottom: spacing[2],
-                    color: '#8e8e93',
-                  }}
-                >
-                  Typical water retention by soil type:
-                </Text>
-                {SOIL_TYPES.map((soil) => (
-                  <Text key={soil.id} style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
-                    • {soil.label}: {soil.waterRetentionMin}-{soil.waterRetentionMax}%
-                  </Text>
-                ))}
-              </View>
 
               {/* Calculate Button */}
               <Pressable
@@ -290,7 +268,7 @@ export default function MADCalculatorScreen() {
                       backgroundColor: 'rgba(64, 128, 89, 0.1)',
                     }}
                   >
-                    <Symbol name="arrow-up-circle" size={18} color="#408059" />
+                    <IconSymbol name="arrow-up-circle" size={18} color="#408059" />
                   </View>
                   <Text
                     style={{
@@ -334,7 +312,7 @@ export default function MADCalculatorScreen() {
                       {span.label}
                     </Text>
                     {selectedRefillSpan === span.id && (
-                      <Symbol name="checkmark.circle.fill" size={20} color="#408059" />
+                      <IconSymbol name="checkmark.circle.fill" size={20} color="#408059" />
                     )}
                   </Pressable>
                 ))}
@@ -464,7 +442,7 @@ export default function MADCalculatorScreen() {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Symbol name="refresh" size={18} color="#8e8e93" />
+                  <IconSymbol name="refresh" size={18} color="#8e8e93" />
                   <Text
                     style={{
                       fontWeight: fontWeight.medium,
@@ -498,6 +476,14 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
+  const handleChangeText = (text: string) => {
+    if (text === '.') {
+      onChangeText('0.');
+    } else {
+      onChangeText(text);
+    }
+  };
+
   return (
     <View style={{ marginBottom: spacing[3] }}>
       <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1], color: '#8e8e93' }}>
@@ -513,7 +499,7 @@ function InputRow({
       >
         <TextInput
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={handleChangeText}
           placeholder={placeholder}
           placeholderTextColor="#8e8e93"
           keyboardType="decimal-pad"

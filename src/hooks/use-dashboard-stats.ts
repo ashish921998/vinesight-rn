@@ -229,11 +229,13 @@ export function useRecentActivities(limit: number = 5) {
 
       // Map irrigation
       irrigation.data?.forEach((r) => {
+        const duration = r.duration ?? 0;
+        const displayDuration = Number.isInteger(duration) ? duration : duration.toFixed(1);
         activities.push({
           id: `irrigation_${r.id}`,
           type: 'irrigation',
           date: r.date,
-          description: `Duration: ${r.duration?.toFixed(1) ?? 0} hrs`,
+          description: `${displayDuration}h`,
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? 'Unknown',
         });

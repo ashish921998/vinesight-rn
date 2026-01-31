@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import { Stack, useRouter } from 'expo-router';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SFSymbol } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-tasks';
 import { TaskReminder, TASK_TYPE_INFO, PRIORITY_INFO } from '../src/types/task';
@@ -155,7 +155,7 @@ export default function TasksScreen() {
                   }}
                   style={{ marginRight: spacing[4] }}
                 >
-                  <Symbol name="plus.circle.fill" size={28} color="#408059" />
+                  <SFSymbol name="plus.circle.fill" size={28} color="#408059" />
                 </Pressable>
               ),
             }}
@@ -272,7 +272,7 @@ export default function TasksScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Symbol name="square" size={48} color="#9CA3AF" />
+                <SFSymbol name="square" size={48} color="#9CA3AF" />
                 <Text
                   style={{
                     color: colors.surface[600],
@@ -354,7 +354,7 @@ export default function TasksScreen() {
                           borderColor: task.completed ? '#22C55E' : colors.surface[300],
                         }}
                       >
-                        {task.completed && <Symbol name="checkmark" size={16} color="white" />}
+                        {task.completed && <SFSymbol name="checkmark" size={16} color="white" />}
                       </Pressable>
 
                       <View style={{ flex: 1 }}>
@@ -371,7 +371,7 @@ export default function TasksScreen() {
                               backgroundColor: `${typeInfo.color}20`,
                             }}
                           >
-                            <Symbol
+                            <SFSymbol
                               name={
                                 typeInfo.icon === 'water'
                                   ? 'drop.fill'
@@ -434,7 +434,7 @@ export default function TasksScreen() {
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Symbol name="leaf.fill" size={12} color="#6B7280" />
+                            <SFSymbol name="leaf.fill" size={12} color="#6B7280" />
                             <Text
                               style={{
                                 fontSize: fontSize.xs,
@@ -455,7 +455,7 @@ export default function TasksScreen() {
                               backgroundColor: overdue ? '#FEE2E2' : colors.surface[100],
                             }}
                           >
-                            <Symbol
+                            <SFSymbol
                               name="calendar"
                               size={12}
                               color={overdue ? '#DC2626' : '#6B7280'}
@@ -471,7 +471,14 @@ export default function TasksScreen() {
                               {formatDueDate(task.due_date)}
                             </Text>
                           </View>
-                          <View style={{ backgroundColor: priorityInfo.bgColor }}>
+                          <View
+                            style={{
+                              backgroundColor: priorityInfo.bgColor,
+                              paddingHorizontal: spacing[2],
+                              paddingVertical: 2,
+                              borderRadius: borderRadius.sm,
+                            }}
+                          >
                             <Text
                               style={{
                                 fontSize: fontSize.xs,
@@ -491,7 +498,7 @@ export default function TasksScreen() {
                           onPress={() => handleDelete(task)}
                           style={{ padding: spacing[2] }}
                         >
-                          <Symbol name="trash" size={18} color="#DC2626" />
+                          <SFSymbol name="trash" size={18} color="#DC2626" />
                         </Pressable>
                       )}
                     </View>
@@ -527,7 +534,7 @@ export default function TasksScreen() {
               elevation: 4,
             }}
           >
-            <Symbol name="plus" size={28} color="white" />
+            <SFSymbol name="plus" size={28} color="white" />
           </Pressable>
 
           {/* Add Task handled via route */}

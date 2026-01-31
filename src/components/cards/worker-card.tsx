@@ -43,6 +43,8 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const avatarStyle: ViewStyle = {
     width: 48,
     height: 48,
+    minWidth: 48,
+    minHeight: 48,
     borderRadius: borderRadius.full,
     backgroundColor: `${colors.primary[500]}33`,
     alignItems: 'center',
@@ -118,10 +120,12 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
 
       {/* Info */}
       <View style={infoContainerStyle}>
-        <Text style={nameTextStyle}>{worker.name}</Text>
+        <Text style={nameTextStyle} numberOfLines={1}>
+          {worker.name}
+        </Text>
         <View style={rateContainerStyle}>
           <CardSymbol name="dollarsign.circle" size={12} color={colors.surface[600]} />
-          <Text style={rateTextStyle}>
+          <Text style={rateTextStyle} numberOfLines={1}>
             {formattedRate}
             <Text style={dayTextStyle}> /day</Text>
           </Text>

@@ -13,7 +13,7 @@ import {
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import playstoreLogo from '../../assets/playstore.png';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
@@ -237,7 +237,7 @@ export default function LoginScreen() {
               {/* Error Message */}
               {errorMessage && (
                 <View style={errorContainerStyle}>
-                  <Symbol name="exclamationmark.circle.fill" size={18} color={colors.error} />
+                  <UiSymbol name="exclamationmark.circle.fill" size={18} color={colors.error} />
                   <Text style={errorTextStyle}>{errorMessage}</Text>
                 </View>
               )}
@@ -263,7 +263,7 @@ export default function LoginScreen() {
             <Button
               title="Continue with Google"
               variant="outline"
-              leftIcon={<Symbol name="g.circle.fill" size={20} color={colors.primary[500]} />}
+              leftIcon={<UiSymbol name="g.circle.fill" size={20} color={colors.primary[500]} />}
               onPress={signInWithGoogle}
               disabled={isLoading}
             />

@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import {
   View,
   Text,
@@ -8,6 +9,8 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Animated,
+  type ScrollViewProps,
+  type StyleProp,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -27,6 +30,10 @@ interface FormModalProps {
   showResetButton?: boolean;
   onReset?: () => void;
   presentation?: 'modal' | 'screen';
+  scrollViewRef?: React.Ref<ScrollView>;
+  scrollViewProps?: ScrollViewProps;
+  scrollViewStyle?: StyleProp<ViewStyle>;
+  contentContainerStyle?: StyleProp<ViewStyle>;
 }
 
 export function FormModal({
@@ -41,8 +48,17 @@ export function FormModal({
   showResetButton = false,
   onReset,
   presentation = 'modal',
+  scrollViewRef,
+  scrollViewProps,
+  scrollViewStyle,
+  contentContainerStyle,
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
+  const {
+    style: scrollStyle,
+    contentContainerStyle: scrollContentStyle,
+    ...restScrollProps
+  } = scrollViewProps ?? {};
 
   const headerStyle: ViewStyle = {
     borderBottomWidth: 1,
@@ -70,10 +86,6 @@ export function FormModal({
   };
 
   const footerStyle: ViewStyle = {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: colors.surface[100],
     borderTopWidth: 1,
     borderTopColor: colors.surface[100],
@@ -94,7 +106,7 @@ export function FormModal({
 
   const saveButtonStyle: ViewStyle = {
     paddingHorizontal: spacing[8],
-    paddingVertical: 14,
+    paddingVertical: spacing[3],
     borderRadius: borderRadius.xl,
     backgroundColor: isSaveDisabled || isLoading ? '#F3F4F6' : '#111827',
   };
@@ -107,7 +119,7 @@ export function FormModal({
 
   const content = (
     <KeyboardAvoidingView
-      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1, backgroundColor: colors.surface[100] }}
     >
       <View style={headerStyle}>
@@ -115,24 +127,35 @@ export function FormModal({
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ width: 40 }} />
           <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text style={titleStyle} numberOfLines={1}>
+            <Text style={titleStyle} numberOfLines={2} accessibilityRole="header">
               {title}
             </Text>
           </View>
-          <Pressable onPress={onClose} style={{ width: 40, alignItems: 'flex-end' }}>
+          <Pressable
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            style={{ width: 40, alignItems: 'flex-end' }}
+          >
             <IconSymbol name="xmark.circle.fill" size={26} color={colors.surface[300]} />
           </Pressable>
         </View>
       </View>
 
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: 24,
-          paddingBottom: 120,
-        }}
+        ref={scrollViewRef}
+        style={[{ flex: 1 }, scrollViewStyle, scrollStyle]}
+        contentContainerStyle={[
+          {
+            paddingHorizontal: spacing[6],
+            paddingTop: spacing[6],
+            paddingBottom: spacing[6],
+          },
+          contentContainerStyle,
+          scrollContentStyle,
+        ]}
         showsVerticalScrollIndicator={false}
+        {...restScrollProps}
       >
         {children}
       </ScrollView>
@@ -164,7 +187,12 @@ export function FormModal({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       {content}
     </Modal>
   );
@@ -221,10 +249,6 @@ export function FullScreenForm({
   };
 
   const footerStyle: ViewStyle = {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: colors.surface[100],
     borderTopWidth: 1,
     borderTopColor: colors.surface[100],
@@ -245,7 +269,7 @@ export function FullScreenForm({
 
   const saveButtonStyle: ViewStyle = {
     paddingHorizontal: spacing[8],
-    paddingVertical: 14,
+    paddingVertical: spacing[3],
     borderRadius: borderRadius.xl,
     backgroundColor: isSaveDisabled || isLoading ? '#F3F4F6' : '#111827',
   };
@@ -263,26 +287,31 @@ export function FullScreenForm({
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ width: 40 }} />
           <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text style={titleStyle} numberOfLines={1}>
+            <Text style={titleStyle} numberOfLines={2} accessibilityRole="header">
               {title}
             </Text>
           </View>
-          <Pressable onPress={onClose} style={{ width: 40, alignItems: 'flex-end' }}>
+          <Pressable
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            style={{ width: 40, alignItems: 'flex-end' }}
+          >
             <IconSymbol name="xmark.circle.fill" size={26} color={colors.surface[300]} />
           </Pressable>
         </View>
       </View>
 
       <KeyboardAvoidingView
-        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
-            paddingHorizontal: 24,
-            paddingTop: 24,
-            paddingBottom: 120,
+            paddingHorizontal: spacing[6],
+            paddingTop: spacing[6],
+            paddingBottom: spacing[6],
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -384,7 +413,7 @@ export function PillSelector({
 
   const getPillStyle = (selected: boolean): ViewStyle => ({
     paddingHorizontal: spacing[6],
-    paddingVertical: 14,
+    paddingVertical: spacing[3],
     borderRadius: borderRadius.full,
     borderWidth: 2,
     flexDirection: 'row',
@@ -642,7 +671,7 @@ export function FormInput({
   const inputStyle: TextStyle = {
     flex: 1,
     paddingHorizontal: spacing[4],
-    paddingVertical: 14,
+    paddingVertical: spacing[3],
     fontSize: fontSize.base,
     color: colors.surface[900],
   };
@@ -684,15 +713,15 @@ interface ToggleProps {
 }
 
 export function Toggle({ label, description, value, onValueChange, style }: ToggleProps) {
-  const translateXAnim = useMemo(() => new Animated.Value(value ? 22 : 0), [value]);
+  const translateXAnimRef = useRef(new Animated.Value(value ? 22 : 0));
 
   useEffect(() => {
-    Animated.timing(translateXAnim, {
+    Animated.timing(translateXAnimRef.current, {
       toValue: value ? 22 : 0,
       duration: 200,
       useNativeDriver: true,
     }).start();
-  }, [value, translateXAnim]);
+  }, [value]);
 
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
@@ -746,7 +775,8 @@ export function Toggle({ label, description, value, onValueChange, style }: Togg
           style={[
             toggleCircleStyle,
             {
-              transform: [{ translateX: translateXAnim }],
+              // eslint-disable-next-line react-hooks/refs
+              transform: [{ translateX: translateXAnimRef.current }],
             },
           ]}
         />

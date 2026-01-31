@@ -61,6 +61,10 @@ export function WorkerForm({
   };
 
   const handleSave = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
     if (!isValid) {
       Alert.alert('Missing Information', 'Please enter worker name and daily rate.');
       return;

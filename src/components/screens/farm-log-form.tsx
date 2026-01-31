@@ -3,11 +3,12 @@
  * Shared add/edit wrapper for farm logs.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { EntryForm } from '@/components/screens/entry-form';
 import { ActivityEditForm } from '@/components/screens/activity-edit-form';
 import { useModalStore } from '@/stores';
+import { useFarm } from '@/hooks';
 
 type FarmLogMode = 'add' | 'edit';
 
@@ -19,11 +20,17 @@ interface FarmLogFormProps {
 
 export function FarmLogForm({ mode, farmId, onClose }: FarmLogFormProps) {
   const { editActivity } = useModalStore();
+  const { data: farm } = useFarm(farmId ?? undefined);
+
+  useEffect(() => {
+    if (mode === 'edit' && !editActivity) {
+      console.warn('[FarmLogForm] Missing editActivity for edit mode.');
+      onClose();
+    }
+  }, [mode, editActivity, onClose]);
 
   if (mode === 'edit') {
     if (!editActivity) {
-      console.warn('[FarmLogForm] Missing editActivity for edit mode.');
-      onClose();
       return (
         <View
           style={{
@@ -59,6 +66,7 @@ export function FarmLogForm({ mode, farmId, onClose }: FarmLogFormProps) {
       presentation="screen"
       tabs={['log']}
       initialTab="log"
+      farm={farm ?? undefined}
       initialFarmId={farmId ?? null}
     />
   );

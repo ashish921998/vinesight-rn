@@ -12,7 +12,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Farm } from '../../types';
 import { isLowWater } from '../../types';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -49,7 +49,8 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
     flex: 1,
     marginRight: spacing[2],
     color: colors.black,
-  };
+    numberOfLines: 1,
+  } as TextStyle;
 
   const actionsStyle: ViewStyle = {
     flexDirection: 'row',
@@ -86,7 +87,9 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
     >
       {/* Header: Name & Status */}
       <View style={headerStyle}>
-        <Text style={nameStyle}>{farm.name}</Text>
+        <Text style={nameStyle} numberOfLines={1}>
+          {farm.name}
+        </Text>
         <View style={actionsStyle}>
           {onEdit && (
             <Pressable
@@ -97,7 +100,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               style={[actionButtonStyle, { backgroundColor: 'rgba(64, 128, 89, 0.1)' }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Symbol name="pencil" size={18} color={colors.primary[500]} />
+              <UiSymbol name="pencil" size={18} color={colors.primary[500]} />
             </Pressable>
           )}
           {onDelete && (
@@ -109,7 +112,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               style={[actionButtonStyle, { backgroundColor: 'rgba(255, 59, 48, 0.1)' }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Symbol name="trash" size={18} color={colors.error} />
+              <UiSymbol name="trash" size={18} color={colors.error} />
             </Pressable>
           )}
           <View style={statusBadgeStyle}>
@@ -143,6 +146,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 textTransform: 'uppercase',
                 color: colors.primary[500],
               }}
+              numberOfLines={1}
             >
               {farm.crop_variety}
             </Text>
@@ -176,6 +180,8 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               style={{
                 width: 12,
                 height: 12,
+                minWidth: 12,
+                minHeight: 12,
                 borderRadius: borderRadius.full,
                 backgroundColor: '#669475',
               }}
@@ -183,11 +189,12 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
             <View>
               <Text
                 style={{
-                  fontSize: 10,
+                  fontSize: fontSize.xs,
                   fontWeight: fontWeight.bold,
                   textTransform: 'uppercase',
                   color: colors.gray[400],
                 }}
+                numberOfLines={1}
               >
                 WATER BALANCE
               </Text>
@@ -214,15 +221,16 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-            <Symbol name="location.fill" size={12} color={colors.gray[400]} />
+            <UiSymbol name="location.fill" size={12} color={colors.gray[400]} />
             <View>
               <Text
                 style={{
-                  fontSize: 10,
+                  fontSize: fontSize.xs,
                   fontWeight: fontWeight.bold,
                   textTransform: 'uppercase',
                   color: colors.gray[400],
                 }}
+                numberOfLines={1}
               >
                 REGION
               </Text>

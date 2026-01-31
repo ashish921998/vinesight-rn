@@ -118,9 +118,9 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                 flex: 1,
                 borderRadius: borderRadius.xl,
                 borderCurve: 'continuous',
-                height: 72,
+                minHeight: 72,
                 paddingHorizontal: spacing[4],
-                paddingVertical: spacing[2],
+                paddingVertical: spacing[3],
                 justifyContent: 'center',
                 backgroundColor: colors.white,
                 borderWidth: 1,
@@ -149,7 +149,6 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
-                      lineHeight: 22,
                     }}
                   >
                     {farms.length}
@@ -158,7 +157,6 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                     style={{
                       color: colors.surface[500],
                       fontSize: fontSize.xs,
-                      lineHeight: 16,
                     }}
                   >
                     Total Farms
@@ -171,9 +169,9 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                 flex: 1,
                 borderRadius: borderRadius.xl,
                 borderCurve: 'continuous',
-                height: 72,
+                minHeight: 72,
                 paddingHorizontal: spacing[4],
-                paddingVertical: spacing[2],
+                paddingVertical: spacing[3],
                 justifyContent: 'center',
                 backgroundColor: colors.white,
                 borderWidth: 1,
@@ -206,7 +204,6 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
-                      lineHeight: 22,
                     }}
                   >
                     {farms.reduce((sum, f) => sum + (f.area || 0), 0).toFixed(1)}
@@ -215,7 +212,6 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                     style={{
                       color: colors.surface[500],
                       fontSize: fontSize.xs,
-                      lineHeight: 16,
                     }}
                   >
                     Total Acres

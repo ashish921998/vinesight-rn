@@ -45,7 +45,7 @@ export function Button({
   // Size styles
   const sizeStyles: Record<string, ViewStyle> = {
     sm: { paddingHorizontal: spacing[4], paddingVertical: spacing[2] },
-    md: { paddingHorizontal: spacing[6], paddingVertical: 14 },
+    md: { paddingHorizontal: spacing[6], paddingVertical: spacing[3] },
     lg: { paddingHorizontal: spacing[8], paddingVertical: spacing[4] },
   };
 
