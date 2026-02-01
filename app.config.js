@@ -2,9 +2,9 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '2.3',
+    version: '2.4',
     orientation: 'portrait',
-    icon: './assets/icon.png',
+    icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'light',
     scheme: 'vinesight',
     newArchEnabled: true,
@@ -12,17 +12,17 @@ module.exports = {
       backgroundColor: '#FFFFFF',
       barStyle: 'dark-content',
     },
-    splash: {
-      image: './assets/splash-screen.png',
-      resizeMode: 'contain',
-      backgroundColor: '#408059',
-    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.ios',
       scheme: 'vinesight',
       usesAppleSignIn: true,
-      buildNumber: '1.1.4',
+      buildNumber: '1.1.5',
+      icon: {
+        light: './assets/icons/ios-light.png',
+        dark: './assets/icons/ios-dark.png',
+        tinted: './assets/icons/ios-tinted.png',
+      },
       config: {
         usesNonExemptEncryption: false,
       },
@@ -52,11 +52,11 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 8,
+      versionCode: 9,
       softwareKeyboardLayoutMode: 'resize',
       adaptiveIcon: {
-        foregroundImage: './assets/playstore.png',
-        backgroundColor: '#408059',
+        foregroundImage: './assets/icons/adaptive-icon.png',
+        backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: true,
@@ -85,6 +85,19 @@ module.exports = {
     },
     plugins: [
       'expo-router',
+      [
+        'expo-splash-screen',
+        {
+          backgroundColor: '#ffffff',
+          image: './assets/icons/splash-icon-dark.png',
+          resizeMode: 'contain',
+          imageWidth: 200,
+          dark: {
+            backgroundColor: '#000000',
+            image: './assets/icons/splash-icon-light.png',
+          },
+        },
+      ],
       'expo-web-browser',
       'expo-secure-store',
       'expo-font',

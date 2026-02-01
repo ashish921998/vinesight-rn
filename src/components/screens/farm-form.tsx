@@ -17,8 +17,25 @@ import {
   FormInput,
   InfoCard,
   CropIcon,
+  Button,
 } from '@/components/ui';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import LocationPicker from './location-picker';
+
+const SOIL_TEXTURE_CLASSES = [
+  'Sand',
+  'Loamy sand',
+  'Sandy loam',
+  'Loam',
+  'Silt loam',
+  'Silt',
+  'Sandy clay loam',
+  'Clay loam',
+  'Silty clay loam',
+  'Sandy clay',
+  'Silty clay',
+  'Clay',
+];
 
 type FarmFormMode = 'add' | 'edit';
 
@@ -35,6 +52,19 @@ const formatLocalDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+const parseDbDateToLocalDate = (value: string): Date => {
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnlyMatch) {
+    const year = Number(dateOnlyMatch[1]);
+    const month = Number(dateOnlyMatch[2]);
+    const day = Number(dateOnlyMatch[3]);
+    return new Date(year, month - 1, day);
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
 const buildFormStateFromFarm = (farm?: Farm | null) => ({
   name: farm?.name ?? '',
   region: farm?.region ?? '',
@@ -42,95 +72,126 @@ const buildFormStateFromFarm = (farm?: Farm | null) => ({
   selectedCrop: (farm?.crop as CropType) ?? 'Grapes',
   cropVariety: farm?.crop_variety ?? '',
   customVariety: '',
-  plantingDate: farm?.planting_date ? new Date(farm.planting_date) : new Date(),
+  plantingDate: farm?.planting_date ? parseDbDateToLocalDate(farm.planting_date) : new Date(),
   vineSpacing: farm?.vine_spacing?.toString() ?? '',
   rowSpacing: farm?.row_spacing?.toString() ?? '',
   totalTankCapacity: farm?.total_tank_capacity?.toString() ?? '',
   systemDischarge: farm?.system_discharge?.toString() ?? '',
-  dateOfPruning: farm?.date_of_pruning ? new Date(farm.date_of_pruning) : null,
+  dateOfPruning: farm?.date_of_pruning ? parseDbDateToLocalDate(farm.date_of_pruning) : null,
+  locationName: farm?.location_name ?? '',
+  latitude: farm?.latitude?.toString() ?? '',
+  longitude: farm?.longitude?.toString() ?? '',
+  elevation: farm?.elevation?.toString() ?? '',
+  bulkDensity: farm?.bulk_density?.toString() ?? '',
+  cationExchangeCapacity: farm?.cation_exchange_capacity?.toString() ?? '',
+  soilWaterRetention: farm?.soil_water_retention?.toString() ?? '',
+  soilTextureClass: farm?.soil_texture_class ?? '',
+  sandPercentage: farm?.sand_percentage?.toString() ?? '',
+  siltPercentage: farm?.silt_percentage?.toString() ?? '',
+  clayPercentage: farm?.clay_percentage?.toString() ?? '',
+  showDatePicker: false,
+  showPruningDatePicker: false,
+  showVarietyPicker: false,
+  showTexturePicker: false,
+  showMapPicker: false,
+  plantingDateChanged: false,
 });
+
+type FormState = ReturnType<typeof buildFormStateFromFarm>;
 
 export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const isEdit = mode === 'edit';
   const createFarm = useCreateFarm();
   const updateFarm = useUpdateFarm();
   const { data: farm, isLoading: farmLoading } = useFarm(isEdit ? farmId : undefined);
+  const initializedFarmIdRef = useRef<number | null>(null);
 
-  const initialStateRef = useRef(buildFormStateFromFarm(undefined));
+  const [formState, setFormState] = useState<FormState>(() =>
+    isEdit && farm ? buildFormStateFromFarm(farm) : buildFormStateFromFarm(undefined),
+  );
 
-  const [name, setName] = useState('');
-  const [region, setRegion] = useState('');
-  const [area, setArea] = useState('');
-  const [selectedCrop, setSelectedCrop] = useState<CropType>('Grapes');
-  const [cropVariety, setCropVariety] = useState('');
-  const [customVariety, setCustomVariety] = useState('');
-  const [plantingDate, setPlantingDate] = useState<Date>(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [vineSpacing, setVineSpacing] = useState('');
-  const [rowSpacing, setRowSpacing] = useState('');
-  const [totalTankCapacity, setTotalTankCapacity] = useState('');
-  const [systemDischarge, setSystemDischarge] = useState('');
-  const [dateOfPruning, setDateOfPruning] = useState<Date | null>(null);
-  const [showPruningDatePicker, setShowPruningDatePicker] = useState(false);
-  const [showVarietyPicker, setShowVarietyPicker] = useState(false);
-  const [plantingDateChanged, setPlantingDateChanged] = useState(false);
-
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (!isEdit) return;
-    if (!farm) return;
-    const initial = buildFormStateFromFarm(farm);
-    initialStateRef.current = initial;
-    setName(initial.name);
-    setRegion(initial.region);
-    setArea(initial.area);
-    setSelectedCrop(initial.selectedCrop);
-    setCropVariety(initial.cropVariety);
-    setCustomVariety(initial.customVariety);
-    setPlantingDate(initial.plantingDate);
-    setVineSpacing(initial.vineSpacing);
-    setRowSpacing(initial.rowSpacing);
-    setTotalTankCapacity(initial.totalTankCapacity);
-    setSystemDischarge(initial.systemDischarge);
-    setDateOfPruning(initial.dateOfPruning);
-    setPlantingDateChanged(false);
-  }, [farm, isEdit]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    if (!isEdit) {
+      initializedFarmIdRef.current = null;
+      return;
+    }
+    if (!farmId || !farm) return;
+    if (initializedFarmIdRef.current === farmId) return;
 
-  const varieties = useMemo(() => CROP_VARIETIES[selectedCrop] || ['Custom'], [selectedCrop]);
+    initializedFarmIdRef.current = farmId;
+    const timer = setTimeout(() => {
+      setFormState(buildFormStateFromFarm(farm));
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [farm, farmId, isEdit]);
+
+  const varieties = useMemo(
+    () => CROP_VARIETIES[formState.selectedCrop] || ['Custom'],
+    [formState.selectedCrop],
+  );
+
+  const soilCompositionWarning = useMemo(() => {
+    const sandRaw = formState.sandPercentage.trim();
+    const siltRaw = formState.siltPercentage.trim();
+    const clayRaw = formState.clayPercentage.trim();
+    const anyProvided = sandRaw !== '' || siltRaw !== '' || clayRaw !== '';
+    if (!anyProvided) return null;
+    if (sandRaw === '' || siltRaw === '' || clayRaw === '') return null;
+
+    const sand = Number(sandRaw);
+    const silt = Number(siltRaw);
+    const clay = Number(clayRaw);
+    if (!Number.isFinite(sand) || !Number.isFinite(silt) || !Number.isFinite(clay)) {
+      return null;
+    }
+    const total = sand + silt + clay;
+    if (Math.abs(total - 100) > 1) {
+      return `Sand + Silt + Clay should total approximately 100% (currently ${total.toFixed(1)}%)`;
+    }
+    return null;
+  }, [formState.sandPercentage, formState.siltPercentage, formState.clayPercentage]);
+
+  const handleOpenMapPicker = () => {
+    setFormState((prev) => ({ ...prev, showMapPicker: true }));
+  };
+
+  const handleLocationSelected = (latitude: number, longitude: number, locationName?: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      latitude: latitude.toFixed(6),
+      longitude: longitude.toFixed(6),
+      locationName: locationName || prev.locationName,
+    }));
+  };
 
   const isValid = useMemo(() => {
-    if (!name.trim()) return false;
-    if (!region.trim()) return false;
-    const areaValue = Number(area);
+    if (!formState.name.trim()) return false;
+    if (!formState.region.trim()) return false;
+    const areaValue = Number(formState.area);
     if (!Number.isFinite(areaValue) || areaValue <= 0) return false;
-    if (cropVariety === 'Custom' && !customVariety.trim()) return false;
-    if (!cropVariety && !customVariety.trim()) return false;
+    if (formState.cropVariety === 'Custom' && !formState.customVariety.trim()) return false;
+    if (!formState.cropVariety && !formState.customVariety.trim()) return false;
     return true;
-  }, [name, region, area, cropVariety, customVariety]);
+  }, [
+    formState.name,
+    formState.region,
+    formState.area,
+    formState.cropVariety,
+    formState.customVariety,
+  ]);
 
   const handleSelectVariety = (variety: string) => {
-    setCropVariety(variety);
-    setShowVarietyPicker(false);
-    if (variety === 'Custom') {
-      setCustomVariety('');
-    }
+    setFormState((prev) => ({
+      ...prev,
+      cropVariety: variety,
+      showVarietyPicker: false,
+      customVariety: variety === 'Custom' ? '' : prev.customVariety,
+    }));
   };
 
   const handleReset = () => {
-    const initial = isEdit ? initialStateRef.current : buildFormStateFromFarm(undefined);
-    setName(initial.name);
-    setRegion(initial.region);
-    setArea(initial.area);
-    setSelectedCrop(initial.selectedCrop);
-    setCropVariety(initial.cropVariety);
-    setCustomVariety(initial.customVariety);
-    setPlantingDate(initial.plantingDate);
-    setVineSpacing(initial.vineSpacing);
-    setRowSpacing(initial.rowSpacing);
-    setTotalTankCapacity(initial.totalTankCapacity);
-    setSystemDischarge(initial.systemDischarge);
-    setDateOfPruning(initial.dateOfPruning);
+    const initialState = isEdit ? buildFormStateFromFarm(farm) : buildFormStateFromFarm(undefined);
+    setFormState(initialState);
   };
 
   const handleSave = async () => {
@@ -139,7 +200,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       return;
     }
 
-    const finalVariety = cropVariety === 'Custom' ? customVariety : cropVariety;
+    const finalVariety =
+      formState.cropVariety === 'Custom' ? formState.customVariety : formState.cropVariety;
 
     if (isEdit) {
       if (!farmId) {
@@ -147,17 +209,46 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         return;
       }
       const updates: FarmUpdate = {
-        name: name.trim(),
-        region: region.trim(),
-        area: parseFloat(area),
-        crop: selectedCrop,
+        name: formState.name.trim(),
+        region: formState.region.trim(),
+        area: parseFloat(formState.area),
+        crop: formState.selectedCrop,
         crop_variety: finalVariety,
-        ...(plantingDateChanged && { planting_date: formatLocalDate(plantingDate as Date) }),
-        vine_spacing: vineSpacing ? parseFloat(vineSpacing) : undefined,
-        row_spacing: rowSpacing ? parseFloat(rowSpacing) : undefined,
-        total_tank_capacity: totalTankCapacity ? parseFloat(totalTankCapacity) : undefined,
-        system_discharge: systemDischarge ? parseFloat(systemDischarge) : undefined,
-        date_of_pruning: dateOfPruning ? formatLocalDate(dateOfPruning) : undefined,
+        ...(formState.plantingDateChanged && {
+          planting_date: formatLocalDate(formState.plantingDate as Date),
+        }),
+        vine_spacing: formState.vineSpacing ? parseFloat(formState.vineSpacing) : undefined,
+        row_spacing: formState.rowSpacing ? parseFloat(formState.rowSpacing) : undefined,
+        total_tank_capacity: formState.totalTankCapacity
+          ? parseFloat(formState.totalTankCapacity)
+          : undefined,
+        system_discharge: formState.systemDischarge
+          ? parseFloat(formState.systemDischarge)
+          : undefined,
+        date_of_pruning: formState.dateOfPruning
+          ? formatLocalDate(formState.dateOfPruning)
+          : undefined,
+        location_name: formState.locationName.trim() || undefined,
+        latitude: formState.latitude ? parseFloat(formState.latitude) : undefined,
+        longitude: formState.longitude ? parseFloat(formState.longitude) : undefined,
+        elevation: formState.elevation ? parseInt(formState.elevation, 10) : undefined,
+        bulk_density: formState.bulkDensity ? parseFloat(formState.bulkDensity) : undefined,
+        cation_exchange_capacity: formState.cationExchangeCapacity
+          ? parseFloat(formState.cationExchangeCapacity)
+          : undefined,
+        soil_water_retention: formState.soilWaterRetention
+          ? parseFloat(formState.soilWaterRetention)
+          : undefined,
+        soil_texture_class: formState.soilTextureClass || undefined,
+        sand_percentage: formState.sandPercentage
+          ? parseFloat(formState.sandPercentage)
+          : undefined,
+        silt_percentage: formState.siltPercentage
+          ? parseFloat(formState.siltPercentage)
+          : undefined,
+        clay_percentage: formState.clayPercentage
+          ? parseFloat(formState.clayPercentage)
+          : undefined,
       };
       try {
         await updateFarm.mutateAsync({ id: farmId, updates });
@@ -171,17 +262,38 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     }
 
     const farmData: FarmInsert = {
-      name: name.trim(),
-      region: region.trim(),
-      area: parseFloat(area),
-      crop: selectedCrop,
+      name: formState.name.trim(),
+      region: formState.region.trim(),
+      area: parseFloat(formState.area),
+      crop: formState.selectedCrop,
       crop_variety: finalVariety,
-      planting_date: formatLocalDate(plantingDate),
-      vine_spacing: vineSpacing ? parseFloat(vineSpacing) : undefined,
-      row_spacing: rowSpacing ? parseFloat(rowSpacing) : undefined,
-      total_tank_capacity: totalTankCapacity ? parseFloat(totalTankCapacity) : undefined,
-      system_discharge: systemDischarge ? parseFloat(systemDischarge) : undefined,
-      date_of_pruning: dateOfPruning ? formatLocalDate(dateOfPruning) : undefined,
+      planting_date: formatLocalDate(formState.plantingDate),
+      vine_spacing: formState.vineSpacing ? parseFloat(formState.vineSpacing) : undefined,
+      row_spacing: formState.rowSpacing ? parseFloat(formState.rowSpacing) : undefined,
+      total_tank_capacity: formState.totalTankCapacity
+        ? parseFloat(formState.totalTankCapacity)
+        : undefined,
+      system_discharge: formState.systemDischarge
+        ? parseFloat(formState.systemDischarge)
+        : undefined,
+      date_of_pruning: formState.dateOfPruning
+        ? formatLocalDate(formState.dateOfPruning)
+        : undefined,
+      location_name: formState.locationName.trim() || undefined,
+      latitude: formState.latitude ? parseFloat(formState.latitude) : undefined,
+      longitude: formState.longitude ? parseFloat(formState.longitude) : undefined,
+      elevation: formState.elevation ? parseInt(formState.elevation, 10) : undefined,
+      bulk_density: formState.bulkDensity ? parseFloat(formState.bulkDensity) : undefined,
+      cation_exchange_capacity: formState.cationExchangeCapacity
+        ? parseFloat(formState.cationExchangeCapacity)
+        : undefined,
+      soil_water_retention: formState.soilWaterRetention
+        ? parseFloat(formState.soilWaterRetention)
+        : undefined,
+      soil_texture_class: formState.soilTextureClass || undefined,
+      sand_percentage: formState.sandPercentage ? parseFloat(formState.sandPercentage) : undefined,
+      silt_percentage: formState.siltPercentage ? parseFloat(formState.siltPercentage) : undefined,
+      clay_percentage: formState.clayPercentage ? parseFloat(formState.clayPercentage) : undefined,
     };
 
     try {
@@ -276,8 +388,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label="Farm Name"
-          value={name}
-          onChangeText={setName}
+          value={formState.name}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, name: v }))}
           placeholder="e.g., Sunset Vineyards"
           required
           autoFocus={!isEdit}
@@ -286,8 +398,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label="Location"
-          value={region}
-          onChangeText={setRegion}
+          value={formState.region}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, region: v }))}
           placeholder="e.g., Nashik, Maharashtra"
           required
           style={{ marginBottom: 12 }}
@@ -295,8 +407,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label="Area"
-          value={area}
-          onChangeText={setArea}
+          value={formState.area}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, area: v }))}
           placeholder="10"
           keyboardType="decimal-pad"
           suffix="acres"
@@ -308,11 +420,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <CardSelector
           options={cropOptions}
-          selectedValue={selectedCrop}
+          selectedValue={formState.selectedCrop}
           onSelect={(value) => {
-            setSelectedCrop(value as CropType);
-            setCropVariety('');
-            setCustomVariety('');
+            setFormState((prev) => ({
+              ...prev,
+              selectedCrop: value as CropType,
+              cropVariety: '',
+              customVariety: '',
+            }));
           }}
           columns={3}
           style={{ marginBottom: 20 }}
@@ -333,25 +448,25 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             justifyContent: 'space-between',
             marginBottom: spacing[5],
           }}
-          onPress={() => setShowVarietyPicker(true)}
+          onPress={() => setFormState((prev) => ({ ...prev, showVarietyPicker: true }))}
         >
           <Text
             style={{
               fontSize: fontSize.base,
-              color: cropVariety ? colors.surface[900] : colors.surface[400],
-              fontWeight: cropVariety ? fontWeight.medium : fontWeight.normal,
+              color: formState.cropVariety ? colors.surface[900] : colors.surface[400],
+              fontWeight: formState.cropVariety ? fontWeight.medium : fontWeight.normal,
             }}
           >
-            {cropVariety || 'Select variety'}
+            {formState.cropVariety || 'Select variety'}
           </Text>
           <UISymbol name="chevron.down" size={20} color="#6B7280" />
         </Pressable>
 
-        {cropVariety === 'Custom' && (
+        {formState.cropVariety === 'Custom' && (
           <FormInput
             label="Custom Variety Name"
-            value={customVariety}
-            onChangeText={setCustomVariety}
+            value={formState.customVariety}
+            onChangeText={(v) => setFormState((prev) => ({ ...prev, customVariety: v }))}
             placeholder="Enter variety name"
             required
             style={{ marginBottom: 20 }}
@@ -372,7 +487,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             alignItems: 'center',
             marginBottom: spacing[5],
           }}
-          onPress={() => setShowDatePicker(true)}
+          onPress={() => setFormState((prev) => ({ ...prev, showDatePicker: true }))}
         >
           <UISymbol name="calendar" size={24} color="#6B7280" />
           <Text
@@ -383,8 +498,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               marginLeft: spacing[3],
             }}
           >
-            {plantingDate
-              ? plantingDate.toLocaleDateString('en-US', {
+            {formState.plantingDate
+              ? formState.plantingDate.toLocaleDateString('en-US', {
                   month: 'long',
                   day: 'numeric',
                   year: 'numeric',
@@ -399,8 +514,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           <View style={{ flex: 1 }}>
             <FormInput
               label="Vine Spacing"
-              value={vineSpacing}
-              onChangeText={setVineSpacing}
+              value={formState.vineSpacing}
+              onChangeText={(v) => setFormState((prev) => ({ ...prev, vineSpacing: v }))}
               placeholder="6"
               keyboardType="decimal-pad"
               suffix="ft"
@@ -410,8 +525,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           <View style={{ flex: 1 }}>
             <FormInput
               label="Row Spacing"
-              value={rowSpacing}
-              onChangeText={setRowSpacing}
+              value={formState.rowSpacing}
+              onChangeText={(v) => setFormState((prev) => ({ ...prev, rowSpacing: v }))}
               placeholder="10"
               keyboardType="decimal-pad"
               suffix="ft"
@@ -424,8 +539,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label="Tank Capacity"
-          value={totalTankCapacity}
-          onChangeText={setTotalTankCapacity}
+          value={formState.totalTankCapacity}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, totalTankCapacity: v }))}
           placeholder="1000"
           keyboardType="decimal-pad"
           suffix="mm"
@@ -434,8 +549,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label="System Discharge"
-          value={systemDischarge}
-          onChangeText={setSystemDischarge}
+          value={formState.systemDischarge}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, systemDischarge: v }))}
           placeholder="10"
           keyboardType="decimal-pad"
           suffix="mm/hr"
@@ -457,7 +572,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             justifyContent: 'space-between',
             marginBottom: spacing[5],
           }}
-          onPress={() => setShowPruningDatePicker(true)}
+          onPress={() => setFormState((prev) => ({ ...prev, showPruningDatePicker: true }))}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
             <UISymbol name="cut-outline" size={24} color="#6B7280" />
@@ -473,8 +588,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   marginTop: 2,
                 }}
               >
-                {dateOfPruning
-                  ? dateOfPruning.toLocaleDateString('en-US', {
+                {formState.dateOfPruning
+                  ? formState.dateOfPruning.toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
                       year: 'numeric',
@@ -483,15 +598,174 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               </Text>
             </View>
           </View>
-          {dateOfPruning && (
+          {formState.dateOfPruning && (
             <Pressable
-              onPress={() => setDateOfPruning(null)}
+              onPress={() => setFormState((prev) => ({ ...prev, dateOfPruning: null }))}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <UISymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
             </Pressable>
           )}
         </Pressable>
+
+        <SectionHeader title="Location (Optional)" style={{ marginBottom: 16 }} />
+
+        <FormInput
+          label="Location Name"
+          value={formState.locationName}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, locationName: v }))}
+          placeholder="e.g., North Field"
+          style={{ marginBottom: 12 }}
+        />
+
+        <Button
+          title="Select Location on Map"
+          variant="outline"
+          size="sm"
+          leftIcon={<UISymbol name="location.fill" size={20} color={colors.primary[500]} />}
+          onPress={handleOpenMapPicker}
+          style={{ marginBottom: 12 }}
+        />
+
+        <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[3] }}>
+          <View style={{ flex: 1 }}>
+            <FormInput
+              label="Latitude"
+              value={formState.latitude}
+              onChangeText={(v) => setFormState((prev) => ({ ...prev, latitude: v }))}
+              placeholder="0.000000"
+              keyboardType="decimal-pad"
+              style={{ marginBottom: 0 }}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <FormInput
+              label="Longitude"
+              value={formState.longitude}
+              onChangeText={(v) => setFormState((prev) => ({ ...prev, longitude: v }))}
+              placeholder="0.000000"
+              keyboardType="decimal-pad"
+              style={{ marginBottom: 0 }}
+            />
+          </View>
+        </View>
+
+        <FormInput
+          label="Elevation"
+          value={formState.elevation}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, elevation: v }))}
+          placeholder="0"
+          keyboardType="decimal-pad"
+          suffix="ft"
+          style={{ marginBottom: 20 }}
+        />
+
+        <SectionHeader title="Soil Properties (Optional)" style={{ marginBottom: 16 }} />
+
+        <FormInput
+          label="Bulk Density"
+          value={formState.bulkDensity}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, bulkDensity: v }))}
+          placeholder="1200"
+          keyboardType="decimal-pad"
+          suffix="kg/m³"
+          style={{ marginBottom: 12 }}
+        />
+
+        <FormInput
+          label="Cation Exchange Capacity"
+          value={formState.cationExchangeCapacity}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, cationExchangeCapacity: v }))}
+          placeholder="15"
+          keyboardType="decimal-pad"
+          suffix="cmol/kg"
+          style={{ marginBottom: 12 }}
+        />
+
+        <FormInput
+          label="Soil Water Retention"
+          value={formState.soilWaterRetention}
+          onChangeText={(v) => setFormState((prev) => ({ ...prev, soilWaterRetention: v }))}
+          placeholder="25"
+          keyboardType="decimal-pad"
+          suffix="%"
+          style={{ marginBottom: 20 }}
+        />
+
+        <SectionHeader title="Soil Texture" style={{ marginBottom: 16 }} />
+
+        <Pressable
+          style={{
+            backgroundColor: colors.white,
+            borderWidth: 2,
+            borderColor: colors.surface[200],
+            borderRadius: borderRadius.xl,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[4],
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: spacing[5],
+          }}
+          onPress={() => setFormState((prev) => ({ ...prev, showTexturePicker: true }))}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              color: formState.soilTextureClass ? colors.surface[900] : colors.surface[400],
+              fontWeight: formState.soilTextureClass ? fontWeight.medium : fontWeight.normal,
+            }}
+          >
+            {formState.soilTextureClass || 'Select texture'}
+          </Text>
+          <UISymbol name="chevron.down" size={20} color="#6B7280" />
+        </Pressable>
+
+        <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
+          <View style={{ flex: 1 }}>
+            <FormInput
+              label="Sand"
+              value={formState.sandPercentage}
+              onChangeText={(v) => setFormState((prev) => ({ ...prev, sandPercentage: v }))}
+              placeholder="40"
+              keyboardType="decimal-pad"
+              suffix="%"
+              style={{ marginBottom: 0 }}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <FormInput
+              label="Silt"
+              value={formState.siltPercentage}
+              onChangeText={(v) => setFormState((prev) => ({ ...prev, siltPercentage: v }))}
+              placeholder="40"
+              keyboardType="decimal-pad"
+              suffix="%"
+              style={{ marginBottom: 0 }}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <FormInput
+              label="Clay"
+              value={formState.clayPercentage}
+              onChangeText={(v) => setFormState((prev) => ({ ...prev, clayPercentage: v }))}
+              placeholder="20"
+              keyboardType="decimal-pad"
+              suffix="%"
+              style={{ marginBottom: 0 }}
+            />
+          </View>
+        </View>
+
+        {soilCompositionWarning && (
+          <InfoCard
+            icon="exclamationmark.triangle.fill"
+            iconColor="#F59E0B"
+            backgroundColor="#FEF3C7"
+            message={soilCompositionWarning}
+            style={{ marginBottom: 20 }}
+          />
+        )}
 
         <InfoCard
           icon="information-circle"
@@ -500,31 +774,34 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           message="You can always update these details later from your farm settings."
         />
       </FullScreenForm>
-      {showDatePicker && (
+      {formState.showDatePicker && (
         <DateTimePicker
-          value={plantingDate}
+          value={formState.plantingDate}
           mode="date"
           onChange={(_, date) => {
-            setShowDatePicker(false);
+            setFormState((prev) => ({ ...prev, showDatePicker: false }));
             if (date) {
-              setPlantingDate(date);
-              setPlantingDateChanged(true);
+              setFormState((prev) => ({
+                ...prev,
+                plantingDate: date,
+                plantingDateChanged: true,
+              }));
             }
           }}
         />
       )}
-      {showPruningDatePicker && (
+      {formState.showPruningDatePicker && (
         <DateTimePicker
-          value={dateOfPruning ?? new Date()}
+          value={formState.dateOfPruning ?? new Date()}
           mode="date"
           onChange={(_, date) => {
-            setShowPruningDatePicker(false);
-            if (date) setDateOfPruning(date);
+            setFormState((prev) => ({ ...prev, showPruningDatePicker: false }));
+            if (date) setFormState((prev) => ({ ...prev, dateOfPruning: date }));
           }}
         />
       )}
 
-      {showVarietyPicker && (
+      {formState.showVarietyPicker && (
         <View
           style={{
             position: 'absolute',
@@ -566,7 +843,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                 Select Variety
               </Text>
               <Pressable
-                onPress={() => setShowVarietyPicker(false)}
+                onPress={() => setFormState((prev) => ({ ...prev, showVarietyPicker: false }))}
                 style={{
                   width: 40,
                   height: 40,
@@ -589,7 +866,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                     paddingVertical: spacing[4],
                     borderBottomWidth: 1,
                     borderBottomColor: colors.surface[100],
-                    backgroundColor: cropVariety === variety ? colors.surface[50] : colors.white,
+                    backgroundColor:
+                      formState.cropVariety === variety ? colors.surface[50] : colors.white,
                   }}
                   onPress={() => handleSelectVariety(variety)}
                 >
@@ -603,14 +881,19 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                     <Text
                       style={{
                         fontSize: fontSize.base,
-                        color: cropVariety === variety ? colors.surface[900] : colors.surface[700],
+                        color:
+                          formState.cropVariety === variety
+                            ? colors.surface[900]
+                            : colors.surface[700],
                         fontWeight:
-                          cropVariety === variety ? fontWeight.semibold : fontWeight.normal,
+                          formState.cropVariety === variety
+                            ? fontWeight.semibold
+                            : fontWeight.normal,
                       }}
                     >
                       {variety}
                     </Text>
-                    {cropVariety === variety && (
+                    {formState.cropVariety === variety && (
                       <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
                     )}
                   </View>
@@ -620,6 +903,123 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           </View>
         </View>
       )}
+
+      {formState.showTexturePicker && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderTopLeftRadius: borderRadius['3xl'],
+              borderTopRightRadius: borderRadius['3xl'],
+              maxHeight: '70%',
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[4],
+                borderBottomWidth: 1,
+                borderBottomColor: colors.surface[100],
+              }}
+            >
+              <View style={{ width: 40 }} />
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                }}
+              >
+                Select Soil Texture
+              </Text>
+              <Pressable
+                onPress={() => setFormState((prev) => ({ ...prev, showTexturePicker: false }))}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: colors.surface[100],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <UISymbol name="xmark" size={20} color="#111827" />
+              </Pressable>
+            </View>
+
+            <ScrollView style={{ maxHeight: 384 }}>
+              {SOIL_TEXTURE_CLASSES.map((texture) => (
+                <Pressable
+                  key={texture}
+                  style={{
+                    paddingHorizontal: spacing[6],
+                    paddingVertical: spacing[4],
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.surface[100],
+                    backgroundColor:
+                      formState.soilTextureClass === texture ? colors.surface[50] : colors.white,
+                  }}
+                  onPress={() => {
+                    setFormState((prev) => ({
+                      ...prev,
+                      soilTextureClass: texture,
+                      showTexturePicker: false,
+                    }));
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: fontSize.base,
+                        color:
+                          formState.soilTextureClass === texture
+                            ? colors.surface[900]
+                            : colors.surface[700],
+                        fontWeight:
+                          formState.soilTextureClass === texture
+                            ? fontWeight.semibold
+                            : fontWeight.normal,
+                      }}
+                    >
+                      {texture}
+                    </Text>
+                    {formState.soilTextureClass === texture && (
+                      <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                    )}
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      <LocationPicker
+        visible={formState.showMapPicker}
+        onClose={() => setFormState((prev) => ({ ...prev, showMapPicker: false }))}
+        onLocationSelect={handleLocationSelected}
+        initialLatitude={formState.latitude ? parseFloat(formState.latitude) : undefined}
+        initialLongitude={formState.longitude ? parseFloat(formState.longitude) : undefined}
+      />
     </View>
   );
 }
