@@ -18,6 +18,7 @@ import { useModalStore } from '@/stores';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatNumber } from '@/i18n/format';
+import { telemetry } from '@/services/telemetry';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
 
@@ -92,7 +93,31 @@ export default function TasksScreen() {
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.complete'),
-          onPress: () => completeMutation.mutate(task.id!),
+          onPress: () => {
+            // Calculate due_offset_days
+            let dueOffsetDays: number | null = null;
+            if (task.due_date) {
+              const dueDate = new Date(task.due_date);
+              const today = startOfDay(new Date());
+              const diffTime = dueDate.getTime() - today.getTime();
+              dueOffsetDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+
+            completeMutation.mutate(task.id!, {
+              onSuccess: () => {
+                telemetry.capture('task_completed', {
+                  task_type: task.type,
+                  priority: task.priority,
+                  due_offset_days: dueOffsetDays,
+                  farm_id: task.farm_id,
+                });
+                telemetry.capture('meaningful_action', {
+                  action_type: 'task_completed',
+                  feature_name: task.type,
+                });
+              },
+            });
+          },
         },
       ],
     );
