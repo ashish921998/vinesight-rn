@@ -120,6 +120,7 @@ export function Button({
 
   return (
     <Pressable
+      {...props}
       disabled={isDisabled}
       accessibilityRole={props.accessibilityRole ?? 'button'}
       onPress={(event) => {
@@ -137,7 +138,6 @@ export function Button({
         onPress?.(event);
       }}
       style={(state) => [containerStyle, typeof style === 'function' ? style(state) : style]}
-      {...props}
     >
       {(state) => (
         <>

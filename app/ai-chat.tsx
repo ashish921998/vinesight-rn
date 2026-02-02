@@ -81,7 +81,7 @@ const markdownStyles = {
 };
 
 export default function AIChatScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
   const { data: farm } = useFarm(farmId ? parseInt(farmId, 10) : undefined);
@@ -136,7 +136,7 @@ export default function AIChatScreen() {
     // Track AI request
     telemetry.capture('ai_request_made', {
       ai_use_case: 'chat',
-      language: t('common.currentLanguage'), // Will need to be properly extracted
+      language: i18n.language,
     });
 
     try {

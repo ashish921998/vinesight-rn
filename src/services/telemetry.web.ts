@@ -35,7 +35,7 @@ export const telemetry = {
   screen: (name: string, properties?: TelemetryProperties) => {
     if (!apiKey) return;
     init();
-    posthog.capture('screen', { screen: name, ...properties });
+    posthog.capture('$screen', { ...properties, $screen_name: name });
   },
   identify: (distinctId: string, properties?: TelemetryProperties) => {
     if (!apiKey) return;

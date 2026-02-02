@@ -94,13 +94,14 @@ export default function TasksScreen() {
         {
           text: t('common.complete'),
           onPress: () => {
-            // Calculate due_offset_days
+            // Calculate due_offset_days using calendar days
             let dueOffsetDays: number | null = null;
             if (task.due_date) {
-              const dueDate = new Date(task.due_date);
+              const dueDate = startOfDay(new Date(task.due_date));
               const today = startOfDay(new Date());
+              const dayMs = 1000 * 60 * 60 * 24;
               const diffTime = dueDate.getTime() - today.getTime();
-              dueOffsetDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              dueOffsetDays = Math.round(diffTime / dayMs);
             }
 
             completeMutation.mutate(task.id!, {
