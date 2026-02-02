@@ -94,7 +94,7 @@ export default function Index() {
 
   // Wait for onboarding store to hydrate before redirecting
   if (!hasHydrated) {
-    return null;
+    return <AnimatedSplash duration={2500} />;
   }
 
   // Redirect based on auth state

@@ -3,7 +3,7 @@
  * Shared add/edit form for farms.
  */
 
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, Pressable, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -313,7 +313,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     }
   };
 
-  type CropOption = {
+  interface CropOption {
     value: CropType;
     label: string;
     sublabel: string;
@@ -321,67 +321,82 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     icon?: string;
     iconColor: string;
     iconLibrary?: 'ionicons' | 'symbols';
-  };
+  }
 
-  const cropOptions: CropOption[] = [
-    {
-      value: 'Grapes' as CropType,
-      label: t('farmForm.cropOptions.grapes.label'),
-      sublabel: t('farmForm.cropOptions.grapes.sublabel'),
-      renderIcon: ({ selected, size }) => <CropIcon name="grapes" size={size} muted={!selected} />,
-      iconColor: '#DDD6FE',
-    },
-    {
-      value: 'Mango' as CropType,
-      label: t('farmForm.cropOptions.mango.label'),
-      sublabel: t('farmForm.cropOptions.mango.sublabel'),
-      renderIcon: ({ selected, size }) => <CropIcon name="mango" size={size} muted={!selected} />,
-      iconColor: '#FED7AA',
-    },
-    {
-      value: 'Pomegranate' as CropType,
-      label: t('farmForm.cropOptions.pomegranate.label'),
-      sublabel: t('farmForm.cropOptions.pomegranate.sublabel'),
-      renderIcon: ({ selected, size }) => (
-        <CropIcon name="pomegranate" size={size} muted={!selected} />
-      ),
-      iconColor: '#FECACA',
-    },
-    {
-      value: 'Citrus' as CropType,
-      label: t('farmForm.cropOptions.citrus.label'),
-      sublabel: t('farmForm.cropOptions.citrus.sublabel'),
-      renderIcon: ({ selected, size }) => <CropIcon name="citrus" size={size} muted={!selected} />,
-      iconColor: '#FEF08A',
-    },
-    {
-      value: 'Banana' as CropType,
-      label: t('farmForm.cropOptions.banana.label'),
-      sublabel: t('farmForm.cropOptions.banana.sublabel'),
-      renderIcon: ({ selected, size }) => <CropIcon name="banana" size={size} muted={!selected} />,
-      iconColor: '#FEF3C7',
-    },
-    {
-      value: 'Other' as CropType,
-      label: t('farmForm.cropOptions.other.label'),
-      sublabel: t('farmForm.cropOptions.other.sublabel'),
-      icon: 'ellipsis-horizontal' as const,
-      iconColor: '#E5E7EB',
-      iconLibrary: 'ionicons' as const,
-    },
-  ];
+  const cropOptions: CropOption[] = useMemo(
+    () => [
+      {
+        value: 'Grapes' as CropType,
+        label: t('farmForm.cropOptions.grapes.label'),
+        sublabel: t('farmForm.cropOptions.grapes.sublabel'),
+        renderIcon: ({ selected, size }) => (
+          <CropIcon name="grapes" size={size} muted={!selected} />
+        ),
+        iconColor: '#DDD6FE',
+      },
+      {
+        value: 'Mango' as CropType,
+        label: t('farmForm.cropOptions.mango.label'),
+        sublabel: t('farmForm.cropOptions.mango.sublabel'),
+        renderIcon: ({ selected, size }) => <CropIcon name="mango" size={size} muted={!selected} />,
+        iconColor: '#FED7AA',
+      },
+      {
+        value: 'Pomegranate' as CropType,
+        label: t('farmForm.cropOptions.pomegranate.label'),
+        sublabel: t('farmForm.cropOptions.pomegranate.sublabel'),
+        renderIcon: ({ selected, size }) => (
+          <CropIcon name="pomegranate" size={size} muted={!selected} />
+        ),
+        iconColor: '#FECACA',
+      },
+      {
+        value: 'Citrus' as CropType,
+        label: t('farmForm.cropOptions.citrus.label'),
+        sublabel: t('farmForm.cropOptions.citrus.sublabel'),
+        renderIcon: ({ selected, size }) => (
+          <CropIcon name="citrus" size={size} muted={!selected} />
+        ),
+        iconColor: '#FEF08A',
+      },
+      {
+        value: 'Banana' as CropType,
+        label: t('farmForm.cropOptions.banana.label'),
+        sublabel: t('farmForm.cropOptions.banana.sublabel'),
+        renderIcon: ({ selected, size }) => (
+          <CropIcon name="banana" size={size} muted={!selected} />
+        ),
+        iconColor: '#FEF3C7',
+      },
+      {
+        value: 'Other' as CropType,
+        label: t('farmForm.cropOptions.other.label'),
+        sublabel: t('farmForm.cropOptions.other.sublabel'),
+        icon: 'ellipsis-horizontal' as const,
+        iconColor: '#E5E7EB',
+        iconLibrary: 'ionicons' as const,
+      },
+    ],
+    [t],
+  );
 
-  const getSoilTextureLabel = (value?: string) => {
-    if (!value) return '';
-    const match = SOIL_TEXTURE_OPTIONS.find((o) => o.value === value);
-    return match ? t(match.labelKey) : value;
-  };
+  const getSoilTextureLabel = useCallback(
+    (value?: string) => {
+      if (!value) return '';
+      const match = SOIL_TEXTURE_OPTIONS.find((o) => o.value === value);
+      return match ? t(match.labelKey) : value;
+    },
+    [t],
+  );
 
-  const getVarietyLabel = (value?: string) => {
-    if (!value) return '';
-    if (value === 'Custom') return t('farmForm.variety.custom');
-    return value;
-  };
+  const getVarietyLabel = useCallback(
+    (value?: string) => {
+      if (!value) return '';
+      if (value === 'Custom') return t('farmForm.variety.custom');
+      return value;
+    },
+    [t],
+  );
 
   if (isEdit && farmLoading) {
     return (

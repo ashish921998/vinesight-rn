@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, Alert, ActivityIndicator, Platform } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
@@ -152,7 +152,7 @@ export default function LabTestForm({
   };
 
   const handleDateChange = (_: DateTimePickerEvent, selectedDate?: Date) => {
-    if (process.env.EXPO_OS === 'android') {
+    if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
     if (selectedDate) {

@@ -1023,7 +1023,11 @@ function NotificationToggle({
       <Switch
         value={enabled}
         onValueChange={(value) => {
-          void onToggle(value);
+          Promise.resolve(onToggle(value)).catch((error) => {
+            if (__DEV__) {
+              console.error('Toggle error:', error);
+            }
+          });
         }}
         trackColor={{ false: '#D1D5DB', true: '#86EFAC' }}
         thumbColor={enabled ? '#22C55E' : '#F3F4F6'}

@@ -7,6 +7,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { Platform } from 'react-native';
 import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 
@@ -17,7 +18,7 @@ export default function TabLayout() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
-  const isAndroid = process.env.EXPO_OS === 'android';
+  const isAndroid = Platform.OS === 'android';
   const defaultHeaderOptions = useMemo(
     () => ({
       headerStyle: {
@@ -84,8 +85,8 @@ export default function TabLayout() {
   if (isAndroid) {
     const renderAndroidTabIcon = (name: string, focused: boolean) => {
       const scaleMap: Record<string, number> = {
-        compass: 1.1,
-        'compass.fill': 1.1,
+        house: 1.1,
+        'house.fill': 1.1,
         'wrench.and.screwdriver': 0.9,
         'wrench.and.screwdriver.fill': 0.9,
       };

@@ -1,148 +1,31 @@
-src/components/screens/lab-test-details-modal.tsx (2)
-25-28: Prefer interface over type for object shapes.
+src/components/screens/farm-form.tsx (4)
+316-324: Prefer interface over type for object shapes.
 
-Per coding guidelines, interface is preferred over type for defining object shapes in TypeScript.
+Per coding guidelines, use interface for defining object shapes in TypeScript.
 
-Suggested change
--type Section = {
-+interface Section {
-title: string;
-params: string[];
--};
-+}
-88-96: Consider locale-aware date formatting for i18n consistency.
+♻️ Suggested refactor
 
-Since this PR adds internationalization support, the date formatting using a fixed DD-MM-YYYY format may not align with user locale preferences. Consider using Intl.DateTimeFormat or a library like date-fns with locale support.
+- type CropOption = {
 
-Example using Intl.DateTimeFormat
-const formatDate = (dateString: string, locale?: string): string => {
-if (!dateString) return '';
-const date = new Date(dateString);
-if (Number.isNaN(date.getTime())) return dateString;
-return new Intl.DateTimeFormat(locale || 'en-IN', {
-day: '2-digit',
-month: '2-digit',
-year: 'numeric',
-}).format(date);
-};
-src/components/screens/lab-test-form.tsx (1)
-  > 490-501: Unify parameter key normalization to avoid drift.
-  > getParameterLabel already normalizes keys in use-lab-tests, while this component keeps its own normalizeParameterKey. Consider exporting a shared normalizer (or otherwise centralizing the mapping) so parsing, labels, and state keys stay consistent over time.
+* interface CropOption {
+  value: CropType;
+  label: string;
+  sublabel: string;
+  renderIcon?: (args: { selected: boolean; size: number }) => React.ReactNode;
+  icon?: string;
+  iconColor: string;
+  iconLibrary?: 'ionicons' | 'symbols';
 
-src/components/cards/worker-card.tsx (2)
-133-136: Allow locale-specific ordering for the “rate per day” label.
+- };
 
-Concatenating the rate with a suffix key locks the ordering; some locales may prefer prefix or different spacing. Consider a single i18n key with interpolation (or Trans for styled parts) so translators can reorder safely.
+* }
+  As per coding guidelines: "Prefer interface over type for defining object shapes in TypeScript"
 
-♻️ Proposed refactor using Trans for ordering + styling
--import { useTranslation } from 'react-i18next';
-+import { useTranslation, Trans } from 'react-i18next';
+326-372: Consider memoizing cropOptions to avoid recreation on every render.
 
--          <Text style={rateTextStyle} numberOfLines={1}>
--            {formattedRate}
--            <Text style={dayTextStyle}>{t('workers.ratePerDayShort')}</Text>
--          </Text>
+The cropOptions array calls t() for each option and is recreated on every render. Since the array structure is static (only translations change when language changes), wrapping it in useMemo would improve performance.
 
-*          <Text style={rateTextStyle} numberOfLines={1}>
-*            <Trans
-*              i18nKey="workers.ratePerDay"
-*              values={{ rate: formattedRate }}
-*              components={{ day: <Text style={dayTextStyle} /> }}
-*            />
-*          </Text>
-  154-175: Provide a fallback for a11y labels when names are missing.
-
-If worker.name is empty/undefined, the a11y labels can become non-descriptive. Consider a fallback name so screen readers still get meaningful labels.
-
-♿ Suggested fallback for a11y labels
-app/soil-trends.tsx (2)
-55-55: Use theme tokens instead of hardcoded color values.
-
-The background color "#f2f2f7" is equivalent to colors.surface[50] from the theme. For consistency with the coding guidelines, prefer using theme tokens.
-
-♻️ Suggested change
-
--      <SafeScreen backgroundColor="#f2f2f7">
-
-*      <SafeScreen backgroundColor={colors.surface[50]}>
-  Apply this to both occurrences (lines 55 and 67).
-
-As per coding guidelines: "Use inline styles with tokens from src/styles/theme.ts for styling"
-
-Also applies to: 67-67
-
-83-83: Consider replacing remaining hardcoded colors with theme tokens.
-
-Several color values like "#597A61", "#333", and "#ef4444" are hardcoded. These could be replaced with theme tokens for better maintainability:
-
-"#597A61" → colors.secondary[500] or define a semantic token
-"#ef4444" → colors.errorRed[500]
-"#333" → colors.gray[800]
-Also applies to: 85-85, 126-127, 135-135, 148-148, 157-157
-
-src/components/forms/spray-form.tsx (2)
-48-50: Verify if the eslint-disable is still necessary.
-
-The /_ eslint-disable react-hooks/refs _/ comment suggests a workaround for ref management. Consider whether this pattern could be refactored to avoid disabling the lint rule, or add a comment explaining why it's needed.
-
-126-127: Consider extracting spray-specific accent colors to theme.
-
-The purple accent colors (#8B5CF6, #7C3AED, #F3E8FF, #A78BFA, #F5F3FF, #DDD6FE) are used consistently for spray form styling but aren't defined in the theme. Consider adding a spray or violet color palette to src/styles/theme.ts for consistency and maintainability.
-
-Also applies to: 132-132, 154-154, 214-214, 219-220
-
-src/components/screens/activity-edit-form.tsx (1)
-66-68: Consider extracting generateId to a shared utility.
-
-This generateId function is similar to the one in src/components/forms/spray-form.tsx (line 17-19). Consider extracting it to a shared utility (e.g., src/utils/id.ts) to avoid duplication and ensure consistent ID generation across the codebase.
-
-♻️ Suggested shared utility
-// src/utils/id.ts
-export function generateId(prefix?: string): string {
-const base = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-return prefix ? `${prefix}_${base}` : base;
-}
-src/hooks/use-lab-tests.ts (1)
-585-595: Check labTests.parameters keys for snake_case entries.
-
-labelKey uses param.key even when it contains underscores. If your locale keys are camelCase (e.g., totalNitrogen), translations will fall back to the English label. Confirm key shape or switch to camelKey for underscore keys.
-
-♻️ Possible adjustment
-
-- const labelKey = param?.key ?? camelKey;
-
-* const labelKey = param?.key
-* ? param.key.includes('\_')
-*      ? camelKey
-*      : param.key
-* : camelKey;
-  src/hooks/use-soil-profiles.ts (1)
-  90-97: Prefer an interface for SECTION_INFO shape.
-
-Extracting a named interface keeps the object shape reusable and aligns with TS conventions.
-
-♻️ Proposed refactor
-+interface SectionInfo {
-
-- labelKey: string;
-- abbr: string;
-- color: string;
-  +}
-- -export const SECTION_INFO: Record<SectionName, { labelKey: string; abbr: string; color: string }> =
-  +export const SECTION_INFO: Record<SectionName, SectionInfo> =
-  {
-  top: { labelKey: 'soilProfileForm.sections.top', abbr: 'T', color: '#10B981' },
-  bottom: { labelKey: 'soilProfileForm.sections.bottom', abbr: 'B', color: '#8B5CF6' },
-  right: { labelKey: 'soilProfileForm.sections.right', abbr: 'R', color: '#F59E0B' },
-  left: { labelKey: 'soilProfileForm.sections.left', abbr: 'L', color: '#3B82F6' },
-  };
-  As per coding guidelines: Prefer `interface` over `type` for defining object shapes in TypeScript.
-  src/components/screens/farm-form.tsx (1)
-  326-372: Consider memoizing cropOptions to avoid recreation on every render.
-
-The cropOptions array calls t() for each crop label/sublabel. Since t is stable across renders (until language changes), this will recreate the array on every render unnecessarily.
-
-♻️ Proposed refactor
+♻️ Suggested refactor
 
 - const cropOptions: CropOption[] = [
 
@@ -150,102 +33,174 @@ The cropOptions array calls t() for each crop label/sublabel. Since t is stable 
   {
   value: 'Grapes' as CropType,
   label: t('farmForm.cropOptions.grapes.label'),
-  sublabel: t('farmForm.cropOptions.grapes.sublabel'),
-  renderIcon: ({ selected, size }) => <CropIcon name="grapes" size={size} muted={!selected} />,
-  iconColor: '#DDD6FE',
+  // ... rest of options
   },
   // ... other options
 
 - ];
 
 * ], [t]);
-  src/stores/notification-store.ts (1)
-  36-62: Consider extracting the storage abstraction to a shared utility.
+  374-384: Wrap helper functions in useCallback for stable references.
 
-The storage object (lines 38-62) is duplicated between notification-store.ts and onboarding-store.ts. Extracting this to a shared utility would reduce duplication and ensure consistency.
+getSoilTextureLabel and getVarietyLabel are recreated on every render. While they're small functions, wrapping them in useCallback ensures stable references, which can help avoid unnecessary re-renders in child components if these were ever passed as props.
 
-♻️ Proposed refactor - create shared storage utility
-Create src/stores/storage.ts:
+♻️ Suggested refactor
 
-import \* as SecureStore from 'expo-secure-store';
+- const getSoilTextureLabel = (value?: string) => {
 
-const isWeb = process.env.EXPO_OS === 'web';
+* const getSoilTextureLabel = useCallback((value?: string) => {
+  if (!value) return '';
+  const match = SOIL_TEXTURE_OPTIONS.find((o) => o.value === value);
+  return match ? t(match.labelKey) : value;
 
-export const persistStorage = {
-getItem: async (key: string): Promise<string | null> => {
-if (isWeb) {
-if (typeof localStorage === 'undefined') return null;
-return localStorage.getItem(key);
-}
-return SecureStore.getItemAsync(key);
-},
-setItem: async (key: string, value: string): Promise<void> => {
-if (isWeb) {
-if (typeof localStorage === 'undefined') return;
-localStorage.setItem(key, value);
-return;
-}
-await SecureStore.setItemAsync(key, value);
-},
-removeItem: async (key: string): Promise<void> => {
-if (isWeb) {
-if (typeof localStorage === 'undefined') return;
-localStorage.removeItem(key);
-return;
-}
-await SecureStore.deleteItemAsync(key);
-},
-};
-Then import in both stores:
+- };
 
-## -const isWeb = process.env.EXPO_OS === 'web';
+* }, [t]);
 
--const storage = {
+- const getVarietyLabel = (value?: string) => {
 
-- // ... duplicated code
-  -};
-  +import { persistStorage } from './storage';
+* const getVarietyLabel = useCallback((value?: string) => {
+  if (!value) return '';
+  if (value === 'Custom') return t('farmForm.variety.custom');
+  return value;
 
-// In persist config:
--storage: createJSONStorage(() => storage),
-+storage: createJSONStorage(() => persistStorage),
-app/reports.tsx (1)
-492-496: Localize the water-usage unit suffix.
-The current output renders like 1234L and the unit isn’t localized. Consider moving the unit into a translation key.
+- };
 
-♻️ Suggested tweak
+* }, [t]);
+  Add useCallback to imports:
 
--                  {formatNumber(preview.summary.totalWaterUsage)}L
+-import React, { useMemo, useState, useEffect, useRef } from 'react';
++import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+543-557: Minor inconsistency: Some unit suffixes are hardcoded while others are translated.
 
-*                  {t('units.liters', {
-*                    value: formatNumber(preview.summary.totalWaterUsage),
-*                  })}
-  src/services/report-service.ts (1)
-  287-291: Consider currency-aware formatting for revenue/net profit.
-  Using formatCurrency will handle signs and spacing more naturally than prefixing ₹ to a plain number.
+t('units.acres') is used for area (line 433), but other units like "m", "mm", "mm/hr", "ft", "kg/m³", etc. are hardcoded. This may be intentional if metric units are universal, but consider using translation keys for all units for consistency (especially "ft" which is locale-specific).
 
-♻️ Suggested change
--import { formatDate, formatNumber } from '@/i18n/format';
-+import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
-...
+app/soil-profiling.tsx (1)
+126-129: Incomplete i18n coverage — several hardcoded strings remain.
 
--              <div class="summary-value">₹${formatNumber(summary.totalRevenue)}</div>
+While key UI elements are translated, many user-facing strings are still hardcoded:
 
-*              <div class="summary-value">
-*                ${formatCurrency(summary.totalRevenue, 'INR', { maximumFractionDigits: 0 })}
-*              </div>
-  ...
+Line 127: "Fusarium: {profile.fusarium_pct}%"
+Line 170: "Average Moisture"
+Lines 256-257: "No Soil Profiles"
+Line 266: "Add soil moisture profiles to track your farm's soil health over time."
+Line 286-287: "Add First Profile"
+Lines 312, 322: "Not Enough Data", "Add at least 2 profiles to see trends."
+Trend labels: "Avg Moisture", "Total Profiles", "Recent Change", "from last profile", "Latest Moisture"
+Consider completing the localization for consistency, especially if Marathi users will interact with this screen.
 
--              <div class="summary-value ${summary.netProfit >= 0 ? 'profit' : 'loss'}">₹${formatNumber(summary.netProfit)}</div>
+Also applies to: 169-171, 248-267, 282-288, 304-323, 340-470
 
-*              <div class="summary-value ${summary.netProfit >= 0 ? 'profit' : 'loss'}">
-*                ${formatCurrency(summary.netProfit, 'INR', { maximumFractionDigits: 0 })}
-*              </div>
-  app/index.tsx (1)
-  95-98: Consider showing a lightweight loader while onboarding state hydrates.
-  Returning null can produce a blank screen if hydration is slow; reusing AnimatedSplash (or a small spinner) would keep UX consistent.
+src/hooks/use-fab-bottom-position.android.ts (1)
+4-10: Consider using spacing tokens for consistency.
 
-💡 Example adjustment
+The hardcoded values (8, 12, 20) could be replaced with spacing tokens from @/styles/theme for consistency with the rest of the codebase. For example, spacing[2] = 8, spacing[3] = 12, spacing[5] = 20.
+
+♻️ Optional refactor using spacing tokens
+import { useTabBarInset } from './use-tab-bar-inset';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
++import { spacing } from '@/styles/theme';
+
+export function useFabBottomPosition(): number {
+const tabBarInset = useTabBarInset();
+const { bottom } = useSafeAreaInsets();
+// Position relative to tab bar top: subtract paddingTop(8) + paddingBottom from total height
+
+- const tabBarPaddingTop = 8;
+- const tabBarPaddingBottom = Math.max(bottom + 12, 20);
+
+* const tabBarPaddingTop = spacing[2];
+* const tabBarPaddingBottom = Math.max(bottom + spacing[3], spacing[5]);
+  return tabBarInset - tabBarPaddingBottom - tabBarPaddingTop;
+  }
+  src/components/forms/expense-form.tsx (1)
+  76-79: Hardcoded UI strings should use i18n translation keys.
+
+Given this PR adds comprehensive i18n support, the following hardcoded strings in the expense form should be translated:
+
+"Expense" / "Log farm expense" (lines 76-79)
+"Category" (line 97)
+"Amount" (line 139)
+"Remarks" (line 165)
+"Optional - describe the expense" (line 192)
+"Ready to add" / "Select category and enter amount" (line 255)
+Also applies to: 97-97, 139-139, 165-165, 192-192, 255-255
+
+src/hooks/use-fab-bottom-position.ts (1)
+6-7: Consider explicit web platform handling if FAB positioning differs.
+
+Web is explicitly supported in this project (see npm run web), but the current code defaults non-Android platforms—including web—to the iOS implementation. While this mirrors the consistent pattern used elsewhere in the hooks (use-fab-bottom-inset.ts, use-tab-bar-inset.ts), if web requires distinct FAB positioning logic, add explicit web handling:
+
+export const useFabBottomPosition =
+Platform.OS === 'android'
+? useFabBottomPositionAndroid
+: Platform.OS === 'web'
+? useFabBottomPositionWeb
+: useFabBottomPositionIOS;
+If iOS positioning works acceptably on web, the current implementation is acceptable.
+
+src/components/screens/water-level-sheet.tsx (1)
+122-135: Consider extracting the 30% threshold as a configurable constant.
+
+The low-water alert threshold is hardcoded at 30%. For maintainability, consider extracting this to a named constant or making it configurable per farm.
+
++const LOW_WATER_THRESHOLD_PERCENT = 30;
+
+- // If user enabled low-water alerts, notify immediately when the new level is critical.
+  if (lowWaterAlertsEnabled && farm.total_tank_capacity && farm.total_tank_capacity > 0) {
+  const pct = (calculatedWaterLevel / farm.total_tank_capacity) \* 100;
+
+* if (pct < 30) {
+
+- if (pct < LOW_WATER_THRESHOLD_PERCENT) {
+  src/hooks/use-dashboard-stats.ts (1)
+  178-183: Query cache may show stale currency format when preference changes.
+
+The preferredCurrency is derived from useProfile but is not included in the queryKey. If a user changes their currency preference, the cached activities will still show the old currency format until the cache expires or is manually invalidated.
+
+Consider adding the currency to the query key if immediate updates are desired:
+
+return useQuery({
+
+- queryKey: queryKeys.dashboard.recentActivities(limit),
+
+* queryKey: [...queryKeys.dashboard.recentActivities(limit), preferredCurrency],
+  Alternatively, this may be acceptable if stale data for 30 seconds is tolerable.
+
+src/services/report-service.ts (1)
+287-287: Inconsistent currency handling: hardcoded ₹ symbol vs. user's preferred currency.
+
+The PDF generation uses hardcoded ₹ (Indian Rupee) symbols, but the dashboard hooks now use the user's preferred_currency. This creates inconsistency:
+
+Line 287: ₹${formatNumber(summary.totalRevenue)}
+Line 291: ₹${formatNumber(summary.netProfit)}
+Line 341: ${r.price ? '₹' + r.price : '-'}
+Line 359: ₹${r.cost}
+Consider using formatCurrency with the user's preferred currency for consistency, or document that reports are always generated in INR.
+
+Also applies to: 291-291, 341-341, 359-359
+
+src/components/screens/trends-chart.tsx (1)
+202-229: Replace hardcoded hex colors with theme tokens.
+
+The selected-point banner and change-indicator colors still use literal hex values. Please swap to colors.\* tokens so the palette stays centralized.
+As per coding guidelines: Use inline styles with tokens from src/styles/theme.ts for styling; avoid using className.
+
+Also applies to: 344-355
+
+src/components/screens/attendance-subcomponents/calendar-attendance-tab.tsx (1)
+60-61: Consider localizing the remaining calendar UI strings.
+
+Month names, day labels, “Worker/All Workers”, “Today”, legend labels, and the worker sheet title/subtitle are still hardcoded. Moving these into translation keys (or using the locale formatter for the month header) would align with the rest of the i18n rollout.
+
+Also applies to: 110-452
+
+app/index.tsx (1)
+95-98: Avoid a blank screen while onboarding store hydrates.
+
+Returning null can flash an empty screen; consider showing a lightweight fallback (e.g., the existing splash) until hydration completes.
+
+Suggested tweak
 
 - if (!hasHydrated) {
 - return null;
@@ -254,597 +209,315 @@ The current output renders like 1234L and the unit isn’t localized. Consider m
 * if (!hasHydrated) {
 * return <AnimatedSplash duration={2500} />;
 * }
-  src/components/screens/warehouse-item-form.tsx (1)
-  270-277: Use formatCurrency for the preview label to avoid hard-coded symbols.
-  The current label only handles INR/USD and can be wrong for other currencies; using the formatter keeps symbol/format consistent.
+  src/constants/calculator-models.ts (1)
+  32-46: Consider migrating other constants to labelKey for consistency.
 
-♻️ Suggested tweak
+LOG_TYPES was updated to use labelKey for i18n, but similar constants (WATER_GROWTH_STAGES, GRAPE_GROWTH_STAGES, IRRIGATION_METHODS, SOIL_TYPES, REFILL_SPANS) still use hardcoded label strings. Consider migrating these for full i18n support, or document why they remain untranslated.
 
--              label: `${quantity} ${unit} × ${currency === 'INR' ? '₹' : '$'}${unitPrice}`,
+Also applies to: 125-189, 203-207, 223-245, 259-263
 
-*              label: `${quantity} ${unit} × ${formatCurrency(Number(unitPrice), currency)}`,
-  src/i18n/dev-checks.ts (1)
-  5-6: Prefer an interface for AnyObject to match TS style guidance.
+src/hooks/use-soil-profiles.ts (1)
+133-148: getMoistureStatus returns hardcoded English labels.
 
-The alias defines an object shape; using an interface keeps this aligned with the repo’s TypeScript conventions.
+This function returns hardcoded strings like 'Very Dry', 'Optimal', etc., while other parts of the file use i18n. Consider returning labelKey values or using i18n.t() for consistency.
 
-♻️ Proposed refactor
--type AnyObject = Record<string, unknown>;
-+interface AnyObject {
+♻️ Suggested refactor for i18n consistency
+export function getMoistureStatus(moisture: number): {
 
-- [key: string]: unknown;
+- label: string;
+
+* labelKey: string;
+  color: string;
+  } {
+  if (moisture < 20) {
+
+- return { label: 'Very Dry', color: '#EF4444' };
+
+* return { labelKey: 'soilProfile.moistureStatus.veryDry', color: '#EF4444' };
+  } else if (moisture < 40) {
+
+- return { label: 'Dry', color: '#F59E0B' };
+
+* return { labelKey: 'soilProfile.moistureStatus.dry', color: '#F59E0B' };
+  } else if (moisture < 60) {
+
+- return { label: 'Optimal', color: '#10B981' };
+
+* return { labelKey: 'soilProfile.moistureStatus.optimal', color: '#10B981' };
+  } else if (moisture < 80) {
+
+- return { label: 'Moist', color: '#3B82F6' };
+
+* return { labelKey: 'soilProfile.moistureStatus.moist', color: '#3B82F6' };
+  } else {
+
+- return { label: 'Wet', color: '#6366F1' };
+
+* return { labelKey: 'soilProfile.moistureStatus.wet', color: '#6366F1' };
+  }
+  }
+  app/(tabs)/\_layout.tsx (1)
+  86-93: Stale scaleMap entries for removed compass icon.
+
+The scaleMap still contains entries for 'compass' and 'compass.fill', but the Explore tab now uses 'house' icon. These entries are now dead code.
+
+♻️ Remove stale scaleMap entries
+const scaleMap: Record<string, number> = {
+
+-        compass: 1.1,
+-        'compass.fill': 1.1,
+
+*        house: 1.1,
+*        'house.fill': 1.1,
+           'wrench.and.screwdriver': 0.9,
+           'wrench.and.screwdriver.fill': 0.9,
+         };
+  app/weather.tsx (3)
+  26-30: Consider localizing soil type labels.
+
+The SOIL_TYPES labels are hardcoded in English. For full i18n support, these should use translation keys.
+
+const SOIL_TYPES: { value: SoilType; labelKey: string }[] = [
+{ value: 'sandy', labelKey: 'weather.soilTypes.sandy' },
+{ value: 'medium', labelKey: 'weather.soilTypes.medium' },
+{ value: 'clay', labelKey: 'weather.soilTypes.clay' },
+];
+Then render with t(type.labelKey) where used.
+
+14-23: Consider localizing growth stage labels.
+
+Similar to soil types, GROWTH_STAGES values are displayed directly as English text. For consistent i18n, these could be mapped to translation keys.
+
+1174-1176: Consider using formatDate for time formatting.
+
+The toLocaleTimeString() call doesn't use the centralized formatting utility. For consistency with other date/time formatting in the app:
+
+- time: new Date(weather.lastUpdated).toLocaleTimeString(),
+
+* time: formatDate(weather.lastUpdated, { hour: 'numeric', minute: 'numeric' }),
+  app/onboarding.tsx (1)
+  151-203: Use theme color tokens instead of hard-coded hex values in the new step.
+
+The new language step introduces hard-coded colors (e.g., icon color), which diverges from the theme-token guideline.
+
+🎨 Example using theme tokens
+
+-        <SymbolIcon name="globe" size={48} color="#1a5d1a" />
+
+*        <SymbolIcon name="globe" size={48} color={colors.primary[700]} />
+  As per coding guidelines: Use inline styles with tokens from src/styles/theme.ts for styling; avoid using className.
+
+app/\_layout.tsx (2)
+30-30: Prefer an interface for DefaultPropsCarrier.
+This is an object shape and fits the interface convention used elsewhere.
+
+♻️ Suggested refactor
+-type DefaultPropsCarrier = { defaultProps?: { style?: StyleProp<TextStyle> } };
++interface DefaultPropsCarrier {
+
+- defaultProps?: { style?: StyleProp<TextStyle> };
   +}
   As per coding guidelines: Prefer interface over type for defining object shapes in TypeScript.
-  src/components/screens/worker-form.tsx (1)
-  12-12: Replace raw spacing literals with theme spacing tokens.
 
-The inline styles use numeric literals (16/12/20) in the changed lines. To keep spacing consistent with the design system, prefer spacing[...] tokens from src/styles/theme.ts.
+34-94: Remove the duplicated Android text patch block.
+The second block is unreachable after the first sets androidTextPatched, so keeping one copy avoids confusion.
 
-♻️ Proposed refactor
--import { FormModal, SectionHeader, FormInput, Toggle, InfoCard } from '@/components/ui';
-+import { FormModal, SectionHeader, FormInput, Toggle, InfoCard } from '@/components/ui';
-+import { spacing } from '@/styles/theme';
-@@
+♻️ Suggested cleanup
+-if (Platform.OS === 'android' && !androidTextPatched) {
 
--      <SectionHeader title={t('workers.form.sections.details')} style={{ marginBottom: 16 }} />
+- androidTextPatched = true;
+-
+- const TextWithDefaults = Text as unknown as DefaultPropsCarrier;
+- const TextInputWithDefaults = TextInput as unknown as DefaultPropsCarrier;
+-
+- TextWithDefaults.defaultProps = {
+- ...(TextWithDefaults.defaultProps ?? {}),
+- style: [
+-      {
+-        includeFontPadding: true,
+-        paddingBottom: androidTextPadding.bottom,
+-        paddingRight: androidTextPadding.right,
+-      },
+-      TextWithDefaults.defaultProps?.style,
+- ],
+- };
+-
+- TextInputWithDefaults.defaultProps = {
+- ...(TextInputWithDefaults.defaultProps ?? {}),
+- style: [
+-      {
+-        includeFontPadding: true,
+-        paddingBottom: androidTextPadding.bottom,
+-        paddingRight: androidTextPadding.right,
+-      },
+-      TextInputWithDefaults.defaultProps?.style,
+- ],
+- };
+  -}
+  app/(tabs)/workers.tsx (1)
+  18-22: Consider an interface for the tab metadata shape.
+  This keeps object-shape typing consistent with the preferred style.
 
-*      <SectionHeader
-*        title={t('workers.form.sections.details')}
-*        style={{ marginBottom: spacing[4] }}
-*      />
-  @@
+♻️ Suggested refactor
+type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
--        style={{ marginBottom: 12 }}
+-const TAB_DATA: { id: WorkersTab; labelKey: string }[] = [
++interface WorkersTabMeta {
 
-*        style={{ marginBottom: spacing[3] }}
-  @@
-
--        style={{ marginBottom: 12 }}
-
-*        style={{ marginBottom: spacing[3] }}
-  @@
-
--        style={{ marginBottom: 20 }}
-
-*        style={{ marginBottom: spacing[5] }}
-  @@
-
--      <SectionHeader title={t('workers.form.sections.status')} style={{ marginBottom: 16 }} />
-
-*      <SectionHeader
-*        title={t('workers.form.sections.status')}
-*        style={{ marginBottom: spacing[4] }}
-*      />
-  @@
-
--        style={{ marginBottom: 16 }}
-
-*        style={{ marginBottom: spacing[4] }}
-  As per coding guidelines: Use inline styles with tokens from src/styles/theme.ts for styling; avoid using className.
-  Also applies to: 127-169
-
-src/i18n/languages.ts (1)
-3-6: Introduce an interface for supported language entries.
-
-The inline object type used in SUPPORTED_LANGUAGES defines a shape; prefer an interface to align with the repo’s TypeScript conventions.
-
-♻️ Proposed refactor
-export type SupportedLanguageCode = 'en' | 'mr';
-
--export const SUPPORTED_LANGUAGES: ReadonlyArray<{ code: SupportedLanguageCode; label: string }> = [
-+export interface SupportedLanguage {
-
-- code: SupportedLanguageCode;
-- label: string;
+- id: WorkersTab;
+- labelKey: string;
   +}
-- +export const SUPPORTED_LANGUAGES: ReadonlyArray<SupportedLanguage> = [
-  { code: 'en', label: 'English' },
-  { code: 'mr', label: 'मराठी' },
+- +const TAB_DATA: WorkersTabMeta[] = [
+  { id: 'workers', labelKey: 'workers.tabs.workers' },
+  { id: 'attendance', labelKey: 'workers.tabs.attendance' },
+  { id: 'analytics', labelKey: 'workers.tabs.analytics' },
   ];
   As per coding guidelines: Prefer interface over type for defining object shapes in TypeScript.
-  src/i18n/locales/mr.ts (1)
-  1408-1410: Prefer interface for the translation shape alias.
-  This keeps the translation type aligned with the TypeScript guideline for object shapes.
 
-♻️ Optional refactor
--export type MrTranslations = typeof mr;
-+export interface MrTranslations extends typeof mr {}
-As per coding guidelines: Prefer interface over type for defining object shapes in TypeScript.
-
-app/weather.tsx (1)
-1174-1178: Using toLocaleTimeString instead of formatTime.
-
-The "last updated" timestamp uses toLocaleTimeString() directly instead of the centralized formatTime helper imported elsewhere in the codebase. This may cause inconsistent formatting across locales.
-
-♻️ Proposed fix to use formatTime
-+import { formatDate, formatTime } from '@/i18n/format';
-...
-<Text style={{ fontSize: fontSize.xs, color: colors.surface[400] }}>
-{t('weather.lastUpdated', {
-
--                time: new Date(weather.lastUpdated).toLocaleTimeString(),
-
-*                time: formatTime(new Date(weather.lastUpdated)),
-                 })}
-               </Text>
-  app/lab-tests.tsx (1)
-  27-35: Local formatDate function duplicates centralized utility.
-
-This file defines its own formatDate function that produces DD-MM-YYYY format, while the codebase has a centralized formatDate in src/i18n/format.ts that handles locale-aware formatting. Consider using the centralized version with appropriate options for consistency.
-
-♻️ Proposed refactor to use centralized formatDate
-+import { formatDate } from '@/i18n/format';
-...
--const formatDate = (dateString: string): string => {
-
-- if (!dateString) return '';
-- const date = new Date(dateString);
-- if (Number.isNaN(date.getTime())) return dateString;
-- const day = String(date.getDate()).padStart(2, '0');
-- const month = String(date.getMonth() + 1).padStart(2, '0');
-- const year = date.getFullYear();
-- return `${day}-${month}-${year}`;
-  -};
-  ...
-  // Usage in renderTestCard:
-  -{formatDate(test.date)}
-  +{formatDate(test.date, { day: '2-digit', month: '2-digit', year: 'numeric' })}
-  app/onboarding.tsx (1)
-  49-52: Redundant language setting in handleNext.
-
-The language is already set immediately when the user taps a language option (lines 200-201 and 226-227). This block in handleNext duplicates those calls when the user proceeds to the next step.
-
-Consider removing this block since the language is set on selection, or remove the immediate setting on press if you prefer to only apply the change when the user confirms.
-
-🔧 Option: Remove redundant calls from handleNext
-
-- if (currentStep === 'language') {
--      setLanguage(selectedLanguage);
--      setAppLanguage(selectedLanguage);
-- }
-app/analytics.tsx (1)
-357-365: Performance category names are not translated.
-
-The key from performanceMetrics.categories is displayed directly with textTransform: 'capitalize'. These category names (e.g., "irrigation", "efficiency") should use translation keys for full i18n support.
-
-🌐 Suggested approach
-<Text
-style={{
-                           fontSize: fontSize.xs,
-                           color: colors.surface[500],
-                           textTransform: 'capitalize',
-                         }} >
-
--                        {key}
-
-*                        {t(`analytics.categories.${key}`)}
-                         </Text>
-  Add corresponding translation keys for each category.
-
-src/i18n/format.ts (2)
-9-13: Redundant numberingSystem specification.
-
-The Latin numbering system is specified both in the locale string (-u-nu-latn suffix from getLocaleWithLatinDigits()) and in the options object (numberingSystem: 'latn'). The locale extension should be sufficient.
-
-♻️ Remove redundant option
-export function formatNumber(value: number, options?: Intl.NumberFormatOptions): string {
-return new Intl.NumberFormat(getLocaleWithLatinDigits(), {
-
-- numberingSystem: 'latn',
-  ...options,
-  }).format(value);
-  }
-  Apply similarly to formatCurrency and formatDate.
-
-29-38: Consider validating date input.
-
-new Date(date) with an invalid string returns an Invalid Date object, which when formatted produces "Invalid Date" string. Consider adding validation or a fallback.
-
-🛡️ Proposed defensive handling
-export function formatDate(
-date: Date | string | number,
-options?: Intl.DateTimeFormatOptions,
-): string {
-const d = date instanceof Date ? date : new Date(date);
-
-- if (Number.isNaN(d.getTime())) {
-- return ''; // or a fallback like 'Invalid date'
-- }
-  return new Intl.DateTimeFormat(getLocaleWithLatinDigits(), {
-  numberingSystem: 'latn',
-  ...options,
-  }).format(d);
-  }
-  src/stores/language-store.ts (1)
-  20-44: Consider using AsyncStorage instead of SecureStore for language preference.
-
-Language preference is not sensitive data. SecureStore adds encryption overhead and has size limitations that aren't necessary here. Consider using @react-native-async-storage/async-storage for better performance, which is the standard choice for non-sensitive persisted data.
-
-That said, if consistency with other stores in the codebase is preferred, the current implementation is functionally correct.
-
-src/services/notifications.ts (1)
-85-87: Consider using i18n interpolation for farmName.
-
-The current string concatenation breaks the translation pattern. Use interpolation for better localization support (e.g., different languages may place the farm name differently).
-
-💡 Suggested improvement
-
-- const baseBody = i18n.t('notifications.lowWater.body');
-- const body = farmName ? `${farmName}: ${baseBody}` : baseBody;
-
-* const body = farmName
-* ? i18n.t('notifications.lowWater.bodyWithFarm', { farmName })
-* : i18n.t('notifications.lowWater.body');
-  This requires adding a new translation key like:
-
-"bodyWithFarm": "{{farmName}}: Your crops need water"
 src/components/screens/location-picker.tsx (1)
-195-206: Default coordinates may not be appropriate for target users.
+27-42: Error boundary lacks reset mechanism.
 
-The fallback coordinates (37.7749, -122.4194) are San Francisco, CA. Given the app uses INR currency and targets Indian farmers, consider using coordinates in India as the default (e.g., central India: ~20.5937, 78.9629).
+The MapErrorBoundary catches errors and renders the fallback, but it never resets hasError back to false. If the map fails once (e.g., due to a transient issue), the fallback will persist even on subsequent opens until the component is fully unmounted and remounted.
 
-src/components/cards/activity-log-card.tsx (1)
-41-46: Consider using the proper TFunction type for better type safety.
+Consider adding a reset mechanism via a key prop or a method to clear the error state:
 
-The current inline type (key: string, options?: Record<string, unknown>) => string works but loses some type checking benefits.
+♻️ Proposed fix to add error reset capability
+class MapErrorBoundary extends Component<MapErrorBoundaryProps, MapErrorBoundaryState> {
+state: MapErrorBoundaryState = { hasError: false };
 
-💡 Suggested improvement
-+import type { TFunction } from 'i18next';
-
-function getDescriptionFromData(
-type: LogTypeId,
-
-- t: (key: string, options?: Record<string, unknown>) => string,
-
-* t: TFunction,
-  data?: RecordData,
-  currency?: string,
-  ): string {
-
-src/hooks/use-lab-tests.ts (1)
-601-605: ⚠️ Potential issue | 🟡 Minor
-
-Normalize aliases before unit lookup.
-
-With the new alias normalization (e.g., organic_carbon), getParameterUnit can return empty units for unnormalized keys. Normalizing here keeps units consistent.
-
-🛠️ Suggested fix
--export function getParameterUnit(key: string, isSoil: boolean): string {
-
-- const params = isSoil ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
-- const param = params.find((p) => p.key === key);
-- return param?.unit || '';
-  -}
-  +export function getParameterUnit(key: string, isSoil: boolean): string {
-
-* const testType = isSoil ? 'soil' : 'petiole';
-* const normalizedKey = normalizeParameterKey(key, testType);
-* const params = isSoil ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
-* const param = params.find((p) => p.key === normalizedKey);
-* return param?.unit || '';
-  +}
-  app/(tabs)/explore.tsx (1)
-  1191-1200: ⚠️ Potential issue | 🟡 Minor
-
-Search placeholder strings are not localized.
-
-The searchPlaceholder useMemo returns hardcoded English strings, inconsistent with the rest of the i18n integration in this file.
-
-🌐 Proposed fix to localize search placeholders
-const searchPlaceholder = useMemo(() => {
-switch (selectedTab) {
-case 'farms':
-
--        return 'Search farms...';
-
-*        return t('farms.search.placeholder');
-       case 'warehouse':
-
--        return 'Search inventory...';
-
-*        return t('warehouse.search.placeholder');
-       default:
-
--        return 'Search...';
-
-*        return t('common.search');
-  }
-
-- }, [selectedTab]);
-
-* }, [selectedTab, t]);
-  app/add-lab-test.tsx (1)
-  10-51: ⚠️ Potential issue | 🟡 Minor
-
-Add a localized placeholder for missing farmId instead of the literal fallback.
-
-The literal 'missing' string on line 17 is interpolated into the translated error message on line 50. Marathi users will see: "अवैध फार्म आयडी: missing" (mixing the localized text with English).
-
-The suggested t('common.missing') key does not exist in the translations. Either add missing to the common namespace in both src/i18n/locales/en.ts and src/i18n/locales/mr.ts, or use an existing key like common.unknownDate:
-
-♻️ Option 1: Add new key
-
-- const farmIdLabel = params.farmId ?? 'missing';
-
-* const farmIdLabel = params.farmId ?? t('common.missing');
-  Then add to src/i18n/locales/en.ts under common:
-
-missing: 'Missing',
-And to src/i18n/locales/mr.ts under common:
-
-missing: 'अनुपलब्ध',
-src/components/screens/trends-table.tsx (1)
-  29-90: ⚠️ Potential issue | 🟡 Minor
-
-Localize the remaining empty-state strings using dedicated table keys.
-
-These are still hardcoded, causing English text to display for Marathi users. Rather than reusing the chart-specific trends.empty._ keys (which reference "view chart"), create separate trends.table.empty._ keys to keep table and chart empty states distinct:
-
-🌐 Suggested mapping
-
--          No Data Available
-
-*          {t('trends.table.empty.noDataTitle')}
-  ...
-
--          Add lab tests to view trends
-
-*          {t('trends.table.empty.noDataBody')}
-  ...
-
--          No Parameter Data
-
-*          {t('trends.table.empty.noParamsTitle')}
-  ...
-
--          Unable to load parameter trends
-
-*          {t('trends.table.empty.noParamsBody')}
-  Then add to src/i18n/locales/en.ts:
-
-trends.table.empty: {
-noDataTitle: 'No Data Available',
-noDataBody: 'Add lab tests to view trends',
-noParamsTitle: 'No Parameter Data',
-noParamsBody: 'Unable to load parameter trends',
+static getDerivedStateFromError(): MapErrorBoundaryState {
+return { hasError: true };
 }
-And the corresponding Marathi translations to src/i18n/locales/mr.ts.
 
-src/components/screens/entry-form.tsx (4)
-482-488: ⚠️ Potential issue | 🟡 Minor
-
-Hardcoded English strings in partial success alert.
-
-The "Partial Success" alert message at lines 483-486 is not translated. This should use i18n keys for consistency with the rest of the file.
-
-🌐 Proposed fix to translate the partial success alert
-if (failedCount > 0) {
-Alert.alert(
-
--          'Partial Success',
--          `${failedCount} log${failedCount > 1 ? 's' : ''} failed to save. Please review and try again.`,
-
-*          t('entryForm.partialSuccess.title'),
-*          t('entryForm.partialSuccess.body', { count: failedCount }),
-           );
-           return;
-         }
-  1559-1585: ⚠️ Potential issue | 🟡 Minor
-
-Hardcoded strings in Due Date picker modal.
-
-The "Select Due Date" title (line 1560) and "Done" button text (line 1584) are not translated, unlike the similar date picker at lines 1686/1708 which uses t('entryForm.selectDate') and t('entryForm.done').
-
-🌐 Proposed fix to translate the due date picker
-<Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
-
--                    Select Due Date
-
-*                    {t('entryForm.selectDueDate')}
-                   </Text>
-                   <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
-
--                    Done
-
-*                    {t('entryForm.done')}
-                     </Text>
-  1351-1402: ⚠️ Potential issue | 🟡 Minor
-
-Hardcoded form labels in task content.
-
-Several form labels remain hardcoded in English: "Title \*" (line 1356), "Enter task title" (line 1361), "Description" (line 1381), "Add details about this task" (line 1386), "Type" (line 1411), "Priority" (line 1446), "Due Date" (line 1488), and "Select due date" (line 1517). These should use translation keys for consistency.
-
-1063-1082: ⚠️ Potential issue | 🟡 Minor
-
-\*Hardcoded "Farm " and "Select farm" labels.
-
-The farm selector labels at lines 1063 and 1082 are hardcoded in English. Apply translation keys similar to other form fields.
-
-🌐 Proposed fix
-<Text
-selectable
-style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }} >
-
--            Farm *
-
-*            {t('entryForm.farmLabel')}
-           </Text>
-               <Text selectable style={{ fontSize: 16, color: '#2c2c2e', marginLeft: 8 }}>
-
--                {activeFarm?.name || 'Select farm'}
-
-*                {activeFarm?.name || t('entryForm.selectFarm')}
-                 </Text>
-  app/weather.tsx (3)
-  336-340: ⚠️ Potential issue | 🟡 Minor
-
-Hardcoded location warning message.
-
-The warning message about missing GPS coordinates (lines 337-338) is not translated. This user-facing text should use i18n keys.
-
-🌐 Proposed fix
-<Text
-style={{
-                 color: '#92400E',
-                 fontSize: fontSize.sm,
-                 marginLeft: spacing[3],
-                 flex: 1,
-               }} >
-
--              This farm doesn&apos;t have location coordinates. Weather data is showing default
--              location (Nashik). Add GPS coordinates to get farm-specific weather.
-
-*              {t('weather.warnings.noCoordinates')}
-               </Text>
-  354-357: ⚠️ Potential issue | 🟡 Minor
-
-Hardcoded picker labels "GROWTH STAGE" and "SOIL TYPE".
-
-The section labels at lines 356 and 430 are hardcoded uppercase English strings. These should use translation keys with appropriate text transformation.
-
-Also applies to: 429-431
-
-510-546: ⚠️ Potential issue | 🟡 Minor
-
-Hardcoded weather condition strings.
-
-Several weather-related strings remain hardcoded: "Current Location" (line 511), "Feels like" (line 546). These should be translated for consistency with other weather labels.
-
-app/warehouse.tsx (2)
-257-260: ⚠️ Potential issue | 🟡 Minor
-
-Hardcoded "{count} items" text.
-
-The low stock items count badge at line 259 uses hardcoded English text. This should use a translation key with interpolation.
-
-🌐 Proposed fix
-<Text
-style={{
-                       color: COLORS.lowStock,
-                       fontSize: fontSize.xs,
-                       fontWeight: fontWeight.medium,
-                     }} >
-
--                    {lowStockItems.length} items
-
-*                    {t('warehouse.labels.itemCount', { count: lowStockItems.length })}
-                     </Text>
-  550-581: ⚠️ Potential issue | 🟡 Minor
-
-Hardcoded inventory item detail labels.
-
-The labels "Quantity" (line 552), "Unit Price" (line 566), and "Total Value" (line 580) are hardcoded in English. These should use translation keys for consistency with the rest of the file.
-
-🌐 Proposed fix
-<Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-
--                      Quantity
-
-*                      {t('warehouse.labels.quantity')}
-                       </Text>
-  ...
-  <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-
--                      Unit Price
-
-*                      {t('warehouse.labels.unitPrice')}
-                       </Text>
-  ...
-  <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-
--                      Total Value
-
-*                      {t('warehouse.labels.totalValue')}
-                       </Text>
-  app/analytics.tsx (1)
-  180-182: ⚠️ Potential issue | 🟡 Minor
-
-Hard-coded strings should use translation keys.
-
-"Irrigation Hours" and "Spray Applications" (line 214-216) are still hard-coded while similar labels like "Total Harvest" (line 249) and "Harvest Value" (line 288) use translation keys. This creates inconsistent i18n coverage.
-
-🌐 Proposed fix for consistent i18n
-<Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-
--                Irrigation Hours
-
-*                {t('analytics.labels.irrigationHours')}
-               </Text>
-               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-
--                Spray Applications
-
-*                {t('analytics.labels.sprayApplications')}
-                 </Text>
-  Add corresponding keys to locale files.
-
-src/components/screens/attendance-subcomponents/mark-attendance-tab.tsx (6)
-36-84: ⚠️ Potential issue | 🟡 Minor
-
-Hardcoded English strings in getStatusDisplay should be translated.
-
-The fullLabel values ('Full Day', 'Half Day', 'Absent', 'Not Set') and single-letter label values are hardcoded in English. For consistent i18n support, these should use translation keys.
-
-💡 Suggested approach
-Pass the t function as a parameter or move this function inside the component:
-
--const getStatusDisplay = (
-
-- status: AttendanceStatus,
-  -): {
-  +const getStatusDisplay = (
-
-* status: AttendanceStatus,
-* t: (key: string) => string,
-  +): {
-  // ...
-  } => {
-  switch (status) {
-  case 'full_day':
-  return {
-
--        label: 'F',
-
-*        label: t('attendance.status.fullDayShort'),
-         // ...
-
--        fullLabel: 'Full Day',
-
-*        fullLabel: t('attendance.status.fullDay'),
-         };
-       // ... similar for other cases
+componentDidCatch(error: Error) {
+this.props.onError(error);
+}
+
+- componentDidUpdate(prevProps: MapErrorBoundaryProps) {
+- // Reset error state when children change (e.g., on re-open)
+- if (this.state.hasError && prevProps.children !== this.props.children) {
+-      this.setState({ hasError: false });
+- }
+- }
+- render() {
+  if (this.state.hasError) return this.props.fallback;
+  return this.props.children;
   }
-  };
-  419-521: ⚠️ Potential issue | 🟡 Minor
+  }
+  app/farm/[id].tsx (1)
+  75-75: Inconsistent platform detection methods.
 
-Multiple UI strings remain untranslated.
+Line 75 uses Platform.OS === 'android', but line 255 and line 484 still use process.env.EXPO_OS === 'android'. Consider using Platform.OS consistently throughout for clarity.
 
-The following strings should use translation keys for complete i18n support:
+♻️ Proposed fix for consistency
 
-"Filters" (line 419)
-"Worker" (line 455)
-"Farms" (line 508)
-"selected" / "All Farms" (lines 520-521)
-560-591: ⚠️ Potential issue | 🟡 Minor
+- const isAndroid = process.env.EXPO_OS === 'android';
 
-Additional hardcoded strings need translation.
+* const isAndroid = Platform.OS === 'android';
+  And at line 484:
 
-"This Week" (line 560)
-"Unsaved Changes" / "Up to Date" (line 591)
-754-838: ⚠️ Potential issue | 🟡 Minor
+- spacing[16] + (process.env.EXPO_OS === 'android' ? 16 : 0),
 
-Quick action button labels are hardcoded.
+* spacing[16] + (isAndroid ? 16 : 0),
+  src/components/screens/lab-test-form.tsx (1)
+  154-161: Inconsistent platform detection.
 
-"All Full", "All Half", and "All Off" should use translation keys.
+This uses process.env.EXPO_OS === 'android' while other files in this PR use Platform.OS. Consider using Platform.OS for consistency with the rest of the codebase.
 
-910-944: ⚠️ Potential issue | 🟡 Minor
+♻️ Proposed fix
++import { Platform } from 'react-native';
 
-Save/Next button labels are hardcoded.
+const handleDateChange = (\_: DateTimePickerEvent, selectedDate?: Date) => {
 
-"Saving...", "Save & Next", "Save & Finish", "Next Worker", and "Done" should use translation keys.
+- if (process.env.EXPO_OS === 'android') {
 
-965-968: ⚠️ Potential issue | 🟡 Minor
+* if (Platform.OS === 'android') {
+  setShowDatePicker(false);
+  }
+  app/analytics.tsx (1)
+  363-365: Dynamic translation key may fail silently.
 
-Sheet titles and subtitles are hardcoded.
+The dynamic key t(\analytics.categories.${key}`)depends on thekeyvalues fromperformanceMetrics.categories` matching translation keys exactly. If a new category is added without a corresponding translation, it will display the raw key.
 
-"Select Worker" and "Choose a worker to mark attendance" should use translation keys.
+Consider adding a fallback or using the original key as the default value:
+
+♻️ Proposed fix with fallback
+
+-                        {t(`analytics.categories.${key}`)}
+
+*                        {t(`analytics.categories.${key}`, { defaultValue: key })}
+  app/(tabs)/farms.tsx (1)
+  255-255: Platform detection inconsistency.
+
+Lines 255 and 484 use process.env.EXPO_OS while other parts of the PR use Platform.OS. Consider using Platform.OS consistently, especially since Platform is not currently imported in this file.
+
+♻️ Proposed fix
++import { Platform } from 'react-native';
+
+- const isAndroid = process.env.EXPO_OS === 'android';
+
+* const isAndroid = Platform.OS === 'android';
+
+  // ...
+
+  const listBottomPadding = Math.max(
+
+- spacing[16] + (process.env.EXPO_OS === 'android' ? 16 : 0),
+
+* spacing[16] + (isAndroid ? 16 : 0),
+  (showFab ? fabBottom + 56 : 0) + spacing[8],
+  );
+  Also applies to: 483-486
+
+src/components/screens/lab-test-details-modal.tsx (1)
+88-96: Consider using the i18n formatDate utility for consistency with the rest of the app.
+
+The local formatDate function replicates what the i18n utility from @/i18n/format provides. Since this app is India-specific (locales: en-IN, mr-IN, hi-IN), you can produce the same DD-MM-YYYY format using formatDate(date, { year: 'numeric', month: '2-digit', day: '2-digit' }). This approach ensures consistency across the codebase, where most components already use the i18n helper with custom options. The same pattern appears elsewhere (e.g., app/lab-tests.tsx), so consolidating on the i18n utility would also reduce duplication.
+
+app/(tabs)/index.tsx (1)
+79-79: Greeting may become stale if the app remains open.
+
+The greetingKey is memoized with an empty dependency array, so it will only compute once when the component mounts. If a user keeps the app open across time boundaries (e.g., from morning to afternoon), the greeting won't update.
+
+Consider adding a time-based dependency or removing memoization since getGreetingKey() is a lightweight computation:
+
+♻️ Proposed fix
+
+- const greetingKey = useMemo(() => getGreetingKey(), []);
+
+* const greetingKey = getGreetingKey();
+  app/(tabs)/settings.tsx (1)
+  1023-1030: Async toggle errors may go unhandled.
+
+The onToggle callback can return a Promise, but the void keyword discards it without error handling. If any async handler throws (e.g., permission request fails unexpectedly), it becomes an unhandled promise rejection.
+
+🛡️ Proposed fix with error boundary
+<Switch
+value={enabled}
+
+-        onValueChange={(value) => {
+-          void onToggle(value);
+-        }}
+
+*        onValueChange={(value) => {
+*          Promise.resolve(onToggle(value)).catch((error) => {
+*            if (__DEV__) {
+*              console.error('Toggle error:', error);
+*            }
+*          });
+*        }}
+           trackColor={{ false: '#D1D5DB', true: '#86EFAC' }}
+           thumbColor={enabled ? '#22C55E' : '#F3F4F6'}
+         />
+  app/(tabs)/explore.tsx (1)
+  56-57: Consider using useRef for Animated.Value instances.
+
+useMemo works here but useRef is more semantically appropriate for mutable values that persist across renders without triggering re-renders. This is a minor stylistic preference.
+
+♻️ Proposed refactor
+
+- const scrollY = useMemo(() => new Animated.Value(0), []);
+- const tabSwitchAnim = useMemo(() => new Animated.Value(1), []);
+
+* const scrollY = useRef(new Animated.Value(0)).current;
+* const tabSwitchAnim = useRef(new Animated.Value(1)).current;

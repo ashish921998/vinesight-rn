@@ -8,6 +8,7 @@ import {
   Image,
   ImageSourcePropType,
   StyleSheet,
+  Platform,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -182,7 +183,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={containerStyle}
     >
       <ScrollView
@@ -272,7 +273,7 @@ export default function LoginScreen() {
             </View>
 
             {/* Apple Sign In (required on iOS if Google is offered) */}
-            {process.env.EXPO_OS === 'ios' && (
+            {Platform.OS === 'ios' && (
               <Button
                 title={t('auth.continueWithApple')}
                 variant="outline"

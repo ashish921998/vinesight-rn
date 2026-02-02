@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -54,7 +55,7 @@ const markdownStyles = {
     color: '#1c1c1e',
     padding: 2,
     borderRadius: 4,
-    fontFamily: process.env.EXPO_OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   code_block: {
     backgroundColor: '#f0f0f0',
@@ -62,7 +63,7 @@ const markdownStyles = {
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
-    fontFamily: process.env.EXPO_OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   blockquote: {
     backgroundColor: '#f5f5f5',
@@ -185,8 +186,8 @@ export default function AIChatScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: colors.surface[50] }}
-        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={process.env.EXPO_OS === 'ios' ? 90 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={{ flex: 1 }}>
           <ScrollView

@@ -27,7 +27,9 @@ import { androidTextPadding } from '@/styles/theme';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
-type DefaultPropsCarrier = { defaultProps?: { style?: StyleProp<TextStyle> } };
+interface DefaultPropsCarrier {
+  defaultProps?: { style?: StyleProp<TextStyle> };
+}
 
 let androidTextPatched = false;
 

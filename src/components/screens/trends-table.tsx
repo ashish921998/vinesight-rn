@@ -298,6 +298,8 @@ const styles = {
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb' as const,
   },
   increase: {
     color: '#10B981' as const,

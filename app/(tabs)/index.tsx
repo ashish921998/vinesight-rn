@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -76,7 +76,7 @@ export default function DashboardScreen() {
   } = useRecentActivities(5);
   const { data: farms, refetch: refetchFarms, isLoading: isLoadingFarms } = useFarms();
 
-  const greetingKey = useMemo(() => getGreetingKey(), []);
+  const greetingKey = getGreetingKey();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

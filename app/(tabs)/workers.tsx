@@ -15,7 +15,12 @@ import { colorWithOpacity } from '@/utils/color';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
-const TAB_DATA: { id: WorkersTab; labelKey: string }[] = [
+interface WorkersTabMeta {
+  id: WorkersTab;
+  labelKey: string;
+}
+
+const TAB_DATA: WorkersTabMeta[] = [
   { id: 'workers', labelKey: 'workers.tabs.workers' },
   { id: 'attendance', labelKey: 'workers.tabs.attendance' },
   { id: 'analytics', labelKey: 'workers.tabs.analytics' },

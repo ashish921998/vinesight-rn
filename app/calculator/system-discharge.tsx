@@ -4,7 +4,15 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 
 import { Stack } from 'expo-router';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
@@ -141,7 +149,7 @@ export default function SystemDischargeScreen() {
       />
       <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
         <KeyboardAvoidingView
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1, backgroundColor: colors.surface[50] }}
         >
           <ScrollView

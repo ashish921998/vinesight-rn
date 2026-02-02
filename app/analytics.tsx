@@ -361,7 +361,7 @@ export default function AnalyticsScreen() {
                           textTransform: 'capitalize',
                         }}
                       >
-                        {t(`analytics.categories.${key}`)}
+                        {t(`analytics.categories.${key}`, { defaultValue: key })}
                       </Text>
                       <SymbolIcon
                         name={

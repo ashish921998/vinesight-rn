@@ -31,6 +31,8 @@ interface WaterLevelSheetProps {
   presentation?: 'modal' | 'screen';
 }
 
+const LOW_WATER_THRESHOLD_PERCENT = 30;
+
 export function WaterLevelSheet({
   visible,
   onClose,
@@ -122,7 +124,7 @@ export function WaterLevelSheet({
       // If user enabled low-water alerts, notify immediately when the new level is critical.
       if (lowWaterAlertsEnabled && farm.total_tank_capacity && farm.total_tank_capacity > 0) {
         const pct = (calculatedWaterLevel / farm.total_tank_capacity) * 100;
-        if (pct < 30) {
+        if (pct < LOW_WATER_THRESHOLD_PERCENT) {
           try {
             const granted = await ensureNotificationPermissions();
             if (granted) {

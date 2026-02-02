@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  Platform,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -252,7 +253,7 @@ export default function FarmsScreen() {
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const isAndroid = process.env.EXPO_OS === 'android';
+  const isAndroid = Platform.OS === 'android';
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchQuery(text);
@@ -481,7 +482,7 @@ export default function FarmsScreen() {
 
   const showFab = isAndroid && (farms?.length || 0) > 0;
   const listBottomPadding = Math.max(
-    spacing[16] + (process.env.EXPO_OS === 'android' ? 16 : 0),
+    spacing[16] + (isAndroid ? 16 : 0),
     (showFab ? fabBottom + 56 : 0) + spacing[8],
   );
 
