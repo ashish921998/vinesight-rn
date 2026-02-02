@@ -334,8 +334,7 @@ export default function WeatherScreen() {
                 flex: 1,
               }}
             >
-              This farm doesn&apos;t have location coordinates. Weather data is showing default
-              location (Nashik). Add GPS coordinates to get farm-specific weather.
+              {t('weather.warnings.noCoordinates')}
             </Text>
           </View>
         )}
@@ -353,7 +352,7 @@ export default function WeatherScreen() {
                 marginBottom: spacing[2],
               }}
             >
-              GROWTH STAGE
+              {t('weather.pickers.growthStage')}
             </Text>
             <Pressable
               onPress={() => setShowGrowthPicker(!showGrowthPicker)}
@@ -427,7 +426,7 @@ export default function WeatherScreen() {
                 marginBottom: spacing[2],
               }}
             >
-              SOIL TYPE
+              {t('weather.pickers.soilType')}
             </Text>
             <Pressable
               onPress={() => setShowSoilPicker(!showSoilPicker)}
@@ -508,7 +507,7 @@ export default function WeatherScreen() {
             >
               <View>
                 <Text style={{ color: colors.primary[100], fontSize: fontSize.sm }}>
-                  {weather.location.name || 'Current Location'}
+                  {weather.location.name || t('weather.location.currentLocation')}
                 </Text>
                 <Text
                   style={{
@@ -543,7 +542,7 @@ export default function WeatherScreen() {
                     marginTop: spacing[2],
                   }}
                 >
-                  Feels like {weather.current.feelsLike}°
+                  {t('weather.location.feelsLike')} {weather.current.feelsLike}°
                 </Text>
               </View>
             </View>

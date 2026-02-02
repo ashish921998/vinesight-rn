@@ -29,12 +29,11 @@ const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
 type DefaultPropsCarrier = { defaultProps?: { style?: StyleProp<TextStyle> } };
 
-// Android text rendering workaround
-// This patch targets Android text rendering font-metric inconsistencies (vertical alignment and includeFontPadding behaviour)
-// by forcing includeFontPadding and small padding tweaks to improve text positioning
 let androidTextPatched = false;
+
 if (Platform.OS === 'android' && !androidTextPatched) {
   androidTextPatched = true;
+
   const TextWithDefaults = Text as unknown as DefaultPropsCarrier;
   const TextInputWithDefaults = TextInput as unknown as DefaultPropsCarrier;
 
@@ -49,6 +48,38 @@ if (Platform.OS === 'android' && !androidTextPatched) {
       TextWithDefaults.defaultProps?.style,
     ],
   };
+
+  TextInputWithDefaults.defaultProps = {
+    ...(TextInputWithDefaults.defaultProps ?? {}),
+    style: [
+      {
+        includeFontPadding: true,
+        paddingBottom: androidTextPadding.bottom,
+        paddingRight: androidTextPadding.right,
+      },
+      TextInputWithDefaults.defaultProps?.style,
+    ],
+  };
+}
+
+if (Platform.OS === 'android' && !androidTextPatched) {
+  androidTextPatched = true;
+
+  const TextWithDefaults = Text as unknown as DefaultPropsCarrier;
+  const TextInputWithDefaults = TextInput as unknown as DefaultPropsCarrier;
+
+  TextWithDefaults.defaultProps = {
+    ...(TextWithDefaults.defaultProps ?? {}),
+    style: [
+      {
+        includeFontPadding: true,
+        paddingBottom: androidTextPadding.bottom,
+        paddingRight: androidTextPadding.right,
+      },
+      TextWithDefaults.defaultProps?.style,
+    ],
+  };
+
   TextInputWithDefaults.defaultProps = {
     ...(TextInputWithDefaults.defaultProps ?? {}),
     style: [
@@ -145,31 +176,66 @@ export default Sentry.wrap(function RootLayout() {
       return;
     }
 
+    prevLanguageRef.current = language;
+
     const reschedule = async () => {
       const state = useNotificationStore.getState();
 
-      if (state.dailyWaterReminderEnabled) {
-        if (state.dailyWaterReminderNotificationId) {
-          await cancelNotification(state.dailyWaterReminderNotificationId);
+      try {
+        if (state.dailyWaterReminderEnabled) {
+          try {
+            if (state.dailyWaterReminderNotificationId) {
+              await cancelNotification(state.dailyWaterReminderNotificationId);
+            }
+            const nextId = await scheduleDailyWaterReminder();
+            if (nextId) {
+              useNotificationStore.setState({ dailyWaterReminderNotificationId: nextId });
+            }
+          } catch (error) {
+            if (__DEV__) {
+              console.error('Failed to reschedule daily water reminder:', error);
+            }
+          }
         }
-        const nextId = await scheduleDailyWaterReminder();
-        if (nextId) {
-          useNotificationStore.setState({ dailyWaterReminderNotificationId: nextId });
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Failed to access daily water reminder state:', error);
         }
       }
 
-      if (state.taskRemindersEnabled) {
-        const entries = Object.entries(state.taskSchedules);
-        for (const [taskId, schedule] of entries) {
-          if (schedule.notificationId) {
-            await cancelNotification(schedule.notificationId);
+      try {
+        if (state.taskRemindersEnabled) {
+          try {
+            const entries = Object.entries(state.taskSchedules);
+            for (const [taskId, schedule] of entries) {
+              try {
+                if (schedule.notificationId) {
+                  await cancelNotification(schedule.notificationId);
+                }
+                const nextId = await scheduleTaskDueReminder(taskId, schedule.dueDate);
+                if (nextId) {
+                  useNotificationStore.getState().upsertTaskSchedule(taskId, {
+                    notificationId: nextId,
+                    dueDate: schedule.dueDate,
+                  });
+                } else {
+                  useNotificationStore.getState().removeTaskSchedule(taskId);
+                }
+              } catch (error) {
+                if (__DEV__) {
+                  console.error(`Failed to reschedule task ${taskId}:`, error);
+                }
+              }
+            }
+          } catch (error) {
+            if (__DEV__) {
+              console.error('Failed to iterate task schedules:', error);
+            }
           }
-          const nextId = await scheduleTaskDueReminder(taskId, schedule.dueDate);
-          if (nextId) {
-            state.upsertTaskSchedule(taskId, { notificationId: nextId, dueDate: schedule.dueDate });
-          } else {
-            state.removeTaskSchedule(taskId);
-          }
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Failed to access task reminders state:', error);
         }
       }
     };

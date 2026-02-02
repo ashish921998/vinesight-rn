@@ -43,6 +43,6 @@ export const GLOSSARY_EN: Record<GlossaryKey, string> = {
   report: 'Report',
   labTest: 'Lab Test',
   petiole: 'Petiole',
-  downyMildew: 'Downy mildew',
-  powderyMildew: 'Powdery mildew',
+  downyMildew: 'Downy Mildew',
+  powderyMildew: 'Powdery Mildew',
 };

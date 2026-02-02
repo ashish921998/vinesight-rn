@@ -256,7 +256,7 @@ export default function WarehouseScreen() {
                       fontWeight: fontWeight.medium,
                     }}
                   >
-                    {lowStockItems.length} items
+                    {t('warehouse.labels.itemCount', { count: lowStockItems.length })}
                   </Text>
                 </View>
               </View>
@@ -549,7 +549,7 @@ export default function WarehouseScreen() {
                   <View style={{ flexDirection: 'row', marginTop: spacing[3] }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        Quantity
+                        {t('warehouse.labels.quantity')}
                       </Text>
                       <Text
                         style={{
@@ -563,7 +563,7 @@ export default function WarehouseScreen() {
                     </View>
                     <View style={{ flex: 1, alignItems: 'center' }}>
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        Unit Price
+                        {t('warehouse.labels.unitPrice')}
                       </Text>
                       <Text
                         style={{
@@ -577,7 +577,7 @@ export default function WarehouseScreen() {
                     </View>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        Total Value
+                        {t('warehouse.labels.totalValue')}
                       </Text>
                       <Text
                         style={{

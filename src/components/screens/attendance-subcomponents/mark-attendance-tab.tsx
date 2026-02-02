@@ -35,6 +35,7 @@ const STATUS_CYCLE: AttendanceStatus[] = ['full_day', 'half_day', 'absent', null
 
 const getStatusDisplay = (
   status: AttendanceStatus,
+  t: (key: string) => string,
 ): {
   label: string;
   bgColor: string;
@@ -46,39 +47,39 @@ const getStatusDisplay = (
   switch (status) {
     case 'full_day':
       return {
-        label: 'F',
+        label: t('attendance.status.fullDayShort'),
         bgColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
         badgeColor: m3.colorScheme.primary,
         badgeTextColor: m3.colorScheme.onPrimary,
         textColor: m3.colorScheme.primary,
-        fullLabel: 'Full Day',
+        fullLabel: t('attendance.status.fullDay'),
       };
     case 'half_day':
       return {
-        label: 'H',
+        label: t('attendance.status.halfDayShort'),
         bgColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
         badgeColor: m3.colorScheme.warning,
         badgeTextColor: m3.colorScheme.onWarning,
         textColor: m3.colorScheme.warning,
-        fullLabel: 'Half Day',
+        fullLabel: t('attendance.status.halfDay'),
       };
     case 'absent':
       return {
-        label: 'A',
+        label: t('attendance.status.absentShort'),
         bgColor: colorWithOpacity(m3.colorScheme.error, 0.12),
         badgeColor: m3.colorScheme.error,
         badgeTextColor: m3.colorScheme.onError,
         textColor: m3.colorScheme.error,
-        fullLabel: 'Absent',
+        fullLabel: t('attendance.status.absent'),
       };
     default:
       return {
-        label: '-',
+        label: t('attendance.status.notSetShort'),
         bgColor: m3.surface.surfaceContainerLowest,
         badgeColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.18),
         badgeTextColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
         textColor: m3.colorScheme.onSurfaceVariant,
-        fullLabel: 'Not Set',
+        fullLabel: t('attendance.status.notSet'),
       };
   }
 };
@@ -267,6 +268,7 @@ export function MarkAttendanceTab({
     );
     if (invalidCells.length > 0) {
       Alert.alert(t('common.error'), t('common.errors.selectAtLeastOneFarm'));
+      return;
     }
 
     setSaving(true);
@@ -386,7 +388,7 @@ export function MarkAttendanceTab({
           color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
         />
         <Text style={{ marginTop: spacing[3], color: m3.colorScheme.onSurfaceVariant }}>
-          No workers available
+          {t('attendance.empty.noWorkersTitle')}
         </Text>
       </View>
     );
@@ -416,13 +418,13 @@ export function MarkAttendanceTab({
                 color: m3.colorScheme.onSurfaceVariant,
               }}
             >
-              Filters
+              {t('attendance.filters.label')}
             </Text>
             <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
               <Pressable
                 onPress={handleWorkerSelect}
                 accessibilityRole="button"
-                accessibilityLabel="Select worker"
+                accessibilityLabel={t('attendance.a11y.selectWorkerButton')}
                 style={({ pressed }) => ({
                   flex: 1,
                   paddingHorizontal: spacing[4],
@@ -452,7 +454,7 @@ export function MarkAttendanceTab({
                       color: m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    Worker
+                    {t('attendance.filters.worker')}
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}>
@@ -463,7 +465,7 @@ export function MarkAttendanceTab({
                       color: m3.colorScheme.onSurface,
                     }}
                   >
-                    {selectedWorker?.name || 'All Workers'}
+                    {selectedWorker?.name || t('attendance.filters.allWorkers')}
                   </Text>
                   <UiSymbol
                     name="chevron.down"
@@ -475,7 +477,7 @@ export function MarkAttendanceTab({
               <Pressable
                 onPress={() => setFarmSheetVisible(true)}
                 accessibilityRole="button"
-                accessibilityLabel="Select farms"
+                accessibilityLabel={t('attendance.a11y.selectFarmsButton')}
                 style={({ pressed }) => ({
                   flex: 1,
                   paddingHorizontal: spacing[4],
@@ -505,7 +507,7 @@ export function MarkAttendanceTab({
                       color: m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    Farms
+                    {t('attendance.filters.farms')}
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}>
@@ -517,8 +519,8 @@ export function MarkAttendanceTab({
                     }}
                   >
                     {selectedFarmIds.length > 0
-                      ? `${selectedFarmIds.length} selected`
-                      : 'All Farms'}
+                      ? t('attendance.filters.farmsSelected', { count: selectedFarmIds.length })
+                      : t('attendance.filters.allFarms')}
                   </Text>
                   <UiSymbol
                     name="chevron.down"
@@ -538,7 +540,11 @@ export function MarkAttendanceTab({
               padding: spacing[6],
               marginBottom: spacing[4],
               backgroundColor: m3.surface.surfaceContainerLow,
-              boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.08,
+              shadowRadius: 24,
+              elevation: 8,
             }}
           >
             <View
@@ -557,7 +563,7 @@ export function MarkAttendanceTab({
                     color: m3.colorScheme.onSurfaceVariant,
                   }}
                 >
-                  This Week
+                  {t('attendance.week.thisWeek')}
                 </Text>
                 <Text
                   style={{
@@ -588,7 +594,9 @@ export function MarkAttendanceTab({
                     color: hasModifications ? m3.colorScheme.warning : m3.colorScheme.primary,
                   }}
                 >
-                  {hasModifications ? 'Unsaved Changes' : 'Up to Date'}
+                  {hasModifications
+                    ? t('attendance.week.unsavedChanges')
+                    : t('attendance.week.upToDate')}
                 </Text>
               </View>
             </View>
@@ -608,7 +616,7 @@ export function MarkAttendanceTab({
                       const dateStr = formatDate(date);
                       const key = getCellKey(workerId, dateStr);
                       const cell = cellData.get(key);
-                      const statusInfo = getStatusDisplay(cell?.status ?? null);
+                      const statusInfo = getStatusDisplay(cell?.status ?? null, t);
                       const isTodayDate = isToday(date);
                       const hasStatus = cell?.status !== null;
                       const isIdleToday = isTodayDate && !hasStatus;
@@ -618,7 +626,11 @@ export function MarkAttendanceTab({
                           key={dateStr}
                           onPress={() => handleDayCellClick(date)}
                           accessibilityRole="button"
-                          accessibilityLabel={`${getDayName(date)} ${date.getDate()}. ${statusInfo.fullLabel}.`}
+                          accessibilityLabel={t('attendance.a11y.dayStatus', {
+                            day: getDayName(date),
+                            date: date.getDate(),
+                            status: statusInfo.fullLabel,
+                          })}
                           style={{
                             width: '13%',
                             aspectRatio: 0.78,
@@ -728,7 +740,7 @@ export function MarkAttendanceTab({
             <Pressable
               onPress={() => handleQuickAction('full_day')}
               accessibilityRole="button"
-              accessibilityLabel="Set all days to full day"
+              accessibilityLabel={t('attendance.a11y.setAllFullDay')}
               style={{
                 flex: 1,
                 height: 44,
@@ -751,7 +763,7 @@ export function MarkAttendanceTab({
                       color: m3.colorScheme.primary,
                     }}
                   >
-                    All Full
+                    {t('attendance.quickActions.allFull')}
                   </Text>
                   <View
                     pointerEvents="none"
@@ -770,7 +782,7 @@ export function MarkAttendanceTab({
             <Pressable
               onPress={() => handleQuickAction('half_day')}
               accessibilityRole="button"
-              accessibilityLabel="Set all days to half day"
+              accessibilityLabel={t('attendance.a11y.setAllHalfDay')}
               style={{
                 flex: 1,
                 height: 44,
@@ -793,7 +805,7 @@ export function MarkAttendanceTab({
                       color: m3.colorScheme.warning,
                     }}
                   >
-                    All Half
+                    {t('attendance.quickActions.allHalf')}
                   </Text>
                   <View
                     pointerEvents="none"
@@ -812,7 +824,7 @@ export function MarkAttendanceTab({
             <Pressable
               onPress={() => handleQuickAction('absent')}
               accessibilityRole="button"
-              accessibilityLabel="Set all days to absent"
+              accessibilityLabel={t('attendance.a11y.setAllAbsent')}
               style={{
                 flex: 1,
                 height: 44,
@@ -835,7 +847,7 @@ export function MarkAttendanceTab({
                       color: m3.colorScheme.error,
                     }}
                   >
-                    All Off
+                    {t('attendance.quickActions.allOff')}
                   </Text>
                   <View
                     pointerEvents="none"
@@ -875,14 +887,14 @@ export function MarkAttendanceTab({
           accessibilityRole="button"
           accessibilityLabel={
             saving
-              ? 'Saving attendance'
+              ? t('attendance.a11y.savingAttendance')
               : hasModifications
                 ? selectedWorkerIndex < workers.length - 1
-                  ? 'Save attendance and go to next worker'
-                  : 'Save attendance and finish'
+                  ? t('attendance.a11y.saveAndNextWorker')
+                  : t('attendance.a11y.saveAndFinish')
                 : selectedWorkerIndex < workers.length - 1
-                  ? 'Go to next worker'
-                  : 'Done'
+                  ? t('attendance.a11y.goToNextWorker')
+                  : t('attendance.buttons.done')
           }
           style={{
             borderRadius: m3.shape.cornerLarge,
@@ -907,7 +919,7 @@ export function MarkAttendanceTab({
                       marginLeft: spacing[2],
                     }}
                   >
-                    Saving...
+                    {t('attendance.buttons.saving')}
                   </Text>
                 </View>
               ) : hasModifications ? (
@@ -927,7 +939,9 @@ export function MarkAttendanceTab({
                       marginLeft: spacing[2],
                     }}
                   >
-                    {selectedWorkerIndex < workers.length - 1 ? 'Save & Next' : 'Save & Finish'}
+                    {selectedWorkerIndex < workers.length - 1
+                      ? t('attendance.buttons.saveAndNext')
+                      : t('attendance.buttons.saveAndFinish')}
                   </Text>
                 </View>
               ) : (
@@ -941,7 +955,9 @@ export function MarkAttendanceTab({
                       color: m3.colorScheme.onPrimary,
                     }}
                   >
-                    {selectedWorkerIndex < workers.length - 1 ? 'Next Worker' : 'Done'}
+                    {selectedWorkerIndex < workers.length - 1
+                      ? t('attendance.buttons.nextWorker')
+                      : t('attendance.buttons.done')}
                   </Text>
                 </View>
               )}
@@ -964,8 +980,8 @@ export function MarkAttendanceTab({
 
       <WorkerSelectSheet
         visible={workerSheetVisible}
-        title="Select Worker"
-        subtitle="Choose a worker to mark attendance"
+        title={t('attendance.sheet.selectWorkerTitle')}
+        subtitle={t('attendance.sheet.selectWorkerSubtitle')}
         workers={workers}
         selectedWorkerId={selectedWorker?.id ?? null}
         onSelect={(workerId) => {

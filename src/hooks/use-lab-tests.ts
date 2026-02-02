@@ -599,8 +599,10 @@ export function getParameterLabel(key: string, testType: 'soil' | 'petiole' = 's
  * Get parameter unit
  */
 export function getParameterUnit(key: string, isSoil: boolean): string {
+  const testType = isSoil ? 'soil' : 'petiole';
+  const normalizedKey = normalizeParameterKey(key, testType);
   const params = isSoil ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
-  const param = params.find((p) => p.key === key);
+  const param = params.find((p) => p.key === normalizedKey);
   return param?.unit || '';
 }
 

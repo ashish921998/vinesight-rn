@@ -192,7 +192,7 @@ export function LabTestDetailsModal({
   const rawParameters = (test.parameters ?? {}) as Record<string, unknown>;
   const parameters = normalizeParameters(rawParameters);
   const sections = getSections(t, testType, parameters);
-  const accentColor = testType === 'soil' ? '#597A61' : '#4C806B';
+  const accentColor = testType === 'soil' ? colors.labTest.soil : colors.labTest.petiole;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -255,6 +255,8 @@ export function LabTestDetailsModal({
               </View>
               <Pressable
                 onPress={onClose}
+                accessibilityLabel={t('common.close')}
+                accessibilityRole="button"
                 style={{
                   width: 32,
                   height: 32,

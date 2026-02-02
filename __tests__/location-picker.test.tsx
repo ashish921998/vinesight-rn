@@ -29,14 +29,16 @@ describe('LocationPicker', () => {
   it('does not crash when MapView throws during render', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    const { getByText } = render(
-      <LocationPicker visible onClose={() => null} onLocationSelect={() => null} />,
-    );
+    try {
+      const { getByText } = render(
+        <LocationPicker visible onClose={() => null} onLocationSelect={() => null} />,
+      );
 
-    await waitFor(() => {
-      expect(getByText('locationPicker.mapsUnavailableTitle')).toBeTruthy();
-    });
-
-    consoleErrorSpy.mockRestore();
+      await waitFor(() => {
+        expect(getByText('locationPicker.mapsUnavailableTitle')).toBeTruthy();
+      });
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 });

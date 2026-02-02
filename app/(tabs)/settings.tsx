@@ -159,6 +159,20 @@ export default function SettingsScreen() {
     setTaskRemindersEnabled(false);
   };
 
+  const handleToggleLowWaterAlerts = async (enabled: boolean) => {
+    if (enabled) {
+      const granted = await ensureNotificationPermissions();
+      if (!granted) {
+        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+        return;
+      }
+      setLowWaterAlertsEnabled(true);
+      return;
+    }
+
+    setLowWaterAlertsEnabled(false);
+  };
+
   const handleDeleteAccount = () => {
     setDeleteEmail(userEmail);
     setShowDeleteAccount(true);
@@ -257,6 +271,7 @@ export default function SettingsScreen() {
 
   const getLanguageLabel = (code: SupportedLanguageCode | null) => {
     if (code === 'mr') return t('settings.languageMarathi');
+    if (code === 'hi') return t('settings.languageHindi');
     return t('settings.languageEnglish');
   };
 
@@ -365,7 +380,7 @@ export default function SettingsScreen() {
             title={t('settings.lowWaterAlerts')}
             subtitle={t('settings.lowWaterAlertsSubtitle')}
             enabled={lowWaterAlertsEnabled}
-            onToggle={setLowWaterAlertsEnabled}
+            onToggle={handleToggleLowWaterAlerts}
           />
           <NotificationToggle
             title={t('settings.taskReminders')}
@@ -577,6 +592,7 @@ export default function SettingsScreen() {
                 [
                   { code: 'en' as const, label: t('settings.languageEnglish') },
                   { code: 'mr' as const, label: t('settings.languageMarathi') },
+                  { code: 'hi' as const, label: t('settings.languageHindi') },
                 ] as const
               ).map((opt, index, arr) => (
                 <Pressable

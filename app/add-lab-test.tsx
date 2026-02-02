@@ -14,7 +14,7 @@ export default function AddLabTestRoute() {
   const testType = params.testType === 'petiole' ? 'petiole' : 'soil';
 
   if (!Number.isFinite(farmId)) {
-    const farmIdLabel = params.farmId ?? 'missing';
+    const farmIdLabel = params.farmId ?? t('common.missing');
     return (
       <View
         style={{

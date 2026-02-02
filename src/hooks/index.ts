@@ -178,3 +178,8 @@ export {
   getMoistureStatus,
   type SectionName,
 } from './use-soil-profiles';
+
+// UI Hooks
+export { useFabBottomInset } from './use-fab-bottom-inset';
+export { useTabBarInset } from './use-tab-bar-inset';
+export { useFabBottomPosition } from './use-fab-bottom-position';

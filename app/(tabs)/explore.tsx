@@ -18,14 +18,13 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
-import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
-import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import {
   useFarms,
   useDeleteFarm,
   useWarehouseItems,
   useProfile,
   useDeleteWarehouseItem,
+  useFabBottomPosition,
 } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { useModalStore } from '@/stores';
@@ -49,11 +48,9 @@ export default function ExploreScreen() {
   );
   const { setAddWarehouseItem, setAddStock } = useModalStore();
   const insets = useSafeAreaInsets();
-  const fabBottomInset = useFabBottomInset();
-  const tabBarInset = useTabBarInset();
+  const fabBottom = useFabBottomPosition();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
   const { fontScale } = useWindowDimensions();
-  const fabBottom = isAndroid ? tabBarInset + spacing[2] : spacing[14] + fabBottomInset;
 
   // Scroll animation values
   const scrollY = useMemo(() => new Animated.Value(0), []);
@@ -1191,13 +1188,13 @@ export default function ExploreScreen() {
   const searchPlaceholder = useMemo(() => {
     switch (selectedTab) {
       case 'farms':
-        return 'Search farms...';
+        return t('farms.search.placeholder');
       case 'warehouse':
-        return 'Search inventory...';
+        return t('warehouse.search.placeholder');
       default:
-        return 'Search...';
+        return t('common.search');
     }
-  }, [selectedTab]);
+  }, [selectedTab, t]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>

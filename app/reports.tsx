@@ -13,7 +13,7 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFarms } from '../src/hooks';
+import { useFarms, useProfile } from '../src/hooks';
 import { useReportData, useReportExport, getDefaultDateRange } from '../src/hooks/use-reports';
 import { DateRange, ReportType, ReportFormat } from '../src/types/report';
 import { useAuthStore } from '@/stores';
@@ -30,7 +30,13 @@ export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const { user } = useAuthStore();
-  const areaUnit = user?.user_metadata?.area_unit || 'acres';
+  const { data: profile } = useProfile();
+  const VALID_AREA_UNITS = ['acres', 'hectares', 'sqm'] as const;
+  const rawAreaUnit = user?.user_metadata?.area_unit;
+  const areaUnit = VALID_AREA_UNITS.includes(rawAreaUnit as 'acres' | 'hectares' | 'sqm')
+    ? rawAreaUnit
+    : 'acres';
+  const preferredCurrency = profile?.preferred_currency || 'USD';
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
@@ -533,7 +539,7 @@ export default function ReportsScreen() {
                     color: preview.summary.netProfit >= 0 ? '#16A34A' : '#DC2626',
                   }}
                 >
-                  {formatCurrency(preview.summary.netProfit, 'INR')}
+                  {formatCurrency(preview.summary.netProfit, preferredCurrency)}
                 </Text>
                 <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>
                   {t('reports.summary.netProfit')}

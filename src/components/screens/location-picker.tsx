@@ -196,11 +196,11 @@ export default function LocationPicker({
               latitude:
                 typeof initialLatitude === 'number' && Number.isFinite(initialLatitude)
                   ? initialLatitude
-                  : 37.7749,
+                  : 20.5937,
               longitude:
                 typeof initialLongitude === 'number' && Number.isFinite(initialLongitude)
                   ? initialLongitude
-                  : -122.4194,
+                  : 78.9629,
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             }}

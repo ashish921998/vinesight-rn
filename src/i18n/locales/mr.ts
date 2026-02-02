@@ -23,6 +23,8 @@ export const mr = {
     reset: 'रीसेट',
     error: 'त्रुटी',
     unknownDate: 'अज्ञात दिनांक',
+    missing: 'अनुपलब्ध',
+    search: 'शोधा...',
     from: 'पासून',
     to: 'पर्यंत',
     selectDate: 'दिनांक निवडा',
@@ -430,11 +432,30 @@ export const mr = {
     addTask: '$t(glossary.task) जोडा',
     editTask: '$t(glossary.task) संपादित करा',
     selectDate: 'दिनांक निवडा',
+    selectDueDate: 'देय दिनांक निवडा',
     done: 'पूर्ण',
     selectTaskType: '$t(glossary.task) प्रकार निवडा',
     selectPriority: 'प्राधान्य निवडा',
     saveLogs: 'नोंदी जतन करा ({{count}})',
     saveTask: '$t(glossary.task) जतन करा',
+    farmLabel: '$t(glossary.farm) *',
+    selectFarm: '$t(glossary.farm) निवडा',
+    partialSuccess: {
+      title: 'आंशिक यश',
+      body_one: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
+      body_other: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
+    },
+    taskForm: {
+      titleLabel: 'शीर्षक *',
+      titlePlaceholder: '$t(glossary.task) शीर्षक प्रविष्ट करा',
+      descriptionLabel: 'वर्णन',
+      descriptionPlaceholder: 'या $t(glossary.task) बद्दल तपशील जोडा',
+      typeLabel: 'प्रकार',
+      priorityLabel: 'प्राधान्य',
+      dueDateLabel: 'देय दिनांक',
+      selectDueDate: 'देय दिनांक निवडा',
+      selectDueDateTitle: 'देय दिनांक निवडा',
+    },
     drafts_one: '{{count}} मसुदा',
     drafts_other: '{{count}} मसुदे',
     pendingLogs_one: 'प्रलंबित नोंदी ({{count}})',
@@ -484,10 +505,39 @@ export const mr = {
 
   analytics: {
     title: 'विश्लेषण',
+    labels: {
+      irrigationHours: '$t(glossary.irrigation) तास',
+      sprayApplications: '$t(glossary.spray) वापर',
+      totalHarvest: 'एकूण $t(glossary.harvest)',
+      harvestValue: '$t(glossary.harvest) मूल्य',
+      performanceScore: 'कामगिरी गुण',
+    },
+    sections: {
+      overview: 'आढावा',
+      trends: 'कल',
+      comparisons: 'तुलना',
+    },
+    timeRanges: {
+      last7Days: 'शेवटचे 7 दिवस',
+      last30Days: 'शेवटचे 30 दिवस',
+      yearToDate: 'वर्षापासून',
+    },
+    loading: 'विश्लेषण लोड होत आहे...',
+    empty: {
+      title: 'डेटा उपलब्ध नाही',
+      description: 'विश्लेषण पाहण्यासाठी $t(glossary.farm) क्रियाकलाप जोडा.',
+    },
     metrics: {
       revenue: 'उत्पन्न',
       expenses: '$t(glossary.expense)',
       roi: 'ROI',
+    },
+    categories: {
+      irrigation: '$t(glossary.irrigation)',
+      spray: '$t(glossary.spray)',
+      harvest: '$t(glossary.harvest)',
+      expense: '$t(glossary.expense)',
+      efficiency: 'कार्यक्षमता',
     },
   },
 
@@ -520,6 +570,18 @@ export const mr = {
     empty: {
       noFarmsTitle: '$t(glossary.farm) उपलब्ध नाहीत',
       noFarmsSubtitle: 'तुमच्या ठिकाणासाठी $t(glossary.weather) पाहण्यासाठी $t(glossary.farm) जोडा',
+    },
+    warnings: {
+      noCoordinates:
+        'या $t(glossary.farm)मध्ये स्थान निर्देशांक नाहीत. $t(glossary.weather) डेटा डीफॉल्ट स्थान (नाशिक) दर्शवत आहे. $t(glossary.farm)-विशिष्ट $t(glossary.weather) मिळवण्यासाठी GPS निर्देशांक जोडा.',
+    },
+    pickers: {
+      growthStage: 'वाढीचा टप्पा',
+      soilType: '$t(glossary.soil) प्रकार',
+    },
+    location: {
+      currentLocation: 'सध्याचे स्थान',
+      feelsLike: 'वाटत आहे',
     },
     sections: {
       forecast7Day: '7 दिवसांचा अंदाज',
@@ -584,6 +646,12 @@ export const mr = {
       increase: 'वाढ',
       decrease: 'घट',
       stable: 'स्थिर',
+      empty: {
+        noDataTitle: 'डेटा उपलब्ध नाही',
+        noDataBody: 'ट्रेंड्स पाहण्यासाठी $t(glossary.labTest) जोडा',
+        noParamsTitle: 'पॅरामीटर डेटा नाही',
+        noParamsBody: 'पॅरामीटर ट्रेंड्स लोड करणे अशक्य',
+      },
     },
   },
 
@@ -669,6 +737,21 @@ export const mr = {
     growthStagePicker: {
       title: 'वाढीचा टप्पा निवडा',
       kcLabel: 'Kc: {{kc}}',
+      stages: {
+        beginningBudbreak: 'सुरुवातीची कोंब फुटणे',
+        shoot30cm: 'कोंब 30 सेमी',
+        shoot50cm: 'कोंब 50 सेमी',
+        shoot80cm: 'कोंब 80 सेमी',
+        beginningBloom: 'सुरुवातीचे फूल येणे',
+        fruitSet: 'फळ लागणे',
+        berry6to8mm: 'बेरी 6-8 मिमी',
+        berry12mm: 'बेरी 12 मिमी',
+        closingBunches: 'गुच्छे बंद होणे',
+        beginningVeraison: 'सुरुवातीचे रंग बदलणे',
+        beginningHarvest: 'सुरुवातीची $t(glossary.harvest)',
+        endHarvest: 'शेवटची $t(glossary.harvest)',
+        afterHarvest: '$t(glossary.harvest)नंतर',
+      },
     },
   },
 
@@ -788,6 +871,7 @@ export const mr = {
     selectLanguage: 'भाषा निवडा',
     languageEnglish: 'English',
     languageMarathi: 'मराठी',
+    languageHindi: 'हिंदी',
     areaUnit: 'क्षेत्रफळ एकक',
     currency: 'चलन',
     dailyWaterReminder: 'दैनिक पाणी आठवण',
@@ -1103,6 +1187,11 @@ export const mr = {
     labels: {
       lowStock: 'कमी स्टॉक',
       lowStockAlerts: 'कमी स्टॉक इशारे',
+      itemCount_one: '{{count}} वस्तू',
+      itemCount_other: '{{count}} वस्तू',
+      quantity: 'प्रमाण',
+      unitPrice: 'युनिट किंमत',
+      totalValue: 'एकूण मूल्य',
     },
     reorderAt: 'पुनर्भरण पातळी: {{quantity}} {{unit}}',
     filters: {
@@ -1111,6 +1200,7 @@ export const mr = {
       spray: '$t(glossary.spray) ({{count}})',
     },
     search: {
+      placeholder: 'इन्व्हेंटरी शोधा...',
       found_one: '{{count}} वस्तू आढळली',
       found_other: '{{count}} वस्तू आढळल्या',
     },
@@ -1311,6 +1401,64 @@ export const mr = {
   },
 
   attendance: {
+    filters: {
+      label: 'फिल्टर',
+      worker: '$t(glossary.worker)',
+      farms: '$t(glossary.farm)',
+      selectWorker: '$t(glossary.worker) निवडा',
+      selectFarms: '$t(glossary.farm) निवडा',
+      allWorkers: 'सर्व $t(glossary.worker)',
+      allFarms: 'सर्व $t(glossary.farm)',
+      farmsSelected_one: '{{count}} निवडले',
+      farmsSelected_other: '{{count}} निवडले',
+    },
+    status: {
+      fullDay: 'पूर्ण दिवस',
+      fullDayShort: 'पू',
+      halfDay: 'अर्धा दिवस',
+      halfDayShort: 'अ',
+      absent: 'अनुपस्थित',
+      absentShort: 'अ',
+      notSet: 'सेट नाही',
+      notSetShort: '-',
+    },
+    week: {
+      thisWeek: 'हा आठवडा',
+      unsavedChanges: 'न जतन केलेले बदल',
+      upToDate: 'अद्ययावत',
+    },
+    quickActions: {
+      allFull: 'सर्व पूर्ण',
+      allHalf: 'सर्व अर्धा',
+      allOff: 'सर्व बंद',
+    },
+    buttons: {
+      saving: 'जतन करत आहे...',
+      saveAndNext: 'जतन करा आणि पुढे',
+      saveAndFinish: 'जतन करा आणि समाप्त',
+      nextWorker: 'पुढील $t(glossary.worker)',
+      done: 'पूर्ण',
+    },
+    sheet: {
+      selectWorkerTitle: '$t(glossary.worker) निवडा',
+      selectWorkerSubtitle:
+        '$t(glossary.attendance) चिन्हांकित करण्यासाठी $t(glossary.worker) निवडा',
+    },
+    a11y: {
+      selectWorkerButton: '$t(glossary.worker) निवडा',
+      selectFarmsButton: '$t(glossary.farm) निवडा',
+      setAllFullDay: 'सर्व दिवस पूर्ण दिवस सेट करा',
+      setAllHalfDay: 'सर्व दिवस अर्धा दिवस सेट करा',
+      setAllAbsent: 'सर्व दिवस अनुपस्थित सेट करा',
+      savingAttendance: '$t(glossary.attendance) जतन करत आहे',
+      saveAndNextWorker: '$t(glossary.attendance) जतन करा आणि पुढील $t(glossary.worker)वर जा',
+      saveAndFinish: '$t(glossary.attendance) जतन करा आणि समाप्त',
+      goToNextWorker: 'पुढील $t(glossary.worker)वर जा',
+      dayStatus: '{{day}} {{date}}. {{status}}.',
+    },
+    empty: {
+      noWorkersTitle: '$t(glossary.worker) उपलब्ध नाहीत',
+    },
     alerts: {
       partialErrorTitle: 'अंशतः त्रुटी',
       partialErrorBody: '{{count}} त्रुटीसह जतन झाले. पुन्हा लोड होत आहे…',

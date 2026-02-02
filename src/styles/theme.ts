@@ -60,6 +60,10 @@ export const colors = {
   expense: {
     500: '#598066',
   },
+  labTest: {
+    soil: '#597A61',
+    petiole: '#4C806B',
+  },
   // Surface Colors (iOS System)
   surface: {
     50: '#f2f2f7',

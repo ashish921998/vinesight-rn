@@ -26,7 +26,7 @@ export default function TrendsChart({
   selectedParams,
   onToggleParam,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
   const [selectedPoint, setSelectedPoint] = useState<{ index: number; date: string } | null>(null);
 
@@ -35,7 +35,7 @@ export default function TrendsChart({
       const date = new Date(trend.date);
       return formatDate(date, { day: '2-digit', month: 'short' });
     });
-  }, [trendData]);
+  }, [trendData, i18n.language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sortedParams = Array.from(selectedParams).sort();
   const params = sortedParams

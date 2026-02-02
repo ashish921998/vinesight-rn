@@ -34,7 +34,18 @@ const EXPENSE_ICONS: Record<ExpenseTypeId, string> = {
 
 export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
   const { data: profile } = useProfile();
-  const currency = preferredCurrency || profile?.preferred_currency || 'INR';
+  const isValidCurrency = (code: string | null | undefined): boolean => {
+    if (!code || typeof code !== 'string') return false;
+    if (!/^[A-Z]{3}$/.test(code)) return false;
+    try {
+      new Intl.NumberFormat(undefined, { style: 'currency', currency: code });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const candidateCurrency = preferredCurrency || profile?.preferred_currency;
+  const currency = isValidCurrency(candidateCurrency) ? (candidateCurrency ?? 'INR') : 'INR';
   const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
 
   return (

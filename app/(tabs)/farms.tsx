@@ -14,12 +14,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useFarms, useDeleteFarm } from '@/hooks';
+import { useFarms, useDeleteFarm, useFabBottomPosition } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
-import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
-import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import type { Farm } from '@/types';
 import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -209,8 +207,8 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                   }}
                 >
                   <SymbolIcon
-                    name="magnifyingglass"
-                    size={36}
+                    name="square.grid.2x2"
+                    size={18}
                     color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
                   />
                 </View>
@@ -249,8 +247,7 @@ export default function FarmsScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
-  const fabBottomInset = useFabBottomInset();
-  const tabBarInset = useTabBarInset();
+  const fabBottom = useFabBottomPosition();
   const { data: farms, isLoading, refetch } = useFarms();
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
@@ -483,11 +480,8 @@ export default function FarmsScreen() {
   };
 
   const showFab = isAndroid && (farms?.length || 0) > 0;
-  const fabBottom = isAndroid
-    ? Math.max(spacing[2], tabBarInset - spacing[14])
-    : spacing[14] + fabBottomInset;
   const listBottomPadding = Math.max(
-    spacing[16] + fabBottomInset,
+    spacing[16] + (process.env.EXPO_OS === 'android' ? 16 : 0),
     (showFab ? fabBottom + 56 : 0) + spacing[8],
   );
 

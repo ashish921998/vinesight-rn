@@ -43,7 +43,7 @@ export default function TrendsTable({
             color: colors.gray[800],
           }}
         >
-          No Data Available
+          {t('trends.table.empty.noDataTitle')}
         </Text>
         <Text
           style={{
@@ -53,7 +53,7 @@ export default function TrendsTable({
             paddingHorizontal: spacing[8],
           }}
         >
-          Add lab tests to view trends
+          {t('trends.table.empty.noDataBody')}
         </Text>
       </View>
     );
@@ -76,7 +76,7 @@ export default function TrendsTable({
             color: colors.gray[800],
           }}
         >
-          No Parameter Data
+          {t('trends.table.empty.noParamsTitle')}
         </Text>
         <Text
           style={{
@@ -86,7 +86,7 @@ export default function TrendsTable({
             paddingHorizontal: spacing[8],
           }}
         >
-          Unable to load parameter trends
+          {t('trends.table.empty.noParamsBody')}
         </Text>
       </View>
     );

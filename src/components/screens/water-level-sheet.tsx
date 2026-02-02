@@ -119,14 +119,17 @@ export function WaterLevelSheet({
         farmId: farm.id,
         remainingWater: calculatedWaterLevel,
       });
-
       // If user enabled low-water alerts, notify immediately when the new level is critical.
       if (lowWaterAlertsEnabled && farm.total_tank_capacity && farm.total_tank_capacity > 0) {
         const pct = (calculatedWaterLevel / farm.total_tank_capacity) * 100;
         if (pct < 30) {
-          const granted = await ensureNotificationPermissions();
-          if (granted) {
-            await notifyLowWaterAlert(farm.name ?? undefined);
+          try {
+            const granted = await ensureNotificationPermissions();
+            if (granted) {
+              await notifyLowWaterAlert(farm.name ?? undefined);
+            }
+          } catch {
+            // Notification failure should not affect save success
           }
         }
       }
@@ -295,7 +298,9 @@ export function WaterLevelSheet({
               >
                 {selectedGrowthStage
                   ? t('waterLevelSheet.growthStage.selected', {
-                      label: selectedGrowthStage.label,
+                      label: t(
+                        `waterLevelSheet.growthStagePicker.stages.${selectedGrowthStage.id}`,
+                      ),
                       kc: formatNumber(selectedGrowthStage.kc, { maximumFractionDigits: 2 }),
                     })
                   : t('waterLevelSheet.growthStage.placeholder')}
@@ -425,7 +430,7 @@ export function WaterLevelSheet({
                               : colors.surface[900],
                         }}
                       >
-                        {stage.label}
+                        {t(`waterLevelSheet.growthStagePicker.stages.${stage.id}`)}
                       </Text>
                       <Text
                         style={{

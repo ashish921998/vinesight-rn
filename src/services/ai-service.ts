@@ -7,6 +7,7 @@ import OpenAI from 'openai';
 import { ChatMessage, SendMessageResponse } from '../types/ai';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import { GLOSSARY_MR } from '@/i18n/glossary.mr';
+import { GLOSSARY_HI } from '@/i18n/glossary.hi';
 
 const SYSTEM_PROMPT_EN = `You are Vinesight AI, an expert agricultural assistant specialized in grape farming and viticulture. You help farmers with:
 - Disease identification and management
@@ -21,14 +22,13 @@ const SYSTEM_PROMPT_EN = `You are Vinesight AI, an expert agricultural assistant
 Provide clear, practical, and actionable advice. When suggesting treatments, always mention safety precautions and recommended dosages. Be concise but thorough. Use metrics appropriate for grape farming (acres, mm/day, kg/acre, etc.).`;
 
 function buildSystemPrompt(language: SupportedLanguageCode): string {
-  if (language !== 'mr') return SYSTEM_PROMPT_EN;
+  if (language === 'mr') {
+    const glossary = GLOSSARY_MR;
+    const glossaryLines = Object.entries(glossary)
+      .map(([k, v]) => `- ${k}: "${v}"`)
+      .join('\n');
 
-  const glossary = GLOSSARY_MR;
-  const glossaryLines = Object.entries(glossary)
-    .map(([k, v]) => `- ${k}: "${v}"`)
-    .join('\n');
-
-  return `You are Vinesight AI, an expert agricultural assistant specialized in grape farming and viticulture.
+    return `You are Vinesight AI, an expert agricultural assistant specialized in grape farming and viticulture.
 
 LANGUAGE MODE: Marathi (mr)
 
@@ -54,6 +54,43 @@ Domain focus:
 
 Safety:
 - When suggesting treatments, include safety precautions and recommended dosage (with units).`;
+  }
+
+  if (language === 'hi') {
+    const glossary = GLOSSARY_HI;
+    const glossaryLines = Object.entries(glossary)
+      .map(([k, v]) => `- ${k}: "${v}"`)
+      .join('\n');
+
+    return `You are Vinesight AI, an expert agricultural assistant specialized in grape farming and viticulture.
+
+LANGUAGE MODE: Hindi (hi)
+
+Hard constraints:
+- Respond ONLY in Hindi.
+- Keep sentences short: max 18 words per sentence.
+- Do NOT use English verbs.
+- Use bullet points for actions.
+- Give direct, actionable steps. Do not add explanations unless the user asks.
+- Always use Arabic numerals (0-9), not Devanagari numerals.
+
+Glossary (MUST use these exact terms when applicable):
+${glossaryLines}
+
+Domain focus:
+- Disease and pest management
+- Irrigation recommendations
+- Fertilizer and nutrient management
+- Pruning and canopy management
+- Weather-based farming advice
+- Harvest timing
+- Soil health
+
+Safety:
+- When suggesting treatments, include safety precautions and recommended dosage (with units).`;
+  }
+
+  return SYSTEM_PROMPT_EN;
 }
 
 class AIService {
@@ -155,12 +192,19 @@ class AIService {
   ): Promise<string[]> {
     if (!this.openai) return [];
 
-    const systemContent =
-      language === 'mr'
-        ? `Respond ONLY in Marathi. Keep each suggestion short (max 6 words). Use Arabic numerals (0-9). Do NOT use English verbs. Use these terms when applicable: ${JSON.stringify(
-            GLOSSARY_MR,
-          )}. Return as a JSON array of strings.`
-        : 'You are a helpful assistant. Generate 3-4 brief follow-up questions or suggestions based on the conversation. Each should be a short phrase (max 8 words). Return as a JSON array of strings.';
+    let systemContent: string;
+    if (language === 'mr') {
+      systemContent = `Respond ONLY in Marathi. Keep each suggestion short (max 6 words). Use Arabic numerals (0-9). Do NOT use English verbs. Use these terms when applicable: ${JSON.stringify(
+        GLOSSARY_MR,
+      )}. Return as a JSON array of strings.`;
+    } else if (language === 'hi') {
+      systemContent = `Respond ONLY in Hindi. Keep each suggestion short (max 6 words). Use Arabic numerals (0-9). Do NOT use English verbs. Use these terms when applicable: ${JSON.stringify(
+        GLOSSARY_HI,
+      )}. Return as a JSON array of strings.`;
+    } else {
+      systemContent =
+        'You are a helpful assistant. Generate 3-4 brief follow-up questions or suggestions based on the conversation. Each should be a short phrase (max 8 words). Return as a JSON array of strings.';
+    }
 
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       {

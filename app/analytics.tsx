@@ -178,7 +178,7 @@ export default function AnalyticsScreen() {
                 {analytics.totalIrrigationHours.toFixed(1)}h
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                Irrigation Hours
+                {t('analytics.labels.irrigationHours')}
               </Text>
             </View>
             <View
@@ -212,7 +212,7 @@ export default function AnalyticsScreen() {
                 {analytics.totalSprayCount}
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                Spray Applications
+                {t('analytics.labels.sprayApplications')}
               </Text>
             </View>
             <View
@@ -361,7 +361,7 @@ export default function AnalyticsScreen() {
                           textTransform: 'capitalize',
                         }}
                       >
-                        {key}
+                        {t(`analytics.categories.${key}`)}
                       </Text>
                       <SymbolIcon
                         name={

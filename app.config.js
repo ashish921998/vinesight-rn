@@ -52,7 +52,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 9,
+      versionCode: 10,
       softwareKeyboardLayoutMode: 'resize',
       adaptiveIcon: {
         foregroundImage: './assets/icons/adaptive-icon.png',

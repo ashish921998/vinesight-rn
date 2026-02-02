@@ -31,6 +31,9 @@ export function formatDate(
   options?: Intl.DateTimeFormatOptions,
 ): string {
   const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) {
+    return '';
+  }
   return new Intl.DateTimeFormat(getLocaleWithLatinDigits(), {
     numberingSystem: 'latn',
     ...options,

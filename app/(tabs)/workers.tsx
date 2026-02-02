@@ -4,9 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { useWorkers, useDeleteWorker } from '@/hooks';
-import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
-import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
+import { useWorkers, useDeleteWorker, useFabBottomPosition } from '@/hooks';
 import { useModalStore } from '@/stores';
 import { AttendanceView } from '@/components/screens';
 import { Button, SegmentedControl } from '@/components/ui';
@@ -28,15 +26,10 @@ export default function WorkersScreen() {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const fabBottomInset = useFabBottomInset();
-  const tabBarInset = useTabBarInset();
+  const fabBottom = useFabBottomPosition();
   const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
   const deleteWorker = useDeleteWorker();
-  const isAndroid = process.env.EXPO_OS === 'android';
-  const fabBottom = isAndroid
-    ? Math.max(spacing[2], tabBarInset - spacing[14])
-    : spacing[14] + fabBottomInset;
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
 

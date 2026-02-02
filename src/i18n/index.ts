@@ -4,6 +4,7 @@ import * as Localization from 'expo-localization';
 
 import { en } from './locales/en';
 import { mr } from './locales/mr';
+import { hi } from './locales/hi';
 import { DEFAULT_LANGUAGE, isSupportedLanguage, type SupportedLanguageCode } from './languages';
 import { devCheckKeyParity, devCheckMrGlossaryUsage } from './dev-checks';
 
@@ -18,6 +19,7 @@ void i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
     mr: { translation: mr },
+    hi: { translation: hi },
   },
   lng: DEFAULT_LANGUAGE,
   fallbackLng: DEFAULT_LANGUAGE,

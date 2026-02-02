@@ -13,7 +13,6 @@ import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useLanguageStore } from '@/stores';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { setAppLanguage } from '@/i18n';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 
 export default function OnboardingScreen() {
@@ -23,7 +22,6 @@ export default function OnboardingScreen() {
     useOnboardingStore();
 
   const currentLanguage = useLanguageStore((s) => s.language);
-  const setLanguage = useLanguageStore((s) => s.setLanguage);
 
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguageCode>(
     currentLanguage ?? 'en',
@@ -44,11 +42,6 @@ export default function OnboardingScreen() {
         country: selectedCountry,
         areaUnit: selectedAreaUnit,
       });
-    }
-
-    if (currentStep === 'language') {
-      setLanguage(selectedLanguage);
-      setAppLanguage(selectedLanguage);
     }
 
     if (currentStep === 'notifications') {
@@ -197,9 +190,10 @@ export default function OnboardingScreen() {
         <Pressable
           onPress={() => {
             setSelectedLanguage('en');
-            setLanguage('en');
-            setAppLanguage('en');
           }}
+          accessibilityRole="button"
+          accessibilityLabel={t('onboarding.language.english')}
+          accessibilityState={{ selected: selectedLanguage === 'en' }}
           style={{
             padding: spacing[4],
             borderRadius: borderRadius.xl,
@@ -223,9 +217,10 @@ export default function OnboardingScreen() {
         <Pressable
           onPress={() => {
             setSelectedLanguage('mr');
-            setLanguage('mr');
-            setAppLanguage('mr');
           }}
+          accessibilityRole="button"
+          accessibilityLabel={t('onboarding.language.marathi')}
+          accessibilityState={{ selected: selectedLanguage === 'mr' }}
           style={{
             padding: spacing[4],
             borderRadius: borderRadius.xl,

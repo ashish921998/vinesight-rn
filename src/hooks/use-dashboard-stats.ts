@@ -10,6 +10,7 @@ import type { Farm } from '../types';
 import { TABLES, isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
 import { formatCurrency } from '@/i18n/format';
+import { useProfile } from './use-profile';
 
 // ============================================================
 // MARK: - Types
@@ -175,6 +176,9 @@ export function useFarmsNeedingAttention() {
 // ============================================================
 
 export function useRecentActivities(limit: number = 5) {
+  const { data: profile } = useProfile();
+  const preferredCurrency = profile?.preferred_currency || 'USD';
+
   return useQuery({
     queryKey: queryKeys.dashboard.recentActivities(limit),
     queryFn: async (): Promise<RecentActivity[]> => {
@@ -268,7 +272,7 @@ export function useRecentActivities(limit: number = 5) {
 
       // Map expense
       expense.data?.forEach((r) => {
-        const formattedCost = formatCurrency(r.cost ?? 0, 'INR', {
+        const formattedCost = formatCurrency(r.cost ?? 0, preferredCurrency, {
           minimumFractionDigits: 0,
         });
         activities.push({

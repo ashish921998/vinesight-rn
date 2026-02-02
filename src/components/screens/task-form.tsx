@@ -198,8 +198,8 @@ export default function TaskForm({
       linked_record_id: null,
     };
 
+    let saved: TaskReminder | null = null;
     try {
-      let saved: TaskReminder | null = null;
       if (isEditing && editingTask?.id) {
         saved = await updateMutation.mutateAsync({
           id: editingTask.id,
@@ -208,12 +208,17 @@ export default function TaskForm({
       } else {
         saved = await createMutation.mutateAsync(taskData);
       }
+    } catch (_error) {
+      Alert.alert(t('common.error'), t('tasks.form.errors.failedToSave'));
+      return;
+    }
 
-      // Task notifications (localized) are scheduled locally.
-      if (saved?.id) {
-        const taskId = String(saved.id);
-        const existing = taskSchedules[taskId];
+    // Task notifications (localized) are scheduled locally - handle separately from save errors
+    if (saved?.id) {
+      const taskId = String(saved.id);
+      const existing = taskSchedules[taskId];
 
+      try {
         // Cancel previous schedule if any.
         if (existing?.notificationId) {
           await cancelNotification(existing.notificationId);
@@ -229,13 +234,16 @@ export default function TaskForm({
             }
           }
         }
+      } catch (notificationError) {
+        // Log notification error but don't fail the save operation
+        if (__DEV__) {
+          console.error('Failed to schedule task notification:', notificationError);
+        }
       }
-
-      onSaveSuccess?.();
-      onClose();
-    } catch (_error) {
-      Alert.alert(t('common.error'), t('tasks.form.errors.failedToSave'));
     }
+
+    onSaveSuccess?.();
+    onClose();
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;

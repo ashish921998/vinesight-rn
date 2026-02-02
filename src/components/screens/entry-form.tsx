@@ -481,8 +481,10 @@ export function EntryForm({
 
       if (failedCount > 0) {
         Alert.alert(
-          'Partial Success',
-          `${failedCount} log${failedCount > 1 ? 's' : ''} failed to save. Please review and try again.`,
+          t('entryForm.partialSuccess.title'),
+          failedCount === 1
+            ? t('entryForm.partialSuccess.body_one', { count: failedCount })
+            : t('entryForm.partialSuccess.body_other', { count: failedCount }),
         );
         return;
       }
@@ -1060,7 +1062,7 @@ export function EntryForm({
             selectable
             style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
           >
-            Farm *
+            {t('entryForm.farmLabel')}
           </Text>
           <Pressable
             onPress={() => setShowLogFarmPicker(!showLogFarmPicker)}
@@ -1079,7 +1081,7 @@ export function EntryForm({
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <AppIcon name="leaf" size={18} color="#408059" />
               <Text selectable style={{ fontSize: 16, color: '#2c2c2e', marginLeft: 8 }}>
-                {activeFarm?.name || 'Select farm'}
+                {activeFarm?.name || t('entryForm.selectFarm')}
               </Text>
             </View>
             <AppIcon name="chevron-down" size={18} color="#9CA3AF" />
@@ -1283,7 +1285,7 @@ export function EntryForm({
             selectable
             style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
           >
-            Farm *
+            {t('entryForm.farmLabel')}
           </Text>
           <Pressable
             onPress={() => setShowTaskFarmPicker(!showTaskFarmPicker)}
@@ -1302,7 +1304,7 @@ export function EntryForm({
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <AppIcon name="leaf" size={20} color="#408059" />
               <Text selectable style={{ fontSize: 16, color: '#2c2c2e', marginLeft: 8 }}>
-                {selectedTaskFarm?.name || 'Select farm'}
+                {selectedTaskFarm?.name || t('entryForm.selectFarm')}
               </Text>
             </View>
             <AppIcon name="chevron-down" size={20} color="#9CA3AF" />
@@ -1353,12 +1355,12 @@ export function EntryForm({
           selectable
           style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
         >
-          Title *
+          {t('entryForm.taskForm.titleLabel')}
         </Text>
         <TextInput
           value={title}
           onChangeText={setTitle}
-          placeholder="Enter task title"
+          placeholder={t('entryForm.taskForm.titlePlaceholder')}
           style={{
             backgroundColor: '#ffffff',
             borderRadius: 12,
@@ -1378,12 +1380,12 @@ export function EntryForm({
           selectable
           style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
         >
-          Description
+          {t('entryForm.taskForm.descriptionLabel')}
         </Text>
         <TextInput
           value={description}
           onChangeText={setDescription}
-          placeholder="Add details about this task"
+          placeholder={t('entryForm.taskForm.descriptionPlaceholder')}
           multiline
           numberOfLines={3}
           style={{
@@ -1408,7 +1410,7 @@ export function EntryForm({
             selectable
             style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
           >
-            Type
+            {t('entryForm.taskForm.typeLabel')}
           </Text>
           <Pressable
             onPress={() => setShowTypePicker(true)}
@@ -1443,7 +1445,7 @@ export function EntryForm({
             selectable
             style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
           >
-            Priority
+            {t('entryForm.taskForm.priorityLabel')}
           </Text>
           <Pressable
             onPress={() => setShowPriorityPicker(true)}
@@ -1485,7 +1487,7 @@ export function EntryForm({
           selectable
           style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
         >
-          Due Date
+          {t('entryForm.taskForm.dueDateLabel')}
         </Text>
         <Pressable
           onPress={() => setShowDueDatePicker(true)}
@@ -1514,7 +1516,7 @@ export function EntryForm({
                     day: 'numeric',
                     year: 'numeric',
                   })
-                : 'Select due date'}
+                : t('entryForm.taskForm.selectDueDate')}
             </Text>
           </View>
           {dueDate && (
@@ -1557,7 +1559,7 @@ export function EntryForm({
                   }}
                 >
                   <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
-                    Select Due Date
+                    {t('entryForm.taskForm.selectDueDateTitle')}
                   </Text>
                   <Pressable onPress={() => setShowDueDatePicker(false)}>
                     <AppIcon name="close" size={24} color="#9CA3AF" />
@@ -1581,7 +1583,7 @@ export function EntryForm({
                   ]}
                 >
                   <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
-                    Done
+                    {t('entryForm.done')}
                   </Text>
                 </Pressable>
               </View>

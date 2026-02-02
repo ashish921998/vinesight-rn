@@ -23,6 +23,8 @@ export const en = {
     reset: 'Reset',
     error: 'Error',
     unknownDate: 'Unknown date',
+    missing: 'Missing',
+    search: 'Search...',
     from: 'From',
     to: 'To',
     selectDate: 'Select date',
@@ -429,6 +431,7 @@ export const en = {
     addTask: 'Add task',
     editTask: 'Edit task',
     selectDate: 'Select date',
+    selectDueDate: 'Select Due Date',
     done: 'Done',
     selectTaskType: 'Select task type',
     selectPriority: 'Select priority',
@@ -438,6 +441,24 @@ export const en = {
     drafts_other: '{{count}} drafts',
     pendingLogs_one: 'Pending logs ({{count}})',
     pendingLogs_other: 'Pending logs ({{count}})',
+    farmLabel: 'Farm *',
+    selectFarm: 'Select farm',
+    partialSuccess: {
+      title: 'Partial Success',
+      body_one: '{{count}} log failed to save. Please review and try again.',
+      body_other: '{{count}} logs failed to save. Please review and try again.',
+    },
+    taskForm: {
+      titleLabel: 'Title *',
+      titlePlaceholder: 'Enter task title',
+      descriptionLabel: 'Description',
+      descriptionPlaceholder: 'Add details about this task',
+      typeLabel: 'Type',
+      priorityLabel: 'Priority',
+      dueDateLabel: 'Due Date',
+      selectDueDate: 'Select due date',
+      selectDueDateTitle: 'Select Due Date',
+    },
     tabs: {
       log: 'Farm log',
       task: 'Task',
@@ -483,10 +504,39 @@ export const en = {
 
   analytics: {
     title: 'Analytics',
+    labels: {
+      irrigationHours: 'Irrigation Hours',
+      sprayApplications: 'Spray Applications',
+      totalHarvest: 'Total Harvest',
+      harvestValue: 'Harvest Value',
+      performanceScore: 'Performance Score',
+    },
+    sections: {
+      overview: 'Overview',
+      trends: 'Trends',
+      comparisons: 'Comparisons',
+    },
+    timeRanges: {
+      last7Days: 'Last 7 Days',
+      last30Days: 'Last 30 Days',
+      yearToDate: 'Year to Date',
+    },
+    loading: 'Loading analytics...',
+    empty: {
+      title: 'No Data Available',
+      description: 'Start adding farm activities to see your analytics.',
+    },
     metrics: {
       revenue: 'Revenue',
       expenses: 'Expenses',
       roi: 'ROI',
+    },
+    categories: {
+      irrigation: 'Irrigation',
+      spray: 'Spray',
+      harvest: 'Harvest',
+      expense: 'Expense',
+      efficiency: 'Efficiency',
     },
   },
 
@@ -519,6 +569,18 @@ export const en = {
     empty: {
       noFarmsTitle: 'No farms available',
       noFarmsSubtitle: 'Add a farm to see weather data for your location',
+    },
+    warnings: {
+      noCoordinates:
+        "This farm doesn't have location coordinates. Weather data is showing default location (Nashik). Add GPS coordinates to get farm-specific weather.",
+    },
+    pickers: {
+      growthStage: 'GROWTH STAGE',
+      soilType: 'SOIL TYPE',
+    },
+    location: {
+      currentLocation: 'Current Location',
+      feelsLike: 'Feels like',
     },
     sections: {
       forecast7Day: '7-day forecast',
@@ -583,6 +645,12 @@ export const en = {
       increase: 'Increase',
       decrease: 'Decrease',
       stable: 'Stable',
+      empty: {
+        noDataTitle: 'No Data Available',
+        noDataBody: 'Add lab tests to view trends',
+        noParamsTitle: 'No Parameter Data',
+        noParamsBody: 'Unable to load parameter trends',
+      },
     },
   },
 
@@ -668,6 +736,21 @@ export const en = {
     growthStagePicker: {
       title: 'Select growth stage',
       kcLabel: 'Kc: {{kc}}',
+      stages: {
+        beginningBudbreak: 'Beginning Budbreak',
+        shoot30cm: 'Shoot 30cm',
+        shoot50cm: 'Shoot 50cm',
+        shoot80cm: 'Shoot 80cm',
+        beginningBloom: 'Beginning Bloom',
+        fruitSet: 'Fruit Set',
+        berry6to8mm: 'Berry 6-8mm',
+        berry12mm: 'Berry 12mm',
+        closingBunches: 'Closing Bunches',
+        beginningVeraison: 'Beginning Veraison',
+        beginningHarvest: 'Beginning Harvest',
+        endHarvest: 'End Harvest',
+        afterHarvest: 'After Harvest',
+      },
     },
   },
 
@@ -784,6 +867,7 @@ export const en = {
     selectLanguage: 'Select Language',
     languageEnglish: 'English',
     languageMarathi: 'Marathi',
+    languageHindi: 'Hindi',
     areaUnit: 'Area Unit',
     currency: 'Currency',
     dailyWaterReminder: 'Daily Water Reminder',
@@ -1095,6 +1179,11 @@ export const en = {
     labels: {
       lowStock: 'Low Stock',
       lowStockAlerts: 'Low Stock Alerts',
+      itemCount_one: '{{count}} item',
+      itemCount_other: '{{count}} items',
+      quantity: 'Quantity',
+      unitPrice: 'Unit Price',
+      totalValue: 'Total Value',
     },
     reorderAt: 'Reorder at: {{quantity}} {{unit}}',
     filters: {
@@ -1103,6 +1192,7 @@ export const en = {
       spray: 'Sprays ({{count}})',
     },
     search: {
+      placeholder: 'Search inventory...',
       found_one: '{{count}} item found',
       found_other: '{{count}} items found',
     },
@@ -1303,6 +1393,63 @@ export const en = {
   },
 
   attendance: {
+    filters: {
+      label: 'Filters',
+      worker: 'Worker',
+      farms: 'Farms',
+      selectWorker: 'Select worker',
+      selectFarms: 'Select farms',
+      allWorkers: 'All Workers',
+      allFarms: 'All Farms',
+      farmsSelected_one: '{{count}} selected',
+      farmsSelected_other: '{{count}} selected',
+    },
+    status: {
+      fullDay: 'Full Day',
+      fullDayShort: 'F',
+      halfDay: 'Half Day',
+      halfDayShort: 'H',
+      absent: 'Absent',
+      absentShort: 'A',
+      notSet: 'Not Set',
+      notSetShort: '-',
+    },
+    week: {
+      thisWeek: 'This Week',
+      unsavedChanges: 'Unsaved Changes',
+      upToDate: 'Up to Date',
+    },
+    quickActions: {
+      allFull: 'All Full',
+      allHalf: 'All Half',
+      allOff: 'All Off',
+    },
+    buttons: {
+      saving: 'Saving...',
+      saveAndNext: 'Save & Next',
+      saveAndFinish: 'Save & Finish',
+      nextWorker: 'Next Worker',
+      done: 'Done',
+    },
+    sheet: {
+      selectWorkerTitle: 'Select Worker',
+      selectWorkerSubtitle: 'Choose a worker to mark attendance',
+    },
+    a11y: {
+      selectWorkerButton: 'Select worker',
+      selectFarmsButton: 'Select farms',
+      setAllFullDay: 'Set all days to full day',
+      setAllHalfDay: 'Set all days to half day',
+      setAllAbsent: 'Set all days to absent',
+      savingAttendance: 'Saving attendance',
+      saveAndNextWorker: 'Save attendance and go to next worker',
+      saveAndFinish: 'Save attendance and finish',
+      goToNextWorker: 'Go to next worker',
+      dayStatus: '{{day}} {{date}}. {{status}}.',
+    },
+    empty: {
+      noWorkersTitle: 'No workers available',
+    },
     alerts: {
       partialErrorTitle: 'Partial error',
       partialErrorBody: 'Saved with {{count}} error(s). Reloading…',
