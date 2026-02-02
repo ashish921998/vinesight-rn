@@ -62,6 +62,16 @@ export async function scheduleTaskDueReminder(
   const [y, mo, d] = dueDate.split('-').map((n) => Number(n));
   const triggerDate = new Date(y, mo - 1, d, 7, 0, 0);
   if (Number.isNaN(triggerDate.getTime())) return null;
+
+  // Validate date components to prevent rollover (e.g., 2026-02-31 -> Mar 3)
+  if (
+    triggerDate.getFullYear() !== y ||
+    triggerDate.getMonth() !== mo - 1 ||
+    triggerDate.getDate() !== d
+  ) {
+    return null;
+  }
+
   if (triggerDate.getTime() <= Date.now()) return null;
 
   const title = i18n.t('notifications.taskDue.title');

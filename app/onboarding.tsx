@@ -22,6 +22,7 @@ export default function OnboardingScreen() {
     useOnboardingStore();
 
   const currentLanguage = useLanguageStore((s) => s.language);
+  const setLanguage = useLanguageStore((s) => s.setLanguage);
 
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguageCode>(
     currentLanguage ?? 'en',
@@ -37,6 +38,10 @@ export default function OnboardingScreen() {
   const isLastStep = currentIndex === ONBOARDING_STEPS.length - 1;
 
   const handleNext = async () => {
+    if (currentStep === 'language') {
+      setLanguage(selectedLanguage);
+    }
+
     if (currentStep === 'preferences') {
       setPreferences({
         country: selectedCountry,

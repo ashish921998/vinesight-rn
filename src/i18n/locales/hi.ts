@@ -999,6 +999,9 @@ export const hi = {
     },
     needsAttention: {
       title: 'ध्यान देने की आवश्यकता है',
+      reasons: {
+        lowWaterLevel: 'पानी का स्तर कम',
+      },
     },
     quickActions: {
       title: 'त्वरित क्रियाएं',

@@ -226,7 +226,7 @@ export default function DashboardScreen() {
                   key={item.farm.id}
                   onPress={() => item.farm.id && handleFarmAttention(item.farm.id)}
                   accessibilityRole="button"
-                  accessibilityLabel={`${item.farm.name}. ${item.reason}.`}
+                  accessibilityLabel={`${item.farm.name}. ${t(`dashboard.needsAttention.reasons.${item.reason}`)}.`}
                   style={{
                     borderRadius: m3.shape.cornerMedium,
                     padding: spacing[3],
@@ -265,7 +265,7 @@ export default function DashboardScreen() {
                             color: m3.colorScheme.onSurfaceVariant,
                           }}
                         >
-                          {item.reason}
+                          {t(`dashboard.needsAttention.reasons.${item.reason}`)}
                         </Text>
                       </View>
                       <SymbolIcon name="chevron.right" size={16} color={colors.gray[300]} />

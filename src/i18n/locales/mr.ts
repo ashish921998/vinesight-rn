@@ -1003,6 +1003,9 @@ export const mr = {
     },
     needsAttention: {
       title: 'लक्ष आवश्यक',
+      reasons: {
+        lowWaterLevel: 'पाणी स्तर कमी',
+      },
     },
     quickActions: {
       title: 'त्वरित क्रिया',

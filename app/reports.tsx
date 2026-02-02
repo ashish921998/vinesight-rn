@@ -31,9 +31,9 @@ export default function ReportsScreen() {
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const { user } = useAuthStore();
   const { data: profile } = useProfile();
-  const VALID_AREA_UNITS = ['acres', 'hectares', 'sqm'] as const;
+  const VALID_AREA_UNITS = ['acres', 'hectares'] as const;
   const rawAreaUnit = user?.user_metadata?.area_unit;
-  const areaUnit = VALID_AREA_UNITS.includes(rawAreaUnit as 'acres' | 'hectares' | 'sqm')
+  const areaUnit = VALID_AREA_UNITS.includes(rawAreaUnit as 'acres' | 'hectares')
     ? rawAreaUnit
     : 'acres';
   const preferredCurrency = profile?.preferred_currency || 'USD';

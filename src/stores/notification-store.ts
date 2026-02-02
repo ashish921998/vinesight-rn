@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import * as SecureStore from 'expo-secure-store';
+import { ExpoSecureStoreAdapter } from '@/lib/supabase';
 
 export type TaskNotificationSchedule = {
   notificationId: string;
@@ -32,34 +32,6 @@ interface NotificationActions {
   removeTaskSchedule: (taskId: string) => void;
   clearAllTaskSchedules: () => void;
 }
-
-const isWeb = process.env.EXPO_OS === 'web';
-
-const storage = {
-  getItem: async (key: string): Promise<string | null> => {
-    if (isWeb) {
-      if (typeof localStorage === 'undefined') return null;
-      return localStorage.getItem(key);
-    }
-    return SecureStore.getItemAsync(key);
-  },
-  setItem: async (key: string, value: string): Promise<void> => {
-    if (isWeb) {
-      if (typeof localStorage === 'undefined') return;
-      localStorage.setItem(key, value);
-      return;
-    }
-    await SecureStore.setItemAsync(key, value);
-  },
-  removeItem: async (key: string): Promise<void> => {
-    if (isWeb) {
-      if (typeof localStorage === 'undefined') return;
-      localStorage.removeItem(key);
-      return;
-    }
-    await SecureStore.deleteItemAsync(key);
-  },
-};
 
 export const useNotificationStore = create<NotificationState & NotificationActions>()(
   persist(
@@ -96,7 +68,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     }),
     {
       name: 'vinesight-notifications',
-      storage: createJSONStorage(() => storage),
+      storage: createJSONStorage(() => ExpoSecureStoreAdapter),
       onRehydrateStorage: () => () => {
         useNotificationStore.setState({ hasHydrated: true });
       },

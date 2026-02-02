@@ -62,37 +62,6 @@ if (Platform.OS === 'android' && !androidTextPatched) {
   };
 }
 
-if (Platform.OS === 'android' && !androidTextPatched) {
-  androidTextPatched = true;
-
-  const TextWithDefaults = Text as unknown as DefaultPropsCarrier;
-  const TextInputWithDefaults = TextInput as unknown as DefaultPropsCarrier;
-
-  TextWithDefaults.defaultProps = {
-    ...(TextWithDefaults.defaultProps ?? {}),
-    style: [
-      {
-        includeFontPadding: true,
-        paddingBottom: androidTextPadding.bottom,
-        paddingRight: androidTextPadding.right,
-      },
-      TextWithDefaults.defaultProps?.style,
-    ],
-  };
-
-  TextInputWithDefaults.defaultProps = {
-    ...(TextInputWithDefaults.defaultProps ?? {}),
-    style: [
-      {
-        includeFontPadding: true,
-        paddingBottom: androidTextPadding.bottom,
-        paddingRight: androidTextPadding.right,
-      },
-      TextInputWithDefaults.defaultProps?.style,
-    ],
-  };
-}
-
 // Initialize Sentry (avoid crashing startup if env/config is missing)
 try {
   Sentry.init({
@@ -137,6 +106,7 @@ export default Sentry.wrap(function RootLayout() {
 
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
+  const reschedulePromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     // Initialize auth state
@@ -160,6 +130,7 @@ export default Sentry.wrap(function RootLayout() {
     const effective = language ?? getDeviceLanguage();
     if (!language) {
       setLanguage(effective);
+      prevLanguageRef.current = effective;
     }
     setAppLanguage(effective);
   }, [language, languageHydrated, setLanguage]);
@@ -176,7 +147,8 @@ export default Sentry.wrap(function RootLayout() {
       return;
     }
 
-    prevLanguageRef.current = language;
+    // Guard against overlapping reschedules
+    if (reschedulePromiseRef.current !== null) return;
 
     const reschedule = async () => {
       const state = useNotificationStore.getState();
@@ -237,10 +209,17 @@ export default Sentry.wrap(function RootLayout() {
         if (__DEV__) {
           console.error('Failed to access task reminders state:', error);
         }
+      } finally {
+        reschedulePromiseRef.current = null;
       }
     };
 
-    void reschedule();
+    prevLanguageRef.current = language;
+    reschedulePromiseRef.current = reschedule();
+
+    return () => {
+      reschedulePromiseRef.current = null;
+    };
   }, [language, languageHydrated, notificationsHydrated]);
 
   useEffect(() => {

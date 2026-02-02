@@ -2,7 +2,14 @@ import i18n from './index';
 
 function getLocaleWithLatinDigits(): string {
   const lang = i18n.language || 'en';
-  const base = lang.startsWith('mr') ? 'mr-IN' : lang.startsWith('en') ? 'en-IN' : 'en-IN';
+  let base = 'en-IN';
+  if (lang.startsWith('mr')) {
+    base = 'mr-IN';
+  } else if (lang.startsWith('hi')) {
+    base = 'hi-IN';
+  } else if (lang.startsWith('en')) {
+    base = 'en-IN';
+  }
   return `${base}-u-nu-latn`;
 }
 

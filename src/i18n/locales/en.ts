@@ -996,6 +996,9 @@ export const en = {
     },
     needsAttention: {
       title: 'Needs attention',
+      reasons: {
+        lowWaterLevel: 'Low water level',
+      },
     },
     quickActions: {
       title: 'Quick actions',

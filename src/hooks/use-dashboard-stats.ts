@@ -25,7 +25,7 @@ export interface DashboardStats {
 
 export interface FarmNeedingAttention {
   farm: Farm;
-  reason: string;
+  reason: 'lowWaterLevel';
 }
 
 export interface RecentActivity {
@@ -164,7 +164,7 @@ export function useFarmsNeedingAttention() {
         .filter((farm) => isLowWater(farm))
         .map((farm) => ({
           farm,
-          reason: 'Low water level',
+          reason: 'lowWaterLevel' as const,
         }));
     },
     staleTime: 60000, // 1 minute
@@ -180,7 +180,7 @@ export function useRecentActivities(limit: number = 5) {
   const preferredCurrency = profile?.preferred_currency || 'USD';
 
   return useQuery({
-    queryKey: queryKeys.dashboard.recentActivities(limit),
+    queryKey: [...queryKeys.dashboard.recentActivities(limit), preferredCurrency],
     queryFn: async (): Promise<RecentActivity[]> => {
       const userId = await getUserId();
       if (!userId) return [];

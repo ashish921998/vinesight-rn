@@ -496,7 +496,7 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
   });
 
   const getSegmentTextStyle = (selected: boolean): TextStyle => ({
-    fontSize: Platform.OS === 'android' ? 12 : fontSize.sm,
+    fontSize: Platform.OS === 'android' ? fontSize.xs : fontSize.sm,
     lineHeight: Platform.OS === 'android' ? 16 : fontSize.sm + 6,
     fontWeight:
       Platform.OS === 'android'
@@ -506,9 +506,6 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
           : fontWeight.medium,
     color: selected ? colors.gray[900] : colors.gray[500],
     textAlign: 'center',
-    width: '100%',
-    flexWrap: 'wrap',
-    flexShrink: 1,
     ...(Platform.OS === 'android'
       ? {
           includeFontPadding: false,

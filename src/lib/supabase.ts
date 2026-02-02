@@ -37,7 +37,7 @@ const WebStorageAdapter = {
  * Custom storage adapter that uses SecureStore on native platforms
  * and localStorage on web (SecureStore is not available on web)
  */
-const ExpoSecureStoreAdapter = {
+export const ExpoSecureStoreAdapter = {
   getItem: async (key: string): Promise<string | null> => {
     try {
       if (isWeb) {
