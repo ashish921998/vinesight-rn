@@ -557,7 +557,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               onChangeText={(v) => setFormState((prev) => ({ ...prev, vineSpacing: v }))}
               placeholder="1.8"
               keyboardType="decimal-pad"
-              suffix="m"
+              suffix={t('units.meter')}
               style={{ marginBottom: 0 }}
             />
           </View>
@@ -568,7 +568,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               onChangeText={(v) => setFormState((prev) => ({ ...prev, rowSpacing: v }))}
               placeholder="3.0"
               keyboardType="decimal-pad"
-              suffix="m"
+              suffix={t('units.meter')}
               style={{ marginBottom: 0 }}
             />
           </View>
@@ -585,7 +585,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           onChangeText={(v) => setFormState((prev) => ({ ...prev, totalTankCapacity: v }))}
           placeholder="1000"
           keyboardType="decimal-pad"
-          suffix="mm"
+          suffix={t('units.millimeter')}
           style={{ marginBottom: 12 }}
         />
 
@@ -595,7 +595,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           onChangeText={(v) => setFormState((prev) => ({ ...prev, systemDischarge: v }))}
           placeholder="10"
           keyboardType="decimal-pad"
-          suffix="mm/hr"
+          suffix={t('units.mmPerHour')}
           style={{ marginBottom: 20 }}
         />
 
@@ -704,7 +704,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           onChangeText={(v) => setFormState((prev) => ({ ...prev, elevation: v }))}
           placeholder="0"
           keyboardType="decimal-pad"
-          suffix="ft"
+          suffix={t('units.feet')}
           style={{ marginBottom: 20 }}
         />
 
@@ -719,7 +719,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           onChangeText={(v) => setFormState((prev) => ({ ...prev, bulkDensity: v }))}
           placeholder="1200"
           keyboardType="decimal-pad"
-          suffix="kg/m³"
+          suffix={t('units.kilogramPerMeterCubed')}
           style={{ marginBottom: 12 }}
         />
 

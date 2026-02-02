@@ -658,6 +658,11 @@ export const mr = {
   units: {
     acres: 'एकर',
     hectares: 'हेक्टर',
+    meter: 'मी',
+    millimeter: 'मिमी',
+    feet: 'फीट',
+    mmPerHour: 'मिमी/तास',
+    kilogramPerMeterCubed: 'किग्रा/मी³',
   },
 
   locationPicker: {

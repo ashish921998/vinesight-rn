@@ -656,6 +656,11 @@ export const hi = {
   units: {
     acres: 'एकड़',
     hectares: 'हेक्टेयर',
+    meter: 'm',
+    millimeter: 'मिमी',
+    feet: 'फीट',
+    mmPerHour: 'मिमी/घंटा',
+    kilogramPerMeterCubed: 'किग्रा/मी³',
   },
 
   locationPicker: {
