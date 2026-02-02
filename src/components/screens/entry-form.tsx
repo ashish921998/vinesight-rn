@@ -73,6 +73,7 @@ import {
 import { TASK_TEMPLATES } from '@/constants/task-templates';
 import { toSupabaseDateString } from '@/types/database';
 import type { Farm } from '@/types';
+import { telemetry } from '@/services/telemetry';
 
 type EntryTab = 'log' | 'task';
 
@@ -474,6 +475,25 @@ export function EntryForm({
       const failedCount = results.filter((result) => result.status === 'rejected').length;
 
       if (successfulIds.length > 0) {
+        // Track telemetry for successfully created records
+        pendingLogs
+          .filter((log) => successfulIds.includes(log.id))
+          .forEach((log) => {
+            try {
+              telemetry.capture('record_created', {
+                record_type: log.type,
+                created_from: 'manual',
+                farm_id: farmId,
+              });
+              // Track meaningful action for record creation
+              telemetry.capture('meaningful_action', {
+                action_type: 'record_created',
+                feature_name: log.type,
+              });
+            } catch {
+              // Ignore telemetry errors
+            }
+          });
         setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
         onLogSaveSuccess?.();
@@ -614,6 +634,15 @@ export function EntryForm({
         });
       } else {
         await createTask.mutateAsync(taskData);
+        telemetry.capture('task_created', {
+          task_type: type,
+          priority,
+          source: 'manual',
+          farm_id: resolvedFarmId,
+          due_offset_days: dueDate
+            ? Math.ceil((new Date(dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+            : null,
+        });
       }
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       onTaskSaveSuccess?.();

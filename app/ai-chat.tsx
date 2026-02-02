@@ -20,6 +20,7 @@ import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatTime } from '@/i18n/format';
+import { telemetry } from '@/services/telemetry';
 
 const markdownStyles = {
   body: { fontSize: 16, color: '#1c1c1e', lineHeight: 24 },
@@ -81,7 +82,7 @@ const markdownStyles = {
 };
 
 export default function AIChatScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
   const { data: farm } = useFarm(farmId ? parseInt(farmId, 10) : undefined);
@@ -133,6 +134,12 @@ export default function AIChatScreen() {
     setIsLoading(true);
     scrollToBottom();
 
+    // Track AI request
+    telemetry.capture('ai_request_made', {
+      ai_use_case: 'chat',
+      language: i18n.language,
+    });
+
     try {
       const response = await aiService.sendMessage(messageText, messages, {
         farmName: farm?.name,
@@ -149,6 +156,13 @@ export default function AIChatScreen() {
 
       setMessages((prev) => [...prev, response.message]);
       setSuggestions(response.suggestions || DEFAULT_SUGGESTIONS);
+
+      // Track AI result received
+      telemetry.capture('ai_result_received', {
+        ai_use_case: 'chat',
+        confidence_score: null, // OpenAI doesn't provide confidence scores
+      });
+
       scrollToBottom();
     } catch (error) {
       Alert.alert(

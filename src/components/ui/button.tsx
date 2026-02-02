@@ -11,6 +11,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { telemetry } from '@/services/telemetry';
 import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -35,6 +36,7 @@ export function Button({
   fullWidth = true,
   disabled,
   style,
+  onPress,
   ...props
 }: ButtonProps) {
   const isDisabled = disabled || isLoading;
@@ -118,10 +120,24 @@ export function Button({
 
   return (
     <Pressable
+      {...props}
       disabled={isDisabled}
       accessibilityRole={props.accessibilityRole ?? 'button'}
+      onPress={(event) => {
+        try {
+          telemetry.capture('ui_button_press', {
+            button_id: props.testID ?? null,
+            label: props.accessibilityLabel ?? null,
+            title,
+            variant,
+            size,
+          });
+        } catch {
+          // Swallow telemetry errors - don't block user interactions
+        }
+        onPress?.(event);
+      }}
       style={(state) => [containerStyle, typeof style === 'function' ? style(state) : style]}
-      {...props}
     >
       {(state) => (
         <>

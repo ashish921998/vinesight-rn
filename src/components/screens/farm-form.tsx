@@ -23,6 +23,7 @@ import {
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import LocationPicker from './location-picker';
 import { formatDate } from '@/i18n/format';
+import { telemetry } from '@/services/telemetry';
 
 const SOIL_TEXTURE_OPTIONS = [
   { value: 'Sand', labelKey: 'farmForm.soilTexture.options.sand' },
@@ -259,6 +260,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       };
       try {
         await updateFarm.mutateAsync({ id: farmId, updates });
+        telemetry.capture('farm_updated', {
+          farm_id: farmId,
+          crop: formState.selectedCrop,
+          variety: finalVariety,
+          region: formState.region,
+          area_acres: parseFloat(formState.area),
+        });
         onClose();
       } catch (_error: unknown) {
         const errorMessage =
@@ -304,7 +312,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     };
 
     try {
-      await createFarm.mutateAsync(farmData);
+      const result = await createFarm.mutateAsync(farmData);
+      telemetry.capture('farm_created', {
+        farm_id: result?.id ?? null,
+        crop: formState.selectedCrop,
+        variety: finalVariety,
+        region: formState.region,
+        area_acres: parseFloat(formState.area),
+      });
       onClose();
     } catch (_error: unknown) {
       const errorMessage =

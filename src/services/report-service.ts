@@ -393,12 +393,15 @@ export class ReportService {
     const csv = this.generateCSV(data, reportType);
     const filename = `${data.farmName.replace(/\s+/g, '_')}_report_${new Date().toISOString().split('T')[0]}.csv`;
 
-    // Create file in cache directory using new API
     const file = new File(Paths.cache, filename);
-    await file.write(csv);
+    const writer = file.writableStream().getWriter();
+    const bytes = new TextEncoder().encode(csv);
+    await writer.write(bytes);
+    await writer.close();
+    const fileUri = file.uri;
 
     if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(file.uri, {
+      await Sharing.shareAsync(fileUri, {
         mimeType: 'text/csv',
         dialogTitle: 'Export Report',
         UTI: 'public.comma-separated-values-text',

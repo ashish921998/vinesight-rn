@@ -18,6 +18,10 @@ on:
           - preview
           - production
 
+permissions:
+  pull-requests: write
+  contents: read
+
 jobs:
   build:
     name: Build Android App

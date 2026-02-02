@@ -17,6 +17,7 @@ import {
 import { Stack } from 'expo-router';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { telemetry } from '@/services/telemetry';
 
 export default function LAICalculatorScreen() {
   const [shootLength, setShootLength] = useState(''); // cm
@@ -40,6 +41,16 @@ export default function LAICalculatorScreen() {
     const vs = parseFloat(vineSpacing);
     const rs = parseFloat(rowSpacing);
 
+    // Track inputs_provided count
+    const inputsProvided = 4; // shootLength, shootsPerVine, vineSpacing, rowSpacing
+
+    // Check if using defaults (placeholders are typical values)
+    const usedDefaults =
+      shootLength === '100' ||
+      shootsPerVine === '20' ||
+      vineSpacing === '1.8' ||
+      rowSpacing === '3.0';
+
     // Estimate leaf area per shoot (cm²) - using empirical relationship
     // Leaf area ≈ 0.7 × shoot length² (simplified)
     const leafAreaPerShoot = 0.7 * sl * sl;
@@ -57,6 +68,18 @@ export default function LAICalculatorScreen() {
     const canopyWidth = (sl / 100) * 0.8; // 80% of shoot length
 
     setResult({ lai, canopyWidth });
+
+    telemetry.capture('analysis_run', {
+      analysis_type: 'LAI',
+      inputs_provided: inputsProvided,
+      used_defaults: usedDefaults,
+      result_saved: false,
+      source: 'manual',
+    });
+    telemetry.capture('meaningful_action', {
+      action_type: 'analysis_completed',
+      feature_name: 'LAI_calculator',
+    });
   };
 
   const reset = () => {

@@ -17,6 +17,7 @@ import { useFarms, useProfile } from '../src/hooks';
 import { useReportData, useReportExport, getDefaultDateRange } from '../src/hooks/use-reports';
 import { DateRange, ReportType, ReportFormat } from '../src/types/report';
 import { useAuthStore } from '@/stores';
+import { telemetry } from '@/services/telemetry';
 
 const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
   { value: 'comprehensive', labelKey: 'reports.types.comprehensive', icon: 'doc.text.fill' },
@@ -62,6 +63,14 @@ export default function ReportsScreen() {
 
     try {
       await exportReport(preview, format, reportType);
+
+      // Track successful export - scope is always 'farm' since reports are generated
+      // for a single selected farm, not multi-farm
+      telemetry.capture('data_exported', {
+        export_type: format,
+        scope: 'farm',
+        farm_id: selectedFarmId,
+      });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : t('reports.errors.unableToExport');
       Alert.alert(t('reports.alerts.exportFailedTitle'), errorMessage);

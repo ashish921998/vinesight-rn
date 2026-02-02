@@ -10,6 +10,7 @@ import { Stack } from 'expo-router';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { telemetry } from '@/services/telemetry';
 
 interface NutrientResult {
   nitrogen: number;
@@ -51,6 +52,14 @@ export default function NutrientCalculatorScreen() {
     const potassium = baseK * yieldFactor * stage.potassiumFactor * a;
 
     setResult({ nitrogen, phosphorus, potassium });
+
+    telemetry.capture('analysis_run', {
+      analysis_type: 'NPK',
+      inputs_provided: 3,
+      used_defaults: false,
+      result_saved: false,
+      source: 'manual',
+    });
   };
 
   const reset = () => {

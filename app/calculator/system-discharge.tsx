@@ -17,6 +17,7 @@ import {
 import { Stack } from 'expo-router';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { telemetry } from '@/services/telemetry';
 
 type SystemDischargeResults = {
   plantsPerHectare?: number | null;
@@ -104,6 +105,14 @@ export default function SystemDischargeScreen() {
       irrigationHours,
       method: 1,
     });
+
+    telemetry.capture('analysis_run', {
+      analysis_type: 'system_discharge',
+      inputs_provided: 4,
+      used_defaults: false,
+      result_saved: false,
+      source: 'manual',
+    });
   };
 
   const calculateMethod2 = () => {
@@ -123,6 +132,14 @@ export default function SystemDischargeScreen() {
       systemDischarge,
       irrigationHours,
       method: 2,
+    });
+
+    telemetry.capture('analysis_run', {
+      analysis_type: 'system_discharge',
+      inputs_provided: 4,
+      used_defaults: false,
+      result_saved: false,
+      source: 'manual',
     });
   };
 
