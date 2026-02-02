@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 import { useCreateWarehouseItem, useUpdateWarehouseItem, useProfile } from '../../hooks';
 import { WarehouseItem, WarehouseItemType, WarehouseUnit } from '../../types';
+import i18n from '@/i18n';
+import { formatCurrency } from '@/i18n/format';
 import {
   FormModal,
   SectionHeader,
@@ -124,17 +126,17 @@ export default function WarehouseItemForm({
   const handleSubmit = async () => {
     // Validation
     if (!name.trim()) {
-      Alert.alert('Error', 'Please enter item name');
+      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.enterItemName'));
       return;
     }
     const quantityValue = Number(quantity);
     if (!Number.isFinite(quantityValue) || quantityValue <= 0) {
-      Alert.alert('Error', 'Please enter valid quantity');
+      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.enterValidQuantity'));
       return;
     }
     const unitPriceValue = Number(unitPrice);
     if (!Number.isFinite(unitPriceValue) || unitPriceValue <= 0) {
-      Alert.alert('Error', 'Please enter valid unit price');
+      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.enterValidUnitPrice'));
       return;
     }
 
@@ -159,7 +161,7 @@ export default function WarehouseItemForm({
       }
       onClose();
     } catch (_error) {
-      Alert.alert('Error', 'Failed to save item. Please try again.');
+      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.failedToSaveItem'));
     }
   };
 
@@ -272,7 +274,7 @@ export default function WarehouseItemForm({
           items={[
             {
               label: `${quantity} ${unit} × ${currency === 'INR' ? '₹' : '$'}${unitPrice}`,
-              value: `${currency === 'INR' ? '₹' : '$'}${parseFloat(totalValue).toLocaleString()}`,
+              value: formatCurrency(parseFloat(totalValue), currency),
             },
           ]}
           backgroundColor="#F0FDF4"

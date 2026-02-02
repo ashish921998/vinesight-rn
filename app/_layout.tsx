@@ -1,16 +1,66 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
+import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { useAuthStore, initAuthListener, cleanupAuthListener } from '@/stores';
+import {
+  useAuthStore,
+  initAuthListener,
+  cleanupAuthListener,
+  useLanguageStore,
+  useNotificationStore,
+} from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
+import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
+import {
+  cancelNotification,
+  scheduleDailyWaterReminder,
+  scheduleTaskDueReminder,
+} from '@/services/notifications';
+import { androidTextPadding } from '@/styles/theme';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
+
+type DefaultPropsCarrier = { defaultProps?: { style?: StyleProp<TextStyle> } };
+
+let androidTextPatched = false;
+
+if (Platform.OS === 'android' && !androidTextPatched) {
+  androidTextPatched = true;
+
+  const TextWithDefaults = Text as unknown as DefaultPropsCarrier;
+  const TextInputWithDefaults = TextInput as unknown as DefaultPropsCarrier;
+
+  TextWithDefaults.defaultProps = {
+    ...(TextWithDefaults.defaultProps ?? {}),
+    style: [
+      {
+        includeFontPadding: true,
+        paddingBottom: androidTextPadding.bottom,
+        paddingRight: androidTextPadding.right,
+      },
+      TextWithDefaults.defaultProps?.style,
+    ],
+  };
+
+  TextInputWithDefaults.defaultProps = {
+    ...(TextInputWithDefaults.defaultProps ?? {}),
+    style: [
+      {
+        includeFontPadding: true,
+        paddingBottom: androidTextPadding.bottom,
+        paddingRight: androidTextPadding.right,
+      },
+      TextInputWithDefaults.defaultProps?.style,
+    ],
+  };
+}
 
 // Initialize Sentry (avoid crashing startup if env/config is missing)
 try {
@@ -50,6 +100,14 @@ export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
   const isLoading = useAuthStore((state) => state.isLoading);
 
+  const language = useLanguageStore((s) => s.language);
+  const setLanguage = useLanguageStore((s) => s.setLanguage);
+  const languageHydrated = useLanguageStore((s) => s.hasHydrated);
+
+  const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
+  const prevLanguageRef = useRef<string | null>(null);
+  const reschedulePromiseRef = useRef<Promise<void> | null>(null);
+
   useEffect(() => {
     // Initialize auth state
     const init = async () => {
@@ -67,38 +125,138 @@ export default Sentry.wrap(function RootLayout() {
   }, [initialize]);
 
   useEffect(() => {
-    // Hide splash screen when auth is loaded
-    if (!isLoading) {
+    if (!languageHydrated) return;
+
+    const effective = language ?? getDeviceLanguage();
+    if (!language) {
+      setLanguage(effective);
+      prevLanguageRef.current = effective;
+    }
+    setAppLanguage(effective);
+  }, [language, languageHydrated, setLanguage]);
+
+  useEffect(() => {
+    if (!languageHydrated || !notificationsHydrated) return;
+
+    // Only run when language actually changes.
+    if (prevLanguageRef.current === language) return;
+
+    // Skip initial mount after hydration
+    if (prevLanguageRef.current === null) {
+      prevLanguageRef.current = language;
+      return;
+    }
+
+    // Guard against overlapping reschedules
+    if (reschedulePromiseRef.current !== null) return;
+
+    const reschedule = async () => {
+      const state = useNotificationStore.getState();
+
+      try {
+        if (state.dailyWaterReminderEnabled) {
+          try {
+            if (state.dailyWaterReminderNotificationId) {
+              await cancelNotification(state.dailyWaterReminderNotificationId);
+            }
+            const nextId = await scheduleDailyWaterReminder();
+            if (nextId) {
+              useNotificationStore.setState({ dailyWaterReminderNotificationId: nextId });
+            }
+          } catch (error) {
+            if (__DEV__) {
+              console.error('Failed to reschedule daily water reminder:', error);
+            }
+          }
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Failed to access daily water reminder state:', error);
+        }
+      }
+
+      try {
+        if (state.taskRemindersEnabled) {
+          try {
+            const entries = Object.entries(state.taskSchedules);
+            for (const [taskId, schedule] of entries) {
+              try {
+                if (schedule.notificationId) {
+                  await cancelNotification(schedule.notificationId);
+                }
+                const nextId = await scheduleTaskDueReminder(taskId, schedule.dueDate);
+                if (nextId) {
+                  useNotificationStore.getState().upsertTaskSchedule(taskId, {
+                    notificationId: nextId,
+                    dueDate: schedule.dueDate,
+                  });
+                } else {
+                  useNotificationStore.getState().removeTaskSchedule(taskId);
+                }
+              } catch (error) {
+                if (__DEV__) {
+                  console.error(`Failed to reschedule task ${taskId}:`, error);
+                }
+              }
+            }
+          } catch (error) {
+            if (__DEV__) {
+              console.error('Failed to iterate task schedules:', error);
+            }
+          }
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Failed to access task reminders state:', error);
+        }
+      } finally {
+        reschedulePromiseRef.current = null;
+      }
+    };
+
+    prevLanguageRef.current = language;
+    reschedulePromiseRef.current = reschedule();
+
+    return () => {
+      reschedulePromiseRef.current = null;
+    };
+  }, [language, languageHydrated, notificationsHydrated]);
+
+  useEffect(() => {
+    // Hide splash screen when auth + language are loaded
+    if (!isLoading && languageHydrated) {
       void SplashScreen.hideAsync().catch(() => null);
     }
-  }, [isLoading]);
+  }, [isLoading, languageHydrated]);
 
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
-            <StatusBar style="dark" />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="add-activity" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="add-entry" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
-              <Stack.Screen
-                name="add-warehouse-item"
-                options={{ presentation: 'modal', headerShown: false }}
-              />
-              <Stack.Screen name="add-lab-test" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="water-level" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
-            </Stack>
+            <I18nextProvider i18n={i18n}>
+              <StatusBar style="dark" />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="add-activity" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="add-entry" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
+                <Stack.Screen
+                  name="add-warehouse-item"
+                  options={{ presentation: 'modal', headerShown: false }}
+                />
+                <Stack.Screen name="add-lab-test" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="water-level" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
+              </Stack>
+            </I18nextProvider>
           </QueryClientProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>

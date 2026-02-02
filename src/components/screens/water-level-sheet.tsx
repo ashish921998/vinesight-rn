@@ -19,6 +19,10 @@ import { useIrrigationRecords, useUpdateFarmWaterLevel } from '@/hooks';
 import { WATER_GROWTH_STAGES } from '@/constants/calculator-models';
 import type { WaterGrowthStage } from '@/constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useNotificationStore } from '@/stores';
+import { ensureNotificationPermissions, notifyLowWaterAlert } from '@/services/notifications';
+import { useTranslation } from 'react-i18next';
+import { formatNumber } from '@/i18n/format';
 
 interface WaterLevelSheetProps {
   visible?: boolean;
@@ -33,6 +37,8 @@ export function WaterLevelSheet({
   farm,
   presentation = 'modal',
 }: WaterLevelSheetProps) {
+  const { t } = useTranslation();
+
   const isVisible = visible ?? true;
   const [manualWaterLevel, setManualWaterLevel] = useState('');
   const [useManual, setUseManual] = useState(false);
@@ -45,6 +51,8 @@ export function WaterLevelSheet({
   const updateWaterLevel = useUpdateFarmWaterLevel();
   const { data: irrigationRecords } = useIrrigationRecords(farm.id);
 
+  const lowWaterAlertsEnabled = useNotificationStore((s) => s.lowWaterAlertsEnabled);
+
   const totalWaterUsed =
     irrigationRecords?.reduce(
       (sum, record) => sum + (record.duration || 0) * (record.system_discharge || 0),
@@ -54,25 +62,34 @@ export function WaterLevelSheet({
   const formatWaterUsed = (value: number | null) => {
     if (value === null || value === undefined) return '--';
     const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
-    return `${value.toFixed(digits)} mm`;
+    return `${formatNumber(value, { maximumFractionDigits: digits })} mm`;
   };
 
   const handleCalculate = () => {
     if (useManual) {
       const manualValue = parseFloat(manualWaterLevel);
       if (isNaN(manualValue) || manualValue < 0) {
-        Alert.alert('Invalid Input', 'Please enter a valid water level in mm');
+        Alert.alert(
+          t('waterLevelSheet.alerts.invalidInputTitle'),
+          t('waterLevelSheet.alerts.invalidWaterLevel'),
+        );
         return;
       }
       setCalculatedWaterLevel(manualValue);
     } else {
       const etoValue = parseFloat(eto);
       if (isNaN(etoValue) || etoValue < 0) {
-        Alert.alert('Invalid Input', 'Please enter a valid ET0 value');
+        Alert.alert(
+          t('waterLevelSheet.alerts.invalidInputTitle'),
+          t('waterLevelSheet.alerts.invalidEto'),
+        );
         return;
       }
       if (!selectedGrowthStage) {
-        Alert.alert('Missing Selection', 'Please select a growth stage');
+        Alert.alert(
+          t('waterLevelSheet.alerts.missingSelectionTitle'),
+          t('waterLevelSheet.alerts.selectGrowthStage'),
+        );
         return;
       }
 
@@ -89,7 +106,10 @@ export function WaterLevelSheet({
     if (!farm.id) return;
 
     if (calculatedWaterLevel === null) {
-      Alert.alert('Calculate First', 'Please calculate the water level first');
+      Alert.alert(
+        t('waterLevelSheet.alerts.calculateFirstTitle'),
+        t('waterLevelSheet.alerts.calculateFirstMessage'),
+      );
       return;
     }
 
@@ -99,7 +119,27 @@ export function WaterLevelSheet({
         farmId: farm.id,
         remainingWater: calculatedWaterLevel,
       });
-      Alert.alert('Success', `Water level updated to ${calculatedWaterLevel.toFixed(1)} mm`);
+      // If user enabled low-water alerts, notify immediately when the new level is critical.
+      if (lowWaterAlertsEnabled && farm.total_tank_capacity && farm.total_tank_capacity > 0) {
+        const pct = (calculatedWaterLevel / farm.total_tank_capacity) * 100;
+        if (pct < 30) {
+          try {
+            const granted = await ensureNotificationPermissions();
+            if (granted) {
+              await notifyLowWaterAlert(farm.name ?? undefined);
+            }
+          } catch {
+            // Notification failure should not affect save success
+          }
+        }
+      }
+      // Keep the success message numeric display in Latin digits.
+      Alert.alert(
+        t('waterLevelSheet.alerts.successTitle'),
+        t('waterLevelSheet.alerts.successUpdated', {
+          valueMm: formatNumber(calculatedWaterLevel, { maximumFractionDigits: 1 }),
+        }),
+      );
       onClose();
       setManualWaterLevel('');
       setEto('');
@@ -107,7 +147,10 @@ export function WaterLevelSheet({
       setCalculatedWaterLevel(null);
       setUseManual(false);
     } catch (_error) {
-      Alert.alert('Error', 'Failed to update water level');
+      Alert.alert(
+        t('waterLevelSheet.alerts.errorTitle'),
+        t('waterLevelSheet.alerts.failedToUpdate'),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -137,47 +180,63 @@ export function WaterLevelSheet({
     <FormModal
       visible={isVisible}
       onClose={handleClose}
-      title="Update Soil Water Level"
+      title={t('waterLevelSheet.title')}
       onSave={handleSave}
-      saveLabel="Save Water Level"
+      saveLabel={t('waterLevelSheet.saveLabel')}
       isLoading={isSaving}
       isSaveDisabled={calculatedWaterLevel === null}
       presentation={presentation}
     >
       <SectionHeader
-        title="Water Levels"
-        subtitle="Calculate from ET0 or set the level manually."
+        title={t('waterLevelSheet.sections.waterLevels.title')}
+        subtitle={t('waterLevelSheet.sections.waterLevels.subtitle')}
         style={{ marginBottom: spacing[4] }}
       />
 
       <PreviewCard
-        title="Current Water Level"
+        title={t('waterLevelSheet.preview.current.title')}
         items={[
-          { label: 'Remaining', value: `${currentWaterDisplay} mm` },
-          { label: 'Total Water Used', value: formatWaterUsed(totalWaterUsed) },
+          {
+            label: t('waterLevelSheet.preview.labels.remaining'),
+            value: `${currentWaterDisplay} mm`,
+          },
+          {
+            label: t('waterLevelSheet.preview.labels.totalWaterUsed'),
+            value: formatWaterUsed(totalWaterUsed),
+          },
         ]}
         backgroundColor={colors.surface[100]}
       />
 
       {calculatedWaterLevel !== null && (
         <PreviewCard
-          title="New Water Level"
+          title={t('waterLevelSheet.preview.new.title')}
           items={[
-            { label: 'Remaining', value: `${calculatedWaterLevel.toFixed(1)} mm` },
             {
-              label: 'Change',
-              value: `${changeValue === null ? '--' : changeValue.toFixed(1)} mm`,
+              label: t('waterLevelSheet.preview.labels.remaining'),
+              value: `${formatNumber(calculatedWaterLevel, { maximumFractionDigits: 1 })} mm`,
+            },
+            {
+              label: t('waterLevelSheet.preview.labels.change'),
+              value: `${
+                changeValue === null
+                  ? '--'
+                  : formatNumber(changeValue, { maximumFractionDigits: 1 })
+              } mm`,
             },
           ]}
           backgroundColor={colors.primary[50]}
         />
       )}
 
-      <SectionHeader title="Calculation Method" style={{ marginBottom: spacing[4] }} />
+      <SectionHeader
+        title={t('waterLevelSheet.sections.method.title')}
+        style={{ marginBottom: spacing[4] }}
+      />
       <SegmentedControl
         options={[
-          { value: 'eto', label: 'ET0' },
-          { value: 'manual', label: 'Manual' },
+          { value: 'eto', label: t('waterLevelSheet.method.eto') },
+          { value: 'manual', label: t('waterLevelSheet.method.manual') },
         ]}
         selectedValue={useManual ? 'manual' : 'eto'}
         onSelect={(value) => {
@@ -188,9 +247,12 @@ export function WaterLevelSheet({
 
       {!useManual && (
         <>
-          <SectionHeader title="ET0 Inputs" style={{ marginBottom: spacing[4] }} />
+          <SectionHeader
+            title={t('waterLevelSheet.sections.etoInputs.title')}
+            style={{ marginBottom: spacing[4] }}
+          />
           <FormInput
-            label="ET0 (Reference Evapotranspiration)"
+            label={t('waterLevelSheet.eto.label')}
             value={eto}
             onChangeText={(value) => {
               setEto(value);
@@ -211,7 +273,7 @@ export function WaterLevelSheet({
                 marginBottom: spacing[2],
               }}
             >
-              Growth Stage
+              {t('waterLevelSheet.growthStage.label')}
               <Text style={{ color: colors.error }}> *</Text>
             </Text>
             <Pressable
@@ -235,8 +297,13 @@ export function WaterLevelSheet({
                 }}
               >
                 {selectedGrowthStage
-                  ? `${selectedGrowthStage.label} (Kc: ${selectedGrowthStage.kc.toFixed(2)})`
-                  : 'Select growth stage'}
+                  ? t('waterLevelSheet.growthStage.selected', {
+                      label: t(
+                        `waterLevelSheet.growthStagePicker.stages.${selectedGrowthStage.id}`,
+                      ),
+                      kc: formatNumber(selectedGrowthStage.kc, { maximumFractionDigits: 2 }),
+                    })
+                  : t('waterLevelSheet.growthStage.placeholder')}
               </Text>
               <SymbolIcon name="chevron.down" size={18} color={colors.surface[400]} />
             </Pressable>
@@ -246,9 +313,12 @@ export function WaterLevelSheet({
 
       {useManual && (
         <>
-          <SectionHeader title="Manual Entry" style={{ marginBottom: spacing[4] }} />
+          <SectionHeader
+            title={t('waterLevelSheet.sections.manualEntry.title')}
+            style={{ marginBottom: spacing[4] }}
+          />
           <FormInput
-            label="Soil Water Level"
+            label={t('waterLevelSheet.manual.label')}
             value={manualWaterLevel}
             onChangeText={(value) => {
               setManualWaterLevel(value);
@@ -276,7 +346,7 @@ export function WaterLevelSheet({
         }}
       >
         <Text style={{ fontWeight: fontWeight.semibold, color: colors.surface[900] }}>
-          Calculate Water Level
+          {t('waterLevelSheet.calculate')}
         </Text>
       </Pressable>
 
@@ -321,7 +391,7 @@ export function WaterLevelSheet({
                   textAlign: 'center',
                 }}
               >
-                Select Growth Stage
+                {t('waterLevelSheet.growthStagePicker.title')}
               </Text>
             </View>
             <ScrollView style={{ maxHeight: 420 }}>
@@ -360,7 +430,7 @@ export function WaterLevelSheet({
                               : colors.surface[900],
                         }}
                       >
-                        {stage.label}
+                        {t(`waterLevelSheet.growthStagePicker.stages.${stage.id}`)}
                       </Text>
                       <Text
                         style={{
@@ -369,7 +439,9 @@ export function WaterLevelSheet({
                           marginTop: 2,
                         }}
                       >
-                        Kc: {stage.kc.toFixed(2)}
+                        {t('waterLevelSheet.growthStagePicker.kcLabel', {
+                          kc: formatNumber(stage.kc, { maximumFractionDigits: 2 }),
+                        })}
                       </Text>
                     </View>
                     {selectedGrowthStage?.id === stage.id && (
@@ -398,7 +470,7 @@ export function WaterLevelSheet({
                   color: colors.surface[500],
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </Text>
             </Pressable>
           </View>

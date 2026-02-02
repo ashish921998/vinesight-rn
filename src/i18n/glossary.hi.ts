@@ -1,0 +1,26 @@
+import type { GlossaryKey } from './glossary.en';
+
+export const GLOSSARY_HI: Record<GlossaryKey, string> = {
+  irrigation: 'सिंचाई',
+  spray: 'छिड़काव',
+  fertigation: 'फर्टिगेशन',
+  harvest: 'कटाई',
+  expense: 'खर्च',
+  task: 'कार्य',
+  worker: 'श्रमिक',
+  attendance: 'उपस्थिति',
+  farm: 'खेत',
+  soil: 'मिट्टी',
+  weather: 'मौसम',
+  disease: 'रोग',
+  pest: 'कीट',
+  fertilizer: 'उर्वरक',
+  pruning: 'छंटाई',
+  canopy: 'कैनोपी प्रबंधन',
+  waterLevel: 'पानी का स्तर',
+  report: 'रिपोर्ट',
+  labTest: 'लैब परीक्षण',
+  petiole: 'पेटीओल',
+  downyMildew: 'डाउनी मिल्ड्यू',
+  powderyMildew: 'पाउडरी मिल्ड्यू',
+};

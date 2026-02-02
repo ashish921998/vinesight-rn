@@ -9,12 +9,14 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import { useModalStore } from '@/stores';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { formatCurrency } from '@/i18n/format';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
 
@@ -28,6 +30,8 @@ const COLORS = {
 };
 
 export default function WarehouseScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const { setAddWarehouseItem, setAddStock } = useModalStore();
   const { data: profile } = useProfile();
@@ -73,22 +77,29 @@ export default function WarehouseScreen() {
   }, [items]);
 
   const handleDeleteItem = (item: WarehouseItem) => {
-    Alert.alert('Delete Item', `Are you sure you want to delete "${item.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          if (item.id) {
-            deleteItemMutation.mutate(item.id, {
-              onError: (error) => {
-                Alert.alert('Error', error.message || 'Failed to delete item');
-              },
-            });
-          }
+    Alert.alert(
+      t('warehouse.alerts.deleteItemTitle'),
+      t('warehouse.alerts.deleteItemBody', { name: item.name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            if (item.id) {
+              deleteItemMutation.mutate(item.id, {
+                onError: (error) => {
+                  Alert.alert(
+                    t('common.error'),
+                    error.message || t('common.errors.failedToDeleteItem'),
+                  );
+                },
+              });
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleAddStock = (item: WarehouseItem) => {
@@ -109,10 +120,10 @@ export default function WarehouseScreen() {
           alignItems: 'center',
         }}
       >
-        <Stack.Screen options={{ title: 'Warehouse' }} />
+        <Stack.Screen options={{ title: t('warehouse.title') }} />
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
-          Loading inventory...
+          {t('warehouse.loading.inventory')}
         </Text>
       </View>
     );
@@ -122,7 +133,7 @@ export default function WarehouseScreen() {
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <Stack.Screen
         options={{
-          title: 'Warehouse',
+          title: t('warehouse.title'),
           headerRight: () => (
             <Pressable
               onPress={() => {
@@ -172,7 +183,9 @@ export default function WarehouseScreen() {
               >
                 {lowStockItems.length}
               </Text>
-              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>Low Stock</Text>
+              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                {t('warehouse.labels.lowStock')}
+              </Text>
             </View>
             <View
               style={{
@@ -191,10 +204,11 @@ export default function WarehouseScreen() {
                   marginTop: spacing[2],
                 }}
               >
-                {currency === 'INR' ? '₹' : '$'}
-                {totals.value.toLocaleString()}
+                {formatCurrency(totals.value, currency)}
               </Text>
-              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>Value</Text>
+              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                {t('common.labels.value')}
+              </Text>
             </View>
           </View>
 
@@ -224,7 +238,7 @@ export default function WarehouseScreen() {
                     marginLeft: spacing[2],
                   }}
                 >
-                  Low Stock Alerts
+                  {t('warehouse.labels.lowStockAlerts')}
                 </Text>
                 <View
                   style={{
@@ -242,7 +256,7 @@ export default function WarehouseScreen() {
                       fontWeight: fontWeight.medium,
                     }}
                   >
-                    {lowStockItems.length} items
+                    {t('warehouse.labels.itemCount', { count: lowStockItems.length })}
                   </Text>
                 </View>
               </View>
@@ -296,7 +310,10 @@ export default function WarehouseScreen() {
                               marginTop: 2,
                             }}
                           >
-                            Reorder at: {item.reorder_quantity} {item.unit}
+                            {t('warehouse.reorderAt', {
+                              quantity: item.reorder_quantity,
+                              unit: item.unit,
+                            })}
                           </Text>
                         )}
                         <View
@@ -317,7 +334,7 @@ export default function WarehouseScreen() {
                               fontWeight: fontWeight.medium,
                             }}
                           >
-                            Add Stock
+                            {t('warehouse.stockForm.title')}
                           </Text>
                         </View>
                       </View>
@@ -358,10 +375,10 @@ export default function WarehouseScreen() {
                   }}
                 >
                   {type === 'all'
-                    ? `ALL (${totals.count})`
+                    ? t('warehouse.filters.all', { count: totals.count })
                     : type === 'fertilizer'
-                      ? `FERTILIZERS (${totals.fertilizers})`
-                      : `SPRAYS (${totals.sprays})`}
+                      ? t('warehouse.filters.fertilizer', { count: totals.fertilizers })
+                      : t('warehouse.filters.spray', { count: totals.sprays })}
                 </Text>
               </Pressable>
             ))}
@@ -397,7 +414,7 @@ export default function WarehouseScreen() {
                   textAlign: 'center',
                 }}
               >
-                No items in warehouse
+                {t('warehouse.empty.title')}
               </Text>
               <Text
                 style={{
@@ -407,7 +424,7 @@ export default function WarehouseScreen() {
                   textAlign: 'center',
                 }}
               >
-                Tap the + button to add your first inventory item
+                {t('warehouse.empty.subtitle')}
               </Text>
               <Pressable
                 onPress={() => {
@@ -431,7 +448,7 @@ export default function WarehouseScreen() {
                     marginLeft: spacing[2],
                   }}
                 >
-                  Add Item
+                  {t('warehouse.actions.addItem')}
                 </Text>
               </Pressable>
             </View>
@@ -482,7 +499,9 @@ export default function WarehouseScreen() {
                                 marginLeft: spacing[1],
                               }}
                             >
-                              {item.type === 'fertilizer' ? 'FERTILIZER' : 'SPRAY'}
+                              {item.type === 'fertilizer'
+                                ? t('warehouse.itemTypes.fertilizer')
+                                : t('warehouse.itemTypes.spray')}
                             </Text>
                           </View>
                         </View>
@@ -496,7 +515,7 @@ export default function WarehouseScreen() {
                               backgroundColor: `${COLORS.lowStock}33`,
                             }}
                           >
-                            <Text style={{ color: COLORS.lowStock }}>Low</Text>
+                            <Text style={{ color: COLORS.lowStock }}>{t('common.labels.low')}</Text>
                           </View>
                         )}
                         <View style={{ flexDirection: 'row', gap: spacing[2], marginLeft: 'auto' }}>
@@ -530,7 +549,7 @@ export default function WarehouseScreen() {
                   <View style={{ flexDirection: 'row', marginTop: spacing[3] }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        Quantity
+                        {t('warehouse.labels.quantity')}
                       </Text>
                       <Text
                         style={{
@@ -544,7 +563,7 @@ export default function WarehouseScreen() {
                     </View>
                     <View style={{ flex: 1, alignItems: 'center' }}>
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        Unit Price
+                        {t('warehouse.labels.unitPrice')}
                       </Text>
                       <Text
                         style={{
@@ -553,13 +572,12 @@ export default function WarehouseScreen() {
                           fontWeight: fontWeight.medium,
                         }}
                       >
-                        {currency === 'INR' ? '₹' : '$'}
-                        {item.unit_price.toLocaleString()}/{item.unit}
+                        {formatCurrency(item.unit_price, currency)}/{item.unit}
                       </Text>
                     </View>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        Total Value
+                        {t('warehouse.labels.totalValue')}
                       </Text>
                       <Text
                         style={{
@@ -568,8 +586,7 @@ export default function WarehouseScreen() {
                           fontWeight: fontWeight.semibold,
                         }}
                       >
-                        {currency === 'INR' ? '₹' : '$'}
-                        {itemValue.toLocaleString()}
+                        {formatCurrency(itemValue, currency)}
                       </Text>
                     </View>
                   </View>

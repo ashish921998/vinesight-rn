@@ -19,6 +19,7 @@ import {
   HarvestRecord,
   ExpenseRecord,
 } from '../types/database';
+import { formatDate } from '@/i18n/format';
 
 export class AnalyticsService {
   /**
@@ -279,7 +280,7 @@ export class AnalyticsService {
     const byMonth = new Map<string, { hours: number; count: number }>();
     irrigations.forEach((r) => {
       const date = new Date(r.date);
-      const monthYear = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+      const monthYear = formatDate(date, { month: 'short', year: '2-digit' });
       const existing = byMonth.get(monthYear) || { hours: 0, count: 0 };
       byMonth.set(monthYear, {
         hours: existing.hours + (r.duration || 0),
@@ -334,7 +335,7 @@ export class AnalyticsService {
 
     harvests.forEach((h) => {
       const date = new Date(h.date);
-      const monthYear = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+      const monthYear = formatDate(date, { month: 'short', year: '2-digit' });
       const existing = months.get(monthYear) || { revenue: 0, costs: 0, profit: 0 };
       const revenue = (h.quantity || 0) * (h.price || 0);
       months.set(monthYear, {
@@ -346,7 +347,7 @@ export class AnalyticsService {
 
     expenses.forEach((e) => {
       const date = new Date(e.date);
-      const monthYear = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+      const monthYear = formatDate(date, { month: 'short', year: '2-digit' });
       const existing = months.get(monthYear) || { revenue: 0, costs: 0, profit: 0 };
       months.set(monthYear, {
         ...existing,

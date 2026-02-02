@@ -8,6 +8,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
@@ -28,6 +29,7 @@ export function UnitPickerModal<T extends string>({
   options,
   title,
 }: UnitPickerModalProps<T>) {
+  const { t } = useTranslation();
   const handleSelect = (unit: T) => {
     onSelect(unit);
     onClose();
@@ -102,7 +104,7 @@ export function UnitPickerModal<T extends string>({
         <View style={containerStyle}>
           <View style={headerStyle}>
             <Pressable onPress={onClose} style={cancelButtonStyle}>
-              <Text style={cancelTextStyle}>Cancel</Text>
+              <Text style={cancelTextStyle}>{t('common.cancel')}</Text>
             </Pressable>
             <Text style={titleTextStyle}>{title}</Text>
           </View>

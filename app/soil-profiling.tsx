@@ -6,6 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { Symbol } from '@/components/ui/symbol';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -27,6 +28,8 @@ import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/th
 type TabType = 'history' | 'trends';
 
 export default function SoilProfilingScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
@@ -69,18 +72,22 @@ export default function SoilProfilingScreen() {
   }, [profiles]);
 
   const handleDeleteProfile = (profile: SoilProfile) => {
-    Alert.alert('Delete Profile', 'Are you sure you want to delete this soil profile?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          if (profile.id) {
-            deleteProfile.mutate({ id: profile.id, farmId: farmIdNum });
-          }
+    Alert.alert(
+      t('soilProfiling.alerts.deleteProfileTitle'),
+      t('soilProfiling.alerts.deleteProfileBody'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            if (profile.id) {
+              deleteProfile.mutate({ id: profile.id, farmId: farmIdNum });
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const renderProfileCard = (profile: SoilProfile) => {
@@ -484,11 +491,10 @@ export default function SoilProfilingScreen() {
               color: colors.surface[900],
             }}
           >
-            Select a Farm First
+            {t('soilProfiling.noFarm.title')}
           </Text>
           <Text style={{ textAlign: 'center', marginTop: spacing[2], color: colors.surface[500] }}>
-            Soil profiles are associated with specific farms. Please select a farm to view its soil
-            profiles.
+            {t('soilProfiling.noFarm.subtitle')}
           </Text>
           <Pressable
             onPress={() => router.push('/(tabs)/farms')}
@@ -501,7 +507,7 @@ export default function SoilProfilingScreen() {
             }}
           >
             <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
-              Go to Farms
+              {t('soilProfiling.noFarm.cta')}
             </Text>
           </Pressable>
         </View>
@@ -540,7 +546,7 @@ export default function SoilProfilingScreen() {
               color: colors.surface[900],
             }}
           >
-            Soil Profiling
+            {t('soilProfiling.title')}
           </Text>
           {farm && (
             <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>{farm.name}</Text>
@@ -584,7 +590,7 @@ export default function SoilProfilingScreen() {
               color: selectedTab === 'history' ? '#408059' : '#8e8e93',
             }}
           >
-            History
+            {t('soilProfiling.tabs.history')}
           </Text>
         </Pressable>
         <Pressable
@@ -605,7 +611,7 @@ export default function SoilProfilingScreen() {
               color: selectedTab === 'trends' ? '#408059' : '#8e8e93',
             }}
           >
-            Trends
+            {t('soilProfiling.tabs.trends')}
           </Text>
         </Pressable>
       </View>
@@ -615,7 +621,7 @@ export default function SoilProfilingScreen() {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#408059" />
           <Text style={{ marginTop: spacing[2], color: colors.surface[500] }}>
-            Loading profiles...
+            {t('soilProfiling.loading')}
           </Text>
         </View>
       ) : selectedTab === 'history' ? (

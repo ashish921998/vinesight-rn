@@ -5,16 +5,28 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, SafeAreaView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { router } from 'expo-router';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
+import { useLanguageStore } from '@/stores';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import type { SupportedLanguageCode } from '@/i18n/languages';
 
 export default function OnboardingScreen() {
+  const { t } = useTranslation();
+
   const { currentStep, preferences, nextStep, previousStep, setPreferences, completeOnboarding } =
     useOnboardingStore();
+
+  const currentLanguage = useLanguageStore((s) => s.language);
+  const setLanguage = useLanguageStore((s) => s.setLanguage);
+
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguageCode>(
+    currentLanguage ?? 'en',
+  );
 
   const [selectedCountry, setSelectedCountry] = useState(preferences.country);
   const [selectedAreaUnit, setSelectedAreaUnit] = useState(preferences.areaUnit);
@@ -26,6 +38,10 @@ export default function OnboardingScreen() {
   const isLastStep = currentIndex === ONBOARDING_STEPS.length - 1;
 
   const handleNext = async () => {
+    if (currentStep === 'language') {
+      setLanguage(selectedLanguage);
+    }
+
     if (currentStep === 'preferences') {
       setPreferences({
         country: selectedCountry,
@@ -129,11 +145,107 @@ export default function OnboardingScreen() {
           marginBottom: spacing[3],
         }}
       >
-        Welcome to Vinesight
+        {t('onboarding.welcome.title')}
       </Text>
       <Text style={{ fontSize: fontSize.lg, color: colors.gray[500], textAlign: 'center' }}>
-        Your smart farming companion
+        {t('onboarding.welcome.subtitle')}
       </Text>
+    </View>
+  );
+
+  const renderLanguageStep = () => (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: spacing[8],
+      }}
+    >
+      <View
+        style={{
+          width: 96,
+          height: 96,
+          borderRadius: borderRadius.full,
+          backgroundColor: colors.primary[100],
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: spacing[8],
+        }}
+      >
+        <SymbolIcon name="globe" size={48} color="#1a5d1a" />
+      </View>
+
+      <Text
+        style={{
+          fontSize: fontSize['2xl'],
+          fontWeight: fontWeight.bold,
+          color: colors.gray[800],
+          textAlign: 'center',
+          marginBottom: spacing[3],
+        }}
+      >
+        {t('onboarding.language.title')}
+      </Text>
+      <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[6] }}>
+        {t('onboarding.language.subtitle')}
+      </Text>
+
+      <View style={{ width: '100%', maxWidth: 420, gap: spacing[3] }}>
+        <Pressable
+          onPress={() => {
+            setSelectedLanguage('en');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('onboarding.language.english')}
+          accessibilityState={{ selected: selectedLanguage === 'en' }}
+          style={{
+            padding: spacing[4],
+            borderRadius: borderRadius.xl,
+            borderWidth: 2,
+            borderColor: selectedLanguage === 'en' ? colors.primary[600] : colors.gray[200],
+            backgroundColor: selectedLanguage === 'en' ? colors.primary[50] : colors.white,
+          }}
+        >
+          <Text
+            style={{
+              textAlign: 'center',
+              fontWeight: fontWeight.semibold,
+              color: selectedLanguage === 'en' ? colors.primary[700] : colors.gray[700],
+              fontSize: fontSize.lg,
+            }}
+          >
+            {t('onboarding.language.english')}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => {
+            setSelectedLanguage('mr');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('onboarding.language.marathi')}
+          accessibilityState={{ selected: selectedLanguage === 'mr' }}
+          style={{
+            padding: spacing[4],
+            borderRadius: borderRadius.xl,
+            borderWidth: 2,
+            borderColor: selectedLanguage === 'mr' ? colors.primary[600] : colors.gray[200],
+            backgroundColor: selectedLanguage === 'mr' ? colors.primary[50] : colors.white,
+          }}
+        >
+          <Text
+            style={{
+              textAlign: 'center',
+              fontWeight: fontWeight.semibold,
+              color: selectedLanguage === 'mr' ? colors.primary[700] : colors.gray[700],
+              fontSize: fontSize.lg,
+            }}
+          >
+            {t('onboarding.language.marathi')}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 
@@ -152,10 +264,10 @@ export default function OnboardingScreen() {
           marginBottom: spacing[2],
         }}
       >
-        How It Works
+        {t('onboarding.howItWorks.title')}
       </Text>
       <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[6] }}>
-        Everything you need to manage your farm
+        {t('onboarding.howItWorks.subtitle')}
       </Text>
 
       {filteredFeatures.map((feature, index) => (
@@ -191,10 +303,10 @@ export default function OnboardingScreen() {
                 color: colors.gray[800],
               }}
             >
-              {feature.title}
+              {t(`onboarding.features.${feature.id}.title`)}
             </Text>
             <Text style={{ fontSize: fontSize.sm, color: colors.gray[500], marginTop: spacing[1] }}>
-              {feature.description}
+              {t(`onboarding.features.${feature.id}.description`)}
             </Text>
           </View>
         </View>
@@ -217,10 +329,10 @@ export default function OnboardingScreen() {
           marginBottom: spacing[2],
         }}
       >
-        Farm Preferences
+        {t('onboarding.preferences.title')}
       </Text>
       <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[8] }}>
-        Help us customize your experience
+        {t('onboarding.preferences.subtitle')}
       </Text>
 
       {/* Country Selection */}
@@ -235,7 +347,7 @@ export default function OnboardingScreen() {
               marginLeft: spacing[2],
             }}
           >
-            Country
+            {t('onboarding.preferences.country')}
           </Text>
         </View>
         <Pressable
@@ -255,7 +367,7 @@ export default function OnboardingScreen() {
               color: selectedCountry ? colors.gray[800] : colors.gray[400],
             }}
           >
-            {selectedCountry || 'Select a country'}
+            {selectedCountry || t('onboarding.preferences.selectCountry')}
           </Text>
           <SymbolIcon
             name={showCountryPicker ? 'chevron.up' : 'chevron.down'}
@@ -317,7 +429,7 @@ export default function OnboardingScreen() {
               marginLeft: spacing[2],
             }}
           >
-            Area Unit
+            {t('onboarding.preferences.areaUnit')}
           </Text>
         </View>
         <View style={{ flexDirection: 'row', gap: spacing[3] }}>
@@ -339,7 +451,7 @@ export default function OnboardingScreen() {
                 color: selectedAreaUnit === 'acres' ? colors.primary[700] : colors.gray[600],
               }}
             >
-              Acres
+              {t('units.acres')}
             </Text>
           </Pressable>
           <Pressable
@@ -360,7 +472,7 @@ export default function OnboardingScreen() {
                 color: selectedAreaUnit === 'hectares' ? colors.primary[700] : colors.gray[600],
               }}
             >
-              Hectares
+              {t('units.hectares')}
             </Text>
           </Pressable>
         </View>
@@ -399,25 +511,31 @@ export default function OnboardingScreen() {
           marginBottom: spacing[3],
         }}
       >
-        Stay Updated
+        {t('onboarding.notifications.title')}
       </Text>
       <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[6] }}>
-        Get reminders for irrigation schedules, task deadlines, and important farm alerts.
+        {t('onboarding.notifications.subtitle')}
       </Text>
       <View
         style={{ backgroundColor: '#EFF6FF', padding: spacing[4], borderRadius: borderRadius.xl }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
           <SymbolIcon name="drop.fill" size={20} color="#3B82F6" />
-          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Irrigation reminders</Text>
+          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>
+            {t('onboarding.notifications.item1')}
+          </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
           <SymbolIcon name="alarm.fill" size={20} color="#3B82F6" />
-          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Task deadlines</Text>
+          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>
+            {t('onboarding.notifications.item2')}
+          </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <SymbolIcon name="exclamationmark.triangle.fill" size={20} color="#3B82F6" />
-          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>Weather alerts</Text>
+          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>
+            {t('onboarding.notifications.item3')}
+          </Text>
         </View>
       </View>
     </View>
@@ -454,16 +572,18 @@ export default function OnboardingScreen() {
           marginBottom: spacing[3],
         }}
       >
-        You&apos;re All Set!
+        {t('onboarding.complete.title')}
       </Text>
       <Text style={{ color: colors.gray[500], textAlign: 'center' }}>
-        Start managing your farms with Vinesight. Add your first farm to get started.
+        {t('onboarding.complete.subtitle')}
       </Text>
     </View>
   );
 
   const renderCurrentStep = () => {
     switch (currentStep) {
+      case 'language':
+        return renderLanguageStep();
       case 'welcome':
         return renderWelcomeStep();
       case 'features':
@@ -490,7 +610,9 @@ export default function OnboardingScreen() {
           onPress={handleSkip}
           style={{ position: 'absolute', right: spacing[4], top: spacing[12], zIndex: 10 }}
         >
-          <Text style={{ color: colors.gray[500], fontSize: fontSize.base }}>Skip</Text>
+          <Text style={{ color: colors.gray[500], fontSize: fontSize.base }}>
+            {t('common.skip')}
+          </Text>
         </Pressable>
       )}
 
@@ -517,7 +639,7 @@ export default function OnboardingScreen() {
                   fontWeight: fontWeight.semibold,
                 }}
               >
-                Back
+                {t('common.back')}
               </Text>
             </Pressable>
           )}
@@ -539,10 +661,10 @@ export default function OnboardingScreen() {
               }}
             >
               {isLastStep
-                ? 'Get Started'
+                ? t('onboarding.cta.getStarted')
                 : currentStep === 'notifications'
-                  ? 'Enable Notifications'
-                  : 'Continue'}
+                  ? t('onboarding.cta.enableNotifications')
+                  : t('onboarding.cta.continue')}
             </Text>
           </Pressable>
         </View>

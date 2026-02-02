@@ -6,24 +6,37 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { formatCurrency, formatNumber } from '@/i18n/format';
 
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFarms } from '../src/hooks';
+import { useFarms, useProfile } from '../src/hooks';
 import { useReportData, useReportExport, getDefaultDateRange } from '../src/hooks/use-reports';
 import { DateRange, ReportType, ReportFormat } from '../src/types/report';
+import { useAuthStore } from '@/stores';
 
-const REPORT_TYPES: { value: ReportType; label: string; icon: string }[] = [
-  { value: 'comprehensive', label: 'Comprehensive', icon: 'doc.text.fill' },
-  { value: 'operations', label: 'Operations', icon: 'drop.fill' },
-  { value: 'financial', label: 'Financial', icon: 'dollarsign.circle.fill' },
+const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
+  { value: 'comprehensive', labelKey: 'reports.types.comprehensive', icon: 'doc.text.fill' },
+  { value: 'operations', labelKey: 'reports.types.operations', icon: 'drop.fill' },
+  { value: 'financial', labelKey: 'reports.types.financial', icon: 'dollarsign.circle.fill' },
 ];
 
 export default function ReportsScreen() {
+  const { t } = useTranslation();
+
   const insets = useSafeAreaInsets();
   const { data: farms, isLoading: farmsLoading } = useFarms();
+  const { user } = useAuthStore();
+  const { data: profile } = useProfile();
+  const VALID_AREA_UNITS = ['acres', 'hectares'] as const;
+  const rawAreaUnit = user?.user_metadata?.area_unit;
+  const areaUnit = VALID_AREA_UNITS.includes(rawAreaUnit as 'acres' | 'hectares')
+    ? rawAreaUnit
+    : 'acres';
+  const preferredCurrency = profile?.preferred_currency || 'USD';
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
@@ -43,15 +56,15 @@ export default function ReportsScreen() {
 
   const handleExport = async (format: ReportFormat) => {
     if (!preview) {
-      Alert.alert('Error', 'No report data available');
+      Alert.alert(t('common.error'), t('common.errors.noReportDataAvailable'));
       return;
     }
 
     try {
       await exportReport(preview, format, reportType);
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Unable to export report';
-      Alert.alert('Export Failed', errorMessage);
+      const errorMessage = e instanceof Error ? e.message : t('reports.errors.unableToExport');
+      Alert.alert(t('reports.alerts.exportFailedTitle'), errorMessage);
     }
   };
 
@@ -107,7 +120,7 @@ export default function ReportsScreen() {
               color: colors.gray[800],
             }}
           >
-            Reports
+            {t('reports.title')}
           </Text>
         </View>
         <View
@@ -122,10 +135,10 @@ export default function ReportsScreen() {
               marginTop: spacing[4],
             }}
           >
-            No Farms Found
+            {t('reports.noFarms.title')}
           </Text>
           <Text style={{ color: colors.gray[500], textAlign: 'center', marginTop: spacing[2] }}>
-            Add a farm first to generate reports
+            {t('reports.noFarms.subtitle')}
           </Text>
         </View>
       </View>
@@ -159,7 +172,7 @@ export default function ReportsScreen() {
             marginLeft: spacing[2],
           }}
         >
-          Reports
+          {t('reports.title')}
         </Text>
       </View>
 
@@ -182,7 +195,7 @@ export default function ReportsScreen() {
               marginBottom: spacing[2],
             }}
           >
-            Select Farm
+            {t('reports.selectFarmLabel')}
           </Text>
           <Pressable
             onPress={() => setShowFarmPicker(!showFarmPicker)}
@@ -208,7 +221,7 @@ export default function ReportsScreen() {
                 }}
                 numberOfLines={1}
               >
-                {selectedFarm?.name || 'Select a farm'}
+                {selectedFarm?.name || t('reports.selectFarmPlaceholder')}
               </Text>
             </View>
             <Icon name={showFarmPicker ? 'chevron.up' : 'chevron.down'} size={20} color="#666" />
@@ -245,7 +258,7 @@ export default function ReportsScreen() {
                       fontWeight: f.id === selectedFarmId ? fontWeight.semibold : fontWeight.normal,
                     }}
                   >
-                    {f.name} ({f.area} acres)
+                    {f.name} ({f.area} {t(`units.${areaUnit}`)})
                   </Text>
                 </Pressable>
               ))}
@@ -271,7 +284,7 @@ export default function ReportsScreen() {
               marginBottom: spacing[3],
             }}
           >
-            Date Range
+            {t('reports.dateRange.label')}
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing[3] }}>
             <Pressable
@@ -288,7 +301,7 @@ export default function ReportsScreen() {
               <Text
                 style={{ fontSize: fontSize.xs, color: colors.gray[500], marginBottom: spacing[1] }}
               >
-                From
+                {t('common.from')}
               </Text>
               <Text
                 style={{
@@ -314,7 +327,7 @@ export default function ReportsScreen() {
               <Text
                 style={{ fontSize: fontSize.xs, color: colors.gray[500], marginBottom: spacing[1] }}
               >
-                To
+                {t('common.to')}
               </Text>
               <Text
                 style={{
@@ -367,7 +380,7 @@ export default function ReportsScreen() {
               marginBottom: spacing[3],
             }}
           >
-            Report Type
+            {t('reports.reportType.label')}
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing[2] }}>
             {REPORT_TYPES.map((type) => (
@@ -398,7 +411,7 @@ export default function ReportsScreen() {
                     fontWeight: reportType === type.value ? fontWeight.semibold : fontWeight.normal,
                   }}
                 >
-                  {type.label}
+                  {t(type.labelKey)}
                 </Text>
               </Pressable>
             ))}
@@ -419,7 +432,7 @@ export default function ReportsScreen() {
           >
             <ActivityIndicator size="small" color="#1a5d1a" />
             <Text style={{ color: colors.gray[500], marginTop: spacing[2] }}>
-              Loading report data...
+              {t('reports.loading.preview')}
             </Text>
           </View>
         ) : preview ? (
@@ -440,7 +453,7 @@ export default function ReportsScreen() {
                 marginBottom: spacing[3],
               }}
             >
-              Preview Summary
+              {t('reports.preview.title')}
             </Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
@@ -462,7 +475,9 @@ export default function ReportsScreen() {
                 >
                   {preview.summary.totalRecords}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>Total Records</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>
+                  {t('reports.summary.totalRecords')}
+                </Text>
               </View>
               <View
                 style={{
@@ -480,9 +495,11 @@ export default function ReportsScreen() {
                     color: '#0891B2',
                   }}
                 >
-                  {preview.summary.totalWaterUsage.toLocaleString()}L
+                  {formatNumber(preview.summary.totalWaterUsage)}L
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#0891B2' }}>Water Usage</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#0891B2' }}>
+                  {t('reports.summary.waterUsage')}
+                </Text>
               </View>
               <View
                 style={{
@@ -502,7 +519,9 @@ export default function ReportsScreen() {
                 >
                   {preview.summary.totalHarvest}kg
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#7C3AED' }}>Total Harvest</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#7C3AED' }}>
+                  {t('reports.summary.totalHarvest')}
+                </Text>
               </View>
               <View
                 style={{
@@ -520,9 +539,11 @@ export default function ReportsScreen() {
                     color: preview.summary.netProfit >= 0 ? '#16A34A' : '#DC2626',
                   }}
                 >
-                  ₹{preview.summary.netProfit.toLocaleString()}
+                  {formatCurrency(preview.summary.netProfit, preferredCurrency)}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>Net Profit</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>
+                  {t('reports.summary.netProfit')}
+                </Text>
               </View>
             </View>
 
@@ -547,7 +568,10 @@ export default function ReportsScreen() {
                 }}
               >
                 <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
-                  💧 {preview.summary.irrigationCount} irrigations
+                  💧{' '}
+                  {t('reports.preview.counts.irrigations', {
+                    count: preview.summary.irrigationCount,
+                  })}
                 </Text>
               </View>
               <View
@@ -559,7 +583,7 @@ export default function ReportsScreen() {
                 }}
               >
                 <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
-                  🧪 {preview.summary.sprayCount} sprays
+                  🧪 {t('reports.preview.counts.sprays', { count: preview.summary.sprayCount })}
                 </Text>
               </View>
               <View
@@ -571,7 +595,7 @@ export default function ReportsScreen() {
                 }}
               >
                 <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
-                  🍇 {preview.summary.harvestCount} harvests
+                  🍇 {t('reports.preview.counts.harvests', { count: preview.summary.harvestCount })}
                 </Text>
               </View>
               <View
@@ -583,7 +607,7 @@ export default function ReportsScreen() {
                 }}
               >
                 <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
-                  💰 {preview.summary.expenseCount} expenses
+                  💰 {t('reports.preview.counts.expenses', { count: preview.summary.expenseCount })}
                 </Text>
               </View>
             </View>
@@ -602,7 +626,7 @@ export default function ReportsScreen() {
               marginBottom: spacing[3],
             }}
           >
-            Export As
+            {t('reports.exportAs')}
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing[3] }}>
             <Pressable

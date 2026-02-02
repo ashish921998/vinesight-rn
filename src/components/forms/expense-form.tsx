@@ -4,6 +4,8 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { NumericInput } from './form-field';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { formatCurrency } from '@/i18n/format';
+import { useProfile } from '../../hooks';
 
 export interface ExpenseFormData {
   type: ExpenseTypeId | '';
@@ -16,6 +18,7 @@ interface ExpenseFormProps {
   data: ExpenseFormData;
   onChange: (data: ExpenseFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
+  preferredCurrency?: string;
 }
 
 // Icon mapping for expense types
@@ -29,7 +32,20 @@ const EXPENSE_ICONS: Record<ExpenseTypeId, string> = {
   Other: 'ellipsis',
 };
 
-export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) {
+export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
+  const { data: profile } = useProfile();
+  const isValidCurrency = (code: string | null | undefined): boolean => {
+    if (!code || typeof code !== 'string') return false;
+    if (!/^[A-Z]{3}$/.test(code)) return false;
+    try {
+      new Intl.NumberFormat(undefined, { style: 'currency', currency: code });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const candidateCurrency = preferredCurrency || profile?.preferred_currency;
+  const currency = isValidCurrency(candidateCurrency) ? (candidateCurrency ?? 'INR') : 'INR';
   const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
 
   return (
@@ -208,7 +224,7 @@ export function ExpenseForm({ data, onChange, onInputFocus }: ExpenseFormProps) 
               </Text>
             </View>
             <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#B91C1C' }}>
-              ₹{data.cost!.toLocaleString()}
+              {formatCurrency(data.cost!, currency)}
             </Text>
           </View>
         </View>

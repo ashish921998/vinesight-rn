@@ -5,24 +5,12 @@
 
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../../hooks/use-lab-tests';
 import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 
-const monthNames = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
+import { formatDate } from '@/i18n/format';
 
 interface Props {
   trendData: TrendData[];
@@ -37,6 +25,7 @@ export default function TrendsTable({
   selectedParams,
   testType,
 }: Props) {
+  const { t } = useTranslation();
   if (trendData.length === 0) {
     return (
       <View
@@ -54,7 +43,7 @@ export default function TrendsTable({
             color: colors.gray[800],
           }}
         >
-          No Data Available
+          {t('trends.table.empty.noDataTitle')}
         </Text>
         <Text
           style={{
@@ -64,7 +53,7 @@ export default function TrendsTable({
             paddingHorizontal: spacing[8],
           }}
         >
-          Add lab tests to view trends
+          {t('trends.table.empty.noDataBody')}
         </Text>
       </View>
     );
@@ -87,7 +76,7 @@ export default function TrendsTable({
             color: colors.gray[800],
           }}
         >
-          No Parameter Data
+          {t('trends.table.empty.noParamsTitle')}
         </Text>
         <Text
           style={{
@@ -97,7 +86,7 @@ export default function TrendsTable({
             paddingHorizontal: spacing[8],
           }}
         >
-          Unable to load parameter trends
+          {t('trends.table.empty.noParamsBody')}
         </Text>
       </View>
     );
@@ -166,14 +155,14 @@ export default function TrendsTable({
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.headerRow}>
-          <Text style={[styles.headerCell, styles.nutrientCell]}>Nutrient</Text>
+          <Text style={[styles.headerCell, styles.nutrientCell]}>{t('trends.table.nutrient')}</Text>
           {trendData.map((item, index) => {
             const date = new Date(item.date);
             return (
               <View key={`header-${item.date}-${index}`} style={styles.headerDateContainer}>
-                <Text style={styles.headerDateMonth}>{monthNames[date.getMonth()]}</Text>
-                <Text style={styles.headerDateDay}>{date.getDate()}</Text>
-                <Text style={styles.headerDateYear}>{date.getFullYear()}</Text>
+                <Text style={styles.headerDateMonth}>{formatDate(date, { month: 'short' })}</Text>
+                <Text style={styles.headerDateDay}>{formatDate(date, { day: '2-digit' })}</Text>
+                <Text style={styles.headerDateYear}>{formatDate(date, { year: 'numeric' })}</Text>
               </View>
             );
           })}
@@ -216,35 +205,35 @@ export default function TrendsTable({
       {/* Color Guide Legend */}
       <View style={styles.legendContainer}>
         <View style={styles.legendContent}>
-          <Text style={styles.legendTitle}>Color Guide:</Text>
+          <Text style={styles.legendTitle}>{t('trends.table.colorGuide')}</Text>
           <View style={styles.colorGuideRow}>
             <View style={styles.legendItem}>
               <View style={[styles.colorBox, styles.colorBoxOptimal]} />
-              <Text style={styles.legendText}>Optimal</Text>
+              <Text style={styles.legendText}>{t('trends.table.optimal')}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.colorBox, styles.colorBoxWarning]} />
-              <Text style={styles.legendText}>Warning</Text>
+              <Text style={styles.legendText}>{t('trends.table.warning')}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.colorBox, styles.colorBoxCritical]} />
-              <Text style={styles.legendText}>Critical</Text>
+              <Text style={styles.legendText}>{t('trends.table.critical')}</Text>
             </View>
           </View>
           <View style={styles.trendGuide}>
-            <Text style={styles.legendTitle}>Trend:</Text>
+            <Text style={styles.legendTitle}>{t('trends.table.trend')}</Text>
             <View style={styles.trendItems}>
               <View style={styles.trendItem}>
                 <Text style={styles.increase}> ↑</Text>
-                <Text style={styles.legendText}>Increase</Text>
+                <Text style={styles.legendText}>{t('trends.table.increase')}</Text>
               </View>
               <View style={styles.trendItem}>
                 <Text style={styles.decrease}> ↓</Text>
-                <Text style={styles.legendText}>Decrease</Text>
+                <Text style={styles.legendText}>{t('trends.table.decrease')}</Text>
               </View>
               <View style={styles.trendItem}>
                 <Text style={styles.stable}> ●</Text>
-                <Text style={styles.legendText}>Stable</Text>
+                <Text style={styles.legendText}>{t('trends.table.stable')}</Text>
               </View>
             </View>
           </View>

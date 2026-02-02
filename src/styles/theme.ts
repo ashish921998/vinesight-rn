@@ -60,6 +60,10 @@ export const colors = {
   expense: {
     500: '#598066',
   },
+  labTest: {
+    soil: '#597A61',
+    petiole: '#4C806B',
+  },
   // Surface Colors (iOS System)
   surface: {
     50: '#f2f2f7',
@@ -105,6 +109,12 @@ export const spacing = {
   16: 64,
   20: 80,
   24: 96,
+} as const;
+
+// Android text padding constants for includeFontPadding workaround
+export const androidTextPadding = {
+  bottom: 2,
+  right: 3,
 } as const;
 
 export const borderRadius = {

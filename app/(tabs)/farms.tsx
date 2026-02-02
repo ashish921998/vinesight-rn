@@ -13,11 +13,11 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useFarms, useDeleteFarm } from '@/hooks';
+import { useTranslation } from 'react-i18next';
+import { useFarms, useDeleteFarm, useFabBottomPosition } from '@/hooks';
 import { FarmCard } from '@/components/cards';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
-import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
 import type { Farm } from '@/types';
 import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -42,6 +42,8 @@ const SearchHeader = React.memo<SearchHeaderProps>(
     filteredFarms,
     farms,
   }) => {
+    const { t } = useTranslation();
+
     const searchBarStyle: ViewStyle = {
       flexDirection: 'row',
       alignItems: 'center',
@@ -69,7 +71,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
       >
         {/* Search Bar */}
         <View style={searchBarStyle}>
-          <Symbol
+          <SymbolIcon
             name="magnifyingglass"
             size={20}
             color={
@@ -80,7 +82,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
           />
           <TextInput
             style={searchInputStyle}
-            placeholder="Search farms..."
+            placeholder={t('farms.search.placeholder')}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
             value={searchQuery}
             onChangeText={onSearchChange}
@@ -93,9 +95,9 @@ const SearchHeader = React.memo<SearchHeaderProps>(
               onPress={() => onSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel="Clear search"
+              accessibilityLabel={t('common.clearSearch')}
             >
-              <Symbol
+              <SymbolIcon
                 name="xmark.circle.fill"
                 size={20}
                 color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
@@ -113,7 +115,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
               color: m3.colorScheme.onSurfaceVariant,
             }}
           >
-            {filteredFarms.length} farm{filteredFarms.length !== 1 ? 's' : ''} found
+            {t('farms.search.found', { count: filteredFarms.length })}
           </Text>
         )}
 
@@ -153,7 +155,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                     backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   }}
                 >
-                  <Symbol name="leaf.fill" size={16} color={m3.colorScheme.primary} />
+                  <SymbolIcon name="leaf.fill" size={16} color={m3.colorScheme.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -172,7 +174,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                       ...m3.typography.labelSmall,
                     }}
                   >
-                    Total Farms
+                    {t('farms.stats.totalFarms')}
                   </Text>
                 </View>
               </View>
@@ -201,13 +203,13 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                     overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    backgroundColor: m3.surface.surfaceContainerHigh,
                   }}
                 >
-                  <Symbol
-                    name="arrow.up.left.and.arrow.down.right"
-                    size={16}
-                    color={m3.colorScheme.primary}
+                  <SymbolIcon
+                    name="square.grid.2x2"
+                    size={18}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
                   />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -227,7 +229,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
                       ...m3.typography.labelSmall,
                     }}
                   >
-                    Total Acres
+                    {t('farms.stats.totalArea')}
                   </Text>
                 </View>
               </View>
@@ -242,8 +244,10 @@ const SearchHeader = React.memo<SearchHeaderProps>(
 SearchHeader.displayName = 'SearchHeader';
 
 export default function FarmsScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
-  const fabBottomInset = useFabBottomInset();
+  const fabBottom = useFabBottomPosition();
   const { data: farms, isLoading, refetch } = useFarms();
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
@@ -295,22 +299,23 @@ export default function FarmsScreen() {
     const farmId = farm.id;
     if (typeof farmId !== 'number') return;
     Alert.alert(
-      'Delete Farm',
-      `Are you sure you want to delete "${farm.name}"? This will also delete all associated data including irrigation records, spray records, harvests, expenses, soil profiles, and other farm-related data. This action cannot be undone.`,
+      t('farmDetails.deleteFarmTitle'),
+      t('farmDetails.deleteFarmBody', { name: farm.name }),
       [
         {
-          text: 'Cancel',
+          text: t('common.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteFarm.mutateAsync(farmId);
             } catch (error: unknown) {
-              const errorMessage = error instanceof Error ? error.message : 'Failed to delete farm';
-              Alert.alert('Error', errorMessage);
+              const errorMessage =
+                error instanceof Error ? error.message : t('farmDetails.errors.deleteFarmFailed');
+              Alert.alert(t('common.error'), errorMessage);
             }
           },
         },
@@ -353,7 +358,7 @@ export default function FarmsScreen() {
               color: m3.colorScheme.onSurfaceVariant,
             }}
           >
-            Loading farms...
+            {t('common.loading')}
           </Text>
         </View>
       );
@@ -373,7 +378,7 @@ export default function FarmsScreen() {
               backgroundColor: m3.surface.surfaceContainerHigh,
             }}
           >
-            <Symbol
+            <SymbolIcon
               name="magnifyingglass"
               size={36}
               color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
@@ -387,7 +392,7 @@ export default function FarmsScreen() {
               color: m3.colorScheme.onSurface,
             }}
           >
-            No Results Found
+            {t('common.noResultsFound')}
           </Text>
           <Text
             style={{
@@ -397,7 +402,7 @@ export default function FarmsScreen() {
               color: m3.colorScheme.onSurfaceVariant,
             }}
           >
-            Try a different search term
+            {t('common.tryDifferentSearchTerm')}
           </Text>
           <Pressable
             onPress={() => setSearchQuery('')}
@@ -407,12 +412,12 @@ export default function FarmsScreen() {
               overflow: 'hidden',
             }}
             accessibilityRole="button"
-            accessibilityLabel="Clear search"
+            accessibilityLabel={t('common.clearSearch')}
           >
             {({ pressed }) => (
               <View style={{ paddingHorizontal: spacing[3], paddingVertical: spacing[2] }}>
                 <Text style={{ fontWeight: fontWeight.medium, color: m3.colorScheme.primary }}>
-                  Clear Search
+                  {t('common.clearSearch')}
                 </Text>
                 <View
                   pointerEvents="none"
@@ -445,7 +450,7 @@ export default function FarmsScreen() {
             backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
           }}
         >
-          <Symbol name="leaf.fill" size={48} color={m3.colorScheme.primary} />
+          <SymbolIcon name="leaf.fill" size={48} color={m3.colorScheme.primary} />
         </View>
         <Text
           style={{
@@ -455,7 +460,7 @@ export default function FarmsScreen() {
             color: m3.colorScheme.onSurface,
           }}
         >
-          No Farms Yet
+          {t('farms.empty.title')}
         </Text>
         <Text
           style={{
@@ -465,10 +470,10 @@ export default function FarmsScreen() {
             color: m3.colorScheme.onSurfaceVariant,
           }}
         >
-          Add your first farm to start tracking irrigation, sprays, and harvests.
+          {t('farms.empty.subtitle')}
         </Text>
         <View style={{ marginTop: spacing[6], width: '100%', maxWidth: 360 }}>
-          <Button title="Add Farm" onPress={handleAddFarm} />
+          <Button title={t('farms.addFarm')} onPress={handleAddFarm} />
         </View>
       </View>
     );
@@ -476,8 +481,8 @@ export default function FarmsScreen() {
 
   const showFab = isAndroid && (farms?.length || 0) > 0;
   const listBottomPadding = Math.max(
-    spacing[16] + fabBottomInset,
-    (showFab ? spacing[14] + fabBottomInset + 56 : 0) + spacing[8],
+    spacing[16] + (process.env.EXPO_OS === 'android' ? 16 : 0),
+    (showFab ? fabBottom + 56 : 0) + spacing[8],
   );
 
   return (
@@ -523,7 +528,7 @@ export default function FarmsScreen() {
         <Pressable
           style={{
             position: 'absolute',
-            bottom: spacing[14] + fabBottomInset,
+            bottom: fabBottom,
             right: spacing[6],
             width: 56,
             height: 56,
@@ -535,11 +540,11 @@ export default function FarmsScreen() {
           }}
           onPress={handleAddFarm}
           accessibilityRole="button"
-          accessibilityLabel="Add farm"
+          accessibilityLabel={t('farms.addFarm')}
         >
           {({ pressed }) => (
             <>
-              <Symbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+              <SymbolIcon name="plus" size={28} color={m3.colorScheme.onPrimary} />
               <View
                 pointerEvents="none"
                 style={[

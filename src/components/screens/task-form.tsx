@@ -23,6 +23,13 @@ import {
 } from '../../types/task';
 import { TASK_TEMPLATES } from '../../constants/task-templates';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useNotificationStore } from '@/stores';
+import {
+  ensureNotificationPermissions,
+  scheduleTaskDueReminder,
+  cancelNotification,
+} from '@/services/notifications';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   visible?: boolean;
@@ -54,10 +61,17 @@ export default function TaskForm({
   onSaveSuccess,
   presentation = 'modal',
 }: Props) {
+  const { t } = useTranslation();
+
   const isVisible = visible ?? true;
   const { data: farms } = useFarms();
   const createMutation = useCreateTask();
   const updateMutation = useUpdateTask();
+
+  const taskRemindersEnabled = useNotificationStore((s) => s.taskRemindersEnabled);
+  const taskSchedules = useNotificationStore((s) => s.taskSchedules);
+  const upsertTaskSchedule = useNotificationStore((s) => s.upsertTaskSchedule);
+  const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -137,17 +151,17 @@ export default function TaskForm({
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a task title');
+      Alert.alert(t('common.error'), t('tasks.form.errors.missingTitle'));
       return;
     }
     if (!farmId) {
-      Alert.alert('Error', 'Please select a farm');
+      Alert.alert(t('common.error'), t('tasks.form.errors.missingFarm'));
       return;
     }
     if (dueDate) {
       const datePattern = /^\d{4}-\d{2}-\d{2}$/;
       if (!datePattern.test(dueDate)) {
-        setDueDateError('Use YYYY-MM-DD format.');
+        setDueDateError(t('tasks.form.dueDateErrors.format'));
         return;
       }
       const [yearStr, monthStr, dayStr] = dueDate.split('-');
@@ -160,7 +174,7 @@ export default function TaskForm({
         candidate.getMonth() === month - 1 &&
         candidate.getDate() === day;
       if (!isValidDate) {
-        setDueDateError('Enter a valid calendar date.');
+        setDueDateError(t('tasks.form.dueDateErrors.invalidDate'));
         return;
       }
     }
@@ -184,20 +198,52 @@ export default function TaskForm({
       linked_record_id: null,
     };
 
+    let saved: TaskReminder | null = null;
     try {
       if (isEditing && editingTask?.id) {
-        await updateMutation.mutateAsync({
+        saved = await updateMutation.mutateAsync({
           id: editingTask.id,
           updates: taskData,
         });
       } else {
-        await createMutation.mutateAsync(taskData);
+        saved = await createMutation.mutateAsync(taskData);
       }
-      onSaveSuccess?.();
-      onClose();
     } catch (_error) {
-      Alert.alert('Error', 'Failed to save task. Please try again.');
+      Alert.alert(t('common.error'), t('tasks.form.errors.failedToSave'));
+      return;
     }
+
+    // Task notifications (localized) are scheduled locally - handle separately from save errors
+    if (saved?.id) {
+      const taskId = String(saved.id);
+      const existing = taskSchedules[taskId];
+
+      try {
+        // Cancel previous schedule if any.
+        if (existing?.notificationId) {
+          await cancelNotification(existing.notificationId);
+          removeTaskSchedule(taskId);
+        }
+
+        if (taskRemindersEnabled && saved.due_date) {
+          const granted = await ensureNotificationPermissions();
+          if (granted) {
+            const notificationId = await scheduleTaskDueReminder(taskId, saved.due_date);
+            if (notificationId) {
+              upsertTaskSchedule(taskId, { notificationId, dueDate: saved.due_date });
+            }
+          }
+        }
+      } catch (notificationError) {
+        // Log notification error but don't fail the save operation
+        if (__DEV__) {
+          console.error('Failed to schedule task notification:', notificationError);
+        }
+      }
+    }
+
+    onSaveSuccess?.();
+    onClose();
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
@@ -238,7 +284,9 @@ export default function TaskForm({
             }}
           >
             <Pressable onPress={onClose} disabled={isLoading}>
-              <Text style={{ color: colors.primary[600], fontSize: fontSize.base }}>Cancel</Text>
+              <Text style={{ color: colors.primary[600], fontSize: fontSize.base }}>
+                {t('common.cancel')}
+              </Text>
             </Pressable>
             <Text
               style={{
@@ -248,7 +296,7 @@ export default function TaskForm({
               }}
               numberOfLines={1}
             >
-              {isEditing ? 'Edit Task' : 'Add Task'}
+              {isEditing ? t('tasks.form.editTitle') : t('tasks.form.addTitle')}
             </Text>
             <Pressable onPress={handleSubmit} disabled={isLoading}>
               <Text
@@ -258,7 +306,7 @@ export default function TaskForm({
                   color: isLoading ? colors.surface[400] : colors.primary[600],
                 }}
               >
-                {isLoading ? 'Saving...' : 'Save'}
+                {isLoading ? t('tasks.form.saving') : t('common.save')}
               </Text>
             </Pressable>
           </View>
@@ -287,7 +335,7 @@ export default function TaskForm({
                   flex: 1,
                 }}
               >
-                Use Template
+                {t('tasks.form.useTemplate')}
               </Text>
               <IconSymbol
                 name={showTemplates ? 'chevron.up' : 'chevron.down'}
@@ -370,7 +418,7 @@ export default function TaskForm({
                 marginBottom: spacing[2],
               }}
             >
-              Farm *
+              {t('tasks.form.fields.farm')} *
             </Text>
             <Pressable
               onPress={() => setShowFarmPicker(!showFarmPicker)}
@@ -395,7 +443,7 @@ export default function TaskForm({
                     marginLeft: spacing[2],
                   }}
                 >
-                  {selectedFarm?.name || 'Select farm'}
+                  {selectedFarm?.name || t('tasks.form.selectFarm')}
                 </Text>
               </View>
               <IconSymbol name="chevron.down" size={20} color="#9CA3AF" />
@@ -449,12 +497,12 @@ export default function TaskForm({
                 marginBottom: spacing[2],
               }}
             >
-              Title *
+              {t('tasks.form.fields.title')} *
             </Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="Enter task title"
+              placeholder={t('tasks.form.placeholders.title')}
               style={{
                 backgroundColor: colors.white,
                 borderRadius: borderRadius.xl,
@@ -479,12 +527,12 @@ export default function TaskForm({
                 marginBottom: spacing[2],
               }}
             >
-              Description
+              {t('tasks.form.fields.description')}
             </Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
-              placeholder="Add details about this task"
+              placeholder={t('tasks.form.placeholders.description')}
               multiline
               numberOfLines={3}
               style={{
@@ -515,7 +563,7 @@ export default function TaskForm({
                   marginBottom: spacing[2],
                 }}
               >
-                Type
+                {t('tasks.form.fields.type')}
               </Text>
               <Pressable
                 onPress={() => setShowTypePicker(!showTypePicker)}
@@ -544,7 +592,7 @@ export default function TaskForm({
                       marginLeft: spacing[2],
                     }}
                   >
-                    {TASK_TYPE_INFO[type].label}
+                    {t(TASK_TYPE_INFO[type].labelKey)}
                   </Text>
                 </View>
                 <IconSymbol name="chevron.down" size={16} color="#9CA3AF" />
@@ -561,7 +609,7 @@ export default function TaskForm({
                   marginBottom: spacing[2],
                 }}
               >
-                Priority
+                {t('tasks.form.fields.priority')}
               </Text>
               <Pressable
                 onPress={() => setShowPriorityPicker(!showPriorityPicker)}
@@ -592,7 +640,7 @@ export default function TaskForm({
                       color: PRIORITY_INFO[priority].color,
                     }}
                   >
-                    {PRIORITY_INFO[priority].label}
+                    {t(PRIORITY_INFO[priority].labelKey)}
                   </Text>
                 </View>
                 <IconSymbol name="chevron.down" size={16} color="#9CA3AF" />
@@ -640,7 +688,7 @@ export default function TaskForm({
                       fontWeight: type === taskType ? fontWeight.medium : fontWeight.normal,
                     }}
                   >
-                    {TASK_TYPE_INFO[taskType].label}
+                    {t(TASK_TYPE_INFO[taskType].labelKey)}
                   </Text>
                 </Pressable>
               ))}
@@ -702,7 +750,7 @@ export default function TaskForm({
                       fontWeight: priority === p ? fontWeight.medium : fontWeight.normal,
                     }}
                   >
-                    {PRIORITY_INFO[p].label}
+                    {t(PRIORITY_INFO[p].labelKey)}
                   </Text>
                 </Pressable>
               ))}
@@ -719,7 +767,7 @@ export default function TaskForm({
                 marginBottom: spacing[2],
               }}
             >
-              Due Date
+              {t('tasks.form.fields.dueDate')}
             </Text>
             <TextInput
               value={dueDate}
@@ -729,7 +777,7 @@ export default function TaskForm({
                   setDueDateError(null);
                 }
               }}
-              placeholder="YYYY-MM-DD (e.g., 2024-01-25)"
+              placeholder={t('tasks.form.placeholders.dueDate')}
               style={{
                 backgroundColor: colors.white,
                 borderRadius: borderRadius.xl,
@@ -750,7 +798,7 @@ export default function TaskForm({
             <Text
               style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}
             >
-              Enter date in YYYY-MM-DD format
+              {t('tasks.form.dueDateHint')}
             </Text>
           </View>
         </ScrollView>

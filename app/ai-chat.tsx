@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,14 @@ import {
 } from 'react-native';
 
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import Markdown from 'react-native-markdown-display';
 import { useFarm } from '@/hooks';
 import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { formatTime } from '@/i18n/format';
 
 const markdownStyles = {
   body: { fontSize: 16, color: '#1c1c1e', lineHeight: 24 },
@@ -78,6 +80,7 @@ const markdownStyles = {
 };
 
 export default function AIChatScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
   const { data: farm } = useFarm(farmId ? parseInt(farmId, 10) : undefined);
@@ -88,22 +91,23 @@ export default function AIChatScreen() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const DEFAULT_SUGGESTIONS = [
-    'How much water do I need?',
-    'Check for common diseases',
-    'Fertilizer recommendations',
-    'Pruning tips for grapes',
-  ];
+  const DEFAULT_SUGGESTIONS = useMemo(
+    () => [
+      t('ai.defaultSuggestions.waterNeed'),
+      t('ai.defaultSuggestions.diseases'),
+      t('ai.defaultSuggestions.fertilizer'),
+      t('ai.defaultSuggestions.pruning'),
+    ],
+    [t],
+  );
 
   useEffect(() => {
     if (!aiService.isConfigured()) {
-      Alert.alert(
-        'API Key Required',
-        'Please configure your OpenAI API key in the environment settings.',
-        [{ text: 'OK', onPress: () => router.back() }],
-      );
+      Alert.alert(t('ai.apiKeyRequiredTitle'), t('ai.apiKeyRequiredBody'), [
+        { text: t('common.ok'), onPress: () => router.back() },
+      ]);
     }
-  }, [router]);
+  }, [router, t]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -147,9 +151,9 @@ export default function AIChatScreen() {
       scrollToBottom();
     } catch (error) {
       Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to get response from AI',
-        [{ text: 'OK' }],
+        t('common.error'),
+        error instanceof Error ? error.message : t('ai.errors.failedResponse'),
+        [{ text: t('common.ok') }],
       );
     } finally {
       setIsLoading(false);
@@ -161,17 +165,14 @@ export default function AIChatScreen() {
   };
 
   const formatMessageTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return formatTime(date);
   };
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'Vinesight AI',
+          title: t('ai.title'),
           headerStyle: { backgroundColor: '#f2f2f7' },
           headerTintColor: '#000000',
           headerLeft: () => (
@@ -225,7 +226,7 @@ export default function AIChatScreen() {
                     marginBottom: spacing[2],
                   }}
                 >
-                  Vinesight AI
+                  {t('ai.title')}
                 </Text>
                 <Text
                   style={{
@@ -236,8 +237,7 @@ export default function AIChatScreen() {
                     paddingHorizontal: spacing[8],
                   }}
                 >
-                  Your personal farming assistant. Ask me anything about grape farming, irrigation,
-                  diseases, or harvest!
+                  {t('ai.description')}
                 </Text>
                 <View style={{ width: '100%', gap: spacing[2] }}>
                   {DEFAULT_SUGGESTIONS.map((suggestion, index) => (
@@ -396,7 +396,7 @@ export default function AIChatScreen() {
                     marginBottom: spacing[2],
                   }}
                 >
-                  Suggested questions:
+                  {t('ai.suggestedQuestions')}
                 </Text>
                 <ScrollView
                   horizontal
@@ -437,7 +437,7 @@ export default function AIChatScreen() {
               <TextInput
                 value={inputText}
                 onChangeText={setInputText}
-                placeholder="Ask about farming..."
+                placeholder={t('ai.input.placeholder')}
                 placeholderTextColor="#9CA3AF"
                 multiline
                 style={{

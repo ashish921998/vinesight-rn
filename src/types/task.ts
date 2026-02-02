@@ -62,31 +62,32 @@ export interface TaskTemplate {
 }
 
 // Task type display info
-export const TASK_TYPE_INFO: Record<TaskType, { label: string; icon: string; color: string }> = {
-  irrigation: { label: 'Irrigation', icon: 'water', color: '#4d8573' },
-  spray: { label: 'Spray', icon: 'flask', color: '#598d6b' },
-  fertigation: { label: 'Fertigation', icon: 'leaf', color: '#408059' },
-  harvest: { label: 'Harvest', icon: 'basket', color: '#669475' },
-  soil_test: { label: 'Soil Test', icon: 'layers', color: '#598266' },
-  petiole_test: { label: 'Petiole Test', icon: 'analytics', color: '#7a9a5c' },
-  expense: { label: 'Expense', icon: 'cash', color: '#598066' },
-  note: { label: 'Note', icon: 'document-text', color: '#738c7a' },
+export const TASK_TYPE_INFO: Record<TaskType, { labelKey: string; icon: string; color: string }> = {
+  irrigation: { labelKey: 'tasks.types.irrigation', icon: 'water', color: '#4d8573' },
+  spray: { labelKey: 'tasks.types.spray', icon: 'flask', color: '#598d6b' },
+  fertigation: { labelKey: 'tasks.types.fertigation', icon: 'leaf', color: '#408059' },
+  harvest: { labelKey: 'tasks.types.harvest', icon: 'basket', color: '#669475' },
+  soil_test: { labelKey: 'tasks.types.soilTest', icon: 'layers', color: '#598266' },
+  petiole_test: { labelKey: 'tasks.types.petioleTest', icon: 'analytics', color: '#7a9a5c' },
+  expense: { labelKey: 'tasks.types.expense', icon: 'cash', color: '#598066' },
+  note: { labelKey: 'tasks.types.note', icon: 'document-text', color: '#738c7a' },
 };
 
 // Priority display info
 export const PRIORITY_INFO: Record<
   TaskPriority,
-  { label: string; color: string; bgColor: string }
+  { labelKey: string; color: string; bgColor: string }
 > = {
-  low: { label: 'Low', color: '#166534', bgColor: '#DCFCE7' },
-  medium: { label: 'Medium', color: '#92400E', bgColor: '#FEF3C7' },
-  high: { label: 'High', color: '#991B1B', bgColor: '#FEE2E2' },
+  low: { labelKey: 'tasks.priority.low', color: '#166534', bgColor: '#DCFCE7' },
+  medium: { labelKey: 'tasks.priority.medium', color: '#92400E', bgColor: '#FEF3C7' },
+  high: { labelKey: 'tasks.priority.high', color: '#991B1B', bgColor: '#FEE2E2' },
 };
 
 // Status display info
-export const STATUS_INFO: Record<TaskStatus, { label: string; color: string; bgColor: string }> = {
-  pending: { label: 'Pending', color: '#92400E', bgColor: '#FEF3C7' },
-  in_progress: { label: 'In Progress', color: '#1D4ED8', bgColor: '#DBEAFE' },
-  completed: { label: 'Completed', color: '#166534', bgColor: '#DCFCE7' },
-  cancelled: { label: 'Cancelled', color: '#6B7280', bgColor: '#F3F4F6' },
-};
+export const STATUS_INFO: Record<TaskStatus, { labelKey: string; color: string; bgColor: string }> =
+  {
+    pending: { labelKey: 'tasks.status.pending', color: '#92400E', bgColor: '#FEF3C7' },
+    in_progress: { labelKey: 'tasks.status.inProgress', color: '#1D4ED8', bgColor: '#DBEAFE' },
+    completed: { labelKey: 'tasks.status.completed', color: '#166534', bgColor: '#DCFCE7' },
+    cancelled: { labelKey: 'tasks.status.cancelled', color: '#6B7280', bgColor: '#F3F4F6' },
+  };

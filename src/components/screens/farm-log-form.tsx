@@ -5,6 +5,7 @@
 
 import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { EntryForm } from '@/components/screens/entry-form';
 import { ActivityEditForm } from '@/components/screens/activity-edit-form';
 import { useModalStore } from '@/stores';
@@ -19,6 +20,7 @@ interface FarmLogFormProps {
 }
 
 export function FarmLogForm({ mode, farmId, onClose }: FarmLogFormProps) {
+  const { t } = useTranslation();
   const { editActivity } = useModalStore();
   const { data: farm } = useFarm(farmId ?? undefined);
 
@@ -41,10 +43,10 @@ export function FarmLogForm({ mode, farmId, onClose }: FarmLogFormProps) {
           }}
         >
           <Text style={{ fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
-            Unable to load activity details.
+            {t('activityEdit.loadErrorTitle')}
           </Text>
           <Text style={{ marginTop: 8, textAlign: 'center', color: '#6B7280' }}>
-            Please try again from the activity list.
+            {t('activityEdit.loadErrorBody')}
           </Text>
         </View>
       );

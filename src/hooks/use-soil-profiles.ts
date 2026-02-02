@@ -6,6 +6,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { SoilProfile, SoilProfileInsert, SoilSectionData } from '../types/database';
+import i18n from '@/i18n';
+import { formatDate } from '@/i18n/format';
 
 // Query keys
 export const soilProfileQueryKeys = {
@@ -86,12 +88,13 @@ export const SECTION_NAMES = ['top', 'bottom', 'right', 'left'] as const;
 export type SectionName = (typeof SECTION_NAMES)[number];
 
 // Section display info
-export const SECTION_INFO: Record<SectionName, { label: string; abbr: string; color: string }> = {
-  top: { label: 'Top', abbr: 'T', color: '#10B981' },
-  bottom: { label: 'Bottom', abbr: 'B', color: '#8B5CF6' },
-  right: { label: 'Right', abbr: 'R', color: '#F59E0B' },
-  left: { label: 'Left', abbr: 'L', color: '#3B82F6' },
-};
+export const SECTION_INFO: Record<SectionName, { labelKey: string; abbr: string; color: string }> =
+  {
+    top: { labelKey: 'soilProfileForm.sections.top', abbr: 'T', color: '#10B981' },
+    bottom: { labelKey: 'soilProfileForm.sections.bottom', abbr: 'B', color: '#8B5CF6' },
+    right: { labelKey: 'soilProfileForm.sections.right', abbr: 'R', color: '#F59E0B' },
+    left: { labelKey: 'soilProfileForm.sections.left', abbr: 'L', color: '#3B82F6' },
+  };
 
 /**
  * Calculate average moisture from sections
@@ -120,12 +123,8 @@ export function getSectionValue(sections: SoilSectionData[], name: SectionName):
  * Format profile date for display
  */
 export function formatProfileDate(createdAt: string | null | undefined): string {
-  if (!createdAt) return 'Unknown date';
-  return new Date(createdAt).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  if (!createdAt) return i18n.t('common.unknownDate');
+  return formatDate(createdAt, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 /**

@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Symbol } from '@/components/ui/symbol';
 import { SafeScreen } from '@/components/ui/safe-screen';
 import { useFarm } from '@/hooks/use-farms';
@@ -18,6 +19,7 @@ import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 type ViewMode = 'table' | 'chart';
 
 export default function PetioleTrendsScreen() {
+  const { t } = useTranslation();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
   const parsed = farmId ? parseInt(farmId, 10) : 0;
   const farmIdNum = Number.isNaN(parsed) ? 0 : parsed;
@@ -43,7 +45,7 @@ export default function PetioleTrendsScreen() {
               marginTop: spacing[4],
             }}
           >
-            Invalid Farm
+            {t('common.errors.invalidFarm')}
           </Text>
         </View>
       </SafeScreen>
@@ -55,7 +57,9 @@ export default function PetioleTrendsScreen() {
       <SafeScreen backgroundColor="#f2f2f7">
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#4C806B" />
-          <Text style={{ color: colors.gray[500], marginTop: spacing[4] }}>Loading trends...</Text>
+          <Text style={{ color: colors.gray[500], marginTop: spacing[4] }}>
+            {t('common.loading')}
+          </Text>
         </View>
       </SafeScreen>
     );
@@ -85,10 +89,10 @@ export default function PetioleTrendsScreen() {
           <Text
             style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.gray[800] }}
           >
-            Petiole Trends
+            {t('trends.screens.petiole')}
           </Text>
           <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
-            {farm?.name || 'Farm'}
+            {farm?.name || t('tasks.unknownFarm')}
           </Text>
         </View>
       </View>
@@ -133,7 +137,7 @@ export default function PetioleTrendsScreen() {
                 color: viewMode === 'table' ? '#4C806B' : colors.gray[400],
               }}
             >
-              Table
+              {t('trends.viewModes.table')}
             </Text>
           </Pressable>
           <Pressable
@@ -155,7 +159,7 @@ export default function PetioleTrendsScreen() {
                 color: viewMode === 'chart' ? '#4C806B' : colors.gray[400],
               }}
             >
-              Chart
+              {t('trends.viewModes.chart')}
             </Text>
           </Pressable>
         </View>

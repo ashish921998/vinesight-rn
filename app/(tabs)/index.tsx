@@ -7,6 +7,7 @@ import {
   Pressable,
   Modal,
   StyleSheet,
+  ActivityIndicator,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -24,24 +25,28 @@ import { Button } from '@/components/ui';
 import type { LogTypeId } from '@/constants/calculator-models';
 import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useTranslation } from 'react-i18next';
+import { formatNumber } from '@/i18n/format';
 
 // ============================================================
 // MARK: - Greeting Helper
 // ============================================================
 
-function getGreeting(): string {
+type GreetingKey = 'morning' | 'afternoon' | 'evening' | 'night';
+
+function getGreetingKey(): GreetingKey {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'Good Morning';
-  if (hour >= 12 && hour < 17) return 'Good Afternoon';
-  if (hour >= 17 && hour < 21) return 'Good Evening';
-  return 'Good Night';
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
 }
 
 function formatHarvest(value: number): string {
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)} t`;
+    return `${formatNumber(value / 1000, { maximumFractionDigits: 1 })} t`;
   }
-  return `${value.toFixed(0)} kg`;
+  return `${formatNumber(value, { maximumFractionDigits: 0 })} kg`;
 }
 
 // ============================================================
@@ -49,6 +54,8 @@ function formatHarvest(value: number): string {
 // ============================================================
 
 export default function DashboardScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -56,12 +63,20 @@ export default function DashboardScreen() {
   const [selectedQuickAction, setSelectedQuickAction] = useState<LogTypeId | null>(null);
 
   // Data hooks
-  const { data: stats, refetch: refetchStats } = useDashboardStats();
-  const { data: farmsNeedingAttention, refetch: refetchAttention } = useFarmsNeedingAttention();
-  const { data: recentActivities, refetch: refetchActivities } = useRecentActivities(5);
-  const { data: farms, refetch: refetchFarms } = useFarms();
+  const { data: stats, refetch: refetchStats, isLoading: isLoadingStats } = useDashboardStats();
+  const {
+    data: farmsNeedingAttention,
+    refetch: refetchAttention,
+    isLoading: isLoadingAttention,
+  } = useFarmsNeedingAttention();
+  const {
+    data: recentActivities,
+    refetch: refetchActivities,
+    isLoading: isLoadingActivities,
+  } = useRecentActivities(5);
+  const { data: farms, refetch: refetchFarms, isLoading: isLoadingFarms } = useFarms();
 
-  const greeting = useMemo(() => getGreeting(), []);
+  const greetingKey = useMemo(() => getGreetingKey(), []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -132,7 +147,7 @@ export default function DashboardScreen() {
       <View style={containerStyle}>
         {/* Welcome Header */}
         <View style={{ marginBottom: spacing[6] }}>
-          <Text style={greetingStyle}>{greeting}</Text>
+          <Text style={greetingStyle}>{t(`dashboard.greeting.${greetingKey}`)}</Text>
         </View>
 
         {/* Stats Grid */}
@@ -140,16 +155,24 @@ export default function DashboardScreen() {
           <View style={{ flexDirection: 'row', marginBottom: spacing[3] }}>
             <View style={{ flex: 1, paddingRight: spacing[2] }}>
               <StatsCard
-                title="Farms"
-                value={stats?.farmsCount?.toString() ?? '0'}
+                title={t('dashboard.stats.farms')}
+                value={
+                  isLoadingStats
+                    ? '...'
+                    : formatNumber(stats?.farmsCount ?? 0, { maximumFractionDigits: 0 })
+                }
                 icon="leaf"
                 color={m3.colorScheme.primary}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
               <StatsCard
-                title="Active Workers"
-                value={stats?.activeWorkersCount?.toString() ?? '0'}
+                title={t('dashboard.stats.activeWorkers')}
+                value={
+                  isLoadingStats
+                    ? '...'
+                    : formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })
+                }
                 icon="people"
                 color={m3.colorScheme.primary}
               />
@@ -158,16 +181,20 @@ export default function DashboardScreen() {
           <View style={{ flexDirection: 'row' }}>
             <View style={{ flex: 1, paddingRight: spacing[2] }}>
               <StatsCard
-                title="Activities"
-                value={stats?.recentActivitiesCount?.toString() ?? '0'}
+                title={t('dashboard.stats.activities')}
+                value={
+                  isLoadingStats
+                    ? '...'
+                    : formatNumber(stats?.recentActivitiesCount ?? 0, { maximumFractionDigits: 0 })
+                }
                 icon="bar-chart"
                 color={m3.colorScheme.primary}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
               <StatsCard
-                title="Harvest"
-                value={formatHarvest(stats?.totalHarvest ?? 0)}
+                title={t('dashboard.stats.harvest')}
+                value={isLoadingStats ? '...' : formatHarvest(stats?.totalHarvest ?? 0)}
                 icon="basket"
                 color={m3.colorScheme.tertiary}
               />
@@ -176,81 +203,97 @@ export default function DashboardScreen() {
         </View>
 
         {/* Farms Needing Attention */}
-        {farmsNeedingAttention && farmsNeedingAttention.length > 0 && (
-          <View style={{ marginBottom: spacing[6] }}>
-            <Text style={sectionTitleStyle}>Needs Attention</Text>
-            {farmsNeedingAttention.slice(0, 3).map((item) => (
-              <Pressable
-                key={item.farm.id}
-                onPress={() => item.farm.id && handleFarmAttention(item.farm.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.farm.name}. ${item.reason}.`}
-                style={{
-                  borderRadius: m3.shape.cornerMedium,
-                  padding: spacing[3],
-                  marginBottom: spacing[2],
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.08),
-                  borderWidth: 1,
-                  borderColor: colorWithOpacity(m3.colorScheme.warning, 0.25),
-                  overflow: 'hidden',
-                }}
-              >
-                {({ pressed }) => (
-                  <>
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: borderRadius.full,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
-                      }}
-                    >
-                      <SymbolIcon name="drop.fill" size={18} color={m3.colorScheme.warning} />
-                    </View>
-                    <View style={{ marginLeft: spacing[3], flex: 1 }}>
-                      <Text
-                        style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurface }}
-                      >
-                        {item.farm.name}
-                      </Text>
-                      <Text
+        {isLoadingAttention ? (
+          <View
+            style={{
+              marginBottom: spacing[6],
+              height: 60,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderRadius: m3.shape.cornerMedium,
+            }}
+          >
+            <ActivityIndicator color={m3.colorScheme.primary} />
+          </View>
+        ) : (
+          farmsNeedingAttention &&
+          farmsNeedingAttention.length > 0 && (
+            <View style={{ marginBottom: spacing[6] }}>
+              <Text style={sectionTitleStyle}>{t('dashboard.needsAttention.title')}</Text>
+              {farmsNeedingAttention.slice(0, 3).map((item) => (
+                <Pressable
+                  key={item.farm.id}
+                  onPress={() => item.farm.id && handleFarmAttention(item.farm.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.farm.name}. ${t(`dashboard.needsAttention.reasons.${item.reason}`)}.`}
+                  style={{
+                    borderRadius: m3.shape.cornerMedium,
+                    padding: spacing[3],
+                    marginBottom: spacing[2],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.08),
+                    borderWidth: 1,
+                    borderColor: colorWithOpacity(m3.colorScheme.warning, 0.25),
+                    overflow: 'hidden',
+                  }}
+                >
+                  {({ pressed }) => (
+                    <>
+                      <View
                         style={{
-                          ...m3.typography.labelSmall,
-                          color: m3.colorScheme.onSurfaceVariant,
+                          width: 36,
+                          height: 36,
+                          borderRadius: borderRadius.full,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
                         }}
                       >
-                        {item.reason}
-                      </Text>
-                    </View>
-                    <SymbolIcon name="chevron.right" size={16} color={colors.gray[300]} />
-                    <View
-                      pointerEvents="none"
-                      style={[
-                        StyleSheet.absoluteFillObject,
-                        {
-                          backgroundColor: pressed
-                            ? colorWithOpacity(
-                                m3.colorScheme.onSurface,
-                                m3.stateLayerOpacity.pressed,
-                              )
-                            : 'transparent',
-                        },
-                      ]}
-                    />
-                  </>
-                )}
-              </Pressable>
-            ))}
-          </View>
+                        <SymbolIcon name="drop.fill" size={18} color={m3.colorScheme.warning} />
+                      </View>
+                      <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                        <Text
+                          style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurface }}
+                        >
+                          {item.farm.name}
+                        </Text>
+                        <Text
+                          style={{
+                            ...m3.typography.labelSmall,
+                            color: m3.colorScheme.onSurfaceVariant,
+                          }}
+                        >
+                          {t(`dashboard.needsAttention.reasons.${item.reason}`)}
+                        </Text>
+                      </View>
+                      <SymbolIcon name="chevron.right" size={16} color={colors.gray[300]} />
+                      <View
+                        pointerEvents="none"
+                        style={[
+                          StyleSheet.absoluteFillObject,
+                          {
+                            backgroundColor: pressed
+                              ? colorWithOpacity(
+                                  m3.colorScheme.onSurface,
+                                  m3.stateLayerOpacity.pressed,
+                                )
+                              : 'transparent',
+                          },
+                        ]}
+                      />
+                    </>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          )
         )}
 
         {/* Quick Actions */}
         <View style={{ marginBottom: spacing[6] }}>
-          <Text style={sectionTitleStyle}>Quick Actions</Text>
+          <Text style={sectionTitleStyle}>{t('dashboard.quickActions.title')}</Text>
           <View
             style={{
               borderRadius: m3.shape.cornerLarge,
@@ -267,25 +310,25 @@ export default function DashboardScreen() {
               }}
             >
               <QuickActionButton
-                title="Irrigation"
+                title={t('dashboard.quickActions.irrigation')}
                 icon="water"
                 color={colors.irrigation[500]}
                 onPress={() => handleQuickAction('irrigation')}
               />
               <QuickActionButton
-                title="Spray"
+                title={t('dashboard.quickActions.spray')}
                 icon="flask"
                 color={colors.spray[500]}
                 onPress={() => handleQuickAction('spray')}
               />
               <QuickActionButton
-                title="Harvest"
+                title={t('dashboard.quickActions.harvest')}
                 icon="basket"
                 color={colors.harvest[500]}
                 onPress={() => handleQuickAction('harvest')}
               />
               <QuickActionButton
-                title="Note"
+                title={t('dashboard.quickActions.note')}
                 icon="document-text"
                 color={m3.colorScheme.primary}
                 onPress={() => handleQuickAction('note')}
@@ -296,8 +339,22 @@ export default function DashboardScreen() {
 
         {/* Recent Activity */}
         <View>
-          <Text style={sectionTitleStyle}>Recent Activity</Text>
-          {recentActivities && recentActivities.length > 0 ? (
+          <Text style={sectionTitleStyle}>{t('dashboard.recentActivity.title')}</Text>
+          {isLoadingActivities || isLoadingFarms ? (
+            <View
+              style={{
+                borderRadius: m3.shape.cornerLarge,
+                padding: spacing[8],
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: m3.surface.surfaceContainerLow,
+                borderWidth: 1,
+                borderColor: m3.colorScheme.outlineVariant,
+              }}
+            >
+              <ActivityIndicator color={m3.colorScheme.primary} />
+            </View>
+          ) : recentActivities && recentActivities.length > 0 ? (
             <View
               style={{
                 borderRadius: m3.shape.cornerLarge,
@@ -340,12 +397,16 @@ export default function DashboardScreen() {
                 }}
               >
                 {farms && farms.length > 0
-                  ? 'No recent activity yet.\nAdd an entry to get started.'
-                  : 'No farms yet.\nAdd your first farm to get started.'}
+                  ? t('dashboard.empty.recentActivity')
+                  : t('dashboard.empty.noFarms')}
               </Text>
               <View style={{ marginTop: spacing[4], width: '100%' }}>
                 <Button
-                  title={farms && farms.length > 0 ? 'Add an entry' : 'Add your first farm'}
+                  title={
+                    farms && farms.length > 0
+                      ? t('dashboard.cta.addEntry')
+                      : t('dashboard.cta.addFirstFarm')
+                  }
                   onPress={() => router.push('/(tabs)/farms')}
                 />
               </View>
@@ -363,7 +424,7 @@ export default function DashboardScreen() {
           <View style={{ flex: 1, backgroundColor: colorWithOpacity(m3.colorScheme.scrim, 0.45) }}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Dismiss farm picker"
+              accessibilityLabel={t('dashboard.farmPicker.dismissA11y')}
               onPress={() => setShowFarmPicker(false)}
               style={StyleSheet.absoluteFillObject}
             />
@@ -407,12 +468,12 @@ export default function DashboardScreen() {
                     color: m3.colorScheme.onSurface,
                   }}
                 >
-                  Select Farm
+                  {t('dashboard.farmPicker.title')}
                 </Text>
                 <Pressable
                   onPress={() => setShowFarmPicker(false)}
                   accessibilityRole="button"
-                  accessibilityLabel="Close farm picker"
+                  accessibilityLabel={t('dashboard.farmPicker.closeA11y')}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
                 >
@@ -432,7 +493,9 @@ export default function DashboardScreen() {
                       key={farm.id}
                       onPress={() => farm.id && handleFarmSelection(farm.id)}
                       accessibilityRole="button"
-                      accessibilityLabel={`Select farm: ${farm.name}`}
+                      accessibilityLabel={t('dashboard.farmPicker.selectFarmA11y', {
+                        name: farm.name,
+                      })}
                       style={({ pressed }) => ({
                         padding: spacing[4],
                         borderBottomWidth: 1,
@@ -478,7 +541,7 @@ export default function DashboardScreen() {
                     }}
                   >
                     <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
-                      No farms available
+                      {t('dashboard.farmPicker.noFarms')}
                     </Text>
                   </View>
                 )}

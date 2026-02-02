@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
 import { useWeatherData } from '../src/hooks/use-weather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { formatDate } from '@/i18n/format';
 
 // Growth stages
 const GROWTH_STAGES: GrapeGrowthStage[] = [
@@ -52,18 +55,19 @@ const urgencyColors = {
 };
 
 // Day name helper
-function getDayName(dateString: string): string {
+function getDayName(dateString: string, t: TFunction): string {
   const date = new Date(dateString);
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  if (date.toDateString() === today.toDateString()) return 'Today';
-  if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
-  return date.toLocaleDateString('en-US', { weekday: 'short' });
+  if (date.toDateString() === today.toDateString()) return t('tasks.dueDate.today');
+  if (date.toDateString() === tomorrow.toDateString()) return t('tasks.dueDate.tomorrow');
+  return formatDate(date, { weekday: 'short' });
 }
 
 export default function WeatherScreen() {
+  const { t } = useTranslation();
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [growthStage, setGrowthStage] = useState<GrapeGrowthStage>('Fruit set');
@@ -107,7 +111,7 @@ export default function WeatherScreen() {
       >
         <ActivityIndicator size="large" color="#408059" />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
-          Loading weather data...
+          {t('common.loading')}
         </Text>
       </View>
     );
@@ -132,7 +136,7 @@ export default function WeatherScreen() {
             textAlign: 'center',
           }}
         >
-          Unable to load weather data
+          {t('weather.errors.unableToLoad')}
         </Text>
         <Text
           style={{
@@ -154,7 +158,9 @@ export default function WeatherScreen() {
             borderRadius: borderRadius.xl,
           }}
         >
-          <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>Try Again</Text>
+          <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
+            {t('common.tryAgain')}
+          </Text>
         </Pressable>
       </View>
     );
@@ -179,7 +185,7 @@ export default function WeatherScreen() {
             textAlign: 'center',
           }}
         >
-          No farms available
+          {t('weather.empty.noFarmsTitle')}
         </Text>
         <Text
           style={{
@@ -189,7 +195,7 @@ export default function WeatherScreen() {
             textAlign: 'center',
           }}
         >
-          Add a farm to see weather data for your location
+          {t('weather.empty.noFarmsSubtitle')}
         </Text>
       </View>
     );
@@ -218,7 +224,7 @@ export default function WeatherScreen() {
               marginBottom: spacing[2],
             }}
           >
-            FARM
+            {t('glossary.farm')}
           </Text>
           <Pressable
             onPress={() => setShowFarmPicker(!showFarmPicker)}
@@ -252,7 +258,7 @@ export default function WeatherScreen() {
                     color: colors.surface[900],
                   }}
                 >
-                  {selectedFarm?.name || 'Select Farm'}
+                  {selectedFarm?.name || t('dashboard.farmPicker.title')}
                 </Text>
                 {hasCoordinates && (
                   <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
@@ -328,8 +334,7 @@ export default function WeatherScreen() {
                 flex: 1,
               }}
             >
-              This farm doesn&apos;t have location coordinates. Weather data is showing default
-              location (Nashik). Add GPS coordinates to get farm-specific weather.
+              {t('weather.warnings.noCoordinates')}
             </Text>
           </View>
         )}
@@ -347,7 +352,7 @@ export default function WeatherScreen() {
                 marginBottom: spacing[2],
               }}
             >
-              GROWTH STAGE
+              {t('weather.pickers.growthStage')}
             </Text>
             <Pressable
               onPress={() => setShowGrowthPicker(!showGrowthPicker)}
@@ -421,7 +426,7 @@ export default function WeatherScreen() {
                 marginBottom: spacing[2],
               }}
             >
-              SOIL TYPE
+              {t('weather.pickers.soilType')}
             </Text>
             <Pressable
               onPress={() => setShowSoilPicker(!showSoilPicker)}
@@ -502,7 +507,7 @@ export default function WeatherScreen() {
             >
               <View>
                 <Text style={{ color: colors.primary[100], fontSize: fontSize.sm }}>
-                  {weather.location.name || 'Current Location'}
+                  {weather.location.name || t('weather.location.currentLocation')}
                 </Text>
                 <Text
                   style={{
@@ -537,7 +542,7 @@ export default function WeatherScreen() {
                     marginTop: spacing[2],
                   }}
                 >
-                  Feels like {weather.current.feelsLike}°
+                  {t('weather.location.feelsLike')} {weather.current.feelsLike}°
                 </Text>
               </View>
             </View>
@@ -562,7 +567,9 @@ export default function WeatherScreen() {
                 >
                   {weather.current.humidity}%
                 </Text>
-                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>Humidity</Text>
+                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>
+                  {t('weather.labels.humidity')}
+                </Text>
               </View>
               <View style={{ flex: 1, alignItems: 'center' }}>
                 <Icon name="gauge" size={18} color="rgba(255,255,255,0.8)" />
@@ -576,7 +583,9 @@ export default function WeatherScreen() {
                 >
                   {weather.current.windSpeed} km/h
                 </Text>
-                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>Wind</Text>
+                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>
+                  {t('weather.labels.wind')}
+                </Text>
               </View>
               <View style={{ flex: 1, alignItems: 'center' }}>
                 <Icon name="sun.max.fill" size={18} color="rgba(255,255,255,0.8)" />
@@ -590,7 +599,9 @@ export default function WeatherScreen() {
                 >
                   {weather.current.uvIndex}
                 </Text>
-                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>UV Index</Text>
+                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>
+                  {t('weather.labels.uvIndex')}
+                </Text>
               </View>
               <View style={{ flex: 1, alignItems: 'center' }}>
                 <Icon name="cloud.rain.fill" size={18} color="rgba(255,255,255,0.8)" />
@@ -604,7 +615,9 @@ export default function WeatherScreen() {
                 >
                   {weather.current.precipitation} mm
                 </Text>
-                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>Rain</Text>
+                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>
+                  {t('weather.labels.rain')}
+                </Text>
               </View>
             </View>
           </View>
@@ -622,7 +635,7 @@ export default function WeatherScreen() {
                 marginBottom: spacing[3],
               }}
             >
-              7-DAY FORECAST
+              {t('weather.sections.forecast7Day')}
             </Text>
             <ScrollView
               horizontal
@@ -649,7 +662,7 @@ export default function WeatherScreen() {
                       color: index === 0 ? colors.primary[600] : colors.surface[600],
                     }}
                   >
-                    {getDayName(day.date)}
+                    {getDayName(day.date, t)}
                   </Text>
                   <Icon
                     name={getWeatherIconName(day.conditionCode)}
@@ -716,7 +729,7 @@ export default function WeatherScreen() {
                   marginLeft: spacing[3],
                 }}
               >
-                Water Requirements
+                {t('weather.sections.waterRequirements')}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
@@ -729,7 +742,9 @@ export default function WeatherScreen() {
                   minWidth: '45%',
                 }}
               >
-                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>Daily ETc</Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  {t('weather.labels.dailyEtc')}
+                </Text>
                 <Text
                   style={{
                     fontSize: fontSize.xl,
@@ -753,7 +768,7 @@ export default function WeatherScreen() {
                 }}
               >
                 <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                  Weekly Need
+                  {t('weather.labels.weeklyNeed')}
                 </Text>
                 <Text
                   style={{
@@ -778,14 +793,18 @@ export default function WeatherScreen() {
                     minWidth: '45%',
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>Total (7 days)</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>
+                    {t('weather.labels.total7Days')}
+                  </Text>
                   <Text
                     style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: '#1D4ED8' }}
                   >
                     {irrigationSchedule.totalWaterNeed} mm
                   </Text>
                   <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>
-                    {irrigationSchedule.schedule.length} irrigations
+                    {t('weather.labels.irrigations', {
+                      count: irrigationSchedule.schedule.length,
+                    })}
                   </Text>
                 </View>
               )}
@@ -805,7 +824,7 @@ export default function WeatherScreen() {
                 marginBottom: spacing[3],
               }}
             >
-              ALERTS &amp; RECOMMENDATIONS
+              {t('weather.sections.alerts')}
             </Text>
 
             {/* Irrigation Alert */}
@@ -846,7 +865,7 @@ export default function WeatherScreen() {
                       marginLeft: spacing[2],
                     }}
                   >
-                    Irrigation
+                    {t('tasks.types.irrigation')}
                   </Text>
                 </View>
                 <View
@@ -864,7 +883,7 @@ export default function WeatherScreen() {
                       fontWeight: fontWeight.medium,
                     }}
                   >
-                    {alerts.irrigation.urgency.toUpperCase()}
+                    {t(`tasks.priority.${alerts.irrigation.urgency}`).toUpperCase()}
                   </Text>
                 </View>
               </View>
@@ -929,7 +948,7 @@ export default function WeatherScreen() {
                       marginLeft: spacing[2],
                     }}
                   >
-                    Pest & Disease
+                    {t('weather.alerts.pest.title')}
                   </Text>
                 </View>
                 <View
@@ -947,7 +966,9 @@ export default function WeatherScreen() {
                       fontWeight: fontWeight.medium,
                     }}
                   >
-                    {alerts.pest.riskLevel.toUpperCase()} RISK
+                    {t('weather.alerts.pest.riskBadge', {
+                      level: t(`tasks.priority.${alerts.pest.riskLevel}`),
+                    })}
                   </Text>
                 </View>
               </View>
@@ -1013,7 +1034,7 @@ export default function WeatherScreen() {
                       marginLeft: spacing[2],
                     }}
                   >
-                    Harvest Conditions
+                    {t('weather.alerts.harvest.title')}
                   </Text>
                 </View>
                 <View
@@ -1025,7 +1046,9 @@ export default function WeatherScreen() {
                   }}
                 >
                   <Text style={{ color: alerts.harvest.isOptimal ? '#166534' : '#92400E' }}>
-                    {alerts.harvest.isOptimal ? 'OPTIMAL' : 'MODERATE'}
+                    {alerts.harvest.isOptimal
+                      ? t('weather.alerts.harvest.badgeOptimal')
+                      : t('weather.alerts.harvest.badgeModerate')}
                   </Text>
                 </View>
               </View>
@@ -1066,7 +1089,7 @@ export default function WeatherScreen() {
                 marginBottom: spacing[3],
               }}
             >
-              IRRIGATION SCHEDULE
+              {t('weather.sections.irrigationSchedule')}
             </Text>
             {irrigationSchedule.schedule.map((item, i) => (
               <View
@@ -1115,10 +1138,10 @@ export default function WeatherScreen() {
                       color: colors.surface[900],
                     }}
                   >
-                    {getDayName(item.date)} - {item.amount} mm
+                    {getDayName(item.date, t)} - {item.amount} mm
                   </Text>
                   <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                    {item.duration.toFixed(1)} hours • {item.reason}
+                    {item.duration.toFixed(1)} {t('common.units.hours')} • {item.reason}
                   </Text>
                 </View>
                 <View
@@ -1136,7 +1159,7 @@ export default function WeatherScreen() {
                       color: urgencyColors[item.priority].text,
                     }}
                   >
-                    {item.priority.toUpperCase()}
+                    {t(`tasks.priority.${item.priority}`).toUpperCase()}
                   </Text>
                 </View>
               </View>
@@ -1148,7 +1171,9 @@ export default function WeatherScreen() {
         {weather && (
           <View style={{ alignItems: 'center', marginTop: spacing[2] }}>
             <Text style={{ fontSize: fontSize.xs, color: colors.surface[400] }}>
-              Last updated: {new Date(weather.lastUpdated).toLocaleTimeString()}
+              {t('weather.lastUpdated', {
+                time: new Date(weather.lastUpdated).toLocaleTimeString(),
+              })}
             </Text>
           </View>
         )}

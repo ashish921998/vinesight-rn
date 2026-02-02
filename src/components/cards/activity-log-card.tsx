@@ -10,6 +10,9 @@ import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
 import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useTranslation } from 'react-i18next';
+import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
+import { useProfile } from '@/hooks';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -35,32 +38,46 @@ interface ActivityLogCardProps {
 }
 
 // Generate description from record data
-function getDescriptionFromData(type: LogTypeId, data?: RecordData): string {
+function getDescriptionFromData(
+  type: LogTypeId,
+  t: (key: string, options?: Record<string, unknown>) => string,
+  data?: RecordData,
+  currency?: string,
+): string {
   if (!data) return '';
 
   switch (type) {
     case 'irrigation': {
       const irrigation = data as IrrigationRecord;
       const duration = irrigation.duration ?? 0;
-      const displayDuration = Number.isInteger(duration) ? duration : duration.toFixed(1);
-      return `${displayDuration}h`;
+      const displayDuration = formatNumber(duration, {
+        maximumFractionDigits: Number.isInteger(duration) ? 0 : 1,
+      });
+      return t('logs.irrigationDurationHoursShort', { hours: displayDuration });
     }
     case 'spray': {
       const spray = data as SprayRecord;
-      return spray.chemical || 'Spray application';
+      return spray.chemical || t('logs.sprayApplication');
     }
     case 'harvest': {
       const harvest = data as HarvestRecord;
-      return `${harvest.quantity?.toFixed(1) || 0}kg - ${harvest.grade || 'N/A'}`;
+      const quantity = formatNumber(harvest.quantity ?? 0, { maximumFractionDigits: 1 });
+      const grade = harvest.grade || t('common.na');
+      return t('logs.harvestDescription', { quantityKg: quantity, grade });
     }
     case 'expense': {
       const expense = data as ExpenseRecord;
-      return `₹${expense.cost?.toLocaleString() || 0} - ${expense.type || 'General'}`;
+      const cost = formatCurrency(expense.cost ?? 0, currency || 'USD');
+      const expenseType = expense.type || t('common.general');
+      return t('logs.expenseDescription', { cost, type: expenseType });
     }
     case 'fertigation': {
       const fertigation = data as FertigationRecord;
       const fertCount = fertigation.fertilizers?.length || 0;
-      return `${fertCount} fertilizer${fertCount !== 1 ? 's' : ''} applied`;
+      return t('logs.fertigationApplied', {
+        count: fertCount,
+        countFormatted: formatNumber(fertCount, { maximumFractionDigits: 0 }),
+      });
     }
     default:
       return '';
@@ -75,15 +92,16 @@ export function ActivityLogCard({
   farmName,
   onPress,
 }: ActivityLogCardProps) {
+  const { t } = useTranslation();
+  const { data: profile } = useProfile();
+  const currency = profile?.preferred_currency || 'INR';
+
   const isInteractive = Boolean(onPress);
   const logType = getLogType(type);
   const parsedDate = fromSupabaseDateString(date);
-  const displayDescription = description || getDescriptionFromData(type, data);
+  const displayDescription = description || getDescriptionFromData(type, t, data, currency);
   const displayDate = parsedDate
-    ? parsedDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      })
+    ? formatDate(parsedDate, { month: 'short', day: 'numeric' })
     : date;
 
   const containerStyle: ViewStyle = {
@@ -147,7 +165,7 @@ export function ActivityLogCard({
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${displayDescription || logType.label}${farmName ? `, ${farmName}` : ''}. ${displayDate}.`}
+        accessibilityLabel={`${displayDescription || t(logType.labelKey)}${farmName ? `, ${farmName}` : ''}. ${displayDate}.`}
       >
         {({ pressed }) => (
           <View style={containerStyle}>
@@ -157,7 +175,7 @@ export function ActivityLogCard({
 
             <View style={contentContainerStyle}>
               <Text style={descriptionTextStyle} numberOfLines={1}>
-                {displayDescription || logType.label}
+                {displayDescription || t(logType.labelKey)}
               </Text>
               <View style={metaContainerStyle}>
                 {farmName && (
@@ -201,7 +219,7 @@ export function ActivityLogCard({
       </View>
       <View style={contentContainerStyle}>
         <Text style={descriptionTextStyle} numberOfLines={1}>
-          {displayDescription || logType.label}
+          {displayDescription || t(logType.labelKey)}
         </Text>
         <View style={metaContainerStyle}>
           {farmName && (

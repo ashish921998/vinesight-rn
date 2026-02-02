@@ -10,6 +10,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCreateFarm, useFarm, useUpdateFarm } from '@/hooks';
 import { CROP_VARIETIES, type CropType } from '@/constants/crop-varieties';
 import type { Farm, FarmInsert, FarmUpdate } from '@/types';
+import { useTranslation } from 'react-i18next';
 import {
   FullScreenForm,
   SectionHeader,
@@ -21,21 +22,22 @@ import {
 } from '@/components/ui';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import LocationPicker from './location-picker';
+import { formatDate } from '@/i18n/format';
 
-const SOIL_TEXTURE_CLASSES = [
-  'Sand',
-  'Loamy sand',
-  'Sandy loam',
-  'Loam',
-  'Silt loam',
-  'Silt',
-  'Sandy clay loam',
-  'Clay loam',
-  'Silty clay loam',
-  'Sandy clay',
-  'Silty clay',
-  'Clay',
-];
+const SOIL_TEXTURE_OPTIONS = [
+  { value: 'Sand', labelKey: 'farmForm.soilTexture.options.sand' },
+  { value: 'Loamy sand', labelKey: 'farmForm.soilTexture.options.loamySand' },
+  { value: 'Sandy loam', labelKey: 'farmForm.soilTexture.options.sandyLoam' },
+  { value: 'Loam', labelKey: 'farmForm.soilTexture.options.loam' },
+  { value: 'Silt loam', labelKey: 'farmForm.soilTexture.options.siltLoam' },
+  { value: 'Silt', labelKey: 'farmForm.soilTexture.options.silt' },
+  { value: 'Sandy clay loam', labelKey: 'farmForm.soilTexture.options.sandyClayLoam' },
+  { value: 'Clay loam', labelKey: 'farmForm.soilTexture.options.clayLoam' },
+  { value: 'Silty clay loam', labelKey: 'farmForm.soilTexture.options.siltyClayLoam' },
+  { value: 'Sandy clay', labelKey: 'farmForm.soilTexture.options.sandyClay' },
+  { value: 'Silty clay', labelKey: 'farmForm.soilTexture.options.siltyClay' },
+  { value: 'Clay', labelKey: 'farmForm.soilTexture.options.clay' },
+] as const;
 
 type FarmFormMode = 'add' | 'edit';
 
@@ -100,6 +102,8 @@ const buildFormStateFromFarm = (farm?: Farm | null) => ({
 type FormState = ReturnType<typeof buildFormStateFromFarm>;
 
 export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
+  const { t } = useTranslation();
+
   const isEdit = mode === 'edit';
   const createFarm = useCreateFarm();
   const updateFarm = useUpdateFarm();
@@ -146,10 +150,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     }
     const total = sand + silt + clay;
     if (Math.abs(total - 100) > 1) {
-      return `Sand + Silt + Clay should total approximately 100% (currently ${total.toFixed(1)}%)`;
+      return t('farmForm.soilCompositionWarning', { total: total.toFixed(1) });
     }
     return null;
-  }, [formState.sandPercentage, formState.siltPercentage, formState.clayPercentage]);
+  }, [formState.sandPercentage, formState.siltPercentage, formState.clayPercentage, t]);
 
   const handleOpenMapPicker = () => {
     setFormState((prev) => ({ ...prev, showMapPicker: true }));
@@ -196,7 +200,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
   const handleSave = async () => {
     if (!isValid) {
-      Alert.alert('Missing Information', 'Please fill in all required fields.');
+      Alert.alert(
+        t('common.alerts.missingInformationTitle'),
+        t('common.alerts.fillAllRequiredFields'),
+      );
       return;
     }
 
@@ -205,7 +212,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
     if (isEdit) {
       if (!farmId) {
-        Alert.alert('Error', 'Missing farm ID for update.');
+        Alert.alert(t('common.error'), t('common.errors.missingFarmIdForUpdate'));
         return;
       }
       const updates: FarmUpdate = {
@@ -255,8 +262,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         onClose();
       } catch (_error: unknown) {
         const errorMessage =
-          _error instanceof Error ? _error.message : 'Failed to update farm. Please try again.';
-        Alert.alert('Error', errorMessage);
+          _error instanceof Error ? _error.message : t('common.errors.failedToUpdateFarm');
+        Alert.alert(t('common.error'), errorMessage);
       }
       return;
     }
@@ -301,8 +308,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       onClose();
     } catch (_error: unknown) {
       const errorMessage =
-        _error instanceof Error ? _error.message : 'Failed to create farm. Please try again.';
-      Alert.alert('Error', errorMessage);
+        _error instanceof Error ? _error.message : t('common.errors.failedToCreateFarm');
+      Alert.alert(t('common.error'), errorMessage);
     }
   };
 
@@ -319,22 +326,22 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const cropOptions: CropOption[] = [
     {
       value: 'Grapes' as CropType,
-      label: 'Grapes',
-      sublabel: 'Vines',
+      label: t('farmForm.cropOptions.grapes.label'),
+      sublabel: t('farmForm.cropOptions.grapes.sublabel'),
       renderIcon: ({ selected, size }) => <CropIcon name="grapes" size={size} muted={!selected} />,
       iconColor: '#DDD6FE',
     },
     {
       value: 'Mango' as CropType,
-      label: 'Mango',
-      sublabel: 'Trees',
+      label: t('farmForm.cropOptions.mango.label'),
+      sublabel: t('farmForm.cropOptions.mango.sublabel'),
       renderIcon: ({ selected, size }) => <CropIcon name="mango" size={size} muted={!selected} />,
       iconColor: '#FED7AA',
     },
     {
       value: 'Pomegranate' as CropType,
-      label: 'Pomegranate',
-      sublabel: 'Fruit',
+      label: t('farmForm.cropOptions.pomegranate.label'),
+      sublabel: t('farmForm.cropOptions.pomegranate.sublabel'),
       renderIcon: ({ selected, size }) => (
         <CropIcon name="pomegranate" size={size} muted={!selected} />
       ),
@@ -342,27 +349,39 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     },
     {
       value: 'Citrus' as CropType,
-      label: 'Citrus',
-      sublabel: 'Trees',
+      label: t('farmForm.cropOptions.citrus.label'),
+      sublabel: t('farmForm.cropOptions.citrus.sublabel'),
       renderIcon: ({ selected, size }) => <CropIcon name="citrus" size={size} muted={!selected} />,
       iconColor: '#FEF08A',
     },
     {
       value: 'Banana' as CropType,
-      label: 'Banana',
-      sublabel: 'Plants',
+      label: t('farmForm.cropOptions.banana.label'),
+      sublabel: t('farmForm.cropOptions.banana.sublabel'),
       renderIcon: ({ selected, size }) => <CropIcon name="banana" size={size} muted={!selected} />,
       iconColor: '#FEF3C7',
     },
     {
       value: 'Other' as CropType,
-      label: 'Other',
-      sublabel: 'Custom',
+      label: t('farmForm.cropOptions.other.label'),
+      sublabel: t('farmForm.cropOptions.other.sublabel'),
       icon: 'ellipsis-horizontal' as const,
       iconColor: '#E5E7EB',
       iconLibrary: 'ionicons' as const,
     },
   ];
+
+  const getSoilTextureLabel = (value?: string) => {
+    if (!value) return '';
+    const match = SOIL_TEXTURE_OPTIONS.find((o) => o.value === value);
+    return match ? t(match.labelKey) : value;
+  };
+
+  const getVarietyLabel = (value?: string) => {
+    if (!value) return '';
+    if (value === 'Custom') return t('farmForm.variety.custom');
+    return value;
+  };
 
   if (isEdit && farmLoading) {
     return (
@@ -375,48 +394,48 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.white }}>
       <FullScreenForm
-        title={isEdit ? 'Edit Farm' : 'Add Farm'}
+        title={isEdit ? t('farmForm.title.edit') : t('farmForm.title.add')}
         onClose={onClose}
         onSave={handleSave}
-        saveLabel={isEdit ? 'Save Changes' : 'Create Farm'}
+        saveLabel={isEdit ? t('common.saveChanges') : t('farmForm.saveLabel.createFarm')}
         isLoading={createFarm.isPending || updateFarm.isPending}
         isSaveDisabled={!isValid}
         showResetButton={!isEdit}
         onReset={handleReset}
       >
-        <SectionHeader title="Farm Details" style={{ marginBottom: 16 }} />
+        <SectionHeader title={t('farmForm.sections.details')} style={{ marginBottom: 16 }} />
 
         <FormInput
-          label="Farm Name"
+          label={t('farmForm.fields.name.label')}
           value={formState.name}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, name: v }))}
-          placeholder="e.g., Sunset Vineyards"
+          placeholder={t('farmForm.fields.name.placeholder')}
           required
           autoFocus={!isEdit}
           style={{ marginBottom: 12 }}
         />
 
         <FormInput
-          label="Location"
+          label={t('farmForm.fields.region.label')}
           value={formState.region}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, region: v }))}
-          placeholder="e.g., Nashik, Maharashtra"
+          placeholder={t('farmForm.fields.region.placeholder')}
           required
           style={{ marginBottom: 12 }}
         />
 
         <FormInput
-          label="Area"
+          label={t('farmForm.fields.area.label')}
           value={formState.area}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, area: v }))}
-          placeholder="10"
+          placeholder={t('farmForm.fields.area.placeholder')}
           keyboardType="decimal-pad"
-          suffix="acres"
+          suffix={t('units.acres')}
           required
           style={{ marginBottom: 20 }}
         />
 
-        <SectionHeader title="Crop Type" style={{ marginBottom: 16 }} />
+        <SectionHeader title={t('farmForm.sections.cropType')} style={{ marginBottom: 16 }} />
 
         <CardSelector
           options={cropOptions}
@@ -433,7 +452,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           style={{ marginBottom: 20 }}
         />
 
-        <SectionHeader title="Variety" style={{ marginBottom: 16 }} />
+        <SectionHeader title={t('farmForm.sections.variety')} style={{ marginBottom: 16 }} />
 
         <Pressable
           style={{
@@ -457,23 +476,25 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               fontWeight: formState.cropVariety ? fontWeight.medium : fontWeight.normal,
             }}
           >
-            {formState.cropVariety || 'Select variety'}
+            {formState.cropVariety
+              ? getVarietyLabel(formState.cropVariety)
+              : t('farmForm.variety.selectPlaceholder')}
           </Text>
           <UISymbol name="chevron.down" size={20} color="#6B7280" />
         </Pressable>
 
         {formState.cropVariety === 'Custom' && (
           <FormInput
-            label="Custom Variety Name"
+            label={t('farmForm.variety.customNameLabel')}
             value={formState.customVariety}
             onChangeText={(v) => setFormState((prev) => ({ ...prev, customVariety: v }))}
-            placeholder="Enter variety name"
+            placeholder={t('farmForm.variety.customNamePlaceholder')}
             required
             style={{ marginBottom: 20 }}
           />
         )}
 
-        <SectionHeader title="Planting Date" style={{ marginBottom: 16 }} />
+        <SectionHeader title={t('farmForm.sections.plantingDate')} style={{ marginBottom: 16 }} />
 
         <Pressable
           style={{
@@ -499,46 +520,52 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             }}
           >
             {formState.plantingDate
-              ? formState.plantingDate.toLocaleDateString('en-US', {
+              ? formatDate(formState.plantingDate, {
                   month: 'long',
                   day: 'numeric',
                   year: 'numeric',
                 })
-              : 'Select date'}
+              : t('farmForm.plantingDate.selectPlaceholder')}
           </Text>
         </Pressable>
 
-        <SectionHeader title="Plant Spacing (Optional)" style={{ marginBottom: 16 }} />
+        <SectionHeader
+          title={t('farmForm.sections.plantSpacingOptional')}
+          style={{ marginBottom: 16 }}
+        />
 
         <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
           <View style={{ flex: 1 }}>
             <FormInput
-              label="Vine Spacing"
+              label={t('farmForm.fields.vineSpacing.label')}
               value={formState.vineSpacing}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, vineSpacing: v }))}
-              placeholder="6"
+              placeholder="1.8"
               keyboardType="decimal-pad"
-              suffix="ft"
+              suffix="m"
               style={{ marginBottom: 0 }}
             />
           </View>
           <View style={{ flex: 1 }}>
             <FormInput
-              label="Row Spacing"
+              label={t('farmForm.fields.rowSpacing.label')}
               value={formState.rowSpacing}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, rowSpacing: v }))}
-              placeholder="10"
+              placeholder="3.0"
               keyboardType="decimal-pad"
-              suffix="ft"
+              suffix="m"
               style={{ marginBottom: 0 }}
             />
           </View>
         </View>
 
-        <SectionHeader title="Irrigation Details (Optional)" style={{ marginBottom: 16 }} />
+        <SectionHeader
+          title={t('farmForm.sections.irrigationDetailsOptional')}
+          style={{ marginBottom: 16 }}
+        />
 
         <FormInput
-          label="Tank Capacity"
+          label={t('farmForm.fields.tankCapacity.label')}
           value={formState.totalTankCapacity}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, totalTankCapacity: v }))}
           placeholder="1000"
@@ -548,7 +575,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         />
 
         <FormInput
-          label="System Discharge"
+          label={t('farmForm.fields.systemDischarge.label')}
           value={formState.systemDischarge}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, systemDischarge: v }))}
           placeholder="10"
@@ -557,7 +584,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           style={{ marginBottom: 20 }}
         />
 
-        <SectionHeader title="Pruning Date (Optional)" style={{ marginBottom: 16 }} />
+        <SectionHeader
+          title={t('farmForm.sections.pruningDateOptional')}
+          style={{ marginBottom: 16 }}
+        />
 
         <Pressable
           style={{
@@ -578,7 +608,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             <UISymbol name="cut-outline" size={24} color="#6B7280" />
             <View style={{ marginLeft: spacing[3], flex: 1 }}>
               <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-                Pruning Date
+                {t('farmForm.fields.pruningDate.label')}
               </Text>
               <Text
                 style={{
@@ -589,12 +619,12 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                 }}
               >
                 {formState.dateOfPruning
-                  ? formState.dateOfPruning.toLocaleDateString('en-US', {
+                  ? formatDate(formState.dateOfPruning, {
                       month: 'long',
                       day: 'numeric',
                       year: 'numeric',
                     })
-                  : 'Not set'}
+                  : t('farmForm.fields.pruningDate.notSet')}
               </Text>
             </View>
           </View>
@@ -608,18 +638,21 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           )}
         </Pressable>
 
-        <SectionHeader title="Location (Optional)" style={{ marginBottom: 16 }} />
+        <SectionHeader
+          title={t('farmForm.sections.locationOptional')}
+          style={{ marginBottom: 16 }}
+        />
 
         <FormInput
-          label="Location Name"
+          label={t('farmForm.fields.locationName.label')}
           value={formState.locationName}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, locationName: v }))}
-          placeholder="e.g., North Field"
+          placeholder={t('farmForm.fields.locationName.placeholder')}
           style={{ marginBottom: 12 }}
         />
 
         <Button
-          title="Select Location on Map"
+          title={t('farmForm.location.selectOnMap')}
           variant="outline"
           size="sm"
           leftIcon={<UISymbol name="location.fill" size={20} color={colors.primary[500]} />}
@@ -630,7 +663,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[3] }}>
           <View style={{ flex: 1 }}>
             <FormInput
-              label="Latitude"
+              label={t('farmForm.fields.latitude.label')}
               value={formState.latitude}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, latitude: v }))}
               placeholder="0.000000"
@@ -640,7 +673,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           </View>
           <View style={{ flex: 1 }}>
             <FormInput
-              label="Longitude"
+              label={t('farmForm.fields.longitude.label')}
               value={formState.longitude}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, longitude: v }))}
               placeholder="0.000000"
@@ -651,7 +684,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         </View>
 
         <FormInput
-          label="Elevation"
+          label={t('farmForm.fields.elevation.label')}
           value={formState.elevation}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, elevation: v }))}
           placeholder="0"
@@ -660,10 +693,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           style={{ marginBottom: 20 }}
         />
 
-        <SectionHeader title="Soil Properties (Optional)" style={{ marginBottom: 16 }} />
+        <SectionHeader
+          title={t('farmForm.sections.soilPropertiesOptional')}
+          style={{ marginBottom: 16 }}
+        />
 
         <FormInput
-          label="Bulk Density"
+          label={t('farmForm.fields.bulkDensity.label')}
           value={formState.bulkDensity}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, bulkDensity: v }))}
           placeholder="1200"
@@ -673,7 +709,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         />
 
         <FormInput
-          label="Cation Exchange Capacity"
+          label={t('farmForm.fields.cationExchangeCapacity.label')}
           value={formState.cationExchangeCapacity}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, cationExchangeCapacity: v }))}
           placeholder="15"
@@ -683,7 +719,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         />
 
         <FormInput
-          label="Soil Water Retention"
+          label={t('farmForm.fields.soilWaterRetention.label')}
           value={formState.soilWaterRetention}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, soilWaterRetention: v }))}
           placeholder="25"
@@ -692,7 +728,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           style={{ marginBottom: 20 }}
         />
 
-        <SectionHeader title="Soil Texture" style={{ marginBottom: 16 }} />
+        <SectionHeader title={t('farmForm.sections.soilTexture')} style={{ marginBottom: 16 }} />
 
         <Pressable
           style={{
@@ -716,7 +752,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               fontWeight: formState.soilTextureClass ? fontWeight.medium : fontWeight.normal,
             }}
           >
-            {formState.soilTextureClass || 'Select texture'}
+            {formState.soilTextureClass
+              ? getSoilTextureLabel(formState.soilTextureClass)
+              : t('farmForm.soilTexture.selectPlaceholder')}
           </Text>
           <UISymbol name="chevron.down" size={20} color="#6B7280" />
         </Pressable>
@@ -724,7 +762,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
           <View style={{ flex: 1 }}>
             <FormInput
-              label="Sand"
+              label={t('farmForm.fields.sandPercentage.label')}
               value={formState.sandPercentage}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, sandPercentage: v }))}
               placeholder="40"
@@ -735,7 +773,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           </View>
           <View style={{ flex: 1 }}>
             <FormInput
-              label="Silt"
+              label={t('farmForm.fields.siltPercentage.label')}
               value={formState.siltPercentage}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, siltPercentage: v }))}
               placeholder="40"
@@ -746,7 +784,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           </View>
           <View style={{ flex: 1 }}>
             <FormInput
-              label="Clay"
+              label={t('farmForm.fields.clayPercentage.label')}
               value={formState.clayPercentage}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, clayPercentage: v }))}
               placeholder="20"
@@ -771,7 +809,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           icon="information-circle"
           iconColor="#10B981"
           backgroundColor="#D1FAE5"
-          message="You can always update these details later from your farm settings."
+          message={t('farmForm.infoCardMessage')}
         />
       </FullScreenForm>
       {formState.showDatePicker && (
@@ -840,7 +878,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   color: colors.surface[900],
                 }}
               >
-                Select Variety
+                {t('farmForm.variety.modalTitle')}
               </Text>
               <Pressable
                 onPress={() => setFormState((prev) => ({ ...prev, showVarietyPicker: false }))}
@@ -891,7 +929,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                             : fontWeight.normal,
                       }}
                     >
-                      {variety}
+                      {getVarietyLabel(variety)}
                     </Text>
                     {formState.cropVariety === variety && (
                       <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
@@ -943,7 +981,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   color: colors.surface[900],
                 }}
               >
-                Select Soil Texture
+                {t('farmForm.soilTexture.modalTitle')}
               </Text>
               <Pressable
                 onPress={() => setFormState((prev) => ({ ...prev, showTexturePicker: false }))}
@@ -961,21 +999,23 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             </View>
 
             <ScrollView style={{ maxHeight: 384 }}>
-              {SOIL_TEXTURE_CLASSES.map((texture) => (
+              {SOIL_TEXTURE_OPTIONS.map((texture) => (
                 <Pressable
-                  key={texture}
+                  key={texture.value}
                   style={{
                     paddingHorizontal: spacing[6],
                     paddingVertical: spacing[4],
                     borderBottomWidth: 1,
                     borderBottomColor: colors.surface[100],
                     backgroundColor:
-                      formState.soilTextureClass === texture ? colors.surface[50] : colors.white,
+                      formState.soilTextureClass === texture.value
+                        ? colors.surface[50]
+                        : colors.white,
                   }}
                   onPress={() => {
                     setFormState((prev) => ({
                       ...prev,
-                      soilTextureClass: texture,
+                      soilTextureClass: texture.value,
                       showTexturePicker: false,
                     }));
                   }}
@@ -991,18 +1031,18 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                       style={{
                         fontSize: fontSize.base,
                         color:
-                          formState.soilTextureClass === texture
+                          formState.soilTextureClass === texture.value
                             ? colors.surface[900]
                             : colors.surface[700],
                         fontWeight:
-                          formState.soilTextureClass === texture
+                          formState.soilTextureClass === texture.value
                             ? fontWeight.semibold
                             : fontWeight.normal,
                       }}
                     >
-                      {texture}
+                      {t(texture.labelKey)}
                     </Text>
-                    {formState.soilTextureClass === texture && (
+                    {formState.soilTextureClass === texture.value && (
                       <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
                     )}
                   </View>

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Alert, View, Text } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { useTranslation } from 'react-i18next';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useUpdateWarehouseItem, useProfile } from '../../hooks';
 import { WarehouseItem } from '../../types';
 import { FormModal, SectionHeader, FormInput, PreviewCard } from '../ui/form-components';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { formatCurrency, formatNumber } from '@/i18n/format';
 
 interface Props {
   visible?: boolean;
@@ -14,6 +16,8 @@ interface Props {
 }
 
 export default function StockForm({ visible, onClose, item, presentation = 'modal' }: Props) {
+  const { t } = useTranslation();
+
   const isVisible = visible ?? true;
   const { data: profile } = useProfile();
   const updateMutation = useUpdateWarehouseItem();
@@ -49,7 +53,10 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
     if (!item?.id) return;
 
     if (!quantityToAdd || parseFloat(quantityToAdd) <= 0) {
-      Alert.alert('Missing Information', 'Please enter the quantity you want to add');
+      Alert.alert(
+        t('common.alerts.missingInformationTitle'),
+        t('common.alerts.enterQuantityToAdd'),
+      );
       return;
     }
 
@@ -63,7 +70,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
       });
       onClose();
     } catch (_error) {
-      Alert.alert('Error', 'Failed to update stock. Please try again.');
+      Alert.alert(t('common.error'), t('common.errors.failedToUpdateStock'));
     }
   };
 
@@ -83,9 +90,9 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
     <FormModal
       visible={isVisible}
       onClose={onClose}
-      title="Add Stock"
+      title={t('warehouse.stockForm.title')}
       onSave={handleSubmit}
-      saveLabel="Add Stock"
+      saveLabel={t('warehouse.stockForm.saveLabel')}
       isLoading={isLoading}
       isSaveDisabled={!isValid}
       showResetButton
@@ -112,7 +119,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
               backgroundColor: item.type === 'fertilizer' ? '#DCFCE7' : '#DBEAFE',
             }}
           >
-            <Symbol
+            <SymbolIcon
               name={item.type === 'fertilizer' ? 'flask.fill' : 'drop.fill'}
               size={24}
               color={item.type === 'fertilizer' ? '#16A34A' : '#3B82F6'}
@@ -129,17 +136,20 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
               {item.name}
             </Text>
             <Text style={{ fontSize: fontSize.sm, color: colors.surface[500], marginTop: 2 }}>
-              Current: {item.quantity} {item.unit}
+              {t('warehouse.stockForm.currentLabel', {
+                quantity: formatNumber(item.quantity),
+                unit: item.unit,
+              })}
             </Text>
           </View>
         </View>
       </View>
 
       {/* Stock Details */}
-      <SectionHeader title="Stock Details" style={{ marginBottom: 16 }} />
+      <SectionHeader title={t('warehouse.stockForm.sectionTitle')} style={{ marginBottom: 16 }} />
 
       <FormInput
-        label="Quantity to Add"
+        label={t('warehouse.stockForm.fields.quantityToAdd')}
         value={quantityToAdd}
         onChangeText={setQuantityToAdd}
         placeholder="0"
@@ -151,28 +161,31 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
       />
 
       <FormInput
-        label={`Unit Price (${currency}) - Optional`}
+        label={t('warehouse.stockForm.fields.unitPriceOptional', { currency })}
         value={newUnitPrice}
         onChangeText={setNewUnitPrice}
         placeholder="0.00"
         keyboardType="decimal-pad"
         prefix={currency === 'INR' ? '₹' : '$'}
-        suffix={`per ${item.unit}`}
+        suffix={t('warehouse.stockForm.perUnitSuffix', { unit: item.unit })}
         style={{ marginBottom: 16 }}
       />
 
       {/* Preview */}
       {quantityToAdd && parseFloat(quantityToAdd) > 0 && (
         <PreviewCard
-          title="AFTER UPDATE"
+          title={t('warehouse.stockForm.preview.title')}
           items={[
             {
-              label: 'New Stock',
-              value: `${newQuantity.toFixed(1)} ${item.unit}`,
+              label: t('warehouse.stockForm.preview.newStock'),
+              value: `${formatNumber(newQuantity, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              })} ${item.unit}`,
             },
             {
-              label: 'Total Value',
-              value: `${currency === 'INR' ? '₹' : '$'}${newValue.toLocaleString()}`,
+              label: t('warehouse.stockForm.preview.totalValue'),
+              value: formatCurrency(newValue, currency),
             },
           ]}
           backgroundColor="#DBEAFE"

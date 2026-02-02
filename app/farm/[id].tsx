@@ -3,6 +3,7 @@ import {
   View,
   Text,
   ScrollView,
+  Platform,
   Pressable,
   RefreshControl,
   ActivityIndicator,
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui';
 import { useFarm, useFarmRecords, useWeather, useDeleteFarm } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
 import { StatsCard, ActivityLogCard } from '@/components/cards';
+import { useTranslation } from 'react-i18next';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -26,28 +28,51 @@ import type {
 import { PRIORITY_INFO } from '@/types/task';
 import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { formatDate } from '@/i18n/format';
 
 // Workboard action type
 interface WorkboardAction {
   id: string;
-  title: string;
+  titleKey: string;
   icon: string;
   color: string;
   route?: string;
 }
 
 const WORKBOARD_ACTIONS: WorkboardAction[] = [
-  { id: 'ai', title: 'AI', icon: 'lightbulb.fill', color: m3.colorScheme.primary },
-  { id: 'lab', title: 'Lab', icon: 'flask.fill', color: m3.colorScheme.secondary },
-  { id: 'reports', title: 'Reports', icon: 'chart.bar.fill', color: m3.colorScheme.tertiary },
-  { id: 'soil', title: 'Soil Moisture', icon: 'square.stack.3d.up.fill', color: colors.task[500] },
+  {
+    id: 'ai',
+    titleKey: 'farmDetails.workboard.actions.ai',
+    icon: 'lightbulb.fill',
+    color: m3.colorScheme.primary,
+  },
+  {
+    id: 'lab',
+    titleKey: 'farmDetails.workboard.actions.lab',
+    icon: 'flask.fill',
+    color: m3.colorScheme.secondary,
+  },
+  {
+    id: 'reports',
+    titleKey: 'farmDetails.workboard.actions.reports',
+    icon: 'chart.bar.fill',
+    color: m3.colorScheme.tertiary,
+  },
+  {
+    id: 'soil',
+    titleKey: 'farmDetails.workboard.actions.soilMoisture',
+    icon: 'square.stack.3d.up.fill',
+    color: colors.task[500],
+  },
 ];
 
 export default function FarmDetailScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const isAndroid = process.env.EXPO_OS === 'android';
+  const isAndroid = Platform.OS === 'android';
   const farmId = id ? parseInt(id, 10) : undefined;
 
   const { data: farm, isLoading: farmLoading, refetch: refetchFarm } = useFarm(farmId);
@@ -91,15 +116,15 @@ export default function FarmDetailScreen() {
   }, [irrigationRecords]);
 
   const formatWaterUsage = (value: number | null | undefined) => {
-    if (value === null || value === undefined) return 'No irrigation logged yet';
+    if (value === null || value === undefined) return t('farmDetails.water.noIrrigationLoggedYet');
     const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
-    return `${value.toFixed(digits)} mm used`;
+    return t('farmDetails.water.mmUsed', { value: value.toFixed(digits) });
   };
 
   const waterUsageCaption =
     totalWaterUsed !== null
-      ? `${formatWaterUsage(totalWaterUsed)} this season`
-      : 'Log irrigation to monitor water use';
+      ? t('farmDetails.water.captionThisSeason', { usage: formatWaterUsage(totalWaterUsed) })
+      : t('farmDetails.water.captionLogIrrigation');
 
   // Days since pruning
   const daysSincePruning = useMemo(() => {
@@ -194,17 +219,20 @@ export default function FarmDetailScreen() {
   };
 
   const handleCompleteTask = (taskId: number) => {
-    Alert.alert('Complete Task', 'Mark this task as completed?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('tasks.alerts.completeTitle'), t('tasks.alerts.completeBodyGeneric'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Complete',
+        text: t('common.complete'),
         onPress: () => {
           completeMutation.mutate(taskId, {
             onSuccess: () => {
               refetchTasks();
             },
             onError: (error: Error) => {
-              Alert.alert('Error', error.message || 'Failed to complete task');
+              Alert.alert(
+                t('common.error'),
+                error.message || t('farmDetails.errors.completeTaskFailed'),
+              );
             },
           });
         },
@@ -213,10 +241,10 @@ export default function FarmDetailScreen() {
   };
 
   const handleDeleteTask = (taskId: number, taskTitle: string) => {
-    Alert.alert('Delete Task', `Delete "${taskTitle}"?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('tasks.alerts.deleteTitle'), t('tasks.alerts.deleteBody', { title: taskTitle }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: () => {
           deleteMutation.mutate(taskId, {
@@ -224,7 +252,10 @@ export default function FarmDetailScreen() {
               refetchTasks();
             },
             onError: (error: Error) => {
-              Alert.alert('Error', error.message || 'Failed to delete task');
+              Alert.alert(
+                t('common.error'),
+                error.message || t('farmDetails.errors.deleteTaskFailed'),
+              );
             },
           });
         },
@@ -235,12 +266,12 @@ export default function FarmDetailScreen() {
   const handleDeleteFarm = () => {
     if (!farmId || !farm) return;
     Alert.alert(
-      'Delete Farm',
-      `Are you sure you want to delete "${farm.name}"? This will also delete all associated data including irrigation records, spray records, harvests, expenses, soil profiles, and other farm-related data. This action cannot be undone.`,
+      t('farmDetails.deleteFarmTitle'),
+      t('farmDetails.deleteFarmBody', { name: farm.name }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
             deleteFarmMutation.mutate(farmId, {
@@ -248,7 +279,10 @@ export default function FarmDetailScreen() {
                 router.back();
               },
               onError: (error: Error) => {
-                Alert.alert('Error', error.message || 'Failed to delete farm');
+                Alert.alert(
+                  t('common.error'),
+                  error.message || t('farmDetails.errors.deleteFarmFailed'),
+                );
               },
             });
           },
@@ -258,17 +292,19 @@ export default function FarmDetailScreen() {
   };
 
   const formatDueDate = (dateString: string | null) => {
-    if (!dateString) return 'No due date';
+    if (!dateString) return t('tasks.dueDate.none');
     const date = new Date(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (date.toDateString() === today.toDateString()) return 'Today';
-    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
-    if (date < today) return `Overdue: ${date.toLocaleDateString()}`;
-    return date.toLocaleDateString();
+    if (date.toDateString() === today.toDateString()) return t('tasks.dueDate.today');
+    if (date.toDateString() === tomorrow.toDateString()) return t('tasks.dueDate.tomorrow');
+
+    const formatted = formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' });
+    if (date < today) return t('tasks.dueDate.overdue', { date: formatted });
+    return formatted;
   };
 
   const startOfDay = (date: Date) => {
@@ -311,7 +347,7 @@ export default function FarmDetailScreen() {
       >
         <ActivityIndicator size="large" color={m3.colorScheme.primary} />
         <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[4] }}>
-          Loading farm...
+          {t('farmDetails.loadingFarm')}
         </Text>
       </View>
     );
@@ -341,10 +377,10 @@ export default function FarmDetailScreen() {
             marginTop: spacing[4],
           }}
         >
-          Farm Not Found
+          {t('farmDetails.notFound.title')}
         </Text>
         <View style={{ marginTop: spacing[4], width: '100%', maxWidth: 320 }}>
-          <Button title="Go Back" variant="outline" onPress={() => router.back()} />
+          <Button title={t('common.goBack')} variant="outline" onPress={() => router.back()} />
         </View>
       </View>
     );
@@ -364,7 +400,7 @@ export default function FarmDetailScreen() {
                 style={{ marginRight: spacing[4] }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 accessibilityRole="button"
-                accessibilityLabel="Edit farm"
+                accessibilityLabel={t('farmDetails.a11y.editFarm')}
               >
                 {({ pressed }) => (
                   <View style={{ borderRadius: 9999, overflow: 'hidden' }}>
@@ -397,7 +433,7 @@ export default function FarmDetailScreen() {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 disabled={deleteFarmMutation.isPending}
                 accessibilityRole="button"
-                accessibilityLabel="Delete farm"
+                accessibilityLabel={t('farmDetails.a11y.deleteFarm')}
               >
                 {({ pressed }) => (
                   <View style={{ borderRadius: 9999, overflow: 'hidden' }}>
@@ -471,7 +507,9 @@ export default function FarmDetailScreen() {
                       marginLeft: spacing[1],
                     }}
                   >
-                    {farm.area != null ? `${farm.area.toFixed(1)} acres` : '— acres'}
+                    {farm.area != null
+                      ? t('farmDetails.header.areaAcres', { value: farm.area.toFixed(1) })
+                      : t('farmDetails.header.areaAcresUnknown')}
                   </Text>
                 </View>
               </View>
@@ -562,7 +600,7 @@ export default function FarmDetailScreen() {
                                 marginLeft: spacing[1],
                               }}
                             >
-                              {daysSincePruning}d
+                              {t('farmDetails.pruning.daysShort', { count: daysSincePruning })}
                             </Text>
                           </View>
                         )}
@@ -642,7 +680,7 @@ export default function FarmDetailScreen() {
                             ...m3.typography.labelSmall,
                           }}
                         >
-                          Current Weather
+                          {t('farmDetails.weather.current')}
                         </Text>
                         <Text
                           style={{
@@ -672,7 +710,7 @@ export default function FarmDetailScreen() {
                             ...m3.typography.labelSmall,
                           }}
                         >
-                          Temperature
+                          {t('farmDetails.weather.temperature')}
                         </Text>
                       </View>
                       <View
@@ -698,7 +736,7 @@ export default function FarmDetailScreen() {
                             ...m3.typography.labelSmall,
                           }}
                         >
-                          ET0 (mm)
+                          {t('farmDetails.weather.et0Mm')}
                         </Text>
                       </View>
                     </View>
@@ -713,17 +751,17 @@ export default function FarmDetailScreen() {
             <View style={{ flexDirection: 'row', gap: spacing[3] }}>
               <View style={{ flex: 1 }}>
                 <StatsCard
-                  title="Log Entries"
+                  title={t('farmDetails.stats.logEntriesTitle')}
                   value={totalRecords.toString()}
                   icon="document-text"
                   iconColor={m3.colorScheme.primary}
-                  subtitle="Records"
+                  subtitle={t('farmDetails.stats.recordsSubtitle')}
                   onPress={() => router.push(`/logs?farmId=${id}`)}
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <StatsCard
-                  title="Soil Water"
+                  title={t('farmDetails.stats.soilWaterTitle')}
                   value={farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
                   icon="water"
                   iconColor={colors.irrigation[500]}
@@ -751,7 +789,7 @@ export default function FarmDetailScreen() {
                 marginBottom: spacing[1],
               }}
             >
-              WORKBOARD
+              {t('farmDetails.workboard.title')}
             </Text>
             <Text
               style={{
@@ -760,7 +798,7 @@ export default function FarmDetailScreen() {
                 marginBottom: spacing[2],
               }}
             >
-              Quick access to tools and resources.
+              {t('farmDetails.workboard.subtitle')}
             </Text>
 
             <View
@@ -780,7 +818,7 @@ export default function FarmDetailScreen() {
                     style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[2] }}
                     onPress={() => handleWorkboardAction(action)}
                     accessibilityRole="button"
-                    accessibilityLabel={action.title}
+                    accessibilityLabel={t(action.titleKey)}
                   >
                     {({ pressed }) => (
                       <View
@@ -814,7 +852,7 @@ export default function FarmDetailScreen() {
                             lineHeight: 16,
                           }}
                         >
-                          {action.title}
+                          {t(action.titleKey)}
                         </Text>
                         <View
                           pointerEvents="none"
@@ -847,16 +885,19 @@ export default function FarmDetailScreen() {
                 borderRadius: m3.shape.cornerLarge,
                 borderWidth: 1,
                 borderColor: m3.colorScheme.outlineVariant,
-                overflow: 'hidden',
               }}
             >
               {(['activities', 'tasks'] as const).map((tab) => (
                 <Pressable
                   key={tab}
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, minWidth: 0 }}
                   onPress={() => setSelectedTab(tab)}
                   accessibilityRole="button"
-                  accessibilityLabel={tab === 'activities' ? 'Show activities' : 'Show tasks'}
+                  accessibilityLabel={
+                    tab === 'activities'
+                      ? t('farmDetails.a11y.showActivities')
+                      : t('farmDetails.a11y.showTasks')
+                  }
                 >
                   {({ pressed }) => {
                     const selected = selectedTab === tab;
@@ -866,21 +907,39 @@ export default function FarmDetailScreen() {
                           alignItems: 'center',
                           justifyContent: 'center',
                           paddingVertical: spacing[3],
+                          paddingHorizontal: spacing[2],
                           backgroundColor: selected
                             ? m3.colorScheme.primaryContainer
                             : 'transparent',
                         }}
                       >
                         <Text
+                          numberOfLines={isAndroid ? 2 : 1}
+                          ellipsizeMode={isAndroid ? 'clip' : 'tail'}
                           style={{
+                            width: '100%',
+                            flexShrink: 1,
                             ...m3.typography.labelLarge,
                             fontWeight: fontWeight.semibold,
                             color: selected
                               ? m3.colorScheme.onPrimaryContainer
                               : m3.colorScheme.onSurfaceVariant,
+                            textAlign: 'center',
+                            maxWidth: '100%',
+                            ...(isAndroid
+                              ? {
+                                  includeFontPadding: true,
+                                  // Avoid occasional bottom clipping for Marathi glyphs in tight tab rows.
+                                  paddingBottom: 2,
+                                  // Prevent occasional right-edge glyph clipping due to pixel rounding.
+                                  paddingRight: 3,
+                                }
+                              : null),
                           }}
                         >
-                          {tab === 'activities' ? 'Activities' : 'Tasks'}
+                          {tab === 'activities'
+                            ? t('farmDetails.tabs.activities')
+                            : t('farmDetails.tabs.tasks')}
                         </Text>
                         <View
                           pointerEvents="none"
@@ -954,7 +1013,7 @@ export default function FarmDetailScreen() {
                       fontWeight: fontWeight.semibold,
                     }}
                   >
-                    No Activities Yet
+                    {t('farmDetails.activities.empty.title')}
                   </Text>
                   <Text
                     style={{
@@ -964,7 +1023,7 @@ export default function FarmDetailScreen() {
                       marginTop: spacing[1],
                     }}
                   >
-                    Start logging activities to see them here
+                    {t('farmDetails.activities.empty.subtitle')}
                   </Text>
                 </View>
               )
@@ -1009,7 +1068,9 @@ export default function FarmDetailScreen() {
                           disabled={task.completed}
                           accessibilityRole="button"
                           accessibilityLabel={
-                            task.completed ? 'Task completed' : 'Mark task complete'
+                            task.completed
+                              ? t('farmDetails.a11y.taskCompleted')
+                              : t('farmDetails.a11y.markTaskComplete')
                           }
                           style={({ pressed }) => ({
                             width: 28,
@@ -1126,7 +1187,7 @@ export default function FarmDetailScreen() {
                                   fontWeight: fontWeight.medium,
                                 }}
                               >
-                                {priorityInfo.label}
+                                {t(priorityInfo.labelKey)}
                               </Text>
                             </View>
                           </View>
@@ -1151,7 +1212,9 @@ export default function FarmDetailScreen() {
                                 : null,
                             ]}
                             accessibilityRole="button"
-                            accessibilityLabel={`Delete task: ${task.title}`}
+                            accessibilityLabel={t('farmDetails.a11y.deleteTask', {
+                              title: task.title,
+                            })}
                           >
                             <UiSymbol name="trash" size={18} color={m3.colorScheme.error} />
                           </Pressable>
@@ -1196,7 +1259,7 @@ export default function FarmDetailScreen() {
                     fontWeight: fontWeight.semibold,
                   }}
                 >
-                  No Tasks Yet
+                  {t('farmDetails.tasks.empty.title')}
                 </Text>
                 <Text
                   style={{
@@ -1207,8 +1270,8 @@ export default function FarmDetailScreen() {
                   }}
                 >
                   {showFab
-                    ? 'Tap the + button to create tasks'
-                    : 'Use the button below to add a task'}
+                    ? t('farmDetails.tasks.empty.subtitleAndroid')
+                    : t('farmDetails.tasks.empty.subtitleIos')}
                 </Text>
               </View>
             )}
@@ -1221,7 +1284,11 @@ export default function FarmDetailScreen() {
         <Pressable
           onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
           accessibilityRole="button"
-          accessibilityLabel={selectedTab === 'activities' ? 'Add activity' : 'Add task'}
+          accessibilityLabel={
+            selectedTab === 'activities'
+              ? t('farmDetails.actions.addActivity')
+              : t('tasks.cta.addTask')
+          }
           style={{
             position: 'absolute',
             bottom: spacing[6] + insets.bottom,
@@ -1268,7 +1335,11 @@ export default function FarmDetailScreen() {
           }}
         >
           <Button
-            title={selectedTab === 'activities' ? 'Add activity' : 'Add task'}
+            title={
+              selectedTab === 'activities'
+                ? t('farmDetails.actions.addActivity')
+                : t('tasks.cta.addTask')
+            }
             onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
           />
         </View>

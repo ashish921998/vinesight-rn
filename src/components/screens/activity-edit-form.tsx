@@ -22,11 +22,8 @@ import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { FormModal, SectionHeader } from '@/components/ui';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-
-function generateId(): string {
-  return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
+import { formatDate } from '@/i18n/format';
+import { useTranslation } from 'react-i18next';
 import {
   IrrigationForm,
   SprayForm,
@@ -66,6 +63,10 @@ import type {
   FertigationRecord,
 } from '@/types';
 
+function generateId(): string {
+  return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
 interface ActivityEditFormProps {
   visible?: boolean;
   onClose: () => void;
@@ -85,6 +86,7 @@ export function ActivityEditForm({
   onSaveSuccess,
   presentation = 'modal',
 }: ActivityEditFormProps) {
+  const { t } = useTranslation();
   const isVisible = visible ?? true;
   const { height: windowHeight } = useWindowDimensions();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -401,7 +403,7 @@ export function ActivityEditForm({
       onClose();
     } catch (error) {
       console.error('Error updating log:', error);
-      Alert.alert('Error', 'Failed to update log. Please try again.');
+      Alert.alert(t('common.error'), t('common.errors.failedToUpdateLog'));
     } finally {
       setIsSubmitting(false);
     }
@@ -425,7 +427,7 @@ export function ActivityEditForm({
         >
           <ActivityIndicator size="large" color="#408059" />
           <Text selectable style={{ marginTop: spacing[4], color: colors.surface[500] }}>
-            Loading...
+            {t('common.loading')}
           </Text>
         </View>
       );
@@ -472,9 +474,9 @@ export function ActivityEditForm({
     <FormModal
       visible={isVisible}
       onClose={handleClose}
-      title="Edit Log"
+      title={t('activityEdit.title')}
       onSave={handleSave}
-      saveLabel="Save Changes"
+      saveLabel={t('common.saveChanges')}
       isLoading={isSubmitting}
       isSaveDisabled={!isFormValid}
       presentation={presentation}
@@ -488,7 +490,7 @@ export function ActivityEditForm({
       }}
     >
       <SectionHeader
-        title="Log Details"
+        title={t('activityEdit.detailsTitle')}
         subtitle={farm.name}
         style={{ marginBottom: spacing[4] }}
       />
@@ -502,7 +504,7 @@ export function ActivityEditForm({
             marginBottom: spacing[2],
           }}
         >
-          Date
+          {t('activityEdit.dateLabel')}
         </Text>
         <Pressable
           onPress={() => setShowDatePicker(true)}
@@ -531,7 +533,7 @@ export function ActivityEditForm({
             <UISymbol name="calendar" size={16} color={colors.primary[600]} />
           </View>
           <Text style={{ fontSize: fontSize.base, fontWeight: fontWeight.medium }}>
-            {selectedDate.toLocaleDateString('en-US', {
+            {formatDate(selectedDate, {
               weekday: 'short',
               month: 'short',
               day: 'numeric',

@@ -2,17 +2,19 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, SafeAreaView } from 'react-native';
 
 import { Stack } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/use-analytics';
 import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
+import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
 
-const TIME_RANGES: { value: TimeRange; label: string }[] = [
-  { value: '30d', label: '30 Days' },
-  { value: '90d', label: '90 Days' },
-  { value: '1y', label: '1 Year' },
-  { value: 'all', label: 'All Time' },
+const TIME_RANGES: { value: TimeRange; labelKey: string }[] = [
+  { value: '30d', labelKey: 'analytics.timeRanges.30d' },
+  { value: '90d', labelKey: 'analytics.timeRanges.90d' },
+  { value: '1y', labelKey: 'analytics.timeRanges.1y' },
+  { value: 'all', labelKey: 'analytics.timeRanges.all' },
 ];
 
 // Metric card colors
@@ -33,6 +35,8 @@ const activityIcons: Record<string, { icon: string; color: string }> = {
 };
 
 export default function AnalyticsScreen() {
+  const { t } = useTranslation();
+
   const { data: profile } = useProfile();
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
 
@@ -52,10 +56,10 @@ export default function AnalyticsScreen() {
           justifyContent: 'center',
         }}
       >
-        <Stack.Screen options={{ title: 'Analytics' }} />
+        <Stack.Screen options={{ title: t('analytics.title') }} />
         <ActivityIndicator size="large" color="#408059" />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
-          Loading analytics...
+          {t('analytics.loading')}
         </Text>
       </View>
     );
@@ -72,7 +76,7 @@ export default function AnalyticsScreen() {
           padding: spacing[6],
         }}
       >
-        <Stack.Screen options={{ title: 'Analytics' }} />
+        <Stack.Screen options={{ title: t('analytics.title') }} />
         <SymbolIcon name="chart.bar.fill" size={48} color="#9CA3AF" />
         <Text
           style={{
@@ -81,7 +85,7 @@ export default function AnalyticsScreen() {
             textAlign: 'center',
           }}
         >
-          No data available
+          {t('analytics.empty.title')}
         </Text>
         <Text
           style={{
@@ -91,7 +95,7 @@ export default function AnalyticsScreen() {
             textAlign: 'center',
           }}
         >
-          Add farms and record activities to see analytics
+          {t('analytics.empty.subtitle')}
         </Text>
       </View>
     );
@@ -100,7 +104,7 @@ export default function AnalyticsScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
       <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
-        <Stack.Screen options={{ title: 'Analytics' }} />
+        <Stack.Screen options={{ title: t('analytics.title') }} />
 
         <ScrollView contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}>
           {/* Time Range Selector */}
@@ -128,7 +132,7 @@ export default function AnalyticsScreen() {
                     color: timeRange === range.value ? colors.white : colors.surface[600],
                   }}
                 >
-                  {range.label}
+                  {t(range.labelKey)}
                 </Text>
               </Pressable>
             ))}
@@ -174,7 +178,7 @@ export default function AnalyticsScreen() {
                 {analytics.totalIrrigationHours.toFixed(1)}h
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                Irrigation Hours
+                {t('analytics.labels.irrigationHours')}
               </Text>
             </View>
             <View
@@ -208,7 +212,7 @@ export default function AnalyticsScreen() {
                 {analytics.totalSprayCount}
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                Spray Applications
+                {t('analytics.labels.sprayApplications')}
               </Text>
             </View>
             <View
@@ -242,7 +246,7 @@ export default function AnalyticsScreen() {
                 {(analytics.totalHarvestQuantity / 1000).toFixed(1)}t
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                Total Harvest
+                {t('analytics.labels.totalHarvest')}
               </Text>
             </View>
             <View
@@ -281,7 +285,7 @@ export default function AnalyticsScreen() {
                 {(analytics.totalHarvestValue / 1000).toFixed(0)}k
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                Harvest Value
+                {t('analytics.labels.harvestValue')}
               </Text>
             </View>
           </View>
@@ -311,7 +315,7 @@ export default function AnalyticsScreen() {
                     color: colors.surface[900],
                   }}
                 >
-                  Performance Score
+                  {t('analytics.labels.performanceScore')}
                 </Text>
                 <View
                   style={{
@@ -357,7 +361,7 @@ export default function AnalyticsScreen() {
                           textTransform: 'capitalize',
                         }}
                       >
-                        {key}
+                        {t(`analytics.categories.${key}`)}
                       </Text>
                       <SymbolIcon
                         name={
@@ -416,7 +420,7 @@ export default function AnalyticsScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                Cost Analysis
+                {t('analytics.sections.costAnalysis')}
               </Text>
               <View style={{ flexDirection: 'row', marginBottom: spacing[3], gap: 12 }}>
                 <View
@@ -427,12 +431,13 @@ export default function AnalyticsScreen() {
                     padding: spacing[3],
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>Revenue</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>
+                    {t('analytics.metrics.revenue')}
+                  </Text>
                   <Text
                     style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#15803D' }}
                   >
-                    {currencySymbol}
-                    {costAnalysis.totalRevenue.toLocaleString()}
+                    {formatCurrency(costAnalysis.totalRevenue, currency)}
                   </Text>
                 </View>
                 <View
@@ -443,12 +448,13 @@ export default function AnalyticsScreen() {
                     padding: spacing[3],
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: '#DC2626' }}>Expenses</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: '#DC2626' }}>
+                    {t('analytics.metrics.expenses')}
+                  </Text>
                   <Text
                     style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#B91C1C' }}
                   >
-                    {currencySymbol}
-                    {costAnalysis.totalCosts.toLocaleString()}
+                    {formatCurrency(costAnalysis.totalCosts, currency)}
                   </Text>
                 </View>
               </View>
@@ -462,7 +468,7 @@ export default function AnalyticsScreen() {
                   }}
                 >
                   <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                    Profit Margin
+                    {t('analytics.metrics.profitMargin')}
                   </Text>
                   <Text
                     style={{
@@ -482,7 +488,9 @@ export default function AnalyticsScreen() {
                     padding: spacing[3],
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>ROI</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    {t('analytics.metrics.roi')}
+                  </Text>
                   <Text
                     style={{
                       fontSize: fontSize.lg,
@@ -515,7 +523,7 @@ export default function AnalyticsScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                Yield Analysis
+                {t('analytics.sections.yieldAnalysis')}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
                 <View
@@ -527,7 +535,7 @@ export default function AnalyticsScreen() {
                   }}
                 >
                   <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                    Total Yield
+                    {t('analytics.labels.totalYield')}
                   </Text>
                   <Text
                     style={{
@@ -536,7 +544,7 @@ export default function AnalyticsScreen() {
                       color: colors.surface[900],
                     }}
                   >
-                    {yieldAnalysis.currentYield.toLocaleString()} kg
+                    {formatNumber(yieldAnalysis.currentYield)} kg
                   </Text>
                 </View>
                 <View
@@ -548,7 +556,7 @@ export default function AnalyticsScreen() {
                   }}
                 >
                   <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                    Yield/Acre
+                    {t('analytics.labels.yieldPerAcre')}
                   </Text>
                   <Text
                     style={{
@@ -569,7 +577,7 @@ export default function AnalyticsScreen() {
                   }}
                 >
                   <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                    Avg Price
+                    {t('analytics.labels.avgPrice')}
                   </Text>
                   <Text
                     style={{
@@ -591,7 +599,7 @@ export default function AnalyticsScreen() {
                   }}
                 >
                   <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                    Total Area
+                    {t('analytics.labels.totalArea')}
                   </Text>
                   <Text
                     style={{
@@ -600,7 +608,7 @@ export default function AnalyticsScreen() {
                       color: colors.surface[900],
                     }}
                   >
-                    {yieldAnalysis.totalArea.toFixed(1)} acres
+                    {yieldAnalysis.totalArea.toFixed(1)} {t('units.acres')}
                   </Text>
                 </View>
               </View>
@@ -625,7 +633,7 @@ export default function AnalyticsScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                Expense Breakdown
+                {t('analytics.sections.expenseBreakdown')}
               </Text>
               {(() => {
                 const displayed = analytics.expensesByType.slice(0, 5);
@@ -673,8 +681,7 @@ export default function AnalyticsScreen() {
                         color: colors.surface[900],
                       }}
                     >
-                      {currencySymbol}
-                      {expense.amount.toLocaleString()}
+                      {formatCurrency(expense.amount, currency)}
                     </Text>
                   </View>
                 ));
@@ -704,7 +711,7 @@ export default function AnalyticsScreen() {
                     marginLeft: spacing[2],
                   }}
                 >
-                  Recommendations
+                  {t('analytics.sections.recommendations')}
                 </Text>
               </View>
               {performanceMetrics.recommendations.map((rec, index) => (
@@ -749,7 +756,7 @@ export default function AnalyticsScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                Recent Activity
+                {t('analytics.sections.recentActivity')}
               </Text>
               {(() => {
                 const recentItems = analytics.recentActivity.slice(0, 5);
@@ -800,7 +807,11 @@ export default function AnalyticsScreen() {
                         </Text>
                       </View>
                       <Text style={{ fontSize: fontSize.xs, color: colors.surface[400] }}>
-                        {new Date(activity.date).toLocaleDateString()}
+                        {formatDate(new Date(activity.date), {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
                       </Text>
                     </View>
                   );

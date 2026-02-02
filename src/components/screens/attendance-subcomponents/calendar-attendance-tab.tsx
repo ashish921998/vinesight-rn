@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { WorkerSelectSheet } from './index';
+import i18n from '@/i18n';
 
 type AttendanceStatus = WorkStatus | null;
 
@@ -57,7 +58,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
       const records = await fetchAttendanceForWorker(selectedWorkerId, startDate, endDate);
       setAttendanceData(records);
     } catch {
-      Alert.alert('Error', 'Failed to load attendance');
+      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.failedToLoadAttendance'));
     } finally {
       setLoading(false);
     }

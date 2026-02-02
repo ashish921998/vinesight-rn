@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
+  Platform,
   Pressable,
   RefreshControl,
   TextInput,
@@ -13,15 +14,17 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
-import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
+import { formatCurrency } from '@/i18n/format';
 import {
   useFarms,
   useDeleteFarm,
   useWarehouseItems,
   useProfile,
   useDeleteWarehouseItem,
+  useFabBottomPosition,
 } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { useModalStore } from '@/stores';
@@ -30,16 +33,22 @@ import type { Farm, WarehouseItem } from '@/types';
 type ExploreTab = 'farms' | 'warehouse';
 type WarehouseFilter = 'all' | 'fertilizer' | 'spray';
 
-const EXPLORE_TABS: { id: ExploreTab; label: string; icon: string }[] = [
-  { id: 'farms', label: 'Farms', icon: 'leaf.fill' },
-  { id: 'warehouse', label: 'Warehouse', icon: 'cube.fill' },
-];
-
 export default function ExploreScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
+  const isAndroid = Platform.OS === 'android';
+  const exploreTabs = useMemo(
+    () =>
+      [
+        { id: 'farms' as const, label: t('tabs.farms'), icon: 'leaf.fill' },
+        { id: 'warehouse' as const, label: t('warehouse.title'), icon: 'cube.fill' },
+      ] as const,
+    [t],
+  );
   const { setAddWarehouseItem, setAddStock } = useModalStore();
   const insets = useSafeAreaInsets();
-  const fabBottomInset = useFabBottomInset();
+  const fabBottom = useFabBottomPosition();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
   const { fontScale } = useWindowDimensions();
 
@@ -129,8 +138,10 @@ export default function ExploreScreen() {
   );
 
   // Header animation values
-  const headerMinHeight = fontScale > 1.3 ? 70 : 50;
-  const headerMaxHeight = fontScale > 1.3 ? 90 : 70;
+  const headerMinHeightBase = fontScale > 1.3 ? 70 : 50;
+  const headerMaxHeightBase = fontScale > 1.3 ? 90 : 70;
+  const headerMinHeight = headerMinHeightBase + (isAndroid ? (fontScale > 1.3 ? 16 : 14) : 0);
+  const headerMaxHeight = headerMaxHeightBase + (isAndroid ? (fontScale > 1.3 ? 16 : 14) : 0);
   const iconMinHeight = fontScale > 1.3 ? 48 : 0;
 
   const headerHeight = scrollY.interpolate({
@@ -205,22 +216,23 @@ export default function ExploreScreen() {
     const farmId = farm.id;
     if (typeof farmId !== 'number') return;
     Alert.alert(
-      'Delete Farm',
-      `Are you sure you want to delete "${farm.name}"? This will also delete all associated data including irrigation records, spray records, harvests, expenses, soil profiles, and other farm-related data. This action cannot be undone.`,
+      t('farmDetails.deleteFarmTitle'),
+      t('farmDetails.deleteFarmBody', { name: farm.name }),
       [
         {
-          text: 'Cancel',
+          text: t('common.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteFarm.mutateAsync(farmId);
             } catch (error: unknown) {
-              const errorMessage = error instanceof Error ? error.message : 'Failed to delete farm';
-              Alert.alert('Error', errorMessage);
+              const errorMessage =
+                error instanceof Error ? error.message : t('farmDetails.errors.deleteFarmFailed');
+              Alert.alert(t('common.error'), errorMessage);
             }
           },
         },
@@ -272,22 +284,29 @@ export default function ExploreScreen() {
   }, [warehouseItems]);
 
   const handleDeleteWarehouseItem = (item: WarehouseItem) => {
-    Alert.alert('Delete Item', `Are you sure you want to delete "${item.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          if (item.id) {
-            deleteItemMutation.mutate(item.id, {
-              onError: (error) => {
-                Alert.alert('Error', error.message || 'Failed to delete item');
-              },
-            });
-          }
+    Alert.alert(
+      t('warehouse.alerts.deleteItemTitle'),
+      t('warehouse.alerts.deleteItemBody', { name: item.name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            if (item.id) {
+              deleteItemMutation.mutate(item.id, {
+                onError: (error) => {
+                  Alert.alert(
+                    t('common.error'),
+                    error.message || t('common.errors.failedToDeleteItem'),
+                  );
+                },
+              });
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleAddStock = (item: WarehouseItem) => {
@@ -329,7 +348,7 @@ export default function ExploreScreen() {
             <Text
               style={{ color: colors.surface[500], fontSize: fontSize.base, marginTop: spacing[4] }}
             >
-              Loading farms...
+              {t('common.loading')}
             </Text>
           </View>
         );
@@ -366,7 +385,7 @@ export default function ExploreScreen() {
                 textAlign: 'center',
               }}
             >
-              No Results Found
+              {t('common.noResultsFound')}
             </Text>
             <Text
               style={{
@@ -376,11 +395,11 @@ export default function ExploreScreen() {
                 marginTop: spacing[2],
               }}
             >
-              Try a different search term
+              {t('common.tryDifferentSearchTerm')}
             </Text>
             <Pressable onPress={() => setSearchQuery('')} style={{ marginTop: spacing[4] }}>
               <Text style={{ color: colors.primary[500], fontWeight: fontWeight.medium }}>
-                Clear Search
+                {t('common.clearSearch')}
               </Text>
             </Pressable>
           </View>
@@ -417,7 +436,7 @@ export default function ExploreScreen() {
               textAlign: 'center',
             }}
           >
-            No Farms Yet
+            {t('farms.empty.title')}
           </Text>
           <Text
             style={{
@@ -427,7 +446,7 @@ export default function ExploreScreen() {
               marginTop: spacing[2],
             }}
           >
-            Add your first farm to start tracking irrigation, sprays, and harvests.
+            {t('farms.empty.subtitle')}
           </Text>
           <Pressable
             style={{
@@ -439,7 +458,9 @@ export default function ExploreScreen() {
             }}
             onPress={handleAddFarm}
           >
-            <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>Add Farm</Text>
+            <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
+              {t('farms.addFarm')}
+            </Text>
           </Pressable>
         </View>
       );
@@ -452,7 +473,7 @@ export default function ExploreScreen() {
           <Text
             style={{ color: colors.surface[500], fontSize: fontSize.sm, marginTop: spacing[2] }}
           >
-            {filteredFarms.length} farm{filteredFarms.length !== 1 ? 's' : ''} found
+            {t('farms.search.found', { count: filteredFarms.length })}
           </Text>
         )}
 
@@ -511,7 +532,7 @@ export default function ExploreScreen() {
                       fontSize: fontSize.xs,
                     }}
                   >
-                    Total Farms
+                    {t('farms.stats.totalFarms')}
                   </Text>
                 </View>
               </View>
@@ -562,7 +583,7 @@ export default function ExploreScreen() {
                       fontSize: fontSize.xs,
                     }}
                   >
-                    Total Acres
+                    {t('farms.stats.totalArea')}
                   </Text>
                 </View>
               </View>
@@ -605,7 +626,7 @@ export default function ExploreScreen() {
             onPress={handleAddFarm}
             style={{
               position: 'absolute',
-              bottom: spacing[14] + fabBottomInset,
+              bottom: fabBottom,
               right: spacing[6],
               width: 56,
               height: 56,
@@ -628,7 +649,7 @@ export default function ExploreScreen() {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
-            Loading inventory...
+            {t('warehouse.loading.inventory')}
           </Text>
         </View>
       );
@@ -682,7 +703,9 @@ export default function ExploreScreen() {
               >
                 {lowStockItems.length}
               </Text>
-              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>Low Stock</Text>
+              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                {t('warehouse.labels.lowStock')}
+              </Text>
             </View>
             <View
               style={{
@@ -701,10 +724,11 @@ export default function ExploreScreen() {
                   marginTop: spacing[2],
                 }}
               >
-                {currency === 'INR' ? '₹' : '$'}
-                {warehouseTotals.value.toLocaleString()}
+                {formatCurrency(warehouseTotals.value, currency)}
               </Text>
-              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>Value</Text>
+              <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
+                {t('common.labels.value')}
+              </Text>
             </View>
           </View>
 
@@ -734,7 +758,7 @@ export default function ExploreScreen() {
                     marginLeft: spacing[2],
                   }}
                 >
-                  Low Stock Alerts
+                  {t('warehouse.labels.lowStockAlerts')}
                 </Text>
                 <View
                   style={{
@@ -752,7 +776,7 @@ export default function ExploreScreen() {
                       fontWeight: fontWeight.medium,
                     }}
                   >
-                    {lowStockItems.length} items
+                    {t('warehouse.itemsCount', { count: lowStockItems.length })}
                   </Text>
                 </View>
               </View>
@@ -808,7 +832,10 @@ export default function ExploreScreen() {
                               marginTop: 2,
                             }}
                           >
-                            Reorder at: {item.reorder_quantity} {item.unit}
+                            {t('warehouse.reorderAt', {
+                              quantity: item.reorder_quantity,
+                              unit: item.unit,
+                            })}
                           </Text>
                         )}
                         <View
@@ -829,7 +856,7 @@ export default function ExploreScreen() {
                               fontWeight: fontWeight.medium,
                             }}
                           >
-                            Add Stock
+                            {t('warehouse.stockForm.title')}
                           </Text>
                         </View>
                       </View>
@@ -849,8 +876,7 @@ export default function ExploreScreen() {
                 marginBottom: spacing[3],
               }}
             >
-              {filteredWarehouseItems.length} item{filteredWarehouseItems.length !== 1 ? 's' : ''}{' '}
-              found
+              {t('warehouse.search.found', { count: filteredWarehouseItems.length })}
             </Text>
           )}
 
@@ -884,10 +910,10 @@ export default function ExploreScreen() {
                   }}
                 >
                   {type === 'all'
-                    ? `ALL (${warehouseTotals.count})`
+                    ? t('warehouse.filters.all', { count: warehouseTotals.count })
                     : type === 'fertilizer'
-                      ? `FERTILIZERS (${warehouseTotals.fertilizers})`
-                      : `SPRAYS (${warehouseTotals.sprays})`}
+                      ? t('warehouse.filters.fertilizer', { count: warehouseTotals.fertilizers })
+                      : t('warehouse.filters.spray', { count: warehouseTotals.sprays })}
                 </Text>
               </Pressable>
             ))}
@@ -923,7 +949,7 @@ export default function ExploreScreen() {
                   textAlign: 'center',
                 }}
               >
-                No items in warehouse
+                {t('warehouse.empty.title')}
               </Text>
               <Text
                 style={{
@@ -933,7 +959,7 @@ export default function ExploreScreen() {
                   textAlign: 'center',
                 }}
               >
-                Tap the + button to add your first inventory item
+                {t('warehouse.empty.subtitle')}
               </Text>
               <Pressable
                 onPress={() => {
@@ -957,7 +983,7 @@ export default function ExploreScreen() {
                     marginLeft: spacing[2],
                   }}
                 >
-                  Add Item
+                  {t('warehouse.actions.addItem')}
                 </Text>
               </Pressable>
             </View>
@@ -1008,7 +1034,9 @@ export default function ExploreScreen() {
                                 marginLeft: spacing[1],
                               }}
                             >
-                              {item.type === 'fertilizer' ? 'FERTILIZER' : 'SPRAY'}
+                              {item.type === 'fertilizer'
+                                ? t('warehouse.itemTypes.fertilizer')
+                                : t('warehouse.itemTypes.spray')}
                             </Text>
                           </View>
                         </View>
@@ -1029,7 +1057,7 @@ export default function ExploreScreen() {
                                 fontWeight: fontWeight.medium,
                               }}
                             >
-                              Low
+                              {t('common.labels.low')}
                             </Text>
                           </View>
                         )}
@@ -1038,7 +1066,7 @@ export default function ExploreScreen() {
                             onPress={() => handleEditWarehouseItem(item)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             accessibilityRole="button"
-                            accessibilityLabel={`Edit ${item.name}`}
+                            accessibilityLabel={t('common.a11y.editWithName', { name: item.name })}
                           >
                             <Icon name="pencil" size={20} color="#408059" />
                           </Pressable>
@@ -1046,7 +1074,9 @@ export default function ExploreScreen() {
                             onPress={() => handleDeleteWarehouseItem(item)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             accessibilityRole="button"
-                            accessibilityLabel={`Delete ${item.name}`}
+                            accessibilityLabel={t('common.a11y.deleteWithName', {
+                              name: item.name,
+                            })}
                           >
                             <Icon name="trash" size={20} color="#EF4444" />
                           </Pressable>
@@ -1071,7 +1101,7 @@ export default function ExploreScreen() {
                   <View style={{ flexDirection: 'row', marginTop: spacing[3] }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        Quantity
+                        {t('common.labels.quantity')}
                       </Text>
                       <Text
                         style={{
@@ -1085,7 +1115,7 @@ export default function ExploreScreen() {
                     </View>
                     <View style={{ flex: 1, alignItems: 'center' }}>
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        Unit Price
+                        {t('common.labels.unitPrice')}
                       </Text>
                       <Text
                         style={{
@@ -1094,13 +1124,12 @@ export default function ExploreScreen() {
                           fontWeight: fontWeight.medium,
                         }}
                       >
-                        {currency === 'INR' ? '₹' : '$'}
-                        {item.unit_price.toLocaleString()}/{item.unit}
+                        {formatCurrency(item.unit_price, currency)}/{item.unit}
                       </Text>
                     </View>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
-                        Total Value
+                        {t('common.labels.totalValue')}
                       </Text>
                       <Text
                         style={{
@@ -1109,8 +1138,7 @@ export default function ExploreScreen() {
                           fontWeight: fontWeight.semibold,
                         }}
                       >
-                        {currency === 'INR' ? '₹' : '$'}
-                        {itemValue.toLocaleString()}
+                        {formatCurrency(itemValue, currency)}
                       </Text>
                     </View>
                   </View>
@@ -1140,7 +1168,7 @@ export default function ExploreScreen() {
           }}
           style={{
             position: 'absolute',
-            bottom: spacing[14] + fabBottomInset,
+            bottom: fabBottom,
             right: spacing[6],
             width: 56,
             height: 56,
@@ -1160,13 +1188,13 @@ export default function ExploreScreen() {
   const searchPlaceholder = useMemo(() => {
     switch (selectedTab) {
       case 'farms':
-        return 'Search farms...';
+        return t('farms.search.placeholder');
       case 'warehouse':
-        return 'Search inventory...';
+        return t('warehouse.search.placeholder');
       default:
-        return 'Search...';
+        return t('common.search');
     }
-  }, [selectedTab]);
+  }, [selectedTab, t]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
@@ -1227,19 +1255,20 @@ export default function ExploreScreen() {
         }}
       >
         <View style={{ flex: 1, flexDirection: 'row', paddingHorizontal: spacing[4] }}>
-          {EXPLORE_TABS.map((tab) => {
+          {exploreTabs.map((tab) => {
             const isSelected = selectedTab === tab.id;
             return (
               <Animated.View
                 key={tab.id}
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   transform: [{ scale: tabScaleAnims[tab.id] }],
                 }}
               >
                 <Pressable
                   onPress={() => handleTabChange(tab.id)}
-                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+                  style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center' }}
                 >
                   <Animated.View
                     style={{
@@ -1266,11 +1295,27 @@ export default function ExploreScreen() {
                   </Animated.View>
 
                   <Animated.Text
+                    numberOfLines={isAndroid ? 2 : 1}
+                    ellipsizeMode={isAndroid ? 'clip' : 'tail'}
                     style={{
+                      width: '100%',
+                      flexShrink: 1,
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
                       color: isSelected ? '#408059' : '#6B7280',
                       marginTop: textMargin,
+                      textAlign: 'center',
+                      paddingHorizontal: spacing[2],
+                      maxWidth: '100%',
+                      ...(isAndroid
+                        ? {
+                            includeFontPadding: true,
+                            // Prevent rare Devanagari glyph clipping at the bottom.
+                            paddingBottom: 1,
+                            // Prevent occasional right-edge glyph clipping due to pixel rounding.
+                            paddingRight: spacing[2] + 1,
+                          }
+                        : null),
                     }}
                   >
                     {tab.label}

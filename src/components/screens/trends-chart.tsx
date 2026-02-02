@@ -5,25 +5,13 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, useWindowDimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LineChart } from 'react-native-chart-kit';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { PARAMETER_COLORS } from '../../hooks/use-lab-tests';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
-const monthNames = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
+import { formatDate } from '@/i18n/format';
 
 interface Props {
   trendData: TrendData[];
@@ -38,15 +26,16 @@ export default function TrendsChart({
   selectedParams,
   onToggleParam,
 }: Props) {
+  const { t, i18n } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
   const [selectedPoint, setSelectedPoint] = useState<{ index: number; date: string } | null>(null);
 
   const labels = useMemo(() => {
-    return trendData.map((t) => {
-      const date = new Date(t.date);
-      return `${date.getDate()} ${monthNames[date.getMonth()]}`;
+    return trendData.map((trend) => {
+      const date = new Date(trend.date);
+      return formatDate(date, { day: '2-digit', month: 'short' });
     });
-  }, [trendData]);
+  }, [trendData, i18n.language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sortedParams = Array.from(selectedParams).sort();
   const params = sortedParams
@@ -104,7 +93,7 @@ export default function TrendsChart({
             color: colors.gray[800],
           }}
         >
-          No Data Available
+          {t('trends.empty.noDataTitle')}
         </Text>
       </View>
     );
@@ -127,7 +116,7 @@ export default function TrendsChart({
             color: colors.gray[800],
           }}
         >
-          Need More Data
+          {t('trends.empty.needMoreDataTitle')}
         </Text>
         <Text
           style={{
@@ -137,7 +126,7 @@ export default function TrendsChart({
             paddingHorizontal: spacing[8],
           }}
         >
-          Add at least 2 lab tests to view chart
+          {t('trends.empty.needMoreDataBody')}
         </Text>
       </View>
     );
@@ -160,7 +149,7 @@ export default function TrendsChart({
             color: colors.gray[800],
           }}
         >
-          No Parameters Selected
+          {t('trends.empty.noParamsTitle')}
         </Text>
         <Text
           style={{
@@ -170,7 +159,7 @@ export default function TrendsChart({
             paddingHorizontal: spacing[8],
           }}
         >
-          Select at least one parameter to view chart
+          {t('trends.empty.noParamsBody')}
         </Text>
       </View>
     );
@@ -228,8 +217,7 @@ export default function TrendsChart({
               marginBottom: spacing[2],
             }}
           >
-            {new Date(selectedPoint.date).getDate()}{' '}
-            {monthNames[new Date(selectedPoint.date).getMonth()]}
+            {formatDate(new Date(selectedPoint.date), { day: '2-digit', month: 'short' })}
           </Text>
           {params.map((param) => {
             const value = trendData[selectedPoint.index].parameters[param.key];
@@ -254,7 +242,7 @@ export default function TrendsChart({
             marginBottom: spacing[3],
           }}
         >
-          Legend
+          {t('trends.legend.title')}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
           {params.map((param, idx) => {
@@ -296,7 +284,7 @@ export default function TrendsChart({
                   <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
                     {trend.change !== null
                       ? `${trend.change > 0 ? '+' : ''}${trend.change.toFixed(1)}%`
-                      : 'N/A'}
+                      : t('common.na')}
                   </Text>
                 </View>
               </Pressable>
@@ -315,7 +303,7 @@ export default function TrendsChart({
             marginBottom: spacing[3],
           }}
         >
-          Summary
+          {t('trends.summary.title')}
         </Text>
         {params.map((param, idx) => {
           const color = PARAMETER_COLORS[idx % PARAMETER_COLORS.length];
@@ -367,7 +355,7 @@ export default function TrendsChart({
                   }}
                 >
                   {trend.change === null
-                    ? 'N/A'
+                    ? t('common.na')
                     : trend.change > 0
                       ? `↑ ${Math.abs(trend.change).toFixed(1)}%`
                       : trend.change < 0
@@ -383,7 +371,9 @@ export default function TrendsChart({
                 }}
               >
                 <View>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>Current</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                    {t('common.labels.current')}
+                  </Text>
                   <Text
                     style={{
                       fontSize: fontSize.sm,
@@ -395,7 +385,9 @@ export default function TrendsChart({
                   </Text>
                 </View>
                 <View>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>Avg</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                    {t('common.labels.avg')}
+                  </Text>
                   <Text
                     style={{
                       fontSize: fontSize.sm,
@@ -407,7 +399,9 @@ export default function TrendsChart({
                   </Text>
                 </View>
                 <View>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>Min</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                    {t('common.labels.min')}
+                  </Text>
                   <Text
                     style={{
                       fontSize: fontSize.sm,
@@ -419,7 +413,9 @@ export default function TrendsChart({
                   </Text>
                 </View>
                 <View>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>Max</Text>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                    {t('common.labels.max')}
+                  </Text>
                   <Text
                     style={{
                       fontSize: fontSize.sm,

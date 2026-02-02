@@ -16,11 +16,13 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
 import { SoilSectionData } from '../../types/database';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { formatDate } from '@/i18n/format';
 
 interface SoilProfileFormProps {
   visible?: boolean;
@@ -36,6 +38,7 @@ export default function SoilProfileForm({
   presentation = 'modal',
 }: SoilProfileFormProps) {
   const isVisible = visible ?? true;
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const createProfile = useCreateSoilProfile();
 
@@ -72,7 +75,7 @@ export default function SoilProfileForm({
     const filledSections = Object.entries(sections).filter(([, value]) => value.trim() !== '');
 
     if (filledSections.length === 0) {
-      Alert.alert('Error', 'Please enter at least one moisture value');
+      Alert.alert(t('common.error'), t('common.errors.enterAtLeastOneMoistureValue'));
       return;
     }
 
@@ -95,7 +98,7 @@ export default function SoilProfileForm({
       onClose();
     } catch (error) {
       console.error('Error creating soil profile:', error);
-      Alert.alert('Error', 'Failed to save soil profile');
+      Alert.alert(t('common.error'), t('common.errors.failedToSaveSoilProfile'));
     }
   };
 
@@ -157,7 +160,9 @@ export default function SoilProfileForm({
         }}
       >
         <Pressable onPress={onClose}>
-          <Text style={{ color: colors.surface[500], fontSize: fontSize.base }}>Cancel</Text>
+          <Text style={{ color: colors.surface[500], fontSize: fontSize.base }}>
+            {t('common.cancel')}
+          </Text>
         </Pressable>
         <Text
           style={{
@@ -166,7 +171,7 @@ export default function SoilProfileForm({
             color: colors.surface[900],
           }}
         >
-          Add Soil Profile
+          {t('soilProfileForm.titleAdd')}
         </Text>
         <Pressable onPress={handleSubmit} disabled={isLoading}>
           <Text
@@ -176,7 +181,7 @@ export default function SoilProfileForm({
               color: isLoading ? '#c7c7cc' : colors.primary[500],
             }}
           >
-            {isLoading ? 'Saving...' : 'Save'}
+            {isLoading ? t('common.saving') : t('common.save')}
           </Text>
         </Pressable>
       </View>
@@ -211,7 +216,7 @@ export default function SoilProfileForm({
               marginBottom: spacing[1],
             }}
           >
-            Profile Date
+            {t('soilProfileForm.date.label')}
           </Text>
           <Text
             style={{
@@ -220,7 +225,7 @@ export default function SoilProfileForm({
               marginBottom: spacing[3],
             }}
           >
-            Select the date when this soil profile was taken.
+            {t('soilProfileForm.date.hint')}
           </Text>
           <Pressable
             onPress={() => setShowDatePicker(true)}
@@ -237,11 +242,7 @@ export default function SoilProfileForm({
             }}
           >
             <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
-              {selectedDate.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
+              {formatDate(selectedDate, { year: 'numeric', month: 'short', day: 'numeric' })}
             </Text>
             <IconSymbol name="calendar" size={20} color="#8e8e93" />
           </Pressable>
@@ -279,7 +280,7 @@ export default function SoilProfileForm({
                   textAlign: 'center',
                 }}
               >
-                Select Profile Date
+                {t('soilProfileForm.date.modalTitle')}
               </Text>
               <DateTimePicker
                 value={selectedDate}
@@ -298,7 +299,9 @@ export default function SoilProfileForm({
                   backgroundColor: colors.primary[500],
                 }}
               >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
+                  {t('common.done')}
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -321,7 +324,7 @@ export default function SoilProfileForm({
               marginBottom: spacing[1],
             }}
           >
-            Moisture Readings (%)
+            {t('soilProfileForm.moisture.title')}
           </Text>
           <Text
             style={{
@@ -330,7 +333,7 @@ export default function SoilProfileForm({
               marginBottom: spacing[4],
             }}
           >
-            Enter soil moisture percentage for each section. At least one is required.
+            {t('soilProfileForm.moisture.hint')}
           </Text>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
@@ -374,7 +377,7 @@ export default function SoilProfileForm({
                       </Text>
                     </View>
                     <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
-                      {info.label}
+                      {t(info.labelKey)}
                     </Text>
                   </View>
                   <TextInput
@@ -418,7 +421,7 @@ export default function SoilProfileForm({
               marginBottom: spacing[1],
             }}
           >
-            EC Values (dS/m) - Optional
+            {t('soilProfileForm.ec.title')}
           </Text>
           <Text
             style={{
@@ -427,7 +430,7 @@ export default function SoilProfileForm({
               marginBottom: spacing[4],
             }}
           >
-            Electrical conductivity readings for each section.
+            {t('soilProfileForm.ec.hint')}
           </Text>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
@@ -449,7 +452,7 @@ export default function SoilProfileForm({
                       marginBottom: spacing[1],
                     }}
                   >
-                    {info.label} EC
+                    {t(info.labelKey)} {t('soilProfileForm.ec.fieldSuffix')}
                   </Text>
                   <TextInput
                     style={{
@@ -494,7 +497,7 @@ export default function SoilProfileForm({
               marginBottom: spacing[1],
             }}
           >
-            Fusarium (%) - Optional
+            {t('soilProfileForm.fusarium.title')}
           </Text>
           <Text
             style={{
@@ -503,7 +506,7 @@ export default function SoilProfileForm({
               marginBottom: spacing[3],
             }}
           >
-            Fusarium wilt percentage if applicable.
+            {t('soilProfileForm.fusarium.hint')}
           </Text>
           <TextInput
             style={{

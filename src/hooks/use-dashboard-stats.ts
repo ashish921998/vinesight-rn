@@ -9,6 +9,8 @@ import { queryKeys } from './query-keys';
 import type { Farm } from '../types';
 import { TABLES, isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
+import { formatCurrency } from '@/i18n/format';
+import { useProfile } from './use-profile';
 
 // ============================================================
 // MARK: - Types
@@ -23,7 +25,7 @@ export interface DashboardStats {
 
 export interface FarmNeedingAttention {
   farm: Farm;
-  reason: string;
+  reason: 'lowWaterLevel';
 }
 
 export interface RecentActivity {
@@ -162,7 +164,7 @@ export function useFarmsNeedingAttention() {
         .filter((farm) => isLowWater(farm))
         .map((farm) => ({
           farm,
-          reason: 'Low water level',
+          reason: 'lowWaterLevel' as const,
         }));
     },
     staleTime: 60000, // 1 minute
@@ -174,8 +176,11 @@ export function useFarmsNeedingAttention() {
 // ============================================================
 
 export function useRecentActivities(limit: number = 5) {
+  const { data: profile } = useProfile();
+  const preferredCurrency = profile?.preferred_currency || 'USD';
+
   return useQuery({
-    queryKey: queryKeys.dashboard.recentActivities(limit),
+    queryKey: [...queryKeys.dashboard.recentActivities(limit), preferredCurrency],
     queryFn: async (): Promise<RecentActivity[]> => {
       const userId = await getUserId();
       if (!userId) return [];
@@ -267,11 +272,9 @@ export function useRecentActivities(limit: number = 5) {
 
       // Map expense
       expense.data?.forEach((r) => {
-        const formattedCost = new Intl.NumberFormat('en-IN', {
-          style: 'currency',
-          currency: 'INR',
+        const formattedCost = formatCurrency(r.cost ?? 0, preferredCurrency, {
           minimumFractionDigits: 0,
-        }).format(r.cost ?? 0);
+        });
         activities.push({
           id: `expense_${r.id}`,
           type: 'expense',

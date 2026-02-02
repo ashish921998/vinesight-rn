@@ -9,6 +9,9 @@ import { Symbol as CardSymbol } from '@/components/ui/symbol';
 import type { Worker } from '../../types';
 import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { formatCurrency } from '@/i18n/format';
+import { useTranslation } from 'react-i18next';
+import { useProfile } from '@/hooks';
 
 interface WorkerCardProps {
   worker: Worker;
@@ -18,19 +21,19 @@ interface WorkerCardProps {
 }
 
 export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProps) {
+  const { t } = useTranslation();
+  const { data: profile } = useProfile();
+  const preferredCurrency = profile?.preferred_currency || 'USD';
+
   const initial = worker.name.charAt(0).toUpperCase();
-  const formattedRate = new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  const formattedRate = formatCurrency(worker.daily_rate, preferredCurrency, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(worker.daily_rate);
-  const formattedAdvance = new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  });
+  const formattedAdvance = formatCurrency(worker.advance_balance, preferredCurrency, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(worker.advance_balance);
+  });
 
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
@@ -132,7 +135,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
           />
           <Text style={rateTextStyle} numberOfLines={1}>
             {formattedRate}
-            <Text style={dayTextStyle}> /day</Text>
+            <Text style={dayTextStyle}>{t('workers.ratePerDayShort')}</Text>
           </Text>
         </View>
       </View>
@@ -151,7 +154,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
               onPress={onEdit}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
-              accessibilityLabel={`Edit ${worker.name}`}
+              accessibilityLabel={t('workers.workerCard.editA11y', { name: worker.name })}
               style={({ pressed: actionPressed }) => [
                 actionButtonStyle,
                 actionPressed
@@ -172,7 +175,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
               onPress={onDelete}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
-              accessibilityLabel={`Delete ${worker.name}`}
+              accessibilityLabel={t('workers.workerCard.deleteA11y', { name: worker.name })}
               style={({ pressed: actionPressed }) => [
                 actionButtonStyle,
                 actionPressed
