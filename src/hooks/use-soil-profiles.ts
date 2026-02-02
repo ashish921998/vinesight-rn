@@ -131,18 +131,18 @@ export function formatProfileDate(createdAt: string | null | undefined): string 
  * Get moisture status label
  */
 export function getMoistureStatus(moisture: number): {
-  label: string;
+  labelKey: string;
   color: string;
 } {
   if (moisture < 20) {
-    return { label: 'Very Dry', color: '#EF4444' };
+    return { labelKey: 'soilProfile.moistureStatus.veryDry', color: '#EF4444' };
   } else if (moisture < 40) {
-    return { label: 'Dry', color: '#F59E0B' };
+    return { labelKey: 'soilProfile.moistureStatus.dry', color: '#F59E0B' };
   } else if (moisture < 60) {
-    return { label: 'Optimal', color: '#10B981' };
+    return { labelKey: 'soilProfile.moistureStatus.optimal', color: '#10B981' };
   } else if (moisture < 80) {
-    return { label: 'Moist', color: '#3B82F6' };
+    return { labelKey: 'soilProfile.moistureStatus.moist', color: '#3B82F6' };
   } else {
-    return { label: 'Wet', color: '#6366F1' };
+    return { labelKey: 'soilProfile.moistureStatus.wet', color: '#6366F1' };
   }
 }

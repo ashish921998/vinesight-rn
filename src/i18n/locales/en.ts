@@ -1368,6 +1368,16 @@ export const en = {
     },
   },
 
+  soilProfile: {
+    moistureStatus: {
+      veryDry: 'Very Dry',
+      dry: 'Dry',
+      optimal: 'Optimal',
+      moist: 'Moist',
+      wet: 'Wet',
+    },
+  },
+
   soilProfileForm: {
     titleAdd: 'Add Soil Profile',
     sections: {

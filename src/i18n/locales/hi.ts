@@ -1371,6 +1371,16 @@ export const hi = {
     },
   },
 
+  soilProfile: {
+    moistureStatus: {
+      veryDry: 'बहुत सूखा',
+      dry: 'सूखा',
+      optimal: 'इष्टतम',
+      moist: 'नम',
+      wet: 'गीला',
+    },
+  },
+
   soilProfileForm: {
     titleAdd: 'मिट्टी प्रोफाइल जोड़ें',
     sections: {

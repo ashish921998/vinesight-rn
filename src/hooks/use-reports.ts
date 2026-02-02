@@ -5,6 +5,7 @@
 
 import { useMemo, useState, useCallback } from 'react';
 import { useFarms } from './use-farms';
+import { useProfile } from './use-profile';
 import {
   useIrrigationRecords,
   useSprayRecords,
@@ -69,6 +70,8 @@ export function useReportData(farmId: number | null, dateRange: DateRange | null
  * Hook to manage report export state
  */
 export function useReportExport() {
+  const { data: profile } = useProfile();
+  const preferredCurrency = profile?.preferred_currency || 'INR';
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -81,7 +84,12 @@ export function useReportExport() {
         if (format === 'csv') {
           await ReportService.exportCSV(preview.data, reportType);
         } else {
-          await ReportService.exportPDF(preview.data, preview.summary, reportType);
+          await ReportService.exportPDF(
+            preview.data,
+            preview.summary,
+            reportType,
+            preferredCurrency,
+          );
         }
       } catch (error) {
         console.error('Export error:', error);
@@ -91,7 +99,7 @@ export function useReportExport() {
         setIsExporting(false);
       }
     },
-    [],
+    [preferredCurrency],
   );
 
   return {

@@ -134,7 +134,7 @@ export default function OnboardingScreen() {
           marginBottom: spacing[8],
         }}
       >
-        <SymbolIcon name="leaf.fill" size={64} color="#1a5d1a" />
+        <SymbolIcon name="leaf.fill" size={64} color={colors.primary[700]} />
       </View>
       <Text
         style={{
@@ -173,7 +173,7 @@ export default function OnboardingScreen() {
           marginBottom: spacing[8],
         }}
       >
-        <SymbolIcon name="globe" size={48} color="#1a5d1a" />
+        <SymbolIcon name="globe" size={48} color={colors.primary[700]} />
       </View>
 
       <Text
@@ -338,7 +338,7 @@ export default function OnboardingScreen() {
       {/* Country Selection */}
       <View style={{ marginBottom: spacing[6] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
-          <SymbolIcon name="globe" size={20} color="#1a5d1a" />
+          <SymbolIcon name="globe" size={20} color={colors.primary[700]} />
           <Text
             style={{
               fontSize: fontSize.base,
@@ -420,7 +420,11 @@ export default function OnboardingScreen() {
       {/* Area Unit Selection */}
       <View style={{ marginBottom: spacing[6] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
-          <SymbolIcon name="arrow.up.left.and.arrow.down.right" size={20} color="#1a5d1a" />
+          <SymbolIcon
+            name="arrow.up.left.and.arrow.down.right"
+            size={20}
+            color={colors.primary[700]}
+          />
           <Text
             style={{
               fontSize: fontSize.base,
@@ -561,7 +565,7 @@ export default function OnboardingScreen() {
           marginBottom: spacing[8],
         }}
       >
-        <SymbolIcon name="checkmark.circle.fill" size={64} color="#1a5d1a" />
+        <SymbolIcon name="checkmark.circle.fill" size={64} color={colors.primary[700]} />
       </View>
       <Text
         style={{

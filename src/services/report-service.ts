@@ -7,7 +7,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
 import { ReportData, ReportSummary, ReportPreview, DateRange, ReportType } from '../types/report';
-import { formatDate, formatNumber } from '@/i18n/format';
+import { formatDate, formatCurrency } from '@/i18n/format';
 import {
   Farm,
   IrrigationRecord,
@@ -236,7 +236,12 @@ export class ReportService {
   /**
    * Generate PDF HTML content
    */
-  static generatePDFHtml(data: ReportData, summary: ReportSummary, reportType: ReportType): string {
+  static generatePDFHtml(
+    data: ReportData,
+    summary: ReportSummary,
+    reportType: ReportType,
+    preferredCurrency: string = 'INR',
+  ): string {
     const styles = `
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; }
@@ -284,11 +289,11 @@ export class ReportService {
               <div class="summary-label">Total Harvest</div>
             </div>
             <div class="summary-item">
-              <div class="summary-value">₹${formatNumber(summary.totalRevenue)}</div>
+              <div class="summary-value">${formatCurrency(summary.totalRevenue, preferredCurrency, { minimumFractionDigits: 0 })}</div>
               <div class="summary-label">Revenue</div>
             </div>
             <div class="summary-item">
-              <div class="summary-value ${summary.netProfit >= 0 ? 'profit' : 'loss'}">₹${formatNumber(summary.netProfit)}</div>
+              <div class="summary-value ${summary.netProfit >= 0 ? 'profit' : 'loss'}">${formatCurrency(summary.netProfit, preferredCurrency, { minimumFractionDigits: 0 })}</div>
               <div class="summary-label">Net Profit</div>
             </div>
           </div>
@@ -338,7 +343,7 @@ export class ReportService {
               .slice(0, 20)
               .map(
                 (r) =>
-                  `<tr><td>${r.date}</td><td>${r.quantity} kg</td><td>${r.grade}</td><td>${r.price ? '₹' + r.price : '-'}</td><td>${r.buyer || '-'}</td></tr>`,
+                  `<tr><td>${r.date}</td><td>${r.quantity} kg</td><td>${r.grade}</td><td>${r.price ? formatCurrency(r.price, preferredCurrency, { minimumFractionDigits: 0 }) : '-'}</td><td>${r.buyer || '-'}</td></tr>`,
               )
               .join('')}
           </table>
@@ -356,7 +361,7 @@ export class ReportService {
               .slice(0, 20)
               .map(
                 (r) =>
-                  `<tr><td>${r.date}</td><td>${r.type}</td><td>₹${r.cost}</td><td>${r.remarks || '-'}</td></tr>`,
+                  `<tr><td>${r.date}</td><td>${r.type}</td><td>${formatCurrency(r.cost, preferredCurrency, { minimumFractionDigits: 0 })}</td><td>${r.remarks || '-'}</td></tr>`,
               )
               .join('')}
           </table>
@@ -408,8 +413,9 @@ export class ReportService {
     data: ReportData,
     summary: ReportSummary,
     reportType: ReportType,
+    preferredCurrency: string = 'INR',
   ): Promise<void> {
-    const html = this.generatePDFHtml(data, summary, reportType);
+    const html = this.generatePDFHtml(data, summary, reportType, preferredCurrency);
 
     const { uri } = await Print.printToFileAsync({
       html,

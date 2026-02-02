@@ -1376,6 +1376,16 @@ export const mr = {
     },
   },
 
+  soilProfile: {
+    moistureStatus: {
+      veryDry: 'अत्यंत कोरडे',
+      dry: 'कोरडे',
+      optimal: 'इष्ट',
+      moist: 'ओलसर',
+      wet: 'भिजलेले',
+    },
+  },
+
   soilProfileForm: {
     titleAdd: '$t(glossary.soil) प्रोफाइल जोडा',
     sections: {

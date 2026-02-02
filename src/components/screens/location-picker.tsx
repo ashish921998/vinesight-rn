@@ -35,6 +35,12 @@ class MapErrorBoundary extends Component<MapErrorBoundaryProps, MapErrorBoundary
     this.props.onError(error);
   }
 
+  componentDidUpdate(prevProps: MapErrorBoundaryProps) {
+    if (this.state.hasError && prevProps.children !== this.props.children) {
+      this.setState({ hasError: false });
+    }
+  }
+
   render() {
     if (this.state.hasError) return this.props.fallback;
     return this.props.children;

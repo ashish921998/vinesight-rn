@@ -145,7 +145,7 @@ export default function SoilProfilingScreen() {
                   fontWeight: fontWeight.semibold,
                 }}
               >
-                {status.label}
+                {t(status.labelKey)}
               </Text>
             </View>
             <Pressable onPress={() => handleDeleteProfile(profile)} style={{ padding: spacing[2] }}>
