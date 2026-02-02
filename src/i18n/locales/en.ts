@@ -709,6 +709,7 @@ export const en = {
         remaining: 'Remaining',
         totalWaterUsed: 'Total water used',
         change: 'Change',
+        lastUpdated: 'Last updated',
       },
       current: {
         title: 'Current water level',

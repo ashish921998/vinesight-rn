@@ -5,6 +5,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatParameterKey } from '@/hooks/use-lab-tests';
 import { useTranslation } from 'react-i18next';
+import { formatDate as formatDateI18n } from '@/i18n/format';
 import type { TFunction } from 'i18next';
 import {
   soilParamOptions,
@@ -87,12 +88,7 @@ const formatValue = (value: unknown) => {
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return dateString;
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
+  return formatDateI18n(dateString, { year: 'numeric', month: '2-digit', day: '2-digit' });
 };
 
 const normalizeParamKey = (key: string) => {

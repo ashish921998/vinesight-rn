@@ -708,6 +708,7 @@ export const hi = {
         remaining: 'शेष',
         totalWaterUsed: 'कुल पानी उपयोग किया गया',
         change: 'परिवर्तन',
+        lastUpdated: 'अंतिम अपडेट',
       },
       current: {
         title: 'वर्तमान पानी का स्तर',

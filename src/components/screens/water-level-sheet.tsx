@@ -22,7 +22,7 @@ import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/th
 import { useNotificationStore } from '@/stores';
 import { ensureNotificationPermissions, notifyLowWaterAlert } from '@/services/notifications';
 import { useTranslation } from 'react-i18next';
-import { formatNumber } from '@/i18n/format';
+import { formatNumber, formatDate } from '@/i18n/format';
 
 interface WaterLevelSheetProps {
   visible?: boolean;
@@ -65,6 +65,24 @@ export function WaterLevelSheet({
     if (value === null || value === undefined) return '--';
     const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
     return `${formatNumber(value, { maximumFractionDigits: digits })} mm`;
+  };
+
+  const formatLastUpdated = (timestamp: string | null | undefined) => {
+    if (!timestamp) return '--';
+    try {
+      const date = new Date(timestamp);
+      if (Number.isNaN(date.getTime())) return '--';
+      return formatDate(date, {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+    } catch {
+      return '--';
+    }
   };
 
   const handleCalculate = () => {
@@ -205,6 +223,10 @@ export function WaterLevelSheet({
           {
             label: t('waterLevelSheet.preview.labels.totalWaterUsed'),
             value: formatWaterUsed(totalWaterUsed),
+          },
+          {
+            label: t('waterLevelSheet.preview.labels.lastUpdated'),
+            value: formatLastUpdated(farm.water_calculation_updated_at),
           },
         ]}
         backgroundColor={colors.surface[100]}

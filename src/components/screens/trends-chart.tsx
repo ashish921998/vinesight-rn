@@ -61,9 +61,9 @@ export default function TrendsChart({
   }, [params, trendData]);
 
   const chartConfig = {
-    backgroundColor: '#ffffff',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
+    backgroundColor: colors.white,
+    backgroundGradientFrom: colors.white,
+    backgroundGradientTo: colors.white,
     decimalPlaces: 2,
     color: (opacity: number) => `rgba(0, 0, 0, ${opacity})`,
     labelColor: (opacity: number) => `rgba(0, 0, 0, ${opacity})`,
@@ -203,7 +203,7 @@ export default function TrendsChart({
       {selectedPoint && (
         <View
           style={{
-            backgroundColor: '#EFF6FF',
+            backgroundColor: colors.primary[50],
             padding: spacing[4],
             borderRadius: borderRadius.xl,
             marginBottom: spacing[4],
@@ -213,7 +213,7 @@ export default function TrendsChart({
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: '#1E3A8A',
+              color: colors.primary[900],
               marginBottom: spacing[2],
             }}
           >
@@ -222,7 +222,7 @@ export default function TrendsChart({
           {params.map((param) => {
             const value = trendData[selectedPoint.index].parameters[param.key];
             return (
-              <Text key={param.key} style={{ fontSize: fontSize.sm, color: '#1E40AF' }}>
+              <Text key={param.key} style={{ fontSize: fontSize.sm, color: colors.primary[800] }}>
                 {param.trend.label}:{' '}
                 {value != null && typeof value === 'number' ? value.toFixed(2) : '-'}{' '}
                 {param.trend.unit}
@@ -348,9 +348,9 @@ export default function TrendsChart({
                       trend.change === null
                         ? colors.gray[400]
                         : trend.change > 0
-                          ? '#16A34A'
+                          ? colors.success
                           : trend.change < 0
-                            ? '#DC2626'
+                            ? colors.error
                             : colors.gray[400],
                   }}
                 >
@@ -406,7 +406,7 @@ export default function TrendsChart({
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: '#16A34A',
+                      color: colors.success,
                     }}
                   >
                     {trend.min.toFixed(2)}
@@ -420,7 +420,7 @@ export default function TrendsChart({
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: '#DC2626',
+                      color: colors.error,
                     }}
                   >
                     {trend.max.toFixed(2)}

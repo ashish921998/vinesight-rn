@@ -710,6 +710,7 @@ export const mr = {
         remaining: 'शिल्लक',
         totalWaterUsed: 'एकूण वापरलेले पाणी',
         change: 'बदल',
+        lastUpdated: 'शेवटचे अद्ययावत',
       },
       current: {
         title: 'सध्याची पाणी पातळी',
