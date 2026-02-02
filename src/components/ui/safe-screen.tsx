@@ -1,9 +1,8 @@
-import type { ReactNode } from 'react';
-import type { SafeAreaViewProps } from 'react-native-safe-area-context';
+import type { ComponentProps, ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/theme';
 
-type SafeScreenProps = SafeAreaViewProps & {
+type SafeScreenProps = ComponentProps<typeof SafeAreaView> & {
   backgroundColor?: string;
   children: ReactNode;
 };

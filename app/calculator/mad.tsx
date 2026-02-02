@@ -12,6 +12,7 @@ import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LinearGradient } from 'expo-linear-gradient';
 import { REFILL_SPANS, type RefillSpanId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { telemetry } from '@/services/telemetry';
 
 export default function MADCalculatorScreen() {
   // Step 1: MAD Calculation inputs
@@ -45,6 +46,14 @@ export default function MADCalculatorScreen() {
     const retentionVal = parseFloat(waterRetention);
     const mad = ((100 / dblVal) * depthVal * widthVal * retentionVal * 100) / 10000;
     setMadResult(mad);
+
+    telemetry.capture('analysis_run', {
+      analysis_type: 'MAD',
+      inputs_provided: 4,
+      used_defaults: false,
+      result_saved: false,
+      source: 'manual',
+    });
   };
 
   const calculateRefillTank = () => {

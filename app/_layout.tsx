@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { Stack } from 'expo-router';
+import { useEffect, useMemo, useRef } from 'react';
+import { Stack, usePathname, useSegments } from 'expo-router';
 import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
 import * as WebBrowser from 'expo-web-browser';
+import { PostHogProvider } from 'posthog-react-native';
 import {
   useAuthStore,
   initAuthListener,
@@ -23,6 +24,7 @@ import {
   scheduleDailyWaterReminder,
   scheduleTaskDueReminder,
 } from '@/services/notifications';
+import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
@@ -30,6 +32,24 @@ const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 type DefaultPropsCarrier = { defaultProps?: { style?: StyleProp<TextStyle> } };
 
 let androidTextPatched = false;
+
+const normalizeRoutePart = (part: string) => {
+  const trimmed = part.trim();
+  if (!trimmed) return trimmed;
+  if (/^\d+$/.test(trimmed)) return ':id';
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trimmed)) {
+    return ':id';
+  }
+  if (trimmed.length >= 24 && /^[0-9a-z_-]+$/i.test(trimmed)) return ':id';
+  return trimmed;
+};
+
+const normalizePath = (path: string) =>
+  path
+    .split('/')
+    .map((p) => normalizeRoutePart(p))
+    .join('/')
+    .replace(/\/{2,}/g, '/');
 
 if (Platform.OS === 'android' && !androidTextPatched) {
   androidTextPatched = true;
@@ -100,6 +120,14 @@ export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
   const isLoading = useAuthStore((state) => state.isLoading);
 
+  const pathname = usePathname();
+  const segments = useSegments();
+  const screenName = useMemo(() => {
+    const normalizedSegments = segments.filter(Boolean).map(normalizeRoutePart).join('/');
+    const normalizedPath = pathname?.trim() ? normalizePath(pathname) : '/';
+    return normalizedSegments ? `${normalizedPath} (${normalizedSegments})` : normalizedPath;
+  }, [pathname, segments]);
+
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
   const languageHydrated = useLanguageStore((s) => s.hasHydrated);
@@ -123,6 +151,11 @@ export default Sentry.wrap(function RootLayout() {
       cleanupAuthListener();
     };
   }, [initialize]);
+
+  useEffect(() => {
+    if (!screenName) return;
+    telemetry.screen(screenName);
+  }, [screenName]);
 
   useEffect(() => {
     if (!languageHydrated) return;
@@ -229,7 +262,7 @@ export default Sentry.wrap(function RootLayout() {
     }
   }, [isLoading, languageHydrated]);
 
-  return (
+  const content = (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
@@ -261,5 +294,20 @@ export default Sentry.wrap(function RootLayout() {
         </SafeAreaProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>
+  );
+
+  if (!telemetryEnabled || Platform.OS === 'web' || !posthogClient) return content;
+
+  return (
+    <PostHogProvider
+      client={posthogClient}
+      autocapture={{
+        captureScreens: false,
+        captureTouches: true,
+      }}
+      debug={__DEV__}
+    >
+      {content}
+    </PostHogProvider>
   );
 });

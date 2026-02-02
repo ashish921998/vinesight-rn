@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
+import { telemetry } from '@/services/telemetry';
 import type { User, Session } from '@supabase/supabase-js';
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -67,6 +68,12 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(trimmed);
 };
 
+const getEmailDomain = (email: string | undefined | null) => {
+  if (!email) return null;
+  const [, domain] = email.split('@');
+  return domain?.trim() || null;
+};
+
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Initial state
   user: null,
@@ -90,6 +97,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (session) {
+        telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
+        telemetry.capture('auth_session_restored', {
+          provider: session.user.app_metadata?.provider ?? null,
+        });
         set({
           user: session.user,
           session,
@@ -139,6 +150,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Sign in with email/password
   signIn: async (email: string, password: string) => {
     set({ errorMessage: null, isLoading: true });
+    telemetry.capture('auth_sign_in_started', { method: 'password' });
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -148,6 +160,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (error) throw error;
 
+      telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
+      telemetry.capture('auth_sign_in_succeeded', { method: 'password' });
+      telemetry.capture('user_logged_in', { method: 'password' });
       set({
         user: data.user,
         session: data.session,
@@ -155,6 +170,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isLoading: false,
       });
     } catch (error: unknown) {
+      telemetry.capture('auth_sign_in_failed', { method: 'password' });
       set({
         errorMessage: getErrorMessage(error, 'Sign in failed'),
         isAuthenticated: false,
@@ -166,6 +182,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Sign up with email/password (direct)
   signUp: async (email: string, password: string, name?: string) => {
     set({ errorMessage: null, isLoading: true });
+    telemetry.capture('auth_sign_up_started', { method: 'password' });
 
     try {
       const metadata = name ? { full_name: name } : undefined;
@@ -179,6 +196,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (data.session) {
+        if (data.user) {
+          telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
+        }
+        telemetry.capture('auth_sign_up_succeeded', { method: 'password', confirmed: true });
+        telemetry.capture('user_signed_up', { method: 'password' });
         set({
           user: data.user,
           session: data.session,
@@ -186,6 +208,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           isLoading: false,
         });
       } else {
+        telemetry.capture('auth_sign_up_succeeded', { method: 'password', confirmed: false });
+        telemetry.capture('user_signed_up', { method: 'password', confirmed: false });
         // Email confirmation required
         set({
           pendingOTPEmail: email.trim(),
@@ -193,6 +217,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         });
       }
     } catch (error: unknown) {
+      telemetry.capture('auth_sign_up_failed', { method: 'password' });
       set({
         errorMessage: (error as { message?: string }).message || 'Sign up failed',
         isAuthenticated: false,
@@ -222,6 +247,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       otpSentSuccessfully: false,
       pendingOTPType: 'signup',
     });
+    telemetry.capture('auth_sign_up_started', { method: 'otp' });
 
     try {
       const metadata = name ? { full_name: name } : undefined;
@@ -235,6 +261,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (data.session) {
+        if (data.user) {
+          telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
+        }
+        telemetry.capture('auth_sign_up_succeeded', { method: 'otp', confirmed: true });
+        telemetry.capture('user_signed_up', { method: 'otp' });
         // Email confirmation disabled, user is authenticated
         set({
           user: data.user,
@@ -243,6 +274,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           isLoading: false,
         });
       } else {
+        telemetry.capture('auth_sign_up_succeeded', { method: 'otp', confirmed: false });
+        telemetry.capture('user_signed_up', { method: 'otp', confirmed: false });
         // OTP sent for email verification
         set({
           pendingOTPEmail: trimmedEmail,
@@ -251,6 +284,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         });
       }
     } catch (error: unknown) {
+      telemetry.capture('auth_sign_up_failed', { method: 'otp' });
       set({
         errorMessage: (error as { message?: string }).message || 'Sign up failed',
         isAuthenticated: false,
@@ -262,6 +296,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Sign in with Google OAuth
   signInWithGoogle: async () => {
     set({ errorMessage: null, isLoading: true });
+    telemetry.capture('auth_sign_in_started', { method: 'google' });
 
     try {
       const { openAuthSessionAsync } = await import('expo-web-browser');
@@ -312,6 +347,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
+          telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
+          telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
+          telemetry.capture('user_logged_in', { method: 'google' });
           set({
             user: data.user,
             session: data.session,
@@ -330,6 +368,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
             refresh_token: refreshToken,
           });
           if (error) throw error;
+          if (data.user) {
+            telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
+          }
+          telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
+          telemetry.capture('user_logged_in', { method: 'google' });
           set({
             user: data.user,
             session: data.session,
@@ -340,6 +383,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           throw new Error('No code or access token in response');
         }
       } else if (result.type === 'cancel') {
+        telemetry.capture('auth_sign_in_cancelled', { method: 'google' });
         set({
           errorMessage: 'Google sign-in was cancelled',
           isLoading: false,
@@ -348,6 +392,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         throw new Error('Google sign-in failed');
       }
     } catch (error: unknown) {
+      telemetry.capture('auth_sign_in_failed', { method: 'google' });
       set({
         errorMessage: getErrorMessage(error, 'Google sign-in failed'),
         isAuthenticated: false,
@@ -359,6 +404,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Sign in with Apple (required on iOS if other third-party auth providers are offered)
   signInWithApple: async () => {
     set({ errorMessage: null, isLoading: true });
+    telemetry.capture('auth_sign_in_started', { method: 'apple' });
 
     try {
       const AppleAuthentication = await import('expo-apple-authentication');
@@ -385,6 +431,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
       if (error) throw error;
 
+      telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
+      telemetry.capture('auth_sign_in_succeeded', { method: 'apple' });
+      telemetry.capture('user_logged_in', { method: 'apple' });
       set({
         user: data.user,
         session: data.session,
@@ -398,10 +447,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           : null;
 
       if (code === 'ERR_REQUEST_CANCELED') {
+        telemetry.capture('auth_sign_in_cancelled', { method: 'apple' });
         set({ errorMessage: 'Apple sign-in was cancelled', isLoading: false });
         return;
       }
 
+      telemetry.capture('auth_sign_in_failed', { method: 'apple' });
       set({
         errorMessage: getErrorMessage(error, 'Apple sign-in failed'),
         isAuthenticated: false,
@@ -413,6 +464,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Sign out
   signOut: async () => {
     set({ errorMessage: null, isLoading: true });
+    telemetry.capture('auth_sign_out');
+    telemetry.capture('user_logged_out');
 
     try {
       if (__DEV__) {
@@ -437,6 +490,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
       });
+      telemetry.reset();
 
       // Force clear any cached sessions from storage
       try {
@@ -459,6 +513,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
       });
+      telemetry.reset();
     }
   },
 
@@ -538,17 +593,20 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       otpSentSuccessfully: false,
       pendingOTPType: 'email',
     });
+    telemetry.capture('auth_otp_send_started');
 
     try {
       const { error } = await supabase.auth.signInWithOtp({ email: trimmedEmail });
       if (error) throw error;
 
+      telemetry.capture('auth_otp_send_succeeded');
       set({
         pendingOTPEmail: trimmedEmail,
         otpSentSuccessfully: true,
         isLoading: false,
       });
     } catch (error: unknown) {
+      telemetry.capture('auth_otp_send_failed');
       set({
         errorMessage: getErrorMessage(error, 'Failed to send OTP'),
         otpSentSuccessfully: false,
@@ -569,6 +627,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     set({ errorMessage: null, isLoading: true });
 
     const { pendingOTPType } = get();
+    telemetry.capture('auth_otp_verify_started', { type: pendingOTPType });
 
     try {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -579,6 +638,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (error) throw error;
 
+      if (data.user) {
+        telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
+      }
+      telemetry.capture('auth_otp_verify_succeeded', { type: pendingOTPType });
+      if (pendingOTPType === 'signup') {
+        telemetry.capture('user_signed_up', { method: 'otp', verified: true });
+      } else {
+        telemetry.capture('user_logged_in', { method: 'otp' });
+      }
       set({
         user: data.user,
         session: data.session,
@@ -588,6 +656,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isLoading: false,
       });
     } catch (_error: unknown) {
+      telemetry.capture('auth_otp_verify_failed', { type: pendingOTPType });
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
         isAuthenticated: false,
@@ -702,6 +771,8 @@ export const initAuthListener = () => {
     }
     // Only update state for significant auth events, not token refreshes during navigation
     if (event === 'SIGNED_IN' && session) {
+      telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
+      telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
       useAuthStore.setState({
         user: session.user,
         session,
@@ -712,6 +783,8 @@ export const initAuthListener = () => {
       if (__DEV__) {
         console.log('SIGNED_OUT event received, clearing auth state');
       }
+      telemetry.capture('auth_state_changed', { event: 'SIGNED_OUT' });
+      telemetry.reset();
       useAuthStore.setState({
         user: null,
         session: null,
