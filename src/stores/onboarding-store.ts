@@ -21,11 +21,13 @@ interface OnboardingStore extends OnboardingState {
   setPreferences: (preferences: Partial<OnboardingPreferences>) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
+  _setHasHydrated: (value: boolean) => void;
 }
 
 const initialState: OnboardingState = {
   isComplete: false,
-  currentStep: 'welcome',
+  hasHydrated: false,
+  currentStep: 'language',
   preferences: {
     country: '',
     areaUnit: 'acres',
@@ -96,10 +98,14 @@ export const useOnboardingStore = create<OnboardingStore>()(
         }),
 
       resetOnboarding: () => set(initialState),
+      _setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: 'vinesight-onboarding',
       storage: createJSONStorage(() => onboardingStorage),
+      onRehydrateStorage: () => () => {
+        useOnboardingStore.setState({ hasHydrated: true });
+      },
     },
   ),
 );

@@ -3,10 +3,17 @@
  * Types for the onboarding flow
  */
 
-export type OnboardingStep = 'welcome' | 'features' | 'preferences' | 'notifications' | 'complete';
+export type OnboardingStep =
+  | 'language'
+  | 'welcome'
+  | 'features'
+  | 'preferences'
+  | 'notifications'
+  | 'complete';
 
 export interface OnboardingState {
   isComplete: boolean;
+  hasHydrated: boolean;
   currentStep: OnboardingStep;
   preferences: OnboardingPreferences;
 }
@@ -18,13 +25,13 @@ export interface OnboardingPreferences {
 }
 
 export interface OnboardingFeature {
+  id: 'addFarms' | 'trackEverything' | 'waterManagement' | 'labTests' | 'reports';
   icon: string;
-  title: string;
-  description: string;
   color: string;
 }
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
+  'language',
   'welcome',
   'features',
   'preferences',
@@ -34,35 +41,28 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
 
 export const ONBOARDING_FEATURES: OnboardingFeature[] = [
   {
+    id: 'addFarms',
     icon: 'plus.circle.fill',
-    title: 'Add Your Farms',
-    description:
-      'Create farms with details like location, crop type, and area. Manage multiple farms from one place.',
     color: '#1a5d1a',
   },
   {
+    id: 'trackEverything',
     icon: 'chart.bar.fill',
-    title: 'Track Everything',
-    description:
-      'Log irrigation, sprays, harvests, expenses, and more. All your records in one place.',
     color: '#F59E0B',
   },
   {
+    id: 'waterManagement',
     icon: 'drop.fill',
-    title: 'Smart Water Management',
-    description: 'Automatic water level calculations based on weather and soil conditions.',
     color: '#3B82F6',
   },
   {
+    id: 'labTests',
     icon: 'flask.fill',
-    title: 'Lab Test Results',
-    description: 'Store and analyze soil and petiole test results with nutrient tracking.',
     color: '#8B5CF6',
   },
   {
+    id: 'reports',
     icon: 'doc.text.fill',
-    title: 'Generate Reports',
-    description: 'Create date-range reports to track productivity and analyze farm performance.',
     color: '#EF4444',
   },
 ];

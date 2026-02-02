@@ -6,16 +6,19 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, Alert, ActivityIndicator } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { FormModal, SectionHeader, FormInput } from '@/components/ui/form-components';
+import { formatDate } from '@/i18n/format';
 import {
   useCreateSoilTest,
   useCreatePetioleTest,
   SOIL_PARAMETERS,
   PETIOLE_PARAMETERS,
+  getParameterLabel,
 } from '../../hooks/use-lab-tests';
 import { parseLabTestFromImage, parseLabTestFromText } from '../../utils/pdf-parser';
 import { extractTextFromPDF } from '../../utils/pdf-to-image';
@@ -76,6 +79,8 @@ export default function LabTestForm({
   testType,
   presentation = 'modal',
 }: LabTestFormProps) {
+  const { t } = useTranslation();
+
   const isVisible = visible ?? true;
   const createSoilTest = useCreateSoilTest();
   const createPetioleTest = useCreatePetioleTest();
@@ -88,6 +93,7 @@ export default function LabTestForm({
   const [isParsingPDF, setIsParsingPDF] = useState(false);
 
   const isSoil = testType === 'soil';
+  const testTypeLabel = isSoil ? t('labTests.form.types.soil') : t('labTests.form.types.petiole');
   const parameterList = isSoil ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
   const isLoading = createSoilTest.isPending || createPetioleTest.isPending;
   const isValid = useMemo(
@@ -118,7 +124,7 @@ export default function LabTestForm({
     });
 
     if (Object.keys(numericParams).length === 0) {
-      Alert.alert('Error', 'Please enter at least one parameter value');
+      Alert.alert(t('common.error'), t('common.errors.enterAtLeastOneParameterValue'));
       return;
     }
 
@@ -141,7 +147,7 @@ export default function LabTestForm({
       onClose();
     } catch (error) {
       console.error('Error creating lab test:', error);
-      Alert.alert('Error', 'Failed to save lab test');
+      Alert.alert(t('common.error'), t('common.errors.failedToSaveLabTest'));
     }
   };
 
@@ -162,21 +168,21 @@ export default function LabTestForm({
   };
 
   const handleUploadFile = async () => {
-    Alert.alert('Choose Upload Method', 'How would you like to upload the lab test report?', [
+    Alert.alert(t('labTests.upload.chooseMethodTitle'), t('labTests.upload.chooseMethodBody'), [
       {
-        text: 'Take Photo',
+        text: t('common.actions.takePhoto'),
         onPress: () => handleTakePhoto(),
       },
       {
-        text: 'Select Image',
+        text: t('common.actions.selectImage'),
         onPress: () => handleSelectImage(),
       },
       {
-        text: 'Select PDF',
+        text: t('common.actions.selectPdf'),
         onPress: () => handleSelectPDF(),
       },
       {
-        text: 'Cancel',
+        text: t('common.cancel'),
         style: 'cancel',
       },
     ]);
@@ -186,7 +192,10 @@ export default function LabTestForm({
     try {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert('Permission denied', 'Camera permission is required to take photos.');
+        Alert.alert(
+          t('labTests.upload.permissionDeniedTitle'),
+          t('labTests.upload.permissionDeniedBody'),
+        );
         return;
       }
 
@@ -200,11 +209,14 @@ export default function LabTestForm({
       if (!result.canceled && result.assets && result.assets.length > 0 && result.assets[0].uri) {
         await parseAndPopulateForm(result.assets[0].uri);
       } else if (!result.canceled) {
-        Alert.alert('Upload Failed', 'No valid image was selected. Please try again.');
+        Alert.alert(
+          t('labTests.upload.uploadFailedTitle'),
+          t('labTests.upload.noValidImageSelected'),
+        );
       }
     } catch (error) {
       console.error('Error taking photo:', error);
-      Alert.alert('Upload Failed', 'Failed to take photo. Please try again.');
+      Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.failedToTakePhoto'));
     }
   };
 
@@ -220,11 +232,14 @@ export default function LabTestForm({
       if (!result.canceled && result.assets && result.assets.length > 0 && result.assets[0].uri) {
         await parseAndPopulateForm(result.assets[0].uri);
       } else if (!result.canceled) {
-        Alert.alert('Upload Failed', 'No valid image was selected. Please try again.');
+        Alert.alert(
+          t('labTests.upload.uploadFailedTitle'),
+          t('labTests.upload.noValidImageSelected'),
+        );
       }
     } catch (error) {
       console.error('Error selecting image:', error);
-      Alert.alert('Upload Failed', 'Failed to select image. Please try again.');
+      Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.failedToSelectImage'));
     }
   };
 
@@ -243,7 +258,7 @@ export default function LabTestForm({
 
       const file = result.assets[0];
       if (!file.uri) {
-        Alert.alert('Upload Failed', 'Invalid PDF file. Please try again.');
+        Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.invalidPdfFile'));
         return;
       }
 
@@ -252,11 +267,11 @@ export default function LabTestForm({
 
         if (!extractedText) {
           Alert.alert(
-            'PDF Processing',
-            'Unable to extract text from PDF automatically. Please take a photo or screenshot of your lab report for best results.',
+            t('labTests.upload.pdfProcessingTitle'),
+            t('labTests.upload.pdfProcessingBody'),
             [
               {
-                text: 'OK',
+                text: t('common.ok'),
                 style: 'default',
               },
             ],
@@ -268,9 +283,9 @@ export default function LabTestForm({
 
         if (Object.keys(parsedData.parameters).length === 0) {
           Alert.alert(
-            'No Data Found',
-            'Could not extract test parameters from PDF. Please try again with a clearer document or enter data manually.',
-            [{ text: 'OK' }],
+            t('labTests.upload.noDataFoundTitle'),
+            t('labTests.upload.noDataFoundPdfBody'),
+            [{ text: t('common.ok') }],
           );
           return;
         }
@@ -300,21 +315,21 @@ export default function LabTestForm({
         }
 
         Alert.alert(
-          'Success',
-          `Successfully extracted ${Object.keys(parsedData.parameters).length} parameters. Please review and save.`,
-          [{ text: 'OK' }],
+          t('labTests.upload.successTitle'),
+          t('labTests.upload.successBody', { count: Object.keys(parsedData.parameters).length }),
+          [{ text: t('common.ok') }],
         );
       } catch (parseError) {
         console.error('Parsing error:', parseError);
         Alert.alert(
-          'Parsing Failed',
-          'Could not extract data from PDF. Please take a photo or screenshot of your lab report for best results.',
-          [{ text: 'OK' }],
+          t('labTests.upload.parsingFailedTitle'),
+          t('labTests.upload.parsingFailedBody'),
+          [{ text: t('common.ok') }],
         );
       }
     } catch (error) {
       console.error('Error selecting PDF:', error);
-      Alert.alert('Upload Failed', 'Failed to select PDF. Please try again.');
+      Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.failedToSelectPdf'));
     } finally {
       setIsParsingPDF(false);
     }
@@ -328,9 +343,9 @@ export default function LabTestForm({
 
       if (Object.keys(parsedData.parameters).length === 0) {
         Alert.alert(
-          'No Data Found',
-          'Could not extract test parameters from the image. Please try again with a clearer image or enter data manually.',
-          [{ text: 'OK' }],
+          t('labTests.upload.noDataFoundTitle'),
+          t('labTests.upload.noDataFoundImageBody'),
+          [{ text: t('common.ok') }],
         );
         return;
       }
@@ -360,17 +375,15 @@ export default function LabTestForm({
       }
 
       Alert.alert(
-        'Success',
-        `Successfully extracted ${Object.keys(parsedData.parameters).length} parameters. Please review and save.`,
-        [{ text: 'OK' }],
+        t('labTests.upload.successTitle'),
+        t('labTests.upload.successBody', { count: Object.keys(parsedData.parameters).length }),
+        [{ text: t('common.ok') }],
       );
     } catch (parseError) {
       console.error('Parsing error:', parseError);
-      Alert.alert(
-        'Parsing Failed',
-        'Could not extract data from the image. Please try again with a clearer image or enter data manually.',
-        [{ text: 'OK' }],
-      );
+      Alert.alert(t('labTests.upload.parsingFailedTitle'), t('labTests.upload.parsingFailedBody'), [
+        { text: t('common.ok') },
+      ]);
     } finally {
       setIsParsingPDF(false);
     }
@@ -380,14 +393,14 @@ export default function LabTestForm({
     <FormModal
       visible={isVisible}
       onClose={onClose}
-      title={`Add ${isSoil ? 'Soil' : 'Petiole'} Test`}
+      title={t('labTests.form.title', { type: testTypeLabel })}
       onSave={handleSubmit}
-      saveLabel="Save Test"
+      saveLabel={t('labTests.form.saveLabel')}
       isLoading={isLoading}
       isSaveDisabled={!isValid}
       presentation={presentation}
     >
-      <SectionHeader title="Upload Lab Report" style={{ marginBottom: 12 }} />
+      <SectionHeader title={t('labTests.form.uploadSectionTitle')} style={{ marginBottom: 12 }} />
       <Pressable
         onPress={handleUploadFile}
         disabled={isParsingPDF || isLoading}
@@ -411,8 +424,10 @@ export default function LabTestForm({
                 color: colors.primary[500],
                 marginLeft: spacing[2],
               }}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
             >
-              Parsing with AI...
+              {t('labTests.form.parsingWithAi')}
             </Text>
           </View>
         ) : (
@@ -425,14 +440,16 @@ export default function LabTestForm({
                 color: colors.primary[500],
                 marginLeft: spacing[2],
               }}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
             >
-              Upload Lab Report
+              {t('labTests.form.uploadButton')}
             </Text>
           </View>
         )}
       </Pressable>
 
-      <SectionHeader title="Test Details" style={{ marginBottom: 12 }} />
+      <SectionHeader title={t('labTests.form.detailsSectionTitle')} style={{ marginBottom: 12 }} />
       <Pressable
         onPress={() => setShowDatePicker(true)}
         style={{
@@ -456,22 +473,24 @@ export default function LabTestForm({
               color: colors.surface[900],
               marginLeft: spacing[2],
             }}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
           >
-            {date.toLocaleDateString()}
+            {formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' })}
           </Text>
         </View>
         <IconSymbol name="chevron.down" size={18} color={colors.surface[500]} />
       </Pressable>
 
       <SectionHeader
-        title={`${isSoil ? 'Soil' : 'Petiole'} Parameters`}
-        subtitle="Enter values from your lab report"
+        title={t('labTests.form.parametersSectionTitle', { type: testTypeLabel })}
+        subtitle={t('labTests.form.parametersSectionSubtitle')}
         style={{ marginBottom: 12 }}
       />
       {parameterList.map((param) => (
         <FormInput
           key={param.key}
-          label={param.label}
+          label={getParameterLabel(param.key, testType)}
           value={parameters[param.key] || ''}
           onChangeText={(value) => updateParameter(param.key, value)}
           placeholder="0"
@@ -481,22 +500,25 @@ export default function LabTestForm({
         />
       ))}
 
-      <SectionHeader title="Recommendations" style={{ marginBottom: 12 }} />
+      <SectionHeader
+        title={t('labTests.form.recommendationsSectionTitle')}
+        style={{ marginBottom: 12 }}
+      />
       <FormInput
-        label="Recommendations"
+        label={t('labTests.form.recommendationsSectionTitle')}
         value={recommendations}
         onChangeText={setRecommendations}
-        placeholder="Optional"
+        placeholder={t('labTests.form.optionalPlaceholder')}
         multiline
         numberOfLines={3}
       />
 
-      <SectionHeader title="Notes" style={{ marginBottom: 12 }} />
+      <SectionHeader title={t('labTests.form.notesSectionTitle')} style={{ marginBottom: 12 }} />
       <FormInput
-        label="Notes"
+        label={t('labTests.form.notesSectionTitle')}
         value={notes}
         onChangeText={setNotes}
-        placeholder="Optional"
+        placeholder={t('labTests.form.optionalPlaceholder')}
         multiline
         numberOfLines={3}
       />

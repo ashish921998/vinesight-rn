@@ -13,11 +13,13 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Farm } from '../../types';
 import { isLowWater } from '../../types';
 import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { formatNumber } from '@/i18n/format';
 
 interface FarmCardProps {
   farm: Farm;
@@ -27,8 +29,11 @@ interface FarmCardProps {
 }
 
 export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
+  const { t } = useTranslation();
   const needsAttention = isLowWater(farm);
-  const statusText = needsAttention ? 'NEEDS ATTENTION' : 'HEALTHY';
+  const statusText = needsAttention
+    ? t('farmCard.status.needsAttention')
+    : t('farmCard.status.healthy');
   const statusColor = needsAttention ? m3.colorScheme.error : m3.colorScheme.primary;
   const statusBg = needsAttention
     ? colorWithOpacity(m3.colorScheme.error, 0.12)
@@ -116,7 +121,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               ]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
-              accessibilityLabel={`Edit ${farm.name}`}
+              accessibilityLabel={t('farmCard.a11y.editFarm', { name: farm.name })}
             >
               <UiSymbol name="pencil" size={18} color={m3.colorScheme.primary} />
             </Pressable>
@@ -141,7 +146,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
               ]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
-              accessibilityLabel={`Delete ${farm.name}`}
+              accessibilityLabel={t('farmCard.a11y.deleteFarm', { name: farm.name })}
             >
               <UiSymbol name="trash" size={18} color={m3.colorScheme.error} />
             </Pressable>
@@ -191,7 +196,11 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
             color: m3.colorScheme.onSurfaceVariant,
           }}
         >
-          {farm.area != null ? `${farm.area.toFixed(1)} Acres` : '— Acres'}
+          {farm.area != null
+            ? t('farmCard.area.acres', {
+                value: formatNumber(farm.area, { maximumFractionDigits: 1 }),
+              })
+            : t('farmCard.area.unknownAcres')}
         </Text>
       </View>
 
@@ -229,7 +238,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 }}
                 numberOfLines={1}
               >
-                WATER BALANCE
+                {t('farmCard.waterBalance.label')}
               </Text>
               <Text
                 style={{
@@ -238,7 +247,11 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                   color: m3.colorScheme.onSurface,
                 }}
               >
-                {farm.remaining_water != null ? `${farm.remaining_water.toFixed(1)} mm` : '—'}
+                {farm.remaining_water != null
+                  ? t('farmCard.waterBalance.value', {
+                      value: formatNumber(farm.remaining_water, { maximumFractionDigits: 1 }),
+                    })
+                  : t('farmCard.waterBalance.unknown')}
               </Text>
             </View>
           </View>
@@ -271,7 +284,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 }}
                 numberOfLines={1}
               >
-                REGION
+                {t('farmCard.region.label')}
               </Text>
               <Text
                 style={{
@@ -281,7 +294,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
                 }}
                 numberOfLines={1}
               >
-                {farm.region || 'Unknown'}
+                {farm.region || t('farmCard.region.unknown')}
               </Text>
             </View>
           </View>

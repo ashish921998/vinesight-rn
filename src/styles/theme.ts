@@ -107,6 +107,12 @@ export const spacing = {
   24: 96,
 } as const;
 
+// Android text padding constants for includeFontPadding workaround
+export const androidTextPadding = {
+  bottom: 2,
+  right: 3,
+} as const;
+
 export const borderRadius = {
   none: 0,
   sm: 4,

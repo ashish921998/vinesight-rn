@@ -26,6 +26,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/ui/app-icon';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/i18n/format';
 
 import {
   IrrigationForm,
@@ -128,6 +130,8 @@ export function EntryForm({
   onTaskSaveSuccess,
   presentation = 'modal',
 }: EntryFormProps) {
+  const { t } = useTranslation();
+
   const isVisible = visible ?? true;
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
@@ -486,7 +490,7 @@ export function EntryForm({
       onClose();
     } catch (error) {
       console.error('Error saving logs:', error);
-      Alert.alert('Error', 'Failed to save logs. Please try again.');
+      Alert.alert(t('common.error'), t('common.errors.failedToSaveLogs'));
     } finally {
       setIsSubmittingLogs(false);
     }
@@ -573,12 +577,12 @@ export function EntryForm({
 
   const handleTaskSubmit = async () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a task title');
+      Alert.alert(t('common.error'), t('common.errors.enterTaskTitle'));
       return;
     }
     const resolvedFarmId = farm?.id ?? taskFarmId;
     if (!resolvedFarmId) {
-      Alert.alert('Error', 'Please select a farm');
+      Alert.alert(t('common.error'), t('common.errors.selectFarm'));
       return;
     }
 
@@ -613,7 +617,7 @@ export function EntryForm({
       onTaskSaveSuccess?.();
       onClose();
     } catch (_error) {
-      Alert.alert('Error', 'Failed to save task. Please try again.');
+      Alert.alert(t('common.error'), t('common.errors.failedToSaveTask'));
     }
   };
 
@@ -625,16 +629,16 @@ export function EntryForm({
 
     if (pendingLogs.length > 0 || hasUnsavedTaskChanges) {
       Alert.alert(
-        'Discard Changes?',
+        t('entryForm.discardChanges.title'),
         hasUnsavedTaskChanges && pendingLogs.length === 0
-          ? 'You have unsaved task changes. Are you sure you want to close?'
+          ? t('entryForm.discardChanges.taskOnly')
           : pendingLogs.length > 0 && !hasUnsavedTaskChanges
-            ? 'You have unsaved logs. Are you sure you want to close?'
-            : 'You have unsaved changes. Are you sure you want to close?',
+            ? t('entryForm.discardChanges.logsOnly')
+            : t('entryForm.discardChanges.both'),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Discard',
+            text: t('entryForm.discardChanges.discard'),
             style: 'destructive',
             onPress: () => {
               setPendingLogs([]);
@@ -665,7 +669,7 @@ export function EntryForm({
         >
           {resolvedTabs.map((tab) => {
             const isActive = activeTab === tab;
-            const label = tab === 'log' ? 'Farm Log' : 'Task';
+            const label = tab === 'log' ? t('entryForm.tabs.log') : t('entryForm.tabs.task');
             const iconName = tab === 'log' ? 'document-text' : 'checkbox-outline';
             return (
               <Pressable
@@ -740,7 +744,7 @@ export function EntryForm({
         selectable
         style={{ fontSize: 16, fontWeight: '600', color: '#2c2c2e', marginBottom: 12 }}
       >
-        Activity Type
+        {t('entryForm.activityType')}
       </Text>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {ACTIVITY_TYPES.map((logType) => {
@@ -783,7 +787,7 @@ export function EntryForm({
                 ]}
                 numberOfLines={2}
               >
-                {logType.label}
+                {t(logType.labelKey)}
               </Text>
             </Pressable>
           );
@@ -853,7 +857,7 @@ export function EntryForm({
               { color: isLogFormValid ? '#FFFFFF' : '#9CA3AF' },
             ]}
           >
-            Add Entry
+            {t('entryForm.addEntry')}
           </Text>
         </Pressable>
       </View>
@@ -892,7 +896,7 @@ export function EntryForm({
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
                   <Text selectable style={{ fontSize: 18, fontWeight: '600', color: '#2c2c2e' }}>
-                    {logType?.label ?? 'Add Log'}
+                    {logType ? t(logType.labelKey) : t('entryForm.addLog')}
                   </Text>
                   <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
                     {activeFarm?.name}
@@ -976,7 +980,7 @@ export function EntryForm({
               { color: isLogFormValid && activeFarm ? '#FFFFFF' : '#9CA3AF' },
             ]}
           >
-            Add Entry
+            {t('entryForm.addEntry')}
           </Text>
         </Pressable>
       </View>
@@ -991,7 +995,7 @@ export function EntryForm({
           selectable
           style={{ fontSize: 16, fontWeight: '600', color: '#2c2c2e', marginBottom: 12 }}
         >
-          Pending Logs ({pendingLogs.length})
+          {t('entryForm.pendingLogs', { count: pendingLogs.length })}
         </Text>
         {pendingLogs.map((log) => {
           const logType = LOG_TYPES.find((lt) => lt.id === log.type);
@@ -1023,7 +1027,7 @@ export function EntryForm({
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text selectable style={{ fontSize: 14, fontWeight: '600', color: '#2c2c2e' }}>
-                  {logType?.label}
+                  {logType ? t(logType.labelKey) : t('entryForm.addLog')}
                 </Text>
                 <Text selectable style={{ fontSize: 12, color: '#8e8e93' }}>
                   {log.displayDescription}
@@ -1150,11 +1154,7 @@ export function EntryForm({
               selectable
               style={{ marginLeft: 8, fontSize: 14, fontWeight: '500', color: '#2c2c2e' }}
             >
-              {selectedDate.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}
+              {formatDate(selectedDate, { weekday: 'short', month: 'short', day: 'numeric' })}
             </Text>
           </Pressable>
 
@@ -1174,7 +1174,7 @@ export function EntryForm({
                 selectable
                 style={{ marginLeft: 4, fontSize: 12, fontWeight: '600', color: '#2d5c3f' }}
               >
-                {pendingLogs.length} draft{pendingLogs.length !== 1 ? 's' : ''}
+                {t('entryForm.drafts', { count: pendingLogs.length })}
               </Text>
             </View>
           )}
@@ -1194,7 +1194,7 @@ export function EntryForm({
           }}
         >
           <Text selectable style={{ fontSize: 14, color: '#636366' }}>
-            Select an activity type to open the full-screen form.
+            {t('entryForm.selectActivityTypeHint')}
           </Text>
         </View>
       )}
@@ -1218,7 +1218,7 @@ export function EntryForm({
         >
           <AppIcon name="flash" size={20} color="#408059" />
           <Text selectable style={{ color: '#2d5c3f', fontWeight: '500', marginLeft: 8, flex: 1 }}>
-            Use Template
+            {t('entryForm.useTemplate')}
           </Text>
           <AppIcon name={showTemplates ? 'chevron-up' : 'chevron-down'} size={20} color="#408059" />
         </Pressable>
@@ -1431,7 +1431,7 @@ export function EntryForm({
                 color={TASK_TYPE_INFO[type].color}
               />
               <Text selectable style={{ fontSize: 14, color: '#2c2c2e', marginLeft: 8 }}>
-                {TASK_TYPE_INFO[type].label}
+                {t(TASK_TYPE_INFO[type].labelKey)}
               </Text>
             </View>
             <AppIcon name="chevron-down" size={16} color="#9CA3AF" />
@@ -1472,7 +1472,7 @@ export function EntryForm({
                   { color: PRIORITY_INFO[priority].color },
                 ]}
               >
-                {PRIORITY_INFO[priority].label}
+                {t(PRIORITY_INFO[priority].labelKey)}
               </Text>
             </View>
             <AppIcon name="chevron-down" size={16} color="#9CA3AF" />
@@ -1508,7 +1508,7 @@ export function EntryForm({
               style={[{ marginLeft: 8, fontSize: 16 }, { color: dueDate ? '#111827' : '#9CA3AF' }]}
             >
               {dueDate
-                ? new Date(dueDate).toLocaleDateString('en-US', {
+                ? formatDate(new Date(dueDate), {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
@@ -1620,7 +1620,11 @@ export function EntryForm({
                 style={{ fontSize: 18, fontWeight: '600', color: '#2c2c2e' }}
                 numberOfLines={1}
               >
-                {activeTab === 'log' ? 'Add Log' : isEditingTask ? 'Edit Task' : 'Add Task'}
+                {activeTab === 'log'
+                  ? t('entryForm.addLog')
+                  : isEditingTask
+                    ? t('entryForm.editTask')
+                    : t('entryForm.addTask')}
               </Text>
               <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
                 {activeFarm?.name}
@@ -1679,7 +1683,7 @@ export function EntryForm({
                 }}
               >
                 <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
-                  Select Date
+                  {t('entryForm.selectDate')}
                 </Text>
                 <Pressable onPress={() => setShowDatePicker(false)}>
                   <AppIcon name="close" size={24} color="#9CA3AF" />
@@ -1701,7 +1705,7 @@ export function EntryForm({
                 ]}
               >
                 <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
-                  Done
+                  {t('entryForm.done')}
                 </Text>
               </Pressable>
             </View>
@@ -1743,7 +1747,7 @@ export function EntryForm({
                 }}
               >
                 <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
-                  Select Task Type
+                  {t('entryForm.selectTaskType')}
                 </Text>
                 <Pressable onPress={() => setShowTypePicker(false)}>
                   <AppIcon name="close" size={24} color="#9CA3AF" />
@@ -1779,7 +1783,7 @@ export function EntryForm({
                         fontWeight: type === taskType ? '500' : '400',
                       }}
                     >
-                      {TASK_TYPE_INFO[taskType].label}
+                      {t(TASK_TYPE_INFO[taskType].labelKey)}
                     </Text>
                   </Pressable>
                 ))}
@@ -1826,7 +1830,7 @@ export function EntryForm({
                 }}
               >
                 <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
-                  Select Priority
+                  {t('entryForm.selectPriority')}
                 </Text>
                 <Pressable onPress={() => setShowPriorityPicker(false)}>
                   <AppIcon name="close" size={24} color="#9CA3AF" />
@@ -1878,7 +1882,7 @@ export function EntryForm({
                       fontWeight: priority === p ? '500' : '400',
                     }}
                   >
-                    {PRIORITY_INFO[p].label}
+                    {t(PRIORITY_INFO[p].labelKey)}
                   </Text>
                 </Pressable>
               ))}
@@ -1925,7 +1929,7 @@ export function EntryForm({
                 }}
               >
                 <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </Pressable>
               <Pressable
@@ -1964,7 +1968,9 @@ export function EntryForm({
                         { color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' },
                       ]}
                     >
-                      {pendingLogs.length > 0 ? `Save Logs (${pendingLogs.length})` : 'Save'}
+                      {pendingLogs.length > 0
+                        ? t('entryForm.saveLogs', { count: pendingLogs.length })
+                        : t('common.save')}
                     </Text>
                   </>
                 )}
@@ -1984,7 +1990,7 @@ export function EntryForm({
                 }}
               >
                 <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </Pressable>
               <Pressable
@@ -2014,7 +2020,7 @@ export function EntryForm({
                         { color: isTaskValid ? '#FFFFFF' : '#9CA3AF' },
                       ]}
                     >
-                      Save Task
+                      {t('entryForm.saveTask')}
                     </Text>
                   </>
                 )}

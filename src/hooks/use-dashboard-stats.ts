@@ -9,6 +9,7 @@ import { queryKeys } from './query-keys';
 import type { Farm } from '../types';
 import { TABLES, isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
+import { formatCurrency } from '@/i18n/format';
 
 // ============================================================
 // MARK: - Types
@@ -267,11 +268,9 @@ export function useRecentActivities(limit: number = 5) {
 
       // Map expense
       expense.data?.forEach((r) => {
-        const formattedCost = new Intl.NumberFormat('en-IN', {
-          style: 'currency',
-          currency: 'INR',
+        const formattedCost = formatCurrency(r.cost ?? 0, 'INR', {
           minimumFractionDigits: 0,
-        }).format(r.cost ?? 0);
+        });
         activities.push({
           id: `expense_${r.id}`,
           type: 'expense',

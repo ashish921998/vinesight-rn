@@ -16,6 +16,8 @@ import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-ta
 import { TaskReminder, TASK_TYPE_INFO, PRIORITY_INFO } from '../src/types/task';
 import { useModalStore } from '@/stores';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useTranslation } from 'react-i18next';
+import { formatDate, formatNumber } from '@/i18n/format';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
 
@@ -26,6 +28,8 @@ const startOfDay = (date: Date) => {
 };
 
 export default function TasksScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const { setAddEntry } = useModalStore();
   const { data: farms } = useFarms();
@@ -38,7 +42,7 @@ export default function TasksScreen() {
   // Get farm name by ID
   const getFarmName = (farmId: number) => {
     const farm = farms?.find((f) => f.id === farmId);
-    return farm?.name || 'Unknown Farm';
+    return farm?.name || t('tasks.unknownFarm');
   };
 
   // Filter and count tasks
@@ -81,38 +85,48 @@ export default function TasksScreen() {
 
   const handleComplete = (task: TaskReminder) => {
     if (!task.id) return;
-    Alert.alert('Complete Task', `Mark "${task.title}" as completed?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Complete',
-        onPress: () => completeMutation.mutate(task.id!),
-      },
-    ]);
+    Alert.alert(
+      t('tasks.alerts.completeTitle'),
+      t('tasks.alerts.completeBody', { title: task.title }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.complete'),
+          onPress: () => completeMutation.mutate(task.id!),
+        },
+      ],
+    );
   };
 
   const handleDelete = (task: TaskReminder) => {
     if (!task.id) return;
-    Alert.alert('Delete Task', `Are you sure you want to delete "${task.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => deleteMutation.mutate(task.id!),
-      },
-    ]);
+    Alert.alert(
+      t('tasks.alerts.deleteTitle'),
+      t('tasks.alerts.deleteBody', { title: task.title }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => deleteMutation.mutate(task.id!),
+        },
+      ],
+    );
   };
 
   const formatDueDate = (dateString: string | null) => {
-    if (!dateString) return 'No due date';
+    if (!dateString) return t('tasks.dueDate.none');
     const date = new Date(dateString);
     const today = startOfDay(new Date());
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (date.toDateString() === today.toDateString()) return 'Today';
-    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
-    if (date < today) return `Overdue: ${date.toLocaleDateString()}`;
-    return date.toLocaleDateString();
+    const display = formatDate(date, { year: 'numeric', month: 'numeric', day: 'numeric' });
+
+    if (date.toDateString() === today.toDateString()) return t('tasks.dueDate.today');
+    if (date.toDateString() === tomorrow.toDateString()) return t('tasks.dueDate.tomorrow');
+    if (date < today) return t('tasks.dueDate.overdue', { date: display });
+    return display;
   };
 
   const isOverdue = (task: TaskReminder) => {
@@ -130,9 +144,11 @@ export default function TasksScreen() {
           justifyContent: 'center',
         }}
       >
-        <Stack.Screen options={{ title: 'Tasks' }} />
+        <Stack.Screen options={{ title: t('tasks.title') }} />
         <ActivityIndicator size="large" color="#408059" />
-        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>Loading tasks...</Text>
+        <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
+          {t('common.loading')}
+        </Text>
       </View>
     );
   }
@@ -143,7 +159,7 @@ export default function TasksScreen() {
         <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
           <Stack.Screen
             options={{
-              title: 'Tasks',
+              title: t('tasks.title'),
               headerRight: () => (
                 <Pressable
                   onPress={() => {
@@ -187,7 +203,9 @@ export default function TasksScreen() {
                 >
                   {counts.pending}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>Pending</Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                  {t('tasks.statusSummary.pending')}
+                </Text>
               </View>
               <View
                 style={{
@@ -207,7 +225,9 @@ export default function TasksScreen() {
                 >
                   {counts.overdue}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>Overdue</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>
+                  {t('tasks.statusSummary.overdue')}
+                </Text>
               </View>
               <View
                 style={{
@@ -227,7 +247,9 @@ export default function TasksScreen() {
                 >
                   {counts.completed}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>Completed</Text>
+                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>
+                  {t('tasks.statusSummary.completed')}
+                </Text>
               </View>
             </View>
 
@@ -256,7 +278,8 @@ export default function TasksScreen() {
                       color: filter === type ? colors.white : colors.surface[600],
                     }}
                   >
-                    {type.charAt(0).toUpperCase() + type.slice(1)} ({counts[type]})
+                    {t(`tasks.filters.${type}`)} (
+                    {formatNumber(counts[type], { maximumFractionDigits: 0 })})
                   </Text>
                 </Pressable>
               ))}
@@ -280,7 +303,7 @@ export default function TasksScreen() {
                     textAlign: 'center',
                   }}
                 >
-                  No tasks found
+                  {t('tasks.empty.title')}
                 </Text>
                 <Text
                   style={{
@@ -291,8 +314,10 @@ export default function TasksScreen() {
                   }}
                 >
                   {filter === 'all'
-                    ? 'Create your first task to get started'
-                    : `No ${filter} tasks`}
+                    ? t('tasks.empty.subtitleAll')
+                    : t('tasks.empty.subtitleFiltered', {
+                        filter: t(`tasks.filters.${filter}`),
+                      })}
                 </Text>
                 {filter === 'all' && (
                   <Pressable
@@ -312,7 +337,7 @@ export default function TasksScreen() {
                     }}
                   >
                     <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
-                      Add Task
+                      {t('tasks.cta.addTask')}
                     </Text>
                   </Pressable>
                 )}
@@ -486,7 +511,7 @@ export default function TasksScreen() {
                                 color: priorityInfo.color,
                               }}
                             >
-                              {priorityInfo.label}
+                              {t(priorityInfo.labelKey)}
                             </Text>
                           </View>
                         </View>

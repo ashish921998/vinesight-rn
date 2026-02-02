@@ -1,6 +1,7 @@
 import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/stores';
+import { useOnboardingStore } from '@/stores/onboarding-store';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
@@ -12,6 +13,8 @@ import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/th
  */
 export default function Index() {
   const { isAuthenticated, isLoading } = useAuthStore();
+  const onboardingComplete = useOnboardingStore((s) => s.isComplete);
+  const hasHydrated = useOnboardingStore((s) => s.hasHydrated);
   const configStatus = getConfigurationStatus();
 
   // Show animated splash screen while checking auth
@@ -89,8 +92,16 @@ export default function Index() {
     );
   }
 
+  // Wait for onboarding store to hydrate before redirecting
+  if (!hasHydrated) {
+    return null;
+  }
+
   // Redirect based on auth state
   if (isAuthenticated) {
+    if (!onboardingComplete) {
+      return <Redirect href="/onboarding" />;
+    }
     return <Redirect href="/(tabs)" />;
   }
 

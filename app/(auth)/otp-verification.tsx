@@ -6,10 +6,14 @@ import { Button, OTPInput } from '@/components/ui';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useTranslation } from 'react-i18next';
+import { formatNumber } from '@/i18n/format';
 
 const RESEND_COOLDOWN = 60; // seconds
 
 export default function OTPVerificationScreen() {
+  const { t } = useTranslation();
+
   const { email } = useLocalSearchParams<{ email: string }>();
   const [otpCode, setOtpCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN);
@@ -194,7 +198,7 @@ export default function OTPVerificationScreen() {
   if (!email) {
     return (
       <View style={errorContainerStyle}>
-        <Text style={errorTextStyle}>Invalid email</Text>
+        <Text style={errorTextStyle}>{t('authOtp.invalidEmail')}</Text>
       </View>
     );
   }
@@ -207,9 +211,9 @@ export default function OTPVerificationScreen() {
           <IconSymbol name="checkmark.shield.fill" size={40} color={m3.colorScheme.primary} />
         </View>
 
-        <Text style={titleTextStyle}>Enter Verification Code</Text>
+        <Text style={titleTextStyle}>{t('authOtp.title')}</Text>
 
-        <Text style={subtitleTextStyle}>We sent a 6-digit code to</Text>
+        <Text style={subtitleTextStyle}>{t('authOtp.subtitle')}</Text>
 
         <View style={emailBadgeStyle}>
           <Text style={emailTextStyle}>{email}</Text>
@@ -228,7 +232,7 @@ export default function OTPVerificationScreen() {
 
       {/* Verify Button */}
       <Button
-        title="Verify"
+        title={t('authOtp.verify')}
         onPress={handleVerify}
         isLoading={isLoading}
         disabled={otpCode.length !== 6 || isLoading}
@@ -252,13 +256,17 @@ export default function OTPVerificationScreen() {
           ]}
           accessibilityRole="button"
           accessibilityLabel={
-            resendCooldown > 0 ? `Resend code in ${resendCooldown} seconds` : 'Resend code'
+            resendCooldown > 0
+              ? t('authOtp.resendA11yWithSeconds', { seconds: formatNumber(resendCooldown) })
+              : t('authOtp.resendA11y')
           }
         >
           {resendCooldown > 0 ? (
-            <Text style={resendDisabledTextStyle}>Resend code in {resendCooldown}s</Text>
+            <Text style={resendDisabledTextStyle}>
+              {t('authOtp.resendInSecondsShort', { seconds: formatNumber(resendCooldown) })}
+            </Text>
           ) : (
-            <Text style={resendEnabledTextStyle}>Resend Code</Text>
+            <Text style={resendEnabledTextStyle}>{t('authOtp.resend')}</Text>
           )}
         </Pressable>
 
@@ -276,9 +284,9 @@ export default function OTPVerificationScreen() {
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Use different email"
+          accessibilityLabel={t('authOtp.useDifferentEmailA11y')}
         >
-          <Text style={backButtonTextStyle}>Use Different Email</Text>
+          <Text style={backButtonTextStyle}>{t('authOtp.useDifferentEmail')}</Text>
         </Pressable>
       </View>
     </View>

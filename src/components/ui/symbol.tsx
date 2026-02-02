@@ -1,7 +1,7 @@
 import { SymbolView, type SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import React from 'react';
 import { View, Text, Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ICON_MAPPING } from '@/utils/icon-mapping';
 
 interface SymbolProps {
@@ -11,6 +11,12 @@ interface SymbolProps {
   weight?: SymbolWeight;
   style?: StyleProp<ViewStyle>;
 }
+
+// Map SF Symbol names to MaterialCommunityIcons for farm/agriculture icons
+const SYMBOL_TO_MATERIAL_ICON: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
+  house: 'barn',
+  'house.fill': 'barn',
+};
 
 // Map SF Symbol names to Ionicons as fallback
 const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -77,6 +83,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'person.fill': 'person',
   'person.2': 'people-outline',
   'person.2.fill': 'people',
+
+  // Note: 'house' and 'house.fill' are mapped to MaterialCommunityIcons (barn) in SYMBOL_TO_MATERIAL_ICON
 
   // Analytics
   'chart.bar': 'bar-chart-outline',
@@ -175,7 +183,19 @@ export function SymbolComponent({
     );
   }
 
-  // On Android/web, use Ionicons as fallback
+  // On Android/web, check for MaterialCommunityIcons first, then Ionicons
+  const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[name];
+  if (materialIcon) {
+    return (
+      <MaterialCommunityIcons
+        name={materialIcon}
+        size={size}
+        color={color}
+        style={style as StyleProp<TextStyle>}
+      />
+    );
+  }
+
   const ionicon = SYMBOL_TO_IONICON[resolvedName] || SYMBOL_TO_IONICON[name] || directIonicon;
   if (ionicon) {
     return (

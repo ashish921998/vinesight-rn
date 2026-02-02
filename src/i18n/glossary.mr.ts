@@ -1,0 +1,26 @@
+import type { GlossaryKey } from './glossary.en';
+
+export const GLOSSARY_MR: Record<GlossaryKey, string> = {
+  irrigation: 'सिंचन',
+  spray: 'फवारणी',
+  fertigation: 'पाण्यातून खत',
+  harvest: 'कापणी',
+  expense: 'खर्च',
+  task: 'काम',
+  worker: 'कामगार',
+  attendance: 'हजेरी',
+  farm: 'शेत',
+  soil: 'माती',
+  weather: 'हवामान',
+  disease: 'रोग',
+  pest: 'कीड',
+  fertilizer: 'खत',
+  pruning: 'छाटणी',
+  canopy: 'छत्र व्यवस्थापन',
+  waterLevel: 'पाण्याची पातळी',
+  report: 'अहवाल',
+  labTest: 'लॅब चाचणी',
+  petiole: 'पेटिओल',
+  downyMildew: 'डाऊनी मिल्ड्यू',
+  powderyMildew: 'पावडरी मिल्ड्यू',
+};

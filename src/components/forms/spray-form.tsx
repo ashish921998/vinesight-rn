@@ -5,6 +5,7 @@ import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculator-models';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useTranslation } from 'react-i18next';
 
 export interface ChemicalEntry {
   id: string;
@@ -30,6 +31,7 @@ interface SprayFormProps {
 }
 
 export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
+  const { t } = useTranslation();
   const isValid =
     data.waterVolume !== undefined &&
     data.waterVolume > 0 &&
@@ -137,26 +139,26 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
               color: colors.surface[900],
             }}
           >
-            Spray Application
+            {t('sprayForm.title')}
           </Text>
           <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            Log chemicals and water volume
+            {t('sprayForm.subtitle')}
           </Text>
         </View>
       </View>
 
       {/* Water Volume Input */}
       <NumericInput
-        label="Water Volume"
+        label={t('sprayForm.waterVolume.label')}
         icon="water-outline"
         iconColor="#8B5CF6"
-        placeholder="Enter volume"
+        placeholder={t('sprayForm.waterVolume.placeholder')}
         value={data.waterVolume}
         onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}
-        unit="Liters"
+        unit={t('sprayForm.waterVolume.unitLiters')}
         required
         decimals={2}
-        hint="Total water used for the spray mix"
+        hint={t('sprayForm.waterVolume.hint')}
         ref={waterVolumeRef}
         onSubmitEditing={focusFirstChemicalName}
         blurOnSubmit={false}
@@ -177,7 +179,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
               color: colors.surface[800],
             }}
           >
-            Chemicals <Text style={{ color: colors.error }}>*</Text>
+            {t('sprayForm.chemicals.label')} <Text style={{ color: colors.error }}>*</Text>
           </Text>
         </View>
 
@@ -218,7 +220,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
                 marginLeft: spacing[2],
               }}
             >
-              Add Chemical
+              {t('sprayForm.chemicals.addChemical')}
             </Text>
           </Pressable>
         )}
@@ -247,7 +249,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
             color: isValid ? '#16A34A' : colors.surface[500],
           }}
         >
-          {isValid ? 'Ready to add' : 'Add water volume and at least one chemical'}
+          {isValid ? t('sprayForm.validation.ready') : t('sprayForm.validation.incomplete')}
         </Text>
       </View>
     </View>
@@ -280,6 +282,7 @@ function ChemicalRow({
   onNextChemical,
   onInputFocus,
 }: ChemicalRowProps) {
+  const { t } = useTranslation();
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [quantityText, setQuantityText] = useState(
     chemical.quantity !== undefined && chemical.quantity > 0 ? chemical.quantity.toString() : '',
@@ -340,7 +343,7 @@ function ChemicalRow({
             borderWidth: 1,
             borderColor: isNameFocused ? '#A78BFA' : colors.surface[200],
           }}
-          placeholder="Chemical name"
+          placeholder={t('sprayForm.chemicals.namePlaceholder')}
           placeholderTextColor="#9CA3AF"
           value={chemical.name}
           onChangeText={(name) => onUpdate({ name })}
@@ -380,7 +383,7 @@ function ChemicalRow({
             borderWidth: 1,
             borderColor: isQuantityFocused ? '#A78BFA' : colors.surface[200],
           }}
-          placeholder="Qty"
+          placeholder={t('sprayForm.chemicals.qtyPlaceholder')}
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"
           value={quantityText}
@@ -426,7 +429,7 @@ function ChemicalRow({
         onSelect={(unit) => onUpdate({ unit })}
         selectedValue={chemical.unit}
         options={CHEMICAL_UNITS}
-        title="Select Unit"
+        title={t('sprayForm.chemicals.selectUnit')}
       />
     </View>
   );

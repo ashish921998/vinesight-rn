@@ -15,11 +15,14 @@ import { router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { useTranslation } from 'react-i18next';
 import appIcon from '../../assets/icon.png';
 import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -198,7 +201,7 @@ export default function LoginScreen() {
               />
             </View>
             <Text style={titleTextStyle}>Vinesight</Text>
-            <Text style={subtitleTextStyle}>Farm Management</Text>
+            <Text style={subtitleTextStyle}>{t('auth.subtitle')}</Text>
           </View>
 
           {/* Form */}
@@ -206,7 +209,7 @@ export default function LoginScreen() {
             <View style={formInnerStyle}>
               {isSignUp && (
                 <Input
-                  placeholder="Full Name"
+                  placeholder={t('auth.fullName')}
                   value={name}
                   onChangeText={setName}
                   leftIcon="person.fill"
@@ -217,7 +220,7 @@ export default function LoginScreen() {
               )}
 
               <Input
-                placeholder="Email"
+                placeholder={t('auth.email')}
                 value={email}
                 onChangeText={setEmail}
                 leftIcon="mail"
@@ -229,7 +232,7 @@ export default function LoginScreen() {
               />
 
               <Input
-                placeholder="Password"
+                placeholder={t('auth.password')}
                 value={password}
                 onChangeText={setPassword}
                 leftIcon="lock.fill"
@@ -253,7 +256,7 @@ export default function LoginScreen() {
 
               {/* Submit Button */}
               <Button
-                title={isSignUp ? 'Sign Up' : 'Sign In'}
+                title={isSignUp ? t('auth.signUp') : t('auth.signIn')}
                 onPress={handleAuth}
                 isLoading={isLoading}
                 disabled={!isFormValid || isLoading}
@@ -264,14 +267,14 @@ export default function LoginScreen() {
             {/* Divider */}
             <View style={dividerContainerStyle}>
               <View style={dividerLineStyle} />
-              <Text style={dividerTextStyle}>or</Text>
+              <Text style={dividerTextStyle}>{t('auth.or')}</Text>
               <View style={dividerLineStyle} />
             </View>
 
             {/* Apple Sign In (required on iOS if Google is offered) */}
             {process.env.EXPO_OS === 'ios' && (
               <Button
-                title="Continue with Apple"
+                title={t('auth.continueWithApple')}
                 variant="outline"
                 leftIcon={<UiSymbol name="apple.logo" size={20} color={m3.colorScheme.primary} />}
                 onPress={signInWithApple}
@@ -282,7 +285,7 @@ export default function LoginScreen() {
 
             {/* Google Sign In */}
             <Button
-              title="Continue with Google"
+              title={t('auth.continueWithGoogle')}
               variant="outline"
               leftIcon={<UiSymbol name="g.circle.fill" size={20} color={m3.colorScheme.primary} />}
               onPress={signInWithGoogle}
@@ -296,13 +299,17 @@ export default function LoginScreen() {
             style={toggleContainerStyle}
             disabled={isLoading}
             accessibilityRole="button"
-            accessibilityLabel={isSignUp ? 'Switch to sign in' : 'Switch to sign up'}
+            accessibilityLabel={
+              isSignUp ? t('auth.a11y.switchToSignIn') : t('auth.a11y.switchToSignUp')
+            }
           >
             {({ pressed }) => (
               <View style={{ paddingVertical: spacing[2], paddingHorizontal: spacing[2] }}>
                 <Text style={toggleTextStyle}>
-                  {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-                  <Text style={toggleLinkStyle}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
+                  {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}{' '}
+                  <Text style={toggleLinkStyle}>
+                    {isSignUp ? t('auth.signIn') : t('auth.signUp')}
+                  </Text>
                 </Text>
                 <View
                   pointerEvents="none"

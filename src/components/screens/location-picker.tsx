@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import React, { Component, useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Alert } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useTranslation } from 'react-i18next';
 
 interface LocationPickerProps {
   visible: boolean;
@@ -12,6 +14,33 @@ interface LocationPickerProps {
   initialLongitude?: number;
 }
 
+interface MapErrorBoundaryProps {
+  children: React.ReactNode;
+  onError: (error: Error) => void;
+  fallback: React.ReactNode;
+}
+
+interface MapErrorBoundaryState {
+  hasError: boolean;
+}
+
+class MapErrorBoundary extends Component<MapErrorBoundaryProps, MapErrorBoundaryState> {
+  state: MapErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): MapErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    this.props.onError(error);
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
 export default function LocationPicker({
   visible,
   onClose,
@@ -19,23 +48,43 @@ export default function LocationPicker({
   initialLatitude,
   initialLongitude,
 }: LocationPickerProps) {
+  const { t } = useTranslation();
+
   const [selectedCoordinate, setSelectedCoordinate] = useState<{
     latitude: number;
     longitude: number;
-  } | null>(
-    initialLatitude && initialLongitude
-      ? { latitude: initialLatitude, longitude: initialLongitude }
-      : null,
-  );
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
+  const wasVisibleRef = useRef(false);
+
+  useEffect(() => {
+    if (!visible) {
+      wasVisibleRef.current = false;
+      return;
+    }
+
+    if (wasVisibleRef.current) return;
+    wasVisibleRef.current = true;
+
+    if (
+      typeof initialLatitude === 'number' &&
+      typeof initialLongitude === 'number' &&
+      Number.isFinite(initialLatitude) &&
+      Number.isFinite(initialLongitude)
+    ) {
+      setSelectedCoordinate({ latitude: initialLatitude, longitude: initialLongitude });
+    } else {
+      setSelectedCoordinate(null);
+    }
+  }, [initialLatitude, initialLongitude, visible]);
 
   const handleGetCurrentLocation = async () => {
     setLoading(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        alert('Permission to access location was denied');
+        Alert.alert(t('common.error'), t('locationPicker.permissionDenied'));
         return;
       }
 
@@ -54,20 +103,20 @@ export default function LocationPicker({
       mapRef.current?.animateToRegion(region);
     } catch (error) {
       console.error('Error getting current location:', error);
-      alert('Unable to get current location');
+      Alert.alert(t('common.error'), t('locationPicker.unableToGetCurrentLocation'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMapPress = async (event: MapPressEvent) => {
+  const handleMapPress = (event: MapPressEvent) => {
     const { coordinate } = event.nativeEvent;
     setSelectedCoordinate(coordinate);
   };
 
   const handleConfirm = async () => {
     if (!selectedCoordinate) {
-      alert('Please select a location on the map');
+      Alert.alert(t('common.error'), t('locationPicker.pleaseSelectOnMap'));
       return;
     }
 
@@ -97,7 +146,7 @@ export default function LocationPicker({
       onClose();
     } catch (error) {
       console.error('Error selecting location:', error);
-      alert('Unable to select location');
+      Alert.alert(t('common.error'), t('locationPicker.unableToSelectLocation'));
     } finally {
       setLoading(false);
     }
@@ -109,28 +158,62 @@ export default function LocationPicker({
     <View style={styles.modalContainer}>
       <View style={styles.modalContent}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Select Location</Text>
+          <Text style={styles.headerTitle}>{t('locationPicker.title')}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color="#6b7280" />
+            <Ionicons name="close" size={24} color={colors.gray[500]} />
           </TouchableOpacity>
         </View>
 
-        <MapView
-          ref={mapRef}
-          style={styles.map}
-          provider={PROVIDER_DEFAULT}
-          initialRegion={{
-            latitude: initialLatitude || 37.7749,
-            longitude: initialLongitude || -122.4194,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
+        <MapErrorBoundary
+          fallback={
+            <View style={styles.mapFallback}>
+              <View style={styles.mapFallbackIcon}>
+                <Ionicons name="map" size={32} color={colors.gray[600]} />
+              </View>
+              <Text style={styles.mapFallbackTitle}>
+                {t('locationPicker.mapsUnavailableTitle')}
+              </Text>
+              <Text style={styles.mapFallbackBody}>{t('locationPicker.mapsUnavailableBody')}</Text>
+              {selectedCoordinate && (
+                <Text style={styles.mapFallbackCoords}>
+                  {selectedCoordinate.latitude.toFixed(6)},{' '}
+                  {selectedCoordinate.longitude.toFixed(6)}
+                </Text>
+              )}
+            </View>
+          }
+          onError={(error) => {
+            if (__DEV__) {
+              console.error('MapView crashed while rendering:', error);
+            }
           }}
-          onPress={handleMapPress}
         >
-          {selectedCoordinate && (
-            <Marker coordinate={selectedCoordinate} title="Selected Location" />
-          )}
-        </MapView>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            provider={PROVIDER_DEFAULT}
+            initialRegion={{
+              latitude:
+                typeof initialLatitude === 'number' && Number.isFinite(initialLatitude)
+                  ? initialLatitude
+                  : 37.7749,
+              longitude:
+                typeof initialLongitude === 'number' && Number.isFinite(initialLongitude)
+                  ? initialLongitude
+                  : -122.4194,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            onPress={handleMapPress}
+          >
+            {selectedCoordinate && (
+              <Marker
+                coordinate={selectedCoordinate}
+                title={t('locationPicker.selectedLocationMarkerTitle')}
+              />
+            )}
+          </MapView>
+        </MapErrorBoundary>
 
         <View style={styles.footer}>
           <TouchableOpacity
@@ -139,11 +222,11 @@ export default function LocationPicker({
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#4ade80" />
+              <ActivityIndicator color={colors.success} />
             ) : (
               <>
-                <Ionicons name="navigate" size={20} color="#4ade80" />
-                <Text style={styles.locationButtonText}>Use Current Location</Text>
+                <Ionicons name="navigate" size={20} color={colors.success} />
+                <Text style={styles.locationButtonText}>{t('locationPicker.useCurrent')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -156,7 +239,7 @@ export default function LocationPicker({
             {loading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={styles.confirmButtonText}>Confirm Location</Text>
+              <Text style={styles.confirmButtonText}>{t('locationPicker.confirm')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -176,65 +259,101 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
+    elevation: 1000,
   },
   modalContent: {
     width: '90%',
     height: '80%',
-    backgroundColor: 'white',
-    borderRadius: 20,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius['2xl'],
     overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.gray[200],
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.gray[900],
   },
   closeButton: {
-    padding: 4,
+    padding: spacing[1],
   },
   map: {
     flex: 1,
   },
+  mapFallback: {
+    flex: 1,
+    paddingHorizontal: spacing[6],
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.gray[50],
+  },
+  mapFallbackIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.gray[100],
+    marginBottom: spacing[4],
+  },
+  mapFallbackTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.gray[900],
+    textAlign: 'center',
+    marginBottom: spacing[2],
+  },
+  mapFallbackBody: {
+    fontSize: fontSize.sm,
+    color: colors.gray[600],
+    textAlign: 'center',
+    marginBottom: spacing[4],
+  },
+  mapFallbackCoords: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.gray[800],
+    textAlign: 'center',
+  },
   footer: {
-    padding: 16,
+    padding: spacing[4],
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    gap: 12,
+    borderTopColor: colors.gray[200],
+    gap: spacing[3],
   },
   locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f3f4f6',
-    padding: 12,
-    borderRadius: 8,
-    gap: 8,
+    backgroundColor: colors.gray[100],
+    padding: spacing[3],
+    borderRadius: borderRadius.md,
+    gap: spacing[2],
   },
   locationButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#4ade80',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.success,
   },
   confirmButton: {
-    backgroundColor: '#22c55e',
-    padding: 14,
-    borderRadius: 8,
+    backgroundColor: colors.success,
+    padding: spacing[3] + 2,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
   },
   confirmButtonDisabled: {
-    backgroundColor: '#d1d5db',
+    backgroundColor: colors.gray[300],
   },
   confirmButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.white,
   },
 });

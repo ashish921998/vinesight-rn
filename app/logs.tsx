@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
+import { formatCurrency, formatDate } from '@/i18n/format';
+import { useTranslation } from 'react-i18next';
 import {
   useFarms,
   useFarmRecords,
@@ -29,6 +31,7 @@ import {
   useHarvestRecordsByFarms,
   useExpenseRecordsByFarms,
   useFertigationRecordsByFarms,
+  useProfile,
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { useModalStore } from '@/stores';
@@ -50,10 +53,14 @@ interface CombinedLog {
 }
 
 export default function LogsScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const { setEditActivity } = useModalStore();
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
+  const { data: profile } = useProfile();
+  const currency = profile?.preferred_currency || 'INR';
   const filterCardStyle = Platform.select({
     ios: {
       backgroundColor: 'rgba(255, 255, 255, 0.8)',
@@ -178,7 +185,7 @@ export default function LogsScreen() {
         id: `irrigation-${r.id}`,
         type: 'irrigation',
         date: r.date,
-        description: `${displayDuration}h`,
+        description: t('logs.irrigationDurationHoursShort', { hours: displayDuration }),
         data: r,
       });
     });
@@ -188,7 +195,7 @@ export default function LogsScreen() {
         id: `spray-${r.id}`,
         type: 'spray',
         date: r.date,
-        description: r.chemical || 'Spray application',
+        description: r.chemical || t('logs.sprayApplication'),
         data: r,
       }),
     );
@@ -198,7 +205,10 @@ export default function LogsScreen() {
         id: `harvest-${r.id}`,
         type: 'harvest',
         date: r.date,
-        description: `${r.quantity?.toFixed(1) || 0}kg - ${r.grade || 'N/A'}`,
+        description: t('logs.harvestDescription', {
+          quantityKg: (r.quantity ?? 0).toFixed(1),
+          grade: r.grade || t('common.na'),
+        }),
         data: r,
       }),
     );
@@ -208,7 +218,10 @@ export default function LogsScreen() {
         id: `expense-${r.id}`,
         type: 'expense',
         date: r.date,
-        description: `₹${r.cost?.toLocaleString() || 0} - ${r.type || 'General'}`,
+        description: t('logs.expenseDescription', {
+          cost: formatCurrency(r.cost ?? 0, currency),
+          type: r.type || t('common.general'),
+        }),
         data: r,
       }),
     );
@@ -218,7 +231,10 @@ export default function LogsScreen() {
         id: `fertigation-${r.id}`,
         type: 'fertigation',
         date: r.date,
-        description: `${r.fertilizers?.length || 0} fertilizer${(r.fertilizers?.length || 0) !== 1 ? 's' : ''} applied`,
+        description: t('logs.fertigationApplied', {
+          count: r.fertilizers?.length || 0,
+          countFormatted: String(r.fertilizers?.length || 0),
+        }),
         data: r,
       }),
     );
@@ -230,6 +246,8 @@ export default function LogsScreen() {
     displayHarvestRecords,
     displayExpenseRecords,
     displayFertigationRecords,
+    t,
+    currency,
   ]);
 
   const filteredLogs = useMemo(() => {
@@ -291,7 +309,7 @@ export default function LogsScreen() {
           : undefined);
 
       if (!farmIdNum) {
-        Alert.alert('Error', 'Cannot delete log: farm ID not found');
+        Alert.alert(t('common.error'), t('common.errors.cannotDeleteLogFarmIdNotFound'));
         return;
       }
 
@@ -335,7 +353,7 @@ export default function LogsScreen() {
       setShowDeleteConfirmation(false);
       setDeletingLog(undefined);
     } catch (_error) {
-      Alert.alert('Error', 'Failed to delete log. Please try again.');
+      Alert.alert(t('common.error'), t('common.errors.failedToDeleteLog'));
     }
   }, [
     deletingLog,
@@ -345,6 +363,7 @@ export default function LogsScreen() {
     deleteHarvest,
     deleteExpense,
     deleteFertigation,
+    t,
   ]);
 
   const clearFilters = useCallback(() => {
@@ -373,7 +392,9 @@ export default function LogsScreen() {
         }}
       >
         <ActivityIndicator size="large" color="#408059" />
-        <Text style={{ marginTop: spacing[4], color: colors.surface[500] }}>Loading...</Text>
+        <Text style={{ marginTop: spacing[4], color: colors.surface[500] }}>
+          {t('common.loading')}
+        </Text>
       </View>
     );
   }
@@ -382,7 +403,7 @@ export default function LogsScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Farm Logs',
+          title: t('logs.screenTitle'),
           headerStyle: { backgroundColor: '#f2f2f7' },
           headerTintColor: '#000000',
           headerRight: () =>
@@ -422,7 +443,7 @@ export default function LogsScreen() {
                   marginBottom: spacing[2],
                 }}
               >
-                SELECTED FARM
+                {t('logs.labels.selectedFarm')}
               </Text>
               <Pressable
                 onPress={() => setShowFarmSelector(true)}
@@ -468,17 +489,17 @@ export default function LogsScreen() {
                         }}
                       >
                         {selectedFarmId === undefined
-                          ? 'All Farms'
-                          : selectedFarm?.name || 'Select farm'}
+                          ? t('logs.farmPicker.allFarms')
+                          : selectedFarm?.name || t('logs.farmPicker.selectFarm')}
                       </Text>
                       {selectedFarm && (
                         <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                          {selectedFarm.crop} • {selectedFarm.area.toFixed(1)} acres
+                          {selectedFarm.crop} • {selectedFarm.area.toFixed(1)} {t('units.acres')}
                         </Text>
                       )}
                       {selectedFarmId === undefined && (
                         <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                          {farms.length} farm{farms.length !== 1 ? 's' : ''}
+                          {t('logs.farmPicker.farmsCount', { count: farms.length })}
                         </Text>
                       )}
                     </View>
@@ -510,7 +531,7 @@ export default function LogsScreen() {
                 >
                   <UiSymbol name="magnifyingglass" size={18} color="#8e8e93" />
                   <TextInput
-                    placeholder="Search logs..."
+                    placeholder={t('logs.search.placeholder')}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     placeholderTextColor="#8e8e93"
@@ -547,7 +568,7 @@ export default function LogsScreen() {
                         color: colors.primary[600],
                       }}
                     >
-                      Filter
+                      {t('common.filter')}
                     </Text>
                     {hasActiveFilters && (
                       <View
@@ -581,7 +602,7 @@ export default function LogsScreen() {
                           color: '#EF4444',
                         }}
                       >
-                        Clear All
+                        {t('common.clearAll')}
                       </Text>
                     </Pressable>
                   )}
@@ -605,7 +626,7 @@ export default function LogsScreen() {
                         marginBottom: spacing[2],
                       }}
                     >
-                      ACTIVITY TYPES
+                      {t('logs.filters.activityTypes')}
                     </Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
                       {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
@@ -661,7 +682,7 @@ export default function LogsScreen() {
                                 color: isSelected ? colors.white : colors.gray[700],
                               }}
                             >
-                              {logType.label}
+                              {t(logType.labelKey)}
                             </Text>
                           </Pressable>
                         );
@@ -689,7 +710,7 @@ export default function LogsScreen() {
                           }}
                         >
                           <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                            From
+                            {t('common.from')}
                           </Text>
                           <Text
                             style={{
@@ -699,11 +720,8 @@ export default function LogsScreen() {
                             }}
                           >
                             {dateFrom
-                              ? dateFrom.toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })
-                              : 'Select date'}
+                              ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
+                              : t('common.selectDate')}
                           </Text>
                         </View>
                       </Pressable>
@@ -721,7 +739,7 @@ export default function LogsScreen() {
                           }}
                         >
                           <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                            To
+                            {t('common.to')}
                           </Text>
                           <Text
                             style={{
@@ -731,11 +749,8 @@ export default function LogsScreen() {
                             }}
                           >
                             {dateTo
-                              ? dateTo.toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })
-                              : 'Select date'}
+                              ? formatDate(dateTo, { month: 'short', day: 'numeric' })
+                              : t('common.selectDate')}
                           </Text>
                         </View>
                       </Pressable>
@@ -795,7 +810,7 @@ export default function LogsScreen() {
                       color: colors.surface[900],
                     }}
                   >
-                    No activity logs found
+                    {t('logs.empty.title')}
                   </Text>
                   <Text
                     style={{
@@ -806,8 +821,8 @@ export default function LogsScreen() {
                     }}
                   >
                     {hasActiveFilters || searchQuery
-                      ? 'Try adjusting your filters'
-                      : 'Start logging activities to see them here'}
+                      ? t('logs.empty.subtitleFiltered')
+                      : t('logs.empty.subtitleDefault')}
                   </Text>
                 </View>
               ) : (
@@ -822,9 +837,11 @@ export default function LogsScreen() {
                     }}
                   >
                     <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                      Showing {(currentPage - 1) * itemsPerPage + 1}-
-                      {Math.min(currentPage * itemsPerPage, filteredLogs.length)} of{' '}
-                      {filteredLogs.length}
+                      {t('logs.pagination.showing', {
+                        start: (currentPage - 1) * itemsPerPage + 1,
+                        end: Math.min(currentPage * itemsPerPage, filteredLogs.length),
+                        total: filteredLogs.length,
+                      })}
                     </Text>
                     <Pressable
                       onPress={() => setShowRecordsPerPageSelector(true)}
@@ -843,7 +860,7 @@ export default function LogsScreen() {
                           color: colors.surface[500],
                         }}
                       >
-                        {itemsPerPage} per page
+                        {t('logs.pagination.perPage', { count: itemsPerPage })}
                       </Text>
                       <UiSymbol
                         name="chevron.down"
@@ -912,7 +929,7 @@ export default function LogsScreen() {
                                   color: colors.surface[900],
                                 }}
                               >
-                                {logType?.label}
+                                {logType ? t(logType.labelKey) : t('entryForm.addLog')}
                               </Text>
                               <Text
                                 style={{
@@ -931,7 +948,7 @@ export default function LogsScreen() {
                                   marginTop: spacing[1],
                                 }}
                               >
-                                {parsedDate.toLocaleDateString('en-US', {
+                                {formatDate(parsedDate, {
                                   weekday: 'short',
                                   month: 'short',
                                   day: 'numeric',
@@ -947,7 +964,10 @@ export default function LogsScreen() {
                                       (f) => f.id === (log.data as { farm_id?: number }).farm_id,
                                     );
                                   if (!logFarm) {
-                                    Alert.alert('Error', 'Farm not found for this log');
+                                    Alert.alert(
+                                      t('common.error'),
+                                      t('common.errors.farmNotFoundForLog'),
+                                    );
                                     return;
                                   }
                                   setEditActivity({
@@ -1146,7 +1166,7 @@ export default function LogsScreen() {
                     color: colors.surface[900],
                   }}
                 >
-                  Select From Date
+                  {t('logs.datePicker.fromTitle')}
                 </Text>
                 <Pressable onPress={() => setShowDatePickerFrom(false)}>
                   <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
@@ -1172,7 +1192,9 @@ export default function LogsScreen() {
                   backgroundColor: '#408059',
                 }}
               >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
+                  {t('common.done')}
+                </Text>
               </Pressable>
             </View>
           </Pressable>
@@ -1218,7 +1240,7 @@ export default function LogsScreen() {
                   paddingBottom: spacing[4],
                 }}
               >
-                Select Farm
+                {t('logs.farmPicker.title')}
               </Text>
               <ScrollView
                 style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[6] }}
@@ -1265,7 +1287,7 @@ export default function LogsScreen() {
                         color: selectedFarmId === undefined ? colors.white : colors.surface[900],
                       }}
                     >
-                      All Farms
+                      {t('logs.farmPicker.allFarms')}
                     </Text>
                     <Text
                       style={{
@@ -1276,7 +1298,7 @@ export default function LogsScreen() {
                             : colors.surface[500],
                       }}
                     >
-                      {farms.length} farm{farms.length !== 1 ? 's' : ''}
+                      {t('logs.farmPicker.farmsCount', { count: farms.length })}
                     </Text>
                   </View>
                   {selectedFarmId === undefined && (
@@ -1339,7 +1361,7 @@ export default function LogsScreen() {
                               : colors.surface[500],
                         }}
                       >
-                        {farm.crop} • {farm.area.toFixed(1)} acres
+                        {farm.crop} • {farm.area.toFixed(1)} {t('units.acres')}
                       </Text>
                     </View>
                     {selectedFarmId === farm.id && (
@@ -1360,7 +1382,7 @@ export default function LogsScreen() {
                 }}
               >
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </Pressable>
             </View>
@@ -1409,7 +1431,7 @@ export default function LogsScreen() {
                     color: colors.surface[900],
                   }}
                 >
-                  Records per page
+                  {t('logs.pagination.recordsPerPage')}
                 </Text>
                 <Pressable onPress={() => setShowRecordsPerPageSelector(false)}>
                   <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
@@ -1487,7 +1509,7 @@ export default function LogsScreen() {
                     color: colors.surface[900],
                   }}
                 >
-                  Select To Date
+                  {t('logs.datePicker.toTitle')}
                 </Text>
                 <Pressable onPress={() => setShowDatePickerTo(false)}>
                   <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
@@ -1513,7 +1535,9 @@ export default function LogsScreen() {
                   backgroundColor: '#408059',
                 }}
               >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Done</Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
+                  {t('common.done')}
+                </Text>
               </Pressable>
             </View>
           </Pressable>
@@ -1566,7 +1590,7 @@ export default function LogsScreen() {
                 marginBottom: spacing[2],
               }}
             >
-              Delete Log?
+              {t('logs.delete.title')}
             </Text>
             <Text
               style={{
@@ -1576,14 +1600,12 @@ export default function LogsScreen() {
                 marginBottom: spacing[6],
               }}
             >
-              Are you sure you want to delete this {deletingLog?.type} log from{' '}
-              {deletingLog
-                ? new Date(deletingLog.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                : ''}
-              ?
+              {t('logs.delete.body', {
+                type: deletingLog ? t(`logs.types.${deletingLog.type}`) : '',
+                date: deletingLog
+                  ? formatDate(new Date(deletingLog.date), { month: 'short', day: 'numeric' })
+                  : '',
+              })}
             </Text>
             <View style={{ flexDirection: 'row', gap: spacing[3] }}>
               <Pressable
@@ -1598,7 +1620,7 @@ export default function LogsScreen() {
                 }}
               >
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </Pressable>
               <Pressable
@@ -1611,7 +1633,9 @@ export default function LogsScreen() {
                   backgroundColor: '#EF4444',
                 }}
               >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>Delete</Text>
+                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
+                  {t('common.delete')}
+                </Text>
               </Pressable>
             </View>
           </View>

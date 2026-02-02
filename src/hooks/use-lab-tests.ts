@@ -12,6 +12,7 @@ import {
   PetioleTestRecordInsert,
 } from '../types/database';
 import { LabTrendsService } from '../services/lab-trends-service';
+import i18n from '@/i18n';
 
 // Query keys
 export const labTestQueryKeys = {
@@ -506,10 +507,7 @@ export const PETIOLE_PARAMETERS = [
  * Format parameter key for display
  */
 export function formatParameterKey(key: string, testType: 'soil' | 'petiole' = 'soil'): string {
-  const normalizedKey = normalizeParameterKey(key, testType);
-  const params = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
-  const param = params.find((p) => p.key === normalizedKey);
-  return param?.label || key;
+  return getParameterLabel(key, testType);
 }
 
 /**
@@ -521,6 +519,11 @@ function normalizeParameterKey(key: string, testType: 'soil' | 'petiole' = 'soil
     EC: 'ec',
     OC: 'organicCarbon',
     OM: 'organicMatter',
+    organic_carbon: 'organicCarbon',
+    organic_matter: 'organicMatter',
+    calcium_carbonate: 'calciumCarbonate',
+    carbonate: 'carbonate',
+    bicarbonate: 'bicarbonate',
     N: 'nitrogen',
     P: 'phosphorus',
     K: 'potassium',
@@ -574,6 +577,22 @@ function normalizeParameterKey(key: string, testType: 'soil' | 'petiole' = 'soil
   }
 
   return mappedKey;
+}
+
+/**
+ * Get localized parameter label
+ */
+export function getParameterLabel(key: string, testType: 'soil' | 'petiole' = 'soil'): string {
+  const normalizedKey = normalizeParameterKey(key, testType);
+  const params = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
+  const param = params.find((p) => p.key === normalizedKey);
+  const baseKey = param?.key ?? normalizedKey;
+  const camelKey = baseKey.includes('_')
+    ? baseKey.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())
+    : baseKey;
+  const labelKey = param?.key ?? camelKey;
+  const fallback = param?.label ?? key;
+  return i18n.t(`labTests.parameters.${labelKey}`, { defaultValue: fallback });
 }
 
 /**

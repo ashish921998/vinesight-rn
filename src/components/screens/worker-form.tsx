@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useCreateWorker, useUpdateWorker } from '@/hooks';
 import type { Worker } from '@/types';
 import { FormModal, SectionHeader, FormInput, Toggle, InfoCard } from '@/components/ui';
@@ -25,6 +26,8 @@ export function WorkerForm({
   onSaveSuccess,
   presentation = 'modal',
 }: WorkerFormProps) {
+  const { t } = useTranslation();
+
   const isVisible = visible ?? true;
   const [name, setName] = useState('');
   const [dailyRate, setDailyRate] = useState('');
@@ -66,7 +69,10 @@ export function WorkerForm({
     }
 
     if (!isValid) {
-      Alert.alert('Missing Information', 'Please enter worker name and daily rate.');
+      Alert.alert(
+        t('common.alerts.missingInformationTitle'),
+        t('common.alerts.enterWorkerNameAndDailyRate'),
+      );
       return;
     }
 
@@ -98,7 +104,7 @@ export function WorkerForm({
       if (__DEV__) {
         console.error('Error saving worker:', error);
       }
-      Alert.alert('Error', 'Failed to save worker. Please try again.');
+      Alert.alert(t('common.error'), t('common.errors.failedToSaveWorker'));
     } finally {
       setIsSubmitting(false);
     }
@@ -108,9 +114,9 @@ export function WorkerForm({
     <FormModal
       visible={isVisible}
       onClose={onClose}
-      title={isEditMode ? 'Edit Worker' : 'Add Worker'}
+      title={isEditMode ? t('workers.form.editTitle') : t('workers.form.addTitle')}
       onSave={handleSave}
-      saveLabel={isEditMode ? 'Save Changes' : 'Add Worker'}
+      saveLabel={isEditMode ? t('common.saveChanges') : t('workers.form.saveAdd')}
       isLoading={isSubmitting}
       isSaveDisabled={!isValid}
       showResetButton={!isEditMode}
@@ -118,32 +124,32 @@ export function WorkerForm({
       presentation={presentation}
     >
       {/* Worker Details */}
-      <SectionHeader title="Worker Details" style={{ marginBottom: 16 }} />
+      <SectionHeader title={t('workers.form.sections.details')} style={{ marginBottom: 16 }} />
 
       <FormInput
-        label="Worker Name"
+        label={t('workers.form.fields.name.label')}
         value={name}
         onChangeText={setName}
-        placeholder="e.g., Rajesh Kumar"
+        placeholder={t('workers.form.fields.name.placeholder')}
         required
         autoFocus
         style={{ marginBottom: 12 }}
       />
 
       <FormInput
-        label="Daily Rate"
+        label={t('workers.form.fields.dailyRate.label')}
         value={dailyRate}
         onChangeText={setDailyRate}
         placeholder="400"
         keyboardType="decimal-pad"
         prefix="₹"
-        suffix="/day"
+        suffix={t('workers.form.fields.dailyRate.perDayShort')}
         required
         style={{ marginBottom: 12 }}
       />
 
       <FormInput
-        label="Advance Amount (Optional)"
+        label={t('workers.form.fields.advanceAmountOptional.label')}
         value={advanceBalance}
         onChangeText={setAdvanceBalance}
         placeholder="0"
@@ -153,11 +159,11 @@ export function WorkerForm({
       />
 
       {/* Active Status */}
-      <SectionHeader title="Status" style={{ marginBottom: 16 }} />
+      <SectionHeader title={t('workers.form.sections.status')} style={{ marginBottom: 16 }} />
 
       <Toggle
-        label="Active Worker"
-        description="Inactive workers won't appear in attendance lists"
+        label={t('workers.form.toggles.activeWorker')}
+        description={t('workers.form.toggles.activeWorkerDescription')}
         value={isActive}
         onValueChange={setIsActive}
         style={{ marginBottom: 16 }}
@@ -168,7 +174,7 @@ export function WorkerForm({
         icon="information-circle"
         iconColor="#3B82F6"
         backgroundColor="#EFF6FF"
-        message="Daily rate is used to calculate earnings. Advance balance tracks outstanding loans."
+        message={t('workers.form.infoCardMessage')}
       />
     </FormModal>
   );

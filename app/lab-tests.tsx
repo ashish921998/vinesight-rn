@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LabTestDetailsModal } from '@/components/screens/lab-test-details-modal';
@@ -34,6 +35,8 @@ const formatDate = (dateString: string): string => {
 };
 
 export default function LabTestsScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
@@ -54,33 +57,41 @@ export default function LabTestsScreen() {
   const isLoading = farmLoading || soilLoading || petioleLoading;
 
   const handleDeleteSoilTest = (test: SoilTestRecord) => {
-    Alert.alert('Delete Test', 'Are you sure you want to delete this soil test?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          if (test.id) {
-            deleteSoilTest.mutate({ id: test.id, farmId: farmIdNum });
-          }
+    Alert.alert(
+      t('labTests.list.deleteTitle'),
+      t('labTests.list.deleteBody', { type: t('labTests.form.types.soil') }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            if (test.id) {
+              deleteSoilTest.mutate({ id: test.id, farmId: farmIdNum });
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleDeletePetioleTest = (test: PetioleTestRecord) => {
-    Alert.alert('Delete Test', 'Are you sure you want to delete this petiole test?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          if (test.id) {
-            deletePetioleTest.mutate({ id: test.id, farmId: farmIdNum });
-          }
+    Alert.alert(
+      t('labTests.list.deleteTitle'),
+      t('labTests.list.deleteBody', { type: t('labTests.form.types.petiole') }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            if (test.id) {
+              deletePetioleTest.mutate({ id: test.id, farmId: farmIdNum });
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const renderTestCard = (test: SoilTestRecord | PetioleTestRecord, type: TestType) => {
@@ -134,8 +145,12 @@ export default function LabTestsScreen() {
                   color: color,
                   textTransform: 'uppercase',
                 }}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
               >
-                {isSoil ? 'Soil Analysis' : 'Petiole Analysis'}
+                {isSoil
+                  ? t('labTests.list.card.soilAnalysis')
+                  : t('labTests.list.card.petioleAnalysis')}
               </Text>
               <Text
                 style={{
@@ -192,6 +207,8 @@ export default function LabTestsScreen() {
                       fontWeight: '700',
                       color: color,
                     }}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
                   >
                     {formatParameterKey(key, type)}
                   </Text>
@@ -253,8 +270,12 @@ export default function LabTestsScreen() {
             color: colors.gray[800],
             marginTop: spacing[4],
           }}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
         >
-          No {type === 'soil' ? 'Soil' : 'Petiole'} Tests
+          {t('labTests.list.empty.title', {
+            type: t(type === 'soil' ? 'labTests.form.types.soil' : 'labTests.form.types.petiole'),
+          })}
         </Text>
         <Text
           style={{
@@ -263,8 +284,12 @@ export default function LabTestsScreen() {
             marginTop: spacing[2],
             paddingHorizontal: spacing[8],
           }}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
         >
-          Add a {type === 'soil' ? 'soil' : 'petiole'} test to track nutrient levels.
+          {t('labTests.list.empty.subtitle', {
+            type: t(type === 'soil' ? 'labTests.form.types.soil' : 'labTests.form.types.petiole'),
+          })}
         </Text>
         <Pressable
           onPress={() =>
@@ -289,8 +314,12 @@ export default function LabTestsScreen() {
           <IconSymbol name="plus" size={20} color="white" />
           <Text
             style={{ color: colors.white, fontWeight: fontWeight.semibold, marginLeft: spacing[1] }}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
           >
-            Add {type === 'soil' ? 'Soil' : 'Petiole'} Test
+            {t('labTests.list.empty.action', {
+              type: t(type === 'soil' ? 'labTests.form.types.soil' : 'labTests.form.types.petiole'),
+            })}
           </Text>
         </Pressable>
       </View>
@@ -309,8 +338,10 @@ export default function LabTestsScreen() {
               color: colors.gray[700],
               marginTop: spacing[4],
             }}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
           >
-            Invalid Farm
+            {t('labTests.errors.invalidFarmTitle')}
           </Text>
           <Pressable
             onPress={() => router.back()}
@@ -322,7 +353,13 @@ export default function LabTestsScreen() {
               borderRadius: borderRadius.lg,
             }}
           >
-            <Text style={{ color: colors.gray[700], fontWeight: fontWeight.medium }}>Go Back</Text>
+            <Text
+              style={{ color: colors.gray[700], fontWeight: fontWeight.medium }}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {t('common.back')}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -351,11 +388,19 @@ export default function LabTestsScreen() {
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.gray[800] }}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
           >
-            Lab Tests
+            {t('labTests.list.title')}
           </Text>
           {farm && (
-            <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>{farm.name}</Text>
+            <Text
+              style={{ fontSize: fontSize.xs, color: colors.gray[500] }}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {farm.name}
+            </Text>
           )}
         </View>
         <Pressable
@@ -384,8 +429,10 @@ export default function LabTestsScreen() {
               marginLeft: spacing[1],
               fontSize: fontSize.sm,
             }}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
           >
-            View Trends
+            {t('labTests.list.viewTrends')}
           </Text>
         </Pressable>
         <Pressable
@@ -437,8 +484,10 @@ export default function LabTestsScreen() {
               textTransform: 'uppercase',
               color: selectedTab === 'soil' ? '#597A61' : colors.gray[400],
             }}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
           >
-            Soil ({soilTests?.length || 0})
+            {t('labTests.list.tabs.soil', { count: soilTests?.length || 0 })}
           </Text>
         </Pressable>
         <Pressable
@@ -459,8 +508,10 @@ export default function LabTestsScreen() {
               textTransform: 'uppercase',
               color: selectedTab === 'petiole' ? '#4C806B' : colors.gray[400],
             }}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
           >
-            Petiole ({petioleTests?.length || 0})
+            {t('labTests.list.tabs.petiole', { count: petioleTests?.length || 0 })}
           </Text>
         </Pressable>
       </View>
@@ -469,7 +520,13 @@ export default function LabTestsScreen() {
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#8b5cf6" />
-          <Text style={{ color: colors.gray[500], marginTop: spacing[2] }}>Loading tests...</Text>
+          <Text
+            style={{ color: colors.gray[500], marginTop: spacing[2] }}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {t('common.loading')}
+          </Text>
         </View>
       ) : (
         <ScrollView

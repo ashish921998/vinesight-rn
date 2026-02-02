@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '2.4',
+    version: '2.5',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'light',
@@ -17,7 +17,7 @@ module.exports = {
       bundleIdentifier: 'com.vinesight.ios',
       scheme: 'vinesight',
       usesAppleSignIn: true,
-      buildNumber: '1.1.5',
+      buildNumber: '1.1.6',
       icon: {
         light: './assets/icons/ios-light.png',
         dark: './assets/icons/ios-dark.png',
@@ -85,6 +85,7 @@ module.exports = {
     },
     plugins: [
       'expo-router',
+      'expo-localization',
       [
         'expo-splash-screen',
         {

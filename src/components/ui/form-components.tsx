@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -41,7 +42,7 @@ export function FormModal({
   onClose,
   title,
   onSave,
-  saveLabel = 'Next',
+  saveLabel,
   isLoading = false,
   isSaveDisabled = false,
   children,
@@ -54,6 +55,8 @@ export function FormModal({
   contentContainerStyle,
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const resolvedSaveLabel = saveLabel ?? t('common.next');
   const {
     style: scrollStyle,
     contentContainerStyle: scrollContentStyle,
@@ -134,7 +137,7 @@ export function FormModal({
           <Pressable
             onPress={onClose}
             accessibilityRole="button"
-            accessibilityLabel="Close"
+            accessibilityLabel={t('common.close')}
             style={{ width: 40, alignItems: 'flex-end' }}
           >
             <IconSymbol name="xmark.circle.fill" size={26} color={colors.surface[300]} />
@@ -163,7 +166,7 @@ export function FormModal({
       <View style={footerStyle}>
         {showResetButton && onReset ? (
           <Pressable onPress={onReset} disabled={isLoading}>
-            <Text style={resetTextStyle}>Reset</Text>
+            <Text style={resetTextStyle}>{t('common.reset')}</Text>
           </Pressable>
         ) : (
           <View />
@@ -175,7 +178,7 @@ export function FormModal({
             disabled={isSaveDisabled || isLoading}
             style={saveButtonStyle}
           >
-            <Text style={saveTextStyle}>{isLoading ? 'Saving...' : saveLabel}</Text>
+            <Text style={saveTextStyle}>{isLoading ? t('common.saving') : resolvedSaveLabel}</Text>
           </Pressable>
         )}
       </View>
@@ -214,7 +217,7 @@ export function FullScreenForm({
   title,
   onClose,
   onSave,
-  saveLabel = 'Next',
+  saveLabel,
   isLoading = false,
   isSaveDisabled = false,
   children,
@@ -222,6 +225,8 @@ export function FullScreenForm({
   onReset,
 }: FullScreenFormProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const resolvedSaveLabel = saveLabel ?? t('common.next');
 
   const headerStyle: ViewStyle = {
     borderBottomWidth: 1,
@@ -294,7 +299,7 @@ export function FullScreenForm({
           <Pressable
             onPress={onClose}
             accessibilityRole="button"
-            accessibilityLabel="Close"
+            accessibilityLabel={t('common.close')}
             style={{ width: 40, alignItems: 'flex-end' }}
           >
             <IconSymbol name="xmark.circle.fill" size={26} color={colors.surface[300]} />
@@ -321,7 +326,7 @@ export function FullScreenForm({
         <View style={footerStyle}>
           {showResetButton && onReset ? (
             <Pressable onPress={onReset} disabled={isLoading}>
-              <Text style={resetTextStyle}>Reset</Text>
+              <Text style={resetTextStyle}>{t('common.reset')}</Text>
             </Pressable>
           ) : (
             <View />
@@ -333,7 +338,9 @@ export function FullScreenForm({
               disabled={isSaveDisabled || isLoading}
               style={saveButtonStyle}
             >
-              <Text style={saveTextStyle}>{isLoading ? 'Saving...' : saveLabel}</Text>
+              <Text style={saveTextStyle}>
+                {isLoading ? t('common.saving') : resolvedSaveLabel}
+              </Text>
             </Pressable>
           )}
         </View>
@@ -476,20 +483,42 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
 
   const getSegmentStyle = (selected: boolean, pressed: boolean): ViewStyle => ({
     flex: 1,
-    paddingVertical: spacing[2],
+    paddingVertical: spacing[3],
+    paddingHorizontal: Platform.OS === 'android' ? spacing[1] : spacing[3],
+    minHeight: Platform.OS === 'android' ? 52 : 44,
     borderRadius: borderRadius.full,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: selected ? colors.white : pressed ? colors.surface[300] : 'transparent',
-    borderWidth: selected ? 1 : 0,
-    borderColor: selected ? colors.surface[300] : 'transparent',
+    borderWidth: 0,
     borderCurve: 'continuous',
     ...(selected ? { ...shadows.sm, elevation: 2 } : null),
   });
 
   const getSegmentTextStyle = (selected: boolean): TextStyle => ({
-    fontSize: fontSize.sm,
-    fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
+    fontSize: Platform.OS === 'android' ? 12 : fontSize.sm,
+    lineHeight: Platform.OS === 'android' ? 16 : fontSize.sm + 6,
+    fontWeight:
+      Platform.OS === 'android'
+        ? fontWeight.medium
+        : selected
+          ? fontWeight.semibold
+          : fontWeight.medium,
     color: selected ? colors.gray[900] : colors.gray[500],
+    textAlign: 'center',
+    width: '100%',
+    flexWrap: 'wrap',
+    flexShrink: 1,
+    ...(Platform.OS === 'android'
+      ? {
+          includeFontPadding: false,
+          textAlignVertical: 'center',
+          paddingBottom: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          letterSpacing: 0,
+        }
+      : null),
   });
 
   return (
@@ -502,7 +531,9 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
             onPress={() => onSelect(option.value)}
             style={({ pressed }) => getSegmentStyle(selected, pressed)}
           >
-            <Text style={getSegmentTextStyle(selected)}>{option.label}</Text>
+            <Text style={getSegmentTextStyle(selected)} numberOfLines={2}>
+              {option.label}
+            </Text>
           </Pressable>
         );
       })}

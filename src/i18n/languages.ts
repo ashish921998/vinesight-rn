@@ -1,0 +1,12 @@
+export type SupportedLanguageCode = 'en' | 'mr';
+
+export const SUPPORTED_LANGUAGES: ReadonlyArray<{ code: SupportedLanguageCode; label: string }> = [
+  { code: 'en', label: 'English' },
+  { code: 'mr', label: 'मराठी' },
+];
+
+export const DEFAULT_LANGUAGE: SupportedLanguageCode = 'en';
+
+export function isSupportedLanguage(code: string): code is SupportedLanguageCode {
+  return code === 'en' || code === 'mr';
+}

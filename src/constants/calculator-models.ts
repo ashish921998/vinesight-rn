@@ -270,18 +270,18 @@ export type LogTypeId = 'irrigation' | 'spray' | 'harvest' | 'expense' | 'fertig
 
 export interface LogType {
   id: LogTypeId;
-  label: string;
+  labelKey: string;
   icon: string;
   color: string;
 }
 
 export const LOG_TYPES: LogType[] = [
-  { id: 'irrigation', label: 'Irrigation', icon: 'water', color: '#4d8573' },
-  { id: 'spray', label: 'Spray', icon: 'flask', color: '#598d6b' },
-  { id: 'harvest', label: 'Harvest', icon: 'basket', color: '#669475' },
-  { id: 'expense', label: 'Expense', icon: 'cash', color: '#598066' },
-  { id: 'fertigation', label: 'Fertigation', icon: 'leaf', color: '#408059' },
-  { id: 'note', label: 'Note', icon: 'document-text', color: '#738c7a' },
+  { id: 'irrigation', labelKey: 'logs.types.irrigation', icon: 'water', color: '#4d8573' },
+  { id: 'spray', labelKey: 'logs.types.spray', icon: 'flask', color: '#598d6b' },
+  { id: 'harvest', labelKey: 'logs.types.harvest', icon: 'basket', color: '#669475' },
+  { id: 'expense', labelKey: 'logs.types.expense', icon: 'cash', color: '#598066' },
+  { id: 'fertigation', labelKey: 'logs.types.fertigation', icon: 'leaf', color: '#408059' },
+  { id: 'note', labelKey: 'logs.types.note', icon: 'document-text', color: '#738c7a' },
 ];
 
 export function getLogType(id: LogTypeId): LogType {

@@ -13,14 +13,24 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { useAuthStore } from '@/stores';
+import { useTranslation } from 'react-i18next';
+import { useAuthStore, useLanguageStore, useNotificationStore } from '@/stores';
 import { useProfile, useUpdateProfile } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { supabase } from '@/lib/supabase';
+import { setAppLanguage } from '@/i18n';
+import type { SupportedLanguageCode } from '@/i18n/languages';
+import {
+  ensureNotificationPermissions,
+  scheduleDailyWaterReminder,
+  cancelNotification,
+} from '@/services/notifications';
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
+
   const {
     user,
     signOut,
@@ -28,10 +38,29 @@ export default function SettingsScreen() {
     updateUserAreaUnit,
     isLoading: authLoading,
   } = useAuthStore();
+
+  const language = useLanguageStore((s) => s.language);
+  const setLanguage = useLanguageStore((s) => s.setLanguage);
+
+  const dailyWaterReminderEnabled = useNotificationStore((s) => s.dailyWaterReminderEnabled);
+  const dailyWaterNotificationId = useNotificationStore((s) => s.dailyWaterReminderNotificationId);
+  const setDailyWaterReminderEnabled = useNotificationStore((s) => s.setDailyWaterReminderEnabled);
+  const setDailyWaterNotificationId = useNotificationStore(
+    (s) => s.setDailyWaterReminderNotificationId,
+  );
+
+  const lowWaterAlertsEnabled = useNotificationStore((s) => s.lowWaterAlertsEnabled);
+  const setLowWaterAlertsEnabled = useNotificationStore((s) => s.setLowWaterAlertsEnabled);
+
+  const taskRemindersEnabled = useNotificationStore((s) => s.taskRemindersEnabled);
+  const setTaskRemindersEnabled = useNotificationStore((s) => s.setTaskRemindersEnabled);
+  const taskSchedules = useNotificationStore((s) => s.taskSchedules);
+  const clearAllTaskSchedules = useNotificationStore((s) => s.clearAllTaskSchedules);
   const { data: profile, refetch: refetchProfile } = useProfile();
   const updateProfile = useUpdateProfile();
 
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [showAreaPicker, setShowAreaPicker] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
@@ -69,10 +98,10 @@ export default function SettingsScreen() {
   const userPhone = profile?.phone || '';
 
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('settings.signOutConfirmTitle'), t('settings.signOutConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Sign Out',
+        text: t('settings.signOut'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -81,11 +110,53 @@ export default function SettingsScreen() {
             if (__DEV__) {
               console.error('Sign out error:', error);
             }
-            Alert.alert('Error', 'Failed to sign out. Please try again.');
+            Alert.alert(t('common.error'), t('settings.errors.signOutFailed'));
           }
         },
       },
     ]);
+  };
+
+  const handleToggleDailyWaterReminder = async (enabled: boolean) => {
+    if (enabled) {
+      const granted = await ensureNotificationPermissions();
+      if (!granted) {
+        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+        return;
+      }
+      const id = await scheduleDailyWaterReminder();
+      if (!id) {
+        Alert.alert(t('common.error'), t('settings.errors.notificationsUnavailable'));
+        return;
+      }
+      setDailyWaterNotificationId(id);
+      setDailyWaterReminderEnabled(true);
+      return;
+    }
+
+    if (dailyWaterNotificationId) {
+      await cancelNotification(dailyWaterNotificationId);
+    }
+    setDailyWaterNotificationId(null);
+    setDailyWaterReminderEnabled(false);
+  };
+
+  const handleToggleTaskReminders = async (enabled: boolean) => {
+    if (enabled) {
+      const granted = await ensureNotificationPermissions();
+      if (!granted) {
+        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+        return;
+      }
+      setTaskRemindersEnabled(true);
+      return;
+    }
+
+    // Disable: cancel any scheduled task notifications we know about
+    const ids = Object.values(taskSchedules).map((s) => s.notificationId);
+    await Promise.allSettled(ids.map((id) => cancelNotification(id)));
+    clearAllTaskSchedules();
+    setTaskRemindersEnabled(false);
   };
 
   const handleDeleteAccount = () => {
@@ -95,17 +166,17 @@ export default function SettingsScreen() {
 
   const handleConfirmDeleteAccount = async () => {
     if (deleteEmail !== userEmail) {
-      Alert.alert('Error', 'Email does not match your account email');
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.emailMismatch'));
       return;
     }
 
     if (!deletePassword) {
-      Alert.alert('Error', 'Please enter your password');
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.missingPassword'));
       return;
     }
 
     if (!deleteConfirmed) {
-      Alert.alert('Error', 'Please confirm you understand the consequences');
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.missingConfirmation'));
       return;
     }
 
@@ -119,7 +190,7 @@ export default function SettingsScreen() {
 
       if (verifyError) {
         setIsDeleting(false);
-        Alert.alert('Error', 'Invalid password');
+        Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.invalidPassword'));
         return;
       }
 
@@ -128,8 +199,8 @@ export default function SettingsScreen() {
       setDeletePassword('');
       setShowDeleteAccount(false);
       Alert.alert(
-        'Account Deletion Requested',
-        'Your account deletion request has been submitted. Your account will be deleted within 30 days. If you change your mind, please contact support immediately.',
+        t('settings.deleteAccountModal.submittedTitle'),
+        t('settings.deleteAccountModal.submittedBody'),
       );
     } catch (error) {
       if (__DEV__) {
@@ -137,7 +208,7 @@ export default function SettingsScreen() {
       }
       setIsDeleting(false);
       setDeletePassword('');
-      Alert.alert('Error', 'Failed to submit deletion request. Please try again.');
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.submitFailed'));
     }
   };
 
@@ -155,7 +226,7 @@ export default function SettingsScreen() {
       if (__DEV__) {
         console.error('Failed to update profile:', error);
       }
-      Alert.alert('Error', 'Failed to update profile');
+      Alert.alert(t('common.error'), t('settings.errors.updateProfileFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -184,6 +255,11 @@ export default function SettingsScreen() {
     return unit?.label || id;
   };
 
+  const getLanguageLabel = (code: SupportedLanguageCode | null) => {
+    if (code === 'mr') return t('settings.languageMarathi');
+    return t('settings.languageEnglish');
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Profile Section */}
@@ -191,15 +267,41 @@ export default function SettingsScreen() {
         <View style={styles.rowCenter}>
           <View style={styles.profileAvatar}>
             {userName ? (
-              <Text style={styles.profileInitial}>{userName.charAt(0).toUpperCase()}</Text>
+              <Text
+                style={styles.profileInitial}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {userName.charAt(0).toUpperCase()}
+              </Text>
             ) : (
               <UISymbol name="person.fill" size={32} color="#408059" />
             )}
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{userName}</Text>
-            <Text style={styles.profileEmail}>{userEmail}</Text>
-            {userPhone ? <Text style={styles.profilePhone}>{userPhone}</Text> : null}
+            <Text
+              style={styles.profileName}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {userName}
+            </Text>
+            <Text
+              style={styles.profileEmail}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {userEmail}
+            </Text>
+            {userPhone ? (
+              <Text
+                style={styles.profilePhone}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {userPhone}
+              </Text>
+            ) : null}
           </View>
           <Pressable onPress={() => setShowEditProfile(true)}>
             <UISymbol name="pencil" size={24} color="#408059" />
@@ -209,20 +311,33 @@ export default function SettingsScreen() {
 
       {/* General Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionHeader}>GENERAL</Text>
+        <Text
+          style={styles.sectionHeader}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {t('settings.sectionGeneral')}
+        </Text>
         <View style={styles.sectionContent}>
-          <SettingsItem icon="globe" title="Language" value="System Default" disabled />
+          <Pressable onPress={() => setShowLanguagePicker(true)}>
+            <SettingsItem
+              icon="globe"
+              title={t('settings.language')}
+              value={getLanguageLabel(language)}
+              isLast={false}
+            />
+          </Pressable>
           <Pressable onPress={() => setShowAreaPicker(true)}>
             <SettingsItem
               icon="arrow.up.left.and.arrow.down.right"
-              title="Area Unit"
+              title={t('settings.areaUnit')}
               value={getAreaUnitLabel(selectedAreaUnit)}
             />
           </Pressable>
           <Pressable onPress={() => setShowCurrencyPicker(true)}>
             <SettingsItem
               icon="dollarsign.circle"
-              title="Currency"
+              title={t('settings.currency')}
               value={getCurrencyLabel(selectedCurrency)}
               isLast
             />
@@ -232,48 +347,96 @@ export default function SettingsScreen() {
 
       {/* Notifications Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionHeader}>NOTIFICATIONS</Text>
+        <Text
+          style={styles.sectionHeader}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {t('settings.sectionNotifications')}
+        </Text>
         <View style={styles.sectionContent}>
           <NotificationToggle
-            title="Daily Water Reminder"
-            subtitle="Remind to check water levels"
+            title={t('settings.dailyWaterReminder')}
+            subtitle={t('settings.dailyWaterReminderSubtitle')}
+            enabled={dailyWaterReminderEnabled}
+            onToggle={handleToggleDailyWaterReminder}
           />
           <NotificationToggle
-            title="Low Water Alerts"
-            subtitle="Alert when water is critically low"
+            title={t('settings.lowWaterAlerts')}
+            subtitle={t('settings.lowWaterAlertsSubtitle')}
+            enabled={lowWaterAlertsEnabled}
+            onToggle={setLowWaterAlertsEnabled}
           />
           <NotificationToggle
-            title="Task Reminders"
-            subtitle="Remind about scheduled tasks"
+            title={t('settings.taskReminders')}
+            subtitle={t('settings.taskRemindersSubtitle')}
+            enabled={taskRemindersEnabled}
+            onToggle={handleToggleTaskReminders}
             isLast
           />
         </View>
-        <Text style={styles.notificationNote}>Notification settings are stored locally</Text>
+        <Text
+          style={styles.notificationNote}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {t('settings.notificationNote')}
+        </Text>
       </View>
 
       {/* Account Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionHeader}>ACCOUNT</Text>
+        <Text
+          style={styles.sectionHeader}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {t('settings.sectionAccount')}
+        </Text>
         <View style={styles.sectionContent}>
           <Pressable onPress={handleSignOut} disabled={authLoading} style={styles.settingsItem}>
             <View style={styles.signOutIcon}>
               <UISymbol name="rectangle.portrait.and.arrow.right" size={20} color="#EF4444" />
             </View>
-            <Text style={styles.signOutText}>Sign Out</Text>
+            <Text
+              style={styles.signOutText}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {t('settings.signOut')}
+            </Text>
           </Pressable>
           <Pressable onPress={handleDeleteAccount} style={styles.settingsItem}>
             <View style={styles.deleteIcon}>
               <UISymbol name="trash" size={20} color="#DC2626" />
             </View>
-            <Text style={styles.deleteText}>Delete Account</Text>
+            <Text
+              style={styles.deleteText}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {t('settings.deleteAccount')}
+            </Text>
           </Pressable>
         </View>
       </View>
 
       {/* App Version */}
       <View style={styles.appVersionContainer}>
-        <Text style={styles.appVersion}>Vinesight v1.0.0</Text>
-        <Text style={styles.appVersionSubtitle}>Made for vineyard management</Text>
+        <Text
+          style={styles.appVersion}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          Vinesight v1.0.0
+        </Text>
+        <Text
+          style={styles.appVersionSubtitle}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {t('settings.madeForVineyardManagement')}
+        </Text>
       </View>
 
       {/* Edit Profile Modal */}
@@ -286,7 +449,13 @@ export default function SettingsScreen() {
         <KeyboardAvoidingView behavior="padding" style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
-              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <Text
+                style={styles.modalTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.editProfile')}
+              </Text>
               <Pressable onPress={() => setShowEditProfile(false)}>
                 <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </Pressable>
@@ -296,30 +465,60 @@ export default function SettingsScreen() {
           <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
             <View style={styles.formCard}>
               <View style={styles.mb4}>
-                <Text style={styles.inputLabel}>Email</Text>
+                <Text
+                  style={styles.inputLabel}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.email')}
+                </Text>
                 <View style={styles.inputDisabled}>
-                  <Text style={styles.inputDisabledText}>{userEmail}</Text>
+                  <Text
+                    style={styles.inputDisabledText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {userEmail}
+                  </Text>
                 </View>
-                <Text style={styles.inputHint}>Email cannot be changed</Text>
+                <Text
+                  style={styles.inputHint}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.emailCannotBeChanged')}
+                </Text>
               </View>
 
               <View style={styles.mb4}>
-                <Text style={styles.inputLabel}>Full Name</Text>
+                <Text
+                  style={styles.inputLabel}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.fullName')}
+                </Text>
                 <TextInput
                   value={editName}
                   onChangeText={setEditName}
-                  placeholder="Enter your name"
+                  placeholder={t('settings.enterName')}
                   placeholderTextColor="#9CA3AF"
                   style={styles.input}
                 />
               </View>
 
               <View style={styles.mb4}>
-                <Text style={styles.inputLabel}>Phone</Text>
+                <Text
+                  style={styles.inputLabel}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.phone')}
+                </Text>
                 <TextInput
                   value={editPhone}
                   onChangeText={setEditPhone}
-                  placeholder="Enter phone number"
+                  placeholder={t('settings.enterPhone')}
                   placeholderTextColor="#9CA3AF"
                   keyboardType="phone-pad"
                   style={styles.input}
@@ -337,11 +536,73 @@ export default function SettingsScreen() {
               {isSaving ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.saveButtonText}>Save Changes</Text>
+                <Text
+                  style={styles.saveButtonText}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('common.saveChanges')}
+                </Text>
               )}
             </Pressable>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Language Picker Modal */}
+      <Modal
+        visible={showLanguagePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowLanguagePicker(false)}
+      >
+        <View style={styles.container}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderInner}>
+              <Text
+                style={styles.modalTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.selectLanguage')}
+              </Text>
+              <Pressable onPress={() => setShowLanguagePicker(false)}>
+                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+              </Pressable>
+            </View>
+          </View>
+          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+            <View style={styles.sectionContent}>
+              {(
+                [
+                  { code: 'en' as const, label: t('settings.languageEnglish') },
+                  { code: 'mr' as const, label: t('settings.languageMarathi') },
+                ] as const
+              ).map((opt, index, arr) => (
+                <Pressable
+                  key={opt.code}
+                  onPress={() => {
+                    setLanguage(opt.code);
+                    setAppLanguage(opt.code);
+                    setShowLanguagePicker(false);
+                  }}
+                  style={[styles.settingsItem, index < arr.length - 1 && styles.borderBottom]}
+                >
+                  <Text
+                    style={styles.pickerItemText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {opt.label}
+                  </Text>
+                  {language === opt.code && (
+                    <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
       </Modal>
 
       {/* Currency Picker Modal */}
@@ -354,7 +615,13 @@ export default function SettingsScreen() {
         <View style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
-              <Text style={styles.modalTitle}>Select Currency</Text>
+              <Text
+                style={styles.modalTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.selectCurrency')}
+              </Text>
               <Pressable onPress={() => setShowCurrencyPicker(false)}>
                 <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </Pressable>
@@ -371,7 +638,13 @@ export default function SettingsScreen() {
                     index < CURRENCIES.length - 1 && styles.borderBottom,
                   ]}
                 >
-                  <Text style={styles.pickerItemText}>{currency.label}</Text>
+                  <Text
+                    style={styles.pickerItemText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {currency.label}
+                  </Text>
                   {selectedCurrency === currency.code && (
                     <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
@@ -392,7 +665,13 @@ export default function SettingsScreen() {
         <View style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
-              <Text style={styles.modalTitle}>Select Area Unit</Text>
+              <Text
+                style={styles.modalTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.selectAreaUnit')}
+              </Text>
               <Pressable onPress={() => setShowAreaPicker(false)}>
                 <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </Pressable>
@@ -412,7 +691,7 @@ export default function SettingsScreen() {
                       if (__DEV__) {
                         console.error('Failed to update area unit:', error);
                       }
-                      Alert.alert('Error', 'Failed to update area unit');
+                      Alert.alert(t('common.error'), t('settings.errors.updateAreaUnitFailed'));
                     }
                   }}
                   style={[
@@ -420,7 +699,13 @@ export default function SettingsScreen() {
                     index < AREA_UNITS.length - 1 && styles.borderBottom,
                   ]}
                 >
-                  <Text style={styles.pickerItemText}>{unit.label}</Text>
+                  <Text
+                    style={styles.pickerItemText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {unit.label}
+                  </Text>
                   {selectedAreaUnit === unit.id && (
                     <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
                   )}
@@ -441,7 +726,13 @@ export default function SettingsScreen() {
         <KeyboardAvoidingView behavior="padding" style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
-              <Text style={styles.modalTitle}>Delete Account</Text>
+              <Text
+                style={styles.modalTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.deleteAccountModal.title')}
+              </Text>
               <Pressable onPress={() => setShowDeleteAccount(false)}>
                 <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
               </Pressable>
@@ -451,73 +742,143 @@ export default function SettingsScreen() {
           <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
             <View style={[styles.alertBox, styles.dangerAlert]}>
               <UISymbol name="exclamationmark.triangle.fill" size={20} color="#DC2626" />
-              <Text style={styles.alertTitle}>Warning: This action is irreversible</Text>
-              <Text style={styles.alertText}>
-                Deleting your account will permanently remove all your data including:
+              <Text
+                style={styles.alertTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.deleteAccountModal.warningTitle')}
+              </Text>
+              <Text
+                style={styles.alertText}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.deleteAccountModal.warningBody')}
               </Text>
             </View>
 
             <View style={styles.deleteWarnings}>
-              <Text style={styles.deleteWarningItem}>
-                • All farm data (farms, crops, soil profiles, lab tests)
+              <Text
+                style={styles.deleteWarningItem}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                • {t('settings.deleteAccountModal.dataList.farms')}
               </Text>
-              <Text style={styles.deleteWarningItem}>
-                • All records (irrigation, spray, fertigation, harvest, expenses)
+              <Text
+                style={styles.deleteWarningItem}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                • {t('settings.deleteAccountModal.dataList.records')}
               </Text>
-              <Text style={styles.deleteWarningItem}>
-                • Worker information and attendance records
+              <Text
+                style={styles.deleteWarningItem}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                • {t('settings.deleteAccountModal.dataList.workers')}
               </Text>
-              <Text style={styles.deleteWarningItem}>
-                • Organization memberships and connections
+              <Text
+                style={styles.deleteWarningItem}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                • {t('settings.deleteAccountModal.dataList.org')}
               </Text>
-              <Text style={styles.deleteWarningItem}>
-                • All uploaded files (soil test reports, photos, documents)
+              <Text
+                style={styles.deleteWarningItem}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                • {t('settings.deleteAccountModal.dataList.uploads')}
               </Text>
-              <Text style={styles.deleteWarningItem}>
-                • Your profile, preferences, and authentication data
+              <Text
+                style={styles.deleteWarningItem}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                • {t('settings.deleteAccountModal.dataList.profile')}
               </Text>
             </View>
 
             <View style={styles.formCard}>
               <View style={styles.mb4}>
-                <Text style={styles.inputLabel}>Confirm your email</Text>
+                <Text
+                  style={styles.inputLabel}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.deleteAccountModal.confirmEmail.label')}
+                </Text>
                 <TextInput
                   value={deleteEmail}
                   onChangeText={setDeleteEmail}
-                  placeholder="Enter your email"
+                  placeholder={t('settings.deleteAccountModal.confirmEmail.placeholder')}
                   placeholderTextColor="#9CA3AF"
                   autoCapitalize="none"
                   keyboardType="email-address"
                   style={styles.input}
                 />
-                <Text style={styles.inputHint}>Enter your account email to confirm deletion</Text>
+                <Text
+                  style={styles.inputHint}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.deleteAccountModal.confirmEmail.hint')}
+                </Text>
               </View>
 
               <View style={styles.mb4}>
-                <Text style={styles.inputLabel}>Confirm your password</Text>
+                <Text
+                  style={styles.inputLabel}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.deleteAccountModal.confirmPassword.label')}
+                </Text>
                 <TextInput
                   value={deletePassword}
                   onChangeText={setDeletePassword}
-                  placeholder="Enter your password"
+                  placeholder={t('settings.deleteAccountModal.confirmPassword.placeholder')}
                   placeholderTextColor="#9CA3AF"
                   secureTextEntry
                   style={styles.input}
                 />
-                <Text style={styles.inputHint}>Enter your password to verify your identity</Text>
+                <Text
+                  style={styles.inputHint}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.deleteAccountModal.confirmPassword.hint')}
+                </Text>
               </View>
 
               <View style={styles.mb4}>
-                <Text style={styles.inputLabel}>Reason for deletion (optional)</Text>
+                <Text
+                  style={styles.inputLabel}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.deleteAccountModal.reason.label')}
+                </Text>
                 <TextInput
                   value={deleteReason}
                   onChangeText={setDeleteReason}
-                  placeholder="Tell us why you're leaving..."
+                  placeholder={t('settings.deleteAccountModal.reason.placeholder')}
                   placeholderTextColor="#9CA3AF"
                   multiline
                   numberOfLines={3}
                   style={[styles.input, { height: 80 }]}
                 />
-                <Text style={styles.inputHint}>This helps us improve the service</Text>
+                <Text
+                  style={styles.inputHint}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.deleteAccountModal.reason.hint')}
+                </Text>
               </View>
 
               <Pressable
@@ -527,10 +888,20 @@ export default function SettingsScreen() {
                 <View style={[styles.checkbox, deleteConfirmed && styles.checkboxChecked]}>
                   {deleteConfirmed && <UISymbol name="checkmark" size={14} color="white" />}
                 </View>
-                <Text style={styles.checkboxText}>
-                  I understand that my account and all associated data will be{' '}
-                  <Text style={styles.checkboxBold}>permanently deleted</Text> and cannot be
-                  recovered. I also understand that this action cannot be undone.
+                <Text
+                  style={styles.checkboxText}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.deleteAccountModal.checkbox.prefix')}{' '}
+                  <Text
+                    style={styles.checkboxBold}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.deleteAccountModal.checkbox.bold')}
+                  </Text>{' '}
+                  {t('settings.deleteAccountModal.checkbox.suffix')}
                 </Text>
               </Pressable>
             </View>
@@ -545,7 +916,13 @@ export default function SettingsScreen() {
               {isDeleting ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.deleteButtonText}>Delete My Account</Text>
+                <Text
+                  style={styles.deleteButtonText}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.deleteAccountModal.submit')}
+                </Text>
               )}
             </Pressable>
           </View>
@@ -574,8 +951,22 @@ function SettingsItem({
       <View style={styles.settingsIcon}>
         <UISymbol name={icon} size={20} color="#6B7280" />
       </View>
-      <Text style={styles.settingsTitle}>{title}</Text>
-      {value && <Text style={styles.settingsValue}>{value}</Text>}
+      <Text
+        style={styles.settingsTitle}
+        textBreakStrategy="highQuality"
+        lineBreakStrategyIOS="standard"
+      >
+        {title}
+      </Text>
+      {value && (
+        <Text
+          style={styles.settingsValue}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {value}
+        </Text>
+      )}
       {!disabled && <UISymbol name="chevron.right" size={18} color="#D1D5DB" />}
     </View>
   );
@@ -585,23 +976,39 @@ function SettingsItem({
 function NotificationToggle({
   title,
   subtitle,
+  enabled,
+  onToggle,
   isLast,
 }: {
   title: string;
   subtitle: string;
+  enabled: boolean;
+  onToggle: (enabled: boolean) => void | Promise<void>;
   isLast?: boolean;
 }) {
-  const [enabled, setEnabled] = useState(false);
-
   return (
     <View style={[styles.notificationItem, !isLast && styles.borderBottom]}>
       <View style={styles.flex1}>
-        <Text style={styles.notificationTitle}>{title}</Text>
-        <Text style={styles.notificationSubtitle}>{subtitle}</Text>
+        <Text
+          style={styles.notificationTitle}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {title}
+        </Text>
+        <Text
+          style={styles.notificationSubtitle}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {subtitle}
+        </Text>
       </View>
       <Switch
         value={enabled}
-        onValueChange={setEnabled}
+        onValueChange={(value) => {
+          void onToggle(value);
+        }}
         trackColor={{ false: '#D1D5DB', true: '#86EFAC' }}
         thumbColor={enabled ? '#22C55E' : '#F3F4F6'}
       />

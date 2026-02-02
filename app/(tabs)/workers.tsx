@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, RefreshControl, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useWorkers, useDeleteWorker } from '@/hooks';
 import { useFabBottomInset } from '@/hooks/use-fab-bottom-inset';
@@ -16,13 +17,15 @@ import { colorWithOpacity } from '@/utils/color';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
-const TAB_DATA: { id: WorkersTab; label: string }[] = [
-  { id: 'workers', label: 'Workers' },
-  { id: 'attendance', label: 'Attendance' },
-  { id: 'analytics', label: 'Analytics' },
+const TAB_DATA: { id: WorkersTab; labelKey: string }[] = [
+  { id: 'workers', labelKey: 'workers.tabs.workers' },
+  { id: 'attendance', labelKey: 'workers.tabs.attendance' },
+  { id: 'analytics', labelKey: 'workers.tabs.analytics' },
 ];
 
 export default function WorkersScreen() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fabBottomInset = useFabBottomInset();
@@ -31,7 +34,9 @@ export default function WorkersScreen() {
   const { data: workers, isLoading, refetch } = useWorkers();
   const deleteWorker = useDeleteWorker();
   const isAndroid = process.env.EXPO_OS === 'android';
-  const iosBottomActionBarHeight = 72;
+  const fabBottom = isAndroid
+    ? Math.max(spacing[2], tabBarInset - spacing[14])
+    : spacing[14] + fabBottomInset;
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
 
@@ -41,12 +46,12 @@ export default function WorkersScreen() {
 
   const handleDeleteWorker = (worker: Worker) => {
     Alert.alert(
-      'Delete Worker?',
-      `This will permanently delete ${worker.name} and all their associated records.`,
+      t('workers.alerts.deleteWorkerTitle'),
+      t('workers.alerts.deleteWorkerBody', { name: worker.name }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             if (worker.id) {
@@ -54,8 +59,8 @@ export default function WorkersScreen() {
                 await deleteWorker.mutateAsync(worker.id);
               } catch (error: unknown) {
                 const errorMessage =
-                  error instanceof Error ? error.message : 'Failed to delete worker';
-                Alert.alert('Error', errorMessage);
+                  error instanceof Error ? error.message : t('common.errors.failedToDeleteWorker');
+                Alert.alert(t('common.error'), errorMessage);
               }
             }
           },
@@ -87,9 +92,7 @@ export default function WorkersScreen() {
       keyExtractor={(item) => String(item.id)}
       contentContainerStyle={{
         paddingTop: spacing[4],
-        paddingBottom: isAndroid
-          ? spacing[16] + fabBottomInset + spacing[10]
-          : iosBottomActionBarHeight + tabBarInset + spacing[6],
+        paddingBottom: fabBottom + 56 + spacing[8],
         flexGrow: 1,
       }}
       ListHeaderComponent={
@@ -104,7 +107,7 @@ export default function WorkersScreen() {
               marginBottom: spacing[2],
             }}
           >
-            ACTIVE WORKERS ({activeWorkers.length})
+            {t('workers.lists.activeTitle', { count: activeWorkers.length })}
           </Text>
         ) : null
       }
@@ -121,7 +124,7 @@ export default function WorkersScreen() {
                 marginBottom: spacing[2],
               }}
             >
-              INACTIVE WORKERS ({inactiveWorkers.length})
+              {t('workers.lists.inactiveTitle', { count: inactiveWorkers.length })}
             </Text>
             {inactiveWorkers.map((worker) => (
               <View key={String(worker.id)} style={{ opacity: 0.6 }}>
@@ -162,7 +165,7 @@ export default function WorkersScreen() {
                 textAlign: 'center',
               }}
             >
-              No Workers Yet
+              {t('workers.empty.title')}
             </Text>
             <Text
               style={{
@@ -172,11 +175,11 @@ export default function WorkersScreen() {
                 marginTop: spacing[2],
               }}
             >
-              Add workers to track attendance,{`\n`}payments, and settlements.
+              {t('workers.empty.subtitle')}
             </Text>
             <View style={{ marginTop: spacing[4], width: '100%', maxWidth: 360 }}>
               <Button
-                title="Add Worker"
+                title={t('workers.form.saveAdd')}
                 onPress={() => {
                   setAddWorker({ worker: null });
                   router.push('/add-worker');
@@ -230,7 +233,7 @@ export default function WorkersScreen() {
           textAlign: 'center',
         }}
       >
-        Labor Analytics
+        {t('workers.analyticsTab.title')}
       </Text>
       <Text
         style={{
@@ -240,7 +243,7 @@ export default function WorkersScreen() {
           marginTop: spacing[2],
         }}
       >
-        View labor costs, productivity,{`\n`}and attendance patterns.
+        {t('workers.analyticsTab.subtitle')}
       </Text>
       <Text
         style={{
@@ -249,7 +252,7 @@ export default function WorkersScreen() {
           marginTop: spacing[4],
         }}
       >
-        Coming soon in a future update
+        {t('workers.analyticsTab.comingSoon')}
       </Text>
     </View>
   );
@@ -273,7 +276,7 @@ export default function WorkersScreen() {
           }}
         >
           <SegmentedControl
-            options={TAB_DATA.map((tab) => ({ value: tab.id, label: tab.label }))}
+            options={TAB_DATA.map((tab) => ({ value: tab.id, label: t(tab.labelKey) }))}
             selectedValue={selectedTab}
             onSelect={(value) => setSelectedTab(value as WorkersTab)}
           />
@@ -285,7 +288,7 @@ export default function WorkersScreen() {
         {selectedTab === 'analytics' && renderAnalyticsTab()}
 
         {/* Primary action */}
-        {selectedTab === 'workers' && (workers?.length || 0) > 0 && isAndroid && (
+        {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
           <Pressable
             onPress={() => {
               setAddWorker({ worker: null });
@@ -293,7 +296,7 @@ export default function WorkersScreen() {
             }}
             style={{
               position: 'absolute',
-              bottom: spacing[14] + fabBottomInset,
+              bottom: fabBottom,
               right: spacing[6],
               width: 56,
               height: 56,
@@ -304,7 +307,7 @@ export default function WorkersScreen() {
               overflow: 'hidden',
             }}
             accessibilityRole="button"
-            accessibilityLabel="Add worker"
+            accessibilityLabel={t('workers.form.saveAdd')}
           >
             {({ pressed }) => (
               <>
@@ -323,31 +326,6 @@ export default function WorkersScreen() {
               </>
             )}
           </Pressable>
-        )}
-
-        {selectedTab === 'workers' && (workers?.length || 0) > 0 && !isAndroid && (
-          <View
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: tabBarInset,
-              paddingHorizontal: spacing[4],
-              paddingTop: spacing[3],
-              paddingBottom: spacing[3],
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopWidth: 1,
-              borderTopColor: m3.colorScheme.outlineVariant,
-            }}
-          >
-            <Button
-              title="Add Worker"
-              onPress={() => {
-                setAddWorker({ worker: null });
-                router.push('/add-worker');
-              }}
-            />
-          </View>
         )}
       </View>
 

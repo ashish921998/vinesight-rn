@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
@@ -16,6 +17,7 @@ import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme'
 import { colorWithOpacity } from '@/utils/color';
 import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { WorkerSelectSheet, FarmSelectSheet } from './index';
+import { formatDate as formatDateLocalized } from '@/i18n/format';
 
 type AttendanceStatus = WorkStatus | null;
 
@@ -96,8 +98,12 @@ export function MarkAttendanceTab({
   onWorkerIndexChange,
   onSaveSuccess,
 }: MarkAttendanceTabProps) {
+  const { t } = useTranslation();
+
   const tabBarInset = useTabBarInset();
   const bottomActionBarHeight = 88;
+  const isAndroid = Platform.OS === 'android';
+  const actionBarBottom = isAndroid ? 0 : tabBarInset;
   const [cellData, setCellData] = useState<Map<string, CellData>>(new Map());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -185,11 +191,11 @@ export function MarkAttendanceTab({
 
       setCellData(newCellData);
     } catch {
-      Alert.alert('Error', 'Failed to load attendance data');
+      Alert.alert(t('common.error'), t('common.errors.failedToLoadAttendanceData'));
     } finally {
       setLoading(false);
     }
-  }, [selectedWorker, dateRange, farms]);
+  }, [selectedWorker, dateRange, farms, t]);
 
   React.useEffect(() => {
     loadAttendance();
@@ -260,8 +266,7 @@ export function MarkAttendanceTab({
       (cell) => cell.status !== null && cell.farmIds.length === 0,
     );
     if (invalidCells.length > 0) {
-      Alert.alert('Error', 'Please select at least one farm');
-      return;
+      Alert.alert(t('common.error'), t('common.errors.selectAtLeastOneFarm'));
     }
 
     setSaving(true);
@@ -296,14 +301,20 @@ export function MarkAttendanceTab({
     }
 
     if (errors.length > 0) {
-      Alert.alert('Partial Error', `Saved with ${errors.length} error(s). Reloading...`);
+      Alert.alert(
+        t('attendance.alerts.partialErrorTitle'),
+        t('attendance.alerts.partialErrorBody', { count: errors.length }),
+      );
       prevWorkerIdRef.current = undefined;
       setSaving(false);
       loadAttendance();
       return;
     }
 
-    Alert.alert('Success', `Saved attendance for ${selectedWorker?.name}`);
+    Alert.alert(
+      t('attendance.alerts.savedTitle'),
+      t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }),
+    );
     onSaveSuccess();
 
     setCellData((prev) => {
@@ -324,7 +335,7 @@ export function MarkAttendanceTab({
     if (selectedWorkerIndex < workers.length - 1) {
       onWorkerIndexChange(selectedWorkerIndex + 1);
     } else {
-      Alert.alert('Complete', 'All workers completed!');
+      Alert.alert(t('attendance.alerts.completeTitle'), t('attendance.alerts.completeBody'));
     }
   };
 
@@ -343,13 +354,11 @@ export function MarkAttendanceTab({
   };
 
   const getDayName = (date: Date): string => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return days[date.getDay()];
+    return formatDateLocalized(date, { weekday: 'short' });
   };
 
   const formatShortDate = (date: Date) => {
-    const month = date.toLocaleDateString('en-US', { month: 'short' });
-    return `${month} ${date.getDate()}`;
+    return formatDateLocalized(date, { month: 'short', day: 'numeric' });
   };
 
   if (loading) {
@@ -388,7 +397,7 @@ export function MarkAttendanceTab({
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingBottom: bottomActionBarHeight + tabBarInset + spacing[4],
+          paddingBottom: bottomActionBarHeight + actionBarBottom + spacing[4],
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -397,17 +406,13 @@ export function MarkAttendanceTab({
             style={{
               borderRadius: m3.shape.cornerLarge,
               padding: spacing[4],
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderColor: m3.colorScheme.outlineVariant,
-              borderWidth: 1,
+              backgroundColor: m3.surface.surfaceContainerLowest,
             }}
           >
             <Text
               style={{
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.bold,
-                textTransform: 'uppercase',
-                letterSpacing: 0.6,
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
                 color: m3.colorScheme.onSurfaceVariant,
               }}
             >
@@ -533,8 +538,7 @@ export function MarkAttendanceTab({
               padding: spacing[6],
               marginBottom: spacing[4],
               backgroundColor: m3.surface.surfaceContainerLow,
-              borderColor: m3.colorScheme.outlineVariant,
-              borderWidth: 1,
+              boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
             }}
           >
             <View
@@ -548,9 +552,8 @@ export function MarkAttendanceTab({
               <View>
                 <Text
                   style={{
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.bold,
-                    textTransform: 'uppercase',
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
                     color: m3.colorScheme.onSurfaceVariant,
                   }}
                 >
@@ -608,6 +611,7 @@ export function MarkAttendanceTab({
                       const statusInfo = getStatusDisplay(cell?.status ?? null);
                       const isTodayDate = isToday(date);
                       const hasStatus = cell?.status !== null;
+                      const isIdleToday = isTodayDate && !hasStatus;
 
                       return (
                         <Pressable
@@ -620,12 +624,12 @@ export function MarkAttendanceTab({
                             aspectRatio: 0.78,
                             borderRadius: m3.shape.cornerMedium,
                             borderWidth: 1,
-                            borderColor: isTodayDate
-                              ? m3.colorScheme.primary
-                              : m3.colorScheme.outlineVariant,
+                            borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.7),
                             backgroundColor: hasStatus
                               ? statusInfo.bgColor
-                              : m3.surface.surfaceContainerLowest,
+                              : isIdleToday
+                                ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                                : m3.surface.surfaceContainerLowest,
                             overflow: 'hidden',
                           }}
                         >
@@ -660,8 +664,8 @@ export function MarkAttendanceTab({
                               <View
                                 style={{
                                   marginTop: spacing[1],
-                                  width: 34,
-                                  height: 34,
+                                  width: 38,
+                                  height: 38,
                                   borderRadius: borderRadius.full,
                                   backgroundColor: hasStatus
                                     ? statusInfo.badgeColor
@@ -718,9 +722,7 @@ export function MarkAttendanceTab({
               marginBottom: spacing[4],
               flexDirection: 'row',
               gap: spacing[3],
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderColor: m3.colorScheme.outlineVariant,
-              borderWidth: 1,
+              backgroundColor: m3.surface.surfaceContainerLowest,
             }}
           >
             <Pressable
@@ -729,7 +731,7 @@ export function MarkAttendanceTab({
               accessibilityLabel="Set all days to full day"
               style={{
                 flex: 1,
-                paddingVertical: spacing[3],
+                height: 44,
                 borderRadius: m3.shape.cornerMedium,
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -740,7 +742,7 @@ export function MarkAttendanceTab({
             >
               {({ pressed }) => (
                 <>
-                  <UiSymbol name="checkmark.circle.fill" size={18} color={m3.colorScheme.primary} />
+                  <UiSymbol name="checkmark.circle.fill" size={16} color={m3.colorScheme.primary} />
                   <Text
                     style={{
                       fontSize: fontSize.sm,
@@ -771,7 +773,7 @@ export function MarkAttendanceTab({
               accessibilityLabel="Set all days to half day"
               style={{
                 flex: 1,
-                paddingVertical: spacing[3],
+                height: 44,
                 borderRadius: m3.shape.cornerMedium,
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -782,7 +784,7 @@ export function MarkAttendanceTab({
             >
               {({ pressed }) => (
                 <>
-                  <UiSymbol name="clock.fill" size={18} color={m3.colorScheme.warning} />
+                  <UiSymbol name="clock.fill" size={16} color={m3.colorScheme.warning} />
                   <Text
                     style={{
                       fontSize: fontSize.sm,
@@ -813,7 +815,7 @@ export function MarkAttendanceTab({
               accessibilityLabel="Set all days to absent"
               style={{
                 flex: 1,
-                paddingVertical: spacing[3],
+                height: 44,
                 borderRadius: m3.shape.cornerMedium,
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -824,7 +826,7 @@ export function MarkAttendanceTab({
             >
               {({ pressed }) => (
                 <>
-                  <UiSymbol name="xmark.circle.fill" size={18} color={m3.colorScheme.error} />
+                  <UiSymbol name="xmark.circle.fill" size={16} color={m3.colorScheme.error} />
                   <Text
                     style={{
                       fontSize: fontSize.sm,
@@ -858,7 +860,7 @@ export function MarkAttendanceTab({
           position: 'absolute',
           left: 0,
           right: 0,
-          bottom: tabBarInset,
+          bottom: actionBarBottom,
           paddingHorizontal: spacing[4],
           paddingTop: spacing[3],
           paddingBottom: spacing[3],

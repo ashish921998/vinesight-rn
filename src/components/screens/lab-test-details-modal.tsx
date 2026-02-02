@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatParameterKey } from '@/hooks/use-lab-tests';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   soilParamOptions,
   petioleParamOptions,
@@ -25,53 +27,57 @@ type Section = {
   params: string[];
 };
 
-const soilSections: Section[] = [
-  {
-    title: '🧪 Chemical Properties',
-    params: ['ph', 'ec', 'organic_carbon', 'calcium_carbonate', 'carbonate', 'bicarbonate'],
-  },
-  {
-    title: '🌿 Major Nutrients',
-    params: ['nitrogen', 'phosphorus', 'potassium'],
-  },
-  {
-    title: '⚗️ Secondary Nutrients',
-    params: ['calcium', 'magnesium', 'sulfur'],
-  },
-  {
-    title: '💧 Micro Nutrients',
-    params: ['iron', 'manganese', 'zinc', 'copper', 'boron', 'molybdenum'],
-  },
-  {
-    title: '📋 Other',
-    params: ['sodium', 'chloride'],
-  },
-];
+const getBaseSections = (t: TFunction, testType: TestType): Section[] => {
+  if (testType === 'soil') {
+    return [
+      {
+        title: t('labTests.details.sections.chemical'),
+        params: ['ph', 'ec', 'organic_carbon', 'calcium_carbonate', 'carbonate', 'bicarbonate'],
+      },
+      {
+        title: t('labTests.details.sections.major'),
+        params: ['nitrogen', 'phosphorus', 'potassium'],
+      },
+      {
+        title: t('labTests.details.sections.secondary'),
+        params: ['calcium', 'magnesium', 'sulfur'],
+      },
+      {
+        title: t('labTests.details.sections.micro'),
+        params: ['iron', 'manganese', 'zinc', 'copper', 'boron', 'molybdenum'],
+      },
+      {
+        title: t('labTests.details.sections.other'),
+        params: ['sodium', 'chloride'],
+      },
+    ];
+  }
 
-const petioleSections: Section[] = [
-  {
-    title: '🌿 Major Nutrients',
-    params: [
-      'total_nitrogen',
-      'nitrate_nitrogen',
-      'ammoniacal_nitrogen',
-      'phosphorus',
-      'potassium',
-    ],
-  },
-  {
-    title: '⚗️ Secondary Nutrients',
-    params: ['calcium', 'magnesium', 'sulfur'],
-  },
-  {
-    title: '💧 Micro Nutrients',
-    params: ['iron', 'manganese', 'zinc', 'copper', 'boron', 'molybdenum'],
-  },
-  {
-    title: '📋 Other',
-    params: ['sodium', 'chloride'],
-  },
-];
+  return [
+    {
+      title: t('labTests.details.sections.major'),
+      params: [
+        'total_nitrogen',
+        'nitrate_nitrogen',
+        'ammoniacal_nitrogen',
+        'phosphorus',
+        'potassium',
+      ],
+    },
+    {
+      title: t('labTests.details.sections.secondary'),
+      params: ['calcium', 'magnesium', 'sulfur'],
+    },
+    {
+      title: t('labTests.details.sections.micro'),
+      params: ['iron', 'manganese', 'zinc', 'copper', 'boron', 'molybdenum'],
+    },
+    {
+      title: t('labTests.details.sections.other'),
+      params: ['sodium', 'chloride'],
+    },
+  ];
+};
 
 const formatValue = (value: unknown) => {
   if (value === null || value === undefined || value === '') return '—';
@@ -109,8 +115,12 @@ const normalizeParameters = (parameters: Record<string, unknown>) => {
   return normalized;
 };
 
-const getSections = (testType: TestType, parameters: Record<string, unknown>): Section[] => {
-  const baseSections = testType === 'soil' ? soilSections : petioleSections;
+const getSections = (
+  t: TFunction,
+  testType: TestType,
+  parameters: Record<string, unknown>,
+): Section[] => {
+  const baseSections = getBaseSections(t, testType);
 
   // Create a set of normalized known keys (convert both snake_case and camelCase to a canonical form)
   const knownKeys = new Set(baseSections.flatMap((section) => section.params));
@@ -129,7 +139,7 @@ const getSections = (testType: TestType, parameters: Record<string, unknown>): S
   return [
     ...baseSections,
     {
-      title: '📊 Additional Parameters',
+      title: t('labTests.details.sections.additional'),
       params: unknownParams,
     },
   ];
@@ -174,13 +184,14 @@ export function LabTestDetailsModal({
   test,
   onClose,
 }: LabTestDetailsModalProps) {
+  const { t } = useTranslation();
   if (!test) {
     return null;
   }
 
   const rawParameters = (test.parameters ?? {}) as Record<string, unknown>;
   const parameters = normalizeParameters(rawParameters);
-  const sections = getSections(testType, parameters);
+  const sections = getSections(t, testType, parameters);
   const accentColor = testType === 'soil' ? '#597A61' : '#4C806B';
 
   return (
@@ -223,10 +234,22 @@ export function LabTestDetailsModal({
                     fontWeight: fontWeight.bold,
                     color: colors.gray[900],
                   }}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
                 >
-                  {testType === 'soil' ? 'Soil Test Details' : 'Petiole Test Details'}
+                  {t('labTests.details.title', {
+                    type: t(
+                      testType === 'soil'
+                        ? 'labTests.form.types.soil'
+                        : 'labTests.form.types.petiole',
+                    ),
+                  })}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                <Text
+                  style={{ fontSize: fontSize.xs, color: colors.gray[500] }}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
                   {formatDate(test.date)}
                 </Text>
               </View>
@@ -266,6 +289,8 @@ export function LabTestDetailsModal({
                         color: colors.gray[800],
                         marginBottom: spacing[2],
                       }}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
                     >
                       {section.title}
                     </Text>
@@ -294,7 +319,11 @@ export function LabTestDetailsModal({
                               borderColor: isOutOfRange ? colors.errorRed[500] : colors.gray[200],
                             }}
                           >
-                            <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                            <Text
+                              style={{ fontSize: fontSize.xs, color: colors.gray[500] }}
+                              textBreakStrategy="highQuality"
+                              lineBreakStrategyIOS="standard"
+                            >
                               {formatParameterKey(String(key), testType)}
                             </Text>
                             <Text
@@ -304,6 +333,8 @@ export function LabTestDetailsModal({
                                 color: isOutOfRange ? colors.errorRed[500] : accentColor,
                                 marginTop: spacing[1],
                               }}
+                              textBreakStrategy="highQuality"
+                              lineBreakStrategyIOS="standard"
                             >
                               {formatValue(value)}
                             </Text>
@@ -314,8 +345,11 @@ export function LabTestDetailsModal({
                                   color: isOutOfRange ? colors.errorRed[500] : colors.gray[400],
                                   marginTop: spacing[1],
                                 }}
+                                textBreakStrategy="highQuality"
+                                lineBreakStrategyIOS="standard"
                               >
-                                Optimal: {paramOption.optimalMin}-{paramOption.optimalMax}
+                                {t('labTests.details.optimalPrefix')} {paramOption.optimalMin}-
+                                {paramOption.optimalMax}
                                 {paramOption.unit && ` ${paramOption.unit}`}
                               </Text>
                             )}
@@ -345,10 +379,16 @@ export function LabTestDetailsModal({
                       color: colors.gray[800],
                       marginBottom: spacing[2],
                     }}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
                   >
-                    Notes
+                    {t('labTests.form.notesSectionTitle')}
                   </Text>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.gray[600] }}>
+                  <Text
+                    style={{ fontSize: fontSize.sm, color: colors.gray[600] }}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
                     {test.notes}
                   </Text>
                 </View>

@@ -3,12 +3,15 @@ import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -89,7 +92,7 @@ export default function TabLayout() {
       const iconName = focused ? name + '.fill' : name;
       const scale = scaleMap[iconName] ?? 1;
       return (
-        <Symbol
+        <SymbolIcon
           name={iconName}
           size={24}
           color={focused ? '#408059' : '#9CA3AF'}
@@ -127,36 +130,36 @@ export default function TabLayout() {
           <Tabs.Screen
             name="index"
             options={{
-              title: 'Dashboard',
+              title: t('tabs.dashboard'),
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('square.grid.2x2', focused),
             }}
           />
           <Tabs.Screen
             name="explore"
             options={{
-              title: 'Explore',
+              title: t('tabs.explore'),
               headerShown: false,
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('compass', focused),
+              tabBarIcon: ({ focused }) => renderAndroidTabIcon('house', focused),
             }}
           />
           <Tabs.Screen
             name="workers"
             options={{
-              title: 'Workers',
+              title: t('tabs.workers'),
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('person.2', focused),
             }}
           />
           <Tabs.Screen
             name="tools"
             options={{
-              title: 'Tools',
+              title: t('tabs.tools'),
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('wrench.and.screwdriver', focused),
             }}
           />
           <Tabs.Screen
             name="settings"
             options={{
-              title: 'Settings',
+              title: t('tabs.settings'),
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('gearshape', focused),
             }}
           />
@@ -176,41 +179,60 @@ export default function TabLayout() {
         backgroundColor="#FFFFFF"
         shadowColor="rgba(0, 0, 0, 0.05)"
       >
-        <NativeTabs.Trigger name="index" options={{ ...defaultHeaderOptions, title: 'Dashboard' }}>
+        <NativeTabs.Trigger
+          name="index"
+          options={{ ...defaultHeaderOptions, title: t('tabs.dashboard') }}
+        >
           {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
-          <Label>Dashboard</Label>
+          <Label>{t('tabs.dashboard')}</Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="explore" options={{ ...defaultHeaderOptions, title: 'Explore' }}>
-          {renderTabIcon(sf('safari'), sf('safari.fill'), 'compass-outline', 'compass')}
-          <Label>Explore</Label>
+        <NativeTabs.Trigger
+          name="explore"
+          options={{ ...defaultHeaderOptions, title: t('tabs.explore') }}
+        >
+          <Icon
+            sf={{ default: sf('house'), selected: sf('house.fill') }}
+            selectedColor="#408059"
+            androidSrc={{
+              default: <VectorIcon family={MaterialCommunityIcons} name="barn" />,
+              selected: <VectorIcon family={MaterialCommunityIcons} name="barn" />,
+            }}
+          />
+          <Label>{t('tabs.explore')}</Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="workers" options={{ ...defaultHeaderOptions, title: 'Workers' }}>
+        <NativeTabs.Trigger
+          name="workers"
+          options={{ ...defaultHeaderOptions, title: t('tabs.workers') }}
+        >
           {renderTabIcon(sf('person.2'), sf('person.2.fill'), 'people-outline', 'people')}
-          <Label>Workers</Label>
+          <Label>{t('tabs.workers')}</Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="tools" options={{ ...defaultHeaderOptions, title: 'Tools' }}>
+        <NativeTabs.Trigger
+          name="tools"
+          options={{ ...defaultHeaderOptions, title: t('tabs.tools') }}
+        >
           {renderTabIcon(
             sf('wrench.and.screwdriver'),
             sf('wrench.and.screwdriver.fill'),
             'build-outline',
             'build',
           )}
-          <Label>Tools</Label>
+          <Label>{t('tabs.tools')}</Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger
           name="settings"
-          options={{ ...defaultHeaderOptions, title: 'Settings' }}
+          options={{ ...defaultHeaderOptions, title: t('tabs.settings') }}
         >
           {renderTabIcon(sf('gearshape'), sf('gearshape.fill'), 'settings-outline', 'settings')}
-          <Label>Settings</Label>
+          <Label>{t('tabs.settings')}</Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger
           name="farms"
           hidden
-          options={{ ...defaultHeaderOptions, title: 'Farms' }}
+          options={{ ...defaultHeaderOptions, title: t('tabs.farms') }}
         >
           {renderTabIcon(sf('leaf'), sf('leaf.fill'), 'leaf-outline', 'leaf')}
-          <Label>Farms</Label>
+          <Label>{t('tabs.farms')}</Label>
         </NativeTabs.Trigger>
       </NativeTabs>
     </>
