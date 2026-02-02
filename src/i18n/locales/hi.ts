@@ -1369,6 +1369,19 @@ export const hi = {
       unableToOpenFormTitle: 'मिट्टी प्रोफाइल फॉर्म खोलने में असमर्थ',
       invalidFarmId: 'अमान्य खेत ID: {{farmId}}',
     },
+    fusarium: 'फ्यूजेरियम: {{value}}%',
+    averageMoisture: 'औसत नमी',
+    noProfiles: 'कोई मिट्टी प्रोफाइल नहीं',
+    noProfilesDescription:
+      'अपने खेत की मिट्टी की स्वास्थ्य ट्रैक करने के लिए मिट्टी नमी प्रोफाइल जोड़ें।',
+    addFirstProfile: 'पहला प्रोफाइल जोड़ें',
+    notEnoughData: 'पर्याप्त डेटा नहीं',
+    notEnoughDataDescription: 'ट्रेंड देखने के लिए कम से कम 2 प्रोफाइल जोड़ें।',
+    avgMoisture: 'औसत नमी',
+    totalProfiles: 'कुल प्रोफाइल',
+    recentChange: 'हाल का परिवर्तन',
+    fromLastProfile: 'पिछली प्रोफाइल से',
+    latestMoisture: 'नवीनतम नमी',
   },
 
   soilProfile: {

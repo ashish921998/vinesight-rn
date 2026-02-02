@@ -1366,6 +1366,18 @@ export const en = {
       unableToOpenFormTitle: 'Unable to open soil profile form',
       invalidFarmId: 'Invalid farm ID: {{farmId}}',
     },
+    fusarium: 'Fusarium: {{value}}%',
+    averageMoisture: 'Average Moisture',
+    noProfiles: 'No Soil Profiles',
+    noProfilesDescription: "Add soil moisture profiles to track your farm's soil health over time.",
+    addFirstProfile: 'Add First Profile',
+    notEnoughData: 'Not Enough Data',
+    notEnoughDataDescription: 'Add at least 2 profiles to see trends.',
+    avgMoisture: 'Avg Moisture',
+    totalProfiles: 'Total Profiles',
+    recentChange: 'Recent Change',
+    fromLastProfile: 'from last profile',
+    latestMoisture: 'Latest Moisture',
   },
 
   soilProfile: {

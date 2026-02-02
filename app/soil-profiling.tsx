@@ -124,7 +124,7 @@ export default function SoilProfilingScreen() {
             </Text>
             {profile.fusarium_pct !== null && profile.fusarium_pct !== undefined && (
               <Text style={{ fontSize: fontSize.xs, color: '#ff9500' }}>
-                Fusarium: {profile.fusarium_pct}%
+                {t('soilProfiling.fusarium', { value: profile.fusarium_pct })}
               </Text>
             )}
           </View>
@@ -167,7 +167,7 @@ export default function SoilProfilingScreen() {
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
             <Text style={{ fontSize: fontSize.sm, color: colors.primary[600] }}>
-              Average Moisture
+              {t('soilProfiling.averageMoisture')}
             </Text>
             <Text
               style={{
@@ -253,7 +253,7 @@ export default function SoilProfilingScreen() {
           color: colors.surface[900],
         }}
       >
-        No Soil Profiles
+        {t('soilProfiling.noProfiles')}
       </Text>
       <Text
         style={{
@@ -263,7 +263,7 @@ export default function SoilProfilingScreen() {
           color: colors.surface[500],
         }}
       >
-        Add soil moisture profiles to track your farm&apos;s soil health over time.
+        {t('soilProfiling.noProfilesDescription')}
       </Text>
       <Pressable
         onPress={() =>
@@ -283,7 +283,7 @@ export default function SoilProfilingScreen() {
         <Text
           style={{ color: colors.white, fontWeight: fontWeight.semibold, marginLeft: spacing[1] }}
         >
-          Add First Profile
+          {t('soilProfiling.addFirstProfile')}
         </Text>
       </Pressable>
     </View>
@@ -309,7 +309,7 @@ export default function SoilProfilingScreen() {
               color: colors.surface[900],
             }}
           >
-            Not Enough Data
+            {t('soilProfiling.notEnoughData')}
           </Text>
           <Text
             style={{
@@ -319,7 +319,7 @@ export default function SoilProfilingScreen() {
               color: colors.surface[500],
             }}
           >
-            Add at least 2 profiles to see trends.
+            {t('soilProfiling.notEnoughDataDescription')}
           </Text>
         </View>
       );
@@ -344,7 +344,7 @@ export default function SoilProfilingScreen() {
                 color: colors.surface[500],
               }}
             >
-              Avg Moisture
+              {t('soilProfiling.avgMoisture')}
             </Text>
             <Text
               style={{
@@ -371,7 +371,7 @@ export default function SoilProfilingScreen() {
                 color: colors.surface[500],
               }}
             >
-              Total Profiles
+              {t('soilProfiling.totalProfiles')}
             </Text>
             <Text
               style={{
@@ -401,7 +401,7 @@ export default function SoilProfilingScreen() {
               color: colors.surface[500],
             }}
           >
-            Recent Change
+            {t('soilProfiling.recentChange')}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Symbol
@@ -434,7 +434,7 @@ export default function SoilProfilingScreen() {
               %
             </Text>
             <Text style={{ marginLeft: spacing[2], color: colors.surface[500] }}>
-              from last profile
+              {t('soilProfiling.fromLastProfile')}
             </Text>
           </View>
         </View>
@@ -450,7 +450,7 @@ export default function SoilProfilingScreen() {
           <Text
             style={{ fontSize: fontSize.sm, marginBottom: spacing[2], color: colors.surface[500] }}
           >
-            Latest Moisture
+            {t('soilProfiling.latestMoisture')}
           </Text>
           <Text
             style={{

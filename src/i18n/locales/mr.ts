@@ -1374,6 +1374,19 @@ export const mr = {
       unableToOpenFormTitle: '$t(glossary.soil) प्रोफाइल फॉर्म उघडता आला नाही',
       invalidFarmId: 'अवैध $t(glossary.farm) आयडी: {{farmId}}',
     },
+    fusarium: 'फ्यूजेरियम: {{value}}%',
+    averageMoisture: 'सरासरी आर्द्रता',
+    noProfiles: 'कोणते $t(glossary.soil) प्रोफाइल नाहीत',
+    noProfilesDescription:
+      'तुमच्या $t(glossary.farm)ची $t(glossary.soil) आरोग्य ट्रॅक करण्यासाठी आर्द्रता प्रोफाइल जोडा.',
+    addFirstProfile: 'पहिला प्रोफाइल जोडा',
+    notEnoughData: 'पुरेसा डेटा नाही',
+    notEnoughDataDescription: 'ट्रेंड्स पाहण्यासाठी किमान 2 प्रोफाइल जोडा.',
+    avgMoisture: 'सरासरी आर्द्रता',
+    totalProfiles: 'एकूण प्रोफाइल',
+    recentChange: 'अलीकडील बदल',
+    fromLastProfile: 'गेल्या प्रोफाइलपासून',
+    latestMoisture: 'नवीनतम आर्द्रता',
   },
 
   soilProfile: {
