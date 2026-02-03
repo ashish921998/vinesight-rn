@@ -175,6 +175,7 @@ export const mr = {
     },
     actions: {
       addActivity: 'नोंद जोडा',
+      seeAllActivities: 'सर्व क्रियाकलाप पहा',
     },
     a11y: {
       editFarm: '$t(glossary.farm) संपादित करा',
@@ -184,6 +185,8 @@ export const mr = {
       taskCompleted: '$t(glossary.task) पूर्ण',
       markTaskComplete: '$t(glossary.task) पूर्ण म्हणून चिन्हांकित करा',
       deleteTask: '$t(glossary.task) हटवा: {{title}}',
+      editActivity: 'क्रियाकलाप संपादित करा: {{type}}',
+      deleteActivity: 'क्रियाकलाप हटवा: {{type}}',
     },
   },
 
@@ -384,6 +387,7 @@ export const mr = {
     },
     filters: {
       activityTypes: 'क्रियाकलाप प्रकार',
+      dateRange: 'तारीख श्रेणी',
     },
     empty: {
       title: 'क्रियाकलाप नोंदी आढळल्या नाहीत',
@@ -638,6 +642,8 @@ export const mr = {
     },
     table: {
       nutrient: 'पोषक घटक',
+      pruningDate: '$t(glossary.pruning)',
+      reportDate: '$t(glossary.report)',
       colorGuide: 'रंग मार्गदर्शक:',
       optimal: 'योग्य',
       warning: 'इशारा',
@@ -1091,6 +1097,11 @@ export const mr = {
       medium: 'मध्यम',
       high: 'उच्च',
     },
+    a11y: {
+      editTask: '$t(glossary.task) संपादित करा: {{title}}',
+      deleteTask: '$t(glossary.task) हटवा: {{title}}',
+      completeTask: '$t(glossary.task) पूर्ण करा: {{title}}',
+    },
     status: {
       pending: 'प्रलंबित',
       inProgress: 'सुरू आहे',
@@ -1259,7 +1270,15 @@ export const mr = {
       card: {
         soilAnalysis: '$t(glossary.soil) विश्लेषण',
         petioleAnalysis: '$t(glossary.petiole) विश्लेषण',
+        outOfRange: 'सीमेबाहेर: {{count}}',
+        allWithinRange: 'सर्व काही मर्यादेत',
+        more: '{{count}} आणखी पोषकतत्त्वे',
+        moreLabel: 'आणखी',
+        status: {
+          outOfRange: 'सीमेबाहेर',
+        },
       },
+      deleteAction: '$t(glossary.labTest) हटवा',
       empty: {
         title: '{{type}} $t(glossary.labTest) नाहीत',
         subtitle: 'पोषकतत्त्वांचे स्तर ट्रॅक करण्यासाठी {{type}} $t(glossary.labTest) जोडा.',
@@ -1453,6 +1472,9 @@ export const mr = {
       absentShort: 'अ',
       notSet: 'सेट नाही',
       notSetShort: '-',
+    },
+    dateRange: {
+      label: 'तारीख श्रेणी',
     },
     week: {
       thisWeek: 'हा आठवडा',

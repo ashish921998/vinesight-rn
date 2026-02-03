@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, Pressable, SafeAreaView, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
@@ -12,8 +12,9 @@ import { router } from 'expo-router';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useLanguageStore } from '@/stores';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import type { SupportedLanguageCode } from '@/i18n/languages';
+import AppIcon from '../assets/icon.png';
 
 export default function OnboardingScreen() {
   const { t } = useTranslation();
@@ -134,7 +135,12 @@ export default function OnboardingScreen() {
           marginBottom: spacing[8],
         }}
       >
-        <SymbolIcon name="leaf.fill" size={64} color={colors.primary[700]} />
+        <Image
+          source={AppIcon}
+          accessibilityLabel={t('onboarding.welcome.title')}
+          style={{ width: 72, height: 72 }}
+          resizeMode="contain"
+        />
       </View>
       <Text
         style={{
@@ -604,7 +610,7 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       {/* Progress Indicator */}
       {renderProgressIndicator()}
 

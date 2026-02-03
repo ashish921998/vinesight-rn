@@ -14,7 +14,7 @@ import { usePetioleTestTrends, PETIOLE_DEFAULT_PARAMS } from '@/hooks/use-lab-te
 import ParameterSelector from '@/components/screens/parameter-selector';
 import TrendsTable from '@/components/screens/trends-table';
 import TrendsChart from '@/components/screens/trends-chart';
-import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, fontSize, fontWeight, m3 } from '@/styles/theme';
 
 type ViewMode = 'table' | 'chart';
 
@@ -34,7 +34,7 @@ export default function PetioleTrendsScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <SafeScreen backgroundColor={colors.gray[50]}>
+      <SafeScreen backgroundColor={m3.colorScheme.background}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Symbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text
@@ -54,9 +54,9 @@ export default function PetioleTrendsScreen() {
 
   if (farmLoading || trendsLoading || !trends || !trends.parameterTrends) {
     return (
-      <SafeScreen backgroundColor="#f2f2f7">
+      <SafeScreen backgroundColor={m3.colorScheme.background}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color="#4C806B" />
+          <ActivityIndicator size="large" color={colors.labTest.petiole} />
           <Text style={{ color: colors.gray[500], marginTop: spacing[4] }}>
             {t('common.loading')}
           </Text>
@@ -66,7 +66,7 @@ export default function PetioleTrendsScreen() {
   }
 
   return (
-    <SafeScreen backgroundColor="#f2f2f7">
+    <SafeScreen backgroundColor={m3.colorScheme.background}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Custom Header */}
@@ -84,7 +84,7 @@ export default function PetioleTrendsScreen() {
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <Symbol name="chevron.left" size={24} color="#333" />
         </Pressable>
-        <Symbol name="chart.bar.fill" size={24} color="#4C806B" />
+        <Symbol name="leaf.fill" size={24} color={colors.labTest.petiole} />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.gray[800] }}
@@ -125,7 +125,7 @@ export default function PetioleTrendsScreen() {
               paddingVertical: spacing[2],
               marginRight: spacing[2],
               borderBottomWidth: viewMode === 'table' ? 2 : 0,
-              borderBottomColor: viewMode === 'table' ? '#4C806B' : 'transparent',
+              borderBottomColor: viewMode === 'table' ? colors.labTest.petiole : 'transparent',
             }}
           >
             <Text
@@ -134,7 +134,7 @@ export default function PetioleTrendsScreen() {
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
-                color: viewMode === 'table' ? '#4C806B' : colors.gray[400],
+                color: viewMode === 'table' ? colors.labTest.petiole : colors.gray[400],
               }}
             >
               {t('trends.viewModes.table')}
@@ -147,7 +147,7 @@ export default function PetioleTrendsScreen() {
               paddingVertical: spacing[2],
               marginLeft: spacing[2],
               borderBottomWidth: viewMode === 'chart' ? 2 : 0,
-              borderBottomColor: viewMode === 'chart' ? '#4C806B' : 'transparent',
+              borderBottomColor: viewMode === 'chart' ? colors.labTest.petiole : 'transparent',
             }}
           >
             <Text
@@ -156,7 +156,7 @@ export default function PetioleTrendsScreen() {
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
-                color: viewMode === 'chart' ? '#4C806B' : colors.gray[400],
+                color: viewMode === 'chart' ? colors.labTest.petiole : colors.gray[400],
               }}
             >
               {t('trends.viewModes.chart')}

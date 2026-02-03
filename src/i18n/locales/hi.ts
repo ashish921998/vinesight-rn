@@ -174,6 +174,7 @@ export const hi = {
     },
     actions: {
       addActivity: 'गतिविधि जोड़ें',
+      seeAllActivities: 'सभी गतिविधियां देखें',
     },
     a11y: {
       editFarm: 'खेत संपादित करें',
@@ -183,6 +184,8 @@ export const hi = {
       taskCompleted: 'कार्य पूर्ण',
       markTaskComplete: 'कार्य पूर्ण के रूप में चिह्नित करें',
       deleteTask: 'कार्य हटाएं: {{title}}',
+      editActivity: 'गतिविधि संपादित करें: {{type}}',
+      deleteActivity: 'गतिविधि हटाएं: {{type}}',
     },
   },
 
@@ -384,6 +387,7 @@ export const hi = {
     },
     filters: {
       activityTypes: 'गतिविधि प्रकार',
+      dateRange: 'तारीख़ सीमा',
     },
     empty: {
       title: 'कोई गतिविधि लॉग नहीं मिला',
@@ -636,6 +640,8 @@ export const hi = {
     },
     table: {
       nutrient: 'पोषक तत्व',
+      pruningDate: 'Pruning',
+      reportDate: 'Report',
       colorGuide: 'रंग गाइड:',
       optimal: 'इष्टतम',
       warning: 'चेतावनी',
@@ -761,7 +767,7 @@ export const hi = {
 
   tabs: {
     dashboard: 'डैशबोर्ड',
-    explore: 'अन्वेषण',
+    explore: 'कृषि',
     workers: 'श्रमिक',
     tools: 'उपकरण',
     settings: 'सेटिंग्स',
@@ -1087,6 +1093,11 @@ export const hi = {
       medium: 'मध्यम',
       high: 'उच्च',
     },
+    a11y: {
+      editTask: 'कार्य संपादित करें: {{title}}',
+      deleteTask: 'कार्य हटाएं: {{title}}',
+      completeTask: 'कार्य पूरा करें: {{title}}',
+    },
     status: {
       pending: 'लंबित',
       inProgress: 'प्रगति में',
@@ -1254,7 +1265,15 @@ export const hi = {
       card: {
         soilAnalysis: 'मिट्टी विश्लेषण',
         petioleAnalysis: 'पेटीओल विश्लेषण',
+        outOfRange: 'सीमा से बाहर: {{count}}',
+        allWithinRange: 'सब कुछ सीमा में',
+        more: '{{count}} और पोषक तत्व',
+        moreLabel: 'और',
+        status: {
+          outOfRange: 'सीमा से बाहर',
+        },
       },
+      deleteAction: 'परीक्षण हटाएं',
       empty: {
         title: 'कोई {{type}} परीक्षण नहीं',
         subtitle: 'पोषक तत्वों के स्तर को ट्रैक करने के लिए एक {{type}} परीक्षण जोड़ें।',
@@ -1448,6 +1467,9 @@ export const hi = {
       absentShort: 'अ',
       notSet: 'सेट नहीं',
       notSetShort: '-',
+    },
+    dateRange: {
+      label: 'तिथि सीमा',
     },
     week: {
       thisWeek: 'यह सप्ताह',
