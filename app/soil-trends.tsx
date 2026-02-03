@@ -14,7 +14,7 @@ import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
 import ParameterSelector from '@/components/screens/parameter-selector';
 import TrendsTable from '@/components/screens/trends-table';
 import TrendsChart from '@/components/screens/trends-chart';
-import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, fontSize, fontWeight, m3 } from '@/styles/theme';
 
 type ViewMode = 'table' | 'chart';
 
@@ -32,7 +32,7 @@ export default function SoilTrendsScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <SafeScreen backgroundColor={colors.gray[50]}>
+      <SafeScreen backgroundColor={m3.colorScheme.background}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text
@@ -52,9 +52,9 @@ export default function SoilTrendsScreen() {
 
   if (farmLoading || trendsLoading || !trends || !trends.parameterTrends) {
     return (
-      <SafeScreen backgroundColor="#f2f2f7">
+      <SafeScreen backgroundColor={m3.colorScheme.background}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color="#597A61" />
+          <ActivityIndicator size="large" color={colors.labTest.soil} />
           <Text style={{ color: colors.gray[500], marginTop: spacing[4] }}>
             {t('common.loading')}
           </Text>
@@ -64,7 +64,7 @@ export default function SoilTrendsScreen() {
   }
 
   return (
-    <SafeScreen backgroundColor="#f2f2f7">
+    <SafeScreen backgroundColor={m3.colorScheme.background}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Custom Header */}
@@ -82,7 +82,7 @@ export default function SoilTrendsScreen() {
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <IconSymbol name="chevron.left" size={24} color="#333" />
         </Pressable>
-        <IconSymbol name="chart.bar.fill" size={24} color="#597A61" />
+        <IconSymbol name="square.stack.3d.up.fill" size={24} color={colors.labTest.soil} />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.gray[800] }}
@@ -123,7 +123,7 @@ export default function SoilTrendsScreen() {
               paddingVertical: spacing[2],
               marginRight: spacing[2],
               borderBottomWidth: viewMode === 'table' ? 2 : 0,
-              borderBottomColor: viewMode === 'table' ? '#597A61' : 'transparent',
+              borderBottomColor: viewMode === 'table' ? colors.labTest.soil : 'transparent',
             }}
           >
             <Text
@@ -132,7 +132,7 @@ export default function SoilTrendsScreen() {
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
-                color: viewMode === 'table' ? '#597A61' : colors.gray[400],
+                color: viewMode === 'table' ? colors.labTest.soil : colors.gray[400],
               }}
             >
               {t('trends.viewModes.table')}
@@ -145,7 +145,7 @@ export default function SoilTrendsScreen() {
               paddingVertical: spacing[2],
               marginLeft: spacing[2],
               borderBottomWidth: viewMode === 'chart' ? 2 : 0,
-              borderBottomColor: viewMode === 'chart' ? '#597A61' : 'transparent',
+              borderBottomColor: viewMode === 'chart' ? colors.labTest.soil : 'transparent',
             }}
           >
             <Text
@@ -154,7 +154,7 @@ export default function SoilTrendsScreen() {
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
-                color: viewMode === 'chart' ? '#597A61' : colors.gray[400],
+                color: viewMode === 'chart' ? colors.labTest.soil : colors.gray[400],
               }}
             >
               {t('trends.viewModes.chart')}

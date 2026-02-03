@@ -1,4 +1,6 @@
 import type { PostHogEventProperties } from '@posthog/core';
+import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import { PostHog, type PostHogOptions } from 'posthog-react-native';
 
 export type TelemetryProperties = PostHogEventProperties;
@@ -12,9 +14,14 @@ const options: PostHogOptions = {
   captureAppLifecycleEvents: true,
 };
 
-export const telemetryEnabled = Boolean(apiKey);
+const isPhysicalDevice = Device.isDevice ?? false;
+const executionEnvironment = Constants.executionEnvironment;
+const isStandalone = executionEnvironment === 'standalone';
+const runtimeDisabled = !isPhysicalDevice || !isStandalone;
 
-export const posthogClient = apiKey ? new PostHog(apiKey, options) : null;
+export const telemetryEnabled = Boolean(apiKey) && !runtimeDisabled;
+
+export const posthogClient = telemetryEnabled ? new PostHog(apiKey, options) : null;
 
 export const telemetry = {
   capture: (event: string, properties?: TelemetryProperties) => {
@@ -42,4 +49,11 @@ export const telemetry = {
   },
 };
 
-export const telemetryConfig = { apiKey, host, options };
+export const telemetryConfig = {
+  apiKey,
+  host,
+  options,
+  isPhysicalDevice,
+  executionEnvironment,
+  runtimeDisabled,
+};

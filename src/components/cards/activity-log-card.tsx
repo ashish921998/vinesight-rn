@@ -35,6 +35,8 @@ interface ActivityLogCardProps {
   data?: RecordData;
   farmName?: string;
   onPress?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 // Generate description from record data
@@ -91,12 +93,15 @@ export function ActivityLogCard({
   data,
   farmName,
   onPress,
+  onEdit,
+  onDelete,
 }: ActivityLogCardProps) {
   const { t } = useTranslation();
   const { data: profile } = useProfile();
   const currency = profile?.preferred_currency || 'INR';
 
-  const isInteractive = Boolean(onPress);
+  const hasActions = Boolean(onEdit || onDelete);
+  const isInteractive = Boolean(onPress) && !hasActions;
   const logType = getLogType(type);
   const parsedDate = fromSupabaseDateString(date);
   const displayDescription = description || getDescriptionFromData(type, t, data, currency);
@@ -209,6 +214,76 @@ export function ActivityLogCard({
           </View>
         )}
       </Pressable>
+    );
+  }
+
+  if (hasActions) {
+    return (
+      <View style={containerStyle}>
+        <View style={iconContainerStyle}>
+          <UiSymbol name={logType.icon} size={18} color={logType.color} />
+        </View>
+        <View style={contentContainerStyle}>
+          <Text style={descriptionTextStyle} numberOfLines={1}>
+            {displayDescription || t(logType.labelKey)}
+          </Text>
+          <View style={metaContainerStyle}>
+            {farmName && (
+              <>
+                <Text style={farmTextStyle} numberOfLines={1}>
+                  {farmName}
+                </Text>
+                <Text style={separatorTextStyle}>•</Text>
+              </>
+            )}
+            <Text style={dateTextStyle}>{displayDate}</Text>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[1] }}>
+          {onEdit && (
+            <Pressable
+              onPress={onEdit}
+              accessibilityRole="button"
+              accessibilityLabel={t('farmDetails.a11y.editActivity', {
+                type: t(logType.labelKey),
+              })}
+              style={({ pressed }) => ({
+                width: 36,
+                height: 36,
+                borderRadius: m3.shape.cornerMedium,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: pressed
+                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  : 'transparent',
+              })}
+            >
+              <UiSymbol name="pencil" size={16} color={m3.colorScheme.primary} />
+            </Pressable>
+          )}
+          {onDelete && (
+            <Pressable
+              onPress={onDelete}
+              accessibilityRole="button"
+              accessibilityLabel={t('farmDetails.a11y.deleteActivity', {
+                type: t(logType.labelKey),
+              })}
+              style={({ pressed }) => ({
+                width: 36,
+                height: 36,
+                borderRadius: m3.shape.cornerMedium,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: pressed
+                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  : 'transparent',
+              })}
+            >
+              <UiSymbol name="trash" size={16} color={m3.colorScheme.error} />
+            </Pressable>
+          )}
+        </View>
+      </View>
     );
   }
 

@@ -88,6 +88,7 @@ export class LabTrendsService {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .map((test) => ({
         date: test.date,
+        dateOfPruning: test.date_of_pruning ?? null,
         parameters: parameterMapper ? parameterMapper(test.parameters) : test.parameters,
       }));
 

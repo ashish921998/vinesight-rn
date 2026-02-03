@@ -84,6 +84,7 @@ export type TimeRange = '30d' | '90d' | '1y' | 'all';
 // Lab test trends types
 export interface TrendData {
   date: string;
+  dateOfPruning?: string | null;
   parameters: Record<string, number | null>;
 }
 

@@ -63,12 +63,28 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
         >
           Parameters ({selected.size} selected)
         </Text>
-        <Pressable onPress={toggleAll}>
+        <Pressable
+          onPress={toggleAll}
+          accessibilityRole="button"
+          accessibilityLabel={
+            selected.size === parameters.length
+              ? 'Deselect all parameters'
+              : 'Select all parameters'
+          }
+          style={{
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[2],
+            borderRadius: borderRadius.full,
+            backgroundColor: colors.primary[50],
+            borderWidth: 1,
+            borderColor: colors.primary[200],
+          }}
+        >
           <Text
             style={{
               fontSize: fontSize.sm,
-              fontWeight: fontWeight.medium,
-              color: colors.primary[500],
+              fontWeight: fontWeight.semibold,
+              color: colors.primary[600],
             }}
           >
             {selected.size === parameters.length ? 'Deselect All' : 'Select All'}

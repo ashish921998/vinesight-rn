@@ -280,7 +280,7 @@ export const LOG_TYPES: LogType[] = [
   { id: 'spray', labelKey: 'logs.types.spray', icon: 'flask', color: '#598d6b' },
   { id: 'harvest', labelKey: 'logs.types.harvest', icon: 'basket', color: '#669475' },
   { id: 'expense', labelKey: 'logs.types.expense', icon: 'cash', color: '#598066' },
-  { id: 'fertigation', labelKey: 'logs.types.fertigation', icon: 'leaf', color: '#408059' },
+  { id: 'fertigation', labelKey: 'logs.types.fertigation', icon: 'fertigation', color: '#408059' },
   { id: 'note', labelKey: 'logs.types.note', icon: 'document-text', color: '#738c7a' },
 ];
 

@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Platform } from 'react-native';
 import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { m3 } from '@/styles/theme';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -22,15 +23,15 @@ export default function TabLayout() {
   const defaultHeaderOptions = useMemo(
     () => ({
       headerStyle: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: m3.colorScheme.background,
         borderBottomWidth: 0,
       },
       headerTitleStyle: {
         fontWeight: '600',
         fontSize: 18,
-        color: '#111827',
+        color: m3.colorScheme.onSurface,
       },
-      headerTintColor: '#408059',
+      headerTintColor: m3.colorScheme.primary,
       headerTransparent: false,
     }),
     [],
@@ -110,8 +111,8 @@ export default function TabLayout() {
             tabBarActiveTintColor: '#408059',
             tabBarInactiveTintColor: '#9CA3AF',
             tabBarStyle: {
-              backgroundColor: '#FFFFFF',
-              borderTopColor: '#F3F4F6',
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderTopColor: m3.colorScheme.outlineVariant,
               borderTopWidth: 1,
               paddingTop: 8,
               paddingBottom: Math.max(insets.bottom + 12, 20),
@@ -177,8 +178,8 @@ export default function TabLayout() {
         tintColor="#408059"
         iconColor={{ default: '#9CA3AF', selected: '#408059' }}
         labelStyle={{ fontSize: 11, fontWeight: '500' }}
-        backgroundColor="#FFFFFF"
-        shadowColor="rgba(0, 0, 0, 0.05)"
+        backgroundColor={m3.surface.surfaceContainerLow}
+        shadowColor="rgba(0, 0, 0, 0.08)"
       >
         <NativeTabs.Trigger
           name="index"

@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 
 interface FormModalProps {
   visible?: boolean;
@@ -148,6 +148,8 @@ export function FormModal({
       <ScrollView
         ref={scrollViewRef}
         style={[{ flex: 1 }, scrollViewStyle, scrollStyle]}
+        contentInsetAdjustmentBehavior="automatic"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         contentContainerStyle={[
           {
             paddingHorizontal: spacing[6],
@@ -158,6 +160,8 @@ export function FormModal({
           scrollContentStyle,
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         {...restScrollProps}
       >
         {children}
@@ -313,12 +317,16 @@ export function FullScreenForm({
       >
         <ScrollView
           style={{ flex: 1 }}
+          contentInsetAdjustmentBehavior="automatic"
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
           contentContainerStyle={{
             paddingHorizontal: spacing[6],
             paddingTop: spacing[6],
             paddingBottom: spacing[6],
           }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {children}
         </ScrollView>
@@ -472,9 +480,9 @@ interface SegmentedControlProps {
 export function SegmentedControl({ options, selectedValue, onSelect }: SegmentedControlProps) {
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
-    backgroundColor: colors.surface[200],
-    borderColor: colors.surface[300],
-    borderWidth: 1,
+    backgroundColor: m3.surface.surfaceContainerLow,
+    borderColor: m3.colorScheme.outlineVariant,
+    borderWidth: Platform.OS === 'ios' ? 0.5 : 1,
     borderRadius: borderRadius.full,
     padding: spacing[1],
     gap: spacing[1],
@@ -483,16 +491,19 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
 
   const getSegmentStyle = (selected: boolean, pressed: boolean): ViewStyle => ({
     flex: 1,
-    paddingVertical: spacing[3],
+    paddingVertical: spacing[2],
     paddingHorizontal: Platform.OS === 'android' ? spacing[1] : spacing[3],
-    minHeight: Platform.OS === 'android' ? 52 : 44,
+    minHeight: Platform.OS === 'android' ? 40 : 44,
     borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: selected ? colors.white : pressed ? colors.surface[300] : 'transparent',
+    backgroundColor: selected
+      ? m3.colorScheme.primaryContainer
+      : pressed
+        ? m3.surface.surfaceContainerHigh
+        : 'transparent',
     borderWidth: 0,
     borderCurve: 'continuous',
-    ...(selected ? { ...shadows.sm, elevation: 2 } : null),
   });
 
   const getSegmentTextStyle = (selected: boolean): TextStyle => ({
@@ -504,7 +515,7 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
         : selected
           ? fontWeight.semibold
           : fontWeight.medium,
-    color: selected ? colors.gray[900] : colors.gray[500],
+    color: selected ? m3.colorScheme.onPrimaryContainer : m3.colorScheme.onSurfaceVariant,
     textAlign: 'center',
     ...(Platform.OS === 'android'
       ? {

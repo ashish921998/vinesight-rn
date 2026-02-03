@@ -7,7 +7,7 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
 import { useWeatherData } from '../src/hooks/use-weather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 
 // Growth stages
@@ -205,10 +205,10 @@ export default function WeatherScreen() {
     Number.isFinite(selectedFarm?.latitude) && Number.isFinite(selectedFarm?.longitude);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface[50] }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }} edges={['top']}>
       <ScrollView
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
-        style={{ backgroundColor: colors.surface[50] }}
+        style={{ backgroundColor: m3.colorScheme.background }}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
         }

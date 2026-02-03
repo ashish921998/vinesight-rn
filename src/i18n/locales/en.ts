@@ -174,6 +174,7 @@ export const en = {
     },
     actions: {
       addActivity: 'Add activity',
+      seeAllActivities: 'See all activities',
     },
     a11y: {
       editFarm: 'Edit farm',
@@ -183,6 +184,8 @@ export const en = {
       taskCompleted: 'Task completed',
       markTaskComplete: 'Mark task complete',
       deleteTask: 'Delete task: {{title}}',
+      editActivity: 'Edit activity: {{type}}',
+      deleteActivity: 'Delete activity: {{type}}',
     },
   },
 
@@ -384,6 +387,7 @@ export const en = {
     },
     filters: {
       activityTypes: 'Activity types',
+      dateRange: 'Date range',
     },
     empty: {
       title: 'No activity logs found',
@@ -637,6 +641,8 @@ export const en = {
     },
     table: {
       nutrient: 'Nutrient',
+      pruningDate: 'Pruning',
+      reportDate: 'Report',
       colorGuide: 'Color Guide:',
       optimal: 'Optimal',
       warning: 'Warning',
@@ -762,7 +768,7 @@ export const en = {
 
   tabs: {
     dashboard: 'Dashboard',
-    explore: 'Explore',
+    explore: 'Farming',
     workers: 'Workers',
     tools: 'Tools',
     settings: 'Settings',
@@ -1084,6 +1090,11 @@ export const en = {
       medium: 'Medium',
       high: 'High',
     },
+    a11y: {
+      editTask: 'Edit task: {{title}}',
+      deleteTask: 'Delete task: {{title}}',
+      completeTask: 'Mark task complete: {{title}}',
+    },
     status: {
       pending: 'Pending',
       inProgress: 'In progress',
@@ -1251,7 +1262,15 @@ export const en = {
       card: {
         soilAnalysis: 'Soil Analysis',
         petioleAnalysis: 'Petiole Analysis',
+        outOfRange: 'Out of range: {{count}}',
+        allWithinRange: 'All within range',
+        more: '{{count}} more nutrients',
+        moreLabel: 'more',
+        status: {
+          outOfRange: 'out of range',
+        },
       },
+      deleteAction: 'Delete test',
       empty: {
         title: 'No {{type}} Tests',
         subtitle: 'Add a {{type}} test to track nutrient levels.',
@@ -1444,6 +1463,9 @@ export const en = {
       absentShort: 'A',
       notSet: 'Not Set',
       notSetShort: '-',
+    },
+    dateRange: {
+      label: 'Date range',
     },
     week: {
       thisWeek: 'This Week',

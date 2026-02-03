@@ -18,7 +18,7 @@ import Markdown from 'react-native-markdown-display';
 import { useFarm } from '@/hooks';
 import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
 
@@ -188,7 +188,7 @@ export default function AIChatScreen() {
       <Stack.Screen
         options={{
           title: t('ai.title'),
-          headerStyle: { backgroundColor: '#f2f2f7' },
+          headerStyle: { backgroundColor: m3.colorScheme.background },
           headerTintColor: '#000000',
           headerLeft: () => (
             <Pressable onPress={() => router.back()} style={{ marginLeft: spacing[2] }}>
@@ -199,7 +199,7 @@ export default function AIChatScreen() {
       />
 
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: colors.surface[50] }}
+        style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
@@ -210,6 +210,8 @@ export default function AIChatScreen() {
             contentContainerStyle={{ paddingTop: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
             {messages.length === 0 && (
               <View

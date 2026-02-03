@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { m3 } from '@/styles/theme';
 
 export default function AuthLayout() {
   return (
@@ -8,7 +9,7 @@ export default function AuthLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#FFFFFF' },
+          contentStyle: { backgroundColor: m3.colorScheme.background },
           animation: 'slide_from_right',
         }}
       >

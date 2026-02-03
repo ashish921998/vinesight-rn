@@ -21,7 +21,8 @@ type BaseIconName =
   | 'flash'
   | 'time'
   | 'layers'
-  | 'chart';
+  | 'chart'
+  | 'fertigation';
 
 type AppIconName = BaseIconName | string;
 
@@ -54,6 +55,7 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   'time-outline': 'time',
   layers: 'layers',
   analytics: 'chart',
+  fertigation: 'fertigation',
 };
 
 export function AppIcon({ name, size = 20, color = '#111827' }: AppIconProps) {
@@ -235,6 +237,26 @@ export function AppIcon({ name, size = 20, color = '#111827' }: AppIconProps) {
             strokeWidth={strokeWidth}
             fill="none"
           />
+        </Svg>
+      );
+    case 'fertigation':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M12 4c3 4 6 7 6 10a6 6 0 1 1-12 0c0-3 3-6 6-10z"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            fill="none"
+          />
+          <Path
+            d="M13.5 14.5c2-2.5 4.8-2.8 4.8-2.8s-.3 2.9-2.9 4.8c-1.2.9-2.6.7-3.1.5"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Line x1="14.5" y1="14" x2="16.5" y2="16" stroke={color} strokeWidth={strokeWidth} />
         </Svg>
       );
     case 'flask':

@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, shadows, m3 } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
 import {
   useFarms,
@@ -614,6 +614,8 @@ export default function ExploreScreen() {
             />
           }
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
             useNativeDriver: false,
           })}
@@ -666,6 +668,8 @@ export default function ExploreScreen() {
               tintColor={colors.primary[500]}
             />
           }
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
             useNativeDriver: false,
           })}
@@ -1197,7 +1201,7 @@ export default function ExploreScreen() {
   }, [selectedTab, t]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       {/* Global Search Bar */}
       <View
         style={{

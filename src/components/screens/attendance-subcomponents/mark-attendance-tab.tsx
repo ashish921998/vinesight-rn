@@ -18,6 +18,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { WorkerSelectSheet, FarmSelectSheet } from './index';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 type AttendanceStatus = WorkStatus | null;
 
@@ -111,23 +112,43 @@ export function MarkAttendanceTab({
   const [selectedFarmIds, setSelectedFarmIds] = useState<number[]>([]);
   const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
   const [farmSheetVisible, setFarmSheetVisible] = useState(false);
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker, setShowToPicker] = useState(false);
 
   const prevWorkerIdRef = useRef<number | undefined>(undefined);
+  const rangeInitWorkerIdRef = useRef<number | undefined>(undefined);
 
   const safeIndex = Math.min(selectedWorkerIndex, Math.max(0, workers.length - 1));
   const selectedWorker = workers[safeIndex];
 
+  const normalizeDate = (date: Date) => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  };
+
+  const addDays = (date: Date, days: number) => {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return next;
+  };
+
+  const [rangeStart, setRangeStart] = useState<Date>(() => normalizeDate(new Date()));
+
+  const rangeEnd = useMemo(() => addDays(rangeStart, 6), [rangeStart]);
+
   const dateRange = useMemo(() => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const offset = (dayOfWeek + 6) % 7;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - offset);
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + i);
-      return date;
-    });
+    return Array.from({ length: 7 }, (_, i) => addDays(rangeStart, i));
+  }, [rangeStart]);
+
+  const getNextAttendanceStart = React.useCallback(async (workerId: number) => {
+    const latestDate = await fetchLatestAttendanceDate(workerId);
+    if (!latestDate) {
+      return normalizeDate(new Date());
+    }
+
+    const parsed = new Date(`${latestDate}T00:00:00`);
+    return addDays(parsed, 1);
   }, []);
 
   const formatDate = (date: Date): string => {
@@ -142,14 +163,23 @@ export function MarkAttendanceTab({
   const loadAttendance = React.useCallback(async () => {
     if (!selectedWorker || dateRange.length === 0) return;
 
+    const workerId = selectedWorker?.id;
+    if (workerId === undefined) return;
+
+    if (rangeInitWorkerIdRef.current !== workerId) {
+      const nextStart = await getNextAttendanceStart(workerId);
+      rangeInitWorkerIdRef.current = workerId;
+      if (nextStart) {
+        setRangeStart(nextStart);
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const newCellData = new Map<string, CellData>();
       const startDate = formatDate(dateRange[0]);
       const endDate = formatDate(dateRange[dateRange.length - 1]);
-
-      const workerId = selectedWorker?.id;
-      if (workerId === undefined) return;
 
       for (const date of dateRange) {
         const dateStr = formatDate(date);
@@ -196,7 +226,7 @@ export function MarkAttendanceTab({
     } finally {
       setLoading(false);
     }
-  }, [selectedWorker, dateRange, farms, t]);
+  }, [selectedWorker, dateRange, farms, t, getNextAttendanceStart]);
 
   React.useEffect(() => {
     loadAttendance();
@@ -346,6 +376,30 @@ export function MarkAttendanceTab({
     setWorkerSheetVisible(true);
   };
 
+  const handleDateRangeChange = (type: 'from' | 'to', event: DateTimePickerEvent, date?: Date) => {
+    if (event.type === 'dismissed') {
+      if (Platform.OS === 'android') {
+        if (type === 'from') setShowFromPicker(false);
+        if (type === 'to') setShowToPicker(false);
+      }
+      return;
+    }
+
+    if (date) {
+      const normalized = normalizeDate(date);
+      if (type === 'from') {
+        setRangeStart(normalized);
+      } else {
+        setRangeStart(addDays(normalized, -6));
+      }
+    }
+
+    if (Platform.OS === 'android') {
+      if (type === 'from') setShowFromPicker(false);
+      if (type === 'to') setShowToPicker(false);
+    }
+  };
+
   const isToday = (date: Date): boolean => {
     const today = new Date();
     return (
@@ -403,12 +457,12 @@ export function MarkAttendanceTab({
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
+        <View style={{ marginHorizontal: spacing[4], marginTop: spacing[2] }}>
           <View
             style={{
               borderRadius: m3.shape.cornerLarge,
-              padding: spacing[4],
-              backgroundColor: m3.surface.surfaceContainerLowest,
+              padding: spacing[3],
+              backgroundColor: m3.surface.surfaceContainerLow,
             }}
           >
             <Text
@@ -420,15 +474,15 @@ export function MarkAttendanceTab({
             >
               {t('attendance.filters.label')}
             </Text>
-            <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
+            <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[2] }}>
               <Pressable
                 onPress={handleWorkerSelect}
                 accessibilityRole="button"
                 accessibilityLabel={t('attendance.a11y.selectWorkerButton')}
                 style={({ pressed }) => ({
                   flex: 1,
-                  paddingHorizontal: spacing[4],
-                  paddingVertical: spacing[3],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
                   borderRadius: m3.shape.cornerMedium,
                   borderWidth: 1,
                   backgroundColor: m3.surface.surfaceContainerLowest,
@@ -480,8 +534,8 @@ export function MarkAttendanceTab({
                 accessibilityLabel={t('attendance.a11y.selectFarmsButton')}
                 style={({ pressed }) => ({
                   flex: 1,
-                  paddingHorizontal: spacing[4],
-                  paddingVertical: spacing[3],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
                   borderRadius: m3.shape.cornerMedium,
                   borderWidth: 1,
                   backgroundColor: m3.surface.surfaceContainerLowest,
@@ -530,53 +584,33 @@ export function MarkAttendanceTab({
                 </View>
               </Pressable>
             </View>
-          </View>
-        </View>
 
-        <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
-          <View
-            style={{
-              borderRadius: m3.shape.cornerLarge,
-              padding: spacing[6],
-              marginBottom: spacing[4],
-              backgroundColor: m3.surface.surfaceContainerLow,
-              shadowColor: '#000000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.08,
-              shadowRadius: 24,
-              elevation: 8,
-            }}
-          >
+            <View
+              style={{
+                height: 1,
+                backgroundColor: m3.colorScheme.outlineVariant,
+                opacity: 0.6,
+                marginVertical: spacing[3],
+              }}
+            />
+
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: spacing[4],
+                marginBottom: spacing[3],
               }}
             >
-              <View>
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
-                    color: m3.colorScheme.onSurfaceVariant,
-                  }}
-                >
-                  {t('attendance.week.thisWeek')}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
-                    marginTop: spacing[1],
-                    color: m3.colorScheme.onSurface,
-                  }}
-                >
-                  {formatShortDate(dateRange[0])} -{' '}
-                  {formatShortDate(dateRange[dateRange.length - 1])}
-                </Text>
-              </View>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  color: m3.colorScheme.onSurfaceVariant,
+                }}
+              >
+                {t('attendance.dateRange.label')}
+              </Text>
               <View
                 style={{
                   paddingHorizontal: spacing[3],
@@ -601,12 +635,112 @@ export function MarkAttendanceTab({
               </View>
             </View>
 
+            <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[3] }}>
+              <Pressable
+                onPress={() => setShowFromPicker(true)}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  borderRadius: m3.shape.cornerMedium,
+                  borderWidth: 1,
+                  backgroundColor: m3.surface.surfaceContainerLowest,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  ...(pressed
+                    ? {
+                        backgroundColor: colorWithOpacity(
+                          m3.colorScheme.onSurface,
+                          m3.stateLayerOpacity.pressed,
+                        ),
+                      }
+                    : null),
+                })}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.colorScheme.onSurfaceVariant,
+                  }}
+                >
+                  {t('common.from')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    marginTop: spacing[1],
+                    color: m3.colorScheme.onSurface,
+                  }}
+                >
+                  {formatShortDate(rangeStart)}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setShowToPicker(true)}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  borderRadius: m3.shape.cornerMedium,
+                  borderWidth: 1,
+                  backgroundColor: m3.surface.surfaceContainerLowest,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  ...(pressed
+                    ? {
+                        backgroundColor: colorWithOpacity(
+                          m3.colorScheme.onSurface,
+                          m3.stateLayerOpacity.pressed,
+                        ),
+                      }
+                    : null),
+                })}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.colorScheme.onSurfaceVariant,
+                  }}
+                >
+                  {t('common.to')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                    marginTop: spacing[1],
+                    color: m3.colorScheme.onSurface,
+                  }}
+                >
+                  {formatShortDate(rangeEnd)}
+                </Text>
+              </Pressable>
+            </View>
+
+            {showFromPicker && (
+              <DateTimePicker
+                value={rangeStart}
+                mode="date"
+                display="default"
+                onChange={(event, date) => handleDateRangeChange('from', event, date)}
+              />
+            )}
+            {showToPicker && (
+              <DateTimePicker
+                value={rangeEnd}
+                mode="date"
+                display="default"
+                onChange={(event, date) => handleDateRangeChange('to', event, date)}
+              />
+            )}
+
             <View
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 marginTop: spacing[2],
-                marginBottom: spacing[4],
+                marginBottom: spacing[3],
               }}
             >
               {selectedWorker && selectedWorker.id
@@ -633,7 +767,7 @@ export function MarkAttendanceTab({
                           })}
                           style={{
                             width: '13%',
-                            aspectRatio: 0.78,
+                            aspectRatio: 0.5,
                             borderRadius: m3.shape.cornerMedium,
                             borderWidth: 1,
                             borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.7),
@@ -725,144 +859,153 @@ export function MarkAttendanceTab({
                   })()
                 : null}
             </View>
-          </View>
 
-          <View
-            style={{
-              borderRadius: m3.shape.cornerLarge,
-              padding: spacing[3],
-              marginBottom: spacing[4],
-              flexDirection: 'row',
-              gap: spacing[3],
-              backgroundColor: m3.surface.surfaceContainerLowest,
-            }}
-          >
-            <Pressable
-              onPress={() => handleQuickAction('full_day')}
-              accessibilityRole="button"
-              accessibilityLabel={t('attendance.a11y.setAllFullDay')}
+            <View
               style={{
-                flex: 1,
-                height: 44,
-                borderRadius: m3.shape.cornerMedium,
                 flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                overflow: 'hidden',
+                gap: spacing[3],
               }}
             >
-              {({ pressed }) => (
-                <>
-                  <UiSymbol name="checkmark.circle.fill" size={16} color={m3.colorScheme.primary} />
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.bold,
-                      marginLeft: spacing[2],
-                      color: m3.colorScheme.primary,
-                    }}
-                  >
-                    {t('attendance.quickActions.allFull')}
-                  </Text>
-                  <View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFillObject,
-                      {
-                        backgroundColor: pressed
-                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                </>
-              )}
-            </Pressable>
-            <Pressable
-              onPress={() => handleQuickAction('half_day')}
-              accessibilityRole="button"
-              accessibilityLabel={t('attendance.a11y.setAllHalfDay')}
-              style={{
-                flex: 1,
-                height: 44,
-                borderRadius: m3.shape.cornerMedium,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
-                overflow: 'hidden',
-              }}
-            >
-              {({ pressed }) => (
-                <>
-                  <UiSymbol name="clock.fill" size={16} color={m3.colorScheme.warning} />
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.bold,
-                      marginLeft: spacing[2],
-                      color: m3.colorScheme.warning,
-                    }}
-                  >
-                    {t('attendance.quickActions.allHalf')}
-                  </Text>
-                  <View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFillObject,
-                      {
-                        backgroundColor: pressed
-                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                </>
-              )}
-            </Pressable>
-            <Pressable
-              onPress={() => handleQuickAction('absent')}
-              accessibilityRole="button"
-              accessibilityLabel={t('attendance.a11y.setAllAbsent')}
-              style={{
-                flex: 1,
-                height: 44,
-                borderRadius: m3.shape.cornerMedium,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
-                overflow: 'hidden',
-              }}
-            >
-              {({ pressed }) => (
-                <>
-                  <UiSymbol name="xmark.circle.fill" size={16} color={m3.colorScheme.error} />
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.bold,
-                      marginLeft: spacing[2],
-                      color: m3.colorScheme.error,
-                    }}
-                  >
-                    {t('attendance.quickActions.allOff')}
-                  </Text>
-                  <View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFillObject,
-                      {
-                        backgroundColor: pressed
-                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                </>
-              )}
-            </Pressable>
+              <Pressable
+                onPress={() => handleQuickAction('full_day')}
+                accessibilityRole="button"
+                accessibilityLabel={t('attendance.a11y.setAllFullDay')}
+                style={{
+                  flex: 1,
+                  height: 40,
+                  borderRadius: m3.shape.cornerMedium,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                  overflow: 'hidden',
+                }}
+              >
+                {({ pressed }) => (
+                  <>
+                    <UiSymbol
+                      name="checkmark.circle.fill"
+                      size={16}
+                      color={m3.colorScheme.primary}
+                    />
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.bold,
+                        marginLeft: spacing[2],
+                        color: m3.colorScheme.primary,
+                      }}
+                    >
+                      {t('attendance.quickActions.allFull')}
+                    </Text>
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        StyleSheet.absoluteFillObject,
+                        {
+                          backgroundColor: pressed
+                            ? colorWithOpacity(
+                                m3.colorScheme.onSurface,
+                                m3.stateLayerOpacity.pressed,
+                              )
+                            : 'transparent',
+                        },
+                      ]}
+                    />
+                  </>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => handleQuickAction('half_day')}
+                accessibilityRole="button"
+                accessibilityLabel={t('attendance.a11y.setAllHalfDay')}
+                style={{
+                  flex: 1,
+                  height: 40,
+                  borderRadius: m3.shape.cornerMedium,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
+                  overflow: 'hidden',
+                }}
+              >
+                {({ pressed }) => (
+                  <>
+                    <UiSymbol name="clock.fill" size={16} color={m3.colorScheme.warning} />
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.bold,
+                        marginLeft: spacing[2],
+                        color: m3.colorScheme.warning,
+                      }}
+                    >
+                      {t('attendance.quickActions.allHalf')}
+                    </Text>
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        StyleSheet.absoluteFillObject,
+                        {
+                          backgroundColor: pressed
+                            ? colorWithOpacity(
+                                m3.colorScheme.onSurface,
+                                m3.stateLayerOpacity.pressed,
+                              )
+                            : 'transparent',
+                        },
+                      ]}
+                    />
+                  </>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => handleQuickAction('absent')}
+                accessibilityRole="button"
+                accessibilityLabel={t('attendance.a11y.setAllAbsent')}
+                style={{
+                  flex: 1,
+                  height: 40,
+                  borderRadius: m3.shape.cornerMedium,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+                  overflow: 'hidden',
+                }}
+              >
+                {({ pressed }) => (
+                  <>
+                    <UiSymbol name="xmark.circle.fill" size={16} color={m3.colorScheme.error} />
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.bold,
+                        marginLeft: spacing[2],
+                        color: m3.colorScheme.error,
+                      }}
+                    >
+                      {t('attendance.quickActions.allOff')}
+                    </Text>
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        StyleSheet.absoluteFillObject,
+                        {
+                          backgroundColor: pressed
+                            ? colorWithOpacity(
+                                m3.colorScheme.onSurface,
+                                m3.stateLayerOpacity.pressed,
+                              )
+                            : 'transparent',
+                        },
+                      ]}
+                    />
+                  </>
+                )}
+              </Pressable>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -1023,6 +1166,21 @@ async function fetchAttendanceForWorker(
   }
 
   return data || [];
+}
+
+async function fetchLatestAttendanceDate(workerId: number): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('worker_attendance')
+    .select('date')
+    .eq('worker_id', workerId)
+    .order('date', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    return null;
+  }
+
+  return data?.[0]?.date ?? null;
 }
 
 async function createAttendance(data: WorkerAttendanceInsert): Promise<WorkerAttendance> {

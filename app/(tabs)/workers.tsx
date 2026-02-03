@@ -1,12 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, RefreshControl, Alert, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  Alert,
+  StyleSheet,
+  Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useWorkers, useDeleteWorker, useFabBottomPosition } from '@/hooks';
 import { useModalStore } from '@/stores';
-import { AttendanceView } from '@/components/screens';
+import { AttendanceView, WorkerAnalyticsView } from '@/components/screens';
 import { Button, SegmentedControl } from '@/components/ui';
 import type { Worker } from '@/types';
 import { WorkerCard } from '@/components/cards';
@@ -31,6 +40,7 @@ export default function WorkersScreen() {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isAndroid = Platform.OS === 'android';
   const fabBottom = useFabBottomPosition();
   const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
@@ -89,7 +99,7 @@ export default function WorkersScreen() {
       renderItem={renderWorker}
       keyExtractor={(item) => String(item.id)}
       contentContainerStyle={{
-        paddingTop: spacing[4],
+        paddingTop: isAndroid ? spacing[1] : spacing[3],
         paddingBottom: fabBottom + 56 + spacing[8],
         flexGrow: 1,
       }}
@@ -201,84 +211,47 @@ export default function WorkersScreen() {
     <AttendanceView workers={activeWorkers} onSaveSuccess={refetch} />
   );
 
-  const renderAnalyticsTab = () => (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: spacing[8],
-      }}
-    >
-      <View
-        style={{
-          width: 80,
-          height: 80,
-          backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.12),
-          borderRadius: borderRadius.full,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: spacing[4],
-        }}
-      >
-        <UiSymbol name="chart.bar" size={40} color={m3.colorScheme.tertiary} />
-      </View>
-      <Text
-        style={{
-          fontSize: fontSize.lg,
-          fontWeight: fontWeight.semibold,
-          color: m3.colorScheme.onSurface,
-          textAlign: 'center',
-        }}
-      >
-        {t('workers.analyticsTab.title')}
-      </Text>
-      <Text
-        style={{
-          fontSize: fontSize.sm,
-          color: m3.colorScheme.onSurfaceVariant,
-          textAlign: 'center',
-          marginTop: spacing[2],
-        }}
-      >
-        {t('workers.analyticsTab.subtitle')}
-      </Text>
-      <Text
-        style={{
-          fontSize: fontSize.xs,
-          color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
-          marginTop: spacing[4],
-        }}
-      >
-        {t('workers.analyticsTab.comingSoon')}
-      </Text>
-    </View>
-  );
+  const renderAnalyticsTab = () => <WorkerAnalyticsView />;
 
   return (
     <>
       <View
         style={{
           flex: 1,
-          backgroundColor: m3.colorScheme.surface,
-          paddingTop: insets.top + spacing[2],
+          backgroundColor: m3.colorScheme.background,
+          paddingTop: (isAndroid ? 0 : insets.top) + spacing[2],
         }}
       >
         {/* Tab Selector */}
         <View
           style={{
-            backgroundColor: m3.colorScheme.surface,
+            backgroundColor: m3.colorScheme.background,
             paddingHorizontal: spacing[4],
-            paddingTop: spacing[3],
+            paddingTop: isAndroid ? spacing[1] : spacing[2],
             paddingBottom: spacing[2],
           }}
         >
-          <SegmentedControl
-            options={TAB_DATA.map((tab) => ({ value: tab.id, label: t(tab.labelKey) }))}
-            selectedValue={selectedTab}
-            onSelect={(value) => setSelectedTab(value as WorkersTab)}
-          />
+          <View
+            style={{
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderRadius: borderRadius.full,
+              padding: spacing[1],
+            }}
+          >
+            <SegmentedControl
+              options={TAB_DATA.map((tab) => ({ value: tab.id, label: t(tab.labelKey) }))}
+              selectedValue={selectedTab}
+              onSelect={(value) => setSelectedTab(value as WorkersTab)}
+            />
+          </View>
         </View>
+        <View
+          style={{
+            height: Platform.OS === 'ios' ? 0.5 : 1,
+            backgroundColor: m3.colorScheme.outlineVariant,
+            marginHorizontal: spacing[4],
+          }}
+        />
 
         {/* Tab Content */}
         {selectedTab === 'workers' && renderWorkersTab()}

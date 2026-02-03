@@ -126,6 +126,7 @@ export const queryKeys = {
   workerTransactions: {
     all: ['workerTransactions'] as const,
     lists: () => [...queryKeys.workerTransactions.all, 'list'] as const,
+    listAll: () => [...queryKeys.workerTransactions.lists(), 'all'] as const,
     listByWorker: (workerId: number) =>
       [...queryKeys.workerTransactions.lists(), { workerId }] as const,
   },

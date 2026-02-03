@@ -4,7 +4,15 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  type ViewStyle,
+  type TextStyle,
+} from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -17,6 +25,7 @@ interface StatsCardProps {
   iconColor?: string;
   subtitle?: string;
   onPress?: () => void;
+  isLoading?: boolean;
 }
 
 export function StatsCard({
@@ -27,8 +36,10 @@ export function StatsCard({
   iconColor,
   subtitle,
   onPress,
+  isLoading = false,
 }: StatsCardProps) {
   const finalColor = iconColor || color;
+  const a11yValue = isLoading ? 'Loading' : value;
 
   const containerStyle: ViewStyle = {
     borderRadius: m3.shape.cornerMedium,
@@ -68,13 +79,17 @@ export function StatsCard({
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${title}: ${value}${subtitle ? `, ${subtitle}` : ''}`}
+        accessibilityLabel={`${title}: ${a11yValue}${subtitle ? `, ${subtitle}` : ''}`}
       >
         {({ pressed }) => (
           <View style={containerStyle}>
             <View style={headerStyle}>
               <UiSymbol name={icon} size={20} color={finalColor} weight="semibold" />
-              <Text style={valueTextStyle}>{value}</Text>
+              {isLoading ? (
+                <ActivityIndicator size="small" color={finalColor} />
+              ) : (
+                <Text style={valueTextStyle}>{value}</Text>
+              )}
             </View>
             <Text style={titleTextStyle} numberOfLines={1} ellipsizeMode="tail">
               {title}
@@ -105,7 +120,11 @@ export function StatsCard({
     <View style={containerStyle}>
       <View style={headerStyle}>
         <UiSymbol name={icon} size={20} color={finalColor} weight="semibold" />
-        <Text style={valueTextStyle}>{value}</Text>
+        {isLoading ? (
+          <ActivityIndicator size="small" color={finalColor} />
+        ) : (
+          <Text style={valueTextStyle}>{value}</Text>
+        )}
       </View>
       <Text style={titleTextStyle} numberOfLines={1} ellipsizeMode="tail">
         {title}

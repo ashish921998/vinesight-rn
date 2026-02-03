@@ -18,11 +18,17 @@ import {
   useDeleteSoilTest,
   useDeletePetioleTest,
   formatParameterKey,
+  getParameterUnit,
 } from '../src/hooks/use-lab-tests';
 import { SoilTestRecord, PetioleTestRecord } from '../src/types/database';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
+import { getParamOption, getParamStatus, selectDisplayParams } from '@/utils/lab-test-utils';
 
 type TestType = 'soil' | 'petiole';
+
+const getTestTypeIcon = (type: TestType) =>
+  type === 'soil' ? 'square.stack.3d.up.fill' : 'leaf.fill';
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '';
@@ -96,8 +102,24 @@ export default function LabTestsScreen() {
 
   const renderTestCard = (test: SoilTestRecord | PetioleTestRecord, type: TestType) => {
     const isSoil = type === 'soil';
-    const params = Object.entries(test.parameters || {}).slice(0, 8);
-    const color = isSoil ? '#597A61' : '#4C806B';
+    const {
+      selected: initialSelected,
+      remainingCount: initialRemainingCount,
+      outOfRangeCount,
+    } = selectDisplayParams(test.parameters, type, 6);
+    let selected = initialSelected;
+    let remainingCount = initialRemainingCount;
+    if (remainingCount > 0 && selected.length === 6) {
+      selected = selected.slice(0, 5);
+      remainingCount += 1;
+    }
+    const accentColor = isSoil ? colors.labTest.soil : colors.labTest.petiole;
+    const surfaceColor = colorWithOpacity(accentColor, 0.08);
+    const surfaceBorder = colorWithOpacity(accentColor, 0.25);
+    const statusLine =
+      outOfRangeCount > 0
+        ? t('labTests.list.card.outOfRange', { count: outOfRangeCount })
+        : t('labTests.list.card.allWithinRange');
 
     return (
       <Pressable
@@ -108,12 +130,14 @@ export default function LabTestsScreen() {
           setDetailsVisible(true);
         }}
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backgroundColor: surfaceColor,
           borderRadius: borderRadius['2xl'],
           padding: spacing[4],
           marginBottom: spacing[4],
           borderWidth: 1,
-          borderColor: isSoil ? 'rgba(89, 122, 97, 0.2)' : 'rgba(76, 128, 107, 0.2)',
+          borderColor: surfaceBorder,
+          borderLeftWidth: 4,
+          borderLeftColor: accentColor,
         }}
       >
         <View
@@ -130,19 +154,19 @@ export default function LabTestsScreen() {
                 width: 40,
                 height: 40,
                 borderRadius: 20,
-                backgroundColor: isSoil ? 'rgba(89, 122, 97, 0.1)' : 'rgba(76, 128, 107, 0.1)',
+                backgroundColor: colorWithOpacity(accentColor, 0.12),
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <IconSymbol name={isSoil ? 'leaf' : 'leaf-outline'} size={20} color={color} />
+              <IconSymbol name={getTestTypeIcon(type)} size={20} color={accentColor} />
             </View>
             <View style={{ marginLeft: spacing[3] }}>
               <Text
                 style={{
                   fontSize: 11,
                   fontWeight: '700',
-                  color: color,
+                  color: accentColor,
                   textTransform: 'uppercase',
                 }}
                 textBreakStrategy="highQuality"
@@ -172,58 +196,132 @@ export default function LabTestsScreen() {
                 handleDeletePetioleTest(test as PetioleTestRecord);
               }
             }}
+            accessibilityRole="button"
+            accessibilityLabel={t('labTests.list.deleteAction')}
             style={{ padding: spacing[2] }}
           >
-            <IconSymbol name="trash" size={18} color="#ef4444" />
+            <IconSymbol name="trash" size={18} color={m3.colorScheme.error} />
           </Pressable>
         </View>
 
-        {/* Parameters Grid */}
-        {params.length > 0 && (
+        <Text
+          style={{
+            fontSize: fontSize.xs,
+            color: m3.colorScheme.onSurfaceVariant,
+            marginBottom: spacing[2],
+          }}
+          textBreakStrategy="highQuality"
+          lineBreakStrategyIOS="standard"
+        >
+          {statusLine}
+        </Text>
+
+        {/* Parameters Chips */}
+        {selected.length > 0 && (
           <View
             style={{
               borderTopWidth: 1,
-              borderTopColor: colors.gray[200],
+              borderTopColor: surfaceBorder,
               paddingTop: spacing[3],
-              marginBottom: spacing[3],
+              marginBottom: spacing[2],
             }}
           >
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
-              {params.map(([key, value]) => (
+              {selected.map(([key, value]) => {
+                const option = getParamOption(String(key), type);
+                const status = getParamStatus(value, option);
+                const statusColor =
+                  status === 'bad'
+                    ? m3.colorScheme.error
+                    : status === 'warn'
+                      ? m3.colorScheme.tertiary
+                      : accentColor;
+                const unit = getParameterUnit(String(key), isSoil);
+                const displayValue = typeof value === 'number' ? value.toFixed(2) : String(value);
+
+                return (
+                  <View
+                    key={String(key)}
+                    style={{
+                      backgroundColor: m3.surface.surfaceContainerHighest,
+                      borderRadius: borderRadius.lg,
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[2],
+                      minWidth: 96,
+                      borderWidth: 1,
+                      borderColor: m3.colorScheme.outlineVariant,
+                    }}
+                    accessibilityLabel={`${formatParameterKey(
+                      String(key),
+                      type,
+                    )} ${displayValue}${unit ? ` ${unit}` : ''} ${
+                      status === 'bad' ? t('labTests.list.card.status.outOfRange') : ''
+                    }`}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: statusColor,
+                          marginRight: spacing[1],
+                        }}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '700',
+                          color: m3.colorScheme.onSurface,
+                        }}
+                        textBreakStrategy="highQuality"
+                        lineBreakStrategyIOS="standard"
+                      >
+                        {formatParameterKey(String(key), type)}
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                        color: m3.colorScheme.onSurfaceVariant,
+                        marginTop: spacing[1],
+                      }}
+                    >
+                      {displayValue}
+                      {unit ? ` ${unit}` : ''}
+                    </Text>
+                  </View>
+                );
+              })}
+              {remainingCount > 0 && (
                 <View
-                  key={key}
                   style={{
-                    backgroundColor: 'rgba(242, 242, 247, 0.5)',
+                    backgroundColor: m3.surface.surfaceContainerHighest,
                     borderRadius: borderRadius.lg,
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[2],
-                    minWidth: 75,
+                    minWidth: 96,
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.outlineVariant,
                     alignItems: 'center',
+                    justifyContent: 'center',
                   }}
+                  accessibilityLabel={t('labTests.list.card.more', {
+                    count: remainingCount,
+                  })}
                 >
                   <Text
                     style={{
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: '700',
-                      color: color,
-                    }}
-                    textBreakStrategy="highQuality"
-                    lineBreakStrategyIOS="standard"
-                  >
-                    {formatParameterKey(key, type)}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.medium,
-                      color: colors.gray[800],
-                      marginTop: spacing[1],
+                      color: m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    {typeof value === 'number' ? value.toFixed(2) : value}
+                    +{remainingCount} {t('labTests.list.card.moreLabel')}
                   </Text>
                 </View>
-              ))}
+              )}
             </View>
           </View>
         )}
@@ -246,7 +344,7 @@ export default function LabTestsScreen() {
   };
 
   const renderEmptyState = (type: TestType) => {
-    const color = type === 'soil' ? '#597A61' : '#4C806B';
+    const accentColor = type === 'soil' ? colors.labTest.soil : colors.labTest.petiole;
 
     return (
       <View
@@ -258,9 +356,9 @@ export default function LabTestsScreen() {
         }}
       >
         <IconSymbol
-          name={type === 'soil' ? 'leaf' : 'leaf-outline'}
+          name={getTestTypeIcon(type)}
           size={48}
-          color={color}
+          color={accentColor}
           style={{ opacity: 0.5 }}
         />
         <Text
@@ -328,7 +426,7 @@ export default function LabTestsScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text
@@ -367,7 +465,7 @@ export default function LabTestsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       {/* Header */}
       <View
         style={{
@@ -384,7 +482,11 @@ export default function LabTestsScreen() {
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <IconSymbol name="chevron.left" size={24} color="#333" />
         </Pressable>
-        <IconSymbol name="flask.fill" size={24} color="#408059" />
+        <IconSymbol
+          name={getTestTypeIcon(selectedTab)}
+          size={24}
+          color={selectedTab === 'soil' ? colors.labTest.soil : colors.labTest.petiole}
+        />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.gray[800] }}
@@ -473,7 +575,7 @@ export default function LabTestsScreen() {
             paddingVertical: spacing[2],
             marginRight: spacing[2],
             borderBottomWidth: selectedTab === 'soil' ? 2 : 0,
-            borderBottomColor: selectedTab === 'soil' ? '#597A61' : 'transparent',
+            borderBottomColor: selectedTab === 'soil' ? colors.labTest.soil : 'transparent',
           }}
         >
           <Text
@@ -482,7 +584,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'soil' ? '#597A61' : colors.gray[400],
+              color: selectedTab === 'soil' ? colors.labTest.soil : colors.gray[400],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -497,7 +599,7 @@ export default function LabTestsScreen() {
             paddingVertical: spacing[2],
             marginLeft: spacing[2],
             borderBottomWidth: selectedTab === 'petiole' ? 2 : 0,
-            borderBottomColor: selectedTab === 'petiole' ? '#4C806B' : 'transparent',
+            borderBottomColor: selectedTab === 'petiole' ? colors.labTest.petiole : 'transparent',
           }}
         >
           <Text
@@ -506,7 +608,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'petiole' ? '#4C806B' : colors.gray[400],
+              color: selectedTab === 'petiole' ? colors.labTest.petiole : colors.gray[400],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"

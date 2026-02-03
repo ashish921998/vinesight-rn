@@ -19,7 +19,7 @@ import { Stack } from 'expo-router';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LinearGradient } from 'expo-linear-gradient';
 import { REFILL_SPANS, type RefillSpanId } from '@/constants/calculator-models';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { telemetry } from '@/services/telemetry';
 
 export default function MADCalculatorScreen() {
@@ -103,10 +103,10 @@ export default function MADCalculatorScreen() {
           headerTintColor: '#408059',
         }}
       />
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+          style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
         >
           <LinearGradient
             colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
@@ -121,6 +121,7 @@ export default function MADCalculatorScreen() {
             }}
             contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
             {/* Step 1: MAD Calculation Card */}
             <View
