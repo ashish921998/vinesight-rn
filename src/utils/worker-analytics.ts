@@ -78,9 +78,11 @@ export function computeWorkerMetrics(
   let workDaysEquivalent = 0;
   let earnings = 0;
   let overrideCount = 0;
+  let inRangeCount = 0;
 
   attendance.forEach((record) => {
     if (!isDateInRange(record.date, range)) return;
+    inRangeCount += 1;
     const status = record.work_status as WorkStatus;
     const multiplier = getStatusMultiplier(status);
     workDaysEquivalent += multiplier;
@@ -100,7 +102,7 @@ export function computeWorkerMetrics(
 
   const totalDays = getDateRangeDays(range);
   const attendanceRate = totalDays > 0 ? workDaysEquivalent / totalDays : 0;
-  const overrideUsageRate = attendance.length > 0 ? overrideCount / attendance.length : 0;
+  const overrideUsageRate = inRangeCount > 0 ? overrideCount / inRangeCount : 0;
 
   return {
     workerId: worker.id ?? 0,
@@ -160,8 +162,8 @@ export function getWeeklySummaries(
     });
 
     summaries.push({
-      start: weekStart.toISOString().split('T')[0],
-      end: effectiveEnd.toISOString().split('T')[0],
+      start: formatLocalDate(weekStart),
+      end: formatLocalDate(effectiveEnd),
       workDaysEquivalent,
       earnings,
     });
@@ -170,6 +172,13 @@ export function getWeeklySummaries(
   }
 
   return summaries;
+}
+
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function sumTransactions(

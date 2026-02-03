@@ -22,41 +22,13 @@ import {
 } from '../src/hooks/use-lab-tests';
 import { SoilTestRecord, PetioleTestRecord } from '../src/types/database';
 import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
-import { soilParamOptions, petioleParamOptions } from '@/constants/lab-test-parameters';
+import { colorWithOpacity } from '@/utils/color';
+import { getParamOption, getParamStatus, selectDisplayParams } from '@/utils/lab-test-utils';
 
 type TestType = 'soil' | 'petiole';
 
-const CORE_SOIL_PARAMS = [
-  'ph',
-  'ec',
-  'nitrogen',
-  'phosphorus',
-  'potassium',
-  'calcium',
-  'magnesium',
-  'sulfur',
-] as const;
-
-const CORE_PETIOLE_PARAMS = [
-  'total_nitrogen',
-  'phosphorus',
-  'potassium',
-  'calcium',
-  'magnesium',
-  'sulfur',
-] as const;
-
 const getTestTypeIcon = (type: TestType) =>
   type === 'soil' ? 'square.stack.3d.up.fill' : 'leaf.fill';
-
-const withAlpha = (hex: string, alpha: number) => {
-  const normalized = hex.replace('#', '');
-  if (normalized.length !== 6) return hex;
-  const r = parseInt(normalized.slice(0, 2), 16);
-  const g = parseInt(normalized.slice(2, 4), 16);
-  const b = parseInt(normalized.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '';
@@ -66,148 +38,6 @@ const formatDate = (dateString: string): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
   return `${day}-${month}-${year}`;
-};
-
-const normalizeParameterKey = (key: string, testType: TestType) => {
-  const soilKeyMap: Record<string, string> = {
-    pH: 'ph',
-    EC: 'ec',
-    OC: 'organicCarbon',
-    OM: 'organicMatter',
-    organic_carbon: 'organicCarbon',
-    organic_matter: 'organicMatter',
-    calcium_carbonate: 'calciumCarbonate',
-    carbonate: 'carbonate',
-    bicarbonate: 'bicarbonate',
-    N: 'nitrogen',
-    P: 'phosphorus',
-    K: 'potassium',
-    Ca: 'calcium',
-    Mg: 'magnesium',
-    S: 'sulfur',
-    Fe: 'iron',
-    Mn: 'manganese',
-    Zn: 'zinc',
-    Cu: 'copper',
-    B: 'boron',
-  };
-
-  const petioleKeyMap: Record<string, string> = {
-    N: 'total_nitrogen',
-    P: 'phosphorus',
-    K: 'potassium',
-    Ca: 'calcium',
-    Mg: 'magnesium',
-    S: 'sulfur',
-    Fe: 'iron',
-    Mn: 'manganese',
-    Zn: 'zinc',
-    Cu: 'copper',
-    B: 'boron',
-    Mo: 'molybdenum',
-    Na: 'sodium',
-    Cl: 'chloride',
-    ammonical_nitrogen: 'ammoniacal_nitrogen',
-  };
-
-  const keyMap = testType === 'petiole' ? petioleKeyMap : soilKeyMap;
-  let mappedKey = keyMap[key];
-
-  if (!mappedKey) {
-    const lowerKey = key.toLowerCase();
-    for (const [mapKey, mapValue] of Object.entries(keyMap)) {
-      if (mapKey.toLowerCase() === lowerKey) {
-        mappedKey = mapValue;
-        break;
-      }
-    }
-  }
-
-  return mappedKey || key;
-};
-
-const getParamOption = (key: string, type: TestType) => {
-  const list = type === 'soil' ? soilParamOptions : petioleParamOptions;
-  const normalizedKey = normalizeParameterKey(key, type);
-  return list.find((item) => item.key === normalizedKey);
-};
-
-const parseNumeric = (value: unknown) => {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && value.trim().length > 0) {
-    const parsed = Number(value);
-    return Number.isNaN(parsed) ? null : parsed;
-  }
-  return null;
-};
-
-const getParamStatus = (value: unknown, option?: { optimalMin: number; optimalMax: number }) => {
-  const numeric = parseNumeric(value);
-  if (numeric === null || !option) return 'ok' as const;
-  if (numeric < option.optimalMin || numeric > option.optimalMax) return 'bad' as const;
-  const warnLow = option.optimalMin * 0.9;
-  const warnHigh = option.optimalMax * 1.1;
-  if (numeric < warnLow || numeric > warnHigh) return 'warn' as const;
-  return 'ok' as const;
-};
-
-const selectDisplayParams = (
-  parameters: Record<string, unknown> | null | undefined,
-  type: TestType,
-  limit: number,
-) => {
-  const entries = Object.entries(parameters || {}).filter(([, value]) => {
-    return value !== null && value !== undefined && value !== '';
-  });
-  if (entries.length === 0) {
-    return { selected: [] as [string, unknown][], remainingCount: 0, outOfRangeCount: 0 };
-  }
-
-  const coreList = type === 'soil' ? CORE_SOIL_PARAMS : CORE_PETIOLE_PARAMS;
-  const normalizedEntries = entries.map(([key, value]) => ({
-    key: String(key),
-    value,
-    normalized: normalizeParameterKey(String(key), type),
-  }));
-
-  const outOfRange: { key: string; value: unknown; normalized: string }[] = [];
-  const byNormalized = new Map<string, { key: string; value: unknown; normalized: string }>();
-
-  normalizedEntries.forEach((entry) => {
-    const option = getParamOption(entry.normalized, type);
-    const status = getParamStatus(entry.value, option);
-    if (status === 'bad') {
-      outOfRange.push(entry);
-    }
-    if (!byNormalized.has(entry.normalized)) {
-      byNormalized.set(entry.normalized, entry);
-    }
-  });
-
-  const selected: [string, unknown][] = [];
-  const used = new Set<string>();
-
-  outOfRange.forEach((entry) => {
-    if (selected.length < limit && !used.has(entry.normalized)) {
-      selected.push([entry.key, entry.value]);
-      used.add(entry.normalized);
-    }
-  });
-
-  coreList.forEach((coreKey) => {
-    const match = byNormalized.get(coreKey);
-    if (match && selected.length < limit && !used.has(coreKey)) {
-      selected.push([match.key, match.value]);
-      used.add(coreKey);
-    }
-  });
-
-  const remainingCount = Math.max(0, entries.length - selected.length);
-  return {
-    selected,
-    remainingCount,
-    outOfRangeCount: outOfRange.length,
-  };
 };
 
 export default function LabTestsScreen() {
@@ -284,8 +114,8 @@ export default function LabTestsScreen() {
       remainingCount += 1;
     }
     const accentColor = isSoil ? colors.labTest.soil : colors.labTest.petiole;
-    const surfaceColor = withAlpha(accentColor, 0.08);
-    const surfaceBorder = withAlpha(accentColor, 0.25);
+    const surfaceColor = colorWithOpacity(accentColor, 0.08);
+    const surfaceBorder = colorWithOpacity(accentColor, 0.25);
     const statusLine =
       outOfRangeCount > 0
         ? t('labTests.list.card.outOfRange', { count: outOfRangeCount })
@@ -324,7 +154,7 @@ export default function LabTestsScreen() {
                 width: 40,
                 height: 40,
                 borderRadius: 20,
-                backgroundColor: withAlpha(accentColor, 0.12),
+                backgroundColor: colorWithOpacity(accentColor, 0.12),
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -413,7 +243,7 @@ export default function LabTestsScreen() {
                   <View
                     key={String(key)}
                     style={{
-                      backgroundColor: m3.colorScheme.surfaceContainerHighest,
+                      backgroundColor: m3.surface.surfaceContainerHighest,
                       borderRadius: borderRadius.lg,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[2],
@@ -467,7 +297,7 @@ export default function LabTestsScreen() {
               {remainingCount > 0 && (
                 <View
                   style={{
-                    backgroundColor: m3.colorScheme.surfaceContainerHighest,
+                    backgroundColor: m3.surface.surfaceContainerHighest,
                     borderRadius: borderRadius.lg,
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[2],

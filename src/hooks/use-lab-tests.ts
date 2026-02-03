@@ -13,6 +13,7 @@ import {
 } from '../types/database';
 import { LabTrendsService } from '../services/lab-trends-service';
 import i18n from '@/i18n';
+import { normalizeParameterKey } from '@/utils/lab-test-utils';
 
 // Query keys
 export const labTestQueryKeys = {
@@ -508,75 +509,6 @@ export const PETIOLE_PARAMETERS = [
  */
 export function formatParameterKey(key: string, testType: 'soil' | 'petiole' = 'soil'): string {
   return getParameterLabel(key, testType);
-}
-
-/**
- * Normalize parameter key (handles old keys like pH, OC, N, etc.)
- */
-function normalizeParameterKey(key: string, testType: 'soil' | 'petiole' = 'soil'): string {
-  const soilKeyMap: Record<string, string> = {
-    pH: 'ph',
-    EC: 'ec',
-    OC: 'organicCarbon',
-    OM: 'organicMatter',
-    organic_carbon: 'organicCarbon',
-    organic_matter: 'organicMatter',
-    calcium_carbonate: 'calciumCarbonate',
-    carbonate: 'carbonate',
-    bicarbonate: 'bicarbonate',
-    N: 'nitrogen',
-    P: 'phosphorus',
-    K: 'potassium',
-    Ca: 'calcium',
-    Mg: 'magnesium',
-    S: 'sulfur',
-    Fe: 'iron',
-    Mn: 'manganese',
-    Zn: 'zinc',
-    Cu: 'copper',
-    B: 'boron',
-  };
-
-  const petioleKeyMap: Record<string, string> = {
-    N: 'total_nitrogen',
-    P: 'phosphorus',
-    K: 'potassium',
-    Ca: 'calcium',
-    Mg: 'magnesium',
-    S: 'sulfur',
-    Fe: 'iron',
-    Mn: 'manganese',
-    Zn: 'zinc',
-    Cu: 'copper',
-    B: 'boron',
-    Mo: 'molybdenum',
-    Na: 'sodium',
-    Cl: 'chloride',
-    ammonical_nitrogen: 'ammoniacal_nitrogen',
-  };
-
-  const keyMap = testType === 'petiole' ? petioleKeyMap : soilKeyMap;
-
-  // Try direct lookup first
-  let mappedKey = keyMap[key];
-
-  // If not found, try case-insensitive lookup for lowercase keys
-  if (!mappedKey) {
-    const lowerKey = key.toLowerCase();
-    for (const [mapKey, mapValue] of Object.entries(keyMap)) {
-      if (mapKey.toLowerCase() === lowerKey) {
-        mappedKey = mapValue;
-        break;
-      }
-    }
-  }
-
-  // If still not found, return the key as-is (it might already be normalized)
-  if (!mappedKey) {
-    return key;
-  }
-
-  return mappedKey;
 }
 
 /**

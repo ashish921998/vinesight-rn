@@ -665,21 +665,26 @@ export function EntryForm({
     if (savedTask?.id) {
       const taskId = String(savedTask.id);
       const existing = taskSchedules[taskId];
+      const nextDueDate = savedTask.due_date ?? null;
+      const hasDueDateChanged = existing?.dueDate !== nextDueDate;
 
       try {
-        if (existing?.notificationId) {
-          await cancelNotification(existing.notificationId);
-          removeTaskSchedule(taskId);
-        }
-
-        if (taskRemindersEnabled && savedTask.due_date) {
+        if (taskRemindersEnabled && nextDueDate && hasDueDateChanged) {
           const granted = await ensureNotificationPermissions();
           if (granted) {
-            const notificationId = await scheduleTaskDueReminder(taskId, savedTask.due_date);
+            const notificationId = await scheduleTaskDueReminder(taskId, nextDueDate);
             if (notificationId) {
-              upsertTaskSchedule(taskId, { notificationId, dueDate: savedTask.due_date });
+              if (existing?.notificationId) {
+                await cancelNotification(existing.notificationId);
+              }
+              upsertTaskSchedule(taskId, { notificationId, dueDate: nextDueDate });
             }
           }
+        }
+
+        if (!nextDueDate && existing?.notificationId && hasDueDateChanged) {
+          await cancelNotification(existing.notificationId);
+          removeTaskSchedule(taskId);
         }
       } catch (notificationError) {
         if (__DEV__) {

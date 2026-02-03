@@ -15,8 +15,8 @@ const options: PostHogOptions = {
 };
 
 const isPhysicalDevice = Device.isDevice ?? false;
-const appOwnership = Constants.appOwnership;
-const isStandalone = appOwnership === 'standalone';
+const executionEnvironment = Constants.executionEnvironment;
+const isStandalone = executionEnvironment === 'standalone';
 const runtimeDisabled = !isPhysicalDevice || !isStandalone;
 
 export const telemetryEnabled = Boolean(apiKey) && !runtimeDisabled;
@@ -54,6 +54,6 @@ export const telemetryConfig = {
   host,
   options,
   isPhysicalDevice,
-  appOwnership,
+  executionEnvironment,
   runtimeDisabled,
 };

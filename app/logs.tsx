@@ -64,19 +64,15 @@ export default function LogsScreen() {
   const currency = profile?.preferred_currency || 'INR';
   const filterCardStyle = Platform.select({
     ios: {
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 5 },
       shadowOpacity: 0.08,
       shadowRadius: 10,
     },
     android: {
-      backgroundColor: colors.surface[100],
       elevation: 2,
     },
-    default: {
-      backgroundColor: colors.surface[100],
-    },
+    default: {},
   });
 
   const { data: farms = [], isLoading: farmsLoading } = useFarms();
@@ -735,6 +731,39 @@ export default function LogsScreen() {
                         </Pressable>
                       );
                     })}
+
+                    {selectedFarmId !== undefined && (
+                      <Pressable
+                        onPress={() => {
+                          setSelectedFarmId(undefined);
+                          setCurrentPage(1);
+                        }}
+                        style={({ pressed }) => ({
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingHorizontal: spacing[3],
+                          paddingVertical: 6,
+                          borderRadius: borderRadius.full,
+                          backgroundColor: pressed
+                            ? m3.surface.surfaceContainerHigh
+                            : m3.surface.surfaceContainerLow,
+                          borderWidth: 1,
+                          borderColor: m3.colorScheme.outlineVariant,
+                        })}
+                      >
+                        <UiSymbol name="leaf.fill" size={12} color={m3.colorScheme.primary} />
+                        <Text
+                          style={{
+                            marginLeft: spacing[1],
+                            fontSize: fontSize.xs,
+                            fontWeight: fontWeight.semibold,
+                            color: m3.colorScheme.onSurfaceVariant,
+                          }}
+                        >
+                          {selectedFarm?.name ?? t('tasks.unknownFarm')}
+                        </Text>
+                      </Pressable>
+                    )}
 
                     {(dateFrom || dateTo) && (
                       <Pressable

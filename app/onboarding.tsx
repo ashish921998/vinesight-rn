@@ -4,7 +4,15 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, SafeAreaView, Image } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  SafeAreaView,
+  Image,
+  type ImageSourcePropType,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
@@ -15,6 +23,8 @@ import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/o
 import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import AppIcon from '../assets/icon.png';
+
+const appIconSource = AppIcon as ImageSourcePropType;
 
 export default function OnboardingScreen() {
   const { t } = useTranslation();
@@ -136,7 +146,7 @@ export default function OnboardingScreen() {
         }}
       >
         <Image
-          source={AppIcon}
+          source={appIconSource}
           accessibilityLabel={t('onboarding.welcome.title')}
           style={{ width: 72, height: 72 }}
           resizeMode="contain"

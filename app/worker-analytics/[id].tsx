@@ -3,13 +3,14 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-nati
 import { useLocalSearchParams, router } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useProfile, useWorkerAttendance, useWorkerTransactions, useWorkers } from '@/hooks';
-import { formatCurrency } from '@/i18n/format';
+import { formatCurrency, formatDate } from '@/i18n/format';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import {
   addDays,
   computeWorkerMetrics,
   getDefaultDateRange,
   getWeeklySummaries,
+  isDateInRange,
   normalizeDate,
   type DateRange,
 } from '@/utils/worker-analytics';
@@ -18,7 +19,9 @@ import { colorWithOpacity } from '@/utils/color';
 
 export default function WorkerAnalyticsDetailScreen() {
   const { id } = useLocalSearchParams();
-  const workerId = Number(id);
+  const rawWorkerId = Number(id);
+  const hasValidWorkerId = Number.isFinite(rawWorkerId);
+  const workerId = hasValidWorkerId ? rawWorkerId : 0;
   const { data: workers, isLoading: workersLoading } = useWorkers();
   const { data: attendance, isLoading: attendanceLoading } = useWorkerAttendance(workerId);
   const { data: transactions, isLoading: transactionsLoading } = useWorkerTransactions(workerId);
@@ -42,6 +45,11 @@ export default function WorkerAnalyticsDetailScreen() {
     return getWeeklySummaries(worker, attendance, range);
   }, [worker, attendance, range]);
 
+  const filteredTransactions = useMemo(() => {
+    if (!transactions) return [];
+    return transactions.filter((tx) => isDateInRange(tx.date, range));
+  }, [transactions, range]);
+
   const handleDateChange = (type: 'from' | 'to', event: DateTimePickerEvent, date?: Date) => {
     if (event.type === 'dismissed') {
       if (type === 'from') setShowFromPicker(false);
@@ -62,10 +70,43 @@ export default function WorkerAnalyticsDetailScreen() {
     if (type === 'to') setShowToPicker(false);
   };
 
-  if (isLoading || !worker) {
+  if (isLoading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={m3.colorScheme.primary} />
+      </View>
+    );
+  }
+
+  if (!hasValidWorkerId || !worker) {
+    return (
+      <View
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] }}
+      >
+        <UiSymbol name="exclamationmark.triangle.fill" size={40} color={m3.colorScheme.error} />
+        <Text
+          style={{
+            marginTop: spacing[3],
+            fontSize: fontSize.base,
+            fontWeight: fontWeight.semibold,
+            color: m3.colorScheme.onSurface,
+            textAlign: 'center',
+          }}
+        >
+          Worker not found
+        </Text>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            marginTop: spacing[4],
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[2],
+            borderRadius: borderRadius.full,
+            backgroundColor: m3.colorScheme.primaryContainer,
+          }}
+        >
+          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>Go back</Text>
+        </Pressable>
       </View>
     );
   }
@@ -156,7 +197,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 From
               </Text>
               <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
-                {range.from.toISOString().split('T')[0]}
+                {formatDate(range.from)}
               </Text>
             </Pressable>
             <Pressable
@@ -175,7 +216,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 To
               </Text>
               <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
-                {range.to.toISOString().split('T')[0]}
+                {formatDate(range.to)}
               </Text>
             </Pressable>
           </View>
@@ -294,8 +335,8 @@ export default function WorkerAnalyticsDetailScreen() {
             >
               Transactions
             </Text>
-            {transactions?.length ? (
-              transactions.map((tx) => (
+            {filteredTransactions.length ? (
+              filteredTransactions.map((tx) => (
                 <View
                   key={String(tx.id)}
                   style={{
