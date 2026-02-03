@@ -15,14 +15,14 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import { useModalStore } from '@/stores';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
 
 const COLORS = {
   primary: '#408059',
-  background: '#f2f2f7',
+  background: m3.colorScheme.background,
   glass: 'rgba(255, 255, 255, 0.8)',
   lowStock: '#D9731F',
   warehouseFertilizer: '#598C6B',

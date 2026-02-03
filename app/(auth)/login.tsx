@@ -17,7 +17,7 @@ import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
-import appIcon from '../../assets/icon.png';
+import appLogo from '../../assets/icons/ios-light.png';
 import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -196,8 +196,8 @@ export default function LoginScreen() {
           <View style={logoContainerStyle}>
             <View style={logoBoxStyle}>
               <Image
-                source={appIcon as ImageSourcePropType}
-                style={{ width: 80, height: 80 }}
+                source={appLogo as ImageSourcePropType}
+                style={{ width: 88, height: 88 }}
                 resizeMode="contain"
               />
             </View>

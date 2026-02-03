@@ -23,7 +23,7 @@ import {
   SECTION_NAMES,
 } from '../src/hooks/use-soil-profiles';
 import { SoilProfile } from '../src/types/database';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 
 type TabType = 'history' | 'trends';
 
@@ -473,7 +473,7 @@ export default function SoilProfilingScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <View
           style={{
             flex: 1,
@@ -516,7 +516,7 @@ export default function SoilProfilingScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <LinearGradient
         colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
         style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}

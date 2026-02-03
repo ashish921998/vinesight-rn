@@ -14,7 +14,7 @@ export default function AddActivityRoute() {
       <EntryForm
         onClose={() => router.back()}
         presentation="screen"
-        tabs={['log']}
+        tabs={['log', 'task']}
         initialTab="log"
         initialFarmId={farmId && !isNaN(farmId) ? farmId : null}
         initialLogType={params.logType ?? null}

@@ -4,12 +4,20 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 
 import { Stack } from 'expo-router';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { telemetry } from '@/services/telemetry';
 
 interface NutrientResult {
@@ -77,10 +85,10 @@ export default function NutrientCalculatorScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
-      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <KeyboardAvoidingView
-          behavior="padding"
-          style={{ flex: 1, backgroundColor: colors.surface[50] }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
         >
           <ScrollView
             style={{ flex: 1 }}
@@ -91,6 +99,7 @@ export default function NutrientCalculatorScreen() {
             }}
             contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
             {/* Calculator Card */}
             <View

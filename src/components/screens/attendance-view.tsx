@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Symbol } from '@/components/ui/symbol';
 import { useFarms } from '@/hooks';
 import type { Worker } from '@/types';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { MarkAttendanceTab, CalendarAttendanceTab } from './attendance-subcomponents';
 
 interface AttendanceViewProps {
@@ -13,7 +12,7 @@ interface AttendanceViewProps {
 }
 
 const UI = {
-  bg: '#F4F6F8',
+  bg: m3.colorScheme.background,
   surface: '#FFFFFF',
   surfaceSoft: 'rgba(255, 255, 255, 0.9)',
   border: 'rgba(15, 23, 42, 0.08)',
@@ -83,43 +82,44 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
 
   return (
     <View style={{ flex: 1, backgroundColor: UI.bg }}>
-      <LinearGradient
-        colors={['rgba(47, 107, 79, 0.12)', 'transparent']}
-        style={{ height: 200, position: 'absolute', top: 0, left: 0, right: 0 }}
-      />
-
-      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
+      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[2] }}>
         <View
           style={{
-            borderRadius: borderRadius['2xl'],
-            padding: 6,
-            backgroundColor: UI.surfaceSoft,
+            borderRadius: borderRadius.xl,
+            padding: 4,
+            backgroundColor: 'transparent',
             borderColor: UI.border,
             borderWidth: 1,
           }}
         >
-          <View style={{ flexDirection: 'row', overflow: 'hidden', borderRadius: borderRadius.xl }}>
+          <View style={{ flexDirection: 'row', overflow: 'hidden', borderRadius: borderRadius.lg }}>
             <Pressable
               onPress={() => setActiveTab('mark')}
               accessibilityRole="button"
               accessibilityLabel="Mark tab"
               accessibilityState={{ selected: activeTab === 'mark' }}
-              style={{
+              style={({ pressed }) => ({
                 flex: 1,
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                paddingVertical: spacing[3],
-                backgroundColor: activeTab === 'mark' ? UI.primary : 'transparent',
-              }}
+                paddingVertical: spacing[2],
+                borderRadius: borderRadius.lg,
+                backgroundColor: activeTab === 'mark' ? UI.primarySoft : 'transparent',
+                ...(pressed ? { opacity: 0.8 } : null),
+              })}
             >
-              <Symbol name="pencil" size={18} color={activeTab === 'mark' ? '#FFFFFF' : UI.muted} />
+              <Symbol
+                name="pencil"
+                size={16}
+                color={activeTab === 'mark' ? UI.primary : UI.muted}
+              />
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
                   marginLeft: spacing[2],
-                  color: activeTab === 'mark' ? '#FFFFFF' : UI.muted,
+                  color: activeTab === 'mark' ? UI.primary : UI.muted,
                 }}
               >
                 Mark
@@ -130,26 +130,28 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
               accessibilityRole="button"
               accessibilityLabel="Calendar tab"
               accessibilityState={{ selected: activeTab === 'calendar' }}
-              style={{
+              style={({ pressed }) => ({
                 flex: 1,
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                paddingVertical: spacing[3],
-                backgroundColor: activeTab === 'calendar' ? UI.primary : 'transparent',
-              }}
+                paddingVertical: spacing[2],
+                borderRadius: borderRadius.lg,
+                backgroundColor: activeTab === 'calendar' ? UI.primarySoft : 'transparent',
+                ...(pressed ? { opacity: 0.8 } : null),
+              })}
             >
               <Symbol
                 name="calendar"
-                size={18}
-                color={activeTab === 'calendar' ? '#FFFFFF' : UI.muted}
+                size={16}
+                color={activeTab === 'calendar' ? UI.primary : UI.muted}
               />
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
                   marginLeft: spacing[2],
-                  color: activeTab === 'calendar' ? '#FFFFFF' : UI.muted,
+                  color: activeTab === 'calendar' ? UI.primary : UI.muted,
                 }}
               >
                 Calendar

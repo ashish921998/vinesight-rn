@@ -66,7 +66,7 @@ export function FarmLogForm({ mode, farmId, onClose }: FarmLogFormProps) {
     <EntryForm
       onClose={onClose}
       presentation="screen"
-      tabs={['log']}
+      tabs={['log', 'task']}
       initialTab="log"
       farm={farm ?? undefined}
       initialFarmId={farmId ?? null}

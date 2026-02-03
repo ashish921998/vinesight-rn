@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +42,8 @@ import type {
   ExpenseRecord,
   FertigationRecord,
 } from '@/types';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface CombinedLog {
   id: string;
@@ -159,13 +160,11 @@ export default function LogsScreen() {
   const [selectedLogTypes, setSelectedLogTypes] = useState<Set<LogTypeId>>(new Set());
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [showFilters, setShowFilters] = useState(false);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [deletingLog, setDeletingLog] = useState<CombinedLog | undefined>();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [showDatePickerFrom, setShowDatePickerFrom] = useState(false);
-  const [showDatePickerTo, setShowDatePickerTo] = useState(false);
   const [showFarmSelector, setShowFarmSelector] = useState(false);
   const [showRecordsPerPageSelector, setShowRecordsPerPageSelector] = useState(false);
 
@@ -174,6 +173,18 @@ export default function LogsScreen() {
   const deleteHarvest = useDeleteHarvestRecord();
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
+
+  const openAndroidDatePicker = (current: Date | undefined, onSelect: (date: Date) => void) => {
+    DateTimePickerAndroid.open({
+      value: current ?? new Date(),
+      mode: 'date',
+      display: 'default',
+      onChange: (event, date) => {
+        if (event.type !== 'set' || !date) return;
+        onSelect(date);
+      },
+    });
+  };
 
   const combinedLogs = useMemo<CombinedLog[]>(() => {
     const logs: CombinedLog[] = [];
@@ -386,7 +397,7 @@ export default function LogsScreen() {
       <View
         style={{
           flex: 1,
-          backgroundColor: '#f2f2f7',
+          backgroundColor: m3.colorScheme.background,
           justifyContent: 'center',
           alignItems: 'center',
         }}
@@ -404,7 +415,7 @@ export default function LogsScreen() {
       <Stack.Screen
         options={{
           title: t('logs.screenTitle'),
-          headerStyle: { backgroundColor: '#f2f2f7' },
+          headerStyle: { backgroundColor: m3.colorScheme.background },
           headerTintColor: '#000000',
           headerRight: () =>
             selectedFarmId !== undefined && (
@@ -425,14 +436,20 @@ export default function LogsScreen() {
         }}
       />
 
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7', paddingTop: insets.top }}>
-        <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background, paddingTop: insets.top }}>
+        <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
           <LinearGradient
             colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
             style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
           />
 
-          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentInsetAdjustmentBehavior="automatic"
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             {/* Farm Selector */}
             <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
               <Text
@@ -448,10 +465,12 @@ export default function LogsScreen() {
               <Pressable
                 onPress={() => setShowFarmSelector(true)}
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  backgroundColor: m3.surface.surfaceContainerLow,
                   borderRadius: borderRadius['2xl'],
                   paddingHorizontal: spacing[4],
                   paddingVertical: spacing[3],
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
                 }}
               >
                 <View
@@ -466,7 +485,7 @@ export default function LogsScreen() {
                       style={{
                         width: 44,
                         height: 44,
-                        backgroundColor: 'rgba(64, 128, 89, 0.15)',
+                        backgroundColor: m3.surface.surfaceContainerHigh,
                         borderRadius: borderRadius.full,
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -477,7 +496,7 @@ export default function LogsScreen() {
                           selectedFarmId === undefined ? 'square.stack.3d.up.fill' : 'leaf.fill'
                         }
                         size={22}
-                        color="#408059"
+                        color={m3.colorScheme.primary}
                       />
                     </View>
                     <View style={{ marginLeft: spacing[3] }}>
@@ -515,6 +534,9 @@ export default function LogsScreen() {
                 style={{
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
                   ...(filterCardStyle ?? {}),
                 }}
               >
@@ -523,32 +545,42 @@ export default function LogsScreen() {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    backgroundColor: colors.surface[50],
+                    backgroundColor: m3.surface.surfaceContainerHigh,
                     borderRadius: borderRadius.xl,
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[2],
+                    borderWidth: 1,
+                    borderColor: m3.colorScheme.outlineVariant,
                   }}
                 >
-                  <UiSymbol name="magnifyingglass" size={18} color="#8e8e93" />
+                  <UiSymbol
+                    name="magnifyingglass"
+                    size={18}
+                    color={m3.colorScheme.onSurfaceVariant}
+                  />
                   <TextInput
                     placeholder={t('logs.search.placeholder')}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    placeholderTextColor="#8e8e93"
+                    placeholderTextColor={m3.colorScheme.onSurfaceVariant}
                     style={{
                       flex: 1,
                       marginLeft: spacing[2],
-                      color: colors.surface[900],
+                      color: m3.colorScheme.onSurface,
                     }}
                   />
                   {searchQuery !== '' && (
                     <Pressable onPress={() => setSearchQuery('')}>
-                      <UiSymbol name="xmark.circle.fill" size={18} color="#8e8e93" />
+                      <UiSymbol
+                        name="xmark.circle.fill"
+                        size={18}
+                        color={m3.colorScheme.onSurfaceVariant}
+                      />
                     </Pressable>
                   )}
                 </View>
 
-                {/* Filter Toggle */}
+                {/* Filter Controls */}
                 <View
                   style={{
                     flexDirection: 'row',
@@ -558,14 +590,31 @@ export default function LogsScreen() {
                   }}
                 >
                   <Pressable
-                    onPress={() => setShowFilters(!showFilters)}
-                    style={{ flexDirection: 'row', alignItems: 'center' }}
+                    onPress={() => setIsFilterSheetOpen(true)}
+                    style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[2],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.primary, 0.2)
+                        : colorWithOpacity(m3.colorScheme.primary, 0.12),
+                      borderWidth: 1,
+                      borderColor: colorWithOpacity(m3.colorScheme.primary, 0.35),
+                    })}
                   >
+                    <UiSymbol
+                      name="line.3.horizontal.decrease"
+                      size={16}
+                      color={m3.colorScheme.primary}
+                    />
                     <Text
                       style={{
+                        marginLeft: spacing[1],
                         fontSize: fontSize.sm,
                         fontWeight: fontWeight.semibold,
-                        color: colors.primary[600],
+                        color: m3.colorScheme.primary,
                       }}
                     >
                       {t('common.filter')}
@@ -574,7 +623,7 @@ export default function LogsScreen() {
                       <View
                         style={{
                           marginLeft: spacing[2],
-                          backgroundColor: 'rgba(64, 128, 89, 0.15)',
+                          backgroundColor: m3.colorScheme.primary,
                           paddingHorizontal: spacing[2],
                           paddingVertical: 2,
                           borderRadius: borderRadius.full,
@@ -584,7 +633,7 @@ export default function LogsScreen() {
                           style={{
                             fontSize: fontSize.xs,
                             fontWeight: fontWeight.bold,
-                            color: colors.primary[600],
+                            color: m3.colorScheme.onPrimary,
                           }}
                         >
                           {selectedLogTypes.size + (dateFrom || dateTo ? 1 : 0)}
@@ -594,12 +643,22 @@ export default function LogsScreen() {
                   </Pressable>
 
                   {hasActiveFilters && (
-                    <Pressable onPress={clearFilters}>
+                    <Pressable
+                      onPress={clearFilters}
+                      style={({ pressed }) => ({
+                        paddingHorizontal: spacing[2],
+                        paddingVertical: spacing[1],
+                        borderRadius: borderRadius.full,
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.error, 0.12)
+                          : 'transparent',
+                      })}
+                    >
                       <Text
                         style={{
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.semibold,
-                          color: '#EF4444',
+                          color: m3.colorScheme.error,
                         }}
                       >
                         {t('common.clearAll')}
@@ -608,153 +667,110 @@ export default function LogsScreen() {
                   )}
                 </View>
 
-                {/* Filter Panel */}
-                {showFilters && (
+                {(selectedLogTypes.size > 0 ||
+                  dateFrom ||
+                  dateTo ||
+                  selectedFarmId !== undefined) && (
                   <View
                     style={{
-                      marginTop: spacing[4],
-                      paddingTop: spacing[4],
-                      borderTopWidth: 1,
-                      borderTopColor: colors.surface[200],
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      gap: spacing[2],
+                      marginTop: spacing[3],
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: fontSize.xs,
-                        fontWeight: fontWeight.bold,
-                        color: colors.surface[500],
-                        marginBottom: spacing[2],
-                      }}
-                    >
-                      {t('logs.filters.activityTypes')}
-                    </Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-                      {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
-                        const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
-                        return (
-                          <Pressable
-                            key={logType.id}
-                            onPress={() => {
-                              const newSet = new Set(selectedLogTypes);
-                              if (newSet.has(logType.id as LogTypeId)) {
-                                newSet.delete(logType.id as LogTypeId);
-                              } else {
-                                newSet.add(logType.id as LogTypeId);
-                              }
-                              setSelectedLogTypes(newSet);
-                              setCurrentPage(1);
-                            }}
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              paddingHorizontal: spacing[3],
-                              paddingVertical: 6,
-                              borderRadius: borderRadius.full,
-                              backgroundColor: isSelected
-                                ? colors.primary[600]
-                                : colors.surface[50],
-                            }}
-                          >
-                            <UiSymbol
-                              name={
-                                logType.icon === 'water'
-                                  ? 'drop.fill'
-                                  : logType.icon === 'flask'
-                                    ? 'flask.fill'
-                                    : logType.icon === 'basket'
-                                      ? 'basket.fill'
-                                      : logType.icon === 'cash'
-                                        ? 'dollarsign.circle.fill'
-                                        : logType.icon === 'leaf'
-                                          ? 'leaf.fill'
-                                          : logType.icon === 'document-text'
-                                            ? 'doc.text.fill'
-                                            : 'doc.fill'
-                              }
-                              size={14}
-                              color={isSelected ? '#FFFFFF' : logType.color}
-                            />
-                            <Text
-                              style={{
-                                marginLeft: spacing[1],
-                                fontSize: fontSize.xs,
-                                fontWeight: fontWeight.semibold,
-                                color: isSelected ? colors.white : colors.gray[700],
-                              }}
-                            >
-                              {t(logType.labelKey)}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginTop: spacing[4],
-                      }}
-                    >
-                      <Pressable
-                        onPress={() => setShowDatePickerFrom(true)}
-                        style={{ flex: 1, marginRight: spacing[2] }}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: colors.surface[50],
-                            paddingHorizontal: spacing[3],
-                            paddingVertical: spacing[2],
-                            borderRadius: borderRadius.xl,
+                    {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                      if (!selectedLogTypes.has(logType.id as LogTypeId)) return null;
+                      return (
+                        <Pressable
+                          key={logType.id}
+                          onPress={() => {
+                            const newSet = new Set(selectedLogTypes);
+                            newSet.delete(logType.id as LogTypeId);
+                            setSelectedLogTypes(newSet);
+                            setCurrentPage(1);
                           }}
+                          style={({ pressed }) => ({
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingHorizontal: spacing[3],
+                            paddingVertical: 6,
+                            borderRadius: borderRadius.full,
+                            backgroundColor: pressed
+                              ? m3.surface.surfaceContainerHigh
+                              : m3.surface.surfaceContainerLow,
+                            borderWidth: 1,
+                            borderColor: m3.colorScheme.outlineVariant,
+                          })}
                         >
-                          <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                            {t('common.from')}
-                          </Text>
+                          <UiSymbol
+                            name={
+                              logType.icon === 'water'
+                                ? 'drop.fill'
+                                : logType.icon === 'flask'
+                                  ? 'flask.fill'
+                                  : logType.icon === 'basket'
+                                    ? 'basket.fill'
+                                    : logType.icon === 'cash'
+                                      ? 'dollarsign.circle.fill'
+                                      : logType.icon === 'leaf'
+                                        ? 'leaf.fill'
+                                        : logType.icon === 'document-text'
+                                          ? 'doc.text.fill'
+                                          : 'doc.fill'
+                            }
+                            size={12}
+                            color={logType.color}
+                          />
                           <Text
                             style={{
-                              fontSize: fontSize.sm,
+                              marginLeft: spacing[1],
+                              fontSize: fontSize.xs,
                               fontWeight: fontWeight.semibold,
-                              color: colors.surface[900],
+                              color: m3.colorScheme.onSurfaceVariant,
                             }}
                           >
-                            {dateFrom
-                              ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
-                              : t('common.selectDate')}
+                            {t(logType.labelKey)}
                           </Text>
-                        </View>
-                      </Pressable>
+                        </Pressable>
+                      );
+                    })}
 
+                    {(dateFrom || dateTo) && (
                       <Pressable
-                        onPress={() => setShowDatePickerTo(true)}
-                        style={{ flex: 1, marginLeft: spacing[2] }}
+                        onPress={() => setIsFilterSheetOpen(true)}
+                        style={({ pressed }) => ({
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingHorizontal: spacing[3],
+                          paddingVertical: 6,
+                          borderRadius: borderRadius.full,
+                          backgroundColor: pressed
+                            ? m3.surface.surfaceContainerHigh
+                            : m3.surface.surfaceContainerLow,
+                          borderWidth: 1,
+                          borderColor: m3.colorScheme.outlineVariant,
+                        })}
                       >
-                        <View
+                        <UiSymbol name="calendar" size={12} color={m3.colorScheme.primary} />
+                        <Text
                           style={{
-                            backgroundColor: colors.surface[50],
-                            paddingHorizontal: spacing[3],
-                            paddingVertical: spacing[2],
-                            borderRadius: borderRadius.xl,
+                            marginLeft: spacing[1],
+                            fontSize: fontSize.xs,
+                            fontWeight: fontWeight.semibold,
+                            color: m3.colorScheme.onSurfaceVariant,
                           }}
                         >
-                          <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                            {t('common.to')}
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.semibold,
-                              color: colors.surface[900],
-                            }}
-                          >
-                            {dateTo
-                              ? formatDate(dateTo, { month: 'short', day: 'numeric' })
-                              : t('common.selectDate')}
-                          </Text>
-                        </View>
+                          {dateFrom
+                            ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
+                            : t('common.from')}
+                          {' – '}
+                          {dateTo
+                            ? formatDate(dateTo, { month: 'short', day: 'numeric' })
+                            : t('common.to')}
+                        </Text>
                       </Pressable>
-                    </View>
+                    )}
                   </View>
                 )}
               </View>
@@ -1125,82 +1141,6 @@ export default function LogsScreen() {
       </View>
 
       {/* Modals are now route-based */}
-
-      {showDatePickerFrom && (
-        <Modal
-          transparent
-          visible={showDatePickerFrom}
-          onRequestClose={() => setShowDatePickerFrom(false)}
-          animationType="fade"
-        >
-          <Pressable
-            style={{
-              flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-            }}
-            onPress={() => setShowDatePickerFrom(false)}
-          >
-            <View
-              style={{
-                backgroundColor: colors.white,
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                margin: spacing[4],
-                marginTop: 'auto',
-                marginBottom: 40,
-              }}
-              onStartShouldSetResponder={() => true}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: spacing[4],
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: fontWeight.semibold,
-                    color: colors.surface[900],
-                  }}
-                >
-                  {t('logs.datePicker.fromTitle')}
-                </Text>
-                <Pressable onPress={() => setShowDatePickerFrom(false)}>
-                  <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
-                </Pressable>
-              </View>
-              <DateTimePicker
-                value={dateFrom || new Date()}
-                mode="date"
-                display="default"
-                onChange={(_, date) => {
-                  if (date) setDateFrom(date);
-                }}
-                style={{ width: '100%', height: 200 }}
-                textColor="#2c2c2e"
-              />
-              <Pressable
-                onPress={() => setShowDatePickerFrom(false)}
-                style={{
-                  marginTop: spacing[4],
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius.xl,
-                  alignItems: 'center',
-                  backgroundColor: '#408059',
-                }}
-              >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
-                  {t('common.done')}
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Modal>
-      )}
-
       {showFarmSelector && (
         <Modal
           transparent
@@ -1217,6 +1157,8 @@ export default function LogsScreen() {
                 borderTopLeftRadius: borderRadius['3xl'],
                 borderTopRightRadius: borderRadius['3xl'],
                 overflow: 'hidden',
+                maxHeight: '78%',
+                paddingTop: Math.max(insets.top, spacing[3]),
               }}
             >
               <View
@@ -1469,78 +1411,307 @@ export default function LogsScreen() {
         </Modal>
       )}
 
-      {showDatePickerTo && (
+      {isFilterSheetOpen && (
         <Modal
           transparent
-          visible={showDatePickerTo}
-          onRequestClose={() => setShowDatePickerTo(false)}
-          animationType="fade"
+          visible={isFilterSheetOpen}
+          onRequestClose={() => setIsFilterSheetOpen(false)}
+          animationType="slide"
         >
-          <Pressable
-            style={{
-              flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-            }}
-            onPress={() => setShowDatePickerTo(false)}
-          >
-            <View
-              style={{
-                backgroundColor: colors.white,
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                margin: spacing[4],
-                marginTop: 'auto',
-                marginBottom: 40,
-              }}
-              onStartShouldSetResponder={() => true}
-            >
+          <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }}>
+            <View style={{ flex: 1, justifyContent: 'flex-end' }}>
               <View
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: spacing[4],
+                  backgroundColor: colors.white,
+                  borderTopLeftRadius: borderRadius['3xl'],
+                  borderTopRightRadius: borderRadius['3xl'],
+                  overflow: 'hidden',
+                  height: '78%',
+                  flex: 1,
                 }}
               >
-                <Text
+                <View
                   style={{
-                    fontSize: fontSize.lg,
-                    fontWeight: fontWeight.semibold,
-                    color: colors.surface[900],
+                    width: 48,
+                    height: 4,
+                    backgroundColor: colors.surface[200],
+                    borderRadius: borderRadius.full,
+                    marginHorizontal: 'auto',
+                    marginTop: spacing[3],
+                    marginBottom: spacing[2],
+                  }}
+                />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: spacing[6],
+                    paddingTop: spacing[2],
+                    paddingBottom: spacing[4],
                   }}
                 >
-                  {t('logs.datePicker.toTitle')}
-                </Text>
-                <Pressable onPress={() => setShowDatePickerTo(false)}>
-                  <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
-                </Pressable>
+                  <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
+                    {t('common.filter')}
+                  </Text>
+                  <Pressable onPress={() => setIsFilterSheetOpen(false)}>
+                    <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                  </Pressable>
+                </View>
+
+                <ScrollView
+                  style={{ flex: 1, paddingHorizontal: spacing[6] }}
+                  contentContainerStyle={{ paddingBottom: spacing[4] }}
+                  showsVerticalScrollIndicator={false}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.bold,
+                      color: colors.surface[500],
+                      marginBottom: spacing[2],
+                    }}
+                  >
+                    {t('logs.filters.activityTypes')}
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+                    {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                      const isSelected = selectedLogTypes.has(logType.id as LogTypeId);
+                      return (
+                        <Pressable
+                          key={logType.id}
+                          onPress={() => {
+                            const newSet = new Set(selectedLogTypes);
+                            if (newSet.has(logType.id as LogTypeId)) {
+                              newSet.delete(logType.id as LogTypeId);
+                            } else {
+                              newSet.add(logType.id as LogTypeId);
+                            }
+                            setSelectedLogTypes(newSet);
+                            setCurrentPage(1);
+                          }}
+                          style={({ pressed }) => ({
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingHorizontal: spacing[3],
+                            paddingVertical: 6,
+                            borderRadius: borderRadius.full,
+                            backgroundColor: isSelected
+                              ? m3.colorScheme.primary
+                              : pressed
+                                ? m3.surface.surfaceContainerHigh
+                                : m3.surface.surfaceContainerLow,
+                            borderWidth: isSelected ? 0 : 1,
+                            borderColor: m3.colorScheme.outlineVariant,
+                          })}
+                        >
+                          <UiSymbol
+                            name={
+                              logType.icon === 'water'
+                                ? 'drop.fill'
+                                : logType.icon === 'flask'
+                                  ? 'flask.fill'
+                                  : logType.icon === 'basket'
+                                    ? 'basket.fill'
+                                    : logType.icon === 'cash'
+                                      ? 'dollarsign.circle.fill'
+                                      : logType.icon === 'leaf'
+                                        ? 'leaf.fill'
+                                        : logType.icon === 'document-text'
+                                          ? 'doc.text.fill'
+                                          : 'doc.fill'
+                            }
+                            size={14}
+                            color={isSelected ? '#FFFFFF' : logType.color}
+                          />
+                          <Text
+                            style={{
+                              marginLeft: spacing[1],
+                              fontSize: fontSize.xs,
+                              fontWeight: fontWeight.semibold,
+                              color: isSelected ? colors.white : colors.gray[700],
+                            }}
+                          >
+                            {t(logType.labelKey)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.bold,
+                      color: colors.surface[500],
+                      marginTop: spacing[5],
+                      marginBottom: spacing[2],
+                    }}
+                  >
+                    {t('logs.filters.dateRange')}
+                  </Text>
+
+                  {Platform.OS === 'android' ? (
+                    <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                      <Pressable
+                        onPress={() => openAndroidDatePicker(dateFrom, (date) => setDateFrom(date))}
+                        style={{ flex: 1 }}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: m3.surface.surfaceContainerLow,
+                            paddingHorizontal: spacing[3],
+                            paddingVertical: spacing[2],
+                            borderRadius: borderRadius.xl,
+                            borderWidth: 1,
+                            borderColor: m3.colorScheme.outlineVariant,
+                          }}
+                        >
+                          <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                            {t('common.from')}
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.semibold,
+                              color: colors.surface[900],
+                            }}
+                          >
+                            {dateFrom
+                              ? formatDate(dateFrom, { month: 'short', day: 'numeric' })
+                              : t('common.selectDate')}
+                          </Text>
+                        </View>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => openAndroidDatePicker(dateTo, (date) => setDateTo(date))}
+                        style={{ flex: 1 }}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: m3.surface.surfaceContainerLow,
+                            paddingHorizontal: spacing[3],
+                            paddingVertical: spacing[2],
+                            borderRadius: borderRadius.xl,
+                            borderWidth: 1,
+                            borderColor: m3.colorScheme.outlineVariant,
+                          }}
+                        >
+                          <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                            {t('common.to')}
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.semibold,
+                              color: colors.surface[900],
+                            }}
+                          >
+                            {dateTo
+                              ? formatDate(dateTo, { month: 'short', day: 'numeric' })
+                              : t('common.selectDate')}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <View style={{ gap: spacing[4] }}>
+                      <View
+                        style={{
+                          padding: spacing[3],
+                          borderRadius: borderRadius.xl,
+                          borderWidth: 1,
+                          borderColor: m3.colorScheme.outlineVariant,
+                          backgroundColor: m3.surface.surfaceContainerLow,
+                        }}
+                      >
+                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                          {t('common.from')}
+                        </Text>
+                        <DateTimePicker
+                          value={dateFrom || new Date()}
+                          mode="date"
+                          display="spinner"
+                          onChange={(_, date) => {
+                            if (date) setDateFrom(date);
+                          }}
+                          style={{ height: 140 }}
+                        />
+                      </View>
+                      <View
+                        style={{
+                          padding: spacing[3],
+                          borderRadius: borderRadius.xl,
+                          borderWidth: 1,
+                          borderColor: m3.colorScheme.outlineVariant,
+                          backgroundColor: m3.surface.surfaceContainerLow,
+                        }}
+                      >
+                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                          {t('common.to')}
+                        </Text>
+                        <DateTimePicker
+                          value={dateTo || new Date()}
+                          mode="date"
+                          display="spinner"
+                          onChange={(_, date) => {
+                            if (date) setDateTo(date);
+                          }}
+                          style={{ height: 140 }}
+                        />
+                      </View>
+                    </View>
+                  )}
+                </ScrollView>
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: spacing[3],
+                    paddingHorizontal: spacing[6],
+                    paddingTop: spacing[3],
+                    paddingBottom: Math.max(insets.bottom, spacing[4]),
+                    borderTopWidth: 1,
+                    borderTopColor: colors.surface[200],
+                  }}
+                >
+                  <Pressable
+                    onPress={() => {
+                      clearFilters();
+                      setIsFilterSheetOpen(false);
+                    }}
+                    style={{
+                      flex: 1,
+                      paddingVertical: spacing[3],
+                      borderRadius: borderRadius.xl,
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: colors.surface[200],
+                    }}
+                  >
+                    <Text style={{ fontWeight: fontWeight.semibold, color: colors.gray[700] }}>
+                      {t('common.clearAll')}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setIsFilterSheetOpen(false)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: spacing[3],
+                      borderRadius: borderRadius.xl,
+                      alignItems: 'center',
+                      backgroundColor: m3.colorScheme.primary,
+                    }}
+                  >
+                    <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
+                      {t('common.done')}
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
-              <DateTimePicker
-                value={dateTo || new Date()}
-                mode="date"
-                display="default"
-                onChange={(_, date) => {
-                  if (date) setDateTo(date);
-                }}
-                style={{ width: '100%', height: 200 }}
-                textColor="#2c2c2e"
-              />
-              <Pressable
-                onPress={() => setShowDatePickerTo(false)}
-                style={{
-                  marginTop: spacing[4],
-                  paddingVertical: spacing[3],
-                  borderRadius: borderRadius.xl,
-                  alignItems: 'center',
-                  backgroundColor: '#408059',
-                }}
-              >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
-                  {t('common.done')}
-                </Text>
-              </Pressable>
             </View>
-          </Pressable>
+          </SafeAreaView>
         </Modal>
       )}
 

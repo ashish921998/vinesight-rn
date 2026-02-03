@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Alert,
+  Platform,
 } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 
@@ -22,7 +23,7 @@ import {
   PRIORITY_INFO,
 } from '../../types/task';
 import { TASK_TEMPLATES } from '../../constants/task-templates';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { useNotificationStore } from '@/stores';
 import {
   ensureNotificationPermissions,
@@ -250,10 +251,10 @@ export default function TaskForm({
   const selectedFarm = farms?.find((f) => f.id === farmId);
 
   const content = (
-    <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <KeyboardAvoidingView
-        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1, backgroundColor: colors.surface[50] }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
       >
         {/* Header */}
         <View
@@ -312,7 +313,13 @@ export default function TaskForm({
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+          contentInsetAdjustmentBehavior="automatic"
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
           {/* Templates Button */}
           {!isEditing && (
             <Pressable

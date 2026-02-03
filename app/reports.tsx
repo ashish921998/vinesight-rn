@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
 
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFarms, useProfile } from '../src/hooks';
@@ -96,7 +96,7 @@ export default function ReportsScreen() {
 
   if (farmsLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#1a5d1a" />
         </View>
@@ -106,7 +106,7 @@ export default function ReportsScreen() {
 
   if (!farms || farms.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <View
           style={{
             flexDirection: 'row',
@@ -155,7 +155,7 @@ export default function ReportsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       {/* Header */}
       <View
         style={{

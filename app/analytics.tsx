@@ -4,7 +4,7 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, SafeAreaView } fr
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/use-analytics';
 import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
@@ -102,8 +102,8 @@ export default function AnalyticsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
-      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <Stack.Screen options={{ title: t('analytics.title') }} />
 
         <ScrollView contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}>

@@ -16,7 +16,7 @@ import {
 
 import { Stack } from 'expo-router';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { telemetry } from '@/services/telemetry';
 
 type SystemDischargeResults = {
@@ -164,16 +164,17 @@ export default function SystemDischargeScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1, backgroundColor: colors.surface[50] }}
+          style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
         >
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
             contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
             <View
               style={{

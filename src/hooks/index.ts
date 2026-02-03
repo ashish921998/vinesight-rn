@@ -66,6 +66,7 @@ export {
   useUpdateWorkerAttendance,
   useDeleteWorkerAttendance,
   // Transactions
+  useAllWorkerTransactions,
   useWorkerTransactions,
   useCreateWorkerTransaction,
   useDeleteWorkerTransaction,

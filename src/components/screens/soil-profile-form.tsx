@@ -21,7 +21,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
 import { SoilSectionData } from '../../types/database';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 
 interface SoilProfileFormProps {
@@ -143,7 +143,7 @@ export default function SoilProfileForm({
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
-      style={{ flex: 1, backgroundColor: colors.surface[50] }}
+      style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
     >
       {/* Header */}
       <View

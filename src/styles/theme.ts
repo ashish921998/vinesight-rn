@@ -204,10 +204,10 @@ export const m3 = {
     errorContainer: '#FDE8E8',
     onErrorContainer: '#7F1D1D',
 
-    background: colors.surface[50],
+    background: '#F3F6F2',
     onBackground: colors.gray[900],
 
-    surface: colors.surface[50],
+    surface: '#F3F6F2',
     onSurface: colors.gray[900],
     surfaceVariant: colors.gray[100],
     onSurfaceVariant: colors.gray[700],
@@ -229,7 +229,7 @@ export const m3 = {
   surface: {
     surfaceDim: colors.surface[200],
     surfaceBright: colors.surface[50],
-    surfaceContainerLowest: colors.surface[50],
+    surfaceContainerLowest: '#F3F6F2',
     surfaceContainerLow: colors.surface[100],
     surfaceContainer: colors.gray[50],
     surfaceContainerHigh: colors.gray[100],

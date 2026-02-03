@@ -114,7 +114,7 @@ export default function DashboardScreen() {
   };
 
   const containerStyle: ViewStyle = {
-    paddingTop: insets.top + spacing[4],
+    paddingTop: spacing[3],
     paddingHorizontal: spacing[4],
   };
 
@@ -134,6 +134,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
+      contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={{ paddingBottom: bottomPadding }}
       refreshControl={
         <RefreshControl
@@ -156,25 +157,19 @@ export default function DashboardScreen() {
             <View style={{ flex: 1, paddingRight: spacing[2] }}>
               <StatsCard
                 title={t('dashboard.stats.farms')}
-                value={
-                  isLoadingStats
-                    ? '...'
-                    : formatNumber(stats?.farmsCount ?? 0, { maximumFractionDigits: 0 })
-                }
+                value={formatNumber(stats?.farmsCount ?? 0, { maximumFractionDigits: 0 })}
                 icon="leaf"
                 color={m3.colorScheme.primary}
+                isLoading={isLoadingStats}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
               <StatsCard
                 title={t('dashboard.stats.activeWorkers')}
-                value={
-                  isLoadingStats
-                    ? '...'
-                    : formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })
-                }
+                value={formatNumber(stats?.activeWorkersCount ?? 0, { maximumFractionDigits: 0 })}
                 icon="people"
                 color={m3.colorScheme.primary}
+                isLoading={isLoadingStats}
               />
             </View>
           </View>
@@ -182,21 +177,21 @@ export default function DashboardScreen() {
             <View style={{ flex: 1, paddingRight: spacing[2] }}>
               <StatsCard
                 title={t('dashboard.stats.activities')}
-                value={
-                  isLoadingStats
-                    ? '...'
-                    : formatNumber(stats?.recentActivitiesCount ?? 0, { maximumFractionDigits: 0 })
-                }
+                value={formatNumber(stats?.recentActivitiesCount ?? 0, {
+                  maximumFractionDigits: 0,
+                })}
                 icon="bar-chart"
                 color={m3.colorScheme.primary}
+                isLoading={isLoadingStats}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
               <StatsCard
                 title={t('dashboard.stats.harvest')}
-                value={isLoadingStats ? '...' : formatHarvest(stats?.totalHarvest ?? 0)}
+                value={formatHarvest(stats?.totalHarvest ?? 0)}
                 icon="basket"
                 color={m3.colorScheme.tertiary}
+                isLoading={isLoadingStats}
               />
             </View>
           </View>

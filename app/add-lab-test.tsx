@@ -3,7 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import LabTestForm from '@/components/screens/lab-test-form';
-import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, fontSize, fontWeight, m3 } from '@/styles/theme';
 
 export default function AddLabTestRoute() {
   const router = useRouter();
@@ -22,7 +22,7 @@ export default function AddLabTestRoute() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: spacing[6],
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.colorScheme.background,
         }}
       >
         <Text

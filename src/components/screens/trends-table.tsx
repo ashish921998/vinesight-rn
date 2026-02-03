@@ -158,8 +158,26 @@ export default function TrendsTable({
           <Text style={[styles.headerCell, styles.nutrientCell]}>{t('trends.table.nutrient')}</Text>
           {trendData.map((item, index) => {
             const date = new Date(item.date);
+            const pruningDate =
+              testType === 'petiole' && item.dateOfPruning ? new Date(item.dateOfPruning) : null;
+            const hasPruningDate = pruningDate !== null && !Number.isNaN(pruningDate.getTime());
             return (
               <View key={`header-${item.date}-${index}`} style={styles.headerDateContainer}>
+                {hasPruningDate && (
+                  <View style={styles.headerDateBlock}>
+                    <Text style={styles.headerDateLabel}>{t('trends.table.pruningDate')}</Text>
+                    <Text style={styles.headerDateValue}>
+                      {formatDate(pruningDate, {
+                        month: 'short',
+                        day: '2-digit',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                  </View>
+                )}
+                {hasPruningDate && (
+                  <Text style={styles.headerDateLabel}>{t('trends.table.reportDate')}</Text>
+                )}
                 <Text style={styles.headerDateMonth}>{formatDate(date, { month: 'short' })}</Text>
                 <Text style={styles.headerDateDay}>{formatDate(date, { day: '2-digit' })}</Text>
                 <Text style={styles.headerDateYear}>{formatDate(date, { year: 'numeric' })}</Text>
@@ -415,5 +433,20 @@ const styles = {
     fontSize: 10,
     fontWeight: '500' as const,
     color: '#6B7280' as const,
+  },
+  headerDateLabel: {
+    fontSize: 9,
+    fontWeight: '600' as const,
+    color: '#6B7280' as const,
+    textTransform: 'uppercase' as const,
+  },
+  headerDateValue: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: '#374151' as const,
+  },
+  headerDateBlock: {
+    alignItems: 'center' as const,
+    marginBottom: 4,
   },
 };

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import TaskForm from '@/components/screens/task-form';
+import { EntryForm } from '@/components/screens/entry-form';
 import { useModalStore } from '@/stores';
 
 export default function AddTaskRoute() {
@@ -19,11 +19,13 @@ export default function AddTaskRoute() {
   }, []);
 
   return (
-    <TaskForm
+    <EntryForm
       onClose={() => router.back()}
       presentation="screen"
       editingTask={addEntry?.editingTask ?? null}
       initialFarmId={initialFarmId ?? null}
+      tabs={['log', 'task']}
+      initialTab="task"
     />
   );
 }

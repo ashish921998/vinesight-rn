@@ -28,6 +28,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/i18n/format';
+import { m3 } from '@/styles/theme';
 
 import {
   IrrigationForm,
@@ -74,6 +75,12 @@ import { TASK_TEMPLATES } from '@/constants/task-templates';
 import { toSupabaseDateString } from '@/types/database';
 import type { Farm } from '@/types';
 import { telemetry } from '@/services/telemetry';
+import { useNotificationStore } from '@/stores';
+import {
+  ensureNotificationPermissions,
+  scheduleTaskDueReminder,
+  cancelNotification,
+} from '@/services/notifications';
 
 type EntryTab = 'log' | 'task';
 
@@ -522,6 +529,10 @@ export function EntryForm({
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const isEditingTask = !!editingTask;
+  const taskRemindersEnabled = useNotificationStore((s) => s.taskRemindersEnabled);
+  const taskSchedules = useNotificationStore((s) => s.taskSchedules);
+  const upsertTaskSchedule = useNotificationStore((s) => s.upsertTaskSchedule);
+  const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<TaskType>('note');
@@ -626,14 +637,16 @@ export function EntryForm({
       linked_record_id: null,
     };
 
+    let savedTask: TaskReminder | null = null;
+
     try {
       if (isEditingTask && editingTask?.id) {
-        await updateTask.mutateAsync({
+        savedTask = await updateTask.mutateAsync({
           id: editingTask.id,
           updates: taskData,
         });
       } else {
-        await createTask.mutateAsync(taskData);
+        savedTask = await createTask.mutateAsync(taskData);
         telemetry.capture('task_created', {
           task_type: type,
           priority,
@@ -644,12 +657,40 @@ export function EntryForm({
             : null,
         });
       }
-      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-      onTaskSaveSuccess?.();
-      onClose();
     } catch (_error) {
       Alert.alert(t('common.error'), t('common.errors.failedToSaveTask'));
+      return;
     }
+
+    if (savedTask?.id) {
+      const taskId = String(savedTask.id);
+      const existing = taskSchedules[taskId];
+
+      try {
+        if (existing?.notificationId) {
+          await cancelNotification(existing.notificationId);
+          removeTaskSchedule(taskId);
+        }
+
+        if (taskRemindersEnabled && savedTask.due_date) {
+          const granted = await ensureNotificationPermissions();
+          if (granted) {
+            const notificationId = await scheduleTaskDueReminder(taskId, savedTask.due_date);
+            if (notificationId) {
+              upsertTaskSchedule(taskId, { notificationId, dueDate: savedTask.due_date });
+            }
+          }
+        }
+      } catch (notificationError) {
+        if (__DEV__) {
+          console.error('Failed to schedule task notification:', notificationError);
+        }
+      }
+    }
+
+    await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    onTaskSaveSuccess?.();
+    onClose();
   };
 
   const selectedTaskFarm = farms?.find((f) => f.id === taskFarmId);
@@ -908,11 +949,11 @@ export function EntryForm({
           setSelectedLogType(null);
         }}
       >
-        <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+        <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
           <KeyboardAvoidingView
             behavior={isIOS ? 'padding' : 'height'}
             keyboardVerticalOffset={isIOS ? 0 : 20}
-            style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+            style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
           >
             <View
               style={{
@@ -1624,11 +1665,11 @@ export function EntryForm({
   );
 
   const content = (
-    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <KeyboardAvoidingView
         behavior={isIOS ? 'padding' : 'height'}
         keyboardVerticalOffset={isIOS ? 0 : 20}
-        style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+        style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
       >
         <View
           style={{

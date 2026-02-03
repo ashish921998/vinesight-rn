@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
+  Platform,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -18,7 +19,7 @@ import { useAuthStore, useLanguageStore, useNotificationStore } from '@/stores';
 import { useProfile, useUpdateProfile } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { supabase } from '@/lib/supabase';
 import { setAppLanguage } from '@/i18n';
 import type { SupportedLanguageCode } from '@/i18n/languages';
@@ -276,7 +277,14 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 32 }}
+      contentInsetAdjustmentBehavior="automatic"
+      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+    >
       {/* Profile Section */}
       <View style={styles.profileCard}>
         <View style={styles.rowCenter}>
@@ -461,7 +469,10 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowEditProfile(false)}
       >
-        <KeyboardAvoidingView behavior="padding" style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}
+        >
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -477,7 +488,14 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+          <ScrollView
+            style={styles.flex1}
+            contentContainerStyle={{ padding: 16 }}
+            contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             <View style={styles.formCard}>
               <View style={styles.mb4}>
                 <Text
@@ -586,7 +604,14 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
           </View>
-          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+          <ScrollView
+            style={styles.flex1}
+            contentContainerStyle={{ padding: 16 }}
+            contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             <View style={styles.sectionContent}>
               {(
                 [
@@ -643,7 +668,14 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
           </View>
-          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+          <ScrollView
+            style={styles.flex1}
+            contentContainerStyle={{ padding: 16 }}
+            contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             <View style={styles.sectionContent}>
               {CURRENCIES.map((currency, index) => (
                 <Pressable
@@ -693,7 +725,14 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
           </View>
-          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+          <ScrollView
+            style={styles.flex1}
+            contentContainerStyle={{ padding: 16 }}
+            contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             <View style={styles.sectionContent}>
               {AREA_UNITS.map((unit, index) => (
                 <Pressable
@@ -739,7 +778,10 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowDeleteAccount(false)}
       >
-        <KeyboardAvoidingView behavior="padding" style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}
+        >
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -755,7 +797,14 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          <ScrollView style={styles.flex1} contentContainerStyle={{ padding: 16 }}>
+          <ScrollView
+            style={styles.flex1}
+            contentContainerStyle={{ padding: 16 }}
+            contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             <View style={[styles.alertBox, styles.dangerAlert]}>
               <UISymbol name="exclamationmark.triangle.fill" size={20} color="#DC2626" />
               <Text
@@ -1037,7 +1086,7 @@ function NotificationToggle({
 }
 
 const styles = {
-  container: { flex: 1, backgroundColor: colors.surface[50] } as ViewStyle,
+  container: { flex: 1, backgroundColor: m3.colorScheme.background } as ViewStyle,
   profileCard: {
     backgroundColor: colors.surface[100],
     marginHorizontal: spacing[4],
@@ -1166,7 +1215,7 @@ const styles = {
     marginTop: spacing[1],
   } as TextStyle,
 
-  modalContainer: { flex: 1, backgroundColor: colors.surface[50] } as ViewStyle,
+  modalContainer: { flex: 1, backgroundColor: m3.colorScheme.background } as ViewStyle,
   modalHeader: {
     backgroundColor: colors.surface[100],
     paddingHorizontal: spacing[4],

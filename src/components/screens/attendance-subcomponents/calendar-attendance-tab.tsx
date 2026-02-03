@@ -3,14 +3,14 @@ import { View, Text, ScrollView, ActivityIndicator, Alert, Pressable } from 'rea
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
 import { WorkerSelectSheet } from './index';
 import i18n from '@/i18n';
 
 type AttendanceStatus = WorkStatus | null;
 
 const UI = {
-  bg: '#F4F6F8',
+  bg: m3.colorScheme.background,
   surface: '#FFFFFF',
   surfaceSoft: 'rgba(255, 255, 255, 0.9)',
   border: 'rgba(15, 23, 42, 0.08)',
@@ -123,13 +123,17 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
   ];
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: UI.bg }} showsVerticalScrollIndicator={false}>
-      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: UI.bg }}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: spacing[6] }}
+    >
+      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[2] }}>
         <View
           style={{
             borderRadius: borderRadius['3xl'],
             padding: spacing[4],
-            backgroundColor: UI.surfaceSoft,
+            backgroundColor: UI.surface,
             borderColor: UI.border,
             borderWidth: 1,
           }}
@@ -151,11 +155,11 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              paddingHorizontal: spacing[4],
-              paddingVertical: spacing[3],
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2],
               borderRadius: borderRadius['2xl'],
               borderWidth: 1,
-              marginTop: spacing[3],
+              marginTop: spacing[2],
               backgroundColor: colors.white,
               borderColor: UI.border,
             }}
@@ -175,19 +179,15 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
             </View>
             <UiSymbol name="chevron.down" size={14} color={UI.muted} />
           </Pressable>
-        </View>
-      </View>
 
-      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
-        <View
-          style={{
-            borderRadius: borderRadius['3xl'],
-            padding: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
-            borderWidth: 1,
-          }}
-        >
+          <View
+            style={{
+              height: 1,
+              backgroundColor: UI.border,
+              marginVertical: spacing[3],
+            }}
+          />
+
           <View
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
@@ -198,15 +198,15 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                 setCalendarMonth(newMonth);
               }}
               style={{
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 borderRadius: borderRadius.full,
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: UI.primarySoft,
               }}
             >
-              <UiSymbol name="chevron.left" size={22} color={UI.primary} />
+              <UiSymbol name="chevron.left" size={20} color={UI.primary} />
             </Pressable>
 
             <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: UI.text }}>
@@ -237,34 +237,29 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                   setCalendarMonth(newMonth);
                 }}
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 36,
+                  height: 36,
                   borderRadius: borderRadius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: UI.primarySoft,
                 }}
               >
-                <UiSymbol name="chevron.right" size={22} color={UI.primary} />
+                <UiSymbol name="chevron.right" size={20} color={UI.primary} />
               </Pressable>
             </View>
           </View>
-        </View>
-      </View>
 
-      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
-        <View
-          style={{
-            borderRadius: borderRadius['3xl'],
-            padding: spacing[4],
-            marginBottom: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
-            borderWidth: 1,
-          }}
-        >
+          <View
+            style={{
+              height: 1,
+              backgroundColor: UI.border,
+              marginVertical: spacing[3],
+            }}
+          />
+
           {loading ? (
-            <View style={{ paddingVertical: spacing[12], alignItems: 'center' }}>
+            <View style={{ paddingVertical: spacing[8], alignItems: 'center' }}>
               <ActivityIndicator size="small" color={UI.primary} />
             </View>
           ) : (
@@ -272,7 +267,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
               <View
                 style={{
                   flexDirection: 'row',
-                  paddingBottom: spacing[3],
+                  paddingBottom: spacing[2],
                   borderBottomWidth: 1,
                   borderColor: UI.border,
                 }}
@@ -294,7 +289,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                 ))}
               </View>
 
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingTop: spacing[3] }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingTop: spacing[2] }}>
                 {(() => {
                   const today = new Date();
                   return calendarDays.map((day, index) => {
@@ -375,75 +370,76 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                   });
                 })()}
               </View>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: spacing[6],
+                  marginTop: spacing[3],
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                  <View
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: borderRadius.full,
+                      backgroundColor: '#22C55E',
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: UI.text,
+                    }}
+                  >
+                    Full Day
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                  <View
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: borderRadius.full,
+                      backgroundColor: '#F59E0B',
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: UI.text,
+                    }}
+                  >
+                    Half Day
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                  <View
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: borderRadius.full,
+                      backgroundColor: '#EF4444',
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: UI.text,
+                    }}
+                  >
+                    Absent
+                  </Text>
+                </View>
+              </View>
             </>
           )}
-        </View>
-      </View>
-
-      <View style={{ marginHorizontal: spacing[4], marginBottom: spacing[6] }}>
-        <View
-          style={{
-            borderRadius: borderRadius['3xl'],
-            padding: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
-            borderWidth: 1,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: spacing[6],
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-              <View
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: '#22C55E',
-                }}
-              />
-              <Text
-                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: UI.text }}
-              >
-                Full Day
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-              <View
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: '#F59E0B',
-                }}
-              />
-              <Text
-                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: UI.text }}
-              >
-                Half Day
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-              <View
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: '#EF4444',
-                }}
-              />
-              <Text
-                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: UI.text }}
-              >
-                Absent
-              </Text>
-            </View>
-          </View>
         </View>
       </View>
       <WorkerSelectSheet

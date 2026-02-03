@@ -522,6 +522,8 @@ export default function FarmsScreen() {
           />
         }
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       />
 
       {/* FAB */}

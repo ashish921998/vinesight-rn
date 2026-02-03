@@ -280,6 +280,24 @@ export function useWorkerTransactions(workerId: number | undefined) {
   });
 }
 
+export function useAllWorkerTransactions() {
+  return useQuery({
+    queryKey: queryKeys.workerTransactions.listAll(),
+    queryFn: async (): Promise<WorkerTransaction[]> => {
+      const userId = await getUserId();
+
+      const { data, error } = await supabase
+        .from(TABLES.WORKER_TRANSACTIONS)
+        .select('*, workers!inner(user_id)')
+        .eq('workers.user_id', userId)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useCreateWorkerTransaction() {
   const queryClient = useQueryClient();
 
