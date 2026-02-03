@@ -18,11 +18,12 @@ import type { Farm } from '@/types';
 import { useIrrigationRecords, useUpdateFarmWaterLevel } from '@/hooks';
 import { WATER_GROWTH_STAGES } from '@/constants/calculator-models';
 import type { WaterGrowthStage } from '@/constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useNotificationStore } from '@/stores';
 import { ensureNotificationPermissions, notifyLowWaterAlert } from '@/services/notifications';
 import { useTranslation } from 'react-i18next';
 import { formatNumber, formatDate } from '@/i18n/format';
+import { useThemeColors } from '@/styles/use-theme';
 
 interface WaterLevelSheetProps {
   visible?: boolean;
@@ -39,6 +40,7 @@ export function WaterLevelSheet({
   farm,
   presentation = 'modal',
 }: WaterLevelSheetProps) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const isVisible = visible ?? true;
@@ -317,7 +319,7 @@ export function WaterLevelSheet({
               <Text
                 style={{
                   fontSize: fontSize.base,
-                  color: selectedGrowthStage ? colors.surface[900] : '#9CA3AF',
+                  color: selectedGrowthStage ? colors.surface[900] : colors.gray[400],
                 }}
               >
                 {selectedGrowthStage
@@ -392,7 +394,7 @@ export function WaterLevelSheet({
         >
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               borderRadius: borderRadius['2xl'],
               width: '100%',
               maxHeight: '70%',

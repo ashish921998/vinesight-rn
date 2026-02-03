@@ -8,7 +8,8 @@ import {
   type TextInputSubmitEditingEventData,
 } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
 
 interface FormFieldProps extends TextInputProps {
   label: string;
@@ -22,13 +23,15 @@ interface FormFieldProps extends TextInputProps {
 export function FormField({
   label,
   icon,
-  iconColor = '#6B7280',
+  iconColor,
   error,
   required = false,
   hint,
   editable = true,
   ...props
 }: FormFieldProps) {
+  const colors = useThemeColors();
+  const resolvedIconColor = iconColor ?? colors.gray[500];
   const [isFocused, setIsFocused] = useState(false);
   const hasError = !!error;
   const isDisabled = !editable;
@@ -37,14 +40,14 @@ export function FormField({
     : isFocused
       ? colors.primary[500]
       : colors.surface[300];
-  const backgroundColor = isDisabled ? colors.surface[100] : colors.white;
+  const backgroundColor = isDisabled ? colors.surface[100] : colors.surface[100];
 
   return (
     <View style={{ marginBottom: spacing[4] }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
         {icon && (
           <View style={{ marginRight: 6 }}>
-            <Symbol name={icon} size={16} color="#408059" />
+            <Symbol name={icon} size={16} color={colors.primary[600]} />
           </View>
         )}
         <Text
@@ -73,13 +76,13 @@ export function FormField({
       >
         {icon && (
           <View style={{ marginRight: 10 }}>
-            <Symbol name={icon} size={20} color={iconColor} />
+            <Symbol name={icon} size={20} color={resolvedIconColor} />
           </View>
         )}
 
         <TextInput
           style={[{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }, props.style]}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           editable={editable}
           onFocus={(e) => {
             setIsFocused(true);
@@ -149,6 +152,7 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
   }: NumericInputProps,
   ref,
 ) {
+  const colors = useThemeColors();
   const [textValue, setTextValue] = useState(value != null ? String(value) : '');
   const [isFocused, setIsFocused] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -160,7 +164,7 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
     : isFocused
       ? colors.primary[500]
       : colors.surface[300];
-  const backgroundColor = isDisabled ? colors.surface[100] : colors.white;
+  const backgroundColor = isDisabled ? colors.surface[100] : colors.surface[100];
 
   useEffect(() => {
     if (!isEditing) {
@@ -207,7 +211,7 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
         {props.icon && (
           <View style={{ marginRight: 6 }}>
-            <Symbol name={props.icon} size={16} color="#408059" />
+            <Symbol name={props.icon} size={16} color={colors.primary[600]} />
           </View>
         )}
         <Text
@@ -236,14 +240,14 @@ export const NumericInput = forwardRef<NumericInputHandle, NumericInputProps>(fu
       >
         {props.icon && (
           <View style={{ marginRight: 10 }}>
-            <Symbol name={props.icon} size={20} color={props.iconColor || '#6B7280'} />
+            <Symbol name={props.icon} size={20} color={props.iconColor ?? colors.gray[500]} />
           </View>
         )}
 
         <TextInput
           ref={internalRef}
           style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           keyboardType="decimal-pad"
           value={textValue}
           onChangeText={handleChangeText}

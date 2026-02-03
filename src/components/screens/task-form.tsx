@@ -22,7 +22,7 @@ import {
   PRIORITY_INFO,
 } from '../../types/task';
 import { TASK_TEMPLATES } from '../../constants/task-templates';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useNotificationStore } from '@/stores';
 import {
   ensureNotificationPermissions,
@@ -30,6 +30,7 @@ import {
   cancelNotification,
 } from '@/services/notifications';
 import { useTranslation } from 'react-i18next';
+import { useThemeColors } from '@/styles/use-theme';
 
 interface Props {
   visible?: boolean;
@@ -61,6 +62,7 @@ export default function TaskForm({
   onSaveSuccess,
   presentation = 'modal',
 }: Props) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const isVisible = visible ?? true;
@@ -258,7 +260,7 @@ export default function TaskForm({
         {/* Header */}
         <View
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderBottomWidth: 1,
             borderBottomColor: colors.surface[200],
             paddingHorizontal: spacing[4],
@@ -326,7 +328,7 @@ export default function TaskForm({
                 alignItems: 'center',
               }}
             >
-              <IconSymbol name="bolt.fill" size={20} color="#408059" />
+              <IconSymbol name="bolt.fill" size={20} color={colors.primary[600]} />
               <Text
                 style={{
                   color: colors.primary[700],
@@ -340,7 +342,7 @@ export default function TaskForm({
               <IconSymbol
                 name={showTemplates ? 'chevron.up' : 'chevron.down'}
                 size={20}
-                color="#408059"
+                color={colors.primary[600]}
               />
             </Pressable>
           )}
@@ -349,7 +351,7 @@ export default function TaskForm({
           {showTemplates && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 marginBottom: spacing[4],
                 borderWidth: 1,
@@ -423,7 +425,7 @@ export default function TaskForm({
             <Pressable
               onPress={() => setShowFarmPicker(!showFarmPicker)}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
@@ -435,7 +437,7 @@ export default function TaskForm({
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <IconSymbol name="leaf.fill" size={20} color="#408059" />
+                <IconSymbol name="leaf.fill" size={20} color={colors.primary[600]} />
                 <Text
                   style={{
                     fontSize: fontSize.base,
@@ -446,12 +448,12 @@ export default function TaskForm({
                   {selectedFarm?.name || t('tasks.form.selectFarm')}
                 </Text>
               </View>
-              <IconSymbol name="chevron.down" size={20} color="#9CA3AF" />
+              <IconSymbol name="chevron.down" size={20} color={colors.gray[400]} />
             </Pressable>
             {showFarmPicker && farms && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius.xl,
                   marginTop: spacing[2],
                   borderWidth: 1,
@@ -504,7 +506,7 @@ export default function TaskForm({
               onChangeText={setTitle}
               placeholder={t('tasks.form.placeholders.title')}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
@@ -513,7 +515,7 @@ export default function TaskForm({
                 borderWidth: 1,
                 borderColor: colors.surface[200],
               }}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.gray[400]}
             />
           </View>
 
@@ -536,7 +538,7 @@ export default function TaskForm({
               multiline
               numberOfLines={3}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
@@ -547,7 +549,7 @@ export default function TaskForm({
                 minHeight: 80,
                 textAlignVertical: 'top',
               }}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.gray[400]}
             />
           </View>
 
@@ -568,7 +570,7 @@ export default function TaskForm({
               <Pressable
                 onPress={() => setShowTypePicker(!showTypePicker)}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius.xl,
                   paddingHorizontal: spacing[4],
                   paddingVertical: spacing[3],
@@ -595,7 +597,7 @@ export default function TaskForm({
                     {t(TASK_TYPE_INFO[type].labelKey)}
                   </Text>
                 </View>
-                <IconSymbol name="chevron.down" size={16} color="#9CA3AF" />
+                <IconSymbol name="chevron.down" size={16} color={colors.gray[400]} />
               </Pressable>
             </View>
 
@@ -614,7 +616,7 @@ export default function TaskForm({
               <Pressable
                 onPress={() => setShowPriorityPicker(!showPriorityPicker)}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius.xl,
                   paddingHorizontal: spacing[4],
                   paddingVertical: spacing[3],
@@ -643,7 +645,7 @@ export default function TaskForm({
                     {t(PRIORITY_INFO[priority].labelKey)}
                   </Text>
                 </View>
-                <IconSymbol name="chevron.down" size={16} color="#9CA3AF" />
+                <IconSymbol name="chevron.down" size={16} color={colors.gray[400]} />
               </Pressable>
             </View>
           </View>
@@ -652,7 +654,7 @@ export default function TaskForm({
           {showTypePicker && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 marginBottom: spacing[4],
                 borderWidth: 1,
@@ -699,7 +701,7 @@ export default function TaskForm({
           {showPriorityPicker && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 marginBottom: spacing[4],
                 borderWidth: 1,
@@ -779,7 +781,7 @@ export default function TaskForm({
               }}
               placeholder={t('tasks.form.placeholders.dueDate')}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
@@ -788,7 +790,7 @@ export default function TaskForm({
                 borderWidth: 1,
                 borderColor: dueDateError ? colors.error : colors.surface[200],
               }}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.gray[400]}
             />
             {dueDateError ? (
               <Text style={{ fontSize: fontSize.xs, color: colors.error, marginTop: spacing[1] }}>

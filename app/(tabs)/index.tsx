@@ -23,10 +23,11 @@ import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/card
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import type { LogTypeId } from '@/constants/calculator-models';
-import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
+import { useThemeTokens } from '@/styles/use-theme';
 
 // ============================================================
 // MARK: - Greeting Helper
@@ -54,6 +55,7 @@ function formatHarvest(value: number): string {
 // ============================================================
 
 export default function DashboardScreen() {
+  const { m3, colors } = useThemeTokens();
   const { t } = useTranslation();
 
   const router = useRouter();

@@ -6,8 +6,9 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 interface StatsCardProps {
   title: string;
@@ -23,12 +24,13 @@ export function StatsCard({
   title,
   value,
   icon,
-  color = '#408059',
+  color,
   iconColor,
   subtitle,
   onPress,
 }: StatsCardProps) {
-  const finalColor = iconColor || color;
+  const m3 = useM3();
+  const finalColor = iconColor || color || m3.colorScheme.primary;
 
   const containerStyle: ViewStyle = {
     borderRadius: m3.shape.cornerMedium,

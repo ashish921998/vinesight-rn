@@ -3,14 +3,16 @@
  * Excel-like table view for test parameters
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../../hooks/use-lab-tests';
-import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
 
 import { formatDate } from '@/i18n/format';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface Props {
   trendData: TrendData[];
@@ -26,6 +28,182 @@ export default function TrendsTable({
   testType,
 }: Props) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(
+    () => ({
+      container: {
+        backgroundColor: colors.surface[100],
+        margin: 16,
+        borderRadius: 12,
+        overflow: 'hidden' as const,
+      },
+      headerRow: {
+        flexDirection: 'row' as const,
+        backgroundColor: colors.surface[50],
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.surface[200],
+      },
+      headerCell: {
+        flex: 1,
+        fontSize: 12,
+        fontWeight: '700' as const,
+        color: colors.gray[700],
+        textAlign: 'center' as const,
+      },
+      nutrientCell: {
+        flex: 1.2,
+        paddingLeft: 12,
+      },
+      nutrientLabelContainer: {
+        flexDirection: 'column' as const,
+        gap: 2,
+      },
+      nutrientLabel: {
+        fontWeight: '600' as const,
+        color: colors.gray[700],
+        fontSize: 13,
+      },
+      nutrientRange: {
+        fontSize: 10,
+        color: colors.gray[500],
+        fontWeight: '400' as const,
+      },
+      row: {
+        flexDirection: 'row' as const,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.surface[200],
+      },
+      rowEven: {
+        backgroundColor: colors.surface[50],
+      },
+      cell: {
+        flex: 1,
+        flexDirection: 'row' as const,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        paddingVertical: 12,
+        borderWidth: 1,
+        borderColor: colors.surface[200],
+      },
+      increase: {
+        color: colors.success,
+        fontSize: 10,
+      },
+      decrease: {
+        color: colors.error,
+        fontSize: 10,
+      },
+      stable: {
+        color: colors.gray[500],
+        fontSize: 10,
+      },
+      cellGray: {
+        backgroundColor: colors.surface[200],
+      },
+      cellOptimal: {
+        backgroundColor: colorWithOpacity(colors.success, 0.15),
+      },
+      cellWarning: {
+        backgroundColor: colorWithOpacity(colors.warning, 0.15),
+      },
+      cellCritical: {
+        backgroundColor: colorWithOpacity(colors.error, 0.12),
+      },
+      cellText: {
+        fontSize: 13,
+        textAlign: 'center' as const,
+        color: colors.gray[700],
+      },
+      legendContainer: {
+        backgroundColor: colors.surface[100],
+        margin: 16,
+        marginTop: 0,
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: colors.surface[200],
+      },
+      legendContent: {
+        gap: 6,
+      },
+      legendTitle: {
+        fontSize: 10,
+        fontWeight: '600' as const,
+        color: colors.gray[700],
+      },
+      colorGuideRow: {
+        flexDirection: 'row' as const,
+        gap: 12,
+        flexWrap: 'wrap' as const,
+      },
+      legendItem: {
+        flexDirection: 'row' as const,
+        alignItems: 'center' as const,
+        gap: 4,
+      },
+      colorBox: {
+        width: 12,
+        height: 12,
+        borderRadius: 2,
+        borderWidth: 1,
+      },
+      colorBoxOptimal: {
+        backgroundColor: colorWithOpacity(colors.success, 0.2),
+        borderColor: colorWithOpacity(colors.success, 0.5),
+      },
+      colorBoxWarning: {
+        backgroundColor: colorWithOpacity(colors.warning, 0.2),
+        borderColor: colorWithOpacity(colors.warning, 0.5),
+      },
+      colorBoxCritical: {
+        backgroundColor: colorWithOpacity(colors.error, 0.2),
+        borderColor: colorWithOpacity(colors.error, 0.5),
+      },
+      legendText: {
+        fontSize: 10,
+        color: colors.gray[700],
+      },
+      trendGuide: {
+        flexDirection: 'row' as const,
+        alignItems: 'center' as const,
+        gap: 4,
+      },
+      trendItems: {
+        flexDirection: 'row' as const,
+        gap: 8,
+        flexWrap: 'wrap' as const,
+      },
+      trendItem: {
+        flexDirection: 'row' as const,
+        alignItems: 'center' as const,
+        gap: 4,
+      },
+      headerDateContainer: {
+        flex: 1,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        paddingVertical: 4,
+      },
+      headerDateMonth: {
+        fontSize: 11,
+        fontWeight: '600' as const,
+        color: colors.gray[700],
+      },
+      headerDateDay: {
+        fontSize: 14,
+        fontWeight: '700' as const,
+        color: colors.gray[700],
+      },
+      headerDateYear: {
+        fontSize: 10,
+        fontWeight: '500' as const,
+        color: colors.gray[500],
+      },
+    }),
+    [colors],
+  );
   if (trendData.length === 0) {
     return (
       <View
@@ -244,176 +422,3 @@ export default function TrendsTable({
     </ScrollView>
   );
 }
-
-const styles = {
-  container: {
-    backgroundColor: 'white' as const,
-    margin: 16,
-    borderRadius: 12,
-    overflow: 'hidden' as const,
-  },
-  headerRow: {
-    flexDirection: 'row' as const,
-    backgroundColor: '#f2f2f7' as const,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb' as const,
-  },
-  headerCell: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: '700' as const,
-    color: '#374151' as const,
-    textAlign: 'center' as const,
-  },
-  nutrientCell: {
-    flex: 1.2,
-    paddingLeft: 12,
-  },
-  nutrientLabelContainer: {
-    flexDirection: 'column' as const,
-    gap: 2,
-  },
-  nutrientLabel: {
-    fontWeight: '600' as const,
-    color: '#374151' as const,
-    fontSize: 13,
-  },
-  nutrientRange: {
-    fontSize: 10,
-    color: '#6B7280' as const,
-    fontWeight: '400' as const,
-  },
-  row: {
-    flexDirection: 'row' as const,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6' as const,
-  },
-  rowEven: {
-    backgroundColor: '#fafafa' as const,
-  },
-  cell: {
-    flex: 1,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb' as const,
-  },
-  increase: {
-    color: '#10B981' as const,
-    fontSize: 10,
-  },
-  decrease: {
-    color: '#EF4444' as const,
-    fontSize: 10,
-  },
-  stable: {
-    color: '#6B7280' as const,
-    fontSize: 10,
-  },
-  cellGray: {
-    backgroundColor: '#F3F4F6' as const,
-  },
-  cellOptimal: {
-    backgroundColor: '#ECFDF5' as const,
-  },
-  cellWarning: {
-    backgroundColor: '#FEFCE8' as const,
-  },
-  cellCritical: {
-    backgroundColor: '#FEF2F2' as const,
-  },
-  cellText: {
-    fontSize: 13,
-    textAlign: 'center' as const,
-    color: '#374151' as const,
-  },
-  legendContainer: {
-    backgroundColor: '#F9FAFB' as const,
-    margin: 16,
-    marginTop: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB' as const,
-  },
-  legendContent: {
-    gap: 6,
-  },
-  legendTitle: {
-    fontSize: 10,
-    fontWeight: '600' as const,
-    color: '#374151' as const,
-  },
-  colorGuideRow: {
-    flexDirection: 'row' as const,
-    gap: 12,
-    flexWrap: 'wrap' as const,
-  },
-  legendItem: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 4,
-  },
-  colorBox: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
-    borderWidth: 1,
-  },
-  colorBoxOptimal: {
-    backgroundColor: '#ECFDF5' as const,
-    borderColor: '#A7F3D0' as const,
-  },
-  colorBoxWarning: {
-    backgroundColor: '#FEFCE8' as const,
-    borderColor: '#FDE68A' as const,
-  },
-  colorBoxCritical: {
-    backgroundColor: '#FEF2F2' as const,
-    borderColor: '#FECACA' as const,
-  },
-  legendText: {
-    fontSize: 10,
-    color: '#374151' as const,
-  },
-  trendGuide: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 4,
-  },
-  trendItems: {
-    flexDirection: 'row' as const,
-    gap: 8,
-    flexWrap: 'wrap' as const,
-  },
-  trendItem: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 4,
-  },
-  headerDateContainer: {
-    flex: 1,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    paddingVertical: 4,
-  },
-  headerDateMonth: {
-    fontSize: 11,
-    fontWeight: '600' as const,
-    color: '#374151' as const,
-  },
-  headerDateDay: {
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: '#374151' as const,
-  },
-  headerDateYear: {
-    fontSize: 10,
-    fontWeight: '500' as const,
-    color: '#6B7280' as const,
-  },
-};

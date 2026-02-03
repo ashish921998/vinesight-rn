@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
 
 interface UnitPickerModalProps<T extends string> {
   visible: boolean;
@@ -29,6 +30,7 @@ export function UnitPickerModal<T extends string>({
   options,
   title,
 }: UnitPickerModalProps<T>) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const handleSelect = (unit: T) => {
     onSelect(unit);

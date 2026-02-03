@@ -20,7 +20,9 @@ import {
   formatParameterKey,
 } from '../src/hooks/use-lab-tests';
 import { SoilTestRecord, PetioleTestRecord } from '../src/types/database';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 type TestType = 'soil' | 'petiole';
 
@@ -35,6 +37,7 @@ const formatDate = (dateString: string): string => {
 };
 
 export default function LabTestsScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -97,7 +100,7 @@ export default function LabTestsScreen() {
   const renderTestCard = (test: SoilTestRecord | PetioleTestRecord, type: TestType) => {
     const isSoil = type === 'soil';
     const params = Object.entries(test.parameters || {}).slice(0, 8);
-    const color = isSoil ? '#597A61' : '#4C806B';
+    const color = isSoil ? colors.labTest.soil : colors.labTest.petiole;
 
     return (
       <Pressable
@@ -108,12 +111,14 @@ export default function LabTestsScreen() {
           setDetailsVisible(true);
         }}
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backgroundColor: colors.surface[100],
           borderRadius: borderRadius['2xl'],
           padding: spacing[4],
           marginBottom: spacing[4],
           borderWidth: 1,
-          borderColor: isSoil ? 'rgba(89, 122, 97, 0.2)' : 'rgba(76, 128, 107, 0.2)',
+          borderColor: isSoil
+            ? colorWithOpacity(colors.labTest.soil, 0.2)
+            : colorWithOpacity(colors.labTest.petiole, 0.2),
         }}
       >
         <View
@@ -130,7 +135,9 @@ export default function LabTestsScreen() {
                 width: 40,
                 height: 40,
                 borderRadius: 20,
-                backgroundColor: isSoil ? 'rgba(89, 122, 97, 0.1)' : 'rgba(76, 128, 107, 0.1)',
+                backgroundColor: isSoil
+                  ? colorWithOpacity(colors.labTest.soil, 0.12)
+                  : colorWithOpacity(colors.labTest.petiole, 0.12),
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -174,7 +181,7 @@ export default function LabTestsScreen() {
             }}
             style={{ padding: spacing[2] }}
           >
-            <IconSymbol name="trash" size={18} color="#ef4444" />
+            <IconSymbol name="trash" size={18} color={colors.error} />
           </Pressable>
         </View>
 
@@ -193,7 +200,7 @@ export default function LabTestsScreen() {
                 <View
                   key={key}
                   style={{
-                    backgroundColor: 'rgba(242, 242, 247, 0.5)',
+                    backgroundColor: colors.surface[50],
                     borderRadius: borderRadius.lg,
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[2],
@@ -233,7 +240,7 @@ export default function LabTestsScreen() {
           <Text
             style={{
               fontSize: 12,
-              color: '#666',
+              color: colors.surface[500],
               marginTop: 4,
             }}
             numberOfLines={2}
@@ -246,7 +253,7 @@ export default function LabTestsScreen() {
   };
 
   const renderEmptyState = (type: TestType) => {
-    const color = type === 'soil' ? '#597A61' : '#4C806B';
+    const color = type === 'soil' ? colors.labTest.soil : colors.labTest.petiole;
 
     return (
       <View
@@ -303,7 +310,7 @@ export default function LabTestsScreen() {
           }
           style={{
             marginTop: spacing[4],
-            backgroundColor: '#408059',
+            backgroundColor: colors.primary[600],
             paddingHorizontal: spacing[6],
             paddingVertical: spacing[3],
             borderRadius: borderRadius.full,
@@ -311,7 +318,7 @@ export default function LabTestsScreen() {
             alignItems: 'center',
           }}
         >
-          <IconSymbol name="plus" size={20} color="white" />
+          <IconSymbol name="plus" size={20} color={colors.white} />
           <Text
             style={{ color: colors.white, fontWeight: fontWeight.semibold, marginLeft: spacing[1] }}
             textBreakStrategy="highQuality"
@@ -328,14 +335,14 @@ export default function LabTestsScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
+          <IconSymbol name="exclamationmark.triangle.fill" size={48} color={colors.error} />
           <Text
             style={{
               fontSize: fontSize.lg,
               fontWeight: fontWeight.semibold,
-              color: colors.gray[700],
+              color: colors.surface[900],
               marginTop: spacing[4],
             }}
             textBreakStrategy="highQuality"
@@ -347,14 +354,14 @@ export default function LabTestsScreen() {
             onPress={() => router.back()}
             style={{
               marginTop: spacing[4],
-              backgroundColor: colors.gray[200],
+              backgroundColor: colors.surface[200],
               paddingHorizontal: spacing[6],
               paddingVertical: spacing[2],
               borderRadius: borderRadius.lg,
             }}
           >
             <Text
-              style={{ color: colors.gray[700], fontWeight: fontWeight.medium }}
+              style={{ color: colors.surface[700], fontWeight: fontWeight.medium }}
               textBreakStrategy="highQuality"
               lineBreakStrategyIOS="standard"
             >
@@ -367,7 +374,7 @@ export default function LabTestsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
       {/* Header */}
       <View
         style={{
@@ -378,13 +385,13 @@ export default function LabTestsScreen() {
           paddingBottom: spacing[3],
           borderBottomWidth: 1,
           borderBottomColor: colors.gray[200],
-          backgroundColor: 'rgba(255,255,255,0.8)',
+          backgroundColor: colors.surface[100],
         }}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <IconSymbol name="chevron.left" size={24} color="#333" />
+          <IconSymbol name="chevron.left" size={24} color={colors.surface[700]} />
         </Pressable>
-        <IconSymbol name="flask.fill" size={24} color="#408059" />
+        <IconSymbol name="flask.fill" size={24} color={colors.primary[600]} />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.gray[800] }}
@@ -412,7 +419,7 @@ export default function LabTestsScreen() {
             }
           }}
           style={{
-            backgroundColor: '#408059',
+            backgroundColor: colors.primary[600],
             paddingHorizontal: spacing[3],
             paddingVertical: spacing[2],
             borderRadius: borderRadius.full,
@@ -421,7 +428,7 @@ export default function LabTestsScreen() {
             marginRight: spacing[2],
           }}
         >
-          <IconSymbol name="arrow.up.right" size={16} color="white" />
+          <IconSymbol name="arrow.up.right" size={16} color={colors.white} />
           <Text
             style={{
               color: colors.white,
@@ -446,12 +453,12 @@ export default function LabTestsScreen() {
             })
           }
           style={{
-            backgroundColor: '#408059',
+            backgroundColor: colors.primary[600],
             padding: spacing[2],
             borderRadius: borderRadius.full,
           }}
         >
-          <IconSymbol name="plus" size={24} color="white" />
+          <IconSymbol name="plus" size={24} color={colors.white} />
         </Pressable>
       </View>
 
@@ -459,7 +466,7 @@ export default function LabTestsScreen() {
       <View
         style={{
           flexDirection: 'row',
-          backgroundColor: 'rgba(255,255,255,0.8)',
+          backgroundColor: colors.surface[100],
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[3],
           borderBottomWidth: 1,
@@ -473,7 +480,7 @@ export default function LabTestsScreen() {
             paddingVertical: spacing[2],
             marginRight: spacing[2],
             borderBottomWidth: selectedTab === 'soil' ? 2 : 0,
-            borderBottomColor: selectedTab === 'soil' ? '#597A61' : 'transparent',
+            borderBottomColor: selectedTab === 'soil' ? colors.labTest.soil : 'transparent',
           }}
         >
           <Text
@@ -482,7 +489,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'soil' ? '#597A61' : colors.gray[400],
+              color: selectedTab === 'soil' ? colors.labTest.soil : colors.gray[400],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -497,7 +504,7 @@ export default function LabTestsScreen() {
             paddingVertical: spacing[2],
             marginLeft: spacing[2],
             borderBottomWidth: selectedTab === 'petiole' ? 2 : 0,
-            borderBottomColor: selectedTab === 'petiole' ? '#4C806B' : 'transparent',
+            borderBottomColor: selectedTab === 'petiole' ? colors.labTest.petiole : 'transparent',
           }}
         >
           <Text
@@ -506,7 +513,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'petiole' ? '#4C806B' : colors.gray[400],
+              color: selectedTab === 'petiole' ? colors.labTest.petiole : colors.gray[400],
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -519,7 +526,7 @@ export default function LabTestsScreen() {
       {/* Content */}
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color="#8b5cf6" />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text
             style={{ color: colors.gray[500], marginTop: spacing[2] }}
             textBreakStrategy="highQuality"

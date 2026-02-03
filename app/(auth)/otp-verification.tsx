@@ -4,14 +4,16 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, OTPInput } from '@/components/ui';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
+import { useM3 } from '@/styles/use-theme';
 
 const RESEND_COOLDOWN = 60; // seconds
 
 export default function OTPVerificationScreen() {
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const { email } = useLocalSearchParams<{ email: string }>();

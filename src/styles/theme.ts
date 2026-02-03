@@ -3,21 +3,63 @@
  * Ported from tailwind.config.js for inline style usage
  */
 
-export const colors = {
+import { colorWithOpacity } from '@/utils/color';
+
+const lightGray = {
+  50: '#f9fafb',
+  100: '#f3f4f6',
+  200: '#e5e7eb',
+  300: '#d1d5db',
+  400: '#9ca3af',
+  500: '#6b7280',
+  600: '#4b5563',
+  700: '#374151',
+  800: '#1f2937',
+  900: '#111827',
+} as const;
+
+const darkGray = {
+  50: '#111827',
+  100: '#1f2937',
+  200: '#374151',
+  300: '#4b5563',
+  400: '#6b7280',
+  500: '#9ca3af',
+  600: '#d1d5db',
+  700: '#e5e7eb',
+  800: '#f3f4f6',
+  900: '#f9fafb',
+} as const;
+
+const lightSurface = {
+  50: '#f2f2f7',
+  100: '#ffffff',
+  200: '#f2f2f7',
+  300: '#e5e5ea',
+  400: '#d1d1d6',
+  500: '#8e8e93',
+  600: '#636366',
+  700: '#48484a',
+  800: '#3a3a3c',
+  900: '#2c2c2e',
+} as const;
+
+const darkSurface = {
+  50: '#111827',
+  100: '#1f2937',
+  200: '#374151',
+  300: '#4b5563',
+  400: '#6b7280',
+  500: '#9ca3af',
+  600: '#d1d5db',
+  700: '#e5e7eb',
+  800: '#f3f4f6',
+  900: '#f9fafb',
+} as const;
+
+const baseColors = {
   white: '#ffffff',
   black: '#000000',
-  gray: {
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
-    600: '#4b5563',
-    700: '#374151',
-    800: '#1f2937',
-    900: '#111827',
-  },
   // Primary - Monochromatic Green Palette
   primary: {
     50: '#f0f5f2',
@@ -64,19 +106,6 @@ export const colors = {
     soil: '#597A61',
     petiole: '#4C806B',
   },
-  // Surface Colors (iOS System)
-  surface: {
-    50: '#f2f2f7',
-    100: '#ffffff',
-    200: '#f2f2f7',
-    300: '#e5e5ea',
-    400: '#d1d1d6',
-    500: '#8e8e93',
-    600: '#636366',
-    700: '#48484a',
-    800: '#3a3a3c',
-    900: '#2c2c2e',
-  },
   // Status Colors
   warning: '#ff9500',
   error: '#ff3b30',
@@ -92,6 +121,22 @@ export const colors = {
     good: '#0b8d32',
   },
 } as const;
+
+export const colors = {
+  ...baseColors,
+  gray: lightGray,
+  surface: lightSurface,
+} as const;
+
+export const darkColors = {
+  ...baseColors,
+  gray: darkGray,
+  surface: darkSurface,
+} as const;
+
+export type ThemeColors = typeof colors;
+
+export const getThemeColors = (isDark: boolean): ThemeColors => (isDark ? darkColors : colors);
 
 export const spacing = {
   0: 0,
@@ -180,61 +225,7 @@ export const shadows = {
   },
 } as const;
 
-// Material Design 3 (M3-ish) semantic roles (light theme starter)
-// Use these roles from screens/components instead of raw hex values.
-export const m3 = {
-  colorScheme: {
-    primary: colors.primary[500],
-    onPrimary: colors.surface[100],
-    primaryContainer: colors.primary[100],
-    onPrimaryContainer: colors.primary[900],
-
-    secondary: colors.secondary[500],
-    onSecondary: colors.surface[100],
-    secondaryContainer: colors.primary[50],
-    onSecondaryContainer: colors.primary[900],
-
-    tertiary: colors.harvest[500],
-    onTertiary: colors.surface[100],
-    tertiaryContainer: colors.primary[50],
-    onTertiaryContainer: colors.primary[900],
-
-    error: colors.error,
-    onError: colors.surface[100],
-    errorContainer: '#FDE8E8',
-    onErrorContainer: '#7F1D1D',
-
-    background: colors.surface[50],
-    onBackground: colors.gray[900],
-
-    surface: colors.surface[50],
-    onSurface: colors.gray[900],
-    surfaceVariant: colors.gray[100],
-    onSurfaceVariant: colors.gray[700],
-
-    outline: colors.gray[300],
-    outlineVariant: colors.gray[200],
-
-    inverseSurface: colors.gray[900],
-    inverseOnSurface: colors.gray[50],
-    inversePrimary: colors.primary[200],
-
-    shadow: '#000000',
-    scrim: '#000000',
-
-    // Not an official role; used for “Needs attention” affordances.
-    warning: colors.warning,
-    onWarning: colors.surface[100],
-  },
-  surface: {
-    surfaceDim: colors.surface[200],
-    surfaceBright: colors.surface[50],
-    surfaceContainerLowest: colors.surface[50],
-    surfaceContainerLow: colors.surface[100],
-    surfaceContainer: colors.gray[50],
-    surfaceContainerHigh: colors.gray[100],
-    surfaceContainerHighest: colors.gray[200],
-  },
+const m3Base = {
   stateLayerOpacity: {
     pressed: 0.12,
     focus: 0.12,
@@ -275,16 +266,85 @@ export const m3 = {
   },
 } as const;
 
+const createM3Theme = (isDark: boolean) => {
+  const themeColors = getThemeColors(isDark);
+  const onAccent = isDark ? themeColors.gray[50] : themeColors.surface[100];
+  const primary = isDark ? colors.primary[300] : colors.primary[500];
+  const error = isDark ? '#ff453a' : colors.error;
+
+  return {
+    colorScheme: {
+      primary,
+      onPrimary: onAccent,
+      primaryContainer: isDark ? colors.primary[800] : colors.primary[100],
+      onPrimaryContainer: isDark ? colors.primary[50] : colors.primary[900],
+
+      secondary: colors.secondary[500],
+      onSecondary: onAccent,
+      secondaryContainer: isDark ? colors.primary[700] : colors.primary[50],
+      onSecondaryContainer: isDark ? colors.primary[50] : colors.primary[900],
+
+      tertiary: colors.harvest[500],
+      onTertiary: onAccent,
+      tertiaryContainer: isDark ? colors.primary[700] : colors.primary[50],
+      onTertiaryContainer: isDark ? colors.primary[50] : colors.primary[900],
+
+      error,
+      onError: onAccent,
+      errorContainer: isDark ? '#5c1a1a' : '#FDE8E8',
+      onErrorContainer: isDark ? '#FECACA' : '#7F1D1D',
+
+      background: themeColors.surface[50],
+      onBackground: themeColors.gray[900],
+
+      surface: themeColors.surface[50],
+      onSurface: themeColors.gray[900],
+      surfaceVariant: isDark ? themeColors.surface[200] : themeColors.surface[100],
+      onSurfaceVariant: isDark ? themeColors.gray[600] : themeColors.gray[700],
+
+      outline: isDark ? themeColors.gray[400] : themeColors.gray[300],
+      outlineVariant: isDark ? themeColors.gray[300] : themeColors.gray[200],
+
+      inverseSurface: themeColors.gray[900],
+      inverseOnSurface: themeColors.gray[50],
+      inversePrimary: colors.primary[200],
+
+      shadow: '#000000',
+      scrim: '#000000',
+
+      // Not an official role; used for “Needs attention” affordances.
+      warning: colors.warning,
+      onWarning: onAccent,
+    },
+    surface: {
+      surfaceDim: themeColors.surface[200],
+      surfaceBright: themeColors.surface[50],
+      surfaceContainerLowest: themeColors.surface[50],
+      surfaceContainerLow: themeColors.surface[100],
+      surfaceContainer: themeColors.surface[200],
+      surfaceContainerHigh: themeColors.surface[300],
+      surfaceContainerHighest: themeColors.surface[400],
+    },
+    ...m3Base,
+  } as const;
+};
+
+// Material Design 3 (M3-ish) semantic roles
+export const m3 = createM3Theme(false);
+export const m3Dark = createM3Theme(true);
+
+export const getM3Theme = (isDark: boolean) => (isDark ? m3Dark : m3);
+
 // Common component styles
 export const commonStyles = {
   // Glass effect cards
   glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
     borderRadius: borderRadius['2xl'],
     ...shadows.glass,
   },
   glassCardDark: {
-    backgroundColor: 'rgba(44, 44, 46, 0.8)',
+    backgroundColor: colorWithOpacity(darkColors.surface[100], 0.8),
     borderRadius: borderRadius['2xl'],
     ...shadows.glass,
   },
@@ -349,7 +409,11 @@ export const commonStyles = {
 
 export const theme = {
   colors,
+  darkColors,
+  getThemeColors,
   m3,
+  m3Dark,
+  getM3Theme,
   spacing,
   borderRadius,
   fontSize,

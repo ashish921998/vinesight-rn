@@ -16,8 +16,9 @@ import {
 
 import { Stack } from 'expo-router';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { telemetry } from '@/services/telemetry';
+import { useThemeColors } from '@/styles/use-theme';
 
 type SystemDischargeResults = {
   plantsPerHectare?: number | null;
@@ -27,6 +28,7 @@ type SystemDischargeResults = {
 };
 
 export default function SystemDischargeScreen() {
+  const colors = useThemeColors();
   const [dbl, setDbl] = useState('');
   const [refillTankValue, setRefillTankValue] = useState('');
 
@@ -164,7 +166,7 @@ export default function SystemDischargeScreen() {
           headerTitleStyle: { fontWeight: '600' },
         }}
       />
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1, backgroundColor: colors.surface[50] }}
@@ -177,7 +179,7 @@ export default function SystemDischargeScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginTop: spacing[4],
@@ -196,7 +198,7 @@ export default function SystemDischargeScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <UISymbol name="speedometer" size={18} color="#408059" />
+                  <UISymbol name="speedometer" size={18} color={colors.primary[500]} />
                 </View>
                 <Text
                   style={{
@@ -235,7 +237,7 @@ export default function SystemDischargeScreen() {
             {canSelectMethod && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   marginTop: spacing[4],
@@ -254,7 +256,7 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="git-branch" size={18} color="#408059" />
+                    <UISymbol name="git-branch" size={18} color={colors.primary[500]} />
                   </View>
                   <Text
                     style={{
@@ -296,7 +298,11 @@ export default function SystemDischargeScreen() {
                       </Text>
                     </View>
                     {selectedMethod === 1 ? (
-                      <UISymbol name="checkmark.circle.fill" size={18} color="#408059" />
+                      <UISymbol
+                        name="checkmark.circle.fill"
+                        size={18}
+                        color={colors.primary[500]}
+                      />
                     ) : null}
                   </View>
                 </Pressable>
@@ -328,7 +334,11 @@ export default function SystemDischargeScreen() {
                       </Text>
                     </View>
                     {selectedMethod === 2 ? (
-                      <UISymbol name="checkmark.circle.fill" size={18} color="#408059" />
+                      <UISymbol
+                        name="checkmark.circle.fill"
+                        size={18}
+                        color={colors.primary[500]}
+                      />
                     ) : null}
                   </View>
                 </Pressable>
@@ -338,7 +348,7 @@ export default function SystemDischargeScreen() {
             {selectedMethod === 1 && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   marginTop: spacing[4],
@@ -357,7 +367,7 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="leaf.fill" size={18} color="#408059" />
+                    <UISymbol name="leaf.fill" size={18} color={colors.primary[500]} />
                   </View>
                   <Text
                     style={{
@@ -444,7 +454,7 @@ export default function SystemDischargeScreen() {
             {selectedMethod === 2 && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   marginTop: spacing[4],
@@ -463,7 +473,7 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="square.grid.2x2.fill" size={18} color="#408059" />
+                    <UISymbol name="square.grid.2x2.fill" size={18} color={colors.primary[500]} />
                   </View>
                   <Text
                     style={{
@@ -549,7 +559,7 @@ export default function SystemDischargeScreen() {
             {results && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   marginTop: spacing[4],
@@ -568,7 +578,7 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="checkmark.circle.fill" size={18} color="#408059" />
+                    <UISymbol name="checkmark.circle.fill" size={18} color={colors.primary[500]} />
                   </View>
                   <Text
                     style={{
@@ -698,7 +708,7 @@ export default function SystemDischargeScreen() {
               <Pressable
                 onPress={reset}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   paddingVertical: spacing[4],
                   alignItems: 'center',
@@ -708,7 +718,7 @@ export default function SystemDischargeScreen() {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <UISymbol name="refresh" size={18} color="#6B7280" />
+                  <UISymbol name="refresh" size={18} color={colors.surface[600]} />
                   <Text
                     style={{
                       color: colors.surface[600],
@@ -759,7 +769,7 @@ function InputRow({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           keyboardType="decimal-pad"
           style={{
             flex: 1,

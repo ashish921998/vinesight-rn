@@ -4,8 +4,9 @@ import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 // Calculator data (Irrigation Planning section)
 const calculators = [
@@ -52,6 +53,7 @@ const calculators = [
 ];
 
 export default function ToolsScreen() {
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const router = useRouter();

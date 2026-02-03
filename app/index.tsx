@@ -5,13 +5,16 @@ import { useOnboardingStore } from '@/stores/onboarding-store';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 /**
  * Entry point of the app
  * Redirects to auth or main tabs based on authentication state
  */
 export default function Index() {
+  const colors = useThemeColors();
   const { isAuthenticated, isLoading } = useAuthStore();
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const hasHydrated = useOnboardingStore((s) => s.hasHydrated);
@@ -29,7 +32,7 @@ export default function Index() {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: colors.white,
+          backgroundColor: colors.surface[100],
           padding: spacing[6],
         }}
       >
@@ -42,10 +45,10 @@ export default function Index() {
               marginBottom: spacing[6],
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#FEE2E2',
+              backgroundColor: colorWithOpacity(colors.error, 0.12),
             }}
           >
-            <SymbolIcon name="exclamationmark.triangle" size={44} color="#EF4444" />
+            <SymbolIcon name="exclamationmark.triangle" size={44} color={colors.error} />
           </View>
 
           <Text

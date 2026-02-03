@@ -3,9 +3,11 @@ import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-nat
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { NumericInput } from './form-field';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
 import { useProfile } from '../../hooks';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export interface ExpenseFormData {
   type: ExpenseTypeId | '';
@@ -33,6 +35,7 @@ const EXPENSE_ICONS: Record<ExpenseTypeId, string> = {
 };
 
 export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
+  const colors = useThemeColors();
   const { data: profile } = useProfile();
   const isValidCurrency = (code: string | null | undefined): boolean => {
     if (!code || typeof code !== 'string') return false;
@@ -57,7 +60,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             width: 40,
             height: 40,
             borderRadius: borderRadius.full,
-            backgroundColor: '#FEE2E2',
+            backgroundColor: colorWithOpacity(colors.error, 0.12),
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: spacing[3],
@@ -85,7 +88,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
           <View style={{ marginRight: 6 }}>
-            <SymbolIcon name="list.bullet" size={16} color="#408059" />
+            <SymbolIcon name="list.bullet" size={16} color={colors.primary[600]} />
           </View>
           <Text
             style={{
@@ -110,7 +113,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
                 paddingVertical: 10,
                 borderRadius: borderRadius.xl,
                 borderWidth: 1,
-                backgroundColor: data.type === type ? '#EF4444' : colors.white,
+                backgroundColor: data.type === type ? '#EF4444' : colors.surface[100],
                 borderColor: data.type === type ? '#EF4444' : colors.surface[200],
               }}
             >
@@ -153,7 +156,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ marginRight: 6 }}>
-            <SymbolIcon name="doc.text" size={16} color="#408059" />
+            <SymbolIcon name="doc.text" size={16} color={colors.primary[600]} />
           </View>
           <Text
             style={{
@@ -173,13 +176,13 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             borderRadius: borderRadius.xl,
             borderWidth: 1,
             borderColor: colors.surface[200],
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
           }}
         >
           <TextInput
             style={{ fontSize: fontSize.base, color: colors.surface[900] }}
             placeholder="Add notes about this expense (optional)"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.gray[400]}
             value={data.remarks || ''}
             onChangeText={(remarks) => onChange({ ...data, remarks: remarks || undefined })}
             multiline
@@ -243,7 +246,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
         <SymbolIcon
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
-          color={isValid ? '#22C55E' : '#9CA3AF'}
+          color={isValid ? colors.success : colors.gray[400]}
         />
         <Text
           style={{

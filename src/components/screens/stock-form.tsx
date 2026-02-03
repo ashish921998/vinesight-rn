@@ -5,8 +5,10 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useUpdateWarehouseItem, useProfile } from '../../hooks';
 import { WarehouseItem } from '../../types';
 import { FormModal, SectionHeader, FormInput, PreviewCard } from '../ui/form-components';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatCurrency, formatNumber } from '@/i18n/format';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface Props {
   visible?: boolean;
@@ -16,6 +18,7 @@ interface Props {
 }
 
 export default function StockForm({ visible, onClose, item, presentation = 'modal' }: Props) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const isVisible = visible ?? true;
@@ -116,13 +119,16 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
               borderRadius: borderRadius.xl,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: item.type === 'fertilizer' ? '#DCFCE7' : '#DBEAFE',
+              backgroundColor:
+                item.type === 'fertilizer'
+                  ? colorWithOpacity(colors.success, 0.16)
+                  : colorWithOpacity(colors.primary[500], 0.16),
             }}
           >
             <SymbolIcon
               name={item.type === 'fertilizer' ? 'flask.fill' : 'drop.fill'}
               size={24}
-              color={item.type === 'fertilizer' ? '#16A34A' : '#3B82F6'}
+              color={item.type === 'fertilizer' ? colors.success : colors.primary[500]}
             />
           </View>
           <View style={{ flex: 1, marginLeft: spacing[3] }}>
@@ -188,7 +194,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
               value: formatCurrency(newValue, currency),
             },
           ]}
-          backgroundColor="#DBEAFE"
+          backgroundColor={colorWithOpacity(colors.primary[500], 0.16)}
         />
       )}
     </FormModal>

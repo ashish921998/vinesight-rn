@@ -12,10 +12,13 @@ import { router } from 'expo-router';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useLanguageStore } from '@/stores';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import type { SupportedLanguageCode } from '@/i18n/languages';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export default function OnboardingScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const { currentStep, preferences, nextStep, previousStep, setPreferences, completeOnboarding } =
@@ -204,7 +207,7 @@ export default function OnboardingScreen() {
             borderRadius: borderRadius.xl,
             borderWidth: 2,
             borderColor: selectedLanguage === 'en' ? colors.primary[600] : colors.gray[200],
-            backgroundColor: selectedLanguage === 'en' ? colors.primary[50] : colors.white,
+            backgroundColor: selectedLanguage === 'en' ? colors.primary[50] : colors.surface[100],
           }}
         >
           <Text
@@ -231,7 +234,7 @@ export default function OnboardingScreen() {
             borderRadius: borderRadius.xl,
             borderWidth: 2,
             borderColor: selectedLanguage === 'mr' ? colors.primary[600] : colors.gray[200],
-            backgroundColor: selectedLanguage === 'mr' ? colors.primary[50] : colors.white,
+            backgroundColor: selectedLanguage === 'mr' ? colors.primary[50] : colors.surface[100],
           }}
         >
           <Text
@@ -274,7 +277,7 @@ export default function OnboardingScreen() {
         <View
           key={index}
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginBottom: spacing[3],
@@ -353,7 +356,7 @@ export default function OnboardingScreen() {
         <Pressable
           onPress={() => setShowCountryPicker(!showCountryPicker)}
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderRadius: borderRadius.xl,
             padding: spacing[4],
             flexDirection: 'row',
@@ -379,7 +382,7 @@ export default function OnboardingScreen() {
         {showCountryPicker && (
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               borderRadius: borderRadius.xl,
               marginTop: spacing[2],
               overflow: 'hidden',
@@ -398,7 +401,8 @@ export default function OnboardingScreen() {
                   padding: spacing[4],
                   borderBottomWidth: 1,
                   borderBottomColor: colors.gray[100],
-                  backgroundColor: selectedCountry === country ? colors.primary[50] : colors.white,
+                  backgroundColor:
+                    selectedCountry === country ? colors.primary[50] : colors.surface[100],
                 }}
               >
                 <Text
@@ -445,7 +449,8 @@ export default function OnboardingScreen() {
               borderRadius: borderRadius.xl,
               borderWidth: 2,
               borderColor: selectedAreaUnit === 'acres' ? colors.primary[600] : colors.gray[200],
-              backgroundColor: selectedAreaUnit === 'acres' ? colors.primary[50] : colors.white,
+              backgroundColor:
+                selectedAreaUnit === 'acres' ? colors.primary[50] : colors.surface[100],
             }}
           >
             <Text
@@ -466,7 +471,8 @@ export default function OnboardingScreen() {
               borderRadius: borderRadius.xl,
               borderWidth: 2,
               borderColor: selectedAreaUnit === 'hectares' ? colors.primary[600] : colors.gray[200],
-              backgroundColor: selectedAreaUnit === 'hectares' ? colors.primary[50] : colors.white,
+              backgroundColor:
+                selectedAreaUnit === 'hectares' ? colors.primary[50] : colors.surface[100],
             }}
           >
             <Text
@@ -498,7 +504,7 @@ export default function OnboardingScreen() {
           width: 96,
           height: 96,
           borderRadius: borderRadius.full,
-          backgroundColor: '#DBEAFE',
+          backgroundColor: colorWithOpacity('#3B82F6', 0.16),
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: spacing[8],

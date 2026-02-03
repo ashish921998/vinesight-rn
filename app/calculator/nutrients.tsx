@@ -9,8 +9,9 @@ import { View, Text, ScrollView, TextInput, Pressable, KeyboardAvoidingView } fr
 import { Stack } from 'expo-router';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { telemetry } from '@/services/telemetry';
+import { useThemeColors } from '@/styles/use-theme';
 
 interface NutrientResult {
   nitrogen: number;
@@ -19,6 +20,7 @@ interface NutrientResult {
 }
 
 export default function NutrientCalculatorScreen() {
+  const colors = useThemeColors();
   const [area, setArea] = useState(''); // acres
   const [targetYield, setTargetYield] = useState(''); // kg/acre
   const [selectedStage, setSelectedStage] = useState<GrapeGrowthStageId | null>(null);
@@ -95,7 +97,7 @@ export default function NutrientCalculatorScreen() {
             {/* Calculator Card */}
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -250,13 +252,13 @@ export default function NutrientCalculatorScreen() {
                     <NutrientRow
                       label="Nitrogen (N)"
                       value={result.nitrogen}
-                      color="#22C55E"
+                      color={colors.success}
                       bgColor="#F0FDF4"
                     />
                     <NutrientRow
                       label="Phosphorus (P₂O₅)"
                       value={result.phosphorus}
-                      color="#F59E0B"
+                      color={colors.warning}
                       bgColor="#FFFBEB"
                     />
                     <NutrientRow
@@ -299,7 +301,7 @@ export default function NutrientCalculatorScreen() {
               <Pressable
                 onPress={reset}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   paddingVertical: spacing[4],
                   alignItems: 'center',
@@ -309,7 +311,7 @@ export default function NutrientCalculatorScreen() {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Icon name="refresh" size={18} color="#6B7280" />
+                  <Icon name="refresh" size={18} color={colors.surface[600]} />
                   <Text
                     style={{
                       color: colors.surface[600],
@@ -368,7 +370,7 @@ function InputRow({
           value={value}
           onChangeText={handleChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           keyboardType="decimal-pad"
           style={{
             flex: 1,

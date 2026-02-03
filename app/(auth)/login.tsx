@@ -18,10 +18,12 @@ import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
 import appIcon from '../../assets/icon.png';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 export default function LoginScreen() {
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const [email, setEmail] = useState('');

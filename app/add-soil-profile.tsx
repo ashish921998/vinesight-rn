@@ -3,9 +3,11 @@ import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import SoilProfileForm from '@/components/screens/soil-profile-form';
-import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
 
 export default function AddSoilProfileRoute() {
+  const colors = useThemeColors();
   const router = useRouter();
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ farmId?: string }>();

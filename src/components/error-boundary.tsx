@@ -1,8 +1,10 @@
 import React, { Component, ReactNode } from 'react';
-import { View, Text, Pressable, ScrollView, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, Platform, Appearance } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { getThemeColors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeStore } from '@/stores';
+import { colorWithOpacity } from '@/utils/color';
 
 interface Props {
   children: ReactNode;
@@ -69,6 +71,12 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const themeMode = useThemeStore.getState().mode;
+      const systemScheme = Appearance.getColorScheme();
+      const resolvedMode =
+        themeMode === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : themeMode;
+      const colors = getThemeColors(resolvedMode === 'dark');
+
       return (
         <View
           style={{
@@ -122,7 +130,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 width: '100%',
                 maxHeight: 192,
                 marginBottom: spacing[6],
-                backgroundColor: '#FEE2E2',
+                backgroundColor: colorWithOpacity(colors.error, 0.12),
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -131,7 +139,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 style={{
                   fontSize: fontSize.xs,
                   fontFamily: monospaceFont,
-                  color: '#7F1D1D',
+                  color: colors.error,
                   marginBottom: spacing[2],
                 }}
               >
@@ -139,7 +147,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </Text>
               {this.state.errorInfo && (
                 <Text
-                  style={{ fontSize: fontSize.xs, fontFamily: monospaceFont, color: '#B91C1C' }}
+                  style={{ fontSize: fontSize.xs, fontFamily: monospaceFont, color: colors.error }}
                 >
                   {this.state.errorInfo}
                 </Text>

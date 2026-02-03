@@ -42,7 +42,9 @@ import type {
   ExpenseRecord,
   FertigationRecord,
 } from '@/types';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface CombinedLog {
   id: string;
@@ -53,6 +55,7 @@ interface CombinedLog {
 }
 
 export default function LogsScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -63,8 +66,8 @@ export default function LogsScreen() {
   const currency = profile?.preferred_currency || 'INR';
   const filterCardStyle = Platform.select({
     ios: {
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
-      shadowColor: '#000',
+      backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
+      shadowColor: colors.black,
       shadowOffset: { width: 0, height: 5 },
       shadowOpacity: 0.08,
       shadowRadius: 10,
@@ -386,12 +389,12 @@ export default function LogsScreen() {
       <View
         style={{
           flex: 1,
-          backgroundColor: '#f2f2f7',
+          backgroundColor: colors.surface[50],
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
-        <ActivityIndicator size="large" color="#408059" />
+        <ActivityIndicator size="large" color={colors.primary[500]} />
         <Text style={{ marginTop: spacing[4], color: colors.surface[500] }}>
           {t('common.loading')}
         </Text>
@@ -404,8 +407,8 @@ export default function LogsScreen() {
       <Stack.Screen
         options={{
           title: t('logs.screenTitle'),
-          headerStyle: { backgroundColor: '#f2f2f7' },
-          headerTintColor: '#000000',
+          headerStyle: { backgroundColor: colors.surface[100] },
+          headerTintColor: colors.primary[500],
           headerRight: () =>
             selectedFarmId !== undefined && (
               <Pressable
@@ -419,16 +422,16 @@ export default function LogsScreen() {
                 }}
                 style={{ marginRight: spacing[4] }}
               >
-                <UiSymbol name="plus.circle.fill" size={28} color="#408059" />
+                <UiSymbol name="plus.circle.fill" size={28} color={colors.primary[500]} />
               </Pressable>
             ),
         }}
       />
 
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7', paddingTop: insets.top }}>
-        <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50], paddingTop: insets.top }}>
+        <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
           <LinearGradient
-            colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
+            colors={[colorWithOpacity(colors.primary[500], 0.08), 'transparent']}
             style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
           />
 
@@ -448,7 +451,7 @@ export default function LogsScreen() {
               <Pressable
                 onPress={() => setShowFarmSelector(true)}
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
                   borderRadius: borderRadius['2xl'],
                   paddingHorizontal: spacing[4],
                   paddingVertical: spacing[3],
@@ -466,7 +469,7 @@ export default function LogsScreen() {
                       style={{
                         width: 44,
                         height: 44,
-                        backgroundColor: 'rgba(64, 128, 89, 0.15)',
+                        backgroundColor: colorWithOpacity(colors.primary[500], 0.15),
                         borderRadius: borderRadius.full,
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -477,7 +480,7 @@ export default function LogsScreen() {
                           selectedFarmId === undefined ? 'square.stack.3d.up.fill' : 'leaf.fill'
                         }
                         size={22}
-                        color="#408059"
+                        color={colors.primary[500]}
                       />
                     </View>
                     <View style={{ marginLeft: spacing[3] }}>
@@ -504,7 +507,7 @@ export default function LogsScreen() {
                       )}
                     </View>
                   </View>
-                  <UiSymbol name="chevron.down" size={20} color="#8e8e93" />
+                  <UiSymbol name="chevron.down" size={20} color={colors.surface[500]} />
                 </View>
               </Pressable>
             </View>
@@ -529,12 +532,12 @@ export default function LogsScreen() {
                     paddingVertical: spacing[2],
                   }}
                 >
-                  <UiSymbol name="magnifyingglass" size={18} color="#8e8e93" />
+                  <UiSymbol name="magnifyingglass" size={18} color={colors.surface[500]} />
                   <TextInput
                     placeholder={t('logs.search.placeholder')}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    placeholderTextColor="#8e8e93"
+                    placeholderTextColor={colors.surface[500]}
                     style={{
                       flex: 1,
                       marginLeft: spacing[2],
@@ -543,7 +546,7 @@ export default function LogsScreen() {
                   />
                   {searchQuery !== '' && (
                     <Pressable onPress={() => setSearchQuery('')}>
-                      <UiSymbol name="xmark.circle.fill" size={18} color="#8e8e93" />
+                      <UiSymbol name="xmark.circle.fill" size={18} color={colors.surface[500]} />
                     </Pressable>
                   )}
                 </View>
@@ -599,7 +602,7 @@ export default function LogsScreen() {
                         style={{
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.semibold,
-                          color: '#EF4444',
+                          color: colors.error,
                         }}
                       >
                         {t('common.clearAll')}
@@ -672,7 +675,7 @@ export default function LogsScreen() {
                                             : 'doc.fill'
                               }
                               size={14}
-                              color={isSelected ? '#FFFFFF' : logType.color}
+                              color={isSelected ? colors.white : logType.color}
                             />
                             <Text
                               style={{
@@ -776,7 +779,7 @@ export default function LogsScreen() {
                       style={{
                         height: 80,
                         borderRadius: borderRadius['2xl'],
-                        backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                        backgroundColor: colorWithOpacity(colors.surface[100], 0.6),
                       }}
                     />
                   ))}
@@ -787,7 +790,7 @@ export default function LogsScreen() {
                     borderRadius: borderRadius['2xl'],
                     alignItems: 'center',
                     padding: spacing[10],
-                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                    backgroundColor: colorWithOpacity(colors.surface[100], 0.6),
                   }}
                 >
                   <View
@@ -801,7 +804,7 @@ export default function LogsScreen() {
                       backgroundColor: 'rgba(142, 142, 147, 0.2)',
                     }}
                   >
-                    <UiSymbol name="calendar" size={32} color="#9CA3AF" />
+                    <UiSymbol name="calendar" size={32} color={colors.gray[400]} />
                   </View>
                   <Text
                     style={{
@@ -865,7 +868,7 @@ export default function LogsScreen() {
                       <UiSymbol
                         name="chevron.down"
                         size={12}
-                        color="#8e8e93"
+                        color={colors.surface[500]}
                         style={{ marginLeft: spacing[1] }}
                       />
                     </Pressable>
@@ -879,7 +882,7 @@ export default function LogsScreen() {
                         <View
                           key={log.id}
                           style={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                            backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
                             borderRadius: borderRadius['2xl'],
                             overflow: 'hidden',
                           }}
@@ -898,7 +901,7 @@ export default function LogsScreen() {
                                 borderRadius: borderRadius.full,
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                backgroundColor: `${logType?.color || '#408059'}1A`,
+                                backgroundColor: `${logType?.color || colors.primary[500]}1A`,
                               }}
                             >
                               <UiSymbol
@@ -918,7 +921,7 @@ export default function LogsScreen() {
                                               : 'doc.fill'
                                 }
                                 size={20}
-                                color={logType?.color || '#408059'}
+                                color={logType?.color || colors.primary[500]}
                               />
                             </View>
                             <View style={{ flex: 1, marginLeft: spacing[3] }}>
@@ -1000,8 +1003,8 @@ export default function LogsScreen() {
                                   size={20}
                                   color={
                                     selectedFarm || (log.data as { farm_id?: number }).farm_id
-                                      ? '#408059'
-                                      : '#c7c7cc'
+                                      ? colors.primary[500]
+                                      : colors.surface[300]
                                   }
                                 />
                               </Pressable>
@@ -1021,7 +1024,7 @@ export default function LogsScreen() {
                                     : 'transparent',
                                 })}
                               >
-                                <UiSymbol name="trash" size={20} color="#EF4444" />
+                                <UiSymbol name="trash" size={20} color={colors.error} />
                               </Pressable>
                             </View>
                           </View>
@@ -1047,14 +1050,15 @@ export default function LogsScreen() {
                           paddingHorizontal: spacing[4],
                           paddingVertical: spacing[2],
                           borderRadius: borderRadius.xl,
-                          backgroundColor: currentPage === 1 ? '#f9f9f9' : '#408059',
+                          backgroundColor:
+                            currentPage === 1 ? colors.surface[50] : colors.primary[500],
                           opacity: currentPage === 1 ? 0.5 : 1,
                         }}
                       >
                         <UiSymbol
                           name="chevron.left"
                           size={18}
-                          color={currentPage === 1 ? '#8e8e93' : '#FFFFFF'}
+                          color={currentPage === 1 ? colors.surface[500] : colors.white}
                         />
                       </Pressable>
 
@@ -1081,7 +1085,10 @@ export default function LogsScreen() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 marginHorizontal: 2,
-                                backgroundColor: currentPage === pageNum ? '#408059' : '#f9f9f9',
+                                backgroundColor:
+                                  currentPage === pageNum
+                                    ? colors.primary[500]
+                                    : colors.surface[50],
                               }}
                             >
                               <Text
@@ -1105,14 +1112,15 @@ export default function LogsScreen() {
                           paddingHorizontal: spacing[4],
                           paddingVertical: spacing[2],
                           borderRadius: borderRadius.xl,
-                          backgroundColor: currentPage === totalPages ? '#f9f9f9' : '#408059',
+                          backgroundColor:
+                            currentPage === totalPages ? colors.surface[50] : colors.primary[500],
                           opacity: currentPage === totalPages ? 0.5 : 1,
                         }}
                       >
                         <UiSymbol
                           name="chevron.right"
                           size={18}
-                          color={currentPage === totalPages ? '#8e8e93' : '#FFFFFF'}
+                          color={currentPage === totalPages ? colors.surface[500] : colors.white}
                         />
                       </Pressable>
                     </View>
@@ -1142,7 +1150,7 @@ export default function LogsScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 margin: spacing[4],
@@ -1169,7 +1177,7 @@ export default function LogsScreen() {
                   {t('logs.datePicker.fromTitle')}
                 </Text>
                 <Pressable onPress={() => setShowDatePickerFrom(false)}>
-                  <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                  <UiSymbol name="xmark.circle.fill" size={24} color={colors.gray[400]} />
                 </Pressable>
               </View>
               <DateTimePicker
@@ -1180,7 +1188,7 @@ export default function LogsScreen() {
                   if (date) setDateFrom(date);
                 }}
                 style={{ width: '100%', height: 200 }}
-                textColor="#2c2c2e"
+                textColor={colors.surface[900]}
               />
               <Pressable
                 onPress={() => setShowDatePickerFrom(false)}
@@ -1189,7 +1197,7 @@ export default function LogsScreen() {
                   paddingVertical: spacing[3],
                   borderRadius: borderRadius.xl,
                   alignItems: 'center',
-                  backgroundColor: '#408059',
+                  backgroundColor: colors.primary[500],
                 }}
               >
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
@@ -1213,7 +1221,7 @@ export default function LogsScreen() {
               style={{
                 flex: 1,
                 marginTop: 'auto',
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
                 borderTopRightRadius: borderRadius['3xl'],
                 overflow: 'hidden',
@@ -1257,7 +1265,8 @@ export default function LogsScreen() {
                     padding: spacing[4],
                     borderRadius: borderRadius['2xl'],
                     marginBottom: spacing[2],
-                    backgroundColor: selectedFarmId === undefined ? '#408059' : '#f9f9f9',
+                    backgroundColor:
+                      selectedFarmId === undefined ? colors.primary[500] : colors.surface[50],
                   }}
                 >
                   <View
@@ -1269,14 +1278,14 @@ export default function LogsScreen() {
                       justifyContent: 'center',
                       backgroundColor:
                         selectedFarmId === undefined
-                          ? 'rgba(255,255,255,0.2)'
+                          ? colorWithOpacity(colors.surface[100], 0.2)
                           : 'rgba(64,128,89,0.15)',
                     }}
                   >
                     <UiSymbol
                       name="square.stack.3d.up.fill"
                       size={20}
-                      color={selectedFarmId === undefined ? '#FFFFFF' : '#408059'}
+                      color={selectedFarmId === undefined ? colors.white : colors.primary[500]}
                     />
                   </View>
                   <View style={{ marginLeft: spacing[3], flex: 1 }}>
@@ -1294,7 +1303,7 @@ export default function LogsScreen() {
                         fontSize: fontSize.xs,
                         color:
                           selectedFarmId === undefined
-                            ? 'rgba(255,255,255,0.8)'
+                            ? colorWithOpacity(colors.surface[100], 0.8)
                             : colors.surface[500],
                       }}
                     >
@@ -1302,7 +1311,7 @@ export default function LogsScreen() {
                     </Text>
                   </View>
                   {selectedFarmId === undefined && (
-                    <UiSymbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
+                    <UiSymbol name="checkmark.circle.fill" size={22} color={colors.white} />
                   )}
                 </Pressable>
 
@@ -1320,7 +1329,8 @@ export default function LogsScreen() {
                       padding: spacing[4],
                       borderRadius: borderRadius['2xl'],
                       marginBottom: spacing[2],
-                      backgroundColor: selectedFarmId === farm.id ? '#408059' : '#f9f9f9',
+                      backgroundColor:
+                        selectedFarmId === farm.id ? colors.primary[500] : colors.surface[50],
                     }}
                   >
                     <View
@@ -1332,14 +1342,14 @@ export default function LogsScreen() {
                         justifyContent: 'center',
                         backgroundColor:
                           selectedFarmId === farm.id
-                            ? 'rgba(255,255,255,0.2)'
+                            ? colorWithOpacity(colors.surface[100], 0.2)
                             : 'rgba(64,128,89,0.15)',
                       }}
                     >
                       <UiSymbol
                         name="leaf.fill"
                         size={20}
-                        color={selectedFarmId === farm.id ? '#FFFFFF' : '#408059'}
+                        color={selectedFarmId === farm.id ? colors.white : colors.primary[500]}
                       />
                     </View>
                     <View style={{ marginLeft: spacing[3], flex: 1 }}>
@@ -1357,7 +1367,7 @@ export default function LogsScreen() {
                           fontSize: fontSize.xs,
                           color:
                             selectedFarmId === farm.id
-                              ? 'rgba(255,255,255,0.8)'
+                              ? colorWithOpacity(colors.surface[100], 0.8)
                               : colors.surface[500],
                         }}
                       >
@@ -1365,7 +1375,7 @@ export default function LogsScreen() {
                       </Text>
                     </View>
                     {selectedFarmId === farm.id && (
-                      <UiSymbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
+                      <UiSymbol name="checkmark.circle.fill" size={22} color={colors.white} />
                     )}
                   </Pressable>
                 ))}
@@ -1410,7 +1420,7 @@ export default function LogsScreen() {
               style={{
                 width: '80%',
                 maxWidth: 320,
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[6],
               }}
@@ -1434,7 +1444,7 @@ export default function LogsScreen() {
                   {t('logs.pagination.recordsPerPage')}
                 </Text>
                 <Pressable onPress={() => setShowRecordsPerPageSelector(false)}>
-                  <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                  <UiSymbol name="xmark.circle.fill" size={24} color={colors.gray[400]} />
                 </Pressable>
               </View>
               {[10, 50, 100].map((value) => (
@@ -1460,7 +1470,7 @@ export default function LogsScreen() {
                     {value}
                   </Text>
                   {itemsPerPage === value && (
-                    <UiSymbol name="checkmark.circle.fill" size={20} color="#408059" />
+                    <UiSymbol name="checkmark.circle.fill" size={20} color={colors.primary[500]} />
                   )}
                 </Pressable>
               ))}
@@ -1485,7 +1495,7 @@ export default function LogsScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 margin: spacing[4],
@@ -1512,7 +1522,7 @@ export default function LogsScreen() {
                   {t('logs.datePicker.toTitle')}
                 </Text>
                 <Pressable onPress={() => setShowDatePickerTo(false)}>
-                  <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                  <UiSymbol name="xmark.circle.fill" size={24} color={colors.gray[400]} />
                 </Pressable>
               </View>
               <DateTimePicker
@@ -1523,7 +1533,7 @@ export default function LogsScreen() {
                   if (date) setDateTo(date);
                 }}
                 style={{ width: '100%', height: 200 }}
-                textColor="#2c2c2e"
+                textColor={colors.surface[900]}
               />
               <Pressable
                 onPress={() => setShowDatePickerTo(false)}
@@ -1532,7 +1542,7 @@ export default function LogsScreen() {
                   paddingVertical: spacing[3],
                   borderRadius: borderRadius.xl,
                   alignItems: 'center',
-                  backgroundColor: '#408059',
+                  backgroundColor: colors.primary[500],
                 }}
               >
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
@@ -1562,7 +1572,7 @@ export default function LogsScreen() {
           <View
             style={{
               width: '100%',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backgroundColor: colorWithOpacity(colors.surface[100], 0.95),
               borderRadius: borderRadius['2xl'],
               padding: spacing[6],
             }}
@@ -1578,7 +1588,7 @@ export default function LogsScreen() {
                   backgroundColor: 'rgba(239, 68, 68, 0.1)',
                 }}
               >
-                <UiSymbol name="exclamationmark.triangle.fill" size={28} color="#EF4444" />
+                <UiSymbol name="exclamationmark.triangle.fill" size={28} color={colors.error} />
               </View>
             </View>
             <Text
@@ -1630,7 +1640,7 @@ export default function LogsScreen() {
                   paddingVertical: spacing[3],
                   borderRadius: borderRadius.xl,
                   alignItems: 'center',
-                  backgroundColor: '#EF4444',
+                  backgroundColor: colors.error,
                 }}
               >
                 <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>

@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
 
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFarms, useProfile } from '../src/hooks';
@@ -18,6 +18,7 @@ import { useReportData, useReportExport, getDefaultDateRange } from '../src/hook
 import { DateRange, ReportType, ReportFormat } from '../src/types/report';
 import { useAuthStore } from '@/stores';
 import { telemetry } from '@/services/telemetry';
+import { useThemeColors } from '@/styles/use-theme';
 
 const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
   { value: 'comprehensive', labelKey: 'reports.types.comprehensive', icon: 'doc.text.fill' },
@@ -26,6 +27,7 @@ const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
 ];
 
 export default function ReportsScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const insets = useSafeAreaInsets();
@@ -96,9 +98,9 @@ export default function ReportsScreen() {
 
   if (farmsLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color="#1a5d1a" />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
         </View>
       </View>
     );
@@ -106,7 +108,7 @@ export default function ReportsScreen() {
 
   if (!farms || farms.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <View
           style={{
             flexDirection: 'row',
@@ -116,11 +118,11 @@ export default function ReportsScreen() {
             paddingBottom: spacing[3],
             borderBottomWidth: 1,
             borderBottomColor: colors.gray[200],
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
           }}
         >
           <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-            <Icon name="chevron.left" size={24} color="#333" />
+            <Icon name="chevron.left" size={24} color={colors.gray[700]} />
           </Pressable>
           <Text
             style={{
@@ -135,7 +137,7 @@ export default function ReportsScreen() {
         <View
           style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] }}
         >
-          <Icon name="doc.text" size={64} color="#9ca3af" />
+          <Icon name="doc.text" size={64} color={colors.gray[400]} />
           <Text
             style={{
               fontSize: fontSize.lg,
@@ -155,7 +157,7 @@ export default function ReportsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.gray[50] }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
       {/* Header */}
       <View
         style={{
@@ -166,13 +168,13 @@ export default function ReportsScreen() {
           paddingBottom: spacing[3],
           borderBottomWidth: 1,
           borderBottomColor: colors.gray[200],
-          backgroundColor: colors.white,
+          backgroundColor: colors.surface[100],
         }}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <Icon name="chevron.left" size={24} color="#333" />
+          <Icon name="chevron.left" size={24} color={colors.gray[700]} />
         </Pressable>
-        <Icon name="doc.text.fill" size={24} color="#1a5d1a" />
+        <Icon name="doc.text.fill" size={24} color={colors.primary[700]} />
         <Text
           style={{
             fontSize: fontSize.xl,
@@ -189,7 +191,7 @@ export default function ReportsScreen() {
         {/* Farm Selector */}
         <View
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             marginHorizontal: spacing[4],
             marginTop: spacing[4],
             borderRadius: borderRadius.xl,
@@ -257,7 +259,8 @@ export default function ReportsScreen() {
                     padding: spacing[3],
                     borderBottomWidth: 1,
                     borderBottomColor: colors.gray[100],
-                    backgroundColor: f.id === selectedFarmId ? colors.primary[50] : colors.white,
+                    backgroundColor:
+                      f.id === selectedFarmId ? colors.primary[50] : colors.surface[100],
                   }}
                 >
                   <Text
@@ -278,7 +281,7 @@ export default function ReportsScreen() {
         {/* Date Range */}
         <View
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             marginHorizontal: spacing[4],
             marginTop: spacing[4],
             borderRadius: borderRadius.xl,
@@ -374,7 +377,7 @@ export default function ReportsScreen() {
         {/* Report Type */}
         <View
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             marginHorizontal: spacing[4],
             marginTop: spacing[4],
             borderRadius: borderRadius.xl,
@@ -431,7 +434,7 @@ export default function ReportsScreen() {
         {dataLoading ? (
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               marginHorizontal: spacing[4],
               marginTop: spacing[4],
               borderRadius: borderRadius.xl,
@@ -447,7 +450,7 @@ export default function ReportsScreen() {
         ) : preview ? (
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               marginHorizontal: spacing[4],
               marginTop: spacing[4],
               borderRadius: borderRadius.xl,
@@ -545,12 +548,12 @@ export default function ReportsScreen() {
                   style={{
                     fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
-                    color: preview.summary.netProfit >= 0 ? '#16A34A' : '#DC2626',
+                    color: preview.summary.netProfit >= 0 ? colors.success : colors.error,
                   }}
                 >
                   {formatCurrency(preview.summary.netProfit, preferredCurrency)}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.success }}>
                   {t('reports.summary.netProfit')}
                 </Text>
               </View>
@@ -652,10 +655,10 @@ export default function ReportsScreen() {
               }}
             >
               {isExporting ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={colors.white} />
               ) : (
                 <>
-                  <Icon name="doc.fill" size={24} color="white" />
+                  <Icon name="doc.fill" size={24} color={colors.white} />
                   <Text
                     style={{
                       color: colors.white,
@@ -678,14 +681,14 @@ export default function ReportsScreen() {
                 justifyContent: 'center',
                 padding: spacing[4],
                 borderRadius: borderRadius.xl,
-                backgroundColor: !preview || isExporting ? colors.gray[200] : '#16A34A',
+                backgroundColor: !preview || isExporting ? colors.gray[200] : colors.success,
               }}
             >
               {isExporting ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={colors.white} />
               ) : (
                 <>
-                  <Icon name="square.grid.2x2.fill" size={24} color="white" />
+                  <Icon name="square.grid.2x2.fill" size={24} color={colors.white} />
                   <Text
                     style={{
                       color: colors.white,

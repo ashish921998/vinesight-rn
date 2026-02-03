@@ -15,21 +15,14 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import { useModalStore } from '@/stores';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
+import { useThemeColors } from '@/styles/use-theme';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
 
-const COLORS = {
-  primary: '#408059',
-  background: '#f2f2f7',
-  glass: 'rgba(255, 255, 255, 0.8)',
-  lowStock: '#D9731F',
-  warehouseFertilizer: '#598C6B',
-  warehouseSpray: '#408059',
-};
-
 export default function WarehouseScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -39,6 +32,17 @@ export default function WarehouseScreen() {
   const deleteItemMutation = useDeleteWarehouseItem();
 
   const [filter, setFilter] = useState<FilterType>('all');
+  const palette = useMemo(
+    () => ({
+      primary: colors.primary[500],
+      background: colors.surface[50],
+      glass: colors.surface[100],
+      lowStock: '#D9731F',
+      warehouseFertilizer: colors.secondary[500],
+      warehouseSpray: colors.primary[500],
+    }),
+    [colors],
+  );
 
   const currency = profile?.preferred_currency || 'INR';
 
@@ -115,13 +119,13 @@ export default function WarehouseScreen() {
       <View
         style={{
           flex: 1,
-          backgroundColor: COLORS.background,
+          backgroundColor: palette.background,
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
         <Stack.Screen options={{ title: t('warehouse.title') }} />
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={palette.primary} />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
           {t('warehouse.loading.inventory')}
         </Text>
@@ -130,7 +134,7 @@ export default function WarehouseScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: palette.background }}>
       <Stack.Screen
         options={{
           title: t('warehouse.title'),
@@ -141,7 +145,7 @@ export default function WarehouseScreen() {
               }}
               style={{ marginRight: spacing[4] }}
             >
-              <Icon name="plus.circle.fill" size={28} color="#408059" />
+              <Icon name="plus.circle.fill" size={28} color={colors.primary[500]} />
             </Pressable>
           ),
         }}
@@ -154,7 +158,7 @@ export default function WarehouseScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={COLORS.primary}
+              tintColor={palette.primary}
             />
           }
         >
@@ -165,13 +169,13 @@ export default function WarehouseScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: COLORS.glass,
+                backgroundColor: palette.glass,
               }}
             >
               <Icon
                 name="exclamationmark.triangle.fill"
                 size={24}
-                color={lowStockItems.length > 0 ? COLORS.lowStock : COLORS.primary}
+                color={lowStockItems.length > 0 ? palette.lowStock : palette.primary}
               />
               <Text
                 style={{
@@ -192,10 +196,10 @@ export default function WarehouseScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: COLORS.glass,
+                backgroundColor: palette.glass,
               }}
             >
-              <Icon name="dollarsign.circle.fill" size={24} color={COLORS.primary} />
+              <Icon name="dollarsign.circle.fill" size={24} color={palette.primary} />
               <Text
                 style={{
                   color: colors.surface[900],
@@ -219,7 +223,7 @@ export default function WarehouseScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
-                backgroundColor: `${COLORS.lowStock}15`,
+                backgroundColor: `${palette.lowStock}15`,
               }}
             >
               <View
@@ -229,10 +233,10 @@ export default function WarehouseScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                <Icon name="exclamationmark.triangle.fill" size={20} color={COLORS.lowStock} />
+                <Icon name="exclamationmark.triangle.fill" size={20} color={palette.lowStock} />
                 <Text
                   style={{
-                    color: COLORS.lowStock,
+                    color: palette.lowStock,
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
                     marginLeft: spacing[2],
@@ -246,12 +250,12 @@ export default function WarehouseScreen() {
                     paddingVertical: 2,
                     borderRadius: borderRadius.full,
                     marginLeft: 'auto',
-                    backgroundColor: `${COLORS.lowStock}30`,
+                    backgroundColor: `${palette.lowStock}30`,
                   }}
                 >
                   <Text
                     style={{
-                      color: COLORS.lowStock,
+                      color: palette.lowStock,
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
                     }}
@@ -272,14 +276,14 @@ export default function WarehouseScreen() {
                         style={{
                           borderRadius: borderRadius.xl,
                           padding: spacing[3],
-                          backgroundColor: COLORS.glass,
+                          backgroundColor: palette.glass,
                         }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Icon
                             name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                             size={16}
-                            color={COLORS.lowStock}
+                            color={palette.lowStock}
                           />
                           <Text
                             style={{
@@ -324,12 +328,12 @@ export default function WarehouseScreen() {
                             borderRadius: borderRadius.full,
                             alignItems: 'center',
                             alignSelf: 'flex-start',
-                            backgroundColor: COLORS.primary,
+                            backgroundColor: palette.primary,
                           }}
                         >
                           <Text
                             style={{
-                              color: 'white',
+                              color: colors.white,
                               fontSize: fontSize.xs,
                               fontWeight: fontWeight.medium,
                             }}
@@ -391,7 +395,7 @@ export default function WarehouseScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[8],
                 alignItems: 'center',
-                backgroundColor: COLORS.glass,
+                backgroundColor: palette.glass,
               }}
             >
               <View
@@ -401,10 +405,10 @@ export default function WarehouseScreen() {
                   borderRadius: borderRadius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: `${COLORS.primary}33`,
+                  backgroundColor: `${palette.primary}33`,
                 }}
               >
-                <Icon name="cube" size={32} color={COLORS.primary} />
+                <Icon name="cube" size={32} color={palette.primary} />
               </View>
               <Text
                 style={{
@@ -437,10 +441,10 @@ export default function WarehouseScreen() {
                   borderRadius: borderRadius.xl,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: COLORS.primary,
+                  backgroundColor: palette.primary,
                 }}
               >
-                <Icon name="plus.circle.fill" size={20} color="white" />
+                <Icon name="plus.circle.fill" size={20} color={colors.white} />
                 <Text
                   style={{
                     color: colors.white,
@@ -457,7 +461,7 @@ export default function WarehouseScreen() {
               const isLowStock = item.reorder_quantity && item.quantity <= item.reorder_quantity;
               const itemValue = item.quantity * item.unit_price;
               const itemColor =
-                item.type === 'fertilizer' ? COLORS.warehouseFertilizer : COLORS.warehouseSpray;
+                item.type === 'fertilizer' ? palette.warehouseFertilizer : palette.warehouseSpray;
 
               return (
                 <View
@@ -466,8 +470,8 @@ export default function WarehouseScreen() {
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
                     marginBottom: spacing[3],
-                    backgroundColor: isLowStock ? `${COLORS.lowStock}0D` : COLORS.glass,
-                    borderColor: isLowStock ? `${COLORS.lowStock}4D` : 'transparent',
+                    backgroundColor: isLowStock ? `${palette.lowStock}0D` : palette.glass,
+                    borderColor: isLowStock ? `${palette.lowStock}4D` : 'transparent',
                     borderWidth: isLowStock ? 1 : 0,
                   }}
                 >
@@ -481,8 +485,8 @@ export default function WarehouseScreen() {
                             borderRadius: borderRadius.full,
                             backgroundColor:
                               item.type === 'fertilizer'
-                                ? `${COLORS.warehouseFertilizer}33`
-                                : `${COLORS.warehouseSpray}33`,
+                                ? `${palette.warehouseFertilizer}33`
+                                : `${palette.warehouseSpray}33`,
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -512,10 +516,12 @@ export default function WarehouseScreen() {
                               paddingHorizontal: spacing[2],
                               paddingVertical: 2,
                               borderRadius: borderRadius.full,
-                              backgroundColor: `${COLORS.lowStock}33`,
+                              backgroundColor: `${palette.lowStock}33`,
                             }}
                           >
-                            <Text style={{ color: COLORS.lowStock }}>{t('common.labels.low')}</Text>
+                            <Text style={{ color: palette.lowStock }}>
+                              {t('common.labels.low')}
+                            </Text>
                           </View>
                         )}
                         <View style={{ flexDirection: 'row', gap: spacing[2], marginLeft: 'auto' }}>
@@ -523,7 +529,7 @@ export default function WarehouseScreen() {
                             onPress={() => handleEditItem(item)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                           >
-                            <Icon name="pencil" size={20} color="#408059" />
+                            <Icon name="pencil" size={20} color={colors.primary[500]} />
                           </Pressable>
                           <Pressable
                             onPress={() => handleDeleteItem(item)}
@@ -581,7 +587,7 @@ export default function WarehouseScreen() {
                       </Text>
                       <Text
                         style={{
-                          color: COLORS.primary,
+                          color: palette.primary,
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.semibold,
                         }}
@@ -624,10 +630,10 @@ export default function WarehouseScreen() {
           borderRadius: borderRadius.full,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: COLORS.primary,
+          backgroundColor: palette.primary,
         }}
       >
-        <Icon name="plus" size={28} color="white" />
+        <Icon name="plus" size={28} color={colors.white} />
       </Pressable>
 
       {/* Modals */}

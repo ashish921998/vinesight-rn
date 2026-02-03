@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatParameterKey } from '@/hooks/use-lab-tests';
 import { useTranslation } from 'react-i18next';
 import { formatDate as formatDateI18n } from '@/i18n/format';
@@ -13,6 +13,7 @@ import {
   type ParamOption,
 } from '@/constants/lab-test-parameters';
 import type { SoilTestRecord, PetioleTestRecord } from '@/types/database';
+import { useThemeColors } from '@/styles/use-theme';
 
 type TestType = 'soil' | 'petiole';
 
@@ -180,6 +181,7 @@ export function LabTestDetailsModal({
   test,
   onClose,
 }: LabTestDetailsModalProps) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   if (!test) {
     return null;
@@ -209,7 +211,7 @@ export function LabTestDetailsModal({
             style={{
               marginHorizontal: spacing[4],
               maxHeight: '85%',
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               borderRadius: borderRadius['2xl'],
               paddingHorizontal: spacing[4],
               paddingVertical: spacing[4],

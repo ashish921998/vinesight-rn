@@ -4,11 +4,13 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, SafeAreaView } fr
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/use-analytics';
 import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 const TIME_RANGES: { value: TimeRange; labelKey: string }[] = [
   { value: '30d', labelKey: 'analytics.timeRanges.30d' },
@@ -19,10 +21,10 @@ const TIME_RANGES: { value: TimeRange; labelKey: string }[] = [
 
 // Metric card colors
 const metricColors = {
-  irrigation: { bg: '#DBEAFE', icon: '#3B82F6' },
-  spray: { bg: '#F3E8FF', icon: '#8B5CF6' },
-  harvest: { bg: '#FEF3C7', icon: '#F59E0B' },
-  cost: { bg: '#DCFCE7', icon: '#16A34A' },
+  irrigation: { bg: colorWithOpacity('#3B82F6', 0.18), icon: '#3B82F6' },
+  spray: { bg: colorWithOpacity('#8B5CF6', 0.18), icon: '#8B5CF6' },
+  harvest: { bg: colorWithOpacity('#F59E0B', 0.2), icon: '#F59E0B' },
+  cost: { bg: colorWithOpacity('#16A34A', 0.18), icon: '#16A34A' },
 };
 
 // Activity type icons
@@ -35,6 +37,7 @@ const activityIcons: Record<string, { icon: string; color: string }> = {
 };
 
 export default function AnalyticsScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const { data: profile } = useProfile();
@@ -57,7 +60,7 @@ export default function AnalyticsScreen() {
         }}
       >
         <Stack.Screen options={{ title: t('analytics.title') }} />
-        <ActivityIndicator size="large" color="#408059" />
+        <ActivityIndicator size="large" color={colors.primary[500]} />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
           {t('analytics.loading')}
         </Text>
@@ -77,7 +80,7 @@ export default function AnalyticsScreen() {
         }}
       >
         <Stack.Screen options={{ title: t('analytics.title') }} />
-        <SymbolIcon name="chart.bar.fill" size={48} color="#9CA3AF" />
+        <SymbolIcon name="chart.bar.fill" size={48} color={colors.gray[400]} />
         <Text
           style={{
             color: colors.surface[600],
@@ -102,7 +105,7 @@ export default function AnalyticsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface[50] }}>
       <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <Stack.Screen options={{ title: t('analytics.title') }} />
 
@@ -122,7 +125,8 @@ export default function AnalyticsScreen() {
                   paddingHorizontal: spacing[4],
                   paddingVertical: spacing[2],
                   borderRadius: borderRadius.full,
-                  backgroundColor: timeRange === range.value ? colors.primary[600] : colors.white,
+                  backgroundColor:
+                    timeRange === range.value ? colors.primary[600] : colors.surface[100],
                 }}
               >
                 <Text
@@ -149,7 +153,7 @@ export default function AnalyticsScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 width: '47%',
@@ -183,7 +187,7 @@ export default function AnalyticsScreen() {
             </View>
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 width: '47%',
@@ -217,7 +221,7 @@ export default function AnalyticsScreen() {
             </View>
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 width: '47%',
@@ -251,7 +255,7 @@ export default function AnalyticsScreen() {
             </View>
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 width: '47%',
@@ -294,7 +298,7 @@ export default function AnalyticsScreen() {
           {performanceMetrics && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -377,7 +381,7 @@ export default function AnalyticsScreen() {
                             ? '#16A34A'
                             : value.trend === 'down'
                               ? '#DC2626'
-                              : '#6B7280'
+                              : colors.surface[600]
                         }
                       />
                     </View>
@@ -406,7 +410,7 @@ export default function AnalyticsScreen() {
           {costAnalysis && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -509,7 +513,7 @@ export default function AnalyticsScreen() {
           {yieldAnalysis && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -619,7 +623,7 @@ export default function AnalyticsScreen() {
           {analytics.expensesByType.length > 0 && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -661,7 +665,7 @@ export default function AnalyticsScreen() {
                           justifyContent: 'center',
                         }}
                       >
-                        <SymbolIcon name="doc.text.fill" size={16} color="#6B7280" />
+                        <SymbolIcon name="doc.text.fill" size={16} color={colors.surface[600]} />
                       </View>
                       <Text
                         style={{
@@ -743,7 +747,7 @@ export default function AnalyticsScreen() {
           {analytics.recentActivity.length > 0 && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -763,7 +767,7 @@ export default function AnalyticsScreen() {
                 return recentItems.map((activity, index) => {
                   const iconInfo = activityIcons[activity.type] || {
                     icon: 'ellipse',
-                    color: '#6B7280',
+                    color: colors.surface[600],
                   };
                   return (
                     <View

@@ -13,11 +13,12 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { WorkerSelectSheet, FarmSelectSheet } from './index';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
+import { useM3 } from '@/styles/use-theme';
 
 type AttendanceStatus = WorkStatus | null;
 
@@ -36,6 +37,7 @@ const STATUS_CYCLE: AttendanceStatus[] = ['full_day', 'half_day', 'absent', null
 const getStatusDisplay = (
   status: AttendanceStatus,
   t: (key: string) => string,
+  theme: ReturnType<typeof useM3>,
 ): {
   label: string;
   bgColor: string;
@@ -48,37 +50,37 @@ const getStatusDisplay = (
     case 'full_day':
       return {
         label: t('attendance.status.fullDayShort'),
-        bgColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-        badgeColor: m3.colorScheme.primary,
-        badgeTextColor: m3.colorScheme.onPrimary,
-        textColor: m3.colorScheme.primary,
+        bgColor: colorWithOpacity(theme.colorScheme.primary, 0.12),
+        badgeColor: theme.colorScheme.primary,
+        badgeTextColor: theme.colorScheme.onPrimary,
+        textColor: theme.colorScheme.primary,
         fullLabel: t('attendance.status.fullDay'),
       };
     case 'half_day':
       return {
         label: t('attendance.status.halfDayShort'),
-        bgColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
-        badgeColor: m3.colorScheme.warning,
-        badgeTextColor: m3.colorScheme.onWarning,
-        textColor: m3.colorScheme.warning,
+        bgColor: colorWithOpacity(theme.colorScheme.warning, 0.18),
+        badgeColor: theme.colorScheme.warning,
+        badgeTextColor: theme.colorScheme.onWarning,
+        textColor: theme.colorScheme.warning,
         fullLabel: t('attendance.status.halfDay'),
       };
     case 'absent':
       return {
         label: t('attendance.status.absentShort'),
-        bgColor: colorWithOpacity(m3.colorScheme.error, 0.12),
-        badgeColor: m3.colorScheme.error,
-        badgeTextColor: m3.colorScheme.onError,
-        textColor: m3.colorScheme.error,
+        bgColor: colorWithOpacity(theme.colorScheme.error, 0.12),
+        badgeColor: theme.colorScheme.error,
+        badgeTextColor: theme.colorScheme.onError,
+        textColor: theme.colorScheme.error,
         fullLabel: t('attendance.status.absent'),
       };
     default:
       return {
         label: t('attendance.status.notSetShort'),
-        bgColor: m3.surface.surfaceContainerLowest,
-        badgeColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.18),
-        badgeTextColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
-        textColor: m3.colorScheme.onSurfaceVariant,
+        bgColor: theme.surface.surfaceContainerLowest,
+        badgeColor: colorWithOpacity(theme.colorScheme.onSurfaceVariant, 0.18),
+        badgeTextColor: colorWithOpacity(theme.colorScheme.onSurfaceVariant, 0.7),
+        textColor: theme.colorScheme.onSurfaceVariant,
         fullLabel: t('attendance.status.notSet'),
       };
   }
@@ -99,6 +101,7 @@ export function MarkAttendanceTab({
   onWorkerIndexChange,
   onSaveSuccess,
 }: MarkAttendanceTabProps) {
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const tabBarInset = useTabBarInset();
@@ -616,7 +619,7 @@ export function MarkAttendanceTab({
                       const dateStr = formatDate(date);
                       const key = getCellKey(workerId, dateStr);
                       const cell = cellData.get(key);
-                      const statusInfo = getStatusDisplay(cell?.status ?? null, t);
+                      const statusInfo = getStatusDisplay(cell?.status ?? null, t, m3);
                       const isTodayDate = isToday(date);
                       const hasStatus = cell?.status !== null;
                       const isIdleToday = isTodayDate && !hasStatus;

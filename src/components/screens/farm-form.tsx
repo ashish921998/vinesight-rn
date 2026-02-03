@@ -20,10 +20,12 @@ import {
   CropIcon,
   Button,
 } from '@/components/ui';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import LocationPicker from './location-picker';
 import { formatDate } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 const SOIL_TEXTURE_OPTIONS = [
   { value: 'Sand', labelKey: 'farmForm.soilTexture.options.sand' },
@@ -103,6 +105,7 @@ const buildFormStateFromFarm = (farm?: Farm | null) => ({
 type FormState = ReturnType<typeof buildFormStateFromFarm>;
 
 export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const isEdit = mode === 'edit';
@@ -347,14 +350,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         renderIcon: ({ selected, size }) => (
           <CropIcon name="grapes" size={size} muted={!selected} />
         ),
-        iconColor: '#DDD6FE',
+        iconColor: colorWithOpacity('#DDD6FE', 0.4),
       },
       {
         value: 'Mango' as CropType,
         label: t('farmForm.cropOptions.mango.label'),
         sublabel: t('farmForm.cropOptions.mango.sublabel'),
         renderIcon: ({ selected, size }) => <CropIcon name="mango" size={size} muted={!selected} />,
-        iconColor: '#FED7AA',
+        iconColor: colorWithOpacity('#FED7AA', 0.4),
       },
       {
         value: 'Pomegranate' as CropType,
@@ -363,7 +366,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         renderIcon: ({ selected, size }) => (
           <CropIcon name="pomegranate" size={size} muted={!selected} />
         ),
-        iconColor: '#FECACA',
+        iconColor: colorWithOpacity('#FECACA', 0.4),
       },
       {
         value: 'Citrus' as CropType,
@@ -372,7 +375,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         renderIcon: ({ selected, size }) => (
           <CropIcon name="citrus" size={size} muted={!selected} />
         ),
-        iconColor: '#FEF08A',
+        iconColor: colorWithOpacity('#FEF08A', 0.4),
       },
       {
         value: 'Banana' as CropType,
@@ -381,14 +384,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         renderIcon: ({ selected, size }) => (
           <CropIcon name="banana" size={size} muted={!selected} />
         ),
-        iconColor: '#FEF3C7',
+        iconColor: colorWithOpacity('#FEF3C7', 0.4),
       },
       {
         value: 'Other' as CropType,
         label: t('farmForm.cropOptions.other.label'),
         sublabel: t('farmForm.cropOptions.other.sublabel'),
         icon: 'ellipsis-horizontal' as const,
-        iconColor: '#E5E7EB',
+        iconColor: colorWithOpacity('#E5E7EB', 0.4),
         iconLibrary: 'ionicons' as const,
       },
     ],
@@ -415,14 +418,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
   if (isEdit && farmLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.white, justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[100], justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={colors.primary[500]} />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.white }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface[100] }}>
       <FullScreenForm
         title={isEdit ? t('farmForm.title.edit') : t('farmForm.title.add')}
         onClose={onClose}
@@ -486,7 +489,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <Pressable
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 2,
             borderColor: colors.surface[200],
             borderRadius: borderRadius.xl,
@@ -510,7 +513,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               ? getVarietyLabel(formState.cropVariety)
               : t('farmForm.variety.selectPlaceholder')}
           </Text>
-          <UISymbol name="chevron.down" size={20} color="#6B7280" />
+          <UISymbol name="chevron.down" size={20} color={colors.surface[600]} />
         </Pressable>
 
         {formState.cropVariety === 'Custom' && (
@@ -528,7 +531,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <Pressable
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 2,
             borderColor: colors.surface[200],
             borderRadius: borderRadius.xl,
@@ -540,7 +543,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           }}
           onPress={() => setFormState((prev) => ({ ...prev, showDatePicker: true }))}
         >
-          <UISymbol name="calendar" size={24} color="#6B7280" />
+          <UISymbol name="calendar" size={24} color={colors.surface[600]} />
           <Text
             style={{
               fontSize: fontSize.base,
@@ -621,7 +624,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <Pressable
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 2,
             borderColor: colors.surface[200],
             borderRadius: borderRadius.xl,
@@ -635,7 +638,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           onPress={() => setFormState((prev) => ({ ...prev, showPruningDatePicker: true }))}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <UISymbol name="cut-outline" size={24} color="#6B7280" />
+            <UISymbol name="cut-outline" size={24} color={colors.surface[600]} />
             <View style={{ marginLeft: spacing[3], flex: 1 }}>
               <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
                 {t('farmForm.fields.pruningDate.label')}
@@ -663,7 +666,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               onPress={() => setFormState((prev) => ({ ...prev, dateOfPruning: null }))}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <UISymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+              <UISymbol name="xmark.circle.fill" size={24} color={colors.gray[400]} />
             </Pressable>
           )}
         </Pressable>
@@ -762,7 +765,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <Pressable
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 2,
             borderColor: colors.surface[200],
             borderRadius: borderRadius.xl,
@@ -786,7 +789,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               ? getSoilTextureLabel(formState.soilTextureClass)
               : t('farmForm.soilTexture.selectPlaceholder')}
           </Text>
-          <UISymbol name="chevron.down" size={20} color="#6B7280" />
+          <UISymbol name="chevron.down" size={20} color={colors.surface[600]} />
         </Pressable>
 
         <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[5] }}>
@@ -828,8 +831,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         {soilCompositionWarning && (
           <InfoCard
             icon="exclamationmark.triangle.fill"
-            iconColor="#F59E0B"
-            backgroundColor="#FEF3C7"
+            iconColor={colors.warning}
+            backgroundColor={colorWithOpacity(colors.warning, 0.2)}
             message={soilCompositionWarning}
             style={{ marginBottom: 20 }}
           />
@@ -837,8 +840,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <InfoCard
           icon="information-circle"
-          iconColor="#10B981"
-          backgroundColor="#D1FAE5"
+          iconColor={colors.success}
+          backgroundColor={colorWithOpacity(colors.success, 0.16)}
           message={t('farmForm.infoCardMessage')}
         />
       </FullScreenForm>
@@ -883,7 +886,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         >
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               borderTopLeftRadius: borderRadius['3xl'],
               borderTopRightRadius: borderRadius['3xl'],
               maxHeight: '70%',
@@ -986,7 +989,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         >
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               borderTopLeftRadius: borderRadius['3xl'],
               borderTopRightRadius: borderRadius['3xl'],
               maxHeight: '70%',

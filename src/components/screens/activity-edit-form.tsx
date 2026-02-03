@@ -21,9 +21,10 @@ import {
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { FormModal, SectionHeader } from '@/components/ui';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
+import { useThemeColors } from '@/styles/use-theme';
 import {
   IrrigationForm,
   SprayForm,
@@ -86,6 +87,7 @@ export function ActivityEditForm({
   onSaveSuccess,
   presentation = 'modal',
 }: ActivityEditFormProps) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const isVisible = visible ?? true;
   const { height: windowHeight } = useWindowDimensions();
@@ -425,7 +427,7 @@ export function ActivityEditForm({
             paddingVertical: spacing[10],
           }}
         >
-          <ActivityIndicator size="large" color="#408059" />
+          <ActivityIndicator size="large" color={colors.primary[600]} />
           <Text selectable style={{ marginTop: spacing[4], color: colors.surface[500] }}>
             {t('common.loading')}
           </Text>

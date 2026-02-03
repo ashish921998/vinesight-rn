@@ -26,9 +26,10 @@ import type {
   FertigationRecord,
 } from '@/types';
 import { PRIORITY_INFO } from '@/types/task';
-import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
+import { useThemeTokens } from '@/styles/use-theme';
 
 // Workboard action type
 interface WorkboardAction {
@@ -39,34 +40,8 @@ interface WorkboardAction {
   route?: string;
 }
 
-const WORKBOARD_ACTIONS: WorkboardAction[] = [
-  {
-    id: 'ai',
-    titleKey: 'farmDetails.workboard.actions.ai',
-    icon: 'lightbulb.fill',
-    color: m3.colorScheme.primary,
-  },
-  {
-    id: 'lab',
-    titleKey: 'farmDetails.workboard.actions.lab',
-    icon: 'flask.fill',
-    color: m3.colorScheme.secondary,
-  },
-  {
-    id: 'reports',
-    titleKey: 'farmDetails.workboard.actions.reports',
-    icon: 'chart.bar.fill',
-    color: m3.colorScheme.tertiary,
-  },
-  {
-    id: 'soil',
-    titleKey: 'farmDetails.workboard.actions.soilMoisture',
-    icon: 'square.stack.3d.up.fill',
-    color: colors.task[500],
-  },
-];
-
 export default function FarmDetailScreen() {
+  const { isDark, m3 } = useThemeTokens();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -95,6 +70,37 @@ export default function FarmDetailScreen() {
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
   const showFab = isAndroid;
   const bottomBarHeight = showFab ? 0 : 72 + insets.bottom;
+  const iconAccent = m3.colorScheme.primary;
+  const iconColor = (fallback: string) => (isDark ? iconAccent : fallback);
+  const workboardActions = useMemo<WorkboardAction[]>(
+    () => [
+      {
+        id: 'ai',
+        titleKey: 'farmDetails.workboard.actions.ai',
+        icon: 'lightbulb.fill',
+        color: m3.colorScheme.primary,
+      },
+      {
+        id: 'lab',
+        titleKey: 'farmDetails.workboard.actions.lab',
+        icon: 'flask.fill',
+        color: m3.colorScheme.secondary,
+      },
+      {
+        id: 'reports',
+        titleKey: 'farmDetails.workboard.actions.reports',
+        icon: 'chart.bar.fill',
+        color: m3.colorScheme.tertiary,
+      },
+      {
+        id: 'soil',
+        titleKey: 'farmDetails.workboard.actions.soilMoisture',
+        icon: 'square.stack.3d.up.fill',
+        color: colors.task[500],
+      },
+    ],
+    [m3],
+  );
 
   // Calculate stats
   const totalRecords = useMemo(
@@ -367,7 +373,7 @@ export default function FarmDetailScreen() {
         <UiSymbol
           name="alert-circle-outline"
           size={48}
-          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+          color={iconColor(colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7))}
         />
         <Text
           style={{
@@ -627,7 +633,7 @@ export default function FarmDetailScreen() {
                       <UiSymbol
                         name="location-outline"
                         size={16}
-                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                        color={iconColor(colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7))}
                       />
                       <Text
                         style={{
@@ -754,7 +760,7 @@ export default function FarmDetailScreen() {
                   title={t('farmDetails.stats.logEntriesTitle')}
                   value={totalRecords.toString()}
                   icon="document-text"
-                  iconColor={m3.colorScheme.primary}
+                  iconColor={iconColor(m3.colorScheme.primary)}
                   subtitle={t('farmDetails.stats.recordsSubtitle')}
                   onPress={() => router.push(`/logs?farmId=${id}`)}
                 />
@@ -764,7 +770,7 @@ export default function FarmDetailScreen() {
                   title={t('farmDetails.stats.soilWaterTitle')}
                   value={farm.remaining_water ? farm.remaining_water.toFixed(1) : '--'}
                   icon="water"
-                  iconColor={colors.irrigation[500]}
+                  iconColor={iconColor(colors.irrigation[500])}
                   subtitle={waterUsageCaption}
                   onPress={() => {
                     if (!farm?.id) return;
@@ -812,7 +818,7 @@ export default function FarmDetailScreen() {
               }}
             >
               <View style={{ flexDirection: 'row' }}>
-                {WORKBOARD_ACTIONS.map((action) => (
+                {workboardActions.map((action) => (
                   <Pressable
                     key={action.id}
                     style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[2] }}
@@ -820,56 +826,61 @@ export default function FarmDetailScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={t(action.titleKey)}
                   >
-                    {({ pressed }) => (
-                      <View
-                        style={{
-                          alignItems: 'center',
-                          borderRadius: m3.shape.cornerMedium,
-                          overflow: 'hidden',
-                          paddingHorizontal: spacing[2],
-                          paddingVertical: spacing[2],
-                        }}
-                      >
-                        <View
-                          style={{
-                            borderRadius: borderRadius.full,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: spacing[2],
-                            width: 40,
-                            height: 40,
-                            backgroundColor: colorWithOpacity(action.color, 0.12),
-                          }}
-                        >
-                          <UiSymbol name={action.icon} size={18} color={action.color} />
-                        </View>
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurfaceVariant,
-                            ...m3.typography.labelSmall,
-                            fontWeight: fontWeight.medium,
-                            textAlign: 'center',
-                            lineHeight: 16,
-                          }}
-                        >
-                          {t(action.titleKey)}
-                        </Text>
-                        <View
-                          pointerEvents="none"
-                          style={[
-                            StyleSheet.absoluteFillObject,
-                            {
-                              backgroundColor: pressed
-                                ? colorWithOpacity(
-                                    m3.colorScheme.onSurface,
-                                    m3.stateLayerOpacity.pressed,
-                                  )
-                                : 'transparent',
-                            },
-                          ]}
-                        />
-                      </View>
-                    )}
+                    {({ pressed }) =>
+                      (() => {
+                        const actionColor = iconColor(action.color);
+                        return (
+                          <View
+                            style={{
+                              alignItems: 'center',
+                              borderRadius: m3.shape.cornerMedium,
+                              overflow: 'hidden',
+                              paddingHorizontal: spacing[2],
+                              paddingVertical: spacing[2],
+                            }}
+                          >
+                            <View
+                              style={{
+                                borderRadius: borderRadius.full,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: spacing[2],
+                                width: 40,
+                                height: 40,
+                                backgroundColor: colorWithOpacity(actionColor, 0.12),
+                              }}
+                            >
+                              <UiSymbol name={action.icon} size={18} color={actionColor} />
+                            </View>
+                            <Text
+                              style={{
+                                color: m3.colorScheme.onSurfaceVariant,
+                                ...m3.typography.labelSmall,
+                                fontWeight: fontWeight.medium,
+                                textAlign: 'center',
+                                lineHeight: 16,
+                              }}
+                            >
+                              {t(action.titleKey)}
+                            </Text>
+                            <View
+                              pointerEvents="none"
+                              style={[
+                                StyleSheet.absoluteFillObject,
+                                {
+                                  backgroundColor: pressed
+                                    ? colorWithOpacity(
+                                        m3.colorScheme.onSurface,
+                                        m3.stateLayerOpacity.pressed,
+                                      )
+                                    : 'transparent',
+                                },
+                              ]}
+                            />
+                          </View>
+                        );
+                      })()
+                    }
                   </Pressable>
                 ))}
               </View>
@@ -1003,7 +1014,7 @@ export default function FarmDetailScreen() {
                     <UiSymbol
                       name="doc.text"
                       size={32}
-                      color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                      color={iconColor(colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7))}
                     />
                   </View>
                   <Text
@@ -1154,7 +1165,9 @@ export default function FarmDetailScreen() {
                                 color={
                                   overdue
                                     ? m3.colorScheme.error
-                                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)
+                                    : iconColor(
+                                        colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),
+                                      )
                                 }
                               />
                               <Text
@@ -1249,7 +1262,7 @@ export default function FarmDetailScreen() {
                   <UiSymbol
                     name="checkbox-outline"
                     size={32}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                    color={iconColor(colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7))}
                   />
                 </View>
                 <Text

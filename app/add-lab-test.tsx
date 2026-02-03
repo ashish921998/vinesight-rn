@@ -3,9 +3,11 @@ import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import LabTestForm from '@/components/screens/lab-test-form';
-import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
 
 export default function AddLabTestRoute() {
+  const colors = useThemeColors();
   const router = useRouter();
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ farmId?: string; testType?: 'soil' | 'petiole' }>();

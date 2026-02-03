@@ -3,29 +3,34 @@ import { View, Text, ScrollView, ActivityIndicator, Alert, Pressable } from 'rea
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { WorkerSelectSheet } from './index';
 import i18n from '@/i18n';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 type AttendanceStatus = WorkStatus | null;
-
-const UI = {
-  bg: '#F4F6F8',
-  surface: '#FFFFFF',
-  surfaceSoft: 'rgba(255, 255, 255, 0.9)',
-  border: 'rgba(15, 23, 42, 0.08)',
-  primary: '#2F6B4F',
-  primarySoft: 'rgba(47, 107, 79, 0.12)',
-  text: '#0F172A',
-  muted: '#6B7280',
-  accent: '#2563EB',
-};
 
 interface CalendarAttendanceTabProps {
   workers: Worker[];
 }
 
 export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
+  const colors = useThemeColors();
+  const ui = useMemo(
+    () => ({
+      bg: colors.surface[50],
+      surface: colors.surface[100],
+      surfaceSoft: colors.surface[100],
+      border: colors.surface[200],
+      primary: colors.primary[600],
+      primarySoft: colorWithOpacity(colors.primary[600], 0.12),
+      text: colors.surface[900],
+      muted: colors.surface[600],
+      accent: colors.primary[500],
+    }),
+    [colors],
+  );
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | null>(
     workers.length > 0 && workers[0].id !== undefined ? workers[0].id : null,
   );
@@ -123,14 +128,14 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
   ];
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: UI.bg }} showsVerticalScrollIndicator={false}>
+    <ScrollView style={{ flex: 1, backgroundColor: ui.bg }} showsVerticalScrollIndicator={false}>
       <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
         <View
           style={{
             borderRadius: borderRadius['3xl'],
             padding: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
+            backgroundColor: ui.surfaceSoft,
+            borderColor: ui.border,
             borderWidth: 1,
           }}
         >
@@ -140,7 +145,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
               fontWeight: fontWeight.bold,
               textTransform: 'uppercase',
               letterSpacing: 0.6,
-              color: UI.muted,
+              color: ui.muted,
             }}
           >
             Worker
@@ -156,24 +161,24 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
               borderRadius: borderRadius['2xl'],
               borderWidth: 1,
               marginTop: spacing[3],
-              backgroundColor: colors.white,
-              borderColor: UI.border,
+              backgroundColor: colors.surface[100],
+              borderColor: ui.border,
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <UiSymbol name="person" size={16} color={UI.primary} />
+              <UiSymbol name="person" size={16} color={ui.primary} />
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
                   marginLeft: spacing[2],
-                  color: UI.text,
+                  color: ui.text,
                 }}
               >
                 {selectedWorker?.name || 'All Workers'}
               </Text>
             </View>
-            <UiSymbol name="chevron.down" size={14} color={UI.muted} />
+            <UiSymbol name="chevron.down" size={14} color={ui.muted} />
           </Pressable>
         </View>
       </View>
@@ -183,8 +188,8 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
           style={{
             borderRadius: borderRadius['3xl'],
             padding: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
+            backgroundColor: ui.surfaceSoft,
+            borderColor: ui.border,
             borderWidth: 1,
           }}
         >
@@ -203,13 +208,13 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                 borderRadius: borderRadius.full,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: UI.primarySoft,
+                backgroundColor: ui.primarySoft,
               }}
             >
-              <UiSymbol name="chevron.left" size={22} color={UI.primary} />
+              <UiSymbol name="chevron.left" size={22} color={ui.primary} />
             </Pressable>
 
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: UI.text }}>
+            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: ui.text }}>
               {monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
             </Text>
 
@@ -221,11 +226,11 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                   paddingVertical: 6,
                   borderRadius: borderRadius.full,
                   marginRight: spacing[2],
-                  backgroundColor: UI.primarySoft,
+                  backgroundColor: ui.primarySoft,
                 }}
               >
                 <Text
-                  style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: UI.primary }}
+                  style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: ui.primary }}
                 >
                   Today
                 </Text>
@@ -242,10 +247,10 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                   borderRadius: borderRadius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: UI.primarySoft,
+                  backgroundColor: ui.primarySoft,
                 }}
               >
-                <UiSymbol name="chevron.right" size={22} color={UI.primary} />
+                <UiSymbol name="chevron.right" size={22} color={ui.primary} />
               </Pressable>
             </View>
           </View>
@@ -258,14 +263,14 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
             borderRadius: borderRadius['3xl'],
             padding: spacing[4],
             marginBottom: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
+            backgroundColor: ui.surfaceSoft,
+            borderColor: ui.border,
             borderWidth: 1,
           }}
         >
           {loading ? (
             <View style={{ paddingVertical: spacing[12], alignItems: 'center' }}>
-              <ActivityIndicator size="small" color={UI.primary} />
+              <ActivityIndicator size="small" color={ui.primary} />
             </View>
           ) : (
             <>
@@ -274,7 +279,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                   flexDirection: 'row',
                   paddingBottom: spacing[3],
                   borderBottomWidth: 1,
-                  borderColor: UI.border,
+                  borderColor: ui.border,
                 }}
               >
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
@@ -285,7 +290,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                         fontWeight: fontWeight.bold,
                         textTransform: 'uppercase',
                         textAlign: 'center',
-                        color: '#9CA3AF',
+                        color: colors.gray[400],
                       }}
                     >
                       {day}
@@ -318,7 +323,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                               alignItems: 'center',
                               justifyContent: 'center',
                               borderRadius: borderRadius['2xl'],
-                              backgroundColor: isTodayDate ? UI.primarySoft : 'transparent',
+                              backgroundColor: isTodayDate ? ui.primarySoft : 'transparent',
                             }}
                           >
                             <Text
@@ -326,10 +331,10 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                                 fontSize: fontSize.sm,
                                 fontWeight: fontWeight.semibold,
                                 color: isTodayDate
-                                  ? UI.primary
+                                  ? ui.primary
                                   : isCurrentMonth
                                     ? '#111827'
-                                    : '#D1D5DB',
+                                    : colors.surface[300],
                               }}
                             >
                               {day.getDate()}
@@ -342,7 +347,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                                       width: 6,
                                       height: 6,
                                       borderRadius: borderRadius.full,
-                                      backgroundColor: '#22C55E',
+                                      backgroundColor: colors.success,
                                     }}
                                   />
                                 )}
@@ -385,8 +390,8 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
           style={{
             borderRadius: borderRadius['3xl'],
             padding: spacing[4],
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
+            backgroundColor: ui.surfaceSoft,
+            borderColor: ui.border,
             borderWidth: 1,
           }}
         >
@@ -404,11 +409,11 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                   width: 12,
                   height: 12,
                   borderRadius: borderRadius.full,
-                  backgroundColor: '#22C55E',
+                  backgroundColor: colors.success,
                 }}
               />
               <Text
-                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: UI.text }}
+                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: ui.text }}
               >
                 Full Day
               </Text>
@@ -423,7 +428,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                 }}
               />
               <Text
-                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: UI.text }}
+                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: ui.text }}
               >
                 Half Day
               </Text>
@@ -438,7 +443,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                 }}
               />
               <Text
-                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: UI.text }}
+                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: ui.text }}
               >
                 Absent
               </Text>

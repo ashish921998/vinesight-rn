@@ -3,7 +3,9 @@ import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-nat
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export interface FertilizerEntry {
   id?: string;
@@ -24,6 +26,7 @@ interface FertigationFormProps {
 }
 
 export function FertigationForm({ data, onChange, onInputFocus }: FertigationFormProps) {
+  const colors = useThemeColors();
   const isValid =
     data.fertilizers.length > 0 && data.fertilizers.every((f) => f.name.trim() && f.quantity > 0);
 
@@ -67,13 +70,13 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
             width: 40,
             height: 40,
             borderRadius: borderRadius.full,
-            backgroundColor: '#DCFCE7',
+            backgroundColor: colorWithOpacity(colors.success, 0.16),
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: spacing[3],
           }}
         >
-          <IconSymbol name="leaf.fill" size={20} color="#22C55E" />
+          <IconSymbol name="leaf.fill" size={20} color={colors.success} />
         </View>
         <View>
           <Text
@@ -103,7 +106,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
         >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ marginRight: 6 }}>
-              <IconSymbol name="flask" size={16} color="#408059" />
+              <IconSymbol name="flask" size={16} color={colors.primary[600]} />
             </View>
             <Text
               style={{
@@ -118,7 +121,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
           {totalInputs > 0 && (
             <View
               style={{
-                backgroundColor: '#DCFCE7',
+                backgroundColor: colorWithOpacity(colors.success, 0.16),
                 paddingHorizontal: 10,
                 paddingVertical: 4,
                 borderRadius: borderRadius.full,
@@ -156,7 +159,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
               marginTop: spacing[2],
             }}
           >
-            <IconSymbol name="plus.circle.fill" size={20} color="#22C55E" />
+            <IconSymbol name="plus.circle.fill" size={20} color={colors.success} />
             <Text
               style={{
                 fontSize: fontSize.sm,
@@ -228,7 +231,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
         <IconSymbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
-          color={isValid ? '#22C55E' : '#9CA3AF'}
+          color={isValid ? colors.success : colors.gray[400]}
         />
         <Text
           style={{
@@ -316,12 +319,12 @@ function FertilizerRow({
             paddingVertical: 10,
             fontSize: fontSize.base,
             color: colors.surface[900],
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 1,
             borderColor: isNameFocused ? '#4ADE80' : colors.surface[200],
           }}
           placeholder="Fertilizer name"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           value={fertilizer.name}
           onChangeText={(name) => onUpdate({ name })}
           onFocus={(event) => {
@@ -336,7 +339,7 @@ function FertilizerRow({
             style={{ marginLeft: spacing[2], padding: spacing[2] }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <IconSymbol name="minus.circle.fill" size={24} color="#9CA3AF" />
+            <IconSymbol name="minus.circle.fill" size={24} color={colors.gray[400]} />
           </Pressable>
         )}
       </View>
@@ -352,12 +355,12 @@ function FertilizerRow({
             fontSize: fontSize.base,
             color: colors.surface[900],
             textAlign: 'center',
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 1,
             borderColor: isQuantityFocused ? '#4ADE80' : colors.surface[200],
           }}
           placeholder="Qty"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           keyboardType="decimal-pad"
           value={quantityText}
           onChangeText={handleQuantityChange}
@@ -380,7 +383,7 @@ function FertilizerRow({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderRadius: borderRadius.lg,
             paddingHorizontal: spacing[3],
             paddingVertical: 10,
@@ -392,7 +395,7 @@ function FertilizerRow({
           <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
             {fertilizer.unit}
           </Text>
-          <IconSymbol name="chevron.right" size={18} color="#6B7280" />
+          <IconSymbol name="chevron.right" size={18} color={colors.surface[600]} />
         </Pressable>
       </View>
 

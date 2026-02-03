@@ -6,8 +6,8 @@ import * as SecureStore from 'expo-secure-store';
 // MARK: - Configuration
 // ============================================================
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim() ?? '';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? '';
+const SUPABASE_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL || '').trim();
+const SUPABASE_ANON_KEY = (process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '').trim();
 
 const SUPABASE_CONFIG_ERROR_MESSAGE =
   'Supabase is not configured for this build. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.';

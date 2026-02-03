@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
 import {
   useFarms,
@@ -29,11 +29,14 @@ import {
 import { FarmCard } from '@/components/cards';
 import { useModalStore } from '@/stores';
 import type { Farm, WarehouseItem } from '@/types';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 type ExploreTab = 'farms' | 'warehouse';
 type WarehouseFilter = 'all' | 'fertilizer' | 'spray';
 
 export default function ExploreScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -344,7 +347,7 @@ export default function ExploreScreen() {
               padding: spacing[8],
             }}
           >
-            <ActivityIndicator size="large" color="#408059" />
+            <ActivityIndicator size="large" color={colors.primary[500]} />
             <Text
               style={{ color: colors.surface[500], fontSize: fontSize.base, marginTop: spacing[4] }}
             >
@@ -375,11 +378,11 @@ export default function ExploreScreen() {
                 backgroundColor: colors.surface[50],
               }}
             >
-              <Icon name="magnifyingglass" size={36} color="#c7c7cc" />
+              <Icon name="magnifyingglass" size={36} color={colors.gray[400]} />
             </View>
             <Text
               style={{
-                color: colors.black,
+                color: colors.surface[900],
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.semibold,
                 textAlign: 'center',
@@ -426,11 +429,11 @@ export default function ExploreScreen() {
               backgroundColor: 'rgba(64, 128, 89, 0.1)',
             }}
           >
-            <Icon name="leaf.fill" size={48} color="#408059" />
+            <Icon name="leaf.fill" size={48} color={colors.primary[500]} />
           </View>
           <Text
             style={{
-              color: colors.black,
+              color: colors.surface[900],
               fontSize: fontSize.xl,
               fontWeight: fontWeight.semibold,
               textAlign: 'center',
@@ -513,12 +516,12 @@ export default function ExploreScreen() {
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
                   }}
                 >
-                  <Icon name="leaf.fill" size={16} color="#408059" />
+                  <Icon name="leaf.fill" size={16} color={colors.primary[500]} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      color: colors.black,
+                      color: colors.surface[900],
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
@@ -564,12 +567,16 @@ export default function ExploreScreen() {
                     backgroundColor: 'rgba(64, 128, 89, 0.1)',
                   }}
                 >
-                  <Icon name="arrow.up.left.and.arrow.down.right" size={16} color="#408059" />
+                  <Icon
+                    name="arrow.up.left.and.arrow.down.right"
+                    size={16}
+                    color={colors.primary[500]}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      color: colors.black,
+                      color: colors.surface[900],
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
@@ -610,7 +617,7 @@ export default function ExploreScreen() {
             <RefreshControl
               refreshing={farmsLoading && !searchQuery}
               onRefresh={refetchFarms}
-              tintColor="#408059"
+              tintColor={colors.primary[500]}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -636,7 +643,7 @@ export default function ExploreScreen() {
               backgroundColor: colors.primary[500],
             }}
           >
-            <Icon name="plus" size={28} color="#FFFFFF" />
+            <Icon name="plus" size={28} color={colors.white} />
           </Pressable>
         )}
       </>
@@ -685,7 +692,7 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
               }}
             >
               <Icon
@@ -712,7 +719,7 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
               }}
             >
               <Icon name="dollarsign.circle.fill" size={24} color={colors.primary[500]} />
@@ -792,7 +799,7 @@ export default function ExploreScreen() {
                         style={{
                           borderRadius: borderRadius.xl,
                           padding: spacing[3],
-                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                          backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
                         }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -851,7 +858,7 @@ export default function ExploreScreen() {
                         >
                           <Text
                             style={{
-                              color: 'white',
+                              color: colors.white,
                               fontSize: fontSize.xs,
                               fontWeight: fontWeight.medium,
                             }}
@@ -926,7 +933,7 @@ export default function ExploreScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[8],
                 alignItems: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
               }}
             >
               <View
@@ -975,7 +982,7 @@ export default function ExploreScreen() {
                   backgroundColor: colors.primary[500],
                 }}
               >
-                <Icon name="plus.circle.fill" size={20} color="white" />
+                <Icon name="plus.circle.fill" size={20} color={colors.white} />
                 <Text
                   style={{
                     color: colors.white,
@@ -1001,8 +1008,10 @@ export default function ExploreScreen() {
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
                     marginBottom: spacing[3],
-                    backgroundColor: isLowStock ? `${'#D9731F'}0D` : 'rgba(255, 255, 255, 0.8)',
-                    borderColor: isLowStock ? `${'#D9731F'}4D` : 'transparent',
+                    backgroundColor: isLowStock
+                      ? colorWithOpacity(colors.warning, 0.08)
+                      : colorWithOpacity(colors.surface[100], 0.9),
+                    borderColor: isLowStock ? colorWithOpacity(colors.warning, 0.3) : 'transparent',
                     borderWidth: isLowStock ? 1 : 0,
                   }}
                 >
@@ -1068,7 +1077,7 @@ export default function ExploreScreen() {
                             accessibilityRole="button"
                             accessibilityLabel={t('common.a11y.editWithName', { name: item.name })}
                           >
-                            <Icon name="pencil" size={20} color="#408059" />
+                            <Icon name="pencil" size={20} color={colors.primary[500]} />
                           </Pressable>
                           <Pressable
                             onPress={() => handleDeleteWarehouseItem(item)}
@@ -1178,7 +1187,7 @@ export default function ExploreScreen() {
             backgroundColor: colors.primary[500],
           }}
         >
-          <Icon name="plus" size={28} color="white" />
+          <Icon name="plus" size={28} color={colors.white} />
         </Pressable>
       </>
     );
@@ -1219,16 +1228,20 @@ export default function ExploreScreen() {
             borderColor: isSearchFocused ? colors.primary[500] : 'transparent',
           }}
         >
-          <Icon name="magnifyingglass" size={20} color={isSearchFocused ? '#408059' : '#c7c7cc'} />
+          <Icon
+            name="magnifyingglass"
+            size={20}
+            color={isSearchFocused ? colors.primary[500] : colors.gray[400]}
+          />
           <TextInput
             style={{
               flex: 1,
               marginLeft: spacing[3],
               fontSize: fontSize.base,
-              color: colors.black,
+              color: colors.surface[900],
             }}
             placeholder={searchPlaceholder}
-            placeholderTextColor="#c7c7cc"
+            placeholderTextColor={colors.gray[400]}
             value={searchQuery}
             onChangeText={handleSearchChange}
             onFocus={handleSearchFocus}
@@ -1240,7 +1253,7 @@ export default function ExploreScreen() {
               onPress={() => handleSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Icon name="xmark.circle.fill" size={20} color="#c7c7cc" />
+              <Icon name="xmark.circle.fill" size={20} color={colors.gray[400]} />
             </Pressable>
           )}
         </View>
@@ -1287,10 +1300,16 @@ export default function ExploreScreen() {
                         overflow: 'hidden',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: isSelected ? 'rgba(64, 128, 89, 0.1)' : 'transparent',
+                        backgroundColor: isSelected
+                          ? colorWithOpacity(colors.primary[500], 0.1)
+                          : 'transparent',
                       }}
                     >
-                      <Icon name={tab.icon} size={24} color={isSelected ? '#408059' : '#9CA3AF'} />
+                      <Icon
+                        name={tab.icon}
+                        size={24}
+                        color={isSelected ? colors.primary[500] : colors.gray[400]}
+                      />
                     </View>
                   </Animated.View>
 
@@ -1302,7 +1321,7 @@ export default function ExploreScreen() {
                       flexShrink: 1,
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: isSelected ? '#408059' : '#6B7280',
+                      color: isSelected ? colors.primary[500] : colors.surface[600],
                       marginTop: textMargin,
                       textAlign: 'center',
                       paddingHorizontal: spacing[2],
@@ -1330,7 +1349,7 @@ export default function ExploreScreen() {
                         height: 2,
                         borderRadius: borderRadius.full,
                         width: '60%',
-                        backgroundColor: '#408059',
+                        backgroundColor: colors.primary[500],
                       }}
                     />
                   )}

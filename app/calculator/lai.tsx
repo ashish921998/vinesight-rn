@@ -16,10 +16,12 @@ import {
 
 import { Stack } from 'expo-router';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { telemetry } from '@/services/telemetry';
+import { useThemeColors } from '@/styles/use-theme';
 
 export default function LAICalculatorScreen() {
+  const colors = useThemeColors();
   const [shootLength, setShootLength] = useState(''); // cm
   const [shootsPerVine, setShootsPerVine] = useState('');
   const [vineSpacing, setVineSpacing] = useState(''); // m
@@ -94,13 +96,13 @@ export default function LAICalculatorScreen() {
     if (lai < 1.0) {
       return {
         label: 'Low',
-        color: '#F59E0B',
+        color: colors.warning,
         message: 'Canopy underdeveloped. May need more shoots or improved vigor.',
       };
     } else if (lai < 2.5) {
       return {
         label: 'Optimal',
-        color: '#22C55E',
+        color: colors.success,
         message: 'Good balance between vegetative growth and fruit exposure.',
       };
     } else if (lai < 4.0) {
@@ -112,7 +114,7 @@ export default function LAICalculatorScreen() {
     } else {
       return {
         label: 'Excessive',
-        color: '#EF4444',
+        color: colors.error,
         message: 'Very dense canopy. Risk of disease and poor fruit quality. Reduce vigor.',
       };
     }
@@ -144,7 +146,7 @@ export default function LAICalculatorScreen() {
             {/* Calculator Card */}
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -162,7 +164,7 @@ export default function LAICalculatorScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="leaf.fill" size={18} color="#22C55E" />
+                  <Icon name="leaf.fill" size={18} color={colors.success} />
                 </View>
                 <Text
                   style={{
@@ -363,7 +365,7 @@ export default function LAICalculatorScreen() {
               <Pressable
                 onPress={reset}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   paddingVertical: spacing[4],
                   alignItems: 'center',
@@ -373,7 +375,7 @@ export default function LAICalculatorScreen() {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Icon name="refresh" size={18} color="#6B7280" />
+                  <Icon name="refresh" size={18} color={colors.surface[600]} />
                   <Text
                     style={{
                       color: colors.surface[600],
@@ -432,7 +434,7 @@ function InputRow({
           value={value}
           onChangeText={handleChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           keyboardType="decimal-pad"
           style={{
             flex: 1,

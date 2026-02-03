@@ -2,6 +2,8 @@
  * Task/Reminder Types for Vinesight
  */
 
+import { colorWithOpacity } from '@/utils/color';
+
 // Task types matching the database schema
 export type TaskType =
   | 'irrigation'
@@ -78,16 +80,44 @@ export const PRIORITY_INFO: Record<
   TaskPriority,
   { labelKey: string; color: string; bgColor: string }
 > = {
-  low: { labelKey: 'tasks.priority.low', color: '#166534', bgColor: '#DCFCE7' },
-  medium: { labelKey: 'tasks.priority.medium', color: '#92400E', bgColor: '#FEF3C7' },
-  high: { labelKey: 'tasks.priority.high', color: '#991B1B', bgColor: '#FEE2E2' },
+  low: {
+    labelKey: 'tasks.priority.low',
+    color: '#166534',
+    bgColor: colorWithOpacity('#166534', 0.14),
+  },
+  medium: {
+    labelKey: 'tasks.priority.medium',
+    color: '#92400E',
+    bgColor: colorWithOpacity('#92400E', 0.16),
+  },
+  high: {
+    labelKey: 'tasks.priority.high',
+    color: '#991B1B',
+    bgColor: colorWithOpacity('#991B1B', 0.16),
+  },
 };
 
 // Status display info
 export const STATUS_INFO: Record<TaskStatus, { labelKey: string; color: string; bgColor: string }> =
   {
-    pending: { labelKey: 'tasks.status.pending', color: '#92400E', bgColor: '#FEF3C7' },
-    in_progress: { labelKey: 'tasks.status.inProgress', color: '#1D4ED8', bgColor: '#DBEAFE' },
-    completed: { labelKey: 'tasks.status.completed', color: '#166534', bgColor: '#DCFCE7' },
-    cancelled: { labelKey: 'tasks.status.cancelled', color: '#6B7280', bgColor: '#F3F4F6' },
+    pending: {
+      labelKey: 'tasks.status.pending',
+      color: '#92400E',
+      bgColor: colorWithOpacity('#92400E', 0.16),
+    },
+    in_progress: {
+      labelKey: 'tasks.status.inProgress',
+      color: '#1D4ED8',
+      bgColor: colorWithOpacity('#1D4ED8', 0.16),
+    },
+    completed: {
+      labelKey: 'tasks.status.completed',
+      color: '#166534',
+      bgColor: colorWithOpacity('#166534', 0.14),
+    },
+    cancelled: {
+      labelKey: 'tasks.status.cancelled',
+      color: '#6B7280',
+      bgColor: colorWithOpacity('#6B7280', 0.16),
+    },
   };

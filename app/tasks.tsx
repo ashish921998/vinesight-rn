@@ -15,10 +15,12 @@ import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-tasks';
 import { TaskReminder, TASK_TYPE_INFO, PRIORITY_INFO } from '../src/types/task';
 import { useModalStore } from '@/stores';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatNumber } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
 
@@ -29,6 +31,7 @@ const startOfDay = (date: Date) => {
 };
 
 export default function TasksScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -171,7 +174,7 @@ export default function TasksScreen() {
         }}
       >
         <Stack.Screen options={{ title: t('tasks.title') }} />
-        <ActivityIndicator size="large" color="#408059" />
+        <ActivityIndicator size="large" color={colors.primary[500]} />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
           {t('common.loading')}
         </Text>
@@ -181,7 +184,7 @@ export default function TasksScreen() {
 
   return (
     <>
-      <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
         <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
           <Stack.Screen
             options={{
@@ -197,7 +200,7 @@ export default function TasksScreen() {
                   }}
                   style={{ marginRight: spacing[4] }}
                 >
-                  <SFSymbol name="plus.circle.fill" size={28} color="#408059" />
+                  <SFSymbol name="plus.circle.fill" size={28} color={colors.primary[500]} />
                 </Pressable>
               ),
             }}
@@ -206,7 +209,11 @@ export default function TasksScreen() {
           <ScrollView
             contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[24] }}
             refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={refetch}
+                tintColor={colors.primary[500]}
+              />
             }
           >
             {/* Stats Cards */}
@@ -214,7 +221,7 @@ export default function TasksScreen() {
               <View
                 style={{
                   flex: 1,
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius.xl,
                   padding: spacing[3],
                   alignItems: 'center',
@@ -268,12 +275,12 @@ export default function TasksScreen() {
                   style={{
                     fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
-                    color: '#15803D',
+                    color: colors.success,
                   }}
                 >
                   {counts.completed}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.success }}>
                   {t('tasks.statusSummary.completed')}
                 </Text>
               </View>
@@ -294,7 +301,7 @@ export default function TasksScreen() {
                     paddingHorizontal: spacing[4],
                     paddingVertical: spacing[2],
                     borderRadius: borderRadius.full,
-                    backgroundColor: filter === type ? colors.primary[600] : colors.white,
+                    backgroundColor: filter === type ? colors.primary[600] : colors.surface[100],
                   }}
                 >
                   <Text
@@ -315,13 +322,13 @@ export default function TasksScreen() {
             {filteredTasks.length === 0 ? (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[8],
                   alignItems: 'center',
                 }}
               >
-                <SFSymbol name="square" size={48} color="#9CA3AF" />
+                <SFSymbol name="square" size={48} color={colors.gray[400]} />
                 <Text
                   style={{
                     color: colors.surface[600],
@@ -378,7 +385,7 @@ export default function TasksScreen() {
                   <View
                     key={task.id}
                     style={{
-                      backgroundColor: colors.white,
+                      backgroundColor: colors.surface[100],
                       borderRadius: borderRadius['2xl'],
                       padding: spacing[4],
                       marginBottom: spacing[3],
@@ -401,11 +408,13 @@ export default function TasksScreen() {
                           justifyContent: 'center',
                           marginRight: spacing[3],
                           marginTop: 2,
-                          backgroundColor: task.completed ? '#22C55E' : 'transparent',
-                          borderColor: task.completed ? '#22C55E' : colors.surface[300],
+                          backgroundColor: task.completed ? colors.success : 'transparent',
+                          borderColor: task.completed ? colors.success : colors.surface[300],
                         }}
                       >
-                        {task.completed && <SFSymbol name="checkmark" size={16} color="white" />}
+                        {task.completed && (
+                          <SFSymbol name="checkmark" size={16} color={colors.white} />
+                        )}
                       </Pressable>
 
                       <View style={{ flex: 1 }}>
@@ -485,7 +494,7 @@ export default function TasksScreen() {
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <SFSymbol name="leaf.fill" size={12} color="#6B7280" />
+                            <SFSymbol name="leaf.fill" size={12} color={colors.surface[600]} />
                             <Text
                               style={{
                                 fontSize: fontSize.xs,
@@ -503,19 +512,21 @@ export default function TasksScreen() {
                               paddingHorizontal: spacing[2],
                               paddingVertical: 2,
                               borderRadius: borderRadius.sm,
-                              backgroundColor: overdue ? '#FEE2E2' : colors.surface[100],
+                              backgroundColor: overdue
+                                ? colorWithOpacity(colors.error, 0.16)
+                                : colors.surface[100],
                             }}
                           >
                             <SFSymbol
                               name="calendar"
                               size={12}
-                              color={overdue ? '#DC2626' : '#6B7280'}
+                              color={overdue ? colors.error : colors.surface[600]}
                             />
                             <Text
                               style={{
                                 fontSize: fontSize.xs,
                                 marginLeft: spacing[1],
-                                color: overdue ? '#DC2626' : colors.surface[500],
+                                color: overdue ? colors.error : colors.surface[500],
                                 fontWeight: overdue ? fontWeight.medium : fontWeight.normal,
                               }}
                             >
@@ -549,7 +560,7 @@ export default function TasksScreen() {
                           onPress={() => handleDelete(task)}
                           style={{ padding: spacing[2] }}
                         >
-                          <SFSymbol name="trash" size={18} color="#DC2626" />
+                          <SFSymbol name="trash" size={18} color={colors.error} />
                         </Pressable>
                       )}
                     </View>
@@ -585,7 +596,7 @@ export default function TasksScreen() {
               elevation: 4,
             }}
           >
-            <SFSymbol name="plus" size={28} color="white" />
+            <SFSymbol name="plus" size={28} color={colors.white} />
           </Pressable>
 
           {/* Add Task handled via route */}

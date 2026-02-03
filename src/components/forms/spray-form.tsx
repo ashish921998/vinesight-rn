@@ -4,8 +4,9 @@ import { Symbol } from '@/components/ui/symbol';
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
+import { useThemeColors } from '@/styles/use-theme';
 
 export interface ChemicalEntry {
   id: string;
@@ -31,6 +32,7 @@ interface SprayFormProps {
 }
 
 export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const isValid =
     data.waterVolume !== undefined &&
@@ -170,7 +172,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
       <View style={{ marginTop: spacing[2] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
           <View style={{ marginRight: 6 }}>
-            <Symbol name="flask" size={16} color="#408059" />
+            <Symbol name="flask" size={16} color={colors.primary[600]} />
           </View>
           <Text
             style={{
@@ -240,7 +242,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
         <Symbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
-          color={isValid ? '#22C55E' : '#9CA3AF'}
+          color={isValid ? colors.success : colors.gray[400]}
         />
         <Text
           style={{
@@ -339,12 +341,12 @@ function ChemicalRow({
             paddingVertical: 10,
             fontSize: fontSize.base,
             color: colors.surface[900],
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 1,
             borderColor: isNameFocused ? '#A78BFA' : colors.surface[200],
           }}
           placeholder={t('sprayForm.chemicals.namePlaceholder')}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           value={chemical.name}
           onChangeText={(name) => onUpdate({ name })}
           onFocus={(event) => {
@@ -362,7 +364,7 @@ function ChemicalRow({
             style={{ marginLeft: spacing[2], padding: spacing[2] }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Symbol name="minus.circle.fill" size={24} color="#9CA3AF" />
+            <Symbol name="minus.circle.fill" size={24} color={colors.gray[400]} />
           </Pressable>
         )}
       </View>
@@ -379,12 +381,12 @@ function ChemicalRow({
             fontSize: fontSize.base,
             color: colors.surface[900],
             textAlign: 'center',
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 1,
             borderColor: isQuantityFocused ? '#A78BFA' : colors.surface[200],
           }}
           placeholder={t('sprayForm.chemicals.qtyPlaceholder')}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           keyboardType="decimal-pad"
           value={quantityText}
           onChangeText={handleQuantityChange}
@@ -406,7 +408,7 @@ function ChemicalRow({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderRadius: borderRadius.lg,
             paddingHorizontal: spacing[3],
             paddingVertical: 10,
@@ -418,7 +420,7 @@ function ChemicalRow({
           <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
             {chemical.unit}
           </Text>
-          <Symbol name="chevron.right" size={18} color="#6B7280" />
+          <Symbol name="chevron.right" size={18} color={colors.surface[600]} />
         </Pressable>
       </View>
 

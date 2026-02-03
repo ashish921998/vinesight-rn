@@ -14,11 +14,13 @@ import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
 import ParameterSelector from '@/components/screens/parameter-selector';
 import TrendsTable from '@/components/screens/trends-table';
 import TrendsChart from '@/components/screens/trends-chart';
-import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
 
 type ViewMode = 'table' | 'chart';
 
 export default function SoilTrendsScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
   const parsed = farmId ? parseInt(farmId, 10) : 0;
@@ -32,7 +34,7 @@ export default function SoilTrendsScreen() {
 
   if (!farmId || farmIdNum === 0) {
     return (
-      <SafeScreen backgroundColor={colors.gray[50]}>
+      <SafeScreen backgroundColor={colors.surface[50]}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
           <Text
@@ -52,9 +54,9 @@ export default function SoilTrendsScreen() {
 
   if (farmLoading || trendsLoading || !trends || !trends.parameterTrends) {
     return (
-      <SafeScreen backgroundColor="#f2f2f7">
+      <SafeScreen backgroundColor={colors.surface[50]}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color="#597A61" />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text style={{ color: colors.gray[500], marginTop: spacing[4] }}>
             {t('common.loading')}
           </Text>
@@ -64,7 +66,7 @@ export default function SoilTrendsScreen() {
   }
 
   return (
-    <SafeScreen backgroundColor="#f2f2f7">
+    <SafeScreen backgroundColor={colors.surface[50]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Custom Header */}
@@ -76,13 +78,13 @@ export default function SoilTrendsScreen() {
           paddingVertical: spacing[3],
           borderBottomWidth: 1,
           borderBottomColor: colors.gray[200],
-          backgroundColor: colors.white,
+          backgroundColor: colors.surface[100],
         }}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <IconSymbol name="chevron.left" size={24} color="#333" />
+          <IconSymbol name="chevron.left" size={24} color={colors.gray[700]} />
         </Pressable>
-        <IconSymbol name="chart.bar.fill" size={24} color="#597A61" />
+        <IconSymbol name="chart.bar.fill" size={24} color={colors.primary[500]} />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.gray[800] }}
@@ -109,7 +111,7 @@ export default function SoilTrendsScreen() {
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: 'rgba(255,255,255,0.8)',
+            backgroundColor: colors.surface[100],
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[2],
             borderBottomWidth: 1,
@@ -123,7 +125,7 @@ export default function SoilTrendsScreen() {
               paddingVertical: spacing[2],
               marginRight: spacing[2],
               borderBottomWidth: viewMode === 'table' ? 2 : 0,
-              borderBottomColor: viewMode === 'table' ? '#597A61' : 'transparent',
+              borderBottomColor: viewMode === 'table' ? colors.primary[500] : 'transparent',
             }}
           >
             <Text
@@ -132,7 +134,7 @@ export default function SoilTrendsScreen() {
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
-                color: viewMode === 'table' ? '#597A61' : colors.gray[400],
+                color: viewMode === 'table' ? colors.primary[500] : colors.gray[400],
               }}
             >
               {t('trends.viewModes.table')}
@@ -145,7 +147,7 @@ export default function SoilTrendsScreen() {
               paddingVertical: spacing[2],
               marginLeft: spacing[2],
               borderBottomWidth: viewMode === 'chart' ? 2 : 0,
-              borderBottomColor: viewMode === 'chart' ? '#597A61' : 'transparent',
+              borderBottomColor: viewMode === 'chart' ? colors.primary[500] : 'transparent',
             }}
           >
             <Text
@@ -154,7 +156,7 @@ export default function SoilTrendsScreen() {
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
-                color: viewMode === 'chart' ? '#597A61' : colors.gray[400],
+                color: viewMode === 'chart' ? colors.primary[500] : colors.gray[400],
               }}
             >
               {t('trends.viewModes.chart')}

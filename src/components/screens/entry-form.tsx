@@ -74,6 +74,7 @@ import { TASK_TEMPLATES } from '@/constants/task-templates';
 import { toSupabaseDateString } from '@/types/database';
 import type { Farm } from '@/types';
 import { telemetry } from '@/services/telemetry';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 
 type EntryTab = 'log' | 'task';
 
@@ -132,6 +133,8 @@ export function EntryForm({
   presentation = 'modal',
 }: EntryFormProps) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
 
   const isVisible = visible ?? true;
   const queryClient = useQueryClient();
@@ -692,7 +695,7 @@ export function EntryForm({
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}>
         <View
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface[100],
             borderRadius: 999,
             padding: 4,
             flexDirection: 'row',
@@ -713,7 +716,7 @@ export function EntryForm({
               >
                 {isActive ? (
                   <LinearGradient
-                    colors={['#3B7E57', '#58A376']}
+                    colors={[m3.colorScheme.primary, m3.colorScheme.primaryContainer]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={{
@@ -726,12 +729,12 @@ export function EntryForm({
                       justifyContent: 'center',
                     }}
                   >
-                    <AppIcon name={iconName} size={16} color="#FFFFFF" />
+                    <AppIcon name={iconName} size={16} color={m3.colorScheme.onPrimary} />
                     <Text
                       selectable
                       style={[
                         { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                        { color: '#FFFFFF' },
+                        { color: m3.colorScheme.onPrimary },
                       ]}
                     >
                       {label}
@@ -749,12 +752,12 @@ export function EntryForm({
                       justifyContent: 'center',
                     }}
                   >
-                    <AppIcon name={iconName} size={16} color="#6B7280" />
+                    <AppIcon name={iconName} size={16} color={colors.gray[500]} />
                     <Text
                       selectable
                       style={[
                         { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                        { color: '#6B7280' },
+                        { color: colors.gray[500] },
                       ]}
                     >
                       {label}
@@ -770,10 +773,17 @@ export function EntryForm({
   };
 
   const renderLogTypeSelector = () => (
-    <View style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+    <View
+      style={{
+        backgroundColor: colors.surface[100],
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+      }}
+    >
       <Text
         selectable
-        style={{ fontSize: 16, fontWeight: '600', color: '#2c2c2e', marginBottom: 12 }}
+        style={{ fontSize: 16, fontWeight: '600', color: colors.surface[900], marginBottom: 12 }}
       >
         {t('entryForm.activityType')}
       </Text>
@@ -793,8 +803,8 @@ export function EntryForm({
                 alignItems: 'center',
                 borderRadius: 12,
                 borderWidth: 1,
-                backgroundColor: isSelected ? '#f0f5f2' : '#f2f2f7',
-                borderColor: isSelected ? '#c3d6cc' : '#f2f2f7',
+                backgroundColor: isSelected ? m3.colorScheme.primaryContainer : colors.surface[50],
+                borderColor: isSelected ? m3.colorScheme.primary : colors.surface[200],
               }}
             >
               <View
@@ -814,7 +824,9 @@ export function EntryForm({
                 selectable
                 style={[
                   { fontSize: 10, fontWeight: '600', textAlign: 'center', lineHeight: 12 },
-                  { color: isSelected ? '#1F4D36' : '#374151' },
+                  {
+                    color: isSelected ? m3.colorScheme.onPrimaryContainer : colors.surface[700],
+                  },
                 ]}
                 numberOfLines={2}
               >
@@ -830,7 +842,7 @@ export function EntryForm({
   const renderLogForm = () => {
     if (!selectedLogType) return null;
     return (
-      <View style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: 16 }}>
+      <View style={{ backgroundColor: colors.surface[100], borderRadius: 16, padding: 16 }}>
         {selectedLogType === 'irrigation' && (
           <IrrigationForm
             data={irrigationData}
@@ -876,16 +888,21 @@ export function EntryForm({
               justifyContent: 'center',
             },
             {
-              backgroundColor: isLogFormValid && activeFarm ? '#408059' : '#E5E7EB',
+              backgroundColor:
+                isLogFormValid && activeFarm ? m3.colorScheme.primary : colors.surface[300],
             },
           ]}
         >
-          <AppIcon name="add-circle" size={20} color={isLogFormValid ? '#FFFFFF' : '#9CA3AF'} />
+          <AppIcon
+            name="add-circle"
+            size={20}
+            color={isLogFormValid ? m3.colorScheme.onPrimary : colors.gray[400]}
+          />
           <Text
             selectable
             style={[
               { marginLeft: 8, fontWeight: '600' },
-              { color: isLogFormValid ? '#FFFFFF' : '#9CA3AF' },
+              { color: isLogFormValid ? m3.colorScheme.onPrimary : colors.gray[400] },
             ]}
           >
             {t('entryForm.addEntry')}
@@ -908,17 +925,17 @@ export function EntryForm({
           setSelectedLogType(null);
         }}
       >
-        <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+        <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
           <KeyboardAvoidingView
             behavior={isIOS ? 'padding' : 'height'}
             keyboardVerticalOffset={isIOS ? 0 : 20}
-            style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+            style={{ flex: 1, backgroundColor: colors.surface[50] }}
           >
             <View
               style={{
-                backgroundColor: '#ffffff',
+                backgroundColor: colors.surface[100],
                 borderBottomWidth: 1,
-                borderColor: '#ffffff',
+                borderColor: colors.surface[100],
                 paddingHorizontal: 16,
                 paddingBottom: 12,
                 paddingTop: 8 + insets.top,
@@ -926,10 +943,17 @@ export function EntryForm({
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
-                  <Text selectable style={{ fontSize: 18, fontWeight: '600', color: '#2c2c2e' }}>
+                  <Text
+                    selectable
+                    style={{ fontSize: 18, fontWeight: '600', color: colors.surface[900] }}
+                  >
                     {logType ? t(logType.labelKey) : t('entryForm.addLog')}
                   </Text>
-                  <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
+                  <Text
+                    selectable
+                    style={{ fontSize: 12, color: colors.surface[500] }}
+                    numberOfLines={1}
+                  >
                     {activeFarm?.name}
                   </Text>
                 </View>
@@ -940,7 +964,7 @@ export function EntryForm({
                   }}
                   style={{ width: 40, alignItems: 'flex-end' }}
                 >
-                  <AppIcon name="close-circle" size={26} color="#9CA3AF" />
+                  <AppIcon name="close-circle" size={26} color={colors.gray[400]} />
                 </Pressable>
               </View>
             </View>
@@ -971,12 +995,12 @@ export function EntryForm({
     return (
       <View
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.surface[100],
           paddingHorizontal: 16,
           paddingVertical: 12,
           borderTopWidth: 1,
-          borderColor: '#ffffff',
-          shadowColor: '#000',
+          borderColor: colors.surface[100],
+          shadowColor: colors.black,
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.08,
           shadowRadius: 12,
@@ -995,20 +1019,23 @@ export function EntryForm({
               justifyContent: 'center',
             },
             {
-              backgroundColor: isLogFormValid && activeFarm ? '#408059' : '#E5E7EB',
+              backgroundColor:
+                isLogFormValid && activeFarm ? m3.colorScheme.primary : colors.surface[300],
             },
           ]}
         >
           <AppIcon
             name="add-circle"
             size={20}
-            color={isLogFormValid && activeFarm ? '#FFFFFF' : '#9CA3AF'}
+            color={isLogFormValid && activeFarm ? m3.colorScheme.onPrimary : colors.gray[400]}
           />
           <Text
             selectable
             style={[
               { marginLeft: 8, fontWeight: '600', fontSize: 16 },
-              { color: isLogFormValid && activeFarm ? '#FFFFFF' : '#9CA3AF' },
+              {
+                color: isLogFormValid && activeFarm ? m3.colorScheme.onPrimary : colors.gray[400],
+              },
             ]}
           >
             {t('entryForm.addEntry')}
@@ -1021,10 +1048,17 @@ export function EntryForm({
   const renderPendingLogs = () => {
     if (pendingLogs.length === 0) return null;
     return (
-      <View style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+      <View
+        style={{
+          backgroundColor: colors.surface[100],
+          borderRadius: 16,
+          padding: 16,
+          marginBottom: 16,
+        }}
+      >
         <Text
           selectable
-          style={{ fontSize: 16, fontWeight: '600', color: '#2c2c2e', marginBottom: 12 }}
+          style={{ fontSize: 16, fontWeight: '600', color: colors.surface[900], marginBottom: 12 }}
         >
           {t('entryForm.pendingLogs', { count: pendingLogs.length })}
         </Text>
@@ -1041,7 +1075,7 @@ export function EntryForm({
                   borderRadius: 12,
                   marginBottom: 8,
                 },
-                { backgroundColor: '#F3F4F6' },
+                { backgroundColor: colors.surface[50] },
               ]}
             >
               <View
@@ -1057,15 +1091,18 @@ export function EntryForm({
                 <AppIcon name={logType?.icon ?? 'document-text'} size={18} color={logType?.color} />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text selectable style={{ fontSize: 14, fontWeight: '600', color: '#2c2c2e' }}>
+                <Text
+                  selectable
+                  style={{ fontSize: 14, fontWeight: '600', color: colors.surface[900] }}
+                >
                   {logType ? t(logType.labelKey) : t('entryForm.addLog')}
                 </Text>
-                <Text selectable style={{ fontSize: 12, color: '#8e8e93' }}>
+                <Text selectable style={{ fontSize: 12, color: colors.surface[500] }}>
                   {log.displayDescription}
                 </Text>
               </View>
               <Pressable onPress={() => removeLogFromSession(log.id)}>
-                <AppIcon name="trash-outline" size={20} color="#EF4444" />
+                <AppIcon name="trash-outline" size={20} color={colors.error} />
               </Pressable>
             </View>
           );
@@ -1079,24 +1116,24 @@ export function EntryForm({
       {!farm && (
         <View
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface[100],
             borderRadius: 16,
             padding: 16,
             marginBottom: 16,
             borderWidth: 1,
-            borderColor: '#ffffff',
+            borderColor: colors.surface[100],
           }}
         >
           <Text
             selectable
-            style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+            style={{ fontSize: 14, fontWeight: '500', color: colors.surface[700], marginBottom: 8 }}
           >
             {t('entryForm.farmLabel')}
           </Text>
           <Pressable
             onPress={() => setShowLogFarmPicker(!showLogFarmPicker)}
             style={{
-              backgroundColor: '#f2f2f7',
+              backgroundColor: colors.surface[50],
               borderRadius: 12,
               paddingHorizontal: 16,
               paddingVertical: 12,
@@ -1104,25 +1141,25 @@ export function EntryForm({
               alignItems: 'center',
               justifyContent: 'space-between',
               borderWidth: 1,
-              borderColor: '#f2f2f7',
+              borderColor: colors.surface[200],
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <AppIcon name="leaf" size={18} color="#408059" />
-              <Text selectable style={{ fontSize: 16, color: '#2c2c2e', marginLeft: 8 }}>
+              <AppIcon name="leaf" size={18} color={m3.colorScheme.primary} />
+              <Text selectable style={{ fontSize: 16, color: colors.surface[900], marginLeft: 8 }}>
                 {activeFarm?.name || t('entryForm.selectFarm')}
               </Text>
             </View>
-            <AppIcon name="chevron-down" size={18} color="#9CA3AF" />
+            <AppIcon name="chevron-down" size={18} color={colors.gray[400]} />
           </Pressable>
           {showLogFarmPicker && farms && (
             <View
               style={{
-                backgroundColor: '#ffffff',
+                backgroundColor: colors.surface[100],
                 borderRadius: 12,
                 marginTop: 8,
                 borderWidth: 1,
-                borderColor: '#f2f2f7',
+                borderColor: colors.surface[200],
                 overflow: 'hidden',
               }}
             >
@@ -1136,14 +1173,20 @@ export function EntryForm({
                   style={{
                     padding: 16,
                     borderBottomWidth: 1,
-                    borderColor: '#ffffff',
-                    backgroundColor: activeFarm?.id === f.id ? '#f0f5f2' : '#ffffff',
+                    borderColor: colors.surface[100],
+                    backgroundColor:
+                      activeFarm?.id === f.id
+                        ? m3.colorScheme.primaryContainer
+                        : colors.surface[100],
                   }}
                 >
                   <Text
                     selectable
                     style={{
-                      color: activeFarm?.id === f.id ? '#2d5c3f' : '#48484a',
+                      color:
+                        activeFarm?.id === f.id
+                          ? m3.colorScheme.onPrimaryContainer
+                          : colors.surface[700],
                       fontWeight: activeFarm?.id === f.id ? '500' : '400',
                     }}
                   >
@@ -1158,12 +1201,12 @@ export function EntryForm({
 
       <View
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.surface[100],
           borderRadius: 16,
           padding: 16,
           marginBottom: 16,
           borderWidth: 1,
-          borderColor: '#ffffff',
+          borderColor: colors.surface[100],
         }}
       >
         <View
@@ -1174,16 +1217,16 @@ export function EntryForm({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.surface[100],
               paddingHorizontal: 16,
               paddingVertical: 8,
               borderRadius: 10,
             }}
           >
-            <AppIcon name="calendar" size={18} color="#408059" />
+            <AppIcon name="calendar" size={18} color={m3.colorScheme.primary} />
             <Text
               selectable
-              style={{ marginLeft: 8, fontSize: 14, fontWeight: '500', color: '#2c2c2e' }}
+              style={{ marginLeft: 8, fontSize: 14, fontWeight: '500', color: colors.surface[900] }}
             >
               {formatDate(selectedDate, { weekday: 'short', month: 'short', day: 'numeric' })}
             </Text>
@@ -1194,16 +1237,21 @@ export function EntryForm({
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                backgroundColor: '#e1ebe5',
+                backgroundColor: m3.colorScheme.secondaryContainer,
                 paddingHorizontal: 12,
                 paddingVertical: 6,
                 borderRadius: 999,
               }}
             >
-              <AppIcon name="document-text" size={14} color="#408059" />
+              <AppIcon name="document-text" size={14} color={m3.colorScheme.primary} />
               <Text
                 selectable
-                style={{ marginLeft: 4, fontSize: 12, fontWeight: '600', color: '#2d5c3f' }}
+                style={{
+                  marginLeft: 4,
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: m3.colorScheme.onSecondaryContainer,
+                }}
               >
                 {t('entryForm.drafts', { count: pendingLogs.length })}
               </Text>
@@ -1216,15 +1264,15 @@ export function EntryForm({
       {selectedLogType === null && (
         <View
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface[100],
             borderRadius: 16,
             padding: 16,
             marginBottom: 16,
             borderWidth: 1,
-            borderColor: '#ffffff',
+            borderColor: colors.surface[100],
           }}
         >
-          <Text selectable style={{ fontSize: 14, color: '#636366' }}>
+          <Text selectable style={{ fontSize: 14, color: colors.surface[600] }}>
             {t('entryForm.selectActivityTypeHint')}
           </Text>
         </View>
@@ -1239,7 +1287,7 @@ export function EntryForm({
         <Pressable
           onPress={() => setShowTemplates(!showTemplates)}
           style={{
-            backgroundColor: '#f0f5f2',
+            backgroundColor: m3.colorScheme.primaryContainer,
             borderRadius: 12,
             padding: 16,
             marginBottom: 16,
@@ -1247,22 +1295,34 @@ export function EntryForm({
             alignItems: 'center',
           }}
         >
-          <AppIcon name="flash" size={20} color="#408059" />
-          <Text selectable style={{ color: '#2d5c3f', fontWeight: '500', marginLeft: 8, flex: 1 }}>
+          <AppIcon name="flash" size={20} color={m3.colorScheme.primary} />
+          <Text
+            selectable
+            style={{
+              color: m3.colorScheme.onPrimaryContainer,
+              fontWeight: '500',
+              marginLeft: 8,
+              flex: 1,
+            }}
+          >
             {t('entryForm.useTemplate')}
           </Text>
-          <AppIcon name={showTemplates ? 'chevron-up' : 'chevron-down'} size={20} color="#408059" />
+          <AppIcon
+            name={showTemplates ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color={m3.colorScheme.primary}
+          />
         </Pressable>
       )}
 
       {showTemplates && (
         <View
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface[100],
             borderRadius: 12,
             marginBottom: 16,
             borderWidth: 1,
-            borderColor: '#f2f2f7',
+            borderColor: colors.surface[200],
             overflow: 'hidden',
           }}
         >
@@ -1276,7 +1336,7 @@ export function EntryForm({
                   style={{
                     padding: 16,
                     borderBottomWidth: 1,
-                    borderColor: '#ffffff',
+                    borderColor: colors.surface[100],
                     flexDirection: 'row',
                     alignItems: 'center',
                   }}
@@ -1294,10 +1354,17 @@ export function EntryForm({
                     <AppIcon name={typeInfo.icon} size={16} color={typeInfo.color} />
                   </View>
                   <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text selectable style={{ fontSize: 14, fontWeight: '500', color: '#2c2c2e' }}>
+                    <Text
+                      selectable
+                      style={{ fontSize: 14, fontWeight: '500', color: colors.surface[900] }}
+                    >
                       {template.title}
                     </Text>
-                    <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
+                    <Text
+                      selectable
+                      style={{ fontSize: 12, color: colors.surface[500] }}
+                      numberOfLines={1}
+                    >
                       {template.description}
                     </Text>
                   </View>
@@ -1312,14 +1379,14 @@ export function EntryForm({
         <View style={{ marginBottom: 16 }}>
           <Text
             selectable
-            style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+            style={{ fontSize: 14, fontWeight: '500', color: colors.surface[700], marginBottom: 8 }}
           >
             {t('entryForm.farmLabel')}
           </Text>
           <Pressable
             onPress={() => setShowTaskFarmPicker(!showTaskFarmPicker)}
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.surface[100],
               borderRadius: 12,
               paddingHorizontal: 16,
               paddingVertical: 12,
@@ -1327,25 +1394,25 @@ export function EntryForm({
               alignItems: 'center',
               justifyContent: 'space-between',
               borderWidth: 1,
-              borderColor: '#f2f2f7',
+              borderColor: colors.surface[200],
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <AppIcon name="leaf" size={20} color="#408059" />
-              <Text selectable style={{ fontSize: 16, color: '#2c2c2e', marginLeft: 8 }}>
+              <AppIcon name="leaf" size={20} color={m3.colorScheme.primary} />
+              <Text selectable style={{ fontSize: 16, color: colors.surface[900], marginLeft: 8 }}>
                 {selectedTaskFarm?.name || t('entryForm.selectFarm')}
               </Text>
             </View>
-            <AppIcon name="chevron-down" size={20} color="#9CA3AF" />
+            <AppIcon name="chevron-down" size={20} color={colors.gray[400]} />
           </Pressable>
           {showTaskFarmPicker && farms && (
             <View
               style={{
-                backgroundColor: '#ffffff',
+                backgroundColor: colors.surface[100],
                 borderRadius: 12,
                 marginTop: 8,
                 borderWidth: 1,
-                borderColor: '#f2f2f7',
+                borderColor: colors.surface[200],
                 overflow: 'hidden',
               }}
             >
@@ -1359,14 +1426,18 @@ export function EntryForm({
                   style={{
                     padding: 16,
                     borderBottomWidth: 1,
-                    borderColor: '#ffffff',
-                    backgroundColor: taskFarmId === f.id ? '#f0f5f2' : '#ffffff',
+                    borderColor: colors.surface[100],
+                    backgroundColor:
+                      taskFarmId === f.id ? m3.colorScheme.primaryContainer : colors.surface[100],
                   }}
                 >
                   <Text
                     selectable
                     style={{
-                      color: taskFarmId === f.id ? '#2d5c3f' : '#48484a',
+                      color:
+                        taskFarmId === f.id
+                          ? m3.colorScheme.onPrimaryContainer
+                          : colors.surface[700],
                       fontWeight: taskFarmId === f.id ? '500' : '400',
                     }}
                   >
@@ -1382,7 +1453,7 @@ export function EntryForm({
       <View style={{ marginBottom: 16 }}>
         <Text
           selectable
-          style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+          style={{ fontSize: 14, fontWeight: '500', color: colors.surface[700], marginBottom: 8 }}
         >
           {t('entryForm.taskForm.titleLabel')}
         </Text>
@@ -1391,23 +1462,23 @@ export function EntryForm({
           onChangeText={setTitle}
           placeholder={t('entryForm.taskForm.titlePlaceholder')}
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface[100],
             borderRadius: 12,
             paddingHorizontal: 16,
             paddingVertical: 12,
             fontSize: 16,
-            color: '#2c2c2e',
+            color: colors.surface[900],
             borderWidth: 1,
-            borderColor: '#f2f2f7',
+            borderColor: colors.surface[200],
           }}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
         />
       </View>
 
       <View style={{ marginBottom: 16 }}>
         <Text
           selectable
-          style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+          style={{ fontSize: 14, fontWeight: '500', color: colors.surface[700], marginBottom: 8 }}
         >
           {t('entryForm.taskForm.descriptionLabel')}
         </Text>
@@ -1418,18 +1489,18 @@ export function EntryForm({
           multiline
           numberOfLines={3}
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface[100],
             borderRadius: 12,
             paddingHorizontal: 16,
             paddingVertical: 12,
             fontSize: 16,
-            color: '#2c2c2e',
+            color: colors.surface[900],
             borderWidth: 1,
-            borderColor: '#f2f2f7',
+            borderColor: colors.surface[200],
             minHeight: 80,
             textAlignVertical: 'top' as const,
           }}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
         />
       </View>
 
@@ -1437,21 +1508,21 @@ export function EntryForm({
         <View style={{ flex: 1 }}>
           <Text
             selectable
-            style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+            style={{ fontSize: 14, fontWeight: '500', color: colors.surface[700], marginBottom: 8 }}
           >
             {t('entryForm.taskForm.typeLabel')}
           </Text>
           <Pressable
             onPress={() => setShowTypePicker(true)}
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.surface[100],
               borderRadius: 12,
               paddingHorizontal: 16,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
               borderWidth: 1,
-              borderColor: '#f2f2f7',
+              borderColor: colors.surface[200],
               height: 48,
             }}
           >
@@ -1461,32 +1532,32 @@ export function EntryForm({
                 size={16}
                 color={TASK_TYPE_INFO[type].color}
               />
-              <Text selectable style={{ fontSize: 14, color: '#2c2c2e', marginLeft: 8 }}>
+              <Text selectable style={{ fontSize: 14, color: colors.surface[900], marginLeft: 8 }}>
                 {t(TASK_TYPE_INFO[type].labelKey)}
               </Text>
             </View>
-            <AppIcon name="chevron-down" size={16} color="#9CA3AF" />
+            <AppIcon name="chevron-down" size={16} color={colors.gray[400]} />
           </Pressable>
         </View>
 
         <View style={{ flex: 1 }}>
           <Text
             selectable
-            style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+            style={{ fontSize: 14, fontWeight: '500', color: colors.surface[700], marginBottom: 8 }}
           >
             {t('entryForm.taskForm.priorityLabel')}
           </Text>
           <Pressable
             onPress={() => setShowPriorityPicker(true)}
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.surface[100],
               borderRadius: 12,
               paddingHorizontal: 16,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
               borderWidth: 1,
-              borderColor: '#f2f2f7',
+              borderColor: colors.surface[200],
               height: 48,
             }}
           >
@@ -1506,7 +1577,7 @@ export function EntryForm({
                 {t(PRIORITY_INFO[priority].labelKey)}
               </Text>
             </View>
-            <AppIcon name="chevron-down" size={16} color="#9CA3AF" />
+            <AppIcon name="chevron-down" size={16} color={colors.gray[400]} />
           </Pressable>
         </View>
       </View>
@@ -1514,14 +1585,14 @@ export function EntryForm({
       <View style={{ marginBottom: 16 }}>
         <Text
           selectable
-          style={{ fontSize: 14, fontWeight: '500', color: '#48484a', marginBottom: 8 }}
+          style={{ fontSize: 14, fontWeight: '500', color: colors.surface[700], marginBottom: 8 }}
         >
           {t('entryForm.taskForm.dueDateLabel')}
         </Text>
         <Pressable
           onPress={() => setShowDueDatePicker(true)}
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface[100],
             borderRadius: 12,
             paddingHorizontal: 16,
             paddingVertical: 12,
@@ -1529,14 +1600,21 @@ export function EntryForm({
             alignItems: 'center',
             justifyContent: 'space-between',
             borderWidth: 1,
-            borderColor: '#f2f2f7',
+            borderColor: colors.surface[200],
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <AppIcon name="calendar" size={18} color={dueDate ? '#408059' : '#9CA3AF'} />
+            <AppIcon
+              name="calendar"
+              size={18}
+              color={dueDate ? m3.colorScheme.primary : colors.gray[400]}
+            />
             <Text
               selectable
-              style={[{ marginLeft: 8, fontSize: 16 }, { color: dueDate ? '#111827' : '#9CA3AF' }]}
+              style={[
+                { marginLeft: 8, fontSize: 16 },
+                { color: dueDate ? colors.surface[900] : colors.gray[400] },
+              ]}
             >
               {dueDate
                 ? formatDate(new Date(dueDate), {
@@ -1550,7 +1628,7 @@ export function EntryForm({
           </View>
           {dueDate && (
             <Pressable onPress={() => setDueDate('')} style={{ marginLeft: 8, padding: 4 }}>
-              <AppIcon name="close-circle" size={20} color="#9CA3AF" />
+              <AppIcon name="close-circle" size={20} color={colors.gray[400]} />
             </Pressable>
           )}
         </Pressable>
@@ -1571,7 +1649,7 @@ export function EntryForm({
             >
               <View
                 style={{
-                  backgroundColor: '#ffffff',
+                  backgroundColor: colors.surface[100],
                   borderTopLeftRadius: 24,
                   borderTopRightRadius: 24,
                   padding: 16,
@@ -1587,11 +1665,14 @@ export function EntryForm({
                     marginBottom: 16,
                   }}
                 >
-                  <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                  <Text
+                    selectable
+                    style={{ fontSize: 18, fontWeight: '700', color: colors.surface[900] }}
+                  >
                     {t('entryForm.taskForm.selectDueDateTitle')}
                   </Text>
                   <Pressable onPress={() => setShowDueDatePicker(false)}>
-                    <AppIcon name="close" size={24} color="#9CA3AF" />
+                    <AppIcon name="close" size={24} color={colors.gray[400]} />
                   </Pressable>
                 </View>
                 <DateTimePicker
@@ -1602,16 +1683,16 @@ export function EntryForm({
                     if (date) setDueDate(date.toISOString().split('T')[0]);
                   }}
                   style={{ height: 200 }}
-                  textColor="#2c2c2e"
+                  textColor={colors.surface[900]}
                 />
                 <Pressable
                   onPress={() => setShowDueDatePicker(false)}
                   style={[
                     { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
-                    { backgroundColor: '#408059' },
+                    { backgroundColor: m3.colorScheme.primary },
                   ]}
                 >
-                  <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
+                  <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
                     {t('entryForm.done')}
                   </Text>
                 </Pressable>
@@ -1624,31 +1705,38 @@ export function EntryForm({
   );
 
   const content = (
-    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface[50] }}>
       <KeyboardAvoidingView
         behavior={isIOS ? 'padding' : 'height'}
         keyboardVerticalOffset={isIOS ? 0 : 20}
-        style={{ flex: 1, backgroundColor: '#f2f2f7' }}
+        style={{ flex: 1, backgroundColor: colors.surface[50] }}
       >
         <View
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface[100],
             borderBottomWidth: 1,
-            borderColor: '#ffffff',
+            borderColor: colors.surface[100],
             paddingHorizontal: 16,
             paddingBottom: 12,
             paddingTop: 8 + insets.top,
           }}
         >
           <View style={{ alignItems: 'center', marginBottom: 8 }}>
-            <View style={{ width: 48, height: 6, borderRadius: 999, backgroundColor: '#f2f2f7' }} />
+            <View
+              style={{
+                width: 48,
+                height: 6,
+                borderRadius: 999,
+                backgroundColor: colors.surface[50],
+              }}
+            />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ width: 40 }} />
             <View style={{ flex: 1, alignItems: 'center' }}>
               <Text
                 selectable
-                style={{ fontSize: 18, fontWeight: '600', color: '#2c2c2e' }}
+                style={{ fontSize: 18, fontWeight: '600', color: colors.surface[900] }}
                 numberOfLines={1}
               >
                 {activeTab === 'log'
@@ -1657,12 +1745,16 @@ export function EntryForm({
                     ? t('entryForm.editTask')
                     : t('entryForm.addTask')}
               </Text>
-              <Text selectable style={{ fontSize: 12, color: '#8e8e93' }} numberOfLines={1}>
+              <Text
+                selectable
+                style={{ fontSize: 12, color: colors.surface[500] }}
+                numberOfLines={1}
+              >
                 {activeFarm?.name}
               </Text>
             </View>
             <Pressable onPress={handleClose} style={{ width: 40, alignItems: 'flex-end' }}>
-              <AppIcon name="close-circle" size={26} color="#9CA3AF" />
+              <AppIcon name="close-circle" size={26} color={colors.gray[400]} />
             </Pressable>
           </View>
         </View>
@@ -1698,7 +1790,7 @@ export function EntryForm({
                 bottom: 0,
                 left: 0,
                 right: 0,
-                backgroundColor: '#ffffff',
+                backgroundColor: colors.surface[100],
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 padding: 16,
@@ -1713,11 +1805,14 @@ export function EntryForm({
                   marginBottom: 16,
                 }}
               >
-                <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                <Text
+                  selectable
+                  style={{ fontSize: 18, fontWeight: '700', color: colors.surface[900] }}
+                >
                   {t('entryForm.selectDate')}
                 </Text>
                 <Pressable onPress={() => setShowDatePicker(false)}>
-                  <AppIcon name="close" size={24} color="#9CA3AF" />
+                  <AppIcon name="close" size={24} color={colors.gray[400]} />
                 </Pressable>
               </View>
               <DateTimePicker
@@ -1732,10 +1827,10 @@ export function EntryForm({
                 onPress={() => setShowDatePicker(false)}
                 style={[
                   { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
-                  { backgroundColor: '#408059' },
+                  { backgroundColor: m3.colorScheme.primary },
                 ]}
               >
-                <Text selectable style={{ fontWeight: '600', color: '#ffffff' }}>
+                <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
                   {t('entryForm.done')}
                 </Text>
               </Pressable>
@@ -1762,7 +1857,7 @@ export function EntryForm({
                 bottom: 0,
                 left: 0,
                 right: 0,
-                backgroundColor: '#ffffff',
+                backgroundColor: colors.surface[100],
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 padding: 16,
@@ -1777,11 +1872,14 @@ export function EntryForm({
                   marginBottom: 12,
                 }}
               >
-                <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                <Text
+                  selectable
+                  style={{ fontSize: 18, fontWeight: '700', color: colors.surface[900] }}
+                >
                   {t('entryForm.selectTaskType')}
                 </Text>
                 <Pressable onPress={() => setShowTypePicker(false)}>
-                  <AppIcon name="close" size={24} color="#9CA3AF" />
+                  <AppIcon name="close" size={24} color={colors.gray[400]} />
                 </Pressable>
               </View>
               <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ maxHeight: 320 }}>
@@ -1797,8 +1895,9 @@ export function EntryForm({
                       flexDirection: 'row',
                       alignItems: 'center',
                       borderBottomWidth: 1,
-                      borderColor: '#ffffff',
-                      backgroundColor: type === taskType ? '#f0f5f2' : '#ffffff',
+                      borderColor: colors.surface[100],
+                      backgroundColor:
+                        type === taskType ? m3.colorScheme.primaryContainer : colors.surface[100],
                     }}
                   >
                     <AppIcon
@@ -1810,7 +1909,10 @@ export function EntryForm({
                       selectable
                       style={{
                         marginLeft: 12,
-                        color: type === taskType ? '#2d5c3f' : '#48484a',
+                        color:
+                          type === taskType
+                            ? m3.colorScheme.onPrimaryContainer
+                            : colors.surface[700],
                         fontWeight: type === taskType ? '500' : '400',
                       }}
                     >
@@ -1845,7 +1947,7 @@ export function EntryForm({
                 bottom: 0,
                 left: 0,
                 right: 0,
-                backgroundColor: '#ffffff',
+                backgroundColor: colors.surface[100],
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 padding: 16,
@@ -1860,11 +1962,14 @@ export function EntryForm({
                   marginBottom: 12,
                 }}
               >
-                <Text selectable style={{ fontSize: 18, fontWeight: '700', color: '#2c2c2e' }}>
+                <Text
+                  selectable
+                  style={{ fontSize: 18, fontWeight: '700', color: colors.surface[900] }}
+                >
                   {t('entryForm.selectPriority')}
                 </Text>
                 <Pressable onPress={() => setShowPriorityPicker(false)}>
-                  <AppIcon name="close" size={24} color="#9CA3AF" />
+                  <AppIcon name="close" size={24} color={colors.gray[400]} />
                 </Pressable>
               </View>
               {PRIORITIES.map((p) => (
@@ -1879,8 +1984,9 @@ export function EntryForm({
                     flexDirection: 'row',
                     alignItems: 'center',
                     borderBottomWidth: 1,
-                    borderColor: '#ffffff',
-                    backgroundColor: priority === p ? '#f0f5f2' : '#ffffff',
+                    borderColor: colors.surface[100],
+                    backgroundColor:
+                      priority === p ? m3.colorScheme.primaryContainer : colors.surface[100],
                   }}
                 >
                   <View
@@ -1909,7 +2015,8 @@ export function EntryForm({
                     selectable
                     style={{
                       marginLeft: 12,
-                      color: priority === p ? '#2d5c3f' : '#48484a',
+                      color:
+                        priority === p ? m3.colorScheme.onPrimaryContainer : colors.surface[700],
                       fontWeight: priority === p ? '500' : '400',
                     }}
                   >
@@ -1939,11 +2046,11 @@ export function EntryForm({
 
         <View
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.surface[100],
             paddingHorizontal: 16,
             paddingVertical: 16,
             borderTopWidth: 1,
-            borderColor: '#ffffff',
+            borderColor: colors.surface[100],
           }}
         >
           {activeTab === 'log' ? (
@@ -1955,11 +2062,11 @@ export function EntryForm({
                   paddingVertical: 14,
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: '#f2f2f7',
+                  borderColor: colors.surface[200],
                   alignItems: 'center',
                 }}
               >
-                <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
+                <Text selectable style={{ fontWeight: '600', color: colors.surface[600] }}>
                   {t('common.cancel')}
                 </Text>
               </Pressable>
@@ -1978,25 +2085,28 @@ export function EntryForm({
                   {
                     backgroundColor:
                       pendingLogs.length > 0 && !isSubmittingLogs && activeFarm
-                        ? '#408059'
-                        : '#E5E7EB',
+                        ? m3.colorScheme.primary
+                        : colors.surface[300],
                   },
                 ]}
               >
                 {isSubmittingLogs ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
                 ) : (
                   <>
                     <AppIcon
                       name="save"
                       size={18}
-                      color={pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF'}
+                      color={pendingLogs.length > 0 ? m3.colorScheme.onPrimary : colors.gray[400]}
                     />
                     <Text
                       selectable
                       style={[
                         { marginLeft: 8, fontWeight: '600' },
-                        { color: pendingLogs.length > 0 ? '#FFFFFF' : '#9CA3AF' },
+                        {
+                          color:
+                            pendingLogs.length > 0 ? m3.colorScheme.onPrimary : colors.gray[400],
+                        },
                       ]}
                     >
                       {pendingLogs.length > 0
@@ -2016,11 +2126,11 @@ export function EntryForm({
                   paddingVertical: 14,
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: '#f2f2f7',
+                  borderColor: colors.surface[200],
                   alignItems: 'center',
                 }}
               >
-                <Text selectable style={{ fontWeight: '600', color: '#636366' }}>
+                <Text selectable style={{ fontWeight: '600', color: colors.surface[600] }}>
                   {t('common.cancel')}
                 </Text>
               </Pressable>
@@ -2036,19 +2146,26 @@ export function EntryForm({
                     flexDirection: 'row',
                     justifyContent: 'center',
                   },
-                  { backgroundColor: isTaskValid && !isTaskSaving ? '#408059' : '#E5E7EB' },
+                  {
+                    backgroundColor:
+                      isTaskValid && !isTaskSaving ? m3.colorScheme.primary : colors.surface[300],
+                  },
                 ]}
               >
                 {isTaskSaving ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
                 ) : (
                   <>
-                    <AppIcon name="save" size={18} color={isTaskValid ? '#FFFFFF' : '#9CA3AF'} />
+                    <AppIcon
+                      name="save"
+                      size={18}
+                      color={isTaskValid ? m3.colorScheme.onPrimary : colors.gray[400]}
+                    />
                     <Text
                       selectable
                       style={[
                         { marginLeft: 8, fontWeight: '600' },
-                        { color: isTaskValid ? '#FFFFFF' : '#9CA3AF' },
+                        { color: isTaskValid ? m3.colorScheme.onPrimary : colors.gray[400] },
                       ]}
                     >
                       {t('entryForm.saveTask')}

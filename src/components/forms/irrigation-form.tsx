@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, type TextInputProps } from 'react-native';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { NumericInput } from './form-field';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export interface IrrigationFormData {
   duration: number | undefined;
@@ -24,6 +26,7 @@ export function IrrigationForm({
   systemDischarge,
   onInputFocus,
 }: IrrigationFormProps) {
+  const colors = useThemeColors();
   const isValid = data.duration !== undefined && data.duration > 0;
 
   // Calculate estimated water applied
@@ -41,7 +44,7 @@ export function IrrigationForm({
             width: 40,
             height: 40,
             borderRadius: borderRadius.full,
-            backgroundColor: '#DBEAFE',
+            backgroundColor: colorWithOpacity('#3B82F6', 0.16),
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: spacing[3],
@@ -98,7 +101,11 @@ export function IrrigationForm({
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[1] }}
               >
-                <SymbolIcon name="arrow.up.left.and.arrow.down.right" size={14} color="#6B7280" />
+                <SymbolIcon
+                  name="arrow.up.left.and.arrow.down.right"
+                  size={14}
+                  color={colors.surface[600]}
+                />
                 <Text
                   style={{
                     fontSize: fontSize.xs,
@@ -163,7 +170,7 @@ export function IrrigationForm({
         <SymbolIcon
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
-          color={isValid ? '#22C55E' : '#9CA3AF'}
+          color={isValid ? colors.success : colors.gray[400]}
         />
         <Text
           style={{

@@ -7,7 +7,8 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../../hooks/use-lab-tests';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useThemeColors } from '@/styles/use-theme';
 
 interface Props {
   testType: 'soil' | 'petiole';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function ParameterSelector({ testType, selected, onChange }: Props) {
+  const colors = useThemeColors();
   const parameters = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
 
   const toggleAll = () => {
@@ -39,7 +41,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
   return (
     <View
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backgroundColor: colors.surface[100],
         paddingHorizontal: spacing[4],
         paddingVertical: spacing[3],
         borderBottomWidth: 1,
@@ -93,14 +95,14 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
                 paddingVertical: spacing[2],
                 borderRadius: borderRadius.full,
                 borderWidth: 1,
-                backgroundColor: isSelected ? colors.primary[500] : colors.white,
+                backgroundColor: isSelected ? colors.primary[500] : colors.surface[100],
                 borderColor: isSelected ? colors.primary[500] : colors.gray[300],
               }}
             >
               <Symbol
                 name={isSelected ? 'checkmark.square.fill' : 'square'}
                 size={16}
-                color={isSelected ? 'white' : '#666'}
+                color={isSelected ? colors.white : colors.gray[500]}
               />
               <Text
                 style={{

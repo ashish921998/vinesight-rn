@@ -21,8 +21,10 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
 import { SoilSectionData } from '../../types/database';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
+import { useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface SoilProfileFormProps {
   visible?: boolean;
@@ -37,6 +39,7 @@ export default function SoilProfileForm({
   farmId,
   presentation = 'modal',
 }: SoilProfileFormProps) {
+  const colors = useThemeColors();
   const isVisible = visible ?? true;
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -154,9 +157,9 @@ export default function SoilProfileForm({
           paddingHorizontal: spacing[4],
           paddingTop: spacing[4] + insets.top,
           paddingBottom: spacing[4],
-          backgroundColor: 'rgba(255,255,255, 0.8)',
+          backgroundColor: colors.surface[100],
           borderBottomWidth: 0.5,
-          borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+          borderBottomColor: colors.surface[200],
         }}
       >
         <Pressable onPress={onClose}>
@@ -178,7 +181,7 @@ export default function SoilProfileForm({
             style={{
               fontSize: fontSize.base,
               fontWeight: fontWeight.semibold,
-              color: isLoading ? '#c7c7cc' : colors.primary[500],
+              color: isLoading ? colors.surface[400] : colors.primary[500],
             }}
           >
             {isLoading ? t('common.saving') : t('common.save')}
@@ -205,7 +208,7 @@ export default function SoilProfileForm({
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginTop: spacing[4],
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
           }}
         >
           <Text
@@ -230,9 +233,9 @@ export default function SoilProfileForm({
           <Pressable
             onPress={() => setShowDatePicker(true)}
             style={{
-              backgroundColor: '#f9f9f9',
+              backgroundColor: colors.surface[50],
               borderWidth: 1,
-              borderColor: '#e5e5e5',
+              borderColor: colors.surface[200],
               borderRadius: borderRadius.xl,
               paddingHorizontal: spacing[4],
               paddingVertical: spacing[3],
@@ -244,7 +247,7 @@ export default function SoilProfileForm({
             <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
               {formatDate(selectedDate, { year: 'numeric', month: 'short', day: 'numeric' })}
             </Text>
-            <IconSymbol name="calendar" size={20} color="#8e8e93" />
+            <IconSymbol name="calendar" size={20} color={colors.surface[500]} />
           </Pressable>
         </View>
 
@@ -265,7 +268,7 @@ export default function SoilProfileForm({
           >
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 width: '85%',
@@ -313,7 +316,7 @@ export default function SoilProfileForm({
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginTop: spacing[4],
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
           }}
         >
           <Text
@@ -382,9 +385,9 @@ export default function SoilProfileForm({
                   </View>
                   <TextInput
                     style={{
-                      backgroundColor: '#f9f9f9',
+                      backgroundColor: colors.surface[50],
                       borderWidth: 1,
-                      borderColor: '#e5e5e5',
+                      borderColor: colors.surface[200],
                       borderRadius: borderRadius.xl,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[3],
@@ -392,7 +395,7 @@ export default function SoilProfileForm({
                       fontSize: fontSize.base,
                     }}
                     placeholder="0.0"
-                    placeholderTextColor="#c7c7cc"
+                    placeholderTextColor={colors.gray[400]}
                     keyboardType="decimal-pad"
                     value={sections[name]}
                     onChangeText={(value) => updateSection(name, value)}
@@ -410,7 +413,7 @@ export default function SoilProfileForm({
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginTop: spacing[4],
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
           }}
         >
           <Text
@@ -456,9 +459,9 @@ export default function SoilProfileForm({
                   </Text>
                   <TextInput
                     style={{
-                      backgroundColor: '#f9f9f9',
+                      backgroundColor: colors.surface[50],
                       borderWidth: 1,
-                      borderColor: '#e5e5e5',
+                      borderColor: colors.surface[200],
                       borderRadius: borderRadius.xl,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[2],
@@ -466,7 +469,7 @@ export default function SoilProfileForm({
                       fontSize: fontSize.base,
                     }}
                     placeholder="0.0"
-                    placeholderTextColor="#c7c7cc"
+                    placeholderTextColor={colors.gray[400]}
                     keyboardType="decimal-pad"
                     value={ecValues[name]}
                     onChangeText={(value) => updateEc(name, value)}
@@ -485,7 +488,7 @@ export default function SoilProfileForm({
             padding: spacing[4],
             marginTop: spacing[4],
             marginBottom: spacing[8],
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
           }}
           onLayout={(event) => recordFieldPosition('fusarium', event.nativeEvent.layout.y ?? 0)}
         >
@@ -510,9 +513,9 @@ export default function SoilProfileForm({
           </Text>
           <TextInput
             style={{
-              backgroundColor: '#f9f9f9',
+              backgroundColor: colors.surface[50],
               borderWidth: 1,
-              borderColor: '#e5e5e5',
+              borderColor: colors.surface[200],
               borderRadius: borderRadius.xl,
               paddingHorizontal: spacing[3],
               paddingVertical: spacing[3],
@@ -520,7 +523,7 @@ export default function SoilProfileForm({
               fontSize: fontSize.base,
             }}
             placeholder="0.0"
-            placeholderTextColor="#c7c7cc"
+            placeholderTextColor={colors.gray[400]}
             keyboardType="decimal-pad"
             value={fusariumPct}
             onChangeText={setFusariumPct}

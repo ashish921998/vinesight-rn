@@ -4,6 +4,7 @@ import { useCreateWarehouseItem, useUpdateWarehouseItem, useProfile } from '../.
 import { WarehouseItem, WarehouseItemType, WarehouseUnit } from '../../types';
 import i18n from '@/i18n';
 import { formatCurrency } from '@/i18n/format';
+import { colorWithOpacity } from '@/utils/color';
 import {
   FormModal,
   SectionHeader,
@@ -31,28 +32,28 @@ const UNITS = [
     label: 'kg',
     sublabel: 'Kilograms',
     icon: 'scale-outline' as const,
-    iconColor: '#FEF3C7',
+    iconColor: colorWithOpacity('#F59E0B', 0.18),
   },
   {
     value: 'gram' as WarehouseUnit,
     label: 'g',
     sublabel: 'Grams',
     icon: 'scale-outline' as const,
-    iconColor: '#FEF3C7',
+    iconColor: colorWithOpacity('#F59E0B', 0.18),
   },
   {
     value: 'liter' as WarehouseUnit,
     label: 'L',
     sublabel: 'Liters',
     icon: 'water-outline' as const,
-    iconColor: '#DBEAFE',
+    iconColor: colorWithOpacity('#3B82F6', 0.16),
   },
   {
     value: 'ml' as WarehouseUnit,
     label: 'ml',
     sublabel: 'Milliliters',
     icon: 'water-outline' as const,
-    iconColor: '#DBEAFE',
+    iconColor: colorWithOpacity('#3B82F6', 0.16),
   },
 ];
 

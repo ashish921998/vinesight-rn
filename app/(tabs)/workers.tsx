@@ -10,8 +10,9 @@ import { AttendanceView } from '@/components/screens';
 import { Button, SegmentedControl } from '@/components/ui';
 import type { Worker } from '@/types';
 import { WorkerCard } from '@/components/cards';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
@@ -27,6 +28,7 @@ const TAB_DATA: WorkersTabMeta[] = [
 ];
 
 export default function WorkersScreen() {
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const router = useRouter();

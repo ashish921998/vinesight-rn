@@ -2,3 +2,4 @@ export { useAuthStore, initAuthListener, cleanupAuthListener } from './auth-stor
 export { useModalStore } from './modal-store';
 export { useLanguageStore } from './language-store';
 export { useNotificationStore } from './notification-store';
+export { useThemeStore } from './theme-store';

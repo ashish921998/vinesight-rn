@@ -18,70 +18,14 @@ import Markdown from 'react-native-markdown-display';
 import { useFarm } from '@/hooks';
 import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
-
-const markdownStyles = {
-  body: { fontSize: 16, color: '#1c1c1e', lineHeight: 24 },
-  heading1: {
-    fontSize: 20,
-    fontWeight: 'bold' as const,
-    color: '#1c1c1e',
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  heading2: {
-    fontSize: 18,
-    fontWeight: 'bold' as const,
-    color: '#1c1c1e',
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  heading3: {
-    fontSize: 16,
-    fontWeight: 'bold' as const,
-    color: '#1c1c1e',
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  strong: { fontWeight: 'bold' as const, color: '#1c1c1e' },
-  em: { fontStyle: 'italic' as const, color: '#1c1c1e' },
-  paragraph: { marginBottom: 8 },
-  list_item: { marginBottom: 4, paddingLeft: 4 },
-  bullet_list: { marginBottom: 8, marginLeft: 8 },
-  ordered_list: { marginBottom: 8, marginLeft: 8 },
-  code_inline: {
-    backgroundColor: '#f0f0f0',
-    color: '#1c1c1e',
-    padding: 2,
-    borderRadius: 4,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  code_block: {
-    backgroundColor: '#f0f0f0',
-    color: '#1c1c1e',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  blockquote: {
-    backgroundColor: '#f5f5f5',
-    borderLeftWidth: 3,
-    borderLeftColor: '#408059',
-    paddingLeft: 12,
-    paddingVertical: 4,
-    marginBottom: 8,
-  },
-  link: { color: '#408059', textDecorationLine: 'underline' as const },
-  table: { borderWidth: 1, borderColor: '#e0e0e0', marginBottom: 8 },
-  table_header: { backgroundColor: '#408059' },
-  table_row: { borderWidth: 1, borderColor: '#e0e0e0' },
-  table_cell: { padding: 8, fontSize: 14, color: '#1c1c1e' },
-};
+import { useThemeTokens } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export default function AIChatScreen() {
+  const { colors, m3 } = useThemeTokens();
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
@@ -92,6 +36,75 @@ export default function AIChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
+  const markdownStyles = useMemo(
+    () => ({
+      body: { fontSize: 16, color: m3.colorScheme.onSurface, lineHeight: 24 },
+      heading1: {
+        fontSize: 20,
+        fontWeight: 'bold' as const,
+        color: m3.colorScheme.onSurface,
+        marginTop: 8,
+        marginBottom: 4,
+      },
+      heading2: {
+        fontSize: 18,
+        fontWeight: 'bold' as const,
+        color: m3.colorScheme.onSurface,
+        marginTop: 8,
+        marginBottom: 4,
+      },
+      heading3: {
+        fontSize: 16,
+        fontWeight: 'bold' as const,
+        color: m3.colorScheme.onSurface,
+        marginTop: 8,
+        marginBottom: 4,
+      },
+      strong: { fontWeight: 'bold' as const, color: m3.colorScheme.onSurface },
+      em: { fontStyle: 'italic' as const, color: m3.colorScheme.onSurface },
+      paragraph: { marginBottom: 8 },
+      list_item: { marginBottom: 4, paddingLeft: 4 },
+      bullet_list: { marginBottom: 8, marginLeft: 8 },
+      ordered_list: { marginBottom: 8, marginLeft: 8 },
+      code_inline: {
+        backgroundColor: m3.surface.surfaceContainerHigh,
+        color: m3.colorScheme.onSurface,
+        padding: 2,
+        borderRadius: 4,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+      },
+      code_block: {
+        backgroundColor: m3.surface.surfaceContainerHigh,
+        color: m3.colorScheme.onSurface,
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 8,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+      },
+      blockquote: {
+        backgroundColor: m3.surface.surfaceContainerLow,
+        borderLeftWidth: 3,
+        borderLeftColor: m3.colorScheme.primary,
+        paddingLeft: 12,
+        paddingVertical: 4,
+        marginBottom: 8,
+      },
+      link: { color: m3.colorScheme.primary, textDecorationLine: 'underline' as const },
+      table: {
+        borderWidth: 1,
+        borderColor: m3.colorScheme.outlineVariant,
+        marginBottom: 8,
+      },
+      table_header: { backgroundColor: m3.colorScheme.primary },
+      table_row: { borderWidth: 1, borderColor: m3.colorScheme.outlineVariant },
+      table_cell: {
+        padding: 8,
+        fontSize: 14,
+        color: m3.colorScheme.onSurface,
+      },
+    }),
+    [m3],
+  );
 
   const DEFAULT_SUGGESTIONS = useMemo(
     () => [
@@ -188,11 +201,11 @@ export default function AIChatScreen() {
       <Stack.Screen
         options={{
           title: t('ai.title'),
-          headerStyle: { backgroundColor: '#f2f2f7' },
-          headerTintColor: '#000000',
+          headerStyle: { backgroundColor: m3.colorScheme.surface },
+          headerTintColor: m3.colorScheme.onSurface,
           headerLeft: () => (
             <Pressable onPress={() => router.back()} style={{ marginLeft: spacing[2] }}>
-              <UiSymbol name="chevron.left" size={24} color="#000000" />
+              <UiSymbol name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
             </Pressable>
           ),
         }}
@@ -231,7 +244,7 @@ export default function AIChatScreen() {
                     marginBottom: spacing[4],
                   }}
                 >
-                  <UiSymbol name="lightbulb.fill" size={40} color="#408059" />
+                  <UiSymbol name="lightbulb.fill" size={40} color={m3.colorScheme.primary} />
                 </View>
                 <Text
                   style={{
@@ -264,7 +277,7 @@ export default function AIChatScreen() {
                         borderRadius: borderRadius.xl,
                         borderWidth: 1,
                         borderColor: colors.surface[100],
-                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
                       }}
                     >
                       <Text
@@ -304,7 +317,7 @@ export default function AIChatScreen() {
                       marginTop: spacing[1],
                     }}
                   >
-                    <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
+                    <UiSymbol name="lightbulb.fill" size={16} color={m3.colorScheme.primary} />
                   </View>
                 )}
                 <View
@@ -313,7 +326,7 @@ export default function AIChatScreen() {
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[3],
                     backgroundColor:
-                      message.role === 'user' ? colors.primary[600] : 'rgba(255, 255, 255, 0.8)',
+                      message.role === 'user' ? colors.primary[600] : colors.surface[100],
                     ...(message.role === 'user'
                       ? { borderBottomRightRadius: borderRadius.sm }
                       : { borderBottomLeftRadius: borderRadius.sm }),
@@ -333,7 +346,9 @@ export default function AIChatScreen() {
                       fontSize: fontSize.xs,
                       marginTop: spacing[1],
                       color:
-                        message.role === 'user' ? 'rgba(255, 255, 255, 0.7)' : colors.surface[400],
+                        message.role === 'user'
+                          ? colorWithOpacity(colors.surface[100], 0.7)
+                          : colors.surface[400],
                     }}
                   >
                     {formatMessageTime(message.timestamp)}
@@ -352,7 +367,7 @@ export default function AIChatScreen() {
                       marginTop: spacing[1],
                     }}
                   >
-                    <UiSymbol name="person.fill" size={16} color="#408059" />
+                    <UiSymbol name="person.fill" size={16} color={m3.colorScheme.primary} />
                   </View>
                 )}
               </View>
@@ -379,18 +394,18 @@ export default function AIChatScreen() {
                     marginTop: spacing[1],
                   }}
                 >
-                  <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
+                  <UiSymbol name="lightbulb.fill" size={16} color={m3.colorScheme.primary} />
                 </View>
                 <View
                   style={{
                     paddingHorizontal: spacing[4],
                     paddingVertical: spacing[3],
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
                     borderRadius: borderRadius['2xl'],
                     borderBottomLeftRadius: borderRadius.sm,
                   }}
                 >
-                  <ActivityIndicator size="small" color="#408059" />
+                  <ActivityIndicator size="small" color={m3.colorScheme.primary} />
                 </View>
               </View>
             )}
@@ -453,7 +468,7 @@ export default function AIChatScreen() {
                 value={inputText}
                 onChangeText={setInputText}
                 placeholder={t('ai.input.placeholder')}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.gray[400]}
                 multiline
                 style={{
                   flex: 1,
@@ -486,7 +501,9 @@ export default function AIChatScreen() {
                 <UiSymbol
                   name="paperplane.fill"
                   size={20}
-                  color={inputText.trim() && !isLoading ? '#FFFFFF' : '#9CA3AF'}
+                  color={
+                    inputText.trim() && !isLoading ? m3.colorScheme.onPrimary : colors.gray[400]
+                  }
                 />
               </Pressable>
             </View>

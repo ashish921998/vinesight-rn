@@ -6,28 +6,33 @@ import { useFarms } from '@/hooks';
 import type { Worker } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { MarkAttendanceTab, CalendarAttendanceTab } from './attendance-subcomponents';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface AttendanceViewProps {
   workers: Worker[];
   onSaveSuccess: () => void;
 }
 
-const UI = {
-  bg: '#F4F6F8',
-  surface: '#FFFFFF',
-  surfaceSoft: 'rgba(255, 255, 255, 0.9)',
-  border: 'rgba(15, 23, 42, 0.08)',
-  primary: '#2F6B4F',
-  primarySoft: 'rgba(47, 107, 79, 0.12)',
-  text: '#0F172A',
-  muted: '#6B7280',
-  accent: '#2563EB',
-};
-
 type AttendanceTab = 'mark' | 'calendar';
 
 export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) {
   const { data: farms } = useFarms();
+  const colors = useThemeColors();
+  const m3 = useM3();
+  const ui = useMemo(
+    () => ({
+      bg: colors.surface[50],
+      surface: colors.surface[100],
+      surfaceSoft: colorWithOpacity(colors.surface[100], 0.9),
+      border: colors.surface[200],
+      primary: m3.colorScheme.primary,
+      primarySoft: colorWithOpacity(m3.colorScheme.primary, 0.12),
+      text: colors.surface[900],
+      muted: colors.surface[500],
+    }),
+    [colors, m3],
+  );
   const [activeTab, setActiveTab] = useState<AttendanceTab>('mark');
   const [selectedWorkerIndex, setSelectedWorkerIndex] = useState(0);
 
@@ -41,7 +46,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
           alignItems: 'center',
           justifyContent: 'center',
           padding: spacing[8],
-          backgroundColor: UI.bg,
+          backgroundColor: ui.bg,
         }}
       >
         <View
@@ -52,17 +57,17 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: spacing[4],
-            backgroundColor: UI.primarySoft,
+            backgroundColor: ui.primarySoft,
           }}
         >
-          <Symbol name="person.2" size={48} color={UI.primary} />
+          <Symbol name="person.2" size={48} color={ui.primary} />
         </View>
         <Text
           style={{
             fontSize: fontSize.lg,
             fontWeight: fontWeight.bold,
             textAlign: 'center',
-            color: UI.text,
+            color: ui.text,
           }}
         >
           No Active Workers
@@ -72,7 +77,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
             fontSize: fontSize.sm,
             textAlign: 'center',
             marginTop: spacing[2],
-            color: UI.muted,
+            color: ui.muted,
           }}
         >
           Add workers in the Workers tab to start tracking attendance.
@@ -82,9 +87,9 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: UI.bg }}>
+    <View style={{ flex: 1, backgroundColor: ui.bg }}>
       <LinearGradient
-        colors={['rgba(47, 107, 79, 0.12)', 'transparent']}
+        colors={[colorWithOpacity(m3.colorScheme.primary, 0.12), 'transparent']}
         style={{ height: 200, position: 'absolute', top: 0, left: 0, right: 0 }}
       />
 
@@ -93,8 +98,8 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
           style={{
             borderRadius: borderRadius['2xl'],
             padding: 6,
-            backgroundColor: UI.surfaceSoft,
-            borderColor: UI.border,
+            backgroundColor: ui.surfaceSoft,
+            borderColor: ui.border,
             borderWidth: 1,
           }}
         >
@@ -110,16 +115,20 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                 alignItems: 'center',
                 justifyContent: 'center',
                 paddingVertical: spacing[3],
-                backgroundColor: activeTab === 'mark' ? UI.primary : 'transparent',
+                backgroundColor: activeTab === 'mark' ? ui.primary : 'transparent',
               }}
             >
-              <Symbol name="pencil" size={18} color={activeTab === 'mark' ? '#FFFFFF' : UI.muted} />
+              <Symbol
+                name="pencil"
+                size={18}
+                color={activeTab === 'mark' ? m3.colorScheme.onPrimary : ui.muted}
+              />
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
                   marginLeft: spacing[2],
-                  color: activeTab === 'mark' ? '#FFFFFF' : UI.muted,
+                  color: activeTab === 'mark' ? m3.colorScheme.onPrimary : ui.muted,
                 }}
               >
                 Mark
@@ -136,20 +145,20 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                 alignItems: 'center',
                 justifyContent: 'center',
                 paddingVertical: spacing[3],
-                backgroundColor: activeTab === 'calendar' ? UI.primary : 'transparent',
+                backgroundColor: activeTab === 'calendar' ? ui.primary : 'transparent',
               }}
             >
               <Symbol
                 name="calendar"
                 size={18}
-                color={activeTab === 'calendar' ? '#FFFFFF' : UI.muted}
+                color={activeTab === 'calendar' ? m3.colorScheme.onPrimary : ui.muted}
               />
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
                   marginLeft: spacing[2],
-                  color: activeTab === 'calendar' ? '#FFFFFF' : UI.muted,
+                  color: activeTab === 'calendar' ? m3.colorScheme.onPrimary : ui.muted,
                 }}
               >
                 Calendar

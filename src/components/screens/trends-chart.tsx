@@ -9,9 +9,17 @@ import { useTranslation } from 'react-i18next';
 import { LineChart } from 'react-native-chart-kit';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { PARAMETER_COLORS } from '../../hooks/use-lab-tests';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
 import { formatDate } from '@/i18n/format';
+import { useThemeColors } from '@/styles/use-theme';
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
 
 interface Props {
   trendData: TrendData[];
@@ -26,6 +34,7 @@ export default function TrendsChart({
   selectedParams,
   onToggleParam,
 }: Props) {
+  const colors = useThemeColors();
   const { t, i18n } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
   const [selectedPoint, setSelectedPoint] = useState<{ index: number; date: string } | null>(null);
@@ -45,12 +54,6 @@ export default function TrendsChart({
   const datasets = useMemo(() => {
     return params.map((param, idx) => {
       const color = PARAMETER_COLORS[idx % PARAMETER_COLORS.length];
-      const hexToRgba = (hex: string, alpha: number) => {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      };
       return {
         data: trendData.map((t) => t.parameters[param.key] || 0),
         color: (opacity: number) => hexToRgba(color, opacity),
@@ -61,12 +64,12 @@ export default function TrendsChart({
   }, [params, trendData]);
 
   const chartConfig = {
-    backgroundColor: colors.white,
-    backgroundGradientFrom: colors.white,
-    backgroundGradientTo: colors.white,
+    backgroundColor: colors.surface[100],
+    backgroundGradientFrom: colors.surface[100],
+    backgroundGradientTo: colors.surface[100],
     decimalPlaces: 2,
-    color: (opacity: number) => `rgba(0, 0, 0, ${opacity})`,
-    labelColor: (opacity: number) => `rgba(0, 0, 0, ${opacity})`,
+    color: (opacity: number) => hexToRgba(colors.gray[900], opacity),
+    labelColor: (opacity: number) => hexToRgba(colors.gray[700], opacity),
     style: {
       borderRadius: 16,
     },
@@ -258,7 +261,7 @@ export default function TrendsChart({
                   paddingHorizontal: spacing[3],
                   paddingVertical: spacing[2],
                   borderRadius: borderRadius.lg,
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderWidth: 1,
                   borderColor: colors.gray[200],
                 }}
@@ -312,7 +315,7 @@ export default function TrendsChart({
             <View
               key={param.key}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 padding: spacing[4],
                 marginBottom: spacing[3],
