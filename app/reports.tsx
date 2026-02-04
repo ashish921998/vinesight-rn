@@ -719,13 +719,17 @@ export default function ReportsScreen() {
               }}
             >
               {isExporting ? (
-                <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                <ActivityIndicator size="small" color={m3.colorScheme.onSurfaceVariant} />
               ) : (
                 <>
-                  <Icon name="square.grid.2x2.fill" size={24} color={m3.colorScheme.onPrimary} />
+                  <Icon
+                    name="square.grid.2x2.fill"
+                    size={24}
+                    color={preview ? m3.colorScheme.onSurface : m3.colorScheme.onSurfaceVariant}
+                  />
                   <Text
                     style={{
-                      color: m3.colorScheme.onPrimary,
+                      color: preview ? m3.colorScheme.onSurface : m3.colorScheme.onSurfaceVariant,
                       fontWeight: fontWeight.bold,
                       marginLeft: spacing[2],
                     }}

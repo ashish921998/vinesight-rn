@@ -661,7 +661,7 @@ export default function ExploreScreen() {
     if (warehouseLoading) {
       return (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary[500]} />
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
           <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
             {t('warehouse.loading.inventory')}
           </Text>
@@ -677,7 +677,7 @@ export default function ExploreScreen() {
             <RefreshControl
               refreshing={warehouseRefetching}
               onRefresh={refetchWarehouse}
-              tintColor={colors.primary[500]}
+              tintColor={m3.colorScheme.primary}
             />
           }
           keyboardShouldPersistTaps="handled"
@@ -952,7 +952,7 @@ export default function ExploreScreen() {
                   borderRadius: borderRadius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: `${colors.primary[500]}33`,
+                  backgroundColor: colorWithOpacity(colors.primary[500], 0.2),
                 }}
               >
                 <Icon name="cube" size={32} color={colors.primary[500]} />
@@ -1034,8 +1034,8 @@ export default function ExploreScreen() {
                             borderRadius: borderRadius.full,
                             backgroundColor:
                               item.type === 'fertilizer'
-                                ? `${colors.secondary[500]}33`
-                                : `${colors.primary[500]}33`,
+                                ? colorWithOpacity(colors.secondary[500], 0.2)
+                                : colorWithOpacity(colors.primary[500], 0.2),
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>

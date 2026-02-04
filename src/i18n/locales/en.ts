@@ -175,6 +175,7 @@ export const en = {
     actions: {
       addActivity: 'Add activity',
       seeAllActivities: 'See all activities',
+      seeAllTasks: 'See all tasks',
     },
     a11y: {
       editFarm: 'Edit farm',
@@ -406,6 +407,9 @@ export const en = {
     delete: {
       title: 'Delete log?',
       body: 'Are you sure you want to delete this {{type}} log from {{date}}?',
+    },
+    cta: {
+      addActivity: 'Add activity',
     },
   },
 

@@ -102,7 +102,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8 }}
+        contentContainerStyle={{ gap: spacing[2] }}
       >
         {parameters.map((param) => {
           const isSelected = selected.has(param.key);

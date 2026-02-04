@@ -213,7 +213,7 @@ export function LabTestDetailsModal({
             style={{
               marginHorizontal: spacing[4],
               maxHeight: '85%',
-              backgroundColor: m3.surface.surface,
+              backgroundColor: m3.colorScheme.surface,
               borderRadius: borderRadius['2xl'],
               paddingHorizontal: spacing[4],
               paddingVertical: spacing[4],
