@@ -13,6 +13,7 @@ import {
 
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import Markdown from 'react-native-markdown-display';
 import { useFarm } from '@/hooks';
@@ -92,6 +93,7 @@ export default function AIChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
 
   const DEFAULT_SUGGESTIONS = useMemo(
     () => [
@@ -198,102 +200,183 @@ export default function AIChatScreen() {
         }}
       />
 
-      <KeyboardAvoidingView
+      <SafeAreaView
         style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        edges={['top', 'left', 'right']}
       >
-        <View style={{ flex: 1 }}>
-          <ScrollView
-            ref={scrollViewRef}
-            style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[4] }}
-            contentContainerStyle={{ paddingTop: spacing[4] }}
-            contentInsetAdjustmentBehavior="automatic"
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-          >
-            {messages.length === 0 && (
-              <View
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: spacing[8],
-                }}
-              >
+        <KeyboardAvoidingView
+          style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <View style={{ flex: 1 }}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[4] }}
+              contentContainerStyle={{ paddingTop: spacing[4] }}
+              contentInsetAdjustmentBehavior="automatic"
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
+              {messages.length === 0 && (
                 <View
                   style={{
-                    width: 80,
-                    height: 80,
-                    backgroundColor: colors.primary[100],
-                    borderRadius: borderRadius.full,
+                    flex: 1,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginBottom: spacing[4],
+                    paddingVertical: spacing[8],
                   }}
                 >
-                  <UiSymbol name="lightbulb.fill" size={40} color="#408059" />
-                </View>
-                <Text
-                  style={{
-                    color: colors.surface[900],
-                    fontSize: fontSize.xl,
-                    fontWeight: fontWeight.bold,
-                    marginBottom: spacing[2],
-                  }}
-                >
-                  {t('ai.title')}
-                </Text>
-                <Text
-                  style={{
-                    color: colors.surface[500],
-                    fontSize: fontSize.base,
-                    textAlign: 'center',
-                    marginBottom: spacing[6],
-                    paddingHorizontal: spacing[8],
-                  }}
-                >
-                  {t('ai.description')}
-                </Text>
-                <View style={{ width: '100%', gap: spacing[2] }}>
-                  {DEFAULT_SUGGESTIONS.map((suggestion, index) => (
-                    <Pressable
-                      key={index}
-                      onPress={() => handleSuggestionPress(suggestion)}
-                      style={{
-                        padding: spacing[3],
-                        borderRadius: borderRadius.xl,
-                        borderWidth: 1,
-                        borderColor: colors.surface[100],
-                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                      }}
-                    >
-                      <Text
+                  <View
+                    style={{
+                      width: 80,
+                      height: 80,
+                      backgroundColor: colors.primary[100],
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: spacing[4],
+                    }}
+                  >
+                    <UiSymbol name="lightbulb.fill" size={40} color="#408059" />
+                  </View>
+                  <Text
+                    style={{
+                      color: colors.surface[900],
+                      fontSize: fontSize.xl,
+                      fontWeight: fontWeight.bold,
+                      marginBottom: spacing[2],
+                    }}
+                  >
+                    {t('ai.title')}
+                  </Text>
+                  <Text
+                    style={{
+                      color: colors.surface[500],
+                      fontSize: fontSize.base,
+                      textAlign: 'center',
+                      marginBottom: spacing[6],
+                      paddingHorizontal: spacing[8],
+                    }}
+                  >
+                    {t('ai.description')}
+                  </Text>
+                  <View style={{ width: '100%', gap: spacing[2] }}>
+                    {DEFAULT_SUGGESTIONS.map((suggestion, index) => (
+                      <Pressable
+                        key={index}
+                        onPress={() => handleSuggestionPress(suggestion)}
                         style={{
-                          color: colors.surface[700],
-                          fontSize: fontSize.sm,
-                          textAlign: 'center',
+                          padding: spacing[3],
+                          borderRadius: borderRadius.xl,
+                          borderWidth: 1,
+                          borderColor: colors.surface[100],
+                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
                         }}
                       >
-                        {suggestion}
-                      </Text>
-                    </Pressable>
-                  ))}
+                        <Text
+                          style={{
+                            color: colors.surface[700],
+                            fontSize: fontSize.sm,
+                            textAlign: 'center',
+                          }}
+                        >
+                          {suggestion}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
 
-            {messages.map((message) => (
-              <View
-                key={message.id}
-                style={{
-                  flexDirection: 'row',
-                  marginBottom: spacing[3],
-                  justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-                }}
-              >
-                {message.role === 'assistant' && (
+              {messages.map((message) => (
+                <View
+                  key={message.id}
+                  style={{
+                    flexDirection: 'row',
+                    marginBottom: spacing[3],
+                    justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+                  }}
+                >
+                  {message.role === 'assistant' && (
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        backgroundColor: colors.primary[100],
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: spacing[2],
+                        marginTop: spacing[1],
+                      }}
+                    >
+                      <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
+                    </View>
+                  )}
+                  <View
+                    style={{
+                      maxWidth: '80%',
+                      borderRadius: borderRadius['2xl'],
+                      padding: spacing[3],
+                      backgroundColor:
+                        message.role === 'user' ? colors.primary[600] : 'rgba(255, 255, 255, 0.8)',
+                      ...(message.role === 'user'
+                        ? { borderBottomRightRadius: borderRadius.sm }
+                        : { borderBottomLeftRadius: borderRadius.sm }),
+                    }}
+                  >
+                    {message.role === 'assistant' ? (
+                      <Markdown style={markdownStyles} mergeStyle={true}>
+                        {message.content}
+                      </Markdown>
+                    ) : (
+                      <Text style={{ fontSize: fontSize.base, color: colors.white }}>
+                        {message.content}
+                      </Text>
+                    )}
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        marginTop: spacing[1],
+                        color:
+                          message.role === 'user'
+                            ? 'rgba(255, 255, 255, 0.7)'
+                            : colors.surface[400],
+                      }}
+                    >
+                      {formatMessageTime(message.timestamp)}
+                    </Text>
+                  </View>
+                  {message.role === 'user' && (
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        backgroundColor: colors.primary[200],
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginLeft: spacing[2],
+                        marginTop: spacing[1],
+                      }}
+                    >
+                      <UiSymbol name="person.fill" size={16} color="#408059" />
+                    </View>
+                  )}
+                </View>
+              ))}
+
+              {isLoading && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'flex-start',
+                    justifyContent: 'flex-start',
+                    marginBottom: spacing[3],
+                  }}
+                >
                   <View
                     style={{
                       width: 32,
@@ -308,193 +391,121 @@ export default function AIChatScreen() {
                   >
                     <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
                   </View>
-                )}
-                <View
-                  style={{
-                    maxWidth: '80%',
-                    borderRadius: borderRadius['2xl'],
-                    padding: spacing[3],
-                    backgroundColor:
-                      message.role === 'user' ? colors.primary[600] : 'rgba(255, 255, 255, 0.8)',
-                    ...(message.role === 'user'
-                      ? { borderBottomRightRadius: borderRadius.sm }
-                      : { borderBottomLeftRadius: borderRadius.sm }),
-                  }}
-                >
-                  {message.role === 'assistant' ? (
-                    <Markdown style={markdownStyles} mergeStyle={true}>
-                      {message.content}
-                    </Markdown>
-                  ) : (
-                    <Text style={{ fontSize: fontSize.base, color: colors.white }}>
-                      {message.content}
-                    </Text>
-                  )}
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      marginTop: spacing[1],
-                      color:
-                        message.role === 'user' ? 'rgba(255, 255, 255, 0.7)' : colors.surface[400],
-                    }}
-                  >
-                    {formatMessageTime(message.timestamp)}
-                  </Text>
-                </View>
-                {message.role === 'user' && (
                   <View
                     style={{
-                      width: 32,
-                      height: 32,
-                      backgroundColor: colors.primary[200],
-                      borderRadius: borderRadius.full,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginLeft: spacing[2],
-                      marginTop: spacing[1],
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: spacing[3],
+                      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                      borderRadius: borderRadius['2xl'],
+                      borderBottomLeftRadius: borderRadius.sm,
                     }}
                   >
-                    <UiSymbol name="person.fill" size={16} color="#408059" />
+                    <ActivityIndicator size="small" color="#408059" />
                   </View>
-                )}
-              </View>
-            ))}
+                </View>
+              )}
 
-            {isLoading && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  justifyContent: 'flex-start',
-                  marginBottom: spacing[3],
-                }}
-              >
+              {suggestions.length > 0 && !isLoading && messages.length > 0 && (
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
-                    backgroundColor: colors.primary[100],
+                    marginTop: spacing[4],
+                    paddingTop: spacing[4],
+                    borderTopWidth: 1,
+                    borderTopColor: colors.surface[100],
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.surface[500],
+                      fontSize: fontSize.xs,
+                      marginBottom: spacing[2],
+                    }}
+                  >
+                    {t('ai.suggestedQuestions')}
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ flexDirection: 'row' }}
+                  >
+                    {suggestions.map((suggestion, index) => (
+                      <Pressable
+                        key={index}
+                        onPress={() => handleSuggestionPress(suggestion)}
+                        style={{
+                          marginRight: spacing[2],
+                          paddingHorizontal: spacing[4],
+                          paddingVertical: spacing[2],
+                          backgroundColor: colors.primary[50],
+                          borderRadius: borderRadius.full,
+                        }}
+                      >
+                        <Text style={{ color: colors.primary[700], fontSize: fontSize.sm }}>
+                          {suggestion}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </ScrollView>
+
+            <View
+              style={{
+                paddingTop: spacing[4],
+                paddingHorizontal: spacing[4],
+                paddingBottom: spacing[4] + insets.bottom,
+                backgroundColor: colors.surface[100],
+                borderTopWidth: 1,
+                borderTopColor: colors.surface[100],
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] }}>
+                <TextInput
+                  value={inputText}
+                  onChangeText={setInputText}
+                  placeholder={t('ai.input.placeholder')}
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                  style={{
+                    flex: 1,
+                    minHeight: 44,
+                    maxHeight: 120,
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[3],
+                    backgroundColor: colors.surface[100],
+                    borderRadius: borderRadius['2xl'],
+                    color: colors.surface[900],
+                    fontSize: fontSize.base,
+                  }}
+                  textAlignVertical="top"
+                  returnKeyType="send"
+                  onSubmitEditing={() => handleSendMessage()}
+                />
+                <Pressable
+                  onPress={() => handleSendMessage()}
+                  disabled={!inputText.trim() || isLoading}
+                  style={{
+                    width: 48,
+                    height: 48,
                     borderRadius: borderRadius.full,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginRight: spacing[2],
-                    marginTop: spacing[1],
+                    backgroundColor:
+                      inputText.trim() && !isLoading ? colors.primary[600] : colors.surface[200],
                   }}
                 >
-                  <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
-                </View>
-                <View
-                  style={{
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[3],
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                    borderRadius: borderRadius['2xl'],
-                    borderBottomLeftRadius: borderRadius.sm,
-                  }}
-                >
-                  <ActivityIndicator size="small" color="#408059" />
-                </View>
+                  <UiSymbol
+                    name="paperplane.fill"
+                    size={20}
+                    color={inputText.trim() && !isLoading ? '#FFFFFF' : '#9CA3AF'}
+                  />
+                </Pressable>
               </View>
-            )}
-
-            {suggestions.length > 0 && !isLoading && messages.length > 0 && (
-              <View
-                style={{
-                  marginTop: spacing[4],
-                  paddingTop: spacing[4],
-                  borderTopWidth: 1,
-                  borderTopColor: colors.surface[100],
-                }}
-              >
-                <Text
-                  style={{
-                    color: colors.surface[500],
-                    fontSize: fontSize.xs,
-                    marginBottom: spacing[2],
-                  }}
-                >
-                  {t('ai.suggestedQuestions')}
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ flexDirection: 'row' }}
-                >
-                  {suggestions.map((suggestion, index) => (
-                    <Pressable
-                      key={index}
-                      onPress={() => handleSuggestionPress(suggestion)}
-                      style={{
-                        marginRight: spacing[2],
-                        paddingHorizontal: spacing[4],
-                        paddingVertical: spacing[2],
-                        backgroundColor: colors.primary[50],
-                        borderRadius: borderRadius.full,
-                      }}
-                    >
-                      <Text style={{ color: colors.primary[700], fontSize: fontSize.sm }}>
-                        {suggestion}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </ScrollView>
-
-          <View
-            style={{
-              padding: spacing[4],
-              backgroundColor: colors.surface[100],
-              borderTopWidth: 1,
-              borderTopColor: colors.surface[100],
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] }}>
-              <TextInput
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder={t('ai.input.placeholder')}
-                placeholderTextColor="#9CA3AF"
-                multiline
-                style={{
-                  flex: 1,
-                  minHeight: 44,
-                  maxHeight: 120,
-                  paddingHorizontal: spacing[4],
-                  paddingVertical: spacing[3],
-                  backgroundColor: colors.surface[100],
-                  borderRadius: borderRadius['2xl'],
-                  color: colors.surface[900],
-                  fontSize: fontSize.base,
-                }}
-                textAlignVertical="top"
-                returnKeyType="send"
-                onSubmitEditing={() => handleSendMessage()}
-              />
-              <Pressable
-                onPress={() => handleSendMessage()}
-                disabled={!inputText.trim() || isLoading}
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: borderRadius.full,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor:
-                    inputText.trim() && !isLoading ? colors.primary[600] : colors.surface[200],
-                }}
-              >
-                <UiSymbol
-                  name="paperplane.fill"
-                  size={20}
-                  color={inputText.trim() && !isLoading ? '#FFFFFF' : '#9CA3AF'}
-                />
-              </Pressable>
             </View>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </>
   );
 }
