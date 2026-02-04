@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, Modal, FlatList } from 'react-native';
-import { Symbol } from '@/components/ui/symbol';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import type { Farm } from '@/types';
@@ -106,7 +106,7 @@ export function FarmSelectSheet({
                   justifyContent: 'center',
                 }}
               >
-                <Symbol name="xmark" size={18} color={ui.primary} />
+                <SymbolIcon name="xmark" size={18} color={ui.primary} />
               </Pressable>
             </View>
 
@@ -158,7 +158,7 @@ export function FarmSelectSheet({
                         {item.region}
                       </Text>
                     </View>
-                    <Symbol
+                    <SymbolIcon
                       name={isSelected ? 'checkmark.circle.fill' : 'circle'}
                       size={20}
                       color={isSelected ? ui.primary : colors.surface[300]}

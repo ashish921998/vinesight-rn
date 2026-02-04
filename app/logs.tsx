@@ -1176,7 +1176,7 @@ export default function LogsScreen() {
                                   color:
                                     currentPage === pageNum
                                       ? m3.colorScheme.onPrimary
-                                      : colors.gray[700],
+                                      : colors.surface[700],
                                 }}
                               >
                                 {pageNum}
