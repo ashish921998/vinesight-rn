@@ -189,6 +189,7 @@ export default function AIChatScreen() {
     <>
       <Stack.Screen
         options={{
+          headerShown: true,
           title: t('ai.title'),
           headerStyle: { backgroundColor: m3.colorScheme.background },
           headerTintColor: '#000000',
