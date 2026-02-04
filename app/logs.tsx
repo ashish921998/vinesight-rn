@@ -42,8 +42,9 @@ import type {
   ExpenseRecord,
   FertigationRecord,
 } from '@/types';
-import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 
 interface CombinedLog {
   id: string;
@@ -54,6 +55,8 @@ interface CombinedLog {
 }
 
 export default function LogsScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -64,7 +67,7 @@ export default function LogsScreen() {
   const currency = profile?.preferred_currency || 'INR';
   const filterCardStyle = Platform.select({
     ios: {
-      shadowColor: '#000',
+      shadowColor: m3.colorScheme.shadow,
       shadowOffset: { width: 0, height: 5 },
       shadowOpacity: 0.08,
       shadowRadius: 10,
@@ -386,6 +389,16 @@ export default function LogsScreen() {
     setShowRecordsPerPageSelector(false);
   }, []);
 
+  const handleAddActivity = useCallback(() => {
+    if (selectedFarmId === undefined) return;
+    router.push({
+      pathname: '/log-entry/add',
+      params: {
+        farmId: selectedFarmId.toString(),
+      },
+    });
+  }, [router, selectedFarmId]);
+
   const hasActiveFilters = selectedLogTypes.size > 0 || dateFrom || dateTo;
 
   if (farmsLoading) {
@@ -398,7 +411,7 @@ export default function LogsScreen() {
           alignItems: 'center',
         }}
       >
-        <ActivityIndicator size="large" color="#408059" />
+        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
         <Text style={{ marginTop: spacing[4], color: colors.surface[500] }}>
           {t('common.loading')}
         </Text>
@@ -412,21 +425,11 @@ export default function LogsScreen() {
         options={{
           title: t('logs.screenTitle'),
           headerStyle: { backgroundColor: m3.colorScheme.background },
-          headerTintColor: '#000000',
+          headerTintColor: m3.colorScheme.onBackground,
           headerRight: () =>
             selectedFarmId !== undefined && (
-              <Pressable
-                onPress={() => {
-                  router.push({
-                    pathname: '/log-entry/add',
-                    params: {
-                      farmId: selectedFarmId.toString(),
-                    },
-                  });
-                }}
-                style={{ marginRight: spacing[4] }}
-              >
-                <UiSymbol name="plus.circle.fill" size={28} color="#408059" />
+              <Pressable onPress={handleAddActivity} style={{ marginRight: spacing[4] }}>
+                <UiSymbol name="plus.circle.fill" size={28} color={m3.colorScheme.primary} />
               </Pressable>
             ),
         }}
@@ -435,7 +438,7 @@ export default function LogsScreen() {
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.background, paddingTop: insets.top }}>
         <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
           <LinearGradient
-            colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
+            colors={[colorWithOpacity(m3.colorScheme.primary, 0.08), 'transparent']}
             style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
           />
 
@@ -519,7 +522,11 @@ export default function LogsScreen() {
                       )}
                     </View>
                   </View>
-                  <UiSymbol name="chevron.down" size={20} color="#8e8e93" />
+                  <UiSymbol
+                    name="chevron.down"
+                    size={20}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                  />
                 </View>
               </Pressable>
             </View>
@@ -821,7 +828,7 @@ export default function LogsScreen() {
                       style={{
                         height: 80,
                         borderRadius: borderRadius['2xl'],
-                        backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                        backgroundColor: colorWithOpacity(colors.surface[100], 0.7),
                       }}
                     />
                   ))}
@@ -832,7 +839,7 @@ export default function LogsScreen() {
                     borderRadius: borderRadius['2xl'],
                     alignItems: 'center',
                     padding: spacing[10],
-                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                    backgroundColor: colorWithOpacity(colors.surface[100], 0.7),
                   }}
                 >
                   <View
@@ -843,10 +850,14 @@ export default function LogsScreen() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       marginBottom: spacing[4],
-                      backgroundColor: 'rgba(142, 142, 147, 0.2)',
+                      backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                     }}
                   >
-                    <UiSymbol name="calendar" size={32} color="#9CA3AF" />
+                    <UiSymbol
+                      name="calendar"
+                      size={32}
+                      color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                    />
                   </View>
                   <Text
                     style={{
@@ -869,6 +880,24 @@ export default function LogsScreen() {
                       ? t('logs.empty.subtitleFiltered')
                       : t('logs.empty.subtitleDefault')}
                   </Text>
+                  {selectedFarmId !== undefined && !hasActiveFilters && !searchQuery ? (
+                    <Pressable
+                      onPress={handleAddActivity}
+                      style={{
+                        marginTop: spacing[4],
+                        backgroundColor: m3.colorScheme.primary,
+                        paddingHorizontal: spacing[6],
+                        paddingVertical: spacing[3],
+                        borderRadius: borderRadius.xl,
+                      }}
+                    >
+                      <Text
+                        style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}
+                      >
+                        {t('logs.cta.addActivity')}
+                      </Text>
+                    </Pressable>
+                  ) : null}
                 </View>
               ) : (
                 <>
@@ -910,7 +939,7 @@ export default function LogsScreen() {
                       <UiSymbol
                         name="chevron.down"
                         size={12}
-                        color="#8e8e93"
+                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
                         style={{ marginLeft: spacing[1] }}
                       />
                     </Pressable>
@@ -924,7 +953,7 @@ export default function LogsScreen() {
                         <View
                           key={log.id}
                           style={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
                             borderRadius: borderRadius['2xl'],
                             overflow: 'hidden',
                           }}
@@ -943,7 +972,10 @@ export default function LogsScreen() {
                                 borderRadius: borderRadius.full,
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                backgroundColor: `${logType?.color || '#408059'}1A`,
+                                backgroundColor: colorWithOpacity(
+                                  logType?.color || m3.colorScheme.primary,
+                                  0.12,
+                                ),
                               }}
                             >
                               <UiSymbol
@@ -963,7 +995,7 @@ export default function LogsScreen() {
                                               : 'doc.fill'
                                 }
                                 size={20}
-                                color={logType?.color || '#408059'}
+                                color={logType?.color || m3.colorScheme.primary}
                               />
                             </View>
                             <View style={{ flex: 1, marginLeft: spacing[3] }}>
@@ -1032,7 +1064,7 @@ export default function LogsScreen() {
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   backgroundColor: pressed
-                                    ? 'rgba(64, 128, 89, 0.1)'
+                                    ? colorWithOpacity(m3.colorScheme.primary, 0.12)
                                     : 'transparent',
                                   opacity:
                                     selectedFarm || (log.data as { farm_id?: number }).farm_id
@@ -1045,8 +1077,8 @@ export default function LogsScreen() {
                                   size={20}
                                   color={
                                     selectedFarm || (log.data as { farm_id?: number }).farm_id
-                                      ? '#408059'
-                                      : '#c7c7cc'
+                                      ? m3.colorScheme.primary
+                                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
                                   }
                                 />
                               </Pressable>
@@ -1062,11 +1094,11 @@ export default function LogsScreen() {
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   backgroundColor: pressed
-                                    ? 'rgba(239, 68, 68, 0.1)'
+                                    ? colorWithOpacity(m3.colorScheme.error, 0.12)
                                     : 'transparent',
                                 })}
                               >
-                                <UiSymbol name="trash" size={20} color="#EF4444" />
+                                <UiSymbol name="trash" size={20} color={m3.colorScheme.error} />
                               </Pressable>
                             </View>
                           </View>
@@ -1092,14 +1124,19 @@ export default function LogsScreen() {
                           paddingHorizontal: spacing[4],
                           paddingVertical: spacing[2],
                           borderRadius: borderRadius.xl,
-                          backgroundColor: currentPage === 1 ? '#f9f9f9' : '#408059',
+                          backgroundColor:
+                            currentPage === 1 ? colors.surface[50] : m3.colorScheme.primary,
                           opacity: currentPage === 1 ? 0.5 : 1,
                         }}
                       >
                         <UiSymbol
                           name="chevron.left"
                           size={18}
-                          color={currentPage === 1 ? '#8e8e93' : '#FFFFFF'}
+                          color={
+                            currentPage === 1
+                              ? colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+                              : m3.colorScheme.onPrimary
+                          }
                         />
                       </Pressable>
 
@@ -1126,14 +1163,20 @@ export default function LogsScreen() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 marginHorizontal: 2,
-                                backgroundColor: currentPage === pageNum ? '#408059' : '#f9f9f9',
+                                backgroundColor:
+                                  currentPage === pageNum
+                                    ? m3.colorScheme.primary
+                                    : colors.surface[50],
                               }}
                             >
                               <Text
                                 style={{
                                   fontSize: fontSize.xs,
                                   fontWeight: fontWeight.semibold,
-                                  color: currentPage === pageNum ? colors.white : colors.gray[700],
+                                  color:
+                                    currentPage === pageNum
+                                      ? m3.colorScheme.onPrimary
+                                      : colors.gray[700],
                                 }}
                               >
                                 {pageNum}
@@ -1150,14 +1193,21 @@ export default function LogsScreen() {
                           paddingHorizontal: spacing[4],
                           paddingVertical: spacing[2],
                           borderRadius: borderRadius.xl,
-                          backgroundColor: currentPage === totalPages ? '#f9f9f9' : '#408059',
+                          backgroundColor:
+                            currentPage === totalPages
+                              ? colors.surface[50]
+                              : m3.colorScheme.primary,
                           opacity: currentPage === totalPages ? 0.5 : 1,
                         }}
                       >
                         <UiSymbol
                           name="chevron.right"
                           size={18}
-                          color={currentPage === totalPages ? '#8e8e93' : '#FFFFFF'}
+                          color={
+                            currentPage === totalPages
+                              ? colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+                              : m3.colorScheme.onPrimary
+                          }
                         />
                       </Pressable>
                     </View>
@@ -1166,6 +1216,31 @@ export default function LogsScreen() {
               )}
             </View>
           </ScrollView>
+          {selectedFarmId !== undefined ? (
+            <Pressable
+              onPress={handleAddActivity}
+              style={{
+                position: 'absolute',
+                bottom: spacing[6] + insets.bottom,
+                right: spacing[6],
+                width: 56,
+                height: 56,
+                backgroundColor: m3.colorScheme.primary,
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: m3.colorScheme.shadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('logs.cta.addActivity')}
+            >
+              <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -1177,12 +1252,12 @@ export default function LogsScreen() {
           onRequestClose={() => setShowFarmSelector(false)}
           animationType="slide"
         >
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <View style={{ flex: 1, backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3) }}>
             <View
               style={{
                 flex: 1,
                 marginTop: 'auto',
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
                 borderTopRightRadius: borderRadius['3xl'],
                 overflow: 'hidden',
@@ -1228,7 +1303,8 @@ export default function LogsScreen() {
                     padding: spacing[4],
                     borderRadius: borderRadius['2xl'],
                     marginBottom: spacing[2],
-                    backgroundColor: selectedFarmId === undefined ? '#408059' : '#f9f9f9',
+                    backgroundColor:
+                      selectedFarmId === undefined ? m3.colorScheme.primary : colors.surface[50],
                   }}
                 >
                   <View
@@ -1240,14 +1316,18 @@ export default function LogsScreen() {
                       justifyContent: 'center',
                       backgroundColor:
                         selectedFarmId === undefined
-                          ? 'rgba(255,255,255,0.2)'
-                          : 'rgba(64,128,89,0.15)',
+                          ? colorWithOpacity(m3.colorScheme.onPrimary, 0.2)
+                          : colorWithOpacity(m3.colorScheme.primary, 0.15),
                     }}
                   >
                     <UiSymbol
                       name="square.stack.3d.up.fill"
                       size={20}
-                      color={selectedFarmId === undefined ? '#FFFFFF' : '#408059'}
+                      color={
+                        selectedFarmId === undefined
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.primary
+                      }
                     />
                   </View>
                   <View style={{ marginLeft: spacing[3], flex: 1 }}>
@@ -1255,7 +1335,10 @@ export default function LogsScreen() {
                       style={{
                         fontSize: fontSize.base,
                         fontWeight: fontWeight.semibold,
-                        color: selectedFarmId === undefined ? colors.white : colors.surface[900],
+                        color:
+                          selectedFarmId === undefined
+                            ? m3.colorScheme.onPrimary
+                            : colors.surface[900],
                       }}
                     >
                       {t('logs.farmPicker.allFarms')}
@@ -1265,7 +1348,7 @@ export default function LogsScreen() {
                         fontSize: fontSize.xs,
                         color:
                           selectedFarmId === undefined
-                            ? 'rgba(255,255,255,0.8)'
+                            ? colorWithOpacity(m3.colorScheme.onPrimary, 0.8)
                             : colors.surface[500],
                       }}
                     >
@@ -1273,7 +1356,11 @@ export default function LogsScreen() {
                     </Text>
                   </View>
                   {selectedFarmId === undefined && (
-                    <UiSymbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
+                    <UiSymbol
+                      name="checkmark.circle.fill"
+                      size={22}
+                      color={m3.colorScheme.onPrimary}
+                    />
                   )}
                 </Pressable>
 
@@ -1291,7 +1378,8 @@ export default function LogsScreen() {
                       padding: spacing[4],
                       borderRadius: borderRadius['2xl'],
                       marginBottom: spacing[2],
-                      backgroundColor: selectedFarmId === farm.id ? '#408059' : '#f9f9f9',
+                      backgroundColor:
+                        selectedFarmId === farm.id ? m3.colorScheme.primary : colors.surface[50],
                     }}
                   >
                     <View
@@ -1303,14 +1391,18 @@ export default function LogsScreen() {
                         justifyContent: 'center',
                         backgroundColor:
                           selectedFarmId === farm.id
-                            ? 'rgba(255,255,255,0.2)'
-                            : 'rgba(64,128,89,0.15)',
+                            ? colorWithOpacity(m3.colorScheme.onPrimary, 0.2)
+                            : colorWithOpacity(m3.colorScheme.primary, 0.15),
                       }}
                     >
                       <UiSymbol
                         name="leaf.fill"
                         size={20}
-                        color={selectedFarmId === farm.id ? '#FFFFFF' : '#408059'}
+                        color={
+                          selectedFarmId === farm.id
+                            ? m3.colorScheme.onPrimary
+                            : m3.colorScheme.primary
+                        }
                       />
                     </View>
                     <View style={{ marginLeft: spacing[3], flex: 1 }}>
@@ -1318,7 +1410,10 @@ export default function LogsScreen() {
                         style={{
                           fontSize: fontSize.base,
                           fontWeight: fontWeight.semibold,
-                          color: selectedFarmId === farm.id ? colors.white : colors.surface[900],
+                          color:
+                            selectedFarmId === farm.id
+                              ? m3.colorScheme.onPrimary
+                              : colors.surface[900],
                         }}
                       >
                         {farm.name}
@@ -1328,7 +1423,7 @@ export default function LogsScreen() {
                           fontSize: fontSize.xs,
                           color:
                             selectedFarmId === farm.id
-                              ? 'rgba(255,255,255,0.8)'
+                              ? colorWithOpacity(m3.colorScheme.onPrimary, 0.8)
                               : colors.surface[500],
                         }}
                       >
@@ -1336,7 +1431,11 @@ export default function LogsScreen() {
                       </Text>
                     </View>
                     {selectedFarmId === farm.id && (
-                      <UiSymbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
+                      <UiSymbol
+                        name="checkmark.circle.fill"
+                        size={22}
+                        color={m3.colorScheme.onPrimary}
+                      />
                     )}
                   </Pressable>
                 ))}
@@ -1371,7 +1470,7 @@ export default function LogsScreen() {
           <Pressable
             style={{
               flex: 1,
-              backgroundColor: 'rgba(0,0,0,0.5)',
+              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -1381,7 +1480,7 @@ export default function LogsScreen() {
               style={{
                 width: '80%',
                 maxWidth: 320,
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[6],
               }}
@@ -1405,7 +1504,11 @@ export default function LogsScreen() {
                   {t('logs.pagination.recordsPerPage')}
                 </Text>
                 <Pressable onPress={() => setShowRecordsPerPageSelector(false)}>
-                  <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                  <UiSymbol
+                    name="xmark.circle.fill"
+                    size={24}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                  />
                 </Pressable>
               </View>
               {[10, 50, 100].map((value) => (
@@ -1431,7 +1534,11 @@ export default function LogsScreen() {
                     {value}
                   </Text>
                   {itemsPerPage === value && (
-                    <UiSymbol name="checkmark.circle.fill" size={20} color="#408059" />
+                    <UiSymbol
+                      name="checkmark.circle.fill"
+                      size={20}
+                      color={m3.colorScheme.primary}
+                    />
                   )}
                 </Pressable>
               ))}
@@ -1447,11 +1554,13 @@ export default function LogsScreen() {
           onRequestClose={() => setIsFilterSheetOpen(false)}
           animationType="slide"
         >
-          <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <SafeAreaView
+            style={{ flex: 1, backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3) }}
+          >
             <View style={{ flex: 1, justifyContent: 'flex-end' }}>
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderTopLeftRadius: borderRadius['3xl'],
                   borderTopRightRadius: borderRadius['3xl'],
                   overflow: 'hidden',
@@ -1484,7 +1593,11 @@ export default function LogsScreen() {
                     {t('common.filter')}
                   </Text>
                   <Pressable onPress={() => setIsFilterSheetOpen(false)}>
-                    <UiSymbol name="xmark.circle.fill" size={24} color="#9CA3AF" />
+                    <UiSymbol
+                      name="xmark.circle.fill"
+                      size={24}
+                      color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                    />
                   </Pressable>
                 </View>
 
@@ -1551,14 +1664,14 @@ export default function LogsScreen() {
                                           : 'doc.fill'
                             }
                             size={14}
-                            color={isSelected ? '#FFFFFF' : logType.color}
+                            color={isSelected ? m3.colorScheme.onPrimary : logType.color}
                           />
                           <Text
                             style={{
                               marginLeft: spacing[1],
                               fontSize: fontSize.xs,
                               fontWeight: fontWeight.semibold,
-                              color: isSelected ? colors.white : colors.gray[700],
+                              color: isSelected ? m3.colorScheme.onPrimary : colors.gray[700],
                             }}
                           >
                             {t(logType.labelKey)}
@@ -1733,7 +1846,9 @@ export default function LogsScreen() {
                       backgroundColor: m3.colorScheme.primary,
                     }}
                   >
-                    <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
+                    <Text
+                      style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}
+                    >
                       {t('common.done')}
                     </Text>
                   </Pressable>
@@ -1755,14 +1870,14 @@ export default function LogsScreen() {
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
             paddingHorizontal: spacing[8],
           }}
         >
           <View
             style={{
               width: '100%',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backgroundColor: colorWithOpacity(colors.surface[100], 0.95),
               borderRadius: borderRadius['2xl'],
               padding: spacing[6],
             }}
@@ -1775,10 +1890,14 @@ export default function LogsScreen() {
                   borderRadius: borderRadius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
                 }}
               >
-                <UiSymbol name="exclamationmark.triangle.fill" size={28} color="#EF4444" />
+                <UiSymbol
+                  name="exclamationmark.triangle.fill"
+                  size={28}
+                  color={m3.colorScheme.error}
+                />
               </View>
             </View>
             <Text
@@ -1830,10 +1949,10 @@ export default function LogsScreen() {
                   paddingVertical: spacing[3],
                   borderRadius: borderRadius.xl,
                   alignItems: 'center',
-                  backgroundColor: '#EF4444',
+                  backgroundColor: m3.colorScheme.error,
                 }}
               >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
+                <Text style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onError }}>
                   {t('common.delete')}
                 </Text>
               </Pressable>

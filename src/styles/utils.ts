@@ -3,7 +3,8 @@
  */
 
 import type { ViewStyle, TextStyle } from 'react-native';
-import { colors, spacing, borderRadius, shadows } from './theme';
+import { colors, getThemeColors, spacing, borderRadius, shadows } from './theme';
+import { colorWithOpacity } from '@/utils/color';
 
 /**
  * Create a card style with optional glass effect
@@ -14,14 +15,14 @@ export const createCardStyle = (options?: {
   padding?: number;
   margin?: number;
 }): ViewStyle => {
+  const themeColors = getThemeColors(Boolean(options?.dark));
+  const glassBackground = colorWithOpacity(themeColors.surface[100], options?.dark ? 0.75 : 0.85);
   const base: ViewStyle = {
     backgroundColor: options?.glass
-      ? options?.dark
-        ? 'rgba(44, 44, 46, 0.8)'
-        : 'rgba(255, 255, 255, 0.8)'
+      ? glassBackground
       : options?.dark
-        ? colors.surface[900]
-        : colors.surface[100],
+        ? themeColors.surface[50]
+        : themeColors.surface[100],
     borderRadius: borderRadius['2xl'],
     padding: options?.padding ?? spacing[4],
     margin: options?.margin,
@@ -57,11 +58,13 @@ export const createTextStyle = (options?: {
   weight?: '400' | '500' | '600' | '700';
   color?: string;
   align?: 'left' | 'center' | 'right';
+  dark?: boolean;
 }): TextStyle => {
+  const themeColors = getThemeColors(Boolean(options?.dark));
   return {
     fontSize: options?.size ?? 16,
     fontWeight: options?.weight ?? '400',
-    color: options?.color ?? colors.surface[900],
+    color: options?.color ?? themeColors.gray[900],
     textAlign: options?.align ?? 'left',
   };
 };

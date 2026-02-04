@@ -3,7 +3,8 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-nati
 import { router } from 'expo-router';
 import { useAllWorkerAttendance, useAllWorkerTransactions, useProfile, useWorkers } from '@/hooks';
 import type { Worker } from '@/types';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
 import {
@@ -15,6 +16,7 @@ import {
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 
 export function WorkerAnalyticsView() {
+  const m3 = useM3();
   const { data: workers, isLoading: workersLoading } = useWorkers();
   const { data: attendance, isLoading: attendanceLoading } = useAllWorkerAttendance();
   const { data: transactions, isLoading: transactionsLoading } = useAllWorkerTransactions();
@@ -202,6 +204,7 @@ export function WorkerAnalyticsView() {
 }
 
 function KpiCard({ label, value }: { label: string; value: string }) {
+  const m3 = useM3();
   return (
     <View
       style={{
@@ -246,6 +249,7 @@ function WorkerAnalyticsRow({
   metrics: WorkerAnalyticsMetrics;
   preferredCurrency: string;
 }) {
+  const m3 = useM3();
   const balanceColor = metrics.netBalance >= 0 ? m3.colorScheme.primary : m3.colorScheme.error;
 
   return (

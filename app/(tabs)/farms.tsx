@@ -20,8 +20,9 @@ import { FarmCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import type { Farm } from '@/types';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -43,6 +44,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
     filteredFarms,
     farms,
   }) => {
+    const m3 = useM3();
     const { t } = useTranslation();
 
     const searchBarStyle: ViewStyle = {
@@ -245,6 +247,7 @@ const SearchHeader = React.memo<SearchHeaderProps>(
 SearchHeader.displayName = 'SearchHeader';
 
 export default function FarmsScreen() {
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const router = useRouter();

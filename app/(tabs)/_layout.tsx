@@ -10,7 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { Platform } from 'react-native';
 import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { m3 } from '@/styles/theme';
+import { useThemeTokens } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -20,10 +21,11 @@ export default function TabLayout() {
   const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
   const isAndroid = Platform.OS === 'android';
+  const { m3, isDark } = useThemeTokens();
   const defaultHeaderOptions = useMemo(
     () => ({
       headerStyle: {
-        backgroundColor: m3.colorScheme.background,
+        backgroundColor: m3.colorScheme.surface,
         borderBottomWidth: 0,
       },
       headerTitleStyle: {
@@ -34,7 +36,7 @@ export default function TabLayout() {
       headerTintColor: m3.colorScheme.primary,
       headerTransparent: false,
     }),
-    [],
+    [m3],
   );
 
   const sf = (name: string) => name as SFSymbol;
@@ -47,7 +49,7 @@ export default function TabLayout() {
   ) => (
     <Icon
       sf={{ default: sfDefault, selected: sfSelected }}
-      selectedColor="#408059"
+      selectedColor={m3.colorScheme.primary}
       androidSrc={{
         default: <VectorIcon family={Ionicons} name={ionDefault} />,
         selected: <VectorIcon family={Ionicons} name={ionSelected} />,
@@ -97,7 +99,7 @@ export default function TabLayout() {
         <SymbolIcon
           name={iconName}
           size={24}
-          color={focused ? '#408059' : '#9CA3AF'}
+          color={focused ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
           style={{ transform: [{ scale }] }}
         />
       );
@@ -105,13 +107,13 @@ export default function TabLayout() {
 
     return (
       <>
-        <StatusBar style="dark" />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <Tabs
           screenOptions={{
-            tabBarActiveTintColor: '#408059',
-            tabBarInactiveTintColor: '#9CA3AF',
+            tabBarActiveTintColor: m3.colorScheme.primary,
+            tabBarInactiveTintColor: m3.colorScheme.onSurfaceVariant,
             tabBarStyle: {
-              backgroundColor: m3.surface.surfaceContainerLow,
+              backgroundColor: m3.surface.surfaceContainer,
               borderTopColor: m3.colorScheme.outlineVariant,
               borderTopWidth: 1,
               paddingTop: 8,
@@ -173,13 +175,25 @@ export default function TabLayout() {
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <NativeTabs
-        tintColor="#408059"
-        iconColor={{ default: '#9CA3AF', selected: '#408059' }}
-        labelStyle={{ fontSize: 11, fontWeight: '500' }}
-        backgroundColor={m3.surface.surfaceContainerLow}
-        shadowColor="rgba(0, 0, 0, 0.08)"
+        tintColor={m3.colorScheme.primary}
+        iconColor={{
+          default: m3.colorScheme.onSurfaceVariant,
+          selected: m3.colorScheme.primary,
+        }}
+        labelStyle={{
+          default: {
+            fontSize: 11,
+            fontWeight: '500',
+            color: m3.colorScheme.onSurfaceVariant,
+          },
+          selected: {
+            color: m3.colorScheme.primary,
+          },
+        }}
+        backgroundColor={m3.surface.surfaceContainer}
+        shadowColor={colorWithOpacity(m3.colorScheme.shadow, isDark ? 0.6 : 0.05)}
       >
         <NativeTabs.Trigger
           name="index"
@@ -194,7 +208,7 @@ export default function TabLayout() {
         >
           <Icon
             sf={{ default: sf('house'), selected: sf('house.fill') }}
-            selectedColor="#408059"
+            selectedColor={m3.colorScheme.primary}
             androidSrc={{
               default: <VectorIcon family={MaterialCommunityIcons} name="barn" />,
               selected: <VectorIcon family={MaterialCommunityIcons} name="barn" />,

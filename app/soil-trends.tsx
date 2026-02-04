@@ -14,12 +14,16 @@ import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
 import ParameterSelector from '@/components/screens/parameter-selector';
 import TrendsTable from '@/components/screens/trends-table';
 import TrendsChart from '@/components/screens/trends-chart';
-import { colors, spacing, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 type ViewMode = 'table' | 'chart';
 
 export default function SoilTrendsScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { farmId } = useLocalSearchParams<{ farmId: string }>();
   const parsed = farmId ? parseInt(farmId, 10) : 0;
   const farmIdNum = Number.isNaN(parsed) ? 0 : parsed;
@@ -34,12 +38,12 @@ export default function SoilTrendsScreen() {
     return (
       <SafeScreen backgroundColor={m3.colorScheme.background}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
+          <IconSymbol name="exclamationmark.triangle.fill" size={48} color={m3.colorScheme.error} />
           <Text
             style={{
               fontSize: fontSize.lg,
               fontWeight: fontWeight.semibold,
-              color: colors.gray[700],
+              color: m3.colorScheme.onSurface,
               marginTop: spacing[4],
             }}
           >
@@ -55,7 +59,12 @@ export default function SoilTrendsScreen() {
       <SafeScreen backgroundColor={m3.colorScheme.background}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color={colors.labTest.soil} />
-          <Text style={{ color: colors.gray[500], marginTop: spacing[4] }}>
+          <Text
+            style={{
+              color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8),
+              marginTop: spacing[4],
+            }}
+          >
             {t('common.loading')}
           </Text>
         </View>
@@ -75,21 +84,25 @@ export default function SoilTrendsScreen() {
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[3],
           borderBottomWidth: 1,
-          borderBottomColor: colors.gray[200],
-          backgroundColor: colors.white,
+          borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+          backgroundColor: colors.surface[100],
         }}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <IconSymbol name="chevron.left" size={24} color="#333" />
+          <IconSymbol name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
         </Pressable>
         <IconSymbol name="square.stack.3d.up.fill" size={24} color={colors.labTest.soil} />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
-            style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.gray[800] }}
+            style={{
+              fontSize: fontSize.lg,
+              fontWeight: fontWeight.bold,
+              color: m3.colorScheme.onSurface,
+            }}
           >
             {t('trends.screens.soil')}
           </Text>
-          <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+          <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
             {farm?.name || t('tasks.unknownFarm')}
           </Text>
         </View>
@@ -109,11 +122,11 @@ export default function SoilTrendsScreen() {
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: 'rgba(255,255,255,0.8)',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[2],
             borderBottomWidth: 1,
-            borderBottomColor: colors.gray[200],
+            borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
           }}
         >
           <Pressable
@@ -132,7 +145,10 @@ export default function SoilTrendsScreen() {
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
-                color: viewMode === 'table' ? colors.labTest.soil : colors.gray[400],
+                color:
+                  viewMode === 'table'
+                    ? colors.labTest.soil
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55),
               }}
             >
               {t('trends.viewModes.table')}
@@ -154,7 +170,10 @@ export default function SoilTrendsScreen() {
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.semibold,
                 textTransform: 'uppercase',
-                color: viewMode === 'chart' ? colors.labTest.soil : colors.gray[400],
+                color:
+                  viewMode === 'chart'
+                    ? colors.labTest.soil
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.55),
               }}
             >
               {t('trends.viewModes.chart')}

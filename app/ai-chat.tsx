@@ -18,70 +18,75 @@ import Markdown from 'react-native-markdown-display';
 import { useFarm } from '@/hooks';
 import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
-const markdownStyles = {
-  body: { fontSize: 16, color: '#1c1c1e', lineHeight: 24 },
+const markdownStyles = (colors: ReturnType<typeof useThemeColors>) => ({
+  body: { fontSize: 16, color: colors.surface[900], lineHeight: 24 },
   heading1: {
     fontSize: 20,
     fontWeight: 'bold' as const,
-    color: '#1c1c1e',
+    color: colors.surface[900],
     marginTop: 8,
     marginBottom: 4,
   },
   heading2: {
     fontSize: 18,
     fontWeight: 'bold' as const,
-    color: '#1c1c1e',
+    color: colors.surface[900],
     marginTop: 8,
     marginBottom: 4,
   },
   heading3: {
     fontSize: 16,
     fontWeight: 'bold' as const,
-    color: '#1c1c1e',
+    color: colors.surface[900],
     marginTop: 8,
     marginBottom: 4,
   },
-  strong: { fontWeight: 'bold' as const, color: '#1c1c1e' },
-  em: { fontStyle: 'italic' as const, color: '#1c1c1e' },
+  strong: { fontWeight: 'bold' as const, color: colors.surface[900] },
+  em: { fontStyle: 'italic' as const, color: colors.surface[900] },
   paragraph: { marginBottom: 8 },
   list_item: { marginBottom: 4, paddingLeft: 4 },
   bullet_list: { marginBottom: 8, marginLeft: 8 },
   ordered_list: { marginBottom: 8, marginLeft: 8 },
   code_inline: {
-    backgroundColor: '#f0f0f0',
-    color: '#1c1c1e',
+    backgroundColor: colors.surface[200],
+    color: colors.surface[900],
     padding: 2,
     borderRadius: 4,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   code_block: {
-    backgroundColor: '#f0f0f0',
-    color: '#1c1c1e',
+    backgroundColor: colors.surface[200],
+    color: colors.surface[900],
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   blockquote: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.surface[200],
     borderLeftWidth: 3,
-    borderLeftColor: '#408059',
+    borderLeftColor: colors.primary[500],
     paddingLeft: 12,
     paddingVertical: 4,
     marginBottom: 8,
   },
-  link: { color: '#408059', textDecorationLine: 'underline' as const },
-  table: { borderWidth: 1, borderColor: '#e0e0e0', marginBottom: 8 },
-  table_header: { backgroundColor: '#408059' },
-  table_row: { borderWidth: 1, borderColor: '#e0e0e0' },
-  table_cell: { padding: 8, fontSize: 14, color: '#1c1c1e' },
-};
+  link: { color: colors.primary[500], textDecorationLine: 'underline' as const },
+  table: { borderWidth: 1, borderColor: colors.surface[300], marginBottom: 8 },
+  table_header: { backgroundColor: colors.primary[500] },
+  table_row: { borderWidth: 1, borderColor: colors.surface[300] },
+  table_cell: { padding: 8, fontSize: 14, color: colors.surface[900] },
+});
 
 export default function AIChatScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
+  const markdown = useMemo(() => markdownStyles(colors), [colors]);
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
@@ -189,10 +194,10 @@ export default function AIChatScreen() {
         options={{
           title: t('ai.title'),
           headerStyle: { backgroundColor: m3.colorScheme.background },
-          headerTintColor: '#000000',
+          headerTintColor: m3.colorScheme.onBackground,
           headerLeft: () => (
             <Pressable onPress={() => router.back()} style={{ marginLeft: spacing[2] }}>
-              <UiSymbol name="chevron.left" size={24} color="#000000" />
+              <UiSymbol name="chevron.left" size={24} color={m3.colorScheme.onBackground} />
             </Pressable>
           ),
         }}
@@ -226,14 +231,14 @@ export default function AIChatScreen() {
                   style={{
                     width: 80,
                     height: 80,
-                    backgroundColor: colors.primary[100],
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                     borderRadius: borderRadius.full,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginBottom: spacing[4],
                   }}
                 >
-                  <UiSymbol name="lightbulb.fill" size={40} color="#408059" />
+                  <UiSymbol name="lightbulb.fill" size={40} color={m3.colorScheme.primary} />
                 </View>
                 <Text
                   style={{
@@ -265,8 +270,8 @@ export default function AIChatScreen() {
                         padding: spacing[3],
                         borderRadius: borderRadius.xl,
                         borderWidth: 1,
-                        borderColor: colors.surface[100],
-                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        borderColor: colors.surface[200],
+                        backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
                       }}
                     >
                       <Text
@@ -298,7 +303,7 @@ export default function AIChatScreen() {
                     style={{
                       width: 32,
                       height: 32,
-                      backgroundColor: colors.primary[100],
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                       borderRadius: borderRadius.full,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -306,7 +311,7 @@ export default function AIChatScreen() {
                       marginTop: spacing[1],
                     }}
                   >
-                    <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
+                    <UiSymbol name="lightbulb.fill" size={16} color={m3.colorScheme.primary} />
                   </View>
                 )}
                 <View
@@ -315,18 +320,20 @@ export default function AIChatScreen() {
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[3],
                     backgroundColor:
-                      message.role === 'user' ? colors.primary[600] : 'rgba(255, 255, 255, 0.8)',
+                      message.role === 'user'
+                        ? m3.colorScheme.primary
+                        : colorWithOpacity(colors.surface[100], 0.85),
                     ...(message.role === 'user'
                       ? { borderBottomRightRadius: borderRadius.sm }
                       : { borderBottomLeftRadius: borderRadius.sm }),
                   }}
                 >
                   {message.role === 'assistant' ? (
-                    <Markdown style={markdownStyles} mergeStyle={true}>
+                    <Markdown style={markdown} mergeStyle={true}>
                       {message.content}
                     </Markdown>
                   ) : (
-                    <Text style={{ fontSize: fontSize.base, color: colors.white }}>
+                    <Text style={{ fontSize: fontSize.base, color: m3.colorScheme.onPrimary }}>
                       {message.content}
                     </Text>
                   )}
@@ -335,7 +342,9 @@ export default function AIChatScreen() {
                       fontSize: fontSize.xs,
                       marginTop: spacing[1],
                       color:
-                        message.role === 'user' ? 'rgba(255, 255, 255, 0.7)' : colors.surface[400],
+                        message.role === 'user'
+                          ? colorWithOpacity(m3.colorScheme.onPrimary, 0.7)
+                          : colors.surface[400],
                     }}
                   >
                     {formatMessageTime(message.timestamp)}
@@ -346,7 +355,7 @@ export default function AIChatScreen() {
                     style={{
                       width: 32,
                       height: 32,
-                      backgroundColor: colors.primary[200],
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
                       borderRadius: borderRadius.full,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -354,7 +363,7 @@ export default function AIChatScreen() {
                       marginTop: spacing[1],
                     }}
                   >
-                    <UiSymbol name="person.fill" size={16} color="#408059" />
+                    <UiSymbol name="person.fill" size={16} color={m3.colorScheme.primary} />
                   </View>
                 )}
               </View>
@@ -373,7 +382,7 @@ export default function AIChatScreen() {
                   style={{
                     width: 32,
                     height: 32,
-                    backgroundColor: colors.primary[100],
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                     borderRadius: borderRadius.full,
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -381,18 +390,18 @@ export default function AIChatScreen() {
                     marginTop: spacing[1],
                   }}
                 >
-                  <UiSymbol name="lightbulb.fill" size={16} color="#408059" />
+                  <UiSymbol name="lightbulb.fill" size={16} color={m3.colorScheme.primary} />
                 </View>
                 <View
                   style={{
                     paddingHorizontal: spacing[4],
                     paddingVertical: spacing[3],
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
                     borderRadius: borderRadius['2xl'],
                     borderBottomLeftRadius: borderRadius.sm,
                   }}
                 >
-                  <ActivityIndicator size="small" color="#408059" />
+                  <ActivityIndicator size="small" color={m3.colorScheme.primary} />
                 </View>
               </View>
             )}
@@ -403,7 +412,7 @@ export default function AIChatScreen() {
                   marginTop: spacing[4],
                   paddingTop: spacing[4],
                   borderTopWidth: 1,
-                  borderTopColor: colors.surface[100],
+                  borderTopColor: colors.surface[200],
                 }}
               >
                 <Text
@@ -428,11 +437,11 @@ export default function AIChatScreen() {
                         marginRight: spacing[2],
                         paddingHorizontal: spacing[4],
                         paddingVertical: spacing[2],
-                        backgroundColor: colors.primary[50],
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                         borderRadius: borderRadius.full,
                       }}
                     >
-                      <Text style={{ color: colors.primary[700], fontSize: fontSize.sm }}>
+                      <Text style={{ color: m3.colorScheme.primary, fontSize: fontSize.sm }}>
                         {suggestion}
                       </Text>
                     </Pressable>
@@ -447,7 +456,7 @@ export default function AIChatScreen() {
               padding: spacing[4],
               backgroundColor: colors.surface[100],
               borderTopWidth: 1,
-              borderTopColor: colors.surface[100],
+              borderTopColor: colors.surface[200],
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] }}>
@@ -455,7 +464,7 @@ export default function AIChatScreen() {
                 value={inputText}
                 onChangeText={setInputText}
                 placeholder={t('ai.input.placeholder')}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
                 multiline
                 style={{
                   flex: 1,
@@ -463,7 +472,7 @@ export default function AIChatScreen() {
                   maxHeight: 120,
                   paddingHorizontal: spacing[4],
                   paddingVertical: spacing[3],
-                  backgroundColor: colors.surface[100],
+                  backgroundColor: colors.surface[50],
                   borderRadius: borderRadius['2xl'],
                   color: colors.surface[900],
                   fontSize: fontSize.base,
@@ -482,13 +491,17 @@ export default function AIChatScreen() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor:
-                    inputText.trim() && !isLoading ? colors.primary[600] : colors.surface[200],
+                    inputText.trim() && !isLoading ? m3.colorScheme.primary : colors.surface[200],
                 }}
               >
                 <UiSymbol
                   name="paperplane.fill"
                   size={20}
-                  color={inputText.trim() && !isLoading ? '#FFFFFF' : '#9CA3AF'}
+                  color={
+                    inputText.trim() && !isLoading
+                      ? m3.colorScheme.onPrimary
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+                  }
                 />
               </Pressable>
             </View>

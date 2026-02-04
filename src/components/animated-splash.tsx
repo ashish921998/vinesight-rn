@@ -11,6 +11,7 @@ import Animated, {
   FadeOut,
 } from 'react-native-reanimated';
 import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface SplashProps {
   onComplete?: () => void;
@@ -117,7 +118,10 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
           </Animated.Text>
 
           <Animated.Text
-            style={[textOpacity, { color: 'rgba(255, 255, 255, 0.8)', fontSize: fontSize.lg }]}
+            style={[
+              textOpacity,
+              { color: colorWithOpacity(colors.white, 0.8), fontSize: fontSize.lg },
+            ]}
           >
             Farm Management
           </Animated.Text>

@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, type TextInputProps } from 'react-native';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { NumericInput } from './form-field';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export interface IrrigationFormData {
   duration: number | undefined;
@@ -24,6 +26,8 @@ export function IrrigationForm({
   systemDischarge,
   onInputFocus,
 }: IrrigationFormProps) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const isValid = data.duration !== undefined && data.duration > 0;
 
   // Calculate estimated water applied
@@ -41,13 +45,13 @@ export function IrrigationForm({
             width: 40,
             height: 40,
             borderRadius: borderRadius.full,
-            backgroundColor: '#DBEAFE',
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.16),
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: spacing[3],
           }}
         >
-          <SymbolIcon name="drop.fill" size={20} color="#3B82F6" />
+          <SymbolIcon name="drop.fill" size={20} color={m3.colorScheme.primary} />
         </View>
         <View>
           <Text
@@ -69,7 +73,7 @@ export function IrrigationForm({
       <NumericInput
         label="Duration"
         icon="time-outline"
-        iconColor="#3B82F6"
+        iconColor={m3.colorScheme.primary}
         placeholder="Enter duration"
         value={data.duration}
         onValueChange={(duration) => onChange({ ...data, duration })}
@@ -98,7 +102,11 @@ export function IrrigationForm({
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[1] }}
               >
-                <SymbolIcon name="arrow.up.left.and.arrow.down.right" size={14} color="#6B7280" />
+                <SymbolIcon
+                  name="arrow.up.left.and.arrow.down.right"
+                  size={14}
+                  color={colors.surface[600]}
+                />
                 <Text
                   style={{
                     fontSize: fontSize.xs,
@@ -126,7 +134,7 @@ export function IrrigationForm({
               style={{
                 flex: 1,
                 minWidth: 140,
-                backgroundColor: '#EFF6FF',
+                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
                 borderRadius: borderRadius.xl,
                 padding: spacing[3],
               }}
@@ -134,13 +142,23 @@ export function IrrigationForm({
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[1] }}
               >
-                <SymbolIcon name="drop" size={14} color="#3B82F6" />
-                <Text style={{ fontSize: fontSize.xs, color: '#2563EB', marginLeft: spacing[1] }}>
+                <SymbolIcon name="drop" size={14} color={m3.colorScheme.primary} />
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: m3.colorScheme.primary,
+                    marginLeft: spacing[1],
+                  }}
+                >
                   Est. Water
                 </Text>
               </View>
               <Text
-                style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: '#1D4ED8' }}
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  color: m3.colorScheme.onSurface,
+                }}
               >
                 {estimatedWater} mm
               </Text>
@@ -163,13 +181,13 @@ export function IrrigationForm({
         <SymbolIcon
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
-          color={isValid ? '#22C55E' : '#9CA3AF'}
+          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
         />
         <Text
           style={{
             fontSize: fontSize.sm,
             marginLeft: spacing[2],
-            color: isValid ? '#16A34A' : colors.surface[500],
+            color: isValid ? colors.success : colors.surface[500],
           }}
         >
           {isValid ? 'Ready to add' : 'Enter duration to continue'}

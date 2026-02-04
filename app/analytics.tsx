@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, SafeAreaView } from 'react-native';
 
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/use-analytics';
 import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 const TIME_RANGES: { value: TimeRange; labelKey: string }[] = [
   { value: '30d', labelKey: 'analytics.timeRanges.30d' },
@@ -17,24 +19,9 @@ const TIME_RANGES: { value: TimeRange; labelKey: string }[] = [
   { value: 'all', labelKey: 'analytics.timeRanges.all' },
 ];
 
-// Metric card colors
-const metricColors = {
-  irrigation: { bg: '#DBEAFE', icon: '#3B82F6' },
-  spray: { bg: '#F3E8FF', icon: '#8B5CF6' },
-  harvest: { bg: '#FEF3C7', icon: '#F59E0B' },
-  cost: { bg: '#DCFCE7', icon: '#16A34A' },
-};
-
-// Activity type icons
-const activityIcons: Record<string, { icon: string; color: string }> = {
-  irrigation: { icon: 'drop.fill', color: '#3B82F6' },
-  spray: { icon: 'flask.fill', color: '#8B5CF6' },
-  harvest: { icon: 'basket.fill', color: '#F59E0B' },
-  expense: { icon: 'dollarsign.circle.fill', color: '#DC2626' },
-  fertigation: { icon: 'leaf.fill', color: '#16A34A' },
-};
-
 export default function AnalyticsScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const { data: profile } = useProfile();
@@ -45,19 +32,50 @@ export default function AnalyticsScreen() {
 
   const currency = profile?.preferred_currency || 'INR';
   const currencySymbol = currency === 'INR' ? '₹' : '$';
+  const metricColors = useMemo(
+    () => ({
+      irrigation: {
+        bg: colorWithOpacity(m3.colorScheme.primary, 0.15),
+        icon: m3.colorScheme.primary,
+      },
+      spray: {
+        bg: colorWithOpacity(m3.colorScheme.tertiary, 0.15),
+        icon: m3.colorScheme.tertiary,
+      },
+      harvest: {
+        bg: colorWithOpacity(colors.warning, 0.18),
+        icon: colors.warning,
+      },
+      cost: {
+        bg: colorWithOpacity(colors.success, 0.18),
+        icon: colors.success,
+      },
+    }),
+    [colors, m3],
+  );
+  const activityIcons = useMemo<Record<string, { icon: string; color: string }>>(
+    () => ({
+      irrigation: { icon: 'drop.fill', color: m3.colorScheme.primary },
+      spray: { icon: 'flask.fill', color: m3.colorScheme.tertiary },
+      harvest: { icon: 'basket.fill', color: colors.warning },
+      expense: { icon: 'dollarsign.circle.fill', color: m3.colorScheme.error },
+      fertigation: { icon: 'leaf.fill', color: colors.success },
+    }),
+    [colors.success, colors.warning, m3],
+  );
 
   if (isLoading) {
     return (
       <View
         style={{
           flex: 1,
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.colorScheme.background,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
         <Stack.Screen options={{ title: t('analytics.title') }} />
-        <ActivityIndicator size="large" color="#408059" />
+        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
           {t('analytics.loading')}
         </Text>
@@ -70,14 +88,18 @@ export default function AnalyticsScreen() {
       <View
         style={{
           flex: 1,
-          backgroundColor: colors.surface[50],
+          backgroundColor: m3.colorScheme.background,
           alignItems: 'center',
           justifyContent: 'center',
           padding: spacing[6],
         }}
       >
         <Stack.Screen options={{ title: t('analytics.title') }} />
-        <SymbolIcon name="chart.bar.fill" size={48} color="#9CA3AF" />
+        <SymbolIcon
+          name="chart.bar.fill"
+          size={48}
+          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+        />
         <Text
           style={{
             color: colors.surface[600],
@@ -122,14 +144,16 @@ export default function AnalyticsScreen() {
                   paddingHorizontal: spacing[4],
                   paddingVertical: spacing[2],
                   borderRadius: borderRadius.full,
-                  backgroundColor: timeRange === range.value ? colors.primary[600] : colors.white,
+                  backgroundColor:
+                    timeRange === range.value ? m3.colorScheme.primary : colors.surface[100],
                 }}
               >
                 <Text
                   style={{
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.medium,
-                    color: timeRange === range.value ? colors.white : colors.surface[600],
+                    color:
+                      timeRange === range.value ? m3.colorScheme.onPrimary : colors.surface[600],
                   }}
                 >
                   {t(range.labelKey)}
@@ -149,7 +173,7 @@ export default function AnalyticsScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 width: '47%',
@@ -183,7 +207,7 @@ export default function AnalyticsScreen() {
             </View>
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 width: '47%',
@@ -217,7 +241,7 @@ export default function AnalyticsScreen() {
             </View>
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 width: '47%',
@@ -251,7 +275,7 @@ export default function AnalyticsScreen() {
             </View>
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 width: '47%',
@@ -294,7 +318,7 @@ export default function AnalyticsScreen() {
           {performanceMetrics && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -319,7 +343,7 @@ export default function AnalyticsScreen() {
                 </Text>
                 <View
                   style={{
-                    backgroundColor: colors.primary[100],
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.16),
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[1],
                     borderRadius: borderRadius.full,
@@ -329,7 +353,7 @@ export default function AnalyticsScreen() {
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: colors.primary[700],
+                      color: m3.colorScheme.primary,
                     }}
                   >
                     {performanceMetrics.overallScore}
@@ -374,10 +398,10 @@ export default function AnalyticsScreen() {
                         size={14}
                         color={
                           value.trend === 'up'
-                            ? '#16A34A'
+                            ? colors.success
                             : value.trend === 'down'
-                              ? '#DC2626'
-                              : '#6B7280'
+                              ? m3.colorScheme.error
+                              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)
                         }
                       />
                     </View>
@@ -406,7 +430,7 @@ export default function AnalyticsScreen() {
           {costAnalysis && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -426,16 +450,20 @@ export default function AnalyticsScreen() {
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: '#ECFDF3',
+                    backgroundColor: colorWithOpacity(colors.success, 0.12),
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.success }}>
                     {t('analytics.metrics.revenue')}
                   </Text>
                   <Text
-                    style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#15803D' }}
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      color: colors.success,
+                    }}
                   >
                     {formatCurrency(costAnalysis.totalRevenue, currency)}
                   </Text>
@@ -443,16 +471,20 @@ export default function AnalyticsScreen() {
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: '#FEF2F2',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: '#DC2626' }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.error }}>
                     {t('analytics.metrics.expenses')}
                   </Text>
                   <Text
-                    style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#B91C1C' }}
+                    style={{
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.bold,
+                      color: m3.colorScheme.error,
+                    }}
                   >
                     {formatCurrency(costAnalysis.totalCosts, currency)}
                   </Text>
@@ -474,7 +506,7 @@ export default function AnalyticsScreen() {
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: costAnalysis.profitMargin >= 0 ? '#15803D' : '#B91C1C',
+                      color: costAnalysis.profitMargin >= 0 ? colors.success : m3.colorScheme.error,
                     }}
                   >
                     {costAnalysis.profitMargin.toFixed(1)}%
@@ -495,7 +527,7 @@ export default function AnalyticsScreen() {
                     style={{
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
-                      color: costAnalysis.roi >= 0 ? '#15803D' : '#B91C1C',
+                      color: costAnalysis.roi >= 0 ? colors.success : m3.colorScheme.error,
                     }}
                   >
                     {costAnalysis.roi.toFixed(1)}%
@@ -509,7 +541,7 @@ export default function AnalyticsScreen() {
           {yieldAnalysis && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -619,7 +651,7 @@ export default function AnalyticsScreen() {
           {analytics.expensesByType.length > 0 && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -661,7 +693,11 @@ export default function AnalyticsScreen() {
                           justifyContent: 'center',
                         }}
                       >
-                        <SymbolIcon name="doc.text.fill" size={16} color="#6B7280" />
+                        <SymbolIcon
+                          name="doc.text.fill"
+                          size={16}
+                          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                        />
                       </View>
                       <Text
                         style={{
@@ -693,7 +729,7 @@ export default function AnalyticsScreen() {
           {performanceMetrics && performanceMetrics.recommendations.length > 0 && (
             <View
               style={{
-                backgroundColor: '#EFF6FF',
+                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
@@ -702,12 +738,12 @@ export default function AnalyticsScreen() {
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}
               >
-                <SymbolIcon name="lightbulb.fill" size={20} color="#3B82F6" />
+                <SymbolIcon name="lightbulb.fill" size={20} color={m3.colorScheme.primary} />
                 <Text
                   style={{
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
-                    color: '#1E3A8A',
+                    color: m3.colorScheme.primary,
                     marginLeft: spacing[2],
                   }}
                 >
@@ -723,11 +759,15 @@ export default function AnalyticsScreen() {
                     marginBottom: spacing[2],
                   }}
                 >
-                  <SymbolIcon name="checkmark.circle.fill" size={16} color="#3B82F6" />
+                  <SymbolIcon
+                    name="checkmark.circle.fill"
+                    size={16}
+                    color={m3.colorScheme.primary}
+                  />
                   <Text
                     style={{
                       fontSize: fontSize.sm,
-                      color: '#1E40AF',
+                      color: m3.colorScheme.onSurfaceVariant,
                       marginLeft: spacing[2],
                       flex: 1,
                     }}
@@ -743,7 +783,7 @@ export default function AnalyticsScreen() {
           {analytics.recentActivity.length > 0 && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -763,7 +803,7 @@ export default function AnalyticsScreen() {
                 return recentItems.map((activity, index) => {
                   const iconInfo = activityIcons[activity.type] || {
                     icon: 'ellipse',
-                    color: '#6B7280',
+                    color: m3.colorScheme.onSurfaceVariant,
                   };
                   return (
                     <View
@@ -784,7 +824,7 @@ export default function AnalyticsScreen() {
                           borderRadius: borderRadius.xl,
                           alignItems: 'center',
                           justifyContent: 'center',
-                          backgroundColor: `${iconInfo.color}15`,
+                          backgroundColor: colorWithOpacity(iconInfo.color, 0.08),
                         }}
                       >
                         <SymbolIcon name={iconInfo.icon} size={18} color={iconInfo.color} />

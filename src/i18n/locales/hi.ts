@@ -175,6 +175,7 @@ export const hi = {
     actions: {
       addActivity: 'गतिविधि जोड़ें',
       seeAllActivities: 'सभी गतिविधियां देखें',
+      seeAllTasks: 'सभी कार्य देखें',
     },
     a11y: {
       editFarm: 'खेत संपादित करें',
@@ -407,6 +408,9 @@ export const hi = {
       title: 'लॉग हटाएं?',
       body: 'क्या आप वाकई {{date}} से इस {{type}} लॉग को हटाना चाहते हैं?',
     },
+    cta: {
+      addActivity: 'गतिविधि जोड़ें',
+    },
   },
 
   farms: {
@@ -563,6 +567,66 @@ export const hi = {
       laiCalculator: 'कैनोपी प्रबंधन के लिए पत्ती क्षेत्र सूचकांक की गणना करें',
       nutrientCalculator: 'लैब परीक्षणों के आधार पर उर्वरक और पोषक तत्वों की आवश्यकता की गणना करें',
     },
+  },
+
+  calculator: {
+    mad: {
+      title: 'MAD कैलकुलेटर',
+      step1: {
+        title: 'चरण 1: MAD गणना',
+        label: {
+          dbl: 'पंक्तियों के बीच की दूरी (DBL)',
+          rootDepth: 'जड़ की गहराई',
+          rootWidth: 'जड़ की चौड़ाई',
+          waterRetention: 'पानी रोकने की क्षमता',
+        },
+        placeholder: {
+          dbl: '3.0',
+          rootDepth: '0.6',
+          rootWidth: '1.5',
+          waterRetention: '15',
+        },
+        unit: {
+          meters: 'मी',
+          percent: '%',
+        },
+        calculateButton: 'MAD की गणना करें',
+      },
+      step2: {
+        title: 'चरण 2: रीफिल टैंक कैलकुलेटर',
+        selectRefillSpan: 'रीफिल अवधि चुनें',
+        refillSpanGuidance: 'रीफिल अवधि मार्गदर्शन:',
+        guidance: {
+          heavy: 'भारी वृद्धि (0.2): फल सेट - टर्गर बनाए रखें',
+          normal: 'सामान्य वृद्धि (0.3): फूलना - वृद्धि/तनाव संतुलित रखें',
+          controlled: 'नियंत्रित तनाव (0.4): वेरासन - गुणवत्ता/चीनी सुधारें',
+        },
+        calculateButton: 'रीफिल टैंक की गणना करें',
+      },
+      results: {
+        madTitle: 'अधिकतम अनुमत ह्रास',
+        interpretation: 'व्याख्या',
+        interpretationMessages: {
+          shallow: 'उथली जड़ क्षेत्र - बहुत बारिकी से सिंचाई की आवश्यकता (दैनिक से दैनिक दो बार)',
+          moderate: 'मध्यम जड़ क्षेत्र - 1-2 दिनों में सिंचाई अनुशंसित',
+          deep: 'गहरी जड़ क्षेत्र - आमतौर पर 2-3 दिनों की सिंचाई पर्याप्त है',
+          veryDeep: 'बहुत गहरी जड़ें - 3-5 दिनों की सिंचाई पर्याप्त हो सकती है',
+        },
+        refillTankTitle: 'रीफिल टैंक आवश्यकता',
+        whatThisMeans: 'इसका क्या मतलब है',
+        refillExplanation:
+          'अनुकूल द्राक्षा स्वास्थ्य बनाए रखने के लिए जब मिट्टी की नमी MAD के {{percentage}}% तक गिर जाती है तो {{value}} इकाइयाँ पानी लगाएं.',
+      },
+      actions: {
+        reset: 'कैलकुलेटर रीसेट करें',
+      },
+    },
+  },
+
+  parameterSelector: {
+    title: 'पैरामीटर ({{count}} चयनित)',
+    selectAll: 'सभी का चयन करें',
+    deselectAll: 'सभी का चयन रद्द करें',
   },
 
   weather: {
@@ -882,6 +946,11 @@ export const hi = {
     languageEnglish: 'English',
     languageMarathi: 'मराठी',
     languageHindi: 'हिंदी',
+    theme: 'थीम',
+    selectTheme: 'थीम चुनें',
+    themeSystem: 'सिस्टम',
+    themeLight: 'लाइट',
+    themeDark: 'डार्क',
     areaUnit: 'क्षेत्रफल इकाई',
     currency: 'मुद्रा',
     dailyWaterReminder: 'दैनिक जल अनुस्मारक',

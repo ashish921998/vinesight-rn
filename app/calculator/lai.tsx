@@ -16,10 +16,14 @@ import {
 
 import { Stack } from 'expo-router';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 
 export default function LAICalculatorScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const [shootLength, setShootLength] = useState(''); // cm
   const [shootsPerVine, setShootsPerVine] = useState('');
   const [vineSpacing, setVineSpacing] = useState(''); // m
@@ -94,25 +98,25 @@ export default function LAICalculatorScreen() {
     if (lai < 1.0) {
       return {
         label: 'Low',
-        color: '#F59E0B',
+        color: colors.warning,
         message: 'Canopy underdeveloped. May need more shoots or improved vigor.',
       };
     } else if (lai < 2.5) {
       return {
         label: 'Optimal',
-        color: '#22C55E',
+        color: colors.success,
         message: 'Good balance between vegetative growth and fruit exposure.',
       };
     } else if (lai < 4.0) {
       return {
         label: 'High',
-        color: '#3B82F6',
+        color: m3.colorScheme.primary,
         message: 'Dense canopy. Consider hedging or leaf removal for better fruit exposure.',
       };
     } else {
       return {
         label: 'Excessive',
-        color: '#EF4444',
+        color: m3.colorScheme.error,
         message: 'Very dense canopy. Risk of disease and poor fruit quality. Reduce vigor.',
       };
     }
@@ -145,7 +149,7 @@ export default function LAICalculatorScreen() {
             {/* Calculator Card */}
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -157,13 +161,13 @@ export default function LAICalculatorScreen() {
                   style={{
                     width: 32,
                     height: 32,
-                    backgroundColor: colors.primary[100],
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                     borderRadius: borderRadius.lg,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="leaf.fill" size={18} color="#22C55E" />
+                  <Icon name="leaf.fill" size={18} color={colors.success} />
                 </View>
                 <Text
                   style={{
@@ -209,7 +213,7 @@ export default function LAICalculatorScreen() {
               {/* Info */}
               <View
                 style={{
-                  backgroundColor: colors.primary[50],
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
                   borderRadius: borderRadius.xl,
                   padding: spacing[3],
                   marginTop: spacing[3],
@@ -219,13 +223,18 @@ export default function LAICalculatorScreen() {
                   style={{
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.medium,
-                    color: colors.primary[700],
+                    color: m3.colorScheme.primary,
                     marginBottom: spacing[1],
                   }}
                 >
                   About LAI
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.primary[600] }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colorWithOpacity(m3.colorScheme.primary, 0.85),
+                  }}
+                >
                   Leaf Area Index is the ratio of total leaf area to ground area. Optimal LAI for
                   table grapes is 1.5-2.5.
                 </Text>
@@ -236,7 +245,10 @@ export default function LAICalculatorScreen() {
                 onPress={calculate}
                 disabled={!canCalculate || result !== null}
                 style={{
-                  backgroundColor: canCalculate && !result ? colors.primary[600] : colors.gray[200],
+                  backgroundColor:
+                    canCalculate && !result
+                      ? m3.colorScheme.primary
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                   marginTop: spacing[4],
                   paddingVertical: spacing[3],
                   borderRadius: borderRadius.xl,
@@ -246,7 +258,10 @@ export default function LAICalculatorScreen() {
                 <Text
                   style={{
                     fontWeight: fontWeight.semibold,
-                    color: canCalculate && !result ? colors.white : colors.gray[400],
+                    color:
+                      canCalculate && !result
+                        ? m3.colorScheme.onPrimary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
                   }}
                 >
                   Calculate LAI
@@ -260,7 +275,7 @@ export default function LAICalculatorScreen() {
                     <View
                       style={{
                         flex: 1,
-                        backgroundColor: colors.primary[50],
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
                         borderRadius: borderRadius.xl,
                         padding: spacing[4],
                         alignItems: 'center',
@@ -270,7 +285,7 @@ export default function LAICalculatorScreen() {
                         style={{
                           fontSize: fontSize['2xl'],
                           fontWeight: fontWeight.bold,
-                          color: colors.primary[700],
+                          color: m3.colorScheme.primary,
                         }}
                       >
                         {result.lai.toFixed(2)}
@@ -278,7 +293,7 @@ export default function LAICalculatorScreen() {
                       <Text
                         style={{
                           fontSize: fontSize.xs,
-                          color: colors.primary[600],
+                          color: colorWithOpacity(m3.colorScheme.primary, 0.85),
                           marginTop: spacing[1],
                         }}
                       >
@@ -288,7 +303,7 @@ export default function LAICalculatorScreen() {
                     <View
                       style={{
                         flex: 1,
-                        backgroundColor: '#EFF6FF',
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
                         borderRadius: borderRadius.xl,
                         padding: spacing[4],
                         alignItems: 'center',
@@ -298,13 +313,17 @@ export default function LAICalculatorScreen() {
                         style={{
                           fontSize: fontSize['2xl'],
                           fontWeight: fontWeight.bold,
-                          color: '#1D4ED8',
+                          color: m3.colorScheme.primary,
                         }}
                       >
                         {result.canopyWidth.toFixed(1)} m
                       </Text>
                       <Text
-                        style={{ fontSize: fontSize.xs, color: '#2563EB', marginTop: spacing[1] }}
+                        style={{
+                          fontSize: fontSize.xs,
+                          color: colorWithOpacity(m3.colorScheme.primary, 0.85),
+                          marginTop: spacing[1],
+                        }}
                       >
                         Est. Canopy Width
                       </Text>
@@ -320,7 +339,7 @@ export default function LAICalculatorScreen() {
                           borderRadius: borderRadius.xl,
                           padding: spacing[3],
                           marginTop: spacing[3],
-                          backgroundColor: `${interp.color}15`,
+                          backgroundColor: colorWithOpacity(interp.color, 0.12),
                         }}
                       >
                         <View
@@ -364,7 +383,7 @@ export default function LAICalculatorScreen() {
               <Pressable
                 onPress={reset}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   paddingVertical: spacing[4],
                   alignItems: 'center',
@@ -374,7 +393,7 @@ export default function LAICalculatorScreen() {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Icon name="refresh" size={18} color="#6B7280" />
+                  <Icon name="refresh" size={18} color={m3.colorScheme.onSurfaceVariant} />
                   <Text
                     style={{
                       color: colors.surface[600],
@@ -408,6 +427,8 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const handleChangeText = (text: string) => {
     if (text === '.') {
       onChangeText('0.');
@@ -433,7 +454,7 @@ function InputRow({
           value={value}
           onChangeText={handleChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
           keyboardType="decimal-pad"
           style={{
             flex: 1,

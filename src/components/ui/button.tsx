@@ -12,8 +12,9 @@ import {
   type TextStyle,
 } from 'react-native';
 import { telemetry } from '@/services/telemetry';
-import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
@@ -39,6 +40,7 @@ export function Button({
   onPress,
   ...props
 }: ButtonProps) {
+  const m3 = useM3();
   const isDisabled = disabled || isLoading;
 
   // Base styles

@@ -14,8 +14,9 @@ import {
   type TextStyle,
 } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 interface StatsCardProps {
   title: string;
@@ -32,13 +33,15 @@ export function StatsCard({
   title,
   value,
   icon,
-  color = '#408059',
+  color,
   iconColor,
   subtitle,
   onPress,
   isLoading = false,
 }: StatsCardProps) {
-  const finalColor = iconColor || color;
+  const m3 = useM3();
+  const resolvedColor = color ?? m3.colorScheme.primary;
+  const finalColor = iconColor || resolvedColor;
   const a11yValue = isLoading ? 'Loading' : value;
 
   const containerStyle: ViewStyle = {

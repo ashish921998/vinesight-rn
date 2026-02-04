@@ -9,8 +9,9 @@ import {
   type TextStyle,
 } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -35,6 +36,7 @@ export function Input({
   editable = true,
   ...props
 }: InputProps) {
+  const m3 = useM3();
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 

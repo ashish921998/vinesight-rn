@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,21 +15,34 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore, useLanguageStore, useNotificationStore } from '@/stores';
+import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
 import { useProfile, useUpdateProfile } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import {
+  spacing,
+  borderRadius,
+  fontSize,
+  fontWeight,
+  type ThemeColors,
+  getM3Theme,
+} from '@/styles/theme';
 import { supabase } from '@/lib/supabase';
 import { setAppLanguage } from '@/i18n';
 import type { SupportedLanguageCode } from '@/i18n/languages';
+import type { ThemeMode } from '@/stores/theme-store';
 import {
   ensureNotificationPermissions,
   scheduleDailyWaterReminder,
   cancelNotification,
 } from '@/services/notifications';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export default function SettingsScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
+  const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
   const { t } = useTranslation();
 
   const {
@@ -42,6 +55,8 @@ export default function SettingsScreen() {
 
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
+  const themeMode = useThemeStore((s) => s.mode);
+  const setThemeMode = useThemeStore((s) => s.setMode);
 
   const dailyWaterReminderEnabled = useNotificationStore((s) => s.dailyWaterReminderEnabled);
   const dailyWaterNotificationId = useNotificationStore((s) => s.dailyWaterReminderNotificationId);
@@ -62,6 +77,7 @@ export default function SettingsScreen() {
 
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [showAreaPicker, setShowAreaPicker] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
@@ -276,6 +292,12 @@ export default function SettingsScreen() {
     return t('settings.languageEnglish');
   };
 
+  const getThemeLabel = (mode: ThemeMode) => {
+    if (mode === 'light') return t('settings.themeLight');
+    if (mode === 'dark') return t('settings.themeDark');
+    return t('settings.themeSystem');
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -298,7 +320,7 @@ export default function SettingsScreen() {
                 {userName.charAt(0).toUpperCase()}
               </Text>
             ) : (
-              <UISymbol name="person.fill" size={32} color="#408059" />
+              <UISymbol name="person.fill" size={32} color={m3.colorScheme.primary} />
             )}
           </View>
           <View style={styles.profileInfo}>
@@ -327,7 +349,7 @@ export default function SettingsScreen() {
             ) : null}
           </View>
           <Pressable onPress={() => setShowEditProfile(true)}>
-            <UISymbol name="pencil" size={24} color="#408059" />
+            <UISymbol name="pencil" size={24} color={m3.colorScheme.primary} />
           </Pressable>
         </View>
       </View>
@@ -348,6 +370,18 @@ export default function SettingsScreen() {
               title={t('settings.language')}
               value={getLanguageLabel(language)}
               isLast={false}
+              styles={styles}
+              colors={colors}
+            />
+          </Pressable>
+          <Pressable onPress={() => setShowThemePicker(true)}>
+            <SettingsItem
+              icon="sun.max.fill"
+              title={t('settings.theme')}
+              value={getThemeLabel(themeMode)}
+              isLast={false}
+              styles={styles}
+              colors={colors}
             />
           </Pressable>
           <Pressable onPress={() => setShowAreaPicker(true)}>
@@ -355,6 +389,9 @@ export default function SettingsScreen() {
               icon="arrow.up.left.and.arrow.down.right"
               title={t('settings.areaUnit')}
               value={getAreaUnitLabel(selectedAreaUnit)}
+              isLast={false}
+              styles={styles}
+              colors={colors}
             />
           </Pressable>
           <Pressable onPress={() => setShowCurrencyPicker(true)}>
@@ -363,6 +400,8 @@ export default function SettingsScreen() {
               title={t('settings.currency')}
               value={getCurrencyLabel(selectedCurrency)}
               isLast
+              styles={styles}
+              colors={colors}
             />
           </Pressable>
         </View>
@@ -383,12 +422,18 @@ export default function SettingsScreen() {
             subtitle={t('settings.dailyWaterReminderSubtitle')}
             enabled={dailyWaterReminderEnabled}
             onToggle={handleToggleDailyWaterReminder}
+            styles={styles}
+            colors={colors}
+            m3={m3}
           />
           <NotificationToggle
             title={t('settings.lowWaterAlerts')}
             subtitle={t('settings.lowWaterAlertsSubtitle')}
             enabled={lowWaterAlertsEnabled}
             onToggle={handleToggleLowWaterAlerts}
+            styles={styles}
+            colors={colors}
+            m3={m3}
           />
           <NotificationToggle
             title={t('settings.taskReminders')}
@@ -396,6 +441,9 @@ export default function SettingsScreen() {
             enabled={taskRemindersEnabled}
             onToggle={handleToggleTaskReminders}
             isLast
+            styles={styles}
+            colors={colors}
+            m3={m3}
           />
         </View>
         <Text
@@ -419,7 +467,7 @@ export default function SettingsScreen() {
         <View style={styles.sectionContent}>
           <Pressable onPress={handleSignOut} disabled={authLoading} style={styles.settingsItem}>
             <View style={styles.signOutIcon}>
-              <UISymbol name="rectangle.portrait.and.arrow.right" size={20} color="#EF4444" />
+              <UISymbol name="rectangle.portrait.and.arrow.right" size={20} color={colors.error} />
             </View>
             <Text
               style={styles.signOutText}
@@ -431,7 +479,7 @@ export default function SettingsScreen() {
           </Pressable>
           <Pressable onPress={handleDeleteAccount} style={styles.settingsItem}>
             <View style={styles.deleteIcon}>
-              <UISymbol name="trash" size={20} color="#DC2626" />
+              <UISymbol name="trash" size={20} color={colors.error} />
             </View>
             <Text
               style={styles.deleteText}
@@ -483,7 +531,7 @@ export default function SettingsScreen() {
                 {t('settings.editProfile')}
               </Text>
               <Pressable onPress={() => setShowEditProfile(false)}>
-                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
           </View>
@@ -535,7 +583,7 @@ export default function SettingsScreen() {
                   value={editName}
                   onChangeText={setEditName}
                   placeholder={t('settings.enterName')}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.gray[400]}
                   style={styles.input}
                 />
               </View>
@@ -552,7 +600,7 @@ export default function SettingsScreen() {
                   value={editPhone}
                   onChangeText={setEditPhone}
                   placeholder={t('settings.enterPhone')}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.gray[400]}
                   keyboardType="phone-pad"
                   style={styles.input}
                 />
@@ -567,7 +615,7 @@ export default function SettingsScreen() {
               style={[styles.saveButton, { backgroundColor: colors.primary[600] }]}
             >
               {isSaving ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={m3.colorScheme.onPrimary} />
               ) : (
                 <Text
                   style={styles.saveButtonText}
@@ -600,7 +648,7 @@ export default function SettingsScreen() {
                 {t('settings.selectLanguage')}
               </Text>
               <Pressable onPress={() => setShowLanguagePicker(false)}>
-                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
           </View>
@@ -637,7 +685,78 @@ export default function SettingsScreen() {
                     {opt.label}
                   </Text>
                   {language === opt.code && (
-                    <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
+                    <UISymbol
+                      name="checkmark.circle.fill"
+                      size={22}
+                      color={m3.colorScheme.primary}
+                    />
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Theme Picker Modal */}
+      <Modal
+        visible={showThemePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowThemePicker(false)}
+      >
+        <View style={styles.container}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderInner}>
+              <Text
+                style={styles.modalTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.selectTheme')}
+              </Text>
+              <Pressable onPress={() => setShowThemePicker(false)}>
+                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+              </Pressable>
+            </View>
+          </View>
+          <ScrollView
+            style={styles.flex1}
+            contentContainerStyle={{ padding: 16 }}
+            contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            <View style={styles.sectionContent}>
+              {(
+                [
+                  { mode: 'system' as const, label: t('settings.themeSystem') },
+                  { mode: 'light' as const, label: t('settings.themeLight') },
+                  { mode: 'dark' as const, label: t('settings.themeDark') },
+                ] as const
+              ).map((opt, index, arr) => (
+                <Pressable
+                  key={opt.mode}
+                  onPress={() => {
+                    setThemeMode(opt.mode);
+                    setShowThemePicker(false);
+                  }}
+                  style={[styles.settingsItem, index < arr.length - 1 && styles.borderBottom]}
+                >
+                  <Text
+                    style={styles.pickerItemText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {opt.label}
+                  </Text>
+                  {themeMode === opt.mode && (
+                    <UISymbol
+                      name="checkmark.circle.fill"
+                      size={22}
+                      color={m3.colorScheme.primary}
+                    />
                   )}
                 </Pressable>
               ))}
@@ -664,7 +783,7 @@ export default function SettingsScreen() {
                 {t('settings.selectCurrency')}
               </Text>
               <Pressable onPress={() => setShowCurrencyPicker(false)}>
-                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
           </View>
@@ -694,7 +813,11 @@ export default function SettingsScreen() {
                     {currency.label}
                   </Text>
                   {selectedCurrency === currency.code && (
-                    <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
+                    <UISymbol
+                      name="checkmark.circle.fill"
+                      size={22}
+                      color={m3.colorScheme.primary}
+                    />
                   )}
                 </Pressable>
               ))}
@@ -721,7 +844,7 @@ export default function SettingsScreen() {
                 {t('settings.selectAreaUnit')}
               </Text>
               <Pressable onPress={() => setShowAreaPicker(false)}>
-                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
           </View>
@@ -762,7 +885,11 @@ export default function SettingsScreen() {
                     {unit.label}
                   </Text>
                   {selectedAreaUnit === unit.id && (
-                    <UISymbol name="checkmark.circle.fill" size={22} color="#408059" />
+                    <UISymbol
+                      name="checkmark.circle.fill"
+                      size={22}
+                      color={m3.colorScheme.primary}
+                    />
                   )}
                 </Pressable>
               ))}
@@ -792,7 +919,7 @@ export default function SettingsScreen() {
                 {t('settings.deleteAccountModal.title')}
               </Text>
               <Pressable onPress={() => setShowDeleteAccount(false)}>
-                <UISymbol name="xmark.circle.fill" size={28} color="#9CA3AF" />
+                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
               </Pressable>
             </View>
           </View>
@@ -806,7 +933,7 @@ export default function SettingsScreen() {
             keyboardDismissMode="on-drag"
           >
             <View style={[styles.alertBox, styles.dangerAlert]}>
-              <UISymbol name="exclamationmark.triangle.fill" size={20} color="#DC2626" />
+              <UISymbol name="exclamationmark.triangle.fill" size={20} color={colors.error} />
               <Text
                 style={styles.alertTitle}
                 textBreakStrategy="highQuality"
@@ -881,7 +1008,7 @@ export default function SettingsScreen() {
                   value={deleteEmail}
                   onChangeText={setDeleteEmail}
                   placeholder={t('settings.deleteAccountModal.confirmEmail.placeholder')}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.gray[400]}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   style={styles.input}
@@ -907,7 +1034,7 @@ export default function SettingsScreen() {
                   value={deletePassword}
                   onChangeText={setDeletePassword}
                   placeholder={t('settings.deleteAccountModal.confirmPassword.placeholder')}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.gray[400]}
                   secureTextEntry
                   style={styles.input}
                 />
@@ -932,7 +1059,7 @@ export default function SettingsScreen() {
                   value={deleteReason}
                   onChangeText={setDeleteReason}
                   placeholder={t('settings.deleteAccountModal.reason.placeholder')}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.gray[400]}
                   multiline
                   numberOfLines={3}
                   style={[styles.input, { height: 80 }]}
@@ -951,7 +1078,9 @@ export default function SettingsScreen() {
                 style={styles.checkboxContainer}
               >
                 <View style={[styles.checkbox, deleteConfirmed && styles.checkboxChecked]}>
-                  {deleteConfirmed && <UISymbol name="checkmark" size={14} color="white" />}
+                  {deleteConfirmed && (
+                    <UISymbol name="checkmark" size={14} color={m3.colorScheme.onError} />
+                  )}
                 </View>
                 <Text
                   style={styles.checkboxText}
@@ -976,10 +1105,10 @@ export default function SettingsScreen() {
             <Pressable
               onPress={handleConfirmDeleteAccount}
               disabled={isDeleting}
-              style={[styles.deleteButton, { backgroundColor: '#DC2626' }]}
+              style={[styles.deleteButton, { backgroundColor: colors.error }]}
             >
               {isDeleting ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={m3.colorScheme.onPrimary} />
               ) : (
                 <Text
                   style={styles.deleteButtonText}
@@ -1004,17 +1133,21 @@ function SettingsItem({
   value,
   isLast,
   disabled,
+  styles,
+  colors,
 }: {
   icon: string;
   title: string;
   value?: string;
   isLast?: boolean;
   disabled?: boolean;
+  styles: SettingsStyles;
+  colors: ThemeColors;
 }) {
   return (
     <View style={[styles.settingsItem, !isLast && styles.borderBottom]}>
       <View style={styles.settingsIcon}>
-        <UISymbol name={icon} size={20} color="#6B7280" />
+        <UISymbol name={icon} size={20} color={colors.gray[500]} />
       </View>
       <Text
         style={styles.settingsTitle}
@@ -1032,7 +1165,7 @@ function SettingsItem({
           {value}
         </Text>
       )}
-      {!disabled && <UISymbol name="chevron.right" size={18} color="#D1D5DB" />}
+      {!disabled && <UISymbol name="chevron.right" size={18} color={colors.surface[300]} />}
     </View>
   );
 }
@@ -1044,12 +1177,18 @@ function NotificationToggle({
   enabled,
   onToggle,
   isLast,
+  styles,
+  colors,
+  m3,
 }: {
   title: string;
   subtitle: string;
   enabled: boolean;
   onToggle: (enabled: boolean) => void | Promise<void>;
   isLast?: boolean;
+  styles: SettingsStyles;
+  colors: ThemeColors;
+  m3: ReturnType<typeof getM3Theme>;
 }) {
   return (
     <View style={[styles.notificationItem, !isLast && styles.borderBottom]}>
@@ -1078,15 +1217,18 @@ function NotificationToggle({
             }
           });
         }}
-        trackColor={{ false: '#D1D5DB', true: '#86EFAC' }}
-        thumbColor={enabled ? '#22C55E' : '#F3F4F6'}
+        trackColor={{
+          false: colors.surface[300],
+          true: colorWithOpacity(m3.colorScheme.primary, 0.4),
+        }}
+        thumbColor={enabled ? m3.colorScheme.primary : colors.surface[100]}
       />
     </View>
   );
 }
 
-const styles = {
-  container: { flex: 1, backgroundColor: m3.colorScheme.background } as ViewStyle,
+const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) => ({
+  container: { flex: 1, backgroundColor: colors.surface[50] } as ViewStyle,
   profileCard: {
     backgroundColor: colors.surface[100],
     marginHorizontal: spacing[4],
@@ -1098,7 +1240,7 @@ const styles = {
   profileAvatar: {
     width: 64,
     height: 64,
-    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1150,7 +1292,7 @@ const styles = {
     width: 36,
     height: 36,
     borderRadius: borderRadius.lg,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colorWithOpacity(colors.error, 0.12),
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -1158,7 +1300,7 @@ const styles = {
     width: 36,
     height: 36,
     borderRadius: borderRadius.lg,
-    backgroundColor: '#FECACA',
+    backgroundColor: colorWithOpacity(colors.error, 0.2),
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
@@ -1172,20 +1314,20 @@ const styles = {
     flex: 1,
     marginLeft: spacing[3],
     fontSize: fontSize.base,
-    color: '#DC2626',
+    color: colors.error,
   } as TextStyle,
   deleteText: {
     flex: 1,
     marginLeft: spacing[3],
     fontSize: fontSize.base,
-    color: '#B91C1C',
+    color: colors.error,
   } as TextStyle,
   settingsValue: {
     fontSize: fontSize.sm,
     color: colors.surface[500],
     marginRight: spacing[2],
   } as TextStyle,
-  borderBottom: { borderBottomWidth: 1, borderBottomColor: colors.surface[50] } as ViewStyle,
+  borderBottom: { borderBottomWidth: 1, borderBottomColor: colors.surface[200] } as ViewStyle,
 
   notificationItem: {
     flexDirection: 'row',
@@ -1211,17 +1353,16 @@ const styles = {
   appVersion: { fontSize: fontSize.sm, color: colors.surface[400] } as TextStyle,
   appVersionSubtitle: {
     fontSize: fontSize.xs,
-    color: '#D1D5DB',
+    color: colors.surface[300],
     marginTop: spacing[1],
   } as TextStyle,
 
-  modalContainer: { flex: 1, backgroundColor: m3.colorScheme.background } as ViewStyle,
   modalHeader: {
     backgroundColor: colors.surface[100],
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: colors.surface[50],
+    borderBottomColor: colors.surface[200],
   } as ViewStyle,
   modalHeaderInner: {
     flexDirection: 'row',
@@ -1272,31 +1413,31 @@ const styles = {
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[4],
     borderTopWidth: 1,
-    borderTopColor: colors.surface[50],
+    borderTopColor: colors.surface[200],
   } as ViewStyle,
   saveButton: {
     paddingVertical: 14,
     borderRadius: borderRadius.xl,
     alignItems: 'center',
   } as ViewStyle,
-  saveButtonText: { color: colors.surface[100], fontWeight: fontWeight.semibold } as TextStyle,
+  saveButtonText: { color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold } as TextStyle,
 
   pickerItemText: { flex: 1, fontSize: fontSize.base, color: colors.surface[900] } as TextStyle,
 
   alertBox: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colorWithOpacity(colors.error, 0.08),
     borderRadius: borderRadius['2xl'],
     padding: spacing[4],
     marginBottom: spacing[4],
   } as ViewStyle,
   dangerAlert: {
     borderLeftWidth: 4,
-    borderLeftColor: '#DC2626',
+    borderLeftColor: colors.error,
   } as ViewStyle,
   alertTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
-    color: '#DC2626',
+    color: colors.error,
     marginTop: spacing[2],
   } as TextStyle,
   alertText: {
@@ -1323,14 +1464,14 @@ const styles = {
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#D1D5DB',
+    borderColor: colors.surface[300],
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
   } as ViewStyle,
   checkboxChecked: {
-    backgroundColor: '#DC2626',
-    borderColor: '#DC2626',
+    backgroundColor: colors.error,
+    borderColor: colors.error,
   } as ViewStyle,
   checkboxText: {
     flex: 1,
@@ -1340,12 +1481,14 @@ const styles = {
   } as TextStyle,
   checkboxBold: {
     fontWeight: fontWeight.bold,
-    color: '#DC2626',
+    color: colors.error,
   } as TextStyle,
   deleteButton: {
     paddingVertical: 14,
     borderRadius: borderRadius.xl,
     alignItems: 'center',
   } as ViewStyle,
-  deleteButtonText: { color: colors.surface[100], fontWeight: fontWeight.semibold } as TextStyle,
-};
+  deleteButtonText: { color: m3.colorScheme.onError, fontWeight: fontWeight.semibold } as TextStyle,
+});
+
+type SettingsStyles = ReturnType<typeof createStyles>;

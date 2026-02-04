@@ -3,9 +3,11 @@ import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-nat
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { NumericInput } from './form-field';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
 import { useProfile } from '../../hooks';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export interface ExpenseFormData {
   type: ExpenseTypeId | '';
@@ -33,6 +35,8 @@ const EXPENSE_ICONS: Record<ExpenseTypeId, string> = {
 };
 
 export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { data: profile } = useProfile();
   const isValidCurrency = (code: string | null | undefined): boolean => {
     if (!code || typeof code !== 'string') return false;
@@ -57,13 +61,13 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             width: 40,
             height: 40,
             borderRadius: borderRadius.full,
-            backgroundColor: '#FEE2E2',
+            backgroundColor: colorWithOpacity(colors.error, 0.12),
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: spacing[3],
           }}
         >
-          <SymbolIcon name="dollarsign.circle.fill" size={20} color="#EF4444" />
+          <SymbolIcon name="dollarsign.circle.fill" size={20} color={m3.colorScheme.error} />
         </View>
         <View>
           <Text
@@ -85,7 +89,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
           <View style={{ marginRight: 6 }}>
-            <SymbolIcon name="list.bullet" size={16} color="#408059" />
+            <SymbolIcon name="list.bullet" size={16} color={colors.primary[600]} />
           </View>
           <Text
             style={{
@@ -110,21 +114,24 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
                 paddingVertical: 10,
                 borderRadius: borderRadius.xl,
                 borderWidth: 1,
-                backgroundColor: data.type === type ? '#EF4444' : colors.white,
-                borderColor: data.type === type ? '#EF4444' : colors.surface[200],
+                backgroundColor:
+                  data.type === type
+                    ? colorWithOpacity(m3.colorScheme.error, 0.12)
+                    : colors.surface[100],
+                borderColor: data.type === type ? m3.colorScheme.error : colors.surface[200],
               }}
             >
               <SymbolIcon
                 name={EXPENSE_ICONS[type]}
                 size={16}
-                color={data.type === type ? colors.white : colors.surface[500]}
+                color={data.type === type ? m3.colorScheme.error : colors.surface[500]}
                 style={{ marginRight: 6 }}
               />
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: data.type === type ? colors.white : colors.surface[700],
+                  color: data.type === type ? m3.colorScheme.error : colors.surface[700],
                 }}
               >
                 {type}
@@ -138,7 +145,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       <NumericInput
         label="Amount"
         icon="cash-outline"
-        iconColor="#EF4444"
+        iconColor={m3.colorScheme.error}
         placeholder="Enter amount"
         value={data.cost}
         onValueChange={(cost) => onChange({ ...data, cost })}
@@ -153,7 +160,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ marginRight: 6 }}>
-            <SymbolIcon name="doc.text" size={16} color="#408059" />
+            <SymbolIcon name="doc.text" size={16} color={colors.primary[600]} />
           </View>
           <Text
             style={{
@@ -173,13 +180,13 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             borderRadius: borderRadius.xl,
             borderWidth: 1,
             borderColor: colors.surface[200],
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
           }}
         >
           <TextInput
             style={{ fontSize: fontSize.base, color: colors.surface[900] }}
             placeholder="Add notes about this expense (optional)"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={data.remarks || ''}
             onChangeText={(remarks) => onChange({ ...data, remarks: remarks || undefined })}
             multiline
@@ -197,7 +204,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       {data.type && data.cost !== undefined && data.cost > 0 && (
         <View
           style={{
-            backgroundColor: '#FEF2F2',
+            backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
             borderRadius: borderRadius.xl,
             padding: spacing[4],
             marginBottom: spacing[4],
@@ -210,20 +217,26 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
               <SymbolIcon
                 name={data.type ? EXPENSE_ICONS[data.type] : 'dollarsign.circle.fill'}
                 size={20}
-                color="#DC2626"
+                color={m3.colorScheme.error}
               />
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: '#B91C1C',
+                  color: m3.colorScheme.error,
                   marginLeft: spacing[2],
                 }}
               >
                 {data.type}
               </Text>
             </View>
-            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: '#B91C1C' }}>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.bold,
+                color: m3.colorScheme.error,
+              }}
+            >
               {formatCurrency(data.cost!, currency)}
             </Text>
           </View>
@@ -243,13 +256,13 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
         <SymbolIcon
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
-          color={isValid ? '#22C55E' : '#9CA3AF'}
+          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
         />
         <Text
           style={{
             fontSize: fontSize.sm,
             marginLeft: spacing[2],
-            color: isValid ? '#16A34A' : colors.surface[500],
+            color: isValid ? colors.success : colors.surface[500],
           }}
         >
           {isValid ? 'Ready to add' : 'Select category and enter amount'}

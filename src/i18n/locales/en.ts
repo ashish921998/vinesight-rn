@@ -175,6 +175,7 @@ export const en = {
     actions: {
       addActivity: 'Add activity',
       seeAllActivities: 'See all activities',
+      seeAllTasks: 'See all tasks',
     },
     a11y: {
       editFarm: 'Edit farm',
@@ -407,6 +408,9 @@ export const en = {
       title: 'Delete log?',
       body: 'Are you sure you want to delete this {{type}} log from {{date}}?',
     },
+    cta: {
+      addActivity: 'Add activity',
+    },
   },
 
   farms: {
@@ -564,6 +568,66 @@ export const en = {
       laiCalculator: 'Calculate Leaf Area Index for canopy management',
       nutrientCalculator: 'Calculate fertilizer and nutrient requirements based on lab tests',
     },
+  },
+
+  calculator: {
+    mad: {
+      title: 'MAD Calculator',
+      step1: {
+        title: 'Step 1: MAD Calculation',
+        label: {
+          dbl: 'Distance Between Lines (DBL)',
+          rootDepth: 'Root Depth',
+          rootWidth: 'Root Width',
+          waterRetention: 'Water Retention',
+        },
+        placeholder: {
+          dbl: '3.0',
+          rootDepth: '0.6',
+          rootWidth: '1.5',
+          waterRetention: '15',
+        },
+        unit: {
+          meters: 'm',
+          percent: '%',
+        },
+        calculateButton: 'Calculate MAD',
+      },
+      step2: {
+        title: 'Step 2: Refill Tank Calculator',
+        selectRefillSpan: 'Select Refill Span',
+        refillSpanGuidance: 'Refill span guidance:',
+        guidance: {
+          heavy: 'Heavy Growth (0.2): Fruit set - maintain turgor',
+          normal: 'Normal Growth (0.3): Flowering - balance growth/stress',
+          controlled: 'Controlled Stress (0.4): Veraison - improve quality/sugar',
+        },
+        calculateButton: 'Calculate Refill Tank',
+      },
+      results: {
+        madTitle: 'Maximum Allowable Deficit',
+        interpretation: 'Interpretation',
+        interpretationMessages: {
+          shallow: 'Shallow root zone - very frequent irrigation needed (daily to twice daily)',
+          moderate: 'Moderate root zone - irrigation every 1-2 days recommended',
+          deep: 'Deep root zone - irrigation every 2-3 days is typically sufficient',
+          veryDeep: 'Very deep roots - irrigation every 3-5 days may be adequate',
+        },
+        refillTankTitle: 'Refill Tank Requirement',
+        whatThisMeans: 'What this means',
+        refillExplanation:
+          'Apply {{value}} units of water when soil moisture drops to {{percentage}}% of MAD to maintain optimal vine health.',
+      },
+      actions: {
+        reset: 'Reset Calculator',
+      },
+    },
+  },
+
+  parameterSelector: {
+    title: 'Parameters ({{count}} selected)',
+    selectAll: 'Select All',
+    deselectAll: 'Deselect All',
   },
 
   weather: {
@@ -880,6 +944,11 @@ export const en = {
     languageEnglish: 'English',
     languageMarathi: 'Marathi',
     languageHindi: 'Hindi',
+    theme: 'Theme',
+    selectTheme: 'Select Theme',
+    themeSystem: 'System',
+    themeLight: 'Light',
+    themeDark: 'Dark',
     areaUnit: 'Area Unit',
     currency: 'Currency',
     dailyWaterReminder: 'Daily Water Reminder',

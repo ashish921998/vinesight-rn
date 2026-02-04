@@ -3,7 +3,9 @@ import { View, Text, Pressable } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { useFarms } from '@/hooks';
 import type { Worker } from '@/types';
-import { spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { MarkAttendanceTab, CalendarAttendanceTab } from './attendance-subcomponents';
 
 interface AttendanceViewProps {
@@ -11,22 +13,26 @@ interface AttendanceViewProps {
   onSaveSuccess: () => void;
 }
 
-const UI = {
-  bg: m3.colorScheme.background,
-  surface: '#FFFFFF',
-  surfaceSoft: 'rgba(255, 255, 255, 0.9)',
-  border: 'rgba(15, 23, 42, 0.08)',
-  primary: '#2F6B4F',
-  primarySoft: 'rgba(47, 107, 79, 0.12)',
-  text: '#0F172A',
-  muted: '#6B7280',
-  accent: '#2563EB',
-};
-
 type AttendanceTab = 'mark' | 'calendar';
 
 export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) {
   const { data: farms } = useFarms();
+  const colors = useThemeColors();
+  const m3 = useM3();
+  const UI = useMemo(
+    () => ({
+      bg: m3.colorScheme.background,
+      surface: colors.surface[100],
+      surfaceSoft: colorWithOpacity(colors.surface[100], 0.9),
+      border: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+      primary: m3.colorScheme.primary,
+      primarySoft: colorWithOpacity(m3.colorScheme.primary, 0.12),
+      text: m3.colorScheme.onSurface,
+      muted: m3.colorScheme.onSurfaceVariant,
+      accent: m3.colorScheme.secondary,
+    }),
+    [colors, m3],
+  );
   const [activeTab, setActiveTab] = useState<AttendanceTab>('mark');
   const [selectedWorkerIndex, setSelectedWorkerIndex] = useState(0);
 

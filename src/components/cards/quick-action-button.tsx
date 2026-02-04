@@ -6,8 +6,9 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { m3, spacing, borderRadius, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 interface QuickActionButtonProps {
   title: string;
@@ -17,6 +18,7 @@ interface QuickActionButtonProps {
 }
 
 export function QuickActionButton({ title, icon, color, onPress }: QuickActionButtonProps) {
+  const m3 = useM3();
   const containerStyle: ViewStyle = {
     alignItems: 'center',
     minWidth: 72,

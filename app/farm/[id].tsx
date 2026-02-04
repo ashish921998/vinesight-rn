@@ -35,10 +35,11 @@ import type {
   ExpenseRecord,
   FertigationRecord,
 } from '@/types';
-import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { useModalStore } from '@/stores';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 
 // Workboard action type
 interface WorkboardAction {
@@ -49,34 +50,9 @@ interface WorkboardAction {
   route?: string;
 }
 
-const WORKBOARD_ACTIONS: WorkboardAction[] = [
-  {
-    id: 'ai',
-    titleKey: 'farmDetails.workboard.actions.ai',
-    icon: 'lightbulb.fill',
-    color: m3.colorScheme.primary,
-  },
-  {
-    id: 'lab',
-    titleKey: 'farmDetails.workboard.actions.lab',
-    icon: 'flask.fill',
-    color: m3.colorScheme.secondary,
-  },
-  {
-    id: 'reports',
-    titleKey: 'farmDetails.workboard.actions.reports',
-    icon: 'chart.bar.fill',
-    color: m3.colorScheme.tertiary,
-  },
-  {
-    id: 'soil',
-    titleKey: 'farmDetails.workboard.actions.soilMoisture',
-    icon: 'square.stack.3d.up.fill',
-    color: colors.task[500],
-  },
-];
-
 export default function FarmDetailScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -111,6 +87,35 @@ export default function FarmDetailScreen() {
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
   const showFab = isAndroid;
   const bottomBarHeight = showFab ? 0 : 72 + insets.bottom;
+  const workboardActions = useMemo<WorkboardAction[]>(
+    () => [
+      {
+        id: 'ai',
+        titleKey: 'farmDetails.workboard.actions.ai',
+        icon: 'lightbulb.fill',
+        color: m3.colorScheme.primary,
+      },
+      {
+        id: 'lab',
+        titleKey: 'farmDetails.workboard.actions.lab',
+        icon: 'flask.fill',
+        color: m3.colorScheme.secondary,
+      },
+      {
+        id: 'reports',
+        titleKey: 'farmDetails.workboard.actions.reports',
+        icon: 'chart.bar.fill',
+        color: m3.colorScheme.tertiary,
+      },
+      {
+        id: 'soil',
+        titleKey: 'farmDetails.workboard.actions.soilMoisture',
+        icon: 'square.stack.3d.up.fill',
+        color: colors.task[500],
+      },
+    ],
+    [colors.task, m3],
+  );
 
   // Calculate stats
   const totalRecords = useMemo(
@@ -881,7 +886,7 @@ export default function FarmDetailScreen() {
               }}
             >
               <View style={{ flexDirection: 'row' }}>
-                {WORKBOARD_ACTIONS.map((action) => (
+                {workboardActions.map((action) => (
                   <Pressable
                     key={action.id}
                     style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[2] }}
@@ -1154,85 +1159,128 @@ export default function FarmDetailScreen() {
                   </View>
                 )}
               </>
-            ) : tasks && tasks.length > 0 ? (
-              <View style={{ gap: spacing[3] }}>
-                {tasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    showFarmName={false}
-                    onComplete={(item) => {
-                      if (!item.id) return;
-                      handleCompleteTask(item.id);
-                    }}
-                    onEdit={(item) => {
-                      setAddEntry({
-                        tabs: ['task'],
-                        initialTab: 'task',
-                        editingTask: item,
-                      });
-                      router.push({
-                        pathname: '/add-entry',
-                        params: { tabs: 'task', initialTab: 'task' },
-                      });
-                    }}
-                    onDelete={(item) => {
-                      if (!item.id) return;
-                      handleDeleteTask(item.id, item.title);
-                    }}
-                  />
-                ))}
-              </View>
             ) : (
-              <View
-                style={{
-                  borderRadius: m3.shape.cornerLarge,
-                  alignItems: 'center',
-                  padding: spacing[10],
-                  backgroundColor: m3.surface.surfaceContainerLow,
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                }}
-              >
-                <View
-                  style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: borderRadius.full,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: spacing[4],
-                    backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-                  }}
-                >
-                  <UiSymbol
-                    name="checkbox-outline"
-                    size={32}
-                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                  />
-                </View>
-                <Text
-                  style={{
-                    color: m3.colorScheme.onSurface,
-                    fontSize: fontSize.base,
-                    fontWeight: fontWeight.semibold,
-                  }}
-                >
-                  {t('farmDetails.tasks.empty.title')}
-                </Text>
-                <Text
-                  style={{
-                    color: m3.colorScheme.onSurfaceVariant,
-                    fontSize: fontSize.sm,
-                    textAlign: 'center',
-                    marginTop: spacing[1],
-                  }}
-                >
-                  {showFab
-                    ? t('farmDetails.tasks.empty.subtitleAndroid')
-                    : t('farmDetails.tasks.empty.subtitleIos')}
-                </Text>
-              </View>
+              <>
+                {farm?.id ? (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'flex-end',
+                      marginBottom: spacing[3],
+                    }}
+                  >
+                    <Pressable
+                      onPress={() => {
+                        if (!farm?.id) return;
+                        router.push({
+                          pathname: '/tasks',
+                          params: { farmId: farm.id.toString() },
+                        });
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('farmDetails.actions.seeAllTasks')}
+                      style={({ pressed }) => ({
+                        paddingHorizontal: spacing[2],
+                        paddingVertical: spacing[1],
+                        borderRadius: m3.shape.cornerMedium,
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      })}
+                    >
+                      <Text
+                        style={{
+                          color: m3.colorScheme.primary,
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
+                        {t('farmDetails.actions.seeAllTasks')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+                {tasks && tasks.length > 0 ? (
+                  <View style={{ gap: spacing[3] }}>
+                    {tasks.map((task) => (
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        showFarmName={false}
+                        onComplete={(item) => {
+                          if (!item.id) return;
+                          handleCompleteTask(item.id);
+                        }}
+                        onEdit={(item) => {
+                          setAddEntry({
+                            tabs: ['task'],
+                            initialTab: 'task',
+                            editingTask: item,
+                          });
+                          router.push({
+                            pathname: '/add-entry',
+                            params: { tabs: 'task', initialTab: 'task' },
+                          });
+                        }}
+                        onDelete={(item) => {
+                          if (!item.id) return;
+                          handleDeleteTask(item.id, item.title);
+                        }}
+                      />
+                    ))}
+                  </View>
+                ) : (
+                  <View
+                    style={{
+                      borderRadius: m3.shape.cornerLarge,
+                      alignItems: 'center',
+                      padding: spacing[10],
+                      backgroundColor: m3.surface.surfaceContainerLow,
+                      borderWidth: 1,
+                      borderColor: m3.colorScheme.outlineVariant,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: spacing[4],
+                        backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+                      }}
+                    >
+                      <UiSymbol
+                        name="checkbox-outline"
+                        size={32}
+                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                      />
+                    </View>
+                    <Text
+                      style={{
+                        color: m3.colorScheme.onSurface,
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('farmDetails.tasks.empty.title')}
+                    </Text>
+                    <Text
+                      style={{
+                        color: m3.colorScheme.onSurfaceVariant,
+                        fontSize: fontSize.sm,
+                        textAlign: 'center',
+                        marginTop: spacing[1],
+                      }}
+                    >
+                      {showFab
+                        ? t('farmDetails.tasks.empty.subtitleAndroid')
+                        : t('farmDetails.tasks.empty.subtitleIos')}
+                    </Text>
+                  </View>
+                )}
+              </>
             )}
           </View>
         </ScrollView>

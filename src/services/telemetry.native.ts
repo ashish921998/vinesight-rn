@@ -21,7 +21,7 @@ const runtimeDisabled = !isPhysicalDevice || !isStandalone;
 
 export const telemetryEnabled = Boolean(apiKey) && !runtimeDisabled;
 
-export const posthogClient = telemetryEnabled ? new PostHog(apiKey, options) : null;
+export const posthogClient = telemetryEnabled ? new PostHog(apiKey as string, options) : null;
 
 export const telemetry = {
   capture: (event: string, properties?: TelemetryProperties) => {

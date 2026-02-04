@@ -1,62 +1,66 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
-
-// Calculator data (Irrigation Planning section)
-const calculators = [
-  {
-    id: 'weather',
-    titleKey: 'tools.items.weatherIrrigation',
-    descriptionKey: 'tools.descriptions.weatherIrrigation',
-    icon: 'sun.max.fill' as const,
-    color: colors.warning,
-    route: '/weather' as Href,
-  },
-  {
-    id: 'mad',
-    titleKey: 'tools.items.madCalculator',
-    descriptionKey: 'tools.descriptions.madCalculator',
-    icon: 'gauge' as const,
-    color: colors.spray[500],
-    route: '/calculator/mad' as Href,
-  },
-  {
-    id: 'system-discharge',
-    titleKey: 'tools.items.systemDischarge',
-    descriptionKey: 'tools.descriptions.systemDischarge',
-    icon: 'drop.fill' as const,
-    color: colors.primary[500],
-    route: '/calculator/system-discharge' as Href,
-  },
-  {
-    id: 'lai',
-    titleKey: 'tools.items.laiCalculator',
-    descriptionKey: 'tools.descriptions.laiCalculator',
-    icon: 'leaf.fill' as const,
-    color: colors.success,
-    route: '/calculator/lai' as Href,
-  },
-  {
-    id: 'nutrients',
-    titleKey: 'tools.items.nutrientCalculator',
-    descriptionKey: 'tools.descriptions.nutrientCalculator',
-    icon: 'flask.fill' as const,
-    color: colors.observation[500],
-    route: '/calculator/nutrients' as Href,
-  },
-];
+import { useM3, useThemeColors } from '@/styles/use-theme';
 
 export default function ToolsScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom + spacing[8], spacing[12]);
+  const calculators = useMemo(
+    () => [
+      {
+        id: 'weather',
+        titleKey: 'tools.items.weatherIrrigation',
+        descriptionKey: 'tools.descriptions.weatherIrrigation',
+        icon: 'sun.max.fill' as const,
+        color: colors.warning,
+        route: '/weather' as Href,
+      },
+      {
+        id: 'mad',
+        titleKey: 'tools.items.madCalculator',
+        descriptionKey: 'tools.descriptions.madCalculator',
+        icon: 'gauge' as const,
+        color: colors.spray[500],
+        route: '/calculator/mad' as Href,
+      },
+      {
+        id: 'system-discharge',
+        titleKey: 'tools.items.systemDischarge',
+        descriptionKey: 'tools.descriptions.systemDischarge',
+        icon: 'drop.fill' as const,
+        color: colors.primary[500],
+        route: '/calculator/system-discharge' as Href,
+      },
+      {
+        id: 'lai',
+        titleKey: 'tools.items.laiCalculator',
+        descriptionKey: 'tools.descriptions.laiCalculator',
+        icon: 'leaf.fill' as const,
+        color: colors.success,
+        route: '/calculator/lai' as Href,
+      },
+      {
+        id: 'nutrients',
+        titleKey: 'tools.items.nutrientCalculator',
+        descriptionKey: 'tools.descriptions.nutrientCalculator',
+        icon: 'flask.fill' as const,
+        color: colors.observation[500],
+        route: '/calculator/nutrients' as Href,
+      },
+    ],
+    [colors],
+  );
 
   return (
     <ScrollView

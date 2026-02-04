@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
 
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFarms, useProfile } from '../src/hooks';
@@ -18,6 +18,8 @@ import { useReportData, useReportExport, getDefaultDateRange } from '../src/hook
 import { DateRange, ReportType, ReportFormat } from '../src/types/report';
 import { useAuthStore } from '@/stores';
 import { telemetry } from '@/services/telemetry';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
   { value: 'comprehensive', labelKey: 'reports.types.comprehensive', icon: 'doc.text.fill' },
@@ -26,6 +28,8 @@ const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
 ];
 
 export default function ReportsScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const insets = useSafeAreaInsets();
@@ -98,7 +102,7 @@ export default function ReportsScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color="#1a5d1a" />
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
         </View>
       </View>
     );
@@ -115,18 +119,18 @@ export default function ReportsScreen() {
             paddingTop: spacing[3] + insets.top,
             paddingBottom: spacing[3],
             borderBottomWidth: 1,
-            borderBottomColor: colors.gray[200],
-            backgroundColor: colors.white,
+            borderBottomColor: colors.surface[200],
+            backgroundColor: colors.surface[100],
           }}
         >
           <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-            <Icon name="chevron.left" size={24} color="#333" />
+            <Icon name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
           </Pressable>
           <Text
             style={{
               fontSize: fontSize.xl,
               fontWeight: fontWeight.bold,
-              color: colors.gray[800],
+              color: m3.colorScheme.onSurface,
             }}
           >
             {t('reports.title')}
@@ -135,18 +139,22 @@ export default function ReportsScreen() {
         <View
           style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing[6] }}
         >
-          <Icon name="doc.text" size={64} color="#9ca3af" />
+          <Icon
+            name="doc.text"
+            size={64}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+          />
           <Text
             style={{
               fontSize: fontSize.lg,
               fontWeight: fontWeight.semibold,
-              color: colors.gray[600],
+              color: colors.surface[600],
               marginTop: spacing[4],
             }}
           >
             {t('reports.noFarms.title')}
           </Text>
-          <Text style={{ color: colors.gray[500], textAlign: 'center', marginTop: spacing[2] }}>
+          <Text style={{ color: colors.surface[500], textAlign: 'center', marginTop: spacing[2] }}>
             {t('reports.noFarms.subtitle')}
           </Text>
         </View>
@@ -165,19 +173,19 @@ export default function ReportsScreen() {
           paddingTop: spacing[3] + insets.top,
           paddingBottom: spacing[3],
           borderBottomWidth: 1,
-          borderBottomColor: colors.gray[200],
-          backgroundColor: colors.white,
+          borderBottomColor: colors.surface[200],
+          backgroundColor: colors.surface[100],
         }}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <Icon name="chevron.left" size={24} color="#333" />
+          <Icon name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
         </Pressable>
-        <Icon name="doc.text.fill" size={24} color="#1a5d1a" />
+        <Icon name="doc.text.fill" size={24} color={m3.colorScheme.primary} />
         <Text
           style={{
             fontSize: fontSize.xl,
             fontWeight: fontWeight.bold,
-            color: colors.gray[800],
+            color: m3.colorScheme.onSurface,
             marginLeft: spacing[2],
           }}
         >
@@ -189,7 +197,7 @@ export default function ReportsScreen() {
         {/* Farm Selector */}
         <View
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             marginHorizontal: spacing[4],
             marginTop: spacing[4],
             borderRadius: borderRadius.xl,
@@ -200,7 +208,7 @@ export default function ReportsScreen() {
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.medium,
-              color: colors.gray[500],
+              color: colors.surface[500],
               marginBottom: spacing[2],
             }}
           >
@@ -212,20 +220,20 @@ export default function ReportsScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: colors.gray[50],
+              backgroundColor: colors.surface[50],
               padding: spacing[3],
               borderRadius: borderRadius.lg,
               borderWidth: 1,
-              borderColor: colors.gray[200],
+              borderColor: colors.surface[200],
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <Icon name="leaf.fill" size={20} color="#1a5d1a" />
+              <Icon name="leaf.fill" size={20} color={m3.colorScheme.primary} />
               <Text
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.medium,
-                  color: colors.gray[800],
+                  color: m3.colorScheme.onSurface,
                   marginLeft: spacing[2],
                 }}
                 numberOfLines={1}
@@ -233,7 +241,11 @@ export default function ReportsScreen() {
                 {selectedFarm?.name || t('reports.selectFarmPlaceholder')}
               </Text>
             </View>
-            <Icon name={showFarmPicker ? 'chevron.up' : 'chevron.down'} size={20} color="#666" />
+            <Icon
+              name={showFarmPicker ? 'chevron.up' : 'chevron.down'}
+              size={20}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            />
           </Pressable>
 
           {showFarmPicker && (
@@ -241,7 +253,7 @@ export default function ReportsScreen() {
               style={{
                 marginTop: spacing[2],
                 borderWidth: 1,
-                borderColor: colors.gray[200],
+                borderColor: colors.surface[200],
                 borderRadius: borderRadius.lg,
                 overflow: 'hidden',
               }}
@@ -256,14 +268,17 @@ export default function ReportsScreen() {
                   style={{
                     padding: spacing[3],
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.gray[100],
-                    backgroundColor: f.id === selectedFarmId ? colors.primary[50] : colors.white,
+                    borderBottomColor: colors.surface[200],
+                    backgroundColor:
+                      f.id === selectedFarmId
+                        ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                        : colors.surface[100],
                   }}
                 >
                   <Text
                     style={{
                       fontSize: fontSize.base,
-                      color: f.id === selectedFarmId ? colors.primary[700] : colors.gray[700],
+                      color: f.id === selectedFarmId ? m3.colorScheme.primary : colors.surface[700],
                       fontWeight: f.id === selectedFarmId ? fontWeight.semibold : fontWeight.normal,
                     }}
                   >
@@ -278,7 +293,7 @@ export default function ReportsScreen() {
         {/* Date Range */}
         <View
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             marginHorizontal: spacing[4],
             marginTop: spacing[4],
             borderRadius: borderRadius.xl,
@@ -289,7 +304,7 @@ export default function ReportsScreen() {
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.medium,
-              color: colors.gray[500],
+              color: colors.surface[500],
               marginBottom: spacing[3],
             }}
           >
@@ -300,15 +315,19 @@ export default function ReportsScreen() {
               onPress={() => setShowFromPicker(true)}
               style={{
                 flex: 1,
-                backgroundColor: colors.gray[50],
+                backgroundColor: colors.surface[50],
                 padding: spacing[3],
                 borderRadius: borderRadius.lg,
                 borderWidth: 1,
-                borderColor: colors.gray[200],
+                borderColor: colors.surface[200],
               }}
             >
               <Text
-                style={{ fontSize: fontSize.xs, color: colors.gray[500], marginBottom: spacing[1] }}
+                style={{
+                  fontSize: fontSize.xs,
+                  color: colors.surface[500],
+                  marginBottom: spacing[1],
+                }}
               >
                 {t('common.from')}
               </Text>
@@ -316,7 +335,7 @@ export default function ReportsScreen() {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.medium,
-                  color: colors.gray[800],
+                  color: m3.colorScheme.onSurface,
                 }}
               >
                 {dateRange.from}
@@ -326,15 +345,19 @@ export default function ReportsScreen() {
               onPress={() => setShowToPicker(true)}
               style={{
                 flex: 1,
-                backgroundColor: colors.gray[50],
+                backgroundColor: colors.surface[50],
                 padding: spacing[3],
                 borderRadius: borderRadius.lg,
                 borderWidth: 1,
-                borderColor: colors.gray[200],
+                borderColor: colors.surface[200],
               }}
             >
               <Text
-                style={{ fontSize: fontSize.xs, color: colors.gray[500], marginBottom: spacing[1] }}
+                style={{
+                  fontSize: fontSize.xs,
+                  color: colors.surface[500],
+                  marginBottom: spacing[1],
+                }}
               >
                 {t('common.to')}
               </Text>
@@ -342,7 +365,7 @@ export default function ReportsScreen() {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.medium,
-                  color: colors.gray[800],
+                  color: m3.colorScheme.onSurface,
                 }}
               >
                 {dateRange.to}
@@ -374,7 +397,7 @@ export default function ReportsScreen() {
         {/* Report Type */}
         <View
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             marginHorizontal: spacing[4],
             marginTop: spacing[4],
             borderRadius: borderRadius.xl,
@@ -385,7 +408,7 @@ export default function ReportsScreen() {
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.medium,
-              color: colors.gray[500],
+              color: colors.surface[500],
               marginBottom: spacing[3],
             }}
           >
@@ -401,14 +424,22 @@ export default function ReportsScreen() {
                   padding: spacing[3],
                   borderRadius: borderRadius.lg,
                   borderWidth: 1,
-                  backgroundColor: reportType === type.value ? colors.primary[50] : colors.gray[50],
-                  borderColor: reportType === type.value ? colors.primary[500] : colors.gray[200],
+                  backgroundColor:
+                    reportType === type.value
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                      : colors.surface[50],
+                  borderColor:
+                    reportType === type.value ? m3.colorScheme.primary : colors.surface[200],
                 }}
               >
                 <Icon
                   name={type.icon}
                   size={24}
-                  color={reportType === type.value ? '#1a5d1a' : '#9ca3af'}
+                  color={
+                    reportType === type.value
+                      ? m3.colorScheme.primary
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+                  }
                   style={{ alignSelf: 'center' }}
                 />
                 <Text
@@ -416,7 +447,7 @@ export default function ReportsScreen() {
                     fontSize: fontSize.xs,
                     textAlign: 'center',
                     marginTop: spacing[1],
-                    color: reportType === type.value ? colors.primary[700] : colors.gray[600],
+                    color: reportType === type.value ? m3.colorScheme.primary : colors.surface[600],
                     fontWeight: reportType === type.value ? fontWeight.semibold : fontWeight.normal,
                   }}
                 >
@@ -431,7 +462,7 @@ export default function ReportsScreen() {
         {dataLoading ? (
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               marginHorizontal: spacing[4],
               marginTop: spacing[4],
               borderRadius: borderRadius.xl,
@@ -439,15 +470,15 @@ export default function ReportsScreen() {
               alignItems: 'center',
             }}
           >
-            <ActivityIndicator size="small" color="#1a5d1a" />
-            <Text style={{ color: colors.gray[500], marginTop: spacing[2] }}>
+            <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+            <Text style={{ color: colors.surface[500], marginTop: spacing[2] }}>
               {t('reports.loading.preview')}
             </Text>
           </View>
         ) : preview ? (
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               marginHorizontal: spacing[4],
               marginTop: spacing[4],
               borderRadius: borderRadius.xl,
@@ -458,7 +489,7 @@ export default function ReportsScreen() {
               style={{
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.medium,
-                color: colors.gray[500],
+                color: colors.surface[500],
                 marginBottom: spacing[3],
               }}
             >
@@ -468,7 +499,7 @@ export default function ReportsScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] }}>
               <View
                 style={{
-                  backgroundColor: '#EFF6FF',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   padding: spacing[3],
                   borderRadius: borderRadius.lg,
                   flex: 1,
@@ -479,18 +510,18 @@ export default function ReportsScreen() {
                   style={{
                     fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
-                    color: '#2563EB',
+                    color: m3.colorScheme.primary,
                   }}
                 >
                   {preview.summary.totalRecords}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>
+                <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.primary }}>
                   {t('reports.summary.totalRecords')}
                 </Text>
               </View>
               <View
                 style={{
-                  backgroundColor: '#ECFEFF',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.secondary, 0.12),
                   padding: spacing[3],
                   borderRadius: borderRadius.lg,
                   flex: 1,
@@ -501,18 +532,18 @@ export default function ReportsScreen() {
                   style={{
                     fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
-                    color: '#0891B2',
+                    color: m3.colorScheme.secondary,
                   }}
                 >
                   {formatNumber(preview.summary.totalWaterUsage)}L
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#0891B2' }}>
+                <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.secondary }}>
                   {t('reports.summary.waterUsage')}
                 </Text>
               </View>
               <View
                 style={{
-                  backgroundColor: '#F5F3FF',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.12),
                   padding: spacing[3],
                   borderRadius: borderRadius.lg,
                   flex: 1,
@@ -523,18 +554,18 @@ export default function ReportsScreen() {
                   style={{
                     fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
-                    color: '#7C3AED',
+                    color: m3.colorScheme.tertiary,
                   }}
                 >
                   {preview.summary.totalHarvest}kg
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#7C3AED' }}>
+                <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.tertiary }}>
                   {t('reports.summary.totalHarvest')}
                 </Text>
               </View>
               <View
                 style={{
-                  backgroundColor: colors.primary[50],
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   padding: spacing[3],
                   borderRadius: borderRadius.lg,
                   flex: 1,
@@ -545,12 +576,17 @@ export default function ReportsScreen() {
                   style={{
                     fontSize: fontSize['2xl'],
                     fontWeight: fontWeight.bold,
-                    color: preview.summary.netProfit >= 0 ? '#16A34A' : '#DC2626',
+                    color: preview.summary.netProfit >= 0 ? colors.success : m3.colorScheme.error,
                   }}
                 >
                   {formatCurrency(preview.summary.netProfit, preferredCurrency)}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: preview.summary.netProfit >= 0 ? colors.success : m3.colorScheme.error,
+                  }}
+                >
                   {t('reports.summary.netProfit')}
                 </Text>
               </View>
@@ -565,18 +601,18 @@ export default function ReportsScreen() {
                 marginTop: spacing[4],
                 paddingTop: spacing[4],
                 borderTopWidth: 1,
-                borderTopColor: colors.gray[100],
+                borderTopColor: colors.surface[200],
               }}
             >
               <View
                 style={{
-                  backgroundColor: colors.gray[100],
+                  backgroundColor: colors.surface[200],
                   paddingHorizontal: spacing[3],
                   paddingVertical: spacing[1],
                   borderRadius: borderRadius.full,
                 }}
               >
-                <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[600] }}>
                   💧{' '}
                   {t('reports.preview.counts.irrigations', {
                     count: preview.summary.irrigationCount,
@@ -585,37 +621,37 @@ export default function ReportsScreen() {
               </View>
               <View
                 style={{
-                  backgroundColor: colors.gray[100],
+                  backgroundColor: colors.surface[200],
                   paddingHorizontal: spacing[3],
                   paddingVertical: spacing[1],
                   borderRadius: borderRadius.full,
                 }}
               >
-                <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[600] }}>
                   🧪 {t('reports.preview.counts.sprays', { count: preview.summary.sprayCount })}
                 </Text>
               </View>
               <View
                 style={{
-                  backgroundColor: colors.gray[100],
+                  backgroundColor: colors.surface[200],
                   paddingHorizontal: spacing[3],
                   paddingVertical: spacing[1],
                   borderRadius: borderRadius.full,
                 }}
               >
-                <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[600] }}>
                   🍇 {t('reports.preview.counts.harvests', { count: preview.summary.harvestCount })}
                 </Text>
               </View>
               <View
                 style={{
-                  backgroundColor: colors.gray[100],
+                  backgroundColor: colors.surface[200],
                   paddingHorizontal: spacing[3],
                   paddingVertical: spacing[1],
                   borderRadius: borderRadius.full,
                 }}
               >
-                <Text style={{ fontSize: fontSize.xs, color: colors.gray[600] }}>
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[600] }}>
                   💰 {t('reports.preview.counts.expenses', { count: preview.summary.expenseCount })}
                 </Text>
               </View>
@@ -631,7 +667,7 @@ export default function ReportsScreen() {
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.medium,
-              color: colors.gray[500],
+              color: colors.surface[500],
               marginBottom: spacing[3],
             }}
           >
@@ -648,17 +684,18 @@ export default function ReportsScreen() {
                 justifyContent: 'center',
                 padding: spacing[4],
                 borderRadius: borderRadius.xl,
-                backgroundColor: !preview || isExporting ? colors.gray[200] : '#EF4444',
+                backgroundColor:
+                  !preview || isExporting ? colors.surface[200] : m3.colorScheme.error,
               }}
             >
               {isExporting ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={m3.colorScheme.onError} />
               ) : (
                 <>
-                  <Icon name="doc.fill" size={24} color="white" />
+                  <Icon name="doc.fill" size={24} color={m3.colorScheme.onError} />
                   <Text
                     style={{
-                      color: colors.white,
+                      color: m3.colorScheme.onError,
                       fontWeight: fontWeight.bold,
                       marginLeft: spacing[2],
                     }}
@@ -678,17 +715,21 @@ export default function ReportsScreen() {
                 justifyContent: 'center',
                 padding: spacing[4],
                 borderRadius: borderRadius.xl,
-                backgroundColor: !preview || isExporting ? colors.gray[200] : '#16A34A',
+                backgroundColor: !preview || isExporting ? colors.surface[200] : colors.success,
               }}
             >
               {isExporting ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={m3.colorScheme.onSurfaceVariant} />
               ) : (
                 <>
-                  <Icon name="square.grid.2x2.fill" size={24} color="white" />
+                  <Icon
+                    name="square.grid.2x2.fill"
+                    size={24}
+                    color={preview ? m3.colorScheme.onSurface : m3.colorScheme.onSurfaceVariant}
+                  />
                   <Text
                     style={{
-                      color: colors.white,
+                      color: preview ? m3.colorScheme.onSurface : m3.colorScheme.onSurfaceVariant,
                       fontWeight: fontWeight.bold,
                       marginLeft: spacing[2],
                     }}

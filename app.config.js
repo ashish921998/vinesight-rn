@@ -5,12 +5,12 @@ module.exports = {
     version: '2.5',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
-    userInterfaceStyle: 'light',
+    userInterfaceStyle: 'automatic',
     scheme: 'vinesight',
     newArchEnabled: true,
     statusBar: {
-      backgroundColor: '#FFFFFF',
-      barStyle: 'dark-content',
+      backgroundColor: 'transparent',
+      barStyle: 'auto',
     },
     ios: {
       supportsTablet: true,
@@ -71,12 +71,12 @@ module.exports = {
         },
       ],
       statusBar: {
-        backgroundColor: '#FFFFFF',
-        barStyle: 'dark-content',
+        backgroundColor: 'transparent',
+        barStyle: 'auto',
       },
       navigationBar: {
-        backgroundColor: '#FFFFFF',
-        barStyle: 'dark',
+        backgroundColor: 'transparent',
+        barStyle: 'auto',
       },
     },
     web: {

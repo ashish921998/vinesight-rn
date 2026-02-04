@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface UnitPickerModalProps<T extends string> {
   visible: boolean;
@@ -29,6 +31,8 @@ export function UnitPickerModal<T extends string>({
   options,
   title,
 }: UnitPickerModalProps<T>) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
   const handleSelect = (unit: T) => {
     onSelect(unit);
@@ -37,7 +41,7 @@ export function UnitPickerModal<T extends string>({
 
   const overlayStyle: ViewStyle = {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3),
     alignItems: 'center',
     justifyContent: 'flex-end',
   };
@@ -65,7 +69,7 @@ export function UnitPickerModal<T extends string>({
   };
 
   const cancelTextStyle: TextStyle = {
-    color: colors.surface[500],
+    color: m3.colorScheme.onSurfaceVariant,
     fontWeight: fontWeight.semibold,
   };
 
@@ -83,7 +87,7 @@ export function UnitPickerModal<T extends string>({
     paddingVertical: spacing[4],
     borderBottomWidth: 1,
     borderBottomColor: colors.surface[50],
-    backgroundColor: isSelected ? `${colors.primary[500]}0D` : 'transparent',
+    backgroundColor: isSelected ? colorWithOpacity(m3.colorScheme.primary, 0.08) : 'transparent',
   });
 
   const optionContentStyle: ViewStyle = {
@@ -95,7 +99,7 @@ export function UnitPickerModal<T extends string>({
   const getOptionTextStyle = (isSelected: boolean): TextStyle => ({
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: isSelected ? colors.primary[500] : colors.surface[900],
+    color: isSelected ? m3.colorScheme.primary : colors.surface[900],
   });
 
   return (
@@ -123,7 +127,7 @@ export function UnitPickerModal<T extends string>({
                       <SymbolIcon
                         name="checkmark.circle.fill"
                         size={24}
-                        color={colors.primary[500]}
+                        color={m3.colorScheme.primary}
                       />
                     )}
                   </View>

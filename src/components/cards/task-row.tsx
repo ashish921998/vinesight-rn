@@ -9,7 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { TaskReminder } from '@/types/task';
 import { PRIORITY_INFO, TASK_TYPE_INFO } from '@/types/task';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 
@@ -60,6 +61,7 @@ export function TaskRow({
   onDelete,
 }: TaskRowProps) {
   const { t } = useTranslation();
+  const m3 = useM3();
   const typeInfo = TASK_TYPE_INFO[task.type];
   const priorityInfo = PRIORITY_INFO[task.priority];
 

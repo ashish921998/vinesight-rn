@@ -19,10 +19,16 @@ import { Stack } from 'expo-router';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { LinearGradient } from 'expo-linear-gradient';
 import { REFILL_SPANS, type RefillSpanId } from '@/constants/calculator-models';
-import { spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
+import { useTranslation } from 'react-i18next';
 
 export default function MADCalculatorScreen() {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
   // Step 1: MAD Calculation inputs
   const [dbl, setDbl] = useState('');
   const [rootDepth, setRootDepth] = useState('');
@@ -84,13 +90,13 @@ export default function MADCalculatorScreen() {
 
   const interpretMAD = (mad: number): string => {
     if (mad < 1.0) {
-      return 'Shallow root zone - very frequent irrigation needed (daily to twice daily)';
+      return t('calculator.mad.results.interpretationMessages.shallow');
     } else if (mad < 2.5) {
-      return 'Moderate root zone - irrigation every 1-2 days recommended';
+      return t('calculator.mad.results.interpretationMessages.moderate');
     } else if (mad < 5.0) {
-      return 'Deep root zone - irrigation every 2-3 days is typically sufficient';
+      return t('calculator.mad.results.interpretationMessages.deep');
     } else {
-      return 'Very deep roots - irrigation every 3-5 days may be adequate';
+      return t('calculator.mad.results.interpretationMessages.veryDeep');
     }
   };
 
@@ -98,9 +104,9 @@ export default function MADCalculatorScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'MAD Calculator',
+          title: t('calculator.mad.title'),
           headerTitleStyle: { fontWeight: '600' },
-          headerTintColor: '#408059',
+          headerTintColor: m3.colorScheme.primary,
         }}
       />
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
@@ -109,7 +115,7 @@ export default function MADCalculatorScreen() {
           style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
         >
           <LinearGradient
-            colors={['rgba(64, 128, 89, 0.08)', 'transparent']}
+            colors={[colorWithOpacity(m3.colorScheme.primary, 0.08), 'transparent']}
             style={{ height: 300, position: 'absolute', top: 0, left: 0, right: 0 }}
           />
           <ScrollView
@@ -129,7 +135,7 @@ export default function MADCalculatorScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 overflow: 'hidden',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
               }}
             >
               <View
@@ -142,50 +148,50 @@ export default function MADCalculatorScreen() {
                     borderRadius: borderRadius.lg,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
                   }}
                 >
-                  <IconSymbol name="drop.fill" size={18} color="#408059" />
+                  <IconSymbol name="drop.fill" size={18} color={m3.colorScheme.primary} />
                 </View>
                 <Text
                   style={{
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
                     marginLeft: spacing[2],
-                    color: '#1c1c1e',
+                    color: m3.colorScheme.onSurface,
                   }}
                 >
-                  Step 1: MAD Calculation
+                  {t('calculator.mad.step1.title')}
                 </Text>
               </View>
 
               <InputRow
-                label="Distance Between Lines (DBL)"
+                label={t('calculator.mad.step1.label.dbl')}
                 value={dbl}
                 onChangeText={setDbl}
-                unit="m"
-                placeholder="3.0"
+                unit={t('calculator.mad.step1.unit.meters')}
+                placeholder={t('calculator.mad.step1.placeholder.dbl')}
               />
               <InputRow
-                label="Root Depth"
+                label={t('calculator.mad.step1.label.rootDepth')}
                 value={rootDepth}
                 onChangeText={setRootDepth}
-                unit="m"
-                placeholder="0.6"
+                unit={t('calculator.mad.step1.unit.meters')}
+                placeholder={t('calculator.mad.step1.placeholder.rootDepth')}
               />
               <InputRow
-                label="Root Width"
+                label={t('calculator.mad.step1.label.rootWidth')}
                 value={rootWidth}
                 onChangeText={setRootWidth}
-                unit="m"
-                placeholder="1.5"
+                unit={t('calculator.mad.step1.unit.meters')}
+                placeholder={t('calculator.mad.step1.placeholder.rootWidth')}
               />
               <InputRow
-                label="Water Retention"
+                label={t('calculator.mad.step1.label.waterRetention')}
                 value={waterRetention}
                 onChangeText={setWaterRetention}
-                unit="%"
-                placeholder="15"
+                unit={t('calculator.mad.step1.unit.percent')}
+                placeholder={t('calculator.mad.step1.placeholder.waterRetention')}
               />
 
               {/* Calculate Button */}
@@ -197,16 +203,22 @@ export default function MADCalculatorScreen() {
                   paddingVertical: spacing[3],
                   borderRadius: borderRadius.xl,
                   alignItems: 'center',
-                  backgroundColor: canCalculateMAD && !madResult ? '#408059' : '#e5e5ea',
+                  backgroundColor:
+                    canCalculateMAD && !madResult
+                      ? m3.colorScheme.primary
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                 }}
               >
                 <Text
                   style={{
                     fontWeight: fontWeight.semibold,
-                    color: canCalculateMAD && !madResult ? '#ffffff' : '#8e8e93',
+                    color:
+                      canCalculateMAD && !madResult
+                        ? m3.colorScheme.onPrimary
+                        : m3.colorScheme.onSurfaceVariant,
                   }}
                 >
-                  Calculate MAD
+                  {t('calculator.mad.step1.calculateButton')}
                 </Text>
               </Pressable>
 
@@ -218,22 +230,26 @@ export default function MADCalculatorScreen() {
                       borderRadius: borderRadius.xl,
                       padding: spacing[4],
                       alignItems: 'center',
-                      backgroundColor: 'rgba(64, 128, 89, 0.08)',
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
                     }}
                   >
                     <Text
                       style={{
                         fontSize: fontSize['3xl'],
                         fontWeight: fontWeight.bold,
-                        color: '#408059',
+                        color: m3.colorScheme.primary,
                       }}
                     >
                       {madResult.toFixed(4)}
                     </Text>
                     <Text
-                      style={{ fontSize: fontSize.sm, marginTop: spacing[1], color: '#408059' }}
+                      style={{
+                        fontSize: fontSize.sm,
+                        marginTop: spacing[1],
+                        color: m3.colorScheme.onSurfaceVariant,
+                      }}
                     >
-                      Maximum Allowable Deficit
+                      {t('calculator.mad.results.madTitle')}
                     </Text>
                   </View>
                   <View
@@ -241,7 +257,7 @@ export default function MADCalculatorScreen() {
                       borderRadius: borderRadius.xl,
                       padding: spacing[3],
                       marginTop: spacing[3],
-                      backgroundColor: '#f9f9f9',
+                      backgroundColor: colors.surface[50],
                     }}
                   >
                     <Text
@@ -249,12 +265,12 @@ export default function MADCalculatorScreen() {
                         fontSize: fontSize.xs,
                         fontWeight: fontWeight.medium,
                         marginBottom: spacing[1],
-                        color: '#8e8e93',
+                        color: m3.colorScheme.onSurface,
                       }}
                     >
-                      Interpretation
+                      {t('calculator.mad.results.interpretation')}
                     </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
+                    <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
                       {interpretMAD(madResult)}
                     </Text>
                   </View>
@@ -269,7 +285,7 @@ export default function MADCalculatorScreen() {
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   overflow: 'hidden',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
                   marginTop: spacing[4],
                 }}
               >
@@ -283,20 +299,20 @@ export default function MADCalculatorScreen() {
                       borderRadius: borderRadius.lg,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
                     }}
                   >
-                    <IconSymbol name="arrow-up-circle" size={18} color="#408059" />
+                    <IconSymbol name="arrow-up-circle" size={18} color={m3.colorScheme.primary} />
                   </View>
                   <Text
                     style={{
                       fontSize: fontSize.base,
                       fontWeight: fontWeight.semibold,
                       marginLeft: spacing[2],
-                      color: '#1c1c1e',
+                      color: m3.colorScheme.onSurface,
                     }}
                   >
-                    Step 2: Refill Tank Calculator
+                    {t('calculator.mad.step2.title')}
                   </Text>
                 </View>
 
@@ -305,10 +321,10 @@ export default function MADCalculatorScreen() {
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.medium,
                     marginBottom: spacing[2],
-                    color: '#3a3a3c',
+                    color: m3.colorScheme.onSurfaceVariant,
                   }}
                 >
-                  Select Refill Span
+                  {t('calculator.mad.step2.selectRefillSpan')}
                 </Text>
                 {REFILL_SPANS.map((span) => (
                   <Pressable
@@ -321,16 +337,27 @@ export default function MADCalculatorScreen() {
                       borderRadius: borderRadius.xl,
                       marginBottom: spacing[2],
                       backgroundColor:
-                        selectedRefillSpan === span.id ? 'rgba(64, 128, 89, 0.08)' : '#f9f9f9',
+                        selectedRefillSpan === span.id
+                          ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                          : colors.surface[50],
                       borderWidth: 1,
-                      borderColor: selectedRefillSpan === span.id ? '#408059' : '#e5e5ea',
+                      borderColor:
+                        selectedRefillSpan === span.id
+                          ? m3.colorScheme.primary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                     }}
                   >
-                    <Text style={{ flex: 1, fontSize: fontSize.sm, color: '#1c1c1e' }}>
+                    <Text
+                      style={{ flex: 1, fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}
+                    >
                       {span.label}
                     </Text>
                     {selectedRefillSpan === span.id && (
-                      <IconSymbol name="checkmark.circle.fill" size={20} color="#408059" />
+                      <IconSymbol
+                        name="checkmark.circle.fill"
+                        size={20}
+                        color={m3.colorScheme.primary}
+                      />
                     )}
                   </Pressable>
                 ))}
@@ -341,7 +368,7 @@ export default function MADCalculatorScreen() {
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     marginTop: spacing[2],
-                    backgroundColor: '#f9f9f9',
+                    backgroundColor: colors.surface[50],
                   }}
                 >
                   <Text
@@ -349,19 +376,19 @@ export default function MADCalculatorScreen() {
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
                       marginBottom: spacing[2],
-                      color: '#8e8e93',
+                      color: m3.colorScheme.onSurface,
                     }}
                   >
-                    Refill span guidance:
+                    {t('calculator.mad.step2.refillSpanGuidance')}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
-                    • Heavy Growth (0.2): Fruit set - maintain turgor
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
+                    • {t('calculator.mad.step2.guidance.heavy')}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
-                    • Normal Growth (0.3): Flowering - balance growth/stress
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
+                    • {t('calculator.mad.step2.guidance.normal')}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
-                    • Controlled Stress (0.4): Veraison - improve quality/sugar
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
+                    • {t('calculator.mad.step2.guidance.controlled')}
                   </Text>
                 </View>
 
@@ -371,7 +398,9 @@ export default function MADCalculatorScreen() {
                   disabled={!canCalculateRefillTank || refillTankResult !== null}
                   style={{
                     backgroundColor:
-                      canCalculateRefillTank && !refillTankResult ? '#408059' : '#e5e5ea',
+                      canCalculateRefillTank && !refillTankResult
+                        ? m3.colorScheme.primary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                     marginTop: spacing[4],
                     paddingVertical: spacing[3],
                     borderRadius: borderRadius.xl,
@@ -381,10 +410,13 @@ export default function MADCalculatorScreen() {
                   <Text
                     style={{
                       fontWeight: fontWeight.semibold,
-                      color: canCalculateRefillTank && !refillTankResult ? '#ffffff' : '#8e8e93',
+                      color:
+                        canCalculateRefillTank && !refillTankResult
+                          ? m3.colorScheme.onPrimary
+                          : m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    Calculate Refill Tank
+                    {t('calculator.mad.step2.calculateButton')}
                   </Text>
                 </Pressable>
 
@@ -396,22 +428,26 @@ export default function MADCalculatorScreen() {
                         borderRadius: borderRadius.xl,
                         padding: spacing[4],
                         alignItems: 'center',
-                        backgroundColor: 'rgba(64, 128, 89, 0.08)',
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
                       }}
                     >
                       <Text
                         style={{
                           fontSize: fontSize['3xl'],
                           fontWeight: fontWeight.bold,
-                          color: '#408059',
+                          color: m3.colorScheme.primary,
                         }}
                       >
                         {refillTankResult.toFixed(4)}
                       </Text>
                       <Text
-                        style={{ fontSize: fontSize.sm, marginTop: spacing[1], color: '#408059' }}
+                        style={{
+                          fontSize: fontSize.sm,
+                          marginTop: spacing[1],
+                          color: m3.colorScheme.onSurfaceVariant,
+                        }}
                       >
-                        Refill Tank Requirement
+                        {t('calculator.mad.results.refillTankTitle')}
                       </Text>
                     </View>
                     <View
@@ -419,7 +455,7 @@ export default function MADCalculatorScreen() {
                         borderRadius: borderRadius.xl,
                         padding: spacing[3],
                         marginTop: spacing[3],
-                        backgroundColor: '#f9f9f9',
+                        backgroundColor: colors.surface[50],
                       }}
                     >
                       <Text
@@ -427,18 +463,21 @@ export default function MADCalculatorScreen() {
                           fontSize: fontSize.xs,
                           fontWeight: fontWeight.medium,
                           marginBottom: spacing[1],
-                          color: '#8e8e93',
+                          color: m3.colorScheme.onSurface,
                         }}
                       >
-                        What this means
+                        {t('calculator.mad.results.whatThisMeans')}
                       </Text>
-                      <Text style={{ fontSize: fontSize.xs, color: '#8e8e93' }}>
-                        Apply {refillTankResult.toFixed(4)} units of water when soil moisture drops
-                        to{' '}
-                        {(
-                          (REFILL_SPANS.find((s) => s.id === selectedRefillSpan)?.value ?? 0) * 100
-                        ).toFixed(0)}
-                        % of MAD to maintain optimal vine health.
+                      <Text
+                        style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
+                      >
+                        {t('calculator.mad.results.refillExplanation', {
+                          value: refillTankResult.toFixed(4),
+                          percentage: (
+                            (REFILL_SPANS.find((s) => s.id === selectedRefillSpan)?.value ?? 0) *
+                            100
+                          ).toFixed(0),
+                        })}
                       </Text>
                     </View>
                   </View>
@@ -455,20 +494,20 @@ export default function MADCalculatorScreen() {
                   paddingVertical: spacing[4],
                   alignItems: 'center',
                   overflow: 'hidden',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
                   marginTop: spacing[4],
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <IconSymbol name="refresh" size={18} color="#8e8e93" />
+                  <IconSymbol name="refresh" size={18} color={m3.colorScheme.onSurfaceVariant} />
                   <Text
                     style={{
                       fontWeight: fontWeight.medium,
                       marginLeft: spacing[2],
-                      color: '#8e8e93',
+                      color: m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    Reset Calculator
+                    {t('calculator.mad.actions.reset')}
                   </Text>
                 </View>
               </Pressable>
@@ -494,6 +533,8 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const handleChangeText = (text: string) => {
     if (text === '.') {
       onChangeText('0.');
@@ -504,7 +545,13 @@ function InputRow({
 
   return (
     <View style={{ marginBottom: spacing[3] }}>
-      <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1], color: '#8e8e93' }}>
+      <Text
+        style={{
+          fontSize: fontSize.sm,
+          marginBottom: spacing[1],
+          color: m3.colorScheme.onSurfaceVariant,
+        }}
+      >
         {label}
       </Text>
       <View
@@ -512,24 +559,30 @@ function InputRow({
           flexDirection: 'row',
           alignItems: 'center',
           borderRadius: borderRadius.xl,
-          backgroundColor: '#f9f9f9',
+          backgroundColor: colors.surface[50],
         }}
       >
         <TextInput
           value={value}
           onChangeText={handleChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#8e8e93"
+          placeholderTextColor={m3.colorScheme.onSurfaceVariant}
           keyboardType="decimal-pad"
           style={{
             flex: 1,
             paddingHorizontal: spacing[4],
             paddingVertical: spacing[3],
             fontSize: fontSize.base,
-            color: '#1c1c1e',
+            color: m3.colorScheme.onSurface,
           }}
         />
-        <Text style={{ fontSize: fontSize.sm, paddingRight: spacing[4], color: '#8e8e93' }}>
+        <Text
+          style={{
+            fontSize: fontSize.sm,
+            paddingRight: spacing[4],
+            color: m3.colorScheme.onSurfaceVariant,
+          }}
+        >
           {unit}
         </Text>
       </View>

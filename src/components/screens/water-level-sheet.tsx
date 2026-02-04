@@ -18,11 +18,13 @@ import type { Farm } from '@/types';
 import { useIrrigationRecords, useUpdateFarmWaterLevel } from '@/hooks';
 import { WATER_GROWTH_STAGES } from '@/constants/calculator-models';
 import type { WaterGrowthStage } from '@/constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useNotificationStore } from '@/stores';
 import { ensureNotificationPermissions, notifyLowWaterAlert } from '@/services/notifications';
 import { useTranslation } from 'react-i18next';
 import { formatNumber, formatDate } from '@/i18n/format';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface WaterLevelSheetProps {
   visible?: boolean;
@@ -40,6 +42,8 @@ export function WaterLevelSheet({
   presentation = 'modal',
 }: WaterLevelSheetProps) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
 
   const isVisible = visible ?? true;
   const [manualWaterLevel, setManualWaterLevel] = useState('');
@@ -317,7 +321,9 @@ export function WaterLevelSheet({
               <Text
                 style={{
                   fontSize: fontSize.base,
-                  color: selectedGrowthStage ? colors.surface[900] : '#9CA3AF',
+                  color: selectedGrowthStage
+                    ? colors.surface[900]
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
                 }}
               >
                 {selectedGrowthStage
@@ -384,7 +390,7 @@ export function WaterLevelSheet({
           edges={['top', 'bottom']}
           style={{
             flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3),
             alignItems: 'center',
             justifyContent: 'center',
             paddingHorizontal: spacing[4],
@@ -392,7 +398,7 @@ export function WaterLevelSheet({
         >
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               borderRadius: borderRadius['2xl'],
               width: '100%',
               maxHeight: '70%',
@@ -404,7 +410,7 @@ export function WaterLevelSheet({
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[4],
                 borderBottomWidth: 1,
-                borderBottomColor: colors.gray[200],
+                borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
               }}
             >
               <Text
@@ -431,7 +437,7 @@ export function WaterLevelSheet({
                     paddingHorizontal: spacing[4],
                     paddingVertical: spacing[3],
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.gray[100],
+                    borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.15),
                     backgroundColor:
                       selectedGrowthStage?.id === stage.id ? colors.primary[50] : 'transparent',
                   }}
@@ -484,7 +490,7 @@ export function WaterLevelSheet({
               style={{
                 paddingVertical: spacing[4],
                 borderTopWidth: 1,
-                borderTopColor: colors.gray[200],
+                borderTopColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
               }}
             >
               <Text

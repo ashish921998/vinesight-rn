@@ -21,7 +21,9 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
 import { SoilSectionData } from '../../types/database';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 
 interface SoilProfileFormProps {
@@ -40,6 +42,8 @@ export default function SoilProfileForm({
   const isVisible = visible ?? true;
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
+  const m3 = useM3();
   const createProfile = useCreateSoilProfile();
 
   const [sections, setSections] = useState<Record<string, string>>({
@@ -154,9 +158,9 @@ export default function SoilProfileForm({
           paddingHorizontal: spacing[4],
           paddingTop: spacing[4] + insets.top,
           paddingBottom: spacing[4],
-          backgroundColor: 'rgba(255,255,255, 0.8)',
+          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
           borderBottomWidth: 0.5,
-          borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+          borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
         }}
       >
         <Pressable onPress={onClose}>
@@ -178,7 +182,9 @@ export default function SoilProfileForm({
             style={{
               fontSize: fontSize.base,
               fontWeight: fontWeight.semibold,
-              color: isLoading ? '#c7c7cc' : colors.primary[500],
+              color: isLoading
+                ? colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)
+                : m3.colorScheme.primary,
             }}
           >
             {isLoading ? t('common.saving') : t('common.save')}
@@ -205,7 +211,7 @@ export default function SoilProfileForm({
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginTop: spacing[4],
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
           }}
         >
           <Text
@@ -230,9 +236,9 @@ export default function SoilProfileForm({
           <Pressable
             onPress={() => setShowDatePicker(true)}
             style={{
-              backgroundColor: '#f9f9f9',
+              backgroundColor: colors.surface[50],
               borderWidth: 1,
-              borderColor: '#e5e5e5',
+              borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
               borderRadius: borderRadius.xl,
               paddingHorizontal: spacing[4],
               paddingVertical: spacing[3],
@@ -244,7 +250,7 @@ export default function SoilProfileForm({
             <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
               {formatDate(selectedDate, { year: 'numeric', month: 'short', day: 'numeric' })}
             </Text>
-            <IconSymbol name="calendar" size={20} color="#8e8e93" />
+            <IconSymbol name="calendar" size={20} color={m3.colorScheme.onSurfaceVariant} />
           </Pressable>
         </View>
 
@@ -258,7 +264,7 @@ export default function SoilProfileForm({
           <View
             style={{
               flex: 1,
-              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3),
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -313,7 +319,7 @@ export default function SoilProfileForm({
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginTop: spacing[4],
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
           }}
         >
           <Text
@@ -363,7 +369,7 @@ export default function SoilProfileForm({
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginRight: spacing[2],
-                        backgroundColor: 'rgba(64, 128, 89, 0.2)',
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.2),
                       }}
                     >
                       <Text
@@ -382,9 +388,9 @@ export default function SoilProfileForm({
                   </View>
                   <TextInput
                     style={{
-                      backgroundColor: '#f9f9f9',
+                      backgroundColor: colors.surface[50],
                       borderWidth: 1,
-                      borderColor: '#e5e5e5',
+                      borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                       borderRadius: borderRadius.xl,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[3],
@@ -392,7 +398,7 @@ export default function SoilProfileForm({
                       fontSize: fontSize.base,
                     }}
                     placeholder="0.0"
-                    placeholderTextColor="#c7c7cc"
+                    placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
                     keyboardType="decimal-pad"
                     value={sections[name]}
                     onChangeText={(value) => updateSection(name, value)}
@@ -410,7 +416,7 @@ export default function SoilProfileForm({
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginTop: spacing[4],
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
           }}
         >
           <Text
@@ -456,9 +462,9 @@ export default function SoilProfileForm({
                   </Text>
                   <TextInput
                     style={{
-                      backgroundColor: '#f9f9f9',
+                      backgroundColor: colors.surface[50],
                       borderWidth: 1,
-                      borderColor: '#e5e5e5',
+                      borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                       borderRadius: borderRadius.xl,
                       paddingHorizontal: spacing[3],
                       paddingVertical: spacing[2],
@@ -466,7 +472,7 @@ export default function SoilProfileForm({
                       fontSize: fontSize.base,
                     }}
                     placeholder="0.0"
-                    placeholderTextColor="#c7c7cc"
+                    placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
                     keyboardType="decimal-pad"
                     value={ecValues[name]}
                     onChangeText={(value) => updateEc(name, value)}
@@ -485,7 +491,7 @@ export default function SoilProfileForm({
             padding: spacing[4],
             marginTop: spacing[4],
             marginBottom: spacing[8],
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
           }}
           onLayout={(event) => recordFieldPosition('fusarium', event.nativeEvent.layout.y ?? 0)}
         >
@@ -510,9 +516,9 @@ export default function SoilProfileForm({
           </Text>
           <TextInput
             style={{
-              backgroundColor: '#f9f9f9',
+              backgroundColor: colors.surface[50],
               borderWidth: 1,
-              borderColor: '#e5e5e5',
+              borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
               borderRadius: borderRadius.xl,
               paddingHorizontal: spacing[3],
               paddingVertical: spacing[3],
@@ -520,7 +526,7 @@ export default function SoilProfileForm({
               fontSize: fontSize.base,
             }}
             placeholder="0.0"
-            placeholderTextColor="#c7c7cc"
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5)}
             keyboardType="decimal-pad"
             value={fusariumPct}
             onChangeText={setFusariumPct}

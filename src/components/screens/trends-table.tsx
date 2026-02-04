@@ -3,12 +3,14 @@
  * Excel-like table view for test parameters
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../../hooks/use-lab-tests';
-import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 import { formatDate } from '@/i18n/format';
 
@@ -26,6 +28,9 @@ export default function TrendsTable({
   testType,
 }: Props) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
+  const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
   if (trendData.length === 0) {
     return (
       <View
@@ -263,25 +268,25 @@ export default function TrendsTable({
   );
 }
 
-const styles = {
+const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<typeof useM3>) => ({
   container: {
-    backgroundColor: 'white' as const,
+    backgroundColor: colors.surface[100],
     margin: 16,
     borderRadius: 12,
     overflow: 'hidden' as const,
   },
   headerRow: {
     flexDirection: 'row' as const,
-    backgroundColor: '#f2f2f7' as const,
+    backgroundColor: colors.surface[50],
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb' as const,
+    borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
   },
   headerCell: {
     flex: 1,
     fontSize: 12,
     fontWeight: '700' as const,
-    color: '#374151' as const,
+    color: m3.colorScheme.onSurface,
     textAlign: 'center' as const,
   },
   nutrientCell: {
@@ -294,21 +299,21 @@ const styles = {
   },
   nutrientLabel: {
     fontWeight: '600' as const,
-    color: '#374151' as const,
+    color: m3.colorScheme.onSurface,
     fontSize: 13,
   },
   nutrientRange: {
     fontSize: 10,
-    color: '#6B7280' as const,
+    color: m3.colorScheme.onSurfaceVariant,
     fontWeight: '400' as const,
   },
   row: {
     flexDirection: 'row' as const,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6' as const,
+    borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.15),
   },
   rowEven: {
-    backgroundColor: '#fafafa' as const,
+    backgroundColor: colors.surface[50],
   },
   cell: {
     flex: 1,
@@ -317,46 +322,46 @@ const styles = {
     justifyContent: 'center' as const,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb' as const,
+    borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
   },
   increase: {
-    color: '#10B981' as const,
+    color: colors.success,
     fontSize: 10,
   },
   decrease: {
-    color: '#EF4444' as const,
+    color: m3.colorScheme.error,
     fontSize: 10,
   },
   stable: {
-    color: '#6B7280' as const,
+    color: m3.colorScheme.onSurfaceVariant,
     fontSize: 10,
   },
   cellGray: {
-    backgroundColor: '#F3F4F6' as const,
+    backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
   },
   cellOptimal: {
-    backgroundColor: '#ECFDF5' as const,
+    backgroundColor: colorWithOpacity(colors.success, 0.12),
   },
   cellWarning: {
-    backgroundColor: '#FEFCE8' as const,
+    backgroundColor: colorWithOpacity(colors.warning, 0.12),
   },
   cellCritical: {
-    backgroundColor: '#FEF2F2' as const,
+    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
   },
   cellText: {
     fontSize: 13,
     textAlign: 'center' as const,
-    color: '#374151' as const,
+    color: m3.colorScheme.onSurface,
   },
   legendContainer: {
-    backgroundColor: '#F9FAFB' as const,
+    backgroundColor: colors.surface[100],
     margin: 16,
     marginTop: 0,
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB' as const,
+    borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
   },
   legendContent: {
     gap: 6,
@@ -364,7 +369,7 @@ const styles = {
   legendTitle: {
     fontSize: 10,
     fontWeight: '600' as const,
-    color: '#374151' as const,
+    color: m3.colorScheme.onSurface,
   },
   colorGuideRow: {
     flexDirection: 'row' as const,
@@ -383,20 +388,20 @@ const styles = {
     borderWidth: 1,
   },
   colorBoxOptimal: {
-    backgroundColor: '#ECFDF5' as const,
-    borderColor: '#A7F3D0' as const,
+    backgroundColor: colorWithOpacity(colors.success, 0.12),
+    borderColor: colorWithOpacity(colors.success, 0.4),
   },
   colorBoxWarning: {
-    backgroundColor: '#FEFCE8' as const,
-    borderColor: '#FDE68A' as const,
+    backgroundColor: colorWithOpacity(colors.warning, 0.12),
+    borderColor: colorWithOpacity(colors.warning, 0.4),
   },
   colorBoxCritical: {
-    backgroundColor: '#FEF2F2' as const,
-    borderColor: '#FECACA' as const,
+    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+    borderColor: colorWithOpacity(m3.colorScheme.error, 0.4),
   },
   legendText: {
     fontSize: 10,
-    color: '#374151' as const,
+    color: m3.colorScheme.onSurface,
   },
   trendGuide: {
     flexDirection: 'row' as const,
@@ -422,31 +427,31 @@ const styles = {
   headerDateMonth: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: '#374151' as const,
+    color: m3.colorScheme.onSurface,
   },
   headerDateDay: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: '#374151' as const,
+    color: m3.colorScheme.onSurface,
   },
   headerDateYear: {
     fontSize: 10,
     fontWeight: '500' as const,
-    color: '#6B7280' as const,
+    color: m3.colorScheme.onSurfaceVariant,
   },
   headerDateLabel: {
     fontSize: 9,
     fontWeight: '600' as const,
-    color: '#6B7280' as const,
+    color: m3.colorScheme.onSurfaceVariant,
     textTransform: 'uppercase' as const,
   },
   headerDateValue: {
     fontSize: 10,
     fontWeight: '600' as const,
-    color: '#374151' as const,
+    color: m3.colorScheme.onSurface,
   },
   headerDateBlock: {
     alignItems: 'center' as const,
     marginBottom: 4,
   },
-};
+});

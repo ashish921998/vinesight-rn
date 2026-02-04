@@ -9,7 +9,9 @@ import { useTranslation } from 'react-i18next';
 import { LineChart } from 'react-native-chart-kit';
 import { TrendData, ParameterTrend } from '../../types/analytics';
 import { PARAMETER_COLORS } from '../../hooks/use-lab-tests';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 import { formatDate } from '@/i18n/format';
 
@@ -27,6 +29,8 @@ export default function TrendsChart({
   onToggleParam,
 }: Props) {
   const { t, i18n } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { width: screenWidth } = useWindowDimensions();
   const [selectedPoint, setSelectedPoint] = useState<{ index: number; date: string } | null>(null);
 
@@ -45,28 +49,22 @@ export default function TrendsChart({
   const datasets = useMemo(() => {
     return params.map((param, idx) => {
       const color = PARAMETER_COLORS[idx % PARAMETER_COLORS.length];
-      const hexToRgba = (hex: string, alpha: number) => {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      };
       return {
         data: trendData.map((t) => t.parameters[param.key] || 0),
-        color: (opacity: number) => hexToRgba(color, opacity),
-        labelColor: (opacity: number) => hexToRgba(color, opacity),
+        color: (opacity: number) => colorWithOpacity(color, opacity),
+        labelColor: (opacity: number) => colorWithOpacity(color, opacity),
         strokeWidth: 2,
       };
     });
   }, [params, trendData]);
 
   const chartConfig = {
-    backgroundColor: colors.white,
-    backgroundGradientFrom: colors.white,
-    backgroundGradientTo: colors.white,
+    backgroundColor: colors.surface[100],
+    backgroundGradientFrom: colors.surface[100],
+    backgroundGradientTo: colors.surface[100],
     decimalPlaces: 2,
-    color: (opacity: number) => `rgba(0, 0, 0, ${opacity})`,
-    labelColor: (opacity: number) => `rgba(0, 0, 0, ${opacity})`,
+    color: (opacity: number) => colorWithOpacity(m3.colorScheme.onSurface, opacity),
+    labelColor: (opacity: number) => colorWithOpacity(m3.colorScheme.onSurfaceVariant, opacity),
     style: {
       borderRadius: 16,
     },
@@ -90,7 +88,7 @@ export default function TrendsChart({
           style={{
             fontSize: fontSize.lg,
             fontWeight: fontWeight.semibold,
-            color: colors.gray[800],
+            color: m3.colorScheme.onSurface,
           }}
         >
           {t('trends.empty.noDataTitle')}
@@ -113,14 +111,14 @@ export default function TrendsChart({
           style={{
             fontSize: fontSize.lg,
             fontWeight: fontWeight.semibold,
-            color: colors.gray[800],
+            color: m3.colorScheme.onSurface,
           }}
         >
           {t('trends.empty.needMoreDataTitle')}
         </Text>
         <Text
           style={{
-            color: colors.gray[500],
+            color: m3.colorScheme.onSurfaceVariant,
             textAlign: 'center',
             marginTop: spacing[2],
             paddingHorizontal: spacing[8],
@@ -146,14 +144,14 @@ export default function TrendsChart({
           style={{
             fontSize: fontSize.lg,
             fontWeight: fontWeight.semibold,
-            color: colors.gray[800],
+            color: m3.colorScheme.onSurface,
           }}
         >
           {t('trends.empty.noParamsTitle')}
         </Text>
         <Text
           style={{
-            color: colors.gray[500],
+            color: m3.colorScheme.onSurfaceVariant,
             textAlign: 'center',
             marginTop: spacing[2],
             paddingHorizontal: spacing[8],
@@ -203,7 +201,7 @@ export default function TrendsChart({
       {selectedPoint && (
         <View
           style={{
-            backgroundColor: colors.primary[50],
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
             padding: spacing[4],
             borderRadius: borderRadius.xl,
             marginBottom: spacing[4],
@@ -213,7 +211,7 @@ export default function TrendsChart({
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: colors.primary[900],
+              color: m3.colorScheme.onSurface,
               marginBottom: spacing[2],
             }}
           >
@@ -222,7 +220,10 @@ export default function TrendsChart({
           {params.map((param) => {
             const value = trendData[selectedPoint.index].parameters[param.key];
             return (
-              <Text key={param.key} style={{ fontSize: fontSize.sm, color: colors.primary[800] }}>
+              <Text
+                key={param.key}
+                style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}
+              >
                 {param.trend.label}:{' '}
                 {value != null && typeof value === 'number' ? value.toFixed(2) : '-'}{' '}
                 {param.trend.unit}
@@ -238,7 +239,7 @@ export default function TrendsChart({
           style={{
             fontSize: fontSize.sm,
             fontWeight: fontWeight.semibold,
-            color: colors.gray[800],
+            color: m3.colorScheme.onSurface,
             marginBottom: spacing[3],
           }}
         >
@@ -258,9 +259,9 @@ export default function TrendsChart({
                   paddingHorizontal: spacing[3],
                   paddingVertical: spacing[2],
                   borderRadius: borderRadius.lg,
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderWidth: 1,
-                  borderColor: colors.gray[200],
+                  borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                 }}
               >
                 <View
@@ -276,12 +277,12 @@ export default function TrendsChart({
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
-                      color: colors.gray[800],
+                      color: m3.colorScheme.onSurface,
                     }}
                   >
                     {trend.label}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
                     {trend.change !== null
                       ? `${trend.change > 0 ? '+' : ''}${trend.change.toFixed(1)}%`
                       : t('common.na')}
@@ -299,7 +300,7 @@ export default function TrendsChart({
           style={{
             fontSize: fontSize.sm,
             fontWeight: fontWeight.semibold,
-            color: colors.gray[800],
+            color: m3.colorScheme.onSurface,
             marginBottom: spacing[3],
           }}
         >
@@ -312,12 +313,12 @@ export default function TrendsChart({
             <View
               key={param.key}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 padding: spacing[4],
                 marginBottom: spacing[3],
                 borderWidth: 1,
-                borderColor: colors.gray[100],
+                borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -335,7 +336,7 @@ export default function TrendsChart({
                     marginLeft: spacing[2],
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
-                    color: colors.gray[800],
+                    color: m3.colorScheme.onSurface,
                   }}
                 >
                   {trend.label}
@@ -346,12 +347,12 @@ export default function TrendsChart({
                     fontWeight: fontWeight.semibold,
                     color:
                       trend.change === null
-                        ? colors.gray[400]
+                        ? colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
                         : trend.change > 0
                           ? colors.success
                           : trend.change < 0
-                            ? colors.error
-                            : colors.gray[400],
+                            ? m3.colorScheme.error
+                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
                   }}
                 >
                   {trend.change === null
@@ -371,35 +372,35 @@ export default function TrendsChart({
                 }}
               >
                 <View>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
                     {t('common.labels.current')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.gray[800],
+                      color: m3.colorScheme.onSurface,
                     }}
                   >
                     {trend.values.length > 0 ? (trend.values.at(-1)?.toFixed(2) ?? '-') : '-'}
                   </Text>
                 </View>
                 <View>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
                     {t('common.labels.avg')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.gray[800],
+                      color: m3.colorScheme.onSurface,
                     }}
                   >
                     {trend.avg.toFixed(2)}
                   </Text>
                 </View>
                 <View>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
                     {t('common.labels.min')}
                   </Text>
                   <Text
@@ -413,14 +414,14 @@ export default function TrendsChart({
                   </Text>
                 </View>
                 <View>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.gray[500] }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
                     {t('common.labels.max')}
                   </Text>
                   <Text
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.error,
+                      color: m3.colorScheme.error,
                     }}
                   >
                     {trend.max.toFixed(2)}

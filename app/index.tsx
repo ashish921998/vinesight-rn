@@ -5,7 +5,9 @@ import { useOnboardingStore } from '@/stores/onboarding-store';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 /**
  * Entry point of the app
@@ -16,6 +18,8 @@ export default function Index() {
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const hasHydrated = useOnboardingStore((s) => s.hasHydrated);
   const configStatus = getConfigurationStatus();
+  const colors = useThemeColors();
+  const m3 = useM3();
 
   // Show animated splash screen while checking auth
   if (isLoading) {
@@ -29,7 +33,7 @@ export default function Index() {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: colors.white,
+          backgroundColor: m3.colorScheme.background,
           padding: spacing[6],
         }}
       >
@@ -42,10 +46,10 @@ export default function Index() {
               marginBottom: spacing[6],
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#FEE2E2',
+              backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
             }}
           >
-            <SymbolIcon name="exclamationmark.triangle" size={44} color="#EF4444" />
+            <SymbolIcon name="exclamationmark.triangle" size={44} color={m3.colorScheme.error} />
           </View>
 
           <Text
@@ -66,7 +70,7 @@ export default function Index() {
 
           <View
             style={{
-              backgroundColor: colors.gray[50],
+              backgroundColor: colors.surface[100],
               borderRadius: borderRadius['2xl'],
               padding: spacing[4],
               width: '100%',

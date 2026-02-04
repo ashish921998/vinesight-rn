@@ -16,6 +16,7 @@ import {
   cleanupAuthListener,
   useLanguageStore,
   useNotificationStore,
+  useThemeStore,
 } from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
@@ -26,6 +27,7 @@ import {
 } from '@/services/notifications';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
+import { useThemeTokens } from '@/styles/use-theme';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -121,6 +123,8 @@ const queryClient = new QueryClient({
 export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const themeHydrated = useThemeStore((state) => state.hasHydrated);
+  const { isDark, m3 } = useThemeTokens();
 
   const pathname = usePathname();
   const segments = useSegments();
@@ -259,10 +263,19 @@ export default Sentry.wrap(function RootLayout() {
 
   useEffect(() => {
     // Hide splash screen when auth + language are loaded
-    if (!isLoading && languageHydrated) {
+    if (!isLoading && languageHydrated && themeHydrated) {
       void SplashScreen.hideAsync().catch(() => null);
     }
-  }, [isLoading, languageHydrated]);
+  }, [isLoading, languageHydrated, themeHydrated]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (typeof document === 'undefined') return;
+    document.body.style.backgroundColor = m3.colorScheme.background;
+    document.body.style.color = m3.colorScheme.onBackground;
+  }, [m3]);
+
+  if (!themeHydrated) return null;
 
   const content = (
     <ErrorBoundary>
@@ -270,8 +283,13 @@ export default Sentry.wrap(function RootLayout() {
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
             <I18nextProvider i18n={i18n}>
-              <StatusBar style="dark" />
-              <Stack screenOptions={{ headerShown: false }}>
+              <StatusBar style={isDark ? 'light' : 'dark'} />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: m3.colorScheme.background },
+                }}
+              >
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
