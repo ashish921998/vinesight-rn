@@ -21,12 +21,12 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 
-type SystemDischargeResults = {
+interface SystemDischargeResults {
   plantsPerHectare?: number | null;
   systemDischarge: number;
   irrigationHours?: number | null;
   method: 1 | 2;
-};
+}
 
 export default function SystemDischargeScreen() {
   const colors = useThemeColors();
@@ -766,19 +766,15 @@ export default function SystemDischargeScreen() {
 }
 
 // Input Row Component
-function InputRow({
-  label,
-  value,
-  onChangeText,
-  unit,
-  placeholder,
-}: {
+interface InputRowProps {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
   unit: string;
   placeholder: string;
-}) {
+}
+
+function InputRow({ label, value, onChangeText, unit, placeholder }: InputRowProps) {
   const colors = useThemeColors();
   const m3 = useM3();
   return (

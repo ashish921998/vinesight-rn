@@ -64,7 +64,7 @@ const getStatusDisplay = (
         label: t('attendance.status.halfDayShort'),
         bgColor: colorWithOpacity(colors.warning, 0.18),
         badgeColor: colors.warning,
-        badgeTextColor: m3Theme.colorScheme.onPrimary,
+        badgeTextColor: m3Theme.colorScheme.onWarning,
         textColor: colors.warning,
         fullLabel: t('attendance.status.halfDay'),
       };

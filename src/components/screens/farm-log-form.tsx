@@ -44,7 +44,14 @@ export function FarmLogForm({ mode, farmId, onClose }: FarmLogFormProps) {
             padding: 24,
           }}
         >
-          <Text style={{ fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: '600',
+              textAlign: 'center',
+              color: m3.colorScheme.onSurfaceVariant,
+            }}
+          >
             {t('activityEdit.loadErrorTitle')}
           </Text>
           <Text

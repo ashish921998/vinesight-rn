@@ -213,7 +213,7 @@ export function LabTestDetailsModal({
             style={{
               marginHorizontal: spacing[4],
               maxHeight: '85%',
-              backgroundColor: colors.white,
+              backgroundColor: m3.surface.surface,
               borderRadius: borderRadius['2xl'],
               paddingHorizontal: spacing[4],
               paddingVertical: spacing[4],
@@ -232,7 +232,7 @@ export function LabTestDetailsModal({
                   style={{
                     fontSize: fontSize.lg,
                     fontWeight: fontWeight.bold,
-                    color: colors.gray[900],
+                    color: m3.colorScheme.onSurface,
                   }}
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
@@ -246,7 +246,7 @@ export function LabTestDetailsModal({
                   })}
                 </Text>
                 <Text
-                  style={{ fontSize: fontSize.xs, color: colors.gray[500] }}
+                  style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
@@ -263,10 +263,10 @@ export function LabTestDetailsModal({
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: borderRadius.full,
-                  backgroundColor: colors.gray[100],
+                  backgroundColor: m3.surface.surfaceContainerHigh,
                 }}
               >
-                <SymbolIcon name="xmark" size={16} color={colors.gray[700]} />
+                <SymbolIcon name="xmark" size={16} color={m3.colorScheme.onSurfaceVariant} />
               </Pressable>
             </View>
 
@@ -288,7 +288,7 @@ export function LabTestDetailsModal({
                       style={{
                         fontSize: fontSize.sm,
                         fontWeight: fontWeight.semibold,
-                        color: colors.gray[800],
+                        color: m3.colorScheme.onSurface,
                         marginBottom: spacing[2],
                       }}
                       textBreakStrategy="highQuality"
@@ -313,16 +313,21 @@ export function LabTestDetailsModal({
                             key={String(key)}
                             style={{
                               flexBasis: '48%',
-                              backgroundColor: colors.gray[50],
+                              backgroundColor: m3.surface.surfaceContainerLowest,
                               borderRadius: borderRadius.lg,
                               paddingHorizontal: spacing[3],
                               paddingVertical: spacing[2],
                               borderWidth: 1,
-                              borderColor: isOutOfRange ? colors.errorRed[500] : colors.gray[200],
+                              borderColor: isOutOfRange
+                                ? m3.colorScheme.error
+                                : m3.colorScheme.outlineVariant,
                             }}
                           >
                             <Text
-                              style={{ fontSize: fontSize.xs, color: colors.gray[500] }}
+                              style={{
+                                fontSize: fontSize.xs,
+                                color: m3.colorScheme.onSurfaceVariant,
+                              }}
                               textBreakStrategy="highQuality"
                               lineBreakStrategyIOS="standard"
                             >
@@ -332,7 +337,7 @@ export function LabTestDetailsModal({
                               style={{
                                 fontSize: fontSize.base,
                                 fontWeight: fontWeight.semibold,
-                                color: isOutOfRange ? colors.errorRed[500] : accentColor,
+                                color: isOutOfRange ? m3.colorScheme.error : accentColor,
                                 marginTop: spacing[1],
                               }}
                               textBreakStrategy="highQuality"
@@ -344,7 +349,9 @@ export function LabTestDetailsModal({
                               <Text
                                 style={{
                                   fontSize: fontSize.xs,
-                                  color: isOutOfRange ? colors.errorRed[500] : colors.gray[400],
+                                  color: isOutOfRange
+                                    ? m3.colorScheme.error
+                                    : m3.colorScheme.onSurfaceVariant,
                                   marginTop: spacing[1],
                                 }}
                                 textBreakStrategy="highQuality"
@@ -366,11 +373,11 @@ export function LabTestDetailsModal({
               {test.notes && (
                 <View
                   style={{
-                    backgroundColor: colors.gray[50],
+                    backgroundColor: m3.surface.surfaceContainerLowest,
                     borderRadius: borderRadius.lg,
                     padding: spacing[3],
                     borderWidth: 1,
-                    borderColor: colors.gray[200],
+                    borderColor: m3.colorScheme.outlineVariant,
                     marginBottom: spacing[4],
                   }}
                 >
@@ -378,7 +385,7 @@ export function LabTestDetailsModal({
                     style={{
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: colors.gray[800],
+                      color: m3.colorScheme.onSurface,
                       marginBottom: spacing[2],
                     }}
                     textBreakStrategy="highQuality"
@@ -387,7 +394,7 @@ export function LabTestDetailsModal({
                     {t('labTests.form.notesSectionTitle')}
                   </Text>
                   <Text
-                    style={{ fontSize: fontSize.sm, color: colors.gray[600] }}
+                    style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >

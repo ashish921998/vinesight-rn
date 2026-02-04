@@ -74,8 +74,8 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
           accessibilityRole="button"
           accessibilityLabel={
             selected.size === parameters.length
-              ? 'Deselect all parameters'
-              : 'Select all parameters'
+              ? t('parameterSelector.deselectAll')
+              : t('parameterSelector.selectAll')
           }
           style={{
             paddingHorizontal: spacing[3],

@@ -15,7 +15,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore, useLanguageStore, useNotificationStore } from '@/stores';
+import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
 import { useProfile, useUpdateProfile } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
@@ -30,6 +30,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { setAppLanguage } from '@/i18n';
 import type { SupportedLanguageCode } from '@/i18n/languages';
+import type { ThemeMode } from '@/stores/theme-store';
 import {
   ensureNotificationPermissions,
   scheduleDailyWaterReminder,
@@ -54,6 +55,8 @@ export default function SettingsScreen() {
 
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
+  const themeMode = useThemeStore((s) => s.mode);
+  const setThemeMode = useThemeStore((s) => s.setMode);
 
   const dailyWaterReminderEnabled = useNotificationStore((s) => s.dailyWaterReminderEnabled);
   const dailyWaterNotificationId = useNotificationStore((s) => s.dailyWaterReminderNotificationId);
@@ -74,6 +77,7 @@ export default function SettingsScreen() {
 
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [showAreaPicker, setShowAreaPicker] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
@@ -288,6 +292,12 @@ export default function SettingsScreen() {
     return t('settings.languageEnglish');
   };
 
+  const getThemeLabel = (mode: ThemeMode) => {
+    if (mode === 'light') return t('settings.themeLight');
+    if (mode === 'dark') return t('settings.themeDark');
+    return t('settings.themeSystem');
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -364,11 +374,22 @@ export default function SettingsScreen() {
               colors={colors}
             />
           </Pressable>
+          <Pressable onPress={() => setShowThemePicker(true)}>
+            <SettingsItem
+              icon="sun.max.fill"
+              title={t('settings.theme')}
+              value={getThemeLabel(themeMode)}
+              isLast={false}
+              styles={styles}
+              colors={colors}
+            />
+          </Pressable>
           <Pressable onPress={() => setShowAreaPicker(true)}>
             <SettingsItem
               icon="arrow.up.left.and.arrow.down.right"
               title={t('settings.areaUnit')}
               value={getAreaUnitLabel(selectedAreaUnit)}
+              isLast={false}
               styles={styles}
               colors={colors}
             />
@@ -664,6 +685,73 @@ export default function SettingsScreen() {
                     {opt.label}
                   </Text>
                   {language === opt.code && (
+                    <UISymbol
+                      name="checkmark.circle.fill"
+                      size={22}
+                      color={m3.colorScheme.primary}
+                    />
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Theme Picker Modal */}
+      <Modal
+        visible={showThemePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowThemePicker(false)}
+      >
+        <View style={styles.container}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderInner}>
+              <Text
+                style={styles.modalTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.selectTheme')}
+              </Text>
+              <Pressable onPress={() => setShowThemePicker(false)}>
+                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+              </Pressable>
+            </View>
+          </View>
+          <ScrollView
+            style={styles.flex1}
+            contentContainerStyle={{ padding: 16 }}
+            contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            <View style={styles.sectionContent}>
+              {(
+                [
+                  { mode: 'system' as const, label: t('settings.themeSystem') },
+                  { mode: 'light' as const, label: t('settings.themeLight') },
+                  { mode: 'dark' as const, label: t('settings.themeDark') },
+                ] as const
+              ).map((opt, index, arr) => (
+                <Pressable
+                  key={opt.mode}
+                  onPress={() => {
+                    setThemeMode(opt.mode);
+                    setShowThemePicker(false);
+                  }}
+                  style={[styles.settingsItem, index < arr.length - 1 && styles.borderBottom]}
+                >
+                  <Text
+                    style={styles.pickerItemText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {opt.label}
+                  </Text>
+                  {themeMode === opt.mode && (
                     <UISymbol
                       name="checkmark.circle.fill"
                       size={22}

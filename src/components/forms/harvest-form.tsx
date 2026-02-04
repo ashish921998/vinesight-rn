@@ -118,7 +118,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: data.grade === grade ? m3.colorScheme.onPrimary : colors.surface[700],
+                  color: data.grade === grade ? m3.colorScheme.onWarning : colors.surface[700],
                 }}
               >
                 {grade}

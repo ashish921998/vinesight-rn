@@ -581,7 +581,12 @@ export default function ReportsScreen() {
                 >
                   {formatCurrency(preview.summary.netProfit, preferredCurrency)}
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.success }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: preview.summary.netProfit >= 0 ? colors.success : m3.colorScheme.error,
+                  }}
+                >
                   {t('reports.summary.netProfit')}
                 </Text>
               </View>

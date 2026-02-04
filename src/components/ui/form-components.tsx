@@ -894,7 +894,7 @@ export function InfoCard({
   return (
     <View style={[containerStyle, style]}>
       <View style={contentContainerStyle}>
-        <IconSymbol name={icon} size={24} color={iconColor} />
+        <IconSymbol name={icon} size={24} color={resolvedIconColor} />
         <View style={textContainerStyle}>
           {title && <Text style={titleTextStyle}>{title}</Text>}
           <Text style={messageTextStyle}>{message}</Text>

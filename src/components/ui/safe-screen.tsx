@@ -2,10 +2,10 @@ import type { ComponentProps, ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/styles/use-theme';
 
-type SafeScreenProps = ComponentProps<typeof SafeAreaView> & {
+interface SafeScreenProps extends ComponentProps<typeof SafeAreaView> {
   backgroundColor?: string;
   children: ReactNode;
-};
+}
 
 export function SafeScreen({
   backgroundColor,

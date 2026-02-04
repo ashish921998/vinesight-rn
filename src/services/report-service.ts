@@ -19,6 +19,16 @@ import {
 
 export class ReportService {
   /**
+   * Escape a value for CSV output
+   */
+  private static escapeCSV(value: string): string {
+    if (value.includes('"') || value.includes(',') || value.includes('\n')) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+  }
+
+  /**
    * Filter records by date range
    */
   static filterByDateRange<T extends { date: string }>(records: T[], dateRange: DateRange): T[] {
@@ -177,7 +187,7 @@ export class ReportService {
         );
         data.irrigation.forEach((r) => {
           rows.push(
-            `${r.date},${r.duration},${r.area},${r.growthStage},${r.moistureStatus},${r.systemDischarge},"${r.notes || ''}"`,
+            `${this.escapeCSV(r.date)},${r.duration},${r.area},${this.escapeCSV(r.growthStage)},${this.escapeCSV(r.moistureStatus)},${r.systemDischarge},${this.escapeCSV(r.notes || '')}`,
           );
         });
         rows.push('');
@@ -189,7 +199,7 @@ export class ReportService {
         rows.push('Date,Chemical,Dose,Area,Weather,Operator,Notes');
         data.spray.forEach((r) => {
           rows.push(
-            `${r.date},"${r.chemical}","${r.dose}",${r.area},"${r.weather}","${r.operator}","${r.notes || ''}"`,
+            `${this.escapeCSV(r.date)},${this.escapeCSV(r.chemical)},${this.escapeCSV(r.dose)},${r.area},${this.escapeCSV(r.weather)},${this.escapeCSV(r.operator)},${this.escapeCSV(r.notes || '')}`,
           );
         });
         rows.push('');
@@ -200,7 +210,9 @@ export class ReportService {
         rows.push('FERTIGATION RECORDS');
         rows.push('Date,Fertilizers,Area,Notes');
         data.fertigation.forEach((r) => {
-          rows.push(`${r.date},"${r.fertilizers}",${r.area},"${r.notes || ''}"`);
+          rows.push(
+            `${this.escapeCSV(r.date)},${this.escapeCSV(r.fertilizers)},${r.area},${this.escapeCSV(r.notes || '')}`,
+          );
         });
         rows.push('');
       }
@@ -211,7 +223,7 @@ export class ReportService {
         rows.push('Date,Quantity (kg),Grade,Price,Buyer,Notes');
         data.harvest.forEach((r) => {
           rows.push(
-            `${r.date},${r.quantity},"${r.grade}",${r.price || ''},"${r.buyer || ''}","${r.notes || ''}"`,
+            `${this.escapeCSV(r.date)},${r.quantity},${this.escapeCSV(r.grade)},${r.price || ''},${this.escapeCSV(r.buyer || '')},${this.escapeCSV(r.notes || '')}`,
           );
         });
         rows.push('');
@@ -224,7 +236,9 @@ export class ReportService {
         rows.push('EXPENSE RECORDS');
         rows.push('Date,Type,Cost,Remarks');
         data.expense.forEach((r) => {
-          rows.push(`${r.date},"${r.type}",${r.cost},"${r.remarks || ''}"`);
+          rows.push(
+            `${this.escapeCSV(r.date)},${this.escapeCSV(r.type)},${r.cost},${this.escapeCSV(r.remarks || '')}`,
+          );
         });
         rows.push('');
       }
@@ -398,8 +412,7 @@ export class ReportService {
     const bytes = new TextEncoder().encode(csv);
     await writer.write(bytes);
     await writer.close();
-    const fileUri =
-      (file as { uri?: string }).uri ?? (file as { path?: string }).path ?? file.toString();
+    const fileUri = file.uri;
 
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(fileUri, {
@@ -407,6 +420,8 @@ export class ReportService {
         dialogTitle: 'Export Report',
         UTI: 'public.comma-separated-values-text',
       });
+    } else {
+      throw new Error('Sharing is not available on this device');
     }
   }
 
@@ -432,6 +447,8 @@ export class ReportService {
         dialogTitle: 'Export Report',
         UTI: 'com.adobe.pdf',
       });
+    } else {
+      throw new Error('Sharing is not available on this device');
     }
   }
 }

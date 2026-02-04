@@ -991,7 +991,7 @@ export default function ExploreScreen() {
                   backgroundColor: colors.primary[500],
                 }}
               >
-                <Icon name="plus.circle.fill" size={20} color="white" />
+                <Icon name="plus.circle.fill" size={20} color={m3.colorScheme.onPrimary} />
                 <Text
                   style={{
                     color: m3.colorScheme.onPrimary,

@@ -64,8 +64,7 @@ export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
     flex: 1,
     marginRight: spacing[2],
     color: m3.colorScheme.onSurface,
-    numberOfLines: 1,
-  } as TextStyle;
+  };
 
   const actionsStyle: ViewStyle = {
     flexDirection: 'row',

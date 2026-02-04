@@ -803,7 +803,7 @@ export default function AnalyticsScreen() {
                 return recentItems.map((activity, index) => {
                   const iconInfo = activityIcons[activity.type] || {
                     icon: 'ellipse',
-                    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
+                    color: m3.colorScheme.onSurfaceVariant,
                   };
                   return (
                     <View
@@ -824,7 +824,7 @@ export default function AnalyticsScreen() {
                           borderRadius: borderRadius.xl,
                           alignItems: 'center',
                           justifyContent: 'center',
-                          backgroundColor: `${iconInfo.color}15`,
+                          backgroundColor: colorWithOpacity(iconInfo.color, 0.08),
                         }}
                       >
                         <SymbolIcon name={iconInfo.icon} size={18} color={iconInfo.color} />

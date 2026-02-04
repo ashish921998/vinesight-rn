@@ -182,7 +182,16 @@ export default function TabLayout() {
           default: m3.colorScheme.onSurfaceVariant,
           selected: m3.colorScheme.primary,
         }}
-        labelStyle={{ fontSize: 11, fontWeight: '500' }}
+        labelStyle={{
+          default: {
+            fontSize: 11,
+            fontWeight: '500',
+            color: m3.colorScheme.onSurfaceVariant,
+          },
+          selected: {
+            color: m3.colorScheme.primary,
+          },
+        }}
         backgroundColor={m3.surface.surfaceContainer}
         shadowColor={colorWithOpacity(m3.colorScheme.shadow, isDark ? 0.6 : 0.05)}
       >
