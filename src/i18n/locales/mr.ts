@@ -176,6 +176,7 @@ export const mr = {
     actions: {
       addActivity: 'नोंद जोडा',
       seeAllActivities: 'सर्व क्रियाकलाप पहा',
+      seeAllTasks: 'सर्व $t(glossary.task) पहा',
     },
     a11y: {
       editFarm: '$t(glossary.farm) संपादित करा',
@@ -407,6 +408,9 @@ export const mr = {
       title: 'नोंद हटवायची?',
       body: '{{date}} ची {{type}} नोंद हटवायची आहे का?',
     },
+    cta: {
+      addActivity: '$t(glossary.activity) जोडा',
+    },
   },
 
   farms: {
@@ -565,6 +569,67 @@ export const mr = {
       laiCalculator: 'कॅनपी व्यवस्थापनासाठी Leaf Area Index गणा',
       nutrientCalculator: '$t(glossary.labTest) वरून $t(glossary.fertilizer) आणि पोषक आवश्यकता गणा',
     },
+  },
+
+  calculator: {
+    mad: {
+      title: 'MAD कॅल्क्युलेटर',
+      step1: {
+        title: 'चरण 1: MAD गणना',
+        label: {
+          dbl: 'ओळींमधील अंतर (DBL)',
+          rootDepth: 'मुळांची खोली',
+          rootWidth: 'मुळांची रुंदी',
+          waterRetention: 'पाणी धारण क्षमता',
+        },
+        placeholder: {
+          dbl: '3.0',
+          rootDepth: '0.6',
+          rootWidth: '1.5',
+          waterRetention: '15',
+        },
+        unit: {
+          meters: 'मी',
+          percent: '%',
+        },
+        calculateButton: 'MAD गणा',
+      },
+      step2: {
+        title: 'चरण 2: रीफिल टँक कॅल्क्युलेटर',
+        selectRefillSpan: 'रीफिल कालावधी निवडा',
+        refillSpanGuidance: 'रीफिल कालावधी मार्गदर्शक:',
+        guidance: {
+          heavy: 'जास्त वाढ (0.2): फळ लावणे - टर्गर राखा',
+          normal: 'सामान्य वाढ (0.3): फुलणे - वाढ/तणाव संतुलित ठेवा',
+          controlled: 'नियंत्रित तणाव (0.4): वेरासन - गुणवत्ता/साखर सुधारा',
+        },
+        calculateButton: 'रीफिल टँक गणा',
+      },
+      results: {
+        madTitle: 'जास्तीत जास्त अनुमत घट',
+        interpretation: 'व्याख्या',
+        interpretationMessages: {
+          shallow:
+            'उथळ मुळ क्षेत्र - अत्यंत वारंवार $t(glossary.irrigation) आवश्यक (दररोज किंवा दिवसातून दोनदा)',
+          moderate: 'मध्यम मुळ क्षेत्र - 1-2 दिवसांत $t(glossary.irrigation) शिफारस केले आहे',
+          deep: 'खोल मुळ क्षेत्र - सामान्यतः 2-3 दिवसांचे $t(glossary.irrigation) पुरेसे आहे',
+          veryDeep: 'खूप खोल मुळे - 3-5 दिवसांचे $t(glossary.irrigation) पुरेसे असू शकते',
+        },
+        refillTankTitle: 'रीफिल टँक आवश्यकता',
+        whatThisMeans: 'याचा अर्थ काय',
+        refillExplanation:
+          'अष्टपौराणिक द्राक्ष आरोग्य राखण्यासाठी $t(glossary.soil) ओलसरपणा MAD च्या {{percentage}}% पर्यंत कमी झाल्यावर {{value}} एकक पाणी लावा.',
+      },
+      actions: {
+        reset: 'कॅल्क्युलेटर रीसेट करा',
+      },
+    },
+  },
+
+  parameterSelector: {
+    title: 'मापदंड ({{count}} निवडले)',
+    selectAll: 'सर्व निवडा',
+    deselectAll: 'सर्व निवड रद्द करा',
   },
 
   weather: {

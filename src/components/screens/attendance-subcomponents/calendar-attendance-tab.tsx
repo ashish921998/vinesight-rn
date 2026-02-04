@@ -3,29 +3,35 @@ import { View, Text, ScrollView, ActivityIndicator, Alert, Pressable } from 'rea
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { WorkerSelectSheet } from './index';
 import i18n from '@/i18n';
 
 type AttendanceStatus = WorkStatus | null;
-
-const UI = {
-  bg: m3.colorScheme.background,
-  surface: '#FFFFFF',
-  surfaceSoft: 'rgba(255, 255, 255, 0.9)',
-  border: 'rgba(15, 23, 42, 0.08)',
-  primary: '#2F6B4F',
-  primarySoft: 'rgba(47, 107, 79, 0.12)',
-  text: '#0F172A',
-  muted: '#6B7280',
-  accent: '#2563EB',
-};
 
 interface CalendarAttendanceTabProps {
   workers: Worker[];
 }
 
 export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
+  const colors = useThemeColors();
+  const m3 = useM3();
+  const UI = useMemo(
+    () => ({
+      bg: m3.colorScheme.background,
+      surface: colors.surface[100],
+      surfaceSoft: colorWithOpacity(colors.surface[100], 0.9),
+      border: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+      primary: m3.colorScheme.primary,
+      primarySoft: colorWithOpacity(m3.colorScheme.primary, 0.12),
+      text: m3.colorScheme.onSurface,
+      muted: m3.colorScheme.onSurfaceVariant,
+      accent: m3.colorScheme.secondary,
+    }),
+    [colors, m3],
+  );
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | null>(
     workers.length > 0 && workers[0].id !== undefined ? workers[0].id : null,
   );
@@ -280,7 +286,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                         fontWeight: fontWeight.bold,
                         textTransform: 'uppercase',
                         textAlign: 'center',
-                        color: '#9CA3AF',
+                        color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
                       }}
                     >
                       {day}
@@ -323,8 +329,8 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                                 color: isTodayDate
                                   ? UI.primary
                                   : isCurrentMonth
-                                    ? '#111827'
-                                    : '#D1D5DB',
+                                    ? m3.colorScheme.onSurface
+                                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.35),
                               }}
                             >
                               {day.getDate()}
@@ -337,7 +343,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                                       width: 6,
                                       height: 6,
                                       borderRadius: borderRadius.full,
-                                      backgroundColor: '#22C55E',
+                                      backgroundColor: colors.success,
                                     }}
                                   />
                                 )}
@@ -347,7 +353,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                                       width: 6,
                                       height: 6,
                                       borderRadius: borderRadius.full,
-                                      backgroundColor: '#F59E0B',
+                                      backgroundColor: colors.warning,
                                     }}
                                   />
                                 )}
@@ -357,7 +363,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                                       width: 6,
                                       height: 6,
                                       borderRadius: borderRadius.full,
-                                      backgroundColor: '#EF4444',
+                                      backgroundColor: m3.colorScheme.error,
                                     }}
                                   />
                                 )}
@@ -386,7 +392,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                       width: 10,
                       height: 10,
                       borderRadius: borderRadius.full,
-                      backgroundColor: '#22C55E',
+                      backgroundColor: colors.success,
                     }}
                   />
                   <Text
@@ -405,7 +411,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                       width: 10,
                       height: 10,
                       borderRadius: borderRadius.full,
-                      backgroundColor: '#F59E0B',
+                      backgroundColor: colors.warning,
                     }}
                   />
                   <Text
@@ -424,7 +430,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                       width: 10,
                       height: 10,
                       borderRadius: borderRadius.full,
-                      backgroundColor: '#EF4444',
+                      backgroundColor: m3.colorScheme.error,
                     }}
                   />
                   <Text

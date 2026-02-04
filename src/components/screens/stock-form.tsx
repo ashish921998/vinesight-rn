@@ -5,7 +5,9 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useUpdateWarehouseItem, useProfile } from '../../hooks';
 import { WarehouseItem } from '../../types';
 import { FormModal, SectionHeader, FormInput, PreviewCard } from '../ui/form-components';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatNumber } from '@/i18n/format';
 
 interface Props {
@@ -17,6 +19,8 @@ interface Props {
 
 export default function StockForm({ visible, onClose, item, presentation = 'modal' }: Props) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
 
   const isVisible = visible ?? true;
   const { data: profile } = useProfile();
@@ -116,13 +120,16 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
               borderRadius: borderRadius.xl,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: item.type === 'fertilizer' ? '#DCFCE7' : '#DBEAFE',
+              backgroundColor:
+                item.type === 'fertilizer'
+                  ? colorWithOpacity(colors.success, 0.12)
+                  : colorWithOpacity(m3.colorScheme.primary, 0.12),
             }}
           >
             <SymbolIcon
               name={item.type === 'fertilizer' ? 'flask.fill' : 'drop.fill'}
               size={24}
-              color={item.type === 'fertilizer' ? '#16A34A' : '#3B82F6'}
+              color={item.type === 'fertilizer' ? colors.success : m3.colorScheme.primary}
             />
           </View>
           <View style={{ flex: 1, marginLeft: spacing[3] }}>
@@ -188,7 +195,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
               value: formatCurrency(newValue, currency),
             },
           ]}
-          backgroundColor="#DBEAFE"
+          backgroundColor={colorWithOpacity(m3.colorScheme.primary, 0.12)}
         />
       )}
     </FormModal>

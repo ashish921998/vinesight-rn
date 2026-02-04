@@ -17,9 +17,10 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { Farm } from '../../types';
 import { isLowWater } from '../../types';
-import { colors, m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatNumber } from '@/i18n/format';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 
 interface FarmCardProps {
   farm: Farm;
@@ -29,6 +30,8 @@ interface FarmCardProps {
 }
 
 export function FarmCard({ farm, onPress, onEdit, onDelete }: FarmCardProps) {
+  const m3 = useM3();
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const needsAttention = isLowWater(farm);
   const statusText = needsAttention

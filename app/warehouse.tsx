@@ -15,22 +15,22 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import { useModalStore } from '@/stores';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
 
-const COLORS = {
-  primary: '#408059',
-  background: m3.colorScheme.background,
-  glass: 'rgba(255, 255, 255, 0.8)',
-  lowStock: '#D9731F',
-  warehouseFertilizer: '#598C6B',
-  warehouseSpray: '#408059',
-};
-
 export default function WarehouseScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
+
+  const glassSurface = colorWithOpacity(colors.surface[100], 0.85);
+  const lowStockColor = colors.warning;
+  const fertilizerColor = m3.colorScheme.tertiary;
+  const sprayColor = m3.colorScheme.primary;
 
   const router = useRouter();
   const { setAddWarehouseItem, setAddStock } = useModalStore();
@@ -115,13 +115,13 @@ export default function WarehouseScreen() {
       <View
         style={{
           flex: 1,
-          backgroundColor: COLORS.background,
+          backgroundColor: m3.colorScheme.background,
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
         <Stack.Screen options={{ title: t('warehouse.title') }} />
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
           {t('warehouse.loading.inventory')}
         </Text>
@@ -130,7 +130,7 @@ export default function WarehouseScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <Stack.Screen
         options={{
           title: t('warehouse.title'),
@@ -141,7 +141,7 @@ export default function WarehouseScreen() {
               }}
               style={{ marginRight: spacing[4] }}
             >
-              <Icon name="plus.circle.fill" size={28} color="#408059" />
+              <Icon name="plus.circle.fill" size={28} color={m3.colorScheme.primary} />
             </Pressable>
           ),
         }}
@@ -154,7 +154,7 @@ export default function WarehouseScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={COLORS.primary}
+              tintColor={m3.colorScheme.primary}
             />
           }
         >
@@ -165,13 +165,13 @@ export default function WarehouseScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: COLORS.glass,
+                backgroundColor: glassSurface,
               }}
             >
               <Icon
                 name="exclamationmark.triangle.fill"
                 size={24}
-                color={lowStockItems.length > 0 ? COLORS.lowStock : COLORS.primary}
+                color={lowStockItems.length > 0 ? lowStockColor : m3.colorScheme.primary}
               />
               <Text
                 style={{
@@ -192,10 +192,10 @@ export default function WarehouseScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: COLORS.glass,
+                backgroundColor: glassSurface,
               }}
             >
-              <Icon name="dollarsign.circle.fill" size={24} color={COLORS.primary} />
+              <Icon name="dollarsign.circle.fill" size={24} color={m3.colorScheme.primary} />
               <Text
                 style={{
                   color: colors.surface[900],
@@ -219,7 +219,7 @@ export default function WarehouseScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
-                backgroundColor: `${COLORS.lowStock}15`,
+                backgroundColor: colorWithOpacity(lowStockColor, 0.08),
               }}
             >
               <View
@@ -229,10 +229,10 @@ export default function WarehouseScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                <Icon name="exclamationmark.triangle.fill" size={20} color={COLORS.lowStock} />
+                <Icon name="exclamationmark.triangle.fill" size={20} color={lowStockColor} />
                 <Text
                   style={{
-                    color: COLORS.lowStock,
+                    color: lowStockColor,
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
                     marginLeft: spacing[2],
@@ -246,12 +246,12 @@ export default function WarehouseScreen() {
                     paddingVertical: 2,
                     borderRadius: borderRadius.full,
                     marginLeft: 'auto',
-                    backgroundColor: `${COLORS.lowStock}30`,
+                    backgroundColor: colorWithOpacity(lowStockColor, 0.18),
                   }}
                 >
                   <Text
                     style={{
-                      color: COLORS.lowStock,
+                      color: lowStockColor,
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
                     }}
@@ -272,14 +272,14 @@ export default function WarehouseScreen() {
                         style={{
                           borderRadius: borderRadius.xl,
                           padding: spacing[3],
-                          backgroundColor: COLORS.glass,
+                          backgroundColor: glassSurface,
                         }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Icon
                             name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                             size={16}
-                            color={COLORS.lowStock}
+                            color={lowStockColor}
                           />
                           <Text
                             style={{
@@ -324,12 +324,12 @@ export default function WarehouseScreen() {
                             borderRadius: borderRadius.full,
                             alignItems: 'center',
                             alignSelf: 'flex-start',
-                            backgroundColor: COLORS.primary,
+                            backgroundColor: m3.colorScheme.primary,
                           }}
                         >
                           <Text
                             style={{
-                              color: 'white',
+                              color: m3.colorScheme.onPrimary,
                               fontSize: fontSize.xs,
                               fontWeight: fontWeight.medium,
                             }}
@@ -352,7 +352,7 @@ export default function WarehouseScreen() {
               borderRadius: borderRadius.xl,
               padding: spacing[1],
               marginBottom: spacing[4],
-              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              backgroundColor: colorWithOpacity(m3.colorScheme.onSurface, 0.08),
             }}
           >
             {(['all', 'fertilizer', 'spray'] as FilterType[]).map((type) => (
@@ -363,7 +363,8 @@ export default function WarehouseScreen() {
                   flex: 1,
                   paddingVertical: 10,
                   borderRadius: borderRadius.lg,
-                  backgroundColor: filter === type ? colors.surface[100] : 'transparent',
+                  backgroundColor:
+                    filter === type ? colorWithOpacity(colors.surface[100], 0.9) : 'transparent',
                 }}
               >
                 <Text
@@ -391,7 +392,7 @@ export default function WarehouseScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[8],
                 alignItems: 'center',
-                backgroundColor: COLORS.glass,
+                backgroundColor: glassSurface,
               }}
             >
               <View
@@ -401,10 +402,10 @@ export default function WarehouseScreen() {
                   borderRadius: borderRadius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: `${COLORS.primary}33`,
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.2),
                 }}
               >
-                <Icon name="cube" size={32} color={COLORS.primary} />
+                <Icon name="cube" size={32} color={m3.colorScheme.primary} />
               </View>
               <Text
                 style={{
@@ -437,13 +438,13 @@ export default function WarehouseScreen() {
                   borderRadius: borderRadius.xl,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: COLORS.primary,
+                  backgroundColor: m3.colorScheme.primary,
                 }}
               >
-                <Icon name="plus.circle.fill" size={20} color="white" />
+                <Icon name="plus.circle.fill" size={20} color={m3.colorScheme.onPrimary} />
                 <Text
                   style={{
-                    color: colors.white,
+                    color: m3.colorScheme.onPrimary,
                     fontWeight: fontWeight.semibold,
                     marginLeft: spacing[2],
                   }}
@@ -456,8 +457,7 @@ export default function WarehouseScreen() {
             filteredItems.map((item) => {
               const isLowStock = item.reorder_quantity && item.quantity <= item.reorder_quantity;
               const itemValue = item.quantity * item.unit_price;
-              const itemColor =
-                item.type === 'fertilizer' ? COLORS.warehouseFertilizer : COLORS.warehouseSpray;
+              const itemColor = item.type === 'fertilizer' ? fertilizerColor : sprayColor;
 
               return (
                 <View
@@ -466,8 +466,10 @@ export default function WarehouseScreen() {
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
                     marginBottom: spacing[3],
-                    backgroundColor: isLowStock ? `${COLORS.lowStock}0D` : COLORS.glass,
-                    borderColor: isLowStock ? `${COLORS.lowStock}4D` : 'transparent',
+                    backgroundColor: isLowStock
+                      ? colorWithOpacity(lowStockColor, 0.08)
+                      : glassSurface,
+                    borderColor: isLowStock ? colorWithOpacity(lowStockColor, 0.3) : 'transparent',
                     borderWidth: isLowStock ? 1 : 0,
                   }}
                 >
@@ -481,8 +483,8 @@ export default function WarehouseScreen() {
                             borderRadius: borderRadius.full,
                             backgroundColor:
                               item.type === 'fertilizer'
-                                ? `${COLORS.warehouseFertilizer}33`
-                                : `${COLORS.warehouseSpray}33`,
+                                ? colorWithOpacity(fertilizerColor, 0.2)
+                                : colorWithOpacity(sprayColor, 0.2),
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -512,10 +514,10 @@ export default function WarehouseScreen() {
                               paddingHorizontal: spacing[2],
                               paddingVertical: 2,
                               borderRadius: borderRadius.full,
-                              backgroundColor: `${COLORS.lowStock}33`,
+                              backgroundColor: colorWithOpacity(lowStockColor, 0.2),
                             }}
                           >
-                            <Text style={{ color: COLORS.lowStock }}>{t('common.labels.low')}</Text>
+                            <Text style={{ color: lowStockColor }}>{t('common.labels.low')}</Text>
                           </View>
                         )}
                         <View style={{ flexDirection: 'row', gap: spacing[2], marginLeft: 'auto' }}>
@@ -523,13 +525,13 @@ export default function WarehouseScreen() {
                             onPress={() => handleEditItem(item)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                           >
-                            <Icon name="pencil" size={20} color="#408059" />
+                            <Icon name="pencil" size={20} color={m3.colorScheme.primary} />
                           </Pressable>
                           <Pressable
                             onPress={() => handleDeleteItem(item)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                           >
-                            <Icon name="trash" size={20} color="#DC2626" />
+                            <Icon name="trash" size={20} color={m3.colorScheme.error} />
                           </Pressable>
                         </View>
                       </View>
@@ -581,7 +583,7 @@ export default function WarehouseScreen() {
                       </Text>
                       <Text
                         style={{
-                          color: COLORS.primary,
+                          color: m3.colorScheme.primary,
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.semibold,
                         }}
@@ -624,10 +626,10 @@ export default function WarehouseScreen() {
           borderRadius: borderRadius.full,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: COLORS.primary,
+          backgroundColor: m3.colorScheme.primary,
         }}
       >
-        <Icon name="plus" size={28} color="white" />
+        <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
       </Pressable>
 
       {/* Modals */}

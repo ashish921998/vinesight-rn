@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { useCreateWarehouseItem, useUpdateWarehouseItem, useProfile } from '../../hooks';
 import { WarehouseItem, WarehouseItemType, WarehouseUnit } from '../../types';
@@ -12,6 +12,8 @@ import {
   FormInput,
   PreviewCard,
 } from '../ui/form-components';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface Props {
   visible?: boolean;
@@ -25,43 +27,14 @@ const ITEM_TYPES = [
   { value: 'spray' as WarehouseItemType, label: 'Spray', icon: 'water' as const },
 ];
 
-const UNITS = [
-  {
-    value: 'kg' as WarehouseUnit,
-    label: 'kg',
-    sublabel: 'Kilograms',
-    icon: 'scale-outline' as const,
-    iconColor: '#FEF3C7',
-  },
-  {
-    value: 'gram' as WarehouseUnit,
-    label: 'g',
-    sublabel: 'Grams',
-    icon: 'scale-outline' as const,
-    iconColor: '#FEF3C7',
-  },
-  {
-    value: 'liter' as WarehouseUnit,
-    label: 'L',
-    sublabel: 'Liters',
-    icon: 'water-outline' as const,
-    iconColor: '#DBEAFE',
-  },
-  {
-    value: 'ml' as WarehouseUnit,
-    label: 'ml',
-    sublabel: 'Milliliters',
-    icon: 'water-outline' as const,
-    iconColor: '#DBEAFE',
-  },
-];
-
 export default function WarehouseItemForm({
   visible,
   onClose,
   editingItem,
   presentation = 'modal',
 }: Props) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const isVisible = visible ?? true;
   const { data: profile } = useProfile();
   const createMutation = useCreateWarehouseItem();
@@ -77,6 +50,40 @@ export default function WarehouseItemForm({
 
   const currency = profile?.preferred_currency || 'INR';
   const isEditing = !!editingItem;
+
+  const unitOptions = useMemo(
+    () => [
+      {
+        value: 'kg' as WarehouseUnit,
+        label: 'kg',
+        sublabel: 'Kilograms',
+        icon: 'scale-outline' as const,
+        iconColor: colorWithOpacity(colors.warning, 0.25),
+      },
+      {
+        value: 'gram' as WarehouseUnit,
+        label: 'g',
+        sublabel: 'Grams',
+        icon: 'scale-outline' as const,
+        iconColor: colorWithOpacity(colors.warning, 0.25),
+      },
+      {
+        value: 'liter' as WarehouseUnit,
+        label: 'L',
+        sublabel: 'Liters',
+        icon: 'water-outline' as const,
+        iconColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
+      },
+      {
+        value: 'ml' as WarehouseUnit,
+        label: 'ml',
+        sublabel: 'Milliliters',
+        icon: 'water-outline' as const,
+        iconColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
+      },
+    ],
+    [colors.warning, m3.colorScheme.primary],
+  );
 
   // Track previous state to prevent unnecessary updates
   const prevVisibleRef = useRef(isVisible);
@@ -225,7 +232,7 @@ export default function WarehouseItemForm({
       />
 
       <CardSelector
-        options={UNITS}
+        options={unitOptions}
         selectedValue={unit}
         onSelect={(value) => setUnit(value as WarehouseUnit)}
         columns={2}
@@ -277,7 +284,7 @@ export default function WarehouseItemForm({
               value: formatCurrency(parseFloat(totalValue), currency),
             },
           ]}
-          backgroundColor="#F0FDF4"
+          backgroundColor={colorWithOpacity(colors.success, 0.12)}
         />
       )}
     </FormModal>

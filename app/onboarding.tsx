@@ -20,7 +20,9 @@ import { router } from 'expo-router';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useLanguageStore } from '@/stores';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import AppIcon from '../assets/icon.png';
 
@@ -28,6 +30,8 @@ const appIconSource = AppIcon as ImageSourcePropType;
 
 export default function OnboardingScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
 
   const { currentStep, preferences, nextStep, previousStep, setPreferences, completeOnboarding } =
     useOnboardingStore();
@@ -117,7 +121,10 @@ export default function OnboardingScreen() {
           style={{
             height: 4,
             borderRadius: borderRadius.full,
-            backgroundColor: index <= currentIndex ? colors.primary[600] : colors.gray[300],
+            backgroundColor:
+              index <= currentIndex
+                ? m3.colorScheme.primary
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.35),
             width: index <= currentIndex ? 32 : 24,
           }}
         />
@@ -139,7 +146,7 @@ export default function OnboardingScreen() {
           width: 128,
           height: 128,
           borderRadius: borderRadius.full,
-          backgroundColor: colors.primary[100],
+          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: spacing[8],
@@ -156,14 +163,20 @@ export default function OnboardingScreen() {
         style={{
           fontSize: fontSize['3xl'],
           fontWeight: fontWeight.bold,
-          color: colors.gray[800],
+          color: m3.colorScheme.onSurface,
           textAlign: 'center',
           marginBottom: spacing[3],
         }}
       >
         {t('onboarding.welcome.title')}
       </Text>
-      <Text style={{ fontSize: fontSize.lg, color: colors.gray[500], textAlign: 'center' }}>
+      <Text
+        style={{
+          fontSize: fontSize.lg,
+          color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
+          textAlign: 'center',
+        }}
+      >
         {t('onboarding.welcome.subtitle')}
       </Text>
     </View>
@@ -183,27 +196,33 @@ export default function OnboardingScreen() {
           width: 96,
           height: 96,
           borderRadius: borderRadius.full,
-          backgroundColor: colors.primary[100],
+          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: spacing[8],
         }}
       >
-        <SymbolIcon name="globe" size={48} color={colors.primary[700]} />
+        <SymbolIcon name="globe" size={48} color={m3.colorScheme.primary} />
       </View>
 
       <Text
         style={{
           fontSize: fontSize['2xl'],
           fontWeight: fontWeight.bold,
-          color: colors.gray[800],
+          color: m3.colorScheme.onSurface,
           textAlign: 'center',
           marginBottom: spacing[3],
         }}
       >
         {t('onboarding.language.title')}
       </Text>
-      <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[6] }}>
+      <Text
+        style={{
+          color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
+          textAlign: 'center',
+          marginBottom: spacing[6],
+        }}
+      >
         {t('onboarding.language.subtitle')}
       </Text>
 
@@ -219,15 +238,21 @@ export default function OnboardingScreen() {
             padding: spacing[4],
             borderRadius: borderRadius.xl,
             borderWidth: 2,
-            borderColor: selectedLanguage === 'en' ? colors.primary[600] : colors.gray[200],
-            backgroundColor: selectedLanguage === 'en' ? colors.primary[50] : colors.white,
+            borderColor:
+              selectedLanguage === 'en'
+                ? m3.colorScheme.primary
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.25),
+            backgroundColor:
+              selectedLanguage === 'en'
+                ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                : colors.surface[100],
           }}
         >
           <Text
             style={{
               textAlign: 'center',
               fontWeight: fontWeight.semibold,
-              color: selectedLanguage === 'en' ? colors.primary[700] : colors.gray[700],
+              color: selectedLanguage === 'en' ? m3.colorScheme.primary : m3.colorScheme.onSurface,
               fontSize: fontSize.lg,
             }}
           >
@@ -246,15 +271,21 @@ export default function OnboardingScreen() {
             padding: spacing[4],
             borderRadius: borderRadius.xl,
             borderWidth: 2,
-            borderColor: selectedLanguage === 'mr' ? colors.primary[600] : colors.gray[200],
-            backgroundColor: selectedLanguage === 'mr' ? colors.primary[50] : colors.white,
+            borderColor:
+              selectedLanguage === 'mr'
+                ? m3.colorScheme.primary
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.25),
+            backgroundColor:
+              selectedLanguage === 'mr'
+                ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                : colors.surface[100],
           }}
         >
           <Text
             style={{
               textAlign: 'center',
               fontWeight: fontWeight.semibold,
-              color: selectedLanguage === 'mr' ? colors.primary[700] : colors.gray[700],
+              color: selectedLanguage === 'mr' ? m3.colorScheme.primary : m3.colorScheme.onSurface,
               fontSize: fontSize.lg,
             }}
           >
@@ -275,14 +306,20 @@ export default function OnboardingScreen() {
         style={{
           fontSize: fontSize['2xl'],
           fontWeight: fontWeight.bold,
-          color: colors.gray[800],
+          color: m3.colorScheme.onSurface,
           textAlign: 'center',
           marginBottom: spacing[2],
         }}
       >
         {t('onboarding.howItWorks.title')}
       </Text>
-      <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[6] }}>
+      <Text
+        style={{
+          color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
+          textAlign: 'center',
+          marginBottom: spacing[6],
+        }}
+      >
         {t('onboarding.howItWorks.subtitle')}
       </Text>
 
@@ -290,7 +327,7 @@ export default function OnboardingScreen() {
         <View
           key={index}
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderRadius: borderRadius['2xl'],
             padding: spacing[4],
             marginBottom: spacing[3],
@@ -306,7 +343,7 @@ export default function OnboardingScreen() {
               alignItems: 'center',
               justifyContent: 'center',
               marginRight: spacing[4],
-              backgroundColor: `${feature.color}15`,
+              backgroundColor: colorWithOpacity(feature.color, 0.12),
             }}
           >
             <SymbolIcon name={feature.icon} size={24} color={feature.color} />
@@ -316,12 +353,18 @@ export default function OnboardingScreen() {
               style={{
                 fontSize: fontSize.base,
                 fontWeight: fontWeight.semibold,
-                color: colors.gray[800],
+                color: m3.colorScheme.onSurface,
               }}
             >
               {t(`onboarding.features.${feature.id}.title`)}
             </Text>
-            <Text style={{ fontSize: fontSize.sm, color: colors.gray[500], marginTop: spacing[1] }}>
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
+                marginTop: spacing[1],
+              }}
+            >
               {t(`onboarding.features.${feature.id}.description`)}
             </Text>
           </View>
@@ -340,26 +383,32 @@ export default function OnboardingScreen() {
         style={{
           fontSize: fontSize['2xl'],
           fontWeight: fontWeight.bold,
-          color: colors.gray[800],
+          color: m3.colorScheme.onSurface,
           textAlign: 'center',
           marginBottom: spacing[2],
         }}
       >
         {t('onboarding.preferences.title')}
       </Text>
-      <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[8] }}>
+      <Text
+        style={{
+          color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
+          textAlign: 'center',
+          marginBottom: spacing[8],
+        }}
+      >
         {t('onboarding.preferences.subtitle')}
       </Text>
 
       {/* Country Selection */}
       <View style={{ marginBottom: spacing[6] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
-          <SymbolIcon name="globe" size={20} color={colors.primary[700]} />
+          <SymbolIcon name="globe" size={20} color={m3.colorScheme.primary} />
           <Text
             style={{
               fontSize: fontSize.base,
               fontWeight: fontWeight.semibold,
-              color: colors.gray[800],
+              color: m3.colorScheme.onSurface,
               marginLeft: spacing[2],
             }}
           >
@@ -369,7 +418,7 @@ export default function OnboardingScreen() {
         <Pressable
           onPress={() => setShowCountryPicker(!showCountryPicker)}
           style={{
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderRadius: borderRadius.xl,
             padding: spacing[4],
             flexDirection: 'row',
@@ -380,7 +429,9 @@ export default function OnboardingScreen() {
           <Text
             style={{
               fontSize: fontSize.base,
-              color: selectedCountry ? colors.gray[800] : colors.gray[400],
+              color: selectedCountry
+                ? m3.colorScheme.onSurface
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
             }}
           >
             {selectedCountry || t('onboarding.preferences.selectCountry')}
@@ -388,19 +439,19 @@ export default function OnboardingScreen() {
           <SymbolIcon
             name={showCountryPicker ? 'chevron.up' : 'chevron.down'}
             size={20}
-            color="#666"
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
           />
         </Pressable>
 
         {showCountryPicker && (
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               borderRadius: borderRadius.xl,
               marginTop: spacing[2],
               overflow: 'hidden',
               borderWidth: 1,
-              borderColor: colors.gray[200],
+              borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.25),
             }}
           >
             {COUNTRIES.map((country) => (
@@ -413,14 +464,20 @@ export default function OnboardingScreen() {
                 style={{
                   padding: spacing[4],
                   borderBottomWidth: 1,
-                  borderBottomColor: colors.gray[100],
-                  backgroundColor: selectedCountry === country ? colors.primary[50] : colors.white,
+                  borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.15),
+                  backgroundColor:
+                    selectedCountry === country
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                      : colors.surface[100],
                 }}
               >
                 <Text
                   style={{
                     fontSize: fontSize.base,
-                    color: selectedCountry === country ? colors.primary[700] : colors.gray[700],
+                    color:
+                      selectedCountry === country
+                        ? m3.colorScheme.primary
+                        : m3.colorScheme.onSurface,
                     fontWeight:
                       selectedCountry === country ? fontWeight.semibold : fontWeight.normal,
                   }}
@@ -439,13 +496,13 @@ export default function OnboardingScreen() {
           <SymbolIcon
             name="arrow.up.left.and.arrow.down.right"
             size={20}
-            color={colors.primary[700]}
+            color={m3.colorScheme.primary}
           />
           <Text
             style={{
               fontSize: fontSize.base,
               fontWeight: fontWeight.semibold,
-              color: colors.gray[800],
+              color: m3.colorScheme.onSurface,
               marginLeft: spacing[2],
             }}
           >
@@ -460,15 +517,24 @@ export default function OnboardingScreen() {
               padding: spacing[4],
               borderRadius: borderRadius.xl,
               borderWidth: 2,
-              borderColor: selectedAreaUnit === 'acres' ? colors.primary[600] : colors.gray[200],
-              backgroundColor: selectedAreaUnit === 'acres' ? colors.primary[50] : colors.white,
+              borderColor:
+                selectedAreaUnit === 'acres'
+                  ? m3.colorScheme.primary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.25),
+              backgroundColor:
+                selectedAreaUnit === 'acres'
+                  ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                  : colors.surface[100],
             }}
           >
             <Text
               style={{
                 textAlign: 'center',
                 fontWeight: fontWeight.semibold,
-                color: selectedAreaUnit === 'acres' ? colors.primary[700] : colors.gray[600],
+                color:
+                  selectedAreaUnit === 'acres'
+                    ? m3.colorScheme.primary
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.85),
               }}
             >
               {t('units.acres')}
@@ -481,15 +547,24 @@ export default function OnboardingScreen() {
               padding: spacing[4],
               borderRadius: borderRadius.xl,
               borderWidth: 2,
-              borderColor: selectedAreaUnit === 'hectares' ? colors.primary[600] : colors.gray[200],
-              backgroundColor: selectedAreaUnit === 'hectares' ? colors.primary[50] : colors.white,
+              borderColor:
+                selectedAreaUnit === 'hectares'
+                  ? m3.colorScheme.primary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.25),
+              backgroundColor:
+                selectedAreaUnit === 'hectares'
+                  ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                  : colors.surface[100],
             }}
           >
             <Text
               style={{
                 textAlign: 'center',
                 fontWeight: fontWeight.semibold,
-                color: selectedAreaUnit === 'hectares' ? colors.primary[700] : colors.gray[600],
+                color:
+                  selectedAreaUnit === 'hectares'
+                    ? m3.colorScheme.primary
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.85),
               }}
             >
               {t('units.hectares')}
@@ -514,46 +589,60 @@ export default function OnboardingScreen() {
           width: 96,
           height: 96,
           borderRadius: borderRadius.full,
-          backgroundColor: '#DBEAFE',
+          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: spacing[8],
         }}
       >
-        <SymbolIcon name="bell.fill" size={48} color="#3B82F6" />
+        <SymbolIcon name="bell.fill" size={48} color={m3.colorScheme.primary} />
       </View>
       <Text
         style={{
           fontSize: fontSize['2xl'],
           fontWeight: fontWeight.bold,
-          color: colors.gray[800],
+          color: m3.colorScheme.onSurface,
           textAlign: 'center',
           marginBottom: spacing[3],
         }}
       >
         {t('onboarding.notifications.title')}
       </Text>
-      <Text style={{ color: colors.gray[500], textAlign: 'center', marginBottom: spacing[6] }}>
+      <Text
+        style={{
+          color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
+          textAlign: 'center',
+          marginBottom: spacing[6],
+        }}
+      >
         {t('onboarding.notifications.subtitle')}
       </Text>
       <View
-        style={{ backgroundColor: '#EFF6FF', padding: spacing[4], borderRadius: borderRadius.xl }}
+        style={{
+          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
+          padding: spacing[4],
+          borderRadius: borderRadius.xl,
+        }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-          <SymbolIcon name="drop.fill" size={20} color="#3B82F6" />
-          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>
+          <SymbolIcon name="drop.fill" size={20} color={m3.colorScheme.primary} />
+          <Text style={{ color: m3.colorScheme.onSurface, marginLeft: spacing[2] }}>
             {t('onboarding.notifications.item1')}
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-          <SymbolIcon name="alarm.fill" size={20} color="#3B82F6" />
-          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>
+          <SymbolIcon name="alarm.fill" size={20} color={m3.colorScheme.primary} />
+          <Text style={{ color: m3.colorScheme.onSurface, marginLeft: spacing[2] }}>
             {t('onboarding.notifications.item2')}
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <SymbolIcon name="exclamationmark.triangle.fill" size={20} color="#3B82F6" />
-          <Text style={{ color: '#1D4ED8', marginLeft: spacing[2] }}>
+          <SymbolIcon
+            name="exclamationmark.triangle.fill"
+            size={20}
+            color={m3.colorScheme.primary}
+          />
+          <Text style={{ color: m3.colorScheme.onSurface, marginLeft: spacing[2] }}>
             {t('onboarding.notifications.item3')}
           </Text>
         </View>
@@ -575,26 +664,31 @@ export default function OnboardingScreen() {
           width: 96,
           height: 96,
           borderRadius: borderRadius.full,
-          backgroundColor: colors.primary[100],
+          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: spacing[8],
         }}
       >
-        <SymbolIcon name="checkmark.circle.fill" size={64} color={colors.primary[700]} />
+        <SymbolIcon name="checkmark.circle.fill" size={64} color={m3.colorScheme.primary} />
       </View>
       <Text
         style={{
           fontSize: fontSize['2xl'],
           fontWeight: fontWeight.bold,
-          color: colors.gray[800],
+          color: m3.colorScheme.onSurface,
           textAlign: 'center',
           marginBottom: spacing[3],
         }}
       >
         {t('onboarding.complete.title')}
       </Text>
-      <Text style={{ color: colors.gray[500], textAlign: 'center' }}>
+      <Text
+        style={{
+          color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
+          textAlign: 'center',
+        }}
+      >
         {t('onboarding.complete.subtitle')}
       </Text>
     </View>
@@ -630,7 +724,12 @@ export default function OnboardingScreen() {
           onPress={handleSkip}
           style={{ position: 'absolute', right: spacing[4], top: spacing[12], zIndex: 10 }}
         >
-          <Text style={{ color: colors.gray[500], fontSize: fontSize.base }}>
+          <Text
+            style={{
+              color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
+              fontSize: fontSize.base,
+            }}
+          >
             {t('common.skip')}
           </Text>
         </Pressable>
@@ -649,12 +748,12 @@ export default function OnboardingScreen() {
                 flex: 1,
                 paddingVertical: spacing[4],
                 borderRadius: borderRadius.xl,
-                backgroundColor: colors.gray[200],
+                backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
               }}
             >
               <Text
                 style={{
-                  color: colors.gray[700],
+                  color: m3.colorScheme.onSurface,
                   textAlign: 'center',
                   fontWeight: fontWeight.semibold,
                 }}
@@ -668,13 +767,13 @@ export default function OnboardingScreen() {
             style={{
               paddingVertical: spacing[4],
               borderRadius: borderRadius.xl,
-              backgroundColor: colors.primary[600],
+              backgroundColor: m3.colorScheme.primary,
               flex: 1,
             }}
           >
             <Text
               style={{
-                color: colors.white,
+                color: m3.colorScheme.onPrimary,
                 textAlign: 'center',
                 fontWeight: fontWeight.semibold,
                 fontSize: fontSize.lg,

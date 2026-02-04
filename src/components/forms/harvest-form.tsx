@@ -3,7 +3,9 @@ import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-nat
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { NumericInput } from './form-field';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export interface HarvestFormData {
   quantity: number | undefined;
@@ -20,6 +22,8 @@ interface HarvestFormProps {
 }
 
 export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const isValid = data.quantity !== undefined && data.quantity > 0 && data.grade !== '';
 
   // Calculate total value if price is set
@@ -37,13 +41,13 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             width: 40,
             height: 40,
             borderRadius: borderRadius.full,
-            backgroundColor: '#FEF3C7',
+            backgroundColor: colorWithOpacity(colors.warning, 0.2),
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: spacing[3],
           }}
         >
-          <Icon name="basket.fill" size={20} color="#F59E0B" />
+          <Icon name="basket.fill" size={20} color={colors.warning} />
         </View>
         <View>
           <Text
@@ -65,7 +69,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       <NumericInput
         label="Quantity"
         icon="scale-outline"
-        iconColor="#F59E0B"
+        iconColor={colors.warning}
         placeholder="Enter quantity"
         value={data.quantity}
         onValueChange={(quantity) => onChange({ ...data, quantity })}
@@ -80,7 +84,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
           <View style={{ marginRight: 6 }}>
-            <Icon name="star" size={16} color="#408059" />
+            <Icon name="star" size={16} color={colors.primary[600]} />
           </View>
           <Text
             style={{
@@ -103,15 +107,18 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                 paddingVertical: 10,
                 borderRadius: borderRadius.xl,
                 borderWidth: 1,
-                backgroundColor: data.grade === grade ? '#F59E0B' : colors.white,
-                borderColor: data.grade === grade ? '#F59E0B' : colors.surface[200],
+                backgroundColor:
+                  data.grade === grade
+                    ? colorWithOpacity(colors.warning, 0.9)
+                    : colors.surface[100],
+                borderColor: data.grade === grade ? colors.warning : colors.surface[200],
               }}
             >
               <Text
                 style={{
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
-                  color: data.grade === grade ? colors.white : colors.surface[700],
+                  color: data.grade === grade ? m3.colorScheme.onPrimary : colors.surface[700],
                 }}
               >
                 {grade}
@@ -125,7 +132,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       <NumericInput
         label="Price per kg"
         icon="cash-outline"
-        iconColor="#22C55E"
+        iconColor={colors.success}
         placeholder="Enter price"
         value={data.price}
         onValueChange={(price) => onChange({ ...data, price })}
@@ -139,7 +146,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       <View style={{ marginBottom: spacing[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ marginRight: 6 }}>
-            <Icon name="person" size={16} color="#408059" />
+            <Icon name="person" size={16} color={colors.primary[600]} />
           </View>
           <Text
             style={{
@@ -161,16 +168,16 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             borderRadius: borderRadius.xl,
             borderWidth: 1,
             borderColor: colors.surface[200],
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
           }}
         >
           <View style={{ marginRight: 10 }}>
-            <Icon name="person" size={20} color="#6B7280" />
+            <Icon name="person" size={20} color={colors.surface[600]} />
           </View>
           <TextInput
             style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
             placeholder="Enter buyer name (optional)"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={data.buyer || ''}
             onChangeText={(buyer) => onChange({ ...data, buyer: buyer || undefined })}
             onFocus={onInputFocus}
@@ -185,7 +192,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       {(totalValue || data.grade) && (
         <View
           style={{
-            backgroundColor: '#FFFBEB',
+            backgroundColor: colorWithOpacity(colors.warning, 0.12),
             borderRadius: borderRadius.xl,
             padding: spacing[4],
             marginBottom: spacing[4],
@@ -195,7 +202,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
-              color: '#B45309',
+              color: colors.warning,
               marginBottom: spacing[2],
             }}
           >
@@ -204,12 +211,19 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[4] }}>
             {data.quantity !== undefined && data.quantity > 0 && (
               <View>
-                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>Quantity</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colorWithOpacity(colors.warning, 0.9),
+                  }}
+                >
+                  Quantity
+                </Text>
                 <Text
                   style={{
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
-                    color: '#92400E',
+                    color: m3.colorScheme.onSurface,
                   }}
                 >
                   {data.quantity!.toFixed(1)} kg
@@ -218,12 +232,19 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             )}
             {data.grade && (
               <View>
-                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>Grade</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colorWithOpacity(colors.warning, 0.9),
+                  }}
+                >
+                  Grade
+                </Text>
                 <Text
                   style={{
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
-                    color: '#92400E',
+                    color: m3.colorScheme.onSurface,
                   }}
                 >
                   {data.grade}
@@ -232,12 +253,19 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             )}
             {totalValue && (
               <View>
-                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>Total Value</Text>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colorWithOpacity(colors.warning, 0.9),
+                  }}
+                >
+                  Total Value
+                </Text>
                 <Text
                   style={{
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
-                    color: '#92400E',
+                    color: m3.colorScheme.onSurface,
                   }}
                 >
                   ₹{totalValue}
@@ -261,13 +289,13 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
         <Icon
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
-          color={isValid ? '#22C55E' : '#9CA3AF'}
+          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
         />
         <Text
           style={{
             fontSize: fontSize.sm,
             marginLeft: spacing[2],
-            color: isValid ? '#16A34A' : colors.surface[500],
+            color: isValid ? colors.success : colors.surface[500],
           }}
         >
           {isValid ? 'Ready to add' : 'Enter quantity and select grade'}

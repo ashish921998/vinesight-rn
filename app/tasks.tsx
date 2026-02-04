@@ -8,18 +8,21 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Symbol as SFSymbol } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-tasks';
 import { TaskReminder } from '../src/types/task';
 import { useModalStore } from '@/stores';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
 import { TaskRow } from '@/components/cards';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
 
@@ -30,9 +33,12 @@ const startOfDay = (date: Date) => {
 };
 
 export default function TasksScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const router = useRouter();
+  const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const { setAddEntry } = useModalStore();
   const { data: farms } = useFarms();
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
@@ -40,6 +46,7 @@ export default function TasksScreen() {
   const deleteMutation = useDeleteTask();
 
   const [filter, setFilter] = useState<FilterType>('all');
+  const farmIdValue = farmId ? parseInt(farmId, 10) : undefined;
 
   // Get farm name by ID
   const getFarmName = (farmId: number) => {
@@ -49,19 +56,22 @@ export default function TasksScreen() {
 
   // Filter and count tasks
   const { filteredTasks, counts } = useMemo(() => {
-    if (!tasks)
+    const scopedTasks =
+      tasks && farmIdValue !== undefined ? tasks.filter((t) => t.farm_id === farmIdValue) : tasks;
+
+    if (!scopedTasks)
       return { filteredTasks: [], counts: { all: 0, pending: 0, overdue: 0, completed: 0 } };
 
     const todayMidnight = startOfDay(new Date());
 
-    const overdueTasks = tasks.filter(
+    const overdueTasks = scopedTasks.filter(
       (t) => !t.completed && t.due_date && new Date(t.due_date) < todayMidnight,
     );
-    const pendingTasks = tasks.filter((t) => !t.completed);
-    const completedTasks = tasks.filter((t) => t.completed);
+    const pendingTasks = scopedTasks.filter((t) => !t.completed);
+    const completedTasks = scopedTasks.filter((t) => t.completed);
 
     const counts = {
-      all: tasks.length,
+      all: scopedTasks.length,
       pending: pendingTasks.length,
       overdue: overdueTasks.length,
       completed: completedTasks.length,
@@ -79,11 +89,11 @@ export default function TasksScreen() {
         filtered = completedTasks;
         break;
       default:
-        filtered = tasks;
+        filtered = scopedTasks;
     }
 
     return { filteredTasks: filtered, counts };
-  }, [tasks, filter]);
+  }, [tasks, filter, farmIdValue]);
 
   const handleComplete = (task: TaskReminder) => {
     if (!task.id) return;
@@ -143,7 +153,7 @@ export default function TasksScreen() {
 
   if (isLoading) {
     return (
-      <View
+      <SafeAreaView
         style={{
           flex: 1,
           backgroundColor: m3.colorScheme.background,
@@ -152,261 +162,265 @@ export default function TasksScreen() {
         }}
       >
         <Stack.Screen options={{ title: t('tasks.title') }} />
-        <ActivityIndicator size="large" color="#408059" />
+        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
           {t('common.loading')}
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <>
-      <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-        <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
-          <Stack.Screen
-            options={{
-              title: t('tasks.title'),
-              headerRight: () => (
-                <Pressable
-                  onPress={() => {
-                    setAddEntry({ tabs: ['task'], initialTab: 'task' });
-                    router.push({
-                      pathname: '/add-entry',
-                      params: { tabs: 'task', initialTab: 'task' },
-                    });
-                  }}
-                  style={{ marginRight: spacing[4] }}
-                >
-                  <SFSymbol name="plus.circle.fill" size={28} color="#408059" />
-                </Pressable>
-              ),
-            }}
-          />
-
-          <ScrollView
-            contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[24] }}
-            refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
-            }
-          >
-            {/* Stats Cards */}
-            <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: spacing[2] }}>
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: colors.white,
-                  borderRadius: borderRadius.xl,
-                  padding: spacing[3],
-                  alignItems: 'center',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize['2xl'],
-                    fontWeight: fontWeight.bold,
-                    color: colors.surface[900],
-                  }}
-                >
-                  {counts.pending}
-                </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                  {t('tasks.statusSummary.pending')}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: '#FFFBEB',
-                  borderRadius: borderRadius.xl,
-                  padding: spacing[3],
-                  alignItems: 'center',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize['2xl'],
-                    fontWeight: fontWeight.bold,
-                    color: '#B45309',
-                  }}
-                >
-                  {counts.overdue}
-                </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#D97706' }}>
-                  {t('tasks.statusSummary.overdue')}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: '#ECFDF3',
-                  borderRadius: borderRadius.xl,
-                  padding: spacing[3],
-                  alignItems: 'center',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: fontSize['2xl'],
-                    fontWeight: fontWeight.bold,
-                    color: '#15803D',
-                  }}
-                >
-                  {counts.completed}
-                </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#16A34A' }}>
-                  {t('tasks.statusSummary.completed')}
-                </Text>
-              </View>
-            </View>
-
-            {/* Filter Tabs */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: spacing[2] }}
-              style={{ marginBottom: spacing[4] }}
+    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+      <Stack.Screen
+        options={{
+          title: t('tasks.title'),
+          headerRight: () => (
+            <Pressable
+              onPress={() => {
+                setAddEntry({ tabs: ['task'], initialTab: 'task' });
+                router.push({
+                  pathname: '/add-entry',
+                  params: { tabs: 'task', initialTab: 'task' },
+                });
+              }}
+              style={{ marginRight: spacing[4] }}
             >
-              {(['all', 'pending', 'overdue', 'completed'] as FilterType[]).map((type) => (
-                <Pressable
-                  key={type}
-                  onPress={() => setFilter(type)}
-                  style={{
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[2],
-                    borderRadius: borderRadius.full,
-                    backgroundColor: filter === type ? colors.primary[600] : colors.white,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.medium,
-                      color: filter === type ? colors.white : colors.surface[600],
-                    }}
-                  >
-                    {t(`tasks.filters.${type}`)} (
-                    {formatNumber(counts[type], { maximumFractionDigits: 0 })})
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+              <SFSymbol name="plus.circle.fill" size={28} color={m3.colorScheme.primary} />
+            </Pressable>
+          ),
+        }}
+      />
 
-            {/* Task List */}
-            {filteredTasks.length === 0 ? (
-              <View
-                style={{
-                  backgroundColor: colors.white,
-                  borderRadius: borderRadius['2xl'],
-                  padding: spacing[8],
-                  alignItems: 'center',
-                }}
-              >
-                <SFSymbol name="square" size={48} color="#9CA3AF" />
-                <Text
-                  style={{
-                    color: colors.surface[600],
-                    marginTop: spacing[4],
-                    textAlign: 'center',
-                  }}
-                >
-                  {t('tasks.empty.title')}
-                </Text>
-                <Text
-                  style={{
-                    color: colors.surface[500],
-                    fontSize: fontSize.sm,
-                    marginTop: spacing[1],
-                    textAlign: 'center',
-                  }}
-                >
-                  {filter === 'all'
-                    ? t('tasks.empty.subtitleAll')
-                    : t('tasks.empty.subtitleFiltered', {
-                        filter: t(`tasks.filters.${filter}`),
-                      })}
-                </Text>
-                {filter === 'all' && (
-                  <Pressable
-                    onPress={() => {
-                      setAddEntry({ tabs: ['task'], initialTab: 'task' });
-                      router.push({
-                        pathname: '/add-entry',
-                        params: { tabs: 'task', initialTab: 'task' },
-                      });
-                    }}
-                    style={{
-                      marginTop: spacing[4],
-                      backgroundColor: colors.primary[600],
-                      paddingHorizontal: spacing[6],
-                      paddingVertical: spacing[3],
-                      borderRadius: borderRadius.xl,
-                    }}
-                  >
-                    <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
-                      {t('tasks.cta.addTask')}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            ) : (
-              filteredTasks.map((task) => (
-                <View key={task.id} style={{ marginBottom: spacing[3] }}>
-                  <TaskRow
-                    task={task}
-                    showFarmName
-                    farmName={getFarmName(task.farm_id)}
-                    onComplete={(item) => handleComplete(item)}
-                    onEdit={(item) => {
-                      setAddEntry({
-                        tabs: ['task'],
-                        initialTab: 'task',
-                        editingTask: item,
-                      });
-                      router.push({
-                        pathname: '/add-entry',
-                        params: { tabs: 'task', initialTab: 'task' },
-                      });
-                    }}
-                    onDelete={(item) => handleDelete(item)}
-                  />
-                </View>
-              ))
-            )}
-          </ScrollView>
-
-          {/* FAB */}
-          <Pressable
-            onPress={() => {
-              setAddEntry({ tabs: ['task'], initialTab: 'task' });
-              router.push({
-                pathname: '/add-entry',
-                params: { tabs: 'task', initialTab: 'task' },
-              });
-            }}
+      <ScrollView
+        contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[24] }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={m3.colorScheme.primary}
+          />
+        }
+      >
+        {/* Stats Cards */}
+        <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: spacing[2] }}>
+          <View
             style={{
-              position: 'absolute',
-              bottom: spacing[6],
-              right: spacing[6],
-              width: 56,
-              height: 56,
-              backgroundColor: colors.primary[600],
-              borderRadius: borderRadius.full,
+              flex: 1,
+              backgroundColor: colors.surface[100],
+              borderRadius: borderRadius.xl,
+              padding: spacing[3],
               alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 8,
-              elevation: 4,
             }}
           >
-            <SFSymbol name="plus" size={28} color="white" />
-          </Pressable>
-
-          {/* Add Task handled via route */}
+            <Text
+              style={{
+                fontSize: fontSize['2xl'],
+                fontWeight: fontWeight.bold,
+                color: colors.surface[900],
+              }}
+            >
+              {counts.pending}
+            </Text>
+            <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+              {t('tasks.statusSummary.pending')}
+            </Text>
+          </View>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colorWithOpacity(colors.warning, 0.12),
+              borderRadius: borderRadius.xl,
+              padding: spacing[3],
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fontSize['2xl'],
+                fontWeight: fontWeight.bold,
+                color: colors.warning,
+              }}
+            >
+              {counts.overdue}
+            </Text>
+            <Text style={{ fontSize: fontSize.xs, color: colorWithOpacity(colors.warning, 0.8) }}>
+              {t('tasks.statusSummary.overdue')}
+            </Text>
+          </View>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colorWithOpacity(colors.success, 0.12),
+              borderRadius: borderRadius.xl,
+              padding: spacing[3],
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fontSize['2xl'],
+                fontWeight: fontWeight.bold,
+                color: colors.success,
+              }}
+            >
+              {counts.completed}
+            </Text>
+            <Text style={{ fontSize: fontSize.xs, color: colorWithOpacity(colors.success, 0.8) }}>
+              {t('tasks.statusSummary.completed')}
+            </Text>
+          </View>
         </View>
-      </View>
-    </>
+
+        {/* Filter Tabs */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: spacing[2] }}
+          style={{ marginBottom: spacing[4] }}
+        >
+          {(['all', 'pending', 'overdue', 'completed'] as FilterType[]).map((type) => (
+            <Pressable
+              key={type}
+              onPress={() => setFilter(type)}
+              style={{
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[2],
+                borderRadius: borderRadius.full,
+                backgroundColor: filter === type ? m3.colorScheme.primary : colors.surface[100],
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: filter === type ? m3.colorScheme.onPrimary : colors.surface[600],
+                }}
+              >
+                {t(`tasks.filters.${type}`)} (
+                {formatNumber(counts[type], { maximumFractionDigits: 0 })})
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        {/* Task List */}
+        {filteredTasks.length === 0 ? (
+          <View
+            style={{
+              backgroundColor: colors.surface[100],
+              borderRadius: borderRadius['2xl'],
+              padding: spacing[8],
+              alignItems: 'center',
+            }}
+          >
+            <SFSymbol
+              name="square"
+              size={48}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            />
+            <Text
+              style={{
+                color: colors.surface[600],
+                marginTop: spacing[4],
+                textAlign: 'center',
+              }}
+            >
+              {t('tasks.empty.title')}
+            </Text>
+            <Text
+              style={{
+                color: colors.surface[500],
+                fontSize: fontSize.sm,
+                marginTop: spacing[1],
+                textAlign: 'center',
+              }}
+            >
+              {filter === 'all'
+                ? t('tasks.empty.subtitleAll')
+                : t('tasks.empty.subtitleFiltered', {
+                    filter: t(`tasks.filters.${filter}`),
+                  })}
+            </Text>
+            {filter === 'all' && (
+              <Pressable
+                onPress={() => {
+                  setAddEntry({ tabs: ['task'], initialTab: 'task' });
+                  router.push({
+                    pathname: '/add-entry',
+                    params: { tabs: 'task', initialTab: 'task' },
+                  });
+                }}
+                style={{
+                  marginTop: spacing[4],
+                  backgroundColor: m3.colorScheme.primary,
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                }}
+              >
+                <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
+                  {t('tasks.cta.addTask')}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        ) : (
+          filteredTasks.map((task) => (
+            <View key={task.id} style={{ marginBottom: spacing[3] }}>
+              <TaskRow
+                task={task}
+                showFarmName
+                farmName={getFarmName(task.farm_id)}
+                onComplete={(item) => handleComplete(item)}
+                onEdit={(item) => {
+                  setAddEntry({
+                    tabs: ['task'],
+                    initialTab: 'task',
+                    editingTask: item,
+                  });
+                  router.push({
+                    pathname: '/add-entry',
+                    params: { tabs: 'task', initialTab: 'task' },
+                  });
+                }}
+                onDelete={(item) => handleDelete(item)}
+              />
+            </View>
+          ))
+        )}
+      </ScrollView>
+
+      {/* FAB */}
+      <Pressable
+        onPress={() => {
+          setAddEntry({ tabs: ['task'], initialTab: 'task' });
+          router.push({
+            pathname: '/add-entry',
+            params: { tabs: 'task', initialTab: 'task' },
+          });
+        }}
+        style={{
+          position: 'absolute',
+          bottom: spacing[6],
+          right: spacing[6],
+          width: 56,
+          height: 56,
+          backgroundColor: m3.colorScheme.primary,
+          borderRadius: borderRadius.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: m3.colorScheme.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          elevation: 4,
+        }}
+      >
+        <SFSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+      </Pressable>
+
+      {/* Add Task handled via route */}
+    </SafeAreaView>
   );
 }

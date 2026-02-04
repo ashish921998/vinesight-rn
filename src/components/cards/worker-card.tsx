@@ -7,11 +7,12 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as CardSymbol } from '@/components/ui/symbol';
 import type { Worker } from '../../types';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
 import { useProfile } from '@/hooks';
+import { useM3 } from '@/styles/use-theme';
 
 interface WorkerCardProps {
   worker: Worker;
@@ -21,6 +22,7 @@ interface WorkerCardProps {
 }
 
 export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProps) {
+  const m3 = useM3();
   const { t } = useTranslation();
   const { data: profile } = useProfile();
   const preferredCurrency = profile?.preferred_currency || 'USD';

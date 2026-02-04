@@ -23,7 +23,9 @@ import {
   PRIORITY_INFO,
 } from '../../types/task';
 import { TASK_TEMPLATES } from '../../constants/task-templates';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { useNotificationStore } from '@/stores';
 import {
   ensureNotificationPermissions,
@@ -63,6 +65,8 @@ export default function TaskForm({
   presentation = 'modal',
 }: Props) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
 
   const isVisible = visible ?? true;
   const { data: farms } = useFarms();
@@ -333,7 +337,7 @@ export default function TaskForm({
                 alignItems: 'center',
               }}
             >
-              <IconSymbol name="bolt.fill" size={20} color="#408059" />
+              <IconSymbol name="bolt.fill" size={20} color={m3.colorScheme.primary} />
               <Text
                 style={{
                   color: colors.primary[700],
@@ -347,7 +351,7 @@ export default function TaskForm({
               <IconSymbol
                 name={showTemplates ? 'chevron.up' : 'chevron.down'}
                 size={20}
-                color="#408059"
+                color={m3.colorScheme.primary}
               />
             </Pressable>
           )}
@@ -442,7 +446,7 @@ export default function TaskForm({
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <IconSymbol name="leaf.fill" size={20} color="#408059" />
+                <IconSymbol name="leaf.fill" size={20} color={m3.colorScheme.primary} />
                 <Text
                   style={{
                     fontSize: fontSize.base,
@@ -453,7 +457,7 @@ export default function TaskForm({
                   {selectedFarm?.name || t('tasks.form.selectFarm')}
                 </Text>
               </View>
-              <IconSymbol name="chevron.down" size={20} color="#9CA3AF" />
+              <IconSymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
             </Pressable>
             {showFarmPicker && farms && (
               <View
@@ -520,7 +524,7 @@ export default function TaskForm({
                 borderWidth: 1,
                 borderColor: colors.surface[200],
               }}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
           </View>
 
@@ -554,7 +558,7 @@ export default function TaskForm({
                 minHeight: 80,
                 textAlignVertical: 'top',
               }}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
           </View>
 
@@ -602,7 +606,7 @@ export default function TaskForm({
                     {t(TASK_TYPE_INFO[type].labelKey)}
                   </Text>
                 </View>
-                <IconSymbol name="chevron.down" size={16} color="#9CA3AF" />
+                <IconSymbol name="chevron.down" size={16} color={m3.colorScheme.onSurfaceVariant} />
               </Pressable>
             </View>
 
@@ -650,7 +654,7 @@ export default function TaskForm({
                     {t(PRIORITY_INFO[priority].labelKey)}
                   </Text>
                 </View>
-                <IconSymbol name="chevron.down" size={16} color="#9CA3AF" />
+                <IconSymbol name="chevron.down" size={16} color={m3.colorScheme.onSurfaceVariant} />
               </Pressable>
             </View>
           </View>
@@ -795,7 +799,7 @@ export default function TaskForm({
                 borderWidth: 1,
                 borderColor: dueDateError ? colors.error : colors.surface[200],
               }}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
             {dueDateError ? (
               <Text style={{ fontSize: fontSize.xs, color: colors.error, marginTop: spacing[1] }}>

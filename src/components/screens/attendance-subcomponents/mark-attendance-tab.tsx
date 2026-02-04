@@ -8,12 +8,14 @@ import {
   Pressable,
   StyleSheet,
   Platform,
+  Modal,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { WorkerSelectSheet, FarmSelectSheet } from './index';
@@ -37,6 +39,8 @@ const STATUS_CYCLE: AttendanceStatus[] = ['full_day', 'half_day', 'absent', null
 const getStatusDisplay = (
   status: AttendanceStatus,
   t: (key: string) => string,
+  m3Theme: ReturnType<typeof useM3>,
+  colors: ReturnType<typeof useThemeColors>,
 ): {
   label: string;
   bgColor: string;
@@ -49,37 +53,37 @@ const getStatusDisplay = (
     case 'full_day':
       return {
         label: t('attendance.status.fullDayShort'),
-        bgColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-        badgeColor: m3.colorScheme.primary,
-        badgeTextColor: m3.colorScheme.onPrimary,
-        textColor: m3.colorScheme.primary,
+        bgColor: colorWithOpacity(m3Theme.colorScheme.primary, 0.12),
+        badgeColor: m3Theme.colorScheme.primary,
+        badgeTextColor: m3Theme.colorScheme.onPrimary,
+        textColor: m3Theme.colorScheme.primary,
         fullLabel: t('attendance.status.fullDay'),
       };
     case 'half_day':
       return {
         label: t('attendance.status.halfDayShort'),
-        bgColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
-        badgeColor: m3.colorScheme.warning,
-        badgeTextColor: m3.colorScheme.onWarning,
-        textColor: m3.colorScheme.warning,
+        bgColor: colorWithOpacity(colors.warning, 0.18),
+        badgeColor: colors.warning,
+        badgeTextColor: m3Theme.colorScheme.onPrimary,
+        textColor: colors.warning,
         fullLabel: t('attendance.status.halfDay'),
       };
     case 'absent':
       return {
         label: t('attendance.status.absentShort'),
-        bgColor: colorWithOpacity(m3.colorScheme.error, 0.12),
-        badgeColor: m3.colorScheme.error,
-        badgeTextColor: m3.colorScheme.onError,
-        textColor: m3.colorScheme.error,
+        bgColor: colorWithOpacity(m3Theme.colorScheme.error, 0.12),
+        badgeColor: m3Theme.colorScheme.error,
+        badgeTextColor: m3Theme.colorScheme.onError,
+        textColor: m3Theme.colorScheme.error,
         fullLabel: t('attendance.status.absent'),
       };
     default:
       return {
         label: t('attendance.status.notSetShort'),
-        bgColor: m3.surface.surfaceContainerLowest,
-        badgeColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.18),
-        badgeTextColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
-        textColor: m3.colorScheme.onSurfaceVariant,
+        bgColor: m3Theme.surface.surfaceContainerLowest,
+        badgeColor: colorWithOpacity(m3Theme.colorScheme.onSurfaceVariant, 0.18),
+        badgeTextColor: colorWithOpacity(m3Theme.colorScheme.onSurfaceVariant, 0.7),
+        textColor: m3Theme.colorScheme.onSurfaceVariant,
         fullLabel: t('attendance.status.notSet'),
       };
   }
@@ -101,6 +105,8 @@ export function MarkAttendanceTab({
   onSaveSuccess,
 }: MarkAttendanceTabProps) {
   const { t } = useTranslation();
+  const m3 = useM3();
+  const colors = useThemeColors();
 
   const tabBarInset = useTabBarInset();
   const bottomActionBarHeight = 88;
@@ -400,6 +406,17 @@ export function MarkAttendanceTab({
     }
   };
 
+  const isIos = Platform.OS === 'ios';
+  const activePickerType: 'from' | 'to' | null = showFromPicker
+    ? 'from'
+    : showToPicker
+      ? 'to'
+      : null;
+  const closePickers = () => {
+    setShowFromPicker(false);
+    setShowToPicker(false);
+  };
+
   const isToday = (date: Date): boolean => {
     const today = new Date();
     return (
@@ -637,7 +654,10 @@ export function MarkAttendanceTab({
 
             <View style={{ flexDirection: 'row', gap: spacing[3], marginBottom: spacing[3] }}>
               <Pressable
-                onPress={() => setShowFromPicker(true)}
+                onPress={() => {
+                  setShowFromPicker(true);
+                  setShowToPicker(false);
+                }}
                 style={({ pressed }) => ({
                   flex: 1,
                   paddingHorizontal: spacing[3],
@@ -677,7 +697,10 @@ export function MarkAttendanceTab({
                 </Text>
               </Pressable>
               <Pressable
-                onPress={() => setShowToPicker(true)}
+                onPress={() => {
+                  setShowToPicker(true);
+                  setShowFromPicker(false);
+                }}
                 style={({ pressed }) => ({
                   flex: 1,
                   paddingHorizontal: spacing[3],
@@ -718,21 +741,105 @@ export function MarkAttendanceTab({
               </Pressable>
             </View>
 
-            {showFromPicker && (
-              <DateTimePicker
-                value={rangeStart}
-                mode="date"
-                display="default"
-                onChange={(event, date) => handleDateRangeChange('from', event, date)}
-              />
-            )}
-            {showToPicker && (
-              <DateTimePicker
-                value={rangeEnd}
-                mode="date"
-                display="default"
-                onChange={(event, date) => handleDateRangeChange('to', event, date)}
-              />
+            {isIos ? (
+              activePickerType ? (
+                <Modal transparent animationType="fade" onRequestClose={closePickers}>
+                  <Pressable
+                    onPress={closePickers}
+                    style={{
+                      flex: 1,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+                      justifyContent: 'flex-end',
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: m3.colorScheme.surface,
+                        borderTopLeftRadius: borderRadius['3xl'],
+                        borderTopRightRadius: borderRadius['3xl'],
+                        padding: spacing[4],
+                        paddingBottom: spacing[6],
+                      }}
+                      onStartShouldSetResponder={() => true}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: spacing[3],
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: fontSize.base,
+                            fontWeight: fontWeight.semibold,
+                            color: m3.colorScheme.onSurface,
+                          }}
+                        >
+                          {activePickerType === 'from' ? t('common.from') : t('common.to')}
+                        </Text>
+                        <Pressable onPress={closePickers}>
+                          <UiSymbol
+                            name="xmark"
+                            size={18}
+                            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                          />
+                        </Pressable>
+                      </View>
+                      <DateTimePicker
+                        value={activePickerType === 'from' ? rangeStart : rangeEnd}
+                        mode="date"
+                        display="spinner"
+                        onChange={(event, date) =>
+                          handleDateRangeChange(activePickerType, event, date)
+                        }
+                        textColor={m3.colorScheme.onSurface}
+                        style={{ height: 200 }}
+                      />
+                      <Pressable
+                        onPress={closePickers}
+                        style={{
+                          marginTop: spacing[3],
+                          paddingVertical: spacing[3],
+                          borderRadius: m3.shape.cornerMedium,
+                          alignItems: 'center',
+                          backgroundColor: m3.colorScheme.primary,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: fontWeight.semibold,
+                            color: m3.colorScheme.onPrimary,
+                          }}
+                        >
+                          {t('common.done')}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </Pressable>
+                </Modal>
+              ) : null
+            ) : (
+              <>
+                {showFromPicker && (
+                  <DateTimePicker
+                    value={rangeStart}
+                    mode="date"
+                    display="default"
+                    onChange={(event, date) => handleDateRangeChange('from', event, date)}
+                  />
+                )}
+                {showToPicker && (
+                  <DateTimePicker
+                    value={rangeEnd}
+                    mode="date"
+                    display="default"
+                    onChange={(event, date) => handleDateRangeChange('to', event, date)}
+                  />
+                )}
+              </>
             )}
 
             <View
@@ -750,7 +857,7 @@ export function MarkAttendanceTab({
                       const dateStr = formatDate(date);
                       const key = getCellKey(workerId, dateStr);
                       const cell = cellData.get(key);
-                      const statusInfo = getStatusDisplay(cell?.status ?? null, t);
+                      const statusInfo = getStatusDisplay(cell?.status ?? null, t, m3, colors);
                       const isTodayDate = isToday(date);
                       const hasStatus = cell?.status !== null;
                       const isIdleToday = isTodayDate && !hasStatus;

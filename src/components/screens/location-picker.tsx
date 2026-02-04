@@ -1,10 +1,13 @@
+/* eslint-disable react-native/no-unused-styles */
 import React, { Component, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Alert } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface LocationPickerProps {
   visible: boolean;
@@ -55,6 +58,9 @@ export default function LocationPicker({
   initialLongitude,
 }: LocationPickerProps) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
+  const styles = createStyles(colors, m3);
 
   const [selectedCoordinate, setSelectedCoordinate] = useState<{
     latitude: number;
@@ -243,7 +249,7 @@ export default function LocationPicker({
             disabled={!selectedCoordinate || loading}
           >
             {loading ? (
-              <ActivityIndicator color="white" />
+              <ActivityIndicator color={m3.colorScheme.onPrimary} />
             ) : (
               <Text style={styles.confirmButtonText}>{t('locationPicker.confirm')}</Text>
             )}
@@ -254,112 +260,113 @@ export default function LocationPicker({
   );
 }
 
-const styles = StyleSheet.create({
-  modalContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    elevation: 1000,
-  },
-  modalContent: {
-    width: '90%',
-    height: '80%',
-    backgroundColor: colors.white,
-    borderRadius: borderRadius['2xl'],
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
-  },
-  closeButton: {
-    padding: spacing[1],
-  },
-  map: {
-    flex: 1,
-  },
-  mapFallback: {
-    flex: 1,
-    paddingHorizontal: spacing[6],
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.gray[50],
-  },
-  mapFallbackIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: borderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.gray[100],
-    marginBottom: spacing[4],
-  },
-  mapFallbackTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
-    textAlign: 'center',
-    marginBottom: spacing[2],
-  },
-  mapFallbackBody: {
-    fontSize: fontSize.sm,
-    color: colors.gray[600],
-    textAlign: 'center',
-    marginBottom: spacing[4],
-  },
-  mapFallbackCoords: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: colors.gray[800],
-    textAlign: 'center',
-  },
-  footer: {
-    padding: spacing[4],
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
-    gap: spacing[3],
-  },
-  locationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.gray[100],
-    padding: spacing[3],
-    borderRadius: borderRadius.md,
-    gap: spacing[2],
-  },
-  locationButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: colors.success,
-  },
-  confirmButton: {
-    backgroundColor: colors.success,
-    padding: spacing[3] + 2,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  confirmButtonDisabled: {
-    backgroundColor: colors.gray[300],
-  },
-  confirmButtonText: {
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
-    color: colors.white,
-  },
-});
+const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<typeof useM3>) =>
+  StyleSheet.create({
+    modalContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+      elevation: 1000,
+    },
+    modalContent: {
+      width: '90%',
+      height: '80%',
+      backgroundColor: colors.surface[100],
+      borderRadius: borderRadius['2xl'],
+      overflow: 'hidden',
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: spacing[4],
+      borderBottomWidth: 1,
+      borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+    },
+    headerTitle: {
+      fontSize: fontSize.lg,
+      fontWeight: fontWeight.semibold,
+      color: m3.colorScheme.onSurface,
+    },
+    closeButton: {
+      padding: spacing[1],
+    },
+    map: {
+      flex: 1,
+    },
+    mapFallback: {
+      flex: 1,
+      paddingHorizontal: spacing[6],
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface[50],
+    },
+    mapFallbackIcon: {
+      width: 72,
+      height: 72,
+      borderRadius: borderRadius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface[100],
+      marginBottom: spacing[4],
+    },
+    mapFallbackTitle: {
+      fontSize: fontSize.lg,
+      fontWeight: fontWeight.semibold,
+      color: m3.colorScheme.onSurface,
+      textAlign: 'center',
+      marginBottom: spacing[2],
+    },
+    mapFallbackBody: {
+      fontSize: fontSize.sm,
+      color: m3.colorScheme.onSurfaceVariant,
+      textAlign: 'center',
+      marginBottom: spacing[4],
+    },
+    mapFallbackCoords: {
+      fontSize: fontSize.sm,
+      fontWeight: fontWeight.medium,
+      color: m3.colorScheme.onSurface,
+      textAlign: 'center',
+    },
+    footer: {
+      padding: spacing[4],
+      borderTopWidth: 1,
+      borderTopColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+      gap: spacing[3],
+    },
+    locationButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+      padding: spacing[3],
+      borderRadius: borderRadius.md,
+      gap: spacing[2],
+    },
+    locationButtonText: {
+      fontSize: fontSize.sm,
+      fontWeight: fontWeight.medium,
+      color: m3.colorScheme.primary,
+    },
+    confirmButton: {
+      backgroundColor: m3.colorScheme.primary,
+      padding: spacing[3] + 2,
+      borderRadius: borderRadius.md,
+      alignItems: 'center',
+    },
+    confirmButtonDisabled: {
+      backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+    },
+    confirmButtonText: {
+      fontSize: fontSize.base,
+      fontWeight: fontWeight.semibold,
+      color: m3.colorScheme.onPrimary,
+    },
+  });

@@ -2,7 +2,9 @@ import React from 'react';
 import { Modal, View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { formatParameterKey } from '@/hooks/use-lab-tests';
 import { useTranslation } from 'react-i18next';
 import { formatDate as formatDateI18n } from '@/i18n/format';
@@ -181,6 +183,8 @@ export function LabTestDetailsModal({
   onClose,
 }: LabTestDetailsModalProps) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
   if (!test) {
     return null;
   }
@@ -201,7 +205,7 @@ export function LabTestDetailsModal({
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.4)',
+              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.4),
             }}
             onPress={onClose}
           />

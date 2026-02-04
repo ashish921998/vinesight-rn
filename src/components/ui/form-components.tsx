@@ -17,7 +17,9 @@ import {
 } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface FormModalProps {
   visible?: boolean;
@@ -56,6 +58,7 @@ export function FormModal({
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const resolvedSaveLabel = saveLabel ?? t('common.next');
   const {
     style: scrollStyle,
@@ -69,7 +72,7 @@ export function FormModal({
     paddingTop: Math.max(insets.top, 12),
     paddingBottom: 12,
     paddingHorizontal: spacing[6],
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface[100],
   };
 
   const handleStyle: ViewStyle = {
@@ -111,13 +114,13 @@ export function FormModal({
     paddingHorizontal: spacing[8],
     paddingVertical: spacing[3],
     borderRadius: borderRadius.xl,
-    backgroundColor: isSaveDisabled || isLoading ? '#F3F4F6' : '#111827',
+    backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[600],
   };
 
   const saveTextStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: isSaveDisabled || isLoading ? '#9CA3AF' : colors.surface[100],
+    color: isSaveDisabled || isLoading ? colors.surface[500] : colors.white,
   };
 
   const content = (
@@ -230,6 +233,7 @@ export function FullScreenForm({
 }: FullScreenFormProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const resolvedSaveLabel = saveLabel ?? t('common.next');
 
   const headerStyle: ViewStyle = {
@@ -238,7 +242,7 @@ export function FullScreenForm({
     paddingTop: Math.max(insets.top, 12),
     paddingBottom: 12,
     paddingHorizontal: spacing[6],
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface[100],
   };
 
   const handleStyle: ViewStyle = {
@@ -280,13 +284,13 @@ export function FullScreenForm({
     paddingHorizontal: spacing[8],
     paddingVertical: spacing[3],
     borderRadius: borderRadius.xl,
-    backgroundColor: isSaveDisabled || isLoading ? '#F3F4F6' : '#111827',
+    backgroundColor: isSaveDisabled || isLoading ? colors.surface[200] : colors.primary[600],
   };
 
   const saveTextStyle: TextStyle = {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: isSaveDisabled || isLoading ? '#9CA3AF' : colors.surface[100],
+    color: isSaveDisabled || isLoading ? colors.surface[500] : colors.white,
   };
 
   return (
@@ -364,6 +368,7 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, subtitle, style }: SectionHeaderProps) {
+  const colors = useThemeColors();
   const containerStyle: ViewStyle = {
     marginBottom: spacing[6],
   };
@@ -412,6 +417,7 @@ export function PillSelector({
   selectedValues = [],
   style,
 }: PillSelectorProps) {
+  const colors = useThemeColors();
   const isSelected = (value: string) => {
     if (multiSelect) {
       return selectedValues.includes(value);
@@ -433,14 +439,14 @@ export function PillSelector({
     borderWidth: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: selected ? '#111827' : '#E5E7EB',
-    backgroundColor: selected ? '#F9FAFB' : colors.surface[100],
+    borderColor: selected ? colors.primary[600] : colors.surface[200],
+    backgroundColor: selected ? colors.surface[100] : colors.surface[50],
   });
 
   const getPillTextStyle = (selected: boolean): TextStyle => ({
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: selected ? '#111827' : '#6B7280',
+    color: selected ? colors.surface[900] : colors.surface[600],
   });
 
   return (
@@ -455,7 +461,11 @@ export function PillSelector({
           >
             {option.icon && (
               <View style={{ marginRight: 8 }}>
-                <IconSymbol name={option.icon} size={18} color={selected ? '#111827' : '#6B7280'} />
+                <IconSymbol
+                  name={option.icon}
+                  size={18}
+                  color={selected ? colors.surface[900] : colors.surface[600]}
+                />
               </View>
             )}
             <Text style={getPillTextStyle(selected)}>{option.label}</Text>
@@ -478,10 +488,11 @@ interface SegmentedControlProps {
 }
 
 export function SegmentedControl({ options, selectedValue, onSelect }: SegmentedControlProps) {
+  const colors = useThemeColors();
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
-    backgroundColor: m3.surface.surfaceContainerLow,
-    borderColor: m3.colorScheme.outlineVariant,
+    backgroundColor: colors.surface[200],
+    borderColor: colors.surface[300],
     borderWidth: Platform.OS === 'ios' ? 0.5 : 1,
     borderRadius: borderRadius.full,
     padding: spacing[1],
@@ -497,11 +508,7 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
     borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: selected
-      ? m3.colorScheme.primaryContainer
-      : pressed
-        ? m3.surface.surfaceContainerHigh
-        : 'transparent',
+    backgroundColor: selected ? colors.surface[100] : pressed ? colors.surface[300] : 'transparent',
     borderWidth: 0,
     borderCurve: 'continuous',
   });
@@ -515,7 +522,7 @@ export function SegmentedControl({ options, selectedValue, onSelect }: Segmented
         : selected
           ? fontWeight.semibold
           : fontWeight.medium,
-    color: selected ? m3.colorScheme.onPrimaryContainer : m3.colorScheme.onSurfaceVariant,
+    color: selected ? colors.gray[900] : colors.gray[500],
     textAlign: 'center',
     ...(Platform.OS === 'android'
       ? {
@@ -573,6 +580,7 @@ export function CardSelector({
   columns = 2,
   style,
 }: CardSelectorProps) {
+  const colors = useThemeColors();
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -587,8 +595,8 @@ export function CardSelector({
     padding: spacing[3],
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: selected ? '#111827' : '#E5E7EB',
-    backgroundColor: selected ? '#F9FAFB' : colors.surface[100],
+    borderColor: selected ? colors.primary[600] : colors.surface[200],
+    backgroundColor: selected ? colors.surface[100] : colors.surface[50],
   });
 
   const iconContainerStyle: ViewStyle = {
@@ -604,7 +612,7 @@ export function CardSelector({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
     textAlign: 'center',
-    color: selected ? '#111827' : '#6B7280',
+    color: selected ? colors.surface[900] : colors.surface[600],
   });
 
   const sublabelTextStyle: TextStyle = {
@@ -624,17 +632,26 @@ export function CardSelector({
             onPress={() => onSelect(option.value)}
             style={getCardStyle(selected)}
           >
-            <View style={[iconContainerStyle, { backgroundColor: option.iconColor || '#F3F4F6' }]}>
+            <View
+              style={[
+                iconContainerStyle,
+                { backgroundColor: option.iconColor || colors.surface[200] },
+              ]}
+            >
               {option.renderIcon ? (
                 option.renderIcon({
                   size: 24,
-                  color: selected ? '#111827' : '#6B7280',
+                  color: selected ? colors.surface[900] : colors.surface[600],
                   selected,
                 })
               ) : option.icon ? (
-                <IconSymbol name={option.icon} size={24} color={selected ? '#111827' : '#6B7280'} />
+                <IconSymbol
+                  name={option.icon}
+                  size={24}
+                  color={selected ? colors.surface[900] : colors.surface[600]}
+                />
               ) : (
-                <IconSymbol name="questionmark.circle" size={24} color="#9CA3AF" />
+                <IconSymbol name="questionmark.circle" size={24} color={colors.surface[400]} />
               )}
             </View>
             <Text style={getLabelTextStyle(selected)}>{option.label}</Text>
@@ -675,6 +692,7 @@ export function FormInput({
   autoFocus = false,
   style,
 }: FormInputProps) {
+  const colors = useThemeColors();
   const containerStyle: ViewStyle = {
     marginBottom: spacing[6],
   };
@@ -725,7 +743,7 @@ export function FormInput({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.gray[400]}
           keyboardType={keyboardType}
           multiline={multiline}
           numberOfLines={numberOfLines}
@@ -750,6 +768,7 @@ interface ToggleProps {
 }
 
 export function Toggle({ label, description, value, onValueChange, style }: ToggleProps) {
+  const colors = useThemeColors();
   const translateXAnimRef = useRef(new Animated.Value(value ? 22 : 0));
 
   useEffect(() => {
@@ -791,7 +810,7 @@ export function Toggle({ label, description, value, onValueChange, style }: Togg
     borderRadius: borderRadius.full,
     padding: spacing[1],
     justifyContent: 'center',
-    backgroundColor: value ? '#111827' : '#E5E7EB',
+    backgroundColor: value ? colors.primary[600] : colors.surface[300],
   };
 
   const toggleCircleStyle: ViewStyle = {
@@ -833,14 +852,17 @@ interface InfoCardProps {
 
 export function InfoCard({
   icon,
-  iconColor = '#3B82F6',
-  backgroundColor = '#EFF6FF',
+  iconColor,
+  backgroundColor,
   title,
   message,
   style,
 }: InfoCardProps) {
+  const m3 = useM3();
+  const resolvedIconColor = iconColor ?? m3.colorScheme.primary;
+  const resolvedBackgroundColor = backgroundColor ?? colorWithOpacity(resolvedIconColor, 0.16);
   const containerStyle: ViewStyle = {
-    backgroundColor,
+    backgroundColor: resolvedBackgroundColor,
     borderRadius: borderRadius['2xl'],
     padding: spacing[4],
     marginBottom: spacing[6],
@@ -860,12 +882,12 @@ export function InfoCard({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
     marginBottom: spacing[1],
-    color: iconColor,
+    color: resolvedIconColor,
   };
 
   const messageTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: iconColor,
+    color: resolvedIconColor,
     opacity: 0.8,
   };
 
@@ -893,12 +915,15 @@ interface PreviewCardProps {
   backgroundColor?: string;
 }
 
-export function PreviewCard({ title, items, backgroundColor = '#F0FDF4' }: PreviewCardProps) {
+export function PreviewCard({ title, items, backgroundColor }: PreviewCardProps) {
+  const colors = useThemeColors();
+  const m3 = useM3();
+  const resolvedBackground = backgroundColor ?? colorWithOpacity(m3.colorScheme.primary, 0.08);
   const containerStyle: ViewStyle = {
     borderRadius: borderRadius['2xl'],
     padding: spacing[5],
     marginBottom: spacing[6],
-    backgroundColor,
+    backgroundColor: resolvedBackground,
   };
 
   const titleTextStyle: TextStyle = {

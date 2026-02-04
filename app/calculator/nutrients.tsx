@@ -17,7 +17,9 @@ import {
 import { Stack } from 'expo-router';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 
 interface NutrientResult {
@@ -27,6 +29,8 @@ interface NutrientResult {
 }
 
 export default function NutrientCalculatorScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const [area, setArea] = useState(''); // acres
   const [targetYield, setTargetYield] = useState(''); // kg/acre
   const [selectedStage, setSelectedStage] = useState<GrapeGrowthStageId | null>(null);
@@ -104,7 +108,7 @@ export default function NutrientCalculatorScreen() {
             {/* Calculator Card */}
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -116,13 +120,13 @@ export default function NutrientCalculatorScreen() {
                   style={{
                     width: 32,
                     height: 32,
-                    backgroundColor: '#EDE9FE',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.12),
                     borderRadius: borderRadius.lg,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="flask.fill" size={18} color="#8B5CF6" />
+                  <Icon name="flask.fill" size={18} color={m3.colorScheme.tertiary} />
                 </View>
                 <Text
                   style={{
@@ -180,14 +184,17 @@ export default function NutrientCalculatorScreen() {
                       paddingVertical: spacing[2],
                       borderRadius: borderRadius.lg,
                       backgroundColor:
-                        selectedStage === stage.id ? colors.primary[600] : colors.gray[100],
+                        selectedStage === stage.id ? m3.colorScheme.primary : colors.surface[100],
                     }}
                   >
                     <Text
                       style={{
                         fontSize: fontSize.xs,
                         fontWeight: fontWeight.medium,
-                        color: selectedStage === stage.id ? colors.white : colors.gray[700],
+                        color:
+                          selectedStage === stage.id
+                            ? m3.colorScheme.onPrimary
+                            : m3.colorScheme.onSurface,
                       }}
                     >
                       {stage.label}
@@ -199,7 +206,7 @@ export default function NutrientCalculatorScreen() {
               {/* Info */}
               <View
                 style={{
-                  backgroundColor: '#F5F3FF',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.12),
                   borderRadius: borderRadius.xl,
                   padding: spacing[3],
                 }}
@@ -208,13 +215,13 @@ export default function NutrientCalculatorScreen() {
                   style={{
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.medium,
-                    color: '#6D28D9',
+                    color: m3.colorScheme.tertiary,
                     marginBottom: spacing[1],
                   }}
                 >
                   How it works
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: '#7C3AED' }}>
+                <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.tertiary }}>
                   Nutrient requirements vary by growth stage. The calculator adjusts N-P-K
                   recommendations based on crop demand at each stage.
                 </Text>
@@ -229,13 +236,19 @@ export default function NutrientCalculatorScreen() {
                   paddingVertical: spacing[3],
                   borderRadius: borderRadius.xl,
                   alignItems: 'center',
-                  backgroundColor: canCalculate && !result ? colors.primary[600] : colors.gray[200],
+                  backgroundColor:
+                    canCalculate && !result
+                      ? m3.colorScheme.primary
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                 }}
               >
                 <Text
                   style={{
                     fontWeight: fontWeight.semibold,
-                    color: canCalculate && !result ? colors.white : colors.gray[400],
+                    color:
+                      canCalculate && !result
+                        ? m3.colorScheme.onPrimary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
                   }}
                 >
                   Calculate Requirements
@@ -259,20 +272,20 @@ export default function NutrientCalculatorScreen() {
                     <NutrientRow
                       label="Nitrogen (N)"
                       value={result.nitrogen}
-                      color="#22C55E"
-                      bgColor="#F0FDF4"
+                      color={colors.success}
+                      bgColor={colorWithOpacity(colors.success, 0.12)}
                     />
                     <NutrientRow
                       label="Phosphorus (P₂O₅)"
                       value={result.phosphorus}
-                      color="#F59E0B"
-                      bgColor="#FFFBEB"
+                      color={colors.warning}
+                      bgColor={colorWithOpacity(colors.warning, 0.12)}
                     />
                     <NutrientRow
                       label="Potassium (K₂O)"
                       value={result.potassium}
-                      color="#8B5CF6"
-                      bgColor="#F5F3FF"
+                      color={m3.colorScheme.tertiary}
+                      bgColor={colorWithOpacity(m3.colorScheme.tertiary, 0.12)}
                     />
                   </View>
 
@@ -308,7 +321,7 @@ export default function NutrientCalculatorScreen() {
               <Pressable
                 onPress={reset}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   paddingVertical: spacing[4],
                   alignItems: 'center',
@@ -318,7 +331,7 @@ export default function NutrientCalculatorScreen() {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Icon name="refresh" size={18} color="#6B7280" />
+                  <Icon name="refresh" size={18} color={m3.colorScheme.onSurfaceVariant} />
                   <Text
                     style={{
                       color: colors.surface[600],
@@ -352,6 +365,8 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const handleChangeText = (text: string) => {
     if (text === '.') {
       onChangeText('0.');
@@ -377,7 +392,7 @@ function InputRow({
           value={value}
           onChangeText={handleChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
           keyboardType="decimal-pad"
           style={{
             flex: 1,
@@ -409,6 +424,7 @@ function NutrientRow({
   color: string;
   bgColor: string;
 }) {
+  const colors = useThemeColors();
   return (
     <View
       style={{

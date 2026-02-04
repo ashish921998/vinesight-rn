@@ -21,9 +21,10 @@ import {
   getParameterUnit,
 } from '../src/hooks/use-lab-tests';
 import { SoilTestRecord, PetioleTestRecord } from '../src/types/database';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getParamOption, getParamStatus, selectDisplayParams } from '@/utils/lab-test-utils';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 
 type TestType = 'soil' | 'petiole';
 
@@ -41,6 +42,8 @@ const formatDate = (dateString: string): string => {
 };
 
 export default function LabTestsScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -180,7 +183,7 @@ export default function LabTestsScreen() {
                 style={{
                   fontSize: fontSize.base,
                   fontWeight: fontWeight.semibold,
-                  color: colors.gray[800],
+                  color: m3.colorScheme.onSurface,
                 }}
               >
                 {formatDate(test.date)}
@@ -331,7 +334,7 @@ export default function LabTestsScreen() {
           <Text
             style={{
               fontSize: 12,
-              color: '#666',
+              color: m3.colorScheme.onSurfaceVariant,
               marginTop: 4,
             }}
             numberOfLines={2}
@@ -365,7 +368,7 @@ export default function LabTestsScreen() {
           style={{
             fontSize: fontSize.lg,
             fontWeight: fontWeight.semibold,
-            color: colors.gray[800],
+            color: m3.colorScheme.onSurface,
             marginTop: spacing[4],
           }}
           textBreakStrategy="highQuality"
@@ -377,7 +380,7 @@ export default function LabTestsScreen() {
         </Text>
         <Text
           style={{
-            color: colors.gray[500],
+            color: m3.colorScheme.onSurfaceVariant,
             textAlign: 'center',
             marginTop: spacing[2],
             paddingHorizontal: spacing[8],
@@ -401,7 +404,7 @@ export default function LabTestsScreen() {
           }
           style={{
             marginTop: spacing[4],
-            backgroundColor: '#408059',
+            backgroundColor: m3.colorScheme.primary,
             paddingHorizontal: spacing[6],
             paddingVertical: spacing[3],
             borderRadius: borderRadius.full,
@@ -409,9 +412,13 @@ export default function LabTestsScreen() {
             alignItems: 'center',
           }}
         >
-          <IconSymbol name="plus" size={20} color="white" />
+          <IconSymbol name="plus" size={20} color={m3.colorScheme.onPrimary} />
           <Text
-            style={{ color: colors.white, fontWeight: fontWeight.semibold, marginLeft: spacing[1] }}
+            style={{
+              color: m3.colorScheme.onPrimary,
+              fontWeight: fontWeight.semibold,
+              marginLeft: spacing[1],
+            }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
           >
@@ -428,12 +435,12 @@ export default function LabTestsScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#ef4444" />
+          <IconSymbol name="exclamationmark.triangle.fill" size={48} color={m3.colorScheme.error} />
           <Text
             style={{
               fontSize: fontSize.lg,
               fontWeight: fontWeight.semibold,
-              color: colors.gray[700],
+              color: m3.colorScheme.onSurfaceVariant,
               marginTop: spacing[4],
             }}
             textBreakStrategy="highQuality"
@@ -445,14 +452,14 @@ export default function LabTestsScreen() {
             onPress={() => router.back()}
             style={{
               marginTop: spacing[4],
-              backgroundColor: colors.gray[200],
+              backgroundColor: colors.surface[200],
               paddingHorizontal: spacing[6],
               paddingVertical: spacing[2],
               borderRadius: borderRadius.lg,
             }}
           >
             <Text
-              style={{ color: colors.gray[700], fontWeight: fontWeight.medium }}
+              style={{ color: m3.colorScheme.onSurfaceVariant, fontWeight: fontWeight.medium }}
               textBreakStrategy="highQuality"
               lineBreakStrategyIOS="standard"
             >
@@ -475,12 +482,12 @@ export default function LabTestsScreen() {
           paddingTop: spacing[3] + insets.top,
           paddingBottom: spacing[3],
           borderBottomWidth: 1,
-          borderBottomColor: colors.gray[200],
-          backgroundColor: 'rgba(255,255,255,0.8)',
+          borderBottomColor: colors.surface[200],
+          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
         }}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
-          <IconSymbol name="chevron.left" size={24} color="#333" />
+          <IconSymbol name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
         </Pressable>
         <IconSymbol
           name={getTestTypeIcon(selectedTab)}
@@ -489,7 +496,11 @@ export default function LabTestsScreen() {
         />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
-            style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.gray[800] }}
+            style={{
+              fontSize: fontSize.xl,
+              fontWeight: fontWeight.bold,
+              color: m3.colorScheme.onSurface,
+            }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
           >
@@ -497,7 +508,7 @@ export default function LabTestsScreen() {
           </Text>
           {farm && (
             <Text
-              style={{ fontSize: fontSize.xs, color: colors.gray[500] }}
+              style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}
               textBreakStrategy="highQuality"
               lineBreakStrategyIOS="standard"
             >
@@ -514,7 +525,7 @@ export default function LabTestsScreen() {
             }
           }}
           style={{
-            backgroundColor: '#408059',
+            backgroundColor: m3.colorScheme.primary,
             paddingHorizontal: spacing[3],
             paddingVertical: spacing[2],
             borderRadius: borderRadius.full,
@@ -523,10 +534,10 @@ export default function LabTestsScreen() {
             marginRight: spacing[2],
           }}
         >
-          <IconSymbol name="arrow.up.right" size={16} color="white" />
+          <IconSymbol name="arrow.up.right" size={16} color={m3.colorScheme.onPrimary} />
           <Text
             style={{
-              color: colors.white,
+              color: m3.colorScheme.onPrimary,
               fontWeight: fontWeight.semibold,
               marginLeft: spacing[1],
               fontSize: fontSize.sm,
@@ -548,12 +559,12 @@ export default function LabTestsScreen() {
             })
           }
           style={{
-            backgroundColor: '#408059',
+            backgroundColor: m3.colorScheme.primary,
             padding: spacing[2],
             borderRadius: borderRadius.full,
           }}
         >
-          <IconSymbol name="plus" size={24} color="white" />
+          <IconSymbol name="plus" size={24} color={m3.colorScheme.onPrimary} />
         </Pressable>
       </View>
 
@@ -561,11 +572,11 @@ export default function LabTestsScreen() {
       <View
         style={{
           flexDirection: 'row',
-          backgroundColor: 'rgba(255,255,255,0.8)',
+          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[3],
           borderBottomWidth: 1,
-          borderBottomColor: colors.gray[200],
+          borderBottomColor: colors.surface[200],
         }}
       >
         <Pressable
@@ -584,7 +595,7 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'soil' ? colors.labTest.soil : colors.gray[400],
+              color: selectedTab === 'soil' ? colors.labTest.soil : m3.colorScheme.onSurfaceVariant,
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -608,7 +619,10 @@ export default function LabTestsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.semibold,
               textTransform: 'uppercase',
-              color: selectedTab === 'petiole' ? colors.labTest.petiole : colors.gray[400],
+              color:
+                selectedTab === 'petiole'
+                  ? colors.labTest.petiole
+                  : m3.colorScheme.onSurfaceVariant,
             }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
@@ -621,9 +635,9 @@ export default function LabTestsScreen() {
       {/* Content */}
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color="#8b5cf6" />
+          <ActivityIndicator size="large" color={m3.colorScheme.primary} />
           <Text
-            style={{ color: colors.gray[500], marginTop: spacing[2] }}
+            style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[2] }}
             textBreakStrategy="highQuality"
             lineBreakStrategyIOS="standard"
           >

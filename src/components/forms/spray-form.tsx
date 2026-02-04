@@ -4,8 +4,10 @@ import { Symbol } from '@/components/ui/symbol';
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculator-models';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 export interface ChemicalEntry {
   id: string;
@@ -31,6 +33,8 @@ interface SprayFormProps {
 }
 
 export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
   const isValid =
     data.waterVolume !== undefined &&
@@ -123,13 +127,13 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
             width: 40,
             height: 40,
             borderRadius: borderRadius.full,
-            backgroundColor: '#F3E8FF',
+            backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.12),
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: spacing[3],
           }}
         >
-          <Symbol name="flask.fill" size={20} color="#8B5CF6" />
+          <Symbol name="flask.fill" size={20} color={m3.colorScheme.tertiary} />
         </View>
         <View>
           <Text
@@ -151,7 +155,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
       <NumericInput
         label={t('sprayForm.waterVolume.label')}
         icon="water-outline"
-        iconColor="#8B5CF6"
+        iconColor={m3.colorScheme.tertiary}
         placeholder={t('sprayForm.waterVolume.placeholder')}
         value={data.waterVolume}
         onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}
@@ -170,7 +174,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
       <View style={{ marginTop: spacing[2] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
           <View style={{ marginRight: 6 }}>
-            <Symbol name="flask" size={16} color="#408059" />
+            <Symbol name="flask" size={16} color={colors.primary[600]} />
           </View>
           <Text
             style={{
@@ -211,12 +215,12 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
               marginTop: spacing[2],
             }}
           >
-            <Symbol name="plus.circle.fill" size={20} color="#8B5CF6" />
+            <Symbol name="plus.circle.fill" size={20} color={m3.colorScheme.tertiary} />
             <Text
               style={{
                 fontSize: fontSize.sm,
                 fontWeight: fontWeight.medium,
-                color: '#7C3AED',
+                color: m3.colorScheme.tertiary,
                 marginLeft: spacing[2],
               }}
             >
@@ -240,13 +244,13 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
         <Symbol
           name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
           size={16}
-          color={isValid ? '#22C55E' : '#9CA3AF'}
+          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
         />
         <Text
           style={{
             fontSize: fontSize.sm,
             marginLeft: spacing[2],
-            color: isValid ? '#16A34A' : colors.surface[500],
+            color: isValid ? colors.success : colors.surface[500],
           }}
         >
           {isValid ? t('sprayForm.validation.ready') : t('sprayForm.validation.incomplete')}
@@ -283,6 +287,8 @@ function ChemicalRow({
   onInputFocus,
 }: ChemicalRowProps) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
   const [showUnitPicker, setShowUnitPicker] = useState(false);
   const [quantityText, setQuantityText] = useState(
     chemical.quantity !== undefined && chemical.quantity > 0 ? chemical.quantity.toString() : '',
@@ -324,8 +330,10 @@ function ChemicalRow({
         padding: spacing[3],
         marginBottom: spacing[3],
         borderWidth: 1,
-        backgroundColor: isRowComplete ? '#F5F3FF' : colors.surface[50],
-        borderColor: isRowComplete ? '#DDD6FE' : 'transparent',
+        backgroundColor: isRowComplete
+          ? colorWithOpacity(m3.colorScheme.tertiary, 0.12)
+          : colors.surface[50],
+        borderColor: isRowComplete ? colorWithOpacity(m3.colorScheme.tertiary, 0.3) : 'transparent',
       }}
     >
       {/* Chemical Name Row */}
@@ -339,12 +347,12 @@ function ChemicalRow({
             paddingVertical: 10,
             fontSize: fontSize.base,
             color: colors.surface[900],
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 1,
-            borderColor: isNameFocused ? '#A78BFA' : colors.surface[200],
+            borderColor: isNameFocused ? m3.colorScheme.tertiary : colors.surface[200],
           }}
           placeholder={t('sprayForm.chemicals.namePlaceholder')}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
           value={chemical.name}
           onChangeText={(name) => onUpdate({ name })}
           onFocus={(event) => {
@@ -362,7 +370,11 @@ function ChemicalRow({
             style={{ marginLeft: spacing[2], padding: spacing[2] }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Symbol name="minus.circle.fill" size={24} color="#9CA3AF" />
+            <Symbol
+              name="minus.circle.fill"
+              size={24}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            />
           </Pressable>
         )}
       </View>
@@ -379,12 +391,12 @@ function ChemicalRow({
             fontSize: fontSize.base,
             color: colors.surface[900],
             textAlign: 'center',
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderWidth: 1,
-            borderColor: isQuantityFocused ? '#A78BFA' : colors.surface[200],
+            borderColor: isQuantityFocused ? m3.colorScheme.tertiary : colors.surface[200],
           }}
           placeholder={t('sprayForm.chemicals.qtyPlaceholder')}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
           keyboardType="decimal-pad"
           value={quantityText}
           onChangeText={handleQuantityChange}
@@ -406,7 +418,7 @@ function ChemicalRow({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: colors.white,
+            backgroundColor: colors.surface[100],
             borderRadius: borderRadius.lg,
             paddingHorizontal: spacing[3],
             paddingVertical: 10,
@@ -418,7 +430,7 @@ function ChemicalRow({
           <Text style={{ fontSize: fontSize.base, color: colors.surface[900] }}>
             {chemical.unit}
           </Text>
-          <Symbol name="chevron.right" size={18} color="#6B7280" />
+          <Symbol name="chevron.right" size={18} color={colors.surface[600]} />
         </Pressable>
       </View>
 

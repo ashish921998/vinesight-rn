@@ -7,8 +7,10 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
 import { useWeatherData } from '../src/hooks/use-weather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 // Growth stages
 const GROWTH_STAGES: GrapeGrowthStage[] = [
@@ -47,13 +49,6 @@ function getWeatherIconName(conditionCode: number): string {
   }
 }
 
-// Urgency badge colors
-const urgencyColors = {
-  low: { bg: '#DCFCE7', text: '#166534' },
-  medium: { bg: '#FEF3C7', text: '#92400E' },
-  high: { bg: '#FEE2E2', text: '#991B1B' },
-};
-
 // Day name helper
 function getDayName(dateString: string, t: TFunction): string {
   const date = new Date(dateString);
@@ -67,6 +62,8 @@ function getDayName(dateString: string, t: TFunction): string {
 }
 
 export default function WeatherScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
@@ -75,6 +72,14 @@ export default function WeatherScreen() {
   const [showFarmPicker, setShowFarmPicker] = useState(false);
   const [showGrowthPicker, setShowGrowthPicker] = useState(false);
   const [showSoilPicker, setShowSoilPicker] = useState(false);
+  const urgencyColors = useMemo(
+    () => ({
+      low: { bg: colorWithOpacity(colors.success, 0.16), text: colors.success },
+      medium: { bg: colorWithOpacity(colors.warning, 0.18), text: colors.warning },
+      high: { bg: colorWithOpacity(m3.colorScheme.error, 0.16), text: m3.colorScheme.error },
+    }),
+    [colors.success, colors.warning, m3],
+  );
 
   // Get selected farm coordinates
   const selectedFarm = useMemo(() => {
@@ -109,7 +114,7 @@ export default function WeatherScreen() {
           justifyContent: 'center',
         }}
       >
-        <ActivityIndicator size="large" color="#408059" />
+        <ActivityIndicator size="large" color={m3.colorScheme.primary} />
         <Text style={{ color: colors.surface[600], marginTop: spacing[4] }}>
           {t('common.loading')}
         </Text>
@@ -128,7 +133,11 @@ export default function WeatherScreen() {
           padding: spacing[6],
         }}
       >
-        <Icon name="cloud.slash.fill" size={48} color="#9CA3AF" />
+        <Icon
+          name="cloud.slash.fill"
+          size={48}
+          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+        />
         <Text
           style={{
             color: colors.surface[600],
@@ -158,7 +167,7 @@ export default function WeatherScreen() {
             borderRadius: borderRadius.xl,
           }}
         >
-          <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
+          <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
             {t('common.tryAgain')}
           </Text>
         </Pressable>
@@ -177,7 +186,11 @@ export default function WeatherScreen() {
           padding: spacing[6],
         }}
       >
-        <Icon name="leaf.fill" size={48} color="#9CA3AF" />
+        <Icon
+          name="leaf.fill"
+          size={48}
+          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+        />
         <Text
           style={{
             color: colors.surface[600],
@@ -210,7 +223,11 @@ export default function WeatherScreen() {
         contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[8] }}
         style={{ backgroundColor: m3.colorScheme.background }}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#408059" />
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={m3.colorScheme.primary}
+          />
         }
       >
         {/* Farm Selector */}
@@ -229,7 +246,7 @@ export default function WeatherScreen() {
           <Pressable
             onPress={() => setShowFarmPicker(!showFarmPicker)}
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               borderRadius: borderRadius.xl,
               padding: spacing[4],
               flexDirection: 'row',
@@ -243,12 +260,12 @@ export default function WeatherScreen() {
                   width: 40,
                   height: 40,
                   borderRadius: borderRadius.xl,
-                  backgroundColor: colors.primary[100],
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Icon name="leaf.fill" size={20} color="#408059" />
+                <Icon name="leaf.fill" size={20} color={m3.colorScheme.primary} />
               </View>
               <View style={{ marginLeft: spacing[3] }}>
                 <Text
@@ -267,12 +284,16 @@ export default function WeatherScreen() {
                 )}
               </View>
             </View>
-            <Icon name={showFarmPicker ? 'chevron.up' : 'chevron.down'} size={20} color="#9CA3AF" />
+            <Icon
+              name={showFarmPicker ? 'chevron.up' : 'chevron.down'}
+              size={20}
+              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            />
           </Pressable>
           {showFarmPicker && (
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 marginTop: spacing[2],
                 overflow: 'hidden',
@@ -288,16 +309,20 @@ export default function WeatherScreen() {
                   style={{
                     padding: spacing[4],
                     borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
+                    borderBottomColor: colors.surface[200],
                     flexDirection: 'row',
                     alignItems: 'center',
-                    backgroundColor: selectedFarmId === farm.id ? colors.primary[50] : colors.white,
+                    backgroundColor:
+                      selectedFarmId === farm.id
+                        ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                        : colors.surface[100],
                   }}
                 >
                   <Text
                     style={{
                       flex: 1,
-                      color: selectedFarmId === farm.id ? colors.primary[700] : colors.surface[700],
+                      color:
+                        selectedFarmId === farm.id ? m3.colorScheme.primary : colors.surface[700],
                       fontWeight:
                         selectedFarmId === farm.id ? fontWeight.semibold : fontWeight.normal,
                     }}
@@ -305,7 +330,7 @@ export default function WeatherScreen() {
                     {farm.name}
                   </Text>
                   {selectedFarmId === farm.id && (
-                    <Icon name="checkmark" size={20} color="#408059" />
+                    <Icon name="checkmark" size={20} color={m3.colorScheme.primary} />
                   )}
                 </Pressable>
               ))}
@@ -317,7 +342,7 @@ export default function WeatherScreen() {
         {!hasCoordinates && (
           <View
             style={{
-              backgroundColor: '#FFFBEB',
+              backgroundColor: colorWithOpacity(colors.warning, 0.18),
               borderRadius: borderRadius.xl,
               padding: spacing[4],
               marginBottom: spacing[4],
@@ -325,10 +350,10 @@ export default function WeatherScreen() {
               alignItems: 'flex-start',
             }}
           >
-            <Icon name="exclamationmark.triangle.fill" size={20} color="#F59E0B" />
+            <Icon name="exclamationmark.triangle.fill" size={20} color={colors.warning} />
             <Text
               style={{
-                color: '#92400E',
+                color: colors.warning,
                 fontSize: fontSize.sm,
                 marginLeft: spacing[3],
                 flex: 1,
@@ -357,7 +382,7 @@ export default function WeatherScreen() {
             <Pressable
               onPress={() => setShowGrowthPicker(!showGrowthPicker)}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 padding: spacing[3],
                 flexDirection: 'row',
@@ -368,12 +393,16 @@ export default function WeatherScreen() {
               <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }} numberOfLines={1}>
                 {growthStage}
               </Text>
-              <Icon name="chevron.down" size={16} color="#9CA3AF" />
+              <Icon
+                name="chevron.down"
+                size={16}
+                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+              />
             </Pressable>
             {showGrowthPicker && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius.xl,
                   marginTop: spacing[2],
                   position: 'absolute',
@@ -382,7 +411,7 @@ export default function WeatherScreen() {
                   right: 0,
                   zIndex: 10,
                   borderWidth: 1,
-                  borderColor: colors.gray[200],
+                  borderColor: colors.surface[200],
                 }}
               >
                 <ScrollView style={{ maxHeight: 200 }}>
@@ -396,13 +425,17 @@ export default function WeatherScreen() {
                       style={{
                         padding: spacing[3],
                         borderBottomWidth: 1,
-                        borderBottomColor: colors.surface[100],
-                        backgroundColor: growthStage === stage ? colors.primary[50] : colors.white,
+                        borderBottomColor: colors.surface[200],
+                        backgroundColor:
+                          growthStage === stage
+                            ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                            : colors.surface[100],
                       }}
                     >
                       <Text
                         style={{
-                          color: growthStage === stage ? colors.primary[700] : colors.surface[700],
+                          color:
+                            growthStage === stage ? m3.colorScheme.primary : colors.surface[700],
                           fontWeight: growthStage === stage ? fontWeight.medium : fontWeight.normal,
                         }}
                       >
@@ -431,7 +464,7 @@ export default function WeatherScreen() {
             <Pressable
               onPress={() => setShowSoilPicker(!showSoilPicker)}
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius.xl,
                 padding: spacing[3],
                 flexDirection: 'row',
@@ -442,12 +475,16 @@ export default function WeatherScreen() {
               <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }} numberOfLines={1}>
                 {SOIL_TYPES.find((s) => s.value === soilType)?.label}
               </Text>
-              <Icon name="chevron.down" size={16} color="#9CA3AF" />
+              <Icon
+                name="chevron.down"
+                size={16}
+                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+              />
             </Pressable>
             {showSoilPicker && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius.xl,
                   marginTop: spacing[2],
                   position: 'absolute',
@@ -456,7 +493,7 @@ export default function WeatherScreen() {
                   right: 0,
                   zIndex: 10,
                   borderWidth: 1,
-                  borderColor: colors.gray[200],
+                  borderColor: colors.surface[200],
                 }}
               >
                 {SOIL_TYPES.map((type) => (
@@ -469,13 +506,17 @@ export default function WeatherScreen() {
                     style={{
                       padding: spacing[3],
                       borderBottomWidth: 1,
-                      borderBottomColor: colors.surface[100],
-                      backgroundColor: soilType === type.value ? colors.primary[50] : colors.white,
+                      borderBottomColor: colors.surface[200],
+                      backgroundColor:
+                        soilType === type.value
+                          ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                          : colors.surface[100],
                     }}
                   >
                     <Text
                       style={{
-                        color: soilType === type.value ? colors.primary[700] : colors.surface[700],
+                        color:
+                          soilType === type.value ? m3.colorScheme.primary : colors.surface[700],
                         fontWeight: soilType === type.value ? fontWeight.medium : fontWeight.normal,
                       }}
                     >
@@ -492,7 +533,7 @@ export default function WeatherScreen() {
         {weather && (
           <View
             style={{
-              backgroundColor: colors.primary[600],
+              backgroundColor: m3.colorScheme.primary,
               borderRadius: borderRadius['2xl'],
               padding: spacing[5],
               marginBottom: spacing[4],
@@ -506,12 +547,12 @@ export default function WeatherScreen() {
               }}
             >
               <View>
-                <Text style={{ color: colors.primary[100], fontSize: fontSize.sm }}>
+                <Text style={{ color: m3.colorScheme.onPrimary, fontSize: fontSize.sm }}>
                   {weather.location.name || t('weather.location.currentLocation')}
                 </Text>
                 <Text
                   style={{
-                    color: colors.white,
+                    color: m3.colorScheme.onPrimary,
                     fontSize: 48,
                     fontWeight: fontWeight.bold,
                     marginTop: spacing[1],
@@ -521,7 +562,7 @@ export default function WeatherScreen() {
                 </Text>
                 <Text
                   style={{
-                    color: colors.primary[100],
+                    color: m3.colorScheme.onPrimary,
                     fontSize: fontSize.base,
                     marginTop: spacing[1],
                   }}
@@ -533,11 +574,11 @@ export default function WeatherScreen() {
                 <Icon
                   name={getWeatherIconName(weather.current.conditionCode)}
                   size={56}
-                  color="rgba(255,255,255,0.9)"
+                  color={colorWithOpacity(m3.colorScheme.onPrimary, 0.9)}
                 />
                 <Text
                   style={{
-                    color: colors.primary[100],
+                    color: m3.colorScheme.onPrimary,
                     fontSize: fontSize.xs,
                     marginTop: spacing[2],
                   }}
@@ -552,14 +593,18 @@ export default function WeatherScreen() {
                 marginTop: spacing[4],
                 paddingTop: spacing[4],
                 borderTopWidth: 1,
-                borderTopColor: colors.primary[500],
+                borderTopColor: colorWithOpacity(m3.colorScheme.onPrimary, 0.3),
               }}
             >
               <View style={{ flex: 1, alignItems: 'center' }}>
-                <Icon name="drop.fill" size={18} color="rgba(255,255,255,0.8)" />
+                <Icon
+                  name="drop.fill"
+                  size={18}
+                  color={colorWithOpacity(m3.colorScheme.onPrimary, 0.8)}
+                />
                 <Text
                   style={{
-                    color: colors.white,
+                    color: m3.colorScheme.onPrimary,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     marginTop: spacing[1],
@@ -567,15 +612,24 @@ export default function WeatherScreen() {
                 >
                   {weather.current.humidity}%
                 </Text>
-                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>
+                <Text
+                  style={{
+                    color: colorWithOpacity(m3.colorScheme.onPrimary, 0.8),
+                    fontSize: fontSize.xs,
+                  }}
+                >
                   {t('weather.labels.humidity')}
                 </Text>
               </View>
               <View style={{ flex: 1, alignItems: 'center' }}>
-                <Icon name="gauge" size={18} color="rgba(255,255,255,0.8)" />
+                <Icon
+                  name="gauge"
+                  size={18}
+                  color={colorWithOpacity(m3.colorScheme.onPrimary, 0.8)}
+                />
                 <Text
                   style={{
-                    color: colors.white,
+                    color: m3.colorScheme.onPrimary,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     marginTop: spacing[1],
@@ -583,15 +637,24 @@ export default function WeatherScreen() {
                 >
                   {weather.current.windSpeed} km/h
                 </Text>
-                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>
+                <Text
+                  style={{
+                    color: colorWithOpacity(m3.colorScheme.onPrimary, 0.8),
+                    fontSize: fontSize.xs,
+                  }}
+                >
                   {t('weather.labels.wind')}
                 </Text>
               </View>
               <View style={{ flex: 1, alignItems: 'center' }}>
-                <Icon name="sun.max.fill" size={18} color="rgba(255,255,255,0.8)" />
+                <Icon
+                  name="sun.max.fill"
+                  size={18}
+                  color={colorWithOpacity(m3.colorScheme.onPrimary, 0.8)}
+                />
                 <Text
                   style={{
-                    color: colors.white,
+                    color: m3.colorScheme.onPrimary,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     marginTop: spacing[1],
@@ -599,15 +662,24 @@ export default function WeatherScreen() {
                 >
                   {weather.current.uvIndex}
                 </Text>
-                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>
+                <Text
+                  style={{
+                    color: colorWithOpacity(m3.colorScheme.onPrimary, 0.8),
+                    fontSize: fontSize.xs,
+                  }}
+                >
                   {t('weather.labels.uvIndex')}
                 </Text>
               </View>
               <View style={{ flex: 1, alignItems: 'center' }}>
-                <Icon name="cloud.rain.fill" size={18} color="rgba(255,255,255,0.8)" />
+                <Icon
+                  name="cloud.rain.fill"
+                  size={18}
+                  color={colorWithOpacity(m3.colorScheme.onPrimary, 0.8)}
+                />
                 <Text
                   style={{
-                    color: colors.white,
+                    color: m3.colorScheme.onPrimary,
                     fontSize: fontSize.sm,
                     fontWeight: fontWeight.semibold,
                     marginTop: spacing[1],
@@ -615,7 +687,12 @@ export default function WeatherScreen() {
                 >
                   {weather.current.precipitation} mm
                 </Text>
-                <Text style={{ color: colors.primary[200], fontSize: fontSize.xs }}>
+                <Text
+                  style={{
+                    color: colorWithOpacity(m3.colorScheme.onPrimary, 0.8),
+                    fontSize: fontSize.xs,
+                  }}
+                >
                   {t('weather.labels.rain')}
                 </Text>
               </View>
@@ -647,19 +724,19 @@ export default function WeatherScreen() {
                   key={day.date}
                   style={{
                     width: 80,
-                    backgroundColor: colors.white,
+                    backgroundColor: colors.surface[100],
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     alignItems: 'center',
                     borderWidth: index === 0 ? 2 : 0,
-                    borderColor: index === 0 ? colors.primary[500] : 'transparent',
+                    borderColor: index === 0 ? m3.colorScheme.primary : 'transparent',
                   }}
                 >
                   <Text
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
-                      color: index === 0 ? colors.primary[600] : colors.surface[600],
+                      color: index === 0 ? m3.colorScheme.primary : colors.surface[600],
                     }}
                   >
                     {getDayName(day.date, t)}
@@ -667,7 +744,11 @@ export default function WeatherScreen() {
                   <Icon
                     name={getWeatherIconName(day.conditionCode)}
                     size={28}
-                    color={index === 0 ? '#408059' : '#6B7280'}
+                    color={
+                      index === 0
+                        ? m3.colorScheme.primary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+                    }
                     style={{ marginVertical: 8 }}
                   />
                   <Text
@@ -686,8 +767,14 @@ export default function WeatherScreen() {
                     <View
                       style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[1] }}
                     >
-                      <Icon name="drop.fill" size={10} color="#3B82F6" />
-                      <Text style={{ fontSize: fontSize.xs, color: '#2563EB', marginLeft: 2 }}>
+                      <Icon name="drop.fill" size={10} color={m3.colorScheme.primary} />
+                      <Text
+                        style={{
+                          fontSize: fontSize.xs,
+                          color: m3.colorScheme.primary,
+                          marginLeft: 2,
+                        }}
+                      >
                         {day.precipitationProbability}%
                       </Text>
                     </View>
@@ -702,7 +789,7 @@ export default function WeatherScreen() {
         {etc && (
           <View
             style={{
-              backgroundColor: colors.white,
+              backgroundColor: colors.surface[100],
               borderRadius: borderRadius['2xl'],
               padding: spacing[4],
               marginBottom: spacing[4],
@@ -714,12 +801,12 @@ export default function WeatherScreen() {
                   width: 40,
                   height: 40,
                   borderRadius: borderRadius.xl,
-                  backgroundColor: '#DBEAFE',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Icon name="drop.fill" size={20} color="#3B82F6" />
+                <Icon name="drop.fill" size={20} color={m3.colorScheme.primary} />
               </View>
               <Text
                 style={{
@@ -786,22 +873,26 @@ export default function WeatherScreen() {
               {irrigationSchedule && (
                 <View
                   style={{
-                    backgroundColor: '#EFF6FF',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     flex: 1,
                     minWidth: '45%',
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.primary }}>
                     {t('weather.labels.total7Days')}
                   </Text>
                   <Text
-                    style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: '#1D4ED8' }}
+                    style={{
+                      fontSize: fontSize.xl,
+                      fontWeight: fontWeight.bold,
+                      color: m3.colorScheme.primary,
+                    }}
                   >
                     {irrigationSchedule.totalWaterNeed} mm
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.primary }}>
                     {t('weather.labels.irrigations', {
                       count: irrigationSchedule.schedule.length,
                     })}
@@ -830,7 +921,7 @@ export default function WeatherScreen() {
             {/* Irrigation Alert */}
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[3],
@@ -850,12 +941,12 @@ export default function WeatherScreen() {
                       width: 32,
                       height: 32,
                       borderRadius: borderRadius.lg,
-                      backgroundColor: '#DBEAFE',
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon name="drop.fill" size={16} color="#3B82F6" />
+                    <Icon name="drop.fill" size={16} color={m3.colorScheme.primary} />
                   </View>
                   <Text
                     style={{
@@ -895,7 +986,7 @@ export default function WeatherScreen() {
                   key={i}
                   style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
                 >
-                  <Icon name="checkmark.circle.fill" size={14} color="#408059" />
+                  <Icon name="checkmark.circle.fill" size={14} color={m3.colorScheme.primary} />
                   <Text
                     style={{
                       fontSize: fontSize.xs,
@@ -913,7 +1004,7 @@ export default function WeatherScreen() {
             {/* Pest Alert */}
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[3],
@@ -933,12 +1024,12 @@ export default function WeatherScreen() {
                       width: 32,
                       height: 32,
                       borderRadius: borderRadius.lg,
-                      backgroundColor: '#FEF3C7',
+                      backgroundColor: colorWithOpacity(colors.warning, 0.18),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon name="ant.fill" size={16} color="#F59E0B" />
+                    <Icon name="ant.fill" size={16} color={colors.warning} />
                   </View>
                   <Text
                     style={{
@@ -982,7 +1073,7 @@ export default function WeatherScreen() {
                   key={i}
                   style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
                 >
-                  <Icon name="checkmark.shield.fill" size={14} color="#F59E0B" />
+                  <Icon name="checkmark.shield.fill" size={14} color={colors.warning} />
                   <Text
                     style={{
                       fontSize: fontSize.xs,
@@ -1000,7 +1091,7 @@ export default function WeatherScreen() {
             {/* Harvest Alert */}
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
               }}
@@ -1019,12 +1110,12 @@ export default function WeatherScreen() {
                       width: 32,
                       height: 32,
                       borderRadius: borderRadius.lg,
-                      backgroundColor: '#EDE9FE',
+                      backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.18),
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon name="basket.fill" size={16} color="#8B5CF6" />
+                    <Icon name="basket.fill" size={16} color={m3.colorScheme.tertiary} />
                   </View>
                   <Text
                     style={{
@@ -1042,10 +1133,16 @@ export default function WeatherScreen() {
                     paddingHorizontal: spacing[2],
                     paddingVertical: spacing[1],
                     borderRadius: borderRadius.full,
-                    backgroundColor: alerts.harvest.isOptimal ? '#DCFCE7' : '#FEF3C7',
+                    backgroundColor: alerts.harvest.isOptimal
+                      ? colorWithOpacity(colors.success, 0.16)
+                      : colorWithOpacity(colors.warning, 0.18),
                   }}
                 >
-                  <Text style={{ color: alerts.harvest.isOptimal ? '#166534' : '#92400E' }}>
+                  <Text
+                    style={{
+                      color: alerts.harvest.isOptimal ? colors.success : colors.warning,
+                    }}
+                  >
                     {alerts.harvest.isOptimal
                       ? t('weather.alerts.harvest.badgeOptimal')
                       : t('weather.alerts.harvest.badgeModerate')}
@@ -1060,7 +1157,7 @@ export default function WeatherScreen() {
                   key={i}
                   style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing[2] }}
                 >
-                  <Icon name="checkmark.circle.fill" size={14} color="#8B5CF6" />
+                  <Icon name="checkmark.circle.fill" size={14} color={m3.colorScheme.tertiary} />
                   <Text
                     style={{
                       fontSize: fontSize.xs,
@@ -1095,7 +1192,7 @@ export default function WeatherScreen() {
               <View
                 key={i}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius.xl,
                   padding: spacing[4],
                   marginBottom: spacing[2],
@@ -1110,25 +1207,10 @@ export default function WeatherScreen() {
                     borderRadius: borderRadius.xl,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor:
-                      item.priority === 'high'
-                        ? '#FEE2E2'
-                        : item.priority === 'medium'
-                          ? '#FEF3C7'
-                          : '#DCFCE7',
+                    backgroundColor: urgencyColors[item.priority].bg,
                   }}
                 >
-                  <Icon
-                    name="drop.fill"
-                    size={20}
-                    color={
-                      item.priority === 'high'
-                        ? '#DC2626'
-                        : item.priority === 'medium'
-                          ? '#D97706'
-                          : '#16A34A'
-                    }
-                  />
+                  <Icon name="drop.fill" size={20} color={urgencyColors[item.priority].text} />
                 </View>
                 <View style={{ flex: 1, marginLeft: spacing[3] }}>
                   <Text

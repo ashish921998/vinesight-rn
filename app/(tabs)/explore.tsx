@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
 import {
   useFarms,
@@ -29,11 +29,15 @@ import {
 import { FarmCard } from '@/components/cards';
 import { useModalStore } from '@/stores';
 import type { Farm, WarehouseItem } from '@/types';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 type ExploreTab = 'farms' | 'warehouse';
 type WarehouseFilter = 'all' | 'fertilizer' | 'spray';
 
 export default function ExploreScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const { t } = useTranslation();
 
   const router = useRouter();
@@ -344,7 +348,7 @@ export default function ExploreScreen() {
               padding: spacing[8],
             }}
           >
-            <ActivityIndicator size="large" color="#408059" />
+            <ActivityIndicator size="large" color={m3.colorScheme.primary} />
             <Text
               style={{ color: colors.surface[500], fontSize: fontSize.base, marginTop: spacing[4] }}
             >
@@ -375,11 +379,15 @@ export default function ExploreScreen() {
                 backgroundColor: colors.surface[50],
               }}
             >
-              <Icon name="magnifyingglass" size={36} color="#c7c7cc" />
+              <Icon
+                name="magnifyingglass"
+                size={36}
+                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+              />
             </View>
             <Text
               style={{
-                color: colors.black,
+                color: m3.colorScheme.onSurface,
                 fontSize: fontSize.lg,
                 fontWeight: fontWeight.semibold,
                 textAlign: 'center',
@@ -423,14 +431,14 @@ export default function ExploreScreen() {
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: spacing[6],
-              backgroundColor: 'rgba(64, 128, 89, 0.1)',
+              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
             }}
           >
-            <Icon name="leaf.fill" size={48} color="#408059" />
+            <Icon name="leaf.fill" size={48} color={m3.colorScheme.primary} />
           </View>
           <Text
             style={{
-              color: colors.black,
+              color: m3.colorScheme.onSurface,
               fontSize: fontSize.xl,
               fontWeight: fontWeight.semibold,
               textAlign: 'center',
@@ -458,7 +466,7 @@ export default function ExploreScreen() {
             }}
             onPress={handleAddFarm}
           >
-            <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
+            <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
               {t('farms.addFarm')}
             </Text>
           </Pressable>
@@ -510,15 +518,15 @@ export default function ExploreScreen() {
                     overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   }}
                 >
-                  <Icon name="leaf.fill" size={16} color="#408059" />
+                  <Icon name="leaf.fill" size={16} color={m3.colorScheme.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      color: colors.black,
+                      color: m3.colorScheme.onSurface,
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
@@ -561,15 +569,19 @@ export default function ExploreScreen() {
                     overflow: 'hidden',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(64, 128, 89, 0.1)',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                   }}
                 >
-                  <Icon name="arrow.up.left.and.arrow.down.right" size={16} color="#408059" />
+                  <Icon
+                    name="arrow.up.left.and.arrow.down.right"
+                    size={16}
+                    color={m3.colorScheme.primary}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      color: colors.black,
+                      color: m3.colorScheme.onSurface,
                       fontSize: fontSize.lg,
                       fontWeight: fontWeight.bold,
                       fontVariant: ['tabular-nums'],
@@ -610,7 +622,7 @@ export default function ExploreScreen() {
             <RefreshControl
               refreshing={farmsLoading && !searchQuery}
               onRefresh={refetchFarms}
-              tintColor="#408059"
+              tintColor={m3.colorScheme.primary}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -638,7 +650,7 @@ export default function ExploreScreen() {
               backgroundColor: colors.primary[500],
             }}
           >
-            <Icon name="plus" size={28} color="#FFFFFF" />
+            <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
           </Pressable>
         )}
       </>
@@ -689,13 +701,13 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
               }}
             >
               <Icon
                 name="exclamationmark.triangle.fill"
                 size={24}
-                color={lowStockItems.length > 0 ? '#D9731F' : colors.primary[500]}
+                color={lowStockItems.length > 0 ? colors.warning : m3.colorScheme.primary}
               />
               <Text
                 style={{
@@ -716,10 +728,10 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
               }}
             >
-              <Icon name="dollarsign.circle.fill" size={24} color={colors.primary[500]} />
+              <Icon name="dollarsign.circle.fill" size={24} color={m3.colorScheme.primary} />
               <Text
                 style={{
                   color: colors.surface[900],
@@ -743,7 +755,7 @@ export default function ExploreScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginBottom: spacing[4],
-                backgroundColor: `${'#D9731F'}15`,
+                backgroundColor: colorWithOpacity(colors.warning, 0.12),
               }}
             >
               <View
@@ -753,10 +765,10 @@ export default function ExploreScreen() {
                   marginBottom: spacing[3],
                 }}
               >
-                <Icon name="exclamationmark.triangle.fill" size={20} color={'#D9731F'} />
+                <Icon name="exclamationmark.triangle.fill" size={20} color={colors.warning} />
                 <Text
                   style={{
-                    color: '#D9731F',
+                    color: colors.warning,
                     fontSize: fontSize.base,
                     fontWeight: fontWeight.semibold,
                     marginLeft: spacing[2],
@@ -770,12 +782,12 @@ export default function ExploreScreen() {
                     paddingVertical: 2,
                     borderRadius: borderRadius.full,
                     marginLeft: 'auto',
-                    backgroundColor: `${'#D9731F'}30`,
+                    backgroundColor: colorWithOpacity(colors.warning, 0.2),
                   }}
                 >
                   <Text
                     style={{
-                      color: '#D9731F',
+                      color: colors.warning,
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
                     }}
@@ -796,14 +808,14 @@ export default function ExploreScreen() {
                         style={{
                           borderRadius: borderRadius.xl,
                           padding: spacing[3],
-                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                          backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
                         }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Icon
                             name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
                             size={16}
-                            color={'#D9731F'}
+                            color={colors.warning}
                           />
                           <Text
                             style={{
@@ -850,12 +862,12 @@ export default function ExploreScreen() {
                             borderRadius: borderRadius.full,
                             alignItems: 'center',
                             alignSelf: 'flex-start',
-                            backgroundColor: colors.primary[500],
+                            backgroundColor: m3.colorScheme.primary,
                           }}
                         >
                           <Text
                             style={{
-                              color: 'white',
+                              color: m3.colorScheme.onPrimary,
                               fontSize: fontSize.xs,
                               fontWeight: fontWeight.medium,
                             }}
@@ -891,7 +903,7 @@ export default function ExploreScreen() {
               borderRadius: borderRadius.xl,
               padding: spacing[1],
               marginBottom: spacing[4],
-              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              backgroundColor: colors.surface[200],
             }}
           >
             {(['all', 'fertilizer', 'spray'] as WarehouseFilter[]).map((type) => (
@@ -930,7 +942,7 @@ export default function ExploreScreen() {
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[8],
                 alignItems: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
               }}
             >
               <View
@@ -982,7 +994,7 @@ export default function ExploreScreen() {
                 <Icon name="plus.circle.fill" size={20} color="white" />
                 <Text
                   style={{
-                    color: colors.white,
+                    color: m3.colorScheme.onPrimary,
                     fontWeight: fontWeight.semibold,
                     marginLeft: spacing[2],
                   }}
@@ -1005,8 +1017,10 @@ export default function ExploreScreen() {
                     borderRadius: borderRadius['2xl'],
                     padding: spacing[4],
                     marginBottom: spacing[3],
-                    backgroundColor: isLowStock ? `${'#D9731F'}0D` : 'rgba(255, 255, 255, 0.8)',
-                    borderColor: isLowStock ? `${'#D9731F'}4D` : 'transparent',
+                    backgroundColor: isLowStock
+                      ? colorWithOpacity(colors.warning, 0.08)
+                      : colorWithOpacity(colors.surface[100], 0.85),
+                    borderColor: isLowStock ? colorWithOpacity(colors.warning, 0.3) : 'transparent',
                     borderWidth: isLowStock ? 1 : 0,
                   }}
                 >
@@ -1051,12 +1065,12 @@ export default function ExploreScreen() {
                               paddingHorizontal: spacing[2],
                               paddingVertical: 2,
                               borderRadius: borderRadius.full,
-                              backgroundColor: `${'#D9731F'}33`,
+                              backgroundColor: colorWithOpacity(colors.warning, 0.2),
                             }}
                           >
                             <Text
                               style={{
-                                color: '#D9731F',
+                                color: colors.warning,
                                 fontSize: fontSize.xs,
                                 fontWeight: fontWeight.medium,
                               }}
@@ -1072,7 +1086,7 @@ export default function ExploreScreen() {
                             accessibilityRole="button"
                             accessibilityLabel={t('common.a11y.editWithName', { name: item.name })}
                           >
-                            <Icon name="pencil" size={20} color="#408059" />
+                            <Icon name="pencil" size={20} color={m3.colorScheme.primary} />
                           </Pressable>
                           <Pressable
                             onPress={() => handleDeleteWarehouseItem(item)}
@@ -1082,7 +1096,7 @@ export default function ExploreScreen() {
                               name: item.name,
                             })}
                           >
-                            <Icon name="trash" size={20} color="#EF4444" />
+                            <Icon name="trash" size={20} color={m3.colorScheme.error} />
                           </Pressable>
                         </View>
                       </View>
@@ -1182,7 +1196,7 @@ export default function ExploreScreen() {
             backgroundColor: colors.primary[500],
           }}
         >
-          <Icon name="plus" size={28} color="white" />
+          <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
         </Pressable>
       </>
     );
@@ -1223,16 +1237,24 @@ export default function ExploreScreen() {
             borderColor: isSearchFocused ? colors.primary[500] : 'transparent',
           }}
         >
-          <Icon name="magnifyingglass" size={20} color={isSearchFocused ? '#408059' : '#c7c7cc'} />
+          <Icon
+            name="magnifyingglass"
+            size={20}
+            color={
+              isSearchFocused
+                ? m3.colorScheme.primary
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+            }
+          />
           <TextInput
             style={{
               flex: 1,
               marginLeft: spacing[3],
               fontSize: fontSize.base,
-              color: colors.black,
+              color: m3.colorScheme.onSurface,
             }}
             placeholder={searchPlaceholder}
-            placeholderTextColor="#c7c7cc"
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
             value={searchQuery}
             onChangeText={handleSearchChange}
             onFocus={handleSearchFocus}
@@ -1244,7 +1266,11 @@ export default function ExploreScreen() {
               onPress={() => handleSearchChange('')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Icon name="xmark.circle.fill" size={20} color="#c7c7cc" />
+              <Icon
+                name="xmark.circle.fill"
+                size={20}
+                color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+              />
             </Pressable>
           )}
         </View>
@@ -1291,10 +1317,20 @@ export default function ExploreScreen() {
                         overflow: 'hidden',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: isSelected ? 'rgba(64, 128, 89, 0.1)' : 'transparent',
+                        backgroundColor: isSelected
+                          ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                          : 'transparent',
                       }}
                     >
-                      <Icon name={tab.icon} size={24} color={isSelected ? '#408059' : '#9CA3AF'} />
+                      <Icon
+                        name={tab.icon}
+                        size={24}
+                        color={
+                          isSelected
+                            ? m3.colorScheme.primary
+                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+                        }
+                      />
                     </View>
                   </Animated.View>
 
@@ -1306,7 +1342,9 @@ export default function ExploreScreen() {
                       flexShrink: 1,
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
-                      color: isSelected ? '#408059' : '#6B7280',
+                      color: isSelected
+                        ? m3.colorScheme.primary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
                       marginTop: textMargin,
                       textAlign: 'center',
                       paddingHorizontal: spacing[2],
@@ -1334,7 +1372,7 @@ export default function ExploreScreen() {
                         height: 2,
                         borderRadius: borderRadius.full,
                         width: '60%',
-                        backgroundColor: '#408059',
+                        backgroundColor: m3.colorScheme.primary,
                       }}
                     />
                   )}

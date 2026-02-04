@@ -7,7 +7,9 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../../hooks/use-lab-tests';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface Props {
   testType: 'soil' | 'petiole';
@@ -16,6 +18,8 @@ interface Props {
 }
 
 export default function ParameterSelector({ testType, selected, onChange }: Props) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const parameters = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
 
   const toggleAll = () => {
@@ -39,11 +43,11 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
   return (
     <View
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backgroundColor: colorWithOpacity(colors.surface[100], 0.9),
         paddingHorizontal: spacing[4],
         paddingVertical: spacing[3],
         borderBottomWidth: 1,
-        borderBottomColor: colors.gray[200],
+        borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
       }}
     >
       <View
@@ -58,7 +62,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
           style={{
             fontSize: fontSize.sm,
             fontWeight: fontWeight.semibold,
-            color: colors.gray[800],
+            color: m3.colorScheme.onSurface,
           }}
         >
           Parameters ({selected.size} selected)
@@ -68,7 +72,7 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
             style={{
               fontSize: fontSize.sm,
               fontWeight: fontWeight.medium,
-              color: colors.primary[500],
+              color: m3.colorScheme.primary,
             }}
           >
             {selected.size === parameters.length ? 'Deselect All' : 'Select All'}
@@ -93,21 +97,27 @@ export default function ParameterSelector({ testType, selected, onChange }: Prop
                 paddingVertical: spacing[2],
                 borderRadius: borderRadius.full,
                 borderWidth: 1,
-                backgroundColor: isSelected ? colors.primary[500] : colors.white,
-                borderColor: isSelected ? colors.primary[500] : colors.gray[300],
+                backgroundColor: isSelected ? m3.colorScheme.primary : colors.surface[100],
+                borderColor: isSelected
+                  ? m3.colorScheme.primary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.35),
               }}
             >
               <Symbol
                 name={isSelected ? 'checkmark.square.fill' : 'square'}
                 size={16}
-                color={isSelected ? 'white' : '#666'}
+                color={
+                  isSelected
+                    ? m3.colorScheme.onPrimary
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
+                }
               />
               <Text
                 style={{
                   marginLeft: spacing[2],
                   fontSize: fontSize.xs,
                   fontWeight: fontWeight.medium,
-                  color: isSelected ? colors.white : colors.gray[700],
+                  color: isSelected ? m3.colorScheme.onPrimary : m3.colorScheme.onSurface,
                 }}
               >
                 {param.label}

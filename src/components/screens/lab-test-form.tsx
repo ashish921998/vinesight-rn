@@ -10,8 +10,9 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { FormModal, SectionHeader, FormInput } from '@/components/ui/form-components';
+import { useM3, useThemeColors } from '@/styles/use-theme';
 import { formatDate } from '@/i18n/format';
 import {
   useCreateSoilTest,
@@ -80,6 +81,8 @@ export default function LabTestForm({
   presentation = 'modal',
 }: LabTestFormProps) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const m3 = useM3();
 
   const isVisible = visible ?? true;
   const createSoilTest = useCreateSoilTest();
@@ -416,7 +419,7 @@ export default function LabTestForm({
       >
         {isParsingPDF ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator color="#408059" size="small" />
+            <ActivityIndicator color={m3.colorScheme.primary} size="small" />
             <Text
               style={{
                 fontSize: fontSize.base,
@@ -432,7 +435,7 @@ export default function LabTestForm({
           </View>
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <IconSymbol name="document" size={22} color="#408059" />
+            <IconSymbol name="document" size={22} color={m3.colorScheme.primary} />
             <Text
               style={{
                 fontSize: fontSize.base,

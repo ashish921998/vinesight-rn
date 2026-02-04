@@ -8,8 +8,9 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 
 interface OTPInputProps {
   length?: number;
@@ -20,6 +21,7 @@ interface OTPInputProps {
 }
 
 export function OTPInput({ length = 6, value, onChange, autoFocus = true, error }: OTPInputProps) {
+  const m3 = useM3();
   const inputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [cursorAnim] = useState(() => new Animated.Value(0));

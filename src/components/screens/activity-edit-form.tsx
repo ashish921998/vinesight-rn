@@ -425,7 +425,7 @@ export function ActivityEditForm({
             paddingVertical: spacing[10],
           }}
         >
-          <ActivityIndicator size="large" color="#408059" />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text selectable style={{ marginTop: spacing[4], color: colors.surface[500] }}>
             {t('common.loading')}
           </Text>

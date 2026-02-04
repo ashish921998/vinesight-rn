@@ -8,11 +8,12 @@ import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } fro
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
-import { m3, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
 import { useProfile } from '@/hooks';
+import { useM3 } from '@/styles/use-theme';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -96,6 +97,7 @@ export function ActivityLogCard({
   onEdit,
   onDelete,
 }: ActivityLogCardProps) {
+  const m3 = useM3();
   const { t } = useTranslation();
   const { data: profile } = useProfile();
   const currency = profile?.preferred_currency || 'INR';

@@ -398,7 +398,8 @@ export class ReportService {
     const bytes = new TextEncoder().encode(csv);
     await writer.write(bytes);
     await writer.close();
-    const fileUri = file.uri;
+    const fileUri =
+      (file as { uri?: string }).uri ?? (file as { path?: string }).path ?? file.toString();
 
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(fileUri, {

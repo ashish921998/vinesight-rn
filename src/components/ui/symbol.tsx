@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, Platform, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ICON_MAPPING } from '@/utils/icon-mapping';
+import { useM3 } from '@/styles/use-theme';
 
 interface SymbolProps {
   name: SymbolViewProps['name'] | string;
@@ -147,10 +148,12 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 export function SymbolComponent({
   name,
   size = 24,
-  color = '#000',
+  color,
   weight = 'regular',
   style,
 }: SymbolProps) {
+  const m3 = useM3();
+  const resolvedColor = color ?? m3.colorScheme.onSurface;
   const resolvedName = ICON_MAPPING[name] ?? name;
   const directIonicon = Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, name)
     ? (name as keyof typeof Ionicons.glyphMap)
@@ -167,7 +170,7 @@ export function SymbolComponent({
       <SymbolView
         name={resolvedName as SymbolViewProps['name']}
         size={size}
-        tintColor={color}
+        tintColor={resolvedColor}
         weight={weight}
         type="hierarchical"
         style={style}
@@ -175,7 +178,7 @@ export function SymbolComponent({
           <Ionicons
             name={fallbackIcon}
             size={size}
-            color={color}
+            color={resolvedColor}
             style={style as StyleProp<TextStyle>}
           />
         }
@@ -190,7 +193,7 @@ export function SymbolComponent({
       <MaterialCommunityIcons
         name={materialIcon}
         size={size}
-        color={color}
+        color={resolvedColor}
         style={style as StyleProp<TextStyle>}
       />
     );
@@ -199,7 +202,12 @@ export function SymbolComponent({
   const ionicon = SYMBOL_TO_IONICON[resolvedName] || SYMBOL_TO_IONICON[name] || directIonicon;
   if (ionicon) {
     return (
-      <Ionicons name={ionicon} size={size} color={color} style={style as StyleProp<TextStyle>} />
+      <Ionicons
+        name={ionicon}
+        size={size}
+        color={resolvedColor}
+        style={style as StyleProp<TextStyle>}
+      />
     );
   }
 
@@ -211,7 +219,7 @@ export function SymbolComponent({
 
   return (
     <View style={containerStyle}>
-      <Text style={{ fontSize: size * 0.6, color }}>•</Text>
+      <Text style={{ fontSize: size * 0.6, color: resolvedColor }}>•</Text>
     </View>
   );
 }

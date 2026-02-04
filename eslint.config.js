@@ -23,6 +23,13 @@ module.exports = [
     'plugin:react-hooks/recommended',
   ),
   {
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: typescriptParser,
@@ -59,11 +66,6 @@ module.exports = [
       'react-native/no-color-literals': 'off',
       'react-native/no-raw-text': 'off',
       'react-native/no-single-element-style-arrays': 'warn',
-    },
-    settings: {
-      react: {
-        version: '19.2.3',
-      },
     },
   },
   prettierConfig,

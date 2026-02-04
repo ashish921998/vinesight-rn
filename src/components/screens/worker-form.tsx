@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { useCreateWorker, useUpdateWorker } from '@/hooks';
 import type { Worker } from '@/types';
 import { FormModal, SectionHeader, FormInput, Toggle, InfoCard } from '@/components/ui';
+import { useM3 } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 
 interface WorkerFormProps {
   visible?: boolean;
@@ -27,6 +29,7 @@ export function WorkerForm({
   presentation = 'modal',
 }: WorkerFormProps) {
   const { t } = useTranslation();
+  const m3 = useM3();
 
   const isVisible = visible ?? true;
   const [name, setName] = useState('');
@@ -172,8 +175,8 @@ export function WorkerForm({
       {/* Info Card */}
       <InfoCard
         icon="information-circle"
-        iconColor="#3B82F6"
-        backgroundColor="#EFF6FF"
+        iconColor={m3.colorScheme.primary}
+        backgroundColor={colorWithOpacity(m3.colorScheme.primary, 0.12)}
         message={t('workers.form.infoCardMessage')}
       />
     </FormModal>

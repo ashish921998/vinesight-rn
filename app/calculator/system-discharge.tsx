@@ -16,7 +16,9 @@ import {
 
 import { Stack } from 'expo-router';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { colors, spacing, borderRadius, fontSize, fontWeight, m3 } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { telemetry } from '@/services/telemetry';
 
 type SystemDischargeResults = {
@@ -27,6 +29,8 @@ type SystemDischargeResults = {
 };
 
 export default function SystemDischargeScreen() {
+  const colors = useThemeColors();
+  const m3 = useM3();
   const [dbl, setDbl] = useState('');
   const [refillTankValue, setRefillTankValue] = useState('');
 
@@ -178,7 +182,7 @@ export default function SystemDischargeScreen() {
           >
             <View
               style={{
-                backgroundColor: colors.white,
+                backgroundColor: colors.surface[100],
                 borderRadius: borderRadius['2xl'],
                 padding: spacing[4],
                 marginTop: spacing[4],
@@ -191,13 +195,13 @@ export default function SystemDischargeScreen() {
                   style={{
                     width: 32,
                     height: 32,
-                    backgroundColor: colors.primary[100],
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                     borderRadius: borderRadius.lg,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <UISymbol name="speedometer" size={18} color="#408059" />
+                  <UISymbol name="speedometer" size={18} color={m3.colorScheme.primary} />
                 </View>
                 <Text
                   style={{
@@ -236,7 +240,7 @@ export default function SystemDischargeScreen() {
             {canSelectMethod && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   marginTop: spacing[4],
@@ -249,13 +253,13 @@ export default function SystemDischargeScreen() {
                     style={{
                       width: 32,
                       height: 32,
-                      backgroundColor: colors.primary[100],
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                       borderRadius: borderRadius.lg,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="git-branch" size={18} color="#408059" />
+                    <UISymbol name="git-branch" size={18} color={m3.colorScheme.primary} />
                   </View>
                   <Text
                     style={{
@@ -278,7 +282,10 @@ export default function SystemDischargeScreen() {
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     marginBottom: spacing[2],
-                    backgroundColor: selectedMethod === 1 ? '#E7F2EC' : colors.gray[100],
+                    backgroundColor:
+                      selectedMethod === 1
+                        ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                        : colors.surface[100],
                   }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -297,7 +304,11 @@ export default function SystemDischargeScreen() {
                       </Text>
                     </View>
                     {selectedMethod === 1 ? (
-                      <UISymbol name="checkmark.circle.fill" size={18} color="#408059" />
+                      <UISymbol
+                        name="checkmark.circle.fill"
+                        size={18}
+                        color={m3.colorScheme.primary}
+                      />
                     ) : null}
                   </View>
                 </Pressable>
@@ -310,7 +321,10 @@ export default function SystemDischargeScreen() {
                   style={{
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
-                    backgroundColor: selectedMethod === 2 ? '#E7F2EC' : colors.gray[100],
+                    backgroundColor:
+                      selectedMethod === 2
+                        ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                        : colors.surface[100],
                   }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -329,7 +343,11 @@ export default function SystemDischargeScreen() {
                       </Text>
                     </View>
                     {selectedMethod === 2 ? (
-                      <UISymbol name="checkmark.circle.fill" size={18} color="#408059" />
+                      <UISymbol
+                        name="checkmark.circle.fill"
+                        size={18}
+                        color={m3.colorScheme.primary}
+                      />
                     ) : null}
                   </View>
                 </Pressable>
@@ -339,7 +357,7 @@ export default function SystemDischargeScreen() {
             {selectedMethod === 1 && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   marginTop: spacing[4],
@@ -352,13 +370,13 @@ export default function SystemDischargeScreen() {
                     style={{
                       width: 32,
                       height: 32,
-                      backgroundColor: colors.primary[100],
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                       borderRadius: borderRadius.lg,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="leaf.fill" size={18} color="#408059" />
+                    <UISymbol name="leaf.fill" size={18} color={m3.colorScheme.primary} />
                   </View>
                   <Text
                     style={{
@@ -396,7 +414,7 @@ export default function SystemDischargeScreen() {
 
                 <View
                   style={{
-                    backgroundColor: '#EFF6FF',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     marginTop: spacing[3],
@@ -406,13 +424,13 @@ export default function SystemDischargeScreen() {
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
-                      color: '#1D4ED8',
+                      color: m3.colorScheme.primary,
                       marginBottom: spacing[1],
                     }}
                   >
                     Formula
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.primary }}>
                     P/H = 10000 ÷ (DBL × DBP){'\n'}
                     System Discharge = (P/H × Drippers × Discharge) ÷ 10000
                   </Text>
@@ -427,13 +445,18 @@ export default function SystemDischargeScreen() {
                     borderRadius: borderRadius.xl,
                     alignItems: 'center',
                     backgroundColor:
-                      canCalculateMethod1 && !results ? colors.primary[600] : colors.gray[200],
+                      canCalculateMethod1 && !results
+                        ? m3.colorScheme.primary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                   }}
                 >
                   <Text
                     style={{
                       fontWeight: fontWeight.semibold,
-                      color: canCalculateMethod1 && !results ? colors.white : colors.gray[400],
+                      color:
+                        canCalculateMethod1 && !results
+                          ? m3.colorScheme.onPrimary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
                     }}
                   >
                     Calculate
@@ -445,7 +468,7 @@ export default function SystemDischargeScreen() {
             {selectedMethod === 2 && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   marginTop: spacing[4],
@@ -458,13 +481,17 @@ export default function SystemDischargeScreen() {
                     style={{
                       width: 32,
                       height: 32,
-                      backgroundColor: colors.primary[100],
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                       borderRadius: borderRadius.lg,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="square.grid.2x2.fill" size={18} color="#408059" />
+                    <UISymbol
+                      name="square.grid.2x2.fill"
+                      size={18}
+                      color={m3.colorScheme.primary}
+                    />
                   </View>
                   <Text
                     style={{
@@ -502,7 +529,7 @@ export default function SystemDischargeScreen() {
 
                 <View
                   style={{
-                    backgroundColor: '#EFF6FF',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
                     borderRadius: borderRadius.xl,
                     padding: spacing[3],
                     marginTop: spacing[3],
@@ -512,13 +539,13 @@ export default function SystemDischargeScreen() {
                     style={{
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.medium,
-                      color: '#1D4ED8',
+                      color: m3.colorScheme.primary,
                       marginBottom: spacing[1],
                     }}
                   >
                     Formula
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: '#2563EB' }}>
+                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.primary }}>
                     System Discharge = ((100 ÷ DBL) × (100 ÷ DBD) × Discharge × Lines) ÷ 10000
                   </Text>
                 </View>
@@ -532,13 +559,18 @@ export default function SystemDischargeScreen() {
                     borderRadius: borderRadius.xl,
                     alignItems: 'center',
                     backgroundColor:
-                      canCalculateMethod2 && !results ? colors.primary[600] : colors.gray[200],
+                      canCalculateMethod2 && !results
+                        ? m3.colorScheme.primary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                   }}
                 >
                   <Text
                     style={{
                       fontWeight: fontWeight.semibold,
-                      color: canCalculateMethod2 && !results ? colors.white : colors.gray[400],
+                      color:
+                        canCalculateMethod2 && !results
+                          ? m3.colorScheme.onPrimary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
                     }}
                   >
                     Calculate
@@ -550,7 +582,7 @@ export default function SystemDischargeScreen() {
             {results && (
               <View
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   padding: spacing[4],
                   marginTop: spacing[4],
@@ -563,13 +595,17 @@ export default function SystemDischargeScreen() {
                     style={{
                       width: 32,
                       height: 32,
-                      backgroundColor: colors.primary[100],
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                       borderRadius: borderRadius.lg,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="checkmark.circle.fill" size={18} color="#408059" />
+                    <UISymbol
+                      name="checkmark.circle.fill"
+                      size={18}
+                      color={m3.colorScheme.primary}
+                    />
                   </View>
                   <Text
                     style={{
@@ -609,7 +645,7 @@ export default function SystemDischargeScreen() {
 
                 <View
                   style={{
-                    backgroundColor: colors.primary[50],
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                     borderRadius: borderRadius.xl,
                     padding: spacing[4],
                     alignItems: 'center',
@@ -619,7 +655,7 @@ export default function SystemDischargeScreen() {
                     style={{
                       fontSize: fontSize['3xl'],
                       fontWeight: fontWeight.bold,
-                      color: colors.primary[700],
+                      color: m3.colorScheme.primary,
                     }}
                   >
                     {results.systemDischarge.toFixed(2)}
@@ -627,7 +663,7 @@ export default function SystemDischargeScreen() {
                   <Text
                     style={{
                       fontSize: fontSize.sm,
-                      color: colors.primary[600],
+                      color: colorWithOpacity(m3.colorScheme.primary, 0.85),
                       marginTop: spacing[1],
                     }}
                   >
@@ -699,7 +735,7 @@ export default function SystemDischargeScreen() {
               <Pressable
                 onPress={reset}
                 style={{
-                  backgroundColor: colors.white,
+                  backgroundColor: colors.surface[100],
                   borderRadius: borderRadius['2xl'],
                   paddingVertical: spacing[4],
                   alignItems: 'center',
@@ -709,7 +745,7 @@ export default function SystemDischargeScreen() {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <UISymbol name="refresh" size={18} color="#6B7280" />
+                  <UISymbol name="refresh" size={18} color={m3.colorScheme.onSurfaceVariant} />
                   <Text
                     style={{
                       color: colors.surface[600],
@@ -743,6 +779,8 @@ function InputRow({
   unit: string;
   placeholder: string;
 }) {
+  const colors = useThemeColors();
+  const m3 = useM3();
   return (
     <View style={{ marginBottom: spacing[3] }}>
       <Text style={{ fontSize: fontSize.sm, color: colors.surface[600], marginBottom: spacing[1] }}>
@@ -760,7 +798,7 @@ function InputRow({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
           keyboardType="decimal-pad"
           style={{
             flex: 1,
