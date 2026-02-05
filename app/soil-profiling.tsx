@@ -12,6 +12,7 @@ import { Symbol } from '@/components/ui/symbol';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFarm } from '../src/hooks';
+import { useCapabilities } from '@/hooks/use-capabilities';
 import {
   useSoilProfiles,
   useDeleteSoilProfile,
@@ -26,6 +27,7 @@ import { SoilProfile } from '../src/types/database';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { FeatureLockCard } from '@/components/subscription/feature-lock-card';
 
 type TabType = 'history' | 'trends';
 
@@ -42,6 +44,8 @@ export default function SoilProfilingScreen() {
   const { data: farm, isLoading: farmLoading } = useFarm(farmIdNum);
   const { data: profiles, isLoading: profilesLoading } = useSoilProfiles(farmIdNum);
   const deleteProfile = useDeleteSoilProfile();
+  const { data: capabilities } = useCapabilities();
+  const canViewTrends = capabilities.capabilities.soilWater.moistureTrends;
 
   const [selectedTab, setSelectedTab] = useState<TabType>('history');
 
@@ -298,6 +302,19 @@ export default function SoilProfilingScreen() {
   );
 
   const renderTrends = () => {
+    if (!canViewTrends) {
+      return (
+        <View style={{ paddingHorizontal: spacing[4], paddingTop: spacing[6] }}>
+          <FeatureLockCard
+            title={t('subscription.locks.soilTrends.title')}
+            description={t('subscription.locks.soilTrends.description')}
+            ctaLabel={t('subscription.locks.cta')}
+            featureKey="soilTrends"
+            onUpgrade={() => router.push('/paywall?source=soilTrends')}
+          />
+        </View>
+      );
+    }
     if (!trendsData || !profiles || profiles.length < 2) {
       return (
         <View

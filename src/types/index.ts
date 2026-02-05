@@ -26,6 +26,9 @@ export * from './onboarding';
 // AI types
 export * from './ai';
 
+// Subscription types
+export * from './subscription';
+
 // Re-export commonly used types for convenience
 export type {
   Farm,

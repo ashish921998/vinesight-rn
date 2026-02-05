@@ -150,6 +150,10 @@ export {
 // Analytics Hooks
 export { useAnalytics } from './use-analytics';
 
+// Subscription Hooks
+export { useCapabilities } from './use-capabilities';
+export { useOfferings } from './use-offerings';
+
 // Report Hooks
 export { useReportData, useReportExport, getDefaultDateRange } from './use-reports';
 

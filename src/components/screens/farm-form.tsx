@@ -26,6 +26,8 @@ import { colorWithOpacity } from '@/utils/color';
 import LocationPicker from './location-picker';
 import { formatDate } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
+import { useCapabilities } from '@/hooks/use-capabilities';
+import { extractErrorReason } from '@/utils/subscription-errors';
 
 const SOIL_TEXTURE_OPTIONS = [
   { value: 'Sand', labelKey: 'farmForm.soilTexture.options.sand' },
@@ -113,6 +115,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const createFarm = useCreateFarm();
   const updateFarm = useUpdateFarm();
   const { data: farm, isLoading: farmLoading } = useFarm(isEdit ? farmId : undefined);
+  const { data: capabilities } = useCapabilities();
+  const maxFarms = capabilities.capabilities.farms.maxFarms;
   const initializedFarmIdRef = useRef<number | null>(null);
 
   const [formState, setFormState] = useState<FormState>(() =>
@@ -326,6 +330,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       });
       onClose();
     } catch (_error: unknown) {
+      const reason = extractErrorReason(_error);
+      if (reason === 'farm_limit_reached') {
+        Alert.alert(
+          t('subscription.locks.farms.title'),
+          t('subscription.locks.farms.description', { limit: maxFarms }),
+        );
+        return;
+      }
       const errorMessage =
         _error instanceof Error ? _error.message : t('common.errors.failedToCreateFarm');
       Alert.alert(t('common.error'), errorMessage);

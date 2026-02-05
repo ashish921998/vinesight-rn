@@ -17,12 +17,16 @@ import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
-import appLogo from '../../assets/icons/ios-light.png';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import appLogoLight from '../../assets/icons/ios-light.png';
+import appLogoDark from '../../assets/icons/ios-dark.png';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
+  const m3 = useM3();
+  const isDark = useIsDark();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,6 +82,7 @@ export default function LoginScreen() {
   };
 
   const isFormValid = email && password && (!isSignUp || name);
+  const logoSource = isDark ? appLogoDark : appLogoLight;
 
   const containerStyle: ViewStyle = {
     flex: 1,
@@ -196,7 +201,7 @@ export default function LoginScreen() {
           <View style={logoContainerStyle}>
             <View style={logoBoxStyle}>
               <Image
-                source={appLogo as ImageSourcePropType}
+                source={logoSource as ImageSourcePropType}
                 style={{ width: 88, height: 88 }}
                 resizeMode="contain"
               />

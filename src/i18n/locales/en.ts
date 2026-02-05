@@ -878,6 +878,11 @@ export const en = {
         description: 'Create date-range reports to track productivity and analyze performance.',
       },
     },
+    subscription: {
+      title: 'Try Pro for free',
+      subtitle: '1 month free, then Rs 3000/year.',
+      cta: 'Start free trial',
+    },
     preferences: {
       title: 'Farm Preferences',
       country: 'Country',
@@ -1038,6 +1043,7 @@ export const en = {
     },
     errors: {
       failedResponse: 'Failed to get response from AI',
+      rateLimited: 'Daily AI limit reached. Try again tomorrow.',
     },
     defaultSuggestions: {
       waterNeed: 'How much water do I need?',
@@ -1664,6 +1670,104 @@ export const en = {
         cost: 'Cost',
         remarks: 'Remarks',
       },
+    },
+  },
+  subscription: {
+    sectionTitle: 'Subscription',
+    plan: {
+      free: 'Free',
+      pro: 'Pro',
+    },
+    status: {
+      active: 'Active',
+      trialing: 'Trialing',
+      grace: 'In grace',
+      canceled: 'Canceled',
+      expired: 'Expired',
+    },
+    badges: {
+      pro: 'Pro',
+      free: 'Free',
+    },
+    upgrade: 'Upgrade plan',
+    manage: 'Manage subscription',
+    trialCopy: '1 month free trial, then Rs 3000/year. Cancel anytime.',
+    paywallTitle: 'VineSight Pro',
+    paywallHeadline: 'Upgrade to Pro',
+    paywallSubhead: 'Unlock the full vineyard toolkit.',
+    features: {
+      unlimitedFarms: 'Unlimited farms',
+      unlimitedWorkers: 'Unlimited workers',
+      fullRetention: 'Full log retention',
+      labTrends: 'Lab trends',
+      soilTrends: 'Soil moisture trends',
+      aiChat: 'AI chat assistant',
+      autoParsing: 'Auto lab test parsing',
+    },
+    cta: 'Start free trial',
+    alreadyPro: "You're subscribed",
+    restore: 'Restore purchases',
+    bestValue: 'Best value',
+    period: 'period',
+    notSupported: 'Subscriptions are not supported on this platform.',
+    successTitle: 'Subscription updated',
+    successBody: 'Your Pro access will be available shortly.',
+    restoreTitle: 'Purchases restored',
+    restoreBody: 'We have restored your purchases.',
+    trialEnds: 'Trial ends {{date}}',
+    renewsOn: 'Renews {{date}}',
+    staleNotice: 'Using last known plan. Check your connection.',
+    errors: {
+      purchaseFailedTitle: 'Purchase failed',
+      purchaseFailedBody: 'Please try again.',
+      restoreFailedTitle: 'Restore failed',
+      restoreFailedBody: 'Please try again.',
+      noPackages: 'No plans available.',
+      unableToManage: 'Unable to open subscription management.',
+    },
+    locks: {
+      cta: 'Upgrade to Pro',
+      ai: {
+        title: 'AI chat is Pro only',
+        description: 'Ask Vinesight AI anything about your vineyard with Pro.',
+      },
+      farms: {
+        title: 'Farm limit reached',
+        description: 'Free plan allows {{limit}} farm(s). Upgrade to add more.',
+      },
+      workers: {
+        title: 'Worker limit reached',
+        description: 'Free plan allows {{limit}} active worker(s). Upgrade to add more.',
+      },
+      attendance: {
+        title: 'Attendance history limited',
+        description: 'Free plan includes the last {{weeks}} weeks of attendance.',
+      },
+      labTrends: {
+        title: 'Lab trends are Pro only',
+        description: 'Track soil and petiole trends over time with Pro.',
+      },
+      labParsing: {
+        title: 'Auto parsing is Pro only',
+        description: 'Scan lab reports automatically with Pro.',
+      },
+      soilWater: {
+        title: 'Soil water updates are Pro only',
+        description: 'Update soil water levels with Pro.',
+      },
+      soilTrends: {
+        title: 'Moisture trends are Pro only',
+        description: 'Unlock moisture trends with Pro.',
+      },
+      generic: {
+        title: 'Feature locked',
+        description: 'Upgrade to Pro to unlock this feature.',
+      },
+    },
+    retention: {
+      bannerTitle: 'Logs expire in {{days}} days',
+      bannerBody: 'Export your logs to keep a copy before they are removed.',
+      bannerCta: 'Export logs',
     },
   },
 } as const;

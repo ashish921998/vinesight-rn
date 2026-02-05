@@ -12,6 +12,8 @@ import type { Worker } from '@/types';
 import { FormModal, SectionHeader, FormInput, Toggle, InfoCard } from '@/components/ui';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useCapabilities } from '@/hooks/use-capabilities';
+import { extractErrorReason } from '@/utils/subscription-errors';
 
 interface WorkerFormProps {
   visible?: boolean;
@@ -40,6 +42,8 @@ export function WorkerForm({
 
   const createWorker = useCreateWorker();
   const updateWorker = useUpdateWorker();
+  const { data: capabilities } = useCapabilities();
+  const maxWorkers = capabilities.capabilities.workers.maxWorkers;
   const isEditMode = !!worker;
 
   useEffect(() => {
@@ -106,6 +110,14 @@ export function WorkerForm({
     } catch (error) {
       if (__DEV__) {
         console.error('Error saving worker:', error);
+      }
+      const reason = extractErrorReason(error);
+      if (reason === 'worker_limit_reached') {
+        Alert.alert(
+          t('subscription.locks.workers.title'),
+          t('subscription.locks.workers.description', { limit: maxWorkers }),
+        );
+        return;
       }
       Alert.alert(t('common.error'), t('common.errors.failedToSaveWorker'));
     } finally {

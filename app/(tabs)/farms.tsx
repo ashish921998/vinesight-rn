@@ -15,14 +15,16 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useFarms, useDeleteFarm, useFabBottomPosition } from '@/hooks';
+import { useFarms, useDeleteFarm, useFabBottomPosition, useCapabilities } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
+import { FeatureLockCard } from '@/components/subscription/feature-lock-card';
 import type { Farm } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
+import { isLimitReached } from '@/utils/capabilities';
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -253,10 +255,15 @@ export default function FarmsScreen() {
   const router = useRouter();
   const fabBottom = useFabBottomPosition();
   const { data: farms, isLoading, refetch } = useFarms();
+  const { data: capabilities } = useCapabilities();
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const isAndroid = Platform.OS === 'android';
+
+  const maxFarms = capabilities.capabilities.farms.maxFarms;
+  const farmCount = farms?.length ?? 0;
+  const canAddFarm = !isLimitReached(farmCount, maxFarms);
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchQuery(text);
@@ -291,6 +298,10 @@ export default function FarmsScreen() {
   };
 
   const handleAddFarm = () => {
+    if (!canAddFarm) {
+      router.push('/locked?feature=farms');
+      return;
+    }
     router.push('/farm/add');
   };
 
@@ -477,13 +488,23 @@ export default function FarmsScreen() {
           {t('farms.empty.subtitle')}
         </Text>
         <View style={{ marginTop: spacing[6], width: '100%', maxWidth: 360 }}>
-          <Button title={t('farms.addFarm')} onPress={handleAddFarm} />
+          <Button
+            title={t('farms.addFarm')}
+            onPress={handleAddFarm}
+            disabled={!canAddFarm}
+            rightIcon={
+              !canAddFarm ? (
+                <SymbolIcon name="lock.fill" size={16} color={m3.colorScheme.onSurfaceVariant} />
+              ) : null
+            }
+          />
         </View>
       </View>
     );
   };
 
   const showFab = isAndroid && (farms?.length || 0) > 0;
+  const fabDisabled = !canAddFarm;
   const listBottomPadding = Math.max(
     spacing[16] + (isAndroid ? 16 : 0),
     (showFab ? fabBottom + 56 : 0) + spacing[8],
@@ -506,15 +527,28 @@ export default function FarmsScreen() {
           flexGrow: 1,
         }}
         ListHeaderComponent={
-          <SearchHeader
-            searchQuery={searchQuery}
-            isSearchFocused={isSearchFocused}
-            onSearchChange={handleSearchChange}
-            onSearchFocus={handleSearchFocus}
-            onSearchBlur={handleSearchBlur}
-            filteredFarms={filteredFarms}
-            farms={farms}
-          />
+          <View>
+            <SearchHeader
+              searchQuery={searchQuery}
+              isSearchFocused={isSearchFocused}
+              onSearchChange={handleSearchChange}
+              onSearchFocus={handleSearchFocus}
+              onSearchBlur={handleSearchBlur}
+              filteredFarms={filteredFarms}
+              farms={farms}
+            />
+            {!canAddFarm && (
+              <View style={{ paddingHorizontal: spacing[4] }}>
+                <FeatureLockCard
+                  title={t('subscription.locks.farms.title')}
+                  description={t('subscription.locks.farms.description', { limit: maxFarms })}
+                  ctaLabel={t('subscription.locks.cta')}
+                  featureKey="farms"
+                  onUpgrade={() => router.push('/paywall?source=farms')}
+                />
+              </View>
+            )}
+          </View>
         }
         ListEmptyComponent={renderEmpty}
         refreshControl={
@@ -541,7 +575,7 @@ export default function FarmsScreen() {
             borderRadius: borderRadius.full,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: m3.colorScheme.primary,
+            backgroundColor: fabDisabled ? m3.surface.surfaceContainerHigh : m3.colorScheme.primary,
             overflow: 'hidden',
           }}
           onPress={handleAddFarm}
@@ -550,14 +584,21 @@ export default function FarmsScreen() {
         >
           {({ pressed }) => (
             <>
-              <SymbolIcon name="plus" size={28} color={m3.colorScheme.onPrimary} />
+              <SymbolIcon
+                name={fabDisabled ? 'lock.fill' : 'plus'}
+                size={fabDisabled ? 20 : 28}
+                color={fabDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onPrimary}
+              />
               <View
                 pointerEvents="none"
                 style={[
                   StyleSheet.absoluteFillObject,
                   {
                     backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                      ? colorWithOpacity(
+                          fabDisabled ? m3.colorScheme.onSurface : m3.colorScheme.onPrimary,
+                          m3.stateLayerOpacity.pressed,
+                        )
                       : 'transparent',
                   },
                 ]}

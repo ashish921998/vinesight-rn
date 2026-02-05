@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { useWorkers, useDeleteWorker, useFabBottomPosition } from '@/hooks';
+import { useWorkers, useDeleteWorker, useFabBottomPosition, useCapabilities } from '@/hooks';
 import { useModalStore } from '@/stores';
 import { AttendanceView, WorkerAnalyticsView } from '@/components/screens';
 import { Button, SegmentedControl } from '@/components/ui';
@@ -22,6 +22,8 @@ import { WorkerCard } from '@/components/cards';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
+import { FeatureLockCard } from '@/components/subscription/feature-lock-card';
+import { isLimitReached } from '@/utils/capabilities';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
@@ -46,6 +48,7 @@ export default function WorkersScreen() {
   const fabBottom = useFabBottomPosition();
   const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
+  const { data: capabilities } = useCapabilities();
   const deleteWorker = useDeleteWorker();
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
@@ -53,6 +56,9 @@ export default function WorkersScreen() {
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
 
   const inactiveWorkers = useMemo(() => workers?.filter((w) => !w.is_active) || [], [workers]);
+
+  const maxWorkers = capabilities.capabilities.workers.maxWorkers;
+  const canAddWorker = !isLimitReached(activeWorkers.length, maxWorkers);
 
   const handleDeleteWorker = (worker: Worker) => {
     Alert.alert(
@@ -106,19 +112,34 @@ export default function WorkersScreen() {
         flexGrow: 1,
       }}
       ListHeaderComponent={
-        activeWorkers.length > 0 ? (
-          <Text
-            style={{
-              fontSize: fontSize.xs,
-              fontWeight: fontWeight.bold,
-              color: m3.colorScheme.onSurfaceVariant,
-              letterSpacing: 0.5,
-              marginHorizontal: spacing[4],
-              marginBottom: spacing[2],
-            }}
-          >
-            {t('workers.lists.activeTitle', { count: activeWorkers.length })}
-          </Text>
+        activeWorkers.length > 0 || !canAddWorker ? (
+          <View style={{ marginBottom: spacing[2] }}>
+            {activeWorkers.length > 0 && (
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.bold,
+                  color: m3.colorScheme.onSurfaceVariant,
+                  letterSpacing: 0.5,
+                  marginHorizontal: spacing[4],
+                  marginBottom: spacing[2],
+                }}
+              >
+                {t('workers.lists.activeTitle', { count: activeWorkers.length })}
+              </Text>
+            )}
+            {!canAddWorker && (
+              <View style={{ marginHorizontal: spacing[4] }}>
+                <FeatureLockCard
+                  title={t('subscription.locks.workers.title')}
+                  description={t('subscription.locks.workers.description', { limit: maxWorkers })}
+                  ctaLabel={t('subscription.locks.cta')}
+                  featureKey="workers"
+                  onUpgrade={() => router.push('/paywall?source=workers')}
+                />
+              </View>
+            )}
+          </View>
         ) : null
       }
       ListFooterComponent={
@@ -194,6 +215,7 @@ export default function WorkersScreen() {
                   setAddWorker({ worker: null });
                   router.push('/add-worker');
                 }}
+                disabled={!canAddWorker}
               />
             </View>
           </View>
@@ -264,6 +286,10 @@ export default function WorkersScreen() {
         {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
           <Pressable
             onPress={() => {
+              if (!canAddWorker) {
+                router.push('/locked?feature=workers');
+                return;
+              }
               setAddWorker({ worker: null });
               router.push('/add-worker');
             }}
@@ -273,7 +299,9 @@ export default function WorkersScreen() {
               right: spacing[6],
               width: 56,
               height: 56,
-              backgroundColor: m3.colorScheme.primary,
+              backgroundColor: canAddWorker
+                ? m3.colorScheme.primary
+                : m3.surface.surfaceContainerHigh,
               borderRadius: borderRadius.full,
               alignItems: 'center',
               justifyContent: 'center',
@@ -284,14 +312,21 @@ export default function WorkersScreen() {
           >
             {({ pressed }) => (
               <>
-                <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+                <UiSymbol
+                  name={canAddWorker ? 'plus' : 'lock.fill'}
+                  size={canAddWorker ? 28 : 20}
+                  color={canAddWorker ? m3.colorScheme.onPrimary : m3.colorScheme.onSurfaceVariant}
+                />
                 <View
                   pointerEvents="none"
                   style={[
                     StyleSheet.absoluteFillObject,
                     {
                       backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                        ? colorWithOpacity(
+                            canAddWorker ? m3.colorScheme.onPrimary : m3.colorScheme.onSurface,
+                            m3.stateLayerOpacity.pressed,
+                          )
                         : 'transparent',
                     },
                   ]}

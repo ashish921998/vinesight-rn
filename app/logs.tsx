@@ -32,6 +32,7 @@ import {
   useExpenseRecordsByFarms,
   useFertigationRecordsByFarms,
   useProfile,
+  useCapabilities,
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { useModalStore } from '@/stores';
@@ -45,6 +46,13 @@ import type {
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3, useThemeColors } from '@/styles/use-theme';
+import {
+  getDaysUntil,
+  getRecordBaseDate,
+  getRetentionExpiryDate,
+  isWithinRetention,
+} from '@/utils/retention';
+import { isUnlimited } from '@/utils/capabilities';
 
 interface CombinedLog {
   id: string;
@@ -79,6 +87,8 @@ export default function LogsScreen() {
   });
 
   const { data: farms = [], isLoading: farmsLoading } = useFarms();
+  const { data: capabilities } = useCapabilities();
+  const retentionMonths = capabilities.capabilities.logs.retentionMonths;
   const [selectedFarmId, setSelectedFarmId] = useState<number | undefined>(() => {
     if (!farmId) return undefined;
     const parsed = parseInt(farmId, 10);
@@ -104,7 +114,7 @@ export default function LogsScreen() {
     expenseRecords = [],
     fertigationRecords = [],
     isLoading: recordsLoading,
-  } = useFarmRecords(selectedFarmId);
+  } = useFarmRecords(selectedFarmId, retentionMonths);
 
   const allFarmIds = useMemo(
     () => farms.map((f) => f.id).filter((id): id is number => id !== undefined),
@@ -125,26 +135,74 @@ export default function LogsScreen() {
     selectedFarmId === undefined ? allFarmIds : [],
   );
 
-  const displayIrrigationRecords = useMemo(
-    () => (selectedFarmId === undefined ? (allRecordsIrrigation.data ?? []) : irrigationRecords),
-    [selectedFarmId, allRecordsIrrigation.data, irrigationRecords],
+  const filterByRetention = useCallback(
+    <T extends { created_at?: string | null; date?: string | null }>(records: T[]): T[] => {
+      if (isUnlimited(retentionMonths)) return records;
+      return records.filter((record) =>
+        isWithinRetention(getRecordBaseDate(record), retentionMonths),
+      );
+    },
+    [retentionMonths],
   );
-  const displaySprayRecords = useMemo(
-    () => (selectedFarmId === undefined ? (allRecordsSpray.data ?? []) : sprayRecords),
-    [selectedFarmId, allRecordsSpray.data, sprayRecords],
-  );
-  const displayHarvestRecords = useMemo(
-    () => (selectedFarmId === undefined ? (allRecordsHarvest.data ?? []) : harvestRecords),
-    [selectedFarmId, allRecordsHarvest.data, harvestRecords],
-  );
-  const displayExpenseRecords = useMemo(
-    () => (selectedFarmId === undefined ? (allRecordsExpense.data ?? []) : expenseRecords),
-    [selectedFarmId, allRecordsExpense.data, expenseRecords],
-  );
-  const displayFertigationRecords = useMemo(
-    () => (selectedFarmId === undefined ? (allRecordsFertigation.data ?? []) : fertigationRecords),
-    [selectedFarmId, allRecordsFertigation.data, fertigationRecords],
-  );
+
+  const displayIrrigationRecords = useMemo(() => {
+    const records =
+      selectedFarmId === undefined ? (allRecordsIrrigation.data ?? []) : (irrigationRecords ?? []);
+    return filterByRetention(records);
+  }, [selectedFarmId, allRecordsIrrigation.data, irrigationRecords, filterByRetention]);
+  const displaySprayRecords = useMemo(() => {
+    const records =
+      selectedFarmId === undefined ? (allRecordsSpray.data ?? []) : (sprayRecords ?? []);
+    return filterByRetention(records);
+  }, [selectedFarmId, allRecordsSpray.data, sprayRecords, filterByRetention]);
+  const displayHarvestRecords = useMemo(() => {
+    const records =
+      selectedFarmId === undefined ? (allRecordsHarvest.data ?? []) : (harvestRecords ?? []);
+    return filterByRetention(records);
+  }, [selectedFarmId, allRecordsHarvest.data, harvestRecords, filterByRetention]);
+  const displayExpenseRecords = useMemo(() => {
+    const records =
+      selectedFarmId === undefined ? (allRecordsExpense.data ?? []) : (expenseRecords ?? []);
+    return filterByRetention(records);
+  }, [selectedFarmId, allRecordsExpense.data, expenseRecords, filterByRetention]);
+  const displayFertigationRecords = useMemo(() => {
+    const records =
+      selectedFarmId === undefined
+        ? (allRecordsFertigation.data ?? [])
+        : (fertigationRecords ?? []);
+    return filterByRetention(records);
+  }, [selectedFarmId, allRecordsFertigation.data, fertigationRecords, filterByRetention]);
+
+  const expiringSoonDays = useMemo(() => {
+    if (isUnlimited(retentionMonths)) return null;
+
+    const allRecords = [
+      ...displayIrrigationRecords,
+      ...displaySprayRecords,
+      ...displayHarvestRecords,
+      ...displayExpenseRecords,
+      ...displayFertigationRecords,
+    ];
+
+    let minDays: number | null = null;
+    allRecords.forEach((record) => {
+      const baseDate = getRecordBaseDate(record);
+      const expiry = getRetentionExpiryDate(baseDate, retentionMonths);
+      if (!expiry) return;
+      const days = getDaysUntil(expiry);
+      if (days <= 0 || days > 7) return;
+      if (minDays === null || days < minDays) minDays = days;
+    });
+
+    return minDays;
+  }, [
+    retentionMonths,
+    displayIrrigationRecords,
+    displaySprayRecords,
+    displayHarvestRecords,
+    displayExpenseRecords,
+    displayFertigationRecords,
+  ]);
 
   const isLoadingAllRecords =
     selectedFarmId === undefined
@@ -530,6 +588,53 @@ export default function LogsScreen() {
                 </View>
               </Pressable>
             </View>
+
+            {expiringSoonDays !== null && (
+              <View
+                style={{
+                  marginHorizontal: spacing[4],
+                  marginTop: spacing[4],
+                  padding: spacing[4],
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: 'rgba(255, 149, 0, 0.12)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 149, 0, 0.3)',
+                }}
+              >
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}
+                >
+                  <UiSymbol name="clock" size={18} color={colors.warning} />
+                  <Text
+                    style={{
+                      marginLeft: spacing[2],
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                      color: colors.surface[900],
+                    }}
+                  >
+                    {t('subscription.retention.bannerTitle', { days: expiringSoonDays })}
+                  </Text>
+                </View>
+                <Text style={{ color: colors.surface[700], marginBottom: spacing[3] }}>
+                  {t('subscription.retention.bannerBody')}
+                </Text>
+                <Pressable
+                  onPress={() => router.push('/reports')}
+                  style={{
+                    alignSelf: 'flex-start',
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[2],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colors.warning,
+                  }}
+                >
+                  <Text style={{ color: colors.white, fontWeight: fontWeight.semibold }}>
+                    {t('subscription.retention.bannerCta')}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
 
             {/* Search & Filters */}
             <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
@@ -1176,7 +1281,7 @@ export default function LogsScreen() {
                                   color:
                                     currentPage === pageNum
                                       ? m3.colorScheme.onPrimary
-                                      : colors.gray[700],
+                                      : colors.surface[700],
                                 }}
                               >
                                 {pageNum}

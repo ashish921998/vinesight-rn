@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import Markdown from 'react-native-markdown-display';
-import { useFarm } from '@/hooks';
+import { useFarm, useCapabilities } from '@/hooks';
 import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -23,6 +23,8 @@ import { formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { LockedFeatureScreen } from '@/components/subscription/locked-feature-screen';
+import { extractErrorReason } from '@/utils/subscription-errors';
 
 const markdownStyles = (colors: ReturnType<typeof useThemeColors>) => ({
   body: { fontSize: 16, color: colors.surface[900], lineHeight: 24 },
@@ -91,6 +93,9 @@ export default function AIChatScreen() {
   const router = useRouter();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
   const { data: farm } = useFarm(farmId ? parseInt(farmId, 10) : undefined);
+  const { data: capabilities } = useCapabilities();
+
+  const aiEnabled = capabilities.capabilities.ai.chatbot;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
@@ -108,13 +113,18 @@ export default function AIChatScreen() {
     [t],
   );
 
-  useEffect(() => {
-    if (!aiService.isConfigured()) {
-      Alert.alert(t('ai.apiKeyRequiredTitle'), t('ai.apiKeyRequiredBody'), [
-        { text: t('common.ok'), onPress: () => router.back() },
-      ]);
-    }
-  }, [router, t]);
+  if (!aiEnabled) {
+    return (
+      <LockedFeatureScreen
+        title={t('subscription.locks.ai.title')}
+        description={t('subscription.locks.ai.description')}
+        ctaLabel={t('subscription.locks.cta')}
+        secondaryLabel={t('common.goBack')}
+        featureKey="ai"
+        onUpgrade={() => router.push('/paywall?source=ai')}
+      />
+    );
+  }
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -170,11 +180,16 @@ export default function AIChatScreen() {
 
       scrollToBottom();
     } catch (error) {
-      Alert.alert(
-        t('common.error'),
-        error instanceof Error ? error.message : t('ai.errors.failedResponse'),
-        [{ text: t('common.ok') }],
-      );
+      const reason = extractErrorReason(error);
+      const message =
+        reason === 'ai_rate_limited'
+          ? t('ai.errors.rateLimited')
+          : reason === 'ai_disabled'
+            ? t('subscription.locks.ai.description')
+            : error instanceof Error
+              ? error.message
+              : t('ai.errors.failedResponse');
+      Alert.alert(t('common.error'), message, [{ text: t('common.ok') }]);
     } finally {
       setIsLoading(false);
     }

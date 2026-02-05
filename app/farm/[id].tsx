@@ -24,6 +24,7 @@ import {
   useDeleteHarvestRecord,
   useDeleteIrrigationRecord,
   useDeleteSprayRecord,
+  useCapabilities,
 } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
 import { StatsCard, ActivityLogCard, TaskRow } from '@/components/cards';
@@ -63,6 +64,8 @@ export default function FarmDetailScreen() {
   const farmId = id ? parseInt(id, 10) : undefined;
 
   const { data: farm, isLoading: farmLoading, refetch: refetchFarm } = useFarm(farmId);
+  const { data: capabilities } = useCapabilities();
+  const retentionMonths = capabilities.capabilities.logs.retentionMonths;
   const {
     irrigationRecords,
     sprayRecords,
@@ -70,7 +73,7 @@ export default function FarmDetailScreen() {
     expenseRecords,
     fertigationRecords,
     refetch: refetchRecords,
-  } = useFarmRecords(farmId);
+  } = useFarmRecords(farmId, retentionMonths);
 
   const { data: tasks, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
@@ -116,6 +119,9 @@ export default function FarmDetailScreen() {
     ],
     [colors.task, m3],
   );
+
+  const aiEnabled = capabilities.capabilities.ai.chatbot;
+  const soilWaterManualEnabled = capabilities.capabilities.soilWater.manualUpdate;
 
   // Calculate stats
   const totalRecords = useMemo(
@@ -395,6 +401,10 @@ export default function FarmDetailScreen() {
   const handleWorkboardAction = (action: WorkboardAction) => {
     switch (action.id) {
       case 'ai':
+        if (!aiEnabled) {
+          router.push('/locked?feature=ai');
+          return;
+        }
         router.push(`/ai-chat?id=${id}`);
         break;
       case 'lab':
@@ -842,6 +852,10 @@ export default function FarmDetailScreen() {
                   subtitle={waterUsageCaption}
                   onPress={() => {
                     if (!farm?.id) return;
+                    if (!soilWaterManualEnabled) {
+                      router.push('/locked?feature=soilWater');
+                      return;
+                    }
                     router.push({
                       pathname: '/water-level',
                       params: { farmId: farm.id.toString() },
@@ -894,56 +908,75 @@ export default function FarmDetailScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={t(action.titleKey)}
                   >
-                    {({ pressed }) => (
-                      <View
-                        style={{
-                          alignItems: 'center',
-                          borderRadius: m3.shape.cornerMedium,
-                          overflow: 'hidden',
-                          paddingHorizontal: spacing[2],
-                          paddingVertical: spacing[2],
-                        }}
-                      >
+                    {({ pressed }) => {
+                      const isLocked = action.id === 'ai' && !aiEnabled;
+                      return (
                         <View
                           style={{
-                            borderRadius: borderRadius.full,
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: spacing[2],
-                            width: 40,
-                            height: 40,
-                            backgroundColor: colorWithOpacity(action.color, 0.12),
+                            borderRadius: m3.shape.cornerMedium,
+                            overflow: 'hidden',
+                            paddingHorizontal: spacing[2],
+                            paddingVertical: spacing[2],
+                            opacity: isLocked ? 0.7 : 1,
                           }}
                         >
-                          <UiSymbol name={action.icon} size={18} color={action.color} />
+                          <View
+                            style={{
+                              borderRadius: borderRadius.full,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              marginBottom: spacing[2],
+                              width: 40,
+                              height: 40,
+                              backgroundColor: colorWithOpacity(action.color, 0.12),
+                            }}
+                          >
+                            <UiSymbol
+                              name={isLocked ? 'lock.fill' : action.icon}
+                              size={18}
+                              color={action.color}
+                            />
+                          </View>
+                          <Text
+                            style={{
+                              color: m3.colorScheme.onSurfaceVariant,
+                              ...m3.typography.labelSmall,
+                              fontWeight: fontWeight.medium,
+                              textAlign: 'center',
+                              lineHeight: 16,
+                            }}
+                          >
+                            {t(action.titleKey)}
+                          </Text>
+                          {isLocked && (
+                            <Text
+                              style={{
+                                marginTop: 2,
+                                fontSize: fontSize.xs,
+                                color: m3.colorScheme.primary,
+                              }}
+                            >
+                              {t('subscription.badges.pro')}
+                            </Text>
+                          )}
+                          <View
+                            pointerEvents="none"
+                            style={[
+                              StyleSheet.absoluteFillObject,
+                              {
+                                backgroundColor: pressed
+                                  ? colorWithOpacity(
+                                      m3.colorScheme.onSurface,
+                                      m3.stateLayerOpacity.pressed,
+                                    )
+                                  : 'transparent',
+                              },
+                            ]}
+                          />
                         </View>
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurfaceVariant,
-                            ...m3.typography.labelSmall,
-                            fontWeight: fontWeight.medium,
-                            textAlign: 'center',
-                            lineHeight: 16,
-                          }}
-                        >
-                          {t(action.titleKey)}
-                        </Text>
-                        <View
-                          pointerEvents="none"
-                          style={[
-                            StyleSheet.absoluteFillObject,
-                            {
-                              backgroundColor: pressed
-                                ? colorWithOpacity(
-                                    m3.colorScheme.onSurface,
-                                    m3.stateLayerOpacity.pressed,
-                                  )
-                                : 'transparent',
-                            },
-                          ]}
-                        />
-                      </View>
-                    )}
+                      );
+                    }}
                   </Pressable>
                 ))}
               </View>

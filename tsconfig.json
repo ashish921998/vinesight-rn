@@ -15,5 +15,6 @@
       "@/utils/*": ["./src/utils/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "assets.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "assets.d.ts"],
+  "exclude": ["supabase/functions/**"]
 }
