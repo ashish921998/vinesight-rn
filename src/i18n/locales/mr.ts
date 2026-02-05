@@ -1277,7 +1277,7 @@ export const mr = {
   startDate: 'सुरूवातीची तारीख',
   endDate: 'शेवटची तारीख',
   calculate: 'गणा',
-  daysWorked: '$t(glossary.task) केलेले दिवस',
+  daysWorked: 'काम केलेले दिवस',
   confirm: 'पुष्टी करा',
   optional: 'ऐच्छिक',
   allFarms: 'सर्व शेते',

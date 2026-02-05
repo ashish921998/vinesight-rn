@@ -155,16 +155,30 @@ export function WorkerSettlementModal({
   }, [selectedPeriod, customStartDate, customEndDate, selectedWorker?.id]);
 
   const handleCalculate = async () => {
-    if (!selectedWorker) return;
-    if (selectedPeriod === 'custom' && customStartDate > customEndDate) {
-      Alert.alert(t('common.error'), t('settlement.invalidDateRange'));
+    if (!selectedWorker?.id) {
+      Alert.alert(t('common.error'), 'Worker not selected');
       return;
+    }
+
+    if (selectedPeriod === 'custom') {
+      // Validate dates are not empty
+      if (!customStartDate || !customEndDate) {
+        Alert.alert(t('common.error'), t('settlement.invalidDateRange'));
+        return;
+      }
+      // Parse and compare dates
+      const startDate = new Date(customStartDate);
+      const endDate = new Date(customEndDate);
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate > endDate) {
+        Alert.alert(t('common.error'), t('settlement.invalidDateRange'));
+        return;
+      }
     }
 
     setIsCalculating(true);
     try {
       const calculation = await calculateWorkerSettlement(
-        selectedWorker.id!,
+        selectedWorker.id,
         null,
         periodDates.start,
         periodDates.end,
@@ -181,7 +195,7 @@ export function WorkerSettlementModal({
   };
 
   const handleConfirm = async () => {
-    if (!selectedWorker || !settlementCalculation) return;
+    if (!selectedWorker?.id || !settlementCalculation) return;
 
     const salary = parseFloat(totalSalary);
     const deduction = parseFloat(advanceDeduction);
@@ -207,7 +221,7 @@ export function WorkerSettlementModal({
     setIsConfirming(true);
     try {
       await createWorkerSettlement({
-        worker_id: selectedWorker.id!,
+        worker_id: selectedWorker.id,
         farm_id: null,
         period_start: periodDates.start,
         period_end: periodDates.end,
@@ -419,7 +433,12 @@ export function WorkerSettlementModal({
               title={t('calculate')}
               onPress={handleCalculate}
               isLoading={isCalculating}
-              disabled={selectedPeriod === 'custom' && customStartDate > customEndDate}
+              disabled={
+                selectedPeriod === 'custom' &&
+                (!customStartDate ||
+                  !customEndDate ||
+                  new Date(customStartDate) > new Date(customEndDate))
+              }
             />
           )}
 

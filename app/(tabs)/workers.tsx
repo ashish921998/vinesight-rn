@@ -285,7 +285,7 @@ export default function WorkersScreen() {
                 right: spacing[6],
                 width: 56,
                 height: 56,
-                backgroundColor: '#598d6b',
+                backgroundColor: m3.colorScheme.secondary || m3.colorScheme.primary,
                 borderRadius: borderRadius.full,
                 alignItems: 'center',
                 justifyContent: 'center',

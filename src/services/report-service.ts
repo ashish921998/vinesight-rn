@@ -404,6 +404,9 @@ export class ReportService {
    * Export report as CSV file
    */
   static async exportCSV(data: ReportData, reportType: ReportType): Promise<void> {
+    if (!cacheDirectory) {
+      throw new Error('Cache directory is not available on this device');
+    }
     const csv = this.generateCSV(data, reportType);
     const filename = `${data.farmName.replace(/\s+/g, '_')}_report_${new Date().toISOString().split('T')[0]}.csv`;
     const fileUri = `${cacheDirectory}${filename}`;

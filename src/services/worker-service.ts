@@ -124,19 +124,23 @@ export async function createWorkerSettlement(
     if (txError) throw txError;
 
     // Update worker's advance balance
-    const { data: workerData } = await supabase
+    const { data: workerData, error: fetchError } = await supabase
       .from('workers')
       .select('advance_balance')
       .eq('id', settlement.worker_id)
       .single();
 
+    if (fetchError) throw fetchError;
+
     if (workerData) {
-      await supabase
+      const { error: updateError } = await supabase
         .from('workers')
         .update({
           advance_balance: Math.max(0, workerData.advance_balance - settlement.advance_deducted),
         })
         .eq('id', settlement.worker_id);
+
+      if (updateError) throw updateError;
     }
   }
 
