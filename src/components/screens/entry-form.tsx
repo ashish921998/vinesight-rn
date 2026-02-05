@@ -1988,7 +1988,7 @@ export function EntryForm({
               <DateTimePicker
                 value={selectedDate}
                 mode="date"
-                display="inline"
+                display="spinner"
                 onChange={(_, date) => {
                   if (date) setSelectedDate(date);
                 }}

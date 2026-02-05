@@ -12,6 +12,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Platform,
   type TextInputProps,
   Keyboard,
   useWindowDimensions,
@@ -545,7 +546,80 @@ export function ActivityEditForm({
 
       {renderForm()}
 
-      {showDatePicker && (
+      {showDatePicker && Platform.OS === 'ios' && (
+        <Pressable
+          onPress={() => setShowDatePicker(false)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 50,
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: colors.surface[100],
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              padding: 16,
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginBottom: 16,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: '700',
+                  color: colors.surface[900],
+                }}
+              >
+                {t('entryForm.selectDate')}
+              </Text>
+              <Pressable onPress={() => setShowDatePicker(false)}>
+                <UISymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />
+              </Pressable>
+            </View>
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="spinner"
+              onChange={(_, date) => {
+                if (date) setSelectedDate(date);
+              }}
+              textColor={colors.surface[900]}
+              style={{ height: 200 }}
+            />
+            <Pressable
+              onPress={() => setShowDatePicker(false)}
+              style={{
+                marginTop: 16,
+                paddingVertical: 12,
+                borderRadius: 12,
+                alignItems: 'center',
+                backgroundColor: colors.primary[500],
+              }}
+            >
+              <Text selectable style={{ fontWeight: '600', color: colors.white }}>
+                {t('common.done')}
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      )}
+      {showDatePicker && Platform.OS !== 'ios' && (
         <DateTimePicker
           value={selectedDate}
           mode="date"

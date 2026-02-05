@@ -407,12 +407,13 @@ export class ReportService {
     const csv = this.generateCSV(data, reportType);
     const filename = `${data.farmName.replace(/\s+/g, '_')}_report_${new Date().toISOString().split('T')[0]}.csv`;
 
-    const file = new File(Paths.cache, filename);
+    const filePath = `${Paths.cache}/${filename}`;
+    const file = new File(filePath);
     const writer = file.writableStream().getWriter();
     const bytes = new TextEncoder().encode(csv);
     await writer.write(bytes);
     await writer.close();
-    const fileUri = file.uri;
+    const fileUri = filePath;
 
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(fileUri, {

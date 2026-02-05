@@ -4,7 +4,15 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+  Platform,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
@@ -89,8 +97,11 @@ export default function ReportsScreen() {
       const dateStr = `${year}-${month}-${day}`;
       setDateRange((prev) => ({ ...prev, [type]: dateStr }));
     }
-    if (type === 'from') setShowFromPicker(false);
-    if (type === 'to') setShowToPicker(false);
+
+    if (Platform.OS === 'android') {
+      if (type === 'from') setShowFromPicker(false);
+      if (type === 'to') setShowToPicker(false);
+    }
   };
 
   const selectedFarm = useMemo(() => {
@@ -373,7 +384,79 @@ export default function ReportsScreen() {
             </Pressable>
           </View>
 
-          {showFromPicker && (
+          {showFromPicker && Platform.OS === 'ios' && (
+            <Pressable
+              onPress={() => setShowFromPicker(false)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                zIndex: 50,
+              }}
+            >
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: colors.surface[100],
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 16,
+                }}
+                onStartShouldSetResponder={() => true}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 16,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: '700',
+                      color: colors.surface[900],
+                    }}
+                  >
+                    {t('common.from')}
+                  </Text>
+                  <Pressable onPress={() => setShowFromPicker(false)}>
+                    <Icon name="xmark.circle.fill" size={24} color={colors.surface[500]} />
+                  </Pressable>
+                </View>
+                <DateTimePicker
+                  value={new Date(dateRange.from)}
+                  mode="date"
+                  display="spinner"
+                  onChange={(_, date) => handleDateChange('from', date)}
+                  maximumDate={new Date(dateRange.to)}
+                  textColor={colors.surface[900]}
+                  style={{ height: 200 }}
+                />
+                <Pressable
+                  onPress={() => setShowFromPicker(false)}
+                  style={{
+                    marginTop: 16,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    backgroundColor: m3.colorScheme.primary,
+                  }}
+                >
+                  <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                    {t('common.done')}
+                  </Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          )}
+          {showFromPicker && Platform.OS !== 'ios' && (
             <DateTimePicker
               value={new Date(dateRange.from)}
               mode="date"
@@ -382,7 +465,80 @@ export default function ReportsScreen() {
               maximumDate={new Date(dateRange.to)}
             />
           )}
-          {showToPicker && (
+          {showToPicker && Platform.OS === 'ios' && (
+            <Pressable
+              onPress={() => setShowToPicker(false)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                zIndex: 50,
+              }}
+            >
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: colors.surface[100],
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 16,
+                }}
+                onStartShouldSetResponder={() => true}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 16,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: '700',
+                      color: colors.surface[900],
+                    }}
+                  >
+                    {t('common.to')}
+                  </Text>
+                  <Pressable onPress={() => setShowToPicker(false)}>
+                    <Icon name="xmark.circle.fill" size={24} color={colors.surface[500]} />
+                  </Pressable>
+                </View>
+                <DateTimePicker
+                  value={new Date(dateRange.to)}
+                  mode="date"
+                  display="spinner"
+                  onChange={(_, date) => handleDateChange('to', date)}
+                  minimumDate={new Date(dateRange.from)}
+                  maximumDate={new Date()}
+                  textColor={colors.surface[900]}
+                  style={{ height: 200 }}
+                />
+                <Pressable
+                  onPress={() => setShowToPicker(false)}
+                  style={{
+                    marginTop: 16,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    backgroundColor: m3.colorScheme.primary,
+                  }}
+                >
+                  <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                    {t('common.done')}
+                  </Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          )}
+          {showToPicker && Platform.OS !== 'ios' && (
             <DateTimePicker
               value={new Date(dateRange.to)}
               mode="date"

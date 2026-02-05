@@ -4,7 +4,15 @@
  */
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, Pressable, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCreateFarm, useFarm, useUpdateFarm } from '@/hooks';
@@ -858,7 +866,85 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           message={t('farmForm.infoCardMessage')}
         />
       </FullScreenForm>
-      {formState.showDatePicker && (
+      {formState.showDatePicker && Platform.OS === 'ios' && (
+        <Pressable
+          onPress={() => setFormState((prev) => ({ ...prev, showDatePicker: false }))}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            zIndex: 50,
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: colors.surface[100],
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              padding: 16,
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 16,
+              }}
+            >
+              <Text
+                selectable
+                style={{ fontSize: 18, fontWeight: '700', color: m3.colorScheme.onSurface }}
+              >
+                {t('farmForm.sections.plantingDate')}
+              </Text>
+              <Pressable
+                onPress={() => setFormState((prev) => ({ ...prev, showDatePicker: false }))}
+              >
+                <UISymbol
+                  name="xmark.circle.fill"
+                  size={24}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                />
+              </Pressable>
+            </View>
+            <DateTimePicker
+              value={formState.plantingDate}
+              mode="date"
+              display="spinner"
+              onChange={(_, date) => {
+                if (date) {
+                  setFormState((prev) => ({
+                    ...prev,
+                    plantingDate: date,
+                    plantingDateChanged: true,
+                  }));
+                }
+              }}
+            />
+            <Pressable
+              onPress={() => setFormState((prev) => ({ ...prev, showDatePicker: false }))}
+              style={[
+                { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+                { backgroundColor: m3.colorScheme.primary },
+              ]}
+            >
+              <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                {t('entryForm.done')}
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      )}
+      {formState.showDatePicker && Platform.OS !== 'ios' && (
         <DateTimePicker
           value={formState.plantingDate}
           mode="date"
@@ -874,7 +960,79 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           }}
         />
       )}
-      {formState.showPruningDatePicker && (
+      {formState.showPruningDatePicker && Platform.OS === 'ios' && (
+        <Pressable
+          onPress={() => setFormState((prev) => ({ ...prev, showPruningDatePicker: false }))}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            zIndex: 50,
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: colors.surface[100],
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              padding: 16,
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 16,
+              }}
+            >
+              <Text
+                selectable
+                style={{ fontSize: 18, fontWeight: '700', color: m3.colorScheme.onSurface }}
+              >
+                {t('farmForm.fields.pruningDate.label')}
+              </Text>
+              <Pressable
+                onPress={() => setFormState((prev) => ({ ...prev, showPruningDatePicker: false }))}
+              >
+                <UISymbol
+                  name="xmark.circle.fill"
+                  size={24}
+                  color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                />
+              </Pressable>
+            </View>
+            <DateTimePicker
+              value={formState.dateOfPruning ?? new Date()}
+              mode="date"
+              display="spinner"
+              onChange={(_, date) => {
+                if (date) setFormState((prev) => ({ ...prev, dateOfPruning: date }));
+              }}
+            />
+            <Pressable
+              onPress={() => setFormState((prev) => ({ ...prev, showPruningDatePicker: false }))}
+              style={[
+                { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+                { backgroundColor: m3.colorScheme.primary },
+              ]}
+            >
+              <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                {t('entryForm.done')}
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      )}
+      {formState.showPruningDatePicker && Platform.OS !== 'ios' && (
         <DateTimePicker
           value={formState.dateOfPruning ?? new Date()}
           mode="date"

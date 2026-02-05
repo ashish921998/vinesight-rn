@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { useProfile, useWorkerAttendance, useWorkerTransactions, useWorkers } from '@/hooks';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -18,6 +19,7 @@ import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme'
 import { colorWithOpacity } from '@/utils/color';
 
 export default function WorkerAnalyticsDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams();
   const rawWorkerId = Number(id);
   const hasValidWorkerId = Number.isFinite(rawWorkerId);
@@ -66,8 +68,10 @@ export default function WorkerAnalyticsDetailScreen() {
       }
     }
 
-    if (type === 'from') setShowFromPicker(false);
-    if (type === 'to') setShowToPicker(false);
+    if (Platform.OS === 'android') {
+      if (type === 'from') setShowFromPicker(false);
+      if (type === 'to') setShowToPicker(false);
+    }
   };
 
   if (isLoading) {
@@ -220,7 +224,83 @@ export default function WorkerAnalyticsDetailScreen() {
               </Text>
             </Pressable>
           </View>
-          {showFromPicker && (
+          {showFromPicker && Platform.OS === 'ios' && (
+            <Pressable
+              onPress={() => setShowFromPicker(false)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                zIndex: 50,
+              }}
+            >
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: m3.surface.surfaceContainerHigh,
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 16,
+                }}
+                onStartShouldSetResponder={() => true}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 16,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: '700',
+                      color: m3.colorScheme.onSurface,
+                    }}
+                  >
+                    {t('common.from')}
+                  </Text>
+                  <Pressable onPress={() => setShowFromPicker(false)}>
+                    <UiSymbol
+                      name="xmark.circle.fill"
+                      size={24}
+                      color={m3.colorScheme.onSurfaceVariant}
+                    />
+                  </Pressable>
+                </View>
+                <DateTimePicker
+                  value={range.from}
+                  mode="date"
+                  display="spinner"
+                  onChange={(event, date) => handleDateChange('from', event, date)}
+                  maximumDate={range.to}
+                  textColor={m3.colorScheme.onSurface}
+                  style={{ height: 200 }}
+                />
+                <Pressable
+                  onPress={() => setShowFromPicker(false)}
+                  style={{
+                    marginTop: 16,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    backgroundColor: m3.colorScheme.primary,
+                  }}
+                >
+                  <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                    Done
+                  </Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          )}
+          {showFromPicker && Platform.OS !== 'ios' && (
             <DateTimePicker
               value={range.from}
               mode="date"
@@ -229,7 +309,84 @@ export default function WorkerAnalyticsDetailScreen() {
               maximumDate={range.to}
             />
           )}
-          {showToPicker && (
+          {showToPicker && Platform.OS === 'ios' && (
+            <Pressable
+              onPress={() => setShowToPicker(false)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                zIndex: 50,
+              }}
+            >
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: m3.surface.surfaceContainerHigh,
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  padding: 16,
+                }}
+                onStartShouldSetResponder={() => true}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 16,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: '700',
+                      color: m3.colorScheme.onSurface,
+                    }}
+                  >
+                    {t('common.to')}
+                  </Text>
+                  <Pressable onPress={() => setShowToPicker(false)}>
+                    <UiSymbol
+                      name="xmark.circle.fill"
+                      size={24}
+                      color={m3.colorScheme.onSurfaceVariant}
+                    />
+                  </Pressable>
+                </View>
+                <DateTimePicker
+                  value={range.to}
+                  mode="date"
+                  display="spinner"
+                  onChange={(event, date) => handleDateChange('to', event, date)}
+                  minimumDate={range.from}
+                  maximumDate={addDays(new Date(), 1)}
+                  textColor={m3.colorScheme.onSurface}
+                  style={{ height: 200 }}
+                />
+                <Pressable
+                  onPress={() => setShowToPicker(false)}
+                  style={{
+                    marginTop: 16,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    backgroundColor: m3.colorScheme.primary,
+                  }}
+                >
+                  <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                    Done
+                  </Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          )}
+          {showToPicker && Platform.OS !== 'ios' && (
             <DateTimePicker
               value={range.to}
               mode="date"
