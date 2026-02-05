@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '2.5',
+    version: '2.6',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
@@ -17,7 +17,7 @@ module.exports = {
       bundleIdentifier: 'com.vinesight.ios',
       scheme: 'vinesight',
       usesAppleSignIn: true,
-      buildNumber: '1.1.6',
+      buildNumber: '1.1.7',
       icon: {
         light: './assets/icons/ios-light.png',
         dark: './assets/icons/ios-dark.png',
@@ -52,7 +52,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 10,
+      versionCode: 11,
       softwareKeyboardLayoutMode: 'resize',
       adaptiveIcon: {
         foregroundImage: './assets/icons/adaptive-icon.png',
