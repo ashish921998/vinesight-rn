@@ -5,7 +5,7 @@
 
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { File, Paths } from 'expo-file-system';
+import { cacheDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
 import { ReportData, ReportSummary, ReportPreview, DateRange, ReportType } from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
 import {
@@ -406,13 +406,9 @@ export class ReportService {
   static async exportCSV(data: ReportData, reportType: ReportType): Promise<void> {
     const csv = this.generateCSV(data, reportType);
     const filename = `${data.farmName.replace(/\s+/g, '_')}_report_${new Date().toISOString().split('T')[0]}.csv`;
+    const fileUri = `${cacheDirectory}${filename}`;
 
-    const file = new File(Paths.cache, filename);
-    const writer = file.writableStream().getWriter();
-    const bytes = new TextEncoder().encode(csv);
-    await writer.write(bytes);
-    await writer.close();
-    const fileUri = file.uri;
+    await writeAsStringAsync(fileUri, csv);
 
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(fileUri, {

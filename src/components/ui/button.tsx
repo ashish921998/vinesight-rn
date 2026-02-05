@@ -117,8 +117,7 @@ export function Button({
     ...textVariantStyles[variant],
   };
 
-  const stateLayerColor =
-    variant === 'primary' ? m3.colorScheme.onPrimary : m3.colorScheme.onSurface;
+  const stateLayerColor = m3.colorScheme.onBackground;
 
   return (
     <Pressable

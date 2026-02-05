@@ -16,6 +16,7 @@ import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useWorkers, useDeleteWorker, useFabBottomPosition } from '@/hooks';
 import { useModalStore } from '@/stores';
 import { AttendanceView, WorkerAnalyticsView } from '@/components/screens';
+import { WorkerSettlementModal } from '@/components/modals/worker-settlement-modal';
 import { Button, SegmentedControl } from '@/components/ui';
 import type { Worker } from '@/types';
 import { WorkerCard } from '@/components/cards';
@@ -49,6 +50,7 @@ export default function WorkersScreen() {
   const deleteWorker = useDeleteWorker();
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
+  const [settlementModalVisible, setSettlementModalVisible] = useState(false);
 
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
 
@@ -82,6 +84,18 @@ export default function WorkersScreen() {
   const handleEditWorker = (worker: Worker) => {
     setAddWorker({ worker });
     router.push('/add-worker');
+  };
+
+  const handleOpenSettlement = () => {
+    setSettlementModalVisible(true);
+  };
+
+  const handleCloseSettlement = () => {
+    setSettlementModalVisible(false);
+  };
+
+  const handleSettlementSuccess = () => {
+    refetch();
   };
 
   const renderWorker = ({ item }: { item: Worker }) => (
@@ -260,49 +274,94 @@ export default function WorkersScreen() {
         {selectedTab === 'attendance' && renderAttendanceTab()}
         {selectedTab === 'analytics' && renderAnalyticsTab()}
 
-        {/* Primary action */}
+        {/* Primary actions */}
         {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
-          <Pressable
-            onPress={() => {
-              setAddWorker({ worker: null });
-              router.push('/add-worker');
-            }}
-            style={{
-              position: 'absolute',
-              bottom: fabBottom,
-              right: spacing[6],
-              width: 56,
-              height: 56,
-              backgroundColor: m3.colorScheme.primary,
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={t('workers.form.saveAdd')}
-          >
-            {({ pressed }) => (
-              <>
-                <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
-                <View
-                  pointerEvents="none"
-                  style={[
-                    StyleSheet.absoluteFillObject,
-                    {
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
-                    },
-                  ]}
-                />
-              </>
-            )}
-          </Pressable>
+          <>
+            <Pressable
+              onPress={handleOpenSettlement}
+              style={{
+                position: 'absolute',
+                bottom: fabBottom + 64 + spacing[3],
+                right: spacing[6],
+                width: 56,
+                height: 56,
+                backgroundColor: '#598d6b',
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('settlePayment')}
+            >
+              {({ pressed }) => (
+                <>
+                  <UiSymbol name="banknote" size={28} color="#ffffff" />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity('#ffffff', m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </>
+              )}
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setAddWorker({ worker: null });
+                router.push('/add-worker');
+              }}
+              style={{
+                position: 'absolute',
+                bottom: fabBottom,
+                right: spacing[6],
+                width: 56,
+                height: 56,
+                backgroundColor: m3.colorScheme.primary,
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('workers.form.saveAdd')}
+            >
+              {({ pressed }) => (
+                <>
+                  <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </>
+              )}
+            </Pressable>
+          </>
         )}
       </View>
 
       {/* Add/Edit Worker handled via route */}
+
+      {/* Settlement Modal */}
+      <WorkerSettlementModal
+        visible={settlementModalVisible}
+        onClose={handleCloseSettlement}
+        workers={activeWorkers}
+        onSuccess={handleSettlementSuccess}
+      />
     </>
   );
 }
