@@ -145,6 +145,24 @@ export const en = {
       captionThisSeason: '{{usage}} this season',
       captionLogIrrigation: 'Log irrigation to monitor water use',
     },
+    seasons: {
+      title: 'SEASONS',
+      firstTimeHint:
+        'Ending a season for the first time? Set the season start and end dates to save this season.',
+      lastEndDate: 'Last season ended on {{date}}. The next season start is set automatically.',
+      startDateLabel: 'Season start date',
+      endDateLabel: 'Season end date',
+      showEndSeasonForm: 'End season',
+      endSeasonButton: 'Save season end',
+      alerts: {
+        endSuccess: 'Season ended successfully.',
+      },
+      errors: {
+        invalidRange: 'Season end date must be after the start date.',
+        duplicateEndDate: 'This season end date has already been saved.',
+        endFailed: 'Unable to end season.',
+      },
+    },
     workboard: {
       title: 'WORKBOARD',
       subtitle: 'Quick access to tools and resources.',

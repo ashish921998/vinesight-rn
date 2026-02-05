@@ -146,6 +146,23 @@ export const mr = {
       captionThisSeason: 'या हंगामात {{usage}}',
       captionLogIrrigation: 'पाणी वापर मॉनिटर करण्यासाठी $t(glossary.irrigation) नोंदवा',
     },
+    seasons: {
+      title: 'हंगाम',
+      firstTimeHint: 'पहिल्यांदा हंगाम समाप्त करत आहात? हंगामाची सुरुवात आणि समाप्ती तारीख भरा.',
+      lastEndDate: 'मागील हंगाम {{date}} ला संपला. पुढील हंगामाची सुरुवात आपोआप सेट होईल.',
+      startDateLabel: 'हंगाम सुरूवात तारीख',
+      endDateLabel: 'हंगाम समाप्ती तारीख',
+      showEndSeasonForm: 'हंगाम समाप्त करा',
+      endSeasonButton: 'हंगाम जतन करा',
+      alerts: {
+        endSuccess: 'हंगाम यशस्वीरित्या समाप्त झाला.',
+      },
+      errors: {
+        invalidRange: 'हंगाम समाप्ती तारीख सुरूवातीच्या तारखेपेक्षा नंतरची असावी.',
+        duplicateEndDate: 'ही हंगाम समाप्ती तारीख आधीच जतन केलेली आहे.',
+        endFailed: 'हंगाम समाप्त करता आला नाही.',
+      },
+    },
     workboard: {
       title: 'वर्कबोर्ड',
       subtitle: 'टूल्स आणि संसाधनांना पटकन प्रवेश.',

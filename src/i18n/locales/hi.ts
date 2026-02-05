@@ -145,6 +145,24 @@ export const hi = {
       captionThisSeason: 'इस मौसम में {{usage}}',
       captionLogIrrigation: 'पानी के उपयोग की निगरानी के लिए सिंचाई लॉग करें',
     },
+    seasons: {
+      title: 'सीज़न',
+      firstTimeHint:
+        'पहली बार सीज़न समाप्त कर रहे हैं? सीज़न की शुरुआत और समाप्ति की तारीख दर्ज करें।',
+      lastEndDate: 'पिछला सीज़न {{date}} को समाप्त हुआ। अगला सीज़न प्रारंभ अपने आप सेट होगा।',
+      startDateLabel: 'सीज़न प्रारंभ तारीख',
+      endDateLabel: 'सीज़न समाप्ति तारीख',
+      showEndSeasonForm: 'सीज़न समाप्त करें',
+      endSeasonButton: 'सीज़न सेव करें',
+      alerts: {
+        endSuccess: 'सीज़न सफलतापूर्वक समाप्त हुआ।',
+      },
+      errors: {
+        invalidRange: 'सीज़न समाप्ति तारीख, प्रारंभ तारीख के बाद होनी चाहिए।',
+        duplicateEndDate: 'यह सीज़न समाप्ति तारीख पहले से सेव है।',
+        endFailed: 'सीज़न समाप्त नहीं हो सका।',
+      },
+    },
     workboard: {
       title: 'वर्कबोर्ड',
       subtitle: 'उपकरण और संसाधनों तक त्वरित पहुंच।',
