@@ -2,20 +2,24 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Alert, Pressable } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
-import type { Worker, WorkerAttendance, WorkStatus } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import type { Worker, WorkerAttendance, WorkStatus, CapabilityLimit } from '@/types';
 import { WorkerSelectSheet } from './index';
 import i18n from '@/i18n';
+import { limitToNumber } from '@/utils/capabilities';
+import { FeatureLockCard } from '@/components/subscription/feature-lock-card';
+import { useRouter } from 'expo-router';
 
 type AttendanceStatus = WorkStatus | null;
 
 interface CalendarAttendanceTabProps {
   workers: Worker[];
+  historyWeeks: CapabilityLimit;
 }
 
-export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
+export function CalendarAttendanceTab({ workers, historyWeeks }: CalendarAttendanceTabProps) {
   const colors = useThemeColors();
   const m3 = useM3();
   const UI = useMemo(
@@ -32,6 +36,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
     }),
     [colors, m3],
   );
+  const router = useRouter();
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | null>(
     workers.length > 0 && workers[0].id !== undefined ? workers[0].id : null,
   );
@@ -41,6 +46,10 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
   const [workerSheetVisible, setWorkerSheetVisible] = useState(false);
 
   const selectedWorker = workers.find((w) => w.id === selectedWorkerId);
+  const maxHistoryWeeks = limitToNumber(historyWeeks);
+  const earliestAllowed = maxHistoryWeeks
+    ? new Date(Date.now() - maxHistoryWeeks * 7 * 24 * 60 * 60 * 1000)
+    : null;
 
   const handleWorkerSelect = () => {
     if (workers.length === 0) return;
@@ -58,7 +67,15 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
       monthEnd.setMonth(monthEnd.getMonth() + 1);
       monthEnd.setDate(0);
 
-      const startDate = monthStart.toISOString().split('T')[0];
+      if (earliestAllowed && monthEnd < earliestAllowed) {
+        setAttendanceData([]);
+        return;
+      }
+
+      const adjustedStart =
+        earliestAllowed && monthStart < earliestAllowed ? earliestAllowed : monthStart;
+
+      const startDate = adjustedStart.toISOString().split('T')[0];
       const endDate = monthEnd.toISOString().split('T')[0];
 
       const records = await fetchAttendanceForWorker(selectedWorkerId, startDate, endDate);
@@ -68,7 +85,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
     } finally {
       setLoading(false);
     }
-  }, [selectedWorkerId, calendarMonth]);
+  }, [selectedWorkerId, calendarMonth, earliestAllowed]);
 
   React.useEffect(() => {
     loadCalendarAttendance();
@@ -128,13 +145,36 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
     'December',
   ];
 
+  const canNavigatePrev = (() => {
+    if (!earliestAllowed) return true;
+    const prevMonth = new Date(calendarMonth);
+    prevMonth.setMonth(prevMonth.getMonth() - 1);
+    const prevMonthEnd = new Date(prevMonth);
+    prevMonthEnd.setMonth(prevMonthEnd.getMonth() + 1);
+    prevMonthEnd.setDate(0);
+    return prevMonthEnd >= earliestAllowed;
+  })();
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: UI.bg }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: spacing[6] }}
     >
-      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[2] }}>
+      {maxHistoryWeeks !== null && (
+        <View style={{ marginHorizontal: spacing[4], marginTop: spacing[2] }}>
+          <FeatureLockCard
+            title={i18n.t('subscription.locks.attendance.title')}
+            description={i18n.t('subscription.locks.attendance.description', {
+              weeks: maxHistoryWeeks,
+            })}
+            ctaLabel={i18n.t('subscription.locks.cta')}
+            featureKey="attendance"
+            onUpgrade={() => router.push('/paywall?source=attendance')}
+          />
+        </View>
+      )}
+      <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
         <View
           style={{
             borderRadius: borderRadius['3xl'],
@@ -199,10 +239,12 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
           >
             <Pressable
               onPress={() => {
+                if (!canNavigatePrev) return;
                 const newMonth = new Date(calendarMonth);
                 newMonth.setMonth(newMonth.getMonth() - 1);
                 setCalendarMonth(newMonth);
               }}
+              disabled={!canNavigatePrev}
               style={{
                 width: 36,
                 height: 36,
@@ -210,6 +252,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: UI.primarySoft,
+                opacity: canNavigatePrev ? 1 : 0.4,
               }}
             >
               <UiSymbol name="chevron.left" size={20} color={UI.primary} />

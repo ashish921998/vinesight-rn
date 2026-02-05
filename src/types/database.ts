@@ -72,6 +72,8 @@ export interface IrrigationRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  expired_at?: string | null;
+  deleted_at?: string | null;
 }
 
 export type IrrigationRecordInsert = Omit<IrrigationRecord, 'id' | 'created_at'>;
@@ -95,6 +97,8 @@ export interface SprayRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  expired_at?: string | null;
+  deleted_at?: string | null;
 }
 
 export type SprayRecordInsert = Omit<SprayRecord, 'id' | 'created_at'>;
@@ -119,6 +123,8 @@ export interface FertigationRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  expired_at?: string | null;
+  deleted_at?: string | null;
 }
 
 export type FertigationRecordInsert = Omit<FertigationRecord, 'id' | 'created_at'>;
@@ -141,6 +147,8 @@ export interface HarvestRecord {
   date_of_pruning?: string | null;
   notes?: string | null;
   created_at?: string | null;
+  expired_at?: string | null;
+  deleted_at?: string | null;
 }
 
 export type HarvestRecordInsert = Omit<HarvestRecord, 'id' | 'created_at'>;
@@ -167,6 +175,8 @@ export interface ExpenseRecord {
   rate_per_unit?: number | null;
   worker_names?: string | null;
   created_at?: string | null;
+  expired_at?: string | null;
+  deleted_at?: string | null;
 }
 
 export type ExpenseRecordInsert = Omit<ExpenseRecord, 'id' | 'created_at'>;
@@ -273,6 +283,10 @@ export interface Profile {
   consultant_organization_id?: string | null;
   preferred_currency?: Currency | null;
   preferred_spacing_unit?: SpacingUnit | null;
+  subscription?: string | null;
+  trial_started_at?: string | null;
+  trial_ends_at?: string | null;
+  trial_used_at?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 }

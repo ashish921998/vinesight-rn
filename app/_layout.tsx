@@ -28,6 +28,7 @@ import {
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
+import { SubscriptionBootstrap } from '@/components/subscription/subscription-bootstrap';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -284,6 +285,7 @@ export default Sentry.wrap(function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <I18nextProvider i18n={i18n}>
               <StatusBar style={isDark ? 'light' : 'dark'} />
+              <SubscriptionBootstrap />
               <Stack
                 screenOptions={{
                   headerShown: false,
@@ -305,6 +307,8 @@ export default Sentry.wrap(function RootLayout() {
                 />
                 <Stack.Screen name="add-lab-test" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="water-level" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="locked" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />

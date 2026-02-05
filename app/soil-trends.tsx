@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { SafeScreen } from '@/components/ui/safe-screen';
 import { useFarm } from '@/hooks/use-farms';
+import { useCapabilities } from '@/hooks/use-capabilities';
 import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
 import ParameterSelector from '@/components/screens/parameter-selector';
 import TrendsTable from '@/components/screens/trends-table';
@@ -17,6 +18,7 @@ import TrendsChart from '@/components/screens/trends-chart';
 import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { LockedFeatureScreen } from '@/components/subscription/locked-feature-screen';
 
 type ViewMode = 'table' | 'chart';
 
@@ -29,10 +31,24 @@ export default function SoilTrendsScreen() {
   const farmIdNum = Number.isNaN(parsed) ? 0 : parsed;
 
   const { data: farm, isLoading: farmLoading } = useFarm(farmIdNum);
+  const { data: capabilities } = useCapabilities();
   const { data: trends, isLoading: trendsLoading } = useSoilTestTrends(farmIdNum);
 
   const [viewMode, setViewMode] = useState<ViewMode>('chart');
   const [selectedParams, setSelectedParams] = useState<Set<string>>(new Set(SOIL_DEFAULT_PARAMS));
+
+  if (!capabilities.capabilities.labTests.trends) {
+    return (
+      <LockedFeatureScreen
+        title={t('subscription.locks.labTrends.title')}
+        description={t('subscription.locks.labTrends.description')}
+        ctaLabel={t('subscription.locks.cta')}
+        secondaryLabel={t('common.goBack')}
+        featureKey="labTrends"
+        onUpgrade={() => router.push('/paywall?source=labTrends')}
+      />
+    );
+  }
 
   if (!farmId || farmIdNum === 0) {
     return (

@@ -882,6 +882,11 @@ export const mr = {
         description: 'दिनांक श्रेणीनुसार $t(glossary.report) तयार करून कामगिरी विश्लेषित करा.',
       },
     },
+    subscription: {
+      title: 'प्रोचे मोफत ट्रायल',
+      subtitle: '1 महिना मोफत, नंतर Rs 3000/वर्ष.',
+      cta: 'मोफत ट्रायल सुरू करा',
+    },
     preferences: {
       title: '$t(glossary.farm) प्राधान्ये',
       country: 'देश',
@@ -1046,6 +1051,7 @@ export const mr = {
     },
     errors: {
       failedResponse: 'AI कडून उत्तर मिळाले नाही',
+      rateLimited: 'आजची AI मर्यादा पूर्ण झाली. उद्या पुन्हा प्रयत्न करा.',
     },
     defaultSuggestions: {
       waterNeed: 'मला किती पाणी लागेल?',
@@ -1675,6 +1681,104 @@ export const mr = {
         cost: '$t(glossary.expense)',
         remarks: 'टिप्पणी',
       },
+    },
+  },
+  subscription: {
+    sectionTitle: 'सबस्क्रिप्शन',
+    plan: {
+      free: 'फ्री',
+      pro: 'प्रो',
+    },
+    status: {
+      active: 'सक्रिय',
+      trialing: 'ट्रायल',
+      grace: 'ग्रेस',
+      canceled: 'रद्द',
+      expired: 'कालबाह्य',
+    },
+    badges: {
+      pro: 'प्रो',
+      free: 'फ्री',
+    },
+    upgrade: 'प्लॅन अपग्रेड करा',
+    manage: 'सबस्क्रिप्शन व्यवस्थापित करा',
+    trialCopy: '1 महिना मोफत ट्रायल, नंतर Rs 3000/वर्ष. कधीही रद्द करा.',
+    paywallTitle: 'VineSight प्रो',
+    paywallHeadline: 'तुमच्या $t(glossary.farm) निर्णयांचा मागोवा हरवू नका.',
+    paywallSubhead: 'प्रो नसल्यास तुमचा $t(glossary.farm) इतिहास आणि AI मार्गदर्शन मर्यादित राहते.',
+    features: {
+      unlimitedFarms: 'अमर्याद $t(glossary.farm)',
+      unlimitedWorkers: 'अमर्याद $t(glossary.worker)',
+      fullRetention: 'पूर्ण लॉग रिटेन्शन',
+      labTrends: 'लॅब ट्रेंड्स',
+      soilTrends: 'मातीतील ओलावा ट्रेंड्स',
+      aiChat: 'AI चॅट सहाय्यक',
+      autoParsing: 'ऑटो लॅब टेस्ट पार्सिंग',
+    },
+    cta: 'मोफत ट्रायल सुरू करा',
+    alreadyPro: 'तुम्ही सबस्क्राइब आहात',
+    restore: 'खरेदी पुनर्संचयित करा',
+    bestValue: 'सर्वोत्तम मूल्य',
+    period: 'कालावधी',
+    notSupported: 'या प्लॅटफॉर्मवर सबस्क्रिप्शन समर्थित नाही.',
+    successTitle: 'सबस्क्रिप्शन अपडेट',
+    successBody: 'तुमचा प्रो प्रवेश लवकर उपलब्ध होईल.',
+    restoreTitle: 'खरेदी पुनर्संचयित',
+    restoreBody: 'तुमची खरेदी पुनर्संचयित झाली.',
+    trialEnds: 'ट्रायल संपेल {{date}}',
+    renewsOn: 'नूतनीकरण {{date}}',
+    staleNotice: 'शेवटचा प्लान वापरला जात आहे. कनेक्शन तपासा.',
+    errors: {
+      purchaseFailedTitle: 'खरेदी अयशस्वी',
+      purchaseFailedBody: 'कृपया पुन्हा प्रयत्न करा.',
+      restoreFailedTitle: 'पुनर्संचयित अयशस्वी',
+      restoreFailedBody: 'कृपया पुन्हा प्रयत्न करा.',
+      noPackages: 'कोणतेही प्लॅन उपलब्ध नाहीत.',
+      unableToManage: 'सबस्क्रिप्शन व्यवस्थापित करता आले नाही.',
+    },
+    locks: {
+      cta: 'प्रोमध्ये अपग्रेड करा',
+      ai: {
+        title: 'AI चॅट फक्त प्रो मध्ये',
+        description: 'Vinesight AI ची मदत प्रो मध्ये उपलब्ध आहे.',
+      },
+      farms: {
+        title: 'फार्म मर्यादा पूर्ण झाली',
+        description: 'फ्री प्लॅनमध्ये {{limit}} फार्म. अधिकासाठी अपग्रेड करा.',
+      },
+      workers: {
+        title: 'वर्कर मर्यादा पूर्ण झाली',
+        description: 'फ्री प्लॅनमध्ये {{limit}} सक्रिय वर्कर. अपग्रेड करा.',
+      },
+      attendance: {
+        title: '$t(glossary.attendance) इतिहास मर्यादित',
+        description: 'फ्री प्लॅनमध्ये मागील {{weeks}} आठवडे उपलब्ध.',
+      },
+      labTrends: {
+        title: 'लॅब ट्रेंड्स फक्त प्रो मध्ये',
+        description: '$t(glossary.soil) व $t(glossary.petiole) ट्रेंड्स प्रो मध्ये पहा.',
+      },
+      labParsing: {
+        title: 'ऑटो पार्सिंग फक्त प्रो मध्ये',
+        description: 'लॅब रिपोर्ट ऑटो पार्सिंग प्रो मध्ये उपलब्ध आहे.',
+      },
+      soilWater: {
+        title: 'सॉइल वॉटर अपडेट प्रो मध्ये',
+        description: 'सॉइल वॉटर स्तर अपडेट करण्यासाठी अपग्रेड करा.',
+      },
+      soilTrends: {
+        title: 'ओलावा ट्रेंड्स फक्त प्रो मध्ये',
+        description: 'ओलावा ट्रेंड्स पाहण्यासाठी प्रोमध्ये अपग्रेड करा.',
+      },
+      generic: {
+        title: 'फीचर लॉक आहे',
+        description: 'हा फीचर अनलॉक करण्यासाठी प्रोमध्ये अपग्रेड करा.',
+      },
+    },
+    retention: {
+      bannerTitle: 'लॉग्स {{days}} दिवसांत संपतील',
+      bannerBody: 'लॉग्स हटण्यापूर्वी एक्सपोर्ट करा.',
+      bannerCta: 'लॉग्स एक्सपोर्ट करा',
     },
   },
 } as const;

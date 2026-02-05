@@ -12,6 +12,7 @@ import {
   PetioleTestRecordInsert,
 } from '../types/database';
 import { LabTrendsService } from '../services/lab-trends-service';
+import { useCapabilities } from './use-capabilities';
 import i18n from '@/i18n';
 import { normalizeParameterKey } from '@/utils/lab-test-utils';
 
@@ -555,39 +556,35 @@ export const SOIL_DEFAULT_PARAMS = ['ph', 'ec'] as const;
 export const PETIOLE_DEFAULT_PARAMS = ['total_nitrogen', 'potassium'] as const;
 
 export function useSoilTestTrends(farmId: number) {
+  const { data: capabilities } = useCapabilities();
+  const canViewTrends = capabilities.capabilities.labTests.trends;
   return useQuery({
     queryKey: labTestQueryKeys.soilTrends(farmId),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('soil_test_records')
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: true });
+      const { data, error } = await supabase.functions.invoke('lab-trends', {
+        body: { farmId, type: 'soil' },
+      });
 
       if (error) throw error;
-      const testData = data as SoilTestRecord[];
-      const trends = LabTrendsService.calculateSoilTrends(testData || []);
-      return trends;
+      return data as ReturnType<typeof LabTrendsService.calculateSoilTrends>;
     },
-    enabled: farmId > 0,
+    enabled: farmId > 0 && canViewTrends,
   });
 }
 
 export function usePetioleTestTrends(farmId: number) {
+  const { data: capabilities } = useCapabilities();
+  const canViewTrends = capabilities.capabilities.labTests.trends;
   return useQuery({
     queryKey: labTestQueryKeys.petioleTrends(farmId),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('petiole_test_records')
-        .select('*')
-        .eq('farm_id', farmId)
-        .order('date', { ascending: true });
+      const { data, error } = await supabase.functions.invoke('lab-trends', {
+        body: { farmId, type: 'petiole' },
+      });
 
       if (error) throw error;
-      const testData = data as PetioleTestRecord[];
-      const trends = LabTrendsService.calculatePetioleTrends(testData || []);
-      return trends;
+      return data as ReturnType<typeof LabTrendsService.calculatePetioleTrends>;
     },
-    enabled: farmId > 0,
+    enabled: farmId > 0 && canViewTrends,
   });
 }

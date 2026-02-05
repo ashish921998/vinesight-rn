@@ -14,6 +14,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { FormModal, SectionHeader, FormInput } from '@/components/ui/form-components';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { formatDate } from '@/i18n/format';
+import { useRouter } from 'expo-router';
 import {
   useCreateSoilTest,
   useCreatePetioleTest,
@@ -21,8 +22,10 @@ import {
   PETIOLE_PARAMETERS,
   getParameterLabel,
 } from '../../hooks/use-lab-tests';
+import { useCapabilities } from '@/hooks/use-capabilities';
 import { parseLabTestFromImage, parseLabTestFromText } from '../../utils/pdf-parser';
 import { extractTextFromPDF } from '../../utils/pdf-to-image';
+import { FeatureLockCard } from '@/components/subscription/feature-lock-card';
 
 function normalizeParameterKey(key: string, isSoil: boolean): string {
   if (isSoil) {
@@ -83,6 +86,7 @@ export default function LabTestForm({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
+  const router = useRouter();
 
   const isVisible = visible ?? true;
   const createSoilTest = useCreateSoilTest();
@@ -99,6 +103,8 @@ export default function LabTestForm({
   const testTypeLabel = isSoil ? t('labTests.form.types.soil') : t('labTests.form.types.petiole');
   const parameterList = isSoil ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
   const isLoading = createSoilTest.isPending || createPetioleTest.isPending;
+  const { data: capabilities } = useCapabilities();
+  const autoParsingEnabled = capabilities.capabilities.labTests.autoParsing;
   const isValid = useMemo(
     () => Object.values(parameters).some((value) => value.trim().length > 0),
     [parameters],
@@ -406,14 +412,14 @@ export default function LabTestForm({
       <SectionHeader title={t('labTests.form.uploadSectionTitle')} style={{ marginBottom: 12 }} />
       <Pressable
         onPress={handleUploadFile}
-        disabled={isParsingPDF || isLoading}
+        disabled={!autoParsingEnabled || isParsingPDF || isLoading}
         style={{
-          backgroundColor: colors.surface[100],
+          backgroundColor: autoParsingEnabled ? colors.surface[100] : colors.surface[200],
           borderRadius: borderRadius.xl,
           padding: spacing[4],
           borderWidth: 2,
           borderStyle: 'dashed',
-          borderColor: colors.surface[300],
+          borderColor: autoParsingEnabled ? colors.surface[300] : colors.surface[400],
           marginBottom: spacing[6],
         }}
       >
@@ -440,7 +446,7 @@ export default function LabTestForm({
               style={{
                 fontSize: fontSize.base,
                 fontWeight: fontWeight.medium,
-                color: colors.primary[500],
+                color: autoParsingEnabled ? colors.primary[500] : colors.surface[500],
                 marginLeft: spacing[2],
               }}
               textBreakStrategy="highQuality"
@@ -451,6 +457,16 @@ export default function LabTestForm({
           </View>
         )}
       </Pressable>
+
+      {!autoParsingEnabled && (
+        <FeatureLockCard
+          title={t('subscription.locks.labParsing.title')}
+          description={t('subscription.locks.labParsing.description')}
+          ctaLabel={t('subscription.locks.cta')}
+          featureKey="labParsing"
+          onUpgrade={() => router.push('/paywall?source=labParsing')}
+        />
+      )}
 
       <SectionHeader title={t('labTests.form.detailsSectionTitle')} style={{ marginBottom: 12 }} />
       <Pressable

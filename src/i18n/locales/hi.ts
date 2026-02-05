@@ -879,6 +879,11 @@ export const hi = {
           'उत्पादकता को ट्रैक करने और प्रदर्शन का विश्लेषण करने के लिए तारीख-श्रेणी रिपोर्ट बनाएं।',
       },
     },
+    subscription: {
+      title: 'प्रो का मुफ्त ट्रायल',
+      subtitle: '1 माह मुफ्त, फिर Rs 3000/वर्ष।',
+      cta: 'मुफ्त ट्रायल शुरू करें',
+    },
     preferences: {
       title: 'खेत प्राथमिकताएं',
       country: 'देश',
@@ -1041,6 +1046,7 @@ export const hi = {
     },
     errors: {
       failedResponse: 'AI से प्रतिक्रिया प्राप्त करने में विफल',
+      rateLimited: 'आज की AI सीमा पूरी हो गई। कल फिर कोशिश करें।',
     },
     defaultSuggestions: {
       waterNeed: 'मुझे कितने पानी की आवश्यकता है?',
@@ -1668,6 +1674,104 @@ export const hi = {
         cost: 'लागत',
         remarks: 'टिप्पणियां',
       },
+    },
+  },
+  subscription: {
+    sectionTitle: 'सब्सक्रिप्शन',
+    plan: {
+      free: 'फ्री',
+      pro: 'प्रो',
+    },
+    status: {
+      active: 'सक्रिय',
+      trialing: 'ट्रायल',
+      grace: 'ग्रेस पीरियड',
+      canceled: 'रद्द',
+      expired: 'समाप्त',
+    },
+    badges: {
+      pro: 'प्रो',
+      free: 'फ्री',
+    },
+    upgrade: 'प्लान अपग्रेड करें',
+    manage: 'सब्सक्रिप्शन मैनेज करें',
+    trialCopy: '1 माह का मुफ्त ट्रायल, फिर Rs 3000/वर्ष। कभी भी रद्द करें।',
+    paywallTitle: 'VineSight प्रो',
+    paywallHeadline: 'प्रो में अपग्रेड करें',
+    paywallSubhead: 'पूरा वाइनयार्ड टूलकिट अनलॉक करें।',
+    features: {
+      unlimitedFarms: 'असीमित खेत',
+      unlimitedWorkers: 'असीमित कामगार',
+      fullRetention: 'पूरी लॉग रिटेंशन',
+      labTrends: 'लैब ट्रेंड्स',
+      soilTrends: 'मिट्टी नमी ट्रेंड्स',
+      aiChat: 'AI चैट सहायक',
+      autoParsing: 'ऑटो लैब टेस्ट पार्सिंग',
+    },
+    cta: 'मुफ्त ट्रायल शुरू करें',
+    alreadyPro: 'आप सब्सक्राइब हैं',
+    restore: 'खरीदारी बहाल करें',
+    bestValue: 'बेहतरीन वैल्यू',
+    period: 'अवधि',
+    notSupported: 'इस प्लेटफॉर्म पर सब्सक्रिप्शन समर्थित नहीं हैं।',
+    successTitle: 'सब्सक्रिप्शन अपडेट',
+    successBody: 'आपका प्रो एक्सेस जल्द उपलब्ध होगा।',
+    restoreTitle: 'खरीदारी बहाल',
+    restoreBody: 'आपकी खरीदारी बहाल कर दी गई है।',
+    trialEnds: 'ट्रायल समाप्त {{date}}',
+    renewsOn: 'नवीकरण {{date}}',
+    staleNotice: 'पिछला प्लान उपयोग हो रहा है। कनेक्शन जांचें।',
+    errors: {
+      purchaseFailedTitle: 'खरीदारी विफल',
+      purchaseFailedBody: 'कृपया फिर से कोशिश करें।',
+      restoreFailedTitle: 'बहाली विफल',
+      restoreFailedBody: 'कृपया फिर से कोशिश करें।',
+      noPackages: 'कोई प्लान उपलब्ध नहीं है।',
+      unableToManage: 'सब्सक्रिप्शन मैनेज नहीं हो सका।',
+    },
+    locks: {
+      cta: 'प्रो में अपग्रेड करें',
+      ai: {
+        title: 'AI चैट केवल प्रो में',
+        description: 'Vinesight AI से प्रो में मदद लें।',
+      },
+      farms: {
+        title: 'फार्म सीमा पूरी हो गई',
+        description: 'फ्री प्लान में {{limit}} फार्म। अधिक जोड़ने के लिए अपग्रेड करें।',
+      },
+      workers: {
+        title: 'वर्कर सीमा पूरी हो गई',
+        description: 'फ्री प्लान में {{limit}} सक्रिय वर्कर। अपग्रेड करें।',
+      },
+      attendance: {
+        title: 'हाजिरी इतिहास सीमित',
+        description: 'फ्री प्लान में पिछले {{weeks}} सप्ताह शामिल हैं।',
+      },
+      labTrends: {
+        title: 'लैब ट्रेंड्स केवल प्रो में',
+        description: 'मिट्टी और पेटियोल ट्रेंड्स प्रो में देखें।',
+      },
+      labParsing: {
+        title: 'ऑटो पार्सिंग केवल प्रो में',
+        description: 'लैब रिपोर्ट ऑटो पार्सिंग प्रो में उपलब्ध है।',
+      },
+      soilWater: {
+        title: 'सॉइल वॉटर अपडेट प्रो में',
+        description: 'सॉइल वॉटर स्तर अपडेट करने के लिए अपग्रेड करें।',
+      },
+      soilTrends: {
+        title: 'नमी ट्रेंड्स केवल प्रो में',
+        description: 'नमी ट्रेंड्स देखने के लिए प्रो में अपग्रेड करें।',
+      },
+      generic: {
+        title: 'फ़ीचर लॉक है',
+        description: 'इस फ़ीचर के लिए प्रो में अपग्रेड करें।',
+      },
+    },
+    retention: {
+      bannerTitle: 'लॉग्स {{days}} दिनों में समाप्त होंगे',
+      bannerBody: 'लॉग्स हटने से पहले एक्सपोर्ट करें।',
+      bannerCta: 'लॉग्स एक्सपोर्ट करें',
     },
   },
 } as const;

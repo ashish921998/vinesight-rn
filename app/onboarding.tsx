@@ -16,9 +16,11 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { Button } from '@/components/ui/button';
 import { router } from 'expo-router';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useLanguageStore } from '@/stores';
+import { useCapabilities } from '@/hooks';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -35,6 +37,7 @@ export default function OnboardingScreen() {
 
   const { currentStep, preferences, nextStep, previousStep, setPreferences, completeOnboarding } =
     useOnboardingStore();
+  const { refetch: refetchCapabilities } = useCapabilities();
 
   const currentLanguage = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
@@ -373,6 +376,101 @@ export default function OnboardingScreen() {
     </ScrollView>
   );
 
+  const renderSubscriptionStep = () => (
+    <ScrollView
+      style={{ flex: 1, paddingHorizontal: spacing[6] }}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingVertical: spacing[6] }}
+    >
+      <View
+        style={{
+          alignItems: 'center',
+          marginBottom: spacing[6],
+        }}
+      >
+        <View
+          style={{
+            width: 96,
+            height: 96,
+            borderRadius: borderRadius.full,
+            backgroundColor: colors.primary[100],
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: spacing[4],
+          }}
+        >
+          <SymbolIcon name="star.fill" size={48} color={colors.primary[700]} />
+        </View>
+        <Text
+          style={{
+            fontSize: fontSize['2xl'],
+            fontWeight: fontWeight.bold,
+            color: colors.gray[800],
+            textAlign: 'center',
+            marginBottom: spacing[2],
+          }}
+        >
+          {t('onboarding.subscription.title')}
+        </Text>
+        <Text style={{ color: colors.gray[500], textAlign: 'center' }}>
+          {t('onboarding.subscription.subtitle')}
+        </Text>
+      </View>
+
+      <View style={{ gap: spacing[3] }}>
+        {[
+          t('subscription.features.unlimitedFarms'),
+          t('subscription.features.unlimitedWorkers'),
+          t('subscription.features.fullRetention'),
+          t('subscription.features.labTrends'),
+          t('subscription.features.soilTrends'),
+          t('subscription.features.aiChat'),
+          t('subscription.features.autoParsing'),
+        ].map((feature) => (
+          <View
+            key={feature}
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing[4],
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
+            <SymbolIcon name="checkmark.circle.fill" size={20} color={colors.primary[600]} />
+            <Text style={{ marginLeft: spacing[3], color: colors.gray[700] }}>{feature}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View
+        style={{
+          marginTop: spacing[6],
+          padding: spacing[4],
+          borderRadius: borderRadius.xl,
+          backgroundColor: colors.primary[50],
+        }}
+      >
+        <Text style={{ color: colors.primary[700], textAlign: 'center' }}>
+          {t('subscription.trialCopy')}
+        </Text>
+      </View>
+
+      <View style={{ marginTop: spacing[6] }}>
+        <Button
+          title={t('onboarding.subscription.cta')}
+          onPress={async () => {
+            try {
+              await refetchCapabilities();
+            } finally {
+              nextStep();
+            }
+          }}
+        />
+      </View>
+    </ScrollView>
+  );
+
   const renderPreferencesStep = () => (
     <ScrollView
       style={{ flex: 1, paddingHorizontal: spacing[6] }}
@@ -702,6 +800,8 @@ export default function OnboardingScreen() {
         return renderWelcomeStep();
       case 'features':
         return renderFeaturesStep();
+      case 'subscription':
+        return renderSubscriptionStep();
       case 'preferences':
         return renderPreferencesStep();
       case 'notifications':

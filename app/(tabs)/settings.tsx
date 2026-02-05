@@ -14,9 +14,9 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
-import { useProfile, useUpdateProfile } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import {
@@ -31,6 +31,10 @@ import { supabase } from '@/lib/supabase';
 import { setAppLanguage } from '@/i18n';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import type { ThemeMode } from '@/stores/theme-store';
+
+import { useProfile, useUpdateProfile, useCapabilities } from '@/hooks';
+import { Button } from '@/components/ui/button';
+import { formatDate } from '@/i18n/format';
 import {
   ensureNotificationPermissions,
   scheduleDailyWaterReminder,
@@ -38,12 +42,14 @@ import {
 } from '@/services/notifications';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { subscriptionService } from '@/services/subscription-service';
 
 export default function SettingsScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
   const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
   const { t } = useTranslation();
+  const router = useRouter();
 
   const {
     user,
@@ -52,6 +58,8 @@ export default function SettingsScreen() {
     updateUserAreaUnit,
     isLoading: authLoading,
   } = useAuthStore();
+
+  const { data: capabilities, isStale: capabilitiesStale } = useCapabilities();
 
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
@@ -276,6 +284,14 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleManageSubscription = async () => {
+    try {
+      await subscriptionService.showManageSubscriptions();
+    } catch (_error) {
+      Alert.alert(t('common.error'), t('subscription.errors.unableToManage'));
+    }
+  };
+
   const getCurrencyLabel = (code: string) => {
     const currency = CURRENCIES.find((c) => c.code === code);
     return currency?.label || code;
@@ -297,6 +313,39 @@ export default function SettingsScreen() {
     if (mode === 'dark') return t('settings.themeDark');
     return t('settings.themeSystem');
   };
+
+  const formatPlanLabel = (planId: string) => {
+    if (planId === 'free') return t('subscription.plan.free');
+    if (planId === 'pro') return t('subscription.plan.pro');
+    return planId.replace(/[-_]+/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const planLabel = formatPlanLabel(capabilities.planId);
+  const badgeLabel =
+    capabilities.planId === 'free'
+      ? t('subscription.badges.free')
+      : capabilities.planId === 'pro'
+        ? t('subscription.badges.pro')
+        : planLabel;
+
+  const statusLabel = (() => {
+    switch (capabilities.status) {
+      case 'trialing':
+        return t('subscription.status.trialing');
+      case 'active':
+        return t('subscription.status.active');
+      case 'grace':
+        return t('subscription.status.grace');
+      case 'canceled':
+        return t('subscription.status.canceled');
+      case 'expired':
+        return t('subscription.status.expired');
+      default:
+        return t('subscription.status.active');
+    }
+  })();
+
+  const hasPaidPlan = capabilities.planId !== 'free' && capabilities.status !== 'expired';
 
   return (
     <ScrollView
@@ -351,6 +400,70 @@ export default function SettingsScreen() {
           <Pressable onPress={() => setShowEditProfile(true)}>
             <UISymbol name="pencil" size={24} color={m3.colorScheme.primary} />
           </Pressable>
+        </View>
+      </View>
+
+      {/* Subscription Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>{t('subscription.sectionTitle')}</Text>
+        <View style={styles.subscriptionCard}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View>
+              <Text style={styles.subscriptionPlan}>{planLabel}</Text>
+              <Text style={styles.subscriptionStatus}>{statusLabel}</Text>
+            </View>
+            <View
+              style={{
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[1],
+                borderRadius: borderRadius.full,
+                backgroundColor: hasPaidPlan ? 'rgba(64, 128, 89, 0.12)' : colors.surface[200],
+              }}
+            >
+              <Text style={{ fontSize: fontSize.xs, fontWeight: fontWeight.semibold }}>
+                {badgeLabel}
+              </Text>
+            </View>
+          </View>
+          {capabilities.trialEndsAt ? (
+            <Text style={styles.subscriptionMeta}>
+              {t('subscription.trialEnds', {
+                date: formatDate(new Date(capabilities.trialEndsAt), {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                }),
+              })}
+            </Text>
+          ) : null}
+          {capabilities.renewsAt ? (
+            <Text style={styles.subscriptionMeta}>
+              {t('subscription.renewsOn', {
+                date: formatDate(new Date(capabilities.renewsAt), {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                }),
+              })}
+            </Text>
+          ) : null}
+          {capabilitiesStale ? (
+            <Text style={styles.subscriptionMeta}>{t('subscription.staleNotice')}</Text>
+          ) : null}
+          <View style={{ marginTop: spacing[4] }}>
+            {hasPaidPlan ? (
+              <Button
+                title={t('subscription.manage')}
+                variant="outline"
+                onPress={handleManageSubscription}
+              />
+            ) : (
+              <Button
+                title={t('subscription.upgrade')}
+                onPress={() => router.push('/paywall?source=settings')}
+              />
+            )}
+          </View>
         </View>
       </View>
 
@@ -1273,6 +1386,26 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     borderRadius: borderRadius['2xl'],
     overflow: 'hidden',
   } as ViewStyle,
+  subscriptionCard: {
+    backgroundColor: colors.surface[100],
+    borderRadius: borderRadius['2xl'],
+    padding: spacing[4],
+  } as ViewStyle,
+  subscriptionPlan: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[900],
+  } as TextStyle,
+  subscriptionStatus: {
+    fontSize: fontSize.sm,
+    color: colors.surface[500],
+    marginTop: 2,
+  } as TextStyle,
+  subscriptionMeta: {
+    fontSize: fontSize.sm,
+    color: colors.surface[600],
+    marginTop: spacing[2],
+  } as TextStyle,
 
   settingsItem: {
     flexDirection: 'row',

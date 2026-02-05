@@ -98,6 +98,19 @@ export const queryKeys = {
     current: () => [...queryKeys.profile.all, 'current'] as const,
   },
 
+  // Capabilities
+  capabilities: {
+    all: ['capabilities'] as const,
+    current: (userId?: string | null) =>
+      [...queryKeys.capabilities.all, 'current', userId ?? 'anonymous'] as const,
+  },
+
+  // Subscription Offerings
+  offerings: {
+    all: ['offerings'] as const,
+    current: () => [...queryKeys.offerings.all, 'current'] as const,
+  },
+
   // Warehouse Items
   warehouseItems: {
     all: ['warehouseItems'] as const,

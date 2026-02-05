@@ -7,6 +7,7 @@ export type OnboardingStep =
   | 'language'
   | 'welcome'
   | 'features'
+  | 'subscription'
   | 'preferences'
   | 'notifications'
   | 'complete';
@@ -34,6 +35,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   'language',
   'welcome',
   'features',
+  'subscription',
   'preferences',
   'notifications',
   'complete',

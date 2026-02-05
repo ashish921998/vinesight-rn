@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { useFarms } from '@/hooks';
+import { useCapabilities } from '@/hooks/use-capabilities';
 import type { Worker } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -33,6 +34,8 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
     }),
     [colors, m3],
   );
+  const { data: capabilities } = useCapabilities();
+  const attendanceHistoryWeeks = capabilities.capabilities.attendance.historyWeeks;
   const [activeTab, setActiveTab] = useState<AttendanceTab>('mark');
   const [selectedWorkerIndex, setSelectedWorkerIndex] = useState(0);
 
@@ -177,7 +180,9 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
             onSaveSuccess={onSaveSuccess}
           />
         )}
-        {activeTab === 'calendar' && <CalendarAttendanceTab workers={activeWorkers} />}
+        {activeTab === 'calendar' && (
+          <CalendarAttendanceTab workers={activeWorkers} historyWeeks={attendanceHistoryWeeks} />
+        )}
       </View>
     </View>
   );

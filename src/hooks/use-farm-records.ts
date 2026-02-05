@@ -10,16 +10,28 @@ import {
   useExpenseRecords,
   useFertigationRecords,
 } from './use-records';
+import type { CapabilityLimit } from '@/types';
+import { getRecordBaseDate, isWithinRetention } from '@/utils/retention';
 
 /**
  * Fetch all records for a specific farm
  */
-export function useFarmRecords(farmId: number | undefined) {
+export function useFarmRecords(farmId: number | undefined, retentionMonths?: CapabilityLimit) {
   const irrigation = useIrrigationRecords(farmId);
   const spray = useSprayRecords(farmId);
   const harvest = useHarvestRecords(farmId);
   const expense = useExpenseRecords(farmId);
   const fertigation = useFertigationRecords(farmId);
+
+  const filterByRetention = <T extends { created_at?: string | null; date?: string | null }>(
+    records: T[] | undefined,
+  ): T[] | undefined => {
+    if (!records) return records;
+    if (!retentionMonths) return records;
+    return records.filter((record) =>
+      isWithinRetention(getRecordBaseDate(record), retentionMonths),
+    );
+  };
 
   const isLoading =
     irrigation.isLoading ||
@@ -46,11 +58,11 @@ export function useFarmRecords(farmId: number | undefined) {
   };
 
   return {
-    irrigationRecords: irrigation.data,
-    sprayRecords: spray.data,
-    harvestRecords: harvest.data,
-    expenseRecords: expense.data,
-    fertigationRecords: fertigation.data,
+    irrigationRecords: filterByRetention(irrigation.data),
+    sprayRecords: filterByRetention(spray.data),
+    harvestRecords: filterByRetention(harvest.data),
+    expenseRecords: filterByRetention(expense.data),
+    fertigationRecords: filterByRetention(fertigation.data),
     isLoading,
     isError,
     refetch,
