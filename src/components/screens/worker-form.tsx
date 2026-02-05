@@ -52,7 +52,7 @@ export function WorkerForm({
       // Reset form for add mode
       setName('');
       setDailyRate('');
-      setAdvanceBalance('0');
+      setAdvanceBalance('');
       setIsActive(true);
     }
   }, [worker, isVisible]);
@@ -62,7 +62,7 @@ export function WorkerForm({
   const handleReset = () => {
     setName('');
     setDailyRate('');
-    setAdvanceBalance('0');
+    setAdvanceBalance('');
     setIsActive(true);
   };
 
