@@ -89,7 +89,19 @@ export default function ReportsScreen() {
     }
   };
 
-  const handleDateChange = (type: 'from' | 'to', date: Date | undefined) => {
+  const handleDateChange = (
+    type: 'from' | 'to',
+    event: { type: string },
+    date: Date | undefined,
+  ) => {
+    if (event.type === 'dismissed') {
+      if (Platform.OS === 'android') {
+        if (type === 'from') setShowFromPicker(false);
+        if (type === 'to') setShowToPicker(false);
+      }
+      return;
+    }
+
     if (date) {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -785,7 +797,7 @@ export default function ReportsScreen() {
               value={new Date(dateRange.from)}
               mode="date"
               display="spinner"
-              onChange={(_, date) => handleDateChange('from', date)}
+              onChange={(event, date) => handleDateChange('from', event, date)}
               maximumDate={new Date(dateRange.to)}
               textColor={m3.colorScheme.onSurface}
               style={{ height: 200 }}
@@ -815,7 +827,7 @@ export default function ReportsScreen() {
           value={new Date(dateRange.from)}
           mode="date"
           display="default"
-          onChange={(_, date) => handleDateChange('from', date)}
+          onChange={(event, date) => handleDateChange('from', event, date)}
           maximumDate={new Date(dateRange.to)}
         />
       )}
@@ -869,7 +881,7 @@ export default function ReportsScreen() {
               value={new Date(dateRange.to)}
               mode="date"
               display="spinner"
-              onChange={(_, date) => handleDateChange('to', date)}
+              onChange={(event, date) => handleDateChange('to', event, date)}
               minimumDate={new Date(dateRange.from)}
               maximumDate={new Date()}
               textColor={m3.colorScheme.onSurface}
@@ -900,7 +912,7 @@ export default function ReportsScreen() {
           value={new Date(dateRange.to)}
           mode="date"
           display="default"
-          onChange={(_, date) => handleDateChange('to', date)}
+          onChange={(event, date) => handleDateChange('to', event, date)}
           minimumDate={new Date(dateRange.from)}
           maximumDate={new Date()}
         />

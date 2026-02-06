@@ -23,7 +23,11 @@ type BaseIconName =
   | 'time'
   | 'layers'
   | 'chart'
-  | 'fertigation';
+  | 'fertigation'
+  | 'trending-up'
+  | 'trending-down'
+  | 'remove'
+  | 'pencil';
 
 type AppIconName = BaseIconName | string;
 
@@ -66,6 +70,10 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   'doc.text.fill': 'document',
   'lightbulb.fill': 'flash',
   'checkmark.circle.fill': 'check-circle',
+  'trending-up': 'trending-up',
+  'trending-down': 'trending-down',
+  remove: 'remove',
+  pencil: 'pencil',
 };
 
 export function AppIcon({ name, size = 20, color }: AppIconProps) {
@@ -427,6 +435,59 @@ export function AppIcon({ name, size = 20, color }: AppIconProps) {
           <Rect x="6" y="12" width="3" height="7" fill={resolvedColor} />
           <Rect x="11" y="9" width="3" height="10" fill={resolvedColor} />
           <Rect x="16" y="6" width="3" height="13" fill={resolvedColor} />
+        </Svg>
+      );
+    case 'trending-up':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M23 6l-9 9-5-5-7 7"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'trending-down':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M23 18l-9-9-5 5-7-7"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'remove':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Line
+            x1="5"
+            y1="12"
+            x2="19"
+            y2="12"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+          />
+        </Svg>
+      );
+    case 'pencil':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </Svg>
       );
     default:

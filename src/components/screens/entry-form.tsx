@@ -1844,12 +1844,22 @@ export function EntryForm({
                   onChange={(_, date) => {
                     if (date) {
                       setDueDate(date.toISOString().split('T')[0]);
-                      setShowDueDatePicker(false);
                     }
                   }}
                   style={{ height: 200 }}
                   textColor={m3.colorScheme.onSurface}
                 />
+                <Pressable
+                  onPress={() => setShowDueDatePicker(false)}
+                  style={[
+                    { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+                    { backgroundColor: m3.colorScheme.primary },
+                  ]}
+                >
+                  <Text selectable style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                    {t('entryForm.done')}
+                  </Text>
+                </Pressable>
               </View>
             </Pressable>
           </Modal>

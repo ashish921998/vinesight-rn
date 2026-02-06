@@ -97,7 +97,7 @@ export default function WorkerAnalyticsDetailScreen() {
             textAlign: 'center',
           }}
         >
-          Worker not found
+          {t('workerAnalytics.notFound')}
         </Text>
         <Pressable
           onPress={() => router.back()}
@@ -109,7 +109,9 @@ export default function WorkerAnalyticsDetailScreen() {
             backgroundColor: m3.colorScheme.primaryContainer,
           }}
         >
-          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>Go back</Text>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
+            {t('common.goBack')}
+          </Text>
         </Pressable>
       </View>
     );
@@ -141,7 +143,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 marginLeft: spacing[1],
               }}
             >
-              Back
+              {t('common.back')}
             </Text>
           </Pressable>
 
@@ -162,7 +164,7 @@ export default function WorkerAnalyticsDetailScreen() {
               marginTop: spacing[1],
             }}
           >
-            Daily rate: {formatCurrency(worker.daily_rate, preferredCurrency)}
+            {t('workerAnalytics.dailyRate')}: {formatCurrency(worker.daily_rate, preferredCurrency)}
           </Text>
         </View>
 
@@ -183,7 +185,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 color: m3.colorScheme.onSurfaceVariant,
               }}
             >
-              Date range
+              {t('workerAnalytics.dateRange')}
             </Text>
             <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[2] }}>
               <Pressable
@@ -199,7 +201,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 }}
               >
                 <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-                  From
+                  {t('common.from')}
                 </Text>
                 <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
                   {formatDate(range.from)}
@@ -218,7 +220,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 }}
               >
                 <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-                  To
+                  {t('common.to')}
                 </Text>
                 <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
                   {formatDate(range.to)}
@@ -246,12 +248,12 @@ export default function WorkerAnalyticsDetailScreen() {
                   color: m3.colorScheme.onSurface,
                 }}
               >
-                Quick stats
+                {t('workerAnalytics.quickStats')}
               </Text>
               <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
-                <StatChip label="Full" value={String(metrics.fullDays)} />
-                <StatChip label="Half" value={String(metrics.halfDays)} />
-                <StatChip label="Absent" value={String(metrics.absentDays)} />
+                <StatChip label={t('workerAnalytics.full')} value={String(metrics.fullDays)} />
+                <StatChip label={t('workerAnalytics.half')} value={String(metrics.halfDays)} />
+                <StatChip label={t('workerAnalytics.absent')} value={String(metrics.absentDays)} />
               </View>
             </View>
           </View>
@@ -276,7 +278,7 @@ export default function WorkerAnalyticsDetailScreen() {
                   marginBottom: spacing[2],
                 }}
               >
-                Weekly summary
+                {t('workerAnalytics.weeklySummary')}
               </Text>
               {weeklySummaries.map((week) => (
                 <View
@@ -319,7 +321,7 @@ export default function WorkerAnalyticsDetailScreen() {
                   marginBottom: spacing[2],
                 }}
               >
-                Transactions
+                {t('workerAnalytics.transactions')}
               </Text>
               {filteredTransactions.length ? (
                 filteredTransactions.map((tx) => (
@@ -350,7 +352,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 ))
               ) : (
                 <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
-                  No transactions in this range.
+                  {t('workerAnalytics.noTransactions')}
                 </Text>
               )}
             </View>
@@ -427,10 +429,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 backgroundColor: m3.colorScheme.primary,
               }}
             >
-              <Text
-                selectable
-                style={{ fontWeight: fontWeight.bold, color: m3.colorScheme.onPrimary }}
-              >
+              <Text style={{ fontWeight: fontWeight.bold, color: m3.colorScheme.onPrimary }}>
                 {t('common.done')}
               </Text>
             </Pressable>
@@ -516,10 +515,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 backgroundColor: m3.colorScheme.primary,
               }}
             >
-              <Text
-                selectable
-                style={{ fontWeight: fontWeight.bold, color: m3.colorScheme.onPrimary }}
-              >
+              <Text style={{ fontWeight: fontWeight.bold, color: m3.colorScheme.onPrimary }}>
                 {t('common.done')}
               </Text>
             </Pressable>

@@ -1202,6 +1202,19 @@ export const en = {
     },
   },
 
+  workerAnalytics: {
+    notFound: 'Worker not found',
+    dailyRate: 'Daily rate',
+    dateRange: 'Date range',
+    quickStats: 'Quick stats',
+    weeklySummary: 'Weekly summary',
+    transactions: 'Transactions',
+    noTransactions: 'No transactions in this range.',
+    full: 'Full',
+    half: 'Half',
+    absent: 'Absent',
+  },
+
   workers: {
     tabs: {
       workers: 'Workers',
