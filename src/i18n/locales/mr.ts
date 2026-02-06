@@ -71,6 +71,8 @@ export const mr = {
 
       failedToUpdateFarm: '$t(glossary.farm) अद्ययावत होऊ शकले नाही. कृपया पुन्हा प्रयत्न करा.',
       failedToCreateFarm: '$t(glossary.farm) तयार होऊ शकले नाही. कृपया पुन्हा प्रयत्न करा.',
+      invalidFarmNumericInput:
+        'एक किंवा अधिक संख्यात्मक मूल्ये अवैध आहेत किंवा अनुमत मर्यादेबाहेर आहेत.',
 
       enterAtLeastOneMoistureValue: 'कृपया किमान एक ओलावा मूल्य टाका.',
       failedToSaveSoilProfile:
@@ -322,8 +324,19 @@ export const mr = {
         sublabel: 'कस्टम',
       },
     },
+    cropPicker: {
+      modalTitle: '$t(glossary.crop) निवडा',
+      searchPlaceholder: '$t(glossary.crop) शोधा',
+      customCropLabel: 'कस्टम $t(glossary.crop)',
+      customCropInputLabel: 'कस्टम $t(glossary.crop) नाव',
+      customCropInputPlaceholder: '$t(glossary.crop) नाव टाका',
+      defaultSublabel: '$t(glossary.crop)',
+      useCustomCrop: '"{{crop}}" वापरा',
+      noResults: 'जुळणारी पिके सापडली नाहीत.',
+    },
     variety: {
       selectPlaceholder: 'वाण निवडा',
+      searchPlaceholder: 'वाण शोधा',
       custom: 'कस्टम',
       customNameLabel: 'कस्टम वाण नाव',
       customNamePlaceholder: 'वाण नाव टाका',
@@ -354,6 +367,10 @@ export const mr = {
       },
     },
     soilCompositionWarning: 'वाळू + गाळ + चिकण यांची बेरीज सुमारे 100% असावी (सध्या {{total}}%)',
+    soilCompositionHint:
+      'वाळू, गाळ आणि चिकण हे 0 ते 100 मधील संख्या म्हणून भरा आणि एकूण सुमारे 100% ठेवा.',
+    overflowError:
+      'ही मूल्ये वर्तमान डेटाबेस अचूकतेसाठी खूप मोठी आहेत: {{fields}}. प्रत्येक {{max}} खाली ठेवा.',
     infoCardMessage: 'तुम्ही हे तपशील नंतर $t(glossary.farm) सेटिंग्जमधून कधीही अद्ययावत करू शकता.',
   },
 
@@ -741,9 +758,15 @@ export const mr = {
     permissionDenied: 'ठिकाण प्रवेशाची परवानगी नाकारली गेली',
     unableToGetCurrentLocation: 'सध्याचे ठिकाण मिळू शकले नाही',
     pleaseSelectOnMap: 'नकाशावर ठिकाण निवडा',
+    invalidCoordinates:
+      'वैध coordinates टाका. अक्षांश -90 ते 90 आणि रेखांश -180 ते 180 दरम्यान असावा.',
     unableToSelectLocation: 'ठिकाण निवडता आले नाही',
     selectedLocationMarkerTitle: 'निवडलेले ठिकाण',
     useCurrent: 'सध्याचे ठिकाण वापरा',
+    manualCoordinatesTitle: 'हाताने coordinates',
+    latitudeLabel: 'अक्षांश',
+    longitudeLabel: 'रेखांश',
+    applyCoordinates: 'coordinates वापरा',
     confirm: 'ठिकाण निश्चित करा',
     mapsUnavailableTitle: 'नकाशा उपलब्ध नाही',
     mapsUnavailableBody:
@@ -887,6 +910,8 @@ export const mr = {
       country: 'देश',
       selectCountry: 'देश निवडा',
       areaUnit: 'क्षेत्रफळ एकक',
+      currency: 'चलन',
+      selectCurrency: 'चलन निवडा',
       subtitle: 'आपला अनुभव सानुकूल करण्यासाठी मदत करा',
     },
     notifications: {
@@ -1077,11 +1102,17 @@ export const mr = {
       evening: 'शुभ संध्याकाळ',
       night: 'शुभ रात्री',
     },
+    greetingWithName: {
+      morning: 'शुभ सकाळ, {{name}}',
+      afternoon: 'शुभ दुपार, {{name}}',
+      evening: 'शुभ संध्याकाळ, {{name}}',
+      night: 'शुभ रात्री, {{name}}',
+    },
     stats: {
       farms: '$t(glossary.farm)',
       activeWorkers: 'सक्रिय $t(glossary.worker)',
       activities: 'क्रियाकलाप',
-      harvest: '$t(glossary.harvest)',
+      tasks: '$t(glossary.task)',
     },
     needsAttention: {
       title: 'लक्ष आवश्यक',
@@ -1210,6 +1241,19 @@ export const mr = {
     },
   },
 
+  workerAnalytics: {
+    notFound: '$t(glossary.worker) आढळला नाही',
+    dailyRate: 'दैनिक दर',
+    dateRange: 'तारीख श्रेणी',
+    quickStats: 'त्वरित आकडेवारी',
+    weeklySummary: 'साप्ताहिक सारांश',
+    transactions: 'व्यवहार',
+    noTransactions: 'या श्रेणीत व्यवहार नाहीत.',
+    full: 'पूर्ण',
+    half: 'अर्धा',
+    absent: 'अनुपस्थित',
+  },
+
   workers: {
     tabs: {
       workers: '$t(glossary.worker)',
@@ -1327,7 +1371,7 @@ export const mr = {
       spray: '$t(glossary.spray) ({{count}})',
     },
     search: {
-      placeholder: 'इन्व्हेंटरी शोधा...',
+      placeholder: 'गोदाम शोधा...',
       found_one: '{{count}} वस्तू आढळली',
       found_other: '{{count}} वस्तू आढळल्या',
     },

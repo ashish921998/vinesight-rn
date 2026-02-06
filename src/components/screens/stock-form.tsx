@@ -29,7 +29,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
   const [quantityToAdd, setQuantityToAdd] = useState('');
   const [newUnitPrice, setNewUnitPrice] = useState('');
 
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
 
   // Track previous visible/item state to prevent unnecessary updates
   const prevVisibleRef = useRef(isVisible);
@@ -127,7 +127,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
             }}
           >
             <SymbolIcon
-              name={item.type === 'fertilizer' ? 'flask.fill' : 'drop.fill'}
+              name={item.type === 'fertilizer' ? 'flask.fill' : 'spraycan.fill'}
               size={24}
               color={item.type === 'fertilizer' ? colors.success : m3.colorScheme.primary}
             />

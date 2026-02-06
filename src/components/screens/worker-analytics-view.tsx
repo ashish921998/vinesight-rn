@@ -21,7 +21,7 @@ export function WorkerAnalyticsView() {
   const { data: attendance, isLoading: attendanceLoading } = useAllWorkerAttendance();
   const { data: transactions, isLoading: transactionsLoading } = useAllWorkerTransactions();
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.preferred_currency || 'USD';
+  const preferredCurrency = profile?.currency_preference || 'INR';
 
   const dateRange = useMemo(() => getDefaultDateRange(30), []);
 

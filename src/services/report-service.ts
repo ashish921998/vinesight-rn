@@ -5,7 +5,7 @@
 
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { cacheDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
+import { cacheDirectory } from 'expo-file-system/legacy';
 import { ReportData, ReportSummary, ReportPreview, DateRange, ReportType } from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
 import {
@@ -26,6 +26,17 @@ export class ReportService {
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;
+  }
+
+  /**
+   * Sanitize a string to be safe for use as a filename
+   * Only allows alphanumeric characters, underscores, and hyphens
+   */
+  private static sanitizeFilename(name: string): string {
+    return name
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
   }
 
   /**
@@ -334,7 +345,7 @@ export class ReportService {
 
       if (data.spray.length > 0) {
         html += `
-          <h2>🧪 Spray Records (${data.spray.length})</h2>
+          <h2>🧴 Spray Records (${data.spray.length})</h2>
           <table>
             <tr><th>Date</th><th>Chemical</th><th>Dose</th><th>Area</th><th>Weather</th></tr>
             ${data.spray
@@ -408,11 +419,15 @@ export class ReportService {
       throw new Error('Cache directory is not available on this device');
     }
     const csv = this.generateCSV(data, reportType);
-    const filename = `${data.farmName.replace(/\s+/g, '_')}_report_${new Date().toISOString().split('T')[0]}.csv`;
-    const fileUri = `${cacheDirectory}${filename}`;
+    const filename = `${this.sanitizeFilename(data.farmName)}_report_${new Date().toISOString().split('T')[0]}.csv`;
 
-    await writeAsStringAsync(fileUri, csv);
+    const file = new File(Paths.cache, filename);
+    const writer = file.writableStream().getWriter();
+    const bytes = new TextEncoder().encode(csv);
+    await writer.write(bytes);
+    await writer.close();
 
+    const fileUri = (file as unknown as { uri: string }).uri;
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(fileUri, {
         mimeType: 'text/csv',

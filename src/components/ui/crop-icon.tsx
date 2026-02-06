@@ -1,7 +1,16 @@
 import React from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-export type CropIconName = 'grapes' | 'mango' | 'pomegranate' | 'citrus' | 'banana';
+export type CropIconName =
+  | 'grapes'
+  | 'mango'
+  | 'pomegranate'
+  | 'citrus'
+  | 'banana'
+  | 'tomato'
+  | 'sugarcane'
+  | 'guava'
+  | 'apple';
 
 interface CropIconProps {
   name: CropIconName;
@@ -92,14 +101,76 @@ export function CropIcon({ name, size = 24, muted = false }: CropIconProps) {
   if (name === 'banana') {
     return (
       <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path d="M2 6c6 5 12 11 12 16-4-1-8-5-12-16Z" fill="#EAB308" opacity={opacity} />
+        <Path d="M4 10c4 3.5 9 9 9 12-3-1-6-4-9-12Z" fill="#FBBF24" opacity={opacity} />
+      </Svg>
+    );
+  }
+
+  if (name === 'tomato') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Circle cx="12" cy="13" r="6.5" fill="#DC2626" opacity={opacity} />
         <Path
-          d="M6.5 17c-1.5-2-2.5-4.5-1.5-7 .5-1.5 2-2.5 3.5-3 2-.5 3.5.5 4.5 2 .5 1.5 0 3-1 4.5-1.5.5-3.5-.5-5.5-3.5Z"
-          fill="#FFE135"
+          d="M12 5.2c2 0 3.8.7 5 1.9-2.5.2-4 .9-5 2.2-1-1.3-2.5-2-5-2.2 1.2-1.2 3-1.9 5-1.9Z"
+          fill="#16A34A"
+          opacity={opacity}
+        />
+        <Circle cx="10" cy="12" r="1.1" fill="#FCA5A5" opacity={opacity} />
+      </Svg>
+    );
+  }
+
+  if (name === 'sugarcane') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path
+          d="M7 20V6.5M11 20V5.5M15 20V7.5"
+          stroke="#16A34A"
+          strokeWidth="2"
           opacity={opacity}
         />
         <Path
-          d="M5.5 16c-1-1.5-1-3.5 0-5 .5-1.5 1.5-2 3-2.5 1.5-.5 2.5.5 3 1.5 0 1 0 2.5-1 3.5-1 .5-2.5-.5-4-2.5Z"
-          fill="#FFD700"
+          d="M6 10h2M10 9h2M14 11h2M10 14h2M14 15h2M6 16h2"
+          stroke="#65A30D"
+          strokeWidth="1.2"
+          opacity={opacity}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'guava') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Circle cx="10.5" cy="13" r="5.5" fill="#22C55E" opacity={opacity} />
+        <Circle cx="13.5" cy="13" r="5.5" fill="#4ADE80" opacity={opacity} />
+        <Circle cx="12" cy="13" r="3.2" fill="#FBCFE8" opacity={opacity} />
+        <Path
+          d="M12.6 6.8c1.1-1.4 2.7-1.7 4-.8-1.2.5-2.3 1-3.3 1.8-.3-.4-.5-.7-.7-1Z"
+          fill="#15803D"
+          opacity={opacity}
+        />
+      </Svg>
+    );
+  }
+
+  if (name === 'apple') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <Path
+          d="M12 8.5c4.4-2.6 8.5 1.8 7.2 6-1.2 3.8-4.5 6.2-7.2 6.2s-6-2.4-7.2-6.2c-1.3-4.2 2.8-8.6 7.2-6Z"
+          fill="#EF4444"
+          opacity={opacity}
+        />
+        <Path
+          d="M12 7c1.1-2.1 3-3.1 5-2.7-1.8 1.1-3.1 2.2-4 3.9-.2-.3-.6-.7-1-1.2Z"
+          fill="#166534"
+          opacity={opacity}
+        />
+        <Path
+          d="M11 5.5c.6-.7 1.5-1.1 2.3-1-.4.8-1 1.4-1.8 1.8-.2-.2-.3-.5-.5-.8Z"
+          fill="#15803D"
           opacity={opacity}
         />
       </Svg>

@@ -53,6 +53,12 @@ module.exports = {
     android: {
       package: 'com.vinesight.app',
       versionCode: 11,
+      config: {
+        googleMaps: {
+          apiKey:
+            process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY || '',
+        },
+      },
       softwareKeyboardLayoutMode: 'resize',
       adaptiveIcon: {
         foregroundImage: './assets/icons/adaptive-icon.png',

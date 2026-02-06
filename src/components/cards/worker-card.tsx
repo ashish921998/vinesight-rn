@@ -25,7 +25,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   const m3 = useM3();
   const { t } = useTranslation();
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.preferred_currency || 'USD';
+  const preferredCurrency = profile?.currency_preference || 'INR';
 
   const initial = worker.name.charAt(0).toUpperCase();
   const formattedRate = formatCurrency(worker.daily_rate, preferredCurrency, {

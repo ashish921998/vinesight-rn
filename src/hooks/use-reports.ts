@@ -71,7 +71,7 @@ export function useReportData(farmId: number | null, dateRange: DateRange | null
  */
 export function useReportExport() {
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.preferred_currency || 'INR';
+  const preferredCurrency = profile?.currency_preference || 'INR';
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 

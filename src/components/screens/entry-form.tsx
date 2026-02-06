@@ -1790,7 +1790,7 @@ export function EntryForm({
             </Pressable>
           )}
         </Pressable>
-        {showDueDatePicker && (
+        {showDueDatePicker && Platform.OS === 'ios' && (
           <Modal
             transparent
             visible={showDueDatePicker}
@@ -1838,11 +1838,13 @@ export function EntryForm({
                   </Pressable>
                 </View>
                 <DateTimePicker
-                  value={dueDate ? new Date(dueDate) : new Date()}
+                  value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
                   mode="date"
-                  display="default"
+                  display="spinner"
                   onChange={(_, date) => {
-                    if (date) setDueDate(date.toISOString().split('T')[0]);
+                    if (date) {
+                      setDueDate(date.toISOString().split('T')[0]);
+                    }
                   }}
                   style={{ height: 200 }}
                   textColor={m3.colorScheme.onSurface}
@@ -1861,6 +1863,19 @@ export function EntryForm({
               </View>
             </Pressable>
           </Modal>
+        )}
+        {showDueDatePicker && Platform.OS === 'android' && (
+          <DateTimePicker
+            value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
+            mode="date"
+            display="default"
+            onChange={(event, date) => {
+              setShowDueDatePicker(false);
+              if (date) {
+                setDueDate(date.toISOString().split('T')[0]);
+              }
+            }}
+          />
         )}
       </View>
     </>
@@ -1988,7 +2003,7 @@ export function EntryForm({
               <DateTimePicker
                 value={selectedDate}
                 mode="date"
-                display="inline"
+                display="spinner"
                 onChange={(_, date) => {
                   if (date) setSelectedDate(date);
                 }}

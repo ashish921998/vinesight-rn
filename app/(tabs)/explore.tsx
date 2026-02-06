@@ -2,7 +2,6 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
-  Platform,
   Pressable,
   RefreshControl,
   TextInput,
@@ -10,7 +9,6 @@ import {
   Alert,
   Animated,
   ScrollView,
-  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,7 +39,6 @@ export default function ExploreScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
-  const isAndroid = Platform.OS === 'android';
   const exploreTabs = useMemo(
     () =>
       [
@@ -54,10 +51,7 @@ export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const fabBottom = useFabBottomPosition();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
-  const { fontScale } = useWindowDimensions();
 
-  // Scroll animation values
-  const scrollY = useMemo(() => new Animated.Value(0), []);
   const tabSwitchAnim = useMemo(() => new Animated.Value(1), []);
   const tabScaleAnims = useMemo(
     () => ({
@@ -86,7 +80,7 @@ export default function ExploreScreen() {
   const deleteItemMutation = useDeleteWarehouseItem();
   const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilter>('all');
 
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
 
   const openWarehouseItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });
@@ -127,8 +121,7 @@ export default function ExploreScreen() {
         useNativeDriver: true,
       }).start(() => {
         setSelectedTab(newTab);
-        // Reset scroll position and search
-        scrollY.setValue(0);
+        // Reset search on tab switch
         setSearchQuery('');
         // Fade in new content
         Animated.timing(tabSwitchAnim, {
@@ -138,39 +131,8 @@ export default function ExploreScreen() {
         }).start();
       });
     },
-    [selectedTab, tabSwitchAnim, scrollY, tabScaleAnims],
+    [selectedTab, tabSwitchAnim, tabScaleAnims],
   );
-
-  // Header animation values
-  const headerMinHeightBase = fontScale > 1.3 ? 70 : 50;
-  const headerMaxHeightBase = fontScale > 1.3 ? 90 : 70;
-  const headerMinHeight = headerMinHeightBase + (isAndroid ? (fontScale > 1.3 ? 16 : 14) : 0);
-  const headerMaxHeight = headerMaxHeightBase + (isAndroid ? (fontScale > 1.3 ? 16 : 14) : 0);
-  const iconMinHeight = fontScale > 1.3 ? 48 : 0;
-
-  const headerHeight = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [headerMaxHeight, headerMinHeight],
-    extrapolate: 'clamp',
-  });
-
-  const iconContainerHeight = scrollY.interpolate({
-    inputRange: [0, 30],
-    outputRange: [48, iconMinHeight],
-    extrapolate: 'clamp',
-  });
-
-  const iconOpacity = scrollY.interpolate({
-    inputRange: [0, 30],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  const textMargin = scrollY.interpolate({
-    inputRange: [0, 30],
-    outputRange: [4, 0],
-    extrapolate: 'clamp',
-  });
 
   // ============================================================
   // FARMS TAB LOGIC
@@ -499,7 +461,7 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius.xl,
                 borderCurve: 'continuous',
-                minHeight: 72,
+                minHeight: 84,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 justifyContent: 'center',
@@ -550,7 +512,7 @@ export default function ExploreScreen() {
                 flex: 1,
                 borderRadius: borderRadius.xl,
                 borderCurve: 'continuous',
-                minHeight: 72,
+                minHeight: 84,
                 paddingHorizontal: spacing[4],
                 paddingVertical: spacing[3],
                 justifyContent: 'center',
@@ -628,10 +590,6 @@ export default function ExploreScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-            useNativeDriver: false,
-          })}
-          scrollEventThrottle={16}
         />
 
         {/* FAB */}
@@ -672,7 +630,11 @@ export default function ExploreScreen() {
     return (
       <>
         <Animated.ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+          contentContainerStyle={{
+            paddingTop: spacing[4],
+            paddingHorizontal: spacing[4],
+            paddingBottom: 100,
+          }}
           refreshControl={
             <RefreshControl
               refreshing={warehouseRefetching}
@@ -682,10 +644,6 @@ export default function ExploreScreen() {
           }
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-            useNativeDriver: false,
-          })}
-          scrollEventThrottle={16}
         >
           {/* Summary Cards */}
           <View
@@ -705,7 +663,11 @@ export default function ExploreScreen() {
               }}
             >
               <Icon
-                name="exclamationmark.triangle.fill"
+                name={
+                  lowStockItems.length > 0
+                    ? 'exclamationmark.triangle.fill'
+                    : 'checkmark.circle.fill'
+                }
                 size={24}
                 color={lowStockItems.length > 0 ? colors.warning : m3.colorScheme.primary}
               />
@@ -813,7 +775,7 @@ export default function ExploreScreen() {
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Icon
-                            name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
+                            name={item.type === 'fertilizer' ? 'leaf.fill' : 'spraycan.fill'}
                             size={16}
                             color={colors.warning}
                           />
@@ -1040,7 +1002,7 @@ export default function ExploreScreen() {
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Icon
-                              name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
+                              name={item.type === 'fertilizer' ? 'leaf.fill' : 'spraycan.fill'}
                               size={12}
                               color={itemColor}
                             />
@@ -1276,15 +1238,22 @@ export default function ExploreScreen() {
         </View>
       </View>
 
-      {/* Animated Sticky Header with Tabs */}
-      <Animated.View
+      {/* Refined Classic Tabs */}
+      <View
         style={{
-          height: headerHeight,
           backgroundColor: colors.surface[100],
+          paddingHorizontal: spacing[4],
+          paddingBottom: spacing[2],
           ...shadows.sm,
         }}
       >
-        <View style={{ flex: 1, flexDirection: 'row', paddingHorizontal: spacing[4] }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           {exploreTabs.map((tab) => {
             const isSelected = selectedTab === tab.id;
             return (
@@ -1298,90 +1267,68 @@ export default function ExploreScreen() {
               >
                 <Pressable
                   onPress={() => handleTabChange(tab.id)}
-                  style={{ flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center' }}
+                  style={({ pressed }) => ({
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: borderRadius.xl,
+                    paddingTop: spacing[1],
+                    paddingBottom: spacing[2],
+                    marginHorizontal: spacing[1],
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                      : 'transparent',
+                  })}
                 >
-                  <Animated.View
+                  <View
                     style={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: borderRadius.full,
                       alignItems: 'center',
-                      overflow: 'hidden',
-                      height: iconContainerHeight,
-                      opacity: iconOpacity,
+                      justifyContent: 'center',
+                      backgroundColor: isSelected
+                        ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                        : 'transparent',
                     }}
                   >
-                    <View
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: borderRadius.full,
-                        borderCurve: 'continuous',
-                        overflow: 'hidden',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: isSelected
-                          ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                          : 'transparent',
-                      }}
-                    >
-                      <Icon
-                        name={tab.icon}
-                        size={24}
-                        color={
-                          isSelected
-                            ? m3.colorScheme.primary
-                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
-                        }
-                      />
-                    </View>
-                  </Animated.View>
-
-                  <Animated.Text
-                    numberOfLines={isAndroid ? 2 : 1}
-                    ellipsizeMode={isAndroid ? 'clip' : 'tail'}
+                    <Icon
+                      name={tab.icon}
+                      size={20}
+                      color={
+                        isSelected
+                          ? m3.colorScheme.primary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.75)
+                      }
+                    />
+                  </View>
+                  <Text
+                    numberOfLines={1}
                     style={{
-                      width: '100%',
-                      flexShrink: 1,
+                      marginTop: spacing[1],
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
                       color: isSelected
                         ? m3.colorScheme.primary
                         : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
-                      marginTop: textMargin,
-                      textAlign: 'center',
-                      paddingHorizontal: spacing[2],
-                      maxWidth: '100%',
-                      ...(isAndroid
-                        ? {
-                            includeFontPadding: true,
-                            // Prevent rare Devanagari glyph clipping at the bottom.
-                            paddingBottom: 1,
-                            // Prevent occasional right-edge glyph clipping due to pixel rounding.
-                            paddingRight: spacing[2] + 1,
-                          }
-                        : null),
                     }}
                   >
                     {tab.label}
-                  </Animated.Text>
-
-                  {/* Active Indicator */}
-                  {isSelected && (
-                    <View
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        height: 2,
-                        borderRadius: borderRadius.full,
-                        width: '60%',
-                        backgroundColor: m3.colorScheme.primary,
-                      }}
-                    />
-                  )}
+                  </Text>
+                  <View
+                    style={{
+                      marginTop: spacing[1],
+                      height: 3,
+                      width: 64,
+                      borderRadius: borderRadius.full,
+                      backgroundColor: isSelected ? m3.colorScheme.primary : 'transparent',
+                    }}
+                  />
                 </Pressable>
               </Animated.View>
             );
           })}
         </View>
-      </Animated.View>
+      </View>
 
       {/* Tab Content with Fade Animation */}
       <Animated.View

@@ -31,6 +31,7 @@ const initialState: OnboardingState = {
   preferences: {
     country: '',
     areaUnit: 'acres',
+    currency: 'INR',
     notificationsEnabled: false,
   },
 };
