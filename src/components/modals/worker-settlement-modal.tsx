@@ -18,6 +18,7 @@ import { Button } from '@/components/ui';
 import type { Worker } from '@/types';
 import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
 import { Picker } from '@react-native-picker/picker';
+import { supabase } from '@/lib/supabase';
 
 type SettlementPeriod = 'this_week' | 'last_week' | 'custom';
 
@@ -92,10 +93,8 @@ export function WorkerSettlementModal({
   // Initialize selected worker when modal opens
   useEffect(() => {
     if (visible && workers.length > 0) {
-      const initialWorker = initialWorkerId
-        ? workers.find((w) => w.id === initialWorkerId)
-        : workers[0];
-      setSelectedWorker(initialWorker || workers[0]);
+      const initialWorker = initialWorkerId ? workers.find((w) => w.id === initialWorkerId) : null;
+      setSelectedWorker(initialWorker ?? workers[0]);
     }
   }, [visible, workers, initialWorkerId]);
 
@@ -200,6 +199,15 @@ export function WorkerSettlementModal({
     const salary = parseFloat(totalSalary);
     const deduction = parseFloat(advanceDeduction);
 
+    // Fetch fresh advance balance before validation
+    const { data: freshWorker } = await supabase
+      .from('workers')
+      .select('advance_balance')
+      .eq('id', selectedWorker.id)
+      .single();
+
+    const currentBalance = freshWorker?.advance_balance ?? 0;
+
     // Validation
     if (isNaN(salary) || salary < 0) {
       Alert.alert(t('common.error'), t('settlement.salaryCannotBeNegative'));
@@ -209,7 +217,7 @@ export function WorkerSettlementModal({
       Alert.alert(t('common.error'), t('settlement.deductionCannotBeNegative'));
       return;
     }
-    if (deduction > (selectedWorker.advance_balance || 0)) {
+    if (deduction > currentBalance) {
       Alert.alert(t('common.error'), t('settlement.deductionExceedsBalance'));
       return;
     }
@@ -240,6 +248,7 @@ export function WorkerSettlementModal({
       onClose();
     } catch (_error: unknown) {
       Alert.alert(t('common.error'), t('settlement.confirmationFailed'));
+      onClose();
     } finally {
       setIsConfirming(false);
     }
@@ -321,11 +330,11 @@ export function WorkerSettlementModal({
                 color: m3.colorScheme.onSurface,
               }}
             >
-              {workers.map((worker) => (
+              {workers.map((worker, index) => (
                 <Picker.Item
-                  key={worker.id}
+                  key={worker.id ?? `worker-${index}`}
                   label={worker.name}
-                  value={worker.id?.toString()}
+                  value={worker.id?.toString() ?? `worker-${index}`}
                   style={{ backgroundColor: m3.surface.surfaceContainerLow }}
                 />
               ))}
@@ -354,7 +363,7 @@ export function WorkerSettlementModal({
                 marginTop: spacing[1],
               }}
             >
-              {t('advanceBalance')}: {selectedWorker.advance_balance}
+              {t('advanceBalance')}: {selectedWorker.advance_balance ?? 0}
             </Text>
           </View>
 
@@ -493,7 +502,7 @@ export function WorkerSettlementModal({
                       {t('advanceBalance')}
                     </Text>
                     <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.error }}>
-                      {selectedWorker.advance_balance}
+                      {selectedWorker.advance_balance ?? 0}
                     </Text>
                   </View>
                 </View>
@@ -537,7 +546,7 @@ export function WorkerSettlementModal({
                     keyboardType="decimal-pad"
                   />
                   <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-                    {t('settlement.max', { max: selectedWorker.advance_balance })}
+                    {t('settlement.max', { max: selectedWorker.advance_balance ?? 0 })}
                   </Text>
                 </View>
               </View>

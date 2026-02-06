@@ -296,14 +296,21 @@ export default function WorkersScreen() {
             >
               {({ pressed }) => (
                 <>
-                  <UiSymbol name="banknote" size={28} color="#ffffff" />
+                  <UiSymbol
+                    name="banknote"
+                    size={28}
+                    color={m3.colorScheme.onSecondary || m3.colorScheme.onPrimary}
+                  />
                   <View
                     pointerEvents="none"
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
                         backgroundColor: pressed
-                          ? colorWithOpacity('#ffffff', m3.stateLayerOpacity.pressed)
+                          ? colorWithOpacity(
+                              m3.colorScheme.onSecondary || m3.colorScheme.onPrimary,
+                              m3.stateLayerOpacity.pressed,
+                            )
                           : 'transparent',
                       },
                     ]}
