@@ -29,6 +29,17 @@ export class ReportService {
   }
 
   /**
+   * Sanitize a string to be safe for use as a filename
+   * Only allows alphanumeric characters, underscores, and hyphens
+   */
+  private static sanitizeFilename(name: string): string {
+    return name
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+  }
+
+  /**
    * Filter records by date range
    */
   static filterByDateRange<T extends { date: string }>(records: T[], dateRange: DateRange): T[] {
@@ -334,7 +345,7 @@ export class ReportService {
 
       if (data.spray.length > 0) {
         html += `
-          <h2>🧪 Spray Records (${data.spray.length})</h2>
+          <h2>🧴 Spray Records (${data.spray.length})</h2>
           <table>
             <tr><th>Date</th><th>Chemical</th><th>Dose</th><th>Area</th><th>Weather</th></tr>
             ${data.spray
@@ -405,7 +416,7 @@ export class ReportService {
    */
   static async exportCSV(data: ReportData, reportType: ReportType): Promise<void> {
     const csv = this.generateCSV(data, reportType);
-    const filename = `${data.farmName.replace(/\s+/g, '_')}_report_${new Date().toISOString().split('T')[0]}.csv`;
+    const filename = `${this.sanitizeFilename(data.farmName)}_report_${new Date().toISOString().split('T')[0]}.csv`;
 
     const filePath = `${Paths.cache}/${filename}`;
     const file = new File(filePath);

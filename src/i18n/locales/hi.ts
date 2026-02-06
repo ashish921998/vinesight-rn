@@ -368,6 +368,8 @@ export const hi = {
       'रेत + गाद + मिट्टी का योग लगभग 100% होना चाहिए (वर्तमान में {{total}}%)',
     soilCompositionHint:
       'रेत, गाद और मिट्टी को 0 से 100 के बीच संख्या के रूप में भरें, और कुल लगभग 100% रखें।',
+    overflowError:
+      'ये मान वर्तमान डेटाबेस परिशीक्तता के लिए बहुत बड़े हैं: {{fields}}। प्रत्येक को {{max}} से नीचे रखें।',
     infoCardMessage: 'आप इन विवरणों को बाद में अपनी खेत सेटिंग्स से अपडेट कर सकते हैं।',
   },
 
@@ -1094,6 +1096,12 @@ export const hi = {
       evening: 'शुभ संध्या',
       night: 'शुभ रात्रि',
     },
+    greetingWithName: {
+      morning: 'सुप्रभात, {{name}}',
+      afternoon: 'शुभ दोपहर, {{name}}',
+      evening: 'शुभ संध्या, {{name}}',
+      night: 'शुभ रात्रि, {{name}}',
+    },
     stats: {
       farms: 'खेत',
       activeWorkers: 'सक्रिय श्रमिक',
@@ -1227,6 +1235,19 @@ export const hi = {
     },
   },
 
+  workerAnalytics: {
+    notFound: 'श्रमिक नहीं मिला',
+    dailyRate: 'दैनिक दर',
+    dateRange: 'तारीख सीमा',
+    quickStats: 'त्वरित आँकड़े',
+    weeklySummary: 'साप्ताहिक सारांश',
+    transactions: 'लेनदेन',
+    noTransactions: 'इस सीमा में कोई लेनदेन नहीं।',
+    full: 'पूर्ण',
+    half: 'आधा',
+    absent: 'अनुपस्थित',
+  },
+
   workers: {
     tabs: {
       workers: 'श्रमिक',
@@ -1306,7 +1327,7 @@ export const hi = {
       spray: 'छिड़काव ({{count}})',
     },
     search: {
-      placeholder: 'इन्वेंटरी खोजें...',
+      placeholder: 'गोदाम खोजें...',
       found_one: '{{count}} वस्तु मिली',
       found_other: '{{count}} वस्तुएं मिलीं',
     },

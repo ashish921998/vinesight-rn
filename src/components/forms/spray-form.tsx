@@ -133,7 +133,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
             marginRight: spacing[3],
           }}
         >
-          <Symbol name="flask.fill" size={20} color={m3.colorScheme.tertiary} />
+          <Symbol name="spraycan.fill" size={20} color={m3.colorScheme.tertiary} />
         </View>
         <View>
           <Text
@@ -174,7 +174,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
       <View style={{ marginTop: spacing[2] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
           <View style={{ marginRight: 6 }}>
-            <Symbol name="flask" size={16} color={colors.primary[600]} />
+            <Symbol name="spraycan" size={16} color={colors.primary[600]} />
           </View>
           <Text
             style={{

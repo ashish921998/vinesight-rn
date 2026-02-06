@@ -24,7 +24,7 @@ interface Props {
 
 const ITEM_TYPES = [
   { value: 'fertilizer' as WarehouseItemType, label: 'Fertilizer', icon: 'flask' as const },
-  { value: 'spray' as WarehouseItemType, label: 'Spray', icon: 'water' as const },
+  { value: 'spray' as WarehouseItemType, label: 'Spray', icon: 'spraycan' as const },
 ];
 
 export default function WarehouseItemForm({

@@ -16,6 +16,7 @@ type BaseIconName =
   | 'document'
   | 'leaf'
   | 'drop'
+  | 'spraycan'
   | 'flask'
   | 'basket'
   | 'cash'
@@ -51,6 +52,7 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   'document-text': 'document',
   'water-outline': 'drop',
   water: 'drop',
+  spraycan: 'spraycan',
   'checkbox-outline': 'check-circle',
   flask: 'flask',
   basket: 'basket',
@@ -63,6 +65,7 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   fertigation: 'fertigation',
   // SF Symbol aliases for compatibility
   'drop.fill': 'drop',
+  'spraycan.fill': 'spraycan',
   'flask.fill': 'flask',
   'basket.fill': 'basket',
   'dollarsign.circle.fill': 'cash',
@@ -341,6 +344,25 @@ export function AppIcon({ name, size = 20, color }: AppIconProps) {
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'spraycan':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M9 5h6v2H9zM8 7h8v3H8zM8 10h8v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M17 11c1.8 0 3 1.2 3 3"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
           />
         </Svg>
       );

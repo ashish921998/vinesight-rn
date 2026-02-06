@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { TaskReminder } from '@/types/task';
 import { PRIORITY_INFO, TASK_TYPE_INFO } from '@/types/task';
+import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -30,26 +31,8 @@ const startOfDay = (date: Date) => {
 };
 
 const mapTaskIcon = (icon: string) => {
-  switch (icon) {
-    case 'water':
-      return 'drop.fill';
-    case 'flask':
-      return 'flask.fill';
-    case 'basket':
-      return 'basket.fill';
-    case 'cash':
-      return 'dollarsign.circle.fill';
-    case 'leaf':
-      return 'leaf.fill';
-    case 'layers':
-      return 'square.stack.3d.up.fill';
-    case 'analytics':
-      return 'chart.bar.fill';
-    case 'document-text':
-      return 'doc.text.fill';
-    default:
-      return 'doc.fill';
-  }
+  if (icon === 'flask') return 'flask.fill';
+  return resolveSymbolIconName(icon);
 };
 
 export function TaskRow({

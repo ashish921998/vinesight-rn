@@ -82,6 +82,8 @@ export const ICON_MAPPING: Record<string, string> = {
   'document-text-outline': 'doc.text',
 
   // Tools & Science
+  spraycan: 'spraycan.fill',
+  'spraycan-outline': 'spraycan',
   flask: 'flask.fill',
   'flask-outline': 'flask',
   'beaker-outline': 'flask',

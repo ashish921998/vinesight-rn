@@ -153,8 +153,17 @@ export default function LocationPicker({
   };
 
   const handleApplyCoordinates = () => {
-    const latitude = Number(latitudeInput.trim());
-    const longitude = Number(longitudeInput.trim());
+    const trimmedLatitude = latitudeInput.trim();
+    const trimmedLongitude = longitudeInput.trim();
+
+    // Prevent empty coordinates from being parsed as 0
+    if (!trimmedLatitude || !trimmedLongitude) {
+      Alert.alert(t('common.error'), t('locationPicker.invalidCoordinates'));
+      return;
+    }
+
+    const latitude = Number(trimmedLatitude);
+    const longitude = Number(trimmedLongitude);
     const isValidLatitude = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90;
     const isValidLongitude = Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
 
@@ -299,7 +308,7 @@ export default function LocationPicker({
                   value={latitudeInput}
                   onChangeText={setLatitudeInput}
                   placeholder="19.076000"
-                  keyboardType="decimal-pad"
+                  keyboardType="numbers-and-punctuation"
                   style={styles.coordinateInput}
                   placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
                 />
@@ -312,7 +321,7 @@ export default function LocationPicker({
                   value={longitudeInput}
                   onChangeText={setLongitudeInput}
                   placeholder="72.877700"
-                  keyboardType="decimal-pad"
+                  keyboardType="numbers-and-punctuation"
                   style={styles.coordinateInput}
                   placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
                 />

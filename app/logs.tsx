@@ -34,6 +34,7 @@ import {
   useProfile,
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
+import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { useModalStore } from '@/stores';
 import type {
   IrrigationRecord,
@@ -707,21 +708,7 @@ export default function LogsScreen() {
                           })}
                         >
                           <UiSymbol
-                            name={
-                              logType.icon === 'water'
-                                ? 'drop.fill'
-                                : logType.icon === 'flask'
-                                  ? 'flask.fill'
-                                  : logType.icon === 'basket'
-                                    ? 'basket.fill'
-                                    : logType.icon === 'cash'
-                                      ? 'dollarsign.circle.fill'
-                                      : logType.icon === 'leaf'
-                                        ? 'leaf.fill'
-                                        : logType.icon === 'document-text'
-                                          ? 'doc.text.fill'
-                                          : 'doc.fill'
-                            }
+                            name={resolveSymbolIconName(logType.icon)}
                             size={12}
                             color={logType.color}
                           />
@@ -979,21 +966,7 @@ export default function LogsScreen() {
                               }}
                             >
                               <UiSymbol
-                                name={
-                                  logType?.icon === 'water'
-                                    ? 'drop.fill'
-                                    : logType?.icon === 'flask'
-                                      ? 'flask.fill'
-                                      : logType?.icon === 'basket'
-                                        ? 'basket.fill'
-                                        : logType?.icon === 'cash'
-                                          ? 'dollarsign.circle.fill'
-                                          : logType?.icon === 'leaf'
-                                            ? 'leaf.fill'
-                                            : logType?.icon === 'document-text'
-                                              ? 'doc.text.fill'
-                                              : 'doc.fill'
-                                }
+                                name={resolveSymbolIconName(logType?.icon)}
                                 size={20}
                                 color={logType?.color || m3.colorScheme.primary}
                               />
@@ -1648,21 +1621,7 @@ export default function LogsScreen() {
                           })}
                         >
                           <UiSymbol
-                            name={
-                              logType.icon === 'water'
-                                ? 'drop.fill'
-                                : logType.icon === 'flask'
-                                  ? 'flask.fill'
-                                  : logType.icon === 'basket'
-                                    ? 'basket.fill'
-                                    : logType.icon === 'cash'
-                                      ? 'dollarsign.circle.fill'
-                                      : logType.icon === 'leaf'
-                                        ? 'leaf.fill'
-                                        : logType.icon === 'document-text'
-                                          ? 'doc.text.fill'
-                                          : 'doc.fill'
-                            }
+                            name={resolveSymbolIconName(logType.icon)}
                             size={14}
                             color={isSelected ? m3.colorScheme.onPrimary : logType.color}
                           />

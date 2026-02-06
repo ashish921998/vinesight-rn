@@ -56,7 +56,7 @@ export default function AnalyticsScreen() {
   const activityIcons = useMemo<Record<string, { icon: string; color: string }>>(
     () => ({
       irrigation: { icon: 'drop', color: m3.colorScheme.primary },
-      spray: { icon: 'flask', color: m3.colorScheme.tertiary },
+      spray: { icon: 'spraycan', color: m3.colorScheme.tertiary },
       harvest: { icon: 'basket', color: colors.warning },
       expense: { icon: 'cash', color: m3.colorScheme.error },
       fertigation: { icon: 'fertigation', color: colors.success },
@@ -224,7 +224,7 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.spray.bg,
                 }}
               >
-                <AppIcon name="flask.fill" size={20} color={metricColors.spray.icon} />
+                <AppIcon name="spraycan.fill" size={20} color={metricColors.spray.icon} />
               </View>
               <Text
                 style={{

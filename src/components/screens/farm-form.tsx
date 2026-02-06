@@ -130,6 +130,10 @@ const resolveCropSelection = (
   if (!normalized) {
     return { selectedCrop: 'Grapes', customCropName: '' };
   }
+  // Special case: existing records that store the sentinel string 'Other'
+  if (normalized === 'Other') {
+    return { selectedCrop: 'Other', customCropName: '' };
+  }
   if (KNOWN_CROPS.includes(normalized as KnownCrop)) {
     return { selectedCrop: normalized as KnownCrop, customCropName: '' };
   }
@@ -254,7 +258,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
   const varieties = useMemo(
     () =>
-      formState.selectedCrop === 'Other' ? ['Custom'] : CROP_VARIETIES[formState.selectedCrop],
+      formState.selectedCrop === 'Other'
+        ? ['Custom']
+        : (CROP_VARIETIES[formState.selectedCrop] ?? ['Custom']),
     [formState.selectedCrop],
   );
 
@@ -481,11 +487,15 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       return;
     }
 
-    const parseOptionalNumber = (raw: string): number | undefined => {
+    const parseOptionalNumber = (raw: string): number | undefined | null => {
       const trimmed = raw.trim();
       if (!trimmed) return undefined;
       const parsed = Number(trimmed);
-      return Number.isFinite(parsed) ? parsed : undefined;
+      if (!Number.isFinite(parsed)) {
+        // Non-empty but non-numeric input - return null to signal invalid input
+        return null;
+      }
+      return parsed;
     };
 
     const parseRequiredNumber = (raw: string): number | null => {
@@ -503,6 +513,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     const latitudeValue = parseOptionalNumber(formState.latitude);
     const longitudeValue = parseOptionalNumber(formState.longitude);
     if (
+      latitudeValue === null ||
+      longitudeValue === null ||
       (latitudeValue !== undefined && (latitudeValue < -90 || latitudeValue > 90)) ||
       (longitudeValue !== undefined && (longitudeValue < -180 || longitudeValue > 180))
     ) {
@@ -512,8 +524,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
     const elevationValue = parseOptionalNumber(formState.elevation);
     if (
-      elevationValue !== undefined &&
-      (!Number.isInteger(elevationValue) || elevationValue < -500 || elevationValue > 12000)
+      elevationValue === null ||
+      (elevationValue !== undefined &&
+        (!Number.isInteger(elevationValue) || elevationValue < -500 || elevationValue > 12000))
     ) {
       Alert.alert(t('common.error'), t('common.errors.invalidFarmNumericInput'));
       return;
@@ -526,6 +539,22 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     const bulkDensityValue = parseOptionalNumber(formState.bulkDensity);
     const cationExchangeCapacityValue = parseOptionalNumber(formState.cationExchangeCapacity);
     const soilWaterRetentionValue = parseOptionalNumber(formState.soilWaterRetention);
+
+    // Check for invalid (non-numeric) inputs
+    const invalidNumericInputs = [
+      vineSpacingValue,
+      rowSpacingValue,
+      totalTankCapacityValue,
+      systemDischargeValue,
+      bulkDensityValue,
+      cationExchangeCapacityValue,
+      soilWaterRetentionValue,
+    ].filter((value) => value === null);
+
+    if (invalidNumericInputs.length > 0) {
+      Alert.alert(t('common.error'), t('common.errors.invalidFarmNumericInput'));
+      return;
+    }
 
     const boundedValues = [
       vineSpacingValue,
@@ -543,24 +572,24 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     }
 
     const overflowFieldLabels = getPrecisionOverflowFieldLabels([
-      { label: t('farmForm.fields.vineSpacing.label'), value: vineSpacingValue },
-      { label: t('farmForm.fields.rowSpacing.label'), value: rowSpacingValue },
-      { label: t('farmForm.fields.tankCapacity.label'), value: totalTankCapacityValue },
-      { label: t('farmForm.fields.systemDischarge.label'), value: systemDischargeValue },
-      { label: t('farmForm.fields.bulkDensity.label'), value: bulkDensityValue },
+      { label: t('farmForm.fields.bulkDensity.label'), value: bulkDensityValue ?? undefined },
       {
         label: t('farmForm.fields.cationExchangeCapacity.label'),
-        value: cationExchangeCapacityValue,
+        value: cationExchangeCapacityValue ?? undefined,
       },
-      { label: t('farmForm.fields.soilWaterRetention.label'), value: soilWaterRetentionValue },
+      {
+        label: t('farmForm.fields.soilWaterRetention.label'),
+        value: soilWaterRetentionValue ?? undefined,
+      },
     ]);
 
     if (overflowFieldLabels.length > 0) {
       Alert.alert(
         t('common.error'),
-        `These values are too large for current database precision: ${overflowFieldLabels.join(
-          ', ',
-        )}. Keep each below ${NUMERIC_6_4_MAX_ABS}.`,
+        t('farmForm.overflowError', {
+          fields: overflowFieldLabels.join(', '),
+          max: NUMERIC_6_4_MAX_ABS,
+        }),
       );
       return;
     }

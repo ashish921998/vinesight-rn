@@ -71,15 +71,52 @@ export function useUpdateProfile() {
     mutationFn: async (updates: ProfileUpdate): Promise<Profile> => {
       const userId = await getUserId();
 
-      const { data, error } = await supabase
+      // Get user email from auth
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const userEmail = user?.email;
+
+      // First, check if profile exists
+      const { error: checkError } = await supabase
         .from(TABLES.PROFILES)
-        .update(updates)
+        .select('id')
         .eq('id', userId)
-        .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      let result;
+
+      if (checkError && checkError.code === 'PGRST116') {
+        // Profile doesn't exist, create it with email
+        const { data, error } = await supabase
+          .from(TABLES.PROFILES)
+          .insert({
+            id: userId,
+            email: userEmail,
+            ...updates,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = data;
+      } else if (checkError) {
+        // Some other error occurred
+        throw checkError;
+      } else {
+        // Profile exists, update it (but don't update email as it's immutable)
+        const { data, error } = await supabase
+          .from(TABLES.PROFILES)
+          .update(updates)
+          .eq('id', userId)
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = data;
+      }
+
+      return result;
     },
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(queryKeys.profile.current(), updatedProfile);

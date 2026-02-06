@@ -775,7 +775,7 @@ export default function ReportsScreen() {
                 }}
               >
                 <Text style={{ fontSize: fontSize.xs, color: colors.surface[600] }}>
-                  🧪 {t('reports.preview.counts.sprays', { count: preview.summary.sprayCount })}
+                  🧴 {t('reports.preview.counts.sprays', { count: preview.summary.sprayCount })}
                 </Text>
               </View>
               <View

@@ -369,6 +369,8 @@ export const mr = {
     soilCompositionWarning: 'वाळू + गाळ + चिकण यांची बेरीज सुमारे 100% असावी (सध्या {{total}}%)',
     soilCompositionHint:
       'वाळू, गाळ आणि चिकण हे 0 ते 100 मधील संख्या म्हणून भरा आणि एकूण सुमारे 100% ठेवा.',
+    overflowError:
+      'ही मूल्ये वर्तमान डेटाबेस अचूकतेसाठी खूप मोठी आहेत: {{fields}}. प्रत्येक {{max}} खाली ठेवा.',
     infoCardMessage: 'तुम्ही हे तपशील नंतर $t(glossary.farm) सेटिंग्जमधून कधीही अद्ययावत करू शकता.',
   },
 
@@ -1100,6 +1102,12 @@ export const mr = {
       evening: 'शुभ संध्याकाळ',
       night: 'शुभ रात्री',
     },
+    greetingWithName: {
+      morning: 'शुभ सकाळ, {{name}}',
+      afternoon: 'शुभ दुपार, {{name}}',
+      evening: 'शुभ संध्याकाळ, {{name}}',
+      night: 'शुभ रात्री, {{name}}',
+    },
     stats: {
       farms: '$t(glossary.farm)',
       activeWorkers: 'सक्रिय $t(glossary.worker)',
@@ -1326,7 +1334,7 @@ export const mr = {
       spray: '$t(glossary.spray) ({{count}})',
     },
     search: {
-      placeholder: 'इन्व्हेंटरी शोधा...',
+      placeholder: 'गोदाम शोधा...',
       found_one: '{{count}} वस्तू आढळली',
       found_other: '{{count}} वस्तू आढळल्या',
     },

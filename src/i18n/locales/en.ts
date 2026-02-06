@@ -368,6 +368,8 @@ export const en = {
       'Sand + Silt + Clay should total approximately 100% (currently {{total}}%)',
     soilCompositionHint:
       'Enter Sand, Silt, and Clay as numbers between 0 and 100, and keep the total near 100%.',
+    overflowError:
+      'These values are too large for current database precision: {{fields}}. Keep each below {{max}}.',
     infoCardMessage: 'You can always update these details later from your farm settings.',
   },
 
@@ -1091,6 +1093,12 @@ export const en = {
       evening: 'Good evening',
       night: 'Good night',
     },
+    greetingWithName: {
+      morning: 'Good morning, {{name}}',
+      afternoon: 'Good afternoon, {{name}}',
+      evening: 'Good evening, {{name}}',
+      night: 'Good night, {{name}}',
+    },
     stats: {
       farms: 'Farms',
       activeWorkers: 'Active workers',
@@ -1316,7 +1324,7 @@ export const en = {
       spray: 'Sprays ({{count}})',
     },
     search: {
-      placeholder: 'Search inventory...',
+      placeholder: 'Search warehouse...',
       found_one: '{{count}} item found',
       found_other: '{{count}} items found',
     },
