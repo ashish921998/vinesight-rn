@@ -20,6 +20,8 @@ import { router } from 'expo-router';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useLanguageStore } from '@/stores';
 import { ONBOARDING_STEPS, ONBOARDING_FEATURES, COUNTRIES } from '../src/types/onboarding';
+import { CURRENCIES } from '@/constants/calculator-models';
+import { useUpdateProfile } from '@/hooks/use-profile';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -38,6 +40,7 @@ export default function OnboardingScreen() {
 
   const currentLanguage = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
+  const updateProfile = useUpdateProfile();
 
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguageCode>(
     currentLanguage ?? 'en',
@@ -45,7 +48,9 @@ export default function OnboardingScreen() {
 
   const [selectedCountry, setSelectedCountry] = useState(preferences.country);
   const [selectedAreaUnit, setSelectedAreaUnit] = useState(preferences.areaUnit);
+  const [selectedCurrency, setSelectedCurrency] = useState(preferences.currency || 'INR');
   const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
 
   const filteredFeatures = useMemo(() => ONBOARDING_FEATURES, []);
   const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
@@ -61,6 +66,7 @@ export default function OnboardingScreen() {
       setPreferences({
         country: selectedCountry,
         areaUnit: selectedAreaUnit,
+        currency: selectedCurrency,
       });
     }
 
@@ -69,6 +75,11 @@ export default function OnboardingScreen() {
     }
 
     if (isLastStep) {
+      try {
+        await updateProfile.mutateAsync({ currency_preference: selectedCurrency });
+      } catch (error) {
+        console.error('Failed to update currency preference:', error);
+      }
       completeOnboarding();
       router.replace('/(tabs)');
     } else {
@@ -571,6 +582,98 @@ export default function OnboardingScreen() {
             </Text>
           </Pressable>
         </View>
+      </View>
+
+      {/* Currency Selection */}
+      <View style={{ marginBottom: spacing[6] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
+          <SymbolIcon name="yensign.circle.fill" size={20} color={m3.colorScheme.primary} />
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              fontWeight: fontWeight.semibold,
+              color: m3.colorScheme.onSurface,
+              marginLeft: spacing[2],
+            }}
+          >
+            {t('onboarding.preferences.currency')}
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => setShowCurrencyPicker(!showCurrencyPicker)}
+          style={{
+            backgroundColor: colors.surface[100],
+            borderRadius: borderRadius.xl,
+            padding: spacing[4],
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              color: selectedCurrency
+                ? m3.colorScheme.onSurface
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+            }}
+          >
+            {selectedCurrency
+              ? CURRENCIES.find((c) => c.code === selectedCurrency)?.label || selectedCurrency
+              : t('onboarding.preferences.selectCurrency')}
+          </Text>
+          <SymbolIcon
+            name={showCurrencyPicker ? 'chevron.up' : 'chevron.down'}
+            size={20}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+          />
+        </Pressable>
+
+        {showCurrencyPicker && (
+          <View
+            style={{
+              backgroundColor: colors.surface[100],
+              borderRadius: borderRadius.xl,
+              marginTop: spacing[2],
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.25),
+            }}
+          >
+            {CURRENCIES.map((currency) => (
+              <Pressable
+                key={currency.code}
+                onPress={() => {
+                  setSelectedCurrency(currency.code);
+                  setShowCurrencyPicker(false);
+                }}
+                style={{
+                  padding: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.15),
+                  backgroundColor:
+                    selectedCurrency === currency.code
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                      : colors.surface[100],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    color:
+                      selectedCurrency === currency.code
+                        ? m3.colorScheme.primary
+                        : m3.colorScheme.onSurface,
+                    fontWeight:
+                      selectedCurrency === currency.code ? fontWeight.semibold : fontWeight.normal,
+                  }}
+                >
+                  {currency.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
       </View>
     </ScrollView>
   );

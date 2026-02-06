@@ -18,6 +18,7 @@ import {
   useFarmsNeedingAttention,
   useRecentActivities,
   useFarms,
+  useProfile,
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
@@ -41,13 +42,6 @@ function getGreetingKey(): GreetingKey {
   if (hour >= 12 && hour < 17) return 'afternoon';
   if (hour >= 17 && hour < 21) return 'evening';
   return 'night';
-}
-
-function formatHarvest(value: number): string {
-  if (value >= 1000) {
-    return `${formatNumber(value / 1000, { maximumFractionDigits: 1 })} t`;
-  }
-  return `${formatNumber(value, { maximumFractionDigits: 0 })} kg`;
 }
 
 // ============================================================
@@ -77,6 +71,7 @@ export default function DashboardScreen() {
     isLoading: isLoadingActivities,
   } = useRecentActivities(5);
   const { data: farms, refetch: refetchFarms, isLoading: isLoadingFarms } = useFarms();
+  const { data: profile } = useProfile();
 
   const greetingKey = getGreetingKey();
 
@@ -150,7 +145,11 @@ export default function DashboardScreen() {
       <View style={containerStyle}>
         {/* Welcome Header */}
         <View style={{ marginBottom: spacing[6] }}>
-          <Text style={greetingStyle}>{t(`dashboard.greeting.${greetingKey}`)}</Text>
+          <Text style={greetingStyle}>
+            {profile?.full_name
+              ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
+              : t(`dashboard.greeting.${greetingKey}`)}
+          </Text>
         </View>
 
         {/* Stats Grid */}
@@ -163,6 +162,7 @@ export default function DashboardScreen() {
                 icon="leaf"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
+                onPress={() => router.push('/(tabs)/farms')}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
@@ -172,6 +172,7 @@ export default function DashboardScreen() {
                 icon="people"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
+                onPress={() => router.push('/(tabs)/workers')}
               />
             </View>
           </View>
@@ -185,15 +186,19 @@ export default function DashboardScreen() {
                 icon="bar-chart"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
+                onPress={() => router.push('/logs')}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
               <StatsCard
-                title={t('dashboard.stats.harvest')}
-                value={formatHarvest(stats?.totalHarvest ?? 0)}
-                icon="basket"
-                color={m3.colorScheme.tertiary}
+                title={t('dashboard.stats.tasks')}
+                value={formatNumber(stats?.pendingTasksCount ?? 0, {
+                  maximumFractionDigits: 0,
+                })}
+                icon="checklist"
+                color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
+                onPress={() => router.push('/tasks')}
               />
             </View>
           </View>
@@ -314,7 +319,7 @@ export default function DashboardScreen() {
               />
               <QuickActionButton
                 title={t('dashboard.quickActions.spray')}
-                icon="flask"
+                icon="spraycan.fill"
                 color={colors.spray[500]}
                 onPress={() => handleQuickAction('spray')}
               />

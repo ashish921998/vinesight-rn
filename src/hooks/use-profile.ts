@@ -71,10 +71,16 @@ export function useUpdateProfile() {
     mutationFn: async (updates: ProfileUpdate): Promise<Profile> => {
       const userId = await getUserId();
 
+      // Atomic upsert avoids race conditions between check/insert/update calls.
       const { data, error } = await supabase
         .from(TABLES.PROFILES)
-        .update(updates)
-        .eq('id', userId)
+        .upsert(
+          {
+            id: userId,
+            ...updates,
+          },
+          { onConflict: 'id' },
+        )
         .select()
         .single();
 

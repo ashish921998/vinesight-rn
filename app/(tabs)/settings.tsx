@@ -11,6 +11,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -102,7 +103,7 @@ export default function SettingsScreen() {
     if (profile) {
       setEditName(profile.full_name || '');
       setEditPhone(profile.phone || '');
-      setSelectedCurrency(profile.preferred_currency || 'INR');
+      setSelectedCurrency(profile.currency_preference || 'INR');
       // Area unit from user metadata
     }
     if (user?.user_metadata?.area_unit) {
@@ -249,7 +250,7 @@ export default function SettingsScreen() {
       await updateProfile.mutateAsync({
         full_name: editName.trim() || undefined,
         phone: editPhone.trim() || undefined,
-        preferred_currency: selectedCurrency,
+        currency_preference: selectedCurrency,
       });
       setShowEditProfile(false);
       refetchProfile();
@@ -267,7 +268,7 @@ export default function SettingsScreen() {
     setSelectedCurrency(code);
     setShowCurrencyPicker(false);
     try {
-      await updateProfile.mutateAsync({ preferred_currency: code });
+      await updateProfile.mutateAsync({ currency_preference: code });
       refetchProfile();
     } catch (error) {
       if (__DEV__) {
@@ -637,7 +638,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowLanguagePicker(false)}
       >
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -695,7 +696,7 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </Modal>
 
       {/* Theme Picker Modal */}
@@ -705,7 +706,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowThemePicker(false)}
       >
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -762,7 +763,7 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </Modal>
 
       {/* Currency Picker Modal */}

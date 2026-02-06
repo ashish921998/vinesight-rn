@@ -24,7 +24,7 @@ interface Props {
 
 const ITEM_TYPES = [
   { value: 'fertilizer' as WarehouseItemType, label: 'Fertilizer', icon: 'flask' as const },
-  { value: 'spray' as WarehouseItemType, label: 'Spray', icon: 'water' as const },
+  { value: 'spray' as WarehouseItemType, label: 'Spray', icon: 'spraycan' as const },
 ];
 
 export default function WarehouseItemForm({
@@ -48,7 +48,7 @@ export default function WarehouseItemForm({
   const [reorderQuantity, setReorderQuantity] = useState('');
   const [notes, setNotes] = useState('');
 
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
   const isEditing = !!editingItem;
 
   const unitOptions = useMemo(

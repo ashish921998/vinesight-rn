@@ -3,6 +3,7 @@
  * TypeScript enums and types for vineyard calculations
  * Ported from iOS CalculatorModels.swift
  */
+import { ICON_REGISTRY } from './icon-registry';
 
 // ============================================================
 // MARK: - Water Growth Stages with Kc Values (FAO-56 Standard)
@@ -276,12 +277,22 @@ export interface LogType {
 }
 
 export const LOG_TYPES: LogType[] = [
-  { id: 'irrigation', labelKey: 'logs.types.irrigation', icon: 'water', color: '#4d8573' },
-  { id: 'spray', labelKey: 'logs.types.spray', icon: 'flask', color: '#598d6b' },
-  { id: 'harvest', labelKey: 'logs.types.harvest', icon: 'basket', color: '#669475' },
-  { id: 'expense', labelKey: 'logs.types.expense', icon: 'cash', color: '#598066' },
-  { id: 'fertigation', labelKey: 'logs.types.fertigation', icon: 'fertigation', color: '#408059' },
-  { id: 'note', labelKey: 'logs.types.note', icon: 'document-text', color: '#738c7a' },
+  {
+    id: 'irrigation',
+    labelKey: 'logs.types.irrigation',
+    icon: ICON_REGISTRY.irrigation,
+    color: '#4d8573',
+  },
+  { id: 'spray', labelKey: 'logs.types.spray', icon: ICON_REGISTRY.spray, color: '#598d6b' },
+  { id: 'harvest', labelKey: 'logs.types.harvest', icon: ICON_REGISTRY.harvest, color: '#669475' },
+  { id: 'expense', labelKey: 'logs.types.expense', icon: ICON_REGISTRY.expense, color: '#598066' },
+  {
+    id: 'fertigation',
+    labelKey: 'logs.types.fertigation',
+    icon: ICON_REGISTRY.fertigation,
+    color: '#408059',
+  },
+  { id: 'note', labelKey: 'logs.types.note', icon: ICON_REGISTRY.note, color: '#738c7a' },
 ];
 
 export function getLogType(id: LogTypeId): LogType {

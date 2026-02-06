@@ -71,6 +71,7 @@ export const hi = {
 
       failedToUpdateFarm: 'खेत अपडेट करने में विफल। कृपया पुनः प्रयास करें।',
       failedToCreateFarm: 'खेत बनाने में विफल। कृपया पुनः प्रयास करें।',
+      invalidFarmNumericInput: 'एक या अधिक संख्यात्मक मान अमान्य हैं या अनुमत सीमा से बाहर हैं।',
 
       enterAtLeastOneMoistureValue: 'कृपया कम से कम एक नमी मान दर्ज करें।',
       failedToSaveSoilProfile: 'मिट्टी प्रोफाइल सहेजने में विफल। कृपया पुनः प्रयास करें।',
@@ -321,8 +322,19 @@ export const hi = {
         sublabel: 'कस्टम',
       },
     },
+    cropPicker: {
+      modalTitle: 'फसल चुनें',
+      searchPlaceholder: 'फसल खोजें',
+      customCropLabel: 'कस्टम फसल',
+      customCropInputLabel: 'कस्टम फसल का नाम',
+      customCropInputPlaceholder: 'फसल का नाम दर्ज करें',
+      defaultSublabel: 'फसल',
+      useCustomCrop: '"{{crop}}" का उपयोग करें',
+      noResults: 'कोई मिलती-जुलती फसल नहीं मिली।',
+    },
     variety: {
       selectPlaceholder: 'किस्म चुनें',
+      searchPlaceholder: 'किस्म खोजें',
       custom: 'कस्टम',
       customNameLabel: 'कस्टम किस्म का नाम',
       customNamePlaceholder: 'किस्म का नाम दर्ज करें',
@@ -354,6 +366,10 @@ export const hi = {
     },
     soilCompositionWarning:
       'रेत + गाद + मिट्टी का योग लगभग 100% होना चाहिए (वर्तमान में {{total}}%)',
+    soilCompositionHint:
+      'रेत, गाद और मिट्टी को 0 से 100 के बीच संख्या के रूप में भरें, और कुल लगभग 100% रखें।',
+    overflowError:
+      'ये मान वर्तमान डेटाबेस परिशीक्तता के लिए बहुत बड़े हैं: {{fields}}। प्रत्येक को {{max}} से नीचे रखें।',
     infoCardMessage: 'आप इन विवरणों को बाद में अपनी खेत सेटिंग्स से अपडेट कर सकते हैं।',
   },
 
@@ -738,9 +754,15 @@ export const hi = {
     permissionDenied: 'स्थान एक्सेस करने की अनुमति अस्वीकृत',
     unableToGetCurrentLocation: 'वर्तमान स्थान प्राप्त करने में असमर्थ',
     pleaseSelectOnMap: 'कृपया मानचित्र पर एक स्थान चुनें',
+    invalidCoordinates:
+      'मान्य निर्देशांक दर्ज करें। अक्षांश -90 से 90 के बीच और देशांतर -180 से 180 के बीच होना चाहिए।',
     unableToSelectLocation: 'स्थान चुनने में असमर्थ',
     selectedLocationMarkerTitle: 'चयनित स्थान',
     useCurrent: 'वर्तमान स्थान उपयोग करें',
+    manualCoordinatesTitle: 'मैन्युअल निर्देशांक',
+    latitudeLabel: 'अक्षांश',
+    longitudeLabel: 'देशांतर',
+    applyCoordinates: 'निर्देशांक उपयोग करें',
     confirm: 'स्थान की पुष्टि करें',
     mapsUnavailableTitle: 'मानचित्र अनुपलब्ध',
     mapsUnavailableBody:
@@ -884,6 +906,8 @@ export const hi = {
       country: 'देश',
       selectCountry: 'एक देश चुनें',
       areaUnit: 'क्षेत्रफल इकाई',
+      currency: 'मुद्रा',
+      selectCurrency: 'मुद्रा चुनें',
       subtitle: 'अपने अनुभव को अनुकूलित करने में हमारी मदद करें',
     },
     notifications: {
@@ -1072,11 +1096,17 @@ export const hi = {
       evening: 'शुभ संध्या',
       night: 'शुभ रात्रि',
     },
+    greetingWithName: {
+      morning: 'सुप्रभात, {{name}}',
+      afternoon: 'शुभ दोपहर, {{name}}',
+      evening: 'शुभ संध्या, {{name}}',
+      night: 'शुभ रात्रि, {{name}}',
+    },
     stats: {
       farms: 'खेत',
       activeWorkers: 'सक्रिय श्रमिक',
       activities: 'गतिविधियां',
-      harvest: 'कटाई',
+      tasks: 'कार्य',
     },
     needsAttention: {
       title: 'ध्यान देने की आवश्यकता है',
@@ -1205,6 +1235,19 @@ export const hi = {
     },
   },
 
+  workerAnalytics: {
+    notFound: 'श्रमिक नहीं मिला',
+    dailyRate: 'दैनिक दर',
+    dateRange: 'तारीख सीमा',
+    quickStats: 'त्वरित आँकड़े',
+    weeklySummary: 'साप्ताहिक सारांश',
+    transactions: 'लेनदेन',
+    noTransactions: 'इस सीमा में कोई लेनदेन नहीं।',
+    full: 'पूर्ण',
+    half: 'आधा',
+    absent: 'अनुपस्थित',
+  },
+
   workers: {
     tabs: {
       workers: 'श्रमिक',
@@ -1284,7 +1327,7 @@ export const hi = {
       spray: 'छिड़काव ({{count}})',
     },
     search: {
-      placeholder: 'इन्वेंटरी खोजें...',
+      placeholder: 'गोदाम खोजें...',
       found_one: '{{count}} वस्तु मिली',
       found_other: '{{count}} वस्तुएं मिलीं',
     },
