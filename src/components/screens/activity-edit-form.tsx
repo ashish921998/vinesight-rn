@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { FormModal, SectionHeader } from '@/components/ui';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
@@ -624,9 +624,13 @@ export function ActivityEditForm({
           value={selectedDate}
           mode="date"
           display="default"
-          onChange={(_, date) => {
-            setShowDatePicker(false);
+          onChange={(event: DateTimePickerEvent, date?: Date) => {
+            if (event.type === 'dismissed') {
+              setShowDatePicker(false);
+              return;
+            }
             if (date) setSelectedDate(date);
+            setShowDatePicker(false);
           }}
         />
       )}

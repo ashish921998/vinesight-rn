@@ -7,7 +7,6 @@ import { useProfile, useWorkerAttendance, useWorkerTransactions, useWorkers } fr
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import {
-  addDays,
   computeWorkerMetrics,
   getDefaultDateRange,
   getWeeklySummaries,
@@ -28,7 +27,7 @@ export default function WorkerAnalyticsDetailScreen() {
   const { data: attendance, isLoading: attendanceLoading } = useWorkerAttendance(workerId);
   const { data: transactions, isLoading: transactionsLoading } = useWorkerTransactions(workerId);
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.preferred_currency || 'USD';
+  const preferredCurrency = profile?.currency_preference || 'INR';
 
   const [range, setRange] = useState<DateRange>(() => getDefaultDateRange(30));
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -501,7 +500,7 @@ export default function WorkerAnalyticsDetailScreen() {
               display="spinner"
               onChange={(event, date) => handleDateChange('to', event, date)}
               minimumDate={range.from}
-              maximumDate={addDays(new Date(), 1)}
+              maximumDate={new Date()}
               textColor={m3.colorScheme.onSurface}
               style={{ height: 200 }}
             />
@@ -529,7 +528,7 @@ export default function WorkerAnalyticsDetailScreen() {
           display="default"
           onChange={(event, date) => handleDateChange('to', event, date)}
           minimumDate={range.from}
-          maximumDate={addDays(new Date(), 1)}
+          maximumDate={new Date()}
         />
       )}
     </>

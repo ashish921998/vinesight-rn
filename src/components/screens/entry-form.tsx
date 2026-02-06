@@ -1838,7 +1838,7 @@ export function EntryForm({
                   </Pressable>
                 </View>
                 <DateTimePicker
-                  value={dueDate ? new Date(dueDate) : new Date()}
+                  value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
                   mode="date"
                   display="spinner"
                   onChange={(_, date) => {
@@ -1866,7 +1866,7 @@ export function EntryForm({
         )}
         {showDueDatePicker && Platform.OS === 'android' && (
           <DateTimePicker
-            value={dueDate ? new Date(dueDate) : new Date()}
+            value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
             mode="date"
             display="default"
             onChange={(event, date) => {

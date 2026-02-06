@@ -12,7 +12,9 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
@@ -50,7 +52,7 @@ export default function ReportsScreen() {
   const areaUnit = VALID_AREA_UNITS.includes(rawAreaUnit as 'acres' | 'hectares')
     ? rawAreaUnit
     : 'acres';
-  const preferredCurrency = profile?.preferred_currency || 'USD';
+  const preferredCurrency = profile?.currency_preference || 'INR';
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
@@ -233,85 +235,226 @@ export default function ReportsScreen() {
               fontSize: fontSize.sm,
               fontWeight: fontWeight.medium,
               color: colors.surface[500],
-              marginBottom: spacing[2],
+              marginBottom: spacing[3],
             }}
           >
             {t('reports.selectFarmLabel')}
           </Text>
           <Pressable
-            onPress={() => setShowFarmPicker(!showFarmPicker)}
+            onPress={() => setShowFarmPicker(true)}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
               backgroundColor: colors.surface[50],
-              padding: spacing[3],
-              borderRadius: borderRadius.lg,
-              borderWidth: 1,
+              padding: spacing[4],
+              borderRadius: borderRadius.xl,
+              borderWidth: 2,
               borderColor: colors.surface[200],
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <Icon name="leaf.fill" size={20} color={m3.colorScheme.primary} />
-              <Text
+              <View
                 style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.medium,
-                  color: m3.colorScheme.onSurface,
-                  marginLeft: spacing[2],
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.lg,
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.15),
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
-                numberOfLines={1}
               >
-                {selectedFarm?.name || t('reports.selectFarmPlaceholder')}
-              </Text>
+                <Icon name="leaf.fill" size={22} color={m3.colorScheme.primary} />
+              </View>
+              <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.semibold,
+                    color: m3.colorScheme.onSurface,
+                  }}
+                  numberOfLines={1}
+                >
+                  {selectedFarm?.name || t('reports.selectFarmPlaceholder')}
+                </Text>
+                {selectedFarm && (
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: colors.surface[500],
+                      marginTop: 2,
+                    }}
+                  >
+                    {selectedFarm.area} {t(`units.${areaUnit}`)} • {selectedFarm.crop}
+                  </Text>
+                )}
+              </View>
             </View>
-            <Icon
-              name={showFarmPicker ? 'chevron.up' : 'chevron.down'}
-              size={20}
-              color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-            />
-          </Pressable>
-
-          {showFarmPicker && (
             <View
               style={{
-                marginTop: spacing[2],
-                borderWidth: 1,
-                borderColor: colors.surface[200],
-                borderRadius: borderRadius.lg,
-                overflow: 'hidden',
+                width: 32,
+                height: 32,
+                borderRadius: borderRadius.full,
+                backgroundColor: colors.surface[200],
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              {farms.map((f) => (
-                <Pressable
-                  key={f.id}
-                  onPress={() => {
-                    setSelectedFarmId(f.id ?? null);
-                    setShowFarmPicker(false);
-                  }}
+              <Icon name="chevron.down" size={16} color={colors.surface[600]} />
+            </View>
+          </Pressable>
+
+          {/* Farm Picker Modal */}
+          <Modal
+            visible={showFarmPicker}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowFarmPicker(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'flex-end',
+                backgroundColor: colorWithOpacity(colors.gray[900], 0.5),
+              }}
+            >
+              <Pressable style={{ flex: 1 }} onPress={() => setShowFarmPicker(false)} />
+              <View
+                style={{
+                  backgroundColor: colors.surface[100],
+                  borderTopLeftRadius: borderRadius['3xl'],
+                  borderTopRightRadius: borderRadius['3xl'],
+                  paddingBottom: insets.bottom + spacing[4],
+                }}
+              >
+                {/* Modal Header */}
+                <View
                   style={{
-                    padding: spacing[3],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[4],
                     borderBottomWidth: 1,
                     borderBottomColor: colors.surface[200],
-                    backgroundColor:
-                      f.id === selectedFarmId
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                        : colors.surface[100],
                   }}
                 >
                   <Text
                     style={{
-                      fontSize: fontSize.base,
-                      color: f.id === selectedFarmId ? m3.colorScheme.primary : colors.surface[700],
-                      fontWeight: f.id === selectedFarmId ? fontWeight.semibold : fontWeight.normal,
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.onSurface,
                     }}
                   >
-                    {f.name} ({f.area} {t(`units.${areaUnit}`)})
+                    {t('reports.selectFarmLabel')}
                   </Text>
-                </Pressable>
-              ))}
+                  <Pressable
+                    onPress={() => setShowFarmPicker(false)}
+                    style={{
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: spacing[2],
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.semibold,
+                        color: m3.colorScheme.primary,
+                      }}
+                    >
+                      {t('common.done')}
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {/* Farm Picker / List */}
+                {Platform.OS === 'ios' ? (
+                  <Picker
+                    selectedValue={selectedFarmId}
+                    onValueChange={(itemValue) => setSelectedFarmId(itemValue)}
+                  >
+                    {farms?.map((farm) => (
+                      <Picker.Item
+                        key={farm.id}
+                        label={`${farm.name} (${farm.area} ${t(`units.${areaUnit}`)})`}
+                        value={farm.id}
+                      />
+                    ))}
+                  </Picker>
+                ) : (
+                  <ScrollView style={{ maxHeight: 300 }}>
+                    {farms?.map((farm) => {
+                      const isSelected = farm.id === selectedFarmId;
+                      return (
+                        <Pressable
+                          key={farm.id}
+                          onPress={() => {
+                            setSelectedFarmId(farm.id ?? null);
+                            setShowFarmPicker(false);
+                          }}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingHorizontal: spacing[4],
+                            paddingVertical: spacing[3],
+                            backgroundColor: isSelected
+                              ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                              : 'transparent',
+                          }}
+                        >
+                          <View
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: borderRadius.lg,
+                              backgroundColor: isSelected
+                                ? m3.colorScheme.primary
+                                : colorWithOpacity(m3.colorScheme.primary, 0.1),
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              marginRight: spacing[3],
+                            }}
+                          >
+                            <Icon
+                              name="leaf.fill"
+                              size={20}
+                              color={isSelected ? m3.colorScheme.onPrimary : m3.colorScheme.primary}
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={{
+                                fontSize: fontSize.base,
+                                fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
+                                color: m3.colorScheme.onSurface,
+                              }}
+                            >
+                              {farm.name}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: fontSize.sm,
+                                color: colors.surface[500],
+                              }}
+                            >
+                              {farm.area} {t(`units.${areaUnit}`)} • {farm.crop}
+                            </Text>
+                          </View>
+                          {isSelected && (
+                            <Icon
+                              name="checkmark.circle.fill"
+                              size={24}
+                              color={m3.colorScheme.primary}
+                            />
+                          )}
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                )}
+              </View>
             </View>
-          )}
+          </Modal>
         </View>
 
         {/* Date Range */}
@@ -768,8 +911,8 @@ export default function ReportsScreen() {
               left: 0,
               right: 0,
               backgroundColor: colors.surface[100],
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: borderRadius['3xl'],
+              borderTopRightRadius: borderRadius['3xl'],
               padding: spacing[4],
             }}
             onStartShouldSetResponder={() => true}
@@ -797,7 +940,7 @@ export default function ReportsScreen() {
             <DateTimePicker
               value={parseLocalDate(dateRange.from)}
               mode="date"
-              display="spinner"
+              display="inline"
               onChange={(event, date) => handleDateChange('from', event, date)}
               maximumDate={parseLocalDate(dateRange.to)}
               textColor={m3.colorScheme.onSurface}
@@ -852,8 +995,8 @@ export default function ReportsScreen() {
               left: 0,
               right: 0,
               backgroundColor: colors.surface[100],
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: borderRadius['3xl'],
+              borderTopRightRadius: borderRadius['3xl'],
               padding: spacing[4],
             }}
             onStartShouldSetResponder={() => true}
@@ -881,7 +1024,7 @@ export default function ReportsScreen() {
             <DateTimePicker
               value={parseLocalDate(dateRange.to)}
               mode="date"
-              display="spinner"
+              display="inline"
               onChange={(event, date) => handleDateChange('to', event, date)}
               minimumDate={parseLocalDate(dateRange.from)}
               maximumDate={new Date()}

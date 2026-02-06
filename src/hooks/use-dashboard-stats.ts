@@ -20,7 +20,7 @@ export interface DashboardStats {
   farmsCount: number;
   activeWorkersCount: number;
   recentActivitiesCount: number;
-  totalHarvest: number;
+  pendingTasksCount: number;
 }
 
 export interface FarmNeedingAttention {
@@ -83,7 +83,6 @@ export function useDashboardStats() {
       const farmIds = farms?.map((f) => f.id) ?? [];
 
       let activitiesCount = 0;
-      let totalHarvest = 0;
 
       if (farmIds.length > 0) {
         // Count irrigation records
@@ -100,10 +99,10 @@ export function useDashboardStats() {
           .in('farm_id', farmIds)
           .gte('date', dateStr);
 
-        // Count harvest records and sum quantity
-        const { count: harvestCount, data: harvestData } = await supabase
+        // Count harvest records
+        const { count: harvestCount } = await supabase
           .from(TABLES.HARVEST_RECORDS)
-          .select('quantity', { count: 'exact' })
+          .select('*', { count: 'exact', head: true })
           .in('farm_id', farmIds)
           .gte('date', dateStr);
 
@@ -127,18 +126,20 @@ export function useDashboardStats() {
           (harvestCount ?? 0) +
           (expenseCount ?? 0) +
           (fertigationCount ?? 0);
-
-        // Sum harvest quantities
-        if (harvestData) {
-          totalHarvest = harvestData.reduce((sum, h) => sum + (h.quantity ?? 0), 0);
-        }
       }
+
+      // Count pending tasks
+      const { count: pendingTasksCount } = await supabase
+        .from('task_reminders')
+        .select('*', { count: 'exact', head: true })
+        .in('farm_id', farmIds)
+        .eq('completed', false);
 
       return {
         farmsCount: farmsCount ?? 0,
         activeWorkersCount: workersCount ?? 0,
         recentActivitiesCount: activitiesCount,
-        totalHarvest,
+        pendingTasksCount: pendingTasksCount ?? 0,
       };
     },
     staleTime: 30000, // 30 seconds
@@ -177,7 +178,7 @@ export function useFarmsNeedingAttention() {
 
 export function useRecentActivities(limit: number = 5) {
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.preferred_currency || 'USD';
+  const preferredCurrency = profile?.currency_preference || 'INR';
 
   return useQuery({
     queryKey: [...queryKeys.dashboard.recentActivities(limit), preferredCurrency],

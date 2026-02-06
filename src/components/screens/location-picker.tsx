@@ -1,9 +1,19 @@
 /* eslint-disable react-native/no-unused-styles */
 import React, { Component, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  TextInput,
+} from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -67,8 +77,15 @@ export default function LocationPicker({
     longitude: number;
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [latitudeInput, setLatitudeInput] = useState('');
+  const [longitudeInput, setLongitudeInput] = useState('');
   const mapRef = useRef<MapView>(null);
   const wasVisibleRef = useRef(false);
+  const configuredMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
+  const androidMapsConfigKey =
+    Constants.expoConfig?.android?.config?.googleMaps?.apiKey?.trim() ?? '';
+  const hasAndroidMapsSetup =
+    Platform.OS !== 'android' || Boolean(configuredMapsApiKey) || Boolean(androidMapsConfigKey);
 
   useEffect(() => {
     if (!visible) {
@@ -85,9 +102,14 @@ export default function LocationPicker({
       Number.isFinite(initialLatitude) &&
       Number.isFinite(initialLongitude)
     ) {
-      setSelectedCoordinate({ latitude: initialLatitude, longitude: initialLongitude });
+      const nextCoordinate = { latitude: initialLatitude, longitude: initialLongitude };
+      setSelectedCoordinate(nextCoordinate);
+      setLatitudeInput(nextCoordinate.latitude.toFixed(6));
+      setLongitudeInput(nextCoordinate.longitude.toFixed(6));
     } else {
       setSelectedCoordinate(null);
+      setLatitudeInput('');
+      setLongitudeInput('');
     }
   }, [initialLatitude, initialLongitude, visible]);
 
@@ -104,6 +126,8 @@ export default function LocationPicker({
       const { latitude, longitude } = location.coords;
 
       setSelectedCoordinate({ latitude, longitude });
+      setLatitudeInput(latitude.toFixed(6));
+      setLongitudeInput(longitude.toFixed(6));
 
       const region = {
         latitude,
@@ -124,6 +148,28 @@ export default function LocationPicker({
   const handleMapPress = (event: MapPressEvent) => {
     const { coordinate } = event.nativeEvent;
     setSelectedCoordinate(coordinate);
+    setLatitudeInput(coordinate.latitude.toFixed(6));
+    setLongitudeInput(coordinate.longitude.toFixed(6));
+  };
+
+  const handleApplyCoordinates = () => {
+    const latitude = Number(latitudeInput.trim());
+    const longitude = Number(longitudeInput.trim());
+    const isValidLatitude = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90;
+    const isValidLongitude = Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+
+    if (!isValidLatitude || !isValidLongitude) {
+      Alert.alert(t('common.error'), t('locationPicker.invalidCoordinates'));
+      return;
+    }
+
+    setSelectedCoordinate({ latitude, longitude });
+    mapRef.current?.animateToRegion({
+      latitude,
+      longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
   };
 
   const handleConfirm = async () => {
@@ -200,34 +246,88 @@ export default function LocationPicker({
             }
           }}
         >
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            provider={PROVIDER_DEFAULT}
-            initialRegion={{
-              latitude:
-                typeof initialLatitude === 'number' && Number.isFinite(initialLatitude)
-                  ? initialLatitude
-                  : 20.5937,
-              longitude:
-                typeof initialLongitude === 'number' && Number.isFinite(initialLongitude)
-                  ? initialLongitude
-                  : 78.9629,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-            onPress={handleMapPress}
-          >
-            {selectedCoordinate && (
-              <Marker
-                coordinate={selectedCoordinate}
-                title={t('locationPicker.selectedLocationMarkerTitle')}
-              />
-            )}
-          </MapView>
+          {hasAndroidMapsSetup ? (
+            <MapView
+              ref={mapRef}
+              style={styles.map}
+              provider={PROVIDER_DEFAULT}
+              initialRegion={{
+                latitude:
+                  typeof initialLatitude === 'number' && Number.isFinite(initialLatitude)
+                    ? initialLatitude
+                    : 20.5937,
+                longitude:
+                  typeof initialLongitude === 'number' && Number.isFinite(initialLongitude)
+                    ? initialLongitude
+                    : 78.9629,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+              onPress={handleMapPress}
+            >
+              {selectedCoordinate && (
+                <Marker
+                  coordinate={selectedCoordinate}
+                  title={t('locationPicker.selectedLocationMarkerTitle')}
+                />
+              )}
+            </MapView>
+          ) : (
+            <View style={styles.mapFallback}>
+              <View style={styles.mapFallbackIcon}>
+                <Ionicons name="map" size={32} color={colors.gray[600]} />
+              </View>
+              <Text style={styles.mapFallbackTitle}>
+                {t('locationPicker.mapsUnavailableTitle')}
+              </Text>
+              <Text style={styles.mapFallbackBody}>{t('locationPicker.mapsUnavailableBody')}</Text>
+            </View>
+          )}
         </MapErrorBoundary>
 
         <View style={styles.footer}>
+          <View style={styles.manualCoordinatesSection}>
+            <Text style={styles.manualCoordinatesTitle}>
+              {t('locationPicker.manualCoordinatesTitle')}
+            </Text>
+            <View style={styles.manualCoordinatesRow}>
+              <View style={styles.manualCoordinateField}>
+                <Text style={styles.manualCoordinateLabel}>
+                  {t('locationPicker.latitudeLabel')}
+                </Text>
+                <TextInput
+                  value={latitudeInput}
+                  onChangeText={setLatitudeInput}
+                  placeholder="19.076000"
+                  keyboardType="decimal-pad"
+                  style={styles.coordinateInput}
+                  placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                />
+              </View>
+              <View style={styles.manualCoordinateField}>
+                <Text style={styles.manualCoordinateLabel}>
+                  {t('locationPicker.longitudeLabel')}
+                </Text>
+                <TextInput
+                  value={longitudeInput}
+                  onChangeText={setLongitudeInput}
+                  placeholder="72.877700"
+                  keyboardType="decimal-pad"
+                  style={styles.coordinateInput}
+                  placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                />
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.applyCoordinatesButton}
+              onPress={handleApplyCoordinates}
+            >
+              <Text style={styles.applyCoordinatesButtonText}>
+                {t('locationPicker.applyCoordinates')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity
             style={styles.locationButton}
             onPress={handleGetCurrentLocation}
@@ -340,6 +440,54 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
       borderTopWidth: 1,
       borderTopColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
       gap: spacing[3],
+    },
+    manualCoordinatesSection: {
+      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.06),
+      borderWidth: 1,
+      borderColor: colorWithOpacity(m3.colorScheme.primary, 0.2),
+      borderRadius: borderRadius.md,
+      padding: spacing[3],
+      gap: spacing[2],
+    },
+    manualCoordinatesTitle: {
+      fontSize: fontSize.sm,
+      fontWeight: fontWeight.semibold,
+      color: m3.colorScheme.onSurface,
+    },
+    manualCoordinatesRow: {
+      flexDirection: 'row',
+      gap: spacing[2],
+    },
+    manualCoordinateField: {
+      flex: 1,
+      gap: spacing[1],
+    },
+    manualCoordinateLabel: {
+      fontSize: fontSize.xs,
+      fontWeight: fontWeight.medium,
+      color: m3.colorScheme.onSurfaceVariant,
+    },
+    coordinateInput: {
+      backgroundColor: colors.surface[100],
+      borderWidth: 1,
+      borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+      borderRadius: borderRadius.sm,
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[2],
+      fontSize: fontSize.sm,
+      color: m3.colorScheme.onSurface,
+    },
+    applyCoordinatesButton: {
+      alignSelf: 'flex-start',
+      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.15),
+      borderRadius: borderRadius.sm,
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[2],
+    },
+    applyCoordinatesButtonText: {
+      fontSize: fontSize.sm,
+      fontWeight: fontWeight.semibold,
+      color: m3.colorScheme.primary,
     },
     locationButton: {
       flexDirection: 'row',

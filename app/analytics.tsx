@@ -30,7 +30,7 @@ export default function AnalyticsScreen() {
   const { analytics, costAnalysis, yieldAnalysis, performanceMetrics, isLoading } =
     useAnalytics(timeRange);
 
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
   const currencySymbol = currency === 'INR' ? '₹' : '$';
   const metricColors = useMemo(
     () => ({

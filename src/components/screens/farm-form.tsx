@@ -8,32 +8,35 @@ import {
   View,
   Text,
   Pressable,
+  TextInput,
   Alert,
   ActivityIndicator,
   ScrollView,
   Platform,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useCreateFarm, useFarm, useUpdateFarm } from '@/hooks';
-import { CROP_VARIETIES, type CropType } from '@/constants/crop-varieties';
+import { CROP_VARIETIES, CROPS, type CropType } from '@/constants/crop-varieties';
 import type { Farm, FarmInsert, FarmUpdate } from '@/types';
 import { useTranslation } from 'react-i18next';
 import {
   FullScreenForm,
   SectionHeader,
-  CardSelector,
   FormInput,
   InfoCard,
-  CropIcon,
   Button,
+  CropIcon,
 } from '@/components/ui';
+import type { CropIconName } from '@/components/ui/crop-icon';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import LocationPicker from './location-picker';
 import { formatDate } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
+import * as Sentry from '@sentry/react-native';
+import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
 
 const SOIL_TEXTURE_OPTIONS = [
   { value: 'Sand', labelKey: 'farmForm.soilTexture.options.sand' },
@@ -58,6 +61,81 @@ interface FarmFormProps {
   onClose: () => void;
 }
 
+type KnownCrop = Exclude<CropType, 'Other'>;
+
+const KNOWN_CROPS = CROPS.filter((crop): crop is KnownCrop => crop !== 'Other');
+const POPULAR_CROPS: KnownCrop[] = [
+  'Grapes',
+  'Mango',
+  'Banana',
+  'Tomato',
+  'Sugarcane',
+  'Guava',
+  'Pomegranate',
+  'Citrus',
+];
+
+const CROP_I18N_KEY_MAP: Partial<Record<KnownCrop, { labelKey: string; sublabelKey: string }>> = {
+  Grapes: {
+    labelKey: 'farmForm.cropOptions.grapes.label',
+    sublabelKey: 'farmForm.cropOptions.grapes.sublabel',
+  },
+  Mango: {
+    labelKey: 'farmForm.cropOptions.mango.label',
+    sublabelKey: 'farmForm.cropOptions.mango.sublabel',
+  },
+  Pomegranate: {
+    labelKey: 'farmForm.cropOptions.pomegranate.label',
+    sublabelKey: 'farmForm.cropOptions.pomegranate.sublabel',
+  },
+  Citrus: {
+    labelKey: 'farmForm.cropOptions.citrus.label',
+    sublabelKey: 'farmForm.cropOptions.citrus.sublabel',
+  },
+  Banana: {
+    labelKey: 'farmForm.cropOptions.banana.label',
+    sublabelKey: 'farmForm.cropOptions.banana.sublabel',
+  },
+};
+
+const CROP_ICON_MAP: Partial<Record<KnownCrop, CropIconName>> = {
+  Grapes: 'grapes',
+  Mango: 'mango',
+  Pomegranate: 'pomegranate',
+  Citrus: 'citrus',
+  Banana: 'banana',
+  Tomato: 'tomato',
+  Sugarcane: 'sugarcane',
+  Guava: 'guava',
+  Apple: 'apple',
+};
+
+const CROP_SYMBOL_MAP: Partial<Record<KnownCrop, string>> = {
+  Rice: 'drop.fill',
+  Wheat: 'basket.fill',
+  Maize: 'basket.fill',
+  Potato: 'basket.fill',
+  Onion: 'basket.fill',
+  Chili: 'flask.fill',
+  Coffee: 'flask.fill',
+  Tea: 'flask.fill',
+};
+
+const getKnownCropSymbol = (crop: KnownCrop) => CROP_SYMBOL_MAP[crop] ?? 'leaf.fill';
+
+const resolveCropSelection = (
+  crop?: string | null,
+): { selectedCrop: CropType; customCropName: string } => {
+  const normalized = crop?.trim();
+  if (!normalized) {
+    return { selectedCrop: 'Grapes', customCropName: '' };
+  }
+  if (KNOWN_CROPS.includes(normalized as KnownCrop)) {
+    return { selectedCrop: normalized as KnownCrop, customCropName: '' };
+  }
+  return { selectedCrop: 'Other', customCropName: normalized };
+};
+
 const formatLocalDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -78,13 +156,43 @@ const parseDbDateToLocalDate = (value: string): Date => {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 };
 
+const ensureValidDate = (value: Date | undefined | null): Date => {
+  if (!value) return new Date();
+  return Number.isNaN(value.getTime()) ? new Date() : value;
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (typeof error === 'object' && error && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+  return fallback;
+};
+
+const NUMERIC_6_4_MAX_ABS = 99.9999;
+
+const getPrecisionOverflowFieldLabels = (
+  values: Array<{ label: string; value: number | undefined }>,
+): string[] => {
+  return values
+    .filter(
+      (item) =>
+        item.value !== undefined &&
+        Number.isFinite(item.value) &&
+        Math.abs(item.value) > NUMERIC_6_4_MAX_ABS,
+    )
+    .map((item) => item.label);
+};
+
 const buildFormStateFromFarm = (farm?: Farm | null) => ({
+  ...resolveCropSelection(farm?.crop),
   name: farm?.name ?? '',
   region: farm?.region ?? '',
   area: farm?.area?.toString() ?? '',
-  selectedCrop: (farm?.crop as CropType) ?? 'Grapes',
   cropVariety: farm?.crop_variety ?? '',
   customVariety: '',
+  cropSearchQuery: '',
+  varietySearchQuery: '',
   plantingDate: farm?.planting_date ? parseDbDateToLocalDate(farm.planting_date) : new Date(),
   vineSpacing: farm?.vine_spacing?.toString() ?? '',
   rowSpacing: farm?.row_spacing?.toString() ?? '',
@@ -105,6 +213,7 @@ const buildFormStateFromFarm = (farm?: Farm | null) => ({
   showDatePicker: false,
   showPruningDatePicker: false,
   showVarietyPicker: false,
+  showCropPicker: false,
   showTexturePicker: false,
   showMapPicker: false,
   plantingDateChanged: false,
@@ -126,6 +235,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const [formState, setFormState] = useState<FormState>(() =>
     isEdit && farm ? buildFormStateFromFarm(farm) : buildFormStateFromFarm(undefined),
   );
+  const [iosPlantingDateDraft, setIosPlantingDateDraft] = useState<Date>(() => new Date());
 
   useEffect(() => {
     if (!isEdit) {
@@ -143,8 +253,89 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   }, [farm, farmId, isEdit]);
 
   const varieties = useMemo(
-    () => CROP_VARIETIES[formState.selectedCrop] || ['Custom'],
+    () =>
+      formState.selectedCrop === 'Other' ? ['Custom'] : CROP_VARIETIES[formState.selectedCrop],
     [formState.selectedCrop],
+  );
+
+  interface KnownCropOption {
+    value: KnownCrop;
+    label: string;
+    sublabel: string;
+  }
+
+  const knownCropOptions: KnownCropOption[] = useMemo(
+    () =>
+      KNOWN_CROPS.map((crop) => {
+        const keys = CROP_I18N_KEY_MAP[crop];
+        return {
+          value: crop,
+          label: keys ? t(keys.labelKey) : crop,
+          sublabel: keys ? t(keys.sublabelKey) : t('farmForm.cropPicker.defaultSublabel'),
+        };
+      }),
+    [t],
+  );
+
+  const popularCropOptions = useMemo(
+    () => knownCropOptions.filter((option) => POPULAR_CROPS.includes(option.value)),
+    [knownCropOptions],
+  );
+
+  const cropSearchQueryTrimmed = formState.cropSearchQuery.trim();
+  const cropSearchQueryLower = cropSearchQueryTrimmed.toLowerCase();
+  const varietySearchQueryLower = formState.varietySearchQuery.trim().toLowerCase();
+
+  const filteredCropOptions = useMemo(() => {
+    if (!cropSearchQueryLower) return knownCropOptions;
+    return knownCropOptions.filter(
+      (option) =>
+        option.label.toLowerCase().includes(cropSearchQueryLower) ||
+        option.value.toLowerCase().includes(cropSearchQueryLower),
+    );
+  }, [cropSearchQueryLower, knownCropOptions]);
+
+  const canCreateCustomCrop = useMemo(() => {
+    if (!cropSearchQueryTrimmed) return false;
+    return !knownCropOptions.some(
+      (option) =>
+        option.value.toLowerCase() === cropSearchQueryLower ||
+        option.label.toLowerCase() === cropSearchQueryLower,
+    );
+  }, [cropSearchQueryLower, cropSearchQueryTrimmed, knownCropOptions]);
+
+  const filteredVarieties = useMemo(() => {
+    if (!varietySearchQueryLower) return varieties;
+    return varieties.filter((variety) => variety.toLowerCase().includes(varietySearchQueryLower));
+  }, [varieties, varietySearchQueryLower]);
+
+  const selectedCropLabel = useMemo(() => {
+    if (formState.selectedCrop === 'Other') {
+      return formState.customCropName.trim() || t('farmForm.cropPicker.customCropLabel');
+    }
+    const selected = knownCropOptions.find((option) => option.value === formState.selectedCrop);
+    return selected?.label ?? formState.selectedCrop;
+  }, [formState.customCropName, formState.selectedCrop, knownCropOptions, t]);
+
+  const renderCropVisual = useCallback(
+    (crop: KnownCrop, size: number, selected = true) => {
+      const iconName = CROP_ICON_MAP[crop];
+      if (iconName) {
+        return <CropIcon name={iconName} size={size} muted={!selected} />;
+      }
+      return (
+        <UISymbol
+          name={getKnownCropSymbol(crop)}
+          size={size}
+          color={
+            selected
+              ? m3.colorScheme.primary
+              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.8)
+          }
+        />
+      );
+    },
+    [m3.colorScheme.onSurfaceVariant, m3.colorScheme.primary],
   );
 
   const soilCompositionWarning = useMemo(() => {
@@ -172,6 +363,22 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     setFormState((prev) => ({ ...prev, showMapPicker: true }));
   };
 
+  const openPlantingDatePicker = () => {
+    const safeDate = ensureValidDate(formState.plantingDate);
+    setIosPlantingDateDraft(safeDate);
+    setFormState((prev) => ({ ...prev, showDatePicker: true }));
+  };
+
+  const commitPlantingDateFromDraft = () => {
+    const safeDate = ensureValidDate(iosPlantingDateDraft);
+    setFormState((prev) => ({
+      ...prev,
+      plantingDate: safeDate,
+      plantingDateChanged: true,
+      showDatePicker: false,
+    }));
+  };
+
   const handleLocationSelected = (latitude: number, longitude: number, locationName?: string) => {
     setFormState((prev) => ({
       ...prev,
@@ -186,6 +393,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     if (!formState.region.trim()) return false;
     const areaValue = Number(formState.area);
     if (!Number.isFinite(areaValue) || areaValue <= 0) return false;
+    if (formState.selectedCrop === 'Other' && !formState.customCropName.trim()) return false;
     if (formState.cropVariety === 'Custom' && !formState.customVariety.trim()) return false;
     if (!formState.cropVariety && !formState.customVariety.trim()) return false;
     return true;
@@ -193,15 +401,30 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     formState.name,
     formState.region,
     formState.area,
+    formState.selectedCrop,
+    formState.customCropName,
     formState.cropVariety,
     formState.customVariety,
   ]);
+
+  const handleSelectCrop = (crop: CropType, customCropName = '') => {
+    setFormState((prev) => ({
+      ...prev,
+      selectedCrop: crop,
+      customCropName,
+      cropVariety: '',
+      customVariety: '',
+      showCropPicker: false,
+      cropSearchQuery: '',
+    }));
+  };
 
   const handleSelectVariety = (variety: string) => {
     setFormState((prev) => ({
       ...prev,
       cropVariety: variety,
       showVarietyPicker: false,
+      varietySearchQuery: '',
       customVariety: variety === 'Custom' ? '' : prev.customVariety,
     }));
   };
@@ -220,6 +443,130 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       return;
     }
 
+    const sandRaw = formState.sandPercentage.trim();
+    const siltRaw = formState.siltPercentage.trim();
+    const clayRaw = formState.clayPercentage.trim();
+    const hasAnySoilPercentage = sandRaw !== '' || siltRaw !== '' || clayRaw !== '';
+    const hasAllSoilPercentages = sandRaw !== '' && siltRaw !== '' && clayRaw !== '';
+
+    if (hasAnySoilPercentage && !hasAllSoilPercentages) {
+      Alert.alert(t('common.alerts.missingInformationTitle'), t('farmForm.soilCompositionHint'));
+      return;
+    }
+
+    const parsedSand = hasAllSoilPercentages ? Number(sandRaw) : undefined;
+    const parsedSilt = hasAllSoilPercentages ? Number(siltRaw) : undefined;
+    const parsedClay = hasAllSoilPercentages ? Number(clayRaw) : undefined;
+
+    if (
+      hasAllSoilPercentages &&
+      (!Number.isFinite(parsedSand) || !Number.isFinite(parsedSilt) || !Number.isFinite(parsedClay))
+    ) {
+      Alert.alert(t('common.error'), t('farmForm.soilCompositionHint'));
+      return;
+    }
+
+    if (hasAllSoilPercentages) {
+      const sand = parsedSand as number;
+      const silt = parsedSilt as number;
+      const clay = parsedClay as number;
+      if (sand < 0 || sand > 100 || silt < 0 || silt > 100 || clay < 0 || clay > 100) {
+        Alert.alert(t('common.error'), t('farmForm.soilCompositionHint'));
+        return;
+      }
+    }
+
+    if (hasAllSoilPercentages && soilCompositionWarning) {
+      Alert.alert(t('common.error'), soilCompositionWarning);
+      return;
+    }
+
+    const parseOptionalNumber = (raw: string): number | undefined => {
+      const trimmed = raw.trim();
+      if (!trimmed) return undefined;
+      const parsed = Number(trimmed);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    };
+
+    const parseRequiredNumber = (raw: string): number | null => {
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed)) return null;
+      return parsed;
+    };
+
+    const areaValue = parseRequiredNumber(formState.area);
+    if (areaValue === null || areaValue <= 0 || areaValue > 1_000_000) {
+      Alert.alert(t('common.error'), t('common.errors.invalidFarmNumericInput'));
+      return;
+    }
+
+    const latitudeValue = parseOptionalNumber(formState.latitude);
+    const longitudeValue = parseOptionalNumber(formState.longitude);
+    if (
+      (latitudeValue !== undefined && (latitudeValue < -90 || latitudeValue > 90)) ||
+      (longitudeValue !== undefined && (longitudeValue < -180 || longitudeValue > 180))
+    ) {
+      Alert.alert(t('common.error'), t('locationPicker.invalidCoordinates'));
+      return;
+    }
+
+    const elevationValue = parseOptionalNumber(formState.elevation);
+    if (
+      elevationValue !== undefined &&
+      (!Number.isInteger(elevationValue) || elevationValue < -500 || elevationValue > 12000)
+    ) {
+      Alert.alert(t('common.error'), t('common.errors.invalidFarmNumericInput'));
+      return;
+    }
+
+    const vineSpacingValue = parseOptionalNumber(formState.vineSpacing);
+    const rowSpacingValue = parseOptionalNumber(formState.rowSpacing);
+    const totalTankCapacityValue = parseOptionalNumber(formState.totalTankCapacity);
+    const systemDischargeValue = parseOptionalNumber(formState.systemDischarge);
+    const bulkDensityValue = parseOptionalNumber(formState.bulkDensity);
+    const cationExchangeCapacityValue = parseOptionalNumber(formState.cationExchangeCapacity);
+    const soilWaterRetentionValue = parseOptionalNumber(formState.soilWaterRetention);
+
+    const boundedValues = [
+      vineSpacingValue,
+      rowSpacingValue,
+      totalTankCapacityValue,
+      systemDischargeValue,
+      bulkDensityValue,
+      cationExchangeCapacityValue,
+      soilWaterRetentionValue,
+    ].filter((value): value is number => value !== undefined);
+
+    if (boundedValues.some((value) => value < 0 || value > 1_000_000)) {
+      Alert.alert(t('common.error'), t('common.errors.invalidFarmNumericInput'));
+      return;
+    }
+
+    const overflowFieldLabels = getPrecisionOverflowFieldLabels([
+      { label: t('farmForm.fields.vineSpacing.label'), value: vineSpacingValue },
+      { label: t('farmForm.fields.rowSpacing.label'), value: rowSpacingValue },
+      { label: t('farmForm.fields.tankCapacity.label'), value: totalTankCapacityValue },
+      { label: t('farmForm.fields.systemDischarge.label'), value: systemDischargeValue },
+      { label: t('farmForm.fields.bulkDensity.label'), value: bulkDensityValue },
+      {
+        label: t('farmForm.fields.cationExchangeCapacity.label'),
+        value: cationExchangeCapacityValue,
+      },
+      { label: t('farmForm.fields.soilWaterRetention.label'), value: soilWaterRetentionValue },
+    ]);
+
+    if (overflowFieldLabels.length > 0) {
+      Alert.alert(
+        t('common.error'),
+        `These values are too large for current database precision: ${overflowFieldLabels.join(
+          ', ',
+        )}. Keep each below ${NUMERIC_6_4_MAX_ABS}.`,
+      );
+      return;
+    }
+
+    const finalCrop =
+      formState.selectedCrop === 'Other' ? formState.customCropName.trim() : formState.selectedCrop;
     const finalVariety =
       formState.cropVariety === 'Custom' ? formState.customVariety : formState.cropVariety;
 
@@ -231,58 +578,63 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       const updates: FarmUpdate = {
         name: formState.name.trim(),
         region: formState.region.trim(),
-        area: parseFloat(formState.area),
-        crop: formState.selectedCrop,
+        area: areaValue,
+        crop: finalCrop,
         crop_variety: finalVariety,
         ...(formState.plantingDateChanged && {
           planting_date: formatLocalDate(formState.plantingDate as Date),
         }),
-        vine_spacing: formState.vineSpacing ? parseFloat(formState.vineSpacing) : undefined,
-        row_spacing: formState.rowSpacing ? parseFloat(formState.rowSpacing) : undefined,
-        total_tank_capacity: formState.totalTankCapacity
-          ? parseFloat(formState.totalTankCapacity)
-          : undefined,
-        system_discharge: formState.systemDischarge
-          ? parseFloat(formState.systemDischarge)
-          : undefined,
+        vine_spacing: vineSpacingValue,
+        row_spacing: rowSpacingValue,
+        total_tank_capacity: totalTankCapacityValue,
+        system_discharge: systemDischargeValue,
         date_of_pruning: formState.dateOfPruning
           ? formatLocalDate(formState.dateOfPruning)
           : undefined,
         location_name: formState.locationName.trim() || undefined,
-        latitude: formState.latitude ? parseFloat(formState.latitude) : undefined,
-        longitude: formState.longitude ? parseFloat(formState.longitude) : undefined,
-        elevation: formState.elevation ? parseInt(formState.elevation, 10) : undefined,
-        bulk_density: formState.bulkDensity ? parseFloat(formState.bulkDensity) : undefined,
-        cation_exchange_capacity: formState.cationExchangeCapacity
-          ? parseFloat(formState.cationExchangeCapacity)
-          : undefined,
-        soil_water_retention: formState.soilWaterRetention
-          ? parseFloat(formState.soilWaterRetention)
-          : undefined,
+        latitude: latitudeValue,
+        longitude: longitudeValue,
+        elevation: elevationValue,
+        bulk_density: bulkDensityValue,
+        cation_exchange_capacity: cationExchangeCapacityValue,
+        soil_water_retention: soilWaterRetentionValue,
         soil_texture_class: formState.soilTextureClass || undefined,
-        sand_percentage: formState.sandPercentage
-          ? parseFloat(formState.sandPercentage)
-          : undefined,
-        silt_percentage: formState.siltPercentage
-          ? parseFloat(formState.siltPercentage)
-          : undefined,
-        clay_percentage: formState.clayPercentage
-          ? parseFloat(formState.clayPercentage)
-          : undefined,
+        sand_percentage: parsedSand,
+        silt_percentage: parsedSilt,
+        clay_percentage: parsedClay,
       };
       try {
         await updateFarm.mutateAsync({ id: farmId, updates });
         telemetry.capture('farm_updated', {
           farm_id: farmId,
-          crop: formState.selectedCrop,
+          crop: finalCrop,
           variety: finalVariety,
           region: formState.region,
-          area_acres: parseFloat(formState.area),
+          area_acres: areaValue,
         });
         onClose();
       } catch (_error: unknown) {
-        const errorMessage =
-          _error instanceof Error ? _error.message : t('common.errors.failedToUpdateFarm');
+        const errorMessage = getErrorMessage(_error, t('common.errors.failedToUpdateFarm'));
+        const errorMeta = getFarmErrorMeta(_error);
+        console.error('Failed to update farm:', _error, { farmId, updates, errorMeta });
+        telemetry.capture('farm_update_failed', {
+          farm_id: farmId,
+          code: errorMeta.code ?? null,
+          message: errorMeta.message ?? errorMessage,
+          details: errorMeta.details ?? null,
+          hint: errorMeta.hint ?? null,
+        });
+        if (shouldCaptureFarmErrorInSentry(errorMeta)) {
+          Sentry.withScope((scope) => {
+            scope.setTag('domain', 'farm');
+            scope.setTag('operation', 'update');
+            if (errorMeta.code) scope.setTag('db_code', errorMeta.code);
+            scope.setExtra('farm_id', farmId);
+            scope.setExtra('payload', updates);
+            scope.setExtra('db_error', errorMeta);
+            Sentry.captureException(_error instanceof Error ? _error : new Error(errorMessage));
+          });
+        }
         Alert.alert(t('common.error'), errorMessage);
       }
       return;
@@ -291,127 +643,63 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     const farmData: FarmInsert = {
       name: formState.name.trim(),
       region: formState.region.trim(),
-      area: parseFloat(formState.area),
-      crop: formState.selectedCrop,
+      area: areaValue,
+      crop: finalCrop,
       crop_variety: finalVariety,
       planting_date: formatLocalDate(formState.plantingDate),
-      vine_spacing: formState.vineSpacing ? parseFloat(formState.vineSpacing) : undefined,
-      row_spacing: formState.rowSpacing ? parseFloat(formState.rowSpacing) : undefined,
-      total_tank_capacity: formState.totalTankCapacity
-        ? parseFloat(formState.totalTankCapacity)
-        : undefined,
-      system_discharge: formState.systemDischarge
-        ? parseFloat(formState.systemDischarge)
-        : undefined,
+      vine_spacing: vineSpacingValue,
+      row_spacing: rowSpacingValue,
+      total_tank_capacity: totalTankCapacityValue,
+      system_discharge: systemDischargeValue,
       date_of_pruning: formState.dateOfPruning
         ? formatLocalDate(formState.dateOfPruning)
         : undefined,
       location_name: formState.locationName.trim() || undefined,
-      latitude: formState.latitude ? parseFloat(formState.latitude) : undefined,
-      longitude: formState.longitude ? parseFloat(formState.longitude) : undefined,
-      elevation: formState.elevation ? parseInt(formState.elevation, 10) : undefined,
-      bulk_density: formState.bulkDensity ? parseFloat(formState.bulkDensity) : undefined,
-      cation_exchange_capacity: formState.cationExchangeCapacity
-        ? parseFloat(formState.cationExchangeCapacity)
-        : undefined,
-      soil_water_retention: formState.soilWaterRetention
-        ? parseFloat(formState.soilWaterRetention)
-        : undefined,
+      latitude: latitudeValue,
+      longitude: longitudeValue,
+      elevation: elevationValue,
+      bulk_density: bulkDensityValue,
+      cation_exchange_capacity: cationExchangeCapacityValue,
+      soil_water_retention: soilWaterRetentionValue,
       soil_texture_class: formState.soilTextureClass || undefined,
-      sand_percentage: formState.sandPercentage ? parseFloat(formState.sandPercentage) : undefined,
-      silt_percentage: formState.siltPercentage ? parseFloat(formState.siltPercentage) : undefined,
-      clay_percentage: formState.clayPercentage ? parseFloat(formState.clayPercentage) : undefined,
+      sand_percentage: parsedSand,
+      silt_percentage: parsedSilt,
+      clay_percentage: parsedClay,
     };
 
     try {
       const result = await createFarm.mutateAsync(farmData);
       telemetry.capture('farm_created', {
         farm_id: result?.id ?? null,
-        crop: formState.selectedCrop,
+        crop: finalCrop,
         variety: finalVariety,
         region: formState.region,
-        area_acres: parseFloat(formState.area),
+        area_acres: areaValue,
       });
       onClose();
     } catch (_error: unknown) {
-      const errorMessage =
-        _error instanceof Error ? _error.message : t('common.errors.failedToCreateFarm');
+      const errorMessage = getErrorMessage(_error, t('common.errors.failedToCreateFarm'));
+      const errorMeta = getFarmErrorMeta(_error);
+      console.error('Failed to create farm:', _error, { farmData, errorMeta });
+      telemetry.capture('farm_create_failed', {
+        code: errorMeta.code ?? null,
+        message: errorMeta.message ?? errorMessage,
+        details: errorMeta.details ?? null,
+        hint: errorMeta.hint ?? null,
+      });
+      if (shouldCaptureFarmErrorInSentry(errorMeta)) {
+        Sentry.withScope((scope) => {
+          scope.setTag('domain', 'farm');
+          scope.setTag('operation', 'create');
+          if (errorMeta.code) scope.setTag('db_code', errorMeta.code);
+          scope.setExtra('payload', farmData);
+          scope.setExtra('db_error', errorMeta);
+          Sentry.captureException(_error instanceof Error ? _error : new Error(errorMessage));
+        });
+      }
       Alert.alert(t('common.error'), errorMessage);
     }
   };
-
-  interface CropOption {
-    value: CropType;
-    label: string;
-    sublabel: string;
-    renderIcon?: (args: { selected: boolean; size: number }) => React.ReactNode;
-    icon?: string;
-    iconColor: string;
-    iconLibrary?: 'ionicons' | 'symbols';
-  }
-
-  const cropOptions: CropOption[] = useMemo(
-    () => [
-      {
-        value: 'Grapes' as CropType,
-        label: t('farmForm.cropOptions.grapes.label'),
-        sublabel: t('farmForm.cropOptions.grapes.sublabel'),
-        renderIcon: ({ selected, size }) => (
-          <CropIcon name="grapes" size={size} muted={!selected} />
-        ),
-        iconColor: colorWithOpacity(m3.colorScheme.tertiary, 0.18),
-      },
-      {
-        value: 'Mango' as CropType,
-        label: t('farmForm.cropOptions.mango.label'),
-        sublabel: t('farmForm.cropOptions.mango.sublabel'),
-        renderIcon: ({ selected, size }) => <CropIcon name="mango" size={size} muted={!selected} />,
-        iconColor: colorWithOpacity(colors.warning, 0.18),
-      },
-      {
-        value: 'Pomegranate' as CropType,
-        label: t('farmForm.cropOptions.pomegranate.label'),
-        sublabel: t('farmForm.cropOptions.pomegranate.sublabel'),
-        renderIcon: ({ selected, size }) => (
-          <CropIcon name="pomegranate" size={size} muted={!selected} />
-        ),
-        iconColor: colorWithOpacity(m3.colorScheme.error, 0.18),
-      },
-      {
-        value: 'Citrus' as CropType,
-        label: t('farmForm.cropOptions.citrus.label'),
-        sublabel: t('farmForm.cropOptions.citrus.sublabel'),
-        renderIcon: ({ selected, size }) => (
-          <CropIcon name="citrus" size={size} muted={!selected} />
-        ),
-        iconColor: colorWithOpacity(colors.warning, 0.12),
-      },
-      {
-        value: 'Banana' as CropType,
-        label: t('farmForm.cropOptions.banana.label'),
-        sublabel: t('farmForm.cropOptions.banana.sublabel'),
-        renderIcon: ({ selected, size }) => (
-          <CropIcon name="banana" size={size} muted={!selected} />
-        ),
-        iconColor: colorWithOpacity(colors.warning, 0.2),
-      },
-      {
-        value: 'Other' as CropType,
-        label: t('farmForm.cropOptions.other.label'),
-        sublabel: t('farmForm.cropOptions.other.sublabel'),
-        icon: 'ellipsis-horizontal' as const,
-        iconColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-        iconLibrary: 'ionicons' as const,
-      },
-    ],
-    [
-      colors.warning,
-      m3.colorScheme.error,
-      m3.colorScheme.onSurfaceVariant,
-      m3.colorScheme.tertiary,
-      t,
-    ],
-  );
 
   const getSoilTextureLabel = useCallback(
     (value?: string) => {
@@ -487,20 +775,116 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <SectionHeader title={t('farmForm.sections.cropType')} style={{ marginBottom: 16 }} />
 
-        <CardSelector
-          options={cropOptions}
-          selectedValue={formState.selectedCrop}
-          onSelect={(value) => {
-            setFormState((prev) => ({
-              ...prev,
-              selectedCrop: value as CropType,
-              cropVariety: '',
-              customVariety: '',
-            }));
+        <Pressable
+          style={{
+            backgroundColor: colors.surface[100],
+            borderWidth: 2,
+            borderColor: colors.surface[200],
+            borderRadius: borderRadius.xl,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[4],
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: spacing[3],
           }}
-          columns={3}
-          style={{ marginBottom: 20 }}
-        />
+          onPress={() => setFormState((prev) => ({ ...prev, showCropPicker: true }))}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            <View
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+              }}
+            >
+              {formState.selectedCrop === 'Other' ? (
+                <UISymbol name="leaf.fill" size={16} color={m3.colorScheme.primary} />
+              ) : (
+                renderCropVisual(formState.selectedCrop, 18)
+              )}
+            </View>
+            <Text
+              style={{
+                fontSize: fontSize.base,
+                color: colors.surface[900],
+                fontWeight: fontWeight.medium,
+                marginLeft: spacing[3],
+              }}
+              numberOfLines={1}
+            >
+              {selectedCropLabel}
+            </Text>
+          </View>
+          <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
+        </Pressable>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: 20 }}>
+          {popularCropOptions.map((cropOption) => {
+            const isSelected =
+              formState.selectedCrop !== 'Other' && formState.selectedCrop === cropOption.value;
+            return (
+              <Pressable
+                key={cropOption.value}
+                onPress={() => handleSelectCrop(cropOption.value)}
+                style={{
+                  paddingLeft: spacing[2],
+                  paddingRight: spacing[3],
+                  paddingVertical: spacing[2],
+                  borderRadius: borderRadius.full,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: isSelected
+                    ? colorWithOpacity(colors.primary[500], 0.14)
+                    : colors.surface[100],
+                  borderWidth: 1,
+                  borderColor: isSelected
+                    ? colorWithOpacity(colors.primary[500], 0.4)
+                    : colors.surface[200],
+                }}
+              >
+                <View
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: borderRadius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: spacing[2],
+                    backgroundColor: isSelected
+                      ? colorWithOpacity(colors.primary[500], 0.15)
+                      : colorWithOpacity(colors.surface[600], 0.12),
+                  }}
+                >
+                  {renderCropVisual(cropOption.value, 14, isSelected)}
+                </View>
+                <Text
+                  style={{
+                    color: isSelected ? colors.primary[700] : colors.surface[700],
+                    fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
+                    fontSize: fontSize.sm,
+                  }}
+                >
+                  {cropOption.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {formState.selectedCrop === 'Other' && (
+          <FormInput
+            label={t('farmForm.cropPicker.customCropInputLabel')}
+            value={formState.customCropName}
+            onChangeText={(v) => setFormState((prev) => ({ ...prev, customCropName: v }))}
+            placeholder={t('farmForm.cropPicker.customCropInputPlaceholder')}
+            required
+            style={{ marginBottom: 20 }}
+          />
+        )}
 
         <SectionHeader title={t('farmForm.sections.variety')} style={{ marginBottom: 16 }} />
 
@@ -517,7 +901,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             justifyContent: 'space-between',
             marginBottom: spacing[5],
           }}
-          onPress={() => setFormState((prev) => ({ ...prev, showVarietyPicker: true }))}
+          onPress={() =>
+            setFormState((prev) => ({ ...prev, showVarietyPicker: true, varietySearchQuery: '' }))
+          }
         >
           <Text
             style={{
@@ -558,7 +944,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             alignItems: 'center',
             marginBottom: spacing[5],
           }}
-          onPress={() => setFormState((prev) => ({ ...prev, showDatePicker: true }))}
+          onPress={openPlantingDatePicker}
         >
           <UISymbol name="calendar" size={24} color={m3.colorScheme.onSurfaceVariant} />
           <Text
@@ -570,7 +956,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             }}
           >
             {formState.plantingDate
-              ? formatDate(formState.plantingDate, {
+              ? formatDate(ensureValidDate(formState.plantingDate), {
                   month: 'long',
                   day: 'numeric',
                   year: 'numeric',
@@ -917,21 +1303,23 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               </Pressable>
             </View>
             <DateTimePicker
-              value={formState.plantingDate}
+              value={ensureValidDate(iosPlantingDateDraft)}
               mode="date"
               display="spinner"
-              onChange={(_, date) => {
-                if (date) {
-                  setFormState((prev) => ({
-                    ...prev,
-                    plantingDate: date,
-                    plantingDateChanged: true,
-                  }));
+              onChange={(event, date) => {
+                if (event.type === 'dismissed') return;
+                const nextDate =
+                  date ??
+                  (typeof event.nativeEvent?.timestamp === 'number'
+                    ? new Date(event.nativeEvent.timestamp)
+                    : undefined);
+                if (nextDate) {
+                  setIosPlantingDateDraft(ensureValidDate(nextDate));
                 }
               }}
             />
             <Pressable
-              onPress={() => setFormState((prev) => ({ ...prev, showDatePicker: false }))}
+              onPress={commitPlantingDateFromDraft}
               style={[
                 { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
                 { backgroundColor: m3.colorScheme.primary },
@@ -946,10 +1334,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       )}
       {formState.showDatePicker && Platform.OS !== 'ios' && (
         <DateTimePicker
-          value={formState.plantingDate}
+          value={ensureValidDate(formState.plantingDate)}
           mode="date"
-          onChange={(_, date) => {
-            setFormState((prev) => ({ ...prev, showDatePicker: false }));
+          onChange={(event: DateTimePickerEvent, date?: Date) => {
+            if (event.type === 'dismissed') {
+              setFormState((prev) => ({ ...prev, showDatePicker: false }));
+              return;
+            }
             if (date) {
               setFormState((prev) => ({
                 ...prev,
@@ -957,6 +1348,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                 plantingDateChanged: true,
               }));
             }
+            setFormState((prev) => ({ ...prev, showDatePicker: false }));
           }}
         />
       )}
@@ -1036,9 +1428,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         <DateTimePicker
           value={formState.dateOfPruning ?? new Date()}
           mode="date"
-          onChange={(_, date) => {
-            setFormState((prev) => ({ ...prev, showPruningDatePicker: false }));
+          onChange={(event: DateTimePickerEvent, date?: Date) => {
+            if (event.type === 'dismissed') {
+              setFormState((prev) => ({ ...prev, showPruningDatePicker: false }));
+              return;
+            }
             if (date) setFormState((prev) => ({ ...prev, dateOfPruning: date }));
+            setFormState((prev) => ({ ...prev, showPruningDatePicker: false }));
           }}
         />
       )}
@@ -1085,7 +1481,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                 {t('farmForm.variety.modalTitle')}
               </Text>
               <Pressable
-                onPress={() => setFormState((prev) => ({ ...prev, showVarietyPicker: false }))}
+                onPress={() =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    showVarietyPicker: false,
+                    varietySearchQuery: '',
+                  }))
+                }
                 style={{
                   width: 40,
                   height: 40,
@@ -1099,8 +1501,49 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               </Pressable>
             </View>
 
+            <View
+              style={{
+                paddingHorizontal: spacing[6],
+                paddingTop: spacing[4],
+                paddingBottom: spacing[2],
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: colors.surface[50],
+                  paddingHorizontal: spacing[3],
+                  minHeight: 48,
+                }}
+              >
+                <UISymbol
+                  name="magnifyingglass"
+                  size={18}
+                  color={m3.colorScheme.onSurfaceVariant}
+                />
+                <TextInput
+                  value={formState.varietySearchQuery}
+                  onChangeText={(v) => setFormState((prev) => ({ ...prev, varietySearchQuery: v }))}
+                  placeholder={t('farmForm.variety.searchPlaceholder')}
+                  placeholderTextColor={colors.surface[400]}
+                  style={{
+                    flex: 1,
+                    marginLeft: spacing[2],
+                    color: colors.surface[900],
+                    fontSize: fontSize.base,
+                  }}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+
             <ScrollView style={{ maxHeight: 384 }}>
-              {varieties.map((variety) => (
+              {filteredVarieties.map((variety) => (
                 <Pressable
                   key={variety}
                   style={{
@@ -1141,6 +1584,235 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   </View>
                 </Pressable>
               ))}
+              {filteredVarieties.length === 0 && (
+                <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                    {t('common.noResultsFound')}
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {formState.showCropPicker && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            justifyContent: 'flex-end',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.surface[100],
+              borderTopLeftRadius: borderRadius['3xl'],
+              borderTopRightRadius: borderRadius['3xl'],
+              maxHeight: '78%',
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[4],
+                borderBottomWidth: 1,
+                borderBottomColor: colors.surface[100],
+              }}
+            >
+              <View style={{ width: 40 }} />
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                }}
+              >
+                {t('farmForm.cropPicker.modalTitle')}
+              </Text>
+              <Pressable
+                onPress={() =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    showCropPicker: false,
+                    cropSearchQuery: '',
+                  }))
+                }
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: colors.surface[100],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+              </Pressable>
+            </View>
+
+            <View
+              style={{
+                paddingHorizontal: spacing[6],
+                paddingTop: spacing[4],
+                paddingBottom: spacing[2],
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: colors.surface[50],
+                  paddingHorizontal: spacing[3],
+                  minHeight: 48,
+                }}
+              >
+                <UISymbol
+                  name="magnifyingglass"
+                  size={18}
+                  color={m3.colorScheme.onSurfaceVariant}
+                />
+                <TextInput
+                  value={formState.cropSearchQuery}
+                  onChangeText={(v) => setFormState((prev) => ({ ...prev, cropSearchQuery: v }))}
+                  placeholder={t('farmForm.cropPicker.searchPlaceholder')}
+                  placeholderTextColor={colors.surface[400]}
+                  style={{
+                    flex: 1,
+                    marginLeft: spacing[2],
+                    color: colors.surface[900],
+                    fontSize: fontSize.base,
+                  }}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+
+            <ScrollView style={{ maxHeight: 440 }}>
+              {filteredCropOptions.map((cropOption) => {
+                const selected =
+                  formState.selectedCrop !== 'Other' && formState.selectedCrop === cropOption.value;
+                return (
+                  <Pressable
+                    key={cropOption.value}
+                    style={{
+                      paddingHorizontal: spacing[6],
+                      paddingVertical: spacing[4],
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor: selected ? colors.surface[50] : colors.surface[100],
+                    }}
+                    onPress={() => handleSelectCrop(cropOption.value)}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <View
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: borderRadius.lg,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginRight: spacing[3],
+                            backgroundColor: selected
+                              ? colorWithOpacity(colors.primary[500], 0.16)
+                              : colorWithOpacity(colors.surface[600], 0.1),
+                          }}
+                        >
+                          {renderCropVisual(cropOption.value, 22, selected)}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={{
+                              fontSize: fontSize.base,
+                              color: selected ? colors.surface[900] : colors.surface[700],
+                              fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
+                            }}
+                          >
+                            {cropOption.label}
+                          </Text>
+                          <Text
+                            style={{
+                              marginTop: 2,
+                              fontSize: fontSize.sm,
+                              color: colors.surface[500],
+                            }}
+                          >
+                            {cropOption.sublabel}
+                          </Text>
+                        </View>
+                      </View>
+                      {selected && (
+                        <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
+
+              {canCreateCustomCrop && (
+                <Pressable
+                  onPress={() => handleSelectCrop('Other', cropSearchQueryTrimmed)}
+                  style={{
+                    paddingHorizontal: spacing[6],
+                    paddingVertical: spacing[4],
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.surface[100],
+                    backgroundColor:
+                      formState.selectedCrop === 'Other' &&
+                      formState.customCropName.trim().toLowerCase() === cropSearchQueryLower
+                        ? colors.surface[50]
+                        : colors.surface[100],
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                      <UISymbol name="plus.circle.fill" size={20} color={colors.primary[500]} />
+                      <Text
+                        style={{
+                          marginLeft: spacing[2],
+                          fontSize: fontSize.base,
+                          color: colors.surface[900],
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
+                        {t('farmForm.cropPicker.useCustomCrop', { crop: cropSearchQueryTrimmed })}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+              )}
+
+              {filteredCropOptions.length === 0 && !canCreateCustomCrop && (
+                <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                    {t('farmForm.cropPicker.noResults')}
+                  </Text>
+                </View>
+              )}
             </ScrollView>
           </View>
         </View>

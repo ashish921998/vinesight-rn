@@ -271,7 +271,7 @@ export interface Profile {
   phone?: string | null;
   user_type?: UserType | null;
   consultant_organization_id?: string | null;
-  preferred_currency?: Currency | null;
+  currency_preference?: Currency | null;
   preferred_spacing_unit?: SpacingUnit | null;
   created_at?: string | null;
   updated_at?: string | null;

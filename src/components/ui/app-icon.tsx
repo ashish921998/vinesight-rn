@@ -70,10 +70,6 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   'doc.text.fill': 'document',
   'lightbulb.fill': 'flash',
   'checkmark.circle.fill': 'check-circle',
-  'trending-up': 'trending-up',
-  'trending-down': 'trending-down',
-  remove: 'remove',
-  pencil: 'pencil',
 };
 
 export function AppIcon({ name, size = 20, color }: AppIconProps) {
@@ -441,7 +437,7 @@ export function AppIcon({ name, size = 20, color }: AppIconProps) {
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path
-            d="M23 6l-9 9-5-5-7 7"
+            d="M22 6l-8.5 8.5-5-5-6.5 6.5"
             stroke={resolvedColor}
             strokeWidth={strokeWidth}
             fill="none"
@@ -454,7 +450,7 @@ export function AppIcon({ name, size = 20, color }: AppIconProps) {
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path
-            d="M23 18l-9-9-5 5-7-7"
+            d="M22 18l-8.5-8.5-5 5-6.5-6.5"
             stroke={resolvedColor}
             strokeWidth={strokeWidth}
             fill="none"

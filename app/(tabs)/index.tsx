@@ -43,13 +43,6 @@ function getGreetingKey(): GreetingKey {
   return 'night';
 }
 
-function formatHarvest(value: number): string {
-  if (value >= 1000) {
-    return `${formatNumber(value / 1000, { maximumFractionDigits: 1 })} t`;
-  }
-  return `${formatNumber(value, { maximumFractionDigits: 0 })} kg`;
-}
-
 // ============================================================
 // MARK: - Dashboard Screen
 // ============================================================
@@ -163,6 +156,7 @@ export default function DashboardScreen() {
                 icon="leaf"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
+                onPress={() => router.push('/(tabs)/farms')}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
@@ -172,6 +166,7 @@ export default function DashboardScreen() {
                 icon="people"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
+                onPress={() => router.push('/(tabs)/workers')}
               />
             </View>
           </View>
@@ -185,15 +180,19 @@ export default function DashboardScreen() {
                 icon="bar-chart"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
+                onPress={() => router.push('/logs')}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
               <StatsCard
-                title={t('dashboard.stats.harvest')}
-                value={formatHarvest(stats?.totalHarvest ?? 0)}
-                icon="basket"
-                color={m3.colorScheme.tertiary}
+                title={t('dashboard.stats.tasks')}
+                value={formatNumber(stats?.pendingTasksCount ?? 0, {
+                  maximumFractionDigits: 0,
+                })}
+                icon="checklist"
+                color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
+                onPress={() => router.push('/tasks')}
               />
             </View>
           </View>

@@ -64,7 +64,7 @@ export default function LogsScreen() {
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
   const { data: profile } = useProfile();
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
   const filterCardStyle = Platform.select({
     ios: {
       shadowColor: m3.colorScheme.shadow,

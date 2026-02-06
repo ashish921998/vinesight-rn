@@ -65,7 +65,7 @@ export interface TaskTemplate {
 export const TASK_TYPE_INFO: Record<TaskType, { labelKey: string; icon: string; color: string }> = {
   irrigation: { labelKey: 'tasks.types.irrigation', icon: 'water', color: '#4d8573' },
   spray: { labelKey: 'tasks.types.spray', icon: 'flask', color: '#598d6b' },
-  fertigation: { labelKey: 'tasks.types.fertigation', icon: 'fertigation', color: '#408059' },
+  fertigation: { labelKey: 'tasks.types.fertigation', icon: 'leaf', color: '#408059' },
   harvest: { labelKey: 'tasks.types.harvest', icon: 'basket', color: '#669475' },
   soil_test: { labelKey: 'tasks.types.soilTest', icon: 'layers', color: '#598266' },
   petiole_test: { labelKey: 'tasks.types.petioleTest', icon: 'analytics', color: '#7a9a5c' },

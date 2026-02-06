@@ -71,6 +71,7 @@ export const en = {
 
       failedToUpdateFarm: 'Failed to update farm. Please try again.',
       failedToCreateFarm: 'Failed to create farm. Please try again.',
+      invalidFarmNumericInput: 'One or more numeric values are invalid or out of allowed range.',
 
       enterAtLeastOneMoistureValue: 'Please enter at least one moisture value.',
       failedToSaveSoilProfile: 'Failed to save soil profile. Please try again.',
@@ -321,8 +322,19 @@ export const en = {
         sublabel: 'Custom',
       },
     },
+    cropPicker: {
+      modalTitle: 'Select Crop',
+      searchPlaceholder: 'Search crops',
+      customCropLabel: 'Custom crop',
+      customCropInputLabel: 'Custom Crop Name',
+      customCropInputPlaceholder: 'Enter crop name',
+      defaultSublabel: 'Crop',
+      useCustomCrop: 'Use "{{crop}}"',
+      noResults: 'No matching crops found.',
+    },
     variety: {
       selectPlaceholder: 'Select variety',
+      searchPlaceholder: 'Search varieties',
       custom: 'Custom',
       customNameLabel: 'Custom Variety Name',
       customNamePlaceholder: 'Enter variety name',
@@ -354,6 +366,8 @@ export const en = {
     },
     soilCompositionWarning:
       'Sand + Silt + Clay should total approximately 100% (currently {{total}}%)',
+    soilCompositionHint:
+      'Enter Sand, Silt, and Clay as numbers between 0 and 100, and keep the total near 100%.',
     infoCardMessage: 'You can always update these details later from your farm settings.',
   },
 
@@ -739,9 +753,15 @@ export const en = {
     permissionDenied: 'Permission to access location was denied',
     unableToGetCurrentLocation: 'Unable to get current location',
     pleaseSelectOnMap: 'Please select a location on the map',
+    invalidCoordinates:
+      'Enter valid coordinates. Latitude must be between -90 and 90, and longitude between -180 and 180.',
     unableToSelectLocation: 'Unable to select location',
     selectedLocationMarkerTitle: 'Selected location',
     useCurrent: 'Use current location',
+    manualCoordinatesTitle: 'Manual coordinates',
+    latitudeLabel: 'Latitude',
+    longitudeLabel: 'Longitude',
+    applyCoordinates: 'Use coordinates',
     confirm: 'Confirm location',
     mapsUnavailableTitle: 'Map unavailable',
     mapsUnavailableBody:
@@ -883,6 +903,8 @@ export const en = {
       country: 'Country',
       selectCountry: 'Select a country',
       areaUnit: 'Area Unit',
+      currency: 'Currency',
+      selectCurrency: 'Select currency',
       subtitle: 'Help us customize your experience',
     },
     notifications: {
@@ -1073,7 +1095,7 @@ export const en = {
       farms: 'Farms',
       activeWorkers: 'Active workers',
       activities: 'Activities',
-      harvest: 'Harvest',
+      tasks: 'Tasks',
     },
     needsAttention: {
       title: 'Needs attention',

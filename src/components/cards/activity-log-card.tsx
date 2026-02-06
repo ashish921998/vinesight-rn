@@ -70,7 +70,7 @@ function getDescriptionFromData(
     }
     case 'expense': {
       const expense = data as ExpenseRecord;
-      const cost = formatCurrency(expense.cost ?? 0, currency || 'USD');
+      const cost = formatCurrency(expense.cost ?? 0, currency || 'INR');
       const expenseType = expense.type || t('common.general');
       return t('logs.expenseDescription', { cost, type: expenseType });
     }
@@ -100,7 +100,7 @@ export function ActivityLogCard({
   const m3 = useM3();
   const { t } = useTranslation();
   const { data: profile } = useProfile();
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
 
   const hasActions = Boolean(onEdit || onDelete);
   const isInteractive = Boolean(onPress) && !hasActions;
@@ -198,7 +198,7 @@ export function ActivityLogCard({
             </View>
 
             <AppIcon
-              name="chevron.right"
+              name="chevron-right"
               size={16}
               color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
