@@ -57,6 +57,15 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   layers: 'layers',
   analytics: 'chart',
   fertigation: 'fertigation',
+  // SF Symbol aliases for compatibility
+  'drop.fill': 'drop',
+  'flask.fill': 'flask',
+  'basket.fill': 'basket',
+  'dollarsign.circle.fill': 'cash',
+  'chart.bar.fill': 'chart',
+  'doc.text.fill': 'document',
+  'lightbulb.fill': 'flash',
+  'checkmark.circle.fill': 'check-circle',
 };
 
 export function AppIcon({ name, size = 20, color }: AppIconProps) {

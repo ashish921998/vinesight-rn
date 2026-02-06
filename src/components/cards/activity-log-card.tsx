@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
-import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { AppIcon } from '@/components/ui/app-icon';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
 import { spacing, fontSize, fontWeight } from '@/styles/theme';
@@ -177,7 +177,7 @@ export function ActivityLogCard({
         {({ pressed }) => (
           <View style={containerStyle}>
             <View style={iconContainerStyle}>
-              <UiSymbol name={logType.icon} size={18} color={logType.color} />
+              <AppIcon name={logType.icon} size={18} color={logType.color} />
             </View>
 
             <View style={contentContainerStyle}>
@@ -197,7 +197,7 @@ export function ActivityLogCard({
               </View>
             </View>
 
-            <UiSymbol
+            <AppIcon
               name="chevron.right"
               size={16}
               color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
@@ -223,7 +223,7 @@ export function ActivityLogCard({
     return (
       <View style={containerStyle}>
         <View style={iconContainerStyle}>
-          <UiSymbol name={logType.icon} size={18} color={logType.color} />
+          <AppIcon name={logType.icon} size={18} color={logType.color} />
         </View>
         <View style={contentContainerStyle}>
           <Text style={descriptionTextStyle} numberOfLines={1}>
@@ -260,7 +260,7 @@ export function ActivityLogCard({
                   : 'transparent',
               })}
             >
-              <UiSymbol name="pencil" size={16} color={m3.colorScheme.primary} />
+              <AppIcon name="pencil" size={16} color={m3.colorScheme.primary} />
             </Pressable>
           )}
           {onDelete && (
@@ -281,7 +281,7 @@ export function ActivityLogCard({
                   : 'transparent',
               })}
             >
-              <UiSymbol name="trash" size={16} color={m3.colorScheme.error} />
+              <AppIcon name="trash" size={16} color={m3.colorScheme.error} />
             </Pressable>
           )}
         </View>
@@ -292,7 +292,7 @@ export function ActivityLogCard({
   return (
     <View style={containerStyle}>
       <View style={iconContainerStyle}>
-        <UiSymbol name={logType.icon} size={18} color={logType.color} />
+        <AppIcon name={logType.icon} size={18} color={logType.color} />
       </View>
       <View style={contentContainerStyle}>
         <Text style={descriptionTextStyle} numberOfLines={1}>
