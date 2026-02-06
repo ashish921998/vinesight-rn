@@ -28,6 +28,7 @@ import { useAuthStore } from '@/stores';
 import { telemetry } from '@/services/telemetry';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { parseLocalDate } from '@/utils/date';
 
 const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
   { value: 'comprehensive', labelKey: 'reports.types.comprehensive', icon: 'doc.text.fill' },
@@ -794,11 +795,11 @@ export default function ReportsScreen() {
               </Pressable>
             </View>
             <DateTimePicker
-              value={new Date(dateRange.from)}
+              value={parseLocalDate(dateRange.from)}
               mode="date"
               display="spinner"
               onChange={(event, date) => handleDateChange('from', event, date)}
-              maximumDate={new Date(dateRange.to)}
+              maximumDate={parseLocalDate(dateRange.to)}
               textColor={m3.colorScheme.onSurface}
               style={{ height: 200 }}
             />
@@ -824,11 +825,11 @@ export default function ReportsScreen() {
       )}
       {showFromPicker && Platform.OS !== 'ios' && (
         <DateTimePicker
-          value={new Date(dateRange.from)}
+          value={parseLocalDate(dateRange.from)}
           mode="date"
           display="default"
           onChange={(event, date) => handleDateChange('from', event, date)}
-          maximumDate={new Date(dateRange.to)}
+          maximumDate={parseLocalDate(dateRange.to)}
         />
       )}
       {showToPicker && Platform.OS === 'ios' && (
@@ -878,11 +879,11 @@ export default function ReportsScreen() {
               </Pressable>
             </View>
             <DateTimePicker
-              value={new Date(dateRange.to)}
+              value={parseLocalDate(dateRange.to)}
               mode="date"
               display="spinner"
               onChange={(event, date) => handleDateChange('to', event, date)}
-              minimumDate={new Date(dateRange.from)}
+              minimumDate={parseLocalDate(dateRange.from)}
               maximumDate={new Date()}
               textColor={m3.colorScheme.onSurface}
               style={{ height: 200 }}
@@ -909,11 +910,11 @@ export default function ReportsScreen() {
       )}
       {showToPicker && Platform.OS !== 'ios' && (
         <DateTimePicker
-          value={new Date(dateRange.to)}
+          value={parseLocalDate(dateRange.to)}
           mode="date"
           display="default"
           onChange={(event, date) => handleDateChange('to', event, date)}
-          minimumDate={new Date(dateRange.from)}
+          minimumDate={parseLocalDate(dateRange.from)}
           maximumDate={new Date()}
         />
       )}
