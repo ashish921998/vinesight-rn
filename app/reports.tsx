@@ -23,6 +23,7 @@ import { Symbol as Icon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useFarms, useProfile } from '../src/hooks';
 import { useReportData, useReportExport, getDefaultDateRange } from '../src/hooks/use-reports';
 import { DateRange, ReportType, ReportFormat } from '../src/types/report';
@@ -65,8 +66,9 @@ export default function ReportsScreen() {
 
   // Auto-select first farm
   React.useEffect(() => {
-    if (farms && farms.length > 0 && !selectedFarmId) {
-      setSelectedFarmId(farms[0].id ?? null);
+    if (farms && farms.length > 0 && selectedFarmId == null) {
+      const firstFarmWithId = farms.find((farm) => farm.id != null);
+      if (firstFarmWithId?.id != null) setSelectedFarmId(firstFarmWithId.id);
     }
   }, [farms, selectedFarmId]);
 
@@ -94,7 +96,7 @@ export default function ReportsScreen() {
 
   const handleDateChange = (
     type: 'from' | 'to',
-    event: { type: string },
+    event: DateTimePickerEvent,
     date: Date | undefined,
   ) => {
     if (event.type === 'dismissed') {
@@ -120,7 +122,7 @@ export default function ReportsScreen() {
   };
 
   const selectedFarm = useMemo(() => {
-    if (!farms || !selectedFarmId) return null;
+    if (!farms || selectedFarmId == null) return null;
     return farms.find((f) => f.id === selectedFarmId) || null;
   }, [farms, selectedFarmId]);
 
@@ -373,17 +375,20 @@ export default function ReportsScreen() {
                     selectedValue={selectedFarmId}
                     onValueChange={(itemValue) => setSelectedFarmId(itemValue)}
                   >
-                    {farms?.map((farm) => (
-                      <Picker.Item
-                        key={farm.id}
-                        label={`${farm.name} (${farm.area} ${t(`units.${areaUnit}`)})`}
-                        value={farm.id}
-                      />
-                    ))}
+                    {farms
+                      ?.filter((farm) => farm.id != null)
+                      .map((farm) => (
+                        <Picker.Item
+                          key={farm.id}
+                          label={`${farm.name} (${farm.area} ${t(`units.${areaUnit}`)})`}
+                          value={farm.id}
+                        />
+                      ))}
                   </Picker>
                 ) : (
                   <ScrollView style={{ maxHeight: 300 }}>
                     {farms?.map((farm) => {
+                      if (farm.id == null) return null;
                       const isSelected = farm.id === selectedFarmId;
                       return (
                         <Pressable

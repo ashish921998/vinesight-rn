@@ -240,6 +240,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     isEdit && farm ? buildFormStateFromFarm(farm) : buildFormStateFromFarm(undefined),
   );
   const [iosPlantingDateDraft, setIosPlantingDateDraft] = useState<Date>(() => new Date());
+  const [iosPruningDateDraft, setIosPruningDateDraft] = useState<Date>(() => new Date());
 
   useEffect(() => {
     if (!isEdit) {
@@ -382,6 +383,21 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       plantingDate: safeDate,
       plantingDateChanged: true,
       showDatePicker: false,
+    }));
+  };
+
+  const openPruningDatePicker = () => {
+    const safeDate = ensureValidDate(formState.dateOfPruning);
+    setIosPruningDateDraft(safeDate);
+    setFormState((prev) => ({ ...prev, showPruningDatePicker: true }));
+  };
+
+  const commitPruningDateFromDraft = () => {
+    const safeDate = ensureValidDate(iosPruningDateDraft);
+    setFormState((prev) => ({
+      ...prev,
+      dateOfPruning: safeDate,
+      showPruningDatePicker: false,
     }));
   };
 
@@ -1067,7 +1083,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             justifyContent: 'space-between',
             marginBottom: spacing[5],
           }}
-          onPress={() => setFormState((prev) => ({ ...prev, showPruningDatePicker: true }))}
+          onPress={openPruningDatePicker}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
             <UISymbol name="cut-outline" size={24} color={m3.colorScheme.onSurfaceVariant} />
@@ -1432,15 +1448,15 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               </Pressable>
             </View>
             <DateTimePicker
-              value={formState.dateOfPruning ?? new Date()}
+              value={ensureValidDate(iosPruningDateDraft)}
               mode="date"
               display="spinner"
               onChange={(_, date) => {
-                if (date) setFormState((prev) => ({ ...prev, dateOfPruning: date }));
+                if (date) setIosPruningDateDraft(date);
               }}
             />
             <Pressable
-              onPress={() => setFormState((prev) => ({ ...prev, showPruningDatePicker: false }))}
+              onPress={commitPruningDateFromDraft}
               style={[
                 { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
                 { backgroundColor: m3.colorScheme.primary },

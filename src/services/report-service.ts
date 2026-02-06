@@ -418,15 +418,15 @@ export class ReportService {
     const csv = this.generateCSV(data, reportType);
     const filename = `${this.sanitizeFilename(data.farmName)}_report_${new Date().toISOString().split('T')[0]}.csv`;
 
-    const filePath = `${Paths.cache}/${filename}`;
-    const file = new File(filePath);
+    const file = new File(Paths.cache, filename);
     const writer = file.writableStream().getWriter();
     const bytes = new TextEncoder().encode(csv);
     await writer.write(bytes);
     await writer.close();
 
+    const fileUri = (file as unknown as { uri: string }).uri;
     if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(filePath, {
+      await Sharing.shareAsync(fileUri, {
         mimeType: 'text/csv',
         dialogTitle: 'Export Report',
         UTI: 'public.comma-separated-values-text',

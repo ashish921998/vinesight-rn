@@ -632,7 +632,7 @@ export default function ExploreScreen() {
         <Animated.ScrollView
           contentContainerStyle={{
             paddingTop: spacing[4],
-            paddingHorizontal: 16,
+            paddingHorizontal: spacing[4],
             paddingBottom: 100,
           }}
           refreshControl={

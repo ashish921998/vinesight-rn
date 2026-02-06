@@ -14,6 +14,7 @@ export type RegistryIconName = (typeof ICON_REGISTRY)[keyof typeof ICON_REGISTRY
 const APP_ICON_TO_SYMBOL_ICON: Record<string, string> = {
   water: 'drop.fill',
   spraycan: 'spraycan.fill',
+  flask: 'flask.fill',
   basket: 'basket.fill',
   cash: 'dollarsign.circle.fill',
   leaf: 'leaf.fill',

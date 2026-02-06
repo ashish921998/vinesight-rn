@@ -30,10 +30,7 @@ const startOfDay = (date: Date) => {
   return result;
 };
 
-const mapTaskIcon = (icon: string) => {
-  if (icon === 'flask') return 'flask.fill';
-  return resolveSymbolIconName(icon);
-};
+const mapTaskIcon = (icon: string) => resolveSymbolIconName(icon);
 
 export function TaskRow({
   task,
