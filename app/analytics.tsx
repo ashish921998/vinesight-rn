@@ -10,6 +10,7 @@ import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
 import { useM3, useThemeColors } from '@/styles/use-theme';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
 
 const TIME_RANGES: { value: TimeRange; labelKey: string }[] = [
@@ -190,7 +191,11 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.irrigation.bg,
                 }}
               >
-                <SymbolIcon name="drop.fill" size={20} color={metricColors.irrigation.icon} />
+                <SymbolIcon
+                  name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                  size={20}
+                  color={metricColors.irrigation.icon}
+                />
               </View>
               <Text
                 style={{
@@ -224,7 +229,11 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.spray.bg,
                 }}
               >
-                <SymbolIcon name="flask.fill" size={20} color={metricColors.spray.icon} />
+                <SymbolIcon
+                  name={resolveSymbolIconName(ICON_REGISTRY.spray)}
+                  size={20}
+                  color={metricColors.spray.icon}
+                />
               </View>
               <Text
                 style={{
@@ -258,7 +267,11 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.harvest.bg,
                 }}
               >
-                <SymbolIcon name="basket.fill" size={20} color={metricColors.harvest.icon} />
+                <SymbolIcon
+                  name={resolveSymbolIconName(ICON_REGISTRY.harvest)}
+                  size={20}
+                  color={metricColors.harvest.icon}
+                />
               </View>
               <Text
                 style={{
@@ -293,7 +306,7 @@ export default function AnalyticsScreen() {
                 }}
               >
                 <SymbolIcon
-                  name="dollarsign.circle.fill"
+                  name={resolveSymbolIconName(ICON_REGISTRY.expense)}
                   size={20}
                   color={metricColors.cost.icon}
                 />
@@ -694,7 +707,7 @@ export default function AnalyticsScreen() {
                         }}
                       >
                         <SymbolIcon
-                          name="doc.text.fill"
+                          name={resolveSymbolIconName(ICON_REGISTRY.note)}
                           size={16}
                           color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
                         />

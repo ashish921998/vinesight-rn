@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { CHEMICAL_UNITS, type ChemicalUnit } from '../../constants/calculator-models';
@@ -133,7 +134,11 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
             marginRight: spacing[3],
           }}
         >
-          <Symbol name="flask.fill" size={20} color={m3.colorScheme.tertiary} />
+          <Symbol
+            name={resolveSymbolIconName(ICON_REGISTRY.spray)}
+            size={20}
+            color={m3.colorScheme.tertiary}
+          />
         </View>
         <View>
           <Text

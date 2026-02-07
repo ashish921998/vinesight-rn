@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -77,7 +78,11 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
             marginRight: spacing[3],
           }}
         >
-          <IconSymbol name="leaf.fill" size={20} color={colors.success} />
+          <IconSymbol
+            name={resolveSymbolIconName(ICON_REGISTRY.fertigation)}
+            size={20}
+            color={colors.success}
+          />
         </View>
         <View>
           <Text

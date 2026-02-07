@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
 import {
@@ -731,7 +732,11 @@ export default function ExploreScreen() {
                 backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
               }}
             >
-              <Icon name="dollarsign.circle.fill" size={24} color={m3.colorScheme.primary} />
+              <Icon
+                name={resolveSymbolIconName(ICON_REGISTRY.expense)}
+                size={24}
+                color={m3.colorScheme.primary}
+              />
               <Text
                 style={{
                   color: colors.surface[900],

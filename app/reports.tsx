@@ -21,11 +21,24 @@ import { telemetry } from '@/services/telemetry';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { parseDbDateToLocalDate } from '@/utils/date';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 
 const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
-  { value: 'comprehensive', labelKey: 'reports.types.comprehensive', icon: 'doc.text.fill' },
-  { value: 'operations', labelKey: 'reports.types.operations', icon: 'drop.fill' },
-  { value: 'financial', labelKey: 'reports.types.financial', icon: 'dollarsign.circle.fill' },
+  {
+    value: 'comprehensive',
+    labelKey: 'reports.types.comprehensive',
+    icon: resolveSymbolIconName(ICON_REGISTRY.note),
+  },
+  {
+    value: 'operations',
+    labelKey: 'reports.types.operations',
+    icon: resolveSymbolIconName(ICON_REGISTRY.irrigation),
+  },
+  {
+    value: 'financial',
+    labelKey: 'reports.types.financial',
+    icon: resolveSymbolIconName(ICON_REGISTRY.expense),
+  },
 ];
 
 export default function ReportsScreen() {
@@ -181,7 +194,11 @@ export default function ReportsScreen() {
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <Icon name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
         </Pressable>
-        <Icon name="doc.text.fill" size={24} color={m3.colorScheme.primary} />
+        <Icon
+          name={resolveSymbolIconName(ICON_REGISTRY.note)}
+          size={24}
+          color={m3.colorScheme.primary}
+        />
         <Text
           style={{
             fontSize: fontSize.xl,

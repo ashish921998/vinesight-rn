@@ -8,6 +8,7 @@ import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-nati
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { SafeScreen } from '@/components/ui/safe-screen';
 import { useFarm } from '@/hooks/use-farms';
 import { useSoilTestTrends, SOIL_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
@@ -91,7 +92,11 @@ export default function SoilTrendsScreen() {
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <IconSymbol name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
         </Pressable>
-        <IconSymbol name="square.stack.3d.up.fill" size={24} color={colors.labTest.soil} />
+        <IconSymbol
+          name={resolveSymbolIconName(ICON_REGISTRY.soilTest)}
+          size={24}
+          color={colors.labTest.soil}
+        />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{

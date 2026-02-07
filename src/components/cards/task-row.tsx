@@ -13,6 +13,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
+import { resolveSymbolIconName } from '@/constants/icon-registry';
 
 interface TaskRowProps {
   task: TaskReminder;
@@ -27,29 +28,6 @@ const startOfDay = (date: Date) => {
   const result = new Date(date);
   result.setHours(0, 0, 0, 0);
   return result;
-};
-
-const mapTaskIcon = (icon: string) => {
-  switch (icon) {
-    case 'water':
-      return 'drop.fill';
-    case 'flask':
-      return 'flask.fill';
-    case 'basket':
-      return 'basket.fill';
-    case 'cash':
-      return 'dollarsign.circle.fill';
-    case 'leaf':
-      return 'leaf.fill';
-    case 'layers':
-      return 'square.stack.3d.up.fill';
-    case 'analytics':
-      return 'chart.bar.fill';
-    case 'document-text':
-      return 'doc.text.fill';
-    default:
-      return 'doc.fill';
-  }
 };
 
 export function TaskRow({
@@ -151,7 +129,11 @@ export function TaskRow({
                 backgroundColor: colorWithOpacity(typeInfo.color, 0.14),
               }}
             >
-              <UiSymbol name={mapTaskIcon(typeInfo.icon)} size={14} color={typeInfo.color} />
+              <UiSymbol
+                name={resolveSymbolIconName(typeInfo.icon)}
+                size={14}
+                color={typeInfo.color}
+              />
             </View>
             <Text
               numberOfLines={1}

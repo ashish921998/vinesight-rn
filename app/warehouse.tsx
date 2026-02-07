@@ -19,6 +19,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
 
@@ -206,7 +207,11 @@ export default function WarehouseScreen() {
                 backgroundColor: glassSurface,
               }}
             >
-              <Icon name="dollarsign.circle.fill" size={24} color={m3.colorScheme.primary} />
+              <Icon
+                name={resolveSymbolIconName(ICON_REGISTRY.expense)}
+                size={24}
+                color={m3.colorScheme.primary}
+              />
               <Text
                 style={{
                   color: colors.surface[900],
@@ -288,7 +293,11 @@ export default function WarehouseScreen() {
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Icon
-                            name={item.type === 'fertilizer' ? 'leaf.fill' : 'spraycan.fill'}
+                            name={resolveSymbolIconName(
+                              item.type === 'fertilizer'
+                                ? ICON_REGISTRY.fertigation
+                                : ICON_REGISTRY.spray,
+                            )}
                             size={16}
                             color={lowStockColor}
                           />
@@ -500,7 +509,11 @@ export default function WarehouseScreen() {
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Icon
-                              name={item.type === 'fertilizer' ? 'leaf.fill' : 'spraycan.fill'}
+                              name={resolveSymbolIconName(
+                                item.type === 'fertilizer'
+                                  ? ICON_REGISTRY.fertigation
+                                  : ICON_REGISTRY.spray,
+                              )}
                               size={12}
                               color={itemColor}
                             />

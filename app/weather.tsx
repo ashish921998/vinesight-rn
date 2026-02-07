@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { useFarms } from '../src/hooks';
 import { useWeatherData } from '../src/hooks/use-weather';
 import { GrapeGrowthStage, SoilType } from '../src/types/weather';
@@ -806,7 +807,11 @@ export default function WeatherScreen() {
                   justifyContent: 'center',
                 }}
               >
-                <Icon name="drop.fill" size={20} color={m3.colorScheme.primary} />
+                <Icon
+                  name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                  size={20}
+                  color={m3.colorScheme.primary}
+                />
               </View>
               <Text
                 style={{
@@ -946,7 +951,11 @@ export default function WeatherScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon name="drop.fill" size={16} color={m3.colorScheme.primary} />
+                    <Icon
+                      name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                      size={16}
+                      color={m3.colorScheme.primary}
+                    />
                   </View>
                   <Text
                     style={{
@@ -1115,7 +1124,11 @@ export default function WeatherScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon name="basket.fill" size={16} color={m3.colorScheme.tertiary} />
+                    <Icon
+                      name={resolveSymbolIconName(ICON_REGISTRY.harvest)}
+                      size={16}
+                      color={m3.colorScheme.tertiary}
+                    />
                   </View>
                   <Text
                     style={{
@@ -1210,7 +1223,11 @@ export default function WeatherScreen() {
                     backgroundColor: urgencyColors[item.priority].bg,
                   }}
                 >
-                  <Icon name="drop.fill" size={20} color={urgencyColors[item.priority].text} />
+                  <Icon
+                    name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                    size={20}
+                    color={urgencyColors[item.priority].text}
+                  />
                 </View>
                 <View style={{ flex: 1, marginLeft: spacing[3] }}>
                   <Text

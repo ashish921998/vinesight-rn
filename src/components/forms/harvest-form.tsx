@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as Icon } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput } from './form-field';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -47,7 +48,11 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             marginRight: spacing[3],
           }}
         >
-          <Icon name="basket.fill" size={20} color={colors.warning} />
+          <Icon
+            name={resolveSymbolIconName(ICON_REGISTRY.harvest)}
+            size={20}
+            color={colors.warning}
+          />
         </View>
         <View>
           <Text

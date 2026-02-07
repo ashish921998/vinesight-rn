@@ -16,6 +16,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { router } from 'expo-router';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useLanguageStore } from '@/stores';
@@ -625,7 +626,11 @@ export default function OnboardingScreen() {
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-          <SymbolIcon name="drop.fill" size={20} color={m3.colorScheme.primary} />
+          <SymbolIcon
+            name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+            size={20}
+            color={m3.colorScheme.primary}
+          />
           <Text style={{ color: m3.colorScheme.onSurface, marginLeft: spacing[2] }}>
             {t('onboarding.notifications.item1')}
           </Text>

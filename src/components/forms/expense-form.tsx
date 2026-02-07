@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput } from './form-field';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -67,7 +68,11 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             marginRight: spacing[3],
           }}
         >
-          <SymbolIcon name="dollarsign.circle.fill" size={20} color={m3.colorScheme.error} />
+          <SymbolIcon
+            name={resolveSymbolIconName(ICON_REGISTRY.expense)}
+            size={20}
+            color={m3.colorScheme.error}
+          />
         </View>
         <View>
           <Text

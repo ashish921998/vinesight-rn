@@ -25,6 +25,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import type { LogTypeId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
@@ -262,7 +263,11 @@ export default function DashboardScreen() {
                           backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
                         }}
                       >
-                        <SymbolIcon name="drop.fill" size={18} color={m3.colorScheme.warning} />
+                        <SymbolIcon
+                          name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                          size={18}
+                          color={m3.colorScheme.warning}
+                        />
                       </View>
                       <View style={{ marginLeft: spacing[3], flex: 1 }}>
                         <Text
