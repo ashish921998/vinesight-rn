@@ -16,6 +16,7 @@ export {
   useDeleteFarm,
   usePrefetchFarm,
 } from './use-farms';
+export { useFarmSeasons, useCreateFarmSeason } from './use-farm-seasons';
 
 // Record Hooks (Irrigation, Spray, Fertigation, Harvest, Expense)
 export {
@@ -49,6 +50,9 @@ export {
   useCreateExpenseRecord,
   useUpdateExpenseRecord,
   useDeleteExpenseRecord,
+  // Daily Notes
+  useDailyNoteByDate,
+  useUpsertDailyNote,
 } from './use-records';
 
 // Worker Hooks

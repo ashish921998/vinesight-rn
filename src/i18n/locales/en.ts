@@ -147,6 +147,7 @@ export const en = {
     },
     seasons: {
       title: 'SEASONS',
+      formTitle: 'End season',
       firstTimeHint:
         'Ending a season for the first time? Set the season start and end dates to save this season.',
       lastEndDate: 'Last season ended on {{date}}. The next season start is set automatically.',
@@ -159,6 +160,7 @@ export const en = {
       },
       errors: {
         invalidRange: 'Season end date must be after the start date.',
+        startBeforeAllowed: 'Season start date must be after the previous season end date.',
         duplicateEndDate: 'This season end date has already been saved.',
         endFailed: 'Unable to end season.',
       },
@@ -174,13 +176,13 @@ export const en = {
       },
     },
     tabs: {
-      activities: 'Activities',
+      activities: 'Logs',
       tasks: 'Tasks',
     },
     activities: {
       empty: {
-        title: 'No Activities Yet',
-        subtitle: 'Start logging activities to see them here',
+        title: 'No Logs Yet',
+        subtitle: 'Start logging to see them here',
       },
     },
     tasks: {
@@ -192,13 +194,17 @@ export const en = {
     },
     actions: {
       addActivity: 'Add activity',
-      seeAllActivities: 'See all activities',
+      seeAllActivities: 'See all logs',
       seeAllTasks: 'See all tasks',
+      menuTitle: 'Farm actions',
+      editFarm: 'Edit farm',
+      endSeason: 'End season',
     },
     a11y: {
       editFarm: 'Edit farm',
       deleteFarm: 'Delete farm',
-      showActivities: 'Show activities',
+      openFarmActions: 'Open farm actions',
+      showActivities: 'Show logs',
       showTasks: 'Show tasks',
       taskCompleted: 'Task completed',
       markTaskComplete: 'Mark task complete',
@@ -1123,6 +1129,27 @@ export const en = {
       closeA11y: 'Close farm picker',
       selectFarmA11y: 'Select farm: {{name}}',
       noFarms: 'No farms available',
+    },
+  },
+
+  dailyNoteForm: {
+    addTitle: 'Add note',
+    editTitle: 'Edit note',
+    fields: {
+      note: 'Note',
+    },
+    placeholders: {
+      note: 'Write your observations for this day...',
+    },
+    errors: {
+      missingNote: 'Please enter a note.',
+      failedToSave: 'Failed to save note. Please try again.',
+    },
+    lastUpdated: 'Last updated: {{date}}',
+    discard: {
+      title: 'Discard changes?',
+      body: 'You have unsaved note changes.',
+      confirm: 'Discard',
     },
   },
 

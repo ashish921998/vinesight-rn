@@ -148,6 +148,7 @@ export const mr = {
     },
     seasons: {
       title: 'हंगाम',
+      formTitle: 'हंगाम समाप्त करा',
       firstTimeHint: 'पहिल्यांदा हंगाम समाप्त करत आहात? हंगामाची सुरुवात आणि समाप्ती तारीख भरा.',
       lastEndDate: 'मागील हंगाम {{date}} ला संपला. पुढील हंगामाची सुरुवात आपोआप सेट होईल.',
       startDateLabel: 'हंगाम सुरूवात तारीख',
@@ -159,6 +160,7 @@ export const mr = {
       },
       errors: {
         invalidRange: 'हंगाम समाप्ती तारीख सुरूवातीच्या तारखेपेक्षा नंतरची असावी.',
+        startBeforeAllowed: 'हंगाम सुरूवात तारीख मागील हंगाम समाप्तीनंतरची असावी.',
         duplicateEndDate: 'ही हंगाम समाप्ती तारीख आधीच जतन केलेली आहे.',
         endFailed: 'हंगाम समाप्त करता आला नाही.',
       },
@@ -174,13 +176,13 @@ export const mr = {
       },
     },
     tabs: {
-      activities: 'क्रियाकलाप',
+      activities: 'नोंदी',
       tasks: 'कामे',
     },
     activities: {
       empty: {
-        title: 'अजून क्रियाकलाप नाहीत',
-        subtitle: 'इथे पाहण्यासाठी क्रियाकलाप नोंदवायला सुरुवात करा',
+        title: 'अजून नोंदी नाहीत',
+        subtitle: 'इथे पाहण्यासाठी नोंदी करायला सुरुवात करा',
       },
     },
     tasks: {
@@ -192,13 +194,17 @@ export const mr = {
     },
     actions: {
       addActivity: 'नोंद जोडा',
-      seeAllActivities: 'सर्व क्रियाकलाप पहा',
+      seeAllActivities: 'सर्व नोंदी पहा',
       seeAllTasks: 'सर्व $t(glossary.task) पहा',
+      menuTitle: '$t(glossary.farm) क्रिया',
+      editFarm: '$t(glossary.farm) संपादित करा',
+      endSeason: 'हंगाम समाप्त करा',
     },
     a11y: {
       editFarm: '$t(glossary.farm) संपादित करा',
       deleteFarm: '$t(glossary.farm) हटवा',
-      showActivities: 'क्रियाकलाप दाखवा',
+      openFarmActions: '$t(glossary.farm) क्रिया उघडा',
+      showActivities: 'नोंदी दाखवा',
       showTasks: 'कामे दाखवा',
       taskCompleted: '$t(glossary.task) पूर्ण',
       markTaskComplete: '$t(glossary.task) पूर्ण म्हणून चिन्हांकित करा',
@@ -1130,6 +1136,27 @@ export const mr = {
       closeA11y: '$t(glossary.farm) निवड बंद करा',
       selectFarmA11y: '$t(glossary.farm) निवडा: {{name}}',
       noFarms: '$t(glossary.farm) उपलब्ध नाहीत',
+    },
+  },
+
+  dailyNoteForm: {
+    addTitle: 'नोंद जोडा',
+    editTitle: 'नोंद संपादित करा',
+    fields: {
+      note: 'नोंद',
+    },
+    placeholders: {
+      note: 'आजच्या दिवसासाठी तुमच्या निरीक्षणांची नोंद करा...',
+    },
+    errors: {
+      missingNote: 'कृपया नोंद लिहा.',
+      failedToSave: 'नोंद जतन होऊ शकली नाही. कृपया पुन्हा प्रयत्न करा.',
+    },
+    lastUpdated: 'शेवटचे अद्ययावत: {{date}}',
+    discard: {
+      title: 'बदल टाकून द्यायचे?',
+      body: 'तुमचे नोंदीतील न जतन केलेले बदल आहेत.',
+      confirm: 'टाकून द्या',
     },
   },
 

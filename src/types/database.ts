@@ -59,6 +59,28 @@ export function isLowWater(farm: Farm): boolean {
 }
 
 // ============================================================
+// MARK: - Farm Season
+// ============================================================
+
+export interface FarmSeason {
+  id?: number;
+  farm_id: number;
+  user_id?: string;
+  start_date: string;
+  end_date: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+/** Create payload for FarmSeason (excludes server-generated fields) */
+export type FarmSeasonInsert = Omit<FarmSeason, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
+
+/** Update payload for FarmSeason */
+export type FarmSeasonUpdate = Partial<
+  Omit<FarmSeason, 'id' | 'farm_id' | 'user_id' | 'created_at' | 'updated_at'>
+>;
+
+// ============================================================
 // MARK: - Irrigation Record
 // ============================================================
 
@@ -173,6 +195,22 @@ export interface ExpenseRecord {
 
 export type ExpenseRecordInsert = Omit<ExpenseRecord, 'id' | 'created_at'>;
 export type ExpenseRecordUpdate = Partial<Omit<ExpenseRecord, 'id' | 'farm_id' | 'created_at'>>;
+
+// ============================================================
+// MARK: - Daily Note Record
+// ============================================================
+
+export interface DailyNoteRecord {
+  id?: number;
+  farm_id: number;
+  date: string;
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export type DailyNoteRecordInsert = Omit<DailyNoteRecord, 'id'>;
+export type DailyNoteRecordUpdate = Partial<Omit<DailyNoteRecord, 'id' | 'farm_id' | 'created_at'>>;
 
 // ============================================================
 // MARK: - Soil Test Record
@@ -541,11 +579,13 @@ export function fromSupabaseTimestampString(timestampString: string): Date | nul
 
 export const TABLES = {
   FARMS: 'farms',
+  FARM_SEASONS: 'farm_seasons',
   IRRIGATION_RECORDS: 'irrigation_records',
   SPRAY_RECORDS: 'spray_records',
   FERTIGATION_RECORDS: 'fertigation_records',
   HARVEST_RECORDS: 'harvest_records',
   EXPENSE_RECORDS: 'expense_records',
+  DAILY_NOTES: 'daily_notes',
   SOIL_TEST_RECORDS: 'soil_test_records',
   PETIOLE_TEST_RECORDS: 'petiole_test_records',
   SOIL_PROFILES: 'soil_profiles',

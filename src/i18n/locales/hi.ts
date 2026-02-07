@@ -147,6 +147,7 @@ export const hi = {
     },
     seasons: {
       title: 'सीज़न',
+      formTitle: 'सीज़न समाप्त करें',
       firstTimeHint:
         'पहली बार सीज़न समाप्त कर रहे हैं? सीज़न की शुरुआत और समाप्ति की तारीख दर्ज करें।',
       lastEndDate: 'पिछला सीज़न {{date}} को समाप्त हुआ। अगला सीज़न प्रारंभ अपने आप सेट होगा।',
@@ -159,6 +160,7 @@ export const hi = {
       },
       errors: {
         invalidRange: 'सीज़न समाप्ति तारीख, प्रारंभ तारीख के बाद होनी चाहिए।',
+        startBeforeAllowed: 'सीज़न प्रारंभ तारीख पिछले सीज़न की समाप्ति तारीख के बाद होनी चाहिए।',
         duplicateEndDate: 'यह सीज़न समाप्ति तारीख पहले से सेव है।',
         endFailed: 'सीज़न समाप्त नहीं हो सका।',
       },
@@ -174,13 +176,13 @@ export const hi = {
       },
     },
     tabs: {
-      activities: 'गतिविधियां',
+      activities: 'लॉग्स',
       tasks: 'कार्य',
     },
     activities: {
       empty: {
-        title: 'अभी तक कोई गतिविधि नहीं',
-        subtitle: 'उन्हें यहां देखने के लिए गतिविधियां लॉग करना शुरू करें',
+        title: 'अभी तक कोई लॉग नहीं',
+        subtitle: 'उन्हें यहां देखने के लिए लॉग करना शुरू करें',
       },
     },
     tasks: {
@@ -192,13 +194,17 @@ export const hi = {
     },
     actions: {
       addActivity: 'गतिविधि जोड़ें',
-      seeAllActivities: 'सभी गतिविधियां देखें',
+      seeAllActivities: 'सभी लॉग्स देखें',
       seeAllTasks: 'सभी कार्य देखें',
+      menuTitle: 'खेत क्रियाएं',
+      editFarm: 'खेत संपादित करें',
+      endSeason: 'सीज़न समाप्त करें',
     },
     a11y: {
       editFarm: 'खेत संपादित करें',
       deleteFarm: 'खेत हटाएं',
-      showActivities: 'गतिविधियां दिखाएं',
+      openFarmActions: 'खेत क्रियाएं खोलें',
+      showActivities: 'लॉग्स दिखाएं',
       showTasks: 'कार्य दिखाएं',
       taskCompleted: 'कार्य पूर्ण',
       markTaskComplete: 'कार्य पूर्ण के रूप में चिह्नित करें',
@@ -1126,6 +1132,27 @@ export const hi = {
       closeA11y: 'खेत चयनकर्ता बंद करें',
       selectFarmA11y: 'खेत चुनें: {{name}}',
       noFarms: 'कोई खेत उपलब्ध नहीं',
+    },
+  },
+
+  dailyNoteForm: {
+    addTitle: 'नोट जोड़ें',
+    editTitle: 'नोट संपादित करें',
+    fields: {
+      note: 'नोट',
+    },
+    placeholders: {
+      note: 'आज के लिए अपनी टिप्पणियाँ लिखें...',
+    },
+    errors: {
+      missingNote: 'कृपया एक नोट लिखें।',
+      failedToSave: 'नोट सहेजने में विफल। कृपया पुनः प्रयास करें।',
+    },
+    lastUpdated: 'अंतिम अपडेट: {{date}}',
+    discard: {
+      title: 'परिवर्तन हटाएँ?',
+      body: 'आपने नोट में बदलाव किए हैं जो सहेजे नहीं गए हैं।',
+      confirm: 'हटाएँ',
     },
   },
 

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import {
@@ -25,7 +25,8 @@ import {
   useDeleteHarvestRecord,
   useDeleteIrrigationRecord,
   useDeleteSprayRecord,
-  useUpdateFarm,
+  useFarmSeasons,
+  useCreateFarmSeason,
 } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
 import { StatsCard, ActivityLogCard, TaskRow } from '@/components/cards';
@@ -40,6 +41,7 @@ import type {
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
+import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 
@@ -52,27 +54,6 @@ interface WorkboardAction {
   route?: string;
 }
 
-const formatLocalDate = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const parseDbDateToLocalDate = (value: string): Date => {
-  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (dateOnlyMatch) {
-    return new Date(
-      Number(dateOnlyMatch[1]),
-      Number(dateOnlyMatch[2]) - 1,
-      Number(dateOnlyMatch[3]),
-    );
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
-};
-
 export default function FarmDetailScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
@@ -83,6 +64,7 @@ export default function FarmDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const isAndroid = Platform.OS === 'android';
+  const isIOS = Platform.OS === 'ios';
   const farmId = id ? parseInt(id, 10) : undefined;
 
   const { data: farm, isLoading: farmLoading, refetch: refetchFarm } = useFarm(farmId);
@@ -97,6 +79,7 @@ export default function FarmDetailScreen() {
 
   const { data: tasks, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
+  const { data: farmSeasons } = useFarmSeasons(farmId);
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
   const deleteFarmMutation = useDeleteFarm();
@@ -105,10 +88,11 @@ export default function FarmDetailScreen() {
   const deleteHarvest = useDeleteHarvestRecord();
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
-  const updateFarm = useUpdateFarm();
+  const createFarmSeason = useCreateFarmSeason();
 
   const [refreshing, setRefreshing] = useState(false);
   const [showSeasonForm, setShowSeasonForm] = useState(false);
+  const [showFarmActionsSheet, setShowFarmActionsSheet] = useState(false);
   const [showSeasonStartPicker, setShowSeasonStartPicker] = useState(false);
   const [showSeasonEndPicker, setShowSeasonEndPicker] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
@@ -131,7 +115,7 @@ export default function FarmDetailScreen() {
       {
         id: 'reports',
         titleKey: 'farmDetails.workboard.actions.reports',
-        icon: 'chart.bar.fill',
+        icon: 'receipt',
         color: m3.colorScheme.tertiary,
       },
       {
@@ -155,13 +139,69 @@ export default function FarmDetailScreen() {
     [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords],
   );
 
+  // Days since pruning
+  const daysSincePruning = useMemo(() => {
+    if (!farm?.date_of_pruning) return null;
+    const pruningDate = new Date(farm.date_of_pruning);
+    const today = new Date();
+    const diffTime = today.getTime() - pruningDate.getTime();
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  }, [farm]);
+
+  const seasonEndDates = useMemo(() => {
+    if (farmSeasons && farmSeasons.length > 0) {
+      return farmSeasons
+        .map((season) => season.end_date)
+        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    }
+    const rawDates = farm?.season_end_dates ?? [];
+    return [...rawDates].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  }, [farm?.season_end_dates, farmSeasons]);
+
+  const firstSeasonStartFromSeasons = useMemo(() => {
+    if (!farmSeasons || farmSeasons.length === 0) return null;
+    const ordered = [...farmSeasons].sort(
+      (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime(),
+    );
+    return ordered[0]?.start_date ?? null;
+  }, [farmSeasons]);
+
+  const lastSeasonEndDate =
+    seasonEndDates.length > 0 ? seasonEndDates[seasonEndDates.length - 1] : null;
+  const minimumSeasonStartDate = useMemo(() => {
+    if (!lastSeasonEndDate) return null;
+    const nextDate = parseDbDateToLocalDate(lastSeasonEndDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    return nextDate;
+  }, [lastSeasonEndDate]);
+  const currentSeasonStartDate = useMemo(() => {
+    if (minimumSeasonStartDate) return minimumSeasonStartDate;
+    if (firstSeasonStartFromSeasons) return parseDbDateToLocalDate(firstSeasonStartFromSeasons);
+    if (farm?.first_season_start_date) return parseDbDateToLocalDate(farm.first_season_start_date);
+    if (farm?.date_of_pruning) return parseDbDateToLocalDate(farm.date_of_pruning);
+    return null;
+  }, [farm, firstSeasonStartFromSeasons, minimumSeasonStartDate]);
+  const defaultSeasonStartDate = useMemo(() => {
+    return currentSeasonStartDate ?? new Date();
+  }, [currentSeasonStartDate]);
+
   const totalWaterUsed = useMemo(() => {
     if (!irrigationRecords) return null;
-    return irrigationRecords.reduce(
+    const currentSeasonStartIso = currentSeasonStartDate
+      ? formatLocalDate(currentSeasonStartDate)
+      : null;
+    const scopedIrrigationRecords =
+      currentSeasonStartIso === null
+        ? irrigationRecords
+        : irrigationRecords.filter((record) => {
+            const recordDateIso = formatLocalDate(parseDbDateToLocalDate(record.date));
+            return recordDateIso >= currentSeasonStartIso;
+          });
+    return scopedIrrigationRecords.reduce(
       (sum, record) => sum + (record.duration || 0) * (record.system_discharge || 0),
       0,
     );
-  }, [irrigationRecords]);
+  }, [currentSeasonStartDate, irrigationRecords]);
 
   const formatWaterUsage = (value: number | null | undefined) => {
     if (value === null || value === undefined) return t('farmDetails.water.noIrrigationLoggedYet');
@@ -174,39 +214,25 @@ export default function FarmDetailScreen() {
       ? t('farmDetails.water.captionThisSeason', { usage: formatWaterUsage(totalWaterUsed) })
       : t('farmDetails.water.captionLogIrrigation');
 
-  // Days since pruning
-  const daysSincePruning = useMemo(() => {
-    if (!farm?.date_of_pruning) return null;
-    const pruningDate = new Date(farm.date_of_pruning);
+  const getInitialSeasonEndDate = React.useCallback((startDate: Date) => {
     const today = new Date();
-    const diffTime = today.getTime() - pruningDate.getTime();
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  }, [farm]);
-
-  const seasonEndDates = useMemo(() => {
-    const rawDates = farm?.season_end_dates ?? [];
-    return [...rawDates].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-  }, [farm?.season_end_dates]);
-
-  const lastSeasonEndDate =
-    seasonEndDates.length > 0 ? seasonEndDates[seasonEndDates.length - 1] : null;
-  const defaultSeasonStartDate = useMemo(() => {
-    if (lastSeasonEndDate) {
-      const nextDate = parseDbDateToLocalDate(lastSeasonEndDate);
-      nextDate.setDate(nextDate.getDate() + 1);
-      return nextDate;
+    if (today.getTime() <= startDate.getTime()) {
+      const nextDay = new Date(startDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      return nextDay;
     }
-    if (farm?.first_season_start_date) return parseDbDateToLocalDate(farm.first_season_start_date);
-    if (farm?.date_of_pruning) return parseDbDateToLocalDate(farm.date_of_pruning);
-    return new Date();
-  }, [farm?.date_of_pruning, farm?.first_season_start_date, lastSeasonEndDate]);
+    return today;
+  }, []);
 
   const [seasonStartDate, setSeasonStartDate] = useState(defaultSeasonStartDate);
-  const [seasonEndDate, setSeasonEndDate] = useState(new Date());
+  const [seasonEndDate, setSeasonEndDate] = useState(
+    getInitialSeasonEndDate(defaultSeasonStartDate),
+  );
 
   React.useEffect(() => {
     setSeasonStartDate(defaultSeasonStartDate);
-  }, [defaultSeasonStartDate]);
+    setSeasonEndDate(getInitialSeasonEndDate(defaultSeasonStartDate));
+  }, [defaultSeasonStartDate, getInitialSeasonEndDate]);
 
   const formattedSeasonStart = formatDate(seasonStartDate, {
     year: 'numeric',
@@ -221,41 +247,85 @@ export default function FarmDetailScreen() {
 
   const handleEndSeason = async () => {
     if (!farm?.id) return;
-    if (seasonStartDate.getTime() > seasonEndDate.getTime()) {
+    if (seasonStartDate.getTime() >= seasonEndDate.getTime()) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.invalidRange'));
+      return;
+    }
+    if (
+      minimumSeasonStartDate &&
+      formatLocalDate(seasonStartDate) < formatLocalDate(minimumSeasonStartDate)
+    ) {
+      Alert.alert(t('common.error'), t('farmDetails.seasons.errors.startBeforeAllowed'));
       return;
     }
 
     const endDateIso = formatLocalDate(seasonEndDate);
-    const existing = farm.season_end_dates ?? [];
-    if (existing.includes(endDateIso)) {
+    if (seasonEndDates.includes(endDateIso)) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.duplicateEndDate'));
       return;
     }
 
-    const nextSeasonEndDates = [...existing, endDateIso].sort(
-      (a, b) => new Date(a).getTime() - new Date(b).getTime(),
-    );
-
     try {
-      await updateFarm.mutateAsync({
-        id: farm.id,
-        updates: {
-          first_season_start_date:
-            farm.first_season_start_date ??
-            (lastSeasonEndDate ? farm.first_season_start_date : formatLocalDate(seasonStartDate)),
-          season_end_dates: nextSeasonEndDates,
-        },
+      await createFarmSeason.mutateAsync({
+        farm_id: farm.id,
+        start_date: formatLocalDate(seasonStartDate),
+        end_date: endDateIso,
       });
 
       Alert.alert(t('common.success'), t('farmDetails.seasons.alerts.endSuccess'));
       setShowSeasonForm(false);
-      setSeasonEndDate(new Date());
+      setSeasonStartDate(defaultSeasonStartDate);
+      setSeasonEndDate(getInitialSeasonEndDate(defaultSeasonStartDate));
     } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
+        Alert.alert(t('common.error'), t('farmDetails.seasons.errors.duplicateEndDate'));
+        return;
+      }
       const message =
         error instanceof Error ? error.message : t('farmDetails.seasons.errors.endFailed');
       Alert.alert(t('common.error'), message);
     }
+  };
+
+  const handleOpenFarmActions = () => {
+    if (!farm) return;
+    if (isAndroid) {
+      setShowFarmActionsSheet(true);
+      return;
+    }
+    Alert.alert(t('farmDetails.actions.menuTitle'), farm.name, [
+      {
+        text: t('farmDetails.actions.editFarm'),
+        onPress: () => router.push(`/farm/${id}/edit`),
+      },
+      {
+        text: t('farmDetails.actions.endSeason'),
+        onPress: () => setShowSeasonForm(true),
+      },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: handleDeleteFarm,
+      },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  };
+
+  const openEditFarm = () => {
+    setShowFarmActionsSheet(false);
+    router.push(`/farm/${id}/edit`);
+  };
+
+  const openEndSeasonForm = () => {
+    setShowFarmActionsSheet(false);
+    setShowSeasonStartPicker(false);
+    setShowSeasonEndPicker(false);
+    setShowSeasonForm(true);
+  };
+
+  const confirmDeleteFarmFromSheet = () => {
+    setShowFarmActionsSheet(false);
+    handleDeleteFarm();
   };
 
   // Recent activity logs - combine and sort
@@ -694,10 +764,17 @@ export default function FarmDetailScreen() {
         }}
       />
 
-      <View style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
+      <SafeAreaView
+        edges={isAndroid ? ['top', 'left', 'right', 'bottom'] : ['left', 'right', 'bottom']}
+        style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
+      >
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingTop: insets.top + spacing[2] }}
+          contentContainerStyle={{
+            paddingTop: isIOS ? spacing[2] : spacing[1],
+            paddingBottom: bottomBarHeight + spacing[6],
+          }}
+          contentInsetAdjustmentBehavior={isIOS ? 'automatic' : 'never'}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -744,9 +821,11 @@ export default function FarmDetailScreen() {
                     <View style={{ marginLeft: spacing[3], flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Text
+                          numberOfLines={1}
                           style={{
                             color: m3.colorScheme.onSurface,
                             ...m3.typography.titleMedium,
+                            flexShrink: 1,
                           }}
                         >
                           {farm.name}
@@ -780,6 +859,39 @@ export default function FarmDetailScreen() {
                             </Text>
                           </View>
                         )}
+                        <Pressable
+                          onPress={handleOpenFarmActions}
+                          style={{ marginLeft: 'auto', paddingLeft: spacing[2] }}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('farmDetails.a11y.openFarmActions')}
+                        >
+                          {({ pressed }) => (
+                            <View style={{ borderRadius: 9999, overflow: 'hidden' }}>
+                              <View style={{ padding: 2 }}>
+                                <UiSymbol
+                                  name="ellipsis.circle"
+                                  size={20}
+                                  color={m3.colorScheme.onSurfaceVariant}
+                                />
+                              </View>
+                              <View
+                                pointerEvents="none"
+                                style={[
+                                  StyleSheet.absoluteFillObject,
+                                  {
+                                    backgroundColor: pressed
+                                      ? colorWithOpacity(
+                                          m3.colorScheme.onSurface,
+                                          m3.stateLayerOpacity.pressed,
+                                        )
+                                      : 'transparent',
+                                  },
+                                ]}
+                              />
+                            </View>
+                          )}
+                        </Pressable>
                       </View>
                       <Text
                         style={{
@@ -794,11 +906,7 @@ export default function FarmDetailScreen() {
 
                   {farm.region && (
                     <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        marginTop: spacing[3],
-                      }}
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
                     >
                       <UiSymbol
                         name="location-outline"
@@ -951,99 +1059,6 @@ export default function FarmDetailScreen() {
                   }}
                 />
               </View>
-            </View>
-          </View>
-
-          {/* Season Management */}
-          <View style={{ paddingHorizontal: spacing[4], marginTop: spacing[6] }}>
-            <View
-              style={{
-                borderRadius: m3.shape.cornerLarge,
-                padding: spacing[4],
-                backgroundColor: m3.surface.surfaceContainerLow,
-                borderWidth: 1,
-                borderColor: m3.colorScheme.outlineVariant,
-              }}
-            >
-              <Text
-                style={{
-                  color: m3.colorScheme.onSurfaceVariant,
-                  ...m3.typography.labelSmall,
-                  fontWeight: fontWeight.bold,
-                  letterSpacing: 1,
-                  marginBottom: spacing[1],
-                }}
-              >
-                {t('farmDetails.seasons.title')}
-              </Text>
-              <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
-                {lastSeasonEndDate
-                  ? t('farmDetails.seasons.lastEndDate', {
-                      date: formatDate(parseDbDateToLocalDate(lastSeasonEndDate), {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      }),
-                    })
-                  : t('farmDetails.seasons.firstTimeHint')}
-              </Text>
-
-              {showSeasonForm && (
-                <View style={{ marginTop: spacing[3], gap: spacing[2] }}>
-                  <Text
-                    style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}
-                  >
-                    {t('farmDetails.seasons.startDateLabel')}
-                  </Text>
-                  <Pressable
-                    onPress={() => setShowSeasonStartPicker(true)}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: m3.colorScheme.outlineVariant,
-                      borderRadius: m3.shape.cornerMedium,
-                      padding: spacing[3],
-                    }}
-                  >
-                    <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
-                      {formattedSeasonStart}
-                    </Text>
-                  </Pressable>
-
-                  <Text
-                    style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}
-                  >
-                    {t('farmDetails.seasons.endDateLabel')}
-                  </Text>
-                  <Pressable
-                    onPress={() => setShowSeasonEndPicker(true)}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: m3.colorScheme.outlineVariant,
-                      borderRadius: m3.shape.cornerMedium,
-                      padding: spacing[3],
-                    }}
-                  >
-                    <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
-                      {formattedSeasonEnd}
-                    </Text>
-                  </Pressable>
-
-                  <Button
-                    title={t('farmDetails.seasons.endSeasonButton')}
-                    onPress={handleEndSeason}
-                    isLoading={updateFarm.isPending}
-                  />
-                </View>
-              )}
-
-              {!showSeasonForm && (
-                <View style={{ marginTop: spacing[3] }}>
-                  <Button
-                    title={t('farmDetails.seasons.showEndSeasonForm')}
-                    onPress={() => setShowSeasonForm(true)}
-                  />
-                </View>
-              )}
             </View>
           </View>
 
@@ -1479,30 +1494,319 @@ export default function FarmDetailScreen() {
             )}
           </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
 
-      {showSeasonStartPicker && (
+      {showFarmActionsSheet && isAndroid && (
+        <Pressable
+          onPress={() => setShowFarmActionsSheet(false)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            zIndex: 45,
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderTopLeftRadius: m3.shape.cornerLarge,
+              borderTopRightRadius: m3.shape.cornerLarge,
+              paddingTop: spacing[3],
+              paddingHorizontal: spacing[4],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
+              gap: spacing[1],
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <View
+              style={{
+                alignSelf: 'center',
+                width: 36,
+                height: 4,
+                borderRadius: borderRadius.full,
+                backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.5),
+                marginBottom: spacing[2],
+              }}
+            />
+            <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+              {t('farmDetails.actions.menuTitle')}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={{ ...m3.typography.bodyMedium, color: m3.colorScheme.onSurfaceVariant }}
+            >
+              {farm?.name}
+            </Text>
+            <Pressable
+              onPress={openEditFarm}
+              style={({ pressed }) => ({
+                borderRadius: m3.shape.cornerMedium,
+                paddingVertical: spacing[3],
+                paddingHorizontal: spacing[3],
+                backgroundColor: pressed
+                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  : m3.surface.surfaceContainer,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              })}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <UiSymbol name="create-outline" size={18} color={m3.colorScheme.primary} />
+                <Text
+                  style={{
+                    marginLeft: spacing[2],
+                    color: m3.colorScheme.onSurface,
+                    ...m3.typography.bodyMedium,
+                  }}
+                >
+                  {t('farmDetails.actions.editFarm')}
+                </Text>
+              </View>
+              <UiSymbol name="chevron.right" size={16} color={m3.colorScheme.onSurfaceVariant} />
+            </Pressable>
+            <Pressable
+              onPress={openEndSeasonForm}
+              style={({ pressed }) => ({
+                borderRadius: m3.shape.cornerMedium,
+                paddingVertical: spacing[3],
+                paddingHorizontal: spacing[3],
+                backgroundColor: pressed
+                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  : m3.surface.surfaceContainer,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              })}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <UiSymbol name="calendar" size={18} color={m3.colorScheme.tertiary} />
+                <Text
+                  style={{
+                    marginLeft: spacing[2],
+                    color: m3.colorScheme.onSurface,
+                    ...m3.typography.bodyMedium,
+                  }}
+                >
+                  {t('farmDetails.actions.endSeason')}
+                </Text>
+              </View>
+              <UiSymbol name="chevron.right" size={16} color={m3.colorScheme.onSurfaceVariant} />
+            </Pressable>
+            <Pressable
+              onPress={confirmDeleteFarmFromSheet}
+              style={({ pressed }) => ({
+                borderRadius: m3.shape.cornerMedium,
+                paddingVertical: spacing[3],
+                paddingHorizontal: spacing[3],
+                backgroundColor: pressed
+                  ? colorWithOpacity(m3.colorScheme.error, 0.2)
+                  : colorWithOpacity(m3.colorScheme.error, 0.12),
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              })}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <UiSymbol name="trash" size={18} color={m3.colorScheme.error} />
+                <Text
+                  style={{
+                    marginLeft: spacing[2],
+                    color: m3.colorScheme.error,
+                    ...m3.typography.bodyMedium,
+                  }}
+                >
+                  {t('common.delete')}
+                </Text>
+              </View>
+              <UiSymbol name="chevron.right" size={16} color={m3.colorScheme.error} />
+            </Pressable>
+            <Pressable
+              onPress={() => setShowFarmActionsSheet(false)}
+              style={({ pressed }) => ({
+                borderRadius: m3.shape.cornerMedium,
+                paddingVertical: spacing[3],
+                paddingHorizontal: spacing[3],
+                alignItems: 'center',
+                backgroundColor: pressed
+                  ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                  : 'transparent',
+              })}
+            >
+              <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
+                {t('common.cancel')}
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      )}
+
+      {showSeasonForm && (
+        <Pressable
+          onPress={() => {
+            setShowSeasonForm(false);
+            setShowSeasonStartPicker(false);
+            setShowSeasonEndPicker(false);
+          }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            zIndex: 40,
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingTop: spacing[4],
+              paddingHorizontal: spacing[4],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
+              gap: spacing[2],
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <View
+              style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}
+            >
+              <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+                {t('farmDetails.seasons.formTitle')}
+              </Text>
+              <Pressable onPress={() => setShowSeasonForm(false)}>
+                <UiSymbol
+                  name="xmark.circle.fill"
+                  size={24}
+                  color={m3.colorScheme.onSurfaceVariant}
+                />
+              </Pressable>
+            </View>
+            <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
+              {lastSeasonEndDate
+                ? t('farmDetails.seasons.lastEndDate', {
+                    date: formatDate(parseDbDateToLocalDate(lastSeasonEndDate), {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    }),
+                  })
+                : t('farmDetails.seasons.firstTimeHint')}
+            </Text>
+            <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}>
+              {t('farmDetails.seasons.startDateLabel')}
+            </Text>
+            {isIOS ? (
+              <DateTimePicker
+                value={seasonStartDate}
+                mode="date"
+                display="spinner"
+                minimumDate={minimumSeasonStartDate ?? undefined}
+                maximumDate={new Date(seasonEndDate.getTime() - 24 * 60 * 60 * 1000)}
+                onChange={(_, date) => {
+                  if (!date) return;
+                  setSeasonStartDate(date);
+                  if (seasonEndDate.getTime() <= date.getTime()) {
+                    const nextDay = new Date(date);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    setSeasonEndDate(nextDay);
+                  }
+                }}
+              />
+            ) : (
+              <Pressable
+                onPress={() => setShowSeasonStartPicker(true)}
+                style={{
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  borderRadius: m3.shape.cornerMedium,
+                  padding: spacing[3],
+                }}
+              >
+                <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
+                  {formattedSeasonStart}
+                </Text>
+              </Pressable>
+            )}
+            <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}>
+              {t('farmDetails.seasons.endDateLabel')}
+            </Text>
+            {isIOS ? (
+              <DateTimePicker
+                value={seasonEndDate}
+                mode="date"
+                display="spinner"
+                minimumDate={new Date(seasonStartDate.getTime() + 24 * 60 * 60 * 1000)}
+                onChange={(_, date) => {
+                  if (date) setSeasonEndDate(date);
+                }}
+              />
+            ) : (
+              <Pressable
+                onPress={() => setShowSeasonEndPicker(true)}
+                style={{
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                  borderRadius: m3.shape.cornerMedium,
+                  padding: spacing[3],
+                }}
+              >
+                <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
+                  {formattedSeasonEnd}
+                </Text>
+              </Pressable>
+            )}
+            <Button
+              title={t('farmDetails.seasons.endSeasonButton')}
+              onPress={handleEndSeason}
+              isLoading={createFarmSeason.isPending}
+            />
+          </View>
+        </Pressable>
+      )}
+
+      {showSeasonStartPicker && Platform.OS !== 'ios' && (
         <DateTimePicker
           value={seasonStartDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'inline' : 'default'}
-          maximumDate={seasonEndDate}
-          onChange={(_event, selectedDate) => {
+          display="default"
+          minimumDate={minimumSeasonStartDate ?? undefined}
+          maximumDate={new Date(seasonEndDate.getTime() - 24 * 60 * 60 * 1000)}
+          onChange={(_, date) => {
             setShowSeasonStartPicker(false);
-            if (selectedDate) setSeasonStartDate(selectedDate);
+            if (!date) return;
+            setSeasonStartDate(date);
+            if (seasonEndDate.getTime() <= date.getTime()) {
+              const nextDay = new Date(date);
+              nextDay.setDate(nextDay.getDate() + 1);
+              setSeasonEndDate(nextDay);
+            }
           }}
         />
       )}
 
-      {showSeasonEndPicker && (
+      {showSeasonEndPicker && Platform.OS !== 'ios' && (
         <DateTimePicker
           value={seasonEndDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'inline' : 'default'}
-          minimumDate={seasonStartDate}
-          onChange={(_event, selectedDate) => {
+          display="default"
+          minimumDate={new Date(seasonStartDate.getTime() + 24 * 60 * 60 * 1000)}
+          onChange={(_, date) => {
             setShowSeasonEndPicker(false);
-            if (selectedDate) setSeasonEndDate(selectedDate);
+            if (date) setSeasonEndDate(date);
           }}
         />
       )}

@@ -99,15 +99,24 @@ export default function DashboardScreen() {
 
   const handleFarmSelection = (farmId: number) => {
     setShowFarmPicker(false);
-    router.push({
-      pathname: '/add-entry',
-      params: {
-        farmId: farmId.toString(),
-        initialLogType: selectedQuickAction ?? undefined,
-        initialTab: 'log',
-        tabs: 'log',
-      },
-    });
+    if (selectedQuickAction === 'note') {
+      router.push({
+        pathname: '/add-note',
+        params: {
+          farmId: farmId.toString(),
+        },
+      });
+    } else {
+      router.push({
+        pathname: '/add-entry',
+        params: {
+          farmId: farmId.toString(),
+          initialLogType: selectedQuickAction ?? undefined,
+          initialTab: 'log',
+          tabs: 'log',
+        },
+      });
+    }
     setSelectedQuickAction(null);
   };
 

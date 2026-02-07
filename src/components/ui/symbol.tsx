@@ -54,6 +54,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'ellipsis.circle': 'ellipsis-horizontal-circle',
   'ellipsis.circle.fill': 'ellipsis-horizontal-circle',
   'line.3.horizontal': 'menu',
+  'line.3.horizontal.decrease': 'filter',
   square: 'square-outline',
   circle: 'ellipse-outline',
 

@@ -551,7 +551,7 @@ export function EntryForm({
   const prevEditingTaskIdRef = useRef<number | null | undefined>(undefined);
   const prevEditingTaskUpdatedAtRef = useRef<string | undefined>(undefined);
 
-  const resetTaskForm = () => {
+  const resetTaskForm = useCallback(() => {
     setTitle('');
     setDescription('');
     setType('note');
@@ -561,7 +561,7 @@ export function EntryForm({
     setShowTypePicker(false);
     setShowPriorityPicker(false);
     setShowTemplates(false);
-  };
+  }, []);
 
   useEffect(() => {
     if (!isVisible) {
@@ -598,7 +598,7 @@ export function EntryForm({
     prevVisibleRef.current = isVisible;
     prevEditingTaskIdRef.current = editingTask?.id;
     prevEditingTaskUpdatedAtRef.current = editingTask?.updated_at;
-  }, [isVisible, editingTask, farms, initialFarmId, farm?.id]);
+  }, [isVisible, editingTask, farms, initialFarmId, farm?.id, resetTaskForm]);
 
   const applyTemplate = (template: TaskTemplate) => {
     setTitle(template.title);

@@ -1,7 +1,7 @@
 /**
  * Records Hooks
  * React Query hooks for farm record CRUD operations
- * Covers: Irrigation, Spray, Fertigation, Harvest, Expense records
+ * Covers: Irrigation, Spray, Fertigation, Harvest, Expense, Daily Note records
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +19,7 @@ import {
   type HarvestRecordInsert,
   type ExpenseRecord,
   type ExpenseRecordInsert,
+  type DailyNoteRecord,
 } from '../types';
 
 // ============================================================
@@ -559,6 +560,72 @@ export function useDeleteExpenseRecord() {
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.expenseRecords.listByFarm(farmId),
+      });
+    },
+  });
+}
+
+// ============================================================
+// MARK: - DAILY NOTES
+// ============================================================
+
+export function useDailyNoteByDate(farmId: number | undefined, date: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.dailyNotes.byDate(farmId!, date!),
+    queryFn: async (): Promise<DailyNoteRecord | null> => {
+      const { data, error } = await supabase
+        .from(TABLES.DAILY_NOTES)
+        .select('*')
+        .eq('farm_id', farmId)
+        .eq('date', date)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data ?? null;
+    },
+    enabled: !!farmId && !!date,
+  });
+}
+
+export function useUpsertDailyNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      farm_id,
+      date,
+      notes,
+    }: {
+      farm_id: number;
+      date: string;
+      notes: string;
+    }): Promise<DailyNoteRecord> => {
+      const { data, error } = await supabase
+        .from(TABLES.DAILY_NOTES)
+        .upsert(
+          {
+            farm_id,
+            date,
+            notes: notes.trim(),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'farm_id,date' },
+        )
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (savedNote) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dailyNotes.listByFarm(savedNote.farm_id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dailyNotes.byDate(savedNote.farm_id, savedNote.date),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.all,
       });
     },
   });
