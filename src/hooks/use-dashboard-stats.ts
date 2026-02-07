@@ -21,7 +21,7 @@ export interface DashboardStats {
   farmsCount: number;
   activeWorkersCount: number;
   recentActivitiesCount: number;
-  totalHarvest: number;
+  pendingTasksCount: number;
 }
 
 export interface FarmNeedingAttention {
@@ -73,17 +73,10 @@ export function useDashboardStats() {
       const farmIds = farms?.map((f) => f.id) ?? [];
 
       let activitiesCount = 0;
-      let totalHarvest = 0;
+      let pendingTasksCount = 0;
 
       if (farmIds.length > 0) {
-        const [
-          { count: irrigationCount },
-          { count: sprayCount },
-          { count: harvestCount, data: harvestData },
-          { count: expenseCount },
-          { count: fertigationCount },
-          { count: dailyNotesCount },
-        ] = await Promise.all([
+        const [irrigation, spray, harvest, expense, fertigation, tasks] = await Promise.all([
           supabase
             .from(TABLES.IRRIGATION_RECORDS)
             .select('*', { count: 'exact', head: true })
@@ -96,7 +89,7 @@ export function useDashboardStats() {
             .gte('date', dateStr),
           supabase
             .from(TABLES.HARVEST_RECORDS)
-            .select('quantity', { count: 'exact' })
+            .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
             .gte('date', dateStr),
           supabase
@@ -110,31 +103,27 @@ export function useDashboardStats() {
             .in('farm_id', farmIds)
             .gte('date', dateStr),
           supabase
-            .from(TABLES.DAILY_NOTES)
+            .from('task_reminders')
             .select('*', { count: 'exact', head: true })
             .in('farm_id', farmIds)
-            .gte('date', dateStr),
+            .eq('completed', false),
         ]);
 
         activitiesCount =
-          (irrigationCount ?? 0) +
-          (sprayCount ?? 0) +
-          (harvestCount ?? 0) +
-          (expenseCount ?? 0) +
-          (fertigationCount ?? 0) +
-          (dailyNotesCount ?? 0);
+          (irrigation.count ?? 0) +
+          (spray.count ?? 0) +
+          (harvest.count ?? 0) +
+          (expense.count ?? 0) +
+          (fertigation.count ?? 0);
 
-        // Sum harvest quantities
-        if (harvestData) {
-          totalHarvest = harvestData.reduce((sum, h) => sum + (h.quantity ?? 0), 0);
-        }
+        pendingTasksCount = tasks.count ?? 0;
       }
 
       return {
         farmsCount: farmsCount ?? 0,
         activeWorkersCount: workersCount ?? 0,
         recentActivitiesCount: activitiesCount,
-        totalHarvest,
+        pendingTasksCount,
       };
     },
     staleTime: 30000, // 30 seconds
@@ -193,7 +182,7 @@ export function useRecentActivities(limit: number = 5) {
       const farmMap = new Map(farms.map((f) => [f.id, f.name]));
 
       // Fetch recent records from each table
-      const [irrigation, spray, harvest, expense, fertigation, dailyNotes] = await Promise.all([
+      const [irrigation, spray, harvest, expense, fertigation] = await Promise.all([
         supabase
           .from(TABLES.IRRIGATION_RECORDS)
           .select('id, farm_id, date, duration')
@@ -221,12 +210,6 @@ export function useRecentActivities(limit: number = 5) {
         supabase
           .from(TABLES.FERTIGATION_RECORDS)
           .select('id, farm_id, date')
-          .in('farm_id', farmIds)
-          .order('date', { ascending: false })
-          .limit(limit),
-        supabase
-          .from(TABLES.DAILY_NOTES)
-          .select('id, farm_id, date, notes')
           .in('farm_id', farmIds)
           .order('date', { ascending: false })
           .limit(limit),
@@ -294,21 +277,6 @@ export function useRecentActivities(limit: number = 5) {
           type: 'fertigation',
           date: r.date,
           description: 'Fertigation applied',
-          farmId: r.farm_id,
-          farmName: farmMap.get(r.farm_id) ?? 'Unknown',
-        });
-      });
-
-      // Map daily notes
-      dailyNotes.data?.forEach((r) => {
-        const noteText = r.notes?.trim() ?? '';
-        const description =
-          noteText.length > 90 ? `${noteText.slice(0, 87).trimEnd()}...` : noteText || 'Note';
-        activities.push({
-          id: `note_${r.id}`,
-          type: 'note',
-          date: r.date,
-          description,
           farmId: r.farm_id,
           farmName: farmMap.get(r.farm_id) ?? 'Unknown',
         });

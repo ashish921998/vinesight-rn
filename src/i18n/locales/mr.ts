@@ -1100,11 +1100,17 @@ export const mr = {
       evening: 'शुभ संध्याकाळ',
       night: 'शुभ रात्री',
     },
+    greetingWithName: {
+      morning: 'शुभ सकाळ, {{name}}',
+      afternoon: 'शुभ दुपार, {{name}}',
+      evening: 'शुभ संध्याकाळ, {{name}}',
+      night: 'शुभ रात्री, {{name}}',
+    },
     stats: {
       farms: '$t(glossary.farm)',
       activeWorkers: 'सक्रिय $t(glossary.worker)',
       activities: 'क्रियाकलाप',
-      harvest: '$t(glossary.harvest)',
+      tasks: 'कार्ये',
     },
     needsAttention: {
       title: 'लक्ष आवश्यक',
@@ -1321,7 +1327,7 @@ export const mr = {
   startDate: 'सुरूवातीची तारीख',
   endDate: 'शेवटची तारीख',
   calculate: 'गणा',
-  daysWorked: 'काम केलेले दिवस',
+  daysWorked: '$t(glossary.task) केलेले दिवस',
   confirm: 'पुष्टी करा',
   optional: 'ऐच्छिक',
   allFarms: 'सर्व शेते',
@@ -1371,7 +1377,7 @@ export const mr = {
       spray: '$t(glossary.spray) ({{count}})',
     },
     search: {
-      placeholder: 'इन्व्हेंटरी शोधा...',
+      placeholder: 'गोदाम शोधा...',
       found_one: '{{count}} वस्तू आढळली',
       found_other: '{{count}} वस्तू आढळल्या',
     },
@@ -1683,6 +1689,9 @@ export const mr = {
     transactions: 'व्यवहार',
     noTransactionsInRange: 'या दिनांक श्रेणीत कोणतेही व्यवहार नाहीत.',
     days: 'दिवस',
+    full: 'पूर्ण',
+    half: 'अर्धा',
+    absent: 'गैरहजर',
   },
 
   reports: {

@@ -1096,11 +1096,17 @@ export const hi = {
       evening: 'शुभ संध्या',
       night: 'शुभ रात्रि',
     },
+    greetingWithName: {
+      morning: 'सुप्रभात, {{name}}',
+      afternoon: 'शुभ दोपहर, {{name}}',
+      evening: 'शुभ संध्या, {{name}}',
+      night: 'शुभ रात्रि, {{name}}',
+    },
     stats: {
       farms: 'खेत',
       activeWorkers: 'सक्रिय श्रमिक',
       activities: 'गतिविधियां',
-      harvest: 'कटाई',
+      tasks: 'कार्य',
     },
     needsAttention: {
       title: 'ध्यान देने की आवश्यकता है',
@@ -1640,6 +1646,9 @@ export const hi = {
     transactions: 'लेन-देन',
     noTransactionsInRange: 'इस तारीख सीमा में कोई लेन-देन नहीं है।',
     days: 'दिन',
+    full: 'पूरा',
+    half: 'आधा',
+    absent: 'अनुपस्थित',
   },
 
   reports: {

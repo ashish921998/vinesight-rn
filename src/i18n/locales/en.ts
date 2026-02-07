@@ -1093,11 +1093,17 @@ export const en = {
       evening: 'Good evening',
       night: 'Good night',
     },
+    greetingWithName: {
+      morning: 'Good morning, {{name}}',
+      afternoon: 'Good afternoon, {{name}}',
+      evening: 'Good evening, {{name}}',
+      night: 'Good night, {{name}}',
+    },
     stats: {
       farms: 'Farms',
       activeWorkers: 'Active workers',
       activities: 'Activities',
-      harvest: 'Harvest',
+      tasks: 'Tasks',
     },
     needsAttention: {
       title: 'Needs attention',
@@ -1673,6 +1679,9 @@ export const en = {
     transactions: 'Transactions',
     noTransactionsInRange: 'No transactions in this range.',
     days: 'days',
+    full: 'Full',
+    half: 'Half',
+    absent: 'Absent',
   },
 
   reports: {
