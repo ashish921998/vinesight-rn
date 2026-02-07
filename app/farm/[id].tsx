@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import {
@@ -781,10 +781,7 @@ export default function FarmDetailScreen() {
         }}
       />
 
-      <SafeAreaView
-        edges={isAndroid ? ['top', 'left', 'right', 'bottom'] : ['left', 'right', 'bottom']}
-        style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
-      >
+      <View style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
@@ -1511,7 +1508,7 @@ export default function FarmDetailScreen() {
             )}
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
 
       {showFarmActionsSheet && isAndroid && (
         <Pressable

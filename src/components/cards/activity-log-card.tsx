@@ -77,6 +77,9 @@ function getDescriptionFromData(
     }
     case 'fertigation': {
       const fertigation = data as FertigationRecord;
+      if (fertigation.fertilizers && fertigation.fertilizers.length > 0) {
+        return fertigation.fertilizers.map((f) => f.name).join(', ');
+      }
       const fertCount = fertigation.fertilizers?.length || 0;
       return t('logs.fertigationApplied', {
         count: fertCount,
