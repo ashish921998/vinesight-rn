@@ -1,40 +1,31 @@
-const toOptionalString = (value: unknown): string | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-};
-
-export const EXPECTED_FARM_DB_ERROR_CODES = [
-  '22003', // numeric_value_out_of_range
-  '22007', // invalid_datetime_format
-  '22P02', // invalid_text_representation
-  '23505', // unique_violation
-  '23514', // check_violation
-] as const;
-
-export interface FarmErrorMeta {
+export interface FarmDbErrorMeta {
   code?: string;
   details?: string;
   hint?: string;
   message?: string;
 }
 
-export function getFarmErrorMeta(error: unknown): FarmErrorMeta {
-  if (!error || typeof error !== 'object') return {};
+export const EXPECTED_FARM_DB_ERROR_CODES = new Set([
+  '22003', // numeric field overflow
+  '22P02', // invalid text representation
+  '23502', // not-null violation
+  '23503', // foreign key violation
+  '23505', // unique violation
+  '23514', // check violation
+]);
 
-  const raw = error as Record<string, unknown>;
+export const getFarmErrorMeta = (error: unknown): FarmDbErrorMeta => {
+  if (typeof error !== 'object' || !error) return {};
+  const record = error as Record<string, unknown>;
   return {
-    code: toOptionalString(raw.code),
-    details: toOptionalString(raw.details),
-    hint: toOptionalString(raw.hint),
-    message: toOptionalString(raw.message),
+    code: typeof record.code === 'string' ? record.code : undefined,
+    details: typeof record.details === 'string' ? record.details : undefined,
+    hint: typeof record.hint === 'string' ? record.hint : undefined,
+    message: typeof record.message === 'string' ? record.message : undefined,
   };
-}
+};
 
-export function shouldCaptureFarmErrorInSentry(error: unknown): boolean {
-  const { code } = getFarmErrorMeta(error);
-  if (!code) return true;
-  return !EXPECTED_FARM_DB_ERROR_CODES.includes(
-    code as (typeof EXPECTED_FARM_DB_ERROR_CODES)[number],
-  );
-}
+export const shouldCaptureFarmErrorInSentry = (errorMeta: FarmDbErrorMeta): boolean => {
+  if (!errorMeta.code) return true;
+  return !EXPECTED_FARM_DB_ERROR_CODES.has(errorMeta.code);
+};

@@ -2,6 +2,8 @@
  * Task/Reminder Types for Vinesight
  */
 
+import { ICON_REGISTRY } from '@/constants/icon-registry';
+
 // Task types matching the database schema
 export type TaskType =
   | 'irrigation'
@@ -63,14 +65,26 @@ export interface TaskTemplate {
 
 // Task type display info
 export const TASK_TYPE_INFO: Record<TaskType, { labelKey: string; icon: string; color: string }> = {
-  irrigation: { labelKey: 'tasks.types.irrigation', icon: 'water', color: '#4d8573' },
-  spray: { labelKey: 'tasks.types.spray', icon: 'flask', color: '#598d6b' },
-  fertigation: { labelKey: 'tasks.types.fertigation', icon: 'leaf', color: '#408059' },
-  harvest: { labelKey: 'tasks.types.harvest', icon: 'basket', color: '#669475' },
-  soil_test: { labelKey: 'tasks.types.soilTest', icon: 'layers', color: '#598266' },
-  petiole_test: { labelKey: 'tasks.types.petioleTest', icon: 'analytics', color: '#7a9a5c' },
-  expense: { labelKey: 'tasks.types.expense', icon: 'cash', color: '#598066' },
-  note: { labelKey: 'tasks.types.note', icon: 'document-text', color: '#738c7a' },
+  irrigation: {
+    labelKey: 'tasks.types.irrigation',
+    icon: ICON_REGISTRY.irrigation,
+    color: '#4d8573',
+  },
+  spray: { labelKey: 'tasks.types.spray', icon: ICON_REGISTRY.spray, color: '#598d6b' },
+  fertigation: {
+    labelKey: 'tasks.types.fertigation',
+    icon: ICON_REGISTRY.fertigation,
+    color: '#408059',
+  },
+  harvest: { labelKey: 'tasks.types.harvest', icon: ICON_REGISTRY.harvest, color: '#669475' },
+  soil_test: { labelKey: 'tasks.types.soilTest', icon: ICON_REGISTRY.soilTest, color: '#598266' },
+  petiole_test: {
+    labelKey: 'tasks.types.petioleTest',
+    icon: ICON_REGISTRY.petioleTest,
+    color: '#7a9a5c',
+  },
+  expense: { labelKey: 'tasks.types.expense', icon: ICON_REGISTRY.expense, color: '#598066' },
+  note: { labelKey: 'tasks.types.note', icon: ICON_REGISTRY.note, color: '#738c7a' },
 };
 
 // Priority display info
