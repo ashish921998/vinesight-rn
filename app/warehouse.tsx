@@ -149,7 +149,11 @@ export default function WarehouseScreen() {
 
       <View style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+          contentContainerStyle={{
+            paddingTop: spacing[4],
+            paddingHorizontal: 16,
+            paddingBottom: 100,
+          }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -159,7 +163,14 @@ export default function WarehouseScreen() {
           }
         >
           {/* Summary Cards */}
-          <View style={{ flexDirection: 'row', marginBottom: spacing[4], gap: 12 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: spacing[4],
+              marginBottom: spacing[4],
+              gap: 12,
+            }}
+          >
             <View
               style={{
                 flex: 1,
@@ -277,7 +288,7 @@ export default function WarehouseScreen() {
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Icon
-                            name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
+                            name={item.type === 'fertilizer' ? 'leaf.fill' : 'spraycan.fill'}
                             size={16}
                             color={lowStockColor}
                           />
@@ -489,7 +500,7 @@ export default function WarehouseScreen() {
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Icon
-                              name={item.type === 'fertilizer' ? 'leaf.fill' : 'drop.fill'}
+                              name={item.type === 'fertilizer' ? 'leaf.fill' : 'spraycan.fill'}
                               size={12}
                               color={itemColor}
                             />
