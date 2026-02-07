@@ -318,7 +318,7 @@ export default function AnalyticsScreen() {
                   color: colors.surface[900],
                 }}
               >
-                {formatCurrency(analytics.totalHarvestValue / 1000, currency)}
+                {formatCurrency(analytics.totalHarvestValue / 1000, currency)}k
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                 {t('analytics.labels.harvestValue')}
@@ -402,10 +402,10 @@ export default function AnalyticsScreen() {
                       <SymbolIcon
                         name={
                           value.trend === 'up'
-                            ? 'trending-up'
+                            ? 'chart.line.uptrend.xyaxis'
                             : value.trend === 'down'
-                              ? 'trending-down'
-                              : 'remove'
+                              ? 'chart.line.downtrend.xyaxis'
+                              : 'minus'
                         }
                         size={14}
                         color={

@@ -270,7 +270,7 @@ export default function FarmDetailScreen() {
 
   const handleEndSeason = async () => {
     if (!farm?.id) return;
-    if (seasonStartDate.getTime() >= seasonEndDate.getTime()) {
+    if (formatLocalDate(seasonStartDate) >= formatLocalDate(seasonEndDate)) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.invalidRange'));
       return;
     }
@@ -1694,8 +1694,8 @@ export default function FarmDetailScreen() {
               left: 0,
               right: 0,
               backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopLeftRadius: borderRadius.xl,
-              borderTopRightRadius: borderRadius.xl,
+              borderTopLeftRadius: m3.shape.cornerLarge,
+              borderTopRightRadius: m3.shape.cornerLarge,
               paddingTop: spacing[4],
               paddingHorizontal: spacing[4],
               paddingBottom: Math.max(insets.bottom, spacing[4]),
@@ -1720,14 +1720,12 @@ export default function FarmDetailScreen() {
             <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
               {lastSeasonEndDate
                 ? t('farmDetails.seasons.lastEndDate', {
-                    date: formatDate(
-                      parseDbDateToLocalDate(lastSeasonEndDate) ?? lastSeasonEndDate,
-                      {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      },
-                    ),
+                    date: (() => {
+                      const parsed = parseDbDateToLocalDate(lastSeasonEndDate);
+                      return parsed
+                        ? formatDate(parsed, { year: 'numeric', month: 'short', day: 'numeric' })
+                        : lastSeasonEndDate;
+                    })(),
                   })
                 : t('farmDetails.seasons.firstTimeHint')}
             </Text>
@@ -1744,7 +1742,7 @@ export default function FarmDetailScreen() {
                 onChange={(_, date) => {
                   if (!date) return;
                   setSeasonStartDate(date);
-                  if (seasonEndDate.getTime() < date.getTime()) {
+                  if (formatLocalDate(seasonEndDate) < formatLocalDate(date)) {
                     const nextDay = new Date(date);
                     nextDay.setDate(nextDay.getDate() + 1);
                     setSeasonEndDate(nextDay);

@@ -23,7 +23,7 @@ export class ReportService {
     const sanitized = Array.from(value)
       .filter((char) => char.charCodeAt(0) >= 32)
       .join('')
-      .replace(/[^a-zA-Z0-9]+/g, '_')
+      .replace(/[^\p{L}\p{N}]+/gu, '_')
       .replace(/^_+|_+$/g, '')
       .slice(0, 64);
     return sanitized || fallback;
@@ -422,7 +422,9 @@ export class ReportService {
     const safeFarmName = this.sanitizeFileNamePart(data.farmName);
     const uniqueness = safeFarmName === 'farm' ? `_${Date.now()}` : '';
     const filename = `${safeFarmName}${uniqueness}_report_${new Date().toISOString().split('T')[0]}.csv`;
-    const fileUri = `${cacheDirectory}${filename}`;
+    const fileUri = cacheDirectory.endsWith('/')
+      ? `${cacheDirectory}${filename}`
+      : `${cacheDirectory}/${filename}`;
     try {
       await writeAsStringAsync(fileUri, csv);
     } catch (error) {

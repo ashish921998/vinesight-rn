@@ -25,6 +25,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
+import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
 import {
   IrrigationForm,
   SprayForm,
@@ -88,6 +90,7 @@ export function ActivityEditForm({
   presentation = 'modal',
 }: ActivityEditFormProps) {
   const { t } = useTranslation();
+  const m3 = useM3();
   const isVisible = visible ?? true;
   const { height: windowHeight } = useWindowDimensions();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -547,18 +550,27 @@ export function ActivityEditForm({
       {renderForm()}
 
       {showDatePicker && Platform.OS === 'ios' && (
-        <Pressable
-          onPress={() => setShowDatePicker(false)}
+        <View
           style={{
             position: 'absolute',
             top: 0,
             right: 0,
             bottom: 0,
             left: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 50,
           }}
         >
+          <Pressable
+            onPress={() => setShowDatePicker(false)}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            }}
+          />
           <View
             style={{
               position: 'absolute',
@@ -570,7 +582,6 @@ export function ActivityEditForm({
               borderTopRightRadius: borderRadius['2xl'],
               padding: spacing[4],
             }}
-            onStartShouldSetResponder={() => true}
           >
             <View
               style={{
@@ -609,7 +620,7 @@ export function ActivityEditForm({
               </Text>
             </Pressable>
           </View>
-        </Pressable>
+        </View>
       )}
 
       {showDatePicker && Platform.OS !== 'ios' && (

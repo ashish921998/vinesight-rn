@@ -543,7 +543,7 @@ export default function LabTestForm({
           >
             <View
               style={{
-                backgroundColor: 'white',
+                backgroundColor: colors.surface[100],
                 borderTopLeftRadius: 20,
                 borderTopRightRadius: 20,
                 padding: 16,

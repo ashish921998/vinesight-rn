@@ -258,10 +258,30 @@ export default function SoilProfileForm({
           animationType="fade"
           onRequestClose={() => setShowDatePicker(false)}
         >
+          <Pressable
+            onPress={() => setShowDatePicker(false)}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3),
+              }}
+            />
+          </Pressable>
           <View
             style={{
-              flex: 1,
-              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.3),
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -294,9 +314,12 @@ export default function SoilProfileForm({
               />
               <Pressable
                 onPress={() => setShowDatePicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.done')}
                 style={{
                   marginTop: spacing[4],
-                  paddingVertical: spacing[3],
+                  paddingVertical: spacing[4],
+                  paddingHorizontal: spacing[6],
                   borderRadius: borderRadius.xl,
                   alignItems: 'center',
                   backgroundColor: colors.primary[500],

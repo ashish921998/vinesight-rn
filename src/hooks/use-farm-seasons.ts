@@ -52,7 +52,9 @@ export function useCreateFarmSeason() {
           if (!old) return [newSeason];
           const next = [...old, newSeason];
           next.sort((a, b) => {
-            if (!a.end_date || !b.end_date) return 0;
+            if (!a.end_date && !b.end_date) return 0;
+            if (!a.end_date) return 1;
+            if (!b.end_date) return -1;
             const aDate = parseDbDateToLocalDate(a.end_date);
             const bDate = parseDbDateToLocalDate(b.end_date);
             if (!aDate || !bDate) return 0;
