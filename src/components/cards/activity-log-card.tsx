@@ -12,8 +12,7 @@ import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
-import { getDefaultCurrency } from '@/i18n/currency';
-import { useProfile } from '@/hooks';
+import { useCurrency } from '@/hooks/use-currency';
 import { useM3 } from '@/styles/use-theme';
 import type {
   IrrigationRecord,
@@ -71,7 +70,7 @@ function getDescriptionFromData(
     }
     case 'expense': {
       const expense = data as ExpenseRecord;
-      const cost = formatCurrency(expense.cost ?? 0, currency ?? getDefaultCurrency());
+      const cost = formatCurrency(expense.cost ?? 0, currency);
       const expenseType = expense.type || t('common.general');
       return t('logs.expenseDescription', { cost, type: expenseType });
     }
@@ -103,8 +102,7 @@ export function ActivityLogCard({
 }: ActivityLogCardProps) {
   const m3 = useM3();
   const { t } = useTranslation();
-  const { data: profile } = useProfile();
-  const currency = profile?.currency_preference ?? getDefaultCurrency();
+  const currency = useCurrency();
 
   const hasActions = Boolean(onEdit || onDelete);
   const isInteractive = Boolean(onPress) && !hasActions;

@@ -117,6 +117,9 @@ export {
   useCreateCalculationHistory,
 } from './use-profile';
 
+// Currency
+export { useCurrency } from './use-currency';
+
 // Dashboard Hooks
 export {
   useDashboardStats,

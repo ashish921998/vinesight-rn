@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Alert } from 'react-native';
-import { useCreateWarehouseItem, useUpdateWarehouseItem, useProfile } from '../../hooks';
+import { useCreateWarehouseItem, useUpdateWarehouseItem } from '../../hooks';
 import { WarehouseItem, WarehouseItemType, WarehouseUnit } from '../../types';
 import i18n from '@/i18n';
 import { formatCurrency } from '@/i18n/format';
-import { getDefaultCurrency } from '@/i18n/currency';
+import { useCurrency } from '@/hooks/use-currency';
 import {
   FormModal,
   SectionHeader,
@@ -37,7 +37,6 @@ export default function WarehouseItemForm({
   const colors = useThemeColors();
   const m3 = useM3();
   const isVisible = visible ?? true;
-  const { data: profile } = useProfile();
   const createMutation = useCreateWarehouseItem();
   const updateMutation = useUpdateWarehouseItem();
 
@@ -49,7 +48,7 @@ export default function WarehouseItemForm({
   const [reorderQuantity, setReorderQuantity] = useState('');
   const [notes, setNotes] = useState('');
 
-  const currency = profile?.currency_preference ?? getDefaultCurrency();
+  const currency = useCurrency();
   const isEditing = !!editingItem;
 
   const unitOptions = useMemo(

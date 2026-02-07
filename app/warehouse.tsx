@@ -12,14 +12,14 @@ import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { Symbol as Icon } from '@/components/ui/symbol';
-import { useWarehouseItems, useProfile, useDeleteWarehouseItem } from '../src/hooks';
+import { useWarehouseItems, useDeleteWarehouseItem } from '../src/hooks';
 import { WarehouseItem } from '../src/types';
 import { useModalStore } from '@/stores';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
-import { getDefaultCurrency } from '@/i18n/currency';
+import { useCurrency } from '@/hooks/use-currency';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
@@ -36,13 +36,12 @@ export default function WarehouseScreen() {
 
   const router = useRouter();
   const { setAddWarehouseItem, setAddStock } = useModalStore();
-  const { data: profile } = useProfile();
   const { data: items, isLoading, refetch, isRefetching } = useWarehouseItems();
   const deleteItemMutation = useDeleteWarehouseItem();
 
   const [filter, setFilter] = useState<FilterType>('all');
 
-  const currency = profile?.currency_preference ?? getDefaultCurrency();
+  const currency = useCurrency();
 
   const openAddItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });

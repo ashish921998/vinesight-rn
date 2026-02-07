@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { useAllWorkerAttendance, useAllWorkerTransactions, useProfile, useWorkers } from '@/hooks';
+import { useAllWorkerAttendance, useAllWorkerTransactions, useWorkers } from '@/hooks';
 import type { Worker } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
-import { getDefaultCurrency } from '@/i18n/currency';
+import { useCurrency } from '@/hooks/use-currency';
 import {
   computeWorkerMetrics,
   computeOverview,
@@ -21,8 +21,7 @@ export function WorkerAnalyticsView() {
   const { data: workers, isLoading: workersLoading } = useWorkers();
   const { data: attendance, isLoading: attendanceLoading } = useAllWorkerAttendance();
   const { data: transactions, isLoading: transactionsLoading } = useAllWorkerTransactions();
-  const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference ?? getDefaultCurrency();
+  const preferredCurrency = useCurrency();
 
   const dateRange = useMemo(() => getDefaultDateRange(30), []);
 

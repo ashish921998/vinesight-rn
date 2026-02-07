@@ -4,9 +4,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
-import { useProfile, useWorkerAttendance, useWorkerTransactions, useWorkers } from '@/hooks';
+import { useWorkerAttendance, useWorkerTransactions, useWorkers, useCurrency } from '@/hooks';
 import { formatCurrency, formatDate } from '@/i18n/format';
-import { getDefaultCurrency } from '@/i18n/currency';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import {
   computeWorkerMetrics,
@@ -28,8 +27,7 @@ export default function WorkerAnalyticsDetailScreen() {
   const { data: workers, isLoading: workersLoading } = useWorkers();
   const { data: attendance, isLoading: attendanceLoading } = useWorkerAttendance(workerId);
   const { data: transactions, isLoading: transactionsLoading } = useWorkerTransactions(workerId);
-  const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference ?? getDefaultCurrency();
+  const preferredCurrency = useCurrency();
 
   const [range, setRange] = useState<DateRange>(() => getDefaultDateRange(30));
   const [showFromPicker, setShowFromPicker] = useState(false);

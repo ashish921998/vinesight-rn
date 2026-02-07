@@ -8,6 +8,7 @@ import { View, Text, Pressable, Alert, ActivityIndicator, Platform, Modal } from
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { Button } from '@/components/ui';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -578,60 +579,19 @@ export default function LabTestForm({
                   marginTop: spacing[4],
                 }}
               >
-                <Pressable
+                <Button
+                  title={t('common.actions.cancel')}
+                  variant="secondary"
                   onPress={() => setShowDatePicker(false)}
-                  accessibilityRole="button"
                   accessibilityLabel={t('common.actions.cancel')}
-                  style={{
-                    flex: 1,
-                    padding: spacing[3],
-                    borderRadius: borderRadius.lg,
-                    alignItems: 'center',
-                    backgroundColor: colors.surface[200],
-                  }}
-                >
-                  <Text
-                    style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onSurface }}
-                  >
-                    {t('common.actions.cancel')}
-                  </Text>
-                </Pressable>
-                <Pressable
+                />
+                <Button
+                  title={t('common.actions.done')}
+                  variant="primary"
                   onPress={() => setShowDatePicker(false)}
-                  accessibilityRole="button"
                   accessibilityLabel={t('common.actions.done')}
-                  style={{
-                    flex: 1,
-                    marginLeft: spacing[3],
-                    padding: spacing[3],
-                    borderRadius: borderRadius.lg,
-                    alignItems: 'center',
-                    backgroundColor: m3.colorScheme.primary,
-                  }}
-                >
-                  <Text
-                    style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}
-                  >
-                    {t('common.actions.done')}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setShowDatePicker(false)}
-                  style={{
-                    flex: 1,
-                    marginLeft: spacing[3],
-                    padding: spacing[3],
-                    borderRadius: borderRadius.lg,
-                    alignItems: 'center',
-                    backgroundColor: m3.colorScheme.primary,
-                  }}
-                >
-                  <Text
-                    style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}
-                  >
-                    {t('common.actions.done')}
-                  </Text>
-                </Pressable>
+                  style={{ marginLeft: spacing[3] }}
+                />
               </View>
             </View>
           </Pressable>

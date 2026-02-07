@@ -16,14 +16,13 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
-import { getDefaultCurrency } from '@/i18n/currency';
 import {
   useFarms,
   useDeleteFarm,
   useWarehouseItems,
-  useProfile,
   useDeleteWarehouseItem,
   useFabBottomPosition,
+  useCurrency,
 } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { useModalStore } from '@/stores';
@@ -77,11 +76,10 @@ export default function ExploreScreen() {
     refetch: refetchWarehouse,
     isRefetching: warehouseRefetching,
   } = useWarehouseItems();
-  const { data: profile } = useProfile();
   const deleteItemMutation = useDeleteWarehouseItem();
   const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilter>('all');
 
-  const currency = profile?.currency_preference ?? getDefaultCurrency();
+  const currency = useCurrency();
 
   const openWarehouseItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });

@@ -244,9 +244,7 @@ export default function FarmDetailScreen() {
       nextDay.setDate(nextDay.getDate() + 1);
       return nextDay;
     }
-    const nextDay = new Date(startDate);
-    nextDay.setDate(nextDay.getDate() + 1);
-    return nextDay;
+    return today;
   }, []);
 
   const [seasonStartDate, setSeasonStartDate] = useState(defaultSeasonStartDate);
@@ -272,7 +270,7 @@ export default function FarmDetailScreen() {
 
   const handleEndSeason = async () => {
     if (!farm?.id) return;
-    if (formatLocalDate(seasonStartDate) > formatLocalDate(seasonEndDate)) {
+    if (formatLocalDate(seasonStartDate) >= formatLocalDate(seasonEndDate)) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.invalidRange'));
       return;
     }
@@ -681,7 +679,7 @@ export default function FarmDetailScreen() {
               >
                 {({ pressed }) => (
                   <View style={{ borderRadius: 9999, overflow: 'hidden' }}>
-                    <View style={{ padding: 4 }}>
+                    <View style={{ padding: spacing[1] }}>
                       <UiSymbol name="create-outline" size={24} color={m3.colorScheme.primary} />
                     </View>
                     <View
@@ -714,7 +712,7 @@ export default function FarmDetailScreen() {
               >
                 {({ pressed }) => (
                   <View style={{ borderRadius: 9999, overflow: 'hidden' }}>
-                    <View style={{ padding: 4 }}>
+                    <View style={{ padding: spacing[1] }}>
                       {deleteFarmMutation.isPending ? (
                         <ActivityIndicator size="small" color={m3.colorScheme.error} />
                       ) : (
@@ -896,7 +894,7 @@ export default function FarmDetailScreen() {
                         >
                           {({ pressed }) => (
                             <View style={{ borderRadius: 9999, overflow: 'hidden' }}>
-                              <View style={{ padding: 2 }}>
+                              <View style={{ padding: spacing[1] }}>
                                 <UiSymbol
                                   name="ellipsis.circle"
                                   size={20}

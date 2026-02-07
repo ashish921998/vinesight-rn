@@ -6,10 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/use-analytics';
-import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
-import { getDefaultCurrency } from '@/i18n/currency';
+import { useCurrency } from '@/hooks/use-currency';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
@@ -26,13 +25,12 @@ export default function AnalyticsScreen() {
   const m3 = useM3();
   const { t } = useTranslation();
 
-  const { data: profile } = useProfile();
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
 
   const { analytics, costAnalysis, yieldAnalysis, performanceMetrics, isLoading } =
     useAnalytics(timeRange);
 
-  const currency = profile?.currency_preference ?? getDefaultCurrency();
+  const currency = useCurrency();
   const metricColors = useMemo(
     () => ({
       irrigation: {

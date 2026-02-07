@@ -8,13 +8,13 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
-import { getDefaultCurrency } from '@/i18n/currency';
+import { useCurrency } from '@/hooks/use-currency';
 
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFarms, useProfile } from '../src/hooks';
+import { useFarms } from '../src/hooks';
 import { useReportData, useReportExport, getDefaultDateRange } from '../src/hooks/use-reports';
 import { DateRange, ReportType, ReportFormat } from '../src/types/report';
 import { useAuthStore } from '@/stores';
@@ -50,13 +50,12 @@ export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const { user } = useAuthStore();
-  const { data: profile } = useProfile();
+  const preferredCurrency = useCurrency();
   const VALID_AREA_UNITS = ['acres', 'hectares'] as const;
   const rawAreaUnit = user?.user_metadata?.area_unit;
   const areaUnit = VALID_AREA_UNITS.includes(rawAreaUnit as 'acres' | 'hectares')
     ? rawAreaUnit
     : 'acres';
-  const preferredCurrency = profile?.currency_preference ?? getDefaultCurrency();
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
