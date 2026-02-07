@@ -16,6 +16,7 @@ type BaseIconName =
   | 'document'
   | 'leaf'
   | 'drop'
+  | 'spraycan'
   | 'flask'
   | 'basket'
   | 'cash'
@@ -23,7 +24,11 @@ type BaseIconName =
   | 'time'
   | 'layers'
   | 'chart'
-  | 'fertigation';
+  | 'fertigation'
+  | 'trending-up'
+  | 'trending-down'
+  | 'remove'
+  | 'pencil';
 
 type AppIconName = BaseIconName | string;
 
@@ -47,6 +52,7 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   'document-text': 'document',
   'water-outline': 'drop',
   water: 'drop',
+  spraycan: 'spraycan',
   'checkbox-outline': 'check-circle',
   flask: 'flask',
   basket: 'basket',
@@ -57,6 +63,16 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   layers: 'layers',
   analytics: 'chart',
   fertigation: 'fertigation',
+  // SF Symbol aliases for compatibility
+  'drop.fill': 'drop',
+  'spraycan.fill': 'spraycan',
+  'flask.fill': 'flask',
+  'basket.fill': 'basket',
+  'dollarsign.circle.fill': 'cash',
+  'chart.bar.fill': 'chart',
+  'doc.text.fill': 'document',
+  'lightbulb.fill': 'flash',
+  'checkmark.circle.fill': 'check-circle',
 };
 
 export function AppIcon({ name, size = 20, color }: AppIconProps) {
@@ -331,6 +347,25 @@ export function AppIcon({ name, size = 20, color }: AppIconProps) {
           />
         </Svg>
       );
+    case 'spraycan':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M9 5h6v2H9zM8 7h8v3H8zM8 10h8v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M17 11c1.8 0 3 1.2 3 3"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+          />
+        </Svg>
+      );
     case 'basket':
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -418,6 +453,59 @@ export function AppIcon({ name, size = 20, color }: AppIconProps) {
           <Rect x="6" y="12" width="3" height="7" fill={resolvedColor} />
           <Rect x="11" y="9" width="3" height="10" fill={resolvedColor} />
           <Rect x="16" y="6" width="3" height="13" fill={resolvedColor} />
+        </Svg>
+      );
+    case 'trending-up':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M22 6l-8.5 8.5-5-5-6.5 6.5"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'trending-down':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M22 18l-8.5-8.5-5 5-6.5-6.5"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'remove':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Line
+            x1="5"
+            y1="12"
+            x2="19"
+            y2="12"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+          />
+        </Svg>
+      );
+    case 'pencil':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </Svg>
       );
     default:

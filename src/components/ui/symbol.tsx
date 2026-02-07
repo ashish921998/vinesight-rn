@@ -4,6 +4,7 @@ import { View, Text, Platform, type StyleProp, type TextStyle, type ViewStyle } 
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ICON_MAPPING } from '@/utils/icon-mapping';
 import { useM3 } from '@/styles/use-theme';
+import { AppIcon } from './app-icon';
 
 interface SymbolProps {
   name: SymbolViewProps['name'] | string;
@@ -17,6 +18,8 @@ interface SymbolProps {
 const SYMBOL_TO_MATERIAL_ICON: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
   house: 'barn',
   'house.fill': 'barn',
+  spraycan: 'spray-bottle',
+  'spraycan.fill': 'spray-bottle',
 };
 
 // Map SF Symbol names to Ionicons as fallback
@@ -37,6 +40,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   checkmark: 'checkmark',
   'checkmark.circle.fill': 'checkmark-circle',
   'checkmark.square.fill': 'checkbox',
+  checklist: 'clipboard-outline',
+  'checklist.fill': 'clipboard',
   pencil: 'pencil',
   trash: 'trash',
   magnifyingglass: 'search',
@@ -54,7 +59,6 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'ellipsis.circle': 'ellipsis-horizontal-circle',
   'ellipsis.circle.fill': 'ellipsis-horizontal-circle',
   'line.3.horizontal': 'menu',
-  'line.3.horizontal.decrease': 'filter',
   square: 'square-outline',
   circle: 'ellipse-outline',
 
@@ -111,6 +115,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'doc.text.fill': 'document-text',
 
   // Tools & Science
+  spraycan: 'water-outline',
+  'spraycan.fill': 'water',
   flask: 'flask-outline',
   'flask.fill': 'flask',
   cube: 'cube-outline',
@@ -159,6 +165,11 @@ export function SymbolComponent({
   const directIonicon = Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, name)
     ? (name as keyof typeof Ionicons.glyphMap)
     : undefined;
+  const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[name];
+  const isSprayIcon = resolvedName === 'spraycan' || resolvedName === 'spraycan.fill';
+
+  // Keep spray icon identical to AppIcon across all platforms.
+  if (isSprayIcon) return <AppIcon name="spraycan" size={size} color={resolvedColor} />;
 
   // On iOS 17+, use SF Symbols
   if (Platform.OS === 'ios') {
@@ -188,7 +199,6 @@ export function SymbolComponent({
   }
 
   // On Android/web, check for MaterialCommunityIcons first, then Ionicons
-  const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[name];
   if (materialIcon) {
     return (
       <MaterialCommunityIcons
