@@ -18,6 +18,7 @@ import {
   useFarmsNeedingAttention,
   useRecentActivities,
   useFarms,
+  useProfile,
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
@@ -77,7 +78,7 @@ export default function DashboardScreen() {
     isLoading: isLoadingActivities,
   } = useRecentActivities(5);
   const { data: farms, refetch: refetchFarms, isLoading: isLoadingFarms } = useFarms();
-
+  const { data: profile } = useProfile();
   const greetingKey = getGreetingKey();
 
   const handleRefresh = async () => {
@@ -159,7 +160,11 @@ export default function DashboardScreen() {
       <View style={containerStyle}>
         {/* Welcome Header */}
         <View style={{ marginBottom: spacing[6] }}>
-          <Text style={greetingStyle}>{t(`dashboard.greeting.${greetingKey}`)}</Text>
+          <Text style={greetingStyle}>
+            {profile?.full_name
+              ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
+              : t(`dashboard.greeting.${greetingKey}`)}
+          </Text>
         </View>
 
         {/* Stats Grid */}
