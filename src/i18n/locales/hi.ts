@@ -907,6 +907,7 @@ export const hi = {
       title: 'खेत प्राथमिकताएं',
       country: 'देश',
       selectCountry: 'एक देश चुनें',
+      currency: 'मुद्रा',
       areaUnit: 'क्षेत्रफल इकाई',
       subtitle: 'अपने अनुभव को अनुकूलित करने में हमारी मदद करें',
     },

@@ -17,6 +17,7 @@ import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatCurrency, formatDate } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import { useTranslation } from 'react-i18next';
 import {
   useFarms,
@@ -65,7 +66,7 @@ export default function LogsScreen() {
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
   const { data: profile } = useProfile();
-  const currency = profile?.currency_preference || 'INR';
+  const currency = profile?.currency_preference ?? getDefaultCurrency();
   const filterCardStyle = Platform.select({
     ios: {
       shadowColor: m3.colorScheme.shadow,

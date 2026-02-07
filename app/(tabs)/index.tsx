@@ -172,7 +172,7 @@ export default function DashboardScreen() {
                 icon="leaf"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
-                onPress={() => router.push('/(tabs)/farms')}
+                onPress={() => router.navigate('/(tabs)/farms')}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
@@ -182,7 +182,7 @@ export default function DashboardScreen() {
                 icon="people"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
-                onPress={() => router.push('/(tabs)/workers')}
+                onPress={() => router.navigate('/(tabs)/workers')}
               />
             </View>
           </View>
@@ -196,7 +196,7 @@ export default function DashboardScreen() {
                 icon="bar-chart"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
-                onPress={() => router.push('/logs')}
+                onPress={() => router.navigate('/logs')}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
@@ -208,7 +208,7 @@ export default function DashboardScreen() {
                 icon="checklist"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
-                onPress={() => router.push('/tasks')}
+                onPress={() => router.navigate('/tasks')}
               />
             </View>
           </View>

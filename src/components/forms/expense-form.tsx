@@ -6,6 +6,7 @@ import { NumericInput } from './form-field';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import { useProfile } from '../../hooks';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -50,7 +51,9 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
     }
   };
   const candidateCurrency = preferredCurrency || profile?.currency_preference;
-  const currency = isValidCurrency(candidateCurrency) ? (candidateCurrency ?? 'INR') : 'INR';
+  const currency = isValidCurrency(candidateCurrency)
+    ? (candidateCurrency ?? getDefaultCurrency())
+    : getDefaultCurrency();
   const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
 
   return (

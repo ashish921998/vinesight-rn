@@ -8,6 +8,7 @@ import * as Sharing from 'expo-sharing';
 import { cacheDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
 import { ReportData, ReportSummary, ReportPreview, DateRange, ReportType } from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import {
   Farm,
   IrrigationRecord,
@@ -264,7 +265,7 @@ export class ReportService {
     data: ReportData,
     summary: ReportSummary,
     reportType: ReportType,
-    preferredCurrency: string = 'INR',
+    preferredCurrency: string = getDefaultCurrency(),
   ): string {
     const styles = `
       <style>
@@ -444,7 +445,7 @@ export class ReportService {
     data: ReportData,
     summary: ReportSummary,
     reportType: ReportType,
-    preferredCurrency: string = 'INR',
+    preferredCurrency: string = getDefaultCurrency(),
   ): Promise<void> {
     const html = this.generatePDFHtml(data, summary, reportType, preferredCurrency);
 

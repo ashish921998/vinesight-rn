@@ -38,6 +38,7 @@ import {
 } from '@/services/notifications';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { getDefaultCurrency } from '@/i18n/currency';
 
 export default function SettingsScreen() {
   const colors = useThemeColors();
@@ -95,14 +96,14 @@ export default function SettingsScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Local preferences state
-  const [selectedCurrency, setSelectedCurrency] = useState('INR');
+  const [selectedCurrency, setSelectedCurrency] = useState(getDefaultCurrency());
   const [selectedAreaUnit, setSelectedAreaUnit] = useState('hectares');
 
   useEffect(() => {
     if (profile) {
       setEditName(profile.full_name || '');
       setEditPhone(profile.phone || '');
-      setSelectedCurrency(profile.currency_preference || 'INR');
+      setSelectedCurrency(profile.currency_preference ?? getDefaultCurrency());
       // Area unit from user metadata
     }
     if (user?.user_metadata?.area_unit) {

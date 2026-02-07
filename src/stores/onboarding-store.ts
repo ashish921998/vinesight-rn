@@ -30,6 +30,7 @@ const initialState: OnboardingState = {
   currentStep: 'language',
   preferences: {
     country: '',
+    currency: '',
     areaUnit: 'acres',
     notificationsEnabled: false,
   },

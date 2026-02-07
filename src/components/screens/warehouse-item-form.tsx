@@ -4,6 +4,7 @@ import { useCreateWarehouseItem, useUpdateWarehouseItem, useProfile } from '../.
 import { WarehouseItem, WarehouseItemType, WarehouseUnit } from '../../types';
 import i18n from '@/i18n';
 import { formatCurrency } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import {
   FormModal,
   SectionHeader,
@@ -48,7 +49,7 @@ export default function WarehouseItemForm({
   const [reorderQuantity, setReorderQuantity] = useState('');
   const [notes, setNotes] = useState('');
 
-  const currency = profile?.currency_preference || 'INR';
+  const currency = profile?.currency_preference ?? getDefaultCurrency();
   const isEditing = !!editingItem;
 
   const unitOptions = useMemo(

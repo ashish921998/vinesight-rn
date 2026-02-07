@@ -7,6 +7,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import {
   computeWorkerMetrics,
   computeOverview,
@@ -21,7 +22,7 @@ export function WorkerAnalyticsView() {
   const { data: attendance, isLoading: attendanceLoading } = useAllWorkerAttendance();
   const { data: transactions, isLoading: transactionsLoading } = useAllWorkerTransactions();
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference || 'INR';
+  const preferredCurrency = profile?.currency_preference ?? getDefaultCurrency();
 
   const dateRange = useMemo(() => getDefaultDateRange(30), []);
 

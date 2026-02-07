@@ -12,6 +12,7 @@ import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import { useProfile } from '@/hooks';
 import { useM3 } from '@/styles/use-theme';
 import type {
@@ -70,7 +71,7 @@ function getDescriptionFromData(
     }
     case 'expense': {
       const expense = data as ExpenseRecord;
-      const cost = formatCurrency(expense.cost ?? 0, currency || 'USD');
+      const cost = formatCurrency(expense.cost ?? 0, currency ?? getDefaultCurrency());
       const expenseType = expense.type || t('common.general');
       return t('logs.expenseDescription', { cost, type: expenseType });
     }
@@ -100,7 +101,7 @@ export function ActivityLogCard({
   const m3 = useM3();
   const { t } = useTranslation();
   const { data: profile } = useProfile();
-  const currency = profile?.currency_preference || 'INR';
+  const currency = profile?.currency_preference ?? getDefaultCurrency();
 
   const hasActions = Boolean(onEdit || onDelete);
   const isInteractive = Boolean(onPress) && !hasActions;

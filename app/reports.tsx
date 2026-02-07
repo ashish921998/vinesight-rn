@@ -8,6 +8,7 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -55,7 +56,7 @@ export default function ReportsScreen() {
   const areaUnit = VALID_AREA_UNITS.includes(rawAreaUnit as 'acres' | 'hectares')
     ? rawAreaUnit
     : 'acres';
-  const preferredCurrency = profile?.currency_preference || 'INR';
+  const preferredCurrency = profile?.currency_preference ?? getDefaultCurrency();
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');

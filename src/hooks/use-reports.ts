@@ -13,6 +13,7 @@ import {
   useHarvestRecords,
   useExpenseRecords,
 } from './use-records';
+import { getDefaultCurrency } from '@/i18n/currency';
 import { ReportService } from '../services/report-service';
 import { DateRange, ReportPreview, ReportType, ReportFormat } from '../types/report';
 
@@ -71,7 +72,7 @@ export function useReportData(farmId: number | null, dateRange: DateRange | null
  */
 export function useReportExport() {
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference || 'INR';
+  const preferredCurrency = profile?.currency_preference ?? getDefaultCurrency();
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 

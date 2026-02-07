@@ -6,6 +6,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { useTranslation } from 'react-i18next';
 import { useProfile, useWorkerAttendance, useWorkerTransactions, useWorkers } from '@/hooks';
 import { formatCurrency, formatDate } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import {
   computeWorkerMetrics,
@@ -28,7 +29,7 @@ export default function WorkerAnalyticsDetailScreen() {
   const { data: attendance, isLoading: attendanceLoading } = useWorkerAttendance(workerId);
   const { data: transactions, isLoading: transactionsLoading } = useWorkerTransactions(workerId);
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference || 'INR';
+  const preferredCurrency = profile?.currency_preference ?? getDefaultCurrency();
 
   const [range, setRange] = useState<DateRange>(() => getDefaultDateRange(30));
   const [showFromPicker, setShowFromPicker] = useState(false);

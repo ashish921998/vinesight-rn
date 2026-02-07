@@ -11,6 +11,7 @@ import type { Farm } from '../types';
 import { TABLES, isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
 import { formatCurrency } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import { useProfile } from './use-profile';
 
 // ============================================================
@@ -162,7 +163,7 @@ export function useFarmsNeedingAttention() {
 
 export function useRecentActivities(limit: number = 5) {
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference || 'INR';
+  const preferredCurrency = profile?.currency_preference ?? getDefaultCurrency();
 
   return useQuery({
     queryKey: [...queryKeys.dashboard.recentActivities(limit), preferredCurrency],

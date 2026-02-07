@@ -909,6 +909,7 @@ export const mr = {
       title: '$t(glossary.farm) प्राधान्ये',
       country: 'देश',
       selectCountry: 'देश निवडा',
+      currency: 'चलन',
       areaUnit: 'क्षेत्रफळ एकक',
       subtitle: 'आपला अनुभव सानुकूल करण्यासाठी मदत करा',
     },

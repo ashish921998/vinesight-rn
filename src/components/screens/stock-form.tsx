@@ -9,6 +9,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatNumber } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 
 interface Props {
   visible?: boolean;
@@ -29,7 +30,7 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
   const [quantityToAdd, setQuantityToAdd] = useState('');
   const [newUnitPrice, setNewUnitPrice] = useState('');
 
-  const currency = profile?.currency_preference || 'INR';
+  const currency = profile?.currency_preference ?? getDefaultCurrency();
 
   // Track previous visible/item state to prevent unnecessary updates
   const prevVisibleRef = useRef(isVisible);

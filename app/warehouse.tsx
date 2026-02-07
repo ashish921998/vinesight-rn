@@ -19,6 +19,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
@@ -41,7 +42,7 @@ export default function WarehouseScreen() {
 
   const [filter, setFilter] = useState<FilterType>('all');
 
-  const currency = profile?.currency_preference || 'INR';
+  const currency = profile?.currency_preference ?? getDefaultCurrency();
 
   const openAddItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });

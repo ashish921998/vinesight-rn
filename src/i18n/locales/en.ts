@@ -906,6 +906,7 @@ export const en = {
       title: 'Farm Preferences',
       country: 'Country',
       selectCountry: 'Select a country',
+      currency: 'Currency',
       areaUnit: 'Area Unit',
       subtitle: 'Help us customize your experience',
     },

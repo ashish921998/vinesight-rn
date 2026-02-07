@@ -9,6 +9,7 @@ import { useAnalytics } from '../src/hooks/use-analytics';
 import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
@@ -31,7 +32,7 @@ export default function AnalyticsScreen() {
   const { analytics, costAnalysis, yieldAnalysis, performanceMetrics, isLoading } =
     useAnalytics(timeRange);
 
-  const currency = profile?.currency_preference || 'INR';
+  const currency = profile?.currency_preference ?? getDefaultCurrency();
   const currencySymbol = currency === 'INR' ? '₹' : '$';
   const metricColors = useMemo(
     () => ({

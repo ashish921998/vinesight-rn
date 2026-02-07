@@ -152,16 +152,20 @@ export default function FarmDetailScreen() {
     if (farmSeasons && farmSeasons.length > 0) {
       return farmSeasons
         .map((season) => season.end_date)
-        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+        .sort((a, b) => parseDbDateToLocalDate(a).getTime() - parseDbDateToLocalDate(b).getTime());
     }
     const rawDates = farm?.season_end_dates ?? [];
-    return [...rawDates].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    return [...rawDates].sort(
+      (a, b) => parseDbDateToLocalDate(a).getTime() - parseDbDateToLocalDate(b).getTime(),
+    );
   }, [farm?.season_end_dates, farmSeasons]);
 
   const firstSeasonStartFromSeasons = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return null;
     const ordered = [...farmSeasons].sort(
-      (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime(),
+      (a, b) =>
+        parseDbDateToLocalDate(a.start_date).getTime() -
+        parseDbDateToLocalDate(b.start_date).getTime(),
     );
     return ordered[0]?.start_date ?? null;
   }, [farmSeasons]);
@@ -184,23 +188,29 @@ export default function FarmDetailScreen() {
     return minimumSeasonStartDate ?? currentSeasonStartDate ?? new Date();
   }, [currentSeasonStartDate, minimumSeasonStartDate]);
 
+  const activeSeasonStartDate = useMemo(() => {
+    if (minimumSeasonStartDate) return minimumSeasonStartDate;
+    if (firstSeasonStartFromSeasons) return parseDbDateToLocalDate(firstSeasonStartFromSeasons);
+    if (farm?.first_season_start_date) return parseDbDateToLocalDate(farm.first_season_start_date);
+    if (farm?.date_of_pruning) return parseDbDateToLocalDate(farm.date_of_pruning);
+    return null;
+  }, [minimumSeasonStartDate, firstSeasonStartFromSeasons, farm]);
+
   const totalWaterUsed = useMemo(() => {
     if (!irrigationRecords) return null;
-    const currentSeasonStartIso = currentSeasonStartDate
-      ? formatLocalDate(currentSeasonStartDate)
-      : null;
+    const activeStartIso = activeSeasonStartDate ? formatLocalDate(activeSeasonStartDate) : null;
     const scopedIrrigationRecords =
-      currentSeasonStartIso === null
+      activeStartIso === null
         ? irrigationRecords
         : irrigationRecords.filter((record) => {
             const recordDateIso = formatLocalDate(parseDbDateToLocalDate(record.date));
-            return recordDateIso >= currentSeasonStartIso;
+            return recordDateIso >= activeStartIso;
           });
     return scopedIrrigationRecords.reduce(
       (sum, record) => sum + (record.duration || 0) * (record.system_discharge || 0),
       0,
     );
-  }, [currentSeasonStartDate, irrigationRecords]);
+  }, [activeSeasonStartDate, irrigationRecords]);
 
   const formatWaterUsage = (value: number | null | undefined) => {
     if (value === null || value === undefined) return t('farmDetails.water.noIrrigationLoggedYet');
@@ -315,10 +325,15 @@ export default function FarmDetailScreen() {
     router.push(`/farm/${id}/edit`);
   };
 
-  const openEndSeasonForm = () => {
-    setShowFarmActionsSheet(false);
+  const closeSeasonForm = () => {
+    setShowSeasonForm(false);
     setShowSeasonStartPicker(false);
     setShowSeasonEndPicker(false);
+  };
+
+  const openEndSeasonForm = () => {
+    setShowFarmActionsSheet(false);
+    closeSeasonForm();
     setShowSeasonForm(true);
   };
 
@@ -385,8 +400,11 @@ export default function FarmDetailScreen() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetchFarm(), refetchRecords(), refetchTasks()]);
-    setRefreshing(false);
+    try {
+      await Promise.all([refetchFarm(), refetchRecords(), refetchTasks()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleAddActivity = () => {
@@ -1649,11 +1667,7 @@ export default function FarmDetailScreen() {
 
       {showSeasonForm && (
         <Pressable
-          onPress={() => {
-            setShowSeasonForm(false);
-            setShowSeasonStartPicker(false);
-            setShowSeasonEndPicker(false);
-          }}
+          onPress={closeSeasonForm}
           style={{
             position: 'absolute',
             top: 0,
@@ -1686,7 +1700,7 @@ export default function FarmDetailScreen() {
               <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
                 {t('farmDetails.seasons.formTitle')}
               </Text>
-              <Pressable onPress={() => setShowSeasonForm(false)}>
+              <Pressable onPress={closeSeasonForm}>
                 <UiSymbol
                   name="xmark.circle.fill"
                   size={24}
