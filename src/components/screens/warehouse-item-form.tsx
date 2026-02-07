@@ -48,7 +48,7 @@ export default function WarehouseItemForm({
   const [reorderQuantity, setReorderQuantity] = useState('');
   const [notes, setNotes] = useState('');
 
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
   const isEditing = !!editingItem;
 
   const unitOptions = useMemo(

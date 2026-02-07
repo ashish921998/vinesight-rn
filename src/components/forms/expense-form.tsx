@@ -48,7 +48,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       return false;
     }
   };
-  const candidateCurrency = preferredCurrency || profile?.preferred_currency;
+  const candidateCurrency = preferredCurrency || profile?.currency_preference;
   const currency = isValidCurrency(candidateCurrency) ? (candidateCurrency ?? 'INR') : 'INR';
   const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
 

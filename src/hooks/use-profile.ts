@@ -70,11 +70,11 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (updates: ProfileUpdate): Promise<Profile> => {
       const userId = await getUserId();
+      const payload: ProfileUpdate & { id: string } = { id: userId, ...updates };
 
       const { data, error } = await supabase
         .from(TABLES.PROFILES)
-        .update(updates)
-        .eq('id', userId)
+        .upsert(payload, { onConflict: 'id' })
         .select()
         .single();
 

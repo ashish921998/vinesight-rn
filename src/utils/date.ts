@@ -15,5 +15,8 @@ export const parseDbDateToLocalDate = (value: string): Date => {
     );
   }
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`Invalid date value: "${value}"`);
+  }
+  return parsed;
 };

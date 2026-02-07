@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { useProfile, useWorkerAttendance, useWorkerTransactions, useWorkers } from '@/hooks';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -18,6 +19,7 @@ import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme'
 import { colorWithOpacity } from '@/utils/color';
 
 export default function WorkerAnalyticsDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams();
   const rawWorkerId = Number(id);
   const hasValidWorkerId = Number.isFinite(rawWorkerId);
@@ -26,7 +28,7 @@ export default function WorkerAnalyticsDetailScreen() {
   const { data: attendance, isLoading: attendanceLoading } = useWorkerAttendance(workerId);
   const { data: transactions, isLoading: transactionsLoading } = useWorkerTransactions(workerId);
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.preferred_currency || 'USD';
+  const preferredCurrency = profile?.currency_preference || 'INR';
 
   const [range, setRange] = useState<DateRange>(() => getDefaultDateRange(30));
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -93,7 +95,7 @@ export default function WorkerAnalyticsDetailScreen() {
             textAlign: 'center',
           }}
         >
-          Worker not found
+          {t('workerAnalyticsDetail.notFound')}
         </Text>
         <Pressable
           onPress={() => router.back()}
@@ -105,7 +107,9 @@ export default function WorkerAnalyticsDetailScreen() {
             backgroundColor: m3.colorScheme.primaryContainer,
           }}
         >
-          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>Go back</Text>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
+            {t('common.goBack')}
+          </Text>
         </Pressable>
       </View>
     );
@@ -136,7 +140,7 @@ export default function WorkerAnalyticsDetailScreen() {
               marginLeft: spacing[1],
             }}
           >
-            Back
+            {t('common.back')}
           </Text>
         </Pressable>
 
@@ -157,7 +161,8 @@ export default function WorkerAnalyticsDetailScreen() {
             marginTop: spacing[1],
           }}
         >
-          Daily rate: {formatCurrency(worker.daily_rate, preferredCurrency)}
+          {t('workerAnalyticsDetail.dailyRate')}:{' '}
+          {formatCurrency(worker.daily_rate, preferredCurrency)}
         </Text>
       </View>
 
@@ -178,7 +183,7 @@ export default function WorkerAnalyticsDetailScreen() {
               color: m3.colorScheme.onSurfaceVariant,
             }}
           >
-            Date range
+            {t('workerAnalyticsDetail.dateRange')}
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[2] }}>
             <Pressable
@@ -194,7 +199,7 @@ export default function WorkerAnalyticsDetailScreen() {
               }}
             >
               <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-                From
+                {t('common.from')}
               </Text>
               <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
                 {formatDate(range.from)}
@@ -213,7 +218,7 @@ export default function WorkerAnalyticsDetailScreen() {
               }}
             >
               <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.onSurfaceVariant }}>
-                To
+                {t('common.to')}
               </Text>
               <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
                 {formatDate(range.to)}
@@ -260,12 +265,12 @@ export default function WorkerAnalyticsDetailScreen() {
                 color: m3.colorScheme.onSurface,
               }}
             >
-              Quick stats
+              {t('workerAnalyticsDetail.quickStats')}
             </Text>
             <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
-              <StatChip label="Full" value={String(metrics.fullDays)} />
-              <StatChip label="Half" value={String(metrics.halfDays)} />
-              <StatChip label="Absent" value={String(metrics.absentDays)} />
+              <StatChip label={t('attendance.status.fullDay')} value={String(metrics.fullDays)} />
+              <StatChip label={t('attendance.status.halfDay')} value={String(metrics.halfDays)} />
+              <StatChip label={t('attendance.status.absent')} value={String(metrics.absentDays)} />
             </View>
           </View>
         </View>
@@ -290,7 +295,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 marginBottom: spacing[2],
               }}
             >
-              Weekly summary
+              {t('workerAnalyticsDetail.weeklySummary')}
             </Text>
             {weeklySummaries.map((week) => (
               <View
@@ -305,7 +310,7 @@ export default function WorkerAnalyticsDetailScreen() {
                   {week.start} → {week.end}
                 </Text>
                 <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
-                  {week.workDaysEquivalent.toFixed(1)} days ·{' '}
+                  {week.workDaysEquivalent.toFixed(1)} {t('workerAnalyticsDetail.days')} ·{' '}
                   {formatCurrency(week.earnings, preferredCurrency)}
                 </Text>
               </View>
@@ -333,7 +338,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 marginBottom: spacing[2],
               }}
             >
-              Transactions
+              {t('workerAnalyticsDetail.transactions')}
             </Text>
             {filteredTransactions.length ? (
               filteredTransactions.map((tx) => (
@@ -362,7 +367,7 @@ export default function WorkerAnalyticsDetailScreen() {
               ))
             ) : (
               <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
-                No transactions in this range.
+                {t('workerAnalyticsDetail.noTransactionsInRange')}
               </Text>
             )}
           </View>

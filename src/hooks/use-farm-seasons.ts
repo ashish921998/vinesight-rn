@@ -1,26 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { requireUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
 import type { FarmSeason, FarmSeasonInsert } from '../types';
 import { TABLES } from '../types';
-
-async function getUserId(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session) {
-    throw new Error('Please sign in to continue');
-  }
-  return session.user.id;
-}
 
 export function useFarmSeasons(farmId: number | undefined) {
   return useQuery({
     queryKey: queryKeys.farmSeasons.listByFarm(farmId ?? -1),
     queryFn: async (): Promise<FarmSeason[]> => {
       if (!farmId) return [];
-      const userId = await getUserId();
+      const userId = await requireUserId();
       const { data, error } = await supabase
         .from(TABLES.FARM_SEASONS)
         .select('*')
@@ -44,7 +34,7 @@ export function useCreateFarmSeason() {
 
   return useMutation({
     mutationFn: async (season: FarmSeasonInsert): Promise<FarmSeason> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
       const { data, error } = await supabase
         .from(TABLES.FARM_SEASONS)
         .insert({ ...season, user_id: userId })
@@ -64,9 +54,6 @@ export function useCreateFarmSeason() {
           return next;
         },
       );
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.farmSeasons.listByFarm(newSeason.farm_id),
-      });
     },
   });
 }

@@ -87,6 +87,7 @@ export const ICON_MAPPING: Record<string, string> = {
   flask: 'flask.fill',
   'flask-outline': 'flask',
   'beaker-outline': 'flask',
+
   layers: 'square.stack.3d.up.fill',
   'layers-outline': 'square.stack.3d.up',
   'cube-outline': 'cube',

@@ -40,7 +40,7 @@ export default function WarehouseScreen() {
 
   const [filter, setFilter] = useState<FilterType>('all');
 
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
 
   const openAddItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });

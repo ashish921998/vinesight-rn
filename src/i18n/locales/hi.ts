@@ -1631,6 +1631,17 @@ export const hi = {
     },
   },
 
+  workerAnalyticsDetail: {
+    notFound: 'श्रमिक नहीं मिला',
+    dailyRate: 'दैनिक दर',
+    dateRange: 'तारीख सीमा',
+    quickStats: 'त्वरित आँकड़े',
+    weeklySummary: 'साप्ताहिक सारांश',
+    transactions: 'लेन-देन',
+    noTransactionsInRange: 'इस तारीख सीमा में कोई लेन-देन नहीं है।',
+    days: 'दिन',
+  },
+
   reports: {
     title: 'रिपोर्ट',
     types: {

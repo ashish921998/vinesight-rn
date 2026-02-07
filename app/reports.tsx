@@ -20,6 +20,7 @@ import { useAuthStore } from '@/stores';
 import { telemetry } from '@/services/telemetry';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { parseDbDateToLocalDate } from '@/utils/date';
 
 const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
   { value: 'comprehensive', labelKey: 'reports.types.comprehensive', icon: 'doc.text.fill' },
@@ -41,7 +42,7 @@ export default function ReportsScreen() {
   const areaUnit = VALID_AREA_UNITS.includes(rawAreaUnit as 'acres' | 'hectares')
     ? rawAreaUnit
     : 'acres';
-  const preferredCurrency = profile?.preferred_currency || 'USD';
+  const preferredCurrency = profile?.currency_preference || 'INR';
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   const [reportType, setReportType] = useState<ReportType>('comprehensive');
@@ -375,20 +376,20 @@ export default function ReportsScreen() {
 
           {showFromPicker && (
             <DateTimePicker
-              value={new Date(dateRange.from)}
+              value={parseDbDateToLocalDate(dateRange.from)}
               mode="date"
               display="default"
               onChange={(_, date) => handleDateChange('from', date)}
-              maximumDate={new Date(dateRange.to)}
+              maximumDate={parseDbDateToLocalDate(dateRange.to)}
             />
           )}
           {showToPicker && (
             <DateTimePicker
-              value={new Date(dateRange.to)}
+              value={parseDbDateToLocalDate(dateRange.to)}
               mode="date"
               display="default"
               onChange={(_, date) => handleDateChange('to', date)}
-              minimumDate={new Date(dateRange.from)}
+              minimumDate={parseDbDateToLocalDate(dateRange.from)}
               maximumDate={new Date()}
             />
           )}

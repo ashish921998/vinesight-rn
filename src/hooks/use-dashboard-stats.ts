@@ -5,6 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { getUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
 import type { Farm } from '../types';
 import { TABLES, isLowWater } from '../types';
@@ -35,17 +36,6 @@ export interface RecentActivity {
   description: string;
   farmId: number;
   farmName: string;
-}
-
-// ============================================================
-// MARK: - Helper to get current user ID
-// ============================================================
-
-async function getUserId(): Promise<string | null> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
 }
 
 // ============================================================
@@ -86,47 +76,45 @@ export function useDashboardStats() {
       let totalHarvest = 0;
 
       if (farmIds.length > 0) {
-        // Count irrigation records
-        const { count: irrigationCount } = await supabase
-          .from(TABLES.IRRIGATION_RECORDS)
-          .select('*', { count: 'exact', head: true })
-          .in('farm_id', farmIds)
-          .gte('date', dateStr);
-
-        // Count spray records
-        const { count: sprayCount } = await supabase
-          .from(TABLES.SPRAY_RECORDS)
-          .select('*', { count: 'exact', head: true })
-          .in('farm_id', farmIds)
-          .gte('date', dateStr);
-
-        // Count harvest records and sum quantity
-        const { count: harvestCount, data: harvestData } = await supabase
-          .from(TABLES.HARVEST_RECORDS)
-          .select('quantity', { count: 'exact' })
-          .in('farm_id', farmIds)
-          .gte('date', dateStr);
-
-        // Count expense records
-        const { count: expenseCount } = await supabase
-          .from(TABLES.EXPENSE_RECORDS)
-          .select('*', { count: 'exact', head: true })
-          .in('farm_id', farmIds)
-          .gte('date', dateStr);
-
-        // Count fertigation records
-        const { count: fertigationCount } = await supabase
-          .from(TABLES.FERTIGATION_RECORDS)
-          .select('*', { count: 'exact', head: true })
-          .in('farm_id', farmIds)
-          .gte('date', dateStr);
-
-        // Count daily notes
-        const { count: dailyNotesCount } = await supabase
-          .from(TABLES.DAILY_NOTES)
-          .select('*', { count: 'exact', head: true })
-          .in('farm_id', farmIds)
-          .gte('date', dateStr);
+        const [
+          { count: irrigationCount },
+          { count: sprayCount },
+          { count: harvestCount, data: harvestData },
+          { count: expenseCount },
+          { count: fertigationCount },
+          { count: dailyNotesCount },
+        ] = await Promise.all([
+          supabase
+            .from(TABLES.IRRIGATION_RECORDS)
+            .select('*', { count: 'exact', head: true })
+            .in('farm_id', farmIds)
+            .gte('date', dateStr),
+          supabase
+            .from(TABLES.SPRAY_RECORDS)
+            .select('*', { count: 'exact', head: true })
+            .in('farm_id', farmIds)
+            .gte('date', dateStr),
+          supabase
+            .from(TABLES.HARVEST_RECORDS)
+            .select('quantity', { count: 'exact' })
+            .in('farm_id', farmIds)
+            .gte('date', dateStr),
+          supabase
+            .from(TABLES.EXPENSE_RECORDS)
+            .select('*', { count: 'exact', head: true })
+            .in('farm_id', farmIds)
+            .gte('date', dateStr),
+          supabase
+            .from(TABLES.FERTIGATION_RECORDS)
+            .select('*', { count: 'exact', head: true })
+            .in('farm_id', farmIds)
+            .gte('date', dateStr),
+          supabase
+            .from(TABLES.DAILY_NOTES)
+            .select('*', { count: 'exact', head: true })
+            .in('farm_id', farmIds)
+            .gte('date', dateStr),
+        ]);
 
         activitiesCount =
           (irrigationCount ?? 0) +
@@ -185,7 +173,7 @@ export function useFarmsNeedingAttention() {
 
 export function useRecentActivities(limit: number = 5) {
   const { data: profile } = useProfile();
-  const preferredCurrency = profile?.preferred_currency || 'USD';
+  const preferredCurrency = profile?.currency_preference || 'INR';
 
   return useQuery({
     queryKey: [...queryKeys.dashboard.recentActivities(limit), preferredCurrency],

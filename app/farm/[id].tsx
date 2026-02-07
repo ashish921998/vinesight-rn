@@ -142,7 +142,7 @@ export default function FarmDetailScreen() {
   // Days since pruning
   const daysSincePruning = useMemo(() => {
     if (!farm?.date_of_pruning) return null;
-    const pruningDate = new Date(farm.date_of_pruning);
+    const pruningDate = parseDbDateToLocalDate(farm.date_of_pruning);
     const today = new Date();
     const diffTime = today.getTime() - pruningDate.getTime();
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -175,15 +175,14 @@ export default function FarmDetailScreen() {
     return nextDate;
   }, [lastSeasonEndDate]);
   const currentSeasonStartDate = useMemo(() => {
-    if (minimumSeasonStartDate) return minimumSeasonStartDate;
     if (firstSeasonStartFromSeasons) return parseDbDateToLocalDate(firstSeasonStartFromSeasons);
     if (farm?.first_season_start_date) return parseDbDateToLocalDate(farm.first_season_start_date);
     if (farm?.date_of_pruning) return parseDbDateToLocalDate(farm.date_of_pruning);
     return null;
-  }, [farm, firstSeasonStartFromSeasons, minimumSeasonStartDate]);
+  }, [farm, firstSeasonStartFromSeasons]);
   const defaultSeasonStartDate = useMemo(() => {
-    return currentSeasonStartDate ?? new Date();
-  }, [currentSeasonStartDate]);
+    return minimumSeasonStartDate ?? currentSeasonStartDate ?? new Date();
+  }, [currentSeasonStartDate, minimumSeasonStartDate]);
 
   const totalWaterUsed = useMemo(() => {
     if (!irrigationRecords) return null;
@@ -216,7 +215,7 @@ export default function FarmDetailScreen() {
 
   const getInitialSeasonEndDate = React.useCallback((startDate: Date) => {
     const today = new Date();
-    if (today.getTime() <= startDate.getTime()) {
+    if (today.getTime() < startDate.getTime()) {
       const nextDay = new Date(startDate);
       nextDay.setDate(nextDay.getDate() + 1);
       return nextDay;
@@ -247,7 +246,7 @@ export default function FarmDetailScreen() {
 
   const handleEndSeason = async () => {
     if (!farm?.id) return;
-    if (seasonStartDate.getTime() >= seasonEndDate.getTime()) {
+    if (seasonStartDate.getTime() > seasonEndDate.getTime()) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.invalidRange'));
       return;
     }
@@ -1672,8 +1671,8 @@ export default function FarmDetailScreen() {
               left: 0,
               right: 0,
               backgroundColor: m3.surface.surfaceContainerLow,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: borderRadius.xl,
+              borderTopRightRadius: borderRadius.xl,
               paddingTop: spacing[4],
               paddingHorizontal: spacing[4],
               paddingBottom: Math.max(insets.bottom, spacing[4]),
@@ -1715,11 +1714,11 @@ export default function FarmDetailScreen() {
                 mode="date"
                 display="spinner"
                 minimumDate={minimumSeasonStartDate ?? undefined}
-                maximumDate={new Date(seasonEndDate.getTime() - 24 * 60 * 60 * 1000)}
+                maximumDate={seasonEndDate}
                 onChange={(_, date) => {
                   if (!date) return;
                   setSeasonStartDate(date);
-                  if (seasonEndDate.getTime() <= date.getTime()) {
+                  if (seasonEndDate.getTime() < date.getTime()) {
                     const nextDay = new Date(date);
                     nextDay.setDate(nextDay.getDate() + 1);
                     setSeasonEndDate(nextDay);
@@ -1749,7 +1748,7 @@ export default function FarmDetailScreen() {
                 value={seasonEndDate}
                 mode="date"
                 display="spinner"
-                minimumDate={new Date(seasonStartDate.getTime() + 24 * 60 * 60 * 1000)}
+                minimumDate={seasonStartDate}
                 onChange={(_, date) => {
                   if (date) setSeasonEndDate(date);
                 }}
@@ -1784,12 +1783,12 @@ export default function FarmDetailScreen() {
           mode="date"
           display="default"
           minimumDate={minimumSeasonStartDate ?? undefined}
-          maximumDate={new Date(seasonEndDate.getTime() - 24 * 60 * 60 * 1000)}
+          maximumDate={seasonEndDate}
           onChange={(_, date) => {
             setShowSeasonStartPicker(false);
             if (!date) return;
             setSeasonStartDate(date);
-            if (seasonEndDate.getTime() <= date.getTime()) {
+            if (seasonEndDate.getTime() < date.getTime()) {
               const nextDay = new Date(date);
               nextDay.setDate(nextDay.getDate() + 1);
               setSeasonEndDate(nextDay);
@@ -1803,7 +1802,7 @@ export default function FarmDetailScreen() {
           value={seasonEndDate}
           mode="date"
           display="default"
-          minimumDate={new Date(seasonStartDate.getTime() + 24 * 60 * 60 * 1000)}
+          minimumDate={seasonStartDate}
           onChange={(_, date) => {
             setShowSeasonEndPicker(false);
             if (date) setSeasonEndDate(date);

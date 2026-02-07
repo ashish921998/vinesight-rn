@@ -100,7 +100,7 @@ export function ActivityLogCard({
   const m3 = useM3();
   const { t } = useTranslation();
   const { data: profile } = useProfile();
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
 
   const hasActions = Boolean(onEdit || onDelete);
   const isInteractive = Boolean(onPress) && !hasActions;

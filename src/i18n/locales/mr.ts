@@ -1674,6 +1674,17 @@ export const mr = {
     },
   },
 
+  workerAnalyticsDetail: {
+    notFound: '$t(glossary.worker) सापडला नाही',
+    dailyRate: 'दैनंदिन दर',
+    dateRange: 'दिनांक श्रेणी',
+    quickStats: 'जलद आकडे',
+    weeklySummary: 'साप्ताहिक सारांश',
+    transactions: 'व्यवहार',
+    noTransactionsInRange: 'या दिनांक श्रेणीत कोणतेही व्यवहार नाहीत.',
+    days: 'दिवस',
+  },
+
   reports: {
     title: '$t(glossary.report)',
     types: {

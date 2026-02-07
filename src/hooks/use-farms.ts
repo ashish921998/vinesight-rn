@@ -229,7 +229,8 @@ export function useDeleteFarm() {
             queryKey[0] === 'temporaryWorkerEntries' ||
             queryKey[0] === 'workerAttendance' ||
             queryKey[0] === 'dashboard' ||
-            queryKey[0] === 'farmSeasons'
+            queryKey[0] === 'farmSeasons' ||
+            queryKey[0] === 'dailyNotes'
           );
         },
       });

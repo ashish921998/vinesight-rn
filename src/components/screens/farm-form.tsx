@@ -42,6 +42,9 @@ const SOIL_TEXTURE_OPTIONS = [
   { value: 'Clay', labelKey: 'farmForm.soilTexture.options.clay' },
 ] as const;
 
+const DECIMAL_NUMBER_REGEX = /^-?\d+(?:\.\d+)?$/;
+const INTEGER_NUMBER_REGEX = /^-?\d+$/;
+
 type FarmFormMode = 'add' | 'edit';
 
 interface FarmFormProps {
@@ -70,37 +73,53 @@ const parseDbDateToLocalDate = (value: string): Date => {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 };
 
-const buildFormStateFromFarm = (farm?: Farm | null) => ({
-  name: farm?.name ?? '',
-  region: farm?.region ?? '',
-  area: farm?.area?.toString() ?? '',
-  selectedCrop: (farm?.crop as CropType) ?? 'Grapes',
-  cropVariety: farm?.crop_variety ?? '',
-  customVariety: '',
-  plantingDate: farm?.planting_date ? parseDbDateToLocalDate(farm.planting_date) : new Date(),
-  vineSpacing: farm?.vine_spacing?.toString() ?? '',
-  rowSpacing: farm?.row_spacing?.toString() ?? '',
-  totalTankCapacity: farm?.total_tank_capacity?.toString() ?? '',
-  systemDischarge: farm?.system_discharge?.toString() ?? '',
-  dateOfPruning: farm?.date_of_pruning ? parseDbDateToLocalDate(farm.date_of_pruning) : null,
-  locationName: farm?.location_name ?? '',
-  latitude: farm?.latitude?.toString() ?? '',
-  longitude: farm?.longitude?.toString() ?? '',
-  elevation: farm?.elevation?.toString() ?? '',
-  bulkDensity: farm?.bulk_density?.toString() ?? '',
-  cationExchangeCapacity: farm?.cation_exchange_capacity?.toString() ?? '',
-  soilWaterRetention: farm?.soil_water_retention?.toString() ?? '',
-  soilTextureClass: farm?.soil_texture_class ?? '',
-  sandPercentage: farm?.sand_percentage?.toString() ?? '',
-  siltPercentage: farm?.silt_percentage?.toString() ?? '',
-  clayPercentage: farm?.clay_percentage?.toString() ?? '',
-  showDatePicker: false,
-  showPruningDatePicker: false,
-  showVarietyPicker: false,
-  showTexturePicker: false,
-  showMapPicker: false,
-  plantingDateChanged: false,
-});
+const parseNumericInput = (rawValue: string, options?: { integer?: boolean }) => {
+  const trimmed = rawValue.trim();
+  if (!trimmed) return { value: undefined as number | undefined, invalid: false };
+  const regex = options?.integer ? INTEGER_NUMBER_REGEX : DECIMAL_NUMBER_REGEX;
+  if (!regex.test(trimmed)) return { value: undefined as number | undefined, invalid: true };
+  const value = options?.integer ? Number.parseInt(trimmed, 10) : Number.parseFloat(trimmed);
+  if (!Number.isFinite(value)) return { value: undefined as number | undefined, invalid: true };
+  return { value, invalid: false };
+};
+
+const buildFormStateFromFarm = (farm?: Farm | null) => {
+  const rawCrop = farm?.crop?.trim() ?? '';
+  const isKnownCrop = rawCrop in CROP_VARIETIES;
+
+  return {
+    name: farm?.name ?? '',
+    region: farm?.region ?? '',
+    area: farm?.area?.toString() ?? '',
+    selectedCrop: farm ? (isKnownCrop ? (rawCrop as CropType) : 'Other') : 'Grapes',
+    customCrop: farm && !isKnownCrop ? rawCrop : '',
+    cropVariety: farm?.crop_variety ?? '',
+    customVariety: '',
+    plantingDate: farm?.planting_date ? parseDbDateToLocalDate(farm.planting_date) : new Date(),
+    vineSpacing: farm?.vine_spacing?.toString() ?? '',
+    rowSpacing: farm?.row_spacing?.toString() ?? '',
+    totalTankCapacity: farm?.total_tank_capacity?.toString() ?? '',
+    systemDischarge: farm?.system_discharge?.toString() ?? '',
+    dateOfPruning: farm?.date_of_pruning ? parseDbDateToLocalDate(farm.date_of_pruning) : null,
+    locationName: farm?.location_name ?? '',
+    latitude: farm?.latitude?.toString() ?? '',
+    longitude: farm?.longitude?.toString() ?? '',
+    elevation: farm?.elevation?.toString() ?? '',
+    bulkDensity: farm?.bulk_density?.toString() ?? '',
+    cationExchangeCapacity: farm?.cation_exchange_capacity?.toString() ?? '',
+    soilWaterRetention: farm?.soil_water_retention?.toString() ?? '',
+    soilTextureClass: farm?.soil_texture_class ?? '',
+    sandPercentage: farm?.sand_percentage?.toString() ?? '',
+    siltPercentage: farm?.silt_percentage?.toString() ?? '',
+    clayPercentage: farm?.clay_percentage?.toString() ?? '',
+    showDatePicker: false,
+    showPruningDatePicker: false,
+    showVarietyPicker: false,
+    showTexturePicker: false,
+    showMapPicker: false,
+    plantingDateChanged: false,
+  };
+};
 
 type FormState = ReturnType<typeof buildFormStateFromFarm>;
 
@@ -214,6 +233,39 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
     const finalVariety =
       formState.cropVariety === 'Custom' ? formState.customVariety : formState.cropVariety;
+    const finalCrop =
+      formState.selectedCrop === 'Other'
+        ? formState.customCrop.trim() || formState.selectedCrop
+        : formState.selectedCrop;
+    const area = Number.parseFloat(formState.area.trim());
+    if (!Number.isFinite(area) || area <= 0) {
+      Alert.alert(t('common.error'), 'Please enter a valid area.');
+      return;
+    }
+
+    const parsedOptionalFields = {
+      vineSpacing: parseNumericInput(formState.vineSpacing),
+      rowSpacing: parseNumericInput(formState.rowSpacing),
+      totalTankCapacity: parseNumericInput(formState.totalTankCapacity),
+      systemDischarge: parseNumericInput(formState.systemDischarge),
+      latitude: parseNumericInput(formState.latitude),
+      longitude: parseNumericInput(formState.longitude),
+      elevation: parseNumericInput(formState.elevation, { integer: true }),
+      bulkDensity: parseNumericInput(formState.bulkDensity),
+      cationExchangeCapacity: parseNumericInput(formState.cationExchangeCapacity),
+      soilWaterRetention: parseNumericInput(formState.soilWaterRetention),
+      sandPercentage: parseNumericInput(formState.sandPercentage),
+      siltPercentage: parseNumericInput(formState.siltPercentage),
+      clayPercentage: parseNumericInput(formState.clayPercentage),
+    };
+
+    const hasInvalidOptionalNumbers = Object.values(parsedOptionalFields).some(
+      (field) => field.invalid,
+    );
+    if (hasInvalidOptionalNumbers) {
+      Alert.alert(t('common.error'), 'Please enter valid numeric values.');
+      return;
+    }
 
     if (isEdit) {
       if (!farmId) {
@@ -223,53 +275,39 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       const updates: FarmUpdate = {
         name: formState.name.trim(),
         region: formState.region.trim(),
-        area: parseFloat(formState.area),
-        crop: formState.selectedCrop,
+        area,
+        crop: finalCrop,
         crop_variety: finalVariety,
         ...(formState.plantingDateChanged && {
           planting_date: formatLocalDate(formState.plantingDate as Date),
         }),
-        vine_spacing: formState.vineSpacing ? parseFloat(formState.vineSpacing) : undefined,
-        row_spacing: formState.rowSpacing ? parseFloat(formState.rowSpacing) : undefined,
-        total_tank_capacity: formState.totalTankCapacity
-          ? parseFloat(formState.totalTankCapacity)
-          : undefined,
-        system_discharge: formState.systemDischarge
-          ? parseFloat(formState.systemDischarge)
-          : undefined,
+        vine_spacing: parsedOptionalFields.vineSpacing.value,
+        row_spacing: parsedOptionalFields.rowSpacing.value,
+        total_tank_capacity: parsedOptionalFields.totalTankCapacity.value,
+        system_discharge: parsedOptionalFields.systemDischarge.value,
         date_of_pruning: formState.dateOfPruning
           ? formatLocalDate(formState.dateOfPruning)
           : undefined,
         location_name: formState.locationName.trim() || undefined,
-        latitude: formState.latitude ? parseFloat(formState.latitude) : undefined,
-        longitude: formState.longitude ? parseFloat(formState.longitude) : undefined,
-        elevation: formState.elevation ? parseInt(formState.elevation, 10) : undefined,
-        bulk_density: formState.bulkDensity ? parseFloat(formState.bulkDensity) : undefined,
-        cation_exchange_capacity: formState.cationExchangeCapacity
-          ? parseFloat(formState.cationExchangeCapacity)
-          : undefined,
-        soil_water_retention: formState.soilWaterRetention
-          ? parseFloat(formState.soilWaterRetention)
-          : undefined,
+        latitude: parsedOptionalFields.latitude.value,
+        longitude: parsedOptionalFields.longitude.value,
+        elevation: parsedOptionalFields.elevation.value,
+        bulk_density: parsedOptionalFields.bulkDensity.value,
+        cation_exchange_capacity: parsedOptionalFields.cationExchangeCapacity.value,
+        soil_water_retention: parsedOptionalFields.soilWaterRetention.value,
         soil_texture_class: formState.soilTextureClass || undefined,
-        sand_percentage: formState.sandPercentage
-          ? parseFloat(formState.sandPercentage)
-          : undefined,
-        silt_percentage: formState.siltPercentage
-          ? parseFloat(formState.siltPercentage)
-          : undefined,
-        clay_percentage: formState.clayPercentage
-          ? parseFloat(formState.clayPercentage)
-          : undefined,
+        sand_percentage: parsedOptionalFields.sandPercentage.value,
+        silt_percentage: parsedOptionalFields.siltPercentage.value,
+        clay_percentage: parsedOptionalFields.clayPercentage.value,
       };
       try {
         await updateFarm.mutateAsync({ id: farmId, updates });
         telemetry.capture('farm_updated', {
           farm_id: farmId,
-          crop: formState.selectedCrop,
+          crop: finalCrop,
           variety: finalVariety,
           region: formState.region,
-          area_acres: parseFloat(formState.area),
+          area_acres: area,
         });
         onClose();
       } catch (_error: unknown) {
@@ -283,46 +321,38 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     const farmData: FarmInsert = {
       name: formState.name.trim(),
       region: formState.region.trim(),
-      area: parseFloat(formState.area),
-      crop: formState.selectedCrop,
+      area,
+      crop: finalCrop,
       crop_variety: finalVariety,
       planting_date: formatLocalDate(formState.plantingDate),
-      vine_spacing: formState.vineSpacing ? parseFloat(formState.vineSpacing) : undefined,
-      row_spacing: formState.rowSpacing ? parseFloat(formState.rowSpacing) : undefined,
-      total_tank_capacity: formState.totalTankCapacity
-        ? parseFloat(formState.totalTankCapacity)
-        : undefined,
-      system_discharge: formState.systemDischarge
-        ? parseFloat(formState.systemDischarge)
-        : undefined,
+      vine_spacing: parsedOptionalFields.vineSpacing.value,
+      row_spacing: parsedOptionalFields.rowSpacing.value,
+      total_tank_capacity: parsedOptionalFields.totalTankCapacity.value,
+      system_discharge: parsedOptionalFields.systemDischarge.value,
       date_of_pruning: formState.dateOfPruning
         ? formatLocalDate(formState.dateOfPruning)
         : undefined,
       location_name: formState.locationName.trim() || undefined,
-      latitude: formState.latitude ? parseFloat(formState.latitude) : undefined,
-      longitude: formState.longitude ? parseFloat(formState.longitude) : undefined,
-      elevation: formState.elevation ? parseInt(formState.elevation, 10) : undefined,
-      bulk_density: formState.bulkDensity ? parseFloat(formState.bulkDensity) : undefined,
-      cation_exchange_capacity: formState.cationExchangeCapacity
-        ? parseFloat(formState.cationExchangeCapacity)
-        : undefined,
-      soil_water_retention: formState.soilWaterRetention
-        ? parseFloat(formState.soilWaterRetention)
-        : undefined,
+      latitude: parsedOptionalFields.latitude.value,
+      longitude: parsedOptionalFields.longitude.value,
+      elevation: parsedOptionalFields.elevation.value,
+      bulk_density: parsedOptionalFields.bulkDensity.value,
+      cation_exchange_capacity: parsedOptionalFields.cationExchangeCapacity.value,
+      soil_water_retention: parsedOptionalFields.soilWaterRetention.value,
       soil_texture_class: formState.soilTextureClass || undefined,
-      sand_percentage: formState.sandPercentage ? parseFloat(formState.sandPercentage) : undefined,
-      silt_percentage: formState.siltPercentage ? parseFloat(formState.siltPercentage) : undefined,
-      clay_percentage: formState.clayPercentage ? parseFloat(formState.clayPercentage) : undefined,
+      sand_percentage: parsedOptionalFields.sandPercentage.value,
+      silt_percentage: parsedOptionalFields.siltPercentage.value,
+      clay_percentage: parsedOptionalFields.clayPercentage.value,
     };
 
     try {
       const result = await createFarm.mutateAsync(farmData);
       telemetry.capture('farm_created', {
         farm_id: result?.id ?? null,
-        crop: formState.selectedCrop,
+        crop: finalCrop,
         variety: finalVariety,
         region: formState.region,
-        area_acres: parseFloat(formState.area),
+        area_acres: area,
       });
       onClose();
     } catch (_error: unknown) {
@@ -486,6 +516,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             setFormState((prev) => ({
               ...prev,
               selectedCrop: value as CropType,
+              customCrop: value === 'Other' ? prev.customCrop : '',
               cropVariety: '',
               customVariety: '',
             }));

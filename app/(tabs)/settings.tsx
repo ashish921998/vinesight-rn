@@ -102,7 +102,7 @@ export default function SettingsScreen() {
     if (profile) {
       setEditName(profile.full_name || '');
       setEditPhone(profile.phone || '');
-      setSelectedCurrency(profile.preferred_currency || 'INR');
+      setSelectedCurrency(profile.currency_preference || 'INR');
       // Area unit from user metadata
     }
     if (user?.user_metadata?.area_unit) {
@@ -249,7 +249,7 @@ export default function SettingsScreen() {
       await updateProfile.mutateAsync({
         full_name: editName.trim() || undefined,
         phone: editPhone.trim() || undefined,
-        preferred_currency: selectedCurrency,
+        currency_preference: selectedCurrency,
       });
       setShowEditProfile(false);
       refetchProfile();
@@ -267,7 +267,7 @@ export default function SettingsScreen() {
     setSelectedCurrency(code);
     setShowCurrencyPicker(false);
     try {
-      await updateProfile.mutateAsync({ preferred_currency: code });
+      await updateProfile.mutateAsync({ currency_preference: code });
       refetchProfile();
     } catch (error) {
       if (__DEV__) {

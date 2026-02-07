@@ -18,7 +18,7 @@ import { useFarm, useDailyNoteByDate, useUpsertDailyNote } from '@/hooks';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { spacing, borderRadius } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
-import { toSupabaseDateString } from '@/types/database';
+import { formatLocalDate } from '@/utils/date';
 import { colorWithOpacity } from '@/utils/color';
 
 export default function AddNoteRoute() {
@@ -38,7 +38,7 @@ export default function AddNoteRoute() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [draftNotesByDate, setDraftNotesByDate] = useState<Record<string, string>>({});
 
-  const dateStr = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
+  const dateStr = useMemo(() => formatLocalDate(selectedDate), [selectedDate]);
   const { data: existingNote, isLoading: isLoadingNote } = useDailyNoteByDate(
     farmId ?? undefined,
     dateStr,
@@ -49,7 +49,15 @@ export default function AddNoteRoute() {
 
   const isSaving = upsertDailyNote.isPending;
   const canSave = Boolean(farmId && notes.trim().length > 0 && !isSaving);
-  const hasUnsavedChanges = notes.trim() !== (existingNote?.notes ?? '').trim();
+  const hasUnsavedChanges = useMemo(() => {
+    return Object.entries(draftNotesByDate).some(([draftDate, draftNotes]) => {
+      if (!draftNotes.trim()) return false;
+      if (draftDate === dateStr) {
+        return draftNotes.trim() !== (existingNote?.notes ?? '').trim();
+      }
+      return true;
+    });
+  }, [dateStr, draftNotesByDate, existingNote?.notes]);
 
   const handleClose = () => {
     if (hasUnsavedChanges) {

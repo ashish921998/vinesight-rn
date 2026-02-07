@@ -86,7 +86,7 @@ export default function ExploreScreen() {
   const deleteItemMutation = useDeleteWarehouseItem();
   const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilter>('all');
 
-  const currency = profile?.preferred_currency || 'INR';
+  const currency = profile?.currency_preference || 'INR';
 
   const openWarehouseItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });

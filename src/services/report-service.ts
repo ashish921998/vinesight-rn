@@ -5,7 +5,7 @@
 
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { cacheDirectory } from 'expo-file-system/legacy';
+import { cacheDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
 import { ReportData, ReportSummary, ReportPreview, DateRange, ReportType } from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
 import {
@@ -18,6 +18,16 @@ import {
 } from '../types/database';
 
 export class ReportService {
+  private static sanitizeFileNamePart(value: string, fallback: string = 'farm'): string {
+    const sanitized = Array.from(value)
+      .filter((char) => char.charCodeAt(0) >= 32)
+      .join('')
+      .replace(/[^a-zA-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 64);
+    return sanitized || fallback;
+  }
+
   /**
    * Escape a value for CSV output
    */
@@ -408,13 +418,10 @@ export class ReportService {
       throw new Error('Cache directory is not available on this device');
     }
     const csv = this.generateCSV(data, reportType);
-    const filename = `${data.farmName.replace(/\s+/g, '_')}_report_${new Date().toISOString().split('T')[0]}.csv`;
-    const file = new File(Paths.cache, filename);
-    const writer = file.writableStream().getWriter();
-    const bytes = new TextEncoder().encode(csv);
-    await writer.write(bytes);
-    await writer.close();
-    const fileUri = (file as unknown as { uri?: string }).uri;
+    const safeFarmName = this.sanitizeFileNamePart(data.farmName);
+    const filename = `${safeFarmName}_report_${new Date().toISOString().split('T')[0]}.csv`;
+    const fileUri = `${cacheDirectory}${filename}`;
+    await writeAsStringAsync(fileUri, csv);
     if (!fileUri) {
       throw new Error('Unable to resolve exported file URI');
     }

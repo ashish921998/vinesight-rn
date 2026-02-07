@@ -28,6 +28,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/i18n/format';
+import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -1838,11 +1839,11 @@ export function EntryForm({
                   </Pressable>
                 </View>
                 <DateTimePicker
-                  value={dueDate ? new Date(dueDate) : new Date()}
+                  value={dueDate ? parseDbDateToLocalDate(dueDate) : new Date()}
                   mode="date"
                   display="default"
                   onChange={(_, date) => {
-                    if (date) setDueDate(date.toISOString().split('T')[0]);
+                    if (date) setDueDate(formatLocalDate(date));
                   }}
                   style={{ height: 200 }}
                   textColor={m3.colorScheme.onSurface}

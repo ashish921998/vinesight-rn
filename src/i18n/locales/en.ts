@@ -1664,6 +1664,17 @@ export const en = {
     },
   },
 
+  workerAnalyticsDetail: {
+    notFound: 'Worker not found',
+    dailyRate: 'Daily rate',
+    dateRange: 'Date range',
+    quickStats: 'Quick stats',
+    weeklySummary: 'Weekly summary',
+    transactions: 'Transactions',
+    noTransactionsInRange: 'No transactions in this range.',
+    days: 'days',
+  },
+
   reports: {
     title: 'Reports',
     types: {
