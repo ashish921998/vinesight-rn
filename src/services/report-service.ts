@@ -5,7 +5,7 @@
 
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { File, Paths } from 'expo-file-system';
+import { cacheDirectory } from 'expo-file-system/legacy';
 import { ReportData, ReportSummary, ReportPreview, DateRange, ReportType } from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
 import {
@@ -404,6 +404,9 @@ export class ReportService {
    * Export report as CSV file
    */
   static async exportCSV(data: ReportData, reportType: ReportType): Promise<void> {
+    if (!cacheDirectory) {
+      throw new Error('Cache directory is not available on this device');
+    }
     const csv = this.generateCSV(data, reportType);
     const filename = `${data.farmName.replace(/\s+/g, '_')}_report_${new Date().toISOString().split('T')[0]}.csv`;
     const file = new File(Paths.cache, filename);
