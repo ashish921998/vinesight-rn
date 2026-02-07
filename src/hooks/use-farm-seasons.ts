@@ -4,6 +4,7 @@ import { requireUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
 import type { FarmSeason, FarmSeasonInsert } from '../types';
 import { TABLES } from '../types';
+import { parseDbDateToLocalDate } from '../utils/date';
 
 export function useFarmSeasons(farmId: number | undefined) {
   return useQuery({
@@ -50,7 +51,13 @@ export function useCreateFarmSeason() {
         (old) => {
           if (!old) return [newSeason];
           const next = [...old, newSeason];
-          next.sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
+          next.sort((a, b) => {
+            if (!a.end_date || !b.end_date) return 0;
+            const aDate = parseDbDateToLocalDate(a.end_date);
+            const bDate = parseDbDateToLocalDate(b.end_date);
+            if (!aDate || !bDate) return 0;
+            return aDate.getTime() - bDate.getTime();
+          });
           return next;
         },
       );

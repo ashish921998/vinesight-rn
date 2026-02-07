@@ -34,6 +34,7 @@ export const mr = {
     clearAll: 'सर्व साफ करा',
     units: {
       hours: 'तास',
+      days: 'दिवस',
     },
     labels: {
       value: 'मूल्य',

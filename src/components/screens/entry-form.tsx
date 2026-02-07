@@ -1772,7 +1772,7 @@ export function EntryForm({
               ]}
             >
               {dueDate
-                ? formatDate(new Date(dueDate), {
+                ? formatDate(parseDbDateToLocalDate(dueDate) ?? dueDate, {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
@@ -1839,7 +1839,11 @@ export function EntryForm({
                   </Pressable>
                 </View>
                 <DateTimePicker
-                  value={dueDate ? parseDbDateToLocalDate(dueDate) : new Date()}
+                  value={(() => {
+                    if (!dueDate) return new Date();
+                    const parsed = parseDbDateToLocalDate(dueDate);
+                    return parsed ?? new Date();
+                  })()}
                   mode="date"
                   display="default"
                   onChange={(_, date) => {

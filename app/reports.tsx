@@ -394,20 +394,20 @@ export default function ReportsScreen() {
 
           {showFromPicker && (
             <DateTimePicker
-              value={parseDbDateToLocalDate(dateRange.from)}
+              value={parseDbDateToLocalDate(dateRange.from) ?? new Date()}
               mode="date"
               display="default"
               onChange={(_, date) => handleDateChange('from', date)}
-              maximumDate={parseDbDateToLocalDate(dateRange.to)}
+              maximumDate={parseDbDateToLocalDate(dateRange.to) ?? undefined}
             />
           )}
           {showToPicker && (
             <DateTimePicker
-              value={parseDbDateToLocalDate(dateRange.to)}
+              value={parseDbDateToLocalDate(dateRange.to) ?? new Date()}
               mode="date"
               display="default"
               onChange={(_, date) => handleDateChange('to', date)}
-              minimumDate={parseDbDateToLocalDate(dateRange.from)}
+              minimumDate={parseDbDateToLocalDate(dateRange.from) ?? undefined}
               maximumDate={new Date()}
             />
           )}

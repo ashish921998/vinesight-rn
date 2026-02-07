@@ -72,7 +72,18 @@ export default function OnboardingScreen() {
         currency: selectedCurrency,
         areaUnit: selectedAreaUnit,
       });
-      updateProfile.mutate({ currency_preference: selectedCurrency });
+      updateProfile.mutate(
+        { currency_preference: selectedCurrency },
+        {
+          onError: (error) => {
+            console.error(
+              'Failed to update profile with currency preference:',
+              selectedCurrency,
+              error,
+            );
+          },
+        },
+      );
     }
 
     if (currentStep === 'notifications') {

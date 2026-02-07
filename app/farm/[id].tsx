@@ -143,6 +143,7 @@ export default function FarmDetailScreen() {
   const daysSincePruning = useMemo(() => {
     if (!farm?.date_of_pruning) return null;
     const pruningDate = parseDbDateToLocalDate(farm.date_of_pruning);
+    if (!pruningDate) return null;
     const today = new Date();
     const diffTime = today.getTime() - pruningDate.getTime();
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -152,21 +153,28 @@ export default function FarmDetailScreen() {
     if (farmSeasons && farmSeasons.length > 0) {
       return farmSeasons
         .map((season) => season.end_date)
-        .sort((a, b) => parseDbDateToLocalDate(a).getTime() - parseDbDateToLocalDate(b).getTime());
+        .filter((date): date is string => date !== null)
+        .sort((a, b) => {
+          const aDate = parseDbDateToLocalDate(a);
+          const bDate = parseDbDateToLocalDate(b);
+          return (aDate?.getTime() ?? 0) - (bDate?.getTime() ?? 0);
+        });
     }
     const rawDates = farm?.season_end_dates ?? [];
-    return [...rawDates].sort(
-      (a, b) => parseDbDateToLocalDate(a).getTime() - parseDbDateToLocalDate(b).getTime(),
-    );
+    return [...rawDates].sort((a, b) => {
+      const aDate = parseDbDateToLocalDate(a);
+      const bDate = parseDbDateToLocalDate(b);
+      return (aDate?.getTime() ?? 0) - (bDate?.getTime() ?? 0);
+    });
   }, [farm?.season_end_dates, farmSeasons]);
 
   const firstSeasonStartFromSeasons = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return null;
-    const ordered = [...farmSeasons].sort(
-      (a, b) =>
-        parseDbDateToLocalDate(a.start_date).getTime() -
-        parseDbDateToLocalDate(b.start_date).getTime(),
-    );
+    const ordered = [...farmSeasons].sort((a, b) => {
+      const aDate = parseDbDateToLocalDate(a.start_date);
+      const bDate = parseDbDateToLocalDate(b.start_date);
+      return (aDate?.getTime() ?? 0) - (bDate?.getTime() ?? 0);
+    });
     return ordered[0]?.start_date ?? null;
   }, [farmSeasons]);
 
@@ -175,6 +183,7 @@ export default function FarmDetailScreen() {
   const minimumSeasonStartDate = useMemo(() => {
     if (!lastSeasonEndDate) return null;
     const nextDate = parseDbDateToLocalDate(lastSeasonEndDate);
+    if (!nextDate) return null;
     nextDate.setDate(nextDate.getDate() + 1);
     return nextDate;
   }, [lastSeasonEndDate]);
@@ -189,12 +198,15 @@ export default function FarmDetailScreen() {
   }, [currentSeasonStartDate, minimumSeasonStartDate]);
 
   const activeSeasonStartDate = useMemo(() => {
-    if (minimumSeasonStartDate) return minimumSeasonStartDate;
+    if (farmSeasons && farmSeasons.length > 0) {
+      const activeSeason = farmSeasons.find((season) => season.end_date === null);
+      if (activeSeason) return parseDbDateToLocalDate(activeSeason.start_date);
+    }
     if (firstSeasonStartFromSeasons) return parseDbDateToLocalDate(firstSeasonStartFromSeasons);
     if (farm?.first_season_start_date) return parseDbDateToLocalDate(farm.first_season_start_date);
     if (farm?.date_of_pruning) return parseDbDateToLocalDate(farm.date_of_pruning);
     return null;
-  }, [minimumSeasonStartDate, firstSeasonStartFromSeasons, farm]);
+  }, [farmSeasons, farm, firstSeasonStartFromSeasons]);
 
   const totalWaterUsed = useMemo(() => {
     if (!irrigationRecords) return null;
@@ -203,7 +215,9 @@ export default function FarmDetailScreen() {
       activeStartIso === null
         ? irrigationRecords
         : irrigationRecords.filter((record) => {
-            const recordDateIso = formatLocalDate(parseDbDateToLocalDate(record.date));
+            const recordDate = parseDbDateToLocalDate(record.date);
+            if (!recordDate) return false;
+            const recordDateIso = formatLocalDate(recordDate);
             return recordDateIso >= activeStartIso;
           });
     return scopedIrrigationRecords.reduce(
@@ -256,7 +270,7 @@ export default function FarmDetailScreen() {
 
   const handleEndSeason = async () => {
     if (!farm?.id) return;
-    if (seasonStartDate.getTime() > seasonEndDate.getTime()) {
+    if (seasonStartDate.getTime() >= seasonEndDate.getTime()) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.invalidRange'));
       return;
     }
@@ -283,8 +297,6 @@ export default function FarmDetailScreen() {
 
       Alert.alert(t('common.success'), t('farmDetails.seasons.alerts.endSuccess'));
       setShowSeasonForm(false);
-      setSeasonStartDate(defaultSeasonStartDate);
-      setSeasonEndDate(getInitialSeasonEndDate(defaultSeasonStartDate));
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
         Alert.alert(t('common.error'), t('farmDetails.seasons.errors.duplicateEndDate'));
@@ -1708,11 +1720,14 @@ export default function FarmDetailScreen() {
             <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
               {lastSeasonEndDate
                 ? t('farmDetails.seasons.lastEndDate', {
-                    date: formatDate(parseDbDateToLocalDate(lastSeasonEndDate), {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    }),
+                    date: formatDate(
+                      parseDbDateToLocalDate(lastSeasonEndDate) ?? lastSeasonEndDate,
+                      {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      },
+                    ),
                   })
                 : t('farmDetails.seasons.firstTimeHint')}
             </Text>

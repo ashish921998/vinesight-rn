@@ -33,7 +33,6 @@ export default function AnalyticsScreen() {
     useAnalytics(timeRange);
 
   const currency = profile?.currency_preference ?? getDefaultCurrency();
-  const currencySymbol = currency === 'INR' ? '₹' : '$';
   const metricColors = useMemo(
     () => ({
       irrigation: {
@@ -319,8 +318,7 @@ export default function AnalyticsScreen() {
                   color: colors.surface[900],
                 }}
               >
-                {currencySymbol}
-                {(analytics.totalHarvestValue / 1000).toFixed(0)}k
+                {formatCurrency(analytics.totalHarvestValue / 1000, currency)}
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                 {t('analytics.labels.harvestValue')}
@@ -632,8 +630,7 @@ export default function AnalyticsScreen() {
                       color: colors.surface[900],
                     }}
                   >
-                    {currencySymbol}
-                    {yieldAnalysis.avgPricePerKg.toFixed(2)}/kg
+                    {formatCurrency(yieldAnalysis.avgPricePerKg, currency)}/kg
                   </Text>
                 </View>
                 <View

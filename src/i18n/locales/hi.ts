@@ -34,6 +34,7 @@ export const hi = {
     clearAll: 'सभी साफ़ करें',
     units: {
       hours: 'घंटे',
+      days: 'दिन',
     },
     labels: {
       value: 'मूल्य',

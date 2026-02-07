@@ -70,7 +70,7 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (updates: ProfileUpdate): Promise<Profile> => {
       const userId = await getUserId();
-      const payload: ProfileUpdate & { id: string } = { id: userId, ...updates };
+      const payload: ProfileUpdate & { id: string } = { ...updates, id: userId };
 
       const { data, error } = await supabase
         .from(TABLES.PROFILES)

@@ -420,11 +420,15 @@ export class ReportService {
     }
     const csv = this.generateCSV(data, reportType);
     const safeFarmName = this.sanitizeFileNamePart(data.farmName);
-    const filename = `${safeFarmName}_report_${new Date().toISOString().split('T')[0]}.csv`;
+    const uniqueness = safeFarmName === 'farm' ? `_${Date.now()}` : '';
+    const filename = `${safeFarmName}${uniqueness}_report_${new Date().toISOString().split('T')[0]}.csv`;
     const fileUri = `${cacheDirectory}${filename}`;
-    await writeAsStringAsync(fileUri, csv);
-    if (!fileUri) {
-      throw new Error('Unable to resolve exported file URI');
+    try {
+      await writeAsStringAsync(fileUri, csv);
+    } catch (error) {
+      throw new Error(
+        `Failed to write report file (${filename}) for farm: ${safeFarmName}. ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     if (await Sharing.isAvailableAsync()) {

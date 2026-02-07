@@ -34,6 +34,7 @@ export const en = {
     clearAll: 'Clear all',
     units: {
       hours: 'hours',
+      days: 'days',
     },
     labels: {
       value: 'Value',

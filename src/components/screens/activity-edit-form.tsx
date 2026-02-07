@@ -17,6 +17,7 @@ import {
   useWindowDimensions,
   UIManager,
   findNodeHandle,
+  Platform,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { FormModal, SectionHeader } from '@/components/ui';
@@ -545,7 +546,73 @@ export function ActivityEditForm({
 
       {renderForm()}
 
-      {showDatePicker && (
+      {showDatePicker && Platform.OS === 'ios' && (
+        <Pressable
+          onPress={() => setShowDatePicker(false)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 50,
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: colors.surface[100],
+              borderTopLeftRadius: borderRadius['2xl'],
+              borderTopRightRadius: borderRadius['2xl'],
+              padding: spacing[4],
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginBottom: spacing[4],
+              }}
+            >
+              <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
+                {t('common.selectDate')}
+              </Text>
+              <Pressable onPress={() => setShowDatePicker(false)}>
+                <UISymbol name="xmark.circle.fill" size={24} />
+              </Pressable>
+            </View>
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="inline"
+              onChange={(_, date) => {
+                if (date) setSelectedDate(date);
+              }}
+            />
+            <Pressable
+              onPress={() => setShowDatePicker(false)}
+              style={{
+                marginTop: spacing[4],
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.lg,
+                alignItems: 'center',
+                backgroundColor: colors.primary[500],
+              }}
+            >
+              <Text style={{ fontWeight: fontWeight.semibold, color: '#fff' }}>
+                {t('common.done')}
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      )}
+
+      {showDatePicker && Platform.OS !== 'ios' && (
         <DateTimePicker
           value={selectedDate}
           mode="date"

@@ -106,12 +106,9 @@ export default function SoilProfileForm({
     }
   };
 
-  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
+  const handleDateChange = (_: DateTimePickerEvent, date?: Date) => {
     if (date) {
       setSelectedDate(date);
-    }
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
     }
   };
 

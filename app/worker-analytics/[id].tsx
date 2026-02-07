@@ -304,7 +304,7 @@ export default function WorkerAnalyticsDetailScreen() {
                     {week.start} → {week.end}
                   </Text>
                   <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
-                    {week.workDaysEquivalent.toFixed(1)} days ·{' '}
+                    {week.workDaysEquivalent.toFixed(1)} {t('common.units.days')} ·{' '}
                     {formatCurrency(week.earnings, preferredCurrency)}
                   </Text>
                 </View>

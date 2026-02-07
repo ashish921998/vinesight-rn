@@ -12,6 +12,7 @@ import {
   OnboardingPreferences,
   ONBOARDING_STEPS,
 } from '../types/onboarding';
+import { getDefaultCurrency } from '../i18n/currency';
 
 interface OnboardingStore extends OnboardingState {
   // Actions
@@ -30,7 +31,7 @@ const initialState: OnboardingState = {
   currentStep: 'language',
   preferences: {
     country: '',
-    currency: '',
+    currency: getDefaultCurrency(),
     areaUnit: 'acres',
     notificationsEnabled: false,
   },
