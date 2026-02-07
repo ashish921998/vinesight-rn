@@ -20,7 +20,7 @@ import {
   Platform,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { FormModal, SectionHeader } from '@/components/ui';
+import { Button, FormModal, SectionHeader } from '@/components/ui';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
@@ -582,6 +582,7 @@ export function ActivityEditForm({
               borderTopRightRadius: borderRadius['2xl'],
               padding: spacing[4],
             }}
+            onStartShouldSetResponder={() => true}
           >
             <View
               style={{
@@ -605,20 +606,11 @@ export function ActivityEditForm({
                 if (date) setSelectedDate(date);
               }}
             />
-            <Pressable
+            <Button
+              title={t('common.done')}
               onPress={() => setShowDatePicker(false)}
-              style={{
-                marginTop: spacing[4],
-                paddingVertical: spacing[3],
-                borderRadius: borderRadius.lg,
-                alignItems: 'center',
-                backgroundColor: colors.primary[500],
-              }}
-            >
-              <Text style={{ fontWeight: fontWeight.semibold, color: '#fff' }}>
-                {t('common.done')}
-              </Text>
-            </Pressable>
+              style={{ marginTop: spacing[4] }}
+            />
           </View>
         </View>
       )}

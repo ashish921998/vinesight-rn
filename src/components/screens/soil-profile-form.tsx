@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { Button } from '@/components/ui';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useCreateSoilProfile, SECTION_NAMES, SECTION_INFO } from '../../hooks/use-soil-profiles';
 import { SoilSectionData } from '../../types/database';
@@ -312,23 +313,11 @@ export default function SoilProfileForm({
                 onChange={handleDateChange}
                 style={{ width: '100%' }}
               />
-              <Pressable
+              <Button
+                title={t('common.done')}
                 onPress={() => setShowDatePicker(false)}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.done')}
-                style={{
-                  marginTop: spacing[4],
-                  paddingVertical: spacing[4],
-                  paddingHorizontal: spacing[6],
-                  borderRadius: borderRadius.xl,
-                  alignItems: 'center',
-                  backgroundColor: colors.primary[500],
-                }}
-              >
-                <Text style={{ fontWeight: fontWeight.semibold, color: colors.white }}>
-                  {t('common.done')}
-                </Text>
-              </Pressable>
+                style={{ marginTop: spacing[4] }}
+              />
             </View>
           </View>
         </Modal>

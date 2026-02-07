@@ -13,6 +13,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { FormModal, SectionHeader, FormInput } from '@/components/ui/form-components';
 import { useM3, useThemeColors } from '@/styles/use-theme';
+import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import {
   useCreateSoilTest,
@@ -527,16 +528,11 @@ export default function LabTestForm({
       />
 
       {Platform.OS === 'ios' && showDatePicker && (
-        <Modal
-          transparent
-          visible={showDatePicker}
-          animationType="slide"
-          onRequestClose={() => setShowDatePicker(false)}
-        >
+        <Modal transparent animationType="slide" onRequestClose={() => setShowDatePicker(false)}>
           <Pressable
             style={{
               flex: 1,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
               justifyContent: 'flex-end',
             }}
             onPress={() => setShowDatePicker(false)}
@@ -544,9 +540,9 @@ export default function LabTestForm({
             <View
               style={{
                 backgroundColor: colors.surface[100],
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
-                padding: 16,
+                borderTopLeftRadius: borderRadius['2xl'],
+                borderTopRightRadius: borderRadius['2xl'],
+                padding: spacing[4],
               }}
               onStartShouldSetResponder={() => true}
             >
@@ -555,13 +551,17 @@ export default function LabTestForm({
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: 16,
+                  marginBottom: spacing[4],
                 }}
               >
-                <Text style={{ fontSize: 18, fontWeight: '600' }}>
+                <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
                   {t('labTests.form.testDateLabel')}
                 </Text>
-                <Pressable onPress={() => setShowDatePicker(false)}>
+                <Pressable
+                  onPress={() => setShowDatePicker(false)}
+                  accessibilityLabel={t('common.actions.close')}
+                  accessibilityRole="button"
+                >
                   <IconSymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />
                 </Pressable>
               </View>
@@ -572,34 +572,63 @@ export default function LabTestForm({
                 onChange={handleDateChange}
               />
               <View
-                style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginTop: spacing[4],
+                }}
               >
                 <Pressable
                   onPress={() => setShowDatePicker(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.actions.cancel')}
                   style={{
                     flex: 1,
-                    padding: 12,
-                    borderRadius: 8,
+                    padding: spacing[3],
+                    borderRadius: borderRadius.lg,
                     alignItems: 'center',
                     backgroundColor: colors.surface[200],
                   }}
                 >
-                  <Text style={{ fontWeight: '600', color: m3.colorScheme.onSurface }}>
+                  <Text
+                    style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onSurface }}
+                  >
                     {t('common.actions.cancel')}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setShowDatePicker(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.actions.done')}
+                  style={{
+                    flex: 1,
+                    marginLeft: spacing[3],
+                    padding: spacing[3],
+                    borderRadius: borderRadius.lg,
+                    alignItems: 'center',
+                    backgroundColor: m3.colorScheme.primary,
+                  }}
+                >
+                  <Text
+                    style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}
+                  >
+                    {t('common.actions.done')}
                   </Text>
                 </Pressable>
                 <Pressable
                   onPress={() => setShowDatePicker(false)}
                   style={{
                     flex: 1,
-                    marginLeft: 12,
-                    padding: 12,
-                    borderRadius: 8,
+                    marginLeft: spacing[3],
+                    padding: spacing[3],
+                    borderRadius: borderRadius.lg,
                     alignItems: 'center',
                     backgroundColor: m3.colorScheme.primary,
                   }}
                 >
-                  <Text style={{ fontWeight: '600', color: m3.colorScheme.onPrimary }}>
+                  <Text
+                    style={{ fontWeight: fontWeight.semibold, color: m3.colorScheme.onPrimary }}
+                  >
                     {t('common.actions.done')}
                   </Text>
                 </Pressable>

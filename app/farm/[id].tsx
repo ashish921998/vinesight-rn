@@ -244,7 +244,9 @@ export default function FarmDetailScreen() {
       nextDay.setDate(nextDay.getDate() + 1);
       return nextDay;
     }
-    return today;
+    const nextDay = new Date(startDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return nextDay;
   }, []);
 
   const [seasonStartDate, setSeasonStartDate] = useState(defaultSeasonStartDate);
@@ -270,7 +272,7 @@ export default function FarmDetailScreen() {
 
   const handleEndSeason = async () => {
     if (!farm?.id) return;
-    if (formatLocalDate(seasonStartDate) >= formatLocalDate(seasonEndDate)) {
+    if (formatLocalDate(seasonStartDate) > formatLocalDate(seasonEndDate)) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.invalidRange'));
       return;
     }
@@ -1572,6 +1574,8 @@ export default function FarmDetailScreen() {
             </Text>
             <Pressable
               onPress={openEditFarm}
+              accessibilityRole="button"
+              accessibilityLabel={t('farmDetails.actions.editFarm')}
               style={({ pressed }) => ({
                 borderRadius: m3.shape.cornerMedium,
                 paddingVertical: spacing[3],
@@ -1600,6 +1604,8 @@ export default function FarmDetailScreen() {
             </Pressable>
             <Pressable
               onPress={openEndSeasonForm}
+              accessibilityRole="button"
+              accessibilityLabel={t('farmDetails.actions.endSeason')}
               style={({ pressed }) => ({
                 borderRadius: m3.shape.cornerMedium,
                 paddingVertical: spacing[3],
@@ -1628,6 +1634,8 @@ export default function FarmDetailScreen() {
             </Pressable>
             <Pressable
               onPress={confirmDeleteFarmFromSheet}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.delete')}
               style={({ pressed }) => ({
                 borderRadius: m3.shape.cornerMedium,
                 paddingVertical: spacing[3],
