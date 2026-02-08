@@ -195,7 +195,7 @@ export const en = {
     },
     actions: {
       addActivity: 'Add activity',
-      seeAllActivities: 'See all logs',
+      seeAllLogs: 'See all logs',
       seeAllTasks: 'See all tasks',
       menuTitle: 'Farm actions',
       editFarm: 'Edit farm',

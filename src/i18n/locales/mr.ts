@@ -195,7 +195,7 @@ export const mr = {
     },
     actions: {
       addActivity: 'नोंद जोडा',
-      seeAllActivities: 'सर्व नोंदी पहा',
+      seeAllLogs: 'सर्व नोंदी पहा',
       seeAllTasks: 'सर्व $t(glossary.task) पहा',
       menuTitle: '$t(glossary.farm) क्रिया',
       editFarm: '$t(glossary.farm) संपादित करा',

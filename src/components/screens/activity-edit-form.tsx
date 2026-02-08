@@ -292,7 +292,7 @@ export function ActivityEditForm({
         case 'fertigation': {
           const r = record as FertigationRecord;
           const data = createEmptyFertigationFormData();
-          if (r.water_volume) {
+          if (r.water_volume != null) {
             data.waterVolume = r.water_volume;
           }
           if (r.fertilizers && r.fertilizers.length > 0) {

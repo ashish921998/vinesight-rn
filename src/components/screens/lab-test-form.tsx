@@ -598,6 +598,7 @@ export default function LabTestForm({
                 <Button
                   title={t('common.actions.cancel')}
                   variant="secondary"
+                  fullWidth={false}
                   onPress={() => {
                     if (originalDate) {
                       setDate(originalDate);
@@ -610,6 +611,7 @@ export default function LabTestForm({
                 <Button
                   title={t('common.actions.done')}
                   variant="primary"
+                  fullWidth={false}
                   onPress={() => {
                     setShowDatePicker(false);
                     setOriginalDate(null);

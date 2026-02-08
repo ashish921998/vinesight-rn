@@ -279,6 +279,10 @@ export default function SoilProfileForm({
           >
             <Pressable
               onPress={() => setShowDatePicker(false)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close')}
+              accessibilityHint={t('common.close')}
               style={{
                 position: 'absolute',
                 top: 0,

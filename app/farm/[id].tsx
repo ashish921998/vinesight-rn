@@ -270,7 +270,7 @@ export default function FarmDetailScreen() {
 
   const handleEndSeason = async () => {
     if (!farm?.id) return;
-    if (formatLocalDate(seasonStartDate) >= formatLocalDate(seasonEndDate)) {
+    if (formatLocalDate(seasonStartDate) > formatLocalDate(seasonEndDate)) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.invalidRange'));
       return;
     }
@@ -1311,7 +1311,7 @@ export default function FarmDetailScreen() {
                       });
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={t('farmDetails.actions.seeAllActivities')}
+                    accessibilityLabel={t('farmDetails.actions.seeAllLogs')}
                     style={({ pressed }) => ({
                       paddingHorizontal: spacing[2],
                       paddingVertical: spacing[1],
@@ -1328,7 +1328,7 @@ export default function FarmDetailScreen() {
                         fontWeight: fontWeight.semibold,
                       }}
                     >
-                      {t('farmDetails.actions.seeAllActivities')}
+                      {t('farmDetails.actions.seeAllLogs')}
                     </Text>
                   </Pressable>
                 </View>
