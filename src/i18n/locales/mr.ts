@@ -535,6 +535,28 @@ export const mr = {
     },
   },
 
+  fertigationForm: {
+    title: 'फर्टिगेशन',
+    subtitle: 'खत अनुप्रयोग नोंदवा',
+    waterVolume: {
+      label: 'पाणी मात्रा',
+      placeholder: 'प्रमाण टाका',
+      unitLiters: 'लिटर',
+      hint: 'फर्टिगेशनसाठी वापरलेले एकूण पाणी (वैकल्पिक)',
+    },
+    fertilizers: {
+      label: 'खते',
+      addFertilizer: 'खत जोडा',
+      namePlaceholder: 'खताचे नाव',
+      qtyPlaceholder: 'प्रमाण',
+      selectUnit: 'युनिट निवडा',
+    },
+    validation: {
+      ready: 'जोडण्यासाठी तयार',
+      incomplete: 'किमान एक खत आणि मात्रा जोडा',
+    },
+  },
+
   analytics: {
     title: 'विश्लेषण',
     labels: {

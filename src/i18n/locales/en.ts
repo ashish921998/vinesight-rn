@@ -535,6 +535,28 @@ export const en = {
     },
   },
 
+  fertigationForm: {
+    title: 'Fertigation',
+    subtitle: 'Log fertilizer application',
+    waterVolume: {
+      label: 'Water volume',
+      placeholder: 'Enter volume',
+      unitLiters: 'Liters',
+      hint: 'Total water used for fertigation (optional)',
+    },
+    fertilizers: {
+      label: 'Fertilizers',
+      addFertilizer: 'Add fertilizer',
+      namePlaceholder: 'Fertilizer name',
+      qtyPlaceholder: 'Qty',
+      selectUnit: 'Select unit',
+    },
+    validation: {
+      ready: 'Ready to add',
+      incomplete: 'Add at least one fertilizer with quantity',
+    },
+  },
+
   analytics: {
     title: 'Analytics',
     labels: {

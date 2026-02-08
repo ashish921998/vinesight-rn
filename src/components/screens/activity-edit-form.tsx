@@ -292,6 +292,9 @@ export function ActivityEditForm({
         case 'fertigation': {
           const r = record as FertigationRecord;
           const data = createEmptyFertigationFormData();
+          if (r.water_volume) {
+            data.waterVolume = r.water_volume;
+          }
           if (r.fertilizers && r.fertilizers.length > 0) {
             data.fertilizers = r.fertilizers.map((f) => ({
               name: f.name,
@@ -395,6 +398,7 @@ export function ActivityEditForm({
                 unit: f.unit,
                 quantity: f.quantity ?? 0,
               })),
+              water_volume: fertigationData.waterVolume,
               date: dateStr,
             },
           });

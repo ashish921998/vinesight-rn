@@ -70,6 +70,7 @@ function getDescriptionFromData(
     }
     case 'expense': {
       const expense = data as ExpenseRecord;
+      if (!currency) return '';
       const cost = formatCurrency(expense.cost ?? 0, currency);
       const expenseType = expense.type || t('common.general');
       return t('logs.expenseDescription', { cost, type: expenseType });

@@ -92,6 +92,7 @@ export default function LabTestForm({
 
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [originalDate, setOriginalDate] = useState<Date | null>(null);
   const [parameters, setParameters] = useState<Record<string, string>>({});
   const [recommendations, setRecommendations] = useState('');
   const [notes, setNotes] = useState('');
@@ -456,7 +457,10 @@ export default function LabTestForm({
 
       <SectionHeader title={t('labTests.form.detailsSectionTitle')} style={{ marginBottom: 12 }} />
       <Pressable
-        onPress={() => setShowDatePicker(true)}
+        onPress={() => {
+          setOriginalDate(date);
+          setShowDatePicker(true);
+        }}
         style={{
           backgroundColor: colors.surface[100],
           borderRadius: borderRadius.xl,
@@ -536,7 +540,13 @@ export default function LabTestForm({
               backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
               justifyContent: 'flex-end',
             }}
-            onPress={() => setShowDatePicker(false)}
+            onPress={() => {
+              if (originalDate) {
+                setDate(originalDate);
+              }
+              setShowDatePicker(false);
+              setOriginalDate(null);
+            }}
           >
             <View
               style={{
@@ -559,7 +569,13 @@ export default function LabTestForm({
                   {t('labTests.form.testDateLabel')}
                 </Text>
                 <Pressable
-                  onPress={() => setShowDatePicker(false)}
+                  onPress={() => {
+                    if (originalDate) {
+                      setDate(originalDate);
+                    }
+                    setShowDatePicker(false);
+                    setOriginalDate(null);
+                  }}
                   accessibilityLabel={t('common.actions.close')}
                   accessibilityRole="button"
                 >
@@ -582,13 +598,22 @@ export default function LabTestForm({
                 <Button
                   title={t('common.actions.cancel')}
                   variant="secondary"
-                  onPress={() => setShowDatePicker(false)}
+                  onPress={() => {
+                    if (originalDate) {
+                      setDate(originalDate);
+                    }
+                    setShowDatePicker(false);
+                    setOriginalDate(null);
+                  }}
                   accessibilityLabel={t('common.actions.cancel')}
                 />
                 <Button
                   title={t('common.actions.done')}
                   variant="primary"
-                  onPress={() => setShowDatePicker(false)}
+                  onPress={() => {
+                    setShowDatePicker(false);
+                    setOriginalDate(null);
+                  }}
                   accessibilityLabel={t('common.actions.done')}
                   style={{ marginLeft: spacing[3] }}
                 />

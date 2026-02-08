@@ -139,6 +139,7 @@ export interface FertigationRecord {
   farm_id: number;
   date: string;
   fertilizers?: FertilizerItem[] | null;
+  water_volume?: number | null;
   area: number;
   date_of_pruning?: string | null;
   notes?: string | null;

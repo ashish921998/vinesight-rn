@@ -312,7 +312,8 @@ export function EntryForm({
       case 'fertigation': {
         const fert = data as FertigationFormData;
         const fertCount = fert.fertilizers.length;
-        return `${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
+        const waterText = fert.waterVolume ? `${fert.waterVolume}L water, ` : '';
+        return `${waterText}${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
       }
       default:
         return '';
@@ -471,6 +472,7 @@ export function EntryForm({
                 unit: f.unit,
                 quantity: f.quantity!,
               })),
+              water_volume: data.waterVolume,
               area: activeFarm.area ?? 0,
               date_of_pruning: activeFarm.date_of_pruning,
             });

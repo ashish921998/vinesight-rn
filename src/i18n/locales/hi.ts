@@ -535,6 +535,28 @@ export const hi = {
     },
   },
 
+  fertigationForm: {
+    title: 'फर्टिगेशन',
+    subtitle: 'उर्वरक अनुप्रयोग लॉग करें',
+    waterVolume: {
+      label: 'पानी की मात्रा',
+      placeholder: 'मात्रा दर्ज करें',
+      unitLiters: 'लीटर',
+      hint: 'फर्टिगेशन के लिए उपयोग किया गया कुल पानी (वैकल्पिक)',
+    },
+    fertilizers: {
+      label: 'उर्वरक',
+      addFertilizer: 'उर्वरक जोड़ें',
+      namePlaceholder: 'उर्वरक का नाम',
+      qtyPlaceholder: 'मात्रा',
+      selectUnit: 'इकाई चुनें',
+    },
+    validation: {
+      ready: 'जोड़ने के लिए तैयार',
+      incomplete: 'कम से कम एक उर्वरक और मात्रा जोड़ें',
+    },
+  },
+
   analytics: {
     title: 'विश्लेषण',
     labels: {
