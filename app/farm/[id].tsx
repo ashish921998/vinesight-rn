@@ -42,8 +42,10 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
+
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
+import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from '@/utils/haptics';
 
 // Workboard action type
 interface WorkboardAction {
@@ -79,7 +81,7 @@ export default function FarmDetailScreen() {
 
   const { data: tasks, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
-  const { data: farmSeasons } = useFarmSeasons(farmId);
+  const { data: farmSeasons, refetch: refetchSeasons } = useFarmSeasons(farmId);
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
   const deleteFarmMutation = useDeleteFarm();
@@ -91,6 +93,7 @@ export default function FarmDetailScreen() {
   const createFarmSeason = useCreateFarmSeason();
 
   const [refreshing, setRefreshing] = useState(false);
+
   const [showSeasonForm, setShowSeasonForm] = useState(false);
   const [showFarmActionsSheet, setShowFarmActionsSheet] = useState(false);
   const [showSeasonStartPicker, setShowSeasonStartPicker] = useState(false);
@@ -138,16 +141,6 @@ export default function FarmDetailScreen() {
       (fertigationRecords?.length || 0),
     [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords],
   );
-
-  // Days since pruning
-  const daysSincePruning = useMemo(() => {
-    if (!farm?.date_of_pruning) return null;
-    const pruningDate = parseDbDateToLocalDate(farm.date_of_pruning);
-    if (!pruningDate) return null;
-    const today = new Date();
-    const diffTime = today.getTime() - pruningDate.getTime();
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  }, [farm]);
 
   const seasonEndDates = useMemo(() => {
     if (farmSeasons && farmSeasons.length > 0) {
@@ -207,6 +200,17 @@ export default function FarmDetailScreen() {
     if (farm?.date_of_pruning) return parseDbDateToLocalDate(farm.date_of_pruning);
     return null;
   }, [farmSeasons, farm, firstSeasonStartFromSeasons]);
+
+  // Days since season start (or pruning as fallback)
+  const daysSincePruning = useMemo(() => {
+    const startDate =
+      activeSeasonStartDate ??
+      (farm?.date_of_pruning ? parseDbDateToLocalDate(farm.date_of_pruning) : null);
+    if (!startDate) return null;
+    const today = new Date();
+    const diffTime = today.getTime() - startDate.getTime();
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  }, [activeSeasonStartDate, farm]);
 
   const totalWaterUsed = useMemo(() => {
     if (!irrigationRecords) return null;
@@ -295,6 +299,7 @@ export default function FarmDetailScreen() {
         end_date: endDateIso,
       });
 
+      triggerHapticSuccess();
       Alert.alert(t('common.success'), t('farmDetails.seasons.alerts.endSuccess'));
       setShowSeasonForm(false);
     } catch (error) {
@@ -413,7 +418,7 @@ export default function FarmDetailScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetchFarm(), refetchRecords(), refetchTasks()]);
+      await Promise.all([refetchFarm(), refetchRecords(), refetchTasks(), refetchSeasons()]);
     } finally {
       setRefreshing(false);
     }
@@ -452,6 +457,7 @@ export default function FarmDetailScreen() {
   };
 
   const handleDeleteActivity = (log: (typeof recentLogs)[number]) => {
+    triggerHapticWarning();
     Alert.alert(
       t('logs.delete.title'),
       t('logs.delete.body', {
@@ -543,6 +549,7 @@ export default function FarmDetailScreen() {
   };
 
   const handleDeleteTask = (taskId: number, taskTitle: string) => {
+    triggerHapticWarning();
     Alert.alert(t('tasks.alerts.deleteTitle'), t('tasks.alerts.deleteBody', { title: taskTitle }), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -567,6 +574,7 @@ export default function FarmDetailScreen() {
 
   const handleDeleteFarm = () => {
     if (!farmId || !farm) return;
+    triggerHapticWarning();
     Alert.alert(
       t('farmDetails.deleteFarmTitle'),
       t('farmDetails.deleteFarmBody', { name: farm.name }),
@@ -594,6 +602,7 @@ export default function FarmDetailScreen() {
   };
 
   const handleWorkboardAction = (action: WorkboardAction) => {
+    triggerHapticMedium();
     switch (action.id) {
       case 'ai':
         router.push(`/ai-chat?id=${id}`);
@@ -1710,12 +1719,20 @@ export default function FarmDetailScreen() {
             onStartShouldSetResponder={() => true}
           >
             <View
-              style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginBottom: spacing[1],
+              }}
             >
               <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
                 {t('farmDetails.seasons.formTitle')}
               </Text>
-              <Pressable onPress={closeSeasonForm}>
+              <Pressable
+                onPress={closeSeasonForm}
+                accessibilityLabel={t('common.close')}
+                accessibilityRole="button"
+              >
                 <UiSymbol
                   name="xmark.circle.fill"
                   size={24}

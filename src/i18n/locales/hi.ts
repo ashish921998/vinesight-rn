@@ -1661,6 +1661,7 @@ export const hi = {
       allFull: 'सभी पूर्ण',
       allHalf: 'सभी आधा',
       allOff: 'सभी बंद',
+      copyFromYesterday: 'कल का कॉपी करें',
     },
     buttons: {
       saving: 'सहेजा जा रहा है...',
@@ -1679,11 +1680,16 @@ export const hi = {
       setAllFullDay: 'सभी दिनों को पूर्ण दिवस पर सेट करें',
       setAllHalfDay: 'सभी दिनों को आधे दिन पर सेट करें',
       setAllAbsent: 'सभी दिनों को अनुपस्थित पर सेट करें',
+      copyFromYesterday: 'कल की उपस्थिति खाली दिनों पर कॉपी करें',
       savingAttendance: 'उपस्थिति सहेजी जा रही है',
-      saveAndNextWorker: 'उपस्थिति सहेजें और अगले श्रमिक पर जाएं',
-      saveAndFinish: 'उपस्थिति सहेजें और समाप्त करें',
-      goToNextWorker: 'अगले श्रमिक पर जाएं',
+      saveAttendance: 'उपस्थिति बदलाव सहेजें',
       dayStatus: '{{day}} {{date}}। {{status}}।',
+    },
+    errors: {
+      noYesterdayData: 'कल की उपस्थिति जानकारी नहीं मिली',
+    },
+    success: {
+      copiedFromYesterday: 'कल की उपस्थिति कॉपी की गई',
     },
     empty: {
       noWorkersTitle: 'कोई श्रमिक उपलब्ध नहीं',

@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { triggerHaptic } from '@/utils/haptics';
 
 interface FormModalProps {
   visible?: boolean;
@@ -821,7 +822,13 @@ export function Toggle({ label, description, value, onValueChange, style }: Togg
   };
 
   return (
-    <Pressable onPress={() => onValueChange(!value)} style={[containerStyle, style]}>
+    <Pressable
+      onPress={() => {
+        triggerHaptic();
+        onValueChange(!value);
+      }}
+      style={[containerStyle, style]}
+    >
       <View style={labelContainerStyle}>
         <Text style={labelTextStyle}>{label}</Text>
         {description && <Text style={descriptionTextStyle}>{description}</Text>}

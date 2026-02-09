@@ -31,6 +31,7 @@ import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { triggerHapticSuccess } from '@/utils/haptics';
 
 import {
   IrrigationForm,
@@ -509,6 +510,7 @@ export function EntryForm({
           });
         setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+        triggerHapticSuccess();
         onLogSaveSuccess?.();
       }
 
@@ -1793,7 +1795,7 @@ export function EntryForm({
             </Pressable>
           )}
         </Pressable>
-        {showDueDatePicker && (
+        {showDueDatePicker && Platform.OS === 'ios' && (
           <Modal
             transparent
             visible={showDueDatePicker}
@@ -1847,7 +1849,7 @@ export function EntryForm({
                     return parsed ?? new Date();
                   })()}
                   mode="date"
-                  display="default"
+                  display="spinner"
                   onChange={(_, date) => {
                     if (date) setDueDate(formatLocalDate(date));
                   }}
@@ -1868,6 +1870,21 @@ export function EntryForm({
               </View>
             </Pressable>
           </Modal>
+        )}
+        {showDueDatePicker && Platform.OS !== 'ios' && (
+          <DateTimePicker
+            value={(() => {
+              if (!dueDate) return new Date();
+              const parsed = parseDbDateToLocalDate(dueDate);
+              return parsed ?? new Date();
+            })()}
+            mode="date"
+            display="default"
+            onChange={(_, date) => {
+              setShowDueDatePicker(false);
+              if (date) setDueDate(formatLocalDate(date));
+            }}
+          />
         )}
       </View>
     </>
@@ -1995,7 +2012,7 @@ export function EntryForm({
               <DateTimePicker
                 value={selectedDate}
                 mode="date"
-                display="inline"
+                display="spinner"
                 onChange={(_, date) => {
                   if (date) setSelectedDate(date);
                 }}

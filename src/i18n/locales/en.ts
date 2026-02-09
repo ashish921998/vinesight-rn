@@ -174,6 +174,7 @@ export const en = {
         lab: 'Lab',
         reports: 'Reports',
         soilMoisture: 'Soil Moisture',
+        tempWorker: 'Temp\nWorker',
       },
     },
     tabs: {
@@ -1333,6 +1334,55 @@ export const en = {
       infoCardMessage:
         'Daily rate is used to calculate earnings. Advance balance tracks outstanding loans.',
     },
+    tempWorkers: {
+      sectionTitle: 'Temporary Workers',
+      addTitle: 'Add Temp Worker',
+      empty: {
+        title: 'No temp workers logged',
+        subtitle: 'Log temporary workers hired for this farm.',
+      },
+      form: {
+        title: 'Add Temp Worker',
+        sections: {
+          workerDetails: 'Worker Details',
+          workDetails: 'Work Details',
+        },
+        fields: {
+          name: {
+            label: 'Worker name',
+            placeholder: 'e.g., Day laborer',
+          },
+          date: {
+            label: 'Date',
+          },
+          hoursWorked: {
+            label: 'Hours worked',
+            suffix: 'hrs',
+          },
+          amountPaid: {
+            label: 'Amount paid',
+          },
+          farm: {
+            label: 'Farm',
+            placeholder: 'Select farm (optional)',
+          },
+          notes: {
+            label: 'Notes (optional)',
+            placeholder: 'Add notes...',
+          },
+        },
+        hourlyRate: 'Hourly rate',
+        perHour: '/hr',
+        save: 'Add Worker',
+        validation: 'Please enter a worker name and amount paid.',
+        error: 'Failed to save temporary worker entry. Please try again.',
+      },
+      card: {
+        hoursShort: '{{hours}} hrs',
+        deleteTitle: 'Delete entry?',
+        deleteBody: 'This will remove the temp worker entry for {{name}}.',
+      },
+    },
   },
 
   settlePayment: 'Settle Payment',
@@ -1657,6 +1707,7 @@ export const en = {
       allFull: 'All Full',
       allHalf: 'All Half',
       allOff: 'All Off',
+      copyFromYesterday: 'Copy Last',
     },
     buttons: {
       saving: 'Saving...',
@@ -1675,11 +1726,16 @@ export const en = {
       setAllFullDay: 'Set all days to full day',
       setAllHalfDay: 'Set all days to half day',
       setAllAbsent: 'Set all days to absent',
+      copyFromYesterday: 'Copy attendance from yesterday to empty days',
       savingAttendance: 'Saving attendance',
-      saveAndNextWorker: 'Save attendance and go to next worker',
-      saveAndFinish: 'Save attendance and finish',
-      goToNextWorker: 'Go to next worker',
+      saveAttendance: 'Save attendance changes',
       dayStatus: '{{day}} {{date}}. {{status}}.',
+    },
+    errors: {
+      noYesterdayData: 'No attendance data found for yesterday',
+    },
+    success: {
+      copiedFromYesterday: 'Copied attendance from yesterday',
     },
     empty: {
       noWorkersTitle: 'No workers available',

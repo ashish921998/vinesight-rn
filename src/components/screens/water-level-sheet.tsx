@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { formatNumber, formatDate } from '@/i18n/format';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { triggerHapticMedium, triggerHapticSuccess } from '@/utils/haptics';
 
 interface WaterLevelSheetProps {
   visible?: boolean;
@@ -90,6 +91,7 @@ export function WaterLevelSheet({
   };
 
   const handleCalculate = () => {
+    triggerHapticMedium();
     if (useManual) {
       const manualValue = parseFloat(manualWaterLevel);
       if (isNaN(manualValue) || manualValue < 0) {
@@ -158,6 +160,7 @@ export function WaterLevelSheet({
         }
       }
       // Keep the success message numeric display in Latin digits.
+      triggerHapticSuccess();
       Alert.alert(
         t('waterLevelSheet.alerts.successTitle'),
         t('waterLevelSheet.alerts.successUpdated', {

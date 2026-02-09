@@ -27,6 +27,7 @@ import { formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
+import { triggerHapticSuccess } from '@/utils/haptics';
 import {
   IrrigationForm,
   SprayForm,
@@ -406,6 +407,7 @@ export function ActivityEditForm({
         }
       }
 
+      triggerHapticSuccess();
       onSaveSuccess?.();
       setIsInitialized(false);
       onClose();
@@ -566,6 +568,8 @@ export function ActivityEditForm({
         >
           <Pressable
             onPress={() => setShowDatePicker(false)}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
             style={{
               position: 'absolute',
               top: 0,
@@ -599,13 +603,13 @@ export function ActivityEditForm({
                 {t('common.selectDate')}
               </Text>
               <Pressable onPress={() => setShowDatePicker(false)}>
-                <UISymbol name="xmark.circle.fill" size={24} />
+                <UISymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />
               </Pressable>
             </View>
             <DateTimePicker
               value={selectedDate}
               mode="date"
-              display="inline"
+              display="spinner"
               onChange={(_, date) => {
                 if (date) setSelectedDate(date);
               }}

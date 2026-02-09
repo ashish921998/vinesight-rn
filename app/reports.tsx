@@ -4,7 +4,16 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Platform,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatNumber } from '@/i18n/format';
@@ -330,7 +339,10 @@ export default function ReportsScreen() {
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing[3] }}>
             <Pressable
-              onPress={() => setShowFromPicker(true)}
+              onPress={() => {
+                setShowToPicker(false);
+                setShowFromPicker(true);
+              }}
               style={{
                 flex: 1,
                 backgroundColor: colors.surface[50],
@@ -360,7 +372,10 @@ export default function ReportsScreen() {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => setShowToPicker(true)}
+              onPress={() => {
+                setShowFromPicker(false);
+                setShowToPicker(true);
+              }}
               style={{
                 flex: 1,
                 backgroundColor: colors.surface[50],
@@ -391,7 +406,8 @@ export default function ReportsScreen() {
             </Pressable>
           </View>
 
-          {showFromPicker && (
+          {/* Android Date Pickers */}
+          {Platform.OS !== 'ios' && showFromPicker && (
             <DateTimePicker
               value={parseDbDateToLocalDate(dateRange.from) ?? new Date()}
               mode="date"
@@ -400,7 +416,7 @@ export default function ReportsScreen() {
               maximumDate={parseDbDateToLocalDate(dateRange.to) ?? undefined}
             />
           )}
-          {showToPicker && (
+          {Platform.OS !== 'ios' && showToPicker && (
             <DateTimePicker
               value={parseDbDateToLocalDate(dateRange.to) ?? new Date()}
               mode="date"
@@ -409,6 +425,113 @@ export default function ReportsScreen() {
               minimumDate={parseDbDateToLocalDate(dateRange.from) ?? undefined}
               maximumDate={new Date()}
             />
+          )}
+
+          {/* iOS Date Pickers with Modal */}
+          {Platform.OS === 'ios' && (showFromPicker || showToPicker) && (
+            <Modal
+              transparent
+              visible={showFromPicker || showToPicker}
+              animationType="fade"
+              onRequestClose={() => {
+                setShowFromPicker(false);
+                setShowToPicker(false);
+              }}
+            >
+              <Pressable
+                onPress={() => {
+                  setShowFromPicker(false);
+                  setShowToPicker(false);
+                }}
+                style={{
+                  flex: 1,
+                  backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: colors.surface[100],
+                    borderTopLeftRadius: borderRadius['2xl'],
+                    borderTopRightRadius: borderRadius['2xl'],
+                    padding: spacing[4],
+                  }}
+                  onStartShouldSetResponder={() => true}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: spacing[4],
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        fontWeight: '700',
+                        color: m3.colorScheme.onSurface,
+                      }}
+                    >
+                      {showFromPicker ? t('reports.selectFromDate') : t('reports.selectToDate')}
+                    </Text>
+                    <Pressable
+                      onPress={() => {
+                        setShowFromPicker(false);
+                        setShowToPicker(false);
+                      }}
+                    >
+                      <Icon
+                        name="xmark.circle.fill"
+                        size={24}
+                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                      />
+                    </Pressable>
+                  </View>
+                  {showFromPicker && (
+                    <DateTimePicker
+                      value={parseDbDateToLocalDate(dateRange.from) ?? new Date()}
+                      mode="date"
+                      display="spinner"
+                      onChange={(_, date) => handleDateChange('from', date)}
+                      maximumDate={parseDbDateToLocalDate(dateRange.to) ?? undefined}
+                    />
+                  )}
+                  {showToPicker && (
+                    <DateTimePicker
+                      value={parseDbDateToLocalDate(dateRange.to) ?? new Date()}
+                      mode="date"
+                      display="spinner"
+                      onChange={(_, date) => handleDateChange('to', date)}
+                      minimumDate={parseDbDateToLocalDate(dateRange.from) ?? undefined}
+                      maximumDate={new Date()}
+                    />
+                  )}
+                  <Pressable
+                    onPress={() => {
+                      setShowFromPicker(false);
+                      setShowToPicker(false);
+                    }}
+                    style={{
+                      marginTop: spacing[4],
+                      paddingVertical: spacing[3],
+                      borderRadius: borderRadius.lg,
+                      alignItems: 'center',
+                      backgroundColor: m3.colorScheme.primary,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: '600',
+                        color: m3.colorScheme.onPrimary,
+                      }}
+                    >
+                      {t('common.done')}
+                    </Text>
+                  </Pressable>
+                </View>
+              </Pressable>
+            </Modal>
           )}
         </View>
 

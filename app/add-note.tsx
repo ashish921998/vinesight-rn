@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Modal,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -50,13 +51,9 @@ export default function AddNoteRoute() {
   const isSaving = upsertDailyNote.isPending;
   const canSave = Boolean(farmId && notes.trim().length > 0 && !isSaving);
   const hasUnsavedChanges = useMemo(() => {
-    return Object.entries(draftNotesByDate).some(([draftDate, draftNotes]) => {
-      if (!draftNotes.trim()) return false;
-      if (draftDate === dateStr) {
-        return draftNotes.trim() !== (existingNote?.notes ?? '').trim();
-      }
-      return true;
-    });
+    const currentDraft = draftNotesByDate[dateStr];
+    if (!currentDraft?.trim()) return false;
+    return currentDraft.trim() !== (existingNote?.notes ?? '').trim();
   }, [dateStr, draftNotesByDate, existingNote?.notes]);
 
   const handleClose = () => {
@@ -214,20 +211,100 @@ export default function AddNoteRoute() {
               </View>
               <AppIcon name="chevron-down" size={16} color={m3.colorScheme.onSurfaceVariant} />
             </Pressable>
-            {showDatePicker && (
+            {showDatePicker && Platform.OS !== 'ios' && (
               <DateTimePicker
                 value={selectedDate}
                 mode="date"
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                display="default"
                 onChange={(_event, date) => {
-                  if (Platform.OS !== 'ios') {
-                    setShowDatePicker(false);
-                  }
+                  setShowDatePicker(false);
                   if (date) {
                     setSelectedDate(date);
                   }
                 }}
               />
+            )}
+            {showDatePicker && Platform.OS === 'ios' && (
+              <Modal
+                transparent
+                visible={showDatePicker}
+                animationType="fade"
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <Pressable
+                  onPress={() => setShowDatePicker(false)}
+                  style={{
+                    flex: 1,
+                    backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: colors.surface[100],
+                      borderTopLeftRadius: borderRadius['2xl'],
+                      borderTopRightRadius: borderRadius['2xl'],
+                      padding: spacing[4],
+                    }}
+                    onStartShouldSetResponder={() => true}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: spacing[4],
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontWeight: '700',
+                          color: m3.colorScheme.onSurface,
+                        }}
+                      >
+                        {t('entryForm.selectDate')}
+                      </Text>
+                      <Pressable onPress={() => setShowDatePicker(false)}>
+                        <AppIcon
+                          name="close"
+                          size={24}
+                          color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                        />
+                      </Pressable>
+                    </View>
+                    <DateTimePicker
+                      value={selectedDate}
+                      mode="date"
+                      display="spinner"
+                      onChange={(_event, date) => {
+                        if (date) {
+                          setSelectedDate(date);
+                        }
+                      }}
+                    />
+                    <Pressable
+                      onPress={() => setShowDatePicker(false)}
+                      style={{
+                        marginTop: spacing[4],
+                        paddingVertical: spacing[3],
+                        borderRadius: borderRadius.lg,
+                        alignItems: 'center',
+                        backgroundColor: m3.colorScheme.primary,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontWeight: '600',
+                          color: m3.colorScheme.onPrimary,
+                        }}
+                      >
+                        {t('entryForm.done')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </Pressable>
+              </Modal>
             )}
           </View>
 

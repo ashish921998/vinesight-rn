@@ -77,7 +77,8 @@ function getDescriptionFromData(
     }
     case 'fertigation': {
       const fertigation = data as FertigationRecord;
-      const fertNames = fertigation.fertilizers?.map((f) => f.name.trim()).filter(Boolean) ?? [];
+      const fertNames =
+        fertigation.fertilizers?.map((f) => f.name?.trim() ?? '').filter(Boolean) ?? [];
       if (fertNames.length > 0) {
         return fertNames.join(', ');
       }

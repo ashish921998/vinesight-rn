@@ -37,6 +37,7 @@ import { formatDate } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
 import * as Sentry from '@sentry/react-native';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
+import { triggerHapticSuccess } from '@/utils/haptics';
 
 const SOIL_TEXTURE_OPTIONS = [
   { value: 'Sand', labelKey: 'farmForm.soilTexture.options.sand' },
@@ -721,6 +722,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         region: formState.region,
         area_acres: areaValue,
       });
+      triggerHapticSuccess();
       onClose();
     } catch (_error: unknown) {
       const errorMessage = getErrorMessage(_error, t('common.errors.failedToCreateFarm'));

@@ -14,6 +14,7 @@ import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
+import { triggerHaptic, triggerHapticWarning } from '@/utils/haptics';
 
 interface TaskRowProps {
   task: TaskReminder;
@@ -90,7 +91,12 @@ export function TaskRow({
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
         <Pressable
-          onPress={() => (task.completed ? null : onComplete?.(task))}
+          onPress={() => {
+            if (!task.completed && onComplete) {
+              triggerHaptic();
+              onComplete(task);
+            }
+          }}
           disabled={task.completed || !onComplete}
           accessibilityRole="button"
           accessibilityLabel={t('tasks.a11y.completeTask', { title: task.title })}
@@ -263,7 +269,10 @@ export function TaskRow({
           )}
           {onDelete && (
             <Pressable
-              onPress={() => onDelete(task)}
+              onPress={() => {
+                triggerHapticWarning();
+                onDelete(task);
+              }}
               accessibilityRole="button"
               accessibilityLabel={t('tasks.a11y.deleteTask', { title: task.title })}
               style={({ pressed }) => ({

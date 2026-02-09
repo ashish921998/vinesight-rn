@@ -566,7 +566,7 @@ export default function LabTestForm({
                 }}
               >
                 <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
-                  {t('labTests.form.testDateLabel')}
+                  {t('common.selectDate')}
                 </Text>
                 <Pressable
                   onPress={() => {
@@ -576,7 +576,7 @@ export default function LabTestForm({
                     setShowDatePicker(false);
                     setOriginalDate(null);
                   }}
-                  accessibilityLabel={t('common.actions.close')}
+                  accessibilityLabel={t('common.close')}
                   accessibilityRole="button"
                 >
                   <IconSymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />
@@ -585,41 +585,20 @@ export default function LabTestForm({
               <DateTimePicker
                 value={date}
                 mode="date"
-                display="default"
+                display="spinner"
                 onChange={handleDateChange}
               />
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginTop: spacing[4],
+              <Button
+                title={t('common.done')}
+                variant="primary"
+                fullWidth={false}
+                onPress={() => {
+                  setShowDatePicker(false);
+                  setOriginalDate(null);
                 }}
-              >
-                <Button
-                  title={t('common.actions.cancel')}
-                  variant="secondary"
-                  fullWidth={false}
-                  onPress={() => {
-                    if (originalDate) {
-                      setDate(originalDate);
-                    }
-                    setShowDatePicker(false);
-                    setOriginalDate(null);
-                  }}
-                  accessibilityLabel={t('common.actions.cancel')}
-                />
-                <Button
-                  title={t('common.actions.done')}
-                  variant="primary"
-                  fullWidth={false}
-                  onPress={() => {
-                    setShowDatePicker(false);
-                    setOriginalDate(null);
-                  }}
-                  accessibilityLabel={t('common.actions.done')}
-                  style={{ marginLeft: spacing[3] }}
-                />
-              </View>
+                accessibilityLabel={t('common.done')}
+                style={{ marginTop: spacing[4] }}
+              />
             </View>
           </Pressable>
         </Modal>

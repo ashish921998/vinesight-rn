@@ -1666,6 +1666,7 @@ export const mr = {
       allFull: 'सर्व पूर्ण',
       allHalf: 'सर्व अर्धा',
       allOff: 'सर्व बंद',
+      copyFromYesterday: 'कालचे कॉपी करा',
     },
     buttons: {
       saving: 'जतन करत आहे...',
@@ -1685,11 +1686,16 @@ export const mr = {
       setAllFullDay: 'सर्व दिवस पूर्ण दिवस सेट करा',
       setAllHalfDay: 'सर्व दिवस अर्धा दिवस सेट करा',
       setAllAbsent: 'सर्व दिवस अनुपस्थित सेट करा',
+      copyFromYesterday: 'कालचे हजेरी रिक्त दिवसांवर कॉपी करा',
       savingAttendance: '$t(glossary.attendance) जतन करत आहे',
-      saveAndNextWorker: '$t(glossary.attendance) जतन करा आणि पुढील $t(glossary.worker)वर जा',
-      saveAndFinish: '$t(glossary.attendance) जतन करा आणि समाप्त',
-      goToNextWorker: 'पुढील $t(glossary.worker)वर जा',
+      saveAttendance: '$t(glossary.attendance) बदल जतन करा',
       dayStatus: '{{day}} {{date}}. {{status}}.',
+    },
+    errors: {
+      noYesterdayData: 'कालची हजेरी माहिती सापडली नाही',
+    },
+    success: {
+      copiedFromYesterday: 'कालचे हजेरी कॉपी केले',
     },
     empty: {
       noWorkersTitle: '$t(glossary.worker) उपलब्ध नाहीत',
