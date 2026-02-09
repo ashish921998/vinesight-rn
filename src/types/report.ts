@@ -42,7 +42,7 @@ export interface ReportData {
 
 export interface ReportStockUsageRecord {
   itemName: string;
-  type: 'fertilizer' | 'spray' | 'other';
+  type: 'fertilizer' | 'spray';
   quantityUsed: number;
   unit: string;
   areaTreated: number; // Total area this item was applied to
