@@ -34,15 +34,14 @@ export function useFarmSeasons(farmId: number | undefined) {
       const { data, error } = await supabase
         .from(TABLES.FARM_SEASONS)
         .select('*')
-        .eq('farm_id', farmId)
-        .order('end_date', { ascending: true, nullsFirst: false });
+        .eq('farm_id', farmId);
 
       if (error) {
         // Allow gradual rollout if migration isn't applied yet.
         if ('code' in error && error.code === '42P01') return [];
         throw error;
       }
-      return data ?? [];
+      return sortFarmSeasonsByEndDate(data ?? []);
     },
     enabled: !!farmId && !Number.isNaN(farmId),
   });
