@@ -82,7 +82,7 @@ export default function ReportsScreen() {
 
   // Auto-select first farm
   React.useEffect(() => {
-    if (farms && farms.length > 0 && !selectedFarmId) {
+    if (farms && farms.length > 0 && selectedFarmId == null) {
       setSelectedFarmId(farms[0].id ?? null);
     }
   }, [farms, selectedFarmId]);
@@ -124,7 +124,7 @@ export default function ReportsScreen() {
   };
 
   const selectedFarm = useMemo(() => {
-    if (!farms || !selectedFarmId) return null;
+    if (!farms || selectedFarmId == null) return null;
     return farms.find((f) => f.id === selectedFarmId) || null;
   }, [farms, selectedFarmId]);
 

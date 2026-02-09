@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { useWorkerAttendance, useWorkerTransactions, useWorkers, useCurrency } from '@/hooks';
@@ -21,6 +21,7 @@ import { colorWithOpacity } from '@/utils/color';
 export default function WorkerAnalyticsDetailScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const rawWorkerId = Number(id);
   const hasValidWorkerId = Number.isFinite(rawWorkerId);
   const workerId = hasValidWorkerId ? rawWorkerId : 0;
@@ -117,10 +118,10 @@ export default function WorkerAnalyticsDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.surface }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: spacing[8] }}
+        contentContainerStyle={{ paddingBottom: spacing[8] + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>

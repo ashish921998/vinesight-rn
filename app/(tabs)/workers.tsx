@@ -414,6 +414,10 @@ export default function WorkersScreen() {
       <TempWorkerForm
         visible={tempWorkerFormVisible}
         onClose={() => setTempWorkerFormVisible(false)}
+        onSaveSuccess={() => {
+          setTempWorkerFormVisible(false);
+          refetch();
+        }}
       />
     </>
   );

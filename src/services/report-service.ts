@@ -67,8 +67,7 @@ export class ReportService {
     itemStr: string,
   ): { name: string; quantity: number; unit: string }[] {
     const items: { name: string; quantity: number; unit: string }[] = [];
-    // Matches "Name (10.5 kg)" or similar patterns
-    const regex = /([^(]+)\s+\((\d+(?:\.\d+)?)\s*([a-zA-Z/%]+)\)/g;
+    const regex = /([^(,]+)\s*\((\d+(?:\.\d+)?)\s*([a-zA-Z/%]+)\)/g;
     let match;
     while ((match = regex.exec(itemStr)) !== null) {
       items.push({

@@ -100,6 +100,10 @@ export function FarmSelectModal({
                 return (
                   <Pressable
                     onPress={() => item.id != null && onSelect(item.id)}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.name}${item.region ? `, ${item.region}` : ''}${isSelected ? ` (${t('common.selected')})` : ''}`}
+                    accessibilityState={{ selected: isSelected }}
                     style={{
                       backgroundColor: isSelected
                         ? m3.colorScheme.primaryContainer

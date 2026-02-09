@@ -1412,7 +1412,7 @@ export const en = {
     netPayment: 'Net Payment',
     netPaymentHint: 'Amount to be paid to worker',
     settlementConfirmedTitle: 'Settlement Confirmed',
-    settlementConfirmedMessage: 'Net payment: ₹{{amount}} confirmed successfully',
+    settlementConfirmedMessage: 'Net payment: {{formattedAmount}} confirmed successfully',
     salaryCannotBeNegative: 'Total salary cannot be negative',
     deductionCannotBeNegative: 'Advance deduction cannot be negative',
     deductionExceedsBalance: 'Deduction exceeds available advance balance',

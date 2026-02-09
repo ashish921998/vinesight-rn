@@ -127,7 +127,13 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
             }}
           >
             <SymbolIcon
-              name={item.type === 'fertilizer' ? 'flask.fill' : 'drop.fill'}
+              name={
+                item.type === 'fertilizer'
+                  ? 'flask.fill'
+                  : item.type === 'spray'
+                    ? 'spraycan.fill'
+                    : 'drop.fill'
+              }
               size={24}
               color={item.type === 'fertilizer' ? colors.success : m3.colorScheme.primary}
             />

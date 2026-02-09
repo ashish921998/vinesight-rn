@@ -1364,7 +1364,7 @@ export const mr = {
             label: 'तारीख',
           },
           hoursWorked: {
-            label: '$t(glossary.task) केलेली तास',
+            label: 'काम केलेले तास',
             suffix: 'तास',
           },
           amountPaid: {
@@ -1401,7 +1401,7 @@ export const mr = {
   startDate: 'सुरूवातीची तारीख',
   endDate: 'शेवटची तारीख',
   calculate: 'गणा',
-  daysWorked: '$t(glossary.task) केलेले दिवस',
+  daysWorked: 'काम केलेले दिवस',
   confirm: 'पुष्टी करा',
   optional: 'ऐच्छिक',
   allFarms: 'सर्व शेते',
@@ -1420,7 +1420,7 @@ export const mr = {
     netPayment: 'निव्वळ पेमेंट',
     netPaymentHint: 'कामगाराला देण्याची रक्कम',
     settlementConfirmedTitle: 'सेटलमेंट पुष्टी झाले',
-    settlementConfirmedMessage: 'निव्वळ पेमेंट: ₹{{amount}} यशस्वीरित्या पुष्टी झाले',
+    settlementConfirmedMessage: 'निव्वळ पेमेंट: {{formattedAmount}} यशस्वीरित्या पुष्टी झाले',
     salaryCannotBeNegative: 'एकूण पगार नकारात्मक असू शकत नाही',
     deductionCannotBeNegative: 'अग्रिम कपात नकारात्मक असू शकत नाही',
     deductionExceedsBalance: 'कपात उपलब्ध अग्रिम शिल्लकापेक्षा जास्त आहे',

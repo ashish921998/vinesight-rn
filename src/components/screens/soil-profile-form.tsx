@@ -282,7 +282,7 @@ export default function SoilProfileForm({
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={t('common.close')}
-              accessibilityHint={t('common.close')}
+              accessibilityHint={t('soilProfileForm.date.closeHint')}
               style={{
                 position: 'absolute',
                 top: 0,

@@ -1282,7 +1282,7 @@ export function MarkAttendanceTab({
               : m3.colorScheme.surfaceVariant,
             overflow: 'hidden',
             transform: [{ scale: pressed && hasModifications ? 0.97 : 1 }],
-            boxShadow: hasModifications ? '0 2px 8px rgba(0,0,0,0.18)' : 'none',
+            ...(hasModifications ? shadows : {}),
             opacity: saving ? 0.8 : hasModifications ? 1 : 0.5,
           })}
         >

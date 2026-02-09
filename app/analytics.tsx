@@ -316,13 +316,12 @@ export default function AnalyticsScreen() {
                   color: colors.surface[900],
                 }}
               >
-                {formatNumber(analytics.totalHarvestValue / 1000, {
+                {formatNumber(analytics.totalHarvestValue, {
                   style: 'currency',
                   currency,
-                  minimumFractionDigits: 0,
+                  notation: 'compact',
                   maximumFractionDigits: 0,
                 })}
-                k
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                 {t('analytics.labels.harvestValue')}

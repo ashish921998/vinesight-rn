@@ -70,12 +70,16 @@ export function WorkerAnalyticsView() {
       isDateInRange(entry.date, dateRange),
     );
 
-    const totalAmount = filteredEntries.reduce((sum, entry) => sum + (entry.amount_paid || 0), 0);
+    const sortedEntries = filteredEntries.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+
+    const totalAmount = sortedEntries.reduce((sum, entry) => sum + (entry.amount_paid || 0), 0);
 
     return {
       totalAmount,
-      totalEntries: filteredEntries.length,
-      entries: filteredEntries.slice(0, 5), // Top 5 most recent
+      totalEntries: sortedEntries.length,
+      entries: sortedEntries.slice(0, 5), // Top 5 most recent
     };
   }, [tempWorkerEntries, dateRange]);
 
@@ -400,7 +404,8 @@ function TempWorkerRow({
 }) {
   const m3 = useM3();
 
-  const displayDate = new Date(entry.date).toLocaleDateString('en-US', {
+  const parsedDate = parseDbDateToLocalDate(entry.date);
+  const displayDate = (parsedDate || new Date(entry.date)).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
   });

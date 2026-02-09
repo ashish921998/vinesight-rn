@@ -1415,7 +1415,7 @@ export const hi = {
     netPayment: 'शुद्ध भुगतान',
     netPaymentHint: 'श्रमिक को दी जाने वाली राशि',
     settlementConfirmedTitle: 'निपटान की पुष्टि हुई',
-    settlementConfirmedMessage: 'शुद्ध भुगतान: ₹{{amount}} सफलतापूर्वक पुष्टि हुआ',
+    settlementConfirmedMessage: 'शुद्ध भुगतान: {{formattedAmount}} सफलतापूर्वक पुष्टि हुआ',
     salaryCannotBeNegative: 'कुल वेतन ऋणात्मक नहीं हो सकता',
     deductionCannotBeNegative: 'अग्रिम कटौती ऋणात्मक नहीं हो सकती',
     deductionExceedsBalance: 'कटौती उपलब्ध अग्रिम शेष से अधिक है',
