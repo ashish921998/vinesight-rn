@@ -83,6 +83,8 @@ export {
   useCreateWorkType,
   // Temporary Worker Entries
   useTemporaryWorkerEntries,
+  useTemporaryWorkerEntriesByFarms,
+  useAllTemporaryWorkerEntries,
   useCreateTemporaryWorkerEntry,
   useDeleteTemporaryWorkerEntry,
 } from './use-workers';

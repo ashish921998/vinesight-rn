@@ -9,6 +9,13 @@ import { colorWithOpacity } from '@/utils/color';
 import { WorkerSelectSheet } from './index';
 import i18n from '@/i18n';
 
+function formatDateToYYYYMMDD(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 type AttendanceStatus = WorkStatus | null;
 
 interface CalendarAttendanceTabProps {
@@ -58,8 +65,8 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
       monthEnd.setMonth(monthEnd.getMonth() + 1);
       monthEnd.setDate(0);
 
-      const startDate = monthStart.toISOString().split('T')[0];
-      const endDate = monthEnd.toISOString().split('T')[0];
+      const startDate = formatDateToYYYYMMDD(monthStart);
+      const endDate = formatDateToYYYYMMDD(monthEnd);
 
       const records = await fetchAttendanceForWorker(selectedWorkerId, startDate, endDate);
       setAttendanceData(records);
@@ -101,7 +108,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
 
   const getAttendanceForDate = (date: Date): AttendanceStatus => {
     if (!date.getTime()) return null;
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatDateToYYYYMMDD(date);
     const record = attendanceData.find((r) => r.date === dateStr);
     return record ? (record.work_status as AttendanceStatus) : null;
   };

@@ -166,8 +166,11 @@ export const queryKeys = {
   temporaryWorkerEntries: {
     all: ['temporaryWorkerEntries'] as const,
     lists: () => [...queryKeys.temporaryWorkerEntries.all, 'list'] as const,
+    listAll: () => [...queryKeys.temporaryWorkerEntries.lists(), 'all'] as const,
     listByFarm: (farmId: number) =>
       [...queryKeys.temporaryWorkerEntries.lists(), { farmId }] as const,
+    listByFarms: (farmIds: number[]) =>
+      [...queryKeys.temporaryWorkerEntries.lists(), { farmIds }] as const,
   },
 
   // Dashboard
