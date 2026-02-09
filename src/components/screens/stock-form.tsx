@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Alert, View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { useUpdateWarehouseItem, useProfile } from '../../hooks';
+import { useUpdateWarehouseItem } from '../../hooks';
 import { WarehouseItem } from '../../types';
 import { FormModal, SectionHeader, FormInput, PreviewCard } from '../ui/form-components';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency, formatNumber } from '@/i18n/format';
+import { useCurrency } from '@/hooks/use-currency';
 
 interface Props {
   visible?: boolean;
@@ -23,13 +24,12 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
   const m3 = useM3();
 
   const isVisible = visible ?? true;
-  const { data: profile } = useProfile();
   const updateMutation = useUpdateWarehouseItem();
 
   const [quantityToAdd, setQuantityToAdd] = useState('');
   const [newUnitPrice, setNewUnitPrice] = useState('');
 
-  const currency = profile?.currency_preference || 'INR';
+  const currency = useCurrency();
 
   // Track previous visible/item state to prevent unnecessary updates
   const prevVisibleRef = useRef(isVisible);
@@ -127,7 +127,13 @@ export default function StockForm({ visible, onClose, item, presentation = 'moda
             }}
           >
             <SymbolIcon
-              name={item.type === 'fertilizer' ? 'flask.fill' : 'spraycan.fill'}
+              name={
+                item.type === 'fertilizer'
+                  ? 'flask.fill'
+                  : item.type === 'spray'
+                    ? 'spraycan.fill'
+                    : 'drop.fill'
+              }
               size={24}
               color={item.type === 'fertilizer' ? colors.success : m3.colorScheme.primary}
             />

@@ -12,6 +12,7 @@ import {
   useHarvestRecordsByFarms,
   useExpenseRecordsByFarms,
 } from './use-records';
+import { useTemporaryWorkerEntriesByFarms } from './use-workers';
 import { AnalyticsService } from '../services/analytics-service';
 import {
   AnalyticsData,
@@ -40,6 +41,8 @@ export function useAnalytics(timeRange: TimeRange = 'all') {
     useFertigationRecordsByFarms(farmIds);
   const { data: harvests, isLoading: harvestsLoading } = useHarvestRecordsByFarms(farmIds);
   const { data: expenses, isLoading: expensesLoading } = useExpenseRecordsByFarms(farmIds);
+  const { data: tempWorkers, isLoading: tempWorkersLoading } =
+    useTemporaryWorkerEntriesByFarms(farmIds);
 
   // Calculate analytics
   const analytics = useMemo<AnalyticsData | null>(() => {
@@ -53,15 +56,16 @@ export function useAnalytics(timeRange: TimeRange = 'all') {
       fertigations,
       harvests,
       expenses,
+      tempWorkers ?? [],
       timeRange,
     );
-  }, [farms, irrigations, sprays, fertigations, harvests, expenses, timeRange]);
+  }, [farms, irrigations, sprays, fertigations, harvests, expenses, tempWorkers, timeRange]);
 
   // Calculate cost analysis
   const costAnalysis = useMemo<CostAnalysis | null>(() => {
     if (!farms || !harvests || !expenses) return null;
-    return AnalyticsService.calculateCostAnalysis(harvests, expenses, farms);
-  }, [farms, harvests, expenses]);
+    return AnalyticsService.calculateCostAnalysis(harvests, expenses, tempWorkers ?? [], farms);
+  }, [farms, harvests, expenses, tempWorkers]);
 
   // Calculate yield analysis
   const yieldAnalysis = useMemo<YieldAnalysis | null>(() => {
@@ -81,7 +85,8 @@ export function useAnalytics(timeRange: TimeRange = 'all') {
     spraysLoading ||
     fertigationsLoading ||
     harvestsLoading ||
-    expensesLoading;
+    expensesLoading ||
+    tempWorkersLoading;
 
   return {
     analytics,

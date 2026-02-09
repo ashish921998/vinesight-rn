@@ -11,7 +11,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
-import { useProfile } from '@/hooks';
+import { useCurrency } from '@/hooks/use-currency';
 import { useM3 } from '@/styles/use-theme';
 
 interface WorkerCardProps {
@@ -24,8 +24,7 @@ interface WorkerCardProps {
 export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProps) {
   const m3 = useM3();
   const { t } = useTranslation();
-  const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference || 'INR';
+  const preferredCurrency = useCurrency();
 
   const initial = worker.name.charAt(0).toUpperCase();
   const formattedRate = formatCurrency(worker.daily_rate, preferredCurrency, {

@@ -16,6 +16,7 @@ import {
 
 import { Stack } from 'expo-router';
 import { Symbol as Icon } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { GRAPE_GROWTH_STAGES, type GrapeGrowthStageId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -126,7 +127,11 @@ export default function NutrientCalculatorScreen() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="flask.fill" size={18} color={m3.colorScheme.tertiary} />
+                  <Icon
+                    name={resolveSymbolIconName(ICON_REGISTRY.spray)}
+                    size={18}
+                    color={m3.colorScheme.tertiary}
+                  />
                 </View>
                 <Text
                   style={{

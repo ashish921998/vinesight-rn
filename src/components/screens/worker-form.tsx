@@ -12,6 +12,7 @@ import type { Worker } from '@/types';
 import { FormModal, SectionHeader, FormInput, Toggle, InfoCard } from '@/components/ui';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { triggerHapticSuccess } from '@/utils/haptics';
 
 interface WorkerFormProps {
   visible?: boolean;
@@ -101,6 +102,7 @@ export function WorkerForm({
         });
       }
 
+      triggerHapticSuccess();
       onSaveSuccess?.();
       onClose();
     } catch (error) {

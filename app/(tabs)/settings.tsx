@@ -11,13 +11,12 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
-import { useProfile, useUpdateProfile } from '@/hooks';
+import { useProfile, useUpdateProfile, useCurrency } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import {
@@ -39,6 +38,7 @@ import {
 } from '@/services/notifications';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { getDefaultCurrency } from '@/i18n/currency';
 
 export default function SettingsScreen() {
   const colors = useThemeColors();
@@ -96,20 +96,21 @@ export default function SettingsScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Local preferences state
-  const [selectedCurrency, setSelectedCurrency] = useState('INR');
+  const [selectedCurrency, setSelectedCurrency] = useState(getDefaultCurrency());
   const [selectedAreaUnit, setSelectedAreaUnit] = useState('hectares');
+  const currency = useCurrency();
 
   useEffect(() => {
     if (profile) {
       setEditName(profile.full_name || '');
       setEditPhone(profile.phone || '');
-      setSelectedCurrency(profile.currency_preference || 'INR');
+      setSelectedCurrency(currency);
       // Area unit from user metadata
     }
     if (user?.user_metadata?.area_unit) {
       setSelectedAreaUnit(user.user_metadata.area_unit as string);
     }
-  }, [profile, user]);
+  }, [profile, user, currency]);
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'User';
   const userEmail = profile?.email || user?.email || '';
@@ -638,7 +639,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowLanguagePicker(false)}
       >
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -696,7 +697,7 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </Modal>
 
       {/* Theme Picker Modal */}
@@ -706,7 +707,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowThemePicker(false)}
       >
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -763,7 +764,7 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </Modal>
 
       {/* Currency Picker Modal */}

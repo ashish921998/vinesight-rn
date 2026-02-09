@@ -3,13 +3,14 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, SafeAreaView } fr
 
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { AppIcon } from '@/components/ui/app-icon';
+import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useAnalytics } from '../src/hooks/use-analytics';
-import { useProfile } from '../src/hooks';
 import { TimeRange } from '../src/types/analytics';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
+import { useCurrency } from '@/hooks/use-currency';
 import { useM3, useThemeColors } from '@/styles/use-theme';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
 
 const TIME_RANGES: { value: TimeRange; labelKey: string }[] = [
@@ -24,14 +25,12 @@ export default function AnalyticsScreen() {
   const m3 = useM3();
   const { t } = useTranslation();
 
-  const { data: profile } = useProfile();
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
 
   const { analytics, costAnalysis, yieldAnalysis, performanceMetrics, isLoading } =
     useAnalytics(timeRange);
 
-  const currency = profile?.currency_preference || 'INR';
-  const currencySymbol = currency === 'INR' ? '₹' : '$';
+  const currency = useCurrency();
   const metricColors = useMemo(
     () => ({
       irrigation: {
@@ -55,11 +54,11 @@ export default function AnalyticsScreen() {
   );
   const activityIcons = useMemo<Record<string, { icon: string; color: string }>>(
     () => ({
-      irrigation: { icon: 'drop', color: m3.colorScheme.primary },
-      spray: { icon: 'spraycan', color: m3.colorScheme.tertiary },
-      harvest: { icon: 'basket', color: colors.warning },
-      expense: { icon: 'cash', color: m3.colorScheme.error },
-      fertigation: { icon: 'fertigation', color: colors.success },
+      irrigation: { icon: 'drop.fill', color: m3.colorScheme.primary },
+      spray: { icon: 'flask.fill', color: m3.colorScheme.tertiary },
+      harvest: { icon: 'basket.fill', color: colors.warning },
+      expense: { icon: 'dollarsign.circle.fill', color: m3.colorScheme.error },
+      fertigation: { icon: 'leaf.fill', color: colors.success },
     }),
     [colors.success, colors.warning, m3],
   );
@@ -95,7 +94,7 @@ export default function AnalyticsScreen() {
         }}
       >
         <Stack.Screen options={{ title: t('analytics.title') }} />
-        <AppIcon
+        <SymbolIcon
           name="chart.bar.fill"
           size={48}
           color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
@@ -190,7 +189,11 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.irrigation.bg,
                 }}
               >
-                <AppIcon name="drop.fill" size={20} color={metricColors.irrigation.icon} />
+                <SymbolIcon
+                  name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                  size={20}
+                  color={metricColors.irrigation.icon}
+                />
               </View>
               <Text
                 style={{
@@ -224,7 +227,11 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.spray.bg,
                 }}
               >
-                <AppIcon name="spraycan.fill" size={20} color={metricColors.spray.icon} />
+                <SymbolIcon
+                  name={resolveSymbolIconName(ICON_REGISTRY.spray)}
+                  size={20}
+                  color={metricColors.spray.icon}
+                />
               </View>
               <Text
                 style={{
@@ -258,7 +265,11 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.harvest.bg,
                 }}
               >
-                <AppIcon name="basket.fill" size={20} color={metricColors.harvest.icon} />
+                <SymbolIcon
+                  name={resolveSymbolIconName(ICON_REGISTRY.harvest)}
+                  size={20}
+                  color={metricColors.harvest.icon}
+                />
               </View>
               <Text
                 style={{
@@ -292,7 +303,11 @@ export default function AnalyticsScreen() {
                   backgroundColor: metricColors.cost.bg,
                 }}
               >
-                <AppIcon name="dollarsign.circle.fill" size={20} color={metricColors.cost.icon} />
+                <SymbolIcon
+                  name={resolveSymbolIconName(ICON_REGISTRY.expense)}
+                  size={20}
+                  color={metricColors.cost.icon}
+                />
               </View>
               <Text
                 style={{
@@ -301,8 +316,12 @@ export default function AnalyticsScreen() {
                   color: colors.surface[900],
                 }}
               >
-                {currencySymbol}
-                {(analytics.totalHarvestValue / 1000).toFixed(0)}k
+                {formatNumber(analytics.totalHarvestValue, {
+                  style: 'currency',
+                  currency,
+                  notation: 'compact',
+                  maximumFractionDigits: 0,
+                })}
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                 {t('analytics.labels.harvestValue')}
@@ -383,13 +402,13 @@ export default function AnalyticsScreen() {
                       >
                         {t(`analytics.categories.${key}`, { defaultValue: key })}
                       </Text>
-                      <AppIcon
+                      <SymbolIcon
                         name={
                           value.trend === 'up'
-                            ? 'trending-up'
+                            ? 'chart.line.uptrend.xyaxis'
                             : value.trend === 'down'
-                              ? 'trending-down'
-                              : 'remove'
+                              ? 'chart.line.downtrend.xyaxis'
+                              : 'minus'
                         }
                         size={14}
                         color={
@@ -614,8 +633,7 @@ export default function AnalyticsScreen() {
                       color: colors.surface[900],
                     }}
                   >
-                    {currencySymbol}
-                    {yieldAnalysis.avgPricePerKg.toFixed(2)}/kg
+                    {formatCurrency(yieldAnalysis.avgPricePerKg, currency)}/kg
                   </Text>
                 </View>
                 <View
@@ -689,8 +707,8 @@ export default function AnalyticsScreen() {
                           justifyContent: 'center',
                         }}
                       >
-                        <AppIcon
-                          name="doc.text.fill"
+                        <SymbolIcon
+                          name={resolveSymbolIconName(ICON_REGISTRY.note)}
                           size={16}
                           color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
                         />
@@ -734,7 +752,7 @@ export default function AnalyticsScreen() {
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}
               >
-                <AppIcon name="lightbulb.fill" size={20} color={m3.colorScheme.primary} />
+                <SymbolIcon name="lightbulb.fill" size={20} color={m3.colorScheme.primary} />
                 <Text
                   style={{
                     fontSize: fontSize.base,
@@ -755,7 +773,11 @@ export default function AnalyticsScreen() {
                     marginBottom: spacing[2],
                   }}
                 >
-                  <AppIcon name="checkmark.circle.fill" size={16} color={m3.colorScheme.primary} />
+                  <SymbolIcon
+                    name="checkmark.circle.fill"
+                    size={16}
+                    color={m3.colorScheme.primary}
+                  />
                   <Text
                     style={{
                       fontSize: fontSize.sm,
@@ -819,7 +841,7 @@ export default function AnalyticsScreen() {
                           backgroundColor: colorWithOpacity(iconInfo.color, 0.08),
                         }}
                       >
-                        <AppIcon name={iconInfo.icon} size={18} color={iconInfo.color} />
+                        <SymbolIcon name={iconInfo.icon} size={18} color={iconInfo.color} />
                       </View>
                       <View style={{ flex: 1, marginLeft: spacing[3] }}>
                         <Text

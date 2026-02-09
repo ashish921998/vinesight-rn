@@ -14,3 +14,4 @@ export { default as TrendsChart } from './trends-chart';
 export { default as WarehouseItemForm } from './warehouse-item-form';
 export { default as StockForm } from './stock-form';
 export { WorkerAnalyticsView } from './worker-analytics-view';
+export { TempWorkerForm } from './temp-worker-form';

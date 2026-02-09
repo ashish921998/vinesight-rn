@@ -3,6 +3,7 @@
  * TypeScript enums and types for vineyard calculations
  * Ported from iOS CalculatorModels.swift
  */
+
 import { ICON_REGISTRY } from './icon-registry';
 
 // ============================================================
@@ -70,7 +71,7 @@ export function getWaterStatus(waterLevel: number): WaterStatus {
       level: 'critical',
       label: 'Critical',
       message: 'IRRIGATION NEEDED - Water level critical!',
-      icon: 'alert-circle',
+      icon: ICON_REGISTRY.alertCircle,
       color: '#db4437',
     };
   } else if (waterLevel < 10) {
@@ -78,7 +79,7 @@ export function getWaterStatus(waterLevel: number): WaterStatus {
       level: 'low',
       label: 'Low',
       message: 'Low water level - consider irrigation soon',
-      icon: 'alert-circle-outline',
+      icon: ICON_REGISTRY.alertCircleOutline,
       color: '#ea8600',
     };
   } else if (waterLevel < 25) {
@@ -86,7 +87,7 @@ export function getWaterStatus(waterLevel: number): WaterStatus {
       level: 'medium',
       label: 'Medium',
       message: 'Medium water level - monitor closely',
-      icon: 'water-outline',
+      icon: ICON_REGISTRY.waterOutline,
       color: '#f9a825',
     };
   } else {
@@ -94,7 +95,7 @@ export function getWaterStatus(waterLevel: number): WaterStatus {
       level: 'good',
       label: 'Good',
       message: 'Good water level',
-      icon: 'checkmark-circle',
+      icon: ICON_REGISTRY.checkmarkCircle,
       color: '#0b8d32',
     };
   }

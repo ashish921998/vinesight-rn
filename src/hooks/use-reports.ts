@@ -5,7 +5,6 @@
 
 import { useMemo, useState, useCallback } from 'react';
 import { useFarms } from './use-farms';
-import { useProfile } from './use-profile';
 import {
   useIrrigationRecords,
   useSprayRecords,
@@ -15,6 +14,7 @@ import {
 } from './use-records';
 import { ReportService } from '../services/report-service';
 import { DateRange, ReportPreview, ReportType, ReportFormat } from '../types/report';
+import { useCurrency } from './use-currency';
 
 /**
  * Hook to get report data for a specific farm
@@ -70,8 +70,7 @@ export function useReportData(farmId: number | null, dateRange: DateRange | null
  * Hook to manage report export state
  */
 export function useReportExport() {
-  const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference || 'INR';
+  const preferredCurrency = useCurrency();
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 

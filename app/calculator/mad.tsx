@@ -17,6 +17,7 @@ import {
 
 import { Stack } from 'expo-router';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { LinearGradient } from 'expo-linear-gradient';
 import { REFILL_SPANS, type RefillSpanId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -151,7 +152,11 @@ export default function MADCalculatorScreen() {
                     backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
                   }}
                 >
-                  <IconSymbol name="drop.fill" size={18} color={m3.colorScheme.primary} />
+                  <IconSymbol
+                    name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                    size={18}
+                    color={m3.colorScheme.primary}
+                  />
                 </View>
                 <Text
                   style={{

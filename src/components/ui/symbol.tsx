@@ -167,9 +167,11 @@ export function SymbolComponent({
     : undefined;
   const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[name];
   const isSprayIcon = resolvedName === 'spraycan' || resolvedName === 'spraycan.fill';
+  const isFertigationIcon = resolvedName === 'fertigation' || name === 'fertigation';
 
   // Keep spray icon identical to AppIcon across all platforms.
   if (isSprayIcon) return <AppIcon name="spraycan" size={size} color={resolvedColor} />;
+  if (isFertigationIcon) return <AppIcon name="fertigation" size={size} color={resolvedColor} />;
 
   // On iOS 17+, use SF Symbols
   if (Platform.OS === 'ios') {

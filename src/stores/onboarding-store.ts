@@ -12,7 +12,6 @@ import {
   OnboardingPreferences,
   ONBOARDING_STEPS,
 } from '../types/onboarding';
-
 interface OnboardingStore extends OnboardingState {
   // Actions
   setCurrentStep: (step: OnboardingStep) => void;
@@ -30,8 +29,8 @@ const initialState: OnboardingState = {
   currentStep: 'language',
   preferences: {
     country: '',
+    currency: '',
     areaUnit: 'acres',
-    currency: 'INR',
     notificationsEnabled: false,
   },
 };

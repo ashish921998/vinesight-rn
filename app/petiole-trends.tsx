@@ -8,6 +8,7 @@ import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-nati
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Symbol } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { SafeScreen } from '@/components/ui/safe-screen';
 import { useFarm } from '@/hooks/use-farms';
 import { usePetioleTestTrends, PETIOLE_DEFAULT_PARAMS } from '@/hooks/use-lab-tests';
@@ -93,7 +94,11 @@ export default function PetioleTrendsScreen() {
         <Pressable onPress={() => router.back()} style={{ marginRight: spacing[3] }}>
           <Symbol name="chevron.left" size={24} color={m3.colorScheme.onSurface} />
         </Pressable>
-        <Symbol name="leaf.fill" size={24} color={colors.labTest.petiole} />
+        <Symbol
+          name={resolveSymbolIconName(ICON_REGISTRY.petioleTest)}
+          size={24}
+          color={colors.labTest.petiole}
+        />
         <View style={{ marginLeft: spacing[2], flex: 1 }}>
           <Text
             style={{

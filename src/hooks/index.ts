@@ -16,6 +16,15 @@ export {
   useDeleteFarm,
   usePrefetchFarm,
 } from './use-farms';
+export {
+  useFarmSeasons,
+  useCreateFarmSeason,
+  useUpdateFarmSeason,
+  useStartFarmSeason,
+  useEndFarmSeason,
+  useRecomputeFarmSeasonAssignments,
+  useFarmSeasonStatus,
+} from './use-farm-seasons';
 
 // Record Hooks (Irrigation, Spray, Fertigation, Harvest, Expense)
 export {
@@ -49,6 +58,9 @@ export {
   useCreateExpenseRecord,
   useUpdateExpenseRecord,
   useDeleteExpenseRecord,
+  // Daily Notes
+  useDailyNoteByDate,
+  useUpsertDailyNote,
 } from './use-records';
 
 // Worker Hooks
@@ -79,6 +91,8 @@ export {
   useCreateWorkType,
   // Temporary Worker Entries
   useTemporaryWorkerEntries,
+  useTemporaryWorkerEntriesByFarms,
+  useAllTemporaryWorkerEntries,
   useCreateTemporaryWorkerEntry,
   useDeleteTemporaryWorkerEntry,
 } from './use-workers';
@@ -112,6 +126,9 @@ export {
   useCalculationHistory,
   useCreateCalculationHistory,
 } from './use-profile';
+
+// Currency
+export { useCurrency } from './use-currency';
 
 // Dashboard Hooks
 export {
@@ -162,11 +179,12 @@ export {
   useDeleteSoilTest,
   useDeletePetioleTest,
   labTestQueryKeys,
-  SOIL_PARAMETERS,
-  PETIOLE_PARAMETERS,
   formatParameterKey,
   getParameterUnit,
 } from './use-lab-tests';
+
+// Re-export parameter constants for backward compatibility
+export { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
 
 // Soil Profile Utilities (Hooks already exported from useProfile)
 export {

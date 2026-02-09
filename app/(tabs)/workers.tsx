@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useWorkers, useDeleteWorker, useFabBottomPosition } from '@/hooks';
 import { useModalStore } from '@/stores';
-import { AttendanceView, WorkerAnalyticsView } from '@/components/screens';
+import { AttendanceView, WorkerAnalyticsView, TempWorkerForm } from '@/components/screens';
 import { WorkerSettlementModal } from '@/components/modals/worker-settlement-modal';
 import { Button, SegmentedControl } from '@/components/ui';
 import type { Worker } from '@/types';
@@ -51,6 +51,7 @@ export default function WorkersScreen() {
 
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
   const [settlementModalVisible, setSettlementModalVisible] = useState(false);
+  const [tempWorkerFormVisible, setTempWorkerFormVisible] = useState(false);
 
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
 
@@ -96,6 +97,10 @@ export default function WorkersScreen() {
 
   const handleSettlementSuccess = () => {
     refetch();
+  };
+
+  const handleOpenTempWorkerForm = () => {
+    setTempWorkerFormVisible(true);
   };
 
   const renderWorker = ({ item }: { item: Worker }) => (
@@ -278,6 +283,41 @@ export default function WorkersScreen() {
         {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
           <>
             <Pressable
+              onPress={handleOpenTempWorkerForm}
+              style={{
+                position: 'absolute',
+                bottom: fabBottom + (64 + spacing[3]) * 2,
+                right: spacing[6],
+                width: 56,
+                height: 56,
+                backgroundColor: m3.colorScheme.warning,
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('workers.tempWorkers.addTitle')}
+            >
+              {({ pressed }) => (
+                <>
+                  <UiSymbol name="person.badge.clock" size={28} color={m3.colorScheme.onWarning} />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onWarning, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </>
+              )}
+            </Pressable>
+
+            <Pressable
               onPress={handleOpenSettlement}
               style={{
                 position: 'absolute',
@@ -368,6 +408,16 @@ export default function WorkersScreen() {
         onClose={handleCloseSettlement}
         workers={activeWorkers}
         onSuccess={handleSettlementSuccess}
+      />
+
+      {/* Temp Worker Form Modal */}
+      <TempWorkerForm
+        visible={tempWorkerFormVisible}
+        onClose={() => setTempWorkerFormVisible(false)}
+        onSaveSuccess={() => {
+          setTempWorkerFormVisible(false);
+          refetch();
+        }}
       />
     </>
   );

@@ -22,6 +22,8 @@ import {
   type CalculationHistory,
   type CalculationHistoryInsert,
 } from '../types';
+import { formatLocalDate } from '../utils/date';
+import { resolveSeasonIdForDate } from '../lib/season-context';
 
 // ============================================================
 // MARK: - Helper
@@ -70,17 +72,11 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (updates: ProfileUpdate): Promise<Profile> => {
       const userId = await getUserId();
+      const payload: ProfileUpdate & { id: string } = { ...updates, id: userId };
 
-      // Atomic upsert avoids race conditions between check/insert/update calls.
       const { data, error } = await supabase
         .from(TABLES.PROFILES)
-        .upsert(
-          {
-            id: userId,
-            ...updates,
-          },
-          { onConflict: 'id' },
-        )
+        .upsert(payload, { onConflict: 'id' })
         .select()
         .single();
 
@@ -189,15 +185,20 @@ export function useDeleteWarehouseItem() {
 // MARK: - SOIL TEST RECORDS
 // ============================================================
 
-export function useSoilTestRecords(farmId: number | undefined) {
+export function useSoilTestRecords(farmId: number | undefined, seasonId?: number) {
   return useQuery({
-    queryKey: queryKeys.soilTestRecords.listByFarm(farmId!),
+    queryKey: [...queryKeys.soilTestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<SoilTestRecord[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from(TABLES.SOIL_TEST_RECORDS)
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data ?? [];
@@ -211,9 +212,15 @@ export function useCreateSoilTestRecord() {
 
   return useMutation({
     mutationFn: async (record: SoilTestRecordInsert): Promise<SoilTestRecord> => {
+      const seasonId =
+        record.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: record.farm_id,
+          date: record.date,
+        }));
       const { data, error } = await supabase
         .from(TABLES.SOIL_TEST_RECORDS)
-        .insert(record)
+        .insert({ ...record, season_id: seasonId })
         .select()
         .single();
 
@@ -278,15 +285,20 @@ export function useDeleteSoilTestRecord() {
 // MARK: - PETIOLE TEST RECORDS
 // ============================================================
 
-export function usePetioleTestRecords(farmId: number | undefined) {
+export function usePetioleTestRecords(farmId: number | undefined, seasonId?: number) {
   return useQuery({
-    queryKey: queryKeys.petioleTestRecords.listByFarm(farmId!),
+    queryKey: [...queryKeys.petioleTestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<PetioleTestRecord[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from(TABLES.PETIOLE_TEST_RECORDS)
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data ?? [];
@@ -300,9 +312,15 @@ export function useCreatePetioleTestRecord() {
 
   return useMutation({
     mutationFn: async (record: PetioleTestRecordInsert): Promise<PetioleTestRecord> => {
+      const seasonId =
+        record.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: record.farm_id,
+          date: record.date,
+        }));
       const { data, error } = await supabase
         .from(TABLES.PETIOLE_TEST_RECORDS)
-        .insert(record)
+        .insert({ ...record, season_id: seasonId })
         .select()
         .single();
 
@@ -367,15 +385,20 @@ export function useDeletePetioleTestRecord() {
 // MARK: - SOIL PROFILES
 // ============================================================
 
-export function useSoilProfiles(farmId: number | undefined) {
+export function useSoilProfiles(farmId: number | undefined, seasonId?: number) {
   return useQuery({
-    queryKey: queryKeys.soilProfiles.listByFarm(farmId!),
+    queryKey: [...queryKeys.soilProfiles.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<SoilProfile[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from(TABLES.SOIL_PROFILES)
         .select('*')
         .eq('farm_id', farmId)
         .order('created_at', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data ?? [];
@@ -389,9 +412,16 @@ export function useCreateSoilProfile() {
 
   return useMutation({
     mutationFn: async (profile: SoilProfileInsert): Promise<SoilProfile> => {
+      const createdAt = profile.created_at ?? new Date().toISOString();
+      const seasonId =
+        profile.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: profile.farm_id,
+          date: formatLocalDate(new Date(createdAt)),
+        }));
       const { data, error } = await supabase
         .from(TABLES.SOIL_PROFILES)
-        .insert(profile)
+        .insert({ ...profile, season_id: seasonId, created_at: createdAt })
         .select()
         .single();
 

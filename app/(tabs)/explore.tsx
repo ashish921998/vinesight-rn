@@ -20,9 +20,9 @@ import {
   useFarms,
   useDeleteFarm,
   useWarehouseItems,
-  useProfile,
   useDeleteWarehouseItem,
   useFabBottomPosition,
+  useCurrency,
 } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { useModalStore } from '@/stores';
@@ -76,11 +76,10 @@ export default function ExploreScreen() {
     refetch: refetchWarehouse,
     isRefetching: warehouseRefetching,
   } = useWarehouseItems();
-  const { data: profile } = useProfile();
   const deleteItemMutation = useDeleteWarehouseItem();
   const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilter>('all');
 
-  const currency = profile?.currency_preference || 'INR';
+  const currency = useCurrency();
 
   const openWarehouseItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });

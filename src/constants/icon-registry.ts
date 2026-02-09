@@ -7,6 +7,11 @@ export const ICON_REGISTRY = {
   note: 'document-text',
   soilTest: 'layers',
   petioleTest: 'analytics',
+  alertCircle: 'alert-circle',
+  alertCircleOutline: 'alert-circle-outline',
+  waterOutline: 'water-outline',
+  checkmarkCircle: 'checkmark-circle',
+  stock: 'stock',
 } as const;
 
 export type RegistryIconName = (typeof ICON_REGISTRY)[keyof typeof ICON_REGISTRY];
@@ -22,6 +27,11 @@ const APP_ICON_TO_SYMBOL_ICON: Record<string, string> = {
   analytics: 'chart.bar.fill',
   layers: 'square.stack.3d.up.fill',
   'document-text': 'doc.text.fill',
+  'alert-circle': 'exclamationmark.circle.fill',
+  'alert-circle-outline': 'exclamationmark.circle',
+  'water-outline': 'drop.circle',
+  'checkmark-circle': 'checkmark.circle.fill',
+  stock: 'cube.box.fill',
 };
 
 export function resolveSymbolIconName(iconName: string | undefined): string {

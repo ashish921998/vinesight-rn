@@ -12,19 +12,22 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  Platform,
   type TextInputProps,
   Keyboard,
   useWindowDimensions,
   UIManager,
   findNodeHandle,
+  Platform,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
-import { FormModal, SectionHeader } from '@/components/ui';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { Button, FormModal, SectionHeader } from '@/components/ui';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate } from '@/i18n/format';
 import { useTranslation } from 'react-i18next';
+import { colorWithOpacity } from '@/utils/color';
+import { useM3 } from '@/styles/use-theme';
+import { triggerHapticSuccess } from '@/utils/haptics';
 import {
   IrrigationForm,
   SprayForm,
@@ -88,6 +91,7 @@ export function ActivityEditForm({
   presentation = 'modal',
 }: ActivityEditFormProps) {
   const { t } = useTranslation();
+  const m3 = useM3();
   const isVisible = visible ?? true;
   const { height: windowHeight } = useWindowDimensions();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -289,6 +293,9 @@ export function ActivityEditForm({
         case 'fertigation': {
           const r = record as FertigationRecord;
           const data = createEmptyFertigationFormData();
+          if (r.water_volume != null) {
+            data.waterVolume = r.water_volume;
+          }
           if (r.fertilizers && r.fertilizers.length > 0) {
             data.fertilizers = r.fertilizers.map((f) => ({
               name: f.name,
@@ -392,6 +399,7 @@ export function ActivityEditForm({
                 unit: f.unit,
                 quantity: f.quantity ?? 0,
               })),
+              water_volume: fertigationData.waterVolume,
               date: dateStr,
             },
           });
@@ -399,6 +407,7 @@ export function ActivityEditForm({
         }
       }
 
+      triggerHapticSuccess();
       onSaveSuccess?.();
       setIsInitialized(false);
       onClose();
@@ -547,18 +556,29 @@ export function ActivityEditForm({
       {renderForm()}
 
       {showDatePicker && Platform.OS === 'ios' && (
-        <Pressable
-          onPress={() => setShowDatePicker(false)}
+        <View
           style={{
             position: 'absolute',
             top: 0,
             right: 0,
             bottom: 0,
             left: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
             zIndex: 50,
           }}
         >
+          <Pressable
+            onPress={() => setShowDatePicker(false)}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            }}
+          />
           <View
             style={{
               position: 'absolute',
@@ -566,9 +586,9 @@ export function ActivityEditForm({
               left: 0,
               right: 0,
               backgroundColor: colors.surface[100],
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              padding: 16,
+              borderTopLeftRadius: borderRadius['2xl'],
+              borderTopRightRadius: borderRadius['2xl'],
+              padding: spacing[4],
             }}
             onStartShouldSetResponder={() => true}
           >
@@ -576,17 +596,11 @@ export function ActivityEditForm({
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
-                marginBottom: 16,
+                marginBottom: spacing[4],
               }}
             >
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: '700',
-                  color: colors.surface[900],
-                }}
-              >
-                {t('entryForm.selectDate')}
+              <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
+                {t('common.selectDate')}
               </Text>
               <Pressable onPress={() => setShowDatePicker(false)}>
                 <UISymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />
@@ -599,38 +613,24 @@ export function ActivityEditForm({
               onChange={(_, date) => {
                 if (date) setSelectedDate(date);
               }}
-              textColor={colors.surface[900]}
-              style={{ height: 200 }}
             />
-            <Pressable
+            <Button
+              title={t('common.done')}
               onPress={() => setShowDatePicker(false)}
-              style={{
-                marginTop: 16,
-                paddingVertical: 12,
-                borderRadius: 12,
-                alignItems: 'center',
-                backgroundColor: colors.primary[500],
-              }}
-            >
-              <Text selectable style={{ fontWeight: '600', color: colors.white }}>
-                {t('common.done')}
-              </Text>
-            </Pressable>
+              style={{ marginTop: spacing[4] }}
+            />
           </View>
-        </Pressable>
+        </View>
       )}
+
       {showDatePicker && Platform.OS !== 'ios' && (
         <DateTimePicker
           value={selectedDate}
           mode="date"
           display="default"
-          onChange={(event: DateTimePickerEvent, date?: Date) => {
-            if (event.type === 'dismissed') {
-              setShowDatePicker(false);
-              return;
-            }
-            if (date) setSelectedDate(date);
+          onChange={(_, date) => {
             setShowDatePicker(false);
+            if (date) setSelectedDate(date);
           }}
         />
       )}

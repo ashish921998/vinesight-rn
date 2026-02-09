@@ -23,6 +23,7 @@ import {
   type TemporaryWorkerEntry,
   type TemporaryWorkerEntryInsert,
 } from '../types';
+import { resolveSeasonIdForDate } from '../lib/season-context';
 
 // ============================================================
 // MARK: - Helper
@@ -469,20 +470,65 @@ export function useCreateWorkType() {
 // MARK: - TEMPORARY WORKER ENTRIES
 // ============================================================
 
-export function useTemporaryWorkerEntries(farmId: number | undefined) {
+export function useTemporaryWorkerEntries(farmId: number | undefined, seasonId?: number) {
   return useQuery({
-    queryKey: queryKeys.temporaryWorkerEntries.listByFarm(farmId!),
+    queryKey: [
+      ...queryKeys.temporaryWorkerEntries.listByFarm(farmId!),
+      { seasonId: seasonId ?? null },
+    ],
     queryFn: async (): Promise<TemporaryWorkerEntry[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data ?? [];
     },
     enabled: !!farmId,
+  });
+}
+
+export function useTemporaryWorkerEntriesByFarms(farmIds: number[]) {
+  return useQuery({
+    queryKey: queryKeys.temporaryWorkerEntries.listByFarms(farmIds),
+    queryFn: async (): Promise<TemporaryWorkerEntry[]> => {
+      if (farmIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from(TABLES.TEMPORARY_WORKER_ENTRIES)
+        .select('*')
+        .in('farm_id', farmIds)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: farmIds.length > 0,
+  });
+}
+
+export function useAllTemporaryWorkerEntries() {
+  return useQuery({
+    queryKey: queryKeys.temporaryWorkerEntries.listAll(),
+    queryFn: async (): Promise<TemporaryWorkerEntry[]> => {
+      const userId = await getUserId();
+
+      // Join through farms table to get entries for user's farms
+      const { data, error } = await supabase
+        .from(TABLES.TEMPORARY_WORKER_ENTRIES)
+        .select('*, farms!inner(user_id)')
+        .eq('farms.user_id', userId)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 }
 
@@ -492,10 +538,16 @@ export function useCreateTemporaryWorkerEntry() {
   return useMutation({
     mutationFn: async (entry: TemporaryWorkerEntryInsert): Promise<TemporaryWorkerEntry> => {
       const userId = await getUserId();
+      const seasonId =
+        entry.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: entry.farm_id,
+          date: entry.date,
+        }));
 
       const { data, error } = await supabase
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
-        .insert({ ...entry, user_id: userId })
+        .insert({ ...entry, season_id: seasonId, user_id: userId })
         .select()
         .single();
 
@@ -505,6 +557,12 @@ export function useCreateTemporaryWorkerEntry() {
     onSuccess: (newEntry) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.temporaryWorkerEntries.listByFarm(newEntry.farm_id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.temporaryWorkerEntries.listAll(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.temporaryWorkerEntries.lists(),
       });
     },
   });
@@ -522,6 +580,12 @@ export function useDeleteTemporaryWorkerEntry() {
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.temporaryWorkerEntries.listByFarm(farmId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.temporaryWorkerEntries.listAll(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.temporaryWorkerEntries.lists(),
       });
     },
   });

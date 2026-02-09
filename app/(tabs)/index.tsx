@@ -25,6 +25,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
 import type { LogTypeId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
@@ -94,15 +95,24 @@ export default function DashboardScreen() {
 
   const handleFarmSelection = (farmId: number) => {
     setShowFarmPicker(false);
-    router.push({
-      pathname: '/add-entry',
-      params: {
-        farmId: farmId.toString(),
-        initialLogType: selectedQuickAction ?? undefined,
-        initialTab: 'log',
-        tabs: 'log',
-      },
-    });
+    if (selectedQuickAction === 'note') {
+      router.push({
+        pathname: '/add-note',
+        params: {
+          farmId: farmId.toString(),
+        },
+      });
+    } else {
+      router.push({
+        pathname: '/add-entry',
+        params: {
+          farmId: farmId.toString(),
+          initialLogType: selectedQuickAction ?? undefined,
+          initialTab: 'log',
+          tabs: 'log',
+        },
+      });
+    }
     setSelectedQuickAction(null);
   };
 
@@ -162,7 +172,7 @@ export default function DashboardScreen() {
                 icon="leaf"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
-                onPress={() => router.push('/(tabs)/farms')}
+                onPress={() => router.navigate('/(tabs)/farms')}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
@@ -172,7 +182,7 @@ export default function DashboardScreen() {
                 icon="people"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
-                onPress={() => router.push('/(tabs)/workers')}
+                onPress={() => router.navigate('/(tabs)/workers')}
               />
             </View>
           </View>
@@ -186,7 +196,7 @@ export default function DashboardScreen() {
                 icon="bar-chart"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
-                onPress={() => router.push('/logs')}
+                onPress={() => router.navigate('/logs')}
               />
             </View>
             <View style={{ flex: 1, paddingLeft: spacing[2] }}>
@@ -198,7 +208,7 @@ export default function DashboardScreen() {
                 icon="checklist"
                 color={m3.colorScheme.primary}
                 isLoading={isLoadingStats}
-                onPress={() => router.push('/tasks')}
+                onPress={() => router.navigate('/tasks')}
               />
             </View>
           </View>
@@ -253,7 +263,11 @@ export default function DashboardScreen() {
                           backgroundColor: colorWithOpacity(m3.colorScheme.warning, 0.18),
                         }}
                       >
-                        <SymbolIcon name="drop.fill" size={18} color={m3.colorScheme.warning} />
+                        <SymbolIcon
+                          name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                          size={18}
+                          color={m3.colorScheme.warning}
+                        />
                       </View>
                       <View style={{ marginLeft: spacing[3], flex: 1 }}>
                         <Text
@@ -319,7 +333,7 @@ export default function DashboardScreen() {
               />
               <QuickActionButton
                 title={t('dashboard.quickActions.spray')}
-                icon="spraycan.fill"
+                icon="flask"
                 color={colors.spray[500]}
                 onPress={() => handleQuickAction('spray')}
               />

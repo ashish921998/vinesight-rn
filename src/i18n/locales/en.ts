@@ -34,6 +34,7 @@ export const en = {
     clearAll: 'Clear all',
     units: {
       hours: 'hours',
+      days: 'days',
     },
     labels: {
       value: 'Value',
@@ -71,7 +72,6 @@ export const en = {
 
       failedToUpdateFarm: 'Failed to update farm. Please try again.',
       failedToCreateFarm: 'Failed to create farm. Please try again.',
-      invalidFarmNumericInput: 'One or more numeric values are invalid or out of allowed range.',
 
       enterAtLeastOneMoistureValue: 'Please enter at least one moisture value.',
       failedToSaveSoilProfile: 'Failed to save soil profile. Please try again.',
@@ -146,6 +146,50 @@ export const en = {
       captionThisSeason: '{{usage}} this season',
       captionLogIrrigation: 'Log irrigation to monitor water use',
     },
+    seasons: {
+      title: 'SEASONS',
+      formTitle: 'End season',
+      startFormTitle: 'Start season',
+      firstTimeHint:
+        'Ending a season for the first time? Set the season start and end dates to save this season.',
+      startHint: 'Choose a crop-aware season template and confirm the start date.',
+      lastEndDate: 'Last season ended on {{date}}. The next season start is set automatically.',
+      startDateLabel: 'Season start date',
+      endDateLabel: 'Season end date',
+      templateLabel: 'Season template',
+      seasonNameLabel: 'Season name (optional)',
+      seasonNamePlaceholder: 'e.g. Summer 2026',
+      templateHint: 'Using template: {{template}}',
+      showEndSeasonForm: 'End season',
+      startSeasonButton: 'Start season',
+      endSeasonButton: 'Save season end',
+      statusActive: 'Active since {{start}}',
+      statusNone: 'No active season',
+      reviewRequiredBadge: 'Review season history',
+      betweenSeasonsBadge: 'Season ended',
+      betweenSeasonsHint: 'Season ended. Next season starts on {{date}}.',
+      actions: {
+        startSeasonToContinue: 'Start a season to continue adding records.',
+      },
+      alerts: {
+        startSuccessTitle: 'Season started successfully',
+        startSuccess: 'New season is now active.',
+        endSuccessTitle: 'Season closed successfully',
+        endSuccess: 'Season ended successfully.',
+        reviewQueuedSuccess: 'Season assignment review triggered successfully.',
+      },
+      errors: {
+        invalidRange: 'Season end date must be after the start date.',
+        startBeforeAllowed: 'Season start date must be after the previous season end date.',
+        duplicateEndDate: 'This season end date has already been saved.',
+        startFailed: 'Unable to start season.',
+        endFailed: 'Unable to end season.',
+        noActiveSeason: 'No active season found for this farm.',
+        reviewQueueFailed: 'Unable to trigger season assignment review.',
+        activeSeasonExists:
+          'An active season exists. Please end the current season before creating a new one.',
+      },
+    },
     workboard: {
       title: 'WORKBOARD',
       subtitle: 'Quick access to tools and resources.',
@@ -154,16 +198,17 @@ export const en = {
         lab: 'Lab',
         reports: 'Reports',
         soilMoisture: 'Soil Moisture',
+        tempWorker: 'Temp\nWorker',
       },
     },
     tabs: {
-      activities: 'Activities',
+      activities: 'Logs',
       tasks: 'Tasks',
     },
     activities: {
       empty: {
-        title: 'No Activities Yet',
-        subtitle: 'Start logging activities to see them here',
+        title: 'No Logs Yet',
+        subtitle: 'Start logging to see them here',
       },
     },
     tasks: {
@@ -175,13 +220,19 @@ export const en = {
     },
     actions: {
       addActivity: 'Add activity',
-      seeAllActivities: 'See all activities',
+      seeAllLogs: 'See all logs',
       seeAllTasks: 'See all tasks',
+      menuTitle: 'Farm actions',
+      editFarm: 'Edit farm',
+      startSeason: 'Start season',
+      endSeason: 'End season',
+      reviewSeasonHistory: 'Review season history',
     },
     a11y: {
       editFarm: 'Edit farm',
       deleteFarm: 'Delete farm',
-      showActivities: 'Show activities',
+      openFarmActions: 'Open farm actions',
+      showActivities: 'Show logs',
       showTasks: 'Show tasks',
       taskCompleted: 'Task completed',
       markTaskComplete: 'Mark task complete',
@@ -322,19 +373,8 @@ export const en = {
         sublabel: 'Custom',
       },
     },
-    cropPicker: {
-      modalTitle: 'Select Crop',
-      searchPlaceholder: 'Search crops',
-      customCropLabel: 'Custom crop',
-      customCropInputLabel: 'Custom Crop Name',
-      customCropInputPlaceholder: 'Enter crop name',
-      defaultSublabel: 'Crop',
-      useCustomCrop: 'Use "{{crop}}"',
-      noResults: 'No matching crops found.',
-    },
     variety: {
       selectPlaceholder: 'Select variety',
-      searchPlaceholder: 'Search varieties',
       custom: 'Custom',
       customNameLabel: 'Custom Variety Name',
       customNamePlaceholder: 'Enter variety name',
@@ -366,10 +406,6 @@ export const en = {
     },
     soilCompositionWarning:
       'Sand + Silt + Clay should total approximately 100% (currently {{total}}%)',
-    soilCompositionHint:
-      'Enter Sand, Silt, and Clay as numbers between 0 and 100, and keep the total near 100%.',
-    overflowError:
-      'These values are too large for current database precision: {{fields}}. Keep each below {{max}}.',
     infoCardMessage: 'You can always update these details later from your farm settings.',
   },
 
@@ -523,6 +559,28 @@ export const en = {
     validation: {
       ready: 'Ready to add',
       incomplete: 'Add water volume and at least one chemical',
+    },
+  },
+
+  fertigationForm: {
+    title: 'Fertigation',
+    subtitle: 'Log fertilizer application',
+    waterVolume: {
+      label: 'Water volume',
+      placeholder: 'Enter volume',
+      unitLiters: 'Liters',
+      hint: 'Total water used for fertigation (optional)',
+    },
+    fertilizers: {
+      label: 'Fertilizers',
+      addFertilizer: 'Add fertilizer',
+      namePlaceholder: 'Fertilizer name',
+      qtyPlaceholder: 'Qty',
+      selectUnit: 'Select unit',
+    },
+    validation: {
+      ready: 'Ready to add',
+      incomplete: 'Add at least one fertilizer with quantity',
     },
   },
 
@@ -755,15 +813,9 @@ export const en = {
     permissionDenied: 'Permission to access location was denied',
     unableToGetCurrentLocation: 'Unable to get current location',
     pleaseSelectOnMap: 'Please select a location on the map',
-    invalidCoordinates:
-      'Enter valid coordinates. Latitude must be between -90 and 90, and longitude between -180 and 180.',
     unableToSelectLocation: 'Unable to select location',
     selectedLocationMarkerTitle: 'Selected location',
     useCurrent: 'Use current location',
-    manualCoordinatesTitle: 'Manual coordinates',
-    latitudeLabel: 'Latitude',
-    longitudeLabel: 'Longitude',
-    applyCoordinates: 'Use coordinates',
     confirm: 'Confirm location',
     mapsUnavailableTitle: 'Map unavailable',
     mapsUnavailableBody:
@@ -904,9 +956,8 @@ export const en = {
       title: 'Farm Preferences',
       country: 'Country',
       selectCountry: 'Select a country',
-      areaUnit: 'Area Unit',
       currency: 'Currency',
-      selectCurrency: 'Select currency',
+      areaUnit: 'Area Unit',
       subtitle: 'Help us customize your experience',
     },
     notifications: {
@@ -1138,6 +1189,27 @@ export const en = {
     },
   },
 
+  dailyNoteForm: {
+    addTitle: 'Add note',
+    editTitle: 'Edit note',
+    fields: {
+      note: 'Note',
+    },
+    placeholders: {
+      note: 'Write your observations for this day...',
+    },
+    errors: {
+      missingNote: 'Please enter a note.',
+      failedToSave: 'Failed to save note. Please try again.',
+    },
+    lastUpdated: 'Last updated: {{date}}',
+    discard: {
+      title: 'Discard changes?',
+      body: 'You have unsaved note changes.',
+      confirm: 'Discard',
+    },
+  },
+
   tasks: {
     title: 'Tasks',
     unknownFarm: 'Unknown farm',
@@ -1232,19 +1304,6 @@ export const en = {
     },
   },
 
-  workerAnalytics: {
-    notFound: 'Worker not found',
-    dailyRate: 'Daily rate',
-    dateRange: 'Date range',
-    quickStats: 'Quick stats',
-    weeklySummary: 'Weekly summary',
-    transactions: 'Transactions',
-    noTransactions: 'No transactions in this range.',
-    full: 'Full',
-    half: 'Half',
-    absent: 'Absent',
-  },
-
   workers: {
     tabs: {
       workers: 'Workers',
@@ -1301,6 +1360,55 @@ export const en = {
       infoCardMessage:
         'Daily rate is used to calculate earnings. Advance balance tracks outstanding loans.',
     },
+    tempWorkers: {
+      sectionTitle: 'Temporary Workers',
+      addTitle: 'Add Temp Worker',
+      empty: {
+        title: 'No temp workers logged',
+        subtitle: 'Log temporary workers hired for this farm.',
+      },
+      form: {
+        title: 'Add Temp Worker',
+        sections: {
+          workerDetails: 'Worker Details',
+          workDetails: 'Work Details',
+        },
+        fields: {
+          name: {
+            label: 'Worker name',
+            placeholder: 'e.g., Day laborer',
+          },
+          date: {
+            label: 'Date',
+          },
+          hoursWorked: {
+            label: 'Hours worked',
+            suffix: 'hrs',
+          },
+          amountPaid: {
+            label: 'Amount paid',
+          },
+          farm: {
+            label: 'Farm',
+            placeholder: 'Select farm (optional)',
+          },
+          notes: {
+            label: 'Notes (optional)',
+            placeholder: 'Add notes...',
+          },
+        },
+        hourlyRate: 'Hourly rate',
+        perHour: '/hr',
+        save: 'Add Worker',
+        validation: 'Please enter a worker name and amount paid.',
+        error: 'Failed to save temporary worker entry. Please try again.',
+      },
+      card: {
+        hoursShort: '{{hours}} hrs',
+        deleteTitle: 'Delete entry?',
+        deleteBody: 'This will remove the temp worker entry for {{name}}.',
+      },
+    },
   },
 
   settlePayment: 'Settle Payment',
@@ -1330,7 +1438,7 @@ export const en = {
     netPayment: 'Net Payment',
     netPaymentHint: 'Amount to be paid to worker',
     settlementConfirmedTitle: 'Settlement Confirmed',
-    settlementConfirmedMessage: 'Net payment: ₹{{amount}} confirmed successfully',
+    settlementConfirmedMessage: 'Net payment: {{formattedAmount}} confirmed successfully',
     salaryCannotBeNegative: 'Total salary cannot be negative',
     deductionCannotBeNegative: 'Advance deduction cannot be negative',
     deductionExceedsBalance: 'Deduction exceeds available advance balance',
@@ -1361,7 +1469,7 @@ export const en = {
       spray: 'Sprays ({{count}})',
     },
     search: {
-      placeholder: 'Search warehouse...',
+      placeholder: 'Search inventory...',
       found_one: '{{count}} item found',
       found_other: '{{count}} items found',
     },
@@ -1625,6 +1733,7 @@ export const en = {
       allFull: 'All Full',
       allHalf: 'All Half',
       allOff: 'All Off',
+      copyFromYesterday: 'Copy Last',
     },
     buttons: {
       saving: 'Saving...',
@@ -1643,11 +1752,16 @@ export const en = {
       setAllFullDay: 'Set all days to full day',
       setAllHalfDay: 'Set all days to half day',
       setAllAbsent: 'Set all days to absent',
+      copyFromYesterday: 'Copy attendance from yesterday to empty days',
       savingAttendance: 'Saving attendance',
-      saveAndNextWorker: 'Save attendance and go to next worker',
-      saveAndFinish: 'Save attendance and finish',
-      goToNextWorker: 'Go to next worker',
+      saveAttendance: 'Save attendance changes',
       dayStatus: '{{day}} {{date}}. {{status}}.',
+    },
+    errors: {
+      noYesterdayData: 'No attendance data found for yesterday',
+    },
+    success: {
+      copiedFromYesterday: 'Copied attendance from yesterday',
     },
     empty: {
       noWorkersTitle: 'No workers available',
@@ -1662,54 +1776,68 @@ export const en = {
     },
   },
 
+  workerAnalyticsDetail: {
+    notFound: 'Worker not found',
+    dailyRate: 'Daily rate',
+    dateRange: 'Date range',
+    quickStats: 'Quick stats',
+    weeklySummary: 'Weekly summary',
+    transactions: 'Transactions',
+    noTransactionsInRange: 'No transactions in this range.',
+    days: 'days',
+    full: 'Full',
+    half: 'Half',
+    absent: 'Absent',
+  },
+
   reports: {
     title: 'Reports',
     types: {
       comprehensive: 'Comprehensive',
       operations: 'Operations',
       financial: 'Financial',
-    },
-    noFarms: {
-      title: 'No farms found',
-      subtitle: 'Add a farm first to generate reports',
+      stockUsage: 'Stock Usage',
     },
     selectFarmLabel: 'Select farm',
-    selectFarmPlaceholder: 'Select farm',
+    selectFarmPlaceholder: 'Select a farm',
     dateRange: {
-      label: 'Date range',
+      label: 'Date Range',
     },
+    selectFromDate: 'Select From Date',
+    selectToDate: 'Select To Date',
     reportType: {
-      label: 'Report type',
+      label: 'Report Type',
     },
     loading: {
-      preview: 'Loading preview…',
+      preview: 'Generating preview...',
     },
     preview: {
-      title: 'Preview summary',
+      title: 'Report Preview',
       counts: {
-        irrigations_one: '{{count}} irrigation',
-        irrigations_other: '{{count}} irrigations',
-        sprays_one: '{{count}} spray',
-        sprays_other: '{{count}} sprays',
-        harvests_one: '{{count}} harvest',
-        harvests_other: '{{count}} harvests',
-        expenses_one: '{{count}} expense',
-        expenses_other: '{{count}} expenses',
+        irrigations: '{{count}} irrigations',
+        sprays: '{{count}} sprays',
+        harvests: '{{count}} harvests',
+        expenses: '{{count}} expenses',
+        stockUsage: '{{count}} items used',
       },
-    },
-    exportAs: 'Export as',
-    alerts: {
-      exportFailedTitle: 'Export failed',
-    },
-    errors: {
-      unableToExport: 'Unable to export report',
     },
     summary: {
       totalRecords: 'Total Records',
       waterUsage: 'Water Usage',
       totalHarvest: 'Total Harvest',
-      revenue: 'Revenue',
       netProfit: 'Net Profit',
+      stockUsageCount: 'Unique Items Used',
+    },
+    exportAs: 'Export as',
+    errors: {
+      unableToExport: 'Unable to export report. Please try again.',
+    },
+    alerts: {
+      exportFailedTitle: 'Export Failed',
+    },
+    noFarms: {
+      title: 'No Farms Available',
+      subtitle: 'Add a farm to generate reports.',
     },
     export: {
       meta: {

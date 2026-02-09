@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
-import { useProfile, useWorkerAttendance, useWorkerTransactions, useWorkers } from '@/hooks';
+import { useWorkerAttendance, useWorkerTransactions, useWorkers, useCurrency } from '@/hooks';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import {
@@ -20,14 +21,14 @@ import { colorWithOpacity } from '@/utils/color';
 export default function WorkerAnalyticsDetailScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const rawWorkerId = Number(id);
   const hasValidWorkerId = Number.isFinite(rawWorkerId);
   const workerId = hasValidWorkerId ? rawWorkerId : 0;
   const { data: workers, isLoading: workersLoading } = useWorkers();
   const { data: attendance, isLoading: attendanceLoading } = useWorkerAttendance(workerId);
   const { data: transactions, isLoading: transactionsLoading } = useWorkerTransactions(workerId);
-  const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference || 'INR';
+  const preferredCurrency = useCurrency();
 
   const [range, setRange] = useState<DateRange>(() => getDefaultDateRange(30));
   const [showFromPicker, setShowFromPicker] = useState(false);
@@ -96,7 +97,7 @@ export default function WorkerAnalyticsDetailScreen() {
             textAlign: 'center',
           }}
         >
-          {t('workerAnalytics.notFound')}
+          {t('workerAnalyticsDetail.notFound')}
         </Text>
         <Pressable
           onPress={() => router.back()}
@@ -117,10 +118,10 @@ export default function WorkerAnalyticsDetailScreen() {
   }
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
       <ScrollView
-        style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
-        contentContainerStyle={{ paddingBottom: spacing[8] }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: spacing[8] + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}>
@@ -163,7 +164,8 @@ export default function WorkerAnalyticsDetailScreen() {
               marginTop: spacing[1],
             }}
           >
-            {t('workerAnalytics.dailyRate')}: {formatCurrency(worker.daily_rate, preferredCurrency)}
+            {t('workerAnalyticsDetail.dailyRate')}:{' '}
+            {formatCurrency(worker.daily_rate, preferredCurrency)}
           </Text>
         </View>
 
@@ -184,7 +186,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 color: m3.colorScheme.onSurfaceVariant,
               }}
             >
-              {t('workerAnalytics.dateRange')}
+              {t('workerAnalyticsDetail.dateRange')}
             </Text>
             <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[2] }}>
               <Pressable
@@ -247,12 +249,21 @@ export default function WorkerAnalyticsDetailScreen() {
                   color: m3.colorScheme.onSurface,
                 }}
               >
-                {t('workerAnalytics.quickStats')}
+                {t('workerAnalyticsDetail.quickStats')}
               </Text>
               <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
-                <StatChip label={t('workerAnalytics.full')} value={String(metrics.fullDays)} />
-                <StatChip label={t('workerAnalytics.half')} value={String(metrics.halfDays)} />
-                <StatChip label={t('workerAnalytics.absent')} value={String(metrics.absentDays)} />
+                <StatChip
+                  label={t('workerAnalyticsDetail.full')}
+                  value={String(metrics.fullDays)}
+                />
+                <StatChip
+                  label={t('workerAnalyticsDetail.half')}
+                  value={String(metrics.halfDays)}
+                />
+                <StatChip
+                  label={t('workerAnalyticsDetail.absent')}
+                  value={String(metrics.absentDays)}
+                />
               </View>
             </View>
           </View>
@@ -277,7 +288,7 @@ export default function WorkerAnalyticsDetailScreen() {
                   marginBottom: spacing[2],
                 }}
               >
-                {t('workerAnalytics.weeklySummary')}
+                {t('workerAnalyticsDetail.weeklySummary')}
               </Text>
               {weeklySummaries.map((week) => (
                 <View
@@ -292,7 +303,7 @@ export default function WorkerAnalyticsDetailScreen() {
                     {week.start} → {week.end}
                   </Text>
                   <Text style={{ fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}>
-                    {week.workDaysEquivalent.toFixed(1)} days ·{' '}
+                    {week.workDaysEquivalent.toFixed(1)} {t('common.units.days')} ·{' '}
                     {formatCurrency(week.earnings, preferredCurrency)}
                   </Text>
                 </View>
@@ -320,7 +331,7 @@ export default function WorkerAnalyticsDetailScreen() {
                   marginBottom: spacing[2],
                 }}
               >
-                {t('workerAnalytics.transactions')}
+                {t('workerAnalyticsDetail.transactions')}
               </Text>
               {filteredTransactions.length ? (
                 filteredTransactions.map((tx) => (
@@ -351,7 +362,7 @@ export default function WorkerAnalyticsDetailScreen() {
                 ))
               ) : (
                 <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
-                  {t('workerAnalytics.noTransactions')}
+                  {t('workerAnalyticsDetail.noTransactionsInRange')}
                 </Text>
               )}
             </View>
@@ -531,7 +542,7 @@ export default function WorkerAnalyticsDetailScreen() {
           maximumDate={new Date()}
         />
       )}
-    </>
+    </SafeAreaView>
   );
 }
 

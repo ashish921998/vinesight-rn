@@ -38,6 +38,7 @@ export interface Farm {
   silt_percentage?: number | null;
   clay_percentage?: number | null;
   date_of_pruning?: string | null;
+  first_season_start_date?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 }
@@ -57,12 +58,40 @@ export function isLowWater(farm: Farm): boolean {
 }
 
 // ============================================================
+// MARK: - Farm Season
+// ============================================================
+
+export interface FarmSeason {
+  id?: number;
+  farm_id: number;
+  user_id?: string;
+  start_date: string;
+  end_date: string | null;
+  season_name?: string | null;
+  crop_type_snapshot?: string | null;
+  template_key?: string | null;
+  template_version?: number | null;
+  config_json?: Record<string, unknown> | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+/** Create payload for FarmSeason (excludes server-generated fields) */
+export type FarmSeasonInsert = Omit<FarmSeason, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
+
+/** Update payload for FarmSeason */
+export type FarmSeasonUpdate = Partial<
+  Omit<FarmSeason, 'id' | 'farm_id' | 'user_id' | 'created_at' | 'updated_at'>
+>;
+
+// ============================================================
 // MARK: - Irrigation Record
 // ============================================================
 
 export interface IrrigationRecord {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   date: string;
   duration: number;
   area: number;
@@ -86,6 +115,7 @@ export type IrrigationRecordUpdate = Partial<
 export interface SprayRecord {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   date: string;
   chemical: string;
   dose: string;
@@ -113,8 +143,10 @@ export interface FertilizerItem {
 export interface FertigationRecord {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   date: string;
   fertilizers?: FertilizerItem[] | null;
+  water_volume?: number | null;
   area: number;
   date_of_pruning?: string | null;
   notes?: string | null;
@@ -133,6 +165,7 @@ export type FertigationRecordUpdate = Partial<
 export interface HarvestRecord {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   date: string;
   quantity: number;
   grade: string;
@@ -155,6 +188,7 @@ export type ExpenseType = 'labor' | 'materials' | 'equipment' | 'fuel' | 'other'
 export interface ExpenseRecord {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   date: string;
   type: ExpenseType | string;
   cost: number;
@@ -173,12 +207,32 @@ export type ExpenseRecordInsert = Omit<ExpenseRecord, 'id' | 'created_at'>;
 export type ExpenseRecordUpdate = Partial<Omit<ExpenseRecord, 'id' | 'farm_id' | 'created_at'>>;
 
 // ============================================================
+// MARK: - Daily Note Record
+// ============================================================
+
+export interface DailyNoteRecord {
+  id?: number;
+  farm_id: number;
+  season_id?: number | null;
+  date: string;
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export type DailyNoteRecordInsert = Omit<DailyNoteRecord, 'id' | 'created_at' | 'updated_at'>;
+export type DailyNoteRecordUpdate = Partial<
+  Omit<DailyNoteRecord, 'id' | 'farm_id' | 'created_at' | 'updated_at'>
+>;
+
+// ============================================================
 // MARK: - Soil Test Record
 // ============================================================
 
 export interface SoilTestRecord {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   date: string;
   parameters: Record<string, number>; // pH, N, P, K, etc.
   date_of_pruning?: string | null;
@@ -197,6 +251,7 @@ export type SoilTestRecordUpdate = Partial<Omit<SoilTestRecord, 'id' | 'farm_id'
 export interface PetioleTestRecord {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   date: string;
   parameters: Record<string, number>; // N, P, K, Ca, Mg, etc.
   date_of_pruning?: string | null;
@@ -228,6 +283,7 @@ export interface SoilSectionData {
 export interface SoilProfile {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   fusarium_pct?: number | null;
   sections: SoilSectionData[];
   created_at?: string | null;
@@ -457,6 +513,7 @@ export type WorkTypeInsert = Omit<WorkType, 'id' | 'user_id' | 'is_default' | 'c
 export interface TemporaryWorkerEntry {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   user_id?: string;
   date: string;
   name: string;
@@ -539,11 +596,13 @@ export function fromSupabaseTimestampString(timestampString: string): Date | nul
 
 export const TABLES = {
   FARMS: 'farms',
+  FARM_SEASONS: 'farm_seasons',
   IRRIGATION_RECORDS: 'irrigation_records',
   SPRAY_RECORDS: 'spray_records',
   FERTIGATION_RECORDS: 'fertigation_records',
   HARVEST_RECORDS: 'harvest_records',
   EXPENSE_RECORDS: 'expense_records',
+  DAILY_NOTES: 'daily_notes',
   SOIL_TEST_RECORDS: 'soil_test_records',
   PETIOLE_TEST_RECORDS: 'petiole_test_records',
   SOIL_PROFILES: 'soil_profiles',

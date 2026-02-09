@@ -17,6 +17,7 @@ import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatCurrency, formatDate } from '@/i18n/format';
+import { useCurrency } from '@/hooks/use-currency';
 import { useTranslation } from 'react-i18next';
 import {
   useFarms,
@@ -31,7 +32,6 @@ import {
   useHarvestRecordsByFarms,
   useExpenseRecordsByFarms,
   useFertigationRecordsByFarms,
-  useProfile,
 } from '@/hooks';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
@@ -53,6 +53,7 @@ interface CombinedLog {
   date: string;
   description: string;
   data: IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
+  searchableText?: string;
 }
 
 export default function LogsScreen() {
@@ -64,8 +65,7 @@ export default function LogsScreen() {
   const { setEditActivity } = useModalStore();
   const { farmId } = useLocalSearchParams<{ farmId?: string }>();
   const insets = useSafeAreaInsets();
-  const { data: profile } = useProfile();
-  const currency = profile?.currency_preference || 'INR';
+  const currency = useCurrency();
   const filterCardStyle = Platform.select({
     ios: {
       shadowColor: m3.colorScheme.shadow,
@@ -174,6 +174,19 @@ export default function LogsScreen() {
   const deleteExpense = useDeleteExpenseRecord();
   const deleteFertigation = useDeleteFertigationRecord();
 
+  const getFertigationDescription = useCallback(
+    (record: FertigationRecord) => {
+      if (record.fertilizers && record.fertilizers.length > 0) {
+        return record.fertilizers.map((f) => f.name).join(', ');
+      }
+      return t('logs.fertigationApplied', {
+        count: 0,
+        countFormatted: '0',
+      });
+    },
+    [t],
+  );
+
   const openAndroidDatePicker = (current: Date | undefined, onSelect: (date: Date) => void) => {
     DateTimePickerAndroid.open({
       value: current ?? new Date(),
@@ -237,18 +250,20 @@ export default function LogsScreen() {
       }),
     );
 
-    displayFertigationRecords.forEach((r) =>
+    displayFertigationRecords.forEach((r) => {
+      const description = getFertigationDescription(r);
+      const searchableText = r.fertilizers
+        ? r.fertilizers.map((f) => f.name.toLowerCase()).join(' ')
+        : '';
       logs.push({
         id: `fertigation-${r.id}`,
         type: 'fertigation',
         date: r.date,
-        description: t('logs.fertigationApplied', {
-          count: r.fertilizers?.length || 0,
-          countFormatted: String(r.fertilizers?.length || 0),
-        }),
+        description,
+        searchableText,
         data: r,
-      }),
-    );
+      });
+    });
 
     return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [
@@ -259,15 +274,19 @@ export default function LogsScreen() {
     displayFertigationRecords,
     t,
     currency,
+    getFertigationDescription,
   ]);
 
   const filteredLogs = useMemo(() => {
     let logs = [...combinedLogs];
 
     if (searchQuery) {
-      logs = logs.filter((log) =>
-        log.description.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+      const query = searchQuery.toLowerCase();
+      logs = logs.filter((log) => {
+        const descriptionMatch = log.description.toLowerCase().includes(query);
+        const additionalMatch = log.searchableText ? log.searchableText.includes(query) : false;
+        return descriptionMatch || additionalMatch;
+      });
     }
 
     if (selectedLogTypes.size > 0) {

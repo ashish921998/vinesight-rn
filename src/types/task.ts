@@ -1,6 +1,7 @@
 /**
  * Task/Reminder Types for Vinesight
  */
+
 import { ICON_REGISTRY } from '@/constants/icon-registry';
 
 // Task types matching the database schema
@@ -22,6 +23,7 @@ export type TaskPriority = 'low' | 'medium' | 'high';
 export interface TaskReminder {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   title: string;
   description: string | null;
   type: TaskType;
@@ -70,7 +72,11 @@ export const TASK_TYPE_INFO: Record<TaskType, { labelKey: string; icon: string; 
     color: '#4d8573',
   },
   spray: { labelKey: 'tasks.types.spray', icon: ICON_REGISTRY.spray, color: '#598d6b' },
-  fertigation: { labelKey: 'tasks.types.fertigation', icon: 'leaf', color: '#408059' },
+  fertigation: {
+    labelKey: 'tasks.types.fertigation',
+    icon: ICON_REGISTRY.fertigation,
+    color: '#408059',
+  },
   harvest: { labelKey: 'tasks.types.harvest', icon: ICON_REGISTRY.harvest, color: '#669475' },
   soil_test: { labelKey: 'tasks.types.soilTest', icon: ICON_REGISTRY.soilTest, color: '#598266' },
   petiole_test: {

@@ -16,6 +16,7 @@ import {
 
 import { Stack } from 'expo-router';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -376,7 +377,11 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="leaf.fill" size={18} color={m3.colorScheme.primary} />
+                    <UISymbol
+                      name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                      size={18}
+                      color={m3.colorScheme.primary}
+                    />
                   </View>
                   <Text
                     style={{

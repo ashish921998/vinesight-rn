@@ -5,12 +5,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { getUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
 import type { Farm } from '../types';
 import { TABLES, isLowWater } from '../types';
 import type { LogTypeId } from '../constants';
 import { formatCurrency } from '@/i18n/format';
-import { useProfile } from './use-profile';
+import { useCurrency } from './use-currency';
 
 // ============================================================
 // MARK: - Types
@@ -35,17 +36,6 @@ export interface RecentActivity {
   description: string;
   farmId: number;
   farmName: string;
-}
-
-// ============================================================
-// MARK: - Helper to get current user ID
-// ============================================================
-
-async function getUserId(): Promise<string | null> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
 }
 
 // ============================================================
@@ -171,8 +161,7 @@ export function useFarmsNeedingAttention() {
 // ============================================================
 
 export function useRecentActivities(limit: number = 5) {
-  const { data: profile } = useProfile();
-  const preferredCurrency = profile?.currency_preference || 'INR';
+  const preferredCurrency = useCurrency();
 
   return useQuery({
     queryKey: [...queryKeys.dashboard.recentActivities(limit), preferredCurrency],

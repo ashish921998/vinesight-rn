@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
+import { NumericInput, type NumericInputHandle } from './form-field';
 import { UnitPickerModal } from '../ui/unit-picker-modal';
 import { FERTILIZER_UNITS, type FertilizerUnit } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useTranslation } from 'react-i18next';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -15,6 +18,7 @@ export interface FertilizerEntry {
 }
 
 export interface FertigationFormData {
+  waterVolume?: number;
   fertilizers: FertilizerEntry[];
   notes?: string;
 }
@@ -28,8 +32,11 @@ interface FertigationFormProps {
 export function FertigationForm({ data, onChange, onInputFocus }: FertigationFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
+  const { t } = useTranslation();
   const isValid =
     data.fertilizers.length > 0 && data.fertilizers.every((f) => f.name.trim() && f.quantity > 0);
+
+  const waterVolumeRef = useRef<NumericInputHandle>(null);
 
   const addFertilizer = () => {
     if (data.fertilizers.length < 10) {
@@ -77,7 +84,11 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
             marginRight: spacing[3],
           }}
         >
-          <IconSymbol name="leaf.fill" size={20} color={colors.success} />
+          <IconSymbol
+            name={resolveSymbolIconName(ICON_REGISTRY.fertigation)}
+            size={20}
+            color={colors.success}
+          />
         </View>
         <View>
           <Text
@@ -95,8 +106,23 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
         </View>
       </View>
 
+      {/* Water Volume Input */}
+      <NumericInput
+        label={t('fertigationForm.waterVolume.label')}
+        icon="water-outline"
+        iconColor={m3.colorScheme.tertiary}
+        placeholder={t('fertigationForm.waterVolume.placeholder')}
+        value={data.waterVolume}
+        onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}
+        unit={t('fertigationForm.waterVolume.unitLiters')}
+        decimals={2}
+        hint={t('fertigationForm.waterVolume.hint')}
+        ref={waterVolumeRef}
+        onFocus={onInputFocus}
+      />
+
       {/* Fertilizers Section */}
-      <View>
+      <View style={{ marginTop: spacing[2] }}>
         <View
           style={{
             flexDirection: 'row',
@@ -440,6 +466,7 @@ export function validateFertigationForm(data: FertigationFormData): boolean {
 // Create empty fertigation form data
 export function createEmptyFertigationFormData(): FertigationFormData {
   return {
+    waterVolume: undefined,
     fertilizers: [{ name: '', quantity: 0, unit: 'kg/acre' }],
   };
 }

@@ -13,6 +13,14 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.farms.details(), id] as const,
   },
 
+  // Farm Seasons
+  farmSeasons: {
+    all: ['farmSeasons'] as const,
+    lists: () => [...queryKeys.farmSeasons.all, 'list'] as const,
+    listByFarm: (farmId: number) => [...queryKeys.farmSeasons.lists(), { farmId }] as const,
+    detail: (id: number) => [...queryKeys.farmSeasons.all, 'detail', id] as const,
+  },
+
   // Irrigation Records
   irrigationRecords: {
     all: ['irrigationRecords'] as const,
@@ -58,6 +66,15 @@ export const queryKeys = {
     listByFarm: (farmId: number) => [...queryKeys.expenseRecords.lists(), { farmId }] as const,
     listByFarms: (farmIds: number[]) => [...queryKeys.expenseRecords.lists(), { farmIds }] as const,
     detail: (id: number) => [...queryKeys.expenseRecords.all, 'detail', id] as const,
+  },
+
+  // Daily Notes
+  dailyNotes: {
+    all: ['dailyNotes'] as const,
+    lists: () => [...queryKeys.dailyNotes.all, 'list'] as const,
+    listByFarm: (farmId: number) => [...queryKeys.dailyNotes.lists(), { farmId }] as const,
+    byDate: (farmId: number, date: string) =>
+      [...queryKeys.dailyNotes.all, 'byDate', { farmId, date }] as const,
   },
 
   // Soil Test Records
@@ -149,8 +166,11 @@ export const queryKeys = {
   temporaryWorkerEntries: {
     all: ['temporaryWorkerEntries'] as const,
     lists: () => [...queryKeys.temporaryWorkerEntries.all, 'list'] as const,
+    listAll: () => [...queryKeys.temporaryWorkerEntries.lists(), 'all'] as const,
     listByFarm: (farmId: number) =>
       [...queryKeys.temporaryWorkerEntries.lists(), { farmId }] as const,
+    listByFarms: (farmIds: number[]) =>
+      [...queryKeys.temporaryWorkerEntries.lists(), { farmIds }] as const,
   },
 
   // Dashboard

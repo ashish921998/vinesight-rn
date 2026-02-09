@@ -28,8 +28,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/i18n/format';
+import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { triggerHapticSuccess } from '@/utils/haptics';
 
 import {
   IrrigationForm,
@@ -311,7 +313,8 @@ export function EntryForm({
       case 'fertigation': {
         const fert = data as FertigationFormData;
         const fertCount = fert.fertilizers.length;
-        return `${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
+        const waterText = fert.waterVolume ? `${fert.waterVolume}L water, ` : '';
+        return `${waterText}${fertCount} fertilizer${fertCount !== 1 ? 's' : ''}`;
       }
       default:
         return '';
@@ -470,6 +473,7 @@ export function EntryForm({
                 unit: f.unit,
                 quantity: f.quantity!,
               })),
+              water_volume: data.waterVolume,
               area: activeFarm.area ?? 0,
               date_of_pruning: activeFarm.date_of_pruning,
             });
@@ -506,6 +510,7 @@ export function EntryForm({
           });
         setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+        triggerHapticSuccess();
         onLogSaveSuccess?.();
       }
 
@@ -551,7 +556,7 @@ export function EntryForm({
   const prevEditingTaskIdRef = useRef<number | null | undefined>(undefined);
   const prevEditingTaskUpdatedAtRef = useRef<string | undefined>(undefined);
 
-  const resetTaskForm = () => {
+  const resetTaskForm = useCallback(() => {
     setTitle('');
     setDescription('');
     setType('note');
@@ -561,7 +566,7 @@ export function EntryForm({
     setShowTypePicker(false);
     setShowPriorityPicker(false);
     setShowTemplates(false);
-  };
+  }, []);
 
   useEffect(() => {
     if (!isVisible) {
@@ -598,7 +603,7 @@ export function EntryForm({
     prevVisibleRef.current = isVisible;
     prevEditingTaskIdRef.current = editingTask?.id;
     prevEditingTaskUpdatedAtRef.current = editingTask?.updated_at;
-  }, [isVisible, editingTask, farms, initialFarmId, farm?.id]);
+  }, [isVisible, editingTask, farms, initialFarmId, farm?.id, resetTaskForm]);
 
   const applyTemplate = (template: TaskTemplate) => {
     setTitle(template.title);
@@ -1771,7 +1776,7 @@ export function EntryForm({
               ]}
             >
               {dueDate
-                ? formatDate(new Date(dueDate), {
+                ? formatDate(parseDbDateToLocalDate(dueDate) ?? dueDate, {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
@@ -1838,13 +1843,15 @@ export function EntryForm({
                   </Pressable>
                 </View>
                 <DateTimePicker
-                  value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
+                  value={(() => {
+                    if (!dueDate) return new Date();
+                    const parsed = parseDbDateToLocalDate(dueDate);
+                    return parsed ?? new Date();
+                  })()}
                   mode="date"
                   display="spinner"
                   onChange={(_, date) => {
-                    if (date) {
-                      setDueDate(date.toISOString().split('T')[0]);
-                    }
+                    if (date) setDueDate(formatLocalDate(date));
                   }}
                   style={{ height: 200 }}
                   textColor={m3.colorScheme.onSurface}
@@ -1864,16 +1871,18 @@ export function EntryForm({
             </Pressable>
           </Modal>
         )}
-        {showDueDatePicker && Platform.OS === 'android' && (
+        {showDueDatePicker && Platform.OS !== 'ios' && (
           <DateTimePicker
-            value={dueDate ? new Date(dueDate + 'T00:00:00') : new Date()}
+            value={(() => {
+              if (!dueDate) return new Date();
+              const parsed = parseDbDateToLocalDate(dueDate);
+              return parsed ?? new Date();
+            })()}
             mode="date"
             display="default"
-            onChange={(event, date) => {
+            onChange={(_, date) => {
               setShowDueDatePicker(false);
-              if (date) {
-                setDueDate(date.toISOString().split('T')[0]);
-              }
+              if (date) setDueDate(formatLocalDate(date));
             }}
           />
         )}

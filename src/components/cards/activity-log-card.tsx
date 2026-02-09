@@ -5,14 +5,14 @@
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
-import { AppIcon } from '@/components/ui/app-icon';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { getLogType, type LogTypeId } from '../../constants';
 import { fromSupabaseDateString } from '../../types';
 import { spacing, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
-import { useProfile } from '@/hooks';
+import { useCurrency } from '@/hooks/use-currency';
 import { useM3 } from '@/styles/use-theme';
 import type {
   IrrigationRecord,
@@ -70,12 +70,18 @@ function getDescriptionFromData(
     }
     case 'expense': {
       const expense = data as ExpenseRecord;
-      const cost = formatCurrency(expense.cost ?? 0, currency || 'INR');
+      if (!currency) return '';
+      const cost = formatCurrency(expense.cost ?? 0, currency);
       const expenseType = expense.type || t('common.general');
       return t('logs.expenseDescription', { cost, type: expenseType });
     }
     case 'fertigation': {
       const fertigation = data as FertigationRecord;
+      const fertNames =
+        fertigation.fertilizers?.map((f) => f.name?.trim() ?? '').filter(Boolean) ?? [];
+      if (fertNames.length > 0) {
+        return fertNames.join(', ');
+      }
       const fertCount = fertigation.fertilizers?.length || 0;
       return t('logs.fertigationApplied', {
         count: fertCount,
@@ -99,8 +105,7 @@ export function ActivityLogCard({
 }: ActivityLogCardProps) {
   const m3 = useM3();
   const { t } = useTranslation();
-  const { data: profile } = useProfile();
-  const currency = profile?.currency_preference || 'INR';
+  const currency = useCurrency();
 
   const hasActions = Boolean(onEdit || onDelete);
   const isInteractive = Boolean(onPress) && !hasActions;
@@ -177,7 +182,7 @@ export function ActivityLogCard({
         {({ pressed }) => (
           <View style={containerStyle}>
             <View style={iconContainerStyle}>
-              <AppIcon name={logType.icon} size={18} color={logType.color} />
+              <UiSymbol name={logType.icon} size={18} color={logType.color} />
             </View>
 
             <View style={contentContainerStyle}>
@@ -197,8 +202,8 @@ export function ActivityLogCard({
               </View>
             </View>
 
-            <AppIcon
-              name="chevron-right"
+            <UiSymbol
+              name="chevron.right"
               size={16}
               color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             />
@@ -223,7 +228,7 @@ export function ActivityLogCard({
     return (
       <View style={containerStyle}>
         <View style={iconContainerStyle}>
-          <AppIcon name={logType.icon} size={18} color={logType.color} />
+          <UiSymbol name={logType.icon} size={18} color={logType.color} />
         </View>
         <View style={contentContainerStyle}>
           <Text style={descriptionTextStyle} numberOfLines={1}>
@@ -260,7 +265,7 @@ export function ActivityLogCard({
                   : 'transparent',
               })}
             >
-              <AppIcon name="pencil" size={16} color={m3.colorScheme.primary} />
+              <UiSymbol name="pencil" size={16} color={m3.colorScheme.primary} />
             </Pressable>
           )}
           {onDelete && (
@@ -281,7 +286,7 @@ export function ActivityLogCard({
                   : 'transparent',
               })}
             >
-              <AppIcon name="trash" size={16} color={m3.colorScheme.error} />
+              <UiSymbol name="trash" size={16} color={m3.colorScheme.error} />
             </Pressable>
           )}
         </View>
@@ -292,7 +297,7 @@ export function ActivityLogCard({
   return (
     <View style={containerStyle}>
       <View style={iconContainerStyle}>
-        <AppIcon name={logType.icon} size={18} color={logType.color} />
+        <UiSymbol name={logType.icon} size={18} color={logType.color} />
       </View>
       <View style={contentContainerStyle}>
         <Text style={descriptionTextStyle} numberOfLines={1}>

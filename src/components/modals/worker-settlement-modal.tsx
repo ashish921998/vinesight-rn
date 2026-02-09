@@ -12,7 +12,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { formatDate } from '@/i18n/format';
+import { formatDate, formatCurrency } from '@/i18n/format';
+import { useCurrency } from '@/hooks/use-currency';
 import { Input } from '@/components/ui';
 import { Button } from '@/components/ui';
 import type { Worker } from '@/types';
@@ -70,6 +71,7 @@ export function WorkerSettlementModal({
   const m3 = useM3();
   const { t } = useTranslation();
   const isAndroid = Platform.OS === 'android';
+  const currency = useCurrency();
 
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
 
@@ -242,7 +244,9 @@ export function WorkerSettlementModal({
       });
       Alert.alert(
         t('settlement.settlementConfirmedTitle'),
-        t('settlement.settlementConfirmedMessage', { amount: netPayment.toFixed(2) }),
+        t('settlement.settlementConfirmedMessage', {
+          formattedAmount: formatCurrency(netPayment, currency),
+        }),
       );
       onSuccess();
       onClose();

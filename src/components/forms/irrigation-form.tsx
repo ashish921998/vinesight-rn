@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, type TextInputProps } from 'react-native';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput } from './form-field';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -51,7 +52,11 @@ export function IrrigationForm({
             marginRight: spacing[3],
           }}
         >
-          <SymbolIcon name="drop.fill" size={20} color={m3.colorScheme.primary} />
+          <SymbolIcon
+            name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+            size={20}
+            color={m3.colorScheme.primary}
+          />
         </View>
         <View>
           <Text

@@ -9,11 +9,12 @@ import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import type { TaskReminder } from '@/types/task';
 import { PRIORITY_INFO, TASK_TYPE_INFO } from '@/types/task';
-import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
+import { resolveSymbolIconName } from '@/constants/icon-registry';
+import { triggerHaptic, triggerHapticWarning } from '@/utils/haptics';
 
 interface TaskRowProps {
   task: TaskReminder;
@@ -29,8 +30,6 @@ const startOfDay = (date: Date) => {
   result.setHours(0, 0, 0, 0);
   return result;
 };
-
-const mapTaskIcon = (icon: string) => resolveSymbolIconName(icon);
 
 export function TaskRow({
   task,
@@ -92,7 +91,12 @@ export function TaskRow({
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
         <Pressable
-          onPress={() => (task.completed ? null : onComplete?.(task))}
+          onPress={() => {
+            if (!task.completed && onComplete) {
+              triggerHaptic();
+              onComplete(task);
+            }
+          }}
           disabled={task.completed || !onComplete}
           accessibilityRole="button"
           accessibilityLabel={t('tasks.a11y.completeTask', { title: task.title })}
@@ -131,7 +135,11 @@ export function TaskRow({
                 backgroundColor: colorWithOpacity(typeInfo.color, 0.14),
               }}
             >
-              <UiSymbol name={mapTaskIcon(typeInfo.icon)} size={14} color={typeInfo.color} />
+              <UiSymbol
+                name={resolveSymbolIconName(typeInfo.icon)}
+                size={14}
+                color={typeInfo.color}
+              />
             </View>
             <Text
               numberOfLines={1}
@@ -261,7 +269,10 @@ export function TaskRow({
           )}
           {onDelete && (
             <Pressable
-              onPress={() => onDelete(task)}
+              onPress={() => {
+                triggerHapticWarning();
+                onDelete(task);
+              }}
               accessibilityRole="button"
               accessibilityLabel={t('tasks.a11y.deleteTask', { title: task.title })}
               style={({ pressed }) => ({

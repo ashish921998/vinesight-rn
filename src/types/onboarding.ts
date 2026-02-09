@@ -20,8 +20,8 @@ export interface OnboardingState {
 
 export interface OnboardingPreferences {
   country: string;
-  areaUnit: 'hectares' | 'acres';
   currency: string;
+  areaUnit: 'hectares' | 'acres';
   notificationsEnabled: boolean;
 }
 

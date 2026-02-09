@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput } from './form-field';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
-import { useProfile } from '../../hooks';
+import { useCurrency } from '@/hooks/use-currency';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
@@ -37,7 +38,7 @@ const EXPENSE_ICONS: Record<ExpenseTypeId, string> = {
 export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
-  const { data: profile } = useProfile();
+  const resolvedCurrency = useCurrency();
   const isValidCurrency = (code: string | null | undefined): boolean => {
     if (!code || typeof code !== 'string') return false;
     if (!/^[A-Z]{3}$/.test(code)) return false;
@@ -48,8 +49,10 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
       return false;
     }
   };
-  const candidateCurrency = preferredCurrency || profile?.currency_preference;
-  const currency = isValidCurrency(candidateCurrency) ? (candidateCurrency ?? 'INR') : 'INR';
+  const candidateCurrency = preferredCurrency || resolvedCurrency;
+  const currency = isValidCurrency(candidateCurrency)
+    ? (candidateCurrency ?? resolvedCurrency)
+    : resolvedCurrency;
   const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
 
   return (
@@ -67,7 +70,11 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             marginRight: spacing[3],
           }}
         >
-          <SymbolIcon name="dollarsign.circle.fill" size={20} color={m3.colorScheme.error} />
+          <SymbolIcon
+            name={resolveSymbolIconName(ICON_REGISTRY.expense)}
+            size={20}
+            color={m3.colorScheme.error}
+          />
         </View>
         <View>
           <Text

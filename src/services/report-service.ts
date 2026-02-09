@@ -5,9 +5,17 @@
 
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { cacheDirectory } from 'expo-file-system/legacy';
-import { ReportData, ReportSummary, ReportPreview, DateRange, ReportType } from '../types/report';
+import { cacheDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
+import {
+  ReportData,
+  ReportSummary,
+  ReportPreview,
+  DateRange,
+  ReportType,
+  ReportStockUsageRecord,
+} from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
+import { getDefaultCurrency } from '@/i18n/currency';
 import {
   Farm,
   IrrigationRecord,
@@ -18,6 +26,16 @@ import {
 } from '../types/database';
 
 export class ReportService {
+  private static sanitizeFileNamePart(value: string, fallback: string = 'farm'): string {
+    const sanitized = Array.from(value)
+      .filter((char) => char.charCodeAt(0) >= 32)
+      .join('')
+      .replace(/[^\p{L}\p{N}]+/gu, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 64);
+    return sanitized || fallback;
+  }
+
   /**
    * Escape a value for CSV output
    */
@@ -26,17 +44,6 @@ export class ReportService {
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;
-  }
-
-  /**
-   * Sanitize a string to be safe for use as a filename
-   * Only allows alphanumeric characters, underscores, and hyphens
-   */
-  private static sanitizeFilename(name: string): string {
-    return name
-      .replace(/[^a-zA-Z0-9_-]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
   }
 
   /**
@@ -54,6 +61,98 @@ export class ReportService {
   }
 
   /**
+   * Helper to parse items from string format "Name (Quantity Unit)"
+   */
+  private static parseStockItems(
+    itemStr: string,
+  ): { name: string; quantity: number; unit: string }[] {
+    const items: { name: string; quantity: number; unit: string }[] = [];
+    const regex = /([^(,]+)\s*\((\d+(?:\.\d+)?)\s*([a-zA-Z/%]+)\)/g;
+    let match;
+    while ((match = regex.exec(itemStr)) !== null) {
+      items.push({
+        name: match[1].trim(),
+        quantity: parseFloat(match[2]),
+        unit: match[3].trim(),
+      });
+    }
+    return items;
+  }
+
+  /**
+   * Calculate stock usage from records
+   */
+  private static calculateStockUsage(
+    sprays: SprayRecord[],
+    fertigations: FertigationRecord[],
+    dateRange: DateRange,
+  ): ReportStockUsageRecord[] {
+    const usageMap = new Map<string, ReportStockUsageRecord>();
+    const filteredSprays = this.filterByDateRange(sprays, dateRange);
+    const filteredFertigations = this.filterByDateRange(fertigations, dateRange);
+
+    // Process Sprays
+    filteredSprays.forEach((record) => {
+      const items = this.parseStockItems(record.chemical);
+      items.forEach((item) => {
+        const key = `${item.name}-${item.unit}`;
+        const existing = usageMap.get(key);
+        if (existing) {
+          existing.quantityUsed += item.quantity;
+          existing.areaTreated += record.area;
+          existing.usageCount += 1;
+        } else {
+          usageMap.set(key, {
+            itemName: item.name,
+            type: 'spray',
+            quantityUsed: item.quantity,
+            unit: item.unit,
+            areaTreated: record.area,
+            usageCount: 1,
+          });
+        }
+      });
+    });
+
+    // Process Fertigations
+    filteredFertigations.forEach((record) => {
+      if (record.fertilizers) {
+        record.fertilizers.forEach((item) => {
+          const key = `${item.name}-${item.unit}`;
+          const existing = usageMap.get(key);
+          // Calculate actual quantity based on unit if possible
+          // If unit is per acre, multiply by area?
+          // The app usually stores total quantity or per acre in the unit string
+          // For now, we assume the quantity in the record is the total quantity used for that application
+          // unless the unit explicitly says '/acre'.
+          // However, standardizing this is tricky. Let's assume quantity is total for now as per Form logic.
+
+          const quantity = item.quantity;
+          // Basic check for per-acre units if we wanted to be smarter, but let's stick to raw sum for now
+          // as users might enter "50 kg" total for "2 acres".
+
+          if (existing) {
+            existing.quantityUsed += quantity;
+            existing.areaTreated += record.area;
+            existing.usageCount += 1;
+          } else {
+            usageMap.set(key, {
+              itemName: item.name,
+              type: 'fertilizer',
+              quantityUsed: quantity,
+              unit: item.unit,
+              areaTreated: record.area,
+              usageCount: 1,
+            });
+          }
+        });
+      }
+    });
+
+    return Array.from(usageMap.values()).sort((a, b) => a.itemName.localeCompare(b.itemName));
+  }
+
+  /**
    * Generate report data from farm records
    */
   static generateReportData(
@@ -65,6 +164,8 @@ export class ReportService {
     expenses: ExpenseRecord[],
     dateRange: DateRange,
   ): ReportData {
+    const stockUsage = this.calculateStockUsage(sprays, fertigations, dateRange);
+
     return {
       farmName: farm.name,
       farmArea: farm.area,
@@ -110,6 +211,7 @@ export class ReportService {
         cost: r.cost,
         remarks: r.remarks || undefined,
       })),
+      stock: stockUsage,
     };
   }
 
@@ -145,6 +247,7 @@ export class ReportService {
       fertigationCount: data.fertigation.length,
       harvestCount: data.harvest.length,
       expenseCount: data.expense.length,
+      stockUsageCount: data.stock.length,
     };
   }
 
@@ -255,6 +358,20 @@ export class ReportService {
       }
     }
 
+    if (reportType === 'stock-usage' || reportType === 'comprehensive') {
+      // Stock Usage
+      if (data.stock.length > 0) {
+        rows.push('STOCK USAGE SUMMARY');
+        rows.push('Item,Type,Total Quantity Used,Unit,Total Area Treated,Usage Count');
+        data.stock.forEach((r) => {
+          rows.push(
+            `${this.escapeCSV(r.itemName)},${r.type},${r.quantityUsed},${r.unit},${r.areaTreated},${r.usageCount}`,
+          );
+        });
+        rows.push('');
+      }
+    }
+
     return rows.join('\n');
   }
 
@@ -265,7 +382,7 @@ export class ReportService {
     data: ReportData,
     summary: ReportSummary,
     reportType: ReportType,
-    preferredCurrency: string = 'INR',
+    preferredCurrency: string = getDefaultCurrency(),
   ): string {
     const styles = `
       <style>
@@ -345,7 +462,7 @@ export class ReportService {
 
       if (data.spray.length > 0) {
         html += `
-          <h2>🧴 Spray Records (${data.spray.length})</h2>
+          <h2>🧪 Spray Records (${data.spray.length})</h2>
           <table>
             <tr><th>Date</th><th>Chemical</th><th>Dose</th><th>Area</th><th>Weather</th></tr>
             ${data.spray
@@ -389,6 +506,23 @@ export class ReportService {
                   `<tr><td>${r.date}</td><td>${r.type}</td><td>${formatCurrency(r.cost, preferredCurrency, { minimumFractionDigits: 0 })}</td><td>${r.remarks || '-'}</td></tr>`,
               )
               .join('')}
+          ${data.expense.length > 20 ? `<p>... and ${data.expense.length - 20} more records</p>` : ''}
+        `;
+      }
+    }
+
+    if (reportType === 'stock-usage' || reportType === 'comprehensive') {
+      if (data.stock.length > 0) {
+        html += `
+          <h2>📦 Stock Usage Summary</h2>
+          <table>
+            <tr><th>Item</th><th>Type</th><th>Total Qty</th><th>Unit</th><th>Area Treated</th><th>Count</th></tr>
+            ${data.stock
+              .map(
+                (r) =>
+                  `<tr><td>${r.itemName}</td><td>${r.type}</td><td>${r.quantityUsed}</td><td>${r.unit}</td><td>${r.areaTreated}</td><td>${r.usageCount}</td></tr>`,
+              )
+              .join('')}
           </table>
         `;
       }
@@ -419,15 +553,20 @@ export class ReportService {
       throw new Error('Cache directory is not available on this device');
     }
     const csv = this.generateCSV(data, reportType);
-    const filename = `${this.sanitizeFilename(data.farmName)}_report_${new Date().toISOString().split('T')[0]}.csv`;
+    const safeFarmName = this.sanitizeFileNamePart(data.farmName);
+    const uniqueness = safeFarmName === 'farm' ? `_${Date.now()}` : '';
+    const filename = `${safeFarmName}${uniqueness}_report_${new Date().toISOString().split('T')[0]}.csv`;
+    const fileUri = cacheDirectory.endsWith('/')
+      ? `${cacheDirectory}${filename}`
+      : `${cacheDirectory}/${filename}`;
+    try {
+      await writeAsStringAsync(fileUri, csv);
+    } catch (error) {
+      throw new Error(
+        `Failed to write report file (${filename}) for farm: ${safeFarmName}. ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
-    const file = new File(Paths.cache, filename);
-    const writer = file.writableStream().getWriter();
-    const bytes = new TextEncoder().encode(csv);
-    await writer.write(bytes);
-    await writer.close();
-
-    const fileUri = (file as unknown as { uri: string }).uri;
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(fileUri, {
         mimeType: 'text/csv',
@@ -446,7 +585,7 @@ export class ReportService {
     data: ReportData,
     summary: ReportSummary,
     reportType: ReportType,
-    preferredCurrency: string = 'INR',
+    preferredCurrency: string = getDefaultCurrency(),
   ): Promise<void> {
     const html = this.generatePDFHtml(data, summary, reportType, preferredCurrency);
 

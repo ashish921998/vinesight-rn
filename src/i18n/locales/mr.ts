@@ -34,6 +34,7 @@ export const mr = {
     clearAll: 'सर्व साफ करा',
     units: {
       hours: 'तास',
+      days: 'दिवस',
     },
     labels: {
       value: 'मूल्य',
@@ -71,8 +72,6 @@ export const mr = {
 
       failedToUpdateFarm: '$t(glossary.farm) अद्ययावत होऊ शकले नाही. कृपया पुन्हा प्रयत्न करा.',
       failedToCreateFarm: '$t(glossary.farm) तयार होऊ शकले नाही. कृपया पुन्हा प्रयत्न करा.',
-      invalidFarmNumericInput:
-        'एक किंवा अधिक संख्यात्मक मूल्ये अवैध आहेत किंवा अनुमत मर्यादेबाहेर आहेत.',
 
       enterAtLeastOneMoistureValue: 'कृपया किमान एक ओलावा मूल्य टाका.',
       failedToSaveSoilProfile:
@@ -148,6 +147,49 @@ export const mr = {
       captionThisSeason: 'या हंगामात {{usage}}',
       captionLogIrrigation: 'पाणी वापर मॉनिटर करण्यासाठी $t(glossary.irrigation) नोंदवा',
     },
+    seasons: {
+      title: 'हंगाम',
+      formTitle: 'हंगाम समाप्त करा',
+      startFormTitle: 'हंगाम सुरू करा',
+      firstTimeHint: 'पहिल्यांदा हंगाम समाप्त करत आहात? हंगामाची सुरुवात आणि समाप्ती तारीख भरा.',
+      startHint: 'पिकानुसार टेम्पलेट निवडा आणि सुरूवातीची तारीख निश्चित करा.',
+      lastEndDate: 'मागील हंगाम {{date}} ला संपला. पुढील हंगामाची सुरुवात आपोआप सेट होईल.',
+      startDateLabel: 'हंगाम सुरूवात तारीख',
+      endDateLabel: 'हंगाम समाप्ती तारीख',
+      templateLabel: 'हंगाम टेम्पलेट',
+      seasonNameLabel: 'हंगाम नाव (ऐच्छिक)',
+      seasonNamePlaceholder: 'उदा. Summer 2026',
+      templateHint: 'निवडलेले टेम्पलेट: {{template}}',
+      showEndSeasonForm: 'हंगाम समाप्त करा',
+      startSeasonButton: 'हंगाम सुरू करा',
+      endSeasonButton: 'हंगाम जतन करा',
+      statusActive: '{{start}} पासून सक्रिय',
+      statusNone: 'सक्रिय हंगाम नाही',
+      reviewRequiredBadge: 'हंगाम इतिहास तपासा',
+      betweenSeasonsBadge: 'हंगाम संपला',
+      betweenSeasonsHint: 'हंगाम संपला. पुढील हंगाम {{date}} पासून सुरू होईल.',
+      actions: {
+        startSeasonToContinue: 'नोंदी जोडण्यासाठी आधी हंगाम सुरू करा.',
+      },
+      alerts: {
+        startSuccessTitle: 'हंगाम यशस्वीरित्या सुरू झाला',
+        startSuccess: 'नवीन हंगाम आता सक्रिय आहे.',
+        endSuccessTitle: 'हंगाम यशस्वीरित्या संपला',
+        endSuccess: 'हंगाम यशस्वीरित्या समाप्त झाला.',
+        reviewQueuedSuccess: 'हंगाम असाइनमेंट पुनरावलोकन यशस्वीरित्या सुरू केले.',
+      },
+      errors: {
+        invalidRange: 'हंगाम समाप्ती तारीख सुरूवातीच्या तारखेपेक्षा नंतरची असावी.',
+        startBeforeAllowed: 'हंगाम सुरूवात तारीख मागील हंगाम समाप्तीनंतरची असावी.',
+        duplicateEndDate: 'ही हंगाम समाप्ती तारीख आधीच जतन केलेली आहे.',
+        startFailed: 'हंगाम सुरू करता आला नाही.',
+        endFailed: 'हंगाम समाप्त करता आला नाही.',
+        noActiveSeason: 'या शेतासाठी सक्रिय हंगाम आढळला नाही.',
+        reviewQueueFailed: 'हंगाम असाइनमेंट पुनरावलोकन सुरू करता आले नाही.',
+        activeSeasonExists:
+          'सक्रिय हंगाम आहे. कृपया नवीन हंगाम तयार करण्यापूर्वी वर्तमान हंगाम समाप्त करा.',
+      },
+    },
     workboard: {
       title: 'वर्कबोर्ड',
       subtitle: 'टूल्स आणि संसाधनांना पटकन प्रवेश.',
@@ -156,16 +198,17 @@ export const mr = {
         lab: 'तपासणी',
         reports: '$t(glossary.report)',
         soilMoisture: '$t(glossary.soil)तील ओलावा',
+        tempWorker: 'तात्पुरता\n$t(glossary.worker)',
       },
     },
     tabs: {
-      activities: 'क्रियाकलाप',
+      activities: 'नोंदी',
       tasks: 'कामे',
     },
     activities: {
       empty: {
-        title: 'अजून क्रियाकलाप नाहीत',
-        subtitle: 'इथे पाहण्यासाठी क्रियाकलाप नोंदवायला सुरुवात करा',
+        title: 'अजून नोंदी नाहीत',
+        subtitle: 'इथे पाहण्यासाठी नोंदी करायला सुरुवात करा',
       },
     },
     tasks: {
@@ -177,13 +220,19 @@ export const mr = {
     },
     actions: {
       addActivity: 'नोंद जोडा',
-      seeAllActivities: 'सर्व क्रियाकलाप पहा',
+      seeAllLogs: 'सर्व नोंदी पहा',
       seeAllTasks: 'सर्व $t(glossary.task) पहा',
+      menuTitle: '$t(glossary.farm) क्रिया',
+      editFarm: '$t(glossary.farm) संपादित करा',
+      startSeason: 'हंगाम सुरू करा',
+      endSeason: 'हंगाम समाप्त करा',
+      reviewSeasonHistory: 'हंगाम इतिहास तपासा',
     },
     a11y: {
       editFarm: '$t(glossary.farm) संपादित करा',
       deleteFarm: '$t(glossary.farm) हटवा',
-      showActivities: 'क्रियाकलाप दाखवा',
+      openFarmActions: '$t(glossary.farm) क्रिया उघडा',
+      showActivities: 'नोंदी दाखवा',
       showTasks: 'कामे दाखवा',
       taskCompleted: '$t(glossary.task) पूर्ण',
       markTaskComplete: '$t(glossary.task) पूर्ण म्हणून चिन्हांकित करा',
@@ -324,19 +373,8 @@ export const mr = {
         sublabel: 'कस्टम',
       },
     },
-    cropPicker: {
-      modalTitle: '$t(glossary.crop) निवडा',
-      searchPlaceholder: '$t(glossary.crop) शोधा',
-      customCropLabel: 'कस्टम $t(glossary.crop)',
-      customCropInputLabel: 'कस्टम $t(glossary.crop) नाव',
-      customCropInputPlaceholder: '$t(glossary.crop) नाव टाका',
-      defaultSublabel: '$t(glossary.crop)',
-      useCustomCrop: '"{{crop}}" वापरा',
-      noResults: 'जुळणारी पिके सापडली नाहीत.',
-    },
     variety: {
       selectPlaceholder: 'वाण निवडा',
-      searchPlaceholder: 'वाण शोधा',
       custom: 'कस्टम',
       customNameLabel: 'कस्टम वाण नाव',
       customNamePlaceholder: 'वाण नाव टाका',
@@ -367,10 +405,6 @@ export const mr = {
       },
     },
     soilCompositionWarning: 'वाळू + गाळ + चिकण यांची बेरीज सुमारे 100% असावी (सध्या {{total}}%)',
-    soilCompositionHint:
-      'वाळू, गाळ आणि चिकण हे 0 ते 100 मधील संख्या म्हणून भरा आणि एकूण सुमारे 100% ठेवा.',
-    overflowError:
-      'ही मूल्ये वर्तमान डेटाबेस अचूकतेसाठी खूप मोठी आहेत: {{fields}}. प्रत्येक {{max}} खाली ठेवा.',
     infoCardMessage: 'तुम्ही हे तपशील नंतर $t(glossary.farm) सेटिंग्जमधून कधीही अद्ययावत करू शकता.',
   },
 
@@ -525,6 +559,28 @@ export const mr = {
     validation: {
       ready: 'जोडण्यासाठी तयार',
       incomplete: 'पाणी मात्रा आणि किमान एक रसायन जोडा',
+    },
+  },
+
+  fertigationForm: {
+    title: 'फर्टिगेशन',
+    subtitle: '$t(glossary.fertilizer) अनुप्रयोग नोंदवा',
+    waterVolume: {
+      label: 'पाणी मात्रा',
+      placeholder: 'प्रमाण टाका',
+      unitLiters: 'लिटर',
+      hint: 'फर्टिगेशनसाठी वापरलेले एकूण पाणी (वैकल्पिक)',
+    },
+    fertilizers: {
+      label: 'खते',
+      addFertilizer: '$t(glossary.fertilizer) जोडा',
+      namePlaceholder: 'खताचे नाव',
+      qtyPlaceholder: 'प्रमाण',
+      selectUnit: 'युनिट निवडा',
+    },
+    validation: {
+      ready: 'जोडण्यासाठी तयार',
+      incomplete: 'किमान एक $t(glossary.fertilizer) आणि मात्रा जोडा',
     },
   },
 
@@ -758,15 +814,9 @@ export const mr = {
     permissionDenied: 'ठिकाण प्रवेशाची परवानगी नाकारली गेली',
     unableToGetCurrentLocation: 'सध्याचे ठिकाण मिळू शकले नाही',
     pleaseSelectOnMap: 'नकाशावर ठिकाण निवडा',
-    invalidCoordinates:
-      'वैध coordinates टाका. अक्षांश -90 ते 90 आणि रेखांश -180 ते 180 दरम्यान असावा.',
     unableToSelectLocation: 'ठिकाण निवडता आले नाही',
     selectedLocationMarkerTitle: 'निवडलेले ठिकाण',
     useCurrent: 'सध्याचे ठिकाण वापरा',
-    manualCoordinatesTitle: 'हाताने coordinates',
-    latitudeLabel: 'अक्षांश',
-    longitudeLabel: 'रेखांश',
-    applyCoordinates: 'coordinates वापरा',
     confirm: 'ठिकाण निश्चित करा',
     mapsUnavailableTitle: 'नकाशा उपलब्ध नाही',
     mapsUnavailableBody:
@@ -909,9 +959,8 @@ export const mr = {
       title: '$t(glossary.farm) प्राधान्ये',
       country: 'देश',
       selectCountry: 'देश निवडा',
-      areaUnit: 'क्षेत्रफळ एकक',
       currency: 'चलन',
-      selectCurrency: 'चलन निवडा',
+      areaUnit: 'क्षेत्रफळ एकक',
       subtitle: 'आपला अनुभव सानुकूल करण्यासाठी मदत करा',
     },
     notifications: {
@@ -1112,7 +1161,7 @@ export const mr = {
       farms: '$t(glossary.farm)',
       activeWorkers: 'सक्रिय $t(glossary.worker)',
       activities: 'क्रियाकलाप',
-      tasks: '$t(glossary.task)',
+      tasks: 'कार्ये',
     },
     needsAttention: {
       title: 'लक्ष आवश्यक',
@@ -1144,6 +1193,27 @@ export const mr = {
       closeA11y: '$t(glossary.farm) निवड बंद करा',
       selectFarmA11y: '$t(glossary.farm) निवडा: {{name}}',
       noFarms: '$t(glossary.farm) उपलब्ध नाहीत',
+    },
+  },
+
+  dailyNoteForm: {
+    addTitle: 'नोंद जोडा',
+    editTitle: 'नोंद संपादित करा',
+    fields: {
+      note: 'नोंद',
+    },
+    placeholders: {
+      note: 'आजच्या दिवसासाठी तुमच्या निरीक्षणांची नोंद करा...',
+    },
+    errors: {
+      missingNote: 'कृपया नोंद लिहा.',
+      failedToSave: 'नोंद जतन होऊ शकली नाही. कृपया पुन्हा प्रयत्न करा.',
+    },
+    lastUpdated: 'शेवटचे अद्ययावत: {{date}}',
+    discard: {
+      title: 'बदल टाकून द्यायचे?',
+      body: 'तुमचे नोंदीतील न जतन केलेले बदल आहेत.',
+      confirm: 'टाकून द्या',
     },
   },
 
@@ -1241,19 +1311,6 @@ export const mr = {
     },
   },
 
-  workerAnalytics: {
-    notFound: '$t(glossary.worker) आढळला नाही',
-    dailyRate: 'दैनिक दर',
-    dateRange: 'तारीख श्रेणी',
-    quickStats: 'त्वरित आकडेवारी',
-    weeklySummary: 'साप्ताहिक सारांश',
-    transactions: 'व्यवहार',
-    noTransactions: 'या श्रेणीत व्यवहार नाहीत.',
-    full: 'पूर्ण',
-    half: 'अर्धा',
-    absent: 'अनुपस्थित',
-  },
-
   workers: {
     tabs: {
       workers: '$t(glossary.worker)',
@@ -1311,6 +1368,55 @@ export const mr = {
       },
       infoCardMessage: 'दैनिक दरावरून कमाईची गणना होते. अग्रिम शिल्लक रक्कम थकबाकीची नोंद ठेवते.',
     },
+    tempWorkers: {
+      sectionTitle: 'तात्पुरते $t(glossary.worker)',
+      addTitle: 'तात्पुरता $t(glossary.worker) जोडा',
+      empty: {
+        title: 'तात्पुरते $t(glossary.worker) नोंदवले नाहीत',
+        subtitle: 'या शेतासाठी नियुक्त केलेले तात्पुरते $t(glossary.worker) नोंदवा.',
+      },
+      form: {
+        title: 'तात्पुरता $t(glossary.worker) जोडा',
+        sections: {
+          workerDetails: '$t(glossary.worker) तपशील',
+          workDetails: 'कामाचे तपशील',
+        },
+        fields: {
+          name: {
+            label: '$t(glossary.worker) नाव',
+            placeholder: 'उदा., दिवसाळू $t(glossary.worker)',
+          },
+          date: {
+            label: 'तारीख',
+          },
+          hoursWorked: {
+            label: '$t(glossary.task) केलेले तास',
+            suffix: 'तास',
+          },
+          amountPaid: {
+            label: 'दिलेली रक्कम',
+          },
+          farm: {
+            label: '$t(glossary.farm)',
+            placeholder: '$t(glossary.farm) निवडा (ऐच्छिक)',
+          },
+          notes: {
+            label: 'नोंदी (ऐच्छिक)',
+            placeholder: 'नोंदी जोडा...',
+          },
+        },
+        hourlyRate: 'तासाचा दर',
+        perHour: '/तास',
+        save: '$t(glossary.worker) जोडा',
+        validation: 'कृपया $t(glossary.worker) नाव आणि दिलेली रक्कम एंटर करा.',
+        error: 'तात्पुरता $t(glossary.worker) नोंद जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
+      },
+      card: {
+        hoursShort: '{{hours}} तास',
+        deleteTitle: 'नोंद हटवायची?',
+        deleteBody: 'यामुळे {{name}} साठी तात्पुरता $t(glossary.worker) नोंद कायमची काढली जाईल.',
+      },
+    },
   },
 
   settlePayment: 'पेमेंट सेटल करा',
@@ -1321,7 +1427,7 @@ export const mr = {
   startDate: 'सुरूवातीची तारीख',
   endDate: 'शेवटची तारीख',
   calculate: 'गणा',
-  daysWorked: 'काम केलेले दिवस',
+  daysWorked: '$t(glossary.task) केलेले दिवस',
   confirm: 'पुष्टी करा',
   optional: 'ऐच्छिक',
   allFarms: 'सर्व शेते',
@@ -1340,7 +1446,7 @@ export const mr = {
     netPayment: 'निव्वळ पेमेंट',
     netPaymentHint: 'कामगाराला देण्याची रक्कम',
     settlementConfirmedTitle: 'सेटलमेंट पुष्टी झाले',
-    settlementConfirmedMessage: 'निव्वळ पेमेंट: ₹{{amount}} यशस्वीरित्या पुष्टी झाले',
+    settlementConfirmedMessage: 'निव्वळ पेमेंट: {{formattedAmount}} यशस्वीरित्या पुष्टी झाले',
     salaryCannotBeNegative: 'एकूण पगार नकारात्मक असू शकत नाही',
     deductionCannotBeNegative: 'अग्रिम कपात नकारात्मक असू शकत नाही',
     deductionExceedsBalance: 'कपात उपलब्ध अग्रिम शिल्लकापेक्षा जास्त आहे',
@@ -1636,6 +1742,7 @@ export const mr = {
       allFull: 'सर्व पूर्ण',
       allHalf: 'सर्व अर्धा',
       allOff: 'सर्व बंद',
+      copyFromYesterday: 'कालचे कॉपी करा',
     },
     buttons: {
       saving: 'जतन करत आहे...',
@@ -1655,11 +1762,16 @@ export const mr = {
       setAllFullDay: 'सर्व दिवस पूर्ण दिवस सेट करा',
       setAllHalfDay: 'सर्व दिवस अर्धा दिवस सेट करा',
       setAllAbsent: 'सर्व दिवस अनुपस्थित सेट करा',
+      copyFromYesterday: 'कालचे $t(glossary.attendance) रिक्त दिवसांवर कॉपी करा',
       savingAttendance: '$t(glossary.attendance) जतन करत आहे',
-      saveAndNextWorker: '$t(glossary.attendance) जतन करा आणि पुढील $t(glossary.worker)वर जा',
-      saveAndFinish: '$t(glossary.attendance) जतन करा आणि समाप्त',
-      goToNextWorker: 'पुढील $t(glossary.worker)वर जा',
+      saveAttendance: '$t(glossary.attendance) बदल जतन करा',
       dayStatus: '{{day}} {{date}}. {{status}}.',
+    },
+    errors: {
+      noYesterdayData: 'कालची $t(glossary.attendance) माहिती सापडली नाही',
+    },
+    success: {
+      copiedFromYesterday: 'कालचे $t(glossary.attendance) कॉपी केले',
     },
     empty: {
       noWorkersTitle: '$t(glossary.worker) उपलब्ध नाहीत',
@@ -1674,54 +1786,68 @@ export const mr = {
     },
   },
 
+  workerAnalyticsDetail: {
+    notFound: '$t(glossary.worker) सापडला नाही',
+    dailyRate: 'दैनंदिन दर',
+    dateRange: 'दिनांक श्रेणी',
+    quickStats: 'जलद आकडे',
+    weeklySummary: 'साप्ताहिक सारांश',
+    transactions: 'व्यवहार',
+    noTransactionsInRange: 'या दिनांक श्रेणीत कोणतेही व्यवहार नाहीत.',
+    days: 'दिवस',
+    full: 'पूर्ण',
+    half: 'अर्धा',
+    absent: 'गैरहजर',
+  },
+
   reports: {
     title: '$t(glossary.report)',
     types: {
-      comprehensive: 'संपूर्ण',
+      comprehensive: 'सविस्तर',
       operations: 'ऑपरेशन्स',
       financial: 'आर्थिक',
-    },
-    noFarms: {
-      title: '$t(glossary.farm) आढळली नाहीत',
-      subtitle: '$t(glossary.report) तयार करण्यासाठी आधी $t(glossary.farm) जोडा',
+      stockUsage: 'स्टॉक वापर',
     },
     selectFarmLabel: '$t(glossary.farm) निवडा',
-    selectFarmPlaceholder: '$t(glossary.farm) निवडा',
+    selectFarmPlaceholder: 'एक $t(glossary.farm) निवडा',
     dateRange: {
       label: 'दिनांक श्रेणी',
     },
+    selectFromDate: 'पासूनचा दिनांक निवडा',
+    selectToDate: 'पर्यंतचा दिनांक निवडा',
     reportType: {
       label: '$t(glossary.report) प्रकार',
     },
     loading: {
-      preview: 'पूर्वदृश्य लोड होत आहे…',
+      preview: 'पूर्वावलोकन तयार होत आहे...',
     },
     preview: {
-      title: 'पूर्वदृश्य सारांश',
+      title: '$t(glossary.report) पूर्वावलोकन',
       counts: {
-        irrigations_one: '{{count}} $t(glossary.irrigation)',
-        irrigations_other: '{{count}} $t(glossary.irrigation)',
-        sprays_one: '{{count}} $t(glossary.spray)',
-        sprays_other: '{{count}} $t(glossary.spray)',
-        harvests_one: '{{count}} $t(glossary.harvest)',
-        harvests_other: '{{count}} $t(glossary.harvest)',
-        expenses_one: '{{count}} $t(glossary.expense)',
-        expenses_other: '{{count}} $t(glossary.expense)',
+        irrigations: '{{count}} $t(glossary.irrigation)',
+        sprays: '{{count}} $t(glossary.spray)',
+        harvests: '{{count}} $t(glossary.harvest)',
+        expenses: '{{count}} $t(glossary.expense)',
+        stockUsage: '{{count}} वस्तू वापरल्या',
       },
-    },
-    exportAs: 'निर्यात करा',
-    alerts: {
-      exportFailedTitle: '$t(glossary.report) निर्यात अयशस्वी',
-    },
-    errors: {
-      unableToExport: '$t(glossary.report) निर्यात करता आला नाही',
     },
     summary: {
       totalRecords: 'एकूण नोंदी',
-      waterUsage: 'पाण्याचा वापर',
+      waterUsage: 'पाणी वापर',
       totalHarvest: 'एकूण $t(glossary.harvest)',
-      revenue: 'उत्पन्न',
       netProfit: 'निव्वळ नफा',
+      stockUsageCount: 'वापरलेल्या वस्तू',
+    },
+    exportAs: 'या स्वरूपात निर्यात करा',
+    errors: {
+      unableToExport: '$t(glossary.report) निर्यात करणे अशक्य. कृपया पुन्हा प्रयत्न करा.',
+    },
+    alerts: {
+      exportFailedTitle: 'निर्यात अयशस्वी',
+    },
+    noFarms: {
+      title: '$t(glossary.farm) उपलब्ध नाहीत',
+      subtitle: '$t(glossary.report) तयार करण्यासाठी $t(glossary.farm) जोडा.',
     },
     export: {
       meta: {

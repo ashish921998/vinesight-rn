@@ -34,6 +34,7 @@ export const hi = {
     clearAll: 'सभी साफ़ करें',
     units: {
       hours: 'घंटे',
+      days: 'दिन',
     },
     labels: {
       value: 'मूल्य',
@@ -71,7 +72,6 @@ export const hi = {
 
       failedToUpdateFarm: 'खेत अपडेट करने में विफल। कृपया पुनः प्रयास करें।',
       failedToCreateFarm: 'खेत बनाने में विफल। कृपया पुनः प्रयास करें।',
-      invalidFarmNumericInput: 'एक या अधिक संख्यात्मक मान अमान्य हैं या अनुमत सीमा से बाहर हैं।',
 
       enterAtLeastOneMoistureValue: 'कृपया कम से कम एक नमी मान दर्ज करें।',
       failedToSaveSoilProfile: 'मिट्टी प्रोफाइल सहेजने में विफल। कृपया पुनः प्रयास करें।',
@@ -146,6 +146,50 @@ export const hi = {
       captionThisSeason: 'इस मौसम में {{usage}}',
       captionLogIrrigation: 'पानी के उपयोग की निगरानी के लिए सिंचाई लॉग करें',
     },
+    seasons: {
+      title: 'सीज़न',
+      formTitle: 'सीज़न समाप्त करें',
+      startFormTitle: 'सीज़न शुरू करें',
+      firstTimeHint:
+        'पहली बार सीज़न समाप्त कर रहे हैं? सीज़न की शुरुआत और समाप्ति की तारीख दर्ज करें।',
+      startHint: 'फ़सल आधारित टेम्पलेट चुनें और शुरू होने की तारीख पुष्टि करें।',
+      lastEndDate: 'पिछला सीज़न {{date}} को समाप्त हुआ। अगला सीज़न प्रारंभ अपने आप सेट होगा।',
+      startDateLabel: 'सीज़न प्रारंभ तारीख',
+      endDateLabel: 'सीज़न समाप्ति तारीख',
+      templateLabel: 'सीज़न टेम्पलेट',
+      seasonNameLabel: 'सीज़न नाम (वैकल्पिक)',
+      seasonNamePlaceholder: 'उदा. Summer 2026',
+      templateHint: 'चयनित टेम्पलेट: {{template}}',
+      showEndSeasonForm: 'सीज़न समाप्त करें',
+      startSeasonButton: 'सीज़न शुरू करें',
+      endSeasonButton: 'सीज़न सेव करें',
+      statusActive: '{{start}} से सक्रिय',
+      statusNone: 'कोई सक्रिय सीज़न नहीं',
+      reviewRequiredBadge: 'सीज़न इतिहास समीक्षा करें',
+      betweenSeasonsBadge: 'सीज़न समाप्त',
+      betweenSeasonsHint: 'सीज़न समाप्त हुआ। अगला सीज़न {{date}} से शुरू होगा।',
+      actions: {
+        startSeasonToContinue: 'रिकॉर्ड जोड़ने के लिए पहले सीज़न शुरू करें।',
+      },
+      alerts: {
+        startSuccessTitle: 'सीज़न सफलतापूर्वक शुरू हुआ',
+        startSuccess: 'नया सीज़न अब सक्रिय है।',
+        endSuccessTitle: 'सीज़न सफलतापूर्वक समाप्त हुआ',
+        endSuccess: 'सीज़न सफलतापूर्वक समाप्त हुआ।',
+        reviewQueuedSuccess: 'सीज़न असाइनमेंट समीक्षा सफलतापूर्वक शुरू की गई।',
+      },
+      errors: {
+        invalidRange: 'सीज़न समाप्ति तारीख, प्रारंभ तारीख के बाद होनी चाहिए।',
+        startBeforeAllowed: 'सीज़न प्रारंभ तारीख पिछले सीज़न की समाप्ति तारीख के बाद होनी चाहिए।',
+        duplicateEndDate: 'यह सीज़न समाप्ति तारीख पहले से सेव है।',
+        startFailed: 'सीज़न शुरू नहीं हो सका।',
+        endFailed: 'सीज़न समाप्त नहीं हो सका।',
+        noActiveSeason: 'इस खेत के लिए कोई सक्रिय सीज़न नहीं मिला।',
+        reviewQueueFailed: 'सीज़न असाइनमेंट समीक्षा शुरू नहीं हो सकी।',
+        activeSeasonExists:
+          'एक सक्रिय सीज़न मौजूद है। कृपया नया सीज़न बनाने से पहले वर्तमान सीज़न को समाप्त करें।',
+      },
+    },
     workboard: {
       title: 'वर्कबोर्ड',
       subtitle: 'उपकरण और संसाधनों तक त्वरित पहुंच।',
@@ -154,16 +198,17 @@ export const hi = {
         lab: 'लैब',
         reports: 'रिपोर्ट',
         soilMoisture: 'मिट्टी की नमी',
+        tempWorker: 'अस्थायी\n$t(glossary.worker)',
       },
     },
     tabs: {
-      activities: 'गतिविधियां',
+      activities: 'लॉग्स',
       tasks: 'कार्य',
     },
     activities: {
       empty: {
-        title: 'अभी तक कोई गतिविधि नहीं',
-        subtitle: 'उन्हें यहां देखने के लिए गतिविधियां लॉग करना शुरू करें',
+        title: 'अभी तक कोई लॉग नहीं',
+        subtitle: 'उन्हें यहां देखने के लिए लॉग करना शुरू करें',
       },
     },
     tasks: {
@@ -175,13 +220,19 @@ export const hi = {
     },
     actions: {
       addActivity: 'गतिविधि जोड़ें',
-      seeAllActivities: 'सभी गतिविधियां देखें',
+      seeAllLogs: 'सभी लॉग्स देखें',
       seeAllTasks: 'सभी कार्य देखें',
+      menuTitle: 'खेत क्रियाएं',
+      editFarm: 'खेत संपादित करें',
+      startSeason: 'सीज़न शुरू करें',
+      endSeason: 'सीज़न समाप्त करें',
+      reviewSeasonHistory: 'सीज़न इतिहास समीक्षा करें',
     },
     a11y: {
       editFarm: 'खेत संपादित करें',
       deleteFarm: 'खेत हटाएं',
-      showActivities: 'गतिविधियां दिखाएं',
+      openFarmActions: 'खेत क्रियाएं खोलें',
+      showActivities: 'लॉग्स दिखाएं',
       showTasks: 'कार्य दिखाएं',
       taskCompleted: 'कार्य पूर्ण',
       markTaskComplete: 'कार्य पूर्ण के रूप में चिह्नित करें',
@@ -322,19 +373,8 @@ export const hi = {
         sublabel: 'कस्टम',
       },
     },
-    cropPicker: {
-      modalTitle: 'फसल चुनें',
-      searchPlaceholder: 'फसल खोजें',
-      customCropLabel: 'कस्टम फसल',
-      customCropInputLabel: 'कस्टम फसल का नाम',
-      customCropInputPlaceholder: 'फसल का नाम दर्ज करें',
-      defaultSublabel: 'फसल',
-      useCustomCrop: '"{{crop}}" का उपयोग करें',
-      noResults: 'कोई मिलती-जुलती फसल नहीं मिली।',
-    },
     variety: {
       selectPlaceholder: 'किस्म चुनें',
-      searchPlaceholder: 'किस्म खोजें',
       custom: 'कस्टम',
       customNameLabel: 'कस्टम किस्म का नाम',
       customNamePlaceholder: 'किस्म का नाम दर्ज करें',
@@ -366,10 +406,6 @@ export const hi = {
     },
     soilCompositionWarning:
       'रेत + गाद + मिट्टी का योग लगभग 100% होना चाहिए (वर्तमान में {{total}}%)',
-    soilCompositionHint:
-      'रेत, गाद और मिट्टी को 0 से 100 के बीच संख्या के रूप में भरें, और कुल लगभग 100% रखें।',
-    overflowError:
-      'ये मान वर्तमान डेटाबेस परिशीक्तता के लिए बहुत बड़े हैं: {{fields}}। प्रत्येक को {{max}} से नीचे रखें।',
     infoCardMessage: 'आप इन विवरणों को बाद में अपनी खेत सेटिंग्स से अपडेट कर सकते हैं।',
   },
 
@@ -523,6 +559,28 @@ export const hi = {
     validation: {
       ready: 'जोड़ने के लिए तैयार',
       incomplete: 'पानी की मात्रा और कम से कम एक रसायन जोड़ें',
+    },
+  },
+
+  fertigationForm: {
+    title: 'फर्टिगेशन',
+    subtitle: '$t(glossary.fertilizer) अनुप्रयोग लॉग करें',
+    waterVolume: {
+      label: 'पानी की मात्रा',
+      placeholder: 'मात्रा दर्ज करें',
+      unitLiters: 'लीटर',
+      hint: 'फर्टिगेशन के लिए उपयोग किया गया कुल पानी (वैकल्पिक)',
+    },
+    fertilizers: {
+      label: 'उर्वरक',
+      addFertilizer: '$t(glossary.fertilizer) जोड़ें',
+      namePlaceholder: 'उर्वरक का नाम',
+      qtyPlaceholder: 'मात्रा',
+      selectUnit: 'इकाई चुनें',
+    },
+    validation: {
+      ready: 'जोड़ने के लिए तैयार',
+      incomplete: 'कम से कम एक $t(glossary.fertilizer) और मात्रा जोड़ें',
     },
   },
 
@@ -754,15 +812,9 @@ export const hi = {
     permissionDenied: 'स्थान एक्सेस करने की अनुमति अस्वीकृत',
     unableToGetCurrentLocation: 'वर्तमान स्थान प्राप्त करने में असमर्थ',
     pleaseSelectOnMap: 'कृपया मानचित्र पर एक स्थान चुनें',
-    invalidCoordinates:
-      'मान्य निर्देशांक दर्ज करें। अक्षांश -90 से 90 के बीच और देशांतर -180 से 180 के बीच होना चाहिए।',
     unableToSelectLocation: 'स्थान चुनने में असमर्थ',
     selectedLocationMarkerTitle: 'चयनित स्थान',
     useCurrent: 'वर्तमान स्थान उपयोग करें',
-    manualCoordinatesTitle: 'मैन्युअल निर्देशांक',
-    latitudeLabel: 'अक्षांश',
-    longitudeLabel: 'देशांतर',
-    applyCoordinates: 'निर्देशांक उपयोग करें',
     confirm: 'स्थान की पुष्टि करें',
     mapsUnavailableTitle: 'मानचित्र अनुपलब्ध',
     mapsUnavailableBody:
@@ -905,9 +957,8 @@ export const hi = {
       title: 'खेत प्राथमिकताएं',
       country: 'देश',
       selectCountry: 'एक देश चुनें',
-      areaUnit: 'क्षेत्रफल इकाई',
       currency: 'मुद्रा',
-      selectCurrency: 'मुद्रा चुनें',
+      areaUnit: 'क्षेत्रफल इकाई',
       subtitle: 'अपने अनुभव को अनुकूलित करने में हमारी मदद करें',
     },
     notifications: {
@@ -1141,6 +1192,27 @@ export const hi = {
     },
   },
 
+  dailyNoteForm: {
+    addTitle: 'नोट जोड़ें',
+    editTitle: 'नोट संपादित करें',
+    fields: {
+      note: 'नोट',
+    },
+    placeholders: {
+      note: 'आज के लिए अपनी टिप्पणियाँ लिखें...',
+    },
+    errors: {
+      missingNote: 'कृपया एक नोट लिखें।',
+      failedToSave: 'नोट सहेजने में विफल। कृपया पुनः प्रयास करें।',
+    },
+    lastUpdated: 'अंतिम अपडेट: {{date}}',
+    discard: {
+      title: 'परिवर्तन हटाएँ?',
+      body: 'आपने नोट में बदलाव किए हैं जो सहेजे नहीं गए हैं।',
+      confirm: 'हटाएँ',
+    },
+  },
+
   tasks: {
     title: 'कार्य',
     unknownFarm: 'अज्ञात खेत',
@@ -1235,19 +1307,6 @@ export const hi = {
     },
   },
 
-  workerAnalytics: {
-    notFound: 'श्रमिक नहीं मिला',
-    dailyRate: 'दैनिक दर',
-    dateRange: 'तारीख सीमा',
-    quickStats: 'त्वरित आँकड़े',
-    weeklySummary: 'साप्ताहिक सारांश',
-    transactions: 'लेनदेन',
-    noTransactions: 'इस सीमा में कोई लेनदेन नहीं।',
-    full: 'पूर्ण',
-    half: 'आधा',
-    absent: 'अनुपस्थित',
-  },
-
   workers: {
     tabs: {
       workers: 'श्रमिक',
@@ -1304,6 +1363,92 @@ export const hi = {
       infoCardMessage:
         'दैनिक दर का उपयोग कमाई की गणना के लिए किया जाता है। अग्रिम शेष बकाया ऋण को ट्रैक करता है।',
     },
+    tempWorkers: {
+      sectionTitle: 'अस्थायी $t(glossary.worker)',
+      addTitle: 'अस्थायी $t(glossary.worker) जोड़ें',
+      empty: {
+        title: 'कोई अस्थायी $t(glossary.worker) लॉग नहीं किए गए',
+        subtitle: 'इस खेत के लिए काम पर रखे गए अस्थायी श्रमिकों को लॉग करें।',
+      },
+      form: {
+        title: 'अस्थायी $t(glossary.worker) जोड़ें',
+        sections: {
+          workerDetails: '$t(glossary.worker) विवरण',
+          workDetails: 'कार्य विवरण',
+        },
+        fields: {
+          name: {
+            label: '$t(glossary.worker) का नाम',
+            placeholder: 'उदा., दिहाड़ी मजदूर',
+          },
+          date: {
+            label: 'तारीख',
+          },
+          hoursWorked: {
+            label: 'काम किए गए घंटे',
+            suffix: 'घंटे',
+          },
+          amountPaid: {
+            label: 'भुगतान की गई राशि',
+          },
+          farm: {
+            label: '$t(glossary.farm)',
+            placeholder: 'खेत चुनें (वैकल्पिक)',
+          },
+          notes: {
+            label: 'नोट्स (वैकल्पिक)',
+            placeholder: 'नोट्स जोड़ें...',
+          },
+        },
+        hourlyRate: 'प्रति घंटा दर',
+        perHour: '/घंटा',
+        save: '$t(glossary.worker) जोड़ें',
+        validation: 'कृपया श्रमिक का नाम और भुगतान की गई राशि दर्ज करें।',
+        error: 'अस्थायी श्रमिक प्रविष्टि सहेजने में विफल। कृपया पुनः प्रयास करें।',
+      },
+      card: {
+        hoursShort: '{{hours}} घंटे',
+        deleteTitle: 'प्रविष्टि हटाएं?',
+        deleteBody: 'इससे {{name}} के लिए अस्थायी श्रमिक प्रविष्टि हटा दी जाएगी।',
+      },
+    },
+  },
+
+  settlePayment: 'भुगतान निपटान करें',
+  selectWorkerAndPeriod: 'श्रमिक और निपटान अवधि चुनें',
+  dailyRate: 'दैनिक दर',
+  advanceBalance: 'अग्रिम शेष',
+  period: 'अवधि',
+  startDate: 'प्रारंभ तिथि',
+  endDate: 'समाप्ति तिथि',
+  calculate: 'गणना करें',
+  daysWorked: 'काम के दिन',
+  confirm: 'पुष्टि करें',
+  optional: 'वैकल्पिक',
+  allFarms: 'सभी खेत',
+  farm: 'खेत',
+  settlement: {
+    this_week: 'इस सप्ताह',
+    last_week: 'पिछला सप्ताह',
+    custom: 'कस्टम',
+    summary: 'सारांश',
+    calculatedGross: 'गणना किया गया कुल',
+    adjustments: 'समायोजन',
+    totalSalary: 'कुल वेतन',
+    totalSalaryHint: 'संपादन योग्य - गणना किए गए कुल से पूर्व-भरा हुआ',
+    cutFromAdvance: 'अग्रिम से कटौती',
+    max: 'अधिकतम: {{max}}',
+    netPayment: 'शुद्ध भुगतान',
+    netPaymentHint: 'श्रमिक को दी जाने वाली राशि',
+    settlementConfirmedTitle: 'निपटान की पुष्टि हुई',
+    settlementConfirmedMessage: 'शुद्ध भुगतान: {{formattedAmount}} सफलतापूर्वक पुष्टि हुआ',
+    salaryCannotBeNegative: 'कुल वेतन ऋणात्मक नहीं हो सकता',
+    deductionCannotBeNegative: 'अग्रिम कटौती ऋणात्मक नहीं हो सकती',
+    deductionExceedsBalance: 'कटौती उपलब्ध अग्रिम शेष से अधिक है',
+    deductionExceedsSalary: 'कटौती कुल वेतन से अधिक नहीं हो सकती',
+    invalidDateRange: 'प्रारंभ तिथि समाप्ति तिथि से पहले होनी चाहिए',
+    calculationFailed: 'निपटान की गणना विफल हुई',
+    confirmationFailed: 'निपटान की पुष्टि विफल हुई',
   },
 
   warehouse: {
@@ -1327,7 +1472,7 @@ export const hi = {
       spray: 'छिड़काव ({{count}})',
     },
     search: {
-      placeholder: 'गोदाम खोजें...',
+      placeholder: 'इन्वेंटरी खोजें...',
       found_one: '{{count}} वस्तु मिली',
       found_other: '{{count}} वस्तुएं मिलीं',
     },
@@ -1592,6 +1737,7 @@ export const hi = {
       allFull: 'सभी पूर्ण',
       allHalf: 'सभी आधा',
       allOff: 'सभी बंद',
+      copyFromYesterday: 'कल का कॉपी करें',
     },
     buttons: {
       saving: 'सहेजा जा रहा है...',
@@ -1610,11 +1756,16 @@ export const hi = {
       setAllFullDay: 'सभी दिनों को पूर्ण दिवस पर सेट करें',
       setAllHalfDay: 'सभी दिनों को आधे दिन पर सेट करें',
       setAllAbsent: 'सभी दिनों को अनुपस्थित पर सेट करें',
-      savingAttendance: 'उपस्थिति सहेजी जा रही है',
-      saveAndNextWorker: 'उपस्थिति सहेजें और अगले श्रमिक पर जाएं',
-      saveAndFinish: 'उपस्थिति सहेजें और समाप्त करें',
-      goToNextWorker: 'अगले श्रमिक पर जाएं',
+      copyFromYesterday: 'कल की $t(glossary.attendance) खाली दिनों पर कॉपी करें',
+      savingAttendance: '$t(glossary.attendance) सहेजी जा रही है',
+      saveAttendance: '$t(glossary.attendance) बदलाव सहेजें',
       dayStatus: '{{day}} {{date}}। {{status}}।',
+    },
+    errors: {
+      noYesterdayData: 'कल की $t(glossary.attendance) जानकारी नहीं मिली',
+    },
+    success: {
+      copiedFromYesterday: 'कल की $t(glossary.attendance) कॉपी की गई',
     },
     empty: {
       noWorkersTitle: 'कोई श्रमिक उपलब्ध नहीं',
@@ -1623,10 +1774,24 @@ export const hi = {
       partialErrorTitle: 'आंशिक त्रुटि',
       partialErrorBody: '{{count}} त्रुटि के साथ सहेजा गया। पुनः लोड हो रहा है…',
       savedTitle: 'सफलता',
-      savedBody: '{{name}} के लिए उपस्थिति सहेजी गई।',
+      savedBody: '{{name}} के लिए $t(glossary.attendance) सहेजी गई।',
       completeTitle: 'पूर्ण',
       completeBody: 'सभी श्रमिक पूर्ण!',
     },
+  },
+
+  workerAnalyticsDetail: {
+    notFound: 'श्रमिक नहीं मिला',
+    dailyRate: 'दैनिक दर',
+    dateRange: 'तारीख सीमा',
+    quickStats: 'त्वरित आँकड़े',
+    weeklySummary: 'साप्ताहिक सारांश',
+    transactions: 'लेन-देन',
+    noTransactionsInRange: 'इस तारीख सीमा में कोई लेन-देन नहीं है।',
+    days: 'दिन',
+    full: 'पूरा',
+    half: 'आधा',
+    absent: 'अनुपस्थित',
   },
 
   reports: {
@@ -1635,48 +1800,48 @@ export const hi = {
       comprehensive: 'व्यापक',
       operations: 'संचालन',
       financial: 'वित्तीय',
-    },
-    noFarms: {
-      title: 'कोई खेत नहीं मिला',
-      subtitle: 'रिपोर्ट बनाने के लिए पहले एक खेत जोड़ें',
+      stockUsage: 'स्टॉक उपयोग',
     },
     selectFarmLabel: 'खेत चुनें',
-    selectFarmPlaceholder: 'खेत चुनें',
+    selectFarmPlaceholder: 'एक खेत चुनें',
     dateRange: {
-      label: 'तारीख सीमा',
+      label: 'तारीख़ सीमा',
     },
+    selectFromDate: 'प्रारंभ तिथि चुनें',
+    selectToDate: 'समाप्ति तिथि चुनें',
     reportType: {
       label: 'रिपोर्ट प्रकार',
     },
     loading: {
-      preview: 'पूर्वावलोकन लोड हो रहा है…',
+      preview: 'पूर्वावलोकन तैयार हो रहा है...',
     },
     preview: {
-      title: 'पूर्वावलोकन सारांश',
+      title: 'रिपोर्ट पूर्वावलोकन',
       counts: {
-        irrigations_one: '{{count}} सिंचाई',
-        irrigations_other: '{{count}} सिंचाई',
-        sprays_one: '{{count}} छिड़काव',
-        sprays_other: '{{count}} छिड़काव',
-        harvests_one: '{{count}} कटाई',
-        harvests_other: '{{count}} कटाई',
-        expenses_one: '{{count}} खर्च',
-        expenses_other: '{{count}} खर्च',
+        irrigations: '{{count}} सिंचाई',
+        sprays: '{{count}} छिड़काव',
+        harvests: '{{count}} कटाई',
+        expenses: '{{count}} खर्च',
+        stockUsage: '{{count}} वस्तुएं उपयोग की गईं',
       },
-    },
-    exportAs: 'इस रूप में निर्यात करें',
-    alerts: {
-      exportFailedTitle: 'निर्यात विफल',
-    },
-    errors: {
-      unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ',
     },
     summary: {
       totalRecords: 'कुल रिकॉर्ड',
       waterUsage: 'पानी का उपयोग',
       totalHarvest: 'कुल कटाई',
-      revenue: 'राजस्व',
       netProfit: 'शुद्ध लाभ',
+      stockUsageCount: 'उपयोग की गई वस्तुएं',
+    },
+    exportAs: 'के रूप में निर्यात करें',
+    errors: {
+      unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ। कृपया पुनः प्रयास करें।',
+    },
+    alerts: {
+      exportFailedTitle: 'निर्यात विफल',
+    },
+    noFarms: {
+      title: 'कोई खेत उपलब्ध नहीं',
+      subtitle: 'रिपोर्ट बनाने के लिए एक खेत जोड़ें।',
     },
     export: {
       meta: {

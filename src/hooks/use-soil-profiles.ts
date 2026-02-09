@@ -8,6 +8,8 @@ import { supabase } from '../lib/supabase';
 import { SoilProfile, SoilProfileInsert, SoilSectionData } from '../types/database';
 import i18n from '@/i18n';
 import { formatDate } from '@/i18n/format';
+import { formatLocalDate } from '../utils/date';
+import { resolveSeasonIdForDate } from '../lib/season-context';
 
 // Query keys
 export const soilProfileQueryKeys = {
@@ -17,15 +19,20 @@ export const soilProfileQueryKeys = {
 /**
  * Fetch soil profiles for a farm
  */
-export function useSoilProfiles(farmId: number) {
+export function useSoilProfiles(farmId: number, seasonId?: number) {
   return useQuery({
-    queryKey: soilProfileQueryKeys.profiles(farmId),
+    queryKey: [...soilProfileQueryKeys.profiles(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('soil_profiles')
         .select('*')
         .eq('farm_id', farmId)
         .order('created_at', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as SoilProfile[];
@@ -42,11 +49,19 @@ export function useCreateSoilProfile() {
 
   return useMutation({
     mutationFn: async (profile: SoilProfileInsert) => {
+      const createdAt = profile.created_at || new Date().toISOString();
+      const seasonId =
+        profile.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: profile.farm_id,
+          date: formatLocalDate(new Date(createdAt)),
+        }));
       const { data, error } = await supabase
         .from('soil_profiles')
         .insert({
           ...profile,
-          created_at: profile.created_at || new Date().toISOString(),
+          season_id: seasonId,
+          created_at: createdAt,
         })
         .select()
         .single();

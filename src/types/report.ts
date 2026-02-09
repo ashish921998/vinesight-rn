@@ -4,7 +4,7 @@
  */
 
 export type ReportFormat = 'pdf' | 'csv';
-export type ReportType = 'operations' | 'financial' | 'comprehensive';
+export type ReportType = 'operations' | 'financial' | 'comprehensive' | 'stock-usage';
 
 export interface DateRange {
   from: string; // ISO date string YYYY-MM-DD
@@ -19,7 +19,13 @@ export interface ExportOptions {
   reportType: ReportType;
 }
 
-export type ReportDataType = 'irrigation' | 'spray' | 'fertigation' | 'harvest' | 'expense';
+export type ReportDataType =
+  | 'irrigation'
+  | 'spray'
+  | 'fertigation'
+  | 'harvest'
+  | 'expense'
+  | 'stock';
 
 export interface ReportData {
   farmName: string;
@@ -31,6 +37,17 @@ export interface ReportData {
   fertigation: ReportFertigationRecord[];
   harvest: ReportHarvestRecord[];
   expense: ReportExpenseRecord[];
+  stock: ReportStockUsageRecord[];
+}
+
+export interface ReportStockUsageRecord {
+  itemName: string;
+  type: 'fertilizer' | 'spray';
+  quantityUsed: number;
+  unit: string;
+  areaTreated: number; // Total area this item was applied to
+  cost?: number; // Estimated cost
+  usageCount: number; // Number of times used
 }
 
 export interface ReportIrrigationRecord {
@@ -90,6 +107,7 @@ export interface ReportSummary {
   fertigationCount: number;
   harvestCount: number;
   expenseCount: number;
+  stockUsageCount: number;
 }
 
 export interface ReportPreview {

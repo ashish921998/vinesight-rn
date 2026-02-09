@@ -14,6 +14,8 @@ import {
 import { LabTrendsService } from '../services/lab-trends-service';
 import i18n from '@/i18n';
 import { normalizeParameterKey } from '@/utils/lab-test-utils';
+import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
+import { resolveSeasonIdForDate } from '../lib/season-context';
 
 // Query keys
 export const labTestQueryKeys = {
@@ -26,15 +28,20 @@ export const labTestQueryKeys = {
 /**
  * Fetch soil test records for a farm
  */
-export function useSoilTests(farmId: number) {
+export function useSoilTests(farmId: number, seasonId?: number) {
   return useQuery({
-    queryKey: labTestQueryKeys.soilTests(farmId),
+    queryKey: [...labTestQueryKeys.soilTests(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('soil_test_records')
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as SoilTestRecord[];
@@ -46,15 +53,20 @@ export function useSoilTests(farmId: number) {
 /**
  * Fetch petiole test records for a farm
  */
-export function usePetioleTests(farmId: number) {
+export function usePetioleTests(farmId: number, seasonId?: number) {
   return useQuery({
-    queryKey: labTestQueryKeys.petioleTests(farmId),
+    queryKey: [...labTestQueryKeys.petioleTests(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('petiole_test_records')
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as PetioleTestRecord[];
@@ -71,9 +83,15 @@ export function useCreateSoilTest() {
 
   return useMutation({
     mutationFn: async (record: SoilTestRecordInsert) => {
+      const seasonId =
+        record.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: record.farm_id,
+          date: record.date,
+        }));
       const { data, error } = await supabase
         .from('soil_test_records')
-        .insert(record)
+        .insert({ ...record, season_id: seasonId })
         .select()
         .single();
 
@@ -96,9 +114,15 @@ export function useCreatePetioleTest() {
 
   return useMutation({
     mutationFn: async (record: PetioleTestRecordInsert) => {
+      const seasonId =
+        record.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: record.farm_id,
+          date: record.date,
+        }));
       const { data, error } = await supabase
         .from('petiole_test_records')
-        .insert(record)
+        .insert({ ...record, season_id: seasonId })
         .select()
         .single();
 
@@ -154,355 +178,6 @@ export function useDeletePetioleTest() {
     },
   });
 }
-
-// Common soil test parameters (matching vinesight-web order)
-export const SOIL_PARAMETERS = [
-  {
-    key: 'ph',
-    label: 'pH',
-    shortLabel: 'pH',
-    unit: '',
-    min: 0,
-    max: 14,
-    step: 0.1,
-    optimalMin: 6.5,
-    optimalMax: 7.5,
-  },
-  {
-    key: 'ec',
-    label: 'EC',
-    shortLabel: 'EC',
-    unit: 'dS/m',
-    min: 0,
-    max: 10,
-    step: 0.1,
-    optimalMin: 0,
-    optimalMax: 1.0,
-  },
-  {
-    key: 'organicCarbon',
-    label: 'Organic Carbon',
-    shortLabel: 'OC',
-    unit: '%',
-    min: 0,
-    max: 5,
-    step: 0.01,
-    optimalMin: 1.01,
-    optimalMax: 3.0,
-  },
-  {
-    key: 'organicMatter',
-    label: 'Organic Matter',
-    shortLabel: 'OM',
-    unit: '%',
-    min: 0,
-    max: 10,
-    step: 0.01,
-    optimalMin: 2.0,
-    optimalMax: 5.0,
-  },
-  {
-    key: 'nitrogen',
-    label: 'Nitrogen',
-    shortLabel: 'N',
-    unit: 'ppm',
-    min: 0,
-    max: 500,
-    step: 1,
-    optimalMin: 200,
-    optimalMax: 400,
-  },
-  {
-    key: 'phosphorus',
-    label: 'Phosphorus',
-    shortLabel: 'P',
-    unit: 'ppm',
-    min: 0,
-    max: 200,
-    step: 1,
-    optimalMin: 10,
-    optimalMax: 20,
-  },
-  {
-    key: 'potassium',
-    label: 'Potassium',
-    shortLabel: 'K',
-    unit: 'ppm',
-    min: 0,
-    max: 500,
-    step: 1,
-    optimalMin: 120,
-    optimalMax: 200,
-  },
-  {
-    key: 'calcium',
-    label: 'Calcium',
-    shortLabel: 'Ca',
-    unit: 'ppm',
-    min: 0,
-    max: 5000,
-    step: 1,
-    optimalMin: 1000,
-    optimalMax: 4500,
-  },
-  {
-    key: 'magnesium',
-    label: 'Magnesium',
-    shortLabel: 'Mg',
-    unit: 'ppm',
-    min: 0,
-    max: 2000,
-    step: 1,
-    optimalMin: 500,
-    optimalMax: 1000,
-  },
-  {
-    key: 'sulfur',
-    label: 'Sulfur',
-    shortLabel: 'S',
-    unit: 'ppm',
-    min: 0,
-    max: 100,
-    step: 1,
-    optimalMin: 10,
-    optimalMax: 20,
-  },
-  {
-    key: 'iron',
-    label: 'Iron',
-    shortLabel: 'Fe',
-    unit: 'ppm',
-    min: 0,
-    max: 100,
-    step: 0.1,
-    optimalMin: 3.1,
-    optimalMax: 5.0,
-  },
-  {
-    key: 'manganese',
-    label: 'Manganese',
-    shortLabel: 'Mn',
-    unit: 'ppm',
-    min: 0,
-    max: 50,
-    step: 0.1,
-    optimalMin: 0.6,
-    optimalMax: 1.0,
-  },
-  {
-    key: 'zinc',
-    label: 'Zinc',
-    shortLabel: 'Zn',
-    unit: 'ppm',
-    min: 0,
-    max: 20,
-    step: 0.1,
-    optimalMin: 1.0,
-    optimalMax: 1.5,
-  },
-  {
-    key: 'copper',
-    label: 'Copper',
-    shortLabel: 'Cu',
-    unit: 'ppm',
-    min: 0,
-    max: 10,
-    step: 0.1,
-    optimalMin: 0.3,
-    optimalMax: 0.5,
-  },
-  {
-    key: 'boron',
-    label: 'Boron',
-    shortLabel: 'B',
-    unit: 'ppm',
-    min: 0,
-    max: 5,
-    step: 0.1,
-    optimalMin: 0,
-    optimalMax: 0.5,
-  },
-];
-
-// Common petiole test parameters (matching vinesight-web order)
-export const PETIOLE_PARAMETERS = [
-  {
-    key: 'total_nitrogen',
-    label: 'Total Nitrogen',
-    shortLabel: 'TN',
-    unit: '%',
-    min: 0,
-    max: 5,
-    step: 0.01,
-    optimalMin: 1.51,
-    optimalMax: 2.21,
-  },
-  {
-    key: 'nitrate_nitrogen',
-    label: 'Nitrate N',
-    shortLabel: 'NO₃-N',
-    unit: 'ppm',
-    min: 0,
-    max: 1000,
-    step: 1,
-    optimalMin: 700,
-    optimalMax: 1000,
-  },
-  {
-    key: 'ammoniacal_nitrogen',
-    label: 'Ammonical N',
-    shortLabel: 'NH₄-N',
-    unit: 'ppm',
-    min: 0,
-    max: 1000,
-    step: 1,
-    optimalMin: 400,
-    optimalMax: 700,
-  },
-  {
-    key: 'phosphorus',
-    label: 'Phosphorus',
-    shortLabel: 'P',
-    unit: '%',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    optimalMin: 0.31,
-    optimalMax: 0.51,
-  },
-  {
-    key: 'potassium',
-    label: 'Potassium',
-    shortLabel: 'K',
-    unit: '%',
-    min: 0,
-    max: 5,
-    step: 0.01,
-    optimalMin: 1.51,
-    optimalMax: 2.01,
-  },
-  {
-    key: 'calcium',
-    label: 'Calcium',
-    shortLabel: 'Ca',
-    unit: '%',
-    min: 0,
-    max: 5,
-    step: 0.01,
-    optimalMin: 1.51,
-    optimalMax: 2.21,
-  },
-  {
-    key: 'magnesium',
-    label: 'Magnesium',
-    shortLabel: 'Mg',
-    unit: '%',
-    min: 0,
-    max: 2,
-    step: 0.01,
-    optimalMin: 0.31,
-    optimalMax: 0.61,
-  },
-  {
-    key: 'sulfur',
-    label: 'Sulfur',
-    shortLabel: 'S',
-    unit: '%',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    optimalMin: 0.15,
-    optimalMax: 0.51,
-  },
-  {
-    key: 'iron',
-    label: 'Iron',
-    shortLabel: 'Fe',
-    unit: 'ppm',
-    min: 0,
-    max: 500,
-    step: 1,
-    optimalMin: 80,
-    optimalMax: 120,
-  },
-  {
-    key: 'manganese',
-    label: 'Manganese',
-    shortLabel: 'Mn',
-    unit: 'ppm',
-    min: 0,
-    max: 300,
-    step: 1,
-    optimalMin: 40,
-    optimalMax: 100,
-  },
-  {
-    key: 'zinc',
-    label: 'Zinc',
-    shortLabel: 'Zn',
-    unit: 'ppm',
-    min: 0,
-    max: 200,
-    step: 1,
-    optimalMin: 50,
-    optimalMax: 80,
-  },
-  {
-    key: 'copper',
-    label: 'Copper',
-    shortLabel: 'Cu',
-    unit: 'ppm',
-    min: 0,
-    max: 50,
-    step: 1,
-    optimalMin: 5,
-    optimalMax: 15,
-  },
-  {
-    key: 'boron',
-    label: 'Boron',
-    shortLabel: 'B',
-    unit: 'ppm',
-    min: 0,
-    max: 100,
-    step: 1,
-    optimalMin: 25,
-    optimalMax: 50,
-  },
-  {
-    key: 'molybdenum',
-    label: 'Molybdenum',
-    shortLabel: 'Mo',
-    unit: 'ppm',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    optimalMin: 0.25,
-    optimalMax: 0.51,
-  },
-  {
-    key: 'sodium',
-    label: 'Sodium',
-    shortLabel: 'Na',
-    unit: '%',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    optimalMin: 0.01,
-    optimalMax: 0.51,
-  },
-  {
-    key: 'chloride',
-    label: 'Chloride',
-    shortLabel: 'Cl',
-    unit: '%',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    optimalMin: 0.05,
-    optimalMax: 0.25,
-  },
-];
 
 /**
  * Format parameter key for display

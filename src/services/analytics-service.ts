@@ -18,6 +18,7 @@ import {
   FertigationRecord,
   HarvestRecord,
   ExpenseRecord,
+  TemporaryWorkerEntry,
 } from '../types/database';
 import { formatDate } from '@/i18n/format';
 
@@ -32,6 +33,7 @@ export class AnalyticsService {
     fertigations: FertigationRecord[],
     harvests: HarvestRecord[],
     expenses: ExpenseRecord[],
+    tempWorkers: TemporaryWorkerEntry[] = [],
     timeRange: TimeRange = 'all',
   ): AnalyticsData {
     // Filter by time range
@@ -40,6 +42,7 @@ export class AnalyticsService {
     const filteredSprays = this.filterByDate(sprays, cutoffDate);
     const filteredHarvests = this.filterByDate(harvests, cutoffDate);
     const filteredExpenses = this.filterByDate(expenses, cutoffDate);
+    const filteredTempWorkers = this.filterByDate(tempWorkers, cutoffDate);
 
     // Calculate totals
     const totalIrrigationHours = filteredIrrigations.reduce((sum, r) => sum + (r.duration || 0), 0);
@@ -48,7 +51,12 @@ export class AnalyticsService {
       (sum, r) => sum + (r.quantity || 0) * (r.price || 0),
       0,
     );
-    const totalExpenses = filteredExpenses.reduce((sum, r) => sum + (r.cost || 0), 0);
+    const totalExpenseRecords = filteredExpenses.reduce((sum, r) => sum + (r.cost || 0), 0);
+    const totalTempWorkerExpenses = filteredTempWorkers.reduce(
+      (sum, r) => sum + (r.amount_paid || 0),
+      0,
+    );
+    const totalExpenses = totalExpenseRecords + totalTempWorkerExpenses;
 
     // Group irrigations by month
     const irrigationsByMonth = this.groupByMonth(filteredIrrigations);
@@ -92,20 +100,29 @@ export class AnalyticsService {
   static calculateCostAnalysis(
     harvests: HarvestRecord[],
     expenses: ExpenseRecord[],
+    tempWorkers: TemporaryWorkerEntry[] = [],
     _farms: Farm[],
   ): CostAnalysis {
-    const totalCosts = expenses.reduce((sum, r) => sum + (r.cost || 0), 0);
+    const totalExpenseCosts = expenses.reduce((sum, r) => sum + (r.cost || 0), 0);
+    const totalTempWorkerCosts = tempWorkers.reduce((sum, r) => sum + (r.amount_paid || 0), 0);
+    const totalCosts = totalExpenseCosts + totalTempWorkerCosts;
     const totalRevenue = harvests.reduce((sum, r) => sum + (r.quantity || 0) * (r.price || 0), 0);
 
     const profitMargin = totalRevenue > 0 ? ((totalRevenue - totalCosts) / totalRevenue) * 100 : 0;
     const roi = totalCosts > 0 ? ((totalRevenue - totalCosts) / totalCosts) * 100 : 0;
 
-    // Group expenses by type
+    // Group expenses by type (including temp workers as 'labor')
     const expensesByType = new Map<string, number>();
     expenses.forEach((expense) => {
       const type = expense.type || 'other';
       expensesByType.set(type, (expensesByType.get(type) || 0) + (expense.cost || 0));
     });
+
+    // Add temp worker expenses to labor category
+    if (totalTempWorkerCosts > 0) {
+      const existingLabor = expensesByType.get('labor') || 0;
+      expensesByType.set('labor', existingLabor + totalTempWorkerCosts);
+    }
 
     const costBreakdown = Array.from(expensesByType.entries()).map(([category, amount]) => ({
       category,
@@ -113,8 +130,8 @@ export class AnalyticsService {
       percentage: totalCosts > 0 ? (amount / totalCosts) * 100 : 0,
     }));
 
-    // Monthly trends
-    const monthlyTrends = this.calculateMonthlyTrends(harvests, expenses);
+    // Monthly trends (combine expense and temp worker records)
+    const monthlyTrends = this.calculateMonthlyTrends(harvests, expenses, tempWorkers);
 
     return {
       totalCosts,
@@ -330,7 +347,11 @@ export class AnalyticsService {
       .sort((a, b) => b.amount - a.amount);
   }
 
-  private static calculateMonthlyTrends(harvests: HarvestRecord[], expenses: ExpenseRecord[]) {
+  private static calculateMonthlyTrends(
+    harvests: HarvestRecord[],
+    expenses: ExpenseRecord[],
+    tempWorkers: TemporaryWorkerEntry[] = [],
+  ) {
     const months = new Map<string, { revenue: number; costs: number; profit: number }>();
 
     harvests.forEach((h) => {
@@ -353,6 +374,17 @@ export class AnalyticsService {
         ...existing,
         costs: existing.costs + (e.cost || 0),
         profit: existing.profit - (e.cost || 0),
+      });
+    });
+
+    tempWorkers.forEach((tw) => {
+      const date = new Date(tw.date);
+      const monthYear = formatDate(date, { month: 'short', year: '2-digit' });
+      const existing = months.get(monthYear) || { revenue: 0, costs: 0, profit: 0 };
+      months.set(monthYear, {
+        ...existing,
+        costs: existing.costs + (tw.amount_paid || 0),
+        profit: existing.profit - (tw.amount_paid || 0),
       });
     });
 

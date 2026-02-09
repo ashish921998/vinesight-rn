@@ -10,6 +10,7 @@ import {
   useExpenseRecords,
   useFertigationRecords,
 } from './use-records';
+import { useTemporaryWorkerEntries } from './use-workers';
 
 /**
  * Fetch all records for a specific farm
@@ -20,20 +21,23 @@ export function useFarmRecords(farmId: number | undefined) {
   const harvest = useHarvestRecords(farmId);
   const expense = useExpenseRecords(farmId);
   const fertigation = useFertigationRecords(farmId);
+  const tempWorkers = useTemporaryWorkerEntries(farmId);
 
   const isLoading =
     irrigation.isLoading ||
     spray.isLoading ||
     harvest.isLoading ||
     expense.isLoading ||
-    fertigation.isLoading;
+    fertigation.isLoading ||
+    tempWorkers.isLoading;
 
   const isError =
     irrigation.isError ||
     spray.isError ||
     harvest.isError ||
     expense.isError ||
-    fertigation.isError;
+    fertigation.isError ||
+    tempWorkers.isError;
 
   const refetch = async () => {
     await Promise.all([
@@ -42,6 +46,7 @@ export function useFarmRecords(farmId: number | undefined) {
       harvest.refetch(),
       expense.refetch(),
       fertigation.refetch(),
+      tempWorkers.refetch(),
     ]);
   };
 
@@ -51,6 +56,7 @@ export function useFarmRecords(farmId: number | undefined) {
     harvestRecords: harvest.data,
     expenseRecords: expense.data,
     fertigationRecords: fertigation.data,
+    temporaryWorkerEntries: tempWorkers.data,
     isLoading,
     isError,
     refetch,
