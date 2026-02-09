@@ -48,7 +48,12 @@ export function TempWorkerForm({
   const createTemporaryWorkerEntry = useCreateTemporaryWorkerEntry();
 
   const resolvedFarmId = externalFarmId ?? selectedFarmId;
-  const isValid = name.trim().length > 0 && parseFloat(amountPaid) > 0 && resolvedFarmId != null;
+  const parsedHours = parseFloat(hoursWorked);
+  const parsedAmount = parseFloat(amountPaid);
+  const isHoursValid =
+    hoursWorked.trim().length === 0 || (Number.isFinite(parsedHours) && parsedHours >= 0);
+  const isValid =
+    name.trim().length > 0 && parsedAmount > 0 && resolvedFarmId != null && isHoursValid;
 
   const handleReset = () => {
     setName('');
@@ -79,8 +84,8 @@ export function TempWorkerForm({
         farm_id: resolvedFarmId!,
         date: formatLocalDate(date),
         name: name.trim(),
-        hours_worked: parseFloat(hoursWorked) || 0,
-        amount_paid: parseFloat(amountPaid),
+        hours_worked: parsedHours || 0,
+        amount_paid: parsedAmount,
         notes: notes.trim() || null,
       });
 
@@ -99,8 +104,6 @@ export function TempWorkerForm({
     }
   };
 
-  const parsedHours = parseFloat(hoursWorked);
-  const parsedAmount = parseFloat(amountPaid);
   const showHourlyRate = parsedHours > 0 && parsedAmount > 0;
 
   return (

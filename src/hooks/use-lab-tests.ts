@@ -15,6 +15,7 @@ import { LabTrendsService } from '../services/lab-trends-service';
 import i18n from '@/i18n';
 import { normalizeParameterKey } from '@/utils/lab-test-utils';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
+import { resolveSeasonIdForDate } from '../lib/season-context';
 
 // Query keys
 export const labTestQueryKeys = {
@@ -27,15 +28,20 @@ export const labTestQueryKeys = {
 /**
  * Fetch soil test records for a farm
  */
-export function useSoilTests(farmId: number) {
+export function useSoilTests(farmId: number, seasonId?: number) {
   return useQuery({
-    queryKey: labTestQueryKeys.soilTests(farmId),
+    queryKey: [...labTestQueryKeys.soilTests(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('soil_test_records')
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as SoilTestRecord[];
@@ -47,15 +53,20 @@ export function useSoilTests(farmId: number) {
 /**
  * Fetch petiole test records for a farm
  */
-export function usePetioleTests(farmId: number) {
+export function usePetioleTests(farmId: number, seasonId?: number) {
   return useQuery({
-    queryKey: labTestQueryKeys.petioleTests(farmId),
+    queryKey: [...labTestQueryKeys.petioleTests(farmId), { seasonId: seasonId ?? null }],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('petiole_test_records')
         .select('*')
         .eq('farm_id', farmId)
         .order('date', { ascending: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as PetioleTestRecord[];
@@ -72,9 +83,15 @@ export function useCreateSoilTest() {
 
   return useMutation({
     mutationFn: async (record: SoilTestRecordInsert) => {
+      const seasonId =
+        record.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: record.farm_id,
+          date: record.date,
+        }));
       const { data, error } = await supabase
         .from('soil_test_records')
-        .insert(record)
+        .insert({ ...record, season_id: seasonId })
         .select()
         .single();
 
@@ -97,9 +114,15 @@ export function useCreatePetioleTest() {
 
   return useMutation({
     mutationFn: async (record: PetioleTestRecordInsert) => {
+      const seasonId =
+        record.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: record.farm_id,
+          date: record.date,
+        }));
       const { data, error } = await supabase
         .from('petiole_test_records')
-        .insert(record)
+        .insert({ ...record, season_id: seasonId })
         .select()
         .single();
 

@@ -23,6 +23,7 @@ export type TaskPriority = 'low' | 'medium' | 'high';
 export interface TaskReminder {
   id?: number;
   farm_id: number;
+  season_id?: number | null;
   title: string;
   description: string | null;
   type: TaskType;

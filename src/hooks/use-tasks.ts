@@ -6,6 +6,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { TaskReminder, TaskReminderInsert, TaskReminderUpdate } from '../types/task';
+import { formatLocalDate } from '../utils/date';
+import { resolveSeasonIdForDate } from '../lib/season-context';
 
 // Query keys for tasks
 export const taskQueryKeys = {
@@ -31,9 +33,11 @@ async function getUserId(): Promise<string> {
 /**
  * Fetch all tasks for a farm
  */
-export function useTasks(farmId?: number) {
+export function useTasks(farmId?: number, seasonId?: number) {
   return useQuery({
-    queryKey: farmId ? taskQueryKeys.listByFarm(farmId) : taskQueryKeys.lists(),
+    queryKey: farmId
+      ? [...taskQueryKeys.listByFarm(farmId), { seasonId: seasonId ?? null }]
+      : [...taskQueryKeys.lists(), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<TaskReminder[]> => {
       await getUserId(); // Ensure user is logged in
 
@@ -44,6 +48,9 @@ export function useTasks(farmId?: number) {
 
       if (farmId) {
         query = query.eq('farm_id', farmId);
+      }
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
       }
 
       const { data, error } = await query;
@@ -57,16 +64,21 @@ export function useTasks(farmId?: number) {
 /**
  * Fetch all tasks across all farms
  */
-export function useAllTasks() {
+export function useAllTasks(seasonId?: number) {
   return useQuery({
-    queryKey: taskQueryKeys.lists(),
+    queryKey: [...taskQueryKeys.lists(), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<TaskReminder[]> => {
       await getUserId();
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('task_reminders')
         .select('*')
         .order('due_date', { ascending: true, nullsFirst: false });
+      if (seasonId !== undefined) {
+        query = query.eq('season_id', seasonId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data ?? [];
@@ -83,11 +95,21 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: async (task: TaskReminderInsert): Promise<TaskReminder> => {
       const userId = await getUserId();
+      const assignmentDate = task.due_date
+        ? task.due_date.slice(0, 10)
+        : formatLocalDate(new Date());
+      const seasonId =
+        task.season_id ??
+        (await resolveSeasonIdForDate({
+          farmId: task.farm_id,
+          date: assignmentDate,
+        }));
 
       const { data, error } = await supabase
         .from('task_reminders')
         .insert({
           ...task,
+          season_id: seasonId,
           created_by: userId,
         })
         .select()

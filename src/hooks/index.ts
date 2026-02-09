@@ -16,7 +16,15 @@ export {
   useDeleteFarm,
   usePrefetchFarm,
 } from './use-farms';
-export { useFarmSeasons, useCreateFarmSeason } from './use-farm-seasons';
+export {
+  useFarmSeasons,
+  useCreateFarmSeason,
+  useUpdateFarmSeason,
+  useStartFarmSeason,
+  useEndFarmSeason,
+  useRecomputeFarmSeasonAssignments,
+  useFarmSeasonStatus,
+} from './use-farm-seasons';
 
 // Record Hooks (Irrigation, Spray, Fertigation, Harvest, Expense)
 export {
