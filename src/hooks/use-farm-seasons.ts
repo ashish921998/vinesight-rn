@@ -6,6 +6,12 @@ import { TABLES } from '../types';
 import { parseDbDateToLocalDate } from '../utils/date';
 import { recomputeSeasonAssignmentsClient } from '../lib/season-context';
 
+function isRpcFunctionMissing(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === '42883' || error.code === 'PGRST202') return true;
+  return typeof error.message === 'string' && /function .* does not exist/i.test(error.message);
+}
+
 function sortFarmSeasonsByEndDate(items: FarmSeason[]) {
   const next = [...items];
   next.sort((a, b) => {
@@ -152,6 +158,9 @@ export function useStartFarmSeason() {
         if (latestError) throw latestError;
         return latest;
       }
+      if (!isRpcFunctionMissing(rpcError)) {
+        throw rpcError;
+      }
 
       const { data, error } = await supabase
         .from(TABLES.FARM_SEASONS)
@@ -209,6 +218,9 @@ export function useEndFarmSeason() {
           .single();
         if (latestEndedError) throw latestEndedError;
         return latestEnded;
+      }
+      if (!isRpcFunctionMissing(rpcError)) {
+        throw rpcError;
       }
 
       const { data: activeSeason, error: activeSeasonError } = await supabase

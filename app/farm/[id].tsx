@@ -414,7 +414,7 @@ export default function FarmDetailScreen() {
     }
     if (
       minimumSeasonStartDate &&
-      formatLocalDate(seasonStartDate) < formatLocalDate(minimumSeasonStartDate)
+      formatLocalDate(effectiveStartDate) < formatLocalDate(minimumSeasonStartDate)
     ) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.startBeforeAllowed'));
       return;

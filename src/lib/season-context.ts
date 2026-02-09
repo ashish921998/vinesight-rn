@@ -42,7 +42,7 @@ export async function resolveSeasonIdForDate({
 }: {
   farmId: number;
   date: string | Date;
-}): Promise<number> {
+}): Promise<number | null> {
   const activityDate = typeof date === 'string' ? date.slice(0, 10) : formatLocalDate(date);
 
   const { data: rpcData, error: rpcError } = await supabase.rpc('resolve_farm_season_for_date', {
@@ -70,8 +70,7 @@ export async function resolveSeasonIdForDate({
   });
 
   if (matched?.id) return matched.id;
-
-  throw new Error('No active season found for this farm. Start a season to continue.');
+  return null;
 }
 
 interface SeasonAssignmentTableConfig {
@@ -146,7 +145,9 @@ export async function recomputeSeasonAssignmentsClient(farmId: number): Promise<
       throw error;
     }
 
-    const typedRows = (rows ?? []) as Array<Record<string, unknown>>;
+    const typedRows = (Array.isArray(rows) ? rows : []) as unknown as Array<
+      Record<string, unknown>
+    >;
     for (const row of typedRows) {
       const rowId = typeof row.id === 'number' ? row.id : null;
       if (!rowId) continue;
