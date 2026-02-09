@@ -61,7 +61,11 @@ export async function resolveSeasonIdForDate({
     .eq('farm_id', farmId)
     .order('start_date', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    // Table may not exist on older schemas without the farm_seasons migration.
+    if (error.code === '42P01') return null;
+    throw error;
+  }
 
   const matched = (data ?? []).find((season) => {
     const startsBeforeOrOnDate = season.start_date <= activityDate;

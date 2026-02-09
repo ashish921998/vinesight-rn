@@ -17,9 +17,12 @@ export const parseDbDateToLocalDate = (value: string): Date | null => {
     }
     return date;
   }
+
+  // Accept only ISO datetime strings with explicit timezone.
+  const isoWithTimezoneMatch =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value);
+  if (!isoWithTimezoneMatch) return null;
+
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-  return parsed;
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 };

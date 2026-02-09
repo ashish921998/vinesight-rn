@@ -192,15 +192,15 @@ export default function FarmDetailScreen() {
     nextDate.setDate(nextDate.getDate() + 1);
     return nextDate;
   }, [lastSeasonEndDate]);
-  const currentSeasonStartDate = useMemo(() => {
+  const initialSeasonStartDate = useMemo(() => {
     if (firstSeasonStartFromSeasons) return parseDbDateToLocalDate(firstSeasonStartFromSeasons);
     if (farm?.first_season_start_date) return parseDbDateToLocalDate(farm.first_season_start_date);
     if (farm?.date_of_pruning) return parseDbDateToLocalDate(farm.date_of_pruning);
     return null;
   }, [farm, firstSeasonStartFromSeasons]);
   const defaultSeasonStartDate = useMemo(() => {
-    return minimumSeasonStartDate ?? currentSeasonStartDate ?? new Date();
-  }, [currentSeasonStartDate, minimumSeasonStartDate]);
+    return minimumSeasonStartDate ?? initialSeasonStartDate ?? new Date();
+  }, [initialSeasonStartDate, minimumSeasonStartDate]);
   const seasonTemplateOptions = useMemo(
     () => getSeasonTemplatesForCrop(farm?.crop ?? farm?.crop_variety ?? null),
     [farm?.crop, farm?.crop_variety],
@@ -216,15 +216,12 @@ export default function FarmDetailScreen() {
   }, [activeSeasonRecord]);
   const isSeasonStartLocked = seasonFormMode === 'end' && activeSeasonRecord !== null;
 
-  const activeSeasonStartDate = useMemo(() => {
-    return lockedSeasonStartDate;
-  }, [lockedSeasonStartDate]);
   const seasonMetricsStartDate = useMemo(() => {
-    if (activeSeasonStartDate) return activeSeasonStartDate;
+    if (lockedSeasonStartDate) return lockedSeasonStartDate;
     if (minimumSeasonStartDate) return minimumSeasonStartDate;
     if (farm?.date_of_pruning) return parseDbDateToLocalDate(farm.date_of_pruning);
     return null;
-  }, [activeSeasonStartDate, farm?.date_of_pruning, minimumSeasonStartDate]);
+  }, [farm?.date_of_pruning, lockedSeasonStartDate, minimumSeasonStartDate]);
   const isBetweenSeasons = useMemo(() => {
     if (activeSeasonRecord) return false;
     if (!minimumSeasonStartDate) return false;
