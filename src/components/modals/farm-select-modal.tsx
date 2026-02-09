@@ -53,7 +53,7 @@ export function FarmSelectModal({
               borderTopRightRadius: borderRadius['3xl'],
               paddingHorizontal: spacing[5],
               paddingTop: spacing[5],
-              paddingBottom: Math.max(insets.bottom, 16),
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
             }}
           >
             <View

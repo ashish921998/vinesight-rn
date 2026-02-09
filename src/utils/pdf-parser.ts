@@ -5,7 +5,7 @@
 
 import * as FileSystem from 'expo-file-system';
 import OpenAI from 'openai';
-import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../hooks/use-lab-tests';
+import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
 
 // Initialize OpenAI client
 const openai = new OpenAI({

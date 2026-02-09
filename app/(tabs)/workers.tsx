@@ -290,7 +290,7 @@ export default function WorkersScreen() {
                 right: spacing[6],
                 width: 56,
                 height: 56,
-                backgroundColor: '#E67E22',
+                backgroundColor: m3.colorScheme.warning,
                 borderRadius: borderRadius.full,
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -301,14 +301,14 @@ export default function WorkersScreen() {
             >
               {({ pressed }) => (
                 <>
-                  <UiSymbol name="person.badge.clock" size={28} color="#FFFFFF" />
+                  <UiSymbol name="person.badge.clock" size={28} color={m3.colorScheme.onWarning} />
                   <View
                     pointerEvents="none"
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
                         backgroundColor: pressed
-                          ? colorWithOpacity('#FFFFFF', m3.stateLayerOpacity.pressed)
+                          ? colorWithOpacity(m3.colorScheme.onWarning, m3.stateLayerOpacity.pressed)
                           : 'transparent',
                       },
                     ]}

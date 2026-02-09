@@ -6,7 +6,14 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { cacheDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
-import { ReportData, ReportSummary, ReportPreview, DateRange, ReportType } from '../types/report';
+import {
+  ReportData,
+  ReportSummary,
+  ReportPreview,
+  DateRange,
+  ReportType,
+  ReportStockUsageRecord,
+} from '../types/report';
 import { formatDate, formatCurrency } from '@/i18n/format';
 import { getDefaultCurrency } from '@/i18n/currency';
 import {
@@ -54,6 +61,99 @@ export class ReportService {
   }
 
   /**
+   * Helper to parse items from string format "Name (Quantity Unit)"
+   */
+  private static parseStockItems(
+    itemStr: string,
+  ): { name: string; quantity: number; unit: string }[] {
+    const items: { name: string; quantity: number; unit: string }[] = [];
+    // Matches "Name (10.5 kg)" or similar patterns
+    const regex = /([^(]+)\s+\((\d+(?:\.\d+)?)\s*([a-zA-Z/%]+)\)/g;
+    let match;
+    while ((match = regex.exec(itemStr)) !== null) {
+      items.push({
+        name: match[1].trim(),
+        quantity: parseFloat(match[2]),
+        unit: match[3].trim(),
+      });
+    }
+    return items;
+  }
+
+  /**
+   * Calculate stock usage from records
+   */
+  private static calculateStockUsage(
+    sprays: SprayRecord[],
+    fertigations: FertigationRecord[],
+    dateRange: DateRange,
+  ): ReportStockUsageRecord[] {
+    const usageMap = new Map<string, ReportStockUsageRecord>();
+    const filteredSprays = this.filterByDateRange(sprays, dateRange);
+    const filteredFertigations = this.filterByDateRange(fertigations, dateRange);
+
+    // Process Sprays
+    filteredSprays.forEach((record) => {
+      const items = this.parseStockItems(record.chemical);
+      items.forEach((item) => {
+        const key = `${item.name}-${item.unit}`;
+        const existing = usageMap.get(key);
+        if (existing) {
+          existing.quantityUsed += item.quantity;
+          existing.areaTreated += record.area;
+          existing.usageCount += 1;
+        } else {
+          usageMap.set(key, {
+            itemName: item.name,
+            type: 'spray',
+            quantityUsed: item.quantity,
+            unit: item.unit,
+            areaTreated: record.area,
+            usageCount: 1,
+          });
+        }
+      });
+    });
+
+    // Process Fertigations
+    filteredFertigations.forEach((record) => {
+      if (record.fertilizers) {
+        record.fertilizers.forEach((item) => {
+          const key = `${item.name}-${item.unit}`;
+          const existing = usageMap.get(key);
+          // Calculate actual quantity based on unit if possible
+          // If unit is per acre, multiply by area?
+          // The app usually stores total quantity or per acre in the unit string
+          // For now, we assume the quantity in the record is the total quantity used for that application
+          // unless the unit explicitly says '/acre'.
+          // However, standardizing this is tricky. Let's assume quantity is total for now as per Form logic.
+
+          const quantity = item.quantity;
+          // Basic check for per-acre units if we wanted to be smarter, but let's stick to raw sum for now
+          // as users might enter "50 kg" total for "2 acres".
+
+          if (existing) {
+            existing.quantityUsed += quantity;
+            existing.areaTreated += record.area;
+            existing.usageCount += 1;
+          } else {
+            usageMap.set(key, {
+              itemName: item.name,
+              type: 'fertilizer',
+              quantityUsed: quantity,
+              unit: item.unit,
+              areaTreated: record.area,
+              usageCount: 1,
+            });
+          }
+        });
+      }
+    });
+
+    return Array.from(usageMap.values()).sort((a, b) => a.itemName.localeCompare(b.itemName));
+  }
+
+  /**
    * Generate report data from farm records
    */
   static generateReportData(
@@ -65,6 +165,8 @@ export class ReportService {
     expenses: ExpenseRecord[],
     dateRange: DateRange,
   ): ReportData {
+    const stockUsage = this.calculateStockUsage(sprays, fertigations, dateRange);
+
     return {
       farmName: farm.name,
       farmArea: farm.area,
@@ -110,6 +212,7 @@ export class ReportService {
         cost: r.cost,
         remarks: r.remarks || undefined,
       })),
+      stock: stockUsage,
     };
   }
 
@@ -145,6 +248,7 @@ export class ReportService {
       fertigationCount: data.fertigation.length,
       harvestCount: data.harvest.length,
       expenseCount: data.expense.length,
+      stockUsageCount: data.stock.length,
     };
   }
 
@@ -249,6 +353,20 @@ export class ReportService {
         data.expense.forEach((r) => {
           rows.push(
             `${this.escapeCSV(r.date)},${this.escapeCSV(r.type)},${r.cost},${this.escapeCSV(r.remarks || '')}`,
+          );
+        });
+        rows.push('');
+      }
+    }
+
+    if (reportType === 'stock-usage' || reportType === 'comprehensive') {
+      // Stock Usage
+      if (data.stock.length > 0) {
+        rows.push('STOCK USAGE SUMMARY');
+        rows.push('Item,Type,Total Quantity Used,Unit,Total Area Treated,Usage Count');
+        data.stock.forEach((r) => {
+          rows.push(
+            `${this.escapeCSV(r.itemName)},${r.type},${r.quantityUsed},${r.unit},${r.areaTreated},${r.usageCount}`,
           );
         });
         rows.push('');
@@ -387,6 +505,23 @@ export class ReportService {
               .map(
                 (r) =>
                   `<tr><td>${r.date}</td><td>${r.type}</td><td>${formatCurrency(r.cost, preferredCurrency, { minimumFractionDigits: 0 })}</td><td>${r.remarks || '-'}</td></tr>`,
+              )
+              .join('')}
+          ${data.expense.length > 20 ? `<p>... and ${data.expense.length - 20} more records</p>` : ''}
+        `;
+      }
+    }
+
+    if (reportType === 'stock-usage' || reportType === 'comprehensive') {
+      if (data.stock.length > 0) {
+        html += `
+          <h2>📦 Stock Usage Summary</h2>
+          <table>
+            <tr><th>Item</th><th>Type</th><th>Total Qty</th><th>Unit</th><th>Area Treated</th><th>Count</th></tr>
+            ${data.stock
+              .map(
+                (r) =>
+                  `<tr><td>${r.itemName}</td><td>${r.type}</td><td>${r.quantityUsed}</td><td>${r.unit}</td><td>${r.areaTreated}</td><td>${r.usageCount}</td></tr>`,
               )
               .join('')}
           </table>

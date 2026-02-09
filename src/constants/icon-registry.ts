@@ -11,6 +11,7 @@ export const ICON_REGISTRY = {
   alertCircleOutline: 'alert-circle-outline',
   waterOutline: 'water-outline',
   checkmarkCircle: 'checkmark-circle',
+  stock: 'stock',
 } as const;
 
 export type RegistryIconName = (typeof ICON_REGISTRY)[keyof typeof ICON_REGISTRY];
@@ -30,6 +31,7 @@ const APP_ICON_TO_SYMBOL_ICON: Record<string, string> = {
   'alert-circle-outline': 'exclamationmark.circle',
   'water-outline': 'drop.circle',
   'checkmark-circle': 'checkmark.circle.fill',
+  stock: 'cube.box.fill',
 };
 
 export function resolveSymbolIconName(iconName: string | undefined): string {

@@ -23,12 +23,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { supabase } from '@/lib/supabase';
 import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus } from '@/types';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
 import { WorkerSelectSheet, FarmSelectSheet } from './index';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
+import { normalizeDate, addDays } from '@/utils/worker-analytics';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const STORAGE_KEYS = {
@@ -151,20 +152,17 @@ export function MarkAttendanceTab({
 
   const prevWorkerIdRef = useRef<number | undefined>(undefined);
 
+  React.useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+        toastTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const safeIndex = Math.min(selectedWorkerIndex, Math.max(0, workers.length - 1));
   const selectedWorker = workers[safeIndex];
-
-  const normalizeDate = (date: Date) => {
-    const normalized = new Date(date);
-    normalized.setHours(0, 0, 0, 0);
-    return normalized;
-  };
-
-  const addDays = (date: Date, days: number) => {
-    const next = new Date(date);
-    next.setDate(next.getDate() + days);
-    return next;
-  };
 
   const [rangeStart, setRangeStart] = useState<Date>(() => normalizeDate(new Date()));
 
@@ -227,23 +225,6 @@ export function MarkAttendanceTab({
     setRangeStart(normalized);
     saveRange(normalized, rangeLength);
   };
-
-  const _handleRangeLengthChange = (newLength: number) => {
-    setRangeLength(newLength);
-    saveRange(rangeStart, newLength);
-  };
-
-  const _getSuggestedStartDate = React.useCallback(
-    async (workerId: number): Promise<Date | null> => {
-      const latestDate = await fetchLatestAttendanceDate(workerId);
-      if (!latestDate) {
-        return null;
-      }
-      const parsed = new Date(`${latestDate}T00:00:00`);
-      return addDays(parsed, 1);
-    },
-    [],
-  );
 
   const formatDate = (date: Date): string => {
     const year = date.getFullYear();
@@ -384,10 +365,17 @@ export function MarkAttendanceTab({
 
     const yesterday = addDays(rangeStart, -1);
     const yesterdayStr = formatDate(yesterday);
-    const yesterdayKey = getCellKey(workerId, yesterdayStr);
-    const yesterdayCell = cellData.get(yesterdayKey);
 
-    if (!yesterdayCell || yesterdayCell.status === null) {
+    let yesterdayRecord: WorkerAttendance | null = null;
+    try {
+      const records = await fetchAttendanceForWorker(workerId, yesterdayStr, yesterdayStr);
+      yesterdayRecord = records.length > 0 ? records[0] : null;
+    } catch {
+      showToast(t('attendance.errors.noYesterdayData'), 'error');
+      return;
+    }
+
+    if (!yesterdayRecord || !yesterdayRecord.work_status) {
       showToast(t('attendance.errors.noYesterdayData'), 'error');
       return;
     }
@@ -403,8 +391,12 @@ export function MarkAttendanceTab({
         if (current && current.status === null) {
           newMap.set(key, {
             ...current,
-            status: yesterdayCell.status,
-            farmIds: yesterdayCell.farmIds.length > 0 ? yesterdayCell.farmIds : selectedFarmIds,
+            status: yesterdayRecord.work_status as AttendanceStatus,
+            workType: yesterdayRecord.work_type,
+            farmIds:
+              yesterdayRecord.farm_ids && yesterdayRecord.farm_ids.length > 0
+                ? yesterdayRecord.farm_ids
+                : selectedFarmIds,
             isModified: true,
           });
         }
@@ -475,22 +467,9 @@ export function MarkAttendanceTab({
     triggerHapticSuccess();
     showToast(t('attendance.alerts.savedBody', { name: selectedWorker?.name ?? '' }), 'success');
     onSaveSuccess();
-
-    setCellData((prev) => {
-      const newMap = new Map(prev);
-      for (const [key, cell] of newMap) {
-        if (cell.isModified) {
-          newMap.set(key, {
-            ...cell,
-            isModified: false,
-            existingRecordId: cell.status !== null ? cell.existingRecordId || -1 : undefined,
-          });
-        }
-      }
-      return newMap;
-    });
-
+    prevWorkerIdRef.current = undefined;
     setSaving(false);
+    loadAttendance();
   };
 
   const handleWorkerSelect = () => {
@@ -1033,7 +1012,7 @@ export function MarkAttendanceTab({
                         >
                           <Text
                             style={{
-                              fontSize: 10,
+                              fontSize: fontSize.xs,
                               fontWeight: fontWeight.semibold,
                               textTransform: 'uppercase',
                               letterSpacing: 0.3,
@@ -1074,7 +1053,7 @@ export function MarkAttendanceTab({
                           >
                             <Text
                               style={{
-                                fontSize: 13,
+                                fontSize: fontSize.sm,
                                 lineHeight: 14,
                                 fontWeight: fontWeight.bold,
                                 textAlign: 'center',
@@ -1399,7 +1378,7 @@ export function MarkAttendanceTab({
             justifyContent: 'center',
             gap: spacing[2],
             zIndex: 100,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+            ...shadows.lg,
           }}
         >
           <UiSymbol
@@ -1442,21 +1421,6 @@ async function fetchAttendanceForWorker(
   }
 
   return data || [];
-}
-
-async function fetchLatestAttendanceDate(workerId: number): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('worker_attendance')
-    .select('date')
-    .eq('worker_id', workerId)
-    .order('date', { ascending: false })
-    .limit(1);
-
-  if (error) {
-    return null;
-  }
-
-  return data?.[0]?.date ?? null;
 }
 
 async function createAttendance(data: WorkerAttendanceInsert): Promise<WorkerAttendance> {

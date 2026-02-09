@@ -49,6 +49,11 @@ const REPORT_TYPES: { value: ReportType; labelKey: string; icon: string }[] = [
     labelKey: 'reports.types.financial',
     icon: resolveSymbolIconName(ICON_REGISTRY.expense),
   },
+  {
+    value: 'stock-usage',
+    labelKey: 'reports.types.stockUsage',
+    icon: resolveSymbolIconName(ICON_REGISTRY.stock),
+  },
 ];
 
 export default function ReportsScreen() {
@@ -112,8 +117,10 @@ export default function ReportsScreen() {
       const dateStr = `${year}-${month}-${day}`;
       setDateRange((prev) => ({ ...prev, [type]: dateStr }));
     }
-    if (type === 'from') setShowFromPicker(false);
-    if (type === 'to') setShowToPicker(false);
+    if (Platform.OS !== 'ios') {
+      if (type === 'from') setShowFromPicker(false);
+      if (type === 'to') setShowToPicker(false);
+    }
   };
 
   const selectedFarm = useMemo(() => {
@@ -468,8 +475,8 @@ export default function ReportsScreen() {
                   >
                     <Text
                       style={{
-                        fontSize: 18,
-                        fontWeight: '700',
+                        fontSize: fontSize.lg,
+                        fontWeight: fontWeight.bold,
                         color: m3.colorScheme.onSurface,
                       }}
                     >
@@ -522,7 +529,7 @@ export default function ReportsScreen() {
                   >
                     <Text
                       style={{
-                        fontWeight: '600',
+                        fontWeight: fontWeight.semibold,
                         color: m3.colorScheme.onPrimary,
                       }}
                     >
@@ -794,6 +801,21 @@ export default function ReportsScreen() {
               >
                 <Text style={{ fontSize: fontSize.xs, color: colors.surface[600] }}>
                   💰 {t('reports.preview.counts.expenses', { count: preview.summary.expenseCount })}
+                </Text>
+              </View>
+              <View
+                style={{
+                  backgroundColor: colors.surface[200],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  borderRadius: borderRadius.full,
+                }}
+              >
+                <Text style={{ fontSize: fontSize.xs, color: colors.surface[600] }}>
+                  📦{' '}
+                  {t('reports.preview.counts.stockUsage', {
+                    count: preview.summary.stockUsageCount,
+                  })}
                 </Text>
               </View>
             </View>

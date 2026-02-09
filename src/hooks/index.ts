@@ -169,11 +169,12 @@ export {
   useDeleteSoilTest,
   useDeletePetioleTest,
   labTestQueryKeys,
-  SOIL_PARAMETERS,
-  PETIOLE_PARAMETERS,
   formatParameterKey,
   getParameterUnit,
 } from './use-lab-tests';
+
+// Re-export parameter constants for backward compatibility
+export { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
 
 // Soil Profile Utilities (Hooks already exported from useProfile)
 export {

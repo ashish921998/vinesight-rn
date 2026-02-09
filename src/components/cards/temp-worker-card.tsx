@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { fromSupabaseDateString } from '../../types';
-import { spacing, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
 import { useM3 } from '@/styles/use-theme';
+import { parseDbDateToLocalDate } from '@/utils/date';
 import type { TemporaryWorkerEntry } from '@/types';
 
 const WARM_ORANGE = '#E67E22';
@@ -22,7 +22,7 @@ export function TempWorkerCard({ entry, onDelete }: TempWorkerCardProps) {
   const { t } = useTranslation();
   const currency = useCurrency();
 
-  const parsedDate = fromSupabaseDateString(entry.date);
+  const parsedDate = parseDbDateToLocalDate(entry.date);
   const displayDate = parsedDate
     ? formatDate(parsedDate, { month: 'short', day: 'numeric' })
     : entry.date;
@@ -41,11 +41,11 @@ export function TempWorkerCard({ entry, onDelete }: TempWorkerCardProps) {
   };
 
   const iconContainerStyle: ViewStyle = {
-    width: 40,
-    height: 40,
-    minWidth: 40,
-    minHeight: 40,
-    borderRadius: 9999,
+    width: spacing[10],
+    height: spacing[10],
+    minWidth: spacing[10],
+    minHeight: spacing[10],
+    borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing[3],
@@ -69,13 +69,13 @@ export function TempWorkerCard({ entry, onDelete }: TempWorkerCardProps) {
   };
 
   const metaTextStyle: TextStyle = {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     color: m3.colorScheme.onSurfaceVariant,
   };
 
   const separatorTextStyle: TextStyle = {
-    fontSize: 12,
-    marginHorizontal: 4,
+    fontSize: fontSize.xs,
+    marginHorizontal: spacing[1],
     color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
   };
 

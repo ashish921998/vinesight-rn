@@ -4,7 +4,7 @@
  */
 
 import { SoilTestRecord, PetioleTestRecord } from '../types/database';
-import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../hooks/use-lab-tests';
+import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
 import { TrendData, ParameterTrend, TestTrendsResponse } from '../types/analytics';
 
 export class LabTrendsService {

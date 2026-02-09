@@ -174,6 +174,7 @@ export const mr = {
         lab: 'तपासणी',
         reports: '$t(glossary.report)',
         soilMoisture: '$t(glossary.soil)तील ओलावा',
+        tempWorker: 'तात्पुरता\n$t(glossary.worker)',
       },
     },
     tabs: {
@@ -537,7 +538,7 @@ export const mr = {
 
   fertigationForm: {
     title: 'फर्टिगेशन',
-    subtitle: 'खत अनुप्रयोग नोंदवा',
+    subtitle: '$t(glossary.fertilizer) अनुप्रयोग नोंदवा',
     waterVolume: {
       label: 'पाणी मात्रा',
       placeholder: 'प्रमाण टाका',
@@ -546,14 +547,14 @@ export const mr = {
     },
     fertilizers: {
       label: 'खते',
-      addFertilizer: 'खत जोडा',
+      addFertilizer: '$t(glossary.fertilizer) जोडा',
       namePlaceholder: 'खताचे नाव',
       qtyPlaceholder: 'प्रमाण',
       selectUnit: 'युनिट निवडा',
     },
     validation: {
       ready: 'जोडण्यासाठी तयार',
-      incomplete: 'किमान एक खत आणि मात्रा जोडा',
+      incomplete: 'किमान एक $t(glossary.fertilizer) आणि मात्रा जोडा',
     },
   },
 
@@ -1341,6 +1342,55 @@ export const mr = {
       },
       infoCardMessage: 'दैनिक दरावरून कमाईची गणना होते. अग्रिम शिल्लक रक्कम थकबाकीची नोंद ठेवते.',
     },
+    tempWorkers: {
+      sectionTitle: 'तात्पुरते $t(glossary.worker)',
+      addTitle: 'तात्पुरता $t(glossary.worker) जोडा',
+      empty: {
+        title: 'तात्पुरते $t(glossary.worker) नोंदवले नाहीत',
+        subtitle: 'या शेतासाठी नियुक्त केलेले तात्पुरते $t(glossary.worker) नोंदवा.',
+      },
+      form: {
+        title: 'तात्पुरता $t(glossary.worker) जोडा',
+        sections: {
+          workerDetails: '$t(glossary.worker) तपशील',
+          workDetails: 'कामाचे तपशील',
+        },
+        fields: {
+          name: {
+            label: '$t(glossary.worker) नाव',
+            placeholder: 'उदा., दिवसाळू $t(glossary.worker)',
+          },
+          date: {
+            label: 'तारीख',
+          },
+          hoursWorked: {
+            label: '$t(glossary.task) केलेली तास',
+            suffix: 'तास',
+          },
+          amountPaid: {
+            label: 'दिलेली रक्कम',
+          },
+          farm: {
+            label: '$t(glossary.farm)',
+            placeholder: '$t(glossary.farm) निवडा (ऐच्छिक)',
+          },
+          notes: {
+            label: 'नोंदी (ऐच्छिक)',
+            placeholder: 'नोंदी जोडा...',
+          },
+        },
+        hourlyRate: 'तासाचा दर',
+        perHour: '/तास',
+        save: '$t(glossary.worker) जोडा',
+        validation: 'कृपया $t(glossary.worker) नाव आणि दिलेली रक्कम एंटर करा.',
+        error: 'तात्पुरता $t(glossary.worker) नोंद जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
+      },
+      card: {
+        hoursShort: '{{hours}} तास',
+        deleteTitle: 'नोंद हटवायची?',
+        deleteBody: 'यामुळे {{name}} साठी तात्पुरता $t(glossary.worker) नोंद कायमची काढली जाईल.',
+      },
+    },
   },
 
   settlePayment: 'पेमेंट सेटल करा',
@@ -1686,16 +1736,16 @@ export const mr = {
       setAllFullDay: 'सर्व दिवस पूर्ण दिवस सेट करा',
       setAllHalfDay: 'सर्व दिवस अर्धा दिवस सेट करा',
       setAllAbsent: 'सर्व दिवस अनुपस्थित सेट करा',
-      copyFromYesterday: 'कालचे हजेरी रिक्त दिवसांवर कॉपी करा',
+      copyFromYesterday: 'कालचे $t(glossary.attendance) रिक्त दिवसांवर कॉपी करा',
       savingAttendance: '$t(glossary.attendance) जतन करत आहे',
       saveAttendance: '$t(glossary.attendance) बदल जतन करा',
       dayStatus: '{{day}} {{date}}. {{status}}.',
     },
     errors: {
-      noYesterdayData: 'कालची हजेरी माहिती सापडली नाही',
+      noYesterdayData: 'कालची $t(glossary.attendance) माहिती सापडली नाही',
     },
     success: {
-      copiedFromYesterday: 'कालचे हजेरी कॉपी केले',
+      copiedFromYesterday: 'कालचे $t(glossary.attendance) कॉपी केले',
     },
     empty: {
       noWorkersTitle: '$t(glossary.worker) उपलब्ध नाहीत',
@@ -1727,51 +1777,51 @@ export const mr = {
   reports: {
     title: '$t(glossary.report)',
     types: {
-      comprehensive: 'संपूर्ण',
+      comprehensive: 'सविस्तर',
       operations: 'ऑपरेशन्स',
       financial: 'आर्थिक',
-    },
-    noFarms: {
-      title: '$t(glossary.farm) आढळली नाहीत',
-      subtitle: '$t(glossary.report) तयार करण्यासाठी आधी $t(glossary.farm) जोडा',
+      stockUsage: 'स्टॉक वापर',
     },
     selectFarmLabel: '$t(glossary.farm) निवडा',
-    selectFarmPlaceholder: '$t(glossary.farm) निवडा',
+    selectFarmPlaceholder: 'एक $t(glossary.farm) निवडा',
     dateRange: {
       label: 'दिनांक श्रेणी',
     },
+    selectFromDate: 'पासूनचा दिनांक निवडा',
+    selectToDate: 'पर्यंतचा दिनांक निवडा',
     reportType: {
       label: '$t(glossary.report) प्रकार',
     },
     loading: {
-      preview: 'पूर्वदृश्य लोड होत आहे…',
+      preview: 'पूर्वावलोकन तयार होत आहे...',
     },
     preview: {
-      title: 'पूर्वदृश्य सारांश',
+      title: '$t(glossary.report) पूर्वावलोकन',
       counts: {
-        irrigations_one: '{{count}} $t(glossary.irrigation)',
-        irrigations_other: '{{count}} $t(glossary.irrigation)',
-        sprays_one: '{{count}} $t(glossary.spray)',
-        sprays_other: '{{count}} $t(glossary.spray)',
-        harvests_one: '{{count}} $t(glossary.harvest)',
-        harvests_other: '{{count}} $t(glossary.harvest)',
-        expenses_one: '{{count}} $t(glossary.expense)',
-        expenses_other: '{{count}} $t(glossary.expense)',
+        irrigations: '{{count}} $t(glossary.irrigation)',
+        sprays: '{{count}} $t(glossary.spray)',
+        harvests: '{{count}} $t(glossary.harvest)',
+        expenses: '{{count}} $t(glossary.expense)',
+        stockUsage: '{{count}} वस्तू वापरल्या',
       },
-    },
-    exportAs: 'निर्यात करा',
-    alerts: {
-      exportFailedTitle: '$t(glossary.report) निर्यात अयशस्वी',
-    },
-    errors: {
-      unableToExport: '$t(glossary.report) निर्यात करता आला नाही',
     },
     summary: {
       totalRecords: 'एकूण नोंदी',
-      waterUsage: 'पाण्याचा वापर',
+      waterUsage: 'पाणी वापर',
       totalHarvest: 'एकूण $t(glossary.harvest)',
-      revenue: 'उत्पन्न',
       netProfit: 'निव्वळ नफा',
+      stockUsageCount: 'वापरलेल्या वस्तू',
+    },
+    exportAs: 'या स्वरूपात निर्यात करा',
+    errors: {
+      unableToExport: '$t(glossary.report) निर्यात करणे अशक्य. कृपया पुन्हा प्रयत्न करा.',
+    },
+    alerts: {
+      exportFailedTitle: 'निर्यात अयशस्वी',
+    },
+    noFarms: {
+      title: '$t(glossary.farm) उपलब्ध नाहीत',
+      subtitle: '$t(glossary.report) तयार करण्यासाठी $t(glossary.farm) जोडा.',
     },
     export: {
       meta: {

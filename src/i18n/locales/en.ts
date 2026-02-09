@@ -1770,48 +1770,48 @@ export const en = {
       comprehensive: 'Comprehensive',
       operations: 'Operations',
       financial: 'Financial',
-    },
-    noFarms: {
-      title: 'No farms found',
-      subtitle: 'Add a farm first to generate reports',
+      stockUsage: 'Stock Usage',
     },
     selectFarmLabel: 'Select farm',
-    selectFarmPlaceholder: 'Select farm',
+    selectFarmPlaceholder: 'Select a farm',
     dateRange: {
-      label: 'Date range',
+      label: 'Date Range',
     },
+    selectFromDate: 'Select From Date',
+    selectToDate: 'Select To Date',
     reportType: {
-      label: 'Report type',
+      label: 'Report Type',
     },
     loading: {
-      preview: 'Loading preview…',
+      preview: 'Generating preview...',
     },
     preview: {
-      title: 'Preview summary',
+      title: 'Report Preview',
       counts: {
-        irrigations_one: '{{count}} irrigation',
-        irrigations_other: '{{count}} irrigations',
-        sprays_one: '{{count}} spray',
-        sprays_other: '{{count}} sprays',
-        harvests_one: '{{count}} harvest',
-        harvests_other: '{{count}} harvests',
-        expenses_one: '{{count}} expense',
-        expenses_other: '{{count}} expenses',
+        irrigations: '{{count}} irrigations',
+        sprays: '{{count}} sprays',
+        harvests: '{{count}} harvests',
+        expenses: '{{count}} expenses',
+        stockUsage: '{{count}} items used',
       },
-    },
-    exportAs: 'Export as',
-    alerts: {
-      exportFailedTitle: 'Export failed',
-    },
-    errors: {
-      unableToExport: 'Unable to export report',
     },
     summary: {
       totalRecords: 'Total Records',
       waterUsage: 'Water Usage',
       totalHarvest: 'Total Harvest',
-      revenue: 'Revenue',
       netProfit: 'Net Profit',
+      stockUsageCount: 'Unique Items Used',
+    },
+    exportAs: 'Export as',
+    errors: {
+      unableToExport: 'Unable to export report. Please try again.',
+    },
+    alerts: {
+      exportFailedTitle: 'Export Failed',
+    },
+    noFarms: {
+      title: 'No Farms Available',
+      subtitle: 'Add a farm to generate reports.',
     },
     export: {
       meta: {

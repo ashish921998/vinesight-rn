@@ -49,12 +49,12 @@ export default function AddNoteRoute() {
   const notes = draftNotesByDate[dateStr] ?? existingNote?.notes ?? '';
 
   const isSaving = upsertDailyNote.isPending;
-  const canSave = Boolean(farmId && notes.trim().length > 0 && !isSaving);
   const hasUnsavedChanges = useMemo(() => {
     const currentDraft = draftNotesByDate[dateStr];
     if (!currentDraft?.trim()) return false;
     return currentDraft.trim() !== (existingNote?.notes ?? '').trim();
   }, [dateStr, draftNotesByDate, existingNote?.notes]);
+  const canSave = Boolean(farmId && notes.trim().length > 0 && !isSaving && hasUnsavedChanges);
 
   const handleClose = () => {
     if (hasUnsavedChanges) {

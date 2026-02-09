@@ -3,32 +3,36 @@ import * as Haptics from 'expo-haptics';
 
 const isIos = Platform.OS === 'ios';
 
+const fireAndForget = (promise: Promise<void>) => {
+  void promise.catch(() => undefined);
+};
+
 export const triggerHaptic = () => {
   if (isIos) {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    fireAndForget(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
   }
 };
 
 export const triggerHapticMedium = () => {
   if (isIos) {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    fireAndForget(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
   }
 };
 
 export const triggerHapticSuccess = () => {
   if (isIos) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    fireAndForget(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
   }
 };
 
 export const triggerHapticWarning = () => {
   if (isIos) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    fireAndForget(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning));
   }
 };
 
 export const triggerHapticError = () => {
   if (isIos) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    fireAndForget(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error));
   }
 };

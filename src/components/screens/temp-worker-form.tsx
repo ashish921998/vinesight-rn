@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Platform, View, Text, Pressable, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
-import { useCreateTemporaryWorkerEntry, useFarms } from '@/hooks';
+import { useCreateTemporaryWorkerEntry, useFarms, useCurrency } from '@/hooks';
 import { FormModal, SectionHeader, FormInput, PreviewCard, Button } from '@/components/ui';
 import { FarmSelectModal } from '@/components/modals/farm-select-modal';
 import { useThemeColors, useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { formatDate } from '@/i18n/format';
+import { formatDate, formatCurrency } from '@/i18n/format';
 import { formatLocalDate } from '@/utils/date';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
@@ -32,6 +32,7 @@ export function TempWorkerForm({
   const colors = useThemeColors();
   const m3 = useM3();
   const { data: farms } = useFarms();
+  const currency = useCurrency();
 
   const isVisible = visible ?? true;
   const [name, setName] = useState('');
@@ -117,7 +118,7 @@ export function TempWorkerForm({
     >
       <SectionHeader
         title={t('workers.tempWorkers.form.sections.workerDetails')}
-        style={{ marginBottom: 16 }}
+        style={{ marginBottom: spacing[4] }}
       />
 
       <FormInput
@@ -127,7 +128,7 @@ export function TempWorkerForm({
         placeholder={t('workers.tempWorkers.form.fields.name.placeholder')}
         required
         autoFocus
-        style={{ marginBottom: 12 }}
+        style={{ marginBottom: spacing[3] }}
       />
 
       <Text
@@ -151,7 +152,7 @@ export function TempWorkerForm({
           borderColor: colors.surface[200],
           paddingHorizontal: spacing[4],
           paddingVertical: spacing[3],
-          marginBottom: 12,
+          marginBottom: spacing[3],
         }}
       >
         <View
@@ -180,7 +181,7 @@ export function TempWorkerForm({
 
       <SectionHeader
         title={t('workers.tempWorkers.form.sections.workDetails')}
-        style={{ marginBottom: 16 }}
+        style={{ marginBottom: spacing[4] }}
       />
 
       {!externalFarmId && (
@@ -201,12 +202,12 @@ export function TempWorkerForm({
               borderRadius: borderRadius.xl,
               borderWidth: 2,
               borderColor: selectedFarmId ? m3.colorScheme.primary : colors.surface[200],
-              paddingVertical: 14,
+              paddingVertical: spacing[3] + 2,
               paddingHorizontal: spacing[4],
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: 12,
+              marginBottom: spacing[3],
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -240,7 +241,7 @@ export function TempWorkerForm({
         placeholder="0"
         keyboardType="decimal-pad"
         suffix={t('workers.tempWorkers.form.fields.hoursWorked.suffix')}
-        style={{ marginBottom: 12 }}
+        style={{ marginBottom: spacing[3] }}
       />
 
       <FormInput
@@ -249,9 +250,9 @@ export function TempWorkerForm({
         onChangeText={setAmountPaid}
         placeholder="0"
         keyboardType="decimal-pad"
-        prefix="₹"
+        prefix={currency}
         required
-        style={{ marginBottom: 12 }}
+        style={{ marginBottom: spacing[3] }}
       />
 
       <FormInput
@@ -261,7 +262,7 @@ export function TempWorkerForm({
         placeholder={t('workers.tempWorkers.form.fields.notes.placeholder')}
         multiline
         numberOfLines={3}
-        style={{ marginBottom: 12 }}
+        style={{ marginBottom: spacing[3] }}
       />
 
       {showHourlyRate && (
@@ -270,7 +271,7 @@ export function TempWorkerForm({
           items={[
             {
               label: t('workers.tempWorkers.form.hourlyRate'),
-              value: `₹${(parsedAmount / parsedHours).toFixed(0)}${t('workers.tempWorkers.form.perHour')}`,
+              value: `${formatCurrency(parsedAmount / parsedHours, currency)}${t('workers.tempWorkers.form.perHour')}`,
             },
           ]}
         />
@@ -327,7 +328,12 @@ export function TempWorkerForm({
               >
                 {t('common.selectDate')}
               </Text>
-              <Pressable onPress={() => setShowDatePicker(false)}>
+              <Pressable
+                onPress={() => setShowDatePicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Close date picker"
+                accessible={true}
+              >
                 <IconSymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />
               </Pressable>
             </View>

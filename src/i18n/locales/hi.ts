@@ -174,6 +174,7 @@ export const hi = {
         lab: 'लैब',
         reports: 'रिपोर्ट',
         soilMoisture: 'मिट्टी की नमी',
+        tempWorker: 'अस्थायी\n$t(glossary.worker)',
       },
     },
     tabs: {
@@ -537,7 +538,7 @@ export const hi = {
 
   fertigationForm: {
     title: 'फर्टिगेशन',
-    subtitle: 'उर्वरक अनुप्रयोग लॉग करें',
+    subtitle: '$t(glossary.fertilizer) अनुप्रयोग लॉग करें',
     waterVolume: {
       label: 'पानी की मात्रा',
       placeholder: 'मात्रा दर्ज करें',
@@ -546,14 +547,14 @@ export const hi = {
     },
     fertilizers: {
       label: 'उर्वरक',
-      addFertilizer: 'उर्वरक जोड़ें',
+      addFertilizer: '$t(glossary.fertilizer) जोड़ें',
       namePlaceholder: 'उर्वरक का नाम',
       qtyPlaceholder: 'मात्रा',
       selectUnit: 'इकाई चुनें',
     },
     validation: {
       ready: 'जोड़ने के लिए तैयार',
-      incomplete: 'कम से कम एक उर्वरक और मात्रा जोड़ें',
+      incomplete: 'कम से कम एक $t(glossary.fertilizer) और मात्रा जोड़ें',
     },
   },
 
@@ -1336,6 +1337,55 @@ export const hi = {
       infoCardMessage:
         'दैनिक दर का उपयोग कमाई की गणना के लिए किया जाता है। अग्रिम शेष बकाया ऋण को ट्रैक करता है।',
     },
+    tempWorkers: {
+      sectionTitle: 'अस्थायी $t(glossary.worker)',
+      addTitle: 'अस्थायी $t(glossary.worker) जोड़ें',
+      empty: {
+        title: 'कोई अस्थायी $t(glossary.worker) लॉग नहीं किए गए',
+        subtitle: 'इस खेत के लिए काम पर रखे गए अस्थायी श्रमिकों को लॉग करें।',
+      },
+      form: {
+        title: 'अस्थायी $t(glossary.worker) जोड़ें',
+        sections: {
+          workerDetails: '$t(glossary.worker) विवरण',
+          workDetails: 'कार्य विवरण',
+        },
+        fields: {
+          name: {
+            label: '$t(glossary.worker) का नाम',
+            placeholder: 'उदा., दिहाड़ी मजदूर',
+          },
+          date: {
+            label: 'तारीख',
+          },
+          hoursWorked: {
+            label: 'काम किए गए घंटे',
+            suffix: 'घंटे',
+          },
+          amountPaid: {
+            label: 'भुगतान की गई राशि',
+          },
+          farm: {
+            label: '$t(glossary.farm)',
+            placeholder: 'खेत चुनें (वैकल्पिक)',
+          },
+          notes: {
+            label: 'नोट्स (वैकल्पिक)',
+            placeholder: 'नोट्स जोड़ें...',
+          },
+        },
+        hourlyRate: 'प्रति घंटा दर',
+        perHour: '/घंटा',
+        save: '$t(glossary.worker) जोड़ें',
+        validation: 'कृपया श्रमिक का नाम और भुगतान की गई राशि दर्ज करें।',
+        error: 'अस्थायी श्रमिक प्रविष्टि सहेजने में विफल। कृपया पुनः प्रयास करें।',
+      },
+      card: {
+        hoursShort: '{{hours}} घंटे',
+        deleteTitle: 'प्रविष्टि हटाएं?',
+        deleteBody: 'इससे {{name}} के लिए अस्थायी श्रमिक प्रविष्टि हटा दी जाएगी।',
+      },
+    },
   },
 
   settlePayment: 'भुगतान निपटान करें',
@@ -1680,16 +1730,16 @@ export const hi = {
       setAllFullDay: 'सभी दिनों को पूर्ण दिवस पर सेट करें',
       setAllHalfDay: 'सभी दिनों को आधे दिन पर सेट करें',
       setAllAbsent: 'सभी दिनों को अनुपस्थित पर सेट करें',
-      copyFromYesterday: 'कल की उपस्थिति खाली दिनों पर कॉपी करें',
-      savingAttendance: 'उपस्थिति सहेजी जा रही है',
-      saveAttendance: 'उपस्थिति बदलाव सहेजें',
+      copyFromYesterday: 'कल की $t(glossary.attendance) खाली दिनों पर कॉपी करें',
+      savingAttendance: '$t(glossary.attendance) सहेजी जा रही है',
+      saveAttendance: '$t(glossary.attendance) बदलाव सहेजें',
       dayStatus: '{{day}} {{date}}। {{status}}।',
     },
     errors: {
-      noYesterdayData: 'कल की उपस्थिति जानकारी नहीं मिली',
+      noYesterdayData: 'कल की $t(glossary.attendance) जानकारी नहीं मिली',
     },
     success: {
-      copiedFromYesterday: 'कल की उपस्थिति कॉपी की गई',
+      copiedFromYesterday: 'कल की $t(glossary.attendance) कॉपी की गई',
     },
     empty: {
       noWorkersTitle: 'कोई श्रमिक उपलब्ध नहीं',
@@ -1698,7 +1748,7 @@ export const hi = {
       partialErrorTitle: 'आंशिक त्रुटि',
       partialErrorBody: '{{count}} त्रुटि के साथ सहेजा गया। पुनः लोड हो रहा है…',
       savedTitle: 'सफलता',
-      savedBody: '{{name}} के लिए उपस्थिति सहेजी गई।',
+      savedBody: '{{name}} के लिए $t(glossary.attendance) सहेजी गई।',
       completeTitle: 'पूर्ण',
       completeBody: 'सभी श्रमिक पूर्ण!',
     },
@@ -1724,48 +1774,48 @@ export const hi = {
       comprehensive: 'व्यापक',
       operations: 'संचालन',
       financial: 'वित्तीय',
-    },
-    noFarms: {
-      title: 'कोई खेत नहीं मिला',
-      subtitle: 'रिपोर्ट बनाने के लिए पहले एक खेत जोड़ें',
+      stockUsage: 'स्टॉक उपयोग',
     },
     selectFarmLabel: 'खेत चुनें',
-    selectFarmPlaceholder: 'खेत चुनें',
+    selectFarmPlaceholder: 'एक खेत चुनें',
     dateRange: {
-      label: 'तारीख सीमा',
+      label: 'तारीख़ सीमा',
     },
+    selectFromDate: 'प्रारंभ तिथि चुनें',
+    selectToDate: 'समाप्ति तिथि चुनें',
     reportType: {
       label: 'रिपोर्ट प्रकार',
     },
     loading: {
-      preview: 'पूर्वावलोकन लोड हो रहा है…',
+      preview: 'पूर्वावलोकन तैयार हो रहा है...',
     },
     preview: {
-      title: 'पूर्वावलोकन सारांश',
+      title: 'रिपोर्ट पूर्वावलोकन',
       counts: {
-        irrigations_one: '{{count}} सिंचाई',
-        irrigations_other: '{{count}} सिंचाई',
-        sprays_one: '{{count}} छिड़काव',
-        sprays_other: '{{count}} छिड़काव',
-        harvests_one: '{{count}} कटाई',
-        harvests_other: '{{count}} कटाई',
-        expenses_one: '{{count}} खर्च',
-        expenses_other: '{{count}} खर्च',
+        irrigations: '{{count}} सिंचाई',
+        sprays: '{{count}} छिड़काव',
+        harvests: '{{count}} कटाई',
+        expenses: '{{count}} खर्च',
+        stockUsage: '{{count}} वस्तुएं उपयोग की गईं',
       },
-    },
-    exportAs: 'इस रूप में निर्यात करें',
-    alerts: {
-      exportFailedTitle: 'निर्यात विफल',
-    },
-    errors: {
-      unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ',
     },
     summary: {
       totalRecords: 'कुल रिकॉर्ड',
       waterUsage: 'पानी का उपयोग',
       totalHarvest: 'कुल कटाई',
-      revenue: 'राजस्व',
       netProfit: 'शुद्ध लाभ',
+      stockUsageCount: 'उपयोग की गई वस्तुएं',
+    },
+    exportAs: 'के रूप में निर्यात करें',
+    errors: {
+      unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ। कृपया पुनः प्रयास करें।',
+    },
+    alerts: {
+      exportFailedTitle: 'निर्यात विफल',
+    },
+    noFarms: {
+      title: 'कोई खेत उपलब्ध नहीं',
+      subtitle: 'रिपोर्ट बनाने के लिए एक खेत जोड़ें।',
     },
     export: {
       meta: {

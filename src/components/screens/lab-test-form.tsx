@@ -19,10 +19,9 @@ import { formatDate } from '@/i18n/format';
 import {
   useCreateSoilTest,
   useCreatePetioleTest,
-  SOIL_PARAMETERS,
-  PETIOLE_PARAMETERS,
   getParameterLabel,
 } from '../../hooks/use-lab-tests';
+import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '@/constants/lab-test-parameters';
 import { parseLabTestFromImage, parseLabTestFromText } from '../../utils/pdf-parser';
 import { extractTextFromPDF } from '../../utils/pdf-to-image';
 
