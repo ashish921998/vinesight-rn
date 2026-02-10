@@ -42,7 +42,13 @@ export function FarmSelectModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      presentationStyle="overFullScreen"
+    >
       <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: ui.overlay }}>
         <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Pressable

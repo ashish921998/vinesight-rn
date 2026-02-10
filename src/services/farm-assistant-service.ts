@@ -120,7 +120,7 @@ const QUERY_TYPE_PATTERNS: Array<{ queryType: QueryType; patterns: RegExp[] }> =
       /\blast\b(?!\s+(week|month|year|season|january|february|march|april|may|june|july|august|september|october|november|december))/i,
       /\bmost recent\b/i,
       /\blatest\b/i,
-      /\bprevious\b/i,
+      /\bprevious\s+(record|entry|one)\b/i,
       /आखिरी/i,
       /हालिया/i,
       /नवीनतम/i,
@@ -205,7 +205,7 @@ const CLOSE_BUT_UNSUPPORTED_PATTERNS: Array<{
   },
   {
     pattern:
-      /\b(log|add|create)\b|\brecord\b(?<!\b(?:my|the|a|an|this|that|last|first|show|display|get|see|view)\s+\w*)/i,
+      /\b(add|create|insert|update|delete)\b|\blog\b(?=\s+(?:\d|an?\b|new\b|today\b|yesterday\b|spray\b|irrigation\b|fertigation\b|expense\b))|\brecord\b(?=\s+(?:\d|an?\s+new|new\b))/i,
     messageKey: 'farmAssistant.errors.unsupportedMessages.recordCreation',
     defaultMessage: "I can't create records, but I can show your recent history.",
     suggestionKey: 'farmAssistant.errors.unsupportedSuggestions.showRecentHistory',

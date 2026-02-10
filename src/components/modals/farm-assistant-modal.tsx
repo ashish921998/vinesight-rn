@@ -324,6 +324,7 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
       <Pressable
         onPress={handleClose}
         accessibilityLabel={t('farmAssistant.a11y.closeAssistant')}
+        accessibilityRole="button"
         style={{ flex: 1, backgroundColor: ui.overlay }}
       >
         <KeyboardAvoidingView

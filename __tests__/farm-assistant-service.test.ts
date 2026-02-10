@@ -107,6 +107,14 @@ describe('classifyIntent', () => {
       expect(classifyIntent('last week irrigation', NO_FARMS).queryType).not.toBe('last');
     });
 
+    it('"previous month spray" should NOT be queryType last', () => {
+      expect(classifyIntent('previous month spray', NO_FARMS).queryType).not.toBe('last');
+    });
+
+    it('"previous record" → queryType: last', () => {
+      expect(classifyIntent('previous record', NO_FARMS).queryType).toBe('last');
+    });
+
     it('"most recent irrigation" → queryType: last', () => {
       expect(classifyIntent('most recent irrigation', NO_FARMS).queryType).toBe('last');
     });
@@ -309,6 +317,10 @@ describe('checkUnsupportedIntent', () => {
     const result = checkUnsupportedIntent('How is my crop doing?');
     expect(result).not.toBeNull();
     expect(result!.type).toBe('close_but_unsupported');
+  });
+
+  it('"show spray log for last month" → null (supported read query)', () => {
+    expect(checkUnsupportedIntent('show spray log for last month')).toBeNull();
   });
 
   it('"total irrigation this month" → null (supported)', () => {

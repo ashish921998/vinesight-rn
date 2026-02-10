@@ -295,7 +295,9 @@ export function useFarmAssistant() {
     }
     ExpoSpeechRecognitionModule.getPermissionsAsync()
       .then((result) => {
-        if (result.status === 'denied') {
+        if (result.status === 'granted') {
+          storeSetMicAvailable(true);
+        } else if (result.status === 'denied') {
           storeSetMicAvailable(false);
         }
       })
