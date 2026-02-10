@@ -185,7 +185,11 @@ export default function AIChatScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
-  const parsedFarmId = useMemo(() => (farmId ? parseInt(farmId, 10) : null), [farmId]);
+  const parsedFarmId = useMemo(() => {
+    if (!farmId) return null;
+    const parsed = Number.parseInt(farmId, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  }, [farmId]);
   const { data: farm } = useFarm(parsedFarmId ?? undefined);
   const { data: farms = [] } = useFarms();
   const contextFarm = useMemo(() => {
@@ -475,7 +479,6 @@ export default function AIChatScreen() {
   }, [isLoading, speechLocale, t, voiceInputState]);
 
   const stopVoiceInput = useCallback(() => {
-    hasSubmittedVoiceQueryRef.current = true;
     try {
       ExpoSpeechRecognitionModule.stop();
     } catch (error) {

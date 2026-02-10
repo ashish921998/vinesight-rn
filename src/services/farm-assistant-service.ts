@@ -3,6 +3,7 @@
  * Deterministic-first query engine: local classification → Supabase fetch → local aggregation → local phrasing
  */
 import { supabase } from '@/lib/supabase';
+import i18n from '@/i18n';
 import { TABLES } from '@/types/database';
 import type { Farm } from '@/types/database';
 import type {
@@ -190,30 +191,40 @@ const MONTH_MAP: Record<string, number> = Object.fromEntries(MONTH_ENTRIES) as R
 
 const CLOSE_BUT_UNSUPPORTED_PATTERNS: Array<{
   pattern: RegExp;
-  message: string;
-  suggestion: string;
+  messageKey: string;
+  defaultMessage: string;
+  suggestionKey: string;
+  defaultSuggestion: string;
 }> = [
   {
     pattern: /\bwhat should (i|we)\b.*\bspray\b/i,
-    message: "I can't recommend sprays, but I can show your last spray if you want.",
-    suggestion: 'Show my last spray',
+    messageKey: 'farmAssistant.errors.unsupportedMessages.sprayRecommendation',
+    defaultMessage: "I can't recommend sprays, but I can show your last spray if you want.",
+    suggestionKey: 'farmAssistant.errors.unsupportedSuggestions.showLastSpray',
+    defaultSuggestion: 'Show my last spray',
   },
   {
     pattern:
       /\b(log|add|create)\b|\brecord\b(?<!\b(?:my|the|a|an|this|that|last|first|show|display|get|see|view)\s+\w*)/i,
-    message: "I can't create records, but I can show your recent history.",
-    suggestion: 'Show recent history',
+    messageKey: 'farmAssistant.errors.unsupportedMessages.recordCreation',
+    defaultMessage: "I can't create records, but I can show your recent history.",
+    suggestionKey: 'farmAssistant.errors.unsupportedSuggestions.showRecentHistory',
+    defaultSuggestion: 'Show recent history',
   },
   {
     pattern: /\b(recommend|suggest|should|advice|predict)\b/i,
-    message: "I can't give recommendations, but I can show your farm history.",
-    suggestion: 'Show recent activity',
+    messageKey: 'farmAssistant.errors.unsupportedMessages.recommendation',
+    defaultMessage: "I can't give recommendations, but I can show your farm history.",
+    suggestionKey: 'farmAssistant.errors.unsupportedSuggestions.showRecentActivity',
+    defaultSuggestion: 'Show recent activity',
   },
   {
     pattern: /\bhow is\b.*\b(crop|farm|plant|vine)\b/i,
-    message:
+    messageKey: 'farmAssistant.errors.unsupportedMessages.cropHealth',
+    defaultMessage:
       'I can help with spray, irrigation, fertilizer, or expense history. Try asking about one of those.',
-    suggestion: 'What spray did I do last month?',
+    suggestionKey: 'farmAssistant.errors.unsupportedSuggestions.askSprayLastMonth',
+    defaultSuggestion: 'What spray did I do last month?',
   },
 ];
 
@@ -380,32 +391,64 @@ function parseTimeRange(text: string): { start: Date; end: Date } | null {
 // MARK: - Clarification
 // ============================================================
 
-export function buildClarification(intent: QueryIntent): ClarificationPrompt | null {
+export function buildClarification(
+  intent: QueryIntent,
+  language?: SupportedLanguageCode,
+): ClarificationPrompt | null {
+  const t = i18n.getFixedT(language ?? i18n.language);
   if (intent.confidence >= CONFIDENCE_THRESHOLD) return null;
 
   if (!intent.category) {
     return {
-      question: 'What would you like to know about?',
-      options: ['Spray history', 'Irrigation history', 'Fertilizer history', 'Expense summary'],
+      question: t('farmAssistant.clarification.whatToKnow', {
+        defaultValue: 'What would you like to know about?',
+      }),
+      options: [
+        t('farmAssistant.clarification.sprayHistory', { defaultValue: 'Spray history' }),
+        t('farmAssistant.clarification.irrigationHistory', { defaultValue: 'Irrigation history' }),
+        t('farmAssistant.clarification.fertilizerHistory', { defaultValue: 'Fertilizer history' }),
+        t('farmAssistant.clarification.expenseSummary', { defaultValue: 'Expense summary' }),
+      ],
     };
   }
 
   if (!intent.timeRange) {
     return {
-      question: 'For which time period?',
-      options: ['This week', 'This month', 'This season', 'Last month'],
+      question: t('farmAssistant.clarification.forWhichPeriod', {
+        defaultValue: 'For which time period?',
+      }),
+      options: [
+        t('farmAssistant.clarification.thisWeek', { defaultValue: 'This week' }),
+        t('farmAssistant.clarification.thisMonth', { defaultValue: 'This month' }),
+        t('farmAssistant.clarification.thisSeason', { defaultValue: 'This season' }),
+        t('farmAssistant.clarification.lastMonth', { defaultValue: 'Last month' }),
+      ],
     };
   }
 
   return null;
 }
 
-export function checkUnsupportedIntent(transcript: string): UnsupportedIntentResponse | null {
+export function checkUnsupportedIntent(
+  transcript: string,
+  language?: SupportedLanguageCode,
+): UnsupportedIntentResponse | null {
   const text = transcript.toLowerCase().trim();
+  const t = i18n.getFixedT(language ?? i18n.language);
 
-  for (const { pattern, message, suggestion } of CLOSE_BUT_UNSUPPORTED_PATTERNS) {
+  for (const {
+    pattern,
+    messageKey,
+    defaultMessage,
+    suggestionKey,
+    defaultSuggestion,
+  } of CLOSE_BUT_UNSUPPORTED_PATTERNS) {
     if (pattern.test(text)) {
-      return { type: 'close_but_unsupported', message, suggestion };
+      return {
+        type: 'close_but_unsupported',
+        message: t(messageKey, { defaultValue: defaultMessage }),
+        suggestion: t(suggestionKey, { defaultValue: defaultSuggestion }),
+      };
     }
   }
 

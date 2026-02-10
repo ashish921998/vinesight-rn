@@ -1939,6 +1939,20 @@ export const mr = {
         'मी फक्त $t(glossary.spray), $t(glossary.irrigation), $t(glossary.fertigation) आणि $t(glossary.expense) इतिहासासाठी मदत करू शकतो.',
       tooManyQueries: 'खूप विनंत्या. कृपया थोडा वेळ थांबा.',
       somethingWentWrong: 'काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.',
+      unsupportedMessages: {
+        sprayRecommendation:
+          'मी $t(glossary.spray) सुचवू शकत नाही, पण तुमची शेवटची $t(glossary.spray) दाखवू शकतो.',
+        recordCreation: 'मी नोंदी तयार करू शकत नाही, पण तुमचा अलीकडचा इतिहास दाखवू शकतो.',
+        recommendation: 'मी शिफारस देऊ शकत नाही, पण तुमचा $t(glossary.farm) इतिहास दाखवू शकतो.',
+        cropHealth:
+          'मी $t(glossary.spray), $t(glossary.irrigation), $t(glossary.fertigation) आणि $t(glossary.expense) इतिहासात मदत करू शकतो.',
+      },
+      unsupportedSuggestions: {
+        showLastSpray: 'माझी शेवटची $t(glossary.spray) दाखवा',
+        showRecentHistory: 'अलीकडचा इतिहास दाखवा',
+        showRecentActivity: 'अलीकडची क्रियाकलाप दाखवा',
+        askSprayLastMonth: 'मागील महिन्यात कोणती $t(glossary.spray) केली?',
+      },
     },
     a11y: {
       openAssistant: '$t(glossary.farm) सहाय्यकाला विचारा',

@@ -1932,6 +1932,21 @@ export const hi = {
         'मैं केवल $t(glossary.spray), $t(glossary.irrigation), $t(glossary.fertigation) और $t(glossary.expense) इतिहास में सहायता कर सकता हूं।',
       tooManyQueries: 'बहुत अधिक अनुरोध। कृपया कुछ देर प्रतीक्षा करें।',
       somethingWentWrong: 'कुछ गड़बड़ हो गई। कृपया पुनः प्रयास करें।',
+      unsupportedMessages: {
+        sprayRecommendation:
+          'मैं $t(glossary.spray) की सिफारिश नहीं कर सकता, लेकिन आपकी आखिरी $t(glossary.spray) दिखा सकता हूं।',
+        recordCreation: 'मैं रिकॉर्ड बना नहीं सकता, लेकिन आपकी हाल की हिस्ट्री दिखा सकता हूं।',
+        recommendation:
+          'मैं सिफारिश नहीं दे सकता, लेकिन आपकी $t(glossary.farm) हिस्ट्री दिखा सकता हूं।',
+        cropHealth:
+          'मैं $t(glossary.spray), $t(glossary.irrigation), $t(glossary.fertigation) और $t(glossary.expense) हिस्ट्री में मदद कर सकता हूं।',
+      },
+      unsupportedSuggestions: {
+        showLastSpray: 'मेरी आखिरी $t(glossary.spray) दिखाएं',
+        showRecentHistory: 'हाल की हिस्ट्री दिखाएं',
+        showRecentActivity: 'हाल की गतिविधि दिखाएं',
+        askSprayLastMonth: 'पिछले महीने कौन सा $t(glossary.spray) किया?',
+      },
     },
     a11y: {
       openAssistant: '$t(glossary.farm) सहायक से पूछें',

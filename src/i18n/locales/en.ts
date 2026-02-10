@@ -1928,6 +1928,20 @@ export const en = {
         'I can only help with spray, irrigation, fertilizer, and expense history.',
       tooManyQueries: 'Too many queries. Please wait a moment.',
       somethingWentWrong: 'Something went wrong. Please try again.',
+      unsupportedMessages: {
+        sprayRecommendation:
+          "I can't recommend sprays, but I can show your last spray if you want.",
+        recordCreation: "I can't create records, but I can show your recent history.",
+        recommendation: "I can't give recommendations, but I can show your farm history.",
+        cropHealth:
+          'I can help with spray, irrigation, fertilizer, or expense history. Try asking about one of those.',
+      },
+      unsupportedSuggestions: {
+        showLastSpray: 'Show my last spray',
+        showRecentHistory: 'Show recent history',
+        showRecentActivity: 'Show recent activity',
+        askSprayLastMonth: 'What spray did I do last month?',
+      },
     },
     a11y: {
       openAssistant: 'Ask farm assistant',

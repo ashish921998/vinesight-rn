@@ -11,6 +11,7 @@ import {
   ExpoSpeechRecognitionModule as _SpeechModule,
   useSpeechRecognitionEvent,
 } from 'expo-speech-recognition';
+import { useTranslation } from 'react-i18next';
 import { useFarmAssistantStore } from '@/stores/farm-assistant-store';
 import { useFarms } from './use-farms';
 import { useLanguageStore } from '@/stores/language-store';
@@ -47,6 +48,7 @@ const LOCALE_MAP: Record<SupportedLanguageCode, string> = {
 
 export function useFarmAssistant() {
   const { data: farms = [] } = useFarms();
+  const { t } = useTranslation();
   const language = useLanguageStore((s) => s.language) ?? 'en';
   const speechLocale = LOCALE_MAP[language] ?? 'en-IN';
 
@@ -128,10 +130,11 @@ export function useFarmAssistant() {
       }
 
       if (isRateLimited()) {
-        storeSetError('Too many queries. Please wait a moment.');
+        const message = t('farmAssistant.errors.tooManyQueries');
+        storeSetError(message);
         telemetry.capture('farm_assistant_error', {
           error_type: 'rate_limited',
-          message: 'Too many queries. Please wait a moment.',
+          message,
         });
         return;
       }
@@ -146,7 +149,7 @@ export function useFarmAssistant() {
       });
 
       try {
-        const unsupported = checkUnsupportedIntent(text);
+        const unsupported = checkUnsupportedIntent(text, language);
         if (unsupported) {
           storeSetError(unsupported.message);
           telemetry.capture('farm_assistant_error', {
@@ -159,7 +162,7 @@ export function useFarmAssistant() {
         const intent = classifyIntent(text, farms);
         storeSetIntent(intent);
 
-        const clarification = buildClarification(intent);
+        const clarification = buildClarification(intent, language);
         if (clarification) {
           storeSetClarification(clarification);
           telemetry.capture('farm_assistant_clarification_triggered', {
@@ -170,8 +173,7 @@ export function useFarmAssistant() {
         }
 
         if (!intent.category) {
-          const noCategMsg =
-            "I couldn't understand that question. I can help with spray, irrigation, fertigation, and expense history.";
+          const noCategMsg = t('farmAssistant.errors.unsupportedCategory');
           storeSetError(noCategMsg);
           telemetry.capture('farm_assistant_error', {
             error_type: 'no_category',
@@ -204,7 +206,7 @@ export function useFarmAssistant() {
         });
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+          err instanceof Error ? err.message : t('farmAssistant.errors.somethingWentWrong');
         storeSetError(message);
         telemetry.capture('farm_assistant_error', {
           error_type: 'query_failed',
@@ -223,6 +225,7 @@ export function useFarmAssistant() {
       storeSetIntent,
       storeSetClarification,
       storeSetAnswer,
+      t,
     ],
   );
 
@@ -275,10 +278,11 @@ export function useFarmAssistant() {
     if (event.error === 'aborted') {
       return;
     }
-    storeSetError(event.message ?? 'Voice recognition failed. Try typing your question.');
+    const message = event.message ?? t('ai.voice.unavailableBody');
+    storeSetError(message);
     telemetry.capture('farm_assistant_error', {
       error_type: 'voice_recognition',
-      message: event.message,
+      message,
       error_code: event.error,
     });
   });
@@ -336,11 +340,11 @@ export function useFarmAssistant() {
       console.warn('Speech recognition start failed:', err);
       storeSetStatus('idle');
       storeSetMicAvailable(false);
-      storeSetError('Voice recognition is not available on this device.');
+      storeSetError(t('ai.voice.unavailableBody'));
     } finally {
       isStartingListeningRef.current = false;
     }
-  }, [speechLocale, storeSetMicAvailable, storeSetStatus, storeSetTranscript, storeSetError]);
+  }, [speechLocale, storeSetMicAvailable, storeSetStatus, storeSetTranscript, storeSetError, t]);
 
   const stopListening = useCallback(() => {
     try {
@@ -378,7 +382,7 @@ export function useFarmAssistant() {
         });
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+          err instanceof Error ? err.message : t('farmAssistant.errors.somethingWentWrong');
         storeSetError(message);
         telemetry.capture('farm_assistant_error', {
           error_type: 'query_failed',
@@ -395,6 +399,7 @@ export function useFarmAssistant() {
       storeSetTranscript,
       storeSetAnswer,
       storeSetError,
+      t,
     ],
   );
 
