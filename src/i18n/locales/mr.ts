@@ -1884,6 +1884,48 @@ export const mr = {
       },
     },
   },
+
+  farmAssistant: {
+    title: '$t(glossary.farm) सहाय्यक',
+    askAboutFarmData: 'तुमच्या $t(glossary.farm)ाच्या डेटाबद्दल विचारा...',
+    listening: 'ऐकत आहे...',
+    tryAsking: 'असे विचारून पहा',
+    lookingUpRecords: 'तुमच्या नोंदी शोधत आहे...',
+    yourQuestion: 'तुमचा प्रश्न',
+    askAnotherQuestion: 'आणखी एक प्रश्न विचारा',
+    tryAgain: 'पुन्हा प्रयत्न करा',
+    showingRecords: '{{total}} पैकी {{shown}} नोंदी दाखवत आहे',
+    suggestedQuestions: {
+      sprayLastMonth: 'मागील महिन्यात कोणती $t(glossary.spray) केली?',
+      totalIrrigationSeason: 'या हंगामातील एकूण $t(glossary.irrigation)?',
+      lastFertilizer: 'शेवटचे $t(glossary.fertilizer) कधी दिले?',
+      spendThisMonth: 'या महिन्यात किती $t(glossary.expense) झाला?',
+    },
+    clarification: {
+      whatToKnow: 'तुम्हाला कशाबद्दल जाणून घ्यायचे आहे?',
+      forWhichPeriod: 'कोणत्या कालावधीसाठी?',
+      sprayHistory: '$t(glossary.spray) इतिहास',
+      irrigationHistory: '$t(glossary.irrigation) इतिहास',
+      fertilizerHistory: '$t(glossary.fertigation) इतिहास',
+      expenseSummary: '$t(glossary.expense) सारांश',
+      thisWeek: 'हा आठवडा',
+      thisMonth: 'हा महिना',
+      thisSeason: 'हा हंगाम',
+      lastMonth: 'मागील महिना',
+    },
+    errors: {
+      unsupportedCategory:
+        'मी फक्त $t(glossary.spray), $t(glossary.irrigation), $t(glossary.fertigation) आणि $t(glossary.expense) इतिहासासाठी मदत करू शकतो.',
+      tooManyQueries: 'खूप विनंत्या. कृपया थोडा वेळ थांबा.',
+      somethingWentWrong: 'काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.',
+    },
+    a11y: {
+      openAssistant: '$t(glossary.farm) सहाय्यकाला विचारा',
+      closeAssistant: '$t(glossary.farm) सहाय्यक बंद करा',
+      submitQuery: 'प्रश्न पाठवा',
+      selectOption: 'पर्याय निवडा: {{option}}',
+    },
+  },
 } as const;
 
 export type MrTranslations = typeof mr;

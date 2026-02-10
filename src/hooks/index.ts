@@ -198,6 +198,9 @@ export {
   type SectionName,
 } from './use-soil-profiles';
 
+// Farm Assistant
+export { useFarmAssistant } from './use-farm-assistant';
+
 // UI Hooks
 export { useFabBottomInset } from './use-fab-bottom-inset';
 export { useTabBarInset } from './use-tab-bar-inset';

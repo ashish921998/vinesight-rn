@@ -9,3 +9,4 @@ export { ActivityLogCard } from './activity-log-card';
 export { WorkerCard } from './worker-card';
 export { TaskRow } from './task-row';
 export { TempWorkerCard } from './temp-worker-card';
+export { AssistantAnswerCard } from './assistant-answer-card';

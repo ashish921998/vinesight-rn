@@ -26,6 +26,9 @@ export * from './onboarding';
 // AI types
 export * from './ai';
 
+// Voice Assistant types
+export * from './voice-assistant';
+
 // Re-export commonly used types for convenience
 export type {
   Farm,

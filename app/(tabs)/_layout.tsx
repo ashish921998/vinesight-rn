@@ -12,6 +12,9 @@ import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { FloatingAssistantButton } from '@/components/ui/floating-assistant-button';
+import { FarmAssistantModal } from '@/components/modals/farm-assistant-modal';
+import { useFarmAssistant } from '@/hooks/use-farm-assistant';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -22,6 +25,7 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const isAndroid = Platform.OS === 'android';
   const { m3, isDark } = useThemeTokens();
+  const farmAssistant = useFarmAssistant();
   const defaultHeaderOptions = useMemo(
     () => ({
       headerStyle: {
@@ -169,6 +173,12 @@ export default function TabLayout() {
           />
           <Tabs.Screen name="farms" options={{ href: null }} />
         </Tabs>
+        <FloatingAssistantButton onPress={farmAssistant.openModal} />
+        <FarmAssistantModal
+          visible={farmAssistant.isModalVisible}
+          onClose={farmAssistant.closeModal}
+          controller={farmAssistant}
+        />
       </>
     );
   }
@@ -251,6 +261,12 @@ export default function TabLayout() {
           <Label>{t('tabs.farms')}</Label>
         </NativeTabs.Trigger>
       </NativeTabs>
+      <FloatingAssistantButton onPress={farmAssistant.openModal} />
+      <FarmAssistantModal
+        visible={farmAssistant.isModalVisible}
+        onClose={farmAssistant.closeModal}
+        controller={farmAssistant}
+      />
     </>
   );
 }

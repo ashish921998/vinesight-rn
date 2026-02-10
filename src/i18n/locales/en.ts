@@ -1874,6 +1874,48 @@ export const en = {
       },
     },
   },
+
+  farmAssistant: {
+    title: 'Farm Assistant',
+    askAboutFarmData: 'Ask about your farm data...',
+    listening: 'Listening...',
+    tryAsking: 'Try asking',
+    lookingUpRecords: 'Looking up your records...',
+    yourQuestion: 'Your question',
+    askAnotherQuestion: 'Ask another question',
+    tryAgain: 'Try again',
+    showingRecords: 'Showing {{shown}} of {{total}} records',
+    suggestedQuestions: {
+      sprayLastMonth: 'What spray did I do last month?',
+      totalIrrigationSeason: 'Total irrigation this season?',
+      lastFertilizer: 'Last fertilizer application?',
+      spendThisMonth: 'How much did I spend this month?',
+    },
+    clarification: {
+      whatToKnow: 'What would you like to know about?',
+      forWhichPeriod: 'For which time period?',
+      sprayHistory: 'Spray history',
+      irrigationHistory: 'Irrigation history',
+      fertilizerHistory: 'Fertilizer history',
+      expenseSummary: 'Expense summary',
+      thisWeek: 'This week',
+      thisMonth: 'This month',
+      thisSeason: 'This season',
+      lastMonth: 'Last month',
+    },
+    errors: {
+      unsupportedCategory:
+        'I can only help with spray, irrigation, fertigation, and expense history.',
+      tooManyQueries: 'Too many queries. Please wait a moment.',
+      somethingWentWrong: 'Something went wrong. Please try again.',
+    },
+    a11y: {
+      openAssistant: 'Ask farm assistant',
+      closeAssistant: 'Close farm assistant',
+      submitQuery: 'Submit query',
+      selectOption: 'Select option: {{option}}',
+    },
+  },
 } as const;
 
 export type EnTranslations = typeof en;
