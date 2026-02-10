@@ -61,6 +61,9 @@ export {
   // Daily Notes
   useDailyNoteByDate,
   useUpsertDailyNote,
+  // Recent inputs
+  useRecentSprayChemicals,
+  useRecentFertigationItems,
 } from './use-records';
 
 // Worker Hooks

@@ -20,6 +20,7 @@ import {
   type ExpenseRecord,
   type ExpenseRecordInsert,
   type DailyNoteRecord,
+  type FertilizerItem,
 } from '../types';
 import { resolveSeasonIdForDate } from '../lib/season-context';
 
@@ -685,6 +686,106 @@ export function useUpsertDailyNote() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.all,
       });
+    },
+  });
+}
+
+export interface RecentInputItem {
+  name: string;
+  unit: string;
+  quantity?: number | null;
+}
+
+function dedupeRecentItems(items: RecentInputItem[], limit = 12): RecentInputItem[] {
+  const seen = new Set<string>();
+  const result: RecentInputItem[] = [];
+  for (const item of items) {
+    const key = `${item.name.trim().toLowerCase()}::${item.unit.trim().toLowerCase()}`;
+    if (!item.name.trim() || !item.unit.trim() || seen.has(key)) continue;
+    seen.add(key);
+    result.push(item);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+function parseSprayChemicalString(value: string | null | undefined): RecentInputItem[] {
+  if (!value) return [];
+  const matches = [...value.matchAll(/([^,(]+)\s*\(([\d.]+)\s*([^)]+)\)/g)];
+  if (matches.length > 0) {
+    return matches.map((match) => {
+      const parsedQuantity = Number.parseFloat(match[2] ?? '');
+      return {
+        name: match[1]?.trim() ?? '',
+        quantity: Number.isFinite(parsedQuantity) ? parsedQuantity : null,
+        unit: match[3]?.trim() ?? '',
+      };
+    });
+  }
+
+  return value
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((name) => ({ name, unit: 'gm/L', quantity: null }));
+}
+
+export function useRecentSprayChemicals(farmId?: number, limit = 12) {
+  return useQuery({
+    queryKey: [...queryKeys.sprayRecords.lists(), 'recent_chemicals', { farmId: farmId ?? null }],
+    queryFn: async (): Promise<RecentInputItem[]> => {
+      let query = supabase
+        .from(TABLES.SPRAY_RECORDS)
+        .select('chemical,date')
+        .order('date', { ascending: false })
+        .limit(80);
+
+      if (farmId !== undefined) {
+        query = query.eq('farm_id', farmId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const parsed = (data ?? []).flatMap((row) => parseSprayChemicalString(row.chemical));
+      return dedupeRecentItems(parsed, limit);
+    },
+  });
+}
+
+export function useRecentFertigationItems(farmId?: number, limit = 12) {
+  return useQuery({
+    queryKey: [
+      ...queryKeys.fertigationRecords.lists(),
+      'recent_fertilizers',
+      { farmId: farmId ?? null },
+    ],
+    queryFn: async (): Promise<RecentInputItem[]> => {
+      let query = supabase
+        .from(TABLES.FERTIGATION_RECORDS)
+        .select('fertilizers,date')
+        .order('date', { ascending: false })
+        .limit(80);
+
+      if (farmId !== undefined) {
+        query = query.eq('farm_id', farmId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const parsed: RecentInputItem[] = [];
+      for (const row of data ?? []) {
+        const fertilizers = row.fertilizers as FertilizerItem[] | null;
+        for (const fertilizer of fertilizers ?? []) {
+          parsed.push({
+            name: fertilizer.name.trim(),
+            unit: fertilizer.unit.trim(),
+            quantity: fertilizer.quantity ?? null,
+          });
+        }
+      }
+      return dedupeRecentItems(parsed, limit);
     },
   });
 }

@@ -27,6 +27,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useNotificationStore } from '@/stores';
+import { stripTaskPlanFromDescription } from '@/utils/task-plan';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
@@ -121,7 +122,7 @@ export default function TaskForm({
       if (shouldUpdate) {
         if (editingTask) {
           setTitle(editingTask.title);
-          setDescription(editingTask.description || '');
+          setDescription(stripTaskPlanFromDescription(editingTask.description || ''));
           setType(editingTask.type);
           setPriority(editingTask.priority);
           setFarmId(editingTask.farm_id);
@@ -188,7 +189,7 @@ export default function TaskForm({
     const taskData = {
       farm_id: farmId,
       title: title.trim(),
-      description: description.trim() || null,
+      description: stripTaskPlanFromDescription(description).trim() || null,
       type,
       status: 'pending' as const,
       priority,
@@ -285,25 +286,34 @@ export default function TaskForm({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'space-between',
             }}
           >
-            <Pressable onPress={onClose} disabled={isLoading}>
+            <Pressable onPress={onClose} disabled={isLoading} style={{ minWidth: 72 }}>
               <Text style={{ color: colors.primary[600], fontSize: fontSize.base }}>
                 {t('common.cancel')}
               </Text>
             </Pressable>
-            <Text
-              style={{
-                fontSize: fontSize.lg,
-                fontWeight: fontWeight.semibold,
-                color: colors.surface[900],
-              }}
-              numberOfLines={1}
+            <View
+              style={{ flex: 1, minWidth: 0, paddingHorizontal: spacing[2], alignItems: 'center' }}
             >
-              {isEditing ? t('tasks.form.editTitle') : t('tasks.form.addTitle')}
-            </Text>
-            <Pressable onPress={handleSubmit} disabled={isLoading}>
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                  textAlign: 'center',
+                }}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {isEditing ? t('tasks.form.editTitle') : t('tasks.form.addTitle')}
+              </Text>
+            </View>
+            <Pressable
+              onPress={handleSubmit}
+              disabled={isLoading}
+              style={{ minWidth: 72, alignItems: 'flex-end' }}
+            >
               <Text
                 style={{
                   fontSize: fontSize.base,

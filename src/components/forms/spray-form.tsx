@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput, type NumericInputHandle } from './form-field';
@@ -17,6 +17,21 @@ export interface ChemicalEntry {
   unit: ChemicalUnit;
 }
 
+const DEFAULT_CHEMICAL_UNIT: ChemicalUnit = 'gm/L';
+
+function isChemicalUnit(value: string): value is ChemicalUnit {
+  return CHEMICAL_UNITS.includes(value as ChemicalUnit);
+}
+
+function resolveChemicalUnit(
+  unit: string | null | undefined,
+  fallback: ChemicalUnit = DEFAULT_CHEMICAL_UNIT,
+): ChemicalUnit {
+  const normalized = unit?.trim();
+  if (normalized && isChemicalUnit(normalized)) return normalized;
+  return fallback;
+}
+
 function generateId(): string {
   return `chem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
@@ -27,13 +42,20 @@ export interface SprayFormData {
   notes?: string;
 }
 
+export interface SprayQuickAddItem {
+  name: string;
+  unit?: string | null;
+  quantity?: number | null;
+}
+
 interface SprayFormProps {
   data: SprayFormData;
   onChange: (data: SprayFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
+  quickAddItems?: SprayQuickAddItem[];
 }
 
-export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
+export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: SprayFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
@@ -102,6 +124,31 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
   const removeChemical = (id: string) => {
     const newChemicals = data.chemicals.filter((c) => c.id !== id);
     onChange({ ...data, chemicals: newChemicals });
+  };
+
+  const addQuickChemical = (item: SprayQuickAddItem) => {
+    if (data.chemicals.length >= 10) return;
+    const validatedUnit = resolveChemicalUnit(item.unit);
+    const normalizedName = item.name.trim().toLowerCase();
+    const alreadyExists = data.chemicals.some(
+      (chemical) =>
+        chemical.name.trim().toLowerCase() === normalizedName &&
+        chemical.unit.trim().toLowerCase() === validatedUnit.trim().toLowerCase(),
+    );
+    if (alreadyExists) return;
+
+    onChange({
+      ...data,
+      chemicals: [
+        ...data.chemicals,
+        {
+          id: generateId(),
+          name: item.name.trim(),
+          quantity: item.quantity ?? undefined,
+          unit: validatedUnit,
+        },
+      ],
+    });
   };
 
   const focusFirstChemicalName = () => {
@@ -177,6 +224,48 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
 
       {/* Chemicals Section */}
       <View style={{ marginTop: spacing[2] }}>
+        {quickAddItems.length > 0 ? (
+          <View style={{ marginBottom: spacing[3] }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[500],
+                marginBottom: spacing[2],
+                textTransform: 'uppercase',
+                letterSpacing: 0.4,
+              }}
+            >
+              {t('sprayForm.quickAdd')}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {quickAddItems.map((item, index) => (
+                <Pressable
+                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  onPress={() => addQuickChemical(item)}
+                  style={{
+                    marginRight: spacing[2],
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colors.surface[100],
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                  }}
+                >
+                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                    {item.name}
+                  </Text>
+                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                    {item.quantity ? `${item.quantity} ` : ''}
+                    {item.unit ?? 'gm/L'}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
           <View style={{ marginRight: 6 }}>
             <Symbol name="flask" size={16} color={colors.primary[600]} />
@@ -199,6 +288,7 @@ export function SprayForm({ data, onChange, onInputFocus }: SprayFormProps) {
             chemical={chemical}
             index={index}
             chemicalCount={data.chemicals.length}
+            quickAddItems={quickAddItems}
             onUpdate={(updates) => updateChemical(chemical.id, updates)}
             onRemove={() => removeChemical(chemical.id)}
             showRemove={data.chemicals.length > 1}
@@ -270,6 +360,7 @@ interface ChemicalRowProps {
   chemical: ChemicalEntry;
   index: number;
   chemicalCount: number;
+  quickAddItems: SprayQuickAddItem[];
   onUpdate: (updates: Partial<ChemicalEntry>) => void;
   onRemove: () => void;
   showRemove: boolean;
@@ -283,6 +374,7 @@ function ChemicalRow({
   chemical,
   index,
   chemicalCount,
+  quickAddItems,
   onUpdate,
   onRemove,
   showRemove,
@@ -300,6 +392,20 @@ function ChemicalRow({
   );
   const [isNameFocused, setIsNameFocused] = useState(false);
   const [isQuantityFocused, setIsQuantityFocused] = useState(false);
+
+  const nameSuggestions = useMemo(() => {
+    const query = chemical.name.trim().toLowerCase();
+    if (!query) return [];
+
+    return quickAddItems
+      .filter((item) => item.name.trim().toLowerCase().includes(query))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 6);
+  }, [chemical.name, quickAddItems]);
+  const showNoMatchHint =
+    isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length === 0;
+  const shouldShowSuggestions =
+    isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length > 0;
 
   const handleQuantityChange = (text: string) => {
     const cleanText = text.replace(/[^0-9.]/g, '');
@@ -328,6 +434,19 @@ function ChemicalRow({
     }
   };
 
+  const applySuggestion = (item: SprayQuickAddItem) => {
+    const unit = resolveChemicalUnit(item.unit, chemical.unit);
+    onUpdate({
+      name: item.name,
+      unit,
+      quantity: chemical.quantity ?? item.quantity ?? undefined,
+    });
+    if (chemical.quantity === undefined && item.quantity !== null && item.quantity !== undefined) {
+      setQuantityText(item.quantity.toString());
+    }
+    quantityRef.current?.focus();
+  };
+
   return (
     <View
       style={{
@@ -342,33 +461,93 @@ function ChemicalRow({
       }}
     >
       {/* Chemical Name Row */}
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <TextInput
-          ref={nameRef}
-          style={{
-            flex: 1,
-            borderRadius: borderRadius.lg,
-            paddingHorizontal: spacing[3],
-            paddingVertical: 10,
-            fontSize: fontSize.base,
-            color: colors.surface[900],
-            backgroundColor: colors.surface[100],
-            borderWidth: 1,
-            borderColor: isNameFocused ? m3.colorScheme.tertiary : colors.surface[200],
-          }}
-          placeholder={t('sprayForm.chemicals.namePlaceholder')}
-          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-          value={chemical.name}
-          onChangeText={(name) => onUpdate({ name })}
-          onFocus={(event) => {
-            setIsNameFocused(true);
-            onInputFocus?.(event);
-          }}
-          onBlur={() => setIsNameFocused(false)}
-          onSubmitEditing={handleNameSubmit}
-          returnKeyType="next"
-          blurOnSubmit={false}
-        />
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+        <View style={{ flex: 1, position: 'relative' }}>
+          <TextInput
+            ref={nameRef}
+            style={{
+              borderRadius: borderRadius.lg,
+              paddingHorizontal: spacing[3],
+              paddingVertical: 10,
+              fontSize: fontSize.base,
+              color: colors.surface[900],
+              backgroundColor: colors.surface[100],
+              borderWidth: 1,
+              borderColor: isNameFocused ? m3.colorScheme.tertiary : colors.surface[200],
+            }}
+            placeholder={t('sprayForm.chemicals.namePlaceholder')}
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            value={chemical.name}
+            onChangeText={(name) => onUpdate({ name })}
+            onFocus={(event) => {
+              setIsNameFocused(true);
+              onInputFocus?.(event);
+            }}
+            onBlur={() => setIsNameFocused(false)}
+            onSubmitEditing={handleNameSubmit}
+            returnKeyType="next"
+            blurOnSubmit={false}
+          />
+
+          {shouldShowSuggestions ? (
+            <View
+              style={{
+                position: 'absolute',
+                top: 52,
+                left: 0,
+                right: 0,
+                backgroundColor: colors.white,
+                borderRadius: borderRadius.lg,
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+                maxHeight: 208,
+                overflow: 'hidden',
+                zIndex: 20,
+                elevation: 6,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.12,
+                shadowRadius: 8,
+              }}
+            >
+              <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+                {nameSuggestions.map((item, suggestionIndex) => (
+                  <Pressable
+                    key={`${item.name}-${item.unit ?? 'unit'}-${suggestionIndex}`}
+                    onPress={() => applySuggestion(item)}
+                    style={{
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[2],
+                      borderTopWidth: suggestionIndex === 0 ? 0 : 1,
+                      borderTopColor: colors.surface[100],
+                    }}
+                  >
+                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                      {item.name}
+                    </Text>
+                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                      {item.quantity ? `${item.quantity} ` : ''}
+                      {item.unit ?? 'gm/L'}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
+
+          {showNoMatchHint ? (
+            <Text
+              style={{
+                marginTop: spacing[1],
+                marginLeft: spacing[1],
+                fontSize: fontSize.xs,
+                color: colors.surface[600],
+              }}
+            >
+              {t('sprayForm.noMatchesHint')}
+            </Text>
+          ) : null}
+        </View>
         {showRemove && (
           <Pressable
             onPress={onRemove}

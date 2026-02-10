@@ -15,6 +15,7 @@ import {
 } from '../ui/form-components';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { ICON_REGISTRY } from '@/constants/icon-registry';
 
 interface Props {
   visible?: boolean;
@@ -24,7 +25,11 @@ interface Props {
 }
 
 const ITEM_TYPES = [
-  { value: 'fertilizer' as WarehouseItemType, label: 'Fertilizer', icon: 'flask' as const },
+  {
+    value: 'fertilizer' as WarehouseItemType,
+    label: 'Fertilizer',
+    icon: ICON_REGISTRY.fertigation,
+  },
   { value: 'spray' as WarehouseItemType, label: 'Spray', icon: 'spraycan' as const },
 ];
 

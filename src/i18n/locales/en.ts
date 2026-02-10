@@ -509,6 +509,11 @@ export const en = {
       body_one: '{{count}} log failed to save. Please review and try again.',
       body_other: '{{count}} logs failed to save. Please review and try again.',
     },
+    taskCompletionLinkFailed: 'Logs were saved, but the source task could not be marked complete.',
+    plannedSprayInputs: 'Planned spray inputs',
+    plannedFertilizers: 'Planned fertilizers',
+    plannedItemNamePlaceholder: 'Name',
+    plannedItemQtyPlaceholder: 'Qty',
     taskForm: {
       titleLabel: 'Title *',
       titlePlaceholder: 'Enter task title',
@@ -557,6 +562,8 @@ export const en = {
       qtyPlaceholder: 'Qty',
       selectUnit: 'Select unit',
     },
+    quickAdd: 'Quick Add',
+    noMatchesHint: 'No matches. Continue with custom chemical name.',
     validation: {
       ready: 'Ready to add',
       incomplete: 'Add water volume and at least one chemical',
@@ -579,6 +586,8 @@ export const en = {
       qtyPlaceholder: 'Qty',
       selectUnit: 'Select unit',
     },
+    quickAdd: 'Quick Add',
+    noMatchesHint: 'No matches. Continue with custom fertilizer name.',
     validation: {
       ready: 'Ready to add',
       incomplete: 'Add at least one fertilizer with quantity',
@@ -807,6 +816,8 @@ export const en = {
     feet: 'ft',
     mmPerHour: 'mm/hr',
     kilogramPerMeterCubed: 'kg/m³',
+    gmPerLiter: 'gm/L',
+    kgPerAcre: 'kg/acre',
   },
 
   locationPicker: {
@@ -1254,6 +1265,7 @@ export const en = {
     cta: {
       addTask: 'Add task',
     },
+    logNow: 'Log now',
     dueDate: {
       none: 'No due date',
       today: 'Today',

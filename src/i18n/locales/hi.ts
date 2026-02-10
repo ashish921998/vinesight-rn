@@ -509,6 +509,12 @@ export const hi = {
       body_one: '{{count}} लॉग सहेजने में विफल। कृपया समीक्षा करें और पुनः प्रयास करें।',
       body_other: '{{count}} लॉग सहेजने में विफल। कृपया समीक्षा करें और पुनः प्रयास करें।',
     },
+    taskCompletionLinkFailed:
+      'लॉग सहेज लिए गए, लेकिन सोर्स कार्य को पूर्ण चिह्नित नहीं किया जा सका।',
+    plannedSprayInputs: 'योजनाबद्ध छिड़काव इनपुट',
+    plannedFertilizers: 'योजनाबद्ध उर्वरक',
+    plannedItemNamePlaceholder: 'नाम',
+    plannedItemQtyPlaceholder: 'मात्रा',
     taskForm: {
       titleLabel: 'शीर्षक *',
       titlePlaceholder: 'कार्य शीर्षक दर्ज करें',
@@ -557,6 +563,8 @@ export const hi = {
       qtyPlaceholder: 'मात्रा',
       selectUnit: 'इकाई चुनें',
     },
+    quickAdd: 'त्वरित जोड़',
+    noMatchesHint: 'कोई मिलान नहीं मिला। कस्टम रसायन नाम के साथ जारी रखें।',
     validation: {
       ready: 'जोड़ने के लिए तैयार',
       incomplete: 'पानी की मात्रा और कम से कम एक रसायन जोड़ें',
@@ -579,6 +587,8 @@ export const hi = {
       qtyPlaceholder: 'मात्रा',
       selectUnit: 'इकाई चुनें',
     },
+    quickAdd: 'त्वरित जोड़',
+    noMatchesHint: 'कोई मिलान नहीं मिला। कस्टम उर्वरक नाम के साथ जारी रखें।',
     validation: {
       ready: 'जोड़ने के लिए तैयार',
       incomplete: 'कम से कम एक $t(glossary.fertigation) और मात्रा जोड़ें',
@@ -806,6 +816,8 @@ export const hi = {
     feet: 'फीट',
     mmPerHour: 'मिमी/घंटा',
     kilogramPerMeterCubed: 'किग्रा/मी³',
+    gmPerLiter: 'gm/L',
+    kgPerAcre: 'kg/acre',
   },
 
   locationPicker: {
@@ -1257,6 +1269,7 @@ export const hi = {
     cta: {
       addTask: 'कार्य जोड़ें',
     },
+    logNow: 'अभी लॉग करें',
     dueDate: {
       none: 'कोई नियत तारीख नहीं',
       today: 'आज',

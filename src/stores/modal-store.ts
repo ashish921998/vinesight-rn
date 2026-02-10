@@ -9,6 +9,7 @@ import type {
   ExpenseRecord,
 } from '@/types';
 import type { TaskReminder } from '@/types/task';
+import type { PlannedInputItem } from '@/types/task';
 import type { WarehouseItem, Worker } from '@/types';
 import type { LogTypeId } from '@/constants/calculator-models';
 
@@ -25,6 +26,11 @@ export type AddEntryRoutePayload = {
   initialFarmId?: number | null;
   initialLogType?: LogTypeId | null;
   editingTask?: TaskReminder | null;
+  sourceTaskId?: number | null;
+  logPrefill?: {
+    sprayChemicals?: PlannedInputItem[];
+    fertigationItems?: PlannedInputItem[];
+  } | null;
 };
 
 export type EditActivityRoutePayload = {

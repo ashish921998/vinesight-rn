@@ -10,6 +10,7 @@ export {
   createEmptySprayFormData,
   type SprayFormData,
   type ChemicalEntry,
+  type SprayQuickAddItem,
 } from './spray-form';
 
 export {
@@ -32,4 +33,5 @@ export {
   createEmptyFertigationFormData,
   type FertigationFormData,
   type FertilizerEntry,
+  type FertigationQuickAddItem,
 } from './fertigation-form';

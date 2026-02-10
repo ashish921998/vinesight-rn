@@ -50,6 +50,8 @@ export default function AddEntryRoute() {
         initialFarmId={initialFarmId ?? addEntry?.initialFarmId ?? null}
         initialLogType={initialLogType ?? null}
         editingTask={addEntry?.editingTask ?? null}
+        sourceTaskId={addEntry?.sourceTaskId ?? null}
+        initialLogPrefill={addEntry?.logPrefill ?? null}
       />
     </>
   );

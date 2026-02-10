@@ -505,6 +505,12 @@ export const mr = {
       body_one: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
       body_other: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
     },
+    taskCompletionLinkFailed:
+      'नोंदी जतन झाल्या, पण स्रोत $t(glossary.task) पूर्ण म्हणून चिन्हांकित करता आले नाही.',
+    plannedSprayInputs: 'नियोजित $t(glossary.spray) इनपुट',
+    plannedFertilizers: 'नियोजित खते',
+    plannedItemNamePlaceholder: 'नाव',
+    plannedItemQtyPlaceholder: 'प्रमाण',
     taskForm: {
       titleLabel: 'शीर्षक *',
       titlePlaceholder: '$t(glossary.task) शीर्षक प्रविष्ट करा',
@@ -557,6 +563,8 @@ export const mr = {
       qtyPlaceholder: 'प्रमाण',
       selectUnit: 'युनिट निवडा',
     },
+    quickAdd: 'जलद जोडा',
+    noMatchesHint: 'जुळणारे सापडले नाही. सानुकूल रसायन नावासह पुढे जा.',
     validation: {
       ready: 'जोडण्यासाठी तयार',
       incomplete: 'पाणी मात्रा आणि किमान एक रसायन जोडा',
@@ -579,6 +587,8 @@ export const mr = {
       qtyPlaceholder: 'प्रमाण',
       selectUnit: 'युनिट निवडा',
     },
+    quickAdd: 'जलद जोडा',
+    noMatchesHint: 'जुळणारे सापडले नाही. सानुकूल $t(glossary.fertigation) नावासह पुढे जा.',
     validation: {
       ready: 'जोडण्यासाठी तयार',
       incomplete: 'किमान एक $t(glossary.fertigation) आणि मात्रा जोडा',
@@ -809,6 +819,8 @@ export const mr = {
     feet: 'फीट',
     mmPerHour: 'मिमी/तास',
     kilogramPerMeterCubed: 'किग्रा/मी³',
+    gmPerLiter: 'gm/L',
+    kgPerAcre: 'kg/acre',
   },
 
   locationPicker: {
@@ -1262,6 +1274,7 @@ export const mr = {
     cta: {
       addTask: '$t(glossary.task) जोडा',
     },
+    logNow: 'आत्ताच नोंदवा',
     dueDate: {
       none: 'देय तारीख नाही',
       today: 'आज',
