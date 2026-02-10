@@ -4,7 +4,7 @@
  */
 
 import OpenAI from 'openai';
-import { ChatMessage, SendMessageResponse } from '../types/ai';
+import { AIMessageAttachmentInput, ChatMessage, SendMessageResponse } from '../types/ai';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import { GLOSSARY_MR } from '@/i18n/glossary.mr';
 import { GLOSSARY_HI } from '@/i18n/glossary.hi';
@@ -129,6 +129,7 @@ class AIService {
       daysSincePruning?: number;
     },
     language: SupportedLanguageCode = 'en',
+    attachments: AIMessageAttachmentInput[] = [],
   ): Promise<SendMessageResponse> {
     if (!this.openai) {
       throw new Error(
@@ -139,6 +140,51 @@ class AIService {
     const contextInfo = farmContext
       ? `\n\nCurrent Farm Context:\n- Farm: ${farmContext.farmName || 'Not specified'}\n- Crop: ${farmContext.cropVariety || 'Grapes'}\n- Area: ${farmContext.area || 'Not specified'} acres\n- Region: ${farmContext.region || 'Not specified'}\n- Growth Stage: ${farmContext.growthStage || 'Not specified'}\n- Days Since Pruning: ${farmContext.daysSincePruning || 'Not specified'} days`
       : '';
+
+    const userContentParts: OpenAI.Chat.ChatCompletionContentPart[] = [];
+    const trimmedUserMessage = userMessage.trim();
+    if (trimmedUserMessage) {
+      userContentParts.push({
+        type: 'text',
+        text: trimmedUserMessage,
+      });
+    }
+
+    if (attachments.length > 0) {
+      const attachmentNames = attachments.map((attachment) => attachment.name).join(', ');
+      userContentParts.push({
+        type: 'text',
+        text: `Attached files: ${attachmentNames}`,
+      });
+    }
+
+    attachments.forEach((attachment) => {
+      if (attachment.kind === 'image' && attachment.dataUrl) {
+        userContentParts.push({
+          type: 'image_url',
+          image_url: {
+            url: attachment.dataUrl,
+          },
+        });
+        return;
+      }
+
+      if (attachment.kind === 'document' && attachment.textContent?.trim()) {
+        userContentParts.push({
+          type: 'text',
+          text: `Document "${attachment.name}" content:\n${attachment.textContent.trim()}`,
+        });
+        return;
+      }
+
+      userContentParts.push({
+        type: 'text',
+        text: `File "${attachment.name}" was attached but its contents could not be read. Analyze based on available context only.`,
+      });
+    });
+
+    const userContent: string | OpenAI.Chat.ChatCompletionContentPart[] =
+      userContentParts.length > 0 ? userContentParts : userMessage;
 
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       {
@@ -151,7 +197,7 @@ class AIService {
       })),
       {
         role: 'user',
-        content: userMessage,
+        content: userContent,
       },
     ];
 

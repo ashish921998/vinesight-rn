@@ -208,7 +208,7 @@ export function WaterLevelSheet({
       visible={isVisible}
       onClose={handleClose}
       title={t('waterLevelSheet.title')}
-      onSave={handleSave}
+      onSave={calculatedWaterLevel !== null ? handleSave : undefined}
       saveLabel={t('waterLevelSheet.saveLabel')}
       isLoading={isSaving}
       isSaveDisabled={calculatedWaterLevel === null}

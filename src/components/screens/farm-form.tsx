@@ -242,6 +242,25 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   );
   const [iosPlantingDateDraft, setIosPlantingDateDraft] = useState<Date>(() => new Date());
   const [iosPruningDateDraft, setIosPruningDateDraft] = useState<Date>(() => new Date());
+  const nameInputRef = useRef<TextInput>(null);
+  const regionInputRef = useRef<TextInput>(null);
+  const areaInputRef = useRef<TextInput>(null);
+  const customCropInputRef = useRef<TextInput>(null);
+  const customVarietyInputRef = useRef<TextInput>(null);
+  const vineSpacingInputRef = useRef<TextInput>(null);
+  const rowSpacingInputRef = useRef<TextInput>(null);
+  const tankCapacityInputRef = useRef<TextInput>(null);
+  const systemDischargeInputRef = useRef<TextInput>(null);
+  const locationNameInputRef = useRef<TextInput>(null);
+  const latitudeInputRef = useRef<TextInput>(null);
+  const longitudeInputRef = useRef<TextInput>(null);
+  const elevationInputRef = useRef<TextInput>(null);
+  const bulkDensityInputRef = useRef<TextInput>(null);
+  const cecInputRef = useRef<TextInput>(null);
+  const soilWaterRetentionInputRef = useRef<TextInput>(null);
+  const sandInputRef = useRef<TextInput>(null);
+  const siltInputRef = useRef<TextInput>(null);
+  const clayInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (!isEdit) {
@@ -792,31 +811,53 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label={t('farmForm.fields.name.label')}
+          inputRef={nameInputRef}
           value={formState.name}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, name: v }))}
           placeholder={t('farmForm.fields.name.placeholder')}
           required
           autoFocus={!isEdit}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => regionInputRef.current?.focus()}
           style={{ marginBottom: 12 }}
         />
 
         <FormInput
           label={t('farmForm.fields.region.label')}
+          inputRef={regionInputRef}
           value={formState.region}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, region: v }))}
           placeholder={t('farmForm.fields.region.placeholder')}
           required
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => areaInputRef.current?.focus()}
           style={{ marginBottom: 12 }}
         />
 
         <FormInput
           label={t('farmForm.fields.area.label')}
+          inputRef={areaInputRef}
           value={formState.area}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, area: v }))}
           placeholder={t('farmForm.fields.area.placeholder')}
           keyboardType="decimal-pad"
           suffix={t('units.acres')}
           required
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => {
+            if (formState.selectedCrop === 'Other') {
+              customCropInputRef.current?.focus();
+              return;
+            }
+            if (formState.cropVariety === 'Custom') {
+              customVarietyInputRef.current?.focus();
+              return;
+            }
+            vineSpacingInputRef.current?.focus();
+          }}
           style={{ marginBottom: 20 }}
         />
 
@@ -925,10 +966,20 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         {formState.selectedCrop === 'Other' && (
           <FormInput
             label={t('farmForm.cropPicker.customCropInputLabel')}
+            inputRef={customCropInputRef}
             value={formState.customCropName}
             onChangeText={(v) => setFormState((prev) => ({ ...prev, customCropName: v }))}
             placeholder={t('farmForm.cropPicker.customCropInputPlaceholder')}
             required
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => {
+              if (formState.cropVariety === 'Custom') {
+                customVarietyInputRef.current?.focus();
+                return;
+              }
+              vineSpacingInputRef.current?.focus();
+            }}
             style={{ marginBottom: 20 }}
           />
         )}
@@ -969,10 +1020,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         {formState.cropVariety === 'Custom' && (
           <FormInput
             label={t('farmForm.variety.customNameLabel')}
+            inputRef={customVarietyInputRef}
             value={formState.customVariety}
             onChangeText={(v) => setFormState((prev) => ({ ...prev, customVariety: v }))}
             placeholder={t('farmForm.variety.customNamePlaceholder')}
             required
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => vineSpacingInputRef.current?.focus()}
             style={{ marginBottom: 20 }}
           />
         )}
@@ -1021,22 +1076,30 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           <View style={{ flex: 1 }}>
             <FormInput
               label={t('farmForm.fields.vineSpacing.label')}
+              inputRef={vineSpacingInputRef}
               value={formState.vineSpacing}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, vineSpacing: v }))}
               placeholder="1.8"
               keyboardType="decimal-pad"
               suffix={t('units.meter')}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => rowSpacingInputRef.current?.focus()}
               style={{ marginBottom: 0 }}
             />
           </View>
           <View style={{ flex: 1 }}>
             <FormInput
               label={t('farmForm.fields.rowSpacing.label')}
+              inputRef={rowSpacingInputRef}
               value={formState.rowSpacing}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, rowSpacing: v }))}
               placeholder="3.0"
               keyboardType="decimal-pad"
               suffix={t('units.meter')}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => tankCapacityInputRef.current?.focus()}
               style={{ marginBottom: 0 }}
             />
           </View>
@@ -1049,21 +1112,29 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label={t('farmForm.fields.tankCapacity.label')}
+          inputRef={tankCapacityInputRef}
           value={formState.totalTankCapacity}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, totalTankCapacity: v }))}
           placeholder="1000"
           keyboardType="decimal-pad"
           suffix={t('units.millimeter')}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => systemDischargeInputRef.current?.focus()}
           style={{ marginBottom: 12 }}
         />
 
         <FormInput
           label={t('farmForm.fields.systemDischarge.label')}
+          inputRef={systemDischargeInputRef}
           value={formState.systemDischarge}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, systemDischarge: v }))}
           placeholder="10"
           keyboardType="decimal-pad"
           suffix={t('units.mmPerHour')}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => locationNameInputRef.current?.focus()}
           style={{ marginBottom: 20 }}
         />
 
@@ -1132,9 +1203,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label={t('farmForm.fields.locationName.label')}
+          inputRef={locationNameInputRef}
           value={formState.locationName}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, locationName: v }))}
           placeholder={t('farmForm.fields.locationName.placeholder')}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => latitudeInputRef.current?.focus()}
           style={{ marginBottom: 12 }}
         />
 
@@ -1151,20 +1226,28 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           <View style={{ flex: 1 }}>
             <FormInput
               label={t('farmForm.fields.latitude.label')}
+              inputRef={latitudeInputRef}
               value={formState.latitude}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, latitude: v }))}
               placeholder="0.000000"
               keyboardType="decimal-pad"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => longitudeInputRef.current?.focus()}
               style={{ marginBottom: 0 }}
             />
           </View>
           <View style={{ flex: 1 }}>
             <FormInput
               label={t('farmForm.fields.longitude.label')}
+              inputRef={longitudeInputRef}
               value={formState.longitude}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, longitude: v }))}
               placeholder="0.000000"
               keyboardType="decimal-pad"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => elevationInputRef.current?.focus()}
               style={{ marginBottom: 0 }}
             />
           </View>
@@ -1172,11 +1255,15 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label={t('farmForm.fields.elevation.label')}
+          inputRef={elevationInputRef}
           value={formState.elevation}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, elevation: v }))}
           placeholder="0"
           keyboardType="decimal-pad"
           suffix={t('units.feet')}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => bulkDensityInputRef.current?.focus()}
           style={{ marginBottom: 20 }}
         />
 
@@ -1187,31 +1274,43 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         <FormInput
           label={t('farmForm.fields.bulkDensity.label')}
+          inputRef={bulkDensityInputRef}
           value={formState.bulkDensity}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, bulkDensity: v }))}
           placeholder="1200"
           keyboardType="decimal-pad"
           suffix={t('units.kilogramPerMeterCubed')}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => cecInputRef.current?.focus()}
           style={{ marginBottom: 12 }}
         />
 
         <FormInput
           label={t('farmForm.fields.cationExchangeCapacity.label')}
+          inputRef={cecInputRef}
           value={formState.cationExchangeCapacity}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, cationExchangeCapacity: v }))}
           placeholder="15"
           keyboardType="decimal-pad"
           suffix="cmol/kg"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => soilWaterRetentionInputRef.current?.focus()}
           style={{ marginBottom: 12 }}
         />
 
         <FormInput
           label={t('farmForm.fields.soilWaterRetention.label')}
+          inputRef={soilWaterRetentionInputRef}
           value={formState.soilWaterRetention}
           onChangeText={(v) => setFormState((prev) => ({ ...prev, soilWaterRetention: v }))}
           placeholder="25"
           keyboardType="decimal-pad"
           suffix="%"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => sandInputRef.current?.focus()}
           style={{ marginBottom: 20 }}
         />
 
@@ -1250,33 +1349,44 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           <View style={{ flex: 1 }}>
             <FormInput
               label={t('farmForm.fields.sandPercentage.label')}
+              inputRef={sandInputRef}
               value={formState.sandPercentage}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, sandPercentage: v }))}
               placeholder="40"
               keyboardType="decimal-pad"
               suffix="%"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => siltInputRef.current?.focus()}
               style={{ marginBottom: 0 }}
             />
           </View>
           <View style={{ flex: 1 }}>
             <FormInput
               label={t('farmForm.fields.siltPercentage.label')}
+              inputRef={siltInputRef}
               value={formState.siltPercentage}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, siltPercentage: v }))}
               placeholder="40"
               keyboardType="decimal-pad"
               suffix="%"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => clayInputRef.current?.focus()}
               style={{ marginBottom: 0 }}
             />
           </View>
           <View style={{ flex: 1 }}>
             <FormInput
               label={t('farmForm.fields.clayPercentage.label')}
+              inputRef={clayInputRef}
               value={formState.clayPercentage}
               onChangeText={(v) => setFormState((prev) => ({ ...prev, clayPercentage: v }))}
               placeholder="20"
               keyboardType="decimal-pad"
               suffix="%"
+              returnKeyType="done"
+              blurOnSubmit
               style={{ marginBottom: 0 }}
             />
           </View>

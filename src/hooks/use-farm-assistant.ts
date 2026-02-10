@@ -8,9 +8,10 @@ import { useCallback, useRef, useEffect } from 'react';
 import { Platform } from 'react-native';
 import * as Speech from 'expo-speech';
 import {
-  ExpoSpeechRecognitionModule as _SpeechModule,
+  SpeechRecognitionModule,
+  isSpeechRecognitionAvailable,
   useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
+} from '@/services/speech-recognition';
 import { useTranslation } from 'react-i18next';
 import { useFarmAssistantStore } from '@/stores/farm-assistant-store';
 import { useFarms } from './use-farms';
@@ -28,15 +29,6 @@ import type {
 } from '@/types/voice-assistant';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import { telemetry } from '@/services/telemetry';
-
-// Cast to bypass web type resolution — native module has these methods at runtime
-const ExpoSpeechRecognitionModule = _SpeechModule as typeof _SpeechModule & {
-  getPermissionsAsync(): Promise<{ status: string; granted: boolean }>;
-  requestPermissionsAsync(): Promise<{ status: string; granted: boolean }>;
-  start(options: { lang: string; interimResults: boolean; continuous: boolean }): void;
-  stop(): void;
-  abort(): void;
-};
 
 const MAX_QUERIES_PER_MINUTE = 10;
 
@@ -123,7 +115,7 @@ export function useFarmAssistant() {
       if (currentStatus === 'listening') {
         hasSubmittedVoiceQueryRef.current = true;
         try {
-          ExpoSpeechRecognitionModule.abort();
+          SpeechRecognitionModule.abort();
         } catch {
           /* ignore */
         }
@@ -283,17 +275,17 @@ export function useFarmAssistant() {
     telemetry.capture('farm_assistant_error', {
       error_type: 'voice_recognition',
       message,
-      error_code: event.error,
+      error_code: event.error ?? 'unknown',
     });
   });
 
   // Check mic permissions on mount
   useEffect(() => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' || !isSpeechRecognitionAvailable) {
       storeSetMicAvailable(false);
       return;
     }
-    ExpoSpeechRecognitionModule.getPermissionsAsync()
+    SpeechRecognitionModule.getPermissionsAsync()
       .then((result) => {
         if (result.status === 'granted') {
           storeSetMicAvailable(true);
@@ -319,10 +311,11 @@ export function useFarmAssistant() {
     isStartingListeningRef.current = true;
 
     try {
-      const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      const result = await SpeechRecognitionModule.requestPermissionsAsync();
       if (!result.granted) {
         storeSetMicAvailable(false);
         storeSetStatus('idle');
+        storeSetError(t('ai.voice.permissionBody'));
         return;
       }
       storeSetMicAvailable(true);
@@ -332,7 +325,7 @@ export function useFarmAssistant() {
       storeSetStatus('listening');
 
       await Promise.resolve(
-        ExpoSpeechRecognitionModule.start({
+        SpeechRecognitionModule.start({
           lang: speechLocale,
           interimResults: true,
           continuous: false,
@@ -350,7 +343,7 @@ export function useFarmAssistant() {
 
   const stopListening = useCallback(() => {
     try {
-      ExpoSpeechRecognitionModule.stop();
+      SpeechRecognitionModule.stop();
     } catch (err) {
       console.warn('Speech recognition stop failed:', err);
       storeSetStatus('idle');
@@ -407,7 +400,7 @@ export function useFarmAssistant() {
 
   const reset = useCallback(() => {
     try {
-      ExpoSpeechRecognitionModule.abort();
+      SpeechRecognitionModule.abort();
     } catch {
       /* ignore */
     }
@@ -423,7 +416,7 @@ export function useFarmAssistant() {
 
   const closeModal = useCallback(() => {
     try {
-      ExpoSpeechRecognitionModule.abort();
+      SpeechRecognitionModule.abort();
     } catch {
       /* ignore */
     }

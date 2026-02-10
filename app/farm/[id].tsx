@@ -240,15 +240,15 @@ export default function FarmDetailScreen() {
     return formatLocalDate(new Date()) < formatLocalDate(minimumSeasonStartDate);
   }, [activeSeasonRecord, minimumSeasonStartDate]);
 
-  // Days since season start (or pruning as fallback)
+  // "Days after pruning" should always be based on the pruning date.
   const daysSincePruning = useMemo(() => {
-    if (isBetweenSeasons) return null;
-    const startDate = seasonMetricsStartDate;
-    if (!startDate) return null;
+    if (!farm?.date_of_pruning) return null;
+    const pruningDate = parseDbDateToLocalDate(farm.date_of_pruning);
+    if (!pruningDate) return null;
     const today = new Date();
-    const diffTime = today.getTime() - startDate.getTime();
+    const diffTime = today.getTime() - pruningDate.getTime();
     return Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-  }, [isBetweenSeasons, seasonMetricsStartDate]);
+  }, [farm?.date_of_pruning]);
 
   const totalWaterUsed = useMemo(() => {
     if (!irrigationRecords) return null;
@@ -1034,10 +1034,10 @@ export default function FarmDetailScreen() {
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
-            paddingTop: isIOS ? spacing[2] : spacing[1],
+            paddingTop: insets.top + (Platform.OS === 'ios' ? spacing[2] : spacing[1]),
             paddingBottom: bottomBarHeight + spacing[6],
           }}
-          contentInsetAdjustmentBehavior={isIOS ? 'automatic' : 'never'}
+          contentInsetAdjustmentBehavior="never"
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

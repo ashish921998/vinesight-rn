@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '2.7',
+    version: '2.8',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
@@ -17,7 +17,7 @@ module.exports = {
       bundleIdentifier: 'com.vinesight.ios',
       scheme: 'vinesight',
       usesAppleSignIn: true,
-      buildNumber: '1.1.9',
+      buildNumber: '1.2.0',
       icon: {
         light: './assets/icons/ios-light.png',
         dark: './assets/icons/ios-dark.png',
@@ -55,7 +55,8 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 12,
+      versionCode: 13,
+      permissions: ['android.permission.RECORD_AUDIO'],
       config: {
         googleMaps: {
           apiKey:
@@ -125,7 +126,8 @@ module.exports = {
           photosPermission:
             'Allow Vinesight to access your photos to attach lab reports and images.',
           cameraPermission: 'Allow Vinesight to use your camera to capture lab reports and photos.',
-          microphonePermission: false,
+          microphonePermission:
+            'Allow Vinesight to use the microphone when capturing video or using voice features.',
         },
       ],
       [

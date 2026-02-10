@@ -9,11 +9,16 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Linking,
 } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
 import {
-  ExpoSpeechRecognitionModule as _SpeechModule,
+  SpeechRecognitionModule,
+  isSpeechRecognitionAvailable,
   useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
+} from '@/services/speech-recognition';
 
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +27,7 @@ import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import Markdown from 'react-native-markdown-display';
 import { useFarm, useFarms } from '@/hooks';
 import { aiService } from '@/services/ai-service';
-import { ChatMessage } from '@/types/ai';
+import { AIMessageAttachmentInput, ChatMessage } from '@/types/ai';
 import { classifyIntent, executeQuery } from '@/services/farm-assistant-service';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatTime } from '@/i18n/format';
@@ -33,13 +38,119 @@ import type { AssistantAnswer, QueryIntent } from '@/types/voice-assistant';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 
 type VoiceInputState = 'idle' | 'starting' | 'listening';
-
-const ExpoSpeechRecognitionModule = _SpeechModule as typeof _SpeechModule & {
-  requestPermissionsAsync(): Promise<{ status: string; granted: boolean }>;
-  start(options: { lang: string; interimResults: boolean; continuous: boolean }): void;
-  stop(): void;
-  abort(): void;
+type ChatAttachment = {
+  id: string;
+  name: string;
+  uri: string;
+  mimeType?: string;
+  size?: number;
+  kind: 'image' | 'document';
 };
+
+const TEXT_DOCUMENT_EXTENSIONS = new Set(['txt', 'csv', 'json', 'md', 'xml', 'html', 'htm', 'log']);
+const TEXT_DOCUMENT_MIME_TYPES = new Set([
+  'application/json',
+  'application/xml',
+  'application/javascript',
+]);
+const MAX_DOCUMENT_CHARS = 12000;
+
+function getFileExtension(nameOrUri: string): string | null {
+  const cleanName = nameOrUri.split('?')[0]?.split('#')[0] ?? nameOrUri;
+  const index = cleanName.lastIndexOf('.');
+  if (index < 0 || index === cleanName.length - 1) return null;
+  return cleanName.slice(index + 1).toLowerCase();
+}
+
+function inferAttachmentMimeType(attachment: ChatAttachment): string {
+  if (attachment.mimeType) return attachment.mimeType;
+
+  const extension = getFileExtension(attachment.name) ?? getFileExtension(attachment.uri);
+  if (!extension) {
+    return attachment.kind === 'image' ? 'image/jpeg' : 'application/octet-stream';
+  }
+
+  if (extension === 'png') return 'image/png';
+  if (extension === 'webp') return 'image/webp';
+  if (extension === 'gif') return 'image/gif';
+  if (extension === 'heic') return 'image/heic';
+  if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
+  if (extension === 'txt') return 'text/plain';
+  if (extension === 'csv') return 'text/csv';
+  if (extension === 'json') return 'application/json';
+  if (extension === 'xml') return 'application/xml';
+  if (extension === 'md') return 'text/markdown';
+
+  return attachment.kind === 'image' ? 'image/jpeg' : 'application/octet-stream';
+}
+
+function isTextDocument(attachment: ChatAttachment, mimeType: string): boolean {
+  if (mimeType.startsWith('text/')) return true;
+  if (TEXT_DOCUMENT_MIME_TYPES.has(mimeType)) return true;
+  const extension = getFileExtension(attachment.name) ?? getFileExtension(attachment.uri);
+  return extension ? TEXT_DOCUMENT_EXTENSIONS.has(extension) : false;
+}
+
+async function prepareAttachmentForAI(
+  attachment: ChatAttachment,
+): Promise<AIMessageAttachmentInput> {
+  const mimeType = inferAttachmentMimeType(attachment);
+
+  if (attachment.kind === 'image') {
+    try {
+      const base64 = await FileSystem.readAsStringAsync(attachment.uri, {
+        encoding: 'base64',
+      });
+      return {
+        kind: 'image',
+        name: attachment.name,
+        mimeType,
+        sourceUri: attachment.uri,
+        dataUrl: `data:${mimeType};base64,${base64}`,
+      };
+    } catch {
+      return {
+        kind: 'image',
+        name: attachment.name,
+        mimeType,
+        sourceUri: attachment.uri,
+      };
+    }
+  }
+
+  if (isTextDocument(attachment, mimeType)) {
+    try {
+      const text = await FileSystem.readAsStringAsync(attachment.uri);
+      return {
+        kind: 'document',
+        name: attachment.name,
+        mimeType,
+        sourceUri: attachment.uri,
+        textContent: text.slice(0, MAX_DOCUMENT_CHARS),
+      };
+    } catch {
+      return {
+        kind: 'document',
+        name: attachment.name,
+        mimeType,
+        sourceUri: attachment.uri,
+      };
+    }
+  }
+
+  return {
+    kind: 'document',
+    name: attachment.name,
+    mimeType,
+    sourceUri: attachment.uri,
+  };
+}
+
+async function prepareAttachmentsForAI(
+  attachments: ChatAttachment[],
+): Promise<AIMessageAttachmentInput[]> {
+  return Promise.all(attachments.map((attachment) => prepareAttachmentForAI(attachment)));
+}
 
 function resolveSpeechLocale(language: string): string {
   if (language.startsWith('mr')) return 'mr-IN';
@@ -51,6 +162,26 @@ function resolveLanguageCode(language: string): SupportedLanguageCode {
   if (language.startsWith('mr')) return 'mr';
   if (language.startsWith('hi')) return 'hi';
   return 'en';
+}
+
+function formatAttachmentSummary(attachments: ChatAttachment[]): string {
+  if (attachments.length === 0) return '';
+  const lines = attachments.map(
+    (attachment, index) => `- ${index + 1}. ${attachment.name} (${attachment.kind})`,
+  );
+  return `Attached files:\n${lines.join('\n')}`;
+}
+
+function promptOpenSettings(title: string, message: string, t: (key: string) => string) {
+  Alert.alert(title, message, [
+    { text: t('common.cancel'), style: 'cancel' },
+    {
+      text: t('common.ok'),
+      onPress: () => {
+        Linking.openSettings().catch(() => null);
+      },
+    },
+  ]);
 }
 
 const FARM_DATA_QUERY_PATTERNS = [
@@ -202,6 +333,7 @@ export default function AIChatScreen() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [voiceInputState, setVoiceInputState] = useState<VoiceInputState>('idle');
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingVoiceTranscriptRef = useRef('');
@@ -239,12 +371,19 @@ export default function AIChatScreen() {
   const handleSendMessage = useCallback(
     async (text?: string, source: 'text' | 'voice' = 'text') => {
       const messageText = text || inputText.trim();
-      if (!messageText || isLoading) return;
+      const currentAttachments = attachments;
+      if ((!messageText && currentAttachments.length === 0) || isLoading) return;
+      const attachmentSummary = formatAttachmentSummary(currentAttachments);
+      const assistantInput = [messageText, attachmentSummary].filter(Boolean).join('\n\n').trim();
+      const visibleUserContent = [messageText, attachmentSummary]
+        .filter(Boolean)
+        .join('\n\n')
+        .trim();
 
       if (source !== 'voice' && isVoiceListening) {
         hasSubmittedVoiceQueryRef.current = true;
         try {
-          ExpoSpeechRecognitionModule.abort();
+          SpeechRecognitionModule.abort();
         } catch {
           /* no-op */
         }
@@ -254,12 +393,13 @@ export default function AIChatScreen() {
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
         role: 'user',
-        content: messageText,
+        content: visibleUserContent,
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, newMessage]);
       setInputText('');
+      setAttachments([]);
       setSuggestions([]);
       setIsLoading(true);
       scrollToBottom();
@@ -272,11 +412,15 @@ export default function AIChatScreen() {
 
       try {
         const deterministicTranscript = contextFarm?.name
-          ? `${messageText} for farm ${contextFarm.name}`
-          : messageText;
+          ? `${assistantInput} for farm ${contextFarm.name}`
+          : assistantInput;
         const intent = classifyIntent(deterministicTranscript, candidateFarms);
 
-        if (shouldUseFarmDataEngine(messageText, intent) && candidateFarms.length > 0) {
+        if (
+          currentAttachments.length === 0 &&
+          shouldUseFarmDataEngine(messageText, intent) &&
+          candidateFarms.length > 0
+        ) {
           try {
             const languageCode = resolveLanguageCode(i18n.language);
             const farmDataResponse = await executeQuery(
@@ -315,8 +459,9 @@ export default function AIChatScreen() {
           }
         }
 
+        const aiAttachments = await prepareAttachmentsForAI(currentAttachments);
         const response = await aiService.sendMessage(
-          messageText,
+          assistantInput,
           messages,
           {
             farmName: contextFarm?.name,
@@ -331,6 +476,7 @@ export default function AIChatScreen() {
               : undefined,
           },
           resolveLanguageCode(i18n.language),
+          aiAttachments,
         );
 
         setMessages((prev) => [...prev, response.message]);
@@ -354,6 +500,7 @@ export default function AIChatScreen() {
     },
     [
       DEFAULT_SUGGESTIONS,
+      attachments,
       candidateFarms,
       contextFarm,
       i18n.language,
@@ -410,9 +557,7 @@ export default function AIChatScreen() {
     }
     if (event.error === 'not-allowed') {
       setVoiceInputState('idle');
-      Alert.alert(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), [
-        { text: t('common.ok') },
-      ]);
+      promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
       return;
     }
 
@@ -425,7 +570,7 @@ export default function AIChatScreen() {
   useEffect(() => {
     return () => {
       try {
-        ExpoSpeechRecognitionModule.abort();
+        SpeechRecognitionModule.abort();
       } catch {
         /* no-op */
       }
@@ -433,7 +578,7 @@ export default function AIChatScreen() {
   }, []);
 
   const startVoiceInput = useCallback(async () => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' || !isSpeechRecognitionAvailable) {
       Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
         { text: t('common.ok') },
       ]);
@@ -449,17 +594,15 @@ export default function AIChatScreen() {
     hasSubmittedVoiceQueryRef.current = false;
 
     try {
-      const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      const permission = await SpeechRecognitionModule.requestPermissionsAsync();
       if (!permission.granted) {
         setVoiceInputState('idle');
-        Alert.alert(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), [
-          { text: t('common.ok') },
-        ]);
+        promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
         return;
       }
 
       await Promise.resolve(
-        ExpoSpeechRecognitionModule.start({
+        SpeechRecognitionModule.start({
           lang: speechLocale,
           interimResults: true,
           continuous: false,
@@ -480,13 +623,82 @@ export default function AIChatScreen() {
 
   const stopVoiceInput = useCallback(() => {
     try {
-      ExpoSpeechRecognitionModule.stop();
+      SpeechRecognitionModule.stop();
     } catch (error) {
       if (__DEV__) {
         console.warn('Voice input stop failed:', error);
       }
       setVoiceInputState('idle');
     }
+  }, []);
+
+  const handlePickImage = useCallback(async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: false,
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      if (!asset.uri) return;
+      setAttachments((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-${asset.uri}`,
+          name: asset.fileName || `image-${prev.length + 1}.jpg`,
+          uri: asset.uri,
+          mimeType: asset.mimeType,
+          size: asset.fileSize,
+          kind: 'image',
+        },
+      ]);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Image selection failed:', error);
+      }
+      Alert.alert(t('common.error'), t('ai.errors.failedResponse'), [{ text: t('common.ok') }]);
+    }
+  }, [t]);
+
+  const handlePickDocument = useCallback(async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      if (!asset.uri) return;
+      setAttachments((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-${asset.uri}`,
+          name: asset.name || `document-${prev.length + 1}`,
+          uri: asset.uri,
+          mimeType: asset.mimeType,
+          size: asset.size,
+          kind: 'document',
+        },
+      ]);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Document selection failed:', error);
+      }
+      Alert.alert(t('common.error'), t('ai.errors.failedResponse'), [{ text: t('common.ok') }]);
+    }
+  }, [t]);
+
+  const openAttachmentPicker = useCallback(() => {
+    Alert.alert('Attach', 'Choose what to attach', [
+      { text: 'Image', onPress: () => void handlePickImage() },
+      { text: 'File', onPress: () => void handlePickDocument() },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  }, [handlePickDocument, handlePickImage, t]);
+
+  const removeAttachment = useCallback((id: string) => {
+    setAttachments((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
   const handleSuggestionPress = (suggestion: string) => {
@@ -514,15 +726,15 @@ export default function AIChatScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       >
         <View style={{ flex: 1 }}>
           <ScrollView
             ref={scrollViewRef}
             style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[4] }}
-            contentContainerStyle={{ paddingTop: spacing[4] }}
-            contentInsetAdjustmentBehavior="automatic"
+            contentContainerStyle={{ paddingTop: insets.top + spacing[4] }}
+            contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
@@ -769,6 +981,48 @@ export default function AIChatScreen() {
               borderTopColor: colors.surface[200],
             }}
           >
+            {attachments.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: spacing[2] }}
+                contentContainerStyle={{ gap: spacing[2] }}
+              >
+                {attachments.map((attachment) => (
+                  <Pressable
+                    key={attachment.id}
+                    onPress={() => removeAttachment(attachment.id)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[2],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                      gap: spacing[1],
+                    }}
+                  >
+                    <UiSymbol
+                      name={attachment.kind === 'image' ? 'photo' : 'doc.text'}
+                      size={14}
+                      color={m3.colorScheme.primary}
+                    />
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        maxWidth: 160,
+                        color: m3.colorScheme.primary,
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                      }}
+                    >
+                      {attachment.name}
+                    </Text>
+                    <UiSymbol name="xmark" size={12} color={m3.colorScheme.primary} />
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
             {voiceInputState !== 'idle' && (
               <Text
                 style={{
@@ -804,6 +1058,22 @@ export default function AIChatScreen() {
                 onSubmitEditing={() => handleSendMessage(undefined, 'text')}
               />
               <Pressable
+                onPress={openAttachmentPicker}
+                disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Attach file"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                }}
+              >
+                <UiSymbol name="plus" size={20} color={m3.colorScheme.primary} />
+              </Pressable>
+              <Pressable
                 onPress={isVoiceListening ? stopVoiceInput : startVoiceInput}
                 disabled={isLoading && !isVoiceListening}
                 accessibilityRole="button"
@@ -829,7 +1099,7 @@ export default function AIChatScreen() {
               </Pressable>
               <Pressable
                 onPress={() => handleSendMessage(undefined, 'text')}
-                disabled={!inputText.trim() || isLoading}
+                disabled={(!inputText.trim() && attachments.length === 0) || isLoading}
                 style={{
                   width: 48,
                   height: 48,
@@ -837,14 +1107,16 @@ export default function AIChatScreen() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor:
-                    inputText.trim() && !isLoading ? m3.colorScheme.primary : colors.surface[200],
+                    (inputText.trim() || attachments.length > 0) && !isLoading
+                      ? m3.colorScheme.primary
+                      : colors.surface[200],
                 }}
               >
                 <UiSymbol
                   name="paperplane.fill"
                   size={20}
                   color={
-                    inputText.trim() && !isLoading
+                    (inputText.trim() || attachments.length > 0) && !isLoading
                       ? m3.colorScheme.onPrimary
                       : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
                   }

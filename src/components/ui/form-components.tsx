@@ -10,6 +10,9 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Animated,
+  type NativeSyntheticEvent,
+  type TextInputProps,
+  type TextInputSubmitEditingEventData,
   type ScrollViewProps,
   type StyleProp,
   type ViewStyle,
@@ -677,6 +680,10 @@ interface FormInputProps {
   numberOfLines?: number;
   autoFocus?: boolean;
   style?: ViewStyle;
+  inputRef?: React.RefObject<TextInput | null>;
+  onSubmitEditing?: (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void;
+  returnKeyType?: TextInputProps['returnKeyType'];
+  blurOnSubmit?: boolean;
 }
 
 export function FormInput({
@@ -692,6 +699,10 @@ export function FormInput({
   numberOfLines = 1,
   autoFocus = false,
   style,
+  inputRef,
+  onSubmitEditing,
+  returnKeyType = multiline ? 'default' : 'done',
+  blurOnSubmit = true,
 }: FormInputProps) {
   const colors = useThemeColors();
   const containerStyle: ViewStyle = {
@@ -741,6 +752,7 @@ export function FormInput({
       <View style={inputContainerStyle}>
         {prefix && <Text style={[prefixSuffixStyle, { paddingLeft: spacing[4] }]}>{prefix}</Text>}
         <TextInput
+          ref={inputRef}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -749,6 +761,9 @@ export function FormInput({
           multiline={multiline}
           numberOfLines={numberOfLines}
           autoFocus={autoFocus}
+          onSubmitEditing={onSubmitEditing}
+          returnKeyType={returnKeyType}
+          blurOnSubmit={blurOnSubmit}
           style={[
             inputStyle,
             multiline && { minHeight: numberOfLines * 24, textAlignVertical: 'top' },

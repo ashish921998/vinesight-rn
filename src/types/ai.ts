@@ -22,3 +22,12 @@ export interface SendMessageResponse {
   message: ChatMessage;
   suggestions?: string[];
 }
+
+export interface AIMessageAttachmentInput {
+  kind: 'image' | 'document';
+  name: string;
+  mimeType?: string;
+  dataUrl?: string;
+  textContent?: string;
+  sourceUri?: string;
+}

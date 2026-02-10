@@ -143,6 +143,9 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'lightbulb.fill': 'bulb',
   'ant.fill': 'bug',
   'paperplane.fill': 'paper-plane',
+  mic: 'mic-outline',
+  'mic.fill': 'mic',
+  'stop.fill': 'stop-circle',
 
   // Additional common mappings
   'chevron.up.chevron.down': 'swap-vertical',
