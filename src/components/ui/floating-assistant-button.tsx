@@ -1,18 +1,25 @@
 import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { Symbol as AssistantSymbol } from '@/components/ui/symbol';
 import { useFabBottomPosition } from '@/hooks/use-fab-bottom-position';
 import { useM3 } from '@/styles/use-theme';
 import { shadows } from '@/styles/theme';
 
 const FAB_SIZE = 56;
+const FAB_RIGHT = 20;
 
 interface FloatingAssistantButtonProps {
   onPress: () => void;
+  rightOffset?: number;
 }
 
-export function FloatingAssistantButton({ onPress }: FloatingAssistantButtonProps) {
+export function FloatingAssistantButton({
+  onPress,
+  rightOffset = 0,
+}: FloatingAssistantButtonProps) {
+  const { t } = useTranslation();
   const m3 = useM3();
   const bottomPosition = useFabBottomPosition();
 
@@ -23,6 +30,7 @@ export function FloatingAssistantButton({ onPress }: FloatingAssistantButtonProp
 
   const dynamicStyle: ViewStyle = {
     bottom: bottomPosition,
+    right: FAB_RIGHT + rightOffset,
     backgroundColor: m3.colorScheme.primary,
     ...shadows.lg,
   };
@@ -31,7 +39,7 @@ export function FloatingAssistantButton({ onPress }: FloatingAssistantButtonProp
     <Pressable
       onPress={handlePress}
       accessibilityRole="button"
-      accessibilityLabel="Ask farm assistant"
+      accessibilityLabel={t('ai.openAssistant')}
       style={({ pressed }) => [
         styles.fab,
         dynamicStyle,
@@ -46,7 +54,6 @@ export function FloatingAssistantButton({ onPress }: FloatingAssistantButtonProp
 const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
-    right: 20,
     width: FAB_SIZE,
     height: FAB_SIZE,
     borderRadius: FAB_SIZE / 2,

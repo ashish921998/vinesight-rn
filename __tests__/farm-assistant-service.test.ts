@@ -121,12 +121,22 @@ describe('classifyIntent', () => {
   // ============================================================
 
   describe('time range parsing', () => {
-    it('"spray last week" → timeRange ~7 days ago', () => {
+    const fixedNow = new Date('2026-02-10T00:00:00Z');
+
+    beforeAll(() => {
+      jest.useFakeTimers().setSystemTime(fixedNow);
+    });
+
+    afterAll(() => {
+      jest.useRealTimers();
+    });
+
+    it('"spray last week" → timeRange ~6 days ago (inclusive 7-day window)', () => {
       const intent = classifyIntent('spray last week', NO_FARMS);
       expect(intent.timeRange).not.toBeNull();
       const now = new Date();
       const daysDiff = (now.getTime() - intent.timeRange!.start.getTime()) / (1000 * 60 * 60 * 24);
-      expect(daysDiff).toBeCloseTo(7, 0);
+      expect(daysDiff).toBeCloseTo(6, 0);
     });
 
     it('"spray last month" → timeRange covers previous calendar month', () => {

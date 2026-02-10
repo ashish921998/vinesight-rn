@@ -23,6 +23,7 @@ import type { SupportedLanguageCode } from '@/i18n/languages';
 const HISTORY_RECORD_LIMIT = 50;
 const LAST_RECORD_LIMIT = 1;
 const TOTAL_QUERY_PAGE_SIZE = 500;
+const MAX_TOTAL_RECORDS = 10_000; // Safety guard to prevent OOM on mobile
 const MAX_DISPLAY_ROWS = 5;
 const CONFIDENCE_THRESHOLD = 0.6;
 
@@ -130,12 +131,13 @@ const QUERY_TYPE_PATTERNS: Array<{ queryType: QueryType; patterns: RegExp[] }> =
   },
 ];
 
+// Note: 'may' is excluded due to ambiguity with modal verb "may I..."
+// It's handled separately with stricter context requirements
 const MONTH_ENTRIES: Array<readonly [string, number]> = [
   ['january', 0],
   ['february', 1],
   ['march', 2],
   ['april', 3],
-  ['may', 4],
   ['june', 5],
   ['july', 6],
   ['august', 7],
@@ -172,6 +174,7 @@ const MONTH_ENTRIES: Array<readonly [string, number]> = [
   ['जानेवारी', 0],
   ['फेब्रुवारी', 1],
   ['एप्रिल', 3],
+  ['मे', 4],
   ['जुलै', 6],
   ['ऑगस्ट', 7],
   ['सप्टेंबर', 8],
@@ -196,7 +199,8 @@ const CLOSE_BUT_UNSUPPORTED_PATTERNS: Array<{
     suggestion: 'Show my last spray',
   },
   {
-    pattern: /\b(log|add|create|record)\b/i,
+    pattern:
+      /\b(log|add|create)\b|\brecord\b(?<!\b(?:my|the|a|an|this|that|last|first|show|display|get|see|view)\s+\w*)/i,
     message: "I can't create records, but I can show your recent history.",
     suggestion: 'Show recent history',
   },
@@ -287,7 +291,8 @@ function parseTimeRange(text: string): { start: Date; end: Date } | null {
     /(मागच्या|गेल्या)\s+आठवड/i.test(text)
   ) {
     const start = new Date(now);
-    start.setDate(start.getDate() - 7);
+    // Inclusive date filters are used downstream, so use a 7-day window including today.
+    start.setDate(start.getDate() - 6);
     return { start, end: now };
   }
 
@@ -338,6 +343,19 @@ function parseTimeRange(text: string): { start: Date; end: Date } | null {
   ) {
     const start = new Date(now.getFullYear() - 1, 0, 1);
     const end = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+    return { start, end };
+  }
+
+  // Special handling for 'may' - require explicit temporal context to avoid
+  // matching modal verb usage (e.g., "may I see...", "you may check...")
+  // Valid patterns: "in may", "may 2024", "may 15th", "last may", "this may"
+  const mayPattern =
+    /(?:^|\s)(?:in\s+|last\s+|this\s+|में\s+|मध्ये\s+)may(?:\s+(?:\d{1,2}(?:st|nd|rd|th)?|\d{4})|\s*$|[,.?!])/i;
+  if (mayPattern.test(text)) {
+    const monthIndex = 4; // May is index 4
+    const year = monthIndex > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    const start = new Date(year, monthIndex, 1);
+    const end = new Date(year, monthIndex + 1, 0, 23, 59, 59);
     return { start, end };
   }
 
@@ -417,7 +435,9 @@ async function getFarmNames(farmIds: number[]): Promise<Map<number, string>> {
     .in('id', farmIds);
 
   const map = new Map<number, string>();
-  (data ?? []).forEach((f: { id: number; name: string }) => map.set(f.id, f.name));
+  (data ?? []).forEach((f: { id: number; name: string }) => {
+    map.set(f.id, f.name);
+  });
   return map;
 }
 
@@ -465,7 +485,8 @@ export async function fetchRecordsForIntent(
       const page = (data ?? []) as Record<string, unknown>[];
       allRecords.push(...page);
 
-      if (page.length < TOTAL_QUERY_PAGE_SIZE) {
+      // Safety guards: stop if page is incomplete or max records reached
+      if (page.length < TOTAL_QUERY_PAGE_SIZE || allRecords.length >= MAX_TOTAL_RECORDS) {
         break;
       }
 
@@ -521,7 +542,10 @@ export function computeAnswer(
   records: Record<string, unknown>[],
   farmNames: Map<number, string>,
 ): AssistantAnswer {
-  const category = intent.category!;
+  if (!intent.category) {
+    throw new Error('Intent category is required to compute an answer');
+  }
+  const category = intent.category;
   const now = new Date();
   const timeRange = intent.timeRange ?? { start: new Date(now.getFullYear(), 0, 1), end: now };
 
@@ -792,11 +816,9 @@ export function createFarmAssistantPipeline({
       const answer = answerEngine.compute(intent, records, farmNames);
 
       const verbalizedText = await answerEngine.verbalize(answer, language);
-      if (verbalizedText) {
-        answer.verbalizedText = verbalizedText;
-      }
-
-      return { answer };
+      return {
+        answer: verbalizedText ? { ...answer, verbalizedText } : answer,
+      };
     },
   };
 }

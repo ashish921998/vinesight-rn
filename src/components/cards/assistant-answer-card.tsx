@@ -5,7 +5,8 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import type { AssistantAnswer } from '@/types/voice-assistant';
+import { formatDate } from '@/i18n/format';
+import type { AssistantAnswer, IntentCategory } from '@/types/voice-assistant';
 
 interface AssistantAnswerCardProps {
   answer: AssistantAnswer;
@@ -19,42 +20,32 @@ const CATEGORY_ICONS: Record<string, string> = {
   expense: 'indianrupeesign.circle.fill',
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  spray: 'Spray',
-  irrigation: 'Irrigation',
-  fertigation: 'Fertigation',
-  expense: 'Expense',
+const CATEGORY_LABEL_KEYS: Record<IntentCategory, string> = {
+  spray: 'farmAssistant.categories.spray',
+  irrigation: 'farmAssistant.categories.irrigation',
+  fertigation: 'farmAssistant.categories.fertigation',
+  expense: 'farmAssistant.categories.expense',
 };
 
 export function AssistantAnswerCard({ answer, onAskAnother }: AssistantAnswerCardProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const iconName = CATEGORY_ICONS[answer.category] ?? 'questionmark.circle';
-  const categoryLabel = CATEGORY_LABELS[answer.category] ?? answer.category;
+  const categoryLabel = t(CATEGORY_LABEL_KEYS[answer.category]);
 
-  const formatDate = (dateStr: string): string => {
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' });
-    } catch {
-      return dateStr;
-    }
-  };
+  const formatRowDate = (dateStr: string): string =>
+    formatDate(dateStr, { day: 'numeric', month: 'short', year: '2-digit' });
 
   const formatTimeRange = (): string => {
-    try {
-      const start = answer.timeRange.start.toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-      });
-      const end = answer.timeRange.end.toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-      });
-      return `${start} – ${end}`;
-    } catch {
-      return '';
-    }
+    const start = formatDate(answer.timeRange.start, {
+      day: 'numeric',
+      month: 'short',
+    });
+    const end = formatDate(answer.timeRange.end, {
+      day: 'numeric',
+      month: 'short',
+    });
+    return start && end ? `${start} – ${end}` : '';
   };
 
   const formattedSummaryValue =
@@ -201,7 +192,7 @@ export function AssistantAnswerCard({ answer, onAskAnother }: AssistantAnswerCar
                   fontWeight: fontWeight.medium,
                 }}
               >
-                {formatDate(row.date)}
+                {formatRowDate(row.date)}
               </Text>
               <View style={{ flex: 1, marginLeft: spacing[2] }}>
                 <Text

@@ -194,7 +194,7 @@ export const mr = {
       title: 'वर्कबोर्ड',
       subtitle: 'टूल्स आणि संसाधनांना पटकन प्रवेश.',
       actions: {
-        ai: 'सल्लागार',
+        ai: 'AI सहाय्यक',
         lab: 'तपासणी',
         reports: '$t(glossary.report)',
         soilMoisture: '$t(glossary.soil)तील ओलावा',
@@ -379,6 +379,7 @@ export const mr = {
       customNameLabel: 'कस्टम वाण नाव',
       customNamePlaceholder: 'वाण नाव टाका',
       modalTitle: 'वाण निवडा',
+      searchPlaceholder: 'वाण शोधा',
     },
     plantingDate: {
       selectPlaceholder: 'दिनांक निवडा',
@@ -414,8 +415,8 @@ export const mr = {
     sprayApplication: '$t(glossary.spray)',
     harvestDescription: '{{quantityKg}}kg - {{grade}}',
     expenseDescription: '{{cost}} - {{type}}',
-    fertigationApplied_one: '{{countFormatted}} $t(glossary.fertilizer) वापरले',
-    fertigationApplied_other: '{{countFormatted}} $t(glossary.fertilizer)े वापरली',
+    fertigationApplied_one: '{{countFormatted}} $t(glossary.fertigation) वापरले',
+    fertigationApplied_other: '{{countFormatted}} $t(glossary.fertigation)े वापरली',
     types: {
       irrigation: '$t(glossary.irrigation)',
       spray: '$t(glossary.spray)',
@@ -564,7 +565,7 @@ export const mr = {
 
   fertigationForm: {
     title: 'फर्टिगेशन',
-    subtitle: '$t(glossary.fertilizer) अनुप्रयोग नोंदवा',
+    subtitle: '$t(glossary.fertigation) अनुप्रयोग नोंदवा',
     waterVolume: {
       label: 'पाणी मात्रा',
       placeholder: 'प्रमाण टाका',
@@ -573,14 +574,14 @@ export const mr = {
     },
     fertilizers: {
       label: 'खते',
-      addFertilizer: '$t(glossary.fertilizer) जोडा',
+      addFertilizer: '$t(glossary.fertigation) जोडा',
       namePlaceholder: 'खताचे नाव',
       qtyPlaceholder: 'प्रमाण',
       selectUnit: 'युनिट निवडा',
     },
     validation: {
       ready: 'जोडण्यासाठी तयार',
-      incomplete: 'किमान एक $t(glossary.fertilizer) आणि मात्रा जोडा',
+      incomplete: 'किमान एक $t(glossary.fertigation) आणि मात्रा जोडा',
     },
   },
 
@@ -640,7 +641,8 @@ export const mr = {
       madCalculator: 'तुमच्या पिकांसाठी Maximum Allowable Depletion गणा',
       systemDischarge: '$t(glossary.irrigation) सिस्टम डिस्चार्ज दर गणा आणि ट्रॅक करा',
       laiCalculator: 'कॅनपी व्यवस्थापनासाठी Leaf Area Index गणा',
-      nutrientCalculator: '$t(glossary.labTest) वरून $t(glossary.fertilizer) आणि पोषक आवश्यकता गणा',
+      nutrientCalculator:
+        '$t(glossary.labTest) वरून $t(glossary.fertigation) आणि पोषक आवश्यकता गणा',
     },
   },
 
@@ -1109,7 +1111,8 @@ export const mr = {
   },
 
   ai: {
-    title: 'सल्लागार',
+    title: 'AI सहाय्यक',
+    openAssistant: 'AI सहाय्यक उघडा',
     description:
       'आपला वैयक्तिक शेती सहाय्यक. द्राक्ष लागवड, $t(glossary.irrigation), $t(glossary.disease) किंवा $t(glossary.harvest)बद्दल काहीही विचारा!',
     suggestedQuestions: 'सूचित प्रश्न:',
@@ -1121,10 +1124,22 @@ export const mr = {
     errors: {
       failedResponse: 'AI कडून उत्तर मिळाले नाही',
     },
+    voice: {
+      starting: 'मायक्रोफोन सुरू होत आहे...',
+      listening: 'ऐकत आहे...',
+      startA11y: 'व्हॉइस इनपुट सुरू करा',
+      stopA11y: 'व्हॉइस इनपुट थांबवा',
+      permissionTitle: 'मायक्रोफोन परवानगी आवश्यक',
+      permissionBody: 'आवाजातून प्रश्न विचारण्यासाठी मायक्रोफोन परवानगी द्या.',
+      noSpeechTitle: 'आवाज सापडला नाही',
+      noSpeechBody: 'मला काही ऐकू आले नाही. कृपया पुन्हा बोला.',
+      unavailableTitle: 'व्हॉइस इनपुट उपलब्ध नाही',
+      unavailableBody: 'या डिव्हाइसवर सध्या व्हॉइस इनपुट उपलब्ध नाही.',
+    },
     defaultSuggestions: {
       waterNeed: 'मला किती पाणी लागेल?',
       diseases: 'सामान्य $t(glossary.disease) तपासा',
-      fertilizer: '$t(glossary.fertilizer) शिफारसी',
+      fertilizer: '$t(glossary.fertigation) शिफारसी',
       pruning: '$t(glossary.pruning) टिपा (द्राक्षे)',
     },
   },
@@ -1473,7 +1488,7 @@ export const mr = {
     reorderAt: 'पुनर्भरण पातळी: {{quantity}} {{unit}}',
     filters: {
       all: 'सर्व ({{count}})',
-      fertilizer: '$t(glossary.fertilizer) ({{count}})',
+      fertilizer: '$t(glossary.fertigation) ({{count}})',
       spray: '$t(glossary.spray) ({{count}})',
     },
     search: {
@@ -1484,7 +1499,7 @@ export const mr = {
     itemsCount_one: '{{count}} वस्तू',
     itemsCount_other: '{{count}} वस्तू',
     itemTypes: {
-      fertilizer: '$t(glossary.fertilizer)',
+      fertilizer: '$t(glossary.fertigation)',
       spray: '$t(glossary.spray)',
     },
     empty: {
@@ -1895,10 +1910,16 @@ export const mr = {
     askAnotherQuestion: 'आणखी एक प्रश्न विचारा',
     tryAgain: 'पुन्हा प्रयत्न करा',
     showingRecords: '{{total}} पैकी {{shown}} नोंदी दाखवत आहे',
+    categories: {
+      spray: '$t(glossary.spray)',
+      irrigation: '$t(glossary.irrigation)',
+      fertigation: '$t(glossary.fertigation)',
+      expense: '$t(glossary.expense)',
+    },
     suggestedQuestions: {
       sprayLastMonth: 'मागील महिन्यात कोणती $t(glossary.spray) केली?',
       totalIrrigationSeason: 'या हंगामातील एकूण $t(glossary.irrigation)?',
-      lastFertilizer: 'शेवटचे $t(glossary.fertilizer) कधी दिले?',
+      lastFertilizer: 'शेवटचे $t(glossary.fertigation) कधी दिले?',
       spendThisMonth: 'या महिन्यात किती $t(glossary.expense) झाला?',
     },
     clarification: {
@@ -1906,7 +1927,7 @@ export const mr = {
       forWhichPeriod: 'कोणत्या कालावधीसाठी?',
       sprayHistory: '$t(glossary.spray) इतिहास',
       irrigationHistory: '$t(glossary.irrigation) इतिहास',
-      fertilizerHistory: '$t(glossary.fertigation) इतिहास',
+      fertilizerHistory: '$t(glossary.fertilizer) इतिहास',
       expenseSummary: '$t(glossary.expense) सारांश',
       thisWeek: 'हा आठवडा',
       thisMonth: 'हा महिना',
@@ -1922,6 +1943,7 @@ export const mr = {
     a11y: {
       openAssistant: '$t(glossary.farm) सहाय्यकाला विचारा',
       closeAssistant: '$t(glossary.farm) सहाय्यक बंद करा',
+      stopListening: 'ऐकणे थांबवा',
       submitQuery: 'प्रश्न पाठवा',
       selectOption: 'पर्याय निवडा: {{option}}',
     },

@@ -148,7 +148,7 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
           <View style={{ alignItems: 'center', paddingVertical: spacing[6], gap: spacing[3] }}>
             <Pressable
               onPress={stopListening}
-              accessibilityLabel={t('farmAssistant.a11y.closeAssistant')}
+              accessibilityLabel={t('farmAssistant.a11y.stopListening')}
               accessibilityRole="button"
               style={{
                 width: 64,

@@ -13,11 +13,25 @@ const mockChain = {
   lte: jest.fn(),
   order: jest.fn(),
   limit: jest.fn(),
+  range: jest.fn(),
 };
 
 function mockResetChain(data: Record<string, unknown>[] = []) {
-  Object.values(mockChain).forEach((fn) => fn.mockReturnValue(mockChain));
+  for (const fn of Object.values(mockChain)) {
+    fn.mockReturnValue(mockChain);
+  }
+
+  // Terminal calls used by fetchRecordsForIntent()
   mockChain.limit.mockResolvedValue({ data, error: null });
+  mockChain.range.mockResolvedValue({ data, error: null });
+
+  // Terminal call used by getFarmNames(): .eq(...).in('id', farmIds)
+  mockChain.in.mockImplementation((column: string) => {
+    if (column === 'id') {
+      return Promise.resolve({ data: [], error: null });
+    }
+    return mockChain;
+  });
 }
 
 jest.mock('@/lib/supabase', () => ({

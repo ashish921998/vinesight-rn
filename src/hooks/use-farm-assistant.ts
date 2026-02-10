@@ -50,12 +50,45 @@ export function useFarmAssistant() {
   const language = useLanguageStore((s) => s.language) ?? 'en';
   const speechLocale = LOCALE_MAP[language] ?? 'en-IN';
 
-  const store = useFarmAssistantStore();
+  // Subscribe only to values needed for rendering/return (causes re-renders)
+  const isModalVisible = useFarmAssistantStore((s) => s.isModalVisible);
+  const status = useFarmAssistantStore((s) => s.status);
+  const transcript = useFarmAssistantStore((s) => s.transcript);
+  const answer = useFarmAssistantStore((s) => s.answer);
+  const clarification = useFarmAssistantStore((s) => s.clarification);
+  const error = useFarmAssistantStore((s) => s.error);
+  const isMicAvailable = useFarmAssistantStore((s) => s.isMicAvailable);
+
+  // Destructure actions (referentially stable in Zustand)
+  const {
+    openModal: storeOpenModal,
+    closeModal: storeCloseModal,
+    setStatus: storeSetStatus,
+    setTranscript: storeSetTranscript,
+    setIntent: storeSetIntent,
+    setAnswer: storeSetAnswer,
+    setClarification: storeSetClarification,
+    setError: storeSetError,
+    setMicAvailable: storeSetMicAvailable,
+    reset: storeReset,
+  } = useFarmAssistantStore((s) => ({
+    openModal: s.openModal,
+    closeModal: s.closeModal,
+    setStatus: s.setStatus,
+    setTranscript: s.setTranscript,
+    setIntent: s.setIntent,
+    setAnswer: s.setAnswer,
+    setClarification: s.setClarification,
+    setError: s.setError,
+    setMicAvailable: s.setMicAvailable,
+    reset: s.reset,
+  }));
+
   const queryTimestamps = useRef<number[]>([]);
   const pendingTranscriptRef = useRef<string>('');
   const hasSubmittedVoiceQueryRef = useRef(false);
   const isStartingListeningRef = useRef(false);
-  const submitQueryRef = useRef<(text: string) => Promise<void>>(undefined);
+  const submitQueryRef = useRef<((text: string) => Promise<void>) | undefined>(undefined);
 
   const isRateLimited = useCallback((): boolean => {
     const now = Date.now();
@@ -81,8 +114,11 @@ export function useFarmAssistant() {
     async (text: string) => {
       if (!text.trim()) return;
 
+      // Read status at call time to avoid dependency on subscribed value
+      const currentStatus = useFarmAssistantStore.getState().status;
+
       // Stop any active voice recognition
-      if (store.status === 'listening') {
+      if (currentStatus === 'listening') {
         hasSubmittedVoiceQueryRef.current = true;
         try {
           ExpoSpeechRecognitionModule.abort();
@@ -92,7 +128,7 @@ export function useFarmAssistant() {
       }
 
       if (isRateLimited()) {
-        store.setError('Too many queries. Please wait a moment.');
+        storeSetError('Too many queries. Please wait a moment.');
         telemetry.capture('farm_assistant_error', {
           error_type: 'rate_limited',
           message: 'Too many queries. Please wait a moment.',
@@ -101,8 +137,8 @@ export function useFarmAssistant() {
       }
 
       queryTimestamps.current.push(Date.now());
-      store.setTranscript(text);
-      store.setStatus('processing');
+      storeSetTranscript(text);
+      storeSetStatus('processing');
 
       telemetry.capture('farm_assistant_query_submitted', {
         query_length: text.length,
@@ -112,7 +148,7 @@ export function useFarmAssistant() {
       try {
         const unsupported = checkUnsupportedIntent(text);
         if (unsupported) {
-          store.setError(unsupported.message);
+          storeSetError(unsupported.message);
           telemetry.capture('farm_assistant_error', {
             error_type: 'unsupported',
             message: unsupported.message,
@@ -121,11 +157,11 @@ export function useFarmAssistant() {
         }
 
         const intent = classifyIntent(text, farms);
-        store.setIntent(intent);
+        storeSetIntent(intent);
 
         const clarification = buildClarification(intent);
         if (clarification) {
-          store.setClarification(clarification);
+          storeSetClarification(clarification);
           telemetry.capture('farm_assistant_clarification_triggered', {
             has_category: !!intent.category,
             confidence: intent.confidence,
@@ -136,7 +172,7 @@ export function useFarmAssistant() {
         if (!intent.category) {
           const noCategMsg =
             "I couldn't understand that question. I can help with spray, irrigation, fertigation, and expense history.";
-          store.setError(noCategMsg);
+          storeSetError(noCategMsg);
           telemetry.capture('farm_assistant_error', {
             error_type: 'no_category',
             message: noCategMsg,
@@ -153,7 +189,7 @@ export function useFarmAssistant() {
         });
 
         const result = await executeQuery(text, farms, language);
-        store.setAnswer(result.answer);
+        storeSetAnswer(result.answer);
 
         // Speak the answer aloud
         if (result.answer.verbalizedText) {
@@ -169,14 +205,25 @@ export function useFarmAssistant() {
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Something went wrong. Please try again.';
-        store.setError(message);
+        storeSetError(message);
         telemetry.capture('farm_assistant_error', {
           error_type: 'query_failed',
           message,
         });
       }
     },
-    [farms, language, store, isRateLimited, speakAnswer],
+    [
+      farms,
+      language,
+      isRateLimited,
+      speakAnswer,
+      storeSetError,
+      storeSetTranscript,
+      storeSetStatus,
+      storeSetIntent,
+      storeSetClarification,
+      storeSetAnswer,
+    ],
   );
 
   // Keep ref in sync with latest submitQuery
@@ -186,11 +233,12 @@ export function useFarmAssistant() {
 
   // Voice recognition event handlers (use ref to avoid circular dependency)
   useSpeechRecognitionEvent('start', () => {
-    store.setStatus('listening');
+    storeSetStatus('listening');
   });
 
   useSpeechRecognitionEvent('end', () => {
-    if (store.status !== 'listening') return;
+    const currentStatus = useFarmAssistantStore.getState().status;
+    if (currentStatus !== 'listening') return;
 
     const finalTranscript = pendingTranscriptRef.current.trim();
     if (finalTranscript && !hasSubmittedVoiceQueryRef.current) {
@@ -199,35 +247,35 @@ export function useFarmAssistant() {
       return;
     }
 
-    store.setStatus('idle');
+    storeSetStatus('idle');
   });
 
   useSpeechRecognitionEvent('result', (event) => {
-    const transcript = event.results[0]?.transcript ?? '';
-    pendingTranscriptRef.current = transcript;
-    store.setTranscript(transcript);
+    const resultTranscript = event.results[0]?.transcript ?? '';
+    pendingTranscriptRef.current = resultTranscript;
+    storeSetTranscript(resultTranscript);
 
-    if (event.isFinal && transcript.trim() && !hasSubmittedVoiceQueryRef.current) {
+    if (event.isFinal && resultTranscript.trim() && !hasSubmittedVoiceQueryRef.current) {
       hasSubmittedVoiceQueryRef.current = true;
-      submitQueryRef.current?.(transcript.trim());
+      submitQueryRef.current?.(resultTranscript.trim());
     }
   });
 
   useSpeechRecognitionEvent('error', (event) => {
     if (event.error === 'no-speech') {
-      store.setStatus('idle');
+      storeSetStatus('idle');
       return;
     }
     if (event.error === 'not-allowed') {
-      store.setMicAvailable(false);
-      store.setStatus('idle');
+      storeSetMicAvailable(false);
+      storeSetStatus('idle');
       return;
     }
     // Ignore 'aborted' errors — these are programmatic (e.g., user closed modal, submitted query)
     if (event.error === 'aborted') {
       return;
     }
-    store.setError(event.message ?? 'Voice recognition failed. Try typing your question.');
+    storeSetError(event.message ?? 'Voice recognition failed. Try typing your question.');
     telemetry.capture('farm_assistant_error', {
       error_type: 'voice_recognition',
       message: event.message,
@@ -238,24 +286,27 @@ export function useFarmAssistant() {
   // Check mic permissions on mount
   useEffect(() => {
     if (Platform.OS === 'web') {
-      store.setMicAvailable(false);
+      storeSetMicAvailable(false);
       return;
     }
     ExpoSpeechRecognitionModule.getPermissionsAsync()
       .then((result) => {
         if (result.status === 'denied') {
-          store.setMicAvailable(false);
+          storeSetMicAvailable(false);
         }
       })
       .catch(() => {
-        store.setMicAvailable(false);
+        storeSetMicAvailable(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startListening = useCallback(async () => {
+    // Read status at call time to avoid dependency on subscribed value
+    const currentStatus = useFarmAssistantStore.getState().status;
+
     // Don't start if already listening to prevent crashes
-    if (store.status === 'listening' || isStartingListeningRef.current) {
+    if (currentStatus === 'listening' || isStartingListeningRef.current) {
       return;
     }
 
@@ -264,15 +315,15 @@ export function useFarmAssistant() {
     try {
       const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!result.granted) {
-        store.setMicAvailable(false);
-        store.setStatus('idle');
+        storeSetMicAvailable(false);
+        storeSetStatus('idle');
         return;
       }
-      store.setMicAvailable(true);
+      storeSetMicAvailable(true);
       pendingTranscriptRef.current = '';
       hasSubmittedVoiceQueryRef.current = false;
-      store.setTranscript('');
-      store.setStatus('listening');
+      storeSetTranscript('');
+      storeSetStatus('listening');
 
       await Promise.resolve(
         ExpoSpeechRecognitionModule.start({
@@ -283,36 +334,36 @@ export function useFarmAssistant() {
       );
     } catch (err) {
       console.warn('Speech recognition start failed:', err);
-      store.setStatus('idle');
-      store.setMicAvailable(false);
-      store.setError('Voice recognition is not available on this device.');
+      storeSetStatus('idle');
+      storeSetMicAvailable(false);
+      storeSetError('Voice recognition is not available on this device.');
     } finally {
       isStartingListeningRef.current = false;
     }
-  }, [speechLocale, store]);
+  }, [speechLocale, storeSetMicAvailable, storeSetStatus, storeSetTranscript, storeSetError]);
 
   const stopListening = useCallback(() => {
     try {
       ExpoSpeechRecognitionModule.stop();
     } catch (err) {
       console.warn('Speech recognition stop failed:', err);
-      store.setStatus('idle');
+      storeSetStatus('idle');
     }
-  }, [store]);
+  }, [storeSetStatus]);
 
   const selectClarification = useCallback(
     async (option: string) => {
       telemetry.capture('farm_assistant_clarification_selected', { option });
 
-      const currentTranscript = store.transcript;
+      const currentTranscript = useFarmAssistantStore.getState().transcript;
       const enrichedTranscript = `${currentTranscript} ${option}`;
-      store.setClarification(null);
-      store.setStatus('processing');
-      store.setTranscript(enrichedTranscript);
+      storeSetClarification(null);
+      storeSetStatus('processing');
+      storeSetTranscript(enrichedTranscript);
 
       try {
         const result = await executeQuery(enrichedTranscript, farms, language);
-        store.setAnswer(result.answer);
+        storeSetAnswer(result.answer);
 
         // Speak the answer aloud
         if (result.answer.verbalizedText) {
@@ -328,14 +379,23 @@ export function useFarmAssistant() {
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Something went wrong. Please try again.';
-        store.setError(message);
+        storeSetError(message);
         telemetry.capture('farm_assistant_error', {
           error_type: 'query_failed',
           message,
         });
       }
     },
-    [farms, language, store, speakAnswer],
+    [
+      farms,
+      language,
+      speakAnswer,
+      storeSetClarification,
+      storeSetStatus,
+      storeSetTranscript,
+      storeSetAnswer,
+      storeSetError,
+    ],
   );
 
   const reset = useCallback(() => {
@@ -347,12 +407,12 @@ export function useFarmAssistant() {
     Speech.stop();
     pendingTranscriptRef.current = '';
     hasSubmittedVoiceQueryRef.current = false;
-    store.reset();
-  }, [store]);
+    storeReset();
+  }, [storeReset]);
 
   const openModal = useCallback(() => {
-    store.openModal();
-  }, [store]);
+    storeOpenModal();
+  }, [storeOpenModal]);
 
   const closeModal = useCallback(() => {
     try {
@@ -363,17 +423,17 @@ export function useFarmAssistant() {
     Speech.stop();
     pendingTranscriptRef.current = '';
     hasSubmittedVoiceQueryRef.current = false;
-    store.closeModal();
-  }, [store]);
+    storeCloseModal();
+  }, [storeCloseModal]);
 
   return {
-    isModalVisible: store.isModalVisible,
-    status: store.status as FarmAssistantStatus,
-    transcript: store.transcript,
-    answer: store.answer as AssistantAnswer | null,
-    clarification: store.clarification as ClarificationPrompt | null,
-    error: store.error,
-    isMicAvailable: store.isMicAvailable,
+    isModalVisible,
+    status: status as FarmAssistantStatus,
+    transcript,
+    answer: answer as AssistantAnswer | null,
+    clarification: clarification as ClarificationPrompt | null,
+    error,
+    isMicAvailable,
 
     startListening,
     stopListening,

@@ -194,7 +194,7 @@ export const hi = {
       title: 'वर्कबोर्ड',
       subtitle: 'उपकरण और संसाधनों तक त्वरित पहुंच।',
       actions: {
-        ai: 'AI',
+        ai: 'AI सहायक',
         lab: 'लैब',
         reports: 'रिपोर्ट',
         soilMoisture: 'मिट्टी की नमी',
@@ -379,6 +379,7 @@ export const hi = {
       customNameLabel: 'कस्टम किस्म का नाम',
       customNamePlaceholder: 'किस्म का नाम दर्ज करें',
       modalTitle: 'किस्म चुनें',
+      searchPlaceholder: 'किस्म खोजें',
     },
     plantingDate: {
       selectPlaceholder: 'तारीख चुनें',
@@ -564,7 +565,7 @@ export const hi = {
 
   fertigationForm: {
     title: 'फर्टिगेशन',
-    subtitle: '$t(glossary.fertilizer) अनुप्रयोग लॉग करें',
+    subtitle: '$t(glossary.fertigation) अनुप्रयोग लॉग करें',
     waterVolume: {
       label: 'पानी की मात्रा',
       placeholder: 'मात्रा दर्ज करें',
@@ -573,14 +574,14 @@ export const hi = {
     },
     fertilizers: {
       label: 'उर्वरक',
-      addFertilizer: '$t(glossary.fertilizer) जोड़ें',
+      addFertilizer: '$t(glossary.fertigation) जोड़ें',
       namePlaceholder: 'उर्वरक का नाम',
       qtyPlaceholder: 'मात्रा',
       selectUnit: 'इकाई चुनें',
     },
     validation: {
       ready: 'जोड़ने के लिए तैयार',
-      incomplete: 'कम से कम एक $t(glossary.fertilizer) और मात्रा जोड़ें',
+      incomplete: 'कम से कम एक $t(glossary.fertigation) और मात्रा जोड़ें',
     },
   },
 
@@ -1105,7 +1106,8 @@ export const hi = {
   },
 
   ai: {
-    title: 'Vinesight AI',
+    title: 'AI सहायक',
+    openAssistant: 'AI सहायक खोलें',
     description:
       'आपका व्यक्तिगत खेती सहायक। मुझसे अंगूर की खेती, सिंचाई, रोगों या कटाई के बारे में कुछ भी पूछें!',
     suggestedQuestions: 'सुझाए गए प्रश्न:',
@@ -1116,6 +1118,18 @@ export const hi = {
     },
     errors: {
       failedResponse: 'AI से प्रतिक्रिया प्राप्त करने में विफल',
+    },
+    voice: {
+      starting: 'माइक्रोफ़ोन शुरू हो रहा है...',
+      listening: 'सुन रहा है...',
+      startA11y: 'वॉइस इनपुट शुरू करें',
+      stopA11y: 'वॉइस इनपुट रोकें',
+      permissionTitle: 'माइक्रोफ़ोन अनुमति आवश्यक',
+      permissionBody: 'आवाज़ से प्रश्न पूछने के लिए माइक्रोफ़ोन की अनुमति दें।',
+      noSpeechTitle: 'कोई आवाज़ नहीं मिली',
+      noSpeechBody: 'मुझे कोई आवाज़ नहीं सुनाई दी। कृपया फिर से बोलें।',
+      unavailableTitle: 'वॉइस इनपुट उपलब्ध नहीं',
+      unavailableBody: 'इस डिवाइस पर अभी वॉइस इनपुट उपलब्ध नहीं है।',
     },
     defaultSuggestions: {
       waterNeed: 'मुझे कितने पानी की आवश्यकता है?',
@@ -1889,10 +1903,16 @@ export const hi = {
     askAnotherQuestion: 'एक और प्रश्न पूछें',
     tryAgain: 'पुनः प्रयास करें',
     showingRecords: '{{total}} में से {{shown}} रिकॉर्ड दिखाए जा रहे हैं',
+    categories: {
+      spray: '$t(glossary.spray)',
+      irrigation: '$t(glossary.irrigation)',
+      fertigation: '$t(glossary.fertigation)',
+      expense: '$t(glossary.expense)',
+    },
     suggestedQuestions: {
       sprayLastMonth: 'पिछले महीने कौन सा $t(glossary.spray) किया?',
       totalIrrigationSeason: 'इस सीज़न की कुल $t(glossary.irrigation)?',
-      lastFertilizer: 'आखिरी $t(glossary.fertilizer) कब दिया?',
+      lastFertilizer: 'आखिरी $t(glossary.fertigation) कब दिया?',
       spendThisMonth: 'इस महीने कितना $t(glossary.expense) हुआ?',
     },
     clarification: {
@@ -1900,7 +1920,7 @@ export const hi = {
       forWhichPeriod: 'किस समयावधि के लिए?',
       sprayHistory: '$t(glossary.spray) इतिहास',
       irrigationHistory: '$t(glossary.irrigation) इतिहास',
-      fertilizerHistory: '$t(glossary.fertigation) इतिहास',
+      fertilizerHistory: '$t(glossary.fertilizer) इतिहास',
       expenseSummary: '$t(glossary.expense) सारांश',
       thisWeek: 'इस सप्ताह',
       thisMonth: 'इस महीने',
@@ -1916,6 +1936,7 @@ export const hi = {
     a11y: {
       openAssistant: '$t(glossary.farm) सहायक से पूछें',
       closeAssistant: '$t(glossary.farm) सहायक बंद करें',
+      stopListening: 'सुनना बंद करें',
       submitQuery: 'प्रश्न भेजें',
       selectOption: 'विकल्प चुनें: {{option}}',
     },
