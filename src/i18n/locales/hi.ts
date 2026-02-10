@@ -1131,6 +1131,60 @@ export const hi = {
       unavailableTitle: 'वॉइस इनपुट उपलब्ध नहीं',
       unavailableBody: 'इस डिवाइस पर अभी वॉइस इनपुट उपलब्ध नहीं है।',
     },
+    logging: {
+      cancelled: 'ठीक है, मैंने लॉगिंग फ्लो रद्द कर दिया।',
+      noFarms: 'पहले एक खेत जोड़ें, फिर मैं लॉगिंग फ़ॉर्म खोल दूँगा।',
+      openingForm:
+        '{{farm}} में {{date}} को {{type}} दर्ज किया। समीक्षा और सबमिट के लिए फ़ॉर्म खोल रहा हूँ।',
+      followups: {
+        common: {
+          askFarm: 'यह किस खेत के लिए लॉग करूँ?',
+          askWaterVolume: 'कितना पानी इस्तेमाल हुआ (लीटर में)?',
+        },
+        irrigation: {
+          askDuration: 'सिंचाई कितने घंटे चली?',
+        },
+        spray: {
+          askChemicals: 'कम से कम एक रसायन का नाम और मात्रा बताएं।',
+        },
+        harvest: {
+          askQuantity: 'कटाई की मात्रा कितनी थी (किलो)?',
+          askGrade: 'कटाई का कौन सा ग्रेड दर्ज करूँ?',
+        },
+        expense: {
+          askCost: 'इस खर्च की राशि कितनी दर्ज करूँ?',
+          askType: 'कौन सी खर्च श्रेणी चुनूँ?',
+        },
+        fertigation: {
+          askFertilizers: 'कम से कम एक उर्वरक का नाम और मात्रा बताएं।',
+        },
+      },
+      draft: {
+        title: 'लॉगिंग ड्राफ़्ट',
+        type: 'प्रकार',
+        farm: 'खेत',
+        status: 'स्थिति',
+        date: 'तारीख',
+        missingFarm: 'चुना नहीं गया',
+        ready: 'तैयार',
+        waiting: 'बाकी: {{fields}}',
+        clearA11y: 'एक्टिविटी लॉगिंग ड्राफ़्ट साफ़ करें',
+        cleared: 'ड्राफ़्ट हटाया गया',
+        undo: 'वापस लाएँ',
+        dismissA11y: 'हटाए गए ड्राफ़्ट की सूचना बंद करें',
+        fields: {
+          farm: 'खेत',
+          duration: 'अवधि',
+          waterVolume: 'पानी मात्रा',
+          chemicals: 'रसायन',
+          quantity: 'मात्रा',
+          grade: 'ग्रेड',
+          cost: 'राशि',
+          expenseType: 'खर्च प्रकार',
+          fertilizers: 'उर्वरक',
+        },
+      },
+    },
     defaultSuggestions: {
       waterNeed: 'मुझे कितने पानी की आवश्यकता है?',
       diseases: 'सामान्य रोगों की जांच करें',

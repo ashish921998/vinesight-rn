@@ -1136,6 +1136,60 @@ export const mr = {
       unavailableTitle: 'व्हॉइस इनपुट उपलब्ध नाही',
       unavailableBody: 'या डिव्हाइसवर सध्या व्हॉइस इनपुट उपलब्ध नाही.',
     },
+    logging: {
+      cancelled: 'ठीक आहे, नोंदणी प्रक्रिया रद्द केली.',
+      noFarms: 'आधी एक $t(glossary.farm) जोडा, मग मी नोंदणी फॉर्म उघडतो.',
+      openingForm:
+        '{{farm}} साठी {{date}} रोजी {{type}} नोंदवले. पडताळणी आणि सबमिटसाठी फॉर्म उघडत आहे.',
+      followups: {
+        common: {
+          askFarm: 'हे कोणत्या $t(glossary.farm)ासाठी नोंदवू?',
+          askWaterVolume: 'पाणी किती वापरले (लिटरमध्ये)?',
+        },
+        irrigation: {
+          askDuration: '$t(glossary.irrigation) किती तास चालले?',
+        },
+        spray: {
+          askChemicals: 'किमान एक रसायनाचे नाव आणि प्रमाण सांगा.',
+        },
+        harvest: {
+          askQuantity: '$t(glossary.harvest) चे प्रमाण किती होते (किलो)?',
+          askGrade: '$t(glossary.harvest) साठी कोणता ग्रेड नोंदवू?',
+        },
+        expense: {
+          askCost: 'या $t(glossary.expense) साठी किती रक्कम नोंदवू?',
+          askType: '$t(glossary.expense) चा प्रकार कोणता निवडू?',
+        },
+        fertigation: {
+          askFertilizers: 'किमान एक $t(glossary.fertilizer) चे नाव आणि प्रमाण सांगा.',
+        },
+      },
+      draft: {
+        title: 'नोंदणी मसुदा',
+        type: 'प्रकार',
+        farm: '$t(glossary.farm)',
+        status: 'स्थिती',
+        date: 'तारीख',
+        missingFarm: 'निवडले नाही',
+        ready: 'तयार',
+        waiting: 'बाकी: {{fields}}',
+        clearA11y: 'एक्टिव्हिटी नोंदणी मसुदा साफ करा',
+        cleared: 'मसुदा काढला',
+        undo: 'पूर्ववत',
+        dismissA11y: 'काढलेल्या मसुद्याची सूचना बंद करा',
+        fields: {
+          farm: '$t(glossary.farm)',
+          duration: 'कालावधी',
+          waterVolume: 'पाणी प्रमाण',
+          chemicals: 'रसायने',
+          quantity: 'प्रमाण',
+          grade: 'ग्रेड',
+          cost: 'रक्कम',
+          expenseType: '$t(glossary.expense) प्रकार',
+          fertilizers: '$t(glossary.fertilizer)',
+        },
+      },
+    },
     defaultSuggestions: {
       waterNeed: 'मला किती पाणी लागेल?',
       diseases: 'सामान्य $t(glossary.disease) तपासा',

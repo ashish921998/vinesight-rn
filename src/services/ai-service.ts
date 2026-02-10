@@ -8,6 +8,12 @@ import { AIMessageAttachmentInput, ChatMessage, SendMessageResponse } from '../t
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import { GLOSSARY_MR } from '@/i18n/glossary.mr';
 import { GLOSSARY_HI } from '@/i18n/glossary.hi';
+import type {
+  ActivityLogExtractionResult,
+  VoiceLogActivityType,
+  VoiceLogChemicalItem,
+  VoiceLogFertilizerItem,
+} from '@/types/voice-log';
 
 const SYSTEM_PROMPT_EN = `You are Vinesight AI Assistant, an expert agricultural assistant specialized in grape farming and viticulture. You help farmers with:
 - Disease identification and management
@@ -93,6 +99,168 @@ Safety:
   }
 
   return SYSTEM_PROMPT_EN;
+}
+
+function parseJsonObjectFromText(raw: string): Record<string, unknown> | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const withoutCodeFences = trimmed
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '');
+
+  try {
+    const parsed: unknown = JSON.parse(withoutCodeFences);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function toOptionalString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function toOptionalNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function toRoundedPositiveNumber(value: unknown): number | null {
+  const parsed = toOptionalNumber(value);
+  if (parsed === null || parsed <= 0) return null;
+  return Math.round(parsed * 100) / 100;
+}
+
+function toRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function toVoiceLogActivityType(value: unknown): VoiceLogActivityType | null {
+  if (
+    value !== 'irrigation' &&
+    value !== 'spray' &&
+    value !== 'harvest' &&
+    value !== 'expense' &&
+    value !== 'fertigation'
+  ) {
+    return null;
+  }
+  return value;
+}
+
+function parseChemicalItems(value: unknown): VoiceLogChemicalItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      const row = toRecord(item);
+      if (!row) return null;
+      const name = toOptionalString(row.name) ?? '';
+      const quantity = toRoundedPositiveNumber(row.quantity);
+      const unit = toOptionalString(row.unit);
+      if (!name && quantity === null && unit === null) return null;
+      return {
+        name,
+        quantity,
+        unit,
+      };
+    })
+    .filter((item): item is VoiceLogChemicalItem => Boolean(item));
+}
+
+function parseFertilizerItems(value: unknown): VoiceLogFertilizerItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      const row = toRecord(item);
+      if (!row) return null;
+      const name = toOptionalString(row.name) ?? '';
+      const quantity = toRoundedPositiveNumber(row.quantity);
+      const unit = toOptionalString(row.unit);
+      if (!name && quantity === null && unit === null) return null;
+      return {
+        name,
+        quantity,
+        unit,
+      };
+    })
+    .filter((item): item is VoiceLogFertilizerItem => Boolean(item));
+}
+
+function parseExtractionResult(raw: string): ActivityLogExtractionResult | null {
+  const obj = parseJsonObjectFromText(raw);
+  if (!obj) return null;
+
+  const intentRaw = toOptionalString(obj.intent);
+  const intent: 'log_activity' | 'none' = intentRaw === 'log_activity' ? 'log_activity' : 'none';
+  const activityType = toVoiceLogActivityType(obj.activity_type);
+
+  const cancel = obj.cancel === true;
+  const farmName = toOptionalString(obj.farm_name);
+
+  const dateIsoRaw = toOptionalString(obj.date_iso);
+  const dateIso = dateIsoRaw && /^\d{4}-\d{2}-\d{2}$/.test(dateIsoRaw) ? dateIsoRaw : null;
+
+  const dateRelativeRaw = toOptionalString(obj.date_relative);
+  const dateRelative: 'today' | 'yesterday' | null =
+    dateRelativeRaw === 'today' || dateRelativeRaw === 'yesterday' ? dateRelativeRaw : null;
+
+  const confidenceRaw = toOptionalNumber(obj.confidence);
+  const confidence =
+    confidenceRaw !== null
+      ? Math.min(1, Math.max(0, confidenceRaw))
+      : intent === 'log_activity'
+        ? 0.6
+        : 0;
+
+  const irrigationRaw = toRecord(obj.irrigation);
+  const sprayRaw = toRecord(obj.spray);
+  const harvestRaw = toRecord(obj.harvest);
+  const expenseRaw = toRecord(obj.expense);
+  const fertigationRaw = toRecord(obj.fertigation);
+
+  return {
+    intent,
+    activityType,
+    cancel,
+    farmName,
+    dateIso,
+    dateRelative,
+    confidence,
+    irrigation: {
+      durationHours: toRoundedPositiveNumber(irrigationRaw?.duration_hours ?? null),
+    },
+    spray: {
+      waterVolume: toRoundedPositiveNumber(sprayRaw?.water_volume ?? null),
+      chemicals: parseChemicalItems(sprayRaw?.chemicals ?? []),
+    },
+    harvest: {
+      quantity: toRoundedPositiveNumber(harvestRaw?.quantity ?? null),
+      grade: toOptionalString(harvestRaw?.grade ?? null),
+      price: toRoundedPositiveNumber(harvestRaw?.price ?? null),
+      buyer: toOptionalString(harvestRaw?.buyer ?? null),
+    },
+    expense: {
+      cost: toRoundedPositiveNumber(expenseRaw?.cost ?? null),
+      expenseType: toOptionalString(expenseRaw?.expense_type ?? null),
+      remarks: toOptionalString(expenseRaw?.remarks ?? null),
+    },
+    fertigation: {
+      waterVolume: toRoundedPositiveNumber(fertigationRaw?.water_volume ?? null),
+      fertilizers: parseFertilizerItems(fertigationRaw?.fertilizers ?? []),
+    },
+  };
 }
 
 class AIService {
@@ -283,6 +451,83 @@ class AIService {
 
   isConfigured(): boolean {
     return this.apiKey !== null;
+  }
+
+  async extractActivityLoggingIntent(input: {
+    transcript: string;
+    language: SupportedLanguageCode;
+    farmNames: string[];
+    contextFarmName?: string | null;
+  }): Promise<ActivityLogExtractionResult | null> {
+    if (!this.openai) return null;
+
+    const normalizedFarmNames = input.farmNames.filter((name) => name.trim().length > 0);
+    const today = new Date();
+    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+      {
+        role: 'system',
+        content: `You extract farm activity logging intent and slots for a farming app.
+Return only valid JSON with keys:
+- intent: "log_activity" | "none"
+- activity_type: "irrigation" | "spray" | "harvest" | "expense" | "fertigation" | null
+- cancel: boolean
+- farm_name: string | null
+- date_relative: "today" | "yesterday" | null
+- date_iso: "YYYY-MM-DD" | null
+- irrigation: { duration_hours: number | null }
+- spray: { water_volume: number | null, chemicals: [{ name: string, quantity: number | null, unit: string | null }] }
+- harvest: { quantity: number | null, grade: string | null, price: number | null, buyer: string | null }
+- expense: { cost: number | null, expense_type: string | null, remarks: string | null }
+- fertigation: { water_volume: number | null, fertilizers: [{ name: string, quantity: number | null, unit: string | null }] }
+- confidence: number from 0 to 1
+
+Rules:
+- Detect intent to log/create/save a farm activity record.
+- If user wants to cancel/stop this logging flow, set cancel=true.
+- If intent is not logging, set intent="none" and activity_type=null.
+- For irrigation duration in minutes, convert to fractional hours.
+- For spray and fertigation, extract list items from user text if present.
+- Keep unknown fields null or empty arrays.
+- If user says "kal"/"कल", treat it as "yesterday".
+- Use date_relative for relative expressions.
+- Use date_iso only when the user clearly gives a concrete date.
+- Prefer exact farm name text when possible.`,
+      },
+      {
+        role: 'user',
+        content: JSON.stringify({
+          transcript: input.transcript,
+          language: input.language,
+          today_iso: todayIso,
+          context_farm_name: input.contextFarmName ?? null,
+          known_farm_names: normalizedFarmNames,
+        }),
+      },
+    ];
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages,
+        temperature: 0,
+        max_tokens: 250,
+        response_format: { type: 'json_object' },
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) return null;
+
+      return parseExtractionResult(content);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Activity logging extraction failed:', error);
+      }
+      return null;
+    }
   }
 }
 

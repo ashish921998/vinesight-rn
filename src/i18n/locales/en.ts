@@ -1128,6 +1128,60 @@ export const en = {
       unavailableTitle: 'Voice Input Unavailable',
       unavailableBody: 'Voice input is not available on this device right now.',
     },
+    logging: {
+      cancelled: 'Okay, I cancelled the logging flow.',
+      noFarms: 'Please add a farm first, then I can open a logging form.',
+      openingForm:
+        'Captured {{type}} on {{date}} at {{farm}}. Opening the form for review and submit.',
+      followups: {
+        common: {
+          askFarm: 'Which farm should I log this for?',
+          askWaterVolume: 'How much water volume did you use (in liters)?',
+        },
+        irrigation: {
+          askDuration: 'How many hours did irrigation run?',
+        },
+        spray: {
+          askChemicals: 'Tell me at least one chemical name and quantity.',
+        },
+        harvest: {
+          askQuantity: 'How much harvest quantity did you collect (kg)?',
+          askGrade: 'What harvest grade should I record?',
+        },
+        expense: {
+          askCost: 'What amount should I log for this expense?',
+          askType: 'Which expense category should I use?',
+        },
+        fertigation: {
+          askFertilizers: 'Tell me at least one fertilizer name and quantity.',
+        },
+      },
+      draft: {
+        title: 'Logging draft',
+        type: 'Type',
+        farm: 'Farm',
+        status: 'Status',
+        date: 'Date',
+        missingFarm: 'Not selected',
+        ready: 'Ready',
+        waiting: 'Missing: {{fields}}',
+        clearA11y: 'Clear activity logging draft',
+        cleared: 'Draft cleared',
+        undo: 'Undo',
+        dismissA11y: 'Dismiss cleared draft notice',
+        fields: {
+          farm: 'Farm',
+          duration: 'Duration',
+          waterVolume: 'Water volume',
+          chemicals: 'Chemicals',
+          quantity: 'Quantity',
+          grade: 'Grade',
+          cost: 'Cost',
+          expenseType: 'Expense type',
+          fertilizers: 'Fertilizers',
+        },
+      },
+    },
     defaultSuggestions: {
       waterNeed: 'How much water do I need?',
       diseases: 'Check for common diseases',

@@ -54,7 +54,14 @@ import {
   type ExpenseFormData,
   type FertigationFormData,
 } from '@/components/forms';
-import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
+import {
+  LOG_TYPES,
+  type LogTypeId,
+  HARVEST_GRADES,
+  EXPENSE_TYPES,
+  CHEMICAL_UNITS,
+  FERTILIZER_UNITS,
+} from '@/constants/calculator-models';
 import {
   useCreateIrrigationRecord,
   useCreateSprayRecord,
@@ -77,6 +84,7 @@ import {
 import { TASK_TEMPLATES } from '@/constants/task-templates';
 import { toSupabaseDateString } from '@/types/database';
 import type { Farm } from '@/types';
+import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useNotificationStore } from '@/stores';
 import {
@@ -95,6 +103,10 @@ interface EntryFormProps {
   farm?: Farm;
   initialFarmId?: number | null;
   initialLogType?: LogTypeId | null;
+  initialIrrigationDurationHours?: number | null;
+  initialLogDate?: string | null;
+  initialVoiceLogPrefill?: VoiceLogFormPrefill | null;
+  entrySource?: 'manual' | 'voice_ai' | null;
   editingTask?: TaskReminder | null;
   onLogSaveSuccess?: () => void;
   onTaskSaveSuccess?: () => void;
@@ -128,6 +140,22 @@ const TASK_TYPES: TaskType[] = [
 
 const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
 
+function parseInitialLogDate(value?: string | null): Date | null {
+  if (!value) return null;
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number.parseInt(match[1], 10);
+  const monthIndex = Number.parseInt(match[2], 10) - 1;
+  const day = Number.parseInt(match[3], 10);
+  const parsed = new Date(year, monthIndex, day);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function createPrefillId(prefix: string, index: number): string {
+  return `${prefix}_${Date.now()}_${index}`;
+}
+
 export function EntryForm({
   visible,
   onClose,
@@ -136,6 +164,10 @@ export function EntryForm({
   farm,
   initialFarmId,
   initialLogType,
+  initialIrrigationDurationHours,
+  initialLogDate,
+  initialVoiceLogPrefill,
+  entrySource = null,
   editingTask,
   onLogSaveSuccess,
   onTaskSaveSuccess,
@@ -157,6 +189,7 @@ export function EntryForm({
   const defaultTab = resolvedTabs.includes(initialTab || 'log')
     ? initialTab || resolvedTabs[0]
     : resolvedTabs[0];
+  const parsedInitialLogDate = useMemo(() => parseInitialLogDate(initialLogDate), [initialLogDate]);
   const [activeTab, setActiveTab] = useState<EntryTab>(defaultTab);
 
   const { data: farms } = useFarms();
@@ -185,7 +218,7 @@ export function EntryForm({
   }, [isVisible, defaultTab, farm?.id, farms, initialFarmId, selectedFarmId]);
 
   // Log state
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => parsedInitialLogDate ?? new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedLogType, setSelectedLogType] = useState<LogTypeId | null>(null);
   const [showLogFormModal, setShowLogFormModal] = useState(false);
@@ -261,6 +294,114 @@ export function EntryForm({
       setShowLogFormModal(true);
     }
   }, [isVisible, initialLogType]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    if (parsedInitialLogDate) {
+      setSelectedDate(parsedInitialLogDate);
+    }
+  }, [isVisible, parsedInitialLogDate]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    if (initialIrrigationDurationHours && initialIrrigationDurationHours > 0) {
+      setIrrigationData((prev) => ({
+        ...prev,
+        duration: initialIrrigationDurationHours,
+      }));
+    }
+  }, [isVisible, initialIrrigationDurationHours]);
+
+  useEffect(() => {
+    if (!isVisible || !initialVoiceLogPrefill) return;
+
+    setSelectedLogType(initialVoiceLogPrefill.type);
+    setShowLogFormModal(true);
+
+    const prefillDate = parseInitialLogDate(initialVoiceLogPrefill.date);
+    if (prefillDate) {
+      setSelectedDate(prefillDate);
+    }
+
+    switch (initialVoiceLogPrefill.type) {
+      case 'irrigation': {
+        const duration = initialVoiceLogPrefill.irrigation?.durationHours;
+        if (duration && duration > 0) {
+          setIrrigationData({ duration });
+        }
+        break;
+      }
+      case 'spray': {
+        const sprayPrefill = initialVoiceLogPrefill.spray;
+        const prefilledChemicals = sprayPrefill?.chemicals?.length
+          ? sprayPrefill.chemicals.map((item, index) => ({
+              id: createPrefillId('chem', index),
+              name: item.name ?? '',
+              quantity: item.quantity ?? undefined,
+              unit:
+                item.unit && CHEMICAL_UNITS.includes(item.unit as (typeof CHEMICAL_UNITS)[number])
+                  ? (item.unit as (typeof CHEMICAL_UNITS)[number])
+                  : 'gm/L',
+            }))
+          : createEmptySprayFormData().chemicals;
+
+        setSprayData({
+          waterVolume: sprayPrefill?.waterVolume ?? undefined,
+          chemicals: prefilledChemicals,
+        });
+        break;
+      }
+      case 'harvest': {
+        const harvestPrefill = initialVoiceLogPrefill.harvest;
+        const grade =
+          harvestPrefill?.grade &&
+          HARVEST_GRADES.includes(harvestPrefill.grade as (typeof HARVEST_GRADES)[number])
+            ? (harvestPrefill.grade as (typeof HARVEST_GRADES)[number])
+            : '';
+        setHarvestData({
+          quantity: harvestPrefill?.quantity ?? undefined,
+          grade,
+          price: harvestPrefill?.price ?? undefined,
+          buyer: harvestPrefill?.buyer ?? undefined,
+        });
+        break;
+      }
+      case 'expense': {
+        const expensePrefill = initialVoiceLogPrefill.expense;
+        const expenseType =
+          expensePrefill?.expenseType &&
+          EXPENSE_TYPES.includes(expensePrefill.expenseType as (typeof EXPENSE_TYPES)[number])
+            ? (expensePrefill.expenseType as (typeof EXPENSE_TYPES)[number])
+            : '';
+        setExpenseData({
+          type: expenseType,
+          cost: expensePrefill?.cost ?? undefined,
+          remarks: expensePrefill?.remarks ?? undefined,
+        });
+        break;
+      }
+      case 'fertigation': {
+        const fertigationPrefill = initialVoiceLogPrefill.fertigation;
+        const prefilledFertilizers = fertigationPrefill?.fertilizers?.length
+          ? fertigationPrefill.fertilizers.map((item) => ({
+              name: item.name ?? '',
+              quantity: item.quantity ?? 0,
+              unit:
+                item.unit &&
+                FERTILIZER_UNITS.includes(item.unit as (typeof FERTILIZER_UNITS)[number])
+                  ? (item.unit as (typeof FERTILIZER_UNITS)[number])
+                  : 'kg/acre',
+            }))
+          : createEmptyFertigationFormData().fertilizers;
+
+        setFertigationData({
+          waterVolume: fertigationPrefill?.waterVolume ?? undefined,
+          fertilizers: prefilledFertilizers,
+        });
+        break;
+      }
+    }
+  }, [initialVoiceLogPrefill, isVisible]);
 
   type OnFocusEvent = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
 
@@ -489,6 +630,7 @@ export function EntryForm({
       const failedCount = results.filter((result) => result.status === 'rejected').length;
 
       if (successfulIds.length > 0) {
+        const createdFrom = entrySource === 'voice_ai' ? 'voice_ai' : 'manual';
         // Track telemetry for successfully created records
         pendingLogs
           .filter((log) => successfulIds.includes(log.id))
@@ -496,9 +638,19 @@ export function EntryForm({
             try {
               telemetry.capture('record_created', {
                 record_type: log.type,
-                created_from: 'manual',
+                created_from: createdFrom,
                 farm_id: farmId,
               });
+              if (entrySource === 'voice_ai') {
+                telemetry.capture('voice_log_submitted', {
+                  farm_id: farmId,
+                  record_type: log.type,
+                  duration_hours:
+                    log.type === 'irrigation'
+                      ? ((log.data as IrrigationFormData).duration ?? null)
+                      : null,
+                });
+              }
               // Track meaningful action for record creation
               telemetry.capture('meaningful_action', {
                 action_type: 'record_created',
