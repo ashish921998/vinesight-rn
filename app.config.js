@@ -29,6 +29,9 @@ module.exports = {
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
           'Vinesight uses your location to show nearby farms and local weather.',
+        NSMicrophoneUsageDescription: 'Allow Vinesight to use the microphone for voice queries.',
+        NSSpeechRecognitionUsageDescription:
+          'Allow Vinesight to convert your speech to text for voice queries.',
       },
       privacyManifests: {
         NSPrivacyTracking: false,
