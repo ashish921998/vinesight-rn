@@ -12,7 +12,11 @@
       "@/stores/*": ["./src/stores/*"],
       "@/components/*": ["./src/components/*"],
       "@/constants/*": ["./src/constants/*"],
-      "@/utils/*": ["./src/utils/*"]
+      "@/utils/*": ["./src/utils/*"],
+      // Keep explicit legacy/subpath mappings because this codebase imports
+      // `expo-file-system/legacy`, which is not part of the root package export path.
+      "expo-file-system/legacy": ["./node_modules/expo-file-system/build/legacy/index.d.ts"],
+      "expo-file-system/*": ["./node_modules/expo-file-system/build/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "assets.d.ts"]

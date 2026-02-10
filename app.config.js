@@ -125,6 +125,14 @@ module.exports = {
           microphonePermission: false,
         },
       ],
+      [
+        'expo-speech-recognition',
+        {
+          microphonePermission: 'Allow Vinesight to use the microphone for voice queries.',
+          speechRecognitionPermission:
+            'Allow Vinesight to use speech recognition for voice queries.',
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

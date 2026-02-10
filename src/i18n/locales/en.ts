@@ -194,7 +194,7 @@ export const en = {
       title: 'WORKBOARD',
       subtitle: 'Quick access to tools and resources.',
       actions: {
-        ai: 'AI',
+        ai: 'AI Assistant',
         lab: 'Lab',
         reports: 'Reports',
         soilMoisture: 'Soil Moisture',
@@ -379,6 +379,7 @@ export const en = {
       customNameLabel: 'Custom Variety Name',
       customNamePlaceholder: 'Enter variety name',
       modalTitle: 'Select Variety',
+      searchPlaceholder: 'Search variety',
     },
     plantingDate: {
       selectPlaceholder: 'Select date',
@@ -422,7 +423,7 @@ export const en = {
       spray: 'Spray',
       harvest: 'Harvest',
       expense: 'Expense',
-      fertigation: 'Fertigation',
+      fertigation: 'Fertilizer',
       note: 'Note',
     },
     labels: {
@@ -563,13 +564,13 @@ export const en = {
   },
 
   fertigationForm: {
-    title: 'Fertigation',
+    title: 'Fertilizer',
     subtitle: 'Log fertilizer application',
     waterVolume: {
       label: 'Water volume',
       placeholder: 'Enter volume',
       unitLiters: 'Liters',
-      hint: 'Total water used for fertigation (optional)',
+      hint: 'Total water used for fertilizer application (optional)',
     },
     fertilizers: {
       label: 'Fertilizers',
@@ -1061,7 +1062,7 @@ export const en = {
       warningBody: 'Deleting your account will permanently remove all your data including:',
       dataList: {
         farms: 'All farm data (farms, crops, soil profiles, lab tests)',
-        records: 'All records (irrigation, spray, fertigation, harvest, expenses)',
+        records: 'All records (irrigation, spray, fertilizer, harvest, expenses)',
         workers: 'Worker information and attendance records',
         org: 'Organization memberships and connections',
         uploads: 'All uploaded files (soil test reports, photos, documents)',
@@ -1102,7 +1103,8 @@ export const en = {
   },
 
   ai: {
-    title: 'Vinesight AI',
+    title: 'AI Assistant',
+    openAssistant: 'Open AI Assistant',
     description:
       'Your personal farming assistant. Ask me anything about grape farming, irrigation, diseases, or harvest!',
     suggestedQuestions: 'Suggested questions:',
@@ -1113,6 +1115,18 @@ export const en = {
     },
     errors: {
       failedResponse: 'Failed to get response from AI',
+    },
+    voice: {
+      starting: 'Starting microphone...',
+      listening: 'Listening...',
+      startA11y: 'Start voice input',
+      stopA11y: 'Stop voice input',
+      permissionTitle: 'Microphone Permission Required',
+      permissionBody: 'Please allow microphone access to ask questions by voice.',
+      noSpeechTitle: 'No Speech Detected',
+      noSpeechBody: 'I could not hear anything. Try speaking again.',
+      unavailableTitle: 'Voice Input Unavailable',
+      unavailableBody: 'Voice input is not available on this device right now.',
     },
     defaultSuggestions: {
       waterNeed: 'How much water do I need?',
@@ -1249,7 +1263,7 @@ export const en = {
     types: {
       irrigation: 'Irrigation',
       spray: 'Spray',
-      fertigation: 'Fertigation',
+      fertigation: 'Fertilizer',
       harvest: 'Harvest',
       soilTest: 'Soil test',
       petioleTest: 'Petiole test',
@@ -1872,6 +1886,69 @@ export const en = {
         cost: 'Cost',
         remarks: 'Remarks',
       },
+    },
+  },
+
+  farmAssistant: {
+    title: 'Farm Assistant',
+    askAboutFarmData: 'Ask about your farm data...',
+    listening: 'Listening...',
+    tryAsking: 'Try asking',
+    lookingUpRecords: 'Looking up your records...',
+    yourQuestion: 'Your question',
+    askAnotherQuestion: 'Ask another question',
+    tryAgain: 'Try again',
+    showingRecords: 'Showing {{shown}} of {{total}} records',
+    categories: {
+      spray: 'Spray',
+      irrigation: 'Irrigation',
+      fertigation: 'Fertilizer',
+      expense: 'Expense',
+    },
+    suggestedQuestions: {
+      sprayLastMonth: 'What spray did I do last month?',
+      totalIrrigationSeason: 'Total irrigation this season?',
+      lastFertilizer: 'Last fertilizer application?',
+      spendThisMonth: 'How much did I spend this month?',
+    },
+    clarification: {
+      whatToKnow: 'What would you like to know about?',
+      forWhichPeriod: 'For which time period?',
+      sprayHistory: 'Spray history',
+      irrigationHistory: 'Irrigation history',
+      fertilizerHistory: 'Fertilizer history',
+      expenseSummary: 'Expense summary',
+      thisWeek: 'This week',
+      thisMonth: 'This month',
+      thisSeason: 'This season',
+      lastMonth: 'Last month',
+    },
+    errors: {
+      unsupportedCategory:
+        'I can only help with spray, irrigation, fertilizer, and expense history.',
+      tooManyQueries: 'Too many queries. Please wait a moment.',
+      somethingWentWrong: 'Something went wrong. Please try again.',
+      unsupportedMessages: {
+        sprayRecommendation:
+          "I can't recommend sprays, but I can show your last spray if you want.",
+        recordCreation: "I can't create records, but I can show your recent history.",
+        recommendation: "I can't give recommendations, but I can show your farm history.",
+        cropHealth:
+          'I can help with spray, irrigation, fertilizer, or expense history. Try asking about one of those.',
+      },
+      unsupportedSuggestions: {
+        showLastSpray: 'Show my last spray',
+        showRecentHistory: 'Show recent history',
+        showRecentActivity: 'Show recent activity',
+        askSprayLastMonth: 'What spray did I do last month?',
+      },
+    },
+    a11y: {
+      openAssistant: 'Ask farm assistant',
+      closeAssistant: 'Close farm assistant',
+      stopListening: 'Stop listening',
+      submitQuery: 'Submit query',
+      selectOption: 'Select option: {{option}}',
     },
   },
 } as const;

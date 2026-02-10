@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,19 +10,113 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import {
+  ExpoSpeechRecognitionModule as _SpeechModule,
+  useSpeechRecognitionEvent,
+} from 'expo-speech-recognition';
 
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import Markdown from 'react-native-markdown-display';
-import { useFarm } from '@/hooks';
+import { useFarm, useFarms } from '@/hooks';
 import { aiService } from '@/services/ai-service';
 import { ChatMessage } from '@/types/ai';
+import { classifyIntent, executeQuery } from '@/services/farm-assistant-service';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import type { AssistantAnswer, QueryIntent } from '@/types/voice-assistant';
+import type { SupportedLanguageCode } from '@/i18n/languages';
+
+type VoiceInputState = 'idle' | 'starting' | 'listening';
+
+const ExpoSpeechRecognitionModule = _SpeechModule as typeof _SpeechModule & {
+  requestPermissionsAsync(): Promise<{ status: string; granted: boolean }>;
+  start(options: { lang: string; interimResults: boolean; continuous: boolean }): void;
+  stop(): void;
+  abort(): void;
+};
+
+function resolveSpeechLocale(language: string): string {
+  if (language.startsWith('mr')) return 'mr-IN';
+  if (language.startsWith('hi')) return 'hi-IN';
+  return 'en-IN';
+}
+
+function resolveLanguageCode(language: string): SupportedLanguageCode {
+  if (language.startsWith('mr')) return 'mr';
+  if (language.startsWith('hi')) return 'hi';
+  return 'en';
+}
+
+const FARM_DATA_QUERY_PATTERNS = [
+  /\bhow\s+much\b/i,
+  /\bhow\s+many\b/i,
+  /\btotal\b/i,
+  /\blast\b/i,
+  /\blatest\b/i,
+  /\bmost\s+recent\b/i,
+  /\bshow\b/i,
+  /\bhistory\b/i,
+  /\brecord(s)?\b/i,
+  /\bmy\b/i,
+  /\bdid\s+i\b/i,
+  /कितना/i,
+  /कितने/i,
+  /किती/i,
+  /कुल/i,
+  /एकूण/i,
+  /पिछले?\s+महीने/i,
+  /(मागच्या|गेल्या|मागील)\s+महिन/i,
+];
+
+const ADVISORY_QUERY_PATTERNS = [
+  /\bshould\b/i,
+  /\brecommend\b/i,
+  /\bsuggest\b/i,
+  /\badvice\b/i,
+  /\bbest\b/i,
+  /\bcan\s+i\b/i,
+  /\bwhat\s+to\s+do\b/i,
+  /\bhow\s+to\b/i,
+  /\bकाय\s+करू\b/i,
+  /\bसल्ला\b/i,
+  /\bसुझाव\b/i,
+  /\bकैसे\b/i,
+  /\bकसा\b/i,
+];
+
+function shouldUseFarmDataEngine(transcript: string, intent: QueryIntent): boolean {
+  if (!intent.category) return false;
+  if (ADVISORY_QUERY_PATTERNS.some((pattern) => pattern.test(transcript))) return false;
+  if (intent.queryType !== 'history' || intent.timeRange) return true;
+  return FARM_DATA_QUERY_PATTERNS.some((pattern) => pattern.test(transcript));
+}
+
+function formatFarmDataAnswer(answer: AssistantAnswer): string {
+  const summaryValue =
+    answer.summary.unit === '₹'
+      ? `₹${Number(answer.summary.value).toLocaleString('en-IN')}`
+      : `${answer.summary.value}${answer.summary.unit ? ` ${answer.summary.unit}` : ''}`;
+
+  const header = `${answer.summary.label}: ${summaryValue}`;
+
+  if (answer.rows.length === 0) {
+    return header;
+  }
+
+  const topRows = answer.rows.slice(0, 3);
+  const rowLines = topRows.map((row) => {
+    const detail = row.secondary ? ` (${row.secondary})` : '';
+    return `- ${row.date}: ${row.primary}${detail}`;
+  });
+
+  return `${header}\n\n${rowLines.join('\n')}`;
+}
 
 const markdownStyles = (colors: ReturnType<typeof useThemeColors>) => ({
   body: { fontSize: 16, color: colors.surface[900], lineHeight: 24 },
@@ -89,14 +183,34 @@ export default function AIChatScreen() {
   const markdown = useMemo(() => markdownStyles(colors), [colors]);
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
-  const { data: farm } = useFarm(farmId ? parseInt(farmId, 10) : undefined);
+  const parsedFarmId = useMemo(() => {
+    if (!farmId) return null;
+    const parsed = Number.parseInt(farmId, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  }, [farmId]);
+  const { data: farm } = useFarm(parsedFarmId ?? undefined);
+  const { data: farms = [] } = useFarms();
+  const contextFarm = useMemo(() => {
+    if (parsedFarmId === null) return null;
+    return farm ?? farms.find((candidate) => candidate.id === parsedFarmId) ?? null;
+  }, [farm, farms, parsedFarmId]);
+  const candidateFarms = useMemo(() => (contextFarm ? [contextFarm] : farms), [contextFarm, farms]);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [voiceInputState, setVoiceInputState] = useState<VoiceInputState>('idle');
   const scrollViewRef = useRef<ScrollView>(null);
+  const pendingVoiceTranscriptRef = useRef('');
+  const hasSubmittedVoiceQueryRef = useRef(false);
+  const isStartingVoiceInputRef = useRef(false);
+  const sendMessageRef =
+    useRef<(text?: string, source?: 'text' | 'voice') => Promise<void>>(undefined);
+  const speechLocale = useMemo(() => resolveSpeechLocale(i18n.language), [i18n.language]);
+  const isVoiceListening = voiceInputState === 'starting' || voiceInputState === 'listening';
 
   const DEFAULT_SUGGESTIONS = useMemo(
     () => [
@@ -122,66 +236,261 @@ export default function AIChatScreen() {
     }, 100);
   };
 
-  const handleSendMessage = async (text?: string) => {
-    const messageText = text || inputText.trim();
-    if (!messageText || isLoading) return;
+  const handleSendMessage = useCallback(
+    async (text?: string, source: 'text' | 'voice' = 'text') => {
+      const messageText = text || inputText.trim();
+      if (!messageText || isLoading) return;
 
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: messageText,
-      timestamp: new Date(),
+      if (source !== 'voice' && isVoiceListening) {
+        hasSubmittedVoiceQueryRef.current = true;
+        try {
+          ExpoSpeechRecognitionModule.abort();
+        } catch {
+          /* no-op */
+        }
+        setVoiceInputState('idle');
+      }
+
+      const newMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: messageText,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, newMessage]);
+      setInputText('');
+      setSuggestions([]);
+      setIsLoading(true);
+      scrollToBottom();
+
+      telemetry.capture('ai_request_made', {
+        ai_use_case: 'chat',
+        language: i18n.language,
+        input_method: source,
+      });
+
+      try {
+        const deterministicTranscript = contextFarm?.name
+          ? `${messageText} for farm ${contextFarm.name}`
+          : messageText;
+        const intent = classifyIntent(deterministicTranscript, candidateFarms);
+
+        if (shouldUseFarmDataEngine(messageText, intent) && candidateFarms.length > 0) {
+          try {
+            const languageCode = resolveLanguageCode(i18n.language);
+            const farmDataResponse = await executeQuery(
+              deterministicTranscript,
+              candidateFarms,
+              languageCode,
+            );
+
+            const content =
+              farmDataResponse.answer.verbalizedText ??
+              formatFarmDataAnswer(farmDataResponse.answer);
+
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content,
+                timestamp: new Date(),
+              },
+            ]);
+            setSuggestions(DEFAULT_SUGGESTIONS);
+
+            telemetry.capture('ai_result_received', {
+              ai_use_case: 'chat',
+              confidence_score: null,
+              response_source: 'farm_records',
+            });
+
+            scrollToBottom();
+            return;
+          } catch (error) {
+            if (__DEV__) {
+              console.warn('Farm data engine failed, falling back to LLM:', error);
+            }
+          }
+        }
+
+        const response = await aiService.sendMessage(
+          messageText,
+          messages,
+          {
+            farmName: contextFarm?.name,
+            cropVariety: contextFarm?.crop_variety || contextFarm?.crop,
+            area: contextFarm?.area,
+            region: contextFarm?.region,
+            daysSincePruning: contextFarm?.date_of_pruning
+              ? Math.floor(
+                  (new Date().getTime() - new Date(contextFarm.date_of_pruning).getTime()) /
+                    (1000 * 60 * 60 * 24),
+                )
+              : undefined,
+          },
+          resolveLanguageCode(i18n.language),
+        );
+
+        setMessages((prev) => [...prev, response.message]);
+        setSuggestions(response.suggestions || DEFAULT_SUGGESTIONS);
+
+        telemetry.capture('ai_result_received', {
+          ai_use_case: 'chat',
+          confidence_score: null,
+        });
+
+        scrollToBottom();
+      } catch (error) {
+        Alert.alert(
+          t('common.error'),
+          error instanceof Error ? error.message : t('ai.errors.failedResponse'),
+          [{ text: t('common.ok') }],
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      DEFAULT_SUGGESTIONS,
+      candidateFarms,
+      contextFarm,
+      i18n.language,
+      inputText,
+      isLoading,
+      isVoiceListening,
+      messages,
+      t,
+    ],
+  );
+
+  useEffect(() => {
+    sendMessageRef.current = handleSendMessage;
+  }, [handleSendMessage]);
+
+  useSpeechRecognitionEvent('start', () => {
+    setVoiceInputState('listening');
+  });
+
+  useSpeechRecognitionEvent('result', (event) => {
+    const transcript = event.results[0]?.transcript ?? '';
+    if (!transcript) return;
+
+    pendingVoiceTranscriptRef.current = transcript;
+    setInputText(transcript);
+
+    if (event.isFinal && transcript.trim() && !hasSubmittedVoiceQueryRef.current) {
+      hasSubmittedVoiceQueryRef.current = true;
+      sendMessageRef.current?.(transcript.trim(), 'voice');
+      setVoiceInputState('idle');
+    }
+  });
+
+  useSpeechRecognitionEvent('end', () => {
+    const finalTranscript = pendingVoiceTranscriptRef.current.trim();
+    if (finalTranscript && !hasSubmittedVoiceQueryRef.current) {
+      hasSubmittedVoiceQueryRef.current = true;
+      sendMessageRef.current?.(finalTranscript, 'voice');
+    }
+    setVoiceInputState('idle');
+  });
+
+  useSpeechRecognitionEvent('error', (event) => {
+    if (event.error === 'aborted') {
+      setVoiceInputState('idle');
+      return;
+    }
+    if (event.error === 'no-speech') {
+      setVoiceInputState('idle');
+      Alert.alert(t('ai.voice.noSpeechTitle'), t('ai.voice.noSpeechBody'), [
+        { text: t('common.ok') },
+      ]);
+      return;
+    }
+    if (event.error === 'not-allowed') {
+      setVoiceInputState('idle');
+      Alert.alert(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), [
+        { text: t('common.ok') },
+      ]);
+      return;
+    }
+
+    setVoiceInputState('idle');
+    Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
+      { text: t('common.ok') },
+    ]);
+  });
+
+  useEffect(() => {
+    return () => {
+      try {
+        ExpoSpeechRecognitionModule.abort();
+      } catch {
+        /* no-op */
+      }
     };
+  }, []);
 
-    setMessages((prev) => [...prev, newMessage]);
-    setInputText('');
-    setSuggestions([]);
-    setIsLoading(true);
-    scrollToBottom();
+  const startVoiceInput = useCallback(async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
+        { text: t('common.ok') },
+      ]);
+      return;
+    }
+    if (isLoading || isStartingVoiceInputRef.current || voiceInputState === 'listening') {
+      return;
+    }
 
-    // Track AI request
-    telemetry.capture('ai_request_made', {
-      ai_use_case: 'chat',
-      language: i18n.language,
-    });
+    isStartingVoiceInputRef.current = true;
+    setVoiceInputState('starting');
+    pendingVoiceTranscriptRef.current = '';
+    hasSubmittedVoiceQueryRef.current = false;
 
     try {
-      const response = await aiService.sendMessage(messageText, messages, {
-        farmName: farm?.name,
-        cropVariety: farm?.crop_variety || farm?.crop,
-        area: farm?.area,
-        region: farm?.region,
-        daysSincePruning: farm?.date_of_pruning
-          ? Math.floor(
-              (new Date().getTime() - new Date(farm.date_of_pruning).getTime()) /
-                (1000 * 60 * 60 * 24),
-            )
-          : undefined,
-      });
+      const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!permission.granted) {
+        setVoiceInputState('idle');
+        Alert.alert(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), [
+          { text: t('common.ok') },
+        ]);
+        return;
+      }
 
-      setMessages((prev) => [...prev, response.message]);
-      setSuggestions(response.suggestions || DEFAULT_SUGGESTIONS);
-
-      // Track AI result received
-      telemetry.capture('ai_result_received', {
-        ai_use_case: 'chat',
-        confidence_score: null, // OpenAI doesn't provide confidence scores
-      });
-
-      scrollToBottom();
-    } catch (error) {
-      Alert.alert(
-        t('common.error'),
-        error instanceof Error ? error.message : t('ai.errors.failedResponse'),
-        [{ text: t('common.ok') }],
+      await Promise.resolve(
+        ExpoSpeechRecognitionModule.start({
+          lang: speechLocale,
+          interimResults: true,
+          continuous: false,
+        }),
       );
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Voice input start failed:', error);
+      }
+      setVoiceInputState('idle');
+      Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
+        { text: t('common.ok') },
+      ]);
     } finally {
-      setIsLoading(false);
+      isStartingVoiceInputRef.current = false;
     }
-  };
+  }, [isLoading, speechLocale, t, voiceInputState]);
+
+  const stopVoiceInput = useCallback(() => {
+    try {
+      ExpoSpeechRecognitionModule.stop();
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Voice input stop failed:', error);
+      }
+      setVoiceInputState('idle');
+    }
+  }, []);
 
   const handleSuggestionPress = (suggestion: string) => {
-    handleSendMessage(suggestion);
+    handleSendMessage(suggestion, 'text');
   };
 
   const formatMessageTime = (date: Date) => {
@@ -454,11 +763,24 @@ export default function AIChatScreen() {
           <View
             style={{
               padding: spacing[4],
+              paddingBottom: Math.max(insets.bottom, spacing[4]),
               backgroundColor: colors.surface[100],
               borderTopWidth: 1,
               borderTopColor: colors.surface[200],
             }}
           >
+            {voiceInputState !== 'idle' && (
+              <Text
+                style={{
+                  marginBottom: spacing[2],
+                  color: m3.colorScheme.primary,
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                }}
+              >
+                {voiceInputState === 'starting' ? t('ai.voice.starting') : t('ai.voice.listening')}
+              </Text>
+            )}
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] }}>
               <TextInput
                 value={inputText}
@@ -479,10 +801,34 @@ export default function AIChatScreen() {
                 }}
                 textAlignVertical="top"
                 returnKeyType="send"
-                onSubmitEditing={() => handleSendMessage()}
+                onSubmitEditing={() => handleSendMessage(undefined, 'text')}
               />
               <Pressable
-                onPress={() => handleSendMessage()}
+                onPress={isVoiceListening ? stopVoiceInput : startVoiceInput}
+                disabled={isLoading && !isVoiceListening}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isVoiceListening ? t('ai.voice.stopA11y') : t('ai.voice.startA11y')
+                }
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isVoiceListening
+                    ? colorWithOpacity(m3.colorScheme.error, 0.16)
+                    : colorWithOpacity(m3.colorScheme.primary, 0.12),
+                }}
+              >
+                <UiSymbol
+                  name={isVoiceListening ? 'stop.fill' : 'mic.fill'}
+                  size={20}
+                  color={isVoiceListening ? m3.colorScheme.error : m3.colorScheme.primary}
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => handleSendMessage(undefined, 'text')}
                 disabled={!inputText.trim() || isLoading}
                 style={{
                   width: 48,
