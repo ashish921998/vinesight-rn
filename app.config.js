@@ -17,7 +17,7 @@ module.exports = {
       bundleIdentifier: 'com.vinesight.ios',
       scheme: 'vinesight',
       usesAppleSignIn: true,
-      buildNumber: '1.1.8',
+      buildNumber: '1.1.9',
       icon: {
         light: './assets/icons/ios-light.png',
         dark: './assets/icons/ios-dark.png',
