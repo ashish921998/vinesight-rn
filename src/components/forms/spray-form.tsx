@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
@@ -18,6 +18,7 @@ export interface ChemicalEntry {
 }
 
 const DEFAULT_CHEMICAL_UNIT: ChemicalUnit = 'gm/L';
+const MAX_CHEMICAL_ROWS = 10;
 
 function isChemicalUnit(value: string): value is ChemicalUnit {
   return CHEMICAL_UNITS.includes(value as ChemicalUnit);
@@ -34,6 +35,10 @@ function resolveChemicalUnit(
 
 function generateId(): string {
   return `chem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function clampChemicalRows(chemicals: ChemicalEntry[]): ChemicalEntry[] {
+  return chemicals.slice(0, MAX_CHEMICAL_ROWS);
 }
 
 export interface SprayFormData {
@@ -104,30 +109,37 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
 
+  useEffect(() => {
+    if (data.chemicals.length <= MAX_CHEMICAL_ROWS) return;
+    onChange({
+      ...data,
+      chemicals: clampChemicalRows(data.chemicals),
+    });
+  }, [data, onChange]);
+
   const addChemical = () => {
-    if (data.chemicals.length < 10) {
+    if (data.chemicals.length < MAX_CHEMICAL_ROWS) {
       onChange({
         ...data,
-        chemicals: [
+        chemicals: clampChemicalRows([
           ...data.chemicals,
           { id: generateId(), name: '', quantity: undefined, unit: 'gm/L' },
-        ],
+        ]),
       });
     }
   };
 
   const updateChemical = (id: string, updates: Partial<ChemicalEntry>) => {
     const newChemicals = data.chemicals.map((c) => (c.id === id ? { ...c, ...updates } : c));
-    onChange({ ...data, chemicals: newChemicals });
+    onChange({ ...data, chemicals: clampChemicalRows(newChemicals) });
   };
 
   const removeChemical = (id: string) => {
     const newChemicals = data.chemicals.filter((c) => c.id !== id);
-    onChange({ ...data, chemicals: newChemicals });
+    onChange({ ...data, chemicals: clampChemicalRows(newChemicals) });
   };
 
   const addQuickChemical = (item: SprayQuickAddItem) => {
-    if (data.chemicals.length >= 10) return;
     const validatedUnit = resolveChemicalUnit(item.unit);
     const normalizedName = item.name.trim().toLowerCase();
     const alreadyExists = data.chemicals.some(
@@ -137,9 +149,36 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
     );
     if (alreadyExists) return;
 
+    const firstIncompleteIndex = data.chemicals.findIndex(
+      (chemical) =>
+        !chemical.name.trim() || chemical.quantity === undefined || chemical.quantity <= 0,
+    );
+
+    if (firstIncompleteIndex >= 0) {
+      const nextChemicals = [...data.chemicals];
+      const current = nextChemicals[firstIncompleteIndex];
+      if (!current) return;
+      nextChemicals[firstIncompleteIndex] = {
+        ...current,
+        name: item.name.trim(),
+        unit: validatedUnit,
+        quantity:
+          current.quantity !== undefined && current.quantity > 0
+            ? current.quantity
+            : (item.quantity ?? undefined),
+      };
+      onChange({
+        ...data,
+        chemicals: clampChemicalRows(nextChemicals),
+      });
+      return;
+    }
+
+    if (data.chemicals.length >= MAX_CHEMICAL_ROWS) return;
+
     onChange({
       ...data,
-      chemicals: [
+      chemicals: clampChemicalRows([
         ...data.chemicals,
         {
           id: generateId(),
@@ -147,7 +186,7 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
           quantity: item.quantity ?? undefined,
           unit: validatedUnit,
         },
-      ],
+      ]),
     });
   };
 

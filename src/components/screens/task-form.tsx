@@ -27,7 +27,11 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useNotificationStore } from '@/stores';
-import { stripTaskPlanFromDescription } from '@/utils/task-plan';
+import {
+  decodeTaskPlanFromDescription,
+  encodeTaskPlanInDescription,
+  stripTaskPlanFromDescription,
+} from '@/utils/task-plan';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
@@ -186,10 +190,23 @@ export default function TaskForm({
     }
     setDueDateError(null);
 
+    const cleanedDescription = stripTaskPlanFromDescription(description).trim();
+    const existingPlannedInputs =
+      editingTask?.planned_inputs && editingTask.planned_inputs.length > 0
+        ? editingTask.planned_inputs
+        : decodeTaskPlanFromDescription(editingTask?.description);
+    const shouldPreservePlan =
+      Boolean(editingTask?.id) &&
+      (type === 'spray' || type === 'fertigation') &&
+      existingPlannedInputs.length > 0;
+    const nextDescription = shouldPreservePlan
+      ? encodeTaskPlanInDescription(cleanedDescription, existingPlannedInputs)
+      : cleanedDescription || null;
+
     const taskData = {
       farm_id: farmId,
       title: title.trim(),
-      description: stripTaskPlanFromDescription(description).trim() || null,
+      description: nextDescription,
       type,
       status: 'pending' as const,
       priority,

@@ -41,6 +41,7 @@ export default function AddEntryRoute() {
     initialTab?: 'log' | 'task';
     tabs?: string;
     initialLogType?: LogTypeId;
+    initialIrrigationDurationHours?: string;
     irrigationDurationHours?: string;
     initialLogDate?: string;
     entrySource?: string;
@@ -61,10 +62,15 @@ export default function AddEntryRoute() {
   const initialLogType = params.initialLogType ?? addEntry?.initialLogType;
   const initialIrrigationDurationHours = useMemo(
     () =>
+      parseDuration(params.initialIrrigationDurationHours) ??
       parseDuration(params.irrigationDurationHours) ??
       addEntry?.initialIrrigationDurationHours ??
       null,
-    [params.irrigationDurationHours, addEntry?.initialIrrigationDurationHours],
+    [
+      params.initialIrrigationDurationHours,
+      params.irrigationDurationHours,
+      addEntry?.initialIrrigationDurationHours,
+    ],
   );
   const initialLogDate = useMemo(
     () => parseLogDate(params.initialLogDate) ?? addEntry?.initialLogDate ?? null,

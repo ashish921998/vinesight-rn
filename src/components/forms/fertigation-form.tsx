@@ -447,15 +447,16 @@ function FertilizerRow({
     onUpdate({ quantity: qty });
   };
 
-  const isRowComplete = fertilizer.name.trim() && fertilizer.quantity > 0;
+  const isRowComplete = fertilizer.name.trim() && (fertilizer.quantity ?? 0) > 0;
   const applySuggestion = (item: FertigationQuickAddItem) => {
     const unit = resolveFertilizerUnit(item.unit, fertilizer.unit);
+    const currentQuantity = fertilizer.quantity ?? 0;
     onUpdate({
       name: item.name,
       unit,
-      quantity: fertilizer.quantity > 0 ? fertilizer.quantity : (item.quantity ?? 0),
+      quantity: currentQuantity > 0 ? currentQuantity : (item.quantity ?? 0),
     });
-    if (fertilizer.quantity <= 0 && item.quantity !== null && item.quantity !== undefined) {
+    if (currentQuantity <= 0 && item.quantity !== null && item.quantity !== undefined) {
       setQuantityText(item.quantity.toString());
     }
     quantityRef.current?.focus();
