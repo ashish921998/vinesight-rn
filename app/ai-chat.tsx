@@ -29,23 +29,34 @@ import { useFarm, useFarms } from '@/hooks';
 import { aiService } from '@/services/ai-service';
 import { AIMessageAttachmentInput, ChatMessage } from '@/types/ai';
 import { classifyIntent, executeQuery } from '@/services/farm-assistant-service';
+import {
+  buildVoiceLogFormPrefill,
+  decideChatRoute,
+  getVoiceLogMissingFields,
+  isRouteClarificationCancelResponse,
+  resolveRouteClarificationResponse,
+  resolveVoiceLogTurn,
+  shouldAttemptVoiceLogExtraction,
+} from '@/services/voice-log-assistant';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { formatTime } from '@/i18n/format';
+import { formatDate, formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
+import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { AssistantAnswer, QueryIntent } from '@/types/voice-assistant';
 import type { SupportedLanguageCode } from '@/i18n/languages';
+import type { VoiceLogDraft, VoiceLogMissingField } from '@/types/voice-log';
 
 type VoiceInputState = 'idle' | 'starting' | 'listening';
-type ChatAttachment = {
+interface ChatAttachment {
   id: string;
   name: string;
   uri: string;
   mimeType?: string;
   size?: number;
   kind: 'image' | 'document';
-};
+}
 
 const TEXT_DOCUMENT_EXTENSIONS = new Set(['txt', 'csv', 'json', 'md', 'xml', 'html', 'htm', 'log']);
 const TEXT_DOCUMENT_MIME_TYPES = new Set([
@@ -249,6 +260,73 @@ function formatFarmDataAnswer(answer: AssistantAnswer): string {
   return `${header}\n\n${rowLines.join('\n')}`;
 }
 
+function parseLocalDate(value: string): Date {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return new Date(value);
+  const year = Number.parseInt(match[1], 10);
+  const monthIndex = Number.parseInt(match[2], 10) - 1;
+  const day = Number.parseInt(match[3], 10);
+  return new Date(year, monthIndex, day);
+}
+
+function getMissingFieldPromptKey(field: VoiceLogMissingField): string {
+  switch (field) {
+    case 'farm':
+      return 'ai.logging.followups.common.askFarm';
+    case 'duration':
+      return 'ai.logging.followups.irrigation.askDuration';
+    case 'waterVolume':
+      return 'ai.logging.followups.common.askWaterVolume';
+    case 'chemicals':
+      return 'ai.logging.followups.spray.askChemicals';
+    case 'quantity':
+      return 'ai.logging.followups.harvest.askQuantity';
+    case 'grade':
+      return 'ai.logging.followups.harvest.askGrade';
+    case 'cost':
+      return 'ai.logging.followups.expense.askCost';
+    case 'expenseType':
+      return 'ai.logging.followups.expense.askType';
+    case 'fertilizers':
+      return 'ai.logging.followups.fertigation.askFertilizers';
+  }
+}
+
+function buildVoiceLogClarificationMessage(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  missingFields: VoiceLogMissingField[],
+): string {
+  const ordered = [...missingFields].sort((a, b) => (a === 'farm' ? -1 : b === 'farm' ? 1 : 0));
+  const prompts = ordered.map((field) => t(getMissingFieldPromptKey(field)));
+  return prompts.join(' ');
+}
+
+function getMissingFieldLabel(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  field: VoiceLogMissingField,
+): string {
+  switch (field) {
+    case 'farm':
+      return t('ai.logging.draft.fields.farm');
+    case 'duration':
+      return t('ai.logging.draft.fields.duration');
+    case 'waterVolume':
+      return t('ai.logging.draft.fields.waterVolume');
+    case 'chemicals':
+      return t('ai.logging.draft.fields.chemicals');
+    case 'quantity':
+      return t('ai.logging.draft.fields.quantity');
+    case 'grade':
+      return t('ai.logging.draft.fields.grade');
+    case 'cost':
+      return t('ai.logging.draft.fields.cost');
+    case 'expenseType':
+      return t('ai.logging.draft.fields.expenseType');
+    case 'fertilizers':
+      return t('ai.logging.draft.fields.fertilizers');
+  }
+}
+
 const markdownStyles = (colors: ReturnType<typeof useThemeColors>) => ({
   body: { fontSize: 16, color: colors.surface[900], lineHeight: 24 },
   heading1: {
@@ -314,6 +392,7 @@ export default function AIChatScreen() {
   const markdown = useMemo(() => markdownStyles(colors), [colors]);
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const setAddEntry = useModalStore((s) => s.setAddEntry);
   const insets = useSafeAreaInsets();
   const { id: farmId } = useLocalSearchParams<{ id?: string }>();
   const parsedFarmId = useMemo(() => {
@@ -327,6 +406,7 @@ export default function AIChatScreen() {
     if (parsedFarmId === null) return null;
     return farm ?? farms.find((candidate) => candidate.id === parsedFarmId) ?? null;
   }, [farm, farms, parsedFarmId]);
+  const voiceLogOriginContext = parsedFarmId === null ? 'dashboard' : 'farm';
   const candidateFarms = useMemo(() => (contextFarm ? [contextFarm] : farms), [contextFarm, farms]);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -334,8 +414,17 @@ export default function AIChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [voiceLogDraft, setVoiceLogDraft] = useState<VoiceLogDraft | null>(null);
+  const [clearedVoiceLogDraft, setClearedVoiceLogDraft] = useState<VoiceLogDraft | null>(null);
+  const [voiceLogExpectedField, setVoiceLogExpectedField] = useState<VoiceLogMissingField | null>(
+    null,
+  );
+  const [voiceLogClarifyAttempts, setVoiceLogClarifyAttempts] = useState(0);
+  const [routeClarificationPending, setRouteClarificationPending] = useState(false);
+  const [pendingAmbiguousTranscript, setPendingAmbiguousTranscript] = useState<string | null>(null);
   const [voiceInputState, setVoiceInputState] = useState<VoiceInputState>('idle');
   const scrollViewRef = useRef<ScrollView>(null);
+  const clearDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingVoiceTranscriptRef = useRef('');
   const hasSubmittedVoiceQueryRef = useRef(false);
   const isStartingVoiceInputRef = useRef(false);
@@ -353,14 +442,66 @@ export default function AIChatScreen() {
     ],
     [t],
   );
+  const voiceLogDraftSummary = useMemo(() => {
+    if (!voiceLogDraft) return null;
+    const farmValue = voiceLogDraft.farmName || t('ai.logging.draft.missingFarm');
+    const missingFields = getVoiceLogMissingFields(voiceLogDraft);
+    const statusValue =
+      missingFields.length === 0
+        ? t('ai.logging.draft.ready')
+        : t('ai.logging.draft.waiting', {
+            fields: missingFields.map((field) => getMissingFieldLabel(t, field)).join(', '),
+          });
+    const dateValue = formatDate(parseLocalDate(voiceLogDraft.date), {
+      month: 'short',
+      day: 'numeric',
+    });
+
+    return {
+      typeValue: t(`logs.types.${voiceLogDraft.type}`),
+      farmValue,
+      statusValue,
+      dateValue,
+    };
+  }, [t, voiceLogDraft]);
+
+  const clearDraftUndoTimeout = useCallback(() => {
+    if (!clearDraftTimeoutRef.current) return;
+    clearTimeout(clearDraftTimeoutRef.current);
+    clearDraftTimeoutRef.current = null;
+  }, []);
+
+  const hideClearedDraftNotice = useCallback(() => {
+    clearDraftUndoTimeout();
+    setClearedVoiceLogDraft(null);
+  }, [clearDraftUndoTimeout]);
+
+  const handleClearVoiceLogDraft = useCallback(() => {
+    if (!voiceLogDraft) return;
+    clearDraftUndoTimeout();
+    setClearedVoiceLogDraft(voiceLogDraft);
+    setVoiceLogDraft(null);
+    setVoiceLogExpectedField(null);
+    setVoiceLogClarifyAttempts(0);
+    clearDraftTimeoutRef.current = setTimeout(() => {
+      setClearedVoiceLogDraft(null);
+      clearDraftTimeoutRef.current = null;
+    }, 6000);
+  }, [clearDraftUndoTimeout, voiceLogDraft]);
+
+  const handleUndoClearVoiceLogDraft = useCallback(() => {
+    if (!clearedVoiceLogDraft) return;
+    clearDraftUndoTimeout();
+    setVoiceLogDraft(clearedVoiceLogDraft);
+    const restoredMissing = getVoiceLogMissingFields(clearedVoiceLogDraft);
+    setVoiceLogExpectedField(restoredMissing[0] ?? null);
+    setVoiceLogClarifyAttempts(0);
+    setClearedVoiceLogDraft(null);
+  }, [clearDraftUndoTimeout, clearedVoiceLogDraft]);
 
   useEffect(() => {
-    if (!aiService.isConfigured()) {
-      Alert.alert(t('ai.apiKeyRequiredTitle'), t('ai.apiKeyRequiredBody'), [
-        { text: t('common.ok'), onPress: () => router.back() },
-      ]);
-    }
-  }, [router, t]);
+    return () => clearDraftUndoTimeout();
+  }, [clearDraftUndoTimeout]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -374,7 +515,7 @@ export default function AIChatScreen() {
       const currentAttachments = attachments;
       if ((!messageText && currentAttachments.length === 0) || isLoading) return;
       const attachmentSummary = formatAttachmentSummary(currentAttachments);
-      const assistantInput = [messageText, attachmentSummary].filter(Boolean).join('\n\n').trim();
+      const assistantInput = messageText.trim();
       const visibleUserContent = [messageText, attachmentSummary]
         .filter(Boolean)
         .join('\n\n')
@@ -414,11 +555,380 @@ export default function AIChatScreen() {
         const deterministicTranscript = contextFarm?.name
           ? `${assistantInput} for farm ${contextFarm.name}`
           : assistantInput;
-        const intent = classifyIntent(deterministicTranscript, candidateFarms);
+        let llmFallbackInput = assistantInput;
+
+        const deterministicIntent = classifyIntent(deterministicTranscript, candidateFarms);
+
+        if (currentAttachments.length === 0 && messageText.trim()) {
+          let forcedRoute: 'voice_log' | 'farm_query' | null = null;
+          let effectiveTranscript = messageText;
+
+          if (routeClarificationPending) {
+            const clarifiedRoute = resolveRouteClarificationResponse(messageText);
+            if (!clarifiedRoute) {
+              if (isRouteClarificationCancelResponse(messageText)) {
+                setRouteClarificationPending(false);
+                setPendingAmbiguousTranscript(null);
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now().toString(),
+                    role: 'assistant',
+                    content: t('ai.logging.routeClarification.cancelled'),
+                    timestamp: new Date(),
+                  },
+                ]);
+                scrollToBottom();
+                return;
+              }
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: t('ai.logging.routeClarification.retry'),
+                  timestamp: new Date(),
+                },
+              ]);
+              scrollToBottom();
+              return;
+            }
+
+            forcedRoute = clarifiedRoute;
+            setRouteClarificationPending(false);
+            if (pendingAmbiguousTranscript) {
+              effectiveTranscript = pendingAmbiguousTranscript;
+              setPendingAmbiguousTranscript(null);
+            }
+            telemetry.capture('chat_route_clarified', {
+              source,
+              clarified_route: clarifiedRoute,
+            });
+          }
+          llmFallbackInput = effectiveTranscript;
+
+          const shouldTryVoiceLogExtraction = shouldAttemptVoiceLogExtraction(
+            effectiveTranscript,
+            Boolean(voiceLogDraft),
+          );
+          const llmExtraction = shouldTryVoiceLogExtraction
+            ? forcedRoute
+              ? null
+              : await aiService.extractActivityLoggingIntent({
+                  transcript: effectiveTranscript,
+                  language: resolveLanguageCode(i18n.language),
+                  farmNames: farms.map((farmItem) => farmItem.name),
+                  contextFarmName: contextFarm?.name ?? null,
+                })
+            : null;
+
+          const chatRoute =
+            forcedRoute ??
+            decideChatRoute({
+              transcript: effectiveTranscript,
+              hasActiveDraft: Boolean(voiceLogDraft),
+              llmExtraction,
+              deterministicQueryIntent: deterministicIntent,
+            });
+
+          if (chatRoute === 'clarify_route') {
+            setRouteClarificationPending(true);
+            setPendingAmbiguousTranscript(effectiveTranscript);
+            telemetry.capture('chat_route_conflict', {
+              source,
+              llm_intent: llmExtraction?.intent ?? null,
+              llm_intent_confidence: llmExtraction?.intentConfidence ?? null,
+              deterministic_category: deterministicIntent.category,
+              deterministic_confidence: deterministicIntent.confidence,
+            });
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: t('ai.logging.routeClarification.prompt'),
+                timestamp: new Date(),
+              },
+            ]);
+            scrollToBottom();
+            return;
+          }
+
+          telemetry.capture('chat_route_selected', {
+            source,
+            route: chatRoute,
+            has_active_draft: Boolean(voiceLogDraft),
+            llm_intent: llmExtraction?.intent ?? null,
+            llm_intent_confidence: llmExtraction?.intentConfidence ?? null,
+            deterministic_category: deterministicIntent.category,
+            deterministic_confidence: deterministicIntent.confidence,
+            forced_route: forcedRoute,
+          });
+
+          if (chatRoute === 'voice_log') {
+            const logTurn = resolveVoiceLogTurn({
+              transcript: effectiveTranscript,
+              farms,
+              contextFarm,
+              activeDraft: voiceLogDraft,
+              originContext: voiceLogOriginContext,
+              llmExtraction,
+              expectedField: voiceLogExpectedField,
+            });
+
+            if (logTurn.kind === 'cancelled') {
+              telemetry.capture('voice_log_cancelled', {
+                source,
+                has_context_farm: Boolean(contextFarm?.id),
+              });
+              setVoiceLogDraft(null);
+              setVoiceLogExpectedField(null);
+              setVoiceLogClarifyAttempts(0);
+              hideClearedDraftNotice();
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: t('ai.logging.cancelled'),
+                  timestamp: new Date(),
+                },
+              ]);
+              scrollToBottom();
+              return;
+            }
+
+            if (logTurn.kind === 'clarify') {
+              if (
+                logTurn.missingFields.includes('farm') &&
+                farms.filter(
+                  (farmCandidate) => farmCandidate.id !== undefined && farmCandidate.id !== null,
+                ).length === 0
+              ) {
+                setVoiceLogDraft(null);
+                setVoiceLogExpectedField(null);
+                setVoiceLogClarifyAttempts(0);
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now().toString(),
+                    role: 'assistant',
+                    content: t('ai.logging.noFarms'),
+                    timestamp: new Date(),
+                  },
+                ]);
+                scrollToBottom();
+                return;
+              }
+
+              const previousMissing = voiceLogDraft
+                ? getVoiceLogMissingFields(voiceLogDraft)
+                : null;
+              const madeProgress =
+                !previousMissing ||
+                logTurn.missingFields.length < previousMissing.length ||
+                logTurn.missingFields.join(',') !== previousMissing.join(',');
+              const nextAttempts = madeProgress ? 0 : voiceLogClarifyAttempts + 1;
+
+              const MAX_CLARIFY_ATTEMPTS = 3;
+              if (voiceLogDraft && nextAttempts >= MAX_CLARIFY_ATTEMPTS) {
+                telemetry.capture('voice_log_clarify_exhausted', {
+                  source,
+                  missing_fields: logTurn.missingFields.join(','),
+                  activity_type: logTurn.draft.type,
+                });
+                setVoiceLogDraft(null);
+                setVoiceLogExpectedField(null);
+                setVoiceLogClarifyAttempts(0);
+                hideClearedDraftNotice();
+                const voicePrefill = buildVoiceLogFormPrefill(logTurn.draft);
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now().toString(),
+                    role: 'assistant',
+                    content: t('ai.logging.clarifyExhausted'),
+                    timestamp: new Date(),
+                  },
+                ]);
+                scrollToBottom();
+
+                setAddEntry({
+                  tabs: ['log'],
+                  initialTab: 'log',
+                  initialFarmId: logTurn.draft.farmId,
+                  initialLogType: logTurn.draft.type,
+                  initialIrrigationDurationHours:
+                    logTurn.draft.type === 'irrigation'
+                      ? logTurn.draft.irrigation.durationHours
+                      : null,
+                  initialLogDate: logTurn.draft.date,
+                  voiceLogPrefill: voicePrefill,
+                  entrySource: 'voice_ai',
+                });
+
+                router.push({
+                  pathname: '/add-entry',
+                  params: {
+                    ...(logTurn.draft.farmId != null
+                      ? { farmId: String(logTurn.draft.farmId) }
+                      : {}),
+                    initialTab: 'log',
+                    tabs: 'log',
+                    initialLogType: logTurn.draft.type,
+                    initialLogDate: logTurn.draft.date,
+                    entrySource: 'voice_ai',
+                  },
+                });
+                return;
+              }
+
+              if (!voiceLogDraft) {
+                telemetry.capture('voice_log_started', {
+                  source,
+                  has_context_farm: Boolean(contextFarm?.id),
+                  extraction_confidence: llmExtraction?.confidence ?? null,
+                });
+              }
+              telemetry.capture('voice_log_clarified', {
+                source,
+                missing_fields: logTurn.missingFields.join(','),
+                activity_type: logTurn.draft.type,
+              });
+              hideClearedDraftNotice();
+              setVoiceLogDraft(logTurn.draft);
+              setVoiceLogExpectedField(logTurn.missingFields[0] ?? null);
+              setVoiceLogClarifyAttempts(nextAttempts);
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: buildVoiceLogClarificationMessage(t, logTurn.missingFields),
+                  timestamp: new Date(),
+                },
+              ]);
+              scrollToBottom();
+              return;
+            }
+
+            if (logTurn.kind === 'ready') {
+              if (!voiceLogDraft) {
+                telemetry.capture('voice_log_started', {
+                  source,
+                  has_context_farm: Boolean(contextFarm?.id),
+                  extraction_confidence: llmExtraction?.confidence ?? null,
+                });
+              }
+              telemetry.capture('voice_log_handoff', {
+                source,
+                farm_id: logTurn.draft.farmId,
+                activity_type: logTurn.draft.type,
+              });
+              setVoiceLogDraft(null);
+              setVoiceLogExpectedField(null);
+              setVoiceLogClarifyAttempts(0);
+              hideClearedDraftNotice();
+              const voicePrefill = buildVoiceLogFormPrefill(logTurn.draft);
+              const farmName = logTurn.draft.farmName ?? t('tasks.unknownFarm');
+              const displayDate = formatDate(parseLocalDate(logTurn.draft.date), {
+                month: 'short',
+                day: 'numeric',
+              });
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: t('ai.logging.openingForm', {
+                    type: t(`logs.types.${logTurn.draft.type}`),
+                    farm: farmName,
+                    date: displayDate,
+                  }),
+                  timestamp: new Date(),
+                },
+              ]);
+              scrollToBottom();
+
+              setAddEntry({
+                tabs: ['log'],
+                initialTab: 'log',
+                initialFarmId: logTurn.draft.farmId,
+                initialLogType: logTurn.draft.type,
+                initialIrrigationDurationHours:
+                  logTurn.draft.type === 'irrigation'
+                    ? logTurn.draft.irrigation.durationHours
+                    : null,
+                initialLogDate: logTurn.draft.date,
+                voiceLogPrefill: voicePrefill,
+                entrySource: 'voice_ai',
+              });
+
+              router.push({
+                pathname: '/add-entry',
+                params: {
+                  ...(logTurn.draft.farmId != null ? { farmId: String(logTurn.draft.farmId) } : {}),
+                  initialTab: 'log',
+                  tabs: 'log',
+                  initialLogType: logTurn.draft.type,
+                  irrigationDurationHours:
+                    logTurn.draft.type === 'irrigation'
+                      ? String(logTurn.draft.irrigation.durationHours ?? '')
+                      : undefined,
+                  initialLogDate: logTurn.draft.date,
+                  entrySource: 'voice_ai',
+                },
+              });
+              return;
+            }
+          }
+
+          if (chatRoute === 'farm_query' && candidateFarms.length > 0) {
+            try {
+              const languageCode = resolveLanguageCode(i18n.language);
+
+              const queryText = contextFarm?.name
+                ? `${effectiveTranscript} for farm ${contextFarm.name}`
+                : effectiveTranscript;
+
+              const farmDataResponse = await executeQuery(queryText, candidateFarms, languageCode);
+
+              const content =
+                farmDataResponse.answer.verbalizedText ??
+                formatFarmDataAnswer(farmDataResponse.answer);
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content,
+                  timestamp: new Date(),
+                },
+              ]);
+              setSuggestions(DEFAULT_SUGGESTIONS);
+
+              telemetry.capture('ai_result_received', {
+                ai_use_case: 'chat',
+                confidence_score: null,
+                response_source: 'farm_records',
+              });
+
+              scrollToBottom();
+              return;
+            } catch (error) {
+              if (__DEV__) {
+                console.warn('Farm data engine failed, falling back to LLM:', error);
+              }
+            }
+          }
+        }
 
         if (
           currentAttachments.length === 0 &&
-          shouldUseFarmDataEngine(messageText, intent) &&
+          shouldUseFarmDataEngine(messageText, deterministicIntent) &&
           candidateFarms.length > 0
         ) {
           try {
@@ -461,7 +971,7 @@ export default function AIChatScreen() {
 
         const aiAttachments = await prepareAttachmentsForAI(currentAttachments);
         const response = await aiService.sendMessage(
-          assistantInput,
+          llmFallbackInput,
           messages,
           {
             farmName: contextFarm?.name,
@@ -503,12 +1013,22 @@ export default function AIChatScreen() {
       attachments,
       candidateFarms,
       contextFarm,
+      farms,
       i18n.language,
       inputText,
       isLoading,
       isVoiceListening,
       messages,
+      router,
+      routeClarificationPending,
+      setAddEntry,
       t,
+      hideClearedDraftNotice,
+      voiceLogOriginContext,
+      voiceLogDraft,
+      voiceLogExpectedField,
+      voiceLogClarifyAttempts,
+      pendingAmbiguousTranscript,
     ],
   );
 
@@ -1034,6 +1554,154 @@ export default function AIChatScreen() {
               >
                 {voiceInputState === 'starting' ? t('ai.voice.starting') : t('ai.voice.listening')}
               </Text>
+            )}
+            {voiceLogDraft && voiceLogDraftSummary && (
+              <View
+                style={{
+                  marginBottom: spacing[2],
+                  borderRadius: borderRadius.xl,
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.primary, 0.35),
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  gap: spacing[2],
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                    <UiSymbol name="waveform.and.mic" size={14} color={m3.colorScheme.primary} />
+                    <Text
+                      style={{
+                        color: m3.colorScheme.primary,
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('ai.logging.draft.title')}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={handleClearVoiceLogDraft}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('ai.logging.draft.clearA11y')}
+                    style={{ padding: spacing[1] }}
+                  >
+                    <UiSymbol name="xmark" size={12} color={m3.colorScheme.primary} />
+                  </Pressable>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+                  <View
+                    style={{
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: spacing[1],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    }}
+                  >
+                    <Text style={{ color: m3.colorScheme.primary, fontSize: fontSize.xs }}>
+                      {t('ai.logging.draft.type')}: {voiceLogDraftSummary.typeValue}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: spacing[1],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    }}
+                  >
+                    <Text style={{ color: m3.colorScheme.primary, fontSize: fontSize.xs }}>
+                      {t('ai.logging.draft.farm')}: {voiceLogDraftSummary.farmValue}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: spacing[1],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    }}
+                  >
+                    <Text style={{ color: m3.colorScheme.primary, fontSize: fontSize.xs }}>
+                      {t('ai.logging.draft.status')}: {voiceLogDraftSummary.statusValue}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      paddingHorizontal: spacing[2],
+                      paddingVertical: spacing[1],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    }}
+                  >
+                    <Text style={{ color: m3.colorScheme.primary, fontSize: fontSize.xs }}>
+                      {t('ai.logging.draft.date')}: {voiceLogDraftSummary.dateValue}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+            {!voiceLogDraft && clearedVoiceLogDraft && (
+              <View
+                style={{
+                  marginBottom: spacing[2],
+                  borderRadius: borderRadius.xl,
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.primary, 0.28),
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: spacing[2],
+                }}
+              >
+                <Text
+                  style={{
+                    color: m3.colorScheme.primary,
+                    fontSize: fontSize.xs,
+                    flex: 1,
+                  }}
+                >
+                  {t('ai.logging.draft.cleared')}
+                </Text>
+                <Pressable
+                  onPress={handleUndoClearVoiceLogDraft}
+                  accessibilityRole="button"
+                  style={{
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.16),
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: m3.colorScheme.primary,
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {t('ai.logging.draft.undo')}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={hideClearedDraftNotice}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('ai.logging.draft.dismissA11y')}
+                  style={{ padding: spacing[1] }}
+                >
+                  <UiSymbol name="xmark" size={12} color={m3.colorScheme.primary} />
+                </Pressable>
+              </View>
             )}
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] }}>
               <TextInput

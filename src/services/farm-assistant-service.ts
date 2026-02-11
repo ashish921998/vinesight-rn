@@ -296,6 +296,26 @@ export function classifyIntent(transcript: string, farms: Farm[]): QueryIntent {
 function parseTimeRange(text: string): { start: Date; end: Date } | null {
   const now = new Date();
 
+  if (/\btoday\b/i.test(text) || /आज/i.test(text) || /आजच/i.test(text)) {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(start);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
+
+  if (
+    /\byesterday\b/i.test(text) ||
+    /कल/i.test(text) ||
+    /\bkal\b/i.test(text) ||
+    /काल/i.test(text)
+  ) {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    start.setDate(start.getDate() - 1);
+    const end = new Date(start);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
+
   if (
     /\blast\s+week\b/i.test(text) ||
     /पिछले?\s+(हफ्ते|सप्ताह)/i.test(text) ||
