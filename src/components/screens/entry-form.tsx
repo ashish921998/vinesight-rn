@@ -623,22 +623,23 @@ export function EntryForm({
         return;
     }
 
-    const shouldMarkSourceTaskLog = Boolean(
-      sourceTaskId &&
-      sourceTaskType &&
-      selectedLogType === sourceTaskType &&
-      !pendingLogs.some((log) => log.isSourceTaskLog),
-    );
-
     const newLog: PendingLog = {
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       type: selectedLogType,
       data,
       displayDescription: getLogDescription(selectedLogType, data),
-      isSourceTaskLog: shouldMarkSourceTaskLog,
+      isSourceTaskLog: false,
     };
 
-    setPendingLogs((prev) => [...prev, newLog]);
+    setPendingLogs((prev) => {
+      const shouldMarkSourceTaskLog = Boolean(
+        sourceTaskId &&
+        sourceTaskType &&
+        selectedLogType === sourceTaskType &&
+        !prev.some((log) => log.isSourceTaskLog),
+      );
+      return [...prev, { ...newLog, isSourceTaskLog: shouldMarkSourceTaskLog }];
+    });
     setSelectedLogType(null);
     setShowLogFormModal(false);
   }, [
@@ -649,7 +650,6 @@ export function EntryForm({
     harvestData,
     expenseData,
     fertigationData,
-    pendingLogs,
     sourceTaskId,
     sourceTaskType,
     getLogDescription,
