@@ -172,7 +172,7 @@ function parseHarvestGrade(transcript: string): string | null {
   const normalized = normalizeText(transcript);
   if (!normalized) return null;
 
-  const singleLetterReply = transcript.trim();
+  const singleLetterReply = normalizeText(transcript);
   if (/^[abc]$/i.test(singleLetterReply)) {
     return singleLetterReply.toUpperCase();
   }
@@ -571,7 +571,14 @@ function mergeChemicalItems(
     if (!normalizedName) continue;
     const existingIndex = merged.findIndex((e) => normalizeItemName(e.name) === normalizedName);
     if (existingIndex >= 0) {
-      merged[existingIndex] = item;
+      const existingItem = merged[existingIndex];
+      if (!existingItem) continue;
+      merged[existingIndex] = {
+        ...existingItem,
+        name: item.name || existingItem.name,
+        quantity: item.quantity ?? existingItem.quantity,
+        unit: item.unit ?? existingItem.unit,
+      };
     } else {
       merged.push(item);
     }
@@ -589,7 +596,14 @@ function mergeFertilizerItems(
     if (!normalizedName) continue;
     const existingIndex = merged.findIndex((e) => normalizeItemName(e.name) === normalizedName);
     if (existingIndex >= 0) {
-      merged[existingIndex] = item;
+      const existingItem = merged[existingIndex];
+      if (!existingItem) continue;
+      merged[existingIndex] = {
+        ...existingItem,
+        name: item.name || existingItem.name,
+        quantity: item.quantity ?? existingItem.quantity,
+        unit: item.unit ?? existingItem.unit,
+      };
     } else {
       merged.push(item);
     }

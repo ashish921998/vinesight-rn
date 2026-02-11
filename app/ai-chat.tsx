@@ -49,14 +49,14 @@ import type { SupportedLanguageCode } from '@/i18n/languages';
 import type { VoiceLogDraft, VoiceLogMissingField } from '@/types/voice-log';
 
 type VoiceInputState = 'idle' | 'starting' | 'listening';
-type ChatAttachment = {
+interface ChatAttachment {
   id: string;
   name: string;
   uri: string;
   mimeType?: string;
   size?: number;
   kind: 'image' | 'document';
-};
+}
 
 const TEXT_DOCUMENT_EXTENSIONS = new Set(['txt', 'csv', 'json', 'md', 'xml', 'html', 'htm', 'log']);
 const TEXT_DOCUMENT_MIME_TYPES = new Set([
@@ -707,6 +707,8 @@ export default function AIChatScreen() {
                 ).length === 0
               ) {
                 setVoiceLogDraft(null);
+                setVoiceLogExpectedField(null);
+                setVoiceLogClarifyAttempts(0);
                 setMessages((prev) => [
                   ...prev,
                   {

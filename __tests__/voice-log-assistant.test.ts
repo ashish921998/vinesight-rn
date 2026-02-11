@@ -616,6 +616,104 @@ describe('voice-log-assistant', () => {
     expect(result.draft.harvest.grade).toBe('A');
   });
 
+  it('accepts punctuation in single-letter harvest grade follow-up', () => {
+    const draft: VoiceLogDraft = {
+      type: 'harvest',
+      farmId: 1,
+      farmName: 'Sunset Farm',
+      date: '2026-02-10',
+      irrigation: { durationHours: null },
+      spray: { waterVolume: null, chemicals: [] },
+      harvest: { quantity: 500, grade: null, price: null, buyer: null },
+      expense: { cost: null, expenseType: null, remarks: null },
+      fertigation: { waterVolume: null, fertilizers: [] },
+    };
+
+    const result = resolveVoiceLogTurn({
+      transcript: 'A.',
+      farms: FARMS,
+      contextFarm: FARMS[0],
+      originContext: 'farm',
+      activeDraft: draft,
+    });
+
+    expect(result.kind).toBe('ready');
+    if (result.kind !== 'ready') return;
+    expect(result.draft.harvest.grade).toBe('A');
+  });
+
+  it('preserves existing chemical fields when LLM incoming values are null', () => {
+    const draft: VoiceLogDraft = {
+      type: 'spray',
+      farmId: 1,
+      farmName: 'Sunset Farm',
+      date: '2026-02-10',
+      irrigation: { durationHours: null },
+      spray: { waterVolume: 200, chemicals: [{ name: 'Sulphur', quantity: 1, unit: 'gm/L' }] },
+      harvest: { quantity: null, grade: null, price: null, buyer: null },
+      expense: { cost: null, expenseType: null, remarks: null },
+      fertigation: { waterVolume: null, fertilizers: [] },
+    };
+
+    const result = resolveVoiceLogTurn({
+      transcript: 'update spray',
+      farms: FARMS,
+      contextFarm: FARMS[0],
+      originContext: 'farm',
+      activeDraft: draft,
+      llmExtraction: emptyExtraction({
+        intent: 'log_activity',
+        activityType: 'spray',
+        spray: { waterVolume: null, chemicals: [{ name: 'Sulphur', quantity: null, unit: null }] },
+      }),
+    });
+
+    expect(result.kind).toBe('ready');
+    if (result.kind !== 'ready') return;
+    expect(result.draft.spray.chemicals[0]).toEqual({ name: 'Sulphur', quantity: 1, unit: 'gm/L' });
+  });
+
+  it('preserves existing fertilizer fields when LLM incoming values are null', () => {
+    const draft: VoiceLogDraft = {
+      type: 'fertigation',
+      farmId: 1,
+      farmName: 'Sunset Farm',
+      date: '2026-02-10',
+      irrigation: { durationHours: null },
+      spray: { waterVolume: null, chemicals: [] },
+      harvest: { quantity: null, grade: null, price: null, buyer: null },
+      expense: { cost: null, expenseType: null, remarks: null },
+      fertigation: {
+        waterVolume: null,
+        fertilizers: [{ name: 'NPK', quantity: 2, unit: 'kg/acre' }],
+      },
+    };
+
+    const result = resolveVoiceLogTurn({
+      transcript: 'update fertigation',
+      farms: FARMS,
+      contextFarm: FARMS[0],
+      originContext: 'farm',
+      activeDraft: draft,
+      llmExtraction: emptyExtraction({
+        intent: 'log_activity',
+        activityType: 'fertigation',
+        fertigation: {
+          waterVolume: null,
+          fertilizers: [{ name: 'NPK', quantity: null, unit: null }],
+        },
+      }),
+    });
+
+    expect(result.kind).toBe('ready');
+    if (result.kind !== 'ready') return;
+    expect(result.draft.fertigation.fertilizers[0]).toEqual({
+      name: 'NPK',
+      quantity: 2,
+      unit: 'kg/acre',
+    });
+  });
+
   it('uses fallback parsing for expense type/category from transcript', () => {
     const draft: VoiceLogDraft = {
       type: 'expense',

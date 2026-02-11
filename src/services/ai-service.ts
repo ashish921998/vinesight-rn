@@ -130,7 +130,7 @@ function toOptionalString(value: unknown): string | null {
 function toOptionalNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
-    const parsed = Number.parseFloat(value);
+    const parsed = Number.parseFloat(value.replace(/,/g, ''));
     if (Number.isFinite(parsed)) return parsed;
   }
   return null;
@@ -437,10 +437,6 @@ class AIService {
     } catch {
       return [];
     }
-  }
-
-  isConfigured(): boolean {
-    return true;
   }
 
   async extractActivityLoggingIntent(input: {
