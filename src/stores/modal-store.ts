@@ -12,6 +12,7 @@ import type { TaskReminder } from '@/types/task';
 import type { PlannedInputItem } from '@/types/task';
 import type { WarehouseItem, Worker } from '@/types';
 import type { LogTypeId } from '@/constants/calculator-models';
+import type { VoiceLogFormPrefill } from '@/types/voice-log';
 
 type EditActivityRecord =
   | IrrigationRecord
@@ -25,6 +26,10 @@ export type AddEntryRoutePayload = {
   initialTab?: 'log' | 'task';
   initialFarmId?: number | null;
   initialLogType?: LogTypeId | null;
+  initialIrrigationDurationHours?: number | null;
+  initialLogDate?: string | null;
+  voiceLogPrefill?: VoiceLogFormPrefill | null;
+  entrySource?: 'manual' | 'voice_ai' | null;
   editingTask?: TaskReminder | null;
   sourceTaskId?: number | null;
   logPrefill?: {

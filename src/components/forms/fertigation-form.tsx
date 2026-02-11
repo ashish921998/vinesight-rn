@@ -13,7 +13,7 @@ import { colorWithOpacity } from '@/utils/color';
 export interface FertilizerEntry {
   id?: string;
   name: string;
-  quantity: number;
+  quantity?: number;
   unit: FertilizerUnit;
 }
 
@@ -61,7 +61,8 @@ export function FertigationForm({
   const m3 = useM3();
   const { t } = useTranslation();
   const isValid =
-    data.fertilizers.length > 0 && data.fertilizers.every((f) => f.name.trim() && f.quantity > 0);
+    data.fertilizers.length > 0 &&
+    data.fertilizers.every((f) => f.name.trim() && (f.quantity ?? 0) > 0);
 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
 
@@ -119,7 +120,7 @@ export function FertigationForm({
   };
 
   // Calculate total inputs count
-  const totalInputs = data.fertilizers.filter((f) => f.name.trim() && f.quantity > 0).length;
+  const totalInputs = data.fertilizers.filter((f) => f.name.trim() && (f.quantity ?? 0) > 0).length;
 
   return (
     <View>
@@ -321,7 +322,7 @@ export function FertigationForm({
             Fertilizers Summary
           </Text>
           {data.fertilizers
-            .filter((f) => f.name.trim() && f.quantity > 0)
+            .filter((f) => f.name.trim() && (f.quantity ?? 0) > 0)
             .map((f, idx) => (
               <View
                 key={idx}
@@ -342,7 +343,7 @@ export function FertigationForm({
                     color: colors.success,
                   }}
                 >
-                  {f.quantity} {f.unit}
+                  {f.quantity ?? 0} {f.unit}
                 </Text>
               </View>
             ))}
@@ -643,7 +644,8 @@ function FertilizerRow({
 
 export function validateFertigationForm(data: FertigationFormData): boolean {
   return (
-    data.fertilizers.length > 0 && data.fertilizers.every((f) => f.name.trim() && f.quantity > 0)
+    data.fertilizers.length > 0 &&
+    data.fertilizers.every((f) => f.name.trim() && (f.quantity ?? 0) > 0)
   );
 }
 

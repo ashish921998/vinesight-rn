@@ -1,23 +1,51 @@
 /**
- * Lab Test Parser Utility using OpenAI
+ * Lab Test Parser Utility using OpenAI (via Supabase Edge Function proxy)
  * Extracts lab test data from PDF reports or images
  */
 
 import * as FileSystem from 'expo-file-system';
-import OpenAI from 'openai';
+import { supabase } from '@/lib/supabase';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY || '',
-  dangerouslyAllowBrowser: true, // Required for Expo/React Native
-});
 
 export interface ParsedLabTest {
   testDate?: string;
   parameters: Record<string, number>;
   recommendations?: string;
   notes?: string;
+}
+
+interface OpenAIProxyResponse {
+  choices: Array<{
+    message?: {
+      content?: string | null;
+    };
+  }>;
+  error?: { message?: string };
+}
+
+async function callOpenAIProxy(params: {
+  messages: Array<{
+    role: 'system' | 'user';
+    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
+  }>;
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  response_format?: { type: string };
+}): Promise<OpenAIProxyResponse> {
+  const { data, error } = await supabase.functions.invoke('openai-proxy', {
+    body: params,
+  });
+
+  if (error) {
+    throw new Error(`AI proxy request failed: ${error.message}`);
+  }
+
+  if (data?.error) {
+    throw new Error(`AI proxy error: ${data.error.message ?? data.error}`);
+  }
+
+  return data as OpenAIProxyResponse;
 }
 
 /**
@@ -29,7 +57,6 @@ async function readImageAsBase64(uri: string): Promise<string> {
       encoding: 'base64',
     });
 
-    // Determine MIME type based on URI
     let mimeType = 'image/jpeg';
     if (uri.endsWith('.png')) {
       mimeType = 'image/png';
@@ -60,7 +87,7 @@ export async function parseLabTestFromImage(
   try {
     const base64Image = await readImageAsBase64(imageUri);
 
-    const response = await openai.chat.completions.create({
+    const response = await callOpenAIProxy({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -107,12 +134,11 @@ Pay attention to units and convert if necessary to match the expected units.`,
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
-      throw new Error('No response from OpenAI');
+      throw new Error('No response from AI proxy');
     }
 
     const parsed = JSON.parse(content);
 
-    // Validate and clean parameters
     const cleanParameters: Record<string, number> = {};
     for (const [key, value] of Object.entries(parsed.parameters || {})) {
       const param = parameters.find((p) => p.key === key);
@@ -145,7 +171,7 @@ export async function parseLabTestFromText(
   const paramKeyNames = parameters.map((p) => p.key).join(', ');
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await callOpenAIProxy({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -181,12 +207,11 @@ Pay attention to units and convert if necessary to match the expected units.`,
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
-      throw new Error('No response from OpenAI');
+      throw new Error('No response from AI proxy');
     }
 
     const parsed = JSON.parse(content);
 
-    // Validate and clean parameters
     const cleanParameters: Record<string, number> = {};
     for (const [key, value] of Object.entries(parsed.parameters || {})) {
       const param = parameters.find((p) => p.key === key);

@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { EntryForm } from '@/components/screens/entry-form';
 import { useModalStore } from '@/stores';
 import type { LogTypeId } from '@/constants/calculator-models';
+import type { VoiceLogFormPrefill } from '@/types/voice-log';
 
 const parseTabs = (value?: string | string[]) => {
   if (!value) return undefined;
@@ -13,6 +14,26 @@ const parseTabs = (value?: string | string[]) => {
   return valid.length ? valid : undefined;
 };
 
+const parseDuration = (value?: string | string[]) => {
+  if (!value) return null;
+  const raw = Array.isArray(value) ? value[0] : value;
+  const parsed = Number.parseFloat(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
+};
+
+const parseLogDate = (value?: string | string[]) => {
+  if (!value) return null;
+  const raw = Array.isArray(value) ? value[0] : value;
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
+};
+
+const parseEntrySource = (value?: string | string[]) => {
+  if (!value) return null;
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === 'voice_ai' ? 'voice_ai' : raw === 'manual' ? 'manual' : null;
+};
+
 export default function AddEntryRoute() {
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -20,6 +41,9 @@ export default function AddEntryRoute() {
     initialTab?: 'log' | 'task';
     tabs?: string;
     initialLogType?: LogTypeId;
+    irrigationDurationHours?: string;
+    initialLogDate?: string;
+    entrySource?: string;
   }>();
   const { addEntry, setAddEntry } = useModalStore();
 
@@ -35,6 +59,25 @@ export default function AddEntryRoute() {
   );
   const initialTab = params.initialTab ?? addEntry?.initialTab;
   const initialLogType = params.initialLogType ?? addEntry?.initialLogType;
+  const initialIrrigationDurationHours = useMemo(
+    () =>
+      parseDuration(params.irrigationDurationHours) ??
+      addEntry?.initialIrrigationDurationHours ??
+      null,
+    [params.irrigationDurationHours, addEntry?.initialIrrigationDurationHours],
+  );
+  const initialLogDate = useMemo(
+    () => parseLogDate(params.initialLogDate) ?? addEntry?.initialLogDate ?? null,
+    [params.initialLogDate, addEntry?.initialLogDate],
+  );
+  const entrySource = useMemo(
+    () => parseEntrySource(params.entrySource) ?? addEntry?.entrySource ?? null,
+    [params.entrySource, addEntry?.entrySource],
+  );
+  const voiceLogPrefill = useMemo<VoiceLogFormPrefill | null>(
+    () => addEntry?.voiceLogPrefill ?? null,
+    [addEntry?.voiceLogPrefill],
+  );
 
   useEffect(() => {
     return () => setAddEntry(null);
@@ -49,6 +92,10 @@ export default function AddEntryRoute() {
         initialTab={initialTab}
         initialFarmId={initialFarmId ?? addEntry?.initialFarmId ?? null}
         initialLogType={initialLogType ?? null}
+        initialIrrigationDurationHours={initialIrrigationDurationHours}
+        initialLogDate={initialLogDate}
+        initialVoiceLogPrefill={voiceLogPrefill}
+        entrySource={entrySource}
         editingTask={addEntry?.editingTask ?? null}
         sourceTaskId={addEntry?.sourceTaskId ?? null}
         initialLogPrefill={addEntry?.logPrefill ?? null}
