@@ -515,7 +515,7 @@ export default function AIChatScreen() {
       const currentAttachments = attachments;
       if ((!messageText && currentAttachments.length === 0) || isLoading) return;
       const attachmentSummary = formatAttachmentSummary(currentAttachments);
-      const assistantInput = [messageText, attachmentSummary].filter(Boolean).join('\n\n').trim();
+      const assistantInput = messageText.trim();
       const visibleUserContent = [messageText, attachmentSummary]
         .filter(Boolean)
         .join('\n\n')

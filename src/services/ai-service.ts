@@ -130,7 +130,11 @@ function toOptionalString(value: unknown): string | null {
 function toOptionalNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
-    const parsed = Number.parseFloat(value.replace(/,/g, ''));
+    const cleaned = value
+      .trim()
+      .replace(/^[^0-9+.-]+/, '')
+      .replace(/,/g, '');
+    const parsed = Number.parseFloat(cleaned);
     if (Number.isFinite(parsed)) return parsed;
   }
   return null;
@@ -480,7 +484,7 @@ Rules:
 - For irrigation duration in minutes, convert to fractional hours.
 - For spray and fertigation, extract list items from user text if present.
 - Keep unknown fields null or empty arrays.
-- If user says "kal"/"कल", treat it as "yesterday".
+- If user says "kal"/"कल", infer date_relative from context (often "yesterday" for past logs, "none" if ambiguous).
 - Use date_relative for relative expressions.
 - Use date_iso only when the user clearly gives a concrete date.
 - Prefer exact farm name text when possible.`,

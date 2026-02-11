@@ -385,7 +385,7 @@ export function EntryForm({
         const prefilledFertilizers = fertigationPrefill?.fertilizers?.length
           ? fertigationPrefill.fertilizers.map((item) => ({
               name: item.name ?? '',
-              quantity: item.quantity ?? 0,
+              quantity: item.quantity ?? undefined,
               unit:
                 item.unit &&
                 FERTILIZER_UNITS.includes(item.unit as (typeof FERTILIZER_UNITS)[number])

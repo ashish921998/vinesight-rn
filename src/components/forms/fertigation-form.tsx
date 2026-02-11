@@ -13,7 +13,7 @@ import { colorWithOpacity } from '@/utils/color';
 export interface FertilizerEntry {
   id?: string;
   name: string;
-  quantity: number;
+  quantity?: number;
   unit: FertilizerUnit;
 }
 
@@ -34,7 +34,8 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
   const m3 = useM3();
   const { t } = useTranslation();
   const isValid =
-    data.fertilizers.length > 0 && data.fertilizers.every((f) => f.name.trim() && f.quantity > 0);
+    data.fertilizers.length > 0 &&
+    data.fertilizers.every((f) => f.name.trim() && (f.quantity ?? 0) > 0);
 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
 
@@ -67,7 +68,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
   };
 
   // Calculate total inputs count
-  const totalInputs = data.fertilizers.filter((f) => f.name.trim() && f.quantity > 0).length;
+  const totalInputs = data.fertilizers.filter((f) => f.name.trim() && (f.quantity ?? 0) > 0).length;
 
   return (
     <View>
@@ -226,7 +227,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
             Fertilizers Summary
           </Text>
           {data.fertilizers
-            .filter((f) => f.name.trim() && f.quantity > 0)
+            .filter((f) => f.name.trim() && (f.quantity ?? 0) > 0)
             .map((f, idx) => (
               <View
                 key={idx}
@@ -247,7 +248,7 @@ export function FertigationForm({ data, onChange, onInputFocus }: FertigationFor
                     color: colors.success,
                   }}
                 >
-                  {f.quantity} {f.unit}
+                  {f.quantity ?? 0} {f.unit}
                 </Text>
               </View>
             ))}
@@ -335,7 +336,7 @@ function FertilizerRow({
     onUpdate({ quantity: qty });
   };
 
-  const isRowComplete = fertilizer.name.trim() && fertilizer.quantity > 0;
+  const isRowComplete = fertilizer.name.trim() && (fertilizer.quantity ?? 0) > 0;
 
   return (
     <View
@@ -459,7 +460,8 @@ function FertilizerRow({
 
 export function validateFertigationForm(data: FertigationFormData): boolean {
   return (
-    data.fertilizers.length > 0 && data.fertilizers.every((f) => f.name.trim() && f.quantity > 0)
+    data.fertilizers.length > 0 &&
+    data.fertilizers.every((f) => f.name.trim() && (f.quantity ?? 0) > 0)
   );
 }
 

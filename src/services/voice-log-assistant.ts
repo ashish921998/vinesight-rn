@@ -160,7 +160,8 @@ function parseAmount(transcript: string): number | null {
   const text = transcript.trim();
   if (!text) return null;
   const rupeeMatch = text.match(/(?:₹|rs\.?|inr)\s*(\d[\d,]*(?:\.\d+)?)/i);
-  const genericMatch = text.match(/\b(\d[\d,]*(?:\.\d+)?)\b/);
+  const genericMatches = [...text.matchAll(/\b(\d[\d,]*(?:\.\d+)?)\b/g)];
+  const genericMatch = genericMatches.length > 0 ? genericMatches[genericMatches.length - 1] : null;
   const picked = rupeeMatch?.[1] ?? genericMatch?.[1];
   if (!picked) return null;
   const parsed = Number.parseFloat(picked.replace(/,/g, ''));
