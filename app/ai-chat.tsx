@@ -31,7 +31,10 @@ import { AIMessageAttachmentInput, ChatMessage } from '@/types/ai';
 import { classifyIntent, executeQuery } from '@/services/farm-assistant-service';
 import {
   buildVoiceLogFormPrefill,
+  decideChatRoute,
   getVoiceLogMissingFields,
+  isRouteClarificationCancelResponse,
+  resolveRouteClarificationResponse,
   resolveVoiceLogTurn,
   shouldAttemptVoiceLogExtraction,
 } from '@/services/voice-log-assistant';
@@ -413,6 +416,12 @@ export default function AIChatScreen() {
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [voiceLogDraft, setVoiceLogDraft] = useState<VoiceLogDraft | null>(null);
   const [clearedVoiceLogDraft, setClearedVoiceLogDraft] = useState<VoiceLogDraft | null>(null);
+  const [voiceLogExpectedField, setVoiceLogExpectedField] = useState<VoiceLogMissingField | null>(
+    null,
+  );
+  const [voiceLogClarifyAttempts, setVoiceLogClarifyAttempts] = useState(0);
+  const [routeClarificationPending, setRouteClarificationPending] = useState(false);
+  const [pendingAmbiguousTranscript, setPendingAmbiguousTranscript] = useState<string | null>(null);
   const [voiceInputState, setVoiceInputState] = useState<VoiceInputState>('idle');
   const scrollViewRef = useRef<ScrollView>(null);
   const clearDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -472,6 +481,8 @@ export default function AIChatScreen() {
     clearDraftUndoTimeout();
     setClearedVoiceLogDraft(voiceLogDraft);
     setVoiceLogDraft(null);
+    setVoiceLogExpectedField(null);
+    setVoiceLogClarifyAttempts(0);
     clearDraftTimeoutRef.current = setTimeout(() => {
       setClearedVoiceLogDraft(null);
       clearDraftTimeoutRef.current = null;
@@ -482,16 +493,11 @@ export default function AIChatScreen() {
     if (!clearedVoiceLogDraft) return;
     clearDraftUndoTimeout();
     setVoiceLogDraft(clearedVoiceLogDraft);
+    const restoredMissing = getVoiceLogMissingFields(clearedVoiceLogDraft);
+    setVoiceLogExpectedField(restoredMissing[0] ?? null);
+    setVoiceLogClarifyAttempts(0);
     setClearedVoiceLogDraft(null);
   }, [clearDraftUndoTimeout, clearedVoiceLogDraft]);
-
-  useEffect(() => {
-    if (!aiService.isConfigured()) {
-      Alert.alert(t('ai.apiKeyRequiredTitle'), t('ai.apiKeyRequiredBody'), [
-        { text: t('common.ok'), onPress: () => router.back() },
-      ]);
-    }
-  }, [router, t]);
 
   useEffect(() => {
     return () => clearDraftUndoTimeout();
@@ -549,64 +555,39 @@ export default function AIChatScreen() {
         const deterministicTranscript = contextFarm?.name
           ? `${assistantInput} for farm ${contextFarm.name}`
           : assistantInput;
+        let llmFallbackInput = assistantInput;
+
+        const deterministicIntent = classifyIntent(deterministicTranscript, candidateFarms);
 
         if (currentAttachments.length === 0 && messageText.trim()) {
-          const shouldTryVoiceLogExtraction = shouldAttemptVoiceLogExtraction(
-            messageText,
-            Boolean(voiceLogDraft),
-          );
-          const llmExtraction = shouldTryVoiceLogExtraction
-            ? await aiService.extractActivityLoggingIntent({
-                transcript: messageText,
-                language: resolveLanguageCode(i18n.language),
-                farmNames: farms.map((farmItem) => farmItem.name),
-                contextFarmName: contextFarm?.name ?? null,
-              })
-            : null;
+          let forcedRoute: 'voice_log' | 'farm_query' | null = null;
+          let effectiveTranscript = messageText;
 
-          const logTurn = resolveVoiceLogTurn({
-            transcript: messageText,
-            farms,
-            contextFarm,
-            activeDraft: voiceLogDraft,
-            originContext: voiceLogOriginContext,
-            llmExtraction,
-          });
+          if (routeClarificationPending) {
+            const clarifiedRoute = resolveRouteClarificationResponse(messageText);
+            if (!clarifiedRoute) {
+              if (isRouteClarificationCancelResponse(messageText)) {
+                setRouteClarificationPending(false);
+                setPendingAmbiguousTranscript(null);
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now().toString(),
+                    role: 'assistant',
+                    content: t('ai.logging.routeClarification.cancelled'),
+                    timestamp: new Date(),
+                  },
+                ]);
+                scrollToBottom();
+                return;
+              }
 
-          if (logTurn.kind === 'cancelled') {
-            telemetry.capture('voice_log_cancelled', {
-              source,
-              has_context_farm: Boolean(contextFarm?.id),
-            });
-            setVoiceLogDraft(null);
-            hideClearedDraftNotice();
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: Date.now().toString(),
-                role: 'assistant',
-                content: t('ai.logging.cancelled'),
-                timestamp: new Date(),
-              },
-            ]);
-            scrollToBottom();
-            return;
-          }
-
-          if (logTurn.kind === 'clarify') {
-            if (
-              logTurn.missingFields.includes('farm') &&
-              farms.filter(
-                (farmCandidate) => farmCandidate.id !== undefined && farmCandidate.id !== null,
-              ).length === 0
-            ) {
-              setVoiceLogDraft(null);
               setMessages((prev) => [
                 ...prev,
                 {
                   id: Date.now().toString(),
                   role: 'assistant',
-                  content: t('ai.logging.noFarms'),
+                  content: t('ai.logging.routeClarification.retry'),
                   timestamp: new Date(),
                 },
               ]);
@@ -614,26 +595,59 @@ export default function AIChatScreen() {
               return;
             }
 
-            if (!voiceLogDraft) {
-              telemetry.capture('voice_log_started', {
-                source,
-                has_context_farm: Boolean(contextFarm?.id),
-                extraction_confidence: llmExtraction?.confidence ?? null,
-              });
+            forcedRoute = clarifiedRoute;
+            setRouteClarificationPending(false);
+            if (pendingAmbiguousTranscript) {
+              effectiveTranscript = pendingAmbiguousTranscript;
+              setPendingAmbiguousTranscript(null);
             }
-            telemetry.capture('voice_log_clarified', {
+            telemetry.capture('chat_route_clarified', {
               source,
-              missing_fields: logTurn.missingFields.join(','),
-              activity_type: logTurn.draft.type,
+              clarified_route: clarifiedRoute,
             });
-            hideClearedDraftNotice();
-            setVoiceLogDraft(logTurn.draft);
+          }
+          llmFallbackInput = effectiveTranscript;
+
+          const shouldTryVoiceLogExtraction = shouldAttemptVoiceLogExtraction(
+            effectiveTranscript,
+            Boolean(voiceLogDraft),
+          );
+          const llmExtraction = shouldTryVoiceLogExtraction
+            ? forcedRoute
+              ? null
+              : await aiService.extractActivityLoggingIntent({
+                  transcript: effectiveTranscript,
+                  language: resolveLanguageCode(i18n.language),
+                  farmNames: farms.map((farmItem) => farmItem.name),
+                  contextFarmName: contextFarm?.name ?? null,
+                })
+            : null;
+
+          const chatRoute =
+            forcedRoute ??
+            decideChatRoute({
+              transcript: effectiveTranscript,
+              hasActiveDraft: Boolean(voiceLogDraft),
+              llmExtraction,
+              deterministicQueryIntent: deterministicIntent,
+            });
+
+          if (chatRoute === 'clarify_route') {
+            setRouteClarificationPending(true);
+            setPendingAmbiguousTranscript(effectiveTranscript);
+            telemetry.capture('chat_route_conflict', {
+              source,
+              llm_intent: llmExtraction?.intent ?? null,
+              llm_intent_confidence: llmExtraction?.intentConfidence ?? null,
+              deterministic_category: deterministicIntent.category,
+              deterministic_confidence: deterministicIntent.confidence,
+            });
             setMessages((prev) => [
               ...prev,
               {
                 id: Date.now().toString(),
                 role: 'assistant',
-                content: buildVoiceLogClarificationMessage(t, logTurn.missingFields),
+                content: t('ai.logging.routeClarification.prompt'),
                 timestamp: new Date(),
               },
             ]);
@@ -641,79 +655,278 @@ export default function AIChatScreen() {
             return;
           }
 
-          if (logTurn.kind === 'ready') {
-            if (!voiceLogDraft) {
-              telemetry.capture('voice_log_started', {
+          telemetry.capture('chat_route_selected', {
+            source,
+            route: chatRoute,
+            has_active_draft: Boolean(voiceLogDraft),
+            llm_intent: llmExtraction?.intent ?? null,
+            llm_intent_confidence: llmExtraction?.intentConfidence ?? null,
+            deterministic_category: deterministicIntent.category,
+            deterministic_confidence: deterministicIntent.confidence,
+            forced_route: forcedRoute,
+          });
+
+          if (chatRoute === 'voice_log') {
+            const logTurn = resolveVoiceLogTurn({
+              transcript: effectiveTranscript,
+              farms,
+              contextFarm,
+              activeDraft: voiceLogDraft,
+              originContext: voiceLogOriginContext,
+              llmExtraction,
+              expectedField: voiceLogExpectedField,
+            });
+
+            if (logTurn.kind === 'cancelled') {
+              telemetry.capture('voice_log_cancelled', {
                 source,
                 has_context_farm: Boolean(contextFarm?.id),
-                extraction_confidence: llmExtraction?.confidence ?? null,
               });
+              setVoiceLogDraft(null);
+              setVoiceLogExpectedField(null);
+              setVoiceLogClarifyAttempts(0);
+              hideClearedDraftNotice();
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: t('ai.logging.cancelled'),
+                  timestamp: new Date(),
+                },
+              ]);
+              scrollToBottom();
+              return;
             }
-            telemetry.capture('voice_log_handoff', {
-              source,
-              farm_id: logTurn.draft.farmId,
-              activity_type: logTurn.draft.type,
-            });
-            setVoiceLogDraft(null);
-            hideClearedDraftNotice();
-            const voicePrefill = buildVoiceLogFormPrefill(logTurn.draft);
-            const farmName = logTurn.draft.farmName ?? t('tasks.unknownFarm');
-            const displayDate = formatDate(parseLocalDate(logTurn.draft.date), {
-              month: 'short',
-              day: 'numeric',
-            });
 
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: Date.now().toString(),
-                role: 'assistant',
-                content: t('ai.logging.openingForm', {
-                  type: t(`logs.types.${logTurn.draft.type}`),
-                  farm: farmName,
-                  date: displayDate,
-                }),
-                timestamp: new Date(),
-              },
-            ]);
-            scrollToBottom();
+            if (logTurn.kind === 'clarify') {
+              if (
+                logTurn.missingFields.includes('farm') &&
+                farms.filter(
+                  (farmCandidate) => farmCandidate.id !== undefined && farmCandidate.id !== null,
+                ).length === 0
+              ) {
+                setVoiceLogDraft(null);
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now().toString(),
+                    role: 'assistant',
+                    content: t('ai.logging.noFarms'),
+                    timestamp: new Date(),
+                  },
+                ]);
+                scrollToBottom();
+                return;
+              }
 
-            setAddEntry({
-              tabs: ['log'],
-              initialTab: 'log',
-              initialFarmId: logTurn.draft.farmId,
-              initialLogType: logTurn.draft.type,
-              initialIrrigationDurationHours:
-                logTurn.draft.type === 'irrigation' ? logTurn.draft.irrigation.durationHours : null,
-              initialLogDate: logTurn.draft.date,
-              voiceLogPrefill: voicePrefill,
-              entrySource: 'voice_ai',
-            });
+              const previousMissing = voiceLogDraft
+                ? getVoiceLogMissingFields(voiceLogDraft)
+                : null;
+              const madeProgress =
+                !previousMissing ||
+                logTurn.missingFields.length < previousMissing.length ||
+                logTurn.missingFields.join(',') !== previousMissing.join(',');
+              const nextAttempts = madeProgress ? 0 : voiceLogClarifyAttempts + 1;
 
-            router.push({
-              pathname: '/add-entry',
-              params: {
-                farmId: String(logTurn.draft.farmId),
+              const MAX_CLARIFY_ATTEMPTS = 3;
+              if (voiceLogDraft && nextAttempts >= MAX_CLARIFY_ATTEMPTS) {
+                telemetry.capture('voice_log_clarify_exhausted', {
+                  source,
+                  missing_fields: logTurn.missingFields.join(','),
+                  activity_type: logTurn.draft.type,
+                });
+                setVoiceLogDraft(null);
+                setVoiceLogExpectedField(null);
+                setVoiceLogClarifyAttempts(0);
+                hideClearedDraftNotice();
+                const voicePrefill = buildVoiceLogFormPrefill(logTurn.draft);
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now().toString(),
+                    role: 'assistant',
+                    content: t('ai.logging.clarifyExhausted'),
+                    timestamp: new Date(),
+                  },
+                ]);
+                scrollToBottom();
+
+                setAddEntry({
+                  tabs: ['log'],
+                  initialTab: 'log',
+                  initialFarmId: logTurn.draft.farmId,
+                  initialLogType: logTurn.draft.type,
+                  initialIrrigationDurationHours:
+                    logTurn.draft.type === 'irrigation'
+                      ? logTurn.draft.irrigation.durationHours
+                      : null,
+                  initialLogDate: logTurn.draft.date,
+                  voiceLogPrefill: voicePrefill,
+                  entrySource: 'voice_ai',
+                });
+
+                router.push({
+                  pathname: '/add-entry',
+                  params: {
+                    ...(logTurn.draft.farmId != null
+                      ? { farmId: String(logTurn.draft.farmId) }
+                      : {}),
+                    initialTab: 'log',
+                    tabs: 'log',
+                    initialLogType: logTurn.draft.type,
+                    initialLogDate: logTurn.draft.date,
+                    entrySource: 'voice_ai',
+                  },
+                });
+                return;
+              }
+
+              if (!voiceLogDraft) {
+                telemetry.capture('voice_log_started', {
+                  source,
+                  has_context_farm: Boolean(contextFarm?.id),
+                  extraction_confidence: llmExtraction?.confidence ?? null,
+                });
+              }
+              telemetry.capture('voice_log_clarified', {
+                source,
+                missing_fields: logTurn.missingFields.join(','),
+                activity_type: logTurn.draft.type,
+              });
+              hideClearedDraftNotice();
+              setVoiceLogDraft(logTurn.draft);
+              setVoiceLogExpectedField(logTurn.missingFields[0] ?? null);
+              setVoiceLogClarifyAttempts(nextAttempts);
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: buildVoiceLogClarificationMessage(t, logTurn.missingFields),
+                  timestamp: new Date(),
+                },
+              ]);
+              scrollToBottom();
+              return;
+            }
+
+            if (logTurn.kind === 'ready') {
+              if (!voiceLogDraft) {
+                telemetry.capture('voice_log_started', {
+                  source,
+                  has_context_farm: Boolean(contextFarm?.id),
+                  extraction_confidence: llmExtraction?.confidence ?? null,
+                });
+              }
+              telemetry.capture('voice_log_handoff', {
+                source,
+                farm_id: logTurn.draft.farmId,
+                activity_type: logTurn.draft.type,
+              });
+              setVoiceLogDraft(null);
+              setVoiceLogExpectedField(null);
+              setVoiceLogClarifyAttempts(0);
+              hideClearedDraftNotice();
+              const voicePrefill = buildVoiceLogFormPrefill(logTurn.draft);
+              const farmName = logTurn.draft.farmName ?? t('tasks.unknownFarm');
+              const displayDate = formatDate(parseLocalDate(logTurn.draft.date), {
+                month: 'short',
+                day: 'numeric',
+              });
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: t('ai.logging.openingForm', {
+                    type: t(`logs.types.${logTurn.draft.type}`),
+                    farm: farmName,
+                    date: displayDate,
+                  }),
+                  timestamp: new Date(),
+                },
+              ]);
+              scrollToBottom();
+
+              setAddEntry({
+                tabs: ['log'],
                 initialTab: 'log',
-                tabs: 'log',
+                initialFarmId: logTurn.draft.farmId,
                 initialLogType: logTurn.draft.type,
-                irrigationDurationHours:
+                initialIrrigationDurationHours:
                   logTurn.draft.type === 'irrigation'
-                    ? String(logTurn.draft.irrigation.durationHours ?? '')
-                    : undefined,
+                    ? logTurn.draft.irrigation.durationHours
+                    : null,
                 initialLogDate: logTurn.draft.date,
+                voiceLogPrefill: voicePrefill,
                 entrySource: 'voice_ai',
-              },
-            });
-            return;
+              });
+
+              router.push({
+                pathname: '/add-entry',
+                params: {
+                  ...(logTurn.draft.farmId != null ? { farmId: String(logTurn.draft.farmId) } : {}),
+                  initialTab: 'log',
+                  tabs: 'log',
+                  initialLogType: logTurn.draft.type,
+                  irrigationDurationHours:
+                    logTurn.draft.type === 'irrigation'
+                      ? String(logTurn.draft.irrigation.durationHours ?? '')
+                      : undefined,
+                  initialLogDate: logTurn.draft.date,
+                  entrySource: 'voice_ai',
+                },
+              });
+              return;
+            }
+          }
+
+          if (chatRoute === 'farm_query' && candidateFarms.length > 0) {
+            try {
+              const languageCode = resolveLanguageCode(i18n.language);
+
+              const queryText = contextFarm?.name
+                ? `${effectiveTranscript} for farm ${contextFarm.name}`
+                : effectiveTranscript;
+
+              const farmDataResponse = await executeQuery(queryText, candidateFarms, languageCode);
+
+              const content =
+                farmDataResponse.answer.verbalizedText ??
+                formatFarmDataAnswer(farmDataResponse.answer);
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content,
+                  timestamp: new Date(),
+                },
+              ]);
+              setSuggestions(DEFAULT_SUGGESTIONS);
+
+              telemetry.capture('ai_result_received', {
+                ai_use_case: 'chat',
+                confidence_score: null,
+                response_source: 'farm_records',
+              });
+
+              scrollToBottom();
+              return;
+            } catch (error) {
+              if (__DEV__) {
+                console.warn('Farm data engine failed, falling back to LLM:', error);
+              }
+            }
           }
         }
 
-        const intent = classifyIntent(deterministicTranscript, candidateFarms);
-
         if (
           currentAttachments.length === 0 &&
-          shouldUseFarmDataEngine(messageText, intent) &&
+          shouldUseFarmDataEngine(messageText, deterministicIntent) &&
           candidateFarms.length > 0
         ) {
           try {
@@ -756,7 +969,7 @@ export default function AIChatScreen() {
 
         const aiAttachments = await prepareAttachmentsForAI(currentAttachments);
         const response = await aiService.sendMessage(
-          assistantInput,
+          llmFallbackInput,
           messages,
           {
             farmName: contextFarm?.name,
@@ -805,11 +1018,15 @@ export default function AIChatScreen() {
       isVoiceListening,
       messages,
       router,
+      routeClarificationPending,
       setAddEntry,
       t,
       hideClearedDraftNotice,
       voiceLogOriginContext,
       voiceLogDraft,
+      voiceLogExpectedField,
+      voiceLogClarifyAttempts,
+      pendingAmbiguousTranscript,
     ],
   );
 

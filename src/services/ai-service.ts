@@ -3,7 +3,6 @@
  * Uses OpenAI GPT-4o for farming assistance
  */
 
-import OpenAI from 'openai';
 import { AIMessageAttachmentInput, ChatMessage, SendMessageResponse } from '../types/ai';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import { GLOSSARY_MR } from '@/i18n/glossary.mr';
@@ -14,6 +13,7 @@ import type {
   VoiceLogChemicalItem,
   VoiceLogFertilizerItem,
 } from '@/types/voice-log';
+import { supabase } from '@/lib/supabase';
 
 const SYSTEM_PROMPT_EN = `You are Vinesight AI Assistant, an expert agricultural assistant specialized in grape farming and viticulture. You help farmers with:
 - Disease identification and management
@@ -203,7 +203,10 @@ function parseExtractionResult(raw: string): ActivityLogExtractionResult | null 
   if (!obj) return null;
 
   const intentRaw = toOptionalString(obj.intent);
-  const intent: 'log_activity' | 'none' = intentRaw === 'log_activity' ? 'log_activity' : 'none';
+  const intent: 'log_activity' | 'query_history' | 'advisory' | 'none' =
+    intentRaw === 'log_activity' || intentRaw === 'query_history' || intentRaw === 'advisory'
+      ? intentRaw
+      : 'none';
   const activityType = toVoiceLogActivityType(obj.activity_type);
 
   const cancel = obj.cancel === true;
@@ -218,11 +221,11 @@ function parseExtractionResult(raw: string): ActivityLogExtractionResult | null 
 
   const confidenceRaw = toOptionalNumber(obj.confidence);
   const confidence =
-    confidenceRaw !== null
-      ? Math.min(1, Math.max(0, confidenceRaw))
-      : intent === 'log_activity'
-        ? 0.6
-        : 0;
+    confidenceRaw !== null ? Math.min(1, Math.max(0, confidenceRaw)) : intent === 'none' ? 0 : 0.6;
+
+  const intentConfidenceRaw = toOptionalNumber(obj.intent_confidence);
+  const intentConfidence =
+    intentConfidenceRaw !== null ? Math.min(1, Math.max(0, intentConfidenceRaw)) : confidence;
 
   const irrigationRaw = toRecord(obj.irrigation);
   const sprayRaw = toRecord(obj.spray);
@@ -232,6 +235,7 @@ function parseExtractionResult(raw: string): ActivityLogExtractionResult | null 
 
   return {
     intent,
+    intentConfidence,
     activityType,
     cancel,
     farmName,
@@ -263,28 +267,48 @@ function parseExtractionResult(raw: string): ActivityLogExtractionResult | null 
   };
 }
 
+interface OpenAIMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string | OpenAIContentPart[];
+}
+
+interface OpenAIContentPart {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: { url: string };
+}
+
+interface OpenAICompletionResponse {
+  choices: Array<{
+    message?: {
+      content?: string | null;
+    };
+  }>;
+}
+
+async function callOpenAIProxy(params: {
+  messages: OpenAIMessage[];
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  response_format?: { type: string };
+}): Promise<OpenAICompletionResponse> {
+  const { data, error } = await supabase.functions.invoke('openai-proxy', {
+    body: params,
+  });
+
+  if (error) {
+    throw new Error(`AI proxy request failed: ${error.message}`);
+  }
+
+  if (data?.error) {
+    throw new Error(`AI proxy error: ${data.error.message ?? data.error}`);
+  }
+
+  return data as OpenAICompletionResponse;
+}
+
 class AIService {
-  private openai: OpenAI | null = null;
-  private apiKey: string | null = null;
-
-  constructor() {
-    this.initializeOpenAI();
-  }
-
-  private initializeOpenAI() {
-    // TODO: Move all OpenAI interactions to a backend endpoint (BFF/serverless) that holds the secret.
-    // Currently using client-side key for development - this should be removed in production.
-    // The mobile client should authenticate to the backend while the backend enforces rate limiting,
-    // input validation, and usage monitoring.
-    this.apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY || null;
-    if (this.apiKey) {
-      this.openai = new OpenAI({
-        apiKey: this.apiKey,
-        dangerouslyAllowBrowser: true,
-      });
-    }
-  }
-
   async sendMessage(
     userMessage: string,
     conversationHistory: ChatMessage[] = [],
@@ -299,44 +323,26 @@ class AIService {
     language: SupportedLanguageCode = 'en',
     attachments: AIMessageAttachmentInput[] = [],
   ): Promise<SendMessageResponse> {
-    if (!this.openai) {
-      throw new Error(
-        'OpenAI API key not configured. Please set EXPO_PUBLIC_OPENAI_API_KEY in your environment.',
-      );
-    }
-
     const contextInfo = farmContext
       ? `\n\nCurrent Farm Context:\n- Farm: ${farmContext.farmName || 'Not specified'}\n- Crop: ${farmContext.cropVariety || 'Grapes'}\n- Area: ${farmContext.area || 'Not specified'} acres\n- Region: ${farmContext.region || 'Not specified'}\n- Growth Stage: ${farmContext.growthStage || 'Not specified'}\n- Days Since Pruning: ${farmContext.daysSincePruning || 'Not specified'} days`
       : '';
 
-    const userContentParts: OpenAI.Chat.ChatCompletionContentPart[] = [];
+    const userContentParts: OpenAIContentPart[] = [];
     const trimmedUserMessage = userMessage.trim();
     if (trimmedUserMessage) {
-      userContentParts.push({
-        type: 'text',
-        text: trimmedUserMessage,
-      });
+      userContentParts.push({ type: 'text', text: trimmedUserMessage });
     }
 
     if (attachments.length > 0) {
       const attachmentNames = attachments.map((attachment) => attachment.name).join(', ');
-      userContentParts.push({
-        type: 'text',
-        text: `Attached files: ${attachmentNames}`,
-      });
+      userContentParts.push({ type: 'text', text: `Attached files: ${attachmentNames}` });
     }
 
     attachments.forEach((attachment) => {
       if (attachment.kind === 'image' && attachment.dataUrl) {
-        userContentParts.push({
-          type: 'image_url',
-          image_url: {
-            url: attachment.dataUrl,
-          },
-        });
+        userContentParts.push({ type: 'image_url', image_url: { url: attachment.dataUrl } });
         return;
       }
-
       if (attachment.kind === 'document' && attachment.textContent?.trim()) {
         userContentParts.push({
           type: 'text',
@@ -344,35 +350,28 @@ class AIService {
         });
         return;
       }
-
       userContentParts.push({
         type: 'text',
         text: `File "${attachment.name}" was attached but its contents could not be read. Analyze based on available context only.`,
       });
     });
 
-    const userContent: string | OpenAI.Chat.ChatCompletionContentPart[] =
+    const userContent: string | OpenAIContentPart[] =
       userContentParts.length > 0 ? userContentParts : userMessage;
 
-    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      {
-        role: 'system',
-        content: buildSystemPrompt(language) + contextInfo,
-      },
+    const messages: OpenAIMessage[] = [
+      { role: 'system', content: buildSystemPrompt(language) + contextInfo },
       ...conversationHistory.slice(-10).map((msg) => ({
-        role: msg.role,
+        role: msg.role as 'user' | 'assistant',
         content: msg.content,
       })),
-      {
-        role: 'user',
-        content: userContent,
-      },
+      { role: 'user', content: userContent },
     ];
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const response = await callOpenAIProxy({
         messages,
+        model: 'gpt-4o-mini',
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -394,7 +393,7 @@ class AIService {
       };
     } catch (error) {
       if (__DEV__) {
-        console.error('Error calling OpenAI API:', error);
+        console.error('Error calling AI proxy:', error);
       }
       throw new Error(
         `Failed to get AI response: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -406,27 +405,18 @@ class AIService {
     lastUserMessage: string,
     language: SupportedLanguageCode,
   ): Promise<string[]> {
-    if (!this.openai) return [];
-
     let systemContent: string;
     if (language === 'mr') {
-      systemContent = `Respond ONLY in Marathi. Keep each suggestion short (max 6 words). Use Arabic numerals (0-9). Do NOT use English verbs. Use these terms when applicable: ${JSON.stringify(
-        GLOSSARY_MR,
-      )}. Return as a JSON array of strings.`;
+      systemContent = `Respond ONLY in Marathi. Keep each suggestion short (max 6 words). Use Arabic numerals (0-9). Do NOT use English verbs. Use these terms when applicable: ${JSON.stringify(GLOSSARY_MR)}. Return as a JSON array of strings.`;
     } else if (language === 'hi') {
-      systemContent = `Respond ONLY in Hindi. Keep each suggestion short (max 6 words). Use Arabic numerals (0-9). Do NOT use English verbs. Use these terms when applicable: ${JSON.stringify(
-        GLOSSARY_HI,
-      )}. Return as a JSON array of strings.`;
+      systemContent = `Respond ONLY in Hindi. Keep each suggestion short (max 6 words). Use Arabic numerals (0-9). Do NOT use English verbs. Use these terms when applicable: ${JSON.stringify(GLOSSARY_HI)}. Return as a JSON array of strings.`;
     } else {
       systemContent =
         'You are a helpful assistant. Generate 3-4 brief follow-up questions or suggestions based on the conversation. Each should be a short phrase (max 8 words). Return as a JSON array of strings.';
     }
 
-    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      {
-        role: 'system',
-        content: systemContent,
-      },
+    const messages: OpenAIMessage[] = [
+      { role: 'system', content: systemContent },
       {
         role: 'user',
         content: `User's last message: "${lastUserMessage}"\n\nGenerate relevant follow-up suggestions.`,
@@ -434,9 +424,9 @@ class AIService {
     ];
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const response = await callOpenAIProxy({
         messages,
+        model: 'gpt-4o-mini',
         temperature: 0.8,
         max_tokens: 200,
       });
@@ -450,7 +440,7 @@ class AIService {
   }
 
   isConfigured(): boolean {
-    return this.apiKey !== null;
+    return true;
   }
 
   async extractActivityLoggingIntent(input: {
@@ -459,20 +449,17 @@ class AIService {
     farmNames: string[];
     contextFarmName?: string | null;
   }): Promise<ActivityLogExtractionResult | null> {
-    if (!this.openai) return null;
-
     const normalizedFarmNames = input.farmNames.filter((name) => name.trim().length > 0);
     const today = new Date();
-    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
-      today.getDate(),
-    ).padStart(2, '0')}`;
+    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    const messages: OpenAIMessage[] = [
       {
         role: 'system',
         content: `You extract farm activity logging intent and slots for a farming app.
 Return only valid JSON with keys:
-- intent: "log_activity" | "none"
+- intent: "log_activity" | "query_history" | "advisory" | "none"
+- intent_confidence: number from 0 to 1
 - activity_type: "irrigation" | "spray" | "harvest" | "expense" | "fertigation" | null
 - cancel: boolean
 - farm_name: string | null
@@ -486,9 +473,14 @@ Return only valid JSON with keys:
 - confidence: number from 0 to 1
 
 Rules:
-- Detect intent to log/create/save a farm activity record.
+- Detect one dominant intent:
+  - log_activity: user wants to create/save/add a new record
+  - query_history: user asks about past logged records/totals/history
+  - advisory: user asks for recommendations or guidance
+  - none: unrelated or unclear
+- Use intent_confidence for intent certainty.
 - If user wants to cancel/stop this logging flow, set cancel=true.
-- If intent is not logging, set intent="none" and activity_type=null.
+- If intent is not log_activity, set activity_type=null.
 - For irrigation duration in minutes, convert to fractional hours.
 - For spray and fertigation, extract list items from user text if present.
 - Keep unknown fields null or empty arrays.
@@ -510,9 +502,9 @@ Rules:
     ];
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const response = await callOpenAIProxy({
         messages,
+        model: 'gpt-4o-mini',
         temperature: 0,
         max_tokens: 250,
         response_format: { type: 'json_object' },

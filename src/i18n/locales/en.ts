@@ -1131,8 +1131,15 @@ export const en = {
     logging: {
       cancelled: 'Okay, I cancelled the logging flow.',
       noFarms: 'Please add a farm first, then I can open a logging form.',
+      clarifyExhausted:
+        "I couldn't capture all the details. Opening the form so you can complete it manually.",
       openingForm:
         'Captured {{type}} on {{date}} at {{farm}}. Opening the form for review and submit.',
+      routeClarification: {
+        prompt: 'I can help with both. Reply with:\n1) Log a new activity\n2) Show past records',
+        cancelled: 'Okay, I cancelled that choice. Ask me anything else.',
+        retry: 'Please reply with 1 or 2 so I can continue.',
+      },
       followups: {
         common: {
           askFarm: 'Which farm should I log this for?',

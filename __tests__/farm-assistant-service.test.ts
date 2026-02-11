@@ -147,6 +147,27 @@ describe('classifyIntent', () => {
       expect(daysDiff).toBeCloseTo(6, 0);
     });
 
+    it('"how many irrigation today" → timeRange is today', () => {
+      const intent = classifyIntent('how many irrigation today', NO_FARMS);
+      expect(intent.timeRange).not.toBeNull();
+      const now = new Date();
+      expect(intent.timeRange!.start.getFullYear()).toBe(now.getFullYear());
+      expect(intent.timeRange!.start.getMonth()).toBe(now.getMonth());
+      expect(intent.timeRange!.start.getDate()).toBe(now.getDate());
+      expect(intent.timeRange!.end.getDate()).toBe(now.getDate());
+    });
+
+    it('"सिंचाई कल कितनी हुई" → timeRange is yesterday', () => {
+      const intent = classifyIntent('सिंचाई कल कितनी हुई', NO_FARMS);
+      expect(intent.timeRange).not.toBeNull();
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      expect(intent.timeRange!.start.getFullYear()).toBe(yesterday.getFullYear());
+      expect(intent.timeRange!.start.getMonth()).toBe(yesterday.getMonth());
+      expect(intent.timeRange!.start.getDate()).toBe(yesterday.getDate());
+      expect(intent.timeRange!.end.getDate()).toBe(yesterday.getDate());
+    });
+
     it('"spray last month" → timeRange covers previous calendar month', () => {
       const intent = classifyIntent('spray last month', NO_FARMS);
       expect(intent.timeRange).not.toBeNull();

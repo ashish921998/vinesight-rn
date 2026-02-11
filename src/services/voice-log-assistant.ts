@@ -7,7 +7,11 @@ import type {
   VoiceLogFormPrefill,
   VoiceLogMissingField,
   VoiceLogOriginContext,
+  VoiceLogChemicalItem,
+  VoiceLogFertilizerItem,
 } from '@/types/voice-log';
+import type { QueryIntent } from '@/types/voice-assistant';
+import { VOICE_PATTERNS } from '@/constants/voice-patterns';
 
 export type VoiceLogTurnResult =
   | { kind: 'none' }
@@ -22,6 +26,13 @@ export type VoiceLogTurnResult =
       draft: VoiceLogDraft;
     };
 
+export type HybridChatRoute =
+  | 'voice_log'
+  | 'farm_query'
+  | 'advisory'
+  | 'clarify_route'
+  | 'fallback_llm';
+
 interface ResolveVoiceLogTurnInput {
   transcript: string;
   farms: Farm[];
@@ -29,83 +40,23 @@ interface ResolveVoiceLogTurnInput {
   activeDraft?: VoiceLogDraft | null;
   originContext: VoiceLogOriginContext;
   llmExtraction?: ActivityLogExtractionResult | null;
+  expectedField?: VoiceLogMissingField | null;
 }
 
-const LOG_ACTION_PATTERNS = [
-  /\b(log|record|add|create|save|submit|enter)\b/i,
-  /\b(i\s+want\s+to|let\s+me|please)\b/i,
-  /लॉग/i,
-  /रिकॉर्ड/i,
-  /जोड़/i,
-  /नोंद/i,
-  /नोंदव/i,
-  /सेव/i,
-];
+const LOG_ACTION_PATTERNS = VOICE_PATTERNS.logAction;
 
-const ACTIVITY_PATTERNS: Record<VoiceLogActivityType, RegExp[]> = {
-  irrigation: [
-    /\birrigat(e|ed|ion|ing)\b/i,
-    /\bwater(ing|ed)?\b/i,
-    /\bdrip\b/i,
-    /सिंचाई/i,
-    /पानी/i,
-    /पाणी/i,
-    /ठिबक/i,
-  ],
-  spray: [
-    /\bspray(ed|ing)?\b/i,
-    /\bchemical(s)?\b/i,
-    /\bpesticide(s)?\b/i,
-    /\bfungicide(s)?\b/i,
-    /\binsecticide(s)?\b/i,
-    /स्प्रे/i,
-    /छिड़काव/i,
-    /फवारणी/i,
-  ],
-  harvest: [
-    /\bharvest(ed|ing)?\b/i,
-    /\bpick(ing|ed)?\b/i,
-    /\bgrapes?\s+picked\b/i,
-    /कटाई/i,
-    /तोड़ाई/i,
-    /कापणी/i,
-    /तोडणी/i,
-  ],
-  expense: [
-    /\bexpense(s)?\b/i,
-    /\bcost(s|ed|ing)?\b/i,
-    /\bspent?\b/i,
-    /\bspending\b/i,
-    /\bbill(s)?\b/i,
-    /खर्च/i,
-    /लागत/i,
-    /किंमत/i,
-  ],
-  fertigation: [
-    /\bfertigat(e|ed|ion|ing)\b/i,
-    /\bfertiliz(e|ed|er|ers|ing)\b/i,
-    /\bfertilis(e|ed|er|ers|ing)\b/i,
-    /\bnutrient(s)?\b/i,
-    /उर्वरक/i,
-    /खाद/i,
-    /खत/i,
-    /फर्टिगेशन/i,
-  ],
-};
+const LOG_HISTORY_QUERY_PATTERNS = VOICE_PATTERNS.historyQuery;
 
-const CANCEL_PATTERNS = [
-  /\bcancel\b/i,
-  /\bstop\b/i,
-  /\bnever\s*mind\b/i,
-  /\bskip\b/i,
-  /रद्द/i,
-  /थांब/i,
-  /थांबा/i,
-  /बंद/i,
-];
+const ACTIVITY_PATTERNS = VOICE_PATTERNS.activities;
+
+const CANCEL_PATTERNS = VOICE_PATTERNS.cancel;
 
 const DEFAULT_CHEMICAL_UNIT = 'gm/L';
 const DEFAULT_FERTILIZER_UNIT = 'kg/acre';
+const LOG_INTENT_MIN_CONFIDENCE = 0.55;
+const QUERY_INTENT_MIN_CONFIDENCE = 0.55;
+const ADVISORY_INTENT_MIN_CONFIDENCE = 0.6;
+const ROUTE_MARGIN = 0.1;
 
 function toLocalDateString(date: Date): string {
   const year = date.getFullYear();
@@ -131,6 +82,14 @@ function roundNumber(value: number): number {
 function parseDurationHours(transcript: string): number | null {
   const text = transcript.trim();
   if (!text) return null;
+
+  const numericOnlyMatch = text.match(/^(\d+(?:\.\d+)?)$/);
+  if (numericOnlyMatch?.[1]) {
+    const parsed = Number.parseFloat(numericOnlyMatch[1]);
+    if (Number.isFinite(parsed) && parsed > 0 && parsed <= 24) {
+      return roundNumber(parsed);
+    }
+  }
 
   const hoursMatch = text.match(/(\d+(?:\.\d+)?)\s*(hours?|hour|hrs?|hr|h|घंटे|घंटा|तास|तासे)/i);
   if (hoursMatch?.[1]) {
@@ -166,6 +125,13 @@ function parseDurationHours(transcript: string): number | null {
 function parseWaterVolume(transcript: string): number | null {
   const text = transcript.trim();
   if (!text) return null;
+
+  const numericOnlyMatch = text.match(/^(\d+(?:\.\d+)?)$/);
+  if (numericOnlyMatch?.[1]) {
+    const parsed = Number.parseFloat(numericOnlyMatch[1]);
+    if (Number.isFinite(parsed) && parsed > 0) return roundNumber(parsed);
+  }
+
   const match = text.match(/(\d+(?:\.\d+)?)\s*(liters?|liter|litre|litres|l|एल|लीटर|लिटर)/i);
   if (!match?.[1]) return null;
   const parsed = Number.parseFloat(match[1]);
@@ -176,6 +142,13 @@ function parseWaterVolume(transcript: string): number | null {
 function parseQuantityKg(transcript: string): number | null {
   const text = transcript.trim();
   if (!text) return null;
+
+  const numericOnlyMatch = text.match(/^(\d+(?:\.\d+)?)$/);
+  if (numericOnlyMatch?.[1]) {
+    const parsed = Number.parseFloat(numericOnlyMatch[1]);
+    if (Number.isFinite(parsed) && parsed > 0) return roundNumber(parsed);
+  }
+
   const match = text.match(/(\d+(?:\.\d+)?)\s*(kg|kgs|kilograms?|किलो|किग्रा|किलोग्राम)/i);
   if (!match?.[1]) return null;
   const parsed = Number.parseFloat(match[1]);
@@ -186,11 +159,11 @@ function parseQuantityKg(transcript: string): number | null {
 function parseAmount(transcript: string): number | null {
   const text = transcript.trim();
   if (!text) return null;
-  const rupeeMatch = text.match(/(?:₹|rs\.?|inr)\s*(\d+(?:\.\d+)?)/i);
-  const genericMatch = text.match(/\b(\d+(?:\.\d+)?)\b/);
+  const rupeeMatch = text.match(/(?:₹|rs\.?|inr)\s*(\d[\d,]*(?:\.\d+)?)/i);
+  const genericMatch = text.match(/\b(\d[\d,]*(?:\.\d+)?)\b/);
   const picked = rupeeMatch?.[1] ?? genericMatch?.[1];
   if (!picked) return null;
-  const parsed = Number.parseFloat(picked);
+  const parsed = Number.parseFloat(picked.replace(/,/g, ''));
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
   return roundNumber(parsed);
 }
@@ -199,9 +172,16 @@ function parseHarvestGrade(transcript: string): string | null {
   const normalized = normalizeText(transcript);
   if (!normalized) return null;
 
-  if (/\bgrade\s*a\b/i.test(transcript) || /\b(?:^|\s)a(?:\s|$)\b/i.test(transcript)) return 'A';
-  if (/\bgrade\s*b\b/i.test(transcript) || /\b(?:^|\s)b(?:\s|$)\b/i.test(transcript)) return 'B';
-  if (/\bgrade\s*c\b/i.test(transcript) || /\b(?:^|\s)c(?:\s|$)\b/i.test(transcript)) return 'C';
+  const singleLetterReply = transcript.trim();
+  if (/^[abc]$/i.test(singleLetterReply)) {
+    return singleLetterReply.toUpperCase();
+  }
+
+  const explicitGradeMatch = normalized.match(/\b(?:grade\s*([abc])|([abc])\s*grade)\b/);
+  if (explicitGradeMatch) {
+    const rawGrade = explicitGradeMatch[1] ?? explicitGradeMatch[2];
+    if (rawGrade) return rawGrade.toUpperCase();
+  }
 
   for (const grade of HARVEST_GRADES) {
     const normalizedGrade = normalizeText(grade);
@@ -224,11 +204,11 @@ function parseExpenseType(transcript: string): string | null {
     }
   }
 
-  if (/diesel|petrol|gas/i.test(transcript)) return 'Fuel';
-  if (/repair|service/i.test(transcript)) return 'Maintenance';
-  if (/transport|truck|delivery/i.test(transcript)) return 'Transport';
-  if (/seed|plant/i.test(transcript)) return 'Seeds/Plants';
-  if (/pack/i.test(transcript)) return 'Packaging';
+  if (/diesel|petrol|gas|डीज़ल|डिझेल|पेट्रोल|गैस|इंधन|इंधन/i.test(transcript)) return 'Fuel';
+  if (/repair|service|मरम्मत|दुरुस्ती|सर्विस/i.test(transcript)) return 'Maintenance';
+  if (/transport|truck|delivery|ट्रांसपोर्ट|ट्रक|वाहतूक/i.test(transcript)) return 'Transport';
+  if (/seed|plant|बीज|बियाणे|पौधा|रोप/i.test(transcript)) return 'Seeds/Plants';
+  if (/pack|पैकिंग|पॅकिंग/i.test(transcript)) return 'Packaging';
 
   return null;
 }
@@ -237,6 +217,10 @@ function parseLogDate(transcript: string): string | null {
   const now = new Date();
   const text = transcript.toLowerCase();
 
+  // Hindi "कल" is ambiguous — it means both "yesterday" and "tomorrow".
+  // The LLM extraction (parseLogDateFromLLM) runs first and handles this
+  // contextually. This deterministic fallback defaults to "yesterday"
+  // since activity logs most commonly reference past events.
   if (/\b(yesterday)\b/i.test(text) || /कल/i.test(transcript)) {
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
@@ -270,6 +254,139 @@ function parseLogDateFromLLM(
 
 function hasLoggingSignal(transcript: string): boolean {
   return LOG_ACTION_PATTERNS.some((pattern) => pattern.test(transcript));
+}
+
+function isLikelyLogHistoryQuery(transcript: string): boolean {
+  const text = transcript.trim();
+  if (!text) return false;
+
+  const hasQuerySignal = LOG_HISTORY_QUERY_PATTERNS.some((pattern) => pattern.test(text));
+  if (!hasQuerySignal) return false;
+
+  const hasHistorySignal =
+    /\b(logged?|records?|entries|history|total|today|yesterday|this\s+week|this\s+month)\b/i.test(
+      text,
+    ) ||
+    /नोंद|नोंदी|रेकॉर्ड|इतिहास|एकूण|आज|काल|आठवड|महिन/i.test(text) ||
+    Boolean(detectActivityTypeFromText(text));
+
+  return hasHistorySignal;
+}
+
+function scoreFromDeterministicQueryIntent(intent: QueryIntent | null | undefined): number {
+  if (!intent?.category) return 0;
+  return Math.min(1, Math.max(0, intent.confidence));
+}
+
+function scoreFromLLMIntent(
+  extraction: ActivityLogExtractionResult | null | undefined,
+  targetIntent: ActivityLogExtractionResult['intent'],
+): number {
+  if (!extraction || extraction.intent !== targetIntent) return 0;
+  const rawScore = extraction.intentConfidence ?? extraction.confidence;
+  return Math.min(1, Math.max(0, rawScore));
+}
+
+export function decideChatRoute(input: {
+  transcript: string;
+  hasActiveDraft: boolean;
+  llmExtraction?: ActivityLogExtractionResult | null;
+  deterministicQueryIntent?: QueryIntent | null;
+}): HybridChatRoute {
+  const { transcript, hasActiveDraft, llmExtraction, deterministicQueryIntent } = input;
+
+  if (hasActiveDraft) return 'voice_log';
+
+  const queryScore = Math.max(
+    scoreFromLLMIntent(llmExtraction, 'query_history'),
+    scoreFromDeterministicQueryIntent(deterministicQueryIntent),
+  );
+  const logScore = scoreFromLLMIntent(llmExtraction, 'log_activity');
+  const advisoryScore = scoreFromLLMIntent(llmExtraction, 'advisory');
+
+  if (
+    queryScore >= QUERY_INTENT_MIN_CONFIDENCE &&
+    logScore >= LOG_INTENT_MIN_CONFIDENCE &&
+    Math.abs(queryScore - logScore) <= ROUTE_MARGIN
+  ) {
+    return 'clarify_route';
+  }
+
+  if (
+    queryScore >= QUERY_INTENT_MIN_CONFIDENCE &&
+    queryScore >= logScore + ROUTE_MARGIN &&
+    queryScore >= advisoryScore + ROUTE_MARGIN
+  ) {
+    return 'farm_query';
+  }
+
+  if (
+    logScore >= LOG_INTENT_MIN_CONFIDENCE &&
+    logScore >= queryScore + ROUTE_MARGIN &&
+    logScore >= advisoryScore + ROUTE_MARGIN
+  ) {
+    return 'voice_log';
+  }
+
+  if (
+    advisoryScore >= ADVISORY_INTENT_MIN_CONFIDENCE &&
+    advisoryScore >= Math.max(logScore, queryScore)
+  ) {
+    return 'advisory';
+  }
+
+  if (queryScore >= QUERY_INTENT_MIN_CONFIDENCE) {
+    return 'farm_query';
+  }
+
+  if (logScore >= LOG_INTENT_MIN_CONFIDENCE) {
+    return 'voice_log';
+  }
+
+  if (isLikelyLogHistoryQuery(transcript)) {
+    return 'farm_query';
+  }
+
+  if (hasLoggingSignal(transcript) && detectActivityTypeFromText(transcript)) {
+    return 'voice_log';
+  }
+
+  return 'fallback_llm';
+}
+
+export function resolveRouteClarificationResponse(
+  transcript: string,
+): Exclude<HybridChatRoute, 'advisory' | 'clarify_route' | 'fallback_llm'> | null {
+  const text = transcript.trim();
+  if (!text) return null;
+
+  if (/^1$/.test(text)) return 'voice_log';
+  if (/^2$/.test(text)) return 'farm_query';
+
+  if (
+    /\b(log|record|add|create|new\s+entry|new\s+log)\b/i.test(text) ||
+    /लॉग|नोंद|नोंदवा|नयी\s+एंट्री|नई\s+एंट्री|नया\s+लॉग/i.test(text)
+  ) {
+    return 'voice_log';
+  }
+
+  if (
+    /\b(history|records?|show|list|total|how\s+many|how\s+much|past)\b/i.test(text) ||
+    /कितना|कितने|इतिहास|रेकॉर्ड|रिकॉर्ड|मागील|कुल|एकूण/i.test(text)
+  ) {
+    return 'farm_query';
+  }
+
+  return null;
+}
+
+export function isRouteClarificationCancelResponse(transcript: string): boolean {
+  const text = transcript.trim();
+  if (!text) return false;
+
+  if (CANCEL_PATTERNS.some((pattern) => pattern.test(text))) return true;
+
+  return /\b(exit|quit|go\s+back|back)\b/i.test(text);
 }
 
 function detectActivityTypeFromText(transcript: string): VoiceLogActivityType | null {
@@ -440,6 +557,46 @@ export function getVoiceLogMissingFields(draft: VoiceLogDraft): VoiceLogMissingF
   return missing;
 }
 
+function normalizeItemName(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function mergeChemicalItems(
+  existing: VoiceLogChemicalItem[],
+  incoming: VoiceLogChemicalItem[],
+): VoiceLogChemicalItem[] {
+  const merged = [...existing];
+  for (const item of incoming) {
+    const normalizedName = normalizeItemName(item.name);
+    if (!normalizedName) continue;
+    const existingIndex = merged.findIndex((e) => normalizeItemName(e.name) === normalizedName);
+    if (existingIndex >= 0) {
+      merged[existingIndex] = item;
+    } else {
+      merged.push(item);
+    }
+  }
+  return merged;
+}
+
+function mergeFertilizerItems(
+  existing: VoiceLogFertilizerItem[],
+  incoming: VoiceLogFertilizerItem[],
+): VoiceLogFertilizerItem[] {
+  const merged = [...existing];
+  for (const item of incoming) {
+    const normalizedName = normalizeItemName(item.name);
+    if (!normalizedName) continue;
+    const existingIndex = merged.findIndex((e) => normalizeItemName(e.name) === normalizedName);
+    if (existingIndex >= 0) {
+      merged[existingIndex] = item;
+    } else {
+      merged.push(item);
+    }
+  }
+  return merged;
+}
+
 function mergeDraftFromLLM(
   draft: VoiceLogDraft,
   extraction: ActivityLogExtractionResult | null | undefined,
@@ -464,7 +621,7 @@ function mergeDraftFromLLM(
   }
 
   if (extraction.spray.chemicals.length > 0) {
-    merged.spray.chemicals = extraction.spray.chemicals;
+    merged.spray.chemicals = mergeChemicalItems(merged.spray.chemicals, extraction.spray.chemicals);
   }
 
   if (extraction.harvest.quantity && extraction.harvest.quantity > 0) {
@@ -494,7 +651,10 @@ function mergeDraftFromLLM(
     merged.fertigation.waterVolume = extraction.fertigation.waterVolume;
   }
   if (extraction.fertigation.fertilizers.length > 0) {
-    merged.fertigation.fertilizers = extraction.fertigation.fertilizers;
+    merged.fertigation.fertilizers = mergeFertilizerItems(
+      merged.fertigation.fertilizers,
+      extraction.fertigation.fertilizers,
+    );
   }
 
   return merged;
@@ -559,6 +719,76 @@ function mergeDraftFromText(draft: VoiceLogDraft, transcript: string): VoiceLogD
   return merged;
 }
 
+function mergeDraftFromTextForField(
+  draft: VoiceLogDraft,
+  transcript: string,
+  field: VoiceLogMissingField,
+): VoiceLogDraft {
+  const merged: VoiceLogDraft = {
+    ...draft,
+    irrigation: { ...draft.irrigation },
+    spray: { ...draft.spray, chemicals: [...draft.spray.chemicals] },
+    harvest: { ...draft.harvest },
+    expense: { ...draft.expense },
+    fertigation: { ...draft.fertigation, fertilizers: [...draft.fertigation.fertilizers] },
+  };
+
+  switch (field) {
+    case 'duration': {
+      const duration = parseDurationHours(transcript);
+      if (duration !== null) {
+        merged.irrigation.durationHours = duration;
+      }
+      break;
+    }
+    case 'waterVolume': {
+      const waterVolume = parseWaterVolume(transcript);
+      if (waterVolume !== null) {
+        if (merged.type === 'spray') {
+          merged.spray.waterVolume = waterVolume;
+        } else if (merged.type === 'fertigation') {
+          merged.fertigation.waterVolume = waterVolume;
+        }
+      }
+      break;
+    }
+    case 'quantity': {
+      const quantity = parseQuantityKg(transcript);
+      if (quantity !== null) {
+        merged.harvest.quantity = quantity;
+      }
+      break;
+    }
+    case 'grade': {
+      const grade = parseHarvestGrade(transcript);
+      if (grade) {
+        merged.harvest.grade = grade;
+      }
+      break;
+    }
+    case 'cost': {
+      const cost = parseAmount(transcript);
+      if (cost !== null) {
+        merged.expense.cost = cost;
+      }
+      break;
+    }
+    case 'expenseType': {
+      const expenseType = parseExpenseType(transcript);
+      if (expenseType) {
+        merged.expense.expenseType = expenseType;
+      }
+      break;
+    }
+    case 'farm':
+    case 'chemicals':
+    case 'fertilizers':
+      break;
+  }
+
+  return merged;
+}
+
 export function resolveVoiceLogTurn({
   transcript,
   farms,
@@ -566,6 +796,7 @@ export function resolveVoiceLogTurn({
   activeDraft,
   originContext,
   llmExtraction,
+  expectedField,
 }: ResolveVoiceLogTurnInput): VoiceLogTurnResult {
   const text = transcript.trim();
   if (!text) return { kind: 'none' };
@@ -577,12 +808,18 @@ export function resolveVoiceLogTurn({
     return { kind: 'none' };
   }
 
+  if (!activeDraft && isLikelyLogHistoryQuery(text)) {
+    return { kind: 'none' };
+  }
+
   const inferredTypeFromText = detectActivityTypeFromText(text);
   const inferredType = activeDraft?.type ?? llmExtraction?.activityType ?? inferredTypeFromText;
 
   if (!activeDraft) {
     const hasStartIntent =
-      llmExtraction?.intent === 'log_activity' || (hasLoggingSignal(text) && Boolean(inferredType));
+      (llmExtraction?.intent === 'log_activity' &&
+        (llmExtraction.intentConfidence ?? 0) >= LOG_INTENT_MIN_CONFIDENCE) ||
+      (hasLoggingSignal(text) && Boolean(inferredType));
 
     if (!hasStartIntent || !inferredType) {
       return { kind: 'none' };
@@ -621,7 +858,11 @@ export function resolveVoiceLogTurn({
   }
 
   nextDraft = mergeDraftFromLLM(nextDraft, llmExtraction);
-  nextDraft = mergeDraftFromText(nextDraft, text);
+  if (activeDraft && expectedField) {
+    nextDraft = mergeDraftFromTextForField(nextDraft, text, expectedField);
+  } else {
+    nextDraft = mergeDraftFromText(nextDraft, text);
+  }
 
   const parsedDate = parseLogDateFromLLM(llmExtraction) ?? parseLogDate(text);
   if (parsedDate) {
@@ -654,13 +895,22 @@ export function shouldAttemptVoiceLogExtraction(
   const text = transcript.trim();
   if (!text) return false;
 
-  const hasActivitySignal = Object.values(ACTIVITY_PATTERNS).some((patterns) =>
-    patterns.some((pattern) => pattern.test(text)),
-  );
+  // Cost optimization: Only attempt extraction if there's a signal
+  // for logging, activity types, or advisory queries.
+  // Pure small talk ("hello", "thanks") should be skipped.
 
-  const hasNumberSignal = /\d/.test(text);
+  if (hasLoggingSignal(text)) return true;
+  if (detectActivityTypeFromText(text) !== null) return true;
+  if (isLikelyLogHistoryQuery(text)) return true;
 
-  return (hasActivitySignal && hasLoggingSignal(text)) || (hasActivitySignal && hasNumberSignal);
+  // If it matches known advisory patterns (usually handled by deterministic intent,
+  // but LLM extraction can help refine it)
+  if (/\b(how|what|when|should|can|suggest|recommend|advice)\b/i.test(text)) return true;
+
+  // For very short inputs without keywords, skip extraction to save tokens
+  if (text.split(/\s+/).length < 3) return false;
+
+  return true;
 }
 
 export function buildVoiceLogFormPrefill(draft: VoiceLogDraft): VoiceLogFormPrefill {
