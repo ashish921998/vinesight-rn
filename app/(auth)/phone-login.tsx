@@ -82,7 +82,9 @@ export default function PhoneLoginScreen() {
   }, [pendingOTPPhone, phoneAuthMode]);
 
   useEffect(() => {
-    if (isAuthenticated && !needsProfileCompletion) {
+    if (isAuthenticated && needsProfileCompletion) {
+      router.replace('/(auth)/profile-completion');
+    } else if (isAuthenticated) {
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, needsProfileCompletion]);
