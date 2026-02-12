@@ -9,6 +9,7 @@ import type {
   ExpenseRecord,
 } from '@/types';
 import type { TaskReminder } from '@/types/task';
+import type { PlannedInputItem } from '@/types/task';
 import type { WarehouseItem, Worker } from '@/types';
 import type { LogTypeId } from '@/constants/calculator-models';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
@@ -30,6 +31,11 @@ export type AddEntryRoutePayload = {
   voiceLogPrefill?: VoiceLogFormPrefill | null;
   entrySource?: 'manual' | 'voice_ai' | null;
   editingTask?: TaskReminder | null;
+  sourceTaskId?: number | null;
+  logPrefill?: {
+    sprayChemicals?: PlannedInputItem[];
+    fertigationItems?: PlannedInputItem[];
+  } | null;
 };
 
 export type EditActivityRoutePayload = {

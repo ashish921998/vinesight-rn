@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useCreateWarehouseItem, useUpdateWarehouseItem } from '../../hooks';
-import { WarehouseItem, WarehouseItemType, WarehouseUnit } from '../../types';
+import {
+  NutrientCompositionItem,
+  WarehouseItem,
+  WarehouseItemType,
+  WarehouseUnit,
+} from '../../types';
 import i18n from '@/i18n';
 import { formatCurrency } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
@@ -15,6 +21,8 @@ import {
 } from '../ui/form-components';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { ICON_REGISTRY } from '@/constants/icon-registry';
+import { WAREHOUSE_PRESETS, type WarehouseNutrientPreset } from '@/constants/nutrient-presets';
 
 interface Props {
   visible?: boolean;
@@ -23,10 +31,54 @@ interface Props {
   presentation?: 'modal' | 'screen';
 }
 
+interface CompositionRow {
+  id: string;
+  nutrient_code: string;
+  percent: string;
+}
+
 const ITEM_TYPES = [
-  { value: 'fertilizer' as WarehouseItemType, label: 'Fertilizer', icon: 'flask' as const },
+  {
+    value: 'fertilizer' as WarehouseItemType,
+    label: 'Fertilizer',
+    icon: ICON_REGISTRY.fertigation,
+  },
   { value: 'spray' as WarehouseItemType, label: 'Spray', icon: 'spraycan' as const },
 ];
+
+function createCompositionRow(item?: Partial<NutrientCompositionItem>): CompositionRow {
+  return {
+    id: `comp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+    nutrient_code: item?.nutrient_code ?? '',
+    percent: item?.percent !== undefined ? String(item.percent) : '',
+  };
+}
+
+function parseComposition(rows: CompositionRow[]): NutrientCompositionItem[] {
+  return rows.reduce<NutrientCompositionItem[]>((result, row) => {
+    const nutrientCode = row.nutrient_code.trim().toUpperCase();
+    const rawPercent = row.percent?.trim() ?? '';
+    if (!rawPercent) {
+      return result;
+    }
+
+    const parsedPercent = Number(rawPercent);
+    if (
+      nutrientCode.length > 0 &&
+      Number.isFinite(parsedPercent) &&
+      parsedPercent >= 0 &&
+      parsedPercent <= 100
+    ) {
+      result.push({
+        nutrient_code: nutrientCode,
+        percent: parsedPercent,
+        basis: 'declared',
+        notes: null,
+      });
+    }
+    return result;
+  }, []);
+}
 
 export default function WarehouseItemForm({
   visible,
@@ -47,6 +99,14 @@ export default function WarehouseItemForm({
   const [unitPrice, setUnitPrice] = useState('');
   const [reorderQuantity, setReorderQuantity] = useState('');
   const [notes, setNotes] = useState('');
+  const [manufacturer, setManufacturer] = useState('');
+  const [densityKgPerL, setDensityKgPerL] = useState('');
+  const [compositionRows, setCompositionRows] = useState<CompositionRow[]>([
+    createCompositionRow(),
+  ]);
+  const [compositionSource, setCompositionSource] = useState<'manual' | 'preset'>('manual');
+  const [selectedCatalogueId, setSelectedCatalogueId] = useState('');
+  const [catalogueSearchQuery, setCatalogueSearchQuery] = useState('');
 
   const currency = useCurrency();
   const isEditing = !!editingItem;
@@ -88,6 +148,20 @@ export default function WarehouseItemForm({
   // Track previous state to prevent unnecessary updates
   const prevVisibleRef = useRef(isVisible);
   const prevEditingItemIdRef = useRef(editingItem?.id);
+  const filteredCatalogueItems = useMemo(() => {
+    const query = catalogueSearchQuery.trim().toLowerCase();
+    if (!query) return WAREHOUSE_PRESETS;
+    return WAREHOUSE_PRESETS.filter((preset) =>
+      `${preset.label} ${preset.name} ${preset.manufacturer}`.toLowerCase().includes(query),
+    );
+  }, [catalogueSearchQuery]);
+  const visibleCatalogueItems = useMemo(() => {
+    if (!selectedCatalogueId) return filteredCatalogueItems;
+    if (filteredCatalogueItems.some((preset) => preset.id === selectedCatalogueId))
+      return filteredCatalogueItems;
+    const selected = WAREHOUSE_PRESETS.find((preset) => preset.id === selectedCatalogueId);
+    return selected ? [selected, ...filteredCatalogueItems] : filteredCatalogueItems;
+  }, [filteredCatalogueItems, selectedCatalogueId]);
 
   const resetForm = () => {
     setName('');
@@ -97,10 +171,50 @@ export default function WarehouseItemForm({
     setUnitPrice('');
     setReorderQuantity('');
     setNotes('');
+    setManufacturer('');
+    setDensityKgPerL('');
+    setCompositionRows([createCompositionRow()]);
+    setCompositionSource('manual');
+    setSelectedCatalogueId('');
+    setCatalogueSearchQuery('');
   };
 
   const handleReset = () => {
     resetForm();
+  };
+
+  const applyPreset = (preset: WarehouseNutrientPreset) => {
+    setName(preset.name);
+    setType(preset.type);
+    setUnit(preset.unit);
+    setManufacturer(preset.manufacturer);
+    setCompositionRows(preset.composition.map((item) => createCompositionRow(item)));
+    setCompositionSource('preset');
+    setSelectedCatalogueId(preset.id);
+  };
+
+  const updateCompositionRow = (id: string, updates: Partial<CompositionRow>) => {
+    setCompositionRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...updates } : row)));
+    setCompositionSource('manual');
+    setSelectedCatalogueId('');
+  };
+
+  const addCompositionRow = () => {
+    if (compositionRows.length >= 12) return;
+    setCompositionRows((prev) => [...prev, createCompositionRow()]);
+    setSelectedCatalogueId('');
+  };
+
+  const removeCompositionRow = (id: string) => {
+    setCompositionRows((prev) => {
+      const next = prev.filter((row) => row.id !== id);
+      return next.length > 0 ? next : [createCompositionRow()];
+    });
+    setCompositionSource('manual');
+    setSelectedCatalogueId('');
+  };
+  const handleTypeSelect = (nextType: WarehouseItemType) => {
+    setType(nextType);
   };
 
   // Reset form when modal opens/closes or editing item changes
@@ -120,6 +234,22 @@ export default function WarehouseItemForm({
           setUnitPrice(editingItem.unit_price.toString());
           setReorderQuantity(editingItem.reorder_quantity?.toString() || '');
           setNotes(editingItem.notes || '');
+          setManufacturer(editingItem.manufacturer || '');
+          setDensityKgPerL(
+            editingItem.density_kg_per_l ? String(editingItem.density_kg_per_l) : '',
+          );
+          const existingComposition = editingItem.composition ?? [];
+          setCompositionRows(
+            existingComposition.length > 0
+              ? existingComposition.map((entry) => createCompositionRow(entry))
+              : [createCompositionRow()],
+          );
+          setCompositionSource(editingItem.composition_source === 'preset' ? 'preset' : 'manual');
+          const matchedPreset = WAREHOUSE_PRESETS.find(
+            (preset) => preset.name === editingItem.name,
+          );
+          setSelectedCatalogueId(matchedPreset?.id ?? '');
+          setCatalogueSearchQuery('');
         } else {
           resetForm();
         }
@@ -147,6 +277,21 @@ export default function WarehouseItemForm({
       return;
     }
 
+    const composition = parseComposition(compositionRows);
+    if (type === 'fertilizer' && composition.length === 0) {
+      Alert.alert(
+        i18n.t('common.error'),
+        'Add at least one valid nutrient composition row for fertilizer.',
+      );
+      return;
+    }
+
+    const densityValue = Number(densityKgPerL);
+    const parsedDensity =
+      densityKgPerL.trim().length > 0 && Number.isFinite(densityValue) && densityValue > 0
+        ? densityValue
+        : null;
+
     const itemData = {
       name: name.trim(),
       type,
@@ -155,6 +300,11 @@ export default function WarehouseItemForm({
       unit_price: unitPriceValue,
       reorder_quantity: reorderQuantity ? parseFloat(reorderQuantity) : null,
       notes: notes.trim() || null,
+      manufacturer: manufacturer.trim() || null,
+      density_kg_per_l: parsedDensity,
+      composition,
+      composition_source: compositionSource,
+      composition_updated_at: new Date().toISOString(),
     };
 
     try {
@@ -167,12 +317,27 @@ export default function WarehouseItemForm({
         await createMutation.mutateAsync(itemData);
       }
       onClose();
-    } catch (_error) {
-      Alert.alert(i18n.t('common.error'), i18n.t('common.errors.failedToSaveItem'));
+    } catch (error) {
+      const details =
+        typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message?: unknown }).message ?? '')
+          : '';
+      const needsMigration =
+        details.includes('column') ||
+        details.includes('composition') ||
+        details.includes('schema cache');
+      Alert.alert(
+        i18n.t('common.error'),
+        needsMigration
+          ? `${i18n.t('common.errors.failedToSaveItem')}\n\nDB schema may be missing nutrient columns. Please run the SQL in docs/sql/2026-02-11-nutrient-composition-tracking.sql.\n\n${details}`
+          : i18n.t('common.errors.failedToSaveItem'),
+      );
     }
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
+  const validComposition = parseComposition(compositionRows);
+  const compositionRequiredSatisfied = type === 'spray' || validComposition.length > 0;
   const isValid =
     name.trim() &&
     quantity &&
@@ -180,7 +345,8 @@ export default function WarehouseItemForm({
     Number(quantity) > 0 &&
     unitPrice &&
     Number.isFinite(Number(unitPrice)) &&
-    Number(unitPrice) > 0;
+    Number(unitPrice) > 0 &&
+    compositionRequiredSatisfied;
 
   const totalValue =
     quantity && unitPrice ? (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2) : '0.00';
@@ -198,6 +364,65 @@ export default function WarehouseItemForm({
       onReset={handleReset}
       presentation={presentation}
     >
+      <SectionHeader
+        title="Catalogue"
+        subtitle="Optional. Search and select if available, or continue with manual item entry."
+        style={{ marginBottom: 12 }}
+      />
+      <FormInput
+        label="Search Catalogue (Optional)"
+        value={catalogueSearchQuery}
+        onChangeText={setCatalogueSearchQuery}
+        placeholder="Search by product, grade, or manufacturer"
+        style={{ marginBottom: 10 }}
+      />
+      <View
+        style={{
+          borderWidth: 1,
+          borderColor: colorWithOpacity(m3.colorScheme.outline, 0.35),
+          borderRadius: 12,
+          overflow: 'hidden',
+          marginBottom: 8,
+          backgroundColor: colorWithOpacity(m3.colorScheme.surfaceVariant, 0.32),
+        }}
+      >
+        <Picker
+          selectedValue={selectedCatalogueId}
+          onValueChange={(value) => {
+            const catalogueId = String(value);
+            if (!catalogueId) {
+              setSelectedCatalogueId('');
+              setCompositionSource('manual');
+              return;
+            }
+            const preset = WAREHOUSE_PRESETS.find((item) => item.id === catalogueId);
+            if (preset) applyPreset(preset);
+          }}
+        >
+          <Picker.Item label="Select from catalogue (or skip)" value="" />
+          {visibleCatalogueItems.map((preset) => (
+            <Picker.Item
+              key={preset.id}
+              label={`${preset.label} - ${preset.manufacturer}`}
+              value={preset.id}
+            />
+          ))}
+          {visibleCatalogueItems.length === 0 ? (
+            <Picker.Item label="No catalogue matches" value="" />
+          ) : null}
+        </Picker>
+      </View>
+      <Text
+        style={{
+          marginBottom: 18,
+          color: m3.colorScheme.onSurfaceVariant,
+          fontSize: 12,
+        }}
+      >
+        Product not listed in catalogue? Leave it unselected and enter item details + composition
+        manually.
+      </Text>
+
       {/* Item Details */}
       <SectionHeader title="Item Details" style={{ marginBottom: 16 }} />
 
@@ -207,16 +432,85 @@ export default function WarehouseItemForm({
         onChangeText={setName}
         placeholder="e.g., NPK 19:19:19"
         required
-        autoFocus
         style={{ marginBottom: 12 }}
       />
 
       <PillSelector
         options={ITEM_TYPES}
         selectedValue={type}
-        onSelect={(value) => setType(value as WarehouseItemType)}
+        onSelect={(value) => handleTypeSelect(value as WarehouseItemType)}
         style={{ marginBottom: 20 }}
       />
+
+      <FormInput
+        label="Manufacturer (Optional)"
+        value={manufacturer}
+        onChangeText={setManufacturer}
+        placeholder="e.g., Mahadhan / Vanita Agro"
+        style={{ marginBottom: 12 }}
+      />
+
+      <FormInput
+        label="Density (kg/L, Optional)"
+        value={densityKgPerL}
+        onChangeText={setDensityKgPerL}
+        placeholder="Defaults to 1.00"
+        keyboardType="decimal-pad"
+        style={{ marginBottom: 16 }}
+      />
+
+      {/* Composition */}
+      <SectionHeader
+        title="Nutrient Composition"
+        subtitle={
+          type === 'fertilizer'
+            ? 'Required for fertilizers. Enter guaranteed nutrient percentages.'
+            : 'Optional for sprays (required only if nutrient-bearing).'
+        }
+        style={{ marginBottom: 12 }}
+      />
+
+      {compositionRows.map((row, index) => (
+        <View key={row.id} style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+          <View style={{ flex: 1.1 }}>
+            <FormInput
+              label={index === 0 ? 'Nutrient' : 'Nutrient'}
+              value={row.nutrient_code}
+              onChangeText={(nutrient_code) => updateCompositionRow(row.id, { nutrient_code })}
+              placeholder="N, P2O5, K2O, Ca..."
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <FormInput
+              label={index === 0 ? 'Percent (%)' : 'Percent (%)'}
+              value={row.percent}
+              onChangeText={(percent) => updateCompositionRow(row.id, { percent })}
+              placeholder="0 - 100"
+              keyboardType="decimal-pad"
+            />
+          </View>
+          <Pressable
+            onPress={() => removeCompositionRow(row.id)}
+            style={{ alignSelf: 'center', paddingHorizontal: 10, paddingVertical: 10 }}
+          >
+            <Text style={{ color: m3.colorScheme.error, fontWeight: '700' }}>Remove</Text>
+          </Pressable>
+        </View>
+      ))}
+
+      <Pressable
+        onPress={addCompositionRow}
+        style={{
+          alignSelf: 'flex-start',
+          marginBottom: 20,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 999,
+          backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.14),
+        }}
+      >
+        <Text style={{ color: m3.colorScheme.tertiary, fontWeight: '600' }}>+ Add Nutrient</Text>
+      </Pressable>
 
       {/* Quantity & Unit */}
       <SectionHeader title="Quantity & Unit" style={{ marginBottom: 16 }} />
@@ -282,6 +576,10 @@ export default function WarehouseItemForm({
             {
               label: `${quantity} ${unit} × ${currency === 'INR' ? '₹' : '$'}${unitPrice}`,
               value: formatCurrency(parseFloat(totalValue), currency),
+            },
+            {
+              label: 'Valid nutrient lines',
+              value: String(validComposition.length),
             },
           ]}
           backgroundColor={colorWithOpacity(colors.success, 0.12)}

@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatDate, formatNumber } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
 import { useM3 } from '@/styles/use-theme';
+import { getExpenseIconName } from '@/utils/expense-icons';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -110,6 +111,10 @@ export function ActivityLogCard({
   const hasActions = Boolean(onEdit || onDelete);
   const isInteractive = Boolean(onPress) && !hasActions;
   const logType = getLogType(type);
+  const iconName =
+    type === 'expense'
+      ? getExpenseIconName((data as ExpenseRecord | undefined)?.type, logType.icon)
+      : logType.icon;
   const parsedDate = fromSupabaseDateString(date);
   const displayDescription = description || getDescriptionFromData(type, t, data, currency);
   const displayDate = parsedDate
@@ -182,7 +187,7 @@ export function ActivityLogCard({
         {({ pressed }) => (
           <View style={containerStyle}>
             <View style={iconContainerStyle}>
-              <UiSymbol name={logType.icon} size={18} color={logType.color} />
+              <UiSymbol name={iconName} size={18} color={logType.color} />
             </View>
 
             <View style={contentContainerStyle}>
@@ -228,7 +233,7 @@ export function ActivityLogCard({
     return (
       <View style={containerStyle}>
         <View style={iconContainerStyle}>
-          <UiSymbol name={logType.icon} size={18} color={logType.color} />
+          <UiSymbol name={iconName} size={18} color={logType.color} />
         </View>
         <View style={contentContainerStyle}>
           <Text style={descriptionTextStyle} numberOfLines={1}>
@@ -297,7 +302,7 @@ export function ActivityLogCard({
   return (
     <View style={containerStyle}>
       <View style={iconContainerStyle}>
-        <UiSymbol name={logType.icon} size={18} color={logType.color} />
+        <UiSymbol name={iconName} size={18} color={logType.color} />
       </View>
       <View style={contentContainerStyle}>
         <Text style={descriptionTextStyle} numberOfLines={1}>

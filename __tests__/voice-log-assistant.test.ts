@@ -293,6 +293,68 @@ describe('voice-log-assistant', () => {
     expect(result.draft.spray.chemicals).toHaveLength(1);
   });
 
+  it('defaults Marathi "काल" to yesterday when deterministic date parsing is used', () => {
+    const draft: VoiceLogDraft = {
+      type: 'irrigation',
+      farmId: 1,
+      farmName: 'Sunset Farm',
+      date: '2026-02-10',
+      irrigation: { durationHours: null },
+      spray: { waterVolume: null, chemicals: [] },
+      harvest: { quantity: null, grade: null, price: null, buyer: null },
+      expense: { cost: null, expenseType: null, remarks: null },
+      fertigation: { waterVolume: null, fertilizers: [] },
+    };
+
+    const result = resolveVoiceLogTurn({
+      transcript: 'काल 2 तास सिंचन',
+      farms: FARMS,
+      contextFarm: FARMS[0],
+      originContext: 'farm',
+      activeDraft: draft,
+      llmExtraction: emptyExtraction({
+        intent: 'log_activity',
+        activityType: 'irrigation',
+        dateRelative: null,
+      }),
+    });
+
+    expect(result.kind).toBe('ready');
+    if (result.kind !== 'ready') return;
+    expect(result.draft.date).toBe('2026-02-09');
+  });
+
+  it('does not treat Marathi words containing "काल" as yesterday', () => {
+    const draft: VoiceLogDraft = {
+      type: 'irrigation',
+      farmId: 1,
+      farmName: 'Sunset Farm',
+      date: '2026-02-10',
+      irrigation: { durationHours: null },
+      spray: { waterVolume: null, chemicals: [] },
+      harvest: { quantity: null, grade: null, price: null, buyer: null },
+      expense: { cost: null, expenseType: null, remarks: null },
+      fertigation: { waterVolume: null, fertilizers: [] },
+    };
+
+    const result = resolveVoiceLogTurn({
+      transcript: 'कालावधी 2 तास सिंचन',
+      farms: FARMS,
+      contextFarm: FARMS[0],
+      originContext: 'farm',
+      activeDraft: draft,
+      llmExtraction: emptyExtraction({
+        intent: 'log_activity',
+        activityType: 'irrigation',
+        dateRelative: null,
+      }),
+    });
+
+    expect(result.kind).toBe('ready');
+    if (result.kind !== 'ready') return;
+    expect(result.draft.date).toBe('2026-02-10');
+  });
+
   it('returns harvest grade as missing when only quantity is provided', () => {
     const llmExtraction = emptyExtraction({
       intent: 'log_activity',

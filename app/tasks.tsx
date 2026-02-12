@@ -23,6 +23,7 @@ import { telemetry } from '@/services/telemetry';
 import { TaskRow } from '@/components/cards';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
 
@@ -149,6 +150,36 @@ export default function TasksScreen() {
         },
       ],
     );
+  };
+
+  const handleLogFromTask = (task: TaskReminder) => {
+    if (!task.id || (task.type !== 'spray' && task.type !== 'fertigation')) return;
+    const planned =
+      task.planned_inputs && task.planned_inputs.length > 0
+        ? task.planned_inputs
+        : decodeTaskPlanFromDescription(task.description);
+    setAddEntry({
+      tabs: ['log'],
+      initialTab: 'log',
+      initialFarmId: task.farm_id,
+      initialLogType: task.type,
+      sourceTaskId: task.id,
+      logPrefill:
+        task.type === 'spray'
+          ? { sprayChemicals: planned }
+          : {
+              fertigationItems: planned,
+            },
+    });
+    router.push({
+      pathname: '/add-entry',
+      params: {
+        tabs: 'log',
+        initialTab: 'log',
+        farmId: String(task.farm_id),
+        initialLogType: task.type,
+      },
+    });
   };
 
   if (isLoading) {
@@ -373,6 +404,7 @@ export default function TasksScreen() {
                 showFarmName
                 farmName={getFarmName(task.farm_id)}
                 onComplete={(item) => handleComplete(item)}
+                onLogFromTask={(item) => handleLogFromTask(item)}
                 onEdit={(item) => {
                   setAddEntry({
                     tabs: ['task'],
