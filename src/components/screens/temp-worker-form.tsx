@@ -334,7 +334,7 @@ export function TempWorkerForm({
               <Pressable
                 onPress={() => setShowDatePicker(false)}
                 accessibilityRole="button"
-                accessibilityLabel="Close date picker"
+                accessibilityLabel={t('common.a11y.closeDatePicker')}
                 accessible={true}
               >
                 <IconSymbol name="xmark.circle.fill" size={24} color={colors.surface[500]} />

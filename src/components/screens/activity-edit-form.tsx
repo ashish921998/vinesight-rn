@@ -490,7 +490,7 @@ export function ActivityEditForm({
       setIsInitialized(false);
       onClose();
     } catch (error) {
-      console.error('Error updating log:', error);
+      if (__DEV__) console.error('Error updating log:', error);
       Alert.alert(t('common.error'), t('common.errors.failedToUpdateLog'));
     } finally {
       setIsSubmitting(false);

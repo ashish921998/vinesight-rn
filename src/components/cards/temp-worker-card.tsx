@@ -9,8 +9,7 @@ import { useCurrency } from '@/hooks/use-currency';
 import { useM3 } from '@/styles/use-theme';
 import { parseDbDateToLocalDate } from '@/utils/date';
 import type { TemporaryWorkerEntry } from '@/types';
-
-const WARM_ORANGE = '#E67E22';
+import { colors } from '@/styles/theme';
 
 interface TempWorkerCardProps {
   entry: TemporaryWorkerEntry;
@@ -49,7 +48,7 @@ export function TempWorkerCard({ entry, onDelete }: TempWorkerCardProps) {
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing[3],
-    backgroundColor: colorWithOpacity(WARM_ORANGE, 0.14),
+    backgroundColor: colorWithOpacity(colors.warning, 0.14),
   };
 
   const contentContainerStyle: ViewStyle = {
@@ -82,7 +81,7 @@ export function TempWorkerCard({ entry, onDelete }: TempWorkerCardProps) {
   return (
     <View style={containerStyle}>
       <View style={iconContainerStyle}>
-        <UiSymbol name="person.badge.clock" size={18} color={WARM_ORANGE} />
+        <UiSymbol name="person.badge.clock" size={18} color={colors.warning} />
       </View>
       <View style={contentContainerStyle}>
         <Text style={nameTextStyle} numberOfLines={1}>

@@ -847,7 +847,7 @@ export function EntryForm({
 
       onClose();
     } catch (error) {
-      console.error('Error saving logs:', error);
+      if (__DEV__) console.error('Error saving logs:', error);
       Alert.alert(t('common.error'), t('common.errors.failedToSaveLogs'));
     } finally {
       setIsSubmittingLogs(false);

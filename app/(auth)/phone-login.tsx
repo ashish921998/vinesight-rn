@@ -238,7 +238,7 @@ export default function PhoneLoginScreen() {
   // Modal styles
   const modalOverlayStyle: ViewStyle = {
     flex: 1,
-    backgroundColor: colorWithOpacity('#000000', 0.5),
+    backgroundColor: colorWithOpacity(m3.colorScheme.scrim, 0.5),
     justifyContent: 'flex-end',
   };
 

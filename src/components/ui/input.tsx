@@ -12,6 +12,7 @@ import { Symbol } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
+import { useTranslation } from 'react-i18next';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -37,6 +38,7 @@ export function Input({
   ...props
 }: InputProps) {
   const m3 = useM3();
+  const { t } = useTranslation();
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -132,7 +134,7 @@ export function Input({
             onPress={() => setShowPassword(!showPassword)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+            accessibilityLabel={showPassword ? t('common.a11y.hidePassword') : t('common.a11y.showPassword')}
           >
             <Symbol
               name={showPassword ? 'eye.slash' : 'eye'}
@@ -148,7 +150,7 @@ export function Input({
             disabled={!onRightIconPress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Input action"
+            accessibilityLabel={t('common.a11y.inputAction')}
           >
             <Symbol
               name={rightIcon}

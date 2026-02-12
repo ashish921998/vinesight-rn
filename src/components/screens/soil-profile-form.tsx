@@ -105,7 +105,7 @@ export default function SoilProfileForm({
       resetForm();
       onClose();
     } catch (error) {
-      console.error('Error creating soil profile:', error);
+      if (__DEV__) console.error('Error creating soil profile:', error);
       Alert.alert(t('common.error'), t('common.errors.failedToSaveSoilProfile'));
     }
   };

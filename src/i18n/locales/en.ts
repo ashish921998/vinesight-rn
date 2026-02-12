@@ -54,6 +54,10 @@ export const en = {
     a11y: {
       editWithName: 'Edit {{name}}',
       deleteWithName: 'Delete {{name}}',
+      closeDatePicker: 'Close date picker',
+      showPassword: 'Show password',
+      hidePassword: 'Hide password',
+      inputAction: 'Input action',
     },
     actions: {
       takePhoto: 'Take photo',
@@ -1883,6 +1887,10 @@ export const en = {
   },
 
   attendance: {
+    tabs: {
+      mark: 'Mark',
+      calendar: 'Calendar',
+    },
     filters: {
       label: 'Filters',
       worker: 'Worker',

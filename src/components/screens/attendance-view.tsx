@@ -6,6 +6,7 @@ import type { Worker } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useTranslation } from 'react-i18next';
 import { MarkAttendanceTab, CalendarAttendanceTab } from './attendance-subcomponents';
 
 interface AttendanceViewProps {
@@ -16,6 +17,7 @@ interface AttendanceViewProps {
 type AttendanceTab = 'mark' | 'calendar';
 
 export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) {
+  const { t } = useTranslation();
   const { data: farms } = useFarms();
   const colors = useThemeColors();
   const m3 = useM3();
@@ -102,7 +104,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
             <Pressable
               onPress={() => setActiveTab('mark')}
               accessibilityRole="button"
-              accessibilityLabel="Mark tab"
+              accessibilityLabel={t('attendance.tabs.mark')}
               accessibilityState={{ selected: activeTab === 'mark' }}
               style={({ pressed }) => ({
                 flex: 1,
@@ -128,13 +130,13 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                   color: activeTab === 'mark' ? UI.primary : UI.muted,
                 }}
               >
-                Mark
+                {t('attendance.tabs.mark')}
               </Text>
             </Pressable>
             <Pressable
               onPress={() => setActiveTab('calendar')}
               accessibilityRole="button"
-              accessibilityLabel="Calendar tab"
+              accessibilityLabel={t('attendance.tabs.calendar')}
               accessibilityState={{ selected: activeTab === 'calendar' }}
               style={({ pressed }) => ({
                 flex: 1,
@@ -160,7 +162,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
                   color: activeTab === 'calendar' ? UI.primary : UI.muted,
                 }}
               >
-                Calendar
+                {t('attendance.tabs.calendar')}
               </Text>
             </Pressable>
           </View>

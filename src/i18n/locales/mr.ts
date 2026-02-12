@@ -54,6 +54,10 @@ export const mr = {
     a11y: {
       editWithName: '{{name}} संपादित करा',
       deleteWithName: '{{name}} हटवा',
+      closeDatePicker: 'तारीख निवडक बंद करा',
+      showPassword: 'पासवर्ड दाखवा',
+      hidePassword: 'पासवर्ड लपवा',
+      inputAction: 'इनपुट क्रिया',
     },
     actions: {
       takePhoto: 'फोटो काढा',
@@ -1895,6 +1899,10 @@ export const mr = {
   },
 
   attendance: {
+    tabs: {
+      mark: 'नोंदवा',
+      calendar: 'कॅलेंडर',
+    },
     filters: {
       label: 'फिल्टर',
       worker: '$t(glossary.worker)',

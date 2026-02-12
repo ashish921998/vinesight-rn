@@ -54,6 +54,10 @@ export const hi = {
     a11y: {
       editWithName: '{{name}} संपादित करें',
       deleteWithName: '{{name}} हटाएं',
+      closeDatePicker: 'तारीख चयनकर्ता बंद करें',
+      showPassword: 'पासवर्ड दिखाएं',
+      hidePassword: 'पासवर्ड छुपाएं',
+      inputAction: 'इनपुट क्रिया',
     },
     actions: {
       takePhoto: 'फोटो लें',
@@ -1888,6 +1892,10 @@ export const hi = {
   },
 
   attendance: {
+    tabs: {
+      mark: 'चिह्नित करें',
+      calendar: 'कैलेंडर',
+    },
     filters: {
       label: 'फ़िल्टर',
       worker: 'श्रमिक',
