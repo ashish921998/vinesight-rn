@@ -62,8 +62,15 @@ export default function PhoneLoginScreen() {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
 
-  const { isLoading, errorMessage, pendingOTPPhone, isAuthenticated, signInWithPhone, clearError } =
-    useAuthStore();
+  const {
+    isLoading,
+    errorMessage,
+    pendingOTPPhone,
+    isAuthenticated,
+    needsProfileCompletion,
+    signInWithPhone,
+    clearError,
+  } = useAuthStore();
 
   useEffect(() => {
     if (pendingOTPPhone) {
@@ -75,10 +82,10 @@ export default function PhoneLoginScreen() {
   }, [pendingOTPPhone, phoneAuthMode]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !needsProfileCompletion) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, needsProfileCompletion]);
 
   const handleSendCode = async () => {
     if (!phoneNumber) return;
