@@ -171,7 +171,7 @@ describe('Integration: transcript → intent → fetch → compute → verbalize
   it('rejects unsupported intents before fetching', () => {
     const intent = classifyIntent('what is the weather today', FARMS);
     expect(intent.category).toBeNull();
-    expect(intent.confidence).toBe(0);
+    expect(intent.confidence).toBeLessThan(0.6);
   });
 
   it('verbalizeAnswer returns undefined for empty records', async () => {

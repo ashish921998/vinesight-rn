@@ -1,9 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   View,
   Text,
   ScrollView,
   Pressable,
+  FlatList,
   Alert,
   TextInput,
   Switch,
@@ -11,6 +13,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -40,7 +43,44 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getDefaultCurrency } from '@/i18n/currency';
 
+interface Country {
+  name: string;
+  code: string;
+  dialCode: string;
+}
+
+const COUNTRIES: Country[] = [
+  { name: 'India', code: 'IN', dialCode: '+91' },
+  { name: 'United States', code: 'US', dialCode: '+1' },
+  { name: 'United Kingdom', code: 'GB', dialCode: '+44' },
+  { name: 'Australia', code: 'AU', dialCode: '+61' },
+  { name: 'Canada', code: 'CA', dialCode: '+1' },
+  { name: 'Germany', code: 'DE', dialCode: '+49' },
+  { name: 'France', code: 'FR', dialCode: '+33' },
+  { name: 'Brazil', code: 'BR', dialCode: '+55' },
+  { name: 'Japan', code: 'JP', dialCode: '+81' },
+  { name: 'South Africa', code: 'ZA', dialCode: '+27' },
+  { name: 'New Zealand', code: 'NZ', dialCode: '+64' },
+  { name: 'Mexico', code: 'MX', dialCode: '+52' },
+  { name: 'Italy', code: 'IT', dialCode: '+39' },
+  { name: 'Spain', code: 'ES', dialCode: '+34' },
+  { name: 'Netherlands', code: 'NL', dialCode: '+31' },
+  { name: 'UAE', code: 'AE', dialCode: '+971' },
+  { name: 'China', code: 'CN', dialCode: '+86' },
+  { name: 'Russia', code: 'RU', dialCode: '+7' },
+  { name: 'Nigeria', code: 'NG', dialCode: '+234' },
+  { name: 'Kenya', code: 'KE', dialCode: '+254' },
+];
+
+const DEFAULT_COUNTRY = COUNTRIES[0];
+
+type LinkPhoneParams = {
+  linkPhone?: string;
+};
+
 export default function SettingsScreen() {
+  const router = useRouter();
+  const { linkPhone } = useLocalSearchParams<LinkPhoneParams>();
   const colors = useThemeColors();
   const m3 = useM3();
   const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
@@ -51,6 +91,13 @@ export default function SettingsScreen() {
     signOut,
     deleteAccount,
     updateUserAreaUnit,
+    linkPhoneNumber,
+    verifyPhoneLinking,
+    cancelPhoneLinking,
+    phoneLinkingPending,
+    phoneLinkingNumber,
+    clearError,
+    errorMessage: authErrorMessage,
     isLoading: authLoading,
   } = useAuthStore();
 
@@ -82,10 +129,10 @@ export default function SettingsScreen() {
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [showAreaPicker, setShowAreaPicker] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [showLinkPhoneModal, setShowLinkPhoneModal] = useState(false);
 
   // Edit profile form state
   const [editName, setEditName] = useState('');
-  const [editPhone, setEditPhone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   // Delete account form state
@@ -94,6 +141,11 @@ export default function SettingsScreen() {
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [linkPhoneInput, setLinkPhoneInput] = useState('');
+  const [linkPhoneCode, setLinkPhoneCode] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
 
   // Local preferences state
   const [selectedCurrency, setSelectedCurrency] = useState(getDefaultCurrency());
@@ -103,7 +155,6 @@ export default function SettingsScreen() {
   useEffect(() => {
     if (profile) {
       setEditName(profile.full_name || '');
-      setEditPhone(profile.phone || '');
       setSelectedCurrency(currency);
       // Area unit from user metadata
     }
@@ -115,6 +166,88 @@ export default function SettingsScreen() {
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'User';
   const userEmail = profile?.email || user?.email || '';
   const userPhone = profile?.phone || '';
+  const linkedAuthPhone = user?.phone || null;
+  const hasSavedPhoneToVerify = Boolean(userPhone) && !linkedAuthPhone;
+  const isLinkPhoneModalVisible = showLinkPhoneModal || phoneLinkingPending;
+  const phoneActionTitle = linkedAuthPhone
+    ? t('settings.linkPhone.changePhone')
+    : hasSavedPhoneToVerify
+      ? t('settings.linkPhone.verifyTitle')
+      : t('settings.linkPhone.title');
+  const phoneActionValue = linkedAuthPhone ?? (hasSavedPhoneToVerify ? userPhone : null);
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch.trim()) return COUNTRIES;
+    const query = countrySearch.toLowerCase();
+    return COUNTRIES.filter(
+      (country) =>
+        country.name.toLowerCase().includes(query) ||
+        country.code.toLowerCase().includes(query) ||
+        country.dialCode.includes(query),
+    );
+  }, [countrySearch]);
+
+  const setPhoneFormFromValue = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setSelectedCountry(DEFAULT_COUNTRY);
+      setLinkPhoneInput('');
+      return;
+    }
+
+    if (trimmed.startsWith('+')) {
+      const matched = [...COUNTRIES]
+        .sort((a, b) => b.dialCode.length - a.dialCode.length)
+        .find((country) => trimmed.startsWith(country.dialCode));
+
+      if (matched) {
+        setSelectedCountry(matched);
+        setLinkPhoneInput(trimmed.slice(matched.dialCode.length));
+        return;
+      }
+    }
+
+    setLinkPhoneInput(trimmed);
+  };
+
+  const buildE164PhoneNumber = () => {
+    const raw = linkPhoneInput.trim();
+    if (!raw) return '';
+    if (raw.startsWith('+')) return raw;
+    const digitsOnly = raw.replace(/[^\d]/g, '');
+    const normalizedLocalNumber = digitsOnly.replace(/^0+/, '');
+    if (!normalizedLocalNumber) return '';
+    return `${selectedCountry.dialCode}${normalizedLocalNumber}`;
+  };
+
+  useEffect(() => {
+    if (linkPhone !== '1') return;
+
+    clearError();
+    setLinkPhoneCode('');
+    const trimmedValue = (linkedAuthPhone ?? userPhone ?? '').trim();
+    if (!trimmedValue) {
+      setSelectedCountry(DEFAULT_COUNTRY);
+      setLinkPhoneInput('');
+    } else if (trimmedValue.startsWith('+')) {
+      const matched = [...COUNTRIES]
+        .sort((a, b) => b.dialCode.length - a.dialCode.length)
+        .find((country) => trimmedValue.startsWith(country.dialCode));
+      if (matched) {
+        setSelectedCountry(matched);
+        setLinkPhoneInput(trimmedValue.slice(matched.dialCode.length));
+      } else {
+        setLinkPhoneInput(trimmedValue);
+      }
+    } else {
+      setLinkPhoneInput(trimmedValue);
+    }
+    setShowLinkPhoneModal(true);
+  }, [linkPhone, clearError, linkedAuthPhone, userPhone]);
+
+  useEffect(() => {
+    if (!phoneLinkingPending) return;
+    setShowLinkPhoneModal(true);
+  }, [phoneLinkingPending]);
 
   const handleSignOut = () => {
     Alert.alert(t('settings.signOutConfirmTitle'), t('settings.signOutConfirmBody'), [
@@ -197,6 +330,73 @@ export default function SettingsScreen() {
     setShowDeleteAccount(true);
   };
 
+  const handleOpenLinkPhone = () => {
+    router.setParams({ linkPhone: '1' });
+    clearError();
+    setLinkPhoneCode('');
+    setCountrySearch('');
+    setPhoneFormFromValue(linkedAuthPhone ?? userPhone ?? '');
+    setShowLinkPhoneModal(true);
+  };
+
+  const handleCloseLinkPhone = () => {
+    clearError();
+    cancelPhoneLinking();
+    setShowCountryPicker(false);
+    setCountrySearch('');
+    setLinkPhoneCode('');
+    setShowLinkPhoneModal(false);
+    router.setParams({ linkPhone: undefined });
+  };
+
+  const handleLinkPhoneSuccessClose = () => {
+    clearError();
+    setShowCountryPicker(false);
+    setCountrySearch('');
+    setLinkPhoneCode('');
+    setShowLinkPhoneModal(false);
+    router.setParams({ linkPhone: undefined });
+  };
+
+  const handleSendPhoneLinkCode = async () => {
+    const phone = buildE164PhoneNumber();
+    if (!phone) return;
+    clearError();
+    await linkPhoneNumber(phone);
+  };
+
+  const handleVerifyPhoneLinkCode = async () => {
+    const code = linkPhoneCode.trim();
+    const formattedPhone = buildE164PhoneNumber();
+    const pendingPhone = phoneLinkingNumber ?? formattedPhone;
+    if (!pendingPhone || code.length !== 6) return;
+
+    clearError();
+    await verifyPhoneLinking(pendingPhone, code);
+
+    const { errorMessage, phoneLinkingPending: stillPending } = useAuthStore.getState();
+    if (!errorMessage && !stillPending) {
+      handleLinkPhoneSuccessClose();
+      setLinkPhoneCode('');
+      setLinkPhoneInput('');
+      refetchProfile();
+      Alert.alert(t('settings.linkPhone.success'));
+    }
+  };
+
+  const handleResendPhoneLinkCode = async () => {
+    const pendingPhone = phoneLinkingNumber ?? buildE164PhoneNumber();
+    if (!pendingPhone) return;
+    clearError();
+    await linkPhoneNumber(pendingPhone);
+  };
+
+  const handleSelectCountry = (country: Country) => {
+    setSelectedCountry(country);
+    setShowCountryPicker(false);
+    setCountrySearch('');
+  };
+
   const handleConfirmDeleteAccount = async () => {
     if (deleteEmail !== userEmail) {
       Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.emailMismatch'));
@@ -250,7 +450,6 @@ export default function SettingsScreen() {
     try {
       await updateProfile.mutateAsync({
         full_name: editName.trim() || undefined,
-        phone: editPhone.trim() || undefined,
         currency_preference: selectedCurrency,
       });
       setShowEditProfile(false);
@@ -467,7 +666,34 @@ export default function SettingsScreen() {
           {t('settings.sectionAccount')}
         </Text>
         <View style={styles.sectionContent}>
-          <Pressable onPress={handleSignOut} disabled={authLoading} style={styles.settingsItem}>
+          <Pressable
+            onPress={handleOpenLinkPhone}
+            style={[styles.settingsItem, styles.borderBottom]}
+          >
+            <View style={styles.settingsIcon}>
+              <UISymbol name="phone.fill" size={20} color={m3.colorScheme.primary} />
+            </View>
+            <Text
+              style={styles.settingsTitle}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {phoneActionTitle}
+            </Text>
+            <Text
+              style={styles.settingsValue}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {phoneActionValue ?? t('settings.linkPhone.sendCode')}
+            </Text>
+            <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
+          </Pressable>
+          <Pressable
+            onPress={handleSignOut}
+            disabled={authLoading}
+            style={[styles.settingsItem, styles.borderBottom]}
+          >
             <View style={styles.signOutIcon}>
               <UISymbol name="rectangle.portrait.and.arrow.right" size={20} color={colors.error} />
             </View>
@@ -598,14 +824,43 @@ export default function SettingsScreen() {
                 >
                   {t('settings.phone')}
                 </Text>
-                <TextInput
-                  value={editPhone}
-                  onChangeText={setEditPhone}
-                  placeholder={t('settings.enterPhone')}
-                  placeholderTextColor={colors.gray[400]}
-                  keyboardType="phone-pad"
-                  style={styles.input}
-                />
+                <View style={styles.inputDisabled}>
+                  <Text
+                    style={styles.inputDisabledText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {linkedAuthPhone ?? t('settings.linkPhone.notLinked')}
+                  </Text>
+                </View>
+                <Text
+                  style={styles.inputHint}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {linkedAuthPhone
+                    ? t('settings.linkPhone.verified')
+                    : t('settings.linkPhone.verificationRequired')}
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setShowEditProfile(false);
+                    handleOpenLinkPhone();
+                  }}
+                  style={styles.verifyPhoneCta}
+                >
+                  <Text
+                    style={styles.verifyPhoneCtaText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {linkedAuthPhone
+                      ? t('settings.linkPhone.changePhone')
+                      : hasSavedPhoneToVerify
+                        ? t('settings.linkPhone.verifyTitle')
+                        : t('settings.linkPhone.title')}
+                  </Text>
+                </Pressable>
               </View>
             </View>
           </ScrollView>
@@ -630,6 +885,260 @@ export default function SettingsScreen() {
             </Pressable>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Link Phone Modal */}
+      <Modal
+        visible={isLinkPhoneModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleCloseLinkPhone}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}
+        >
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderInner}>
+              <Text
+                style={styles.modalTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {phoneLinkingPending
+                  ? t('settings.linkPhone.verifyTitle')
+                  : hasSavedPhoneToVerify
+                    ? t('settings.linkPhone.verifyTitle')
+                    : t('settings.linkPhone.title')}
+              </Text>
+              <Pressable onPress={handleCloseLinkPhone}>
+                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+              </Pressable>
+            </View>
+          </View>
+
+          <ScrollView
+            style={styles.flex1}
+            contentContainerStyle={{ padding: 16 }}
+            contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            <View style={styles.formCard}>
+              <View style={styles.mb4}>
+                <Text
+                  style={styles.inputLabel}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {phoneLinkingPending
+                    ? t('settings.linkPhone.verifySubtitle')
+                    : t('settings.linkPhone.subtitle')}
+                </Text>
+                {phoneLinkingPending ? (
+                  <Text
+                    style={styles.inputHint}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {phoneLinkingNumber ?? linkPhoneInput}
+                  </Text>
+                ) : null}
+              </View>
+
+              {!phoneLinkingPending ? (
+                <View style={styles.mb4}>
+                  <Text
+                    style={styles.inputLabel}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.linkPhone.phoneLabel')}
+                  </Text>
+                  <View style={styles.linkPhoneInputRow}>
+                    <Pressable
+                      onPress={() => setShowCountryPicker(true)}
+                      style={styles.linkPhoneCountryButton}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('authPhone.selectCountryA11y')}
+                    >
+                      <Text
+                        style={styles.linkPhoneCountryCode}
+                        textBreakStrategy="highQuality"
+                        lineBreakStrategyIOS="standard"
+                      >
+                        {selectedCountry.dialCode}
+                      </Text>
+                      <UISymbol name="chevron.down" size={14} color={colors.surface[500]} />
+                    </Pressable>
+                    <TextInput
+                      value={linkPhoneInput}
+                      onChangeText={setLinkPhoneInput}
+                      placeholder={t('settings.linkPhone.phonePlaceholder')}
+                      placeholderTextColor={colors.gray[400]}
+                      keyboardType="phone-pad"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      style={styles.linkPhoneInputField}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.mb4}>
+                  <Text
+                    style={styles.inputLabel}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.linkPhone.codeLabel')}
+                  </Text>
+                  <TextInput
+                    value={linkPhoneCode}
+                    onChangeText={setLinkPhoneCode}
+                    placeholder={t('settings.linkPhone.codePlaceholder')}
+                    placeholderTextColor={colors.gray[400]}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    style={styles.input}
+                  />
+                  <Pressable onPress={handleResendPhoneLinkCode} disabled={authLoading}>
+                    <Text
+                      style={styles.inputHint}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {t('settings.linkPhone.resend')}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {authErrorMessage ? (
+                <View style={[styles.alertBox, styles.dangerAlert, { marginBottom: 0 }]}>
+                  <Text
+                    style={styles.alertText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {authErrorMessage}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          </ScrollView>
+
+          <View style={styles.modalFooter}>
+            <Pressable
+              onPress={phoneLinkingPending ? handleVerifyPhoneLinkCode : handleSendPhoneLinkCode}
+              disabled={
+                authLoading ||
+                (!phoneLinkingPending && !linkPhoneInput.trim()) ||
+                (phoneLinkingPending && linkPhoneCode.trim().length !== 6)
+              }
+              style={[
+                styles.saveButton,
+                { backgroundColor: colors.primary[600], marginBottom: spacing[3] },
+              ]}
+            >
+              {authLoading ? (
+                <ActivityIndicator color={m3.colorScheme.onPrimary} />
+              ) : (
+                <Text
+                  style={styles.saveButtonText}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {phoneLinkingPending
+                    ? t('settings.linkPhone.verify')
+                    : t('settings.linkPhone.sendCode')}
+                </Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              onPress={handleCloseLinkPhone}
+              disabled={authLoading}
+              style={styles.saveButton}
+            >
+              <Text
+                style={[
+                  styles.settingsTitle,
+                  { flex: 0, marginLeft: 0, color: colors.surface[700] },
+                ]}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.linkPhone.cancel')}
+              </Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={showCountryPicker}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowCountryPicker(false)}
+      >
+        <View style={styles.countryPickerOverlay}>
+          <Pressable
+            style={styles.countryPickerBackdrop}
+            onPress={() => setShowCountryPicker(false)}
+          />
+          <View style={styles.countryPickerSheet}>
+            <View style={styles.countryPickerHeader}>
+              <Text
+                style={styles.modalTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('authPhone.selectCountry')}
+              </Text>
+              <Pressable
+                onPress={() => setShowCountryPicker(false)}
+                accessibilityLabel={t('authPhone.closeA11y')}
+              >
+                <UISymbol name="xmark.circle.fill" size={24} color={colors.gray[400]} />
+              </Pressable>
+            </View>
+
+            <TextInput
+              value={countrySearch}
+              onChangeText={setCountrySearch}
+              placeholder={t('authPhone.searchCountry')}
+              placeholderTextColor={colors.gray[400]}
+              style={styles.countrySearchInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <FlatList
+              data={filteredCountries}
+              keyExtractor={(country) => `${country.code}-${country.dialCode}`}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <Pressable style={styles.countryRow} onPress={() => handleSelectCountry(item)}>
+                  <Text
+                    style={styles.countryName}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {item.name}
+                  </Text>
+                  <Text
+                    style={styles.countryDialCode}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {item.dialCode}
+                  </Text>
+                </Pressable>
+              )}
+            />
+          </View>
+        </View>
       </Modal>
 
       {/* Language Picker Modal */}
@@ -1409,6 +1918,47 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     fontSize: fontSize.base,
     color: colors.surface[900],
   } as ViewStyle & TextStyle,
+  linkPhoneInputRow: {
+    flexDirection: 'row',
+    gap: spacing[2],
+    alignItems: 'center',
+  } as ViewStyle,
+  linkPhoneCountryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    backgroundColor: colors.surface[50],
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+  } as ViewStyle,
+  linkPhoneCountryCode: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[900],
+  } as TextStyle,
+  linkPhoneInputField: {
+    flex: 1,
+    backgroundColor: colors.surface[50],
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    fontSize: fontSize.base,
+    color: colors.surface[900],
+  } as ViewStyle & TextStyle,
+  verifyPhoneCta: {
+    marginTop: spacing[3],
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: borderRadius.lg,
+    backgroundColor: colorWithOpacity(colors.primary[600], 0.12),
+  } as ViewStyle,
+  verifyPhoneCtaText: {
+    color: colors.primary[700],
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+  } as TextStyle,
 
   modalFooter: {
     backgroundColor: colors.surface[100],
@@ -1491,6 +2041,59 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     alignItems: 'center',
   } as ViewStyle,
   deleteButtonText: { color: m3.colorScheme.onError, fontWeight: fontWeight.semibold } as TextStyle,
+  countryPickerOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  } as ViewStyle,
+  countryPickerBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colorWithOpacity(colors.surface[900], 0.35),
+  } as ViewStyle,
+  countryPickerSheet: {
+    backgroundColor: colors.surface[100],
+    borderTopLeftRadius: borderRadius['2xl'],
+    borderTopRightRadius: borderRadius['2xl'],
+    maxHeight: '72%',
+    paddingBottom: spacing[4],
+  } as ViewStyle,
+  countryPickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surface[200],
+  } as ViewStyle,
+  countrySearchInput: {
+    backgroundColor: colors.surface[50],
+    borderRadius: borderRadius.xl,
+    marginHorizontal: spacing[4],
+    marginVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    fontSize: fontSize.base,
+    color: colors.surface[900],
+  } as ViewStyle & TextStyle,
+  countryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surface[200],
+  } as ViewStyle,
+  countryName: {
+    fontSize: fontSize.base,
+    color: colors.surface[900],
+  } as TextStyle,
+  countryDialCode: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[600],
+  } as TextStyle,
 });
 
 type SettingsStyles = ReturnType<typeof createStyles>;

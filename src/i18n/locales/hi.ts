@@ -1026,11 +1026,13 @@ export const hi = {
     or: 'या',
     continueWithApple: 'Apple के साथ जारी रखें',
     continueWithGoogle: 'Google के साथ जारी रखें',
+    continueWithPhone: 'फ़ोन से जारी रखें',
     alreadyHaveAccount: 'पहले से खाता है?',
     dontHaveAccount: 'खाता नहीं है?',
     a11y: {
       switchToSignIn: 'साइन इन पर स्विच करें',
       switchToSignUp: 'साइन अप पर स्विच करें',
+      continueWithPhone: 'फ़ोन नंबर से साइन इन करें',
     },
   },
 
@@ -1045,6 +1047,49 @@ export const hi = {
     resendInSecondsShort: '{{seconds}}से में पुनः भेजें',
     useDifferentEmail: 'अलग ईमेल उपयोग करें',
     useDifferentEmailA11y: 'अलग ईमेल उपयोग करें',
+    subtitlePhone: 'हमने 6-अंकीय कोड भेजा है',
+    useDifferentPhone: 'दूसरा फ़ोन नंबर उपयोग करें',
+    useDifferentPhoneA11y: 'दूसरा फ़ोन नंबर उपयोग करें',
+  },
+
+  authPhone: {
+    title: 'फ़ोन साइन इन',
+    subtitle: 'सत्यापन कोड प्राप्त करने के लिए अपना मोबाइल नंबर दर्ज करें',
+    phoneNumber: 'फ़ोन नंबर',
+    phoneLabel: 'फ़ोन नंबर',
+    phonePlaceholder: 'फ़ोन नंबर दर्ज करें',
+    sendCode: 'सत्यापन कोड भेजें',
+    selectCountry: 'देश चुनें',
+    selectCountryA11y: 'देश चयनकर्ता खोलें',
+    closeA11y: 'देश चयनकर्ता बंद करें',
+    backToLoginPrefix: 'वापस जाएं',
+    backToLoginLink: 'ईमेल साइन इन',
+    backToLoginA11y: 'ईमेल साइन इन पर वापस जाएं',
+    invalidPhone: 'कृपया देश कोड के साथ एक वैध फ़ोन नंबर दर्ज करें',
+    countryCode: 'देश कोड',
+    searchCountry: 'देश खोजें...',
+    a11y: {
+      selectCountryCode: 'देश कोड चुनें',
+      phoneInput: 'फ़ोन नंबर इनपुट',
+    },
+  },
+
+  profileCompletion: {
+    title: 'अपनी प्रोफ़ाइल पूरी करें',
+    subtitle: 'हमें अपने बारे में कुछ बताएं',
+    firstName: 'पहला नाम',
+    lastName: 'अंतिम नाम',
+    fullName: 'पूरा नाम',
+    fullNamePlaceholder: 'अपना पूरा नाम दर्ज करें',
+    emailOptional: 'ईमेल',
+    emailPlaceholder: 'अपना ईमेल दर्ज करें',
+    continue: 'जारी रखें',
+    skip: 'अभी छोड़ें',
+    emailExistsWarning:
+      'इस ईमेल के साथ एक खाता पहले से मौजूद है। कृपया पहले ईमेल से साइन इन करें, फिर सेटिंग्स से अपना फोन नंबर लिंक करें।',
+    a11y: {
+      skipProfileCompletion: 'प्रोफ़ाइल पूर्णता छोड़ें',
+    },
   },
 
   settings: {
@@ -1090,6 +1135,8 @@ export const hi = {
       notificationsUnavailable: 'इस वातावरण में सूचनाएं उपलब्ध नहीं हैं।',
       updateProfileFailed: 'प्रोफाइल अपडेट करने में विफल। कृपया पुनः प्रयास करें।',
       updateAreaUnitFailed: 'क्षेत्रफल इकाई अपडेट करने में विफल। कृपया पुनः प्रयास करें।',
+      linkPhoneFailed: 'फोन नंबर लिंक करने में विफल। कृपया पुनः प्रयास करें।',
+      verifyPhoneFailed: 'फोन नंबर सत्यापित करने में विफल। कृपया पुनः प्रयास करें।',
     },
 
     deleteAccountModal: {
@@ -1136,6 +1183,32 @@ export const hi = {
         invalidPassword: 'अमान्य पासवर्ड।',
         submitFailed: 'हटाने का अनुरोध सबमिट करने में विफल। कृपया पुनः प्रयास करें।',
       },
+    },
+
+    linkPhone: {
+      title: 'फोन नंबर लिंक करें',
+      subtitle: 'आसान साइन-इन के लिए अपने खाते से फोन नंबर लिंक करें',
+      phoneLabel: 'फोन नंबर',
+      phonePlaceholder: '+1234567890',
+      sendCode: 'सत्यापन कोड भेजें',
+      verifyTitle: 'फोन नंबर सत्यापित करें',
+      verifySubtitle: 'भेजा गया 6-अंकीय कोड दर्ज करें',
+      codeLabel: 'सत्यापन कोड',
+      codePlaceholder: '000000',
+      verify: 'सत्यापित करें और लिंक करें',
+      resend: 'कोड पुनः भेजें',
+      cancel: 'रद्द करें',
+      success: 'फोन नंबर सफलतापूर्वक लिंक हो गया',
+      alreadyLinked: 'फोन नंबर पहले से आपके खाते से लिंक है',
+      changePhone: 'फोन नंबर बदलें',
+      verified: 'सत्यापित फोन नंबर',
+      notLinked: 'कोई सत्यापित फोन नंबर लिंक नहीं है',
+      verificationRequired: 'फोन साइन-इन के लिए अपना फोन नंबर सत्यापित करें',
+    },
+    phoneEnforcement: {
+      title: 'जारी रखने के लिए अपना फोन लिंक करें',
+      body: 'अकाउंट सुरक्षा और आसान साइन-इन के लिए ऐप इस्तेमाल करने से पहले अपना मोबाइल नंबर लिंक करें।',
+      linkNow: 'फोन नंबर लिंक करें',
     },
   },
 

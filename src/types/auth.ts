@@ -17,6 +17,13 @@ import type { User, Session } from '@supabase/supabase-js';
  */
 export type EmailOTPType = 'email' | 'signup';
 
+/**
+ * Type of OTP being verified via phone
+ * - sms: SMS-based OTP
+ */
+export type PhoneOTPType = 'sms';
+export type PhoneAuthMode = 'signin' | 'signup';
+
 // ============================================================
 // MARK: - Auth State
 // ============================================================
@@ -43,11 +50,17 @@ export interface AuthState {
   /** Email pending OTP verification */
   pendingOTPEmail: string | null;
 
+  /** Phone pending OTP verification */
+  pendingOTPPhone: string | null;
+
   /** Whether OTP was sent successfully */
   otpSentSuccessfully: boolean;
 
   /** Type of OTP flow in progress */
   pendingOTPType: EmailOTPType;
+
+  /** Whether the user needs to complete their profile */
+  needsProfileCompletion: boolean;
 }
 
 export const initialAuthState: AuthState = {
@@ -58,8 +71,10 @@ export const initialAuthState: AuthState = {
   errorMessage: null,
   pendingEmailConfirmation: null,
   pendingOTPEmail: null,
+  pendingOTPPhone: null,
   otpSentSuccessfully: false,
   pendingOTPType: 'email',
+  needsProfileCompletion: false,
 };
 
 // ============================================================
@@ -90,6 +105,21 @@ export interface AuthActions {
 
   /** Cancel OTP flow */
   cancelOTPFlow: () => void;
+
+  /** Start phone auth flow (signin blocks auto user creation, signup allows it) */
+  signInWithPhone: (phone: string, mode?: PhoneAuthMode) => Promise<void>;
+
+  /** Verify phone OTP code */
+  verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
+
+  /** Resend phone OTP code */
+  resendPhoneOTP: (mode?: PhoneAuthMode) => Promise<void>;
+
+  /** Cancel phone OTP flow */
+  cancelPhoneOTPFlow: () => void;
+
+  /** Complete user profile after phone sign-in */
+  completeProfile: (data: { firstName: string; lastName: string; email?: string }) => Promise<void>;
 
   /** Sign out */
   signOut: () => Promise<void>;
@@ -141,6 +171,11 @@ export interface OTPCredentials {
   code: string;
 }
 
+export interface PhoneOTPCredentials {
+  phone: string;
+  code: string;
+}
+
 // ============================================================
 // MARK: - User Metadata
 // ============================================================
@@ -157,7 +192,7 @@ export interface UserMetadata {
 // MARK: - Auth Provider Types
 // ============================================================
 
-export type AuthProvider = 'email' | 'apple' | 'google' | 'otp';
+export type AuthProvider = 'email' | 'apple' | 'google' | 'otp' | 'phone';
 
 export interface AuthEvent {
   event: 'SIGNED_IN' | 'SIGNED_OUT' | 'USER_UPDATED' | 'PASSWORD_RECOVERY' | 'TOKEN_REFRESHED';
@@ -215,6 +250,10 @@ export const AUTH_ERROR_MESSAGES = {
   APPLE_SIGN_IN_FAILED: 'Apple sign-in failed. Please try again.',
   APPLE_SIGN_IN_CANCELLED: 'Apple sign-in was cancelled.',
   SESSION_EXPIRED: 'Your session has expired. Please sign in again.',
+  INVALID_PHONE: 'Please enter a valid phone number',
+  PHONE_OTP_FAILED: 'Failed to send verification code. Please try again.',
+  PHONE_OTP_EXPIRED: 'Code expired. Please request a new one.',
+  PROFILE_UPDATE_FAILED: 'Failed to update profile. Please try again.',
 } as const;
 
 export type AuthErrorKey = keyof typeof AUTH_ERROR_MESSAGES;

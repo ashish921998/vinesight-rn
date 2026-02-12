@@ -1030,11 +1030,13 @@ export const mr = {
     or: 'किंवा',
     continueWithApple: 'Apple सह पुढे जा',
     continueWithGoogle: 'Google सह पुढे जा',
+    continueWithPhone: 'फोनने पुढे जा',
     alreadyHaveAccount: 'आधीच खाते आहे?',
     dontHaveAccount: 'खाते नाही?',
     a11y: {
       switchToSignIn: 'साइन इन वर स्विच करा',
       switchToSignUp: 'साइन अप वर स्विच करा',
+      continueWithPhone: 'फोन नंबरने साइन इन करा',
     },
   },
 
@@ -1049,6 +1051,49 @@ export const mr = {
     resendInSecondsShort: '{{seconds}}s नंतर पुन्हा पाठवा',
     useDifferentEmail: 'वेगळा ईमेल वापरा',
     useDifferentEmailA11y: 'वेगळा ईमेल वापरा',
+    subtitlePhone: 'आम्ही 6-अंकी कोड पाठवला',
+    useDifferentPhone: 'वेगळा फोन नंबर वापरा',
+    useDifferentPhoneA11y: 'वेगळा फोन नंबर वापरा',
+  },
+
+  authPhone: {
+    title: 'फोन साइन इन',
+    subtitle: 'सत्यापन कोड मिळवण्यासाठी तुमचा मोबाइल नंबर प्रविष्ट करा',
+    phoneNumber: 'फोन नंबर',
+    phoneLabel: 'फोन नंबर',
+    phonePlaceholder: 'फोन नंबर प्रविष्ट करा',
+    sendCode: 'सत्यापन कोड पाठवा',
+    selectCountry: 'देश निवडा',
+    selectCountryA11y: 'देश निवडक उघडा',
+    closeA11y: 'देश निवडक बंद करा',
+    backToLoginPrefix: 'परत जा',
+    backToLoginLink: 'ईमेल साइन इन',
+    backToLoginA11y: 'ईमेल साइन इनवर परत जा',
+    invalidPhone: 'कृपया देश कोडसह वैध फोन नंबर प्रविष्ट करा',
+    countryCode: 'देश कोड',
+    searchCountry: 'देश शोधा...',
+    a11y: {
+      selectCountryCode: 'देश कोड निवडा',
+      phoneInput: 'फोन नंबर इनपुट',
+    },
+  },
+
+  profileCompletion: {
+    title: 'तुमचे प्रोफाइल पूर्ण करा',
+    subtitle: 'आम्हाला तुमच्याबद्दल थोडे सांगा',
+    firstName: 'नाव',
+    lastName: 'आडनाव',
+    fullName: 'पूर्ण नाव',
+    fullNamePlaceholder: 'तुमचे पूर्ण नाव प्रविष्ट करा',
+    emailOptional: 'ईमेल',
+    emailPlaceholder: 'तुमचा ईमेल प्रविष्ट करा',
+    continue: 'पुढे जा',
+    skip: 'आता सोडा',
+    emailExistsWarning:
+      'या ईमेलसह खाते आधीपासून अस्तित्वात आहे. कृपया आधी ईमेलने साइन इन करा, नंतर सेटिंग्जमधून तुमचा फोन नंबर लिंक करा.',
+    a11y: {
+      skipProfileCompletion: 'प्रोफाइल पूर्णता सोडा',
+    },
   },
 
   settings: {
@@ -1094,6 +1139,8 @@ export const mr = {
       notificationsUnavailable: 'या वातावरणात सूचना उपलब्ध नाहीत.',
       updateProfileFailed: 'प्रोफाइल अद्ययावत होऊ शकले नाही. कृपया पुन्हा प्रयत्न करा.',
       updateAreaUnitFailed: 'क्षेत्रफळ एकक अद्ययावत होऊ शकले नाही. कृपया पुन्हा प्रयत्न करा.',
+      linkPhoneFailed: 'फोन नंबर लिंक करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
+      verifyPhoneFailed: 'फोन नंबर सत्यापित करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
     },
 
     deleteAccountModal: {
@@ -1142,6 +1189,32 @@ export const mr = {
         invalidPassword: 'अवैध पासवर्ड.',
         submitFailed: 'विनंती पाठवता आली नाही. कृपया पुन्हा प्रयत्न करा.',
       },
+    },
+
+    linkPhone: {
+      title: 'फोन नंबर लिंक करा',
+      subtitle: 'सोप्या साइन-इनसाठी तुमच्या खात्याशी फोन नंबर लिंक करा',
+      phoneLabel: 'फोन नंबर',
+      phonePlaceholder: '+1234567890',
+      sendCode: 'सत्यापन कोड पाठवा',
+      verifyTitle: 'फोन नंबर पडताळा',
+      verifySubtitle: 'पाठवलेला 6-अंकी कोड टाका',
+      codeLabel: 'सत्यापन कोड',
+      codePlaceholder: '000000',
+      verify: 'पडताळा आणि लिंक करा',
+      resend: 'कोड पुन्हा पाठवा',
+      cancel: 'रद्द करा',
+      success: 'फोन नंबर यशस्वीरित्या लिंक झाला',
+      alreadyLinked: 'फोन नंबर आधीपासून तुमच्या खात्याशी लिंक आहे',
+      changePhone: 'फोन नंबर बदला',
+      verified: 'पडताळलेला फोन नंबर',
+      notLinked: 'कोणताही पडताळलेला फोन नंबर लिंक नाही',
+      verificationRequired: 'फोन साइन-इन वापरण्यासाठी फोन नंबर पडताळा',
+    },
+    phoneEnforcement: {
+      title: 'पुढे जाण्यासाठी तुमचा फोन लिंक करा',
+      body: 'खाते सुरक्षितता आणि सोप्या साइन-इनसाठी अॅप वापरण्यापूर्वी तुमचा मोबाइल नंबर लिंक करा.',
+      linkNow: 'फोन नंबर लिंक करा',
     },
   },
 
