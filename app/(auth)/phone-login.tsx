@@ -80,6 +80,8 @@ export default function PhoneLoginScreen() {
         pathname: '/(auth)/otp-verification',
         params: { phone: pendingOTPPhone, channel: 'phone', mode: phoneAuthMode },
       });
+    } else if (!pendingOTPPhone) {
+      lastNavigatedPhoneRef.current = null;
     }
   }, [pendingOTPPhone, phoneAuthMode]);
 
