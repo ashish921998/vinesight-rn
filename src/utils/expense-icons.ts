@@ -1,4 +1,5 @@
 import type { ExpenseTypeId } from '@/constants/calculator-models';
+import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { mapExpenseRecordTypeToTypeId } from './expense-type';
 
 export const EXPENSE_TYPE_ICONS: Record<ExpenseTypeId, string> = {
@@ -16,6 +17,7 @@ export function getExpenseIconName(
   fallback = 'dollarsign.circle.fill',
 ): string {
   const normalizedType = mapExpenseRecordTypeToTypeId(expenseType, '');
-  if (!normalizedType) return fallback;
-  return EXPENSE_TYPE_ICONS[normalizedType];
+  const resolvedFallback = resolveSymbolIconName(fallback);
+  if (!normalizedType) return resolvedFallback;
+  return EXPENSE_TYPE_ICONS[normalizedType] ?? resolvedFallback;
 }

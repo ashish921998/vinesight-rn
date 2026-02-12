@@ -33,6 +33,7 @@ import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
+import { resolveSymbolIconName } from '@/constants/icon-registry';
 
 import {
   IrrigationForm,
@@ -1558,9 +1559,9 @@ export function EntryForm({
             log.type === 'expense'
               ? getExpenseIconName(
                   (log.data as ExpenseFormData | undefined)?.type,
-                  logType?.icon ?? 'cash',
+                  resolveSymbolIconName(logType?.icon),
                 )
-              : (logType?.icon ?? 'document-text');
+              : resolveSymbolIconName(logType?.icon);
           return (
             <View
               key={log.id}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
@@ -487,6 +487,15 @@ function FertilizerRow({
   const shouldShowSuggestions =
     isNameFocused && fertilizer.name.trim().length >= 2 && nameSuggestions.length > 0;
 
+  useEffect(() => {
+    if (isQuantityEditing) return;
+    if (quantityText === syncedQuantityText) return;
+    const frame = requestAnimationFrame(() => {
+      setQuantityText(syncedQuantityText);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isQuantityEditing, quantityText, syncedQuantityText]);
+
   const handleQuantityChange = (text: string) => {
     const cleanText = text.replace(/[^0-9.]/g, '');
     const parts = cleanText.split('.');
@@ -653,7 +662,6 @@ function FertilizerRow({
           onChangeText={handleQuantityChange}
           onFocus={(event) => {
             setIsQuantityFocused(true);
-            setQuantityText(syncedQuantityText);
             setIsQuantityEditing(true);
             onInputFocus?.(event);
           }}

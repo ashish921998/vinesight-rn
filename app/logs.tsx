@@ -959,7 +959,7 @@ export default function LogsScreen() {
                         log.type === 'expense'
                           ? getExpenseIconName(
                               (log.data as ExpenseRecord | undefined)?.type,
-                              logType?.icon ?? 'cash',
+                              resolveSymbolIconName(logType?.icon),
                             )
                           : resolveSymbolIconName(logType?.icon);
                       const parsedDate = new Date(log.date);
