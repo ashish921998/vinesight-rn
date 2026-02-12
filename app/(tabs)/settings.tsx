@@ -214,7 +214,9 @@ export default function SettingsScreen() {
     if (!raw) return '';
     if (raw.startsWith('+')) return raw;
     const digitsOnly = raw.replace(/[^\d]/g, '');
-    return `${selectedCountry.dialCode}${digitsOnly}`;
+    const normalizedLocalNumber = digitsOnly.replace(/^0+/, '');
+    if (!normalizedLocalNumber) return '';
+    return `${selectedCountry.dialCode}${normalizedLocalNumber}`;
   };
 
   useEffect(() => {

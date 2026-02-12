@@ -92,7 +92,8 @@ export default function PhoneLoginScreen() {
   const handleSendCode = async () => {
     if (!phoneNumber) return;
     clearError();
-    const normalizedLocalNumber = phoneNumber.replace(/[^\d]/g, '');
+    const digitsOnly = phoneNumber.replace(/[^\d]/g, '');
+    const normalizedLocalNumber = digitsOnly.replace(/^0+/, '');
     if (!normalizedLocalNumber) return;
     const fullPhoneNumber = selectedCountry.dialCode + normalizedLocalNumber;
     await signInWithPhone(fullPhoneNumber, phoneAuthMode);
