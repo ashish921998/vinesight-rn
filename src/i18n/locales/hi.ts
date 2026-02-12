@@ -104,6 +104,8 @@ export const hi = {
       failedToDeleteFarm: 'खेत हटाने में विफल।',
       failedToDeleteWorker: 'श्रमिक हटाने में विफल।',
 
+      loadFailed: 'डेटा लोड करने में कुछ गलत हुआ। रिफ्रेश करने के लिए खींचें।',
+
       noReportDataAvailable: 'कोई रिपोर्ट डेटा उपलब्ध नहीं है।',
 
       invalidFarm: 'अमान्य खेत',

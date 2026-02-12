@@ -27,7 +27,14 @@ export async function ensureNotificationPermissions(): Promise<boolean> {
 export async function cancelNotification(notificationId: string): Promise<void> {
   const Notifications = await getNotifications();
   if (!Notifications) return;
-  await Notifications.cancelScheduledNotificationAsync(notificationId);
+  try {
+    await Notifications.cancelScheduledNotificationAsync(notificationId);
+  } catch (error: unknown) {
+    // Notification may have already fired or been dismissed; swallow gracefully.
+    if (__DEV__) {
+      console.warn('cancelNotification failed for id', notificationId, error);
+    }
+  }
 }
 
 export async function scheduleDailyWaterReminder(): Promise<string | null> {

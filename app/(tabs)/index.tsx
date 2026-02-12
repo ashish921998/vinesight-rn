@@ -61,7 +61,12 @@ export default function DashboardScreen() {
   const [selectedQuickAction, setSelectedQuickAction] = useState<LogTypeId | null>(null);
 
   // Data hooks
-  const { data: stats, refetch: refetchStats, isLoading: isLoadingStats } = useDashboardStats();
+  const {
+    data: stats,
+    refetch: refetchStats,
+    isLoading: isLoadingStats,
+    isError: isStatsError,
+  } = useDashboardStats();
   const {
     data: farmsNeedingAttention,
     refetch: refetchAttention,
@@ -72,15 +77,25 @@ export default function DashboardScreen() {
     refetch: refetchActivities,
     isLoading: isLoadingActivities,
   } = useRecentActivities(5);
-  const { data: farms, refetch: refetchFarms, isLoading: isLoadingFarms } = useFarms();
+  const {
+    data: farms,
+    refetch: refetchFarms,
+    isLoading: isLoadingFarms,
+    isError: isFarmsError,
+  } = useFarms();
   const { data: profile } = useProfile();
+
+  const hasQueryError = isStatsError || isFarmsError;
 
   const greetingKey = getGreetingKey();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([refetchStats(), refetchAttention(), refetchActivities(), refetchFarms()]);
-    setIsRefreshing(false);
+    try {
+      await Promise.all([refetchStats(), refetchAttention(), refetchActivities(), refetchFarms()]);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Navigation handlers
@@ -155,6 +170,41 @@ export default function DashboardScreen() {
         scrollIndicatorInsets={{ top: insets.top }}
       >
         <View style={containerStyle}>
+          {/* Error Banner */}
+          {hasQueryError && (
+            <Pressable
+              onPress={handleRefresh}
+              style={{
+                backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+                borderRadius: borderRadius.xl,
+                padding: spacing[3],
+                marginBottom: spacing[4],
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing[2],
+              }}
+            >
+              <SymbolIcon name="exclamationmark.triangle.fill" size={18} color={m3.colorScheme.error} />
+              <Text
+                style={{
+                  ...m3.typography.bodyMedium,
+                  color: m3.colorScheme.error,
+                  flex: 1,
+                }}
+              >
+                {t('common.errors.loadFailed')}
+              </Text>
+              <Text
+                style={{
+                  ...m3.typography.labelSmall,
+                  color: m3.colorScheme.error,
+                }}
+              >
+                {t('common.tryAgain')}
+              </Text>
+            </Pressable>
+          )}
+
           {/* Welcome Header */}
           <View style={{ marginBottom: spacing[6] }}>
             <Text style={greetingStyle}>

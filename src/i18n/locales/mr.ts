@@ -105,6 +105,8 @@ export const mr = {
       failedToDeleteFarm: '$t(glossary.farm) हटवता आले नाही.',
       failedToDeleteWorker: '$t(glossary.worker) हटवता आला नाही.',
 
+      loadFailed: 'डेटा लोड करताना काहीतरी चूक झाली. रिफ्रेश करण्यासाठी खाली ओढा.',
+
       noReportDataAvailable: '$t(glossary.report) डेटा उपलब्ध नाही.',
 
       invalidFarm: 'अवैध $t(glossary.farm)',

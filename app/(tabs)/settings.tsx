@@ -270,59 +270,80 @@ export default function SettingsScreen() {
   };
 
   const handleToggleDailyWaterReminder = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await ensureNotificationPermissions();
-      if (!granted) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+    try {
+      if (enabled) {
+        const granted = await ensureNotificationPermissions();
+        if (!granted) {
+          Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+          return;
+        }
+        const id = await scheduleDailyWaterReminder();
+        if (!id) {
+          Alert.alert(t('common.error'), t('settings.errors.notificationsUnavailable'));
+          return;
+        }
+        setDailyWaterNotificationId(id);
+        setDailyWaterReminderEnabled(true);
         return;
       }
-      const id = await scheduleDailyWaterReminder();
-      if (!id) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsUnavailable'));
-        return;
-      }
-      setDailyWaterNotificationId(id);
-      setDailyWaterReminderEnabled(true);
-      return;
-    }
 
-    if (dailyWaterNotificationId) {
-      await cancelNotification(dailyWaterNotificationId);
+      if (dailyWaterNotificationId) {
+        await cancelNotification(dailyWaterNotificationId);
+      }
+      setDailyWaterNotificationId(null);
+      setDailyWaterReminderEnabled(false);
+    } catch (error: unknown) {
+      if (__DEV__) {
+        console.error('Toggle daily water reminder error:', error);
+      }
+      Alert.alert(t('common.error'), t('settings.errors.notificationsUnavailable'));
     }
-    setDailyWaterNotificationId(null);
-    setDailyWaterReminderEnabled(false);
   };
 
   const handleToggleTaskReminders = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await ensureNotificationPermissions();
-      if (!granted) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+    try {
+      if (enabled) {
+        const granted = await ensureNotificationPermissions();
+        if (!granted) {
+          Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+          return;
+        }
+        setTaskRemindersEnabled(true);
         return;
       }
-      setTaskRemindersEnabled(true);
-      return;
-    }
 
-    // Disable: cancel any scheduled task notifications we know about
-    const ids = Object.values(taskSchedules).map((s) => s.notificationId);
-    await Promise.allSettled(ids.map((id) => cancelNotification(id)));
-    clearAllTaskSchedules();
-    setTaskRemindersEnabled(false);
+      // Disable: cancel any scheduled task notifications we know about
+      const ids = Object.values(taskSchedules).map((s) => s.notificationId);
+      await Promise.allSettled(ids.map((id) => cancelNotification(id)));
+      clearAllTaskSchedules();
+      setTaskRemindersEnabled(false);
+    } catch (error: unknown) {
+      if (__DEV__) {
+        console.error('Toggle task reminders error:', error);
+      }
+      Alert.alert(t('common.error'), t('settings.errors.notificationsUnavailable'));
+    }
   };
 
   const handleToggleLowWaterAlerts = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await ensureNotificationPermissions();
-      if (!granted) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+    try {
+      if (enabled) {
+        const granted = await ensureNotificationPermissions();
+        if (!granted) {
+          Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+          return;
+        }
+        setLowWaterAlertsEnabled(true);
         return;
       }
-      setLowWaterAlertsEnabled(true);
-      return;
-    }
 
-    setLowWaterAlertsEnabled(false);
+      setLowWaterAlertsEnabled(false);
+    } catch (error: unknown) {
+      if (__DEV__) {
+        console.error('Toggle low water alerts error:', error);
+      }
+      Alert.alert(t('common.error'), t('settings.errors.notificationsUnavailable'));
+    }
   };
 
   const handleDeleteAccount = () => {

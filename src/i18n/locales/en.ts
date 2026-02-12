@@ -104,6 +104,8 @@ export const en = {
       failedToDeleteFarm: 'Failed to delete farm.',
       failedToDeleteWorker: 'Failed to delete worker.',
 
+      loadFailed: 'Something went wrong loading data. Pull to refresh.',
+
       noReportDataAvailable: 'No report data available.',
 
       invalidFarm: 'Invalid farm',
