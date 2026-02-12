@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { m3 } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 
 export default function AuthLayout() {
+  const m3 = useM3();
   return (
     <>
       <StatusBar style="dark" />

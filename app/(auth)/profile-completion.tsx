@@ -13,11 +13,13 @@ import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export default function ProfileCompletionScreen() {
   const { t } = useTranslation();
+  const m3 = useM3();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');

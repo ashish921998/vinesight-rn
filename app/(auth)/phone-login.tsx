@@ -18,7 +18,8 @@ import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 interface Country {
@@ -54,6 +55,7 @@ const DEFAULT_COUNTRY = COUNTRIES[0]; // India
 
 export default function PhoneLoginScreen() {
   const { t } = useTranslation();
+  const m3 = useM3();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
 

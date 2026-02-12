@@ -18,11 +18,13 @@ import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
 import appLogo from '../../assets/icons/ios-light.png';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
+  const m3 = useM3();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
