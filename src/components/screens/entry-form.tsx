@@ -24,6 +24,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/ui/app-icon';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -93,6 +94,7 @@ import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
+import { getExpenseIconName } from '@/utils/expense-icons';
 import { submitEntryPendingLog } from '@/utils/entry-log-submission';
 import {
   ensureNotificationPermissions,
@@ -1552,6 +1554,13 @@ export function EntryForm({
         </Text>
         {pendingLogs.map((log) => {
           const logType = LOG_TYPES.find((lt) => lt.id === log.type);
+          const iconName =
+            log.type === 'expense'
+              ? getExpenseIconName(
+                  (log.data as ExpenseFormData | undefined)?.type,
+                  logType?.icon ?? 'cash',
+                )
+              : (logType?.icon ?? 'document-text');
           return (
             <View
               key={log.id}
@@ -1576,7 +1585,11 @@ export function EntryForm({
                   backgroundColor: `${logType?.color}15`,
                 }}
               >
-                <AppIcon name={logType?.icon ?? 'document-text'} size={18} color={logType?.color} />
+                <UiSymbol
+                  name={iconName}
+                  size={18}
+                  color={logType?.color ?? m3.colorScheme.primary}
+                />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text
