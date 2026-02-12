@@ -22,6 +22,7 @@ export type EmailOTPType = 'email' | 'signup';
  * - sms: SMS-based OTP
  */
 export type PhoneOTPType = 'sms';
+export type PhoneAuthMode = 'signin' | 'signup';
 
 // ============================================================
 // MARK: - Auth State
@@ -105,20 +106,20 @@ export interface AuthActions {
   /** Cancel OTP flow */
   cancelOTPFlow: () => void;
 
-  /** Sign in with phone number (sends OTP via SMS) */
-  signInWithPhone: (phone: string) => Promise<void>;
+  /** Start phone auth flow (signin blocks auto user creation, signup allows it) */
+  signInWithPhone: (phone: string, mode?: PhoneAuthMode) => Promise<void>;
 
   /** Verify phone OTP code */
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
 
   /** Resend phone OTP code */
-  resendPhoneOTP: () => Promise<void>;
+  resendPhoneOTP: (mode?: PhoneAuthMode) => Promise<void>;
 
   /** Cancel phone OTP flow */
   cancelPhoneOTPFlow: () => void;
 
   /** Complete user profile after phone sign-in */
-  completeProfile: (data: { fullName: string; email?: string }) => Promise<void>;
+  completeProfile: (data: { firstName: string; lastName: string; email: string }) => Promise<void>;
 
   /** Sign out */
   signOut: () => Promise<void>;

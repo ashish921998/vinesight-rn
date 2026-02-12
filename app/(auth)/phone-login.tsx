@@ -13,7 +13,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -54,6 +54,8 @@ const DEFAULT_COUNTRY = COUNTRIES[0]; // India
 
 export default function PhoneLoginScreen() {
   const { t } = useTranslation();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
@@ -67,10 +69,10 @@ export default function PhoneLoginScreen() {
     if (pendingOTPPhone) {
       router.push({
         pathname: '/(auth)/otp-verification',
-        params: { phone: pendingOTPPhone, channel: 'phone' },
+        params: { phone: pendingOTPPhone, channel: 'phone', mode: phoneAuthMode },
       });
     }
-  }, [pendingOTPPhone]);
+  }, [pendingOTPPhone, phoneAuthMode]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -82,7 +84,7 @@ export default function PhoneLoginScreen() {
     if (!phoneNumber) return;
     clearError();
     const fullPhoneNumber = selectedCountry.dialCode + phoneNumber;
-    await signInWithPhone(fullPhoneNumber);
+    await signInWithPhone(fullPhoneNumber, phoneAuthMode);
   };
 
   const handleSelectCountry = (country: Country) => {

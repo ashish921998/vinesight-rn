@@ -14,11 +14,13 @@ const RESEND_COOLDOWN = 60; // seconds
 export default function OTPVerificationScreen() {
   const { t } = useTranslation();
 
-  const { email, phone, channel } = useLocalSearchParams<{
+  const { email, phone, channel, mode } = useLocalSearchParams<{
     email?: string;
     phone?: string;
     channel?: string;
+    mode?: string;
   }>();
+  const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
   const isPhoneOTP = channel === 'phone' && !!phone;
   const identifier = isPhoneOTP ? phone : email;
   const [otpCode, setOtpCode] = useState('');
@@ -104,7 +106,7 @@ export default function OTPVerificationScreen() {
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     if (isPhoneOTP) {
-      await resendPhoneOTP();
+      await resendPhoneOTP(phoneAuthMode);
     } else {
       await resendOTP();
     }

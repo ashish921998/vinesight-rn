@@ -4,7 +4,6 @@ import {
   Text,
   KeyboardAvoidingView,
   ScrollView,
-  Pressable,
   Platform,
   type ViewStyle,
   type TextStyle,
@@ -20,8 +19,10 @@ import { colorWithOpacity } from '@/utils/color';
 export default function ProfileCompletionScreen() {
   const { t } = useTranslation();
 
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const {
     isLoading,
@@ -39,14 +40,22 @@ export default function ProfileCompletionScreen() {
   }, [isAuthenticated, needsProfileCompletion]);
 
   const handleContinue = async () => {
-    if (!fullName.trim()) return;
+    if (!firstName.trim() || !lastName.trim()) return;
+    const trimmedEmail = email.trim();
+    if (trimmedEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setEmailError('Please enter a valid email address');
+        return;
+      }
+    }
+    setEmailError(null);
     clearError();
-    await completeProfile({ fullName: fullName.trim(), email: email.trim() || undefined });
-  };
-
-  const handleSkip = () => {
-    useAuthStore.setState({ needsProfileCompletion: false });
-    router.replace('/(tabs)');
+    await completeProfile({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: trimmedEmail,
+    });
   };
 
   const containerStyle: ViewStyle = {
@@ -119,18 +128,6 @@ export default function ProfileCompletionScreen() {
     color: m3.colorScheme.error,
   };
 
-  const skipContainerStyle: ViewStyle = {
-    alignItems: 'center',
-    paddingVertical: spacing[4],
-    marginTop: spacing[4],
-  };
-
-  const skipTextStyle: TextStyle = {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    color: m3.colorScheme.primary,
-  };
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -157,17 +154,27 @@ export default function ProfileCompletionScreen() {
           <View style={formContainerStyle}>
             <View style={formInnerStyle}>
               <Input
-                placeholder={t('profileCompletion.fullName')}
-                value={fullName}
-                onChangeText={setFullName}
+                placeholder={t('profileCompletion.firstName')}
+                value={firstName}
+                onChangeText={setFirstName}
                 leftIcon="person.fill"
                 autoCapitalize="words"
-                textContentType="name"
+                textContentType="givenName"
                 containerStyle={{ marginBottom: spacing[4] }}
               />
 
               <Input
-                placeholder={t('profileCompletion.email')}
+                placeholder={t('profileCompletion.lastName')}
+                value={lastName}
+                onChangeText={setLastName}
+                leftIcon="person.fill"
+                autoCapitalize="words"
+                textContentType="familyName"
+                containerStyle={{ marginBottom: spacing[4] }}
+              />
+
+              <Input
+                placeholder={t('profileCompletion.emailPlaceholder')}
                 value={email}
                 onChangeText={setEmail}
                 leftIcon="mail"
@@ -178,14 +185,14 @@ export default function ProfileCompletionScreen() {
                 containerStyle={{ marginBottom: spacing[2] }}
               />
 
-              {errorMessage && (
+              {(errorMessage || emailError) && (
                 <View style={errorContainerStyle}>
                   <UiSymbol
                     name="exclamationmark.circle.fill"
                     size={18}
                     color={m3.colorScheme.error}
                   />
-                  <Text style={errorTextStyle}>{errorMessage}</Text>
+                  <Text style={errorTextStyle}>{emailError || errorMessage}</Text>
                 </View>
               )}
 
@@ -193,34 +200,11 @@ export default function ProfileCompletionScreen() {
                 title={t('profileCompletion.continue')}
                 onPress={handleContinue}
                 isLoading={isLoading}
-                disabled={!fullName.trim() || isLoading}
+                disabled={!firstName.trim() || !lastName.trim() || !email.trim() || isLoading}
                 style={{ marginTop: spacing[4] }}
               />
             </View>
           </View>
-
-          <Pressable
-            onPress={handleSkip}
-            style={skipContainerStyle}
-            disabled={isLoading}
-            accessibilityRole="button"
-            accessibilityLabel={t('profileCompletion.skipA11y')}
-          >
-            {({ pressed }) => (
-              <View
-                style={{
-                  paddingVertical: spacing[2],
-                  paddingHorizontal: spacing[2],
-                  backgroundColor: pressed
-                    ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
-                    : 'transparent',
-                  borderRadius: m3.shape.cornerMedium,
-                }}
-              >
-                <Text style={skipTextStyle}>{t('profileCompletion.skip')}</Text>
-              </View>
-            )}
-          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

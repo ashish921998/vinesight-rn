@@ -299,7 +299,12 @@ export default function LoginScreen() {
               title={t('auth.continueWithPhone')}
               variant="outline"
               leftIcon={<UiSymbol name="phone.fill" size={20} color={m3.colorScheme.primary} />}
-              onPress={() => router.push('/(auth)/phone-login')}
+              onPress={() =>
+                router.push({
+                  pathname: '/(auth)/phone-login',
+                  params: { mode: isSignUp ? 'signup' : 'signin' },
+                })
+              }
               disabled={isLoading}
             />
           </View>
