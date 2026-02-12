@@ -362,6 +362,7 @@ describe('completeProfile', () => {
     expect(supabase.auth.updateUser).toHaveBeenCalledWith({
       email: 'alice@example.com',
       data: {
+        email: 'alice@example.com',
         full_name: 'Alice Smith',
         first_name: 'Alice',
         last_name: 'Smith',
@@ -411,6 +412,7 @@ describe('completeProfile', () => {
     expect(supabase.auth.updateUser).toHaveBeenCalledWith({
       email: 'bob@example.com',
       data: {
+        email: 'bob@example.com',
         full_name: 'Bob Jones',
         first_name: 'Bob',
         last_name: 'Jones',

@@ -119,7 +119,7 @@ export interface AuthActions {
   cancelPhoneOTPFlow: () => void;
 
   /** Complete user profile after phone sign-in */
-  completeProfile: (data: { firstName: string; lastName: string; email: string }) => Promise<void>;
+  completeProfile: (data: { firstName: string; lastName: string; email?: string }) => Promise<void>;
 
   /** Sign out */
   signOut: () => Promise<void>;

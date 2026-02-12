@@ -906,7 +906,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           .eq('email', email)
           .limit(1);
 
-        if (!lookupError && existingProfiles && existingProfiles.length > 0) {
+        if (lookupError) {
+          set({
+            errorMessage: getErrorMessage(lookupError, 'Failed to validate email'),
+            isLoading: false,
+          });
+          return;
+        }
+
+        if (existingProfiles && existingProfiles.length > 0) {
           set({
             errorMessage:
               'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
@@ -928,6 +936,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       };
       if (email) {
         updateUserPayload.email = email;
+        updateUserPayload.data.email = email;
       }
 
       const { error } = await supabase.auth.updateUser(updateUserPayload);

@@ -11,15 +11,17 @@ import { formatNumber } from '@/i18n/format';
 
 const RESEND_COOLDOWN = 60; // seconds
 
+type OTPRouteParams = {
+  email?: string;
+  phone?: string;
+  channel?: string;
+  mode?: string;
+};
+
 export default function OTPVerificationScreen() {
   const { t } = useTranslation();
 
-  const { email, phone, channel, mode } = useLocalSearchParams<{
-    email?: string;
-    phone?: string;
-    channel?: string;
-    mode?: string;
-  }>();
+  const { email, phone, channel, mode } = useLocalSearchParams<OTPRouteParams>();
   const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
   const isPhoneOTP = channel === 'phone' && !!phone;
   const identifier = isPhoneOTP ? phone : email;
@@ -220,9 +222,11 @@ export default function OTPVerificationScreen() {
   };
 
   if (!identifier) {
+    const invalidMessage =
+      channel === 'phone' ? t('authPhone.invalidPhone') : t('authOtp.invalidEmail');
     return (
       <View style={errorContainerStyle}>
-        <Text style={errorTextStyle}>{t('authOtp.invalidEmail')}</Text>
+        <Text style={errorTextStyle}>{invalidMessage}</Text>
       </View>
     );
   }
