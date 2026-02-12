@@ -99,6 +99,13 @@ const getEmailDomain = (email: string | undefined | null) => {
   return domain?.trim() || null;
 };
 
+const hasCompletedProfileName = (user: User | null | undefined) =>
+  Boolean(
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.first_name ||
+    user?.user_metadata?.last_name,
+  );
+
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Initial state
   user: null,
@@ -817,12 +824,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
       telemetry.capture('auth_phone_otp_verify_succeeded');
 
-      const isNewUser =
-        !data.user?.email &&
-        !data.user?.user_metadata?.email &&
-        !data.user?.user_metadata?.full_name &&
-        !data.user?.user_metadata?.first_name &&
-        !data.user?.user_metadata?.last_name;
+      const isNewUser = !hasCompletedProfileName(data.user) && !data.user?.email;
 
       if (isNewUser) {
         telemetry.capture('user_signed_up', { method: 'phone' });
@@ -1107,11 +1109,8 @@ export const initAuthListener = () => {
       const currentState = useAuthStore.getState();
       const looksLikeNewPhoneUser =
         Boolean(currentState.pendingOTPPhone) &&
-        !session.user.email &&
-        !session.user.user_metadata?.email &&
-        !session.user.user_metadata?.full_name &&
-        !session.user.user_metadata?.first_name &&
-        !session.user.user_metadata?.last_name;
+        !hasCompletedProfileName(session.user) &&
+        !session.user.email;
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
       useAuthStore.setState((state) => ({
