@@ -3,6 +3,7 @@
  * Deterministic-first query engine: local classification → Supabase fetch → local aggregation → local phrasing
  */
 import { supabase } from '@/lib/supabase';
+import { requireUserId } from '@/lib/auth-utils';
 import i18n from '@/i18n';
 import { TABLES } from '@/types/database';
 import type { Farm } from '@/types/database';
@@ -479,18 +480,9 @@ export function checkUnsupportedIntent(
 // MARK: - Data Fetching
 // ============================================================
 
-async function getUserId(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session) throw new Error('Please sign in to continue');
-  return session.user.id;
-}
-
 async function getFarmNames(farmIds: number[]): Promise<Map<number, string>> {
   if (farmIds.length === 0) return new Map();
-  const userId = await getUserId();
+  const userId = await requireUserId();
   const { data } = await supabase
     .from(TABLES.FARMS)
     .select('id, name')
@@ -514,7 +506,7 @@ function formatDateForQuery(date: Date): string {
 export async function fetchRecordsForIntent(
   intent: QueryIntent,
 ): Promise<{ records: Record<string, unknown>[]; farmNames: Map<number, string> }> {
-  const userId = await getUserId();
+  const userId = await requireUserId();
 
   const buildBaseQuery = (table: string) => {
     let query = supabase.from(table).select('*, farms!inner(name)');

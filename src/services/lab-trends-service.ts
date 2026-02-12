@@ -9,12 +9,10 @@ import { TrendData, ParameterTrend, TestTrendsResponse } from '../types/analytic
 
 export class LabTrendsService {
   static calculateSoilTrends(tests: SoilTestRecord[]): TestTrendsResponse {
-    console.log('calculateSoilTrends called with', tests.length, 'tests');
     return this.calculateTrends(tests, SOIL_PARAMETERS, LabTrendsService.mapSoilParameters);
   }
 
   static calculatePetioleTrends(tests: PetioleTestRecord[]): TestTrendsResponse {
-    console.log('calculatePetioleTrends called with', tests.length, 'tests');
     return this.calculateTrends(tests, PETIOLE_PARAMETERS, LabTrendsService.mapPetioleParameters);
   }
 

@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { requireUserId } from '../lib/auth-utils';
 import { TaskReminder, TaskReminderInsert, TaskReminderUpdate } from '../types/task';
 import { formatLocalDate } from '../utils/date';
 import { resolveSeasonIdForDate } from '../lib/season-context';
@@ -19,18 +20,6 @@ export const taskQueryKeys = {
   listByStatus: (status: string) => [...taskQueryKeys.lists(), { status }] as const,
   detail: (id: number) => [...taskQueryKeys.all, 'detail', id] as const,
 };
-
-// Helper to get user ID
-async function getUserId(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session) {
-    throw new Error('Please sign in to continue');
-  }
-  return session.user.id;
-}
 
 function isMissingPlannedInputsColumnError(
   error: { message?: string; details?: string } | null,
@@ -52,7 +41,7 @@ export function useTasks(farmId?: number, seasonId?: number) {
       ? [...taskQueryKeys.listByFarm(farmId), { seasonId: seasonId ?? null }]
       : [...taskQueryKeys.lists(), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<TaskReminder[]> => {
-      await getUserId(); // Ensure user is logged in
+      await requireUserId(); // Ensure user is logged in
 
       let query = supabase
         .from('task_reminders')
@@ -81,7 +70,7 @@ export function useAllTasks(seasonId?: number) {
   return useQuery({
     queryKey: [...taskQueryKeys.lists(), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<TaskReminder[]> => {
-      await getUserId();
+      await requireUserId();
 
       let query = supabase
         .from('task_reminders')
@@ -107,7 +96,7 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: async (task: TaskReminderInsert): Promise<TaskReminder> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
       const assignmentDate = task.due_date
         ? task.due_date.slice(0, 10)
         : formatLocalDate(new Date());

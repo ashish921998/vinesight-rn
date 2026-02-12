@@ -6,24 +6,10 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { requireUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmUpdate } from '../types';
 import { TABLES, toSupabaseTimestampString } from '../types';
-
-// ============================================================
-// MARK: - Helper to get current user ID
-// ============================================================
-
-async function getUserId(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session) {
-    throw new Error('Please sign in to continue');
-  }
-  return session.user.id;
-}
 
 // ============================================================
 // MARK: - Fetch Farms Query
@@ -36,7 +22,7 @@ export function useFarms() {
   return useQuery({
     queryKey: queryKeys.farms.lists(),
     queryFn: async (): Promise<Farm[]> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.FARMS)
@@ -57,7 +43,7 @@ export function useFarm(id: number | undefined) {
   return useQuery({
     queryKey: queryKeys.farms.detail(id!),
     queryFn: async (): Promise<Farm> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
       const { data, error } = await supabase
         .from(TABLES.FARMS)
         .select('*')
@@ -81,7 +67,7 @@ export function useCreateFarm() {
 
   return useMutation({
     mutationFn: async (farm: FarmInsert): Promise<Farm> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.FARMS)
@@ -113,7 +99,7 @@ export function useUpdateFarm() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: FarmUpdate }): Promise<Farm> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.FARMS)
@@ -190,7 +176,7 @@ export function useDeleteFarm() {
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { error } = await supabase
         .from(TABLES.FARMS)

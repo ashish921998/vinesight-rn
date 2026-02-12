@@ -1,11 +1,13 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { m3 } from '@/styles/theme';
+import { useThemeTokens } from '@/styles/use-theme';
 
 export default function AuthLayout() {
+  const { m3, isDark } = useThemeTokens();
+
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,

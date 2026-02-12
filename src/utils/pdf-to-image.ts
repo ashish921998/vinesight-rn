@@ -29,7 +29,7 @@ export async function extractTextFromPDF(pdfUri: string): Promise<string | null>
 
     return null;
   } catch (error) {
-    console.error('Error extracting text from PDF:', error);
+    if (__DEV__) console.error('Error extracting text from PDF:', error);
     return null;
   }
 }

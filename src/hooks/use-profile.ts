@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { requireUserId } from '../lib/auth-utils';
 import { queryKeys } from './query-keys';
 import {
   TABLES,
@@ -26,21 +27,6 @@ import { formatLocalDate } from '../utils/date';
 import { resolveSeasonIdForDate } from '../lib/season-context';
 
 // ============================================================
-// MARK: - Helper
-// ============================================================
-
-async function getUserId(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session) {
-    throw new Error('Please sign in to continue');
-  }
-  return session.user.id;
-}
-
-// ============================================================
 // MARK: - PROFILE
 // ============================================================
 
@@ -48,7 +34,7 @@ export function useProfile() {
   return useQuery({
     queryKey: queryKeys.profile.current(),
     queryFn: async (): Promise<Profile | null> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.PROFILES)
@@ -71,7 +57,7 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (updates: ProfileUpdate): Promise<Profile> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
       const payload: ProfileUpdate & { id: string } = { ...updates, id: userId };
 
       const { data, error } = await supabase
@@ -97,7 +83,7 @@ export function useWarehouseItems(type?: string) {
   return useQuery({
     queryKey: queryKeys.warehouseItems.listByType(type),
     queryFn: async (): Promise<WarehouseItem[]> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       let query = supabase
         .from(TABLES.WAREHOUSE_ITEMS)
@@ -122,7 +108,7 @@ export function useCreateWarehouseItem() {
 
   return useMutation({
     mutationFn: async (item: WarehouseItemInsert): Promise<WarehouseItem> => {
-      const userId = await getUserId();
+      const userId = await requireUserId();
 
       const { data, error } = await supabase
         .from(TABLES.WAREHOUSE_ITEMS)

@@ -68,7 +68,9 @@ async function readImageAsBase64(uri: string): Promise<string> {
 
     return `data:${mimeType};base64,${base64}`;
   } catch (error) {
-    console.error('Error reading image:', error);
+    if (__DEV__) {
+      console.error('Error reading image:', error);
+    }
     throw new Error('Failed to read image file');
   }
 }
@@ -154,7 +156,7 @@ Pay attention to units and convert if necessary to match the expected units.`,
       notes: parsed.notes,
     };
   } catch (error) {
-    console.error('Error parsing lab test from image:', error);
+    if (__DEV__) console.error('Error parsing lab test from image:', error);
     throw new Error('Failed to parse lab test data from image');
   }
 }
@@ -227,7 +229,7 @@ Pay attention to units and convert if necessary to match the expected units.`,
       notes: parsed.notes,
     };
   } catch (error) {
-    console.error('Error parsing lab test from text:', error);
+    if (__DEV__) console.error('Error parsing lab test from text:', error);
     throw new Error('Failed to parse lab test data from text');
   }
 }
