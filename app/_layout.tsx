@@ -24,6 +24,8 @@ import {
   cancelNotification,
   scheduleDailyWaterReminder,
   scheduleTaskDueReminder,
+  setupAndroidChannel,
+  setupNotificationHandler,
 } from '@/services/notifications';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
@@ -141,6 +143,13 @@ export default Sentry.wrap(function RootLayout() {
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
+
+  useEffect(() => {
+    // Set up notification foreground handler and Android channel early,
+    // before any notifications are scheduled or received.
+    void setupNotificationHandler();
+    void setupAndroidChannel();
+  }, []);
 
   useEffect(() => {
     // Initialize auth state
