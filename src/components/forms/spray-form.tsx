@@ -138,10 +138,11 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
     const clamped = clampChemicalRows(data.chemicals);
     if (clamped.length === data.chemicals.length) return;
     onChange({
-      ...data,
+      waterVolume: data.waterVolume,
+      notes: data.notes,
       chemicals: clamped,
     });
-  }, [data, onChange]);
+  }, [data.chemicals, data.notes, data.waterVolume, onChange]);
 
   const addChemical = () => {
     if (data.chemicals.length < MAX_CHEMICAL_ROWS) {
@@ -179,8 +180,7 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
     const normalizedName = item.name.trim().toLowerCase();
     const alreadyExists = data.chemicals.some(
       (chemical) =>
-        chemical.name.trim().toLowerCase() === normalizedName &&
-        chemical.unit.trim().toLowerCase() === validatedUnit.trim().toLowerCase(),
+        chemical.name.trim().toLowerCase() === normalizedName && chemical.unit === validatedUnit,
     );
     if (alreadyExists) return;
 

@@ -124,7 +124,7 @@ export function FertigationForm({
     const alreadyExists = data.fertilizers.some(
       (fertilizer) =>
         fertilizer.name.trim().toLowerCase() === normalizedName &&
-        fertilizer.unit.trim().toLowerCase() === validatedUnit.trim().toLowerCase(),
+        fertilizer.unit === validatedUnit,
     );
     if (alreadyExists) return;
 
