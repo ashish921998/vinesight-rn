@@ -19,6 +19,13 @@ export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
+export interface PlannedInputItem {
+  name: string;
+  quantity?: number | null;
+  unit?: string | null;
+  source?: 'warehouse' | 'recent' | 'custom' | null;
+}
+
 // Main task interface
 export interface TaskReminder {
   id?: number;
@@ -40,6 +47,7 @@ export interface TaskReminder {
   created_by: string | null;
   linked_record_type: string | null;
   linked_record_id: number | null;
+  planned_inputs?: PlannedInputItem[] | null;
 }
 
 // Insert type (without auto-generated fields)

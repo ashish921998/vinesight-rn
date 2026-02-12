@@ -8,6 +8,8 @@ import { supabase } from '../lib/supabase';
 import { TaskReminder, TaskReminderInsert, TaskReminderUpdate } from '../types/task';
 import { formatLocalDate } from '../utils/date';
 import { resolveSeasonIdForDate } from '../lib/season-context';
+import { encodeTaskPlanInDescription } from '../utils/task-plan';
+import { telemetry } from '../services/telemetry';
 
 // Query keys for tasks
 export const taskQueryKeys = {
@@ -28,6 +30,17 @@ async function getUserId(): Promise<string> {
     throw new Error('Please sign in to continue');
   }
   return session.user.id;
+}
+
+function isMissingPlannedInputsColumnError(
+  error: { message?: string; details?: string } | null,
+  hasPlannedInputs: boolean,
+): boolean {
+  if (!hasPlannedInputs || !error) return false;
+  return (
+    error.message?.includes('planned_inputs') === true ||
+    error.details?.includes('planned_inputs') === true
+  );
 }
 
 /**
@@ -105,18 +118,38 @@ export function useCreateTask() {
           date: assignmentDate,
         }));
 
-      const { data, error } = await supabase
+      const payload = {
+        ...task,
+        season_id: seasonId,
+        created_by: userId,
+      };
+
+      const firstAttempt = await supabase.from('task_reminders').insert(payload).select().single();
+      if (!firstAttempt.error) return firstAttempt.data;
+
+      if (!isMissingPlannedInputsColumnError(firstAttempt.error, 'planned_inputs' in payload)) {
+        throw firstAttempt.error;
+      }
+      telemetry.capture('task_planned_inputs_column_missing', {
+        operation: 'insert',
+      });
+
+      const { planned_inputs: _plannedInputs, ...fallbackPayload } = payload;
+      const encodedDescription = encodeTaskPlanInDescription(
+        fallbackPayload.description,
+        payload.planned_inputs,
+      );
+      const fallbackAttempt = await supabase
         .from('task_reminders')
         .insert({
-          ...task,
-          season_id: seasonId,
-          created_by: userId,
+          ...fallbackPayload,
+          description: encodedDescription,
         })
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (fallbackAttempt.error) throw fallbackAttempt.error;
+      return fallbackAttempt.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
@@ -138,15 +171,39 @@ export function useUpdateTask() {
       id: number;
       updates: TaskReminderUpdate;
     }): Promise<TaskReminder> => {
-      const { data, error } = await supabase
+      const firstAttempt = await supabase
         .from('task_reminders')
         .update(updates)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (!firstAttempt.error) return firstAttempt.data;
+
+      if (!isMissingPlannedInputsColumnError(firstAttempt.error, 'planned_inputs' in updates)) {
+        throw firstAttempt.error;
+      }
+      telemetry.capture('task_planned_inputs_column_missing', {
+        operation: 'update',
+      });
+
+      const { planned_inputs: _plannedInputs, ...fallbackUpdates } = updates;
+      const encodedDescription =
+        'description' in updates
+          ? encodeTaskPlanInDescription(fallbackUpdates.description, updates.planned_inputs)
+          : fallbackUpdates.description;
+      const fallbackAttempt = await supabase
+        .from('task_reminders')
+        .update({
+          ...fallbackUpdates,
+          ...(encodedDescription !== undefined ? { description: encodedDescription } : {}),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (fallbackAttempt.error) throw fallbackAttempt.error;
+      return fallbackAttempt.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });

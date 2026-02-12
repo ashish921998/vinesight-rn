@@ -1,0 +1,201 @@
+import type {
+  ExpenseRecordInsert,
+  FertigationRecordInsert,
+  HarvestRecordInsert,
+  IrrigationRecordInsert,
+  SprayRecordInsert,
+} from '@/types';
+import type { ExpenseTypeId, LogTypeId } from '@/constants/calculator-models';
+import type {
+  ExpenseFormData,
+  FertigationFormData,
+  HarvestFormData,
+  IrrigationFormData,
+  SprayFormData,
+} from '@/components/forms';
+import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
+import { mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
+
+export interface EntryPendingLogSubmission {
+  id: string;
+  type: LogTypeId;
+  data:
+    | IrrigationFormData
+    | SprayFormData
+    | HarvestFormData
+    | ExpenseFormData
+    | FertigationFormData;
+}
+
+export interface EntryLogFarmContext {
+  id: number;
+  area?: number | null;
+  total_tank_capacity?: number | null;
+  system_discharge?: number | null;
+  remaining_water?: number | null;
+  date_of_pruning?: string | null;
+}
+
+export interface EntryLogSubmitters {
+  createIrrigation: (payload: IrrigationRecordInsert) => Promise<{ id?: number | null }>;
+  createSpray: (payload: SprayRecordInsert) => Promise<{ id?: number | null }>;
+  createHarvest: (payload: HarvestRecordInsert) => Promise<{ id?: number | null }>;
+  createExpense: (payload: ExpenseRecordInsert) => Promise<{ id?: number | null }>;
+  createFertigation: (payload: FertigationRecordInsert) => Promise<{ id?: number | null }>;
+  updateWaterLevel: (payload: { farmId: number; remainingWater: number }) => Promise<unknown>;
+}
+
+export interface EntryLogSubmissionResult {
+  pendingLogId: string;
+  type: LogTypeId;
+  recordId: number | null;
+}
+
+export async function submitEntryPendingLog(params: {
+  log: EntryPendingLogSubmission;
+  dateStr: string;
+  farm: EntryLogFarmContext;
+  submitters: EntryLogSubmitters;
+}): Promise<EntryLogSubmissionResult> {
+  const { log, dateStr, farm, submitters } = params;
+  const farmId = farm.id;
+  const farmArea = farm.area ?? 0;
+
+  switch (log.type) {
+    case 'irrigation': {
+      const data = log.data as IrrigationFormData;
+      const duration = data.duration;
+      if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0) {
+        throw new Error('Invalid irrigation duration');
+      }
+      const created = await submitters.createIrrigation({
+        farm_id: farmId,
+        date: dateStr,
+        duration,
+        area: farmArea,
+        growth_stage: '',
+        moisture_status: '',
+        system_discharge: farm.system_discharge ?? 0,
+        date_of_pruning: farm.date_of_pruning,
+      });
+
+      if (
+        farm.total_tank_capacity &&
+        farm.system_discharge &&
+        farm.total_tank_capacity > 0 &&
+        farm.system_discharge > 0
+      ) {
+        const waterAdded = duration * farm.system_discharge;
+        const currentWater = farm.remaining_water ?? 0;
+        const newWaterLevel = Math.min(farm.total_tank_capacity, currentWater + waterAdded);
+        await submitters.updateWaterLevel({
+          farmId,
+          remainingWater: newWaterLevel,
+        });
+      }
+
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+    }
+
+    case 'spray': {
+      const data = log.data as SprayFormData;
+      const chemicalStr = data.chemicals
+        .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
+        .join(', ');
+      const chemicalItems = data.chemicals
+        .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
+        .map((c) => ({
+          name: c.name.trim(),
+          unit: c.unit,
+          quantity: c.quantity!,
+          quantity_basis: c.quantityBasis ?? 'total',
+          warehouse_item_id: c.warehouseItemId ?? null,
+          composition_snapshot: c.compositionSnapshot ?? null,
+          density_kg_per_l: c.densityKgPerL ?? null,
+        }));
+      const nutrientTotals = calculateNutrientTotalsForLog({
+        items: chemicalItems,
+        areaAcre: farmArea,
+        waterVolumeL: data.waterVolume ?? null,
+      });
+      const created = await submitters.createSpray({
+        farm_id: farmId,
+        date: dateStr,
+        chemical: chemicalStr,
+        chemical_items: chemicalItems,
+        dose: `Water: ${data.waterVolume}L`,
+        nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
+        nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
+        nutrient_calc_coverage: nutrientTotals.coveragePercent,
+        area: farmArea,
+        weather: '',
+        operator: '',
+        date_of_pruning: farm.date_of_pruning,
+      });
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+    }
+
+    case 'harvest': {
+      const data = log.data as HarvestFormData;
+      const created = await submitters.createHarvest({
+        farm_id: farmId,
+        date: dateStr,
+        quantity: data.quantity!,
+        grade: data.grade,
+        price: data.price || undefined,
+        buyer: data.buyer || undefined,
+        date_of_pruning: farm.date_of_pruning,
+      });
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+    }
+
+    case 'expense': {
+      const data = log.data as ExpenseFormData;
+      const expenseType = (data.type || 'Other') as ExpenseTypeId;
+      const created = await submitters.createExpense({
+        farm_id: farmId,
+        date: dateStr,
+        type: mapExpenseTypeIdToRecordType(expenseType),
+        cost: data.cost!,
+        date_of_pruning: farm.date_of_pruning,
+        remarks: data.remarks || undefined,
+      });
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+    }
+
+    case 'fertigation': {
+      const data = log.data as FertigationFormData;
+      const fertilizers = data.fertilizers
+        .filter((f) => f.name.trim() && f.quantity !== undefined && f.quantity > 0)
+        .map((f) => ({
+          name: f.name.trim(),
+          unit: f.unit,
+          quantity: f.quantity!,
+          quantity_basis: f.quantityBasis ?? 'total',
+          warehouse_item_id: f.warehouseItemId ?? null,
+          composition_snapshot: f.compositionSnapshot ?? null,
+          density_kg_per_l: f.densityKgPerL ?? null,
+        }));
+      const nutrientTotals = calculateNutrientTotalsForLog({
+        items: fertilizers,
+        areaAcre: farmArea,
+        waterVolumeL: data.waterVolume ?? null,
+      });
+      const created = await submitters.createFertigation({
+        farm_id: farmId,
+        date: dateStr,
+        fertilizers,
+        water_volume: data.waterVolume,
+        nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
+        nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
+        nutrient_calc_coverage: nutrientTotals.coveragePercent,
+        area: farmArea,
+        date_of_pruning: farm.date_of_pruning,
+      });
+      return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
+    }
+
+    case 'note':
+      return { pendingLogId: log.id, type: log.type, recordId: null };
+  }
+}

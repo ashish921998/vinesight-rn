@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
 import { triggerHapticSuccess } from '@/utils/haptics';
+import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
 import {
   IrrigationForm,
   SprayForm,
@@ -49,7 +50,7 @@ import {
   type ExpenseFormData,
   type FertigationFormData,
 } from '@/components/forms';
-import { type LogTypeId } from '@/constants/calculator-models';
+import { type ExpenseTypeId, type LogTypeId } from '@/constants/calculator-models';
 import {
   useUpdateIrrigationRecord,
   useUpdateSprayRecord,
@@ -66,6 +67,7 @@ import type {
   ExpenseRecord,
   FertigationRecord,
 } from '@/types';
+import { mapExpenseRecordTypeToTypeId, mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
 
 function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -207,15 +209,54 @@ export function ActivityEditForm({
             }
           }
 
-          const allowedUnits = ['gm/L', 'ml/L', 'gm/acre', 'ml/acre', 'ppm'] as const;
+          const allowedUnits = [
+            'gm/L',
+            'ml/L',
+            'gm/acre',
+            'ml/acre',
+            'ppm',
+            'kg',
+            'gram',
+            'liter',
+            'ml',
+          ] as const;
           type AllowedUnit = (typeof allowedUnits)[number];
+          const allowedUnitByLowercase = new Map<string, AllowedUnit>(
+            allowedUnits.map((unit) => [unit.toLowerCase(), unit]),
+          );
+          const normalizeLegacySprayUnit = (rawUnit: string): AllowedUnit | null => {
+            const lowered = rawUnit.trim().toLowerCase();
+            if (
+              lowered === 'gm/liter' ||
+              lowered === 'gm/litre' ||
+              lowered === 'gm/l' ||
+              lowered === 'g/l'
+            ) {
+              return 'gm/L';
+            }
+            if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
+              return 'ml/L';
+            }
+            return allowedUnitByLowercase.get(lowered) ?? null;
+          };
 
-          if (r.chemical) {
+          if (r.chemical_items && r.chemical_items.length > 0) {
+            data.chemicals = r.chemical_items.map((item) => ({
+              id: generateId(),
+              name: item.name,
+              quantity: item.quantity ?? 0,
+              unit: (item.unit as SprayFormData['chemicals'][number]['unit']) ?? 'ml/L',
+              quantityBasis: item.quantity_basis ?? 'total',
+              warehouseItemId: item.warehouse_item_id ?? null,
+              compositionSnapshot: item.composition_snapshot ?? null,
+              densityKgPerL: item.density_kg_per_l ?? null,
+            }));
+          } else if (r.chemical) {
             const chemicalParts = r.chemical.split(',').map((part) => part.trim());
             const chemicals = chemicalParts.map((part) => {
               const match = part.match(/(.+?)\s*\((\d+\.?\d*)\s*(.+?)\)/);
               if (match) {
-                const unit = match[3].trim() as AllowedUnit;
+                const unit = normalizeLegacySprayUnit(match[3]);
                 const parsedQuantity = parseFloat(match[2]);
                 if (isNaN(parsedQuantity)) {
                   console.warn('[EditActivityModal] Invalid chemical quantity:', match[2]);
@@ -226,7 +267,7 @@ export function ActivityEditForm({
                     unit: 'ml/L' as const,
                   };
                 }
-                if (!allowedUnits.includes(unit)) {
+                if (!unit) {
                   console.warn('[EditActivityModal] Invalid unit, using default:', match[3]);
                   return {
                     id: generateId(),
@@ -240,6 +281,10 @@ export function ActivityEditForm({
                   name: match[1].trim(),
                   quantity: parsedQuantity,
                   unit,
+                  quantityBasis: 'total' as const,
+                  warehouseItemId: null,
+                  compositionSnapshot: null,
+                  densityKgPerL: null,
                 };
               }
               console.warn('[EditActivityModal] Chemical parsing failed, using defaults:', part);
@@ -248,6 +293,10 @@ export function ActivityEditForm({
                 name: part,
                 quantity: 0,
                 unit: 'ml/L' as const,
+                quantityBasis: 'total' as const,
+                warehouseItemId: null,
+                compositionSnapshot: null,
+                densityKgPerL: null,
               };
             });
             data.chemicals = chemicals;
@@ -276,15 +325,7 @@ export function ActivityEditForm({
         case 'expense': {
           const r = record as ExpenseRecord;
           setExpenseData({
-            type: (r.type || '') as
-              | ''
-              | 'Equipment'
-              | 'Fuel'
-              | 'Seeds/Plants'
-              | 'Packaging'
-              | 'Transport'
-              | 'Maintenance'
-              | 'Other',
+            type: mapExpenseRecordTypeToTypeId(r.type, 'Other'),
             cost: r.cost || 0,
             remarks: r.remarks || '',
           });
@@ -300,7 +341,11 @@ export function ActivityEditForm({
             data.fertilizers = r.fertilizers.map((f) => ({
               name: f.name,
               quantity: f.quantity ?? 0,
-              unit: f.unit as 'kg/acre' | 'liter/acre',
+              unit: f.unit as FertigationFormData['fertilizers'][number]['unit'],
+              quantityBasis: f.quantity_basis ?? 'total',
+              warehouseItemId: f.warehouse_item_id ?? null,
+              compositionSnapshot: f.composition_snapshot ?? null,
+              densityKgPerL: f.density_kg_per_l ?? null,
             }));
           }
           setFertigationData(data);
@@ -343,11 +388,31 @@ export function ActivityEditForm({
             .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
             .join(', ');
           const doseStr = `Water: ${sprayData.waterVolume}L`;
+          const chemicalItems = sprayData.chemicals
+            .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
+            .map((c) => ({
+              name: c.name.trim(),
+              unit: c.unit,
+              quantity: c.quantity!,
+              quantity_basis: c.quantityBasis ?? 'total',
+              warehouse_item_id: c.warehouseItemId ?? null,
+              composition_snapshot: c.compositionSnapshot ?? null,
+              density_kg_per_l: c.densityKgPerL ?? null,
+            }));
+          const nutrientTotals = calculateNutrientTotalsForLog({
+            items: chemicalItems,
+            areaAcre: farm.area ?? 0,
+            waterVolumeL: sprayData.waterVolume ?? null,
+          });
           await updateSpray.mutateAsync({
             id: r.id,
             updates: {
               chemical: chemicalStr,
+              chemical_items: chemicalItems,
               dose: doseStr,
+              nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
+              nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
+              nutrient_calc_coverage: nutrientTotals.coveragePercent,
               date: dateStr,
             },
           });
@@ -378,7 +443,7 @@ export function ActivityEditForm({
           await updateExpense.mutateAsync({
             id: r.id,
             updates: {
-              type: expenseData.type,
+              type: mapExpenseTypeIdToRecordType((expenseData.type || 'Other') as ExpenseTypeId),
               cost: expenseData.cost,
               remarks: expenseData.remarks || undefined,
               date: dateStr,
@@ -391,15 +456,28 @@ export function ActivityEditForm({
           if (r.id == null) {
             throw new Error('Record ID is missing');
           }
+          const fertilizerItems = fertigationData.fertilizers.map((f) => ({
+            name: f.name.trim(),
+            unit: f.unit,
+            quantity: f.quantity ?? 0,
+            quantity_basis: f.quantityBasis ?? 'total',
+            warehouse_item_id: f.warehouseItemId ?? null,
+            composition_snapshot: f.compositionSnapshot ?? null,
+            density_kg_per_l: f.densityKgPerL ?? null,
+          }));
+          const nutrientTotals = calculateNutrientTotalsForLog({
+            items: fertilizerItems,
+            areaAcre: farm.area ?? 0,
+            waterVolumeL: fertigationData.waterVolume ?? null,
+          });
           await updateFertigation.mutateAsync({
             id: r.id,
             updates: {
-              fertilizers: fertigationData.fertilizers.map((f) => ({
-                name: f.name,
-                unit: f.unit,
-                quantity: f.quantity ?? 0,
-              })),
+              fertilizers: fertilizerItems,
               water_volume: fertigationData.waterVolume,
+              nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
+              nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
+              nutrient_calc_coverage: nutrientTotals.coveragePercent,
               date: dateStr,
             },
           });

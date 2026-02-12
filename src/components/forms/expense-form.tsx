@@ -9,6 +9,7 @@ import { formatCurrency } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { EXPENSE_TYPE_ICONS } from '@/utils/expense-icons';
 
 export interface ExpenseFormData {
   type: ExpenseTypeId | '';
@@ -23,17 +24,6 @@ interface ExpenseFormProps {
   onInputFocus?: TextInputProps['onFocus'];
   preferredCurrency?: string;
 }
-
-// Icon mapping for expense types
-const EXPENSE_ICONS: Record<ExpenseTypeId, string> = {
-  Equipment: 'wrench.and.screwdriver',
-  Fuel: 'car',
-  'Seeds/Plants': 'leaf',
-  Packaging: 'cube',
-  Transport: 'bus',
-  Maintenance: 'hammer',
-  Other: 'ellipsis',
-};
 
 export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
   const colors = useThemeColors();
@@ -129,7 +119,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
               }}
             >
               <SymbolIcon
-                name={EXPENSE_ICONS[type]}
+                name={EXPENSE_TYPE_ICONS[type]}
                 size={16}
                 color={data.type === type ? m3.colorScheme.error : colors.surface[500]}
                 style={{ marginRight: 6 }}
@@ -222,7 +212,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <SymbolIcon
-                name={data.type ? EXPENSE_ICONS[data.type] : 'dollarsign.circle.fill'}
+                name={data.type ? EXPENSE_TYPE_ICONS[data.type] : 'dollarsign.circle.fill'}
                 size={20}
                 color={m3.colorScheme.error}
               />

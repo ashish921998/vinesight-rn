@@ -44,6 +44,7 @@ import type {
   ExpenseRecord,
   FertigationRecord,
 } from '@/types';
+import type { TaskReminder } from '@/types/task';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
@@ -53,6 +54,7 @@ import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from '@/utils/haptics';
 import { getSeasonTemplatesForCrop } from '@/constants/season-templates';
+import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 
 // Workboard action type
 interface WorkboardAction {
@@ -798,6 +800,36 @@ export default function FarmDetailScreen() {
         },
       },
     ]);
+  };
+
+  const handleLogFromTask = (task: TaskReminder) => {
+    if (!task.id || (task.type !== 'spray' && task.type !== 'fertigation')) return;
+    const planned =
+      task.planned_inputs && task.planned_inputs.length > 0
+        ? task.planned_inputs
+        : decodeTaskPlanFromDescription(task.description);
+    setAddEntry({
+      tabs: ['log'],
+      initialTab: 'log',
+      initialFarmId: task.farm_id,
+      initialLogType: task.type,
+      sourceTaskId: task.id,
+      logPrefill:
+        task.type === 'spray'
+          ? { sprayChemicals: planned }
+          : {
+              fertigationItems: planned,
+            },
+    });
+    router.push({
+      pathname: '/add-entry',
+      params: {
+        tabs: 'log',
+        initialTab: 'log',
+        farmId: String(task.farm_id),
+        initialLogType: task.type,
+      },
+    });
   };
 
   const handleDeleteFarm = () => {
@@ -1797,6 +1829,7 @@ export default function FarmDetailScreen() {
                           if (!item.id) return;
                           handleDeleteTask(item.id, item.title);
                         }}
+                        onLogFromTask={(item) => handleLogFromTask(item)}
                       />
                     ))}
                   </View>

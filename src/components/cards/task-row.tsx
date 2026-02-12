@@ -15,6 +15,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { triggerHaptic, triggerHapticWarning } from '@/utils/haptics';
+import { stripTaskPlanFromDescription } from '@/utils/task-plan';
 
 interface TaskRowProps {
   task: TaskReminder;
@@ -23,6 +24,7 @@ interface TaskRowProps {
   onComplete?: (task: TaskReminder) => void;
   onEdit?: (task: TaskReminder) => void;
   onDelete?: (task: TaskReminder) => void;
+  onLogFromTask?: (task: TaskReminder) => void;
 }
 
 const startOfDay = (date: Date) => {
@@ -38,11 +40,13 @@ export function TaskRow({
   onComplete,
   onEdit,
   onDelete,
+  onLogFromTask,
 }: TaskRowProps) {
   const { t } = useTranslation();
   const m3 = useM3();
   const typeInfo = TASK_TYPE_INFO[task.type];
   const priorityInfo = PRIORITY_INFO[task.priority];
+  const cleanDescription = stripTaskPlanFromDescription(task.description);
 
   const today = startOfDay(new Date());
   const dueDate = task.due_date ? new Date(task.due_date) : null;
@@ -155,7 +159,7 @@ export function TaskRow({
             </Text>
           </View>
 
-          {task.description && (
+          {cleanDescription && (
             <Text
               style={{
                 fontSize: fontSize.sm,
@@ -164,7 +168,7 @@ export function TaskRow({
               }}
               numberOfLines={2}
             >
-              {task.description}
+              {cleanDescription}
             </Text>
           )}
 
@@ -244,6 +248,32 @@ export function TaskRow({
                 {t(priorityInfo.labelKey)}
               </Text>
             </View>
+
+            {!task.completed &&
+            (task.type === 'spray' || task.type === 'fertigation') &&
+            onLogFromTask ? (
+              <Pressable
+                onPress={() => onLogFromTask(task)}
+                style={{
+                  marginTop: spacing[2],
+                  alignSelf: 'flex-start',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.medium,
+                    color: m3.colorScheme.primary,
+                  }}
+                >
+                  {t('tasks.logNow')}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
 

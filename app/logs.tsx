@@ -45,6 +45,7 @@ import type {
 } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { getExpenseIconName } from '@/utils/expense-icons';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 
 interface CombinedLog {
@@ -954,6 +955,13 @@ export default function LogsScreen() {
                   <View style={{ gap: spacing[3] }}>
                     {paginatedLogs.map((log) => {
                       const logType = LOG_TYPES.find((lt) => lt.id === log.type);
+                      const iconName =
+                        log.type === 'expense'
+                          ? getExpenseIconName(
+                              (log.data as ExpenseRecord | undefined)?.type,
+                              resolveSymbolIconName(logType?.icon),
+                            )
+                          : resolveSymbolIconName(logType?.icon);
                       const parsedDate = new Date(log.date);
                       return (
                         <View
@@ -985,7 +993,7 @@ export default function LogsScreen() {
                               }}
                             >
                               <UiSymbol
-                                name={resolveSymbolIconName(logType?.icon)}
+                                name={iconName}
                                 size={20}
                                 color={logType?.color || m3.colorScheme.primary}
                               />

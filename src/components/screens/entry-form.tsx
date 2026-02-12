@@ -24,6 +24,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/ui/app-icon';
+import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,7 @@ import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
+import { resolveSymbolIconName } from '@/constants/icon-registry';
 
 import {
   IrrigationForm,
@@ -48,6 +50,8 @@ import {
   createEmptyHarvestFormData,
   createEmptyExpenseFormData,
   createEmptyFertigationFormData,
+  type SprayQuickAddItem,
+  type FertigationQuickAddItem,
   type IrrigationFormData,
   type SprayFormData,
   type HarvestFormData,
@@ -58,7 +62,6 @@ import {
   LOG_TYPES,
   type LogTypeId,
   HARVEST_GRADES,
-  EXPENSE_TYPES,
   CHEMICAL_UNITS,
   FERTILIZER_UNITS,
 } from '@/constants/calculator-models';
@@ -70,6 +73,9 @@ import {
   useCreateFertigationRecord,
   useUpdateFarmWaterLevel,
   useFarms,
+  useWarehouseItems,
+  useRecentSprayChemicals,
+  useRecentFertigationItems,
   queryKeys,
 } from '@/hooks';
 import { useCreateTask, useUpdateTask } from '@/hooks/use-tasks';
@@ -78,6 +84,7 @@ import {
   TaskType,
   TaskPriority,
   TaskTemplate,
+  PlannedInputItem,
   TASK_TYPE_INFO,
   PRIORITY_INFO,
 } from '@/types/task';
@@ -87,11 +94,19 @@ import type { Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useNotificationStore } from '@/stores';
+import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
+import { getExpenseIconName } from '@/utils/expense-icons';
+import { submitEntryPendingLog } from '@/utils/entry-log-submission';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
   cancelNotification,
 } from '@/services/notifications';
+import {
+  decodeTaskPlanFromDescription,
+  encodeTaskPlanInDescription,
+  stripTaskPlanFromDescription,
+} from '@/utils/task-plan';
 
 type EntryTab = 'log' | 'task';
 
@@ -103,6 +118,11 @@ interface EntryFormProps {
   farm?: Farm;
   initialFarmId?: number | null;
   initialLogType?: LogTypeId | null;
+  initialLogPrefill?: {
+    sprayChemicals?: PlannedInputItem[];
+    fertigationItems?: PlannedInputItem[];
+  } | null;
+  sourceTaskId?: number | null;
   initialIrrigationDurationHours?: number | null;
   initialLogDate?: string | null;
   initialVoiceLogPrefill?: VoiceLogFormPrefill | null;
@@ -123,6 +143,7 @@ interface PendingLog {
     | ExpenseFormData
     | FertigationFormData;
   displayDescription: string;
+  isSourceTaskLog?: boolean;
 }
 
 const ACTIVITY_TYPES = LOG_TYPES.filter((lt) => lt.id !== 'note');
@@ -139,6 +160,43 @@ const TASK_TYPES: TaskType[] = [
 ];
 
 const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
+
+function isValidChemicalUnit(unit: string): unit is SprayFormData['chemicals'][number]['unit'] {
+  return CHEMICAL_UNITS.includes(unit as SprayFormData['chemicals'][number]['unit']);
+}
+
+function isValidFertilizerUnit(
+  unit: string,
+): unit is FertigationFormData['fertilizers'][number]['unit'] {
+  return FERTILIZER_UNITS.includes(unit as FertigationFormData['fertilizers'][number]['unit']);
+}
+
+function normalizeFertigationDoseUnit(unit: string): string {
+  const normalized = unit.trim().toLowerCase();
+  if (normalized === 'litre/acre') return 'liter/acre';
+  if (normalized === 'litre') return 'liter';
+  return unit.trim();
+}
+
+function normalizePlannedInputs(items: PlannedInputItem[]): PlannedInputItem[] {
+  const deduped = new Map<string, PlannedInputItem>();
+  for (const item of items) {
+    const name = item.name.trim();
+    if (!name) continue;
+    const unit = item.unit?.trim() || null;
+    const quantity =
+      typeof item.quantity === 'number' && Number.isFinite(item.quantity) ? item.quantity : null;
+    const key = `${name.toLowerCase()}::${(unit ?? '').toLowerCase()}`;
+    if (deduped.has(key)) continue;
+    deduped.set(key, {
+      name,
+      unit,
+      quantity,
+      source: item.source ?? null,
+    });
+  }
+  return Array.from(deduped.values());
+}
 
 function parseInitialLogDate(value?: string | null): Date | null {
   if (!value) return null;
@@ -164,6 +222,8 @@ export function EntryForm({
   farm,
   initialFarmId,
   initialLogType,
+  initialLogPrefill,
+  sourceTaskId,
   initialIrrigationDurationHours,
   initialLogDate,
   initialVoiceLogPrefill,
@@ -189,6 +249,10 @@ export function EntryForm({
   const defaultTab = resolvedTabs.includes(initialTab || 'log')
     ? initialTab || resolvedTabs[0]
     : resolvedTabs[0];
+  const sourceTaskType: LogTypeId | null =
+    sourceTaskId && (initialLogType === 'spray' || initialLogType === 'fertigation')
+      ? initialLogType
+      : null;
   const parsedInitialLogDate = useMemo(() => parseInitialLogDate(initialLogDate), [initialLogDate]);
   const [activeTab, setActiveTab] = useState<EntryTab>(defaultTab);
 
@@ -200,6 +264,11 @@ export function EntryForm({
   const [showTaskFarmPicker, setShowTaskFarmPicker] = useState(false);
 
   const activeFarm = farm ?? farms?.find((f) => f.id === selectedFarmId) ?? null;
+  const logFarmId = activeFarm?.id;
+  const { data: sprayWarehouseItems } = useWarehouseItems('spray');
+  const { data: fertilizerWarehouseItems } = useWarehouseItems('fertilizer');
+  const { data: recentSprayChemicals } = useRecentSprayChemicals(logFarmId ?? undefined);
+  const { data: recentFertigationItems } = useRecentFertigationItems(logFarmId ?? undefined);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -237,6 +306,86 @@ export function EntryForm({
   const [fertigationData, setFertigationData] = useState<FertigationFormData>(
     createEmptyFertigationFormData(),
   );
+  const [taskPlannedInputs, setTaskPlannedInputs] = useState<PlannedInputItem[]>([]);
+  const [plannedItemName, setPlannedItemName] = useState('');
+  const [plannedItemQty, setPlannedItemQty] = useState('');
+  const [plannedItemUnit, setPlannedItemUnit] = useState('');
+
+  const sprayQuickAddItems = useMemo<SprayQuickAddItem[]>(() => {
+    const byWarehouse = (sprayWarehouseItems ?? []).map((item) => ({
+      name: item.name,
+      unit: undefined,
+      quantity: null,
+      quantityBasis: undefined,
+      warehouseItemId: item.id ?? null,
+      composition: item.composition ?? null,
+      densityKgPerL: item.density_kg_per_l ?? null,
+    }));
+    const byRecent = (recentSprayChemicals ?? []).map((item) => ({
+      name: item.name,
+      unit: item.unit,
+      quantity: item.quantity ?? null,
+      quantityBasis: undefined,
+    }));
+    const deduped = new Map<string, SprayQuickAddItem>();
+    [...byWarehouse, ...byRecent].forEach((item) => {
+      const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
+      const existing = deduped.get(key);
+      if (!existing) {
+        deduped.set(key, item);
+        return;
+      }
+      if (
+        (existing.quantity === null || existing.quantity === undefined) &&
+        item.quantity != null
+      ) {
+        deduped.set(key, {
+          ...existing,
+          quantity: item.quantity,
+          quantityBasis: item.quantityBasis ?? existing.quantityBasis,
+        });
+      }
+    });
+    return Array.from(deduped.values()).slice(0, 15);
+  }, [sprayWarehouseItems, recentSprayChemicals]);
+
+  const fertigationQuickAddItems = useMemo<FertigationQuickAddItem[]>(() => {
+    const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
+      name: item.name,
+      unit: normalizeFertigationDoseUnit(item.unit),
+      quantity: null,
+      quantityBasis: undefined,
+      warehouseItemId: item.id ?? null,
+      composition: item.composition ?? null,
+      densityKgPerL: item.density_kg_per_l ?? null,
+    }));
+    const byRecent = (recentFertigationItems ?? []).map((item) => ({
+      name: item.name,
+      unit: item.unit,
+      quantity: item.quantity ?? null,
+      quantityBasis: undefined,
+    }));
+    const deduped = new Map<string, FertigationQuickAddItem>();
+    [...byWarehouse, ...byRecent].forEach((item) => {
+      const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
+      const existing = deduped.get(key);
+      if (!existing) {
+        deduped.set(key, item);
+        return;
+      }
+      if (
+        (existing.quantity === null || existing.quantity === undefined) &&
+        item.quantity != null
+      ) {
+        deduped.set(key, {
+          ...existing,
+          quantity: item.quantity,
+          quantityBasis: item.quantityBasis ?? existing.quantityBasis,
+        });
+      }
+    });
+    return Array.from(deduped.values()).slice(0, 15);
+  }, [fertilizerWarehouseItems, recentFertigationItems]);
 
   const createIrrigation = useCreateIrrigationRecord();
   const createSpray = useCreateSprayRecord();
@@ -292,8 +441,40 @@ export function EntryForm({
     if (isVisible && initialLogType) {
       setSelectedLogType(initialLogType);
       setShowLogFormModal(true);
+      if (initialLogType === 'spray' && initialLogPrefill?.sprayChemicals?.length) {
+        setSprayData({
+          waterVolume: undefined,
+          chemicals: initialLogPrefill.sprayChemicals.map((item) => {
+            const normalizedUnit = item.unit?.trim();
+            const unit =
+              normalizedUnit && isValidChemicalUnit(normalizedUnit) ? normalizedUnit : 'gm/L';
+            return {
+              id: `chem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+              name: item.name,
+              quantity: item.quantity ?? undefined,
+              unit,
+            };
+          }),
+        });
+      }
+      if (initialLogType === 'fertigation' && initialLogPrefill?.fertigationItems?.length) {
+        setFertigationData({
+          waterVolume: undefined,
+          fertilizers: initialLogPrefill.fertigationItems.map((item) => {
+            const normalizedUnit = item.unit?.trim();
+            const unit =
+              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg/acre';
+            return {
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              name: item.name,
+              quantity: item.quantity ?? 0,
+              unit,
+            };
+          }),
+        });
+      }
     }
-  }, [isVisible, initialLogType]);
+  }, [isVisible, initialLogType, initialLogPrefill]);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -368,11 +549,7 @@ export function EntryForm({
       }
       case 'expense': {
         const expensePrefill = initialVoiceLogPrefill.expense;
-        const expenseType =
-          expensePrefill?.expenseType &&
-          EXPENSE_TYPES.includes(expensePrefill.expenseType as (typeof EXPENSE_TYPES)[number])
-            ? (expensePrefill.expenseType as (typeof EXPENSE_TYPES)[number])
-            : '';
+        const expenseType = mapExpenseRecordTypeToTypeId(expensePrefill?.expenseType, '');
         setExpenseData({
           type: expenseType,
           cost: expensePrefill?.cost ?? undefined,
@@ -496,9 +673,18 @@ export function EntryForm({
       type: selectedLogType,
       data,
       displayDescription: getLogDescription(selectedLogType, data),
+      isSourceTaskLog: false,
     };
 
-    setPendingLogs((prev) => [...prev, newLog]);
+    setPendingLogs((prev) => {
+      const shouldMarkSourceTaskLog = Boolean(
+        sourceTaskId &&
+        sourceTaskType &&
+        selectedLogType === sourceTaskType &&
+        !prev.some((log) => log.isSourceTaskLog),
+      );
+      return [...prev, { ...newLog, isSourceTaskLog: shouldMarkSourceTaskLog }];
+    });
     setSelectedLogType(null);
     setShowLogFormModal(false);
   }, [
@@ -509,6 +695,8 @@ export function EntryForm({
     harvestData,
     expenseData,
     fertigationData,
+    sourceTaskId,
+    sourceTaskType,
     getLogDescription,
   ]);
 
@@ -528,99 +716,29 @@ export function EntryForm({
     }
 
     try {
-      const saveLog = async (log: (typeof pendingLogs)[number]) => {
-        switch (log.type) {
-          case 'irrigation': {
-            const data = log.data as IrrigationFormData;
-            await createIrrigation.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              duration: data.duration!,
-              area: activeFarm.area ?? 0,
-              growth_stage: '',
-              moisture_status: '',
-              system_discharge: activeFarm.system_discharge ?? 0,
-              date_of_pruning: activeFarm.date_of_pruning,
-            });
-
-            if (
-              activeFarm.total_tank_capacity &&
-              activeFarm.system_discharge &&
-              activeFarm.total_tank_capacity > 0 &&
-              activeFarm.system_discharge > 0
-            ) {
-              const waterAdded = data.duration! * activeFarm.system_discharge;
-              const currentWater = activeFarm.remaining_water ?? 0;
-              const newWaterLevel = Math.min(
-                activeFarm.total_tank_capacity,
-                currentWater + waterAdded,
-              );
-              await updateWaterLevel.mutateAsync({
-                farmId,
-                remainingWater: newWaterLevel,
-              });
-            }
-            break;
-          }
-          case 'spray': {
-            const data = log.data as SprayFormData;
-            const chemicalStr = data.chemicals
-              .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
-              .join(', ');
-            await createSpray.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              chemical: chemicalStr,
-              dose: `Water: ${data.waterVolume}L`,
-              area: activeFarm.area ?? 0,
-              weather: '',
-              operator: '',
-              date_of_pruning: activeFarm.date_of_pruning,
-            });
-            break;
-          }
-          case 'harvest': {
-            const data = log.data as HarvestFormData;
-            await createHarvest.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              quantity: data.quantity!,
-              grade: data.grade,
-              price: data.price || undefined,
-              buyer: data.buyer || undefined,
-              date_of_pruning: activeFarm.date_of_pruning,
-            });
-            break;
-          }
-          case 'expense': {
-            const data = log.data as ExpenseFormData;
-            await createExpense.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              type: data.type,
-              cost: data.cost!,
-              date_of_pruning: activeFarm.date_of_pruning,
-              remarks: data.remarks || undefined,
-            });
-            break;
-          }
-          case 'fertigation': {
-            const data = log.data as FertigationFormData;
-            await createFertigation.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              fertilizers: data.fertilizers.map((f) => ({
-                name: f.name,
-                unit: f.unit,
-                quantity: f.quantity!,
-              })),
-              water_volume: data.waterVolume,
-              area: activeFarm.area ?? 0,
-              date_of_pruning: activeFarm.date_of_pruning,
-            });
-            break;
-          }
-        }
+      const saveLog = async (
+        log: (typeof pendingLogs)[number],
+      ): Promise<{ pendingLogId: string; type: LogTypeId; recordId: number | null }> => {
+        return submitEntryPendingLog({
+          log,
+          dateStr,
+          farm: {
+            id: farmId,
+            area: activeFarm.area,
+            total_tank_capacity: activeFarm.total_tank_capacity,
+            system_discharge: activeFarm.system_discharge,
+            remaining_water: activeFarm.remaining_water,
+            date_of_pruning: activeFarm.date_of_pruning,
+          },
+          submitters: {
+            createIrrigation: async (payload) => createIrrigation.mutateAsync(payload),
+            createSpray: async (payload) => createSpray.mutateAsync(payload),
+            createHarvest: async (payload) => createHarvest.mutateAsync(payload),
+            createExpense: async (payload) => createExpense.mutateAsync(payload),
+            createFertigation: async (payload) => createFertigation.mutateAsync(payload),
+            updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
+          },
+        });
       };
 
       const results = await Promise.allSettled(pendingLogs.map((log) => saveLog(log)));
@@ -628,6 +746,30 @@ export function EntryForm({
         .filter((_, index) => results[index]?.status === 'fulfilled')
         .map((log) => log.id);
       const failedCount = results.filter((result) => result.status === 'rejected').length;
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const failedLog = pendingLogs[index];
+          console.error('Failed to save pending log', {
+            pendingLogId: failedLog?.id ?? null,
+            logType: failedLog?.type ?? null,
+            error: result.reason,
+          });
+        }
+      });
+      const sourceTaskLogId = pendingLogs.find((log) => log.isSourceTaskLog)?.id;
+      const matchingSuccessfulRecord =
+        sourceTaskLogId === undefined
+          ? null
+          : results.find(
+              (
+                result,
+              ): result is PromiseFulfilledResult<{
+                pendingLogId: string;
+                type: LogTypeId;
+                recordId: number | null;
+              }> => result.status === 'fulfilled' && result.value.pendingLogId === sourceTaskLogId,
+            )?.value;
+      let taskCompletionUpdateFailed = false;
 
       if (successfulIds.length > 0) {
         const createdFrom = entrySource === 'voice_ai' ? 'voice_ai' : 'manual';
@@ -661,6 +803,29 @@ export function EntryForm({
             }
           });
         setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
+
+        if (
+          sourceTaskId &&
+          matchingSuccessfulRecord &&
+          matchingSuccessfulRecord.recordId !== null
+        ) {
+          try {
+            await updateTask.mutateAsync({
+              id: sourceTaskId,
+              updates: {
+                status: 'completed',
+                completed: true,
+                completed_at: new Date().toISOString(),
+                linked_record_type: matchingSuccessfulRecord.type,
+                linked_record_id: matchingSuccessfulRecord.recordId,
+              },
+            });
+          } catch (taskUpdateError) {
+            taskCompletionUpdateFailed = true;
+            console.error('Task completion update failed after log save:', taskUpdateError);
+          }
+        }
+
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
         triggerHapticSuccess();
         onLogSaveSuccess?.();
@@ -674,6 +839,10 @@ export function EntryForm({
             : t('entryForm.partialSuccess.body_other', { count: failedCount }),
         );
         return;
+      }
+
+      if (taskCompletionUpdateFailed) {
+        Alert.alert(t('common.error'), t('entryForm.taskCompletionLinkFailed'));
       }
 
       onClose();
@@ -718,6 +887,10 @@ export function EntryForm({
     setShowTypePicker(false);
     setShowPriorityPicker(false);
     setShowTemplates(false);
+    setTaskPlannedInputs([]);
+    setPlannedItemName('');
+    setPlannedItemQty('');
+    setPlannedItemUnit('');
   }, []);
 
   useEffect(() => {
@@ -733,13 +906,22 @@ export function EntryForm({
     if (shouldUpdate) {
       if (editingTask) {
         setTitle(editingTask.title);
-        setDescription(editingTask.description || '');
+        setDescription(stripTaskPlanFromDescription(editingTask.description || ''));
         setType(editingTask.type);
         setPriority(editingTask.priority);
         setTaskFarmId(editingTask.farm_id);
         setDueDate(editingTask.due_date || '');
+        setTaskPlannedInputs(
+          editingTask.planned_inputs && editingTask.planned_inputs.length > 0
+            ? editingTask.planned_inputs
+            : decodeTaskPlanFromDescription(editingTask.description || ''),
+        );
       } else {
         resetTaskForm();
+        setTaskPlannedInputs([]);
+        setPlannedItemName('');
+        setPlannedItemQty('');
+        setPlannedItemUnit('');
         if (farm?.id) {
           setTaskFarmId(farm.id);
         } else if (initialFarmId) {
@@ -765,6 +947,62 @@ export function EntryForm({
     setShowTemplates(false);
   };
 
+  useEffect(() => {
+    if (type !== 'spray' && type !== 'fertigation' && taskPlannedInputs.length > 0) {
+      setTaskPlannedInputs([]);
+    }
+  }, [type, taskPlannedInputs.length]);
+
+  const taskPlanningSuggestions = useMemo<PlannedInputItem[]>(() => {
+    if (type === 'spray') {
+      return sprayQuickAddItems.map((item) => ({
+        name: item.name,
+        unit: item.unit ?? 'gm/L',
+        quantity: item.quantity ?? null,
+        source: 'recent',
+      }));
+    }
+    if (type === 'fertigation') {
+      return fertigationQuickAddItems.map((item) => ({
+        name: item.name,
+        unit: item.unit ?? 'kg/acre',
+        quantity: item.quantity ?? null,
+        source: 'recent',
+      }));
+    }
+    return [];
+  }, [type, sprayQuickAddItems, fertigationQuickAddItems]);
+
+  const addTaskPlannedInput = useCallback((input: PlannedInputItem) => {
+    if (!input.name.trim()) return;
+    setTaskPlannedInputs((prev) => {
+      const key = `${input.name.trim().toLowerCase()}::${(input.unit ?? '').trim().toLowerCase()}`;
+      const exists = prev.some(
+        (item) =>
+          `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}` === key,
+      );
+      if (exists) return prev;
+      return [...prev, input];
+    });
+  }, []);
+
+  const removeTaskPlannedInput = useCallback((index: number) => {
+    setTaskPlannedInputs((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+  }, []);
+
+  const addCustomTaskPlannedInput = useCallback(() => {
+    const quantityValue = plannedItemQty.trim() ? Number(plannedItemQty) : null;
+    addTaskPlannedInput({
+      name: plannedItemName.trim(),
+      unit: plannedItemUnit.trim() || (type === 'spray' ? 'gm/L' : 'kg/acre'),
+      quantity: Number.isFinite(quantityValue) ? quantityValue : null,
+      source: 'custom',
+    });
+    setPlannedItemName('');
+    setPlannedItemQty('');
+    setPlannedItemUnit('');
+  }, [addTaskPlannedInput, plannedItemName, plannedItemQty, plannedItemUnit, type]);
+
   const isTaskValid = Boolean(title.trim() && (farm?.id || taskFarmId));
   const isTaskSaving = createTask.isPending || updateTask.isPending;
 
@@ -779,10 +1017,14 @@ export function EntryForm({
       return;
     }
 
+    const normalizedPlannedInputs =
+      type === 'spray' || type === 'fertigation' ? normalizePlannedInputs(taskPlannedInputs) : [];
+    const taskDescription = encodeTaskPlanInDescription(description, normalizedPlannedInputs);
+
     const taskData = {
       farm_id: resolvedFarmId,
       title: title.trim(),
-      description: description.trim() || null,
+      description: taskDescription,
       type,
       status: 'pending' as const,
       priority,
@@ -795,6 +1037,7 @@ export function EntryForm({
       created_by: null,
       linked_record_type: null,
       linked_record_id: null,
+      planned_inputs: normalizedPlannedInputs,
     };
 
     let savedTask: TaskReminder | null = null;
@@ -862,7 +1105,8 @@ export function EntryForm({
 
   const handleClose = () => {
     const hasUnsavedTaskChanges =
-      activeTab === 'task' && (title.trim() || description.trim() || dueDate);
+      activeTab === 'task' &&
+      (title.trim() || description.trim() || dueDate || taskPlannedInputs.length > 0);
 
     if (pendingLogs.length > 0 || hasUnsavedTaskChanges) {
       Alert.alert(
@@ -1064,7 +1308,12 @@ export function EntryForm({
           />
         )}
         {selectedLogType === 'spray' && (
-          <SprayForm data={sprayData} onChange={setSprayData} onInputFocus={scrollToFocusedInput} />
+          <SprayForm
+            data={sprayData}
+            onChange={setSprayData}
+            onInputFocus={scrollToFocusedInput}
+            quickAddItems={sprayQuickAddItems}
+          />
         )}
         {selectedLogType === 'harvest' && (
           <HarvestForm
@@ -1085,6 +1334,7 @@ export function EntryForm({
             data={fertigationData}
             onChange={setFertigationData}
             onInputFocus={scrollToFocusedInput}
+            quickAddItems={fertigationQuickAddItems}
           />
         )}
 
@@ -1305,6 +1555,13 @@ export function EntryForm({
         </Text>
         {pendingLogs.map((log) => {
           const logType = LOG_TYPES.find((lt) => lt.id === log.type);
+          const iconName =
+            log.type === 'expense'
+              ? getExpenseIconName(
+                  (log.data as ExpenseFormData | undefined)?.type,
+                  resolveSymbolIconName(logType?.icon),
+                )
+              : resolveSymbolIconName(logType?.icon);
           return (
             <View
               key={log.id}
@@ -1329,7 +1586,11 @@ export function EntryForm({
                   backgroundColor: `${logType?.color}15`,
                 }}
               >
-                <AppIcon name={logType?.icon ?? 'document-text'} size={18} color={logType?.color} />
+                <UiSymbol
+                  name={iconName}
+                  size={18}
+                  color={logType?.color ?? m3.colorScheme.primary}
+                />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text
@@ -1880,6 +2141,176 @@ export function EntryForm({
         </View>
       </View>
 
+      {(type === 'spray' || type === 'fertigation') && (
+        <View
+          style={{
+            backgroundColor: colors.surface[100],
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+          }}
+        >
+          <Text
+            selectable
+            style={{
+              fontSize: 14,
+              fontWeight: '600',
+              color: m3.colorScheme.onSurface,
+              marginBottom: 10,
+            }}
+          >
+            {type === 'spray'
+              ? t('entryForm.plannedSprayInputs')
+              : t('entryForm.plannedFertilizers')}
+          </Text>
+
+          {taskPlanningSuggestions.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginBottom: 12 }}
+            >
+              {taskPlanningSuggestions.map((item, index) => (
+                <Pressable
+                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  onPress={() => addTaskPlannedInput(item)}
+                  style={{
+                    marginRight: 8,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 999,
+                    backgroundColor: colors.surface[50],
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                  }}
+                >
+                  <Text style={{ fontSize: 12, color: m3.colorScheme.onSurface }}>{item.name}</Text>
+                  <Text style={{ fontSize: 11, color: m3.colorScheme.onSurfaceVariant }}>
+                    {item.quantity ? `${item.quantity} ` : ''}
+                    {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg/acre')}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+            <TextInput
+              value={plannedItemName}
+              onChangeText={setPlannedItemName}
+              placeholder={t('entryForm.plannedItemNamePlaceholder')}
+              style={{
+                flex: 2,
+                backgroundColor: colors.surface[50],
+                borderRadius: 10,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+                color: m3.colorScheme.onSurface,
+              }}
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            />
+            <TextInput
+              value={plannedItemQty}
+              onChangeText={setPlannedItemQty}
+              placeholder={t('entryForm.plannedItemQtyPlaceholder')}
+              keyboardType="decimal-pad"
+              style={{
+                flex: 1,
+                backgroundColor: colors.surface[50],
+                borderRadius: 10,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+                color: m3.colorScheme.onSurface,
+              }}
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            />
+            <TextInput
+              value={plannedItemUnit}
+              onChangeText={setPlannedItemUnit}
+              placeholder={type === 'spray' ? t('units.gmPerLiter') : t('units.kgPerAcre')}
+              style={{
+                flex: 1,
+                backgroundColor: colors.surface[50],
+                borderRadius: 10,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                borderWidth: 1,
+                borderColor: colors.surface[200],
+                color: m3.colorScheme.onSurface,
+              }}
+              placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+            />
+            <Pressable
+              onPress={addCustomTaskPlannedInput}
+              disabled={!plannedItemName.trim()}
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: 10,
+                borderRadius: 10,
+                backgroundColor: plannedItemName.trim()
+                  ? m3.colorScheme.primary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+              }}
+            >
+              <AppIcon
+                name="plus"
+                size={16}
+                color={
+                  plannedItemName.trim()
+                    ? m3.colorScheme.onPrimary
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+                }
+              />
+            </Pressable>
+          </View>
+
+          {taskPlannedInputs.length > 0 && (
+            <View style={{ gap: 6 }}>
+              {taskPlannedInputs.map((item, index) => (
+                <View
+                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: colors.surface[50],
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                    paddingHorizontal: 10,
+                    paddingVertical: 8,
+                  }}
+                >
+                  <View>
+                    <Text style={{ fontSize: 13, color: m3.colorScheme.onSurface }}>
+                      {item.name}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
+                      {item.quantity ? `${item.quantity} ` : ''}
+                      {item.unit ?? ''}
+                    </Text>
+                  </View>
+                  <Pressable onPress={() => removeTaskPlannedInput(index)}>
+                    <AppIcon
+                      name="close-circle"
+                      size={18}
+                      color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                    />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+
       <View style={{ marginBottom: 16 }}>
         <Text
           selectable
@@ -2074,8 +2505,14 @@ export function EntryForm({
             <View style={{ flex: 1, alignItems: 'center' }}>
               <Text
                 selectable
-                style={{ fontSize: 18, fontWeight: '600', color: m3.colorScheme.onSurface }}
+                style={{
+                  fontSize: 18,
+                  fontWeight: '600',
+                  color: m3.colorScheme.onSurface,
+                  textAlign: 'center',
+                }}
                 numberOfLines={1}
+                ellipsizeMode="tail"
               >
                 {activeTab === 'log'
                   ? t('entryForm.addLog')

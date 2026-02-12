@@ -107,6 +107,7 @@ export const en = {
       noReportDataAvailable: 'No report data available.',
 
       invalidFarm: 'Invalid farm',
+      invalidFarmNumericInput: 'Please enter valid numeric values in farm details.',
     },
   },
 
@@ -373,6 +374,16 @@ export const en = {
         sublabel: 'Custom',
       },
     },
+    cropPicker: {
+      modalTitle: 'Select Crop',
+      searchPlaceholder: 'Search crop',
+      defaultSublabel: 'Crop',
+      customCropLabel: 'Custom crop',
+      customCropInputLabel: 'Custom Crop Name',
+      customCropInputPlaceholder: 'Enter crop name',
+      useCustomCrop: 'Use "{{crop}}"',
+      noResults: 'No matching crops found',
+    },
     variety: {
       selectPlaceholder: 'Select variety',
       custom: 'Custom',
@@ -407,6 +418,8 @@ export const en = {
     },
     soilCompositionWarning:
       'Sand + Silt + Clay should total approximately 100% (currently {{total}}%)',
+    soilCompositionHint: 'Enter Sand, Silt, and Clay percentages (0-100) so they total about 100%.',
+    overflowError: '{{fields}} must be less than or equal to {{max}}.',
     infoCardMessage: 'You can always update these details later from your farm settings.',
   },
 
@@ -509,6 +522,11 @@ export const en = {
       body_one: '{{count}} log failed to save. Please review and try again.',
       body_other: '{{count}} logs failed to save. Please review and try again.',
     },
+    taskCompletionLinkFailed: 'Logs were saved, but the source task could not be marked complete.',
+    plannedSprayInputs: 'Planned spray inputs',
+    plannedFertilizers: 'Planned fertilizers',
+    plannedItemNamePlaceholder: 'Name',
+    plannedItemQtyPlaceholder: 'Qty',
     taskForm: {
       titleLabel: 'Title *',
       titlePlaceholder: 'Enter task title',
@@ -557,6 +575,8 @@ export const en = {
       qtyPlaceholder: 'Qty',
       selectUnit: 'Select unit',
     },
+    quickAdd: 'Quick Add',
+    noMatchesHint: 'No matches. Continue with custom chemical name.',
     validation: {
       ready: 'Ready to add',
       incomplete: 'Add water volume and at least one chemical',
@@ -579,6 +599,8 @@ export const en = {
       qtyPlaceholder: 'Qty',
       selectUnit: 'Select unit',
     },
+    quickAdd: 'Quick Add',
+    noMatchesHint: 'No matches. Continue with custom fertilizer name.',
     validation: {
       ready: 'Ready to add',
       incomplete: 'Add at least one fertilizer with quantity',
@@ -797,6 +819,15 @@ export const en = {
         noParamsBody: 'Unable to load parameter trends',
       },
     },
+    nutrientFlow: {
+      title: 'Nutrients Provided To Soil Between Petiole Tests ({{unit}})',
+      subtitle: 'Based on fertigation logs captured in each date interval.',
+      empty: 'Add at least 2 petiole tests to see interval-wise nutrient flow.',
+      partialHistory:
+        'Partial history: some logs in these intervals do not have nutrient composition snapshots.',
+      nutrient: 'Nutrient',
+      coverage: 'Coverage {{value}}%',
+    },
   },
 
   units: {
@@ -807,6 +838,8 @@ export const en = {
     feet: 'ft',
     mmPerHour: 'mm/hr',
     kilogramPerMeterCubed: 'kg/m³',
+    gmPerLiter: 'gm/L',
+    kgPerAcre: 'kg/acre',
   },
 
   locationPicker: {
@@ -815,6 +848,7 @@ export const en = {
     unableToGetCurrentLocation: 'Unable to get current location',
     pleaseSelectOnMap: 'Please select a location on the map',
     unableToSelectLocation: 'Unable to select location',
+    invalidCoordinates: 'Please enter valid latitude and longitude coordinates.',
     selectedLocationMarkerTitle: 'Selected location',
     useCurrent: 'Use current location',
     confirm: 'Confirm location',
@@ -1371,6 +1405,7 @@ export const en = {
     cta: {
       addTask: 'Add task',
     },
+    logNow: 'Log now',
     dueDate: {
       none: 'No due date',
       today: 'Today',

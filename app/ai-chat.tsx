@@ -873,7 +873,7 @@ export default function AIChatScreen() {
                   initialTab: 'log',
                   tabs: 'log',
                   initialLogType: logTurn.draft.type,
-                  irrigationDurationHours:
+                  initialIrrigationDurationHours:
                     logTurn.draft.type === 'irrigation'
                       ? String(logTurn.draft.irrigation.durationHours ?? '')
                       : undefined,
