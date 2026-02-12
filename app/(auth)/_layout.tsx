@@ -15,6 +15,8 @@ export default function AuthLayout() {
       >
         <Stack.Screen name="login" />
         <Stack.Screen name="otp-verification" />
+        <Stack.Screen name="phone-login" />
+        <Stack.Screen name="profile-completion" />
       </Stack>
     </>
   );

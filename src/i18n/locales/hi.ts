@@ -992,11 +992,13 @@ export const hi = {
     or: 'या',
     continueWithApple: 'Apple के साथ जारी रखें',
     continueWithGoogle: 'Google के साथ जारी रखें',
+    continueWithPhone: 'फ़ोन से जारी रखें',
     alreadyHaveAccount: 'पहले से खाता है?',
     dontHaveAccount: 'खाता नहीं है?',
     a11y: {
       switchToSignIn: 'साइन इन पर स्विच करें',
       switchToSignUp: 'साइन अप पर स्विच करें',
+      continueWithPhone: 'फ़ोन नंबर से साइन इन करें',
     },
   },
 
@@ -1011,6 +1013,38 @@ export const hi = {
     resendInSecondsShort: '{{seconds}}से में पुनः भेजें',
     useDifferentEmail: 'अलग ईमेल उपयोग करें',
     useDifferentEmailA11y: 'अलग ईमेल उपयोग करें',
+    subtitlePhone: 'हमने 6-अंकीय कोड भेजा है',
+    useDifferentPhone: 'दूसरा फ़ोन नंबर उपयोग करें',
+    useDifferentPhoneA11y: 'दूसरा फ़ोन नंबर उपयोग करें',
+  },
+
+  authPhone: {
+    title: 'फ़ोन साइन इन',
+    subtitle: 'सत्यापन कोड प्राप्त करने के लिए अपना मोबाइल नंबर दर्ज करें',
+    phoneLabel: 'फ़ोन नंबर',
+    phonePlaceholder: 'फ़ोन नंबर दर्ज करें',
+    sendCode: 'सत्यापन कोड भेजें',
+    invalidPhone: 'कृपया देश कोड के साथ एक वैध फ़ोन नंबर दर्ज करें',
+    countryCode: 'देश कोड',
+    searchCountry: 'देश खोजें...',
+    a11y: {
+      selectCountryCode: 'देश कोड चुनें',
+      phoneInput: 'फ़ोन नंबर इनपुट',
+    },
+  },
+
+  profileCompletion: {
+    title: 'अपनी प्रोफ़ाइल पूरी करें',
+    subtitle: 'हमें अपने बारे में कुछ बताएं',
+    fullName: 'पूरा नाम',
+    fullNamePlaceholder: 'अपना पूरा नाम दर्ज करें',
+    emailOptional: 'ईमेल (वैकल्पिक)',
+    emailPlaceholder: 'अपना ईमेल दर्ज करें',
+    continue: 'जारी रखें',
+    skip: 'अभी छोड़ें',
+    a11y: {
+      skipProfileCompletion: 'प्रोफ़ाइल पूर्णता छोड़ें',
+    },
   },
 
   settings: {

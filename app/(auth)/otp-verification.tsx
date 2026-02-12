@@ -14,7 +14,13 @@ const RESEND_COOLDOWN = 60; // seconds
 export default function OTPVerificationScreen() {
   const { t } = useTranslation();
 
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const { email, phone, channel } = useLocalSearchParams<{
+    email?: string;
+    phone?: string;
+    channel?: string;
+  }>();
+  const isPhoneOTP = channel === 'phone' && !!phone;
+  const identifier = isPhoneOTP ? phone : email;
   const [otpCode, setOtpCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN);
 
@@ -23,9 +29,13 @@ export default function OTPVerificationScreen() {
     errorMessage,
     isAuthenticated,
     otpSentSuccessfully,
+    needsProfileCompletion,
     verifyOTP,
+    verifyPhoneOTP,
     resendOTP,
+    resendPhoneOTP,
     cancelOTPFlow,
+    cancelPhoneOTPFlow,
     clearError,
   } = useAuthStore();
 
@@ -34,10 +44,12 @@ export default function OTPVerificationScreen() {
 
   // Redirect when authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && needsProfileCompletion) {
+      router.replace('/(auth)/profile-completion');
+    } else if (isAuthenticated) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, needsProfileCompletion]);
 
   // Cooldown timer
   useEffect(() => {
@@ -61,15 +73,17 @@ export default function OTPVerificationScreen() {
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleVerify = useCallback(async () => {
-    if (!email || otpCode.length !== 6) return;
+    if (!identifier || otpCode.length !== 6) return;
     clearError();
-    await verifyOTP(email, otpCode);
-
-    // Clear code on error
+    if (isPhoneOTP) {
+      await verifyPhoneOTP(identifier, otpCode);
+    } else {
+      await verifyOTP(identifier, otpCode);
+    }
     if (useAuthStore.getState().errorMessage) {
       setOtpCode('');
     }
-  }, [email, otpCode, verifyOTP, clearError]);
+  }, [identifier, otpCode, isPhoneOTP, verifyOTP, verifyPhoneOTP, clearError]);
 
   // Stable verify function that doesn't change on every render
   const verifyRef = useRef(handleVerify);
@@ -79,21 +93,29 @@ export default function OTPVerificationScreen() {
 
   // Auto-submit when 6 digits entered
   useEffect(() => {
-    if (otpCode.length === 6 && email && !isLoading && !verificationTriggeredRef.current) {
+    if (otpCode.length === 6 && identifier && !isLoading && !verificationTriggeredRef.current) {
       verificationTriggeredRef.current = true;
       verifyRef.current();
     } else if (otpCode.length !== 6) {
       verificationTriggeredRef.current = false;
     }
-  }, [otpCode, email, isLoading]);
+  }, [otpCode, identifier, isLoading]);
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;
-    await resendOTP();
+    if (isPhoneOTP) {
+      await resendPhoneOTP();
+    } else {
+      await resendOTP();
+    }
   };
 
   const handleBack = () => {
-    cancelOTPFlow();
+    if (isPhoneOTP) {
+      cancelPhoneOTPFlow();
+    } else {
+      cancelOTPFlow();
+    }
     router.back();
   };
 
@@ -195,7 +217,7 @@ export default function OTPVerificationScreen() {
     marginTop: spacing[2],
   };
 
-  if (!email) {
+  if (!identifier) {
     return (
       <View style={errorContainerStyle}>
         <Text style={errorTextStyle}>{t('authOtp.invalidEmail')}</Text>
@@ -213,10 +235,12 @@ export default function OTPVerificationScreen() {
 
         <Text style={titleTextStyle}>{t('authOtp.title')}</Text>
 
-        <Text style={subtitleTextStyle}>{t('authOtp.subtitle')}</Text>
+        <Text style={subtitleTextStyle}>
+          {isPhoneOTP ? t('authOtp.subtitlePhone') : t('authOtp.subtitle')}
+        </Text>
 
         <View style={emailBadgeStyle}>
-          <Text style={emailTextStyle}>{email}</Text>
+          <Text style={emailTextStyle}>{identifier}</Text>
         </View>
       </View>
 
@@ -284,9 +308,13 @@ export default function OTPVerificationScreen() {
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={t('authOtp.useDifferentEmailA11y')}
+          accessibilityLabel={
+            isPhoneOTP ? t('authOtp.useDifferentPhoneA11y') : t('authOtp.useDifferentEmailA11y')
+          }
         >
-          <Text style={backButtonTextStyle}>{t('authOtp.useDifferentEmail')}</Text>
+          <Text style={backButtonTextStyle}>
+            {isPhoneOTP ? t('authOtp.useDifferentPhone') : t('authOtp.useDifferentEmail')}
+          </Text>
         </Pressable>
       </View>
     </View>

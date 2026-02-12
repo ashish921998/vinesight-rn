@@ -990,11 +990,13 @@ export const en = {
     or: 'or',
     continueWithApple: 'Continue with Apple',
     continueWithGoogle: 'Continue with Google',
+    continueWithPhone: 'Continue with Phone',
     alreadyHaveAccount: 'Already have an account?',
     dontHaveAccount: "Don't have an account?",
     a11y: {
       switchToSignIn: 'Switch to sign in',
       switchToSignUp: 'Switch to sign up',
+      continueWithPhone: 'Sign in with phone number',
     },
   },
 
@@ -1009,6 +1011,40 @@ export const en = {
     resendInSecondsShort: 'Resend in {{seconds}}s',
     useDifferentEmail: 'Use different email',
     useDifferentEmailA11y: 'Use different email',
+    subtitlePhone: 'We sent a 6-digit code to',
+    useDifferentPhone: 'Use different phone number',
+    useDifferentPhoneA11y: 'Use different phone number',
+  },
+
+  authPhone: {
+    title: 'Phone Sign In',
+    subtitle: 'Enter your mobile number to receive a verification code',
+    phoneLabel: 'Phone Number',
+    phonePlaceholder: 'Enter phone number',
+    sendCode: 'Send Verification Code',
+    invalidPhone: 'Please enter a valid phone number with country code',
+    countryCode: 'Country Code',
+    searchCountry: 'Search country...',
+    a11y: {
+      selectCountryCode: 'Select country code',
+      phoneInput: 'Phone number input',
+    },
+  },
+
+  profileCompletion: {
+    title: 'Complete Your Profile',
+    subtitle: 'Tell us a bit about yourself',
+    fullName: 'Full Name',
+    fullNamePlaceholder: 'Enter your full name',
+    emailOptional: 'Email (optional)',
+    emailPlaceholder: 'Enter your email',
+    continue: 'Continue',
+    skip: 'Skip for now',
+    emailExistsWarning:
+      'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
+    a11y: {
+      skipProfileCompletion: 'Skip profile completion',
+    },
   },
 
   settings: {
@@ -1054,6 +1090,8 @@ export const en = {
       notificationsUnavailable: 'Notifications are not available in this environment.',
       updateProfileFailed: 'Failed to update profile. Please try again.',
       updateAreaUnitFailed: 'Failed to update area unit. Please try again.',
+      linkPhoneFailed: 'Failed to link phone number. Please try again.',
+      verifyPhoneFailed: 'Failed to verify phone number. Please try again.',
     },
 
     deleteAccountModal: {
@@ -1099,6 +1137,24 @@ export const en = {
         invalidPassword: 'Invalid password.',
         submitFailed: 'Failed to submit deletion request. Please try again.',
       },
+    },
+
+    linkPhone: {
+      title: 'Link Phone Number',
+      subtitle: 'Link a phone number to your account for easy sign-in',
+      phoneLabel: 'Phone Number',
+      phonePlaceholder: '+1234567890',
+      sendCode: 'Send Verification Code',
+      verifyTitle: 'Verify Phone Number',
+      verifySubtitle: 'Enter the 6-digit code sent to',
+      codeLabel: 'Verification Code',
+      codePlaceholder: '000000',
+      verify: 'Verify & Link',
+      resend: 'Resend Code',
+      cancel: 'Cancel',
+      success: 'Phone number linked successfully',
+      alreadyLinked: 'Phone number is already linked to your account',
+      changePhone: 'Change Phone Number',
     },
   },
 

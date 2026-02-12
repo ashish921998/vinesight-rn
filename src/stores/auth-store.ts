@@ -24,8 +24,12 @@ interface AuthState {
 
   // OTP state
   pendingOTPEmail: string | null;
+  pendingOTPPhone: string | null;
   otpSentSuccessfully: boolean;
   pendingOTPType: EmailOTPType;
+  needsProfileCompletion: boolean;
+  phoneLinkingPending: boolean;
+  phoneLinkingNumber: string | null;
 
   // Onboarding
   hasSeenOnboarding: boolean;
@@ -51,6 +55,13 @@ interface AuthActions {
   resendOTP: () => Promise<void>;
   cancelOTPFlow: () => void;
 
+  // Phone OTP methods
+  signInWithPhone: (phone: string) => Promise<void>;
+  verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
+  resendPhoneOTP: () => Promise<void>;
+  cancelPhoneOTPFlow: () => void;
+  completeProfile: (data: { fullName: string; email?: string }) => Promise<void>;
+
   // Utility
   clearError: () => void;
   setHasSeenOnboarding: (value: boolean) => void;
@@ -58,6 +69,11 @@ interface AuthActions {
   // Profile updates
   updateUserCountry: (country: string) => Promise<void>;
   updateUserAreaUnit: (unit: 'hectares' | 'acres') => Promise<void>;
+
+  // Phone linking (for existing users)
+  linkPhoneNumber: (phone: string) => Promise<void>;
+  verifyPhoneLinking: (phone: string, code: string) => Promise<void>;
+  cancelPhoneLinking: () => void;
 }
 
 // Email validation helper
@@ -66,6 +82,14 @@ const isValidEmail = (email: string): boolean => {
   if (!trimmed) return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(trimmed);
+};
+
+// Phone validation helper (E.164 format: +<country><number>)
+const isValidPhone = (phone: string): boolean => {
+  const trimmed = phone.trim();
+  if (!trimmed) return false;
+  const phoneRegex = /^\+[1-9]\d{6,14}$/;
+  return phoneRegex.test(trimmed);
 };
 
 const getEmailDomain = (email: string | undefined | null) => {
@@ -82,8 +106,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   isLoading: true,
   errorMessage: null,
   pendingOTPEmail: null,
+  pendingOTPPhone: null,
   otpSentSuccessfully: false,
   pendingOTPType: 'email',
+  needsProfileCompletion: false,
+  phoneLinkingPending: false,
+  phoneLinkingNumber: null,
   hasSeenOnboarding: false,
 
   // Initialize - check existing session
@@ -487,8 +515,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isAuthenticated: false,
         isLoading: false,
         pendingOTPEmail: null,
+        pendingOTPPhone: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
+        needsProfileCompletion: false,
       });
       telemetry.reset();
 
@@ -510,8 +540,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isAuthenticated: false,
         isLoading: false,
         pendingOTPEmail: null,
+        pendingOTPPhone: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
+        needsProfileCompletion: false,
       });
       telemetry.reset();
     }
@@ -556,8 +588,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isAuthenticated: false,
         isLoading: false,
         pendingOTPEmail: null,
+        pendingOTPPhone: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
+        needsProfileCompletion: false,
       });
 
       if (__DEV__) {
@@ -698,8 +732,253 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   cancelOTPFlow: () => {
     set({
       pendingOTPEmail: null,
+      pendingOTPPhone: null,
       otpSentSuccessfully: false,
       pendingOTPType: 'email',
+      errorMessage: null,
+    });
+  },
+
+  // Sign in with phone (send OTP via SMS)
+  signInWithPhone: async (phone: string) => {
+    const trimmedPhone = phone.trim();
+
+    if (!isValidPhone(trimmedPhone)) {
+      set({ errorMessage: 'Please enter a valid phone number with country code' });
+      return;
+    }
+
+    set({
+      errorMessage: null,
+      isLoading: true,
+      pendingOTPPhone: null,
+      otpSentSuccessfully: false,
+    });
+    telemetry.capture('auth_phone_otp_send_started');
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ phone: trimmedPhone });
+      if (error) throw error;
+
+      telemetry.capture('auth_phone_otp_send_succeeded');
+      set({
+        pendingOTPPhone: trimmedPhone,
+        otpSentSuccessfully: true,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      telemetry.capture('auth_phone_otp_send_failed');
+      set({
+        errorMessage: getErrorMessage(error, 'Failed to send verification code'),
+        otpSentSuccessfully: false,
+        isLoading: false,
+      });
+    }
+  },
+
+  // Verify phone OTP code
+  verifyPhoneOTP: async (phone: string, code: string) => {
+    const trimmedCode = code.trim();
+
+    if (trimmedCode.length !== 6 || !/^\d+$/.test(trimmedCode)) {
+      set({ errorMessage: 'Please enter a valid 6-digit code' });
+      return;
+    }
+
+    set({ errorMessage: null, isLoading: true });
+    telemetry.capture('auth_phone_otp_verify_started');
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone,
+        token: trimmedCode,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        telemetry.identify(data.user.id, {
+          email_domain: getEmailDomain(data.user.email),
+        });
+      }
+      telemetry.capture('auth_phone_otp_verify_succeeded');
+
+      const isNewUser = !data.user?.user_metadata?.full_name && !data.user?.user_metadata?.email;
+
+      if (isNewUser) {
+        telemetry.capture('user_signed_up', { method: 'phone' });
+        set({
+          user: data.user,
+          session: data.session,
+          isAuthenticated: true,
+          pendingOTPPhone: null,
+          otpSentSuccessfully: false,
+          needsProfileCompletion: true,
+          isLoading: false,
+        });
+      } else {
+        telemetry.capture('user_logged_in', { method: 'phone' });
+        set({
+          user: data.user,
+          session: data.session,
+          isAuthenticated: true,
+          pendingOTPPhone: null,
+          otpSentSuccessfully: false,
+          needsProfileCompletion: false,
+          isLoading: false,
+        });
+      }
+    } catch (_error: unknown) {
+      telemetry.capture('auth_phone_otp_verify_failed');
+      set({
+        errorMessage: 'Invalid or expired code. Please try again.',
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    }
+  },
+
+  // Resend phone OTP
+  resendPhoneOTP: async () => {
+    const { pendingOTPPhone, signInWithPhone } = get();
+    if (!pendingOTPPhone) return;
+    await signInWithPhone(pendingOTPPhone);
+  },
+
+  // Cancel phone OTP flow
+  cancelPhoneOTPFlow: () => {
+    set({
+      pendingOTPPhone: null,
+      otpSentSuccessfully: false,
+      errorMessage: null,
+    });
+  },
+
+  // Complete profile after phone auth sign-up
+  completeProfile: async (data: { fullName: string; email?: string }) => {
+    set({ errorMessage: null, isLoading: true });
+    telemetry.capture('profile_completion_started');
+
+    try {
+      if (data.email) {
+        const { data: existingProfiles, error: lookupError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', data.email.trim().toLowerCase())
+          .limit(1);
+
+        if (!lookupError && existingProfiles && existingProfiles.length > 0) {
+          set({
+            errorMessage:
+              'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
+            isLoading: false,
+          });
+          return;
+        }
+      }
+
+      const updateData: Record<string, string> = { full_name: data.fullName };
+      if (data.email) {
+        updateData.email = data.email;
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        data: updateData,
+      });
+
+      if (error) throw error;
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      telemetry.capture('profile_completion_succeeded');
+      set({
+        user,
+        needsProfileCompletion: false,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      telemetry.capture('profile_completion_failed');
+      set({
+        errorMessage: getErrorMessage(error, 'Failed to update profile'),
+        isLoading: false,
+      });
+    }
+  },
+
+  linkPhoneNumber: async (phone: string) => {
+    const trimmedPhone = phone.trim();
+
+    if (!isValidPhone(trimmedPhone)) {
+      set({ errorMessage: 'Please enter a valid phone number with country code' });
+      return;
+    }
+
+    set({ errorMessage: null, isLoading: true });
+    telemetry.capture('phone_linking_started');
+
+    try {
+      const { error } = await supabase.auth.updateUser({ phone: trimmedPhone });
+      if (error) throw error;
+
+      telemetry.capture('phone_linking_otp_sent');
+      set({
+        phoneLinkingPending: true,
+        phoneLinkingNumber: trimmedPhone,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      telemetry.capture('phone_linking_failed');
+      set({
+        errorMessage: getErrorMessage(error, 'Failed to send verification code'),
+        isLoading: false,
+      });
+    }
+  },
+
+  verifyPhoneLinking: async (phone: string, code: string) => {
+    const trimmedCode = code.trim();
+
+    if (trimmedCode.length !== 6 || !/^\d+$/.test(trimmedCode)) {
+      set({ errorMessage: 'Please enter a valid 6-digit code' });
+      return;
+    }
+
+    set({ errorMessage: null, isLoading: true });
+    telemetry.capture('phone_linking_verify_started');
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone,
+        token: trimmedCode,
+        type: 'phone_change',
+      });
+
+      if (error) throw error;
+
+      telemetry.capture('phone_linking_verify_succeeded');
+      set({
+        user: data.user,
+        session: data.session,
+        phoneLinkingPending: false,
+        phoneLinkingNumber: null,
+        isLoading: false,
+      });
+    } catch (_error: unknown) {
+      telemetry.capture('phone_linking_verify_failed');
+      set({
+        errorMessage: 'Invalid or expired code. Please try again.',
+        isLoading: false,
+      });
+    }
+  },
+
+  cancelPhoneLinking: () => {
+    set({
+      phoneLinkingPending: false,
+      phoneLinkingNumber: null,
       errorMessage: null,
     });
   },
@@ -791,8 +1070,10 @@ export const initAuthListener = () => {
         isAuthenticated: false,
         isLoading: false,
         pendingOTPEmail: null,
+        pendingOTPPhone: null,
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
+        needsProfileCompletion: false,
       });
     } else if (event === 'TOKEN_REFRESHED' && session) {
       // Silently update session without triggering navigation changes

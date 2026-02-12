@@ -291,6 +291,16 @@ export default function LoginScreen() {
               leftIcon={<UiSymbol name="g.circle.fill" size={20} color={m3.colorScheme.primary} />}
               onPress={signInWithGoogle}
               disabled={isLoading}
+              style={{ marginBottom: spacing[3] }}
+            />
+
+            {/* Phone Sign In */}
+            <Button
+              title={t('auth.continueWithPhone')}
+              variant="outline"
+              leftIcon={<UiSymbol name="phone.fill" size={20} color={m3.colorScheme.primary} />}
+              onPress={() => router.push('/(auth)/phone-login')}
+              disabled={isLoading}
             />
           </View>
 

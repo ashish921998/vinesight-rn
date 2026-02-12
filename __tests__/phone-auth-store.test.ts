@@ -1,0 +1,338 @@
+import { useAuthStore } from '@/stores/auth-store';
+import { supabase } from '@/lib/supabase';
+
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      signInWithOtp: jest.fn(),
+      verifyOtp: jest.fn(),
+      updateUser: jest.fn(),
+      getUser: jest.fn(),
+      getSession: jest.fn(),
+      signOut: jest.fn(),
+    },
+  },
+}));
+
+jest.mock('@/services/telemetry', () => ({
+  telemetry: {
+    capture: jest.fn(),
+    identify: jest.fn(),
+    reset: jest.fn(),
+    screen: jest.fn(),
+  },
+}));
+
+const initialState = {
+  user: null,
+  session: null,
+  isAuthenticated: false,
+  isLoading: false,
+  errorMessage: null,
+  pendingOTPEmail: null,
+  pendingOTPPhone: null,
+  otpSentSuccessfully: false,
+  pendingOTPType: 'email' as const,
+  needsProfileCompletion: false,
+  hasSeenOnboarding: false,
+};
+
+beforeEach(() => {
+  useAuthStore.setState(initialState);
+  jest.clearAllMocks();
+});
+
+// ============================================================
+// signInWithPhone
+// ============================================================
+
+describe('signInWithPhone', () => {
+  describe('validation', () => {
+    it.each([
+      ['', 'empty string'],
+      ['9876543210', 'no + prefix'],
+      ['+123', 'too short'],
+      ['+1234567890123456', 'too long (16 digits)'],
+      ['+1234abcd90', 'contains letters'],
+      ['+0123456789', 'starts with 0 after +'],
+    ])('rejects invalid phone "%s" (%s)', async (phone) => {
+      await useAuthStore.getState().signInWithPhone(phone);
+      const state = useAuthStore.getState();
+      expect(state.errorMessage).toBe('Please enter a valid phone number with country code');
+      expect(supabase.auth.signInWithOtp).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['+919876543210', 'Indian number'],
+      ['+14155552671', 'US number'],
+      ['+447911123456', 'UK number'],
+    ])('accepts valid E.164 phone "%s" (%s)', async (phone) => {
+      (supabase.auth.signInWithOtp as jest.Mock).mockResolvedValue({ error: null });
+      await useAuthStore.getState().signInWithPhone(phone);
+      expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({ phone });
+    });
+  });
+
+  it('trims whitespace from phone input', async () => {
+    (supabase.auth.signInWithOtp as jest.Mock).mockResolvedValue({ error: null });
+    await useAuthStore.getState().signInWithPhone('  +919876543210  ');
+    expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({ phone: '+919876543210' });
+  });
+
+  it('sets pendingOTPPhone and otpSentSuccessfully on success', async () => {
+    (supabase.auth.signInWithOtp as jest.Mock).mockResolvedValue({ error: null });
+    await useAuthStore.getState().signInWithPhone('+919876543210');
+    const state = useAuthStore.getState();
+    expect(state.pendingOTPPhone).toBe('+919876543210');
+    expect(state.otpSentSuccessfully).toBe(true);
+    expect(state.isLoading).toBe(false);
+    expect(state.errorMessage).toBeNull();
+  });
+
+  it('handles Supabase error', async () => {
+    (supabase.auth.signInWithOtp as jest.Mock).mockResolvedValue({
+      error: { message: 'Rate limit exceeded' },
+    });
+    await useAuthStore.getState().signInWithPhone('+919876543210');
+    const state = useAuthStore.getState();
+    expect(state.errorMessage).toBe('Rate limit exceeded');
+    expect(state.otpSentSuccessfully).toBe(false);
+    expect(state.isLoading).toBe(false);
+    expect(state.pendingOTPPhone).toBeNull();
+  });
+});
+
+// ============================================================
+// verifyPhoneOTP
+// ============================================================
+
+describe('verifyPhoneOTP', () => {
+  describe('validation', () => {
+    it.each([
+      ['12345', 'less than 6 digits'],
+      ['abcdef', 'non-numeric'],
+      ['', 'empty string'],
+      ['12345a', '5 digits + letter'],
+    ])('rejects invalid code "%s" (%s)', async (code) => {
+      await useAuthStore.getState().verifyPhoneOTP('+919876543210', code);
+      const state = useAuthStore.getState();
+      expect(state.errorMessage).toBe('Please enter a valid 6-digit code');
+      expect(supabase.auth.verifyOtp).not.toHaveBeenCalled();
+    });
+  });
+
+  it('sets isAuthenticated and needsProfileCompletion=false for existing user', async () => {
+    const mockUser = {
+      id: 'user-1',
+      email: 'test@example.com',
+      user_metadata: { full_name: 'John Doe', email: 'test@example.com' },
+    };
+    (supabase.auth.verifyOtp as jest.Mock).mockResolvedValue({
+      data: { user: mockUser, session: { user: mockUser } },
+      error: null,
+    });
+
+    await useAuthStore.getState().verifyPhoneOTP('+919876543210', '123456');
+    const state = useAuthStore.getState();
+    expect(state.isAuthenticated).toBe(true);
+    expect(state.needsProfileCompletion).toBe(false);
+    expect(state.user).toEqual(mockUser);
+  });
+
+  it('sets needsProfileCompletion=true for new user (no full_name or email in metadata)', async () => {
+    const mockUser = {
+      id: 'user-2',
+      user_metadata: {},
+    };
+    (supabase.auth.verifyOtp as jest.Mock).mockResolvedValue({
+      data: { user: mockUser, session: { user: mockUser } },
+      error: null,
+    });
+
+    await useAuthStore.getState().verifyPhoneOTP('+919876543210', '654321');
+    const state = useAuthStore.getState();
+    expect(state.isAuthenticated).toBe(true);
+    expect(state.needsProfileCompletion).toBe(true);
+  });
+
+  it('clears pendingOTPPhone and otpSentSuccessfully on success', async () => {
+    useAuthStore.setState({ pendingOTPPhone: '+919876543210', otpSentSuccessfully: true });
+    const mockUser = {
+      id: 'user-1',
+      user_metadata: { full_name: 'Jane' },
+    };
+    (supabase.auth.verifyOtp as jest.Mock).mockResolvedValue({
+      data: { user: mockUser, session: { user: mockUser } },
+      error: null,
+    });
+
+    await useAuthStore.getState().verifyPhoneOTP('+919876543210', '123456');
+    const state = useAuthStore.getState();
+    expect(state.pendingOTPPhone).toBeNull();
+    expect(state.otpSentSuccessfully).toBe(false);
+  });
+
+  it('calls verifyOtp with correct params', async () => {
+    const mockUser = { id: 'u1', user_metadata: { full_name: 'A' } };
+    (supabase.auth.verifyOtp as jest.Mock).mockResolvedValue({
+      data: { user: mockUser, session: { user: mockUser } },
+      error: null,
+    });
+
+    await useAuthStore.getState().verifyPhoneOTP('+14155552671', '999888');
+    expect(supabase.auth.verifyOtp).toHaveBeenCalledWith({
+      phone: '+14155552671',
+      token: '999888',
+      type: 'sms',
+    });
+  });
+
+  it('handles Supabase error', async () => {
+    (supabase.auth.verifyOtp as jest.Mock).mockRejectedValue(new Error('Token expired'));
+    await useAuthStore.getState().verifyPhoneOTP('+919876543210', '123456');
+    const state = useAuthStore.getState();
+    expect(state.errorMessage).toBe('Invalid or expired code. Please try again.');
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.isLoading).toBe(false);
+  });
+});
+
+// ============================================================
+// resendPhoneOTP
+// ============================================================
+
+describe('resendPhoneOTP', () => {
+  it('does nothing when no pendingOTPPhone', async () => {
+    await useAuthStore.getState().resendPhoneOTP();
+    expect(supabase.auth.signInWithOtp).not.toHaveBeenCalled();
+  });
+
+  it('calls signInWithPhone with the pending phone number', async () => {
+    useAuthStore.setState({ pendingOTPPhone: '+919876543210' });
+    (supabase.auth.signInWithOtp as jest.Mock).mockResolvedValue({ error: null });
+
+    await useAuthStore.getState().resendPhoneOTP();
+    expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({ phone: '+919876543210' });
+  });
+});
+
+// ============================================================
+// cancelPhoneOTPFlow
+// ============================================================
+
+describe('cancelPhoneOTPFlow', () => {
+  it('clears pendingOTPPhone, otpSentSuccessfully, and errorMessage', () => {
+    useAuthStore.setState({
+      pendingOTPPhone: '+919876543210',
+      otpSentSuccessfully: true,
+      errorMessage: 'Some error',
+    });
+
+    useAuthStore.getState().cancelPhoneOTPFlow();
+    const state = useAuthStore.getState();
+    expect(state.pendingOTPPhone).toBeNull();
+    expect(state.otpSentSuccessfully).toBe(false);
+    expect(state.errorMessage).toBeNull();
+  });
+});
+
+// ============================================================
+// completeProfile
+// ============================================================
+
+describe('completeProfile', () => {
+  it('calls updateUser with full_name only', async () => {
+    const refreshedUser = { id: 'u1', user_metadata: { full_name: 'Alice' } };
+    (supabase.auth.updateUser as jest.Mock).mockResolvedValue({ error: null });
+    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      data: { user: refreshedUser },
+    });
+
+    await useAuthStore.getState().completeProfile({ fullName: 'Alice' });
+    expect(supabase.auth.updateUser).toHaveBeenCalledWith({
+      data: { full_name: 'Alice' },
+    });
+  });
+
+  it('calls updateUser with full_name and email when email provided', async () => {
+    const refreshedUser = {
+      id: 'u1',
+      user_metadata: { full_name: 'Bob', email: 'bob@example.com' },
+    };
+    (supabase.auth.updateUser as jest.Mock).mockResolvedValue({ error: null });
+    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      data: { user: refreshedUser },
+    });
+
+    await useAuthStore.getState().completeProfile({ fullName: 'Bob', email: 'bob@example.com' });
+    expect(supabase.auth.updateUser).toHaveBeenCalledWith({
+      data: { full_name: 'Bob', email: 'bob@example.com' },
+    });
+  });
+
+  it('sets needsProfileCompletion=false on success', async () => {
+    useAuthStore.setState({ needsProfileCompletion: true });
+    const refreshedUser = { id: 'u1', user_metadata: { full_name: 'Alice' } };
+    (supabase.auth.updateUser as jest.Mock).mockResolvedValue({ error: null });
+    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      data: { user: refreshedUser },
+    });
+
+    await useAuthStore.getState().completeProfile({ fullName: 'Alice' });
+    expect(useAuthStore.getState().needsProfileCompletion).toBe(false);
+  });
+
+  it('refreshes user from getUser() after update', async () => {
+    const refreshedUser = { id: 'u1', user_metadata: { full_name: 'Alice' } };
+    (supabase.auth.updateUser as jest.Mock).mockResolvedValue({ error: null });
+    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      data: { user: refreshedUser },
+    });
+
+    await useAuthStore.getState().completeProfile({ fullName: 'Alice' });
+    expect(supabase.auth.getUser).toHaveBeenCalled();
+    expect(useAuthStore.getState().user).toEqual(refreshedUser);
+  });
+
+  it('handles error and sets errorMessage', async () => {
+    (supabase.auth.updateUser as jest.Mock).mockResolvedValue({
+      error: { message: 'Update failed' },
+    });
+
+    await useAuthStore.getState().completeProfile({ fullName: 'Alice' });
+    const state = useAuthStore.getState();
+    expect(state.errorMessage).toBe('Update failed');
+    expect(state.isLoading).toBe(false);
+  });
+});
+
+// ============================================================
+// State cleanup
+// ============================================================
+
+describe('state cleanup', () => {
+  it('signOut clears pendingOTPPhone and needsProfileCompletion', async () => {
+    useAuthStore.setState({
+      pendingOTPPhone: '+919876543210',
+      needsProfileCompletion: true,
+      isAuthenticated: true,
+    });
+    (supabase.auth.signOut as jest.Mock).mockResolvedValue({ error: null });
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+
+    await useAuthStore.getState().signOut();
+    const state = useAuthStore.getState();
+    expect(state.pendingOTPPhone).toBeNull();
+    expect(state.needsProfileCompletion).toBe(false);
+    expect(state.isAuthenticated).toBe(false);
+  });
+
+  it('cancelOTPFlow clears pendingOTPPhone', () => {
+    useAuthStore.setState({ pendingOTPPhone: '+919876543210' });
+    useAuthStore.getState().cancelOTPFlow();
+    expect(useAuthStore.getState().pendingOTPPhone).toBeNull();
+  });
+});
