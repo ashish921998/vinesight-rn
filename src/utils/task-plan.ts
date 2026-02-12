@@ -13,7 +13,7 @@ export function encodeTaskPlanInDescription(
 ): string | null {
   const base = (description ?? '').trim();
   const cleaned = stripTaskPlanFromDescription(base);
-  const normalizedItems = (items ?? []).filter((item) => item.name.trim());
+  const normalizedItems = (items ?? []).filter((item) => item?.name?.trim());
 
   if (normalizedItems.length === 0) {
     return cleaned || null;

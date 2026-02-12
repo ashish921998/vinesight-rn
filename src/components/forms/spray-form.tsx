@@ -88,6 +88,7 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
   const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
+  const onChangeRef = useRef(onChange);
   const isValid =
     data.waterVolume !== undefined &&
     data.waterVolume > 0 &&
@@ -134,15 +135,19 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
 
   useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
     if (data.chemicals.length <= MAX_CHEMICAL_ROWS) return;
     const clamped = clampChemicalRows(data.chemicals);
     if (clamped.length === data.chemicals.length) return;
-    onChange({
+    onChangeRef.current({
       waterVolume: data.waterVolume,
       notes: data.notes,
       chemicals: clamped,
     });
-  }, [data.chemicals, data.notes, data.waterVolume, onChange]);
+  }, [data.chemicals, data.notes, data.waterVolume]);
 
   const addChemical = () => {
     if (data.chemicals.length < MAX_CHEMICAL_ROWS) {

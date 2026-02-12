@@ -711,7 +711,9 @@ function dedupeRecentItems(items: RecentInputItem[], limit = 12): RecentInputIte
 
 function parseSprayChemicalString(value: string | null | undefined): RecentInputItem[] {
   if (!value) return [];
-  const matches = [...value.matchAll(/(.+)\s+\(([\d.]+)\s+([^)]+)\)(?=\s*(?:,|$))/g)];
+  const matches = [
+    ...value.matchAll(/(?:^|,\s*)(.+?)\s+\((\d+(?:\.\d+)?)\s+([^)]+)\)(?=\s*(?:,|$))/g),
+  ];
   if (matches.length > 0) {
     return matches.map((match) => {
       const parsedQuantity = Number.parseFloat(match[2] ?? '');

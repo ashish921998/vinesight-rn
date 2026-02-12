@@ -470,6 +470,10 @@ function FertilizerRow({
       : '',
   );
   const [isQuantityEditing, setIsQuantityEditing] = useState(false);
+  const syncedQuantityText =
+    fertilizer.quantity !== undefined && fertilizer.quantity > 0
+      ? fertilizer.quantity.toString()
+      : '';
   const nameSuggestions = useMemo(() => {
     const query = fertilizer.name.trim().toLowerCase();
     if (!query) return [];
@@ -482,17 +486,6 @@ function FertilizerRow({
     isNameFocused && fertilizer.name.trim().length >= 2 && nameSuggestions.length === 0;
   const shouldShowSuggestions =
     isNameFocused && fertilizer.name.trim().length >= 2 && nameSuggestions.length > 0;
-
-  // Sync quantityText with fertilizer.quantity when not editing
-  if (!isQuantityEditing) {
-    const syncedText =
-      fertilizer.quantity !== undefined && fertilizer.quantity > 0
-        ? fertilizer.quantity.toString()
-        : '';
-    if (quantityText !== syncedText) {
-      setQuantityText(syncedText);
-    }
-  }
 
   const handleQuantityChange = (text: string) => {
     const cleanText = text.replace(/[^0-9.]/g, '');
@@ -656,10 +649,11 @@ function FertilizerRow({
           placeholder="Qty"
           placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
           keyboardType="decimal-pad"
-          value={quantityText}
+          value={isQuantityEditing ? quantityText : syncedQuantityText}
           onChangeText={handleQuantityChange}
           onFocus={(event) => {
             setIsQuantityFocused(true);
+            setQuantityText(syncedQuantityText);
             setIsQuantityEditing(true);
             onInputFocus?.(event);
           }}
