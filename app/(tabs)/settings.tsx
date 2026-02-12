@@ -74,9 +74,13 @@ const COUNTRIES: Country[] = [
 
 const DEFAULT_COUNTRY = COUNTRIES[0];
 
+type LinkPhoneParams = {
+  linkPhone?: string;
+};
+
 export default function SettingsScreen() {
   const router = useRouter();
-  const { linkPhone } = useLocalSearchParams<{ linkPhone?: string }>();
+  const { linkPhone } = useLocalSearchParams<LinkPhoneParams>();
   const colors = useThemeColors();
   const m3 = useM3();
   const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
@@ -343,6 +347,15 @@ export default function SettingsScreen() {
     router.setParams({ linkPhone: undefined });
   };
 
+  const handleLinkPhoneSuccessClose = () => {
+    clearError();
+    setShowCountryPicker(false);
+    setCountrySearch('');
+    setLinkPhoneCode('');
+    setShowLinkPhoneModal(false);
+    router.setParams({ linkPhone: undefined });
+  };
+
   const handleSendPhoneLinkCode = async () => {
     const phone = buildE164PhoneNumber();
     if (!phone) return;
@@ -361,7 +374,7 @@ export default function SettingsScreen() {
 
     const { errorMessage, phoneLinkingPending: stillPending } = useAuthStore.getState();
     if (!errorMessage && !stillPending) {
-      handleCloseLinkPhone();
+      handleLinkPhoneSuccessClose();
       setLinkPhoneCode('');
       setLinkPhoneInput('');
       refetchProfile();
@@ -370,7 +383,7 @@ export default function SettingsScreen() {
   };
 
   const handleResendPhoneLinkCode = async () => {
-    const pendingPhone = phoneLinkingNumber ?? linkPhoneInput.trim();
+    const pendingPhone = phoneLinkingNumber ?? buildE164PhoneNumber();
     if (!pendingPhone) return;
     clearError();
     await linkPhoneNumber(pendingPhone);
@@ -2032,7 +2045,7 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
   } as ViewStyle,
   countryPickerBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colorWithOpacity('#000000', 0.35),
+    backgroundColor: colorWithOpacity(colors.surface[900], 0.35),
   } as ViewStyle,
   countryPickerSheet: {
     backgroundColor: colors.surface[100],

@@ -54,7 +54,7 @@ export default function ProfileCompletionScreen() {
     await completeProfile({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      email: trimmedEmail,
+      email: trimmedEmail || undefined,
     });
   };
 
@@ -200,7 +200,7 @@ export default function ProfileCompletionScreen() {
                 title={t('profileCompletion.continue')}
                 onPress={handleContinue}
                 isLoading={isLoading}
-                disabled={!firstName.trim() || !lastName.trim() || !email.trim() || isLoading}
+                disabled={!firstName.trim() || !lastName.trim() || isLoading}
                 style={{ marginTop: spacing[4] }}
               />
             </View>

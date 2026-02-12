@@ -61,7 +61,7 @@ interface AuthActions {
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
   resendPhoneOTP: (mode?: PhoneAuthMode) => Promise<void>;
   cancelPhoneOTPFlow: () => void;
-  completeProfile: (data: { firstName: string; lastName: string; email: string }) => Promise<void>;
+  completeProfile: (data: { firstName: string; lastName: string; email?: string }) => Promise<void>;
 
   // Utility
   clearError: () => void;
@@ -758,7 +758,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     set({
       errorMessage: null,
       isLoading: true,
-      pendingOTPPhone: null,
       otpSentSuccessfully: false,
     });
     telemetry.capture('auth_phone_otp_send_started', { mode });
@@ -875,24 +874,24 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // Complete profile after phone auth sign-up
-  completeProfile: async (data: { firstName: string; lastName: string; email: string }) => {
+  completeProfile: async (data: { firstName: string; lastName: string; email?: string }) => {
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('profile_completion_started');
 
     try {
       const firstName = data.firstName.trim();
       const lastName = data.lastName.trim();
-      const email = data.email.trim().toLowerCase();
+      const email = data.email?.trim().toLowerCase();
 
-      if (!firstName || !lastName || !email) {
+      if (!firstName || !lastName) {
         set({
-          errorMessage: 'Please enter first name, last name, and email.',
+          errorMessage: 'Please enter first name and last name.',
           isLoading: false,
         });
         return;
       }
 
-      if (!isValidEmail(email)) {
+      if (email && !isValidEmail(email)) {
         set({
           errorMessage: 'Please enter a valid email address.',
           isLoading: false,
@@ -900,19 +899,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         return;
       }
 
-      const { data: existingProfiles, error: lookupError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .limit(1);
+      if (email) {
+        const { data: existingProfiles, error: lookupError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .limit(1);
 
-      if (!lookupError && existingProfiles && existingProfiles.length > 0) {
-        set({
-          errorMessage:
-            'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
-          isLoading: false,
-        });
-        return;
+        if (!lookupError && existingProfiles && existingProfiles.length > 0) {
+          set({
+            errorMessage:
+              'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
+            isLoading: false,
+          });
+          return;
+        }
       }
 
       const fullName = `${firstName} ${lastName}`.trim();
@@ -922,10 +923,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         last_name: lastName,
       };
 
-      const { error } = await supabase.auth.updateUser({
-        email,
+      const updateUserPayload: { email?: string; data: Record<string, string> } = {
         data: updateData,
-      });
+      };
+      if (email) {
+        updateUserPayload.email = email;
+      }
+
+      const { error } = await supabase.auth.updateUser(updateUserPayload);
 
       if (error) throw error;
 
@@ -1090,6 +1095,10 @@ export const initAuthListener = () => {
     }
     // Only update state for significant auth events, not token refreshes during navigation
     if (event === 'SIGNED_IN' && session) {
+      const currentState = useAuthStore.getState();
+      if (currentState.pendingOTPPhone || currentState.pendingOTPEmail) {
+        return;
+      }
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
       useAuthStore.setState({

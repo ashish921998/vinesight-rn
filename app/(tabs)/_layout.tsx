@@ -81,7 +81,7 @@ export default function TabLayout() {
     }
   }, [isAuthenticated, isLoading, router, hasRedirected]);
 
-  if (!isAuthenticated) {
+  if (isLoading || !isAuthenticated) {
     return null;
   }
 

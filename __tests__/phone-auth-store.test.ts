@@ -274,6 +274,19 @@ describe('resendPhoneOTP', () => {
       options: { shouldCreateUser: true },
     });
   });
+
+  it('preserves pendingOTPPhone when resend fails', async () => {
+    useAuthStore.setState({ pendingOTPPhone: '+919876543210' });
+    (supabase.auth.signInWithOtp as jest.Mock).mockResolvedValue({
+      error: { message: 'Rate limit exceeded' },
+    });
+
+    await useAuthStore.getState().resendPhoneOTP();
+
+    const state = useAuthStore.getState();
+    expect(state.pendingOTPPhone).toBe('+919876543210');
+    expect(state.errorMessage).toBe('Rate limit exceeded');
+  });
 });
 
 // ============================================================
@@ -305,12 +318,11 @@ describe('completeProfile', () => {
     await useAuthStore.getState().completeProfile({
       firstName: 'Alice',
       lastName: '',
-      email: 'alice@example.com',
     });
 
     const state = useAuthStore.getState();
     expect(supabase.auth.updateUser).not.toHaveBeenCalled();
-    expect(state.errorMessage).toBe('Please enter first name, last name, and email.');
+    expect(state.errorMessage).toBe('Please enter first name and last name.');
     expect(state.isLoading).toBe(false);
   });
 
@@ -349,6 +361,30 @@ describe('completeProfile', () => {
     });
     expect(supabase.auth.updateUser).toHaveBeenCalledWith({
       email: 'alice@example.com',
+      data: {
+        full_name: 'Alice Smith',
+        first_name: 'Alice',
+        last_name: 'Smith',
+      },
+    });
+  });
+
+  it('allows profile completion without email', async () => {
+    const refreshedUser = {
+      id: 'u1',
+      user_metadata: { full_name: 'Alice Smith', first_name: 'Alice', last_name: 'Smith' },
+    };
+    (supabase.auth.updateUser as jest.Mock).mockResolvedValue({ error: null });
+    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      data: { user: refreshedUser },
+    });
+
+    await useAuthStore.getState().completeProfile({
+      firstName: 'Alice',
+      lastName: 'Smith',
+    });
+
+    expect(supabase.auth.updateUser).toHaveBeenCalledWith({
       data: {
         full_name: 'Alice Smith',
         first_name: 'Alice',
