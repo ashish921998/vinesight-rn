@@ -60,7 +60,6 @@ import {
   LOG_TYPES,
   type LogTypeId,
   HARVEST_GRADES,
-  EXPENSE_TYPES,
   CHEMICAL_UNITS,
   FERTILIZER_UNITS,
 } from '@/constants/calculator-models';
@@ -93,6 +92,8 @@ import type { Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useNotificationStore } from '@/stores';
+import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
+import { submitEntryPendingLog } from '@/utils/entry-log-submission';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
@@ -165,6 +166,13 @@ function isValidFertilizerUnit(
   unit: string,
 ): unit is FertigationFormData['fertilizers'][number]['unit'] {
   return FERTILIZER_UNITS.includes(unit as FertigationFormData['fertilizers'][number]['unit']);
+}
+
+function normalizeFertigationDoseUnit(unit: string): string {
+  const normalized = unit.trim().toLowerCase();
+  if (normalized === 'litre/acre') return 'liter/acre';
+  if (normalized === 'litre') return 'liter';
+  return unit.trim();
 }
 
 function normalizePlannedInputs(items: PlannedInputItem[]): PlannedInputItem[] {
@@ -303,18 +311,37 @@ export function EntryForm({
   const sprayQuickAddItems = useMemo<SprayQuickAddItem[]>(() => {
     const byWarehouse = (sprayWarehouseItems ?? []).map((item) => ({
       name: item.name,
-      unit: item.unit,
+      unit: undefined,
       quantity: null,
+      quantityBasis: undefined,
+      warehouseItemId: item.id ?? null,
+      composition: item.composition ?? null,
+      densityKgPerL: item.density_kg_per_l ?? null,
     }));
     const byRecent = (recentSprayChemicals ?? []).map((item) => ({
       name: item.name,
       unit: item.unit,
       quantity: item.quantity ?? null,
+      quantityBasis: undefined,
     }));
     const deduped = new Map<string, SprayQuickAddItem>();
-    [...byRecent, ...byWarehouse].forEach((item) => {
+    [...byWarehouse, ...byRecent].forEach((item) => {
       const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
-      if (!deduped.has(key)) deduped.set(key, item);
+      const existing = deduped.get(key);
+      if (!existing) {
+        deduped.set(key, item);
+        return;
+      }
+      if (
+        (existing.quantity === null || existing.quantity === undefined) &&
+        item.quantity != null
+      ) {
+        deduped.set(key, {
+          ...existing,
+          quantity: item.quantity,
+          quantityBasis: item.quantityBasis ?? existing.quantityBasis,
+        });
+      }
     });
     return Array.from(deduped.values()).slice(0, 15);
   }, [sprayWarehouseItems, recentSprayChemicals]);
@@ -322,18 +349,37 @@ export function EntryForm({
   const fertigationQuickAddItems = useMemo<FertigationQuickAddItem[]>(() => {
     const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
       name: item.name,
-      unit: item.unit,
+      unit: normalizeFertigationDoseUnit(item.unit),
       quantity: null,
+      quantityBasis: undefined,
+      warehouseItemId: item.id ?? null,
+      composition: item.composition ?? null,
+      densityKgPerL: item.density_kg_per_l ?? null,
     }));
     const byRecent = (recentFertigationItems ?? []).map((item) => ({
       name: item.name,
       unit: item.unit,
       quantity: item.quantity ?? null,
+      quantityBasis: undefined,
     }));
     const deduped = new Map<string, FertigationQuickAddItem>();
-    [...byRecent, ...byWarehouse].forEach((item) => {
+    [...byWarehouse, ...byRecent].forEach((item) => {
       const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
-      if (!deduped.has(key)) deduped.set(key, item);
+      const existing = deduped.get(key);
+      if (!existing) {
+        deduped.set(key, item);
+        return;
+      }
+      if (
+        (existing.quantity === null || existing.quantity === undefined) &&
+        item.quantity != null
+      ) {
+        deduped.set(key, {
+          ...existing,
+          quantity: item.quantity,
+          quantityBasis: item.quantityBasis ?? existing.quantityBasis,
+        });
+      }
     });
     return Array.from(deduped.values()).slice(0, 15);
   }, [fertilizerWarehouseItems, recentFertigationItems]);
@@ -500,11 +546,7 @@ export function EntryForm({
       }
       case 'expense': {
         const expensePrefill = initialVoiceLogPrefill.expense;
-        const expenseType =
-          expensePrefill?.expenseType &&
-          EXPENSE_TYPES.includes(expensePrefill.expenseType as (typeof EXPENSE_TYPES)[number])
-            ? (expensePrefill.expenseType as (typeof EXPENSE_TYPES)[number])
-            : '';
+        const expenseType = mapExpenseRecordTypeToTypeId(expensePrefill?.expenseType, '');
         setExpenseData({
           type: expenseType,
           cost: expensePrefill?.cost ?? undefined,
@@ -674,99 +716,26 @@ export function EntryForm({
       const saveLog = async (
         log: (typeof pendingLogs)[number],
       ): Promise<{ pendingLogId: string; type: LogTypeId; recordId: number | null }> => {
-        switch (log.type) {
-          case 'irrigation': {
-            const data = log.data as IrrigationFormData;
-            const created = await createIrrigation.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              duration: data.duration!,
-              area: activeFarm.area ?? 0,
-              growth_stage: '',
-              moisture_status: '',
-              system_discharge: activeFarm.system_discharge ?? 0,
-              date_of_pruning: activeFarm.date_of_pruning,
-            });
-
-            if (
-              activeFarm.total_tank_capacity &&
-              activeFarm.system_discharge &&
-              activeFarm.total_tank_capacity > 0 &&
-              activeFarm.system_discharge > 0
-            ) {
-              const waterAdded = data.duration! * activeFarm.system_discharge;
-              const currentWater = activeFarm.remaining_water ?? 0;
-              const newWaterLevel = Math.min(
-                activeFarm.total_tank_capacity,
-                currentWater + waterAdded,
-              );
-              await updateWaterLevel.mutateAsync({
-                farmId,
-                remainingWater: newWaterLevel,
-              });
-            }
-            return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
-          }
-          case 'spray': {
-            const data = log.data as SprayFormData;
-            const chemicalStr = data.chemicals
-              .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
-              .join(', ');
-            const created = await createSpray.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              chemical: chemicalStr,
-              dose: `Water: ${data.waterVolume}L`,
-              area: activeFarm.area ?? 0,
-              weather: '',
-              operator: '',
-              date_of_pruning: activeFarm.date_of_pruning,
-            });
-            return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
-          }
-          case 'harvest': {
-            const data = log.data as HarvestFormData;
-            const created = await createHarvest.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              quantity: data.quantity!,
-              grade: data.grade,
-              price: data.price || undefined,
-              buyer: data.buyer || undefined,
-              date_of_pruning: activeFarm.date_of_pruning,
-            });
-            return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
-          }
-          case 'expense': {
-            const data = log.data as ExpenseFormData;
-            const created = await createExpense.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              type: data.type,
-              cost: data.cost!,
-              date_of_pruning: activeFarm.date_of_pruning,
-              remarks: data.remarks || undefined,
-            });
-            return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
-          }
-          case 'fertigation': {
-            const data = log.data as FertigationFormData;
-            const created = await createFertigation.mutateAsync({
-              farm_id: farmId,
-              date: dateStr,
-              fertilizers: data.fertilizers.map((f) => ({
-                name: f.name,
-                unit: f.unit,
-                quantity: f.quantity!,
-              })),
-              water_volume: data.waterVolume,
-              area: activeFarm.area ?? 0,
-              date_of_pruning: activeFarm.date_of_pruning,
-            });
-            return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
-          }
-        }
-        return { pendingLogId: log.id, type: log.type, recordId: null };
+        return submitEntryPendingLog({
+          log,
+          dateStr,
+          farm: {
+            id: farmId,
+            area: activeFarm.area,
+            total_tank_capacity: activeFarm.total_tank_capacity,
+            system_discharge: activeFarm.system_discharge,
+            remaining_water: activeFarm.remaining_water,
+            date_of_pruning: activeFarm.date_of_pruning,
+          },
+          submitters: {
+            createIrrigation: async (payload) => createIrrigation.mutateAsync(payload),
+            createSpray: async (payload) => createSpray.mutateAsync(payload),
+            createHarvest: async (payload) => createHarvest.mutateAsync(payload),
+            createExpense: async (payload) => createExpense.mutateAsync(payload),
+            createFertigation: async (payload) => createFertigation.mutateAsync(payload),
+            updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
+          },
+        });
       };
 
       const results = await Promise.allSettled(pendingLogs.map((log) => saveLog(log)));
@@ -774,6 +743,16 @@ export function EntryForm({
         .filter((_, index) => results[index]?.status === 'fulfilled')
         .map((log) => log.id);
       const failedCount = results.filter((result) => result.status === 'rejected').length;
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const failedLog = pendingLogs[index];
+          console.error('Failed to save pending log', {
+            pendingLogId: failedLog?.id ?? null,
+            logType: failedLog?.type ?? null,
+            error: result.reason,
+          });
+        }
+      });
       const sourceTaskLogId = pendingLogs.find((log) => log.isSourceTaskLog)?.id;
       const matchingSuccessfulRecord =
         sourceTaskLogId === undefined
@@ -822,7 +801,11 @@ export function EntryForm({
           });
         setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
 
-        if (sourceTaskId && matchingSuccessfulRecord) {
+        if (
+          sourceTaskId &&
+          matchingSuccessfulRecord &&
+          matchingSuccessfulRecord.recordId !== null
+        ) {
           try {
             await updateTask.mutateAsync({
               id: sourceTaskId,

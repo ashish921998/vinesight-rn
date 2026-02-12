@@ -9,12 +9,17 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import type { NutrientCompositionItem, QuantityBasis } from '@/types';
 
 export interface ChemicalEntry {
   id: string;
   name: string;
   quantity: number | undefined;
   unit: ChemicalUnit;
+  quantityBasis?: QuantityBasis;
+  warehouseItemId?: number | null;
+  compositionSnapshot?: NutrientCompositionItem[] | null;
+  densityKgPerL?: number | null;
 }
 
 const DEFAULT_CHEMICAL_UNIT: ChemicalUnit = 'gm/L';
@@ -29,8 +34,23 @@ function resolveChemicalUnit(
   fallback: ChemicalUnit = DEFAULT_CHEMICAL_UNIT,
 ): ChemicalUnit {
   const normalized = unit?.trim();
+  const lowered = normalized?.toLowerCase();
+  if (lowered === 'gm/liter' || lowered === 'gm/litre' || lowered === 'gm/l' || lowered === 'g/l') {
+    return 'gm/L';
+  }
+  if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
+    return 'ml/L';
+  }
   if (normalized && isChemicalUnit(normalized)) return normalized;
   return fallback;
+}
+
+function resolveQuantityBasis(
+  unit: string | null | undefined,
+  basis?: QuantityBasis,
+): QuantityBasis {
+  if (basis) return basis;
+  return unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total';
 }
 
 function generateId(): string {
@@ -51,6 +71,10 @@ export interface SprayQuickAddItem {
   name: string;
   unit?: string | null;
   quantity?: number | null;
+  quantityBasis?: QuantityBasis;
+  warehouseItemId?: number | null;
+  composition?: NutrientCompositionItem[] | null;
+  densityKgPerL?: number | null;
 }
 
 interface SprayFormProps {
@@ -111,9 +135,11 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
 
   useEffect(() => {
     if (data.chemicals.length <= MAX_CHEMICAL_ROWS) return;
+    const clamped = clampChemicalRows(data.chemicals);
+    if (clamped.length === data.chemicals.length) return;
     onChange({
       ...data,
-      chemicals: clampChemicalRows(data.chemicals),
+      chemicals: clamped,
     });
   }, [data, onChange]);
 
@@ -123,7 +149,16 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
         ...data,
         chemicals: clampChemicalRows([
           ...data.chemicals,
-          { id: generateId(), name: '', quantity: undefined, unit: 'gm/L' },
+          {
+            id: generateId(),
+            name: '',
+            quantity: undefined,
+            unit: 'gm/L',
+            quantityBasis: 'total',
+            warehouseItemId: null,
+            compositionSnapshot: null,
+            densityKgPerL: null,
+          },
         ]),
       });
     }
@@ -166,6 +201,11 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
           current.quantity !== undefined && current.quantity > 0
             ? current.quantity
             : (item.quantity ?? undefined),
+        quantityBasis:
+          current.quantityBasis ?? resolveQuantityBasis(validatedUnit, item.quantityBasis),
+        warehouseItemId: item.warehouseItemId ?? null,
+        compositionSnapshot: item.composition ?? null,
+        densityKgPerL: item.densityKgPerL ?? null,
       };
       onChange({
         ...data,
@@ -185,6 +225,10 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
           name: item.name.trim(),
           quantity: item.quantity ?? undefined,
           unit: validatedUnit,
+          quantityBasis: resolveQuantityBasis(validatedUnit, item.quantityBasis),
+          warehouseItemId: item.warehouseItemId ?? null,
+          compositionSnapshot: item.composition ?? null,
+          densityKgPerL: item.densityKgPerL ?? null,
         },
       ]),
     });
@@ -479,6 +523,10 @@ function ChemicalRow({
       name: item.name,
       unit,
       quantity: chemical.quantity ?? item.quantity ?? undefined,
+      quantityBasis: chemical.quantityBasis ?? resolveQuantityBasis(unit, item.quantityBasis),
+      warehouseItemId: item.warehouseItemId ?? null,
+      compositionSnapshot: item.composition ?? null,
+      densityKgPerL: item.densityKgPerL ?? null,
     });
     if (chemical.quantity === undefined && item.quantity !== null && item.quantity !== undefined) {
       setQuantityText(item.quantity.toString());
@@ -657,6 +705,45 @@ function ChemicalRow({
         </Pressable>
       </View>
 
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2], gap: 8 }}>
+        <Pressable
+          onPress={() => onUpdate({ quantityBasis: 'total' })}
+          style={{
+            borderRadius: borderRadius.full,
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[1],
+            backgroundColor:
+              (chemical.quantityBasis ?? 'total') === 'total'
+                ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
+                : colors.surface[100],
+            borderWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
+          }}
+        >
+          <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+            Total Qty
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => onUpdate({ quantityBasis: 'per_acre' })}
+          style={{
+            borderRadius: borderRadius.full,
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[1],
+            backgroundColor:
+              chemical.quantityBasis === 'per_acre'
+                ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
+                : colors.surface[100],
+            borderWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
+          }}
+        >
+          <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+            Per acre
+          </Text>
+        </Pressable>
+      </View>
+
       {/* Unit Picker Modal */}
       <UnitPickerModal
         visible={showUnitPicker}
@@ -683,6 +770,17 @@ export function validateSprayForm(data: SprayFormData): boolean {
 export function createEmptySprayFormData(): SprayFormData {
   return {
     waterVolume: undefined,
-    chemicals: [{ id: generateId(), name: '', quantity: undefined, unit: 'gm/L' }],
+    chemicals: [
+      {
+        id: generateId(),
+        name: '',
+        quantity: undefined,
+        unit: 'gm/L',
+        quantityBasis: 'total',
+        warehouseItemId: null,
+        compositionSnapshot: null,
+        densityKgPerL: null,
+      },
+    ],
   };
 }

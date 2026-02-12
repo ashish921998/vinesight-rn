@@ -711,7 +711,7 @@ function dedupeRecentItems(items: RecentInputItem[], limit = 12): RecentInputIte
 
 function parseSprayChemicalString(value: string | null | undefined): RecentInputItem[] {
   if (!value) return [];
-  const matches = [...value.matchAll(/([^,(]+)\s*\(([\d.]+)\s*([^)]+)\)/g)];
+  const matches = [...value.matchAll(/([^(]+)\s*\(([\d.]+)\s*([^)]+)\)/g)];
   if (matches.length > 0) {
     return matches.map((match) => {
       const parsedQuantity = Number.parseFloat(match[2] ?? '');
@@ -736,7 +736,7 @@ export function useRecentSprayChemicals(farmId?: number, limit = 12) {
     queryFn: async (): Promise<RecentInputItem[]> => {
       let query = supabase
         .from(TABLES.SPRAY_RECORDS)
-        .select('chemical,date')
+        .select('chemical,date,chemical_items')
         .order('date', { ascending: false })
         .limit(80);
 
@@ -747,7 +747,23 @@ export function useRecentSprayChemicals(farmId?: number, limit = 12) {
       const { data, error } = await query;
       if (error) throw error;
 
-      const parsed = (data ?? []).flatMap((row) => parseSprayChemicalString(row.chemical));
+      const parsed = (data ?? []).flatMap((row) => {
+        const chemicalItems = row.chemical_items as
+          | Array<{ name?: string; unit?: string; quantity?: number | null }>
+          | null
+          | undefined;
+        if (chemicalItems && chemicalItems.length > 0) {
+          return chemicalItems.map((item) => ({
+            name: item.name?.trim() ?? '',
+            unit: item.unit?.trim() ?? '',
+            quantity:
+              typeof item.quantity === 'number' && Number.isFinite(item.quantity)
+                ? item.quantity
+                : null,
+          }));
+        }
+        return parseSprayChemicalString(row.chemical);
+      });
       return dedupeRecentItems(parsed, limit);
     },
   });

@@ -217,12 +217,13 @@ function parseExpenseType(transcript: string): string | null {
 function parseLogDate(transcript: string): string | null {
   const now = new Date();
   const text = transcript.toLowerCase();
+  const hasMarathiKaalToken = /(^|[\s,.;!?()[\]{}"'-])काल($|[\s,.;!?()[\]{}"'-])/u.test(transcript);
 
   // Hindi "कल" and Marathi "काल" are ambiguous in some contexts.
   // The LLM extraction (parseLogDateFromLLM) runs first and handles this
   // contextually. This deterministic fallback defaults to "yesterday"
   // since activity logs most commonly reference past events.
-  if (/\b(yesterday)\b/i.test(text) || /कल/i.test(transcript) || /काल/i.test(transcript)) {
+  if (/\b(yesterday)\b/i.test(text) || /कल/i.test(transcript) || hasMarathiKaalToken) {
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     return toLocalDateString(yesterday);

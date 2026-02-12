@@ -108,6 +108,7 @@ export const mr = {
       noReportDataAvailable: '$t(glossary.report) डेटा उपलब्ध नाही.',
 
       invalidFarm: 'अवैध $t(glossary.farm)',
+      invalidFarmNumericInput: 'कृपया $t(glossary.farm) तपशीलात वैध संख्यात्मक मूल्ये टाका.',
     },
   },
 
@@ -373,6 +374,16 @@ export const mr = {
         sublabel: 'कस्टम',
       },
     },
+    cropPicker: {
+      modalTitle: 'पीक निवडा',
+      searchPlaceholder: 'पीक शोधा',
+      defaultSublabel: 'पीक',
+      customCropLabel: 'कस्टम पीक',
+      customCropInputLabel: 'कस्टम पीक नाव',
+      customCropInputPlaceholder: 'पीक नाव टाका',
+      useCustomCrop: '"{{crop}}" वापरा',
+      noResults: 'जुळणारी पीके आढळली नाहीत',
+    },
     variety: {
       selectPlaceholder: 'वाण निवडा',
       custom: 'कस्टम',
@@ -406,6 +417,9 @@ export const mr = {
       },
     },
     soilCompositionWarning: 'वाळू + गाळ + चिकण यांची बेरीज सुमारे 100% असावी (सध्या {{total}}%)',
+    soilCompositionHint:
+      'वाळू, गाळ आणि चिकणमातीचे टक्केवारी (0-100) टाका, ज्यांची बेरीज सुमारे 100% असेल.',
+    overflowError: '{{fields}} चे मूल्य {{max}} पेक्षा जास्त नसावे.',
     infoCardMessage: 'तुम्ही हे तपशील नंतर $t(glossary.farm) सेटिंग्जमधून कधीही अद्ययावत करू शकता.',
   },
 
@@ -809,6 +823,14 @@ export const mr = {
         noParamsBody: 'पॅरामीटर ट्रेंड्स लोड करणे अशक्य',
       },
     },
+    nutrientFlow: {
+      title: '$t(glossary.petiole) चाचण्यांदरम्यान मातीला दिलेले पोषक घटक ({{unit}})',
+      subtitle: 'प्रत्येक तारीख-अंतरालात नोंदवलेल्या $t(glossary.fertigation) लॉगवर आधारित.',
+      empty: 'अंतरालानुसार पोषक प्रवाह पाहण्यासाठी किमान 2 $t(glossary.petiole) चाचण्या जोडा.',
+      partialHistory: 'आंशिक इतिहास: या अंतरालांतील काही लॉगमध्ये पोषक संरचनेचे स्नॅपशॉट नाहीत.',
+      nutrient: 'पोषक घटक',
+      coverage: 'कव्हरेज {{value}}%',
+    },
   },
 
   units: {
@@ -829,6 +851,7 @@ export const mr = {
     unableToGetCurrentLocation: 'सध्याचे ठिकाण मिळू शकले नाही',
     pleaseSelectOnMap: 'नकाशावर ठिकाण निवडा',
     unableToSelectLocation: 'ठिकाण निवडता आले नाही',
+    invalidCoordinates: 'कृपया वैध अक्षांश आणि रेखांश समन्वय टाका.',
     selectedLocationMarkerTitle: 'निवडलेले ठिकाण',
     useCurrent: 'सध्याचे ठिकाण वापरा',
     confirm: 'ठिकाण निश्चित करा',

@@ -112,13 +112,37 @@ export type IrrigationRecordUpdate = Partial<
 // MARK: - Spray Record
 // ============================================================
 
+export type QuantityBasis = 'total' | 'per_acre';
+export type NutrientCompositionBasis = 'declared';
+
+export interface NutrientCompositionItem {
+  nutrient_code: string;
+  percent: number;
+  basis?: NutrientCompositionBasis;
+  notes?: string | null;
+}
+
+export interface SprayChemicalItem {
+  name: string;
+  unit: string;
+  quantity: number;
+  quantity_basis?: QuantityBasis;
+  warehouse_item_id?: number | null;
+  composition_snapshot?: NutrientCompositionItem[] | null;
+  density_kg_per_l?: number | null;
+}
+
 export interface SprayRecord {
   id?: number;
   farm_id: number;
   season_id?: number | null;
   date: string;
   chemical: string;
+  chemical_items?: SprayChemicalItem[] | null;
   dose: string;
+  nutrient_totals_elemental?: Record<string, number> | null;
+  nutrient_totals_elemental_per_acre?: Record<string, number> | null;
+  nutrient_calc_coverage?: number | null;
   area: number;
   weather: string;
   operator: string;
@@ -138,6 +162,10 @@ export interface FertilizerItem {
   name: string;
   unit: 'kg/acre' | 'liter/acre' | string;
   quantity: number;
+  quantity_basis?: QuantityBasis;
+  warehouse_item_id?: number | null;
+  composition_snapshot?: NutrientCompositionItem[] | null;
+  density_kg_per_l?: number | null;
 }
 
 export interface FertigationRecord {
@@ -147,6 +175,9 @@ export interface FertigationRecord {
   date: string;
   fertilizers?: FertilizerItem[] | null;
   water_volume?: number | null;
+  nutrient_totals_elemental?: Record<string, number> | null;
+  nutrient_totals_elemental_per_acre?: Record<string, number> | null;
+  nutrient_calc_coverage?: number | null;
   area: number;
   date_of_pruning?: string | null;
   notes?: string | null;
@@ -351,6 +382,14 @@ export interface WarehouseItem {
   unit: WarehouseUnit;
   unit_price: number;
   reorder_quantity?: number | null;
+  composition?: NutrientCompositionItem[] | null;
+  manufacturer?: string | null;
+  density_kg_per_l?: number | null;
+  default_dose_quantity?: number | null;
+  default_dose_unit?: string | null;
+  default_dose_basis?: QuantityBasis | null;
+  composition_source?: 'manual' | 'preset' | string;
+  composition_updated_at?: string | null;
   notes?: string | null;
   created_at?: string | null;
   updated_at?: string | null;

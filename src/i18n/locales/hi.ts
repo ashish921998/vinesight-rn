@@ -107,6 +107,7 @@ export const hi = {
       noReportDataAvailable: 'कोई रिपोर्ट डेटा उपलब्ध नहीं है।',
 
       invalidFarm: 'अमान्य खेत',
+      invalidFarmNumericInput: 'कृपया खेत विवरण में मान्य संख्यात्मक मान दर्ज करें।',
     },
   },
 
@@ -373,6 +374,16 @@ export const hi = {
         sublabel: 'कस्टम',
       },
     },
+    cropPicker: {
+      modalTitle: 'फसल चुनें',
+      searchPlaceholder: 'फसल खोजें',
+      defaultSublabel: 'फसल',
+      customCropLabel: 'कस्टम फसल',
+      customCropInputLabel: 'कस्टम फसल का नाम',
+      customCropInputPlaceholder: 'फसल का नाम दर्ज करें',
+      useCustomCrop: '"{{crop}}" का उपयोग करें',
+      noResults: 'मेल खाने वाली फसलें नहीं मिलीं',
+    },
     variety: {
       selectPlaceholder: 'किस्म चुनें',
       custom: 'कस्टम',
@@ -407,6 +418,8 @@ export const hi = {
     },
     soilCompositionWarning:
       'रेत + गाद + मिट्टी का योग लगभग 100% होना चाहिए (वर्तमान में {{total}}%)',
+    soilCompositionHint: 'रेत, गाद और मिट्टी के प्रतिशत (0-100) दर्ज करें ताकि कुल लगभग 100% हो।',
+    overflowError: '{{fields}} का मान {{max}} या उससे कम होना चाहिए।',
     infoCardMessage: 'आप इन विवरणों को बाद में अपनी खेत सेटिंग्स से अपडेट कर सकते हैं।',
   },
 
@@ -806,6 +819,14 @@ export const hi = {
         noParamsBody: 'पैरामीटर रुझान लोड करने में असमर्थ',
       },
     },
+    nutrientFlow: {
+      title: 'पेटीओल परीक्षणों के बीच मिट्टी को दिए गए पोषक तत्व ({{unit}})',
+      subtitle: 'प्रत्येक तारीख अंतराल में दर्ज फर्टिगेशन लॉग के आधार पर।',
+      empty: 'अंतराल-वार पोषक प्रवाह देखने के लिए कम से कम 2 पेटीओल परीक्षण जोड़ें।',
+      partialHistory: 'आंशिक इतिहास: इन अंतरालों के कुछ लॉग में पोषक संरचना स्नैपशॉट नहीं हैं।',
+      nutrient: 'पोषक तत्व',
+      coverage: 'कवरेज {{value}}%',
+    },
   },
 
   units: {
@@ -826,6 +847,7 @@ export const hi = {
     unableToGetCurrentLocation: 'वर्तमान स्थान प्राप्त करने में असमर्थ',
     pleaseSelectOnMap: 'कृपया मानचित्र पर एक स्थान चुनें',
     unableToSelectLocation: 'स्थान चुनने में असमर्थ',
+    invalidCoordinates: 'कृपया मान्य अक्षांश और देशांतर निर्देशांक दर्ज करें।',
     selectedLocationMarkerTitle: 'चयनित स्थान',
     useCurrent: 'वर्तमान स्थान उपयोग करें',
     confirm: 'स्थान की पुष्टि करें',

@@ -28,7 +28,6 @@ import {
   Button,
   CropIcon,
 } from '@/components/ui';
-import type { CropIconName } from '@/components/ui/crop-icon';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -38,6 +37,11 @@ import { telemetry } from '@/services/telemetry';
 import * as Sentry from '@sentry/react-native';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
 import { triggerHapticSuccess } from '@/utils/haptics';
+import {
+  NUMERIC_6_4_MAX_ABS,
+  validateAndParseOptionalFarmNumbers,
+} from '@/utils/farm-form-submit-validation';
+import { getCropVisual, type KnownCrop } from '@/utils/farm-crop-visuals';
 
 const SOIL_TEXTURE_OPTIONS = [
   { value: 'Sand', labelKey: 'farmForm.soilTexture.options.sand' },
@@ -61,8 +65,6 @@ interface FarmFormProps {
   farmId?: number;
   onClose: () => void;
 }
-
-type KnownCrop = Exclude<CropType, 'Other'>;
 
 const KNOWN_CROPS = CROPS.filter((crop): crop is KnownCrop => crop !== 'Other');
 const POPULAR_CROPS: KnownCrop[] = [
@@ -98,31 +100,6 @@ const CROP_I18N_KEY_MAP: Partial<Record<KnownCrop, { labelKey: string; sublabelK
     sublabelKey: 'farmForm.cropOptions.banana.sublabel',
   },
 };
-
-const CROP_ICON_MAP: Partial<Record<KnownCrop, CropIconName>> = {
-  Grapes: 'grapes',
-  Mango: 'mango',
-  Pomegranate: 'pomegranate',
-  Citrus: 'citrus',
-  Banana: 'banana',
-  Tomato: 'tomato',
-  Sugarcane: 'sugarcane',
-  Guava: 'guava',
-  Apple: 'apple',
-};
-
-const CROP_SYMBOL_MAP: Partial<Record<KnownCrop, string>> = {
-  Rice: 'drop.fill',
-  Wheat: 'basket.fill',
-  Maize: 'basket.fill',
-  Potato: 'basket.fill',
-  Onion: 'basket.fill',
-  Chili: 'flask.fill',
-  Coffee: 'flask.fill',
-  Tea: 'flask.fill',
-};
-
-const getKnownCropSymbol = (crop: KnownCrop) => CROP_SYMBOL_MAP[crop] ?? 'leaf.fill';
 
 const resolveCropSelection = (
   crop?: string | null,
@@ -172,21 +149,6 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
     if (typeof message === 'string' && message.trim()) return message;
   }
   return fallback;
-};
-
-const NUMERIC_6_4_MAX_ABS = 99.9999;
-
-const getPrecisionOverflowFieldLabels = (
-  values: Array<{ label: string; value: number | undefined }>,
-): string[] => {
-  return values
-    .filter(
-      (item) =>
-        item.value !== undefined &&
-        Number.isFinite(item.value) &&
-        Math.abs(item.value) > NUMERIC_6_4_MAX_ABS,
-    )
-    .map((item) => item.label);
 };
 
 const buildFormStateFromFarm = (farm?: Farm | null) => ({
@@ -346,13 +308,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
   const renderCropVisual = useCallback(
     (crop: KnownCrop, size: number, selected = true) => {
-      const iconName = CROP_ICON_MAP[crop];
-      if (iconName) {
-        return <CropIcon name={iconName} size={size} muted={!selected} />;
+      const cropVisual = getCropVisual(crop);
+      if (cropVisual.iconName) {
+        return <CropIcon name={cropVisual.iconName} size={size} muted={!selected} />;
       }
       return (
         <UISymbol
-          name={getKnownCropSymbol(crop)}
+          name={cropVisual.symbolName}
           size={size}
           color={
             selected
@@ -568,67 +530,53 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       return;
     }
 
-    const vineSpacingValue = parseOptionalNumber(formState.vineSpacing);
-    const rowSpacingValue = parseOptionalNumber(formState.rowSpacing);
-    const totalTankCapacityValue = parseOptionalNumber(formState.totalTankCapacity);
-    const systemDischargeValue = parseOptionalNumber(formState.systemDischarge);
-    const bulkDensityValue = parseOptionalNumber(formState.bulkDensity);
-    const cationExchangeCapacityValue = parseOptionalNumber(formState.cationExchangeCapacity);
-    const soilWaterRetentionValue = parseOptionalNumber(formState.soilWaterRetention);
-
-    // Check for invalid (non-numeric) inputs
-    const invalidNumericInputs = [
-      vineSpacingValue,
-      rowSpacingValue,
-      totalTankCapacityValue,
-      systemDischargeValue,
-      bulkDensityValue,
-      cationExchangeCapacityValue,
-      soilWaterRetentionValue,
-    ].filter((value) => value === null);
-
-    if (invalidNumericInputs.length > 0) {
-      Alert.alert(t('common.error'), t('common.errors.invalidFarmNumericInput'));
-      return;
-    }
-
-    const boundedValues = [
-      vineSpacingValue,
-      rowSpacingValue,
-      totalTankCapacityValue,
-      systemDischargeValue,
-      bulkDensityValue,
-      cationExchangeCapacityValue,
-      soilWaterRetentionValue,
-    ].filter((value): value is number => value !== undefined);
-
-    if (boundedValues.some((value) => value < 0 || value > 1_000_000)) {
-      Alert.alert(t('common.error'), t('common.errors.invalidFarmNumericInput'));
-      return;
-    }
-
-    const overflowFieldLabels = getPrecisionOverflowFieldLabels([
-      { label: t('farmForm.fields.bulkDensity.label'), value: bulkDensityValue ?? undefined },
+    const optionalNumberValidation = validateAndParseOptionalFarmNumbers(
       {
-        label: t('farmForm.fields.cationExchangeCapacity.label'),
-        value: cationExchangeCapacityValue ?? undefined,
+        vineSpacing: formState.vineSpacing,
+        rowSpacing: formState.rowSpacing,
+        totalTankCapacity: formState.totalTankCapacity,
+        systemDischarge: formState.systemDischarge,
+        bulkDensity: formState.bulkDensity,
+        cationExchangeCapacity: formState.cationExchangeCapacity,
+        soilWaterRetention: formState.soilWaterRetention,
       },
       {
-        label: t('farmForm.fields.soilWaterRetention.label'),
-        value: soilWaterRetentionValue ?? undefined,
+        bulkDensity: t('farmForm.fields.bulkDensity.label'),
+        cationExchangeCapacity: t('farmForm.fields.cationExchangeCapacity.label'),
+        soilWaterRetention: t('farmForm.fields.soilWaterRetention.label'),
       },
-    ]);
+    );
 
-    if (overflowFieldLabels.length > 0) {
+    if (optionalNumberValidation.error) {
+      if (
+        optionalNumberValidation.error.code === 'invalid_numeric' ||
+        optionalNumberValidation.error.code === 'out_of_bounds'
+      ) {
+        Alert.alert(t('common.error'), t('common.errors.invalidFarmNumericInput'));
+        return;
+      }
+
+      const overflowFields = optionalNumberValidation.error.fields.join(', ');
       Alert.alert(
         t('common.error'),
         t('farmForm.overflowError', {
-          fields: overflowFieldLabels.join(', '),
+          fields: overflowFields,
           max: NUMERIC_6_4_MAX_ABS,
+          defaultValue: `${overflowFields} must be less than or equal to ${NUMERIC_6_4_MAX_ABS}.`,
         }),
       );
       return;
     }
+
+    const {
+      vineSpacing: vineSpacingValue,
+      rowSpacing: rowSpacingValue,
+      totalTankCapacity: totalTankCapacityValue,
+      systemDischarge: systemDischargeValue,
+      bulkDensity: bulkDensityValue,
+      cationExchangeCapacity: cationExchangeCapacityValue,
+      soilWaterRetention: soilWaterRetentionValue,
+    } = optionalNumberValidation.parsed;
 
     const finalCrop =
       formState.selectedCrop === 'Other' ? formState.customCropName.trim() : formState.selectedCrop;

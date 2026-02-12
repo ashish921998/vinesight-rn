@@ -9,12 +9,17 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import type { NutrientCompositionItem, QuantityBasis } from '@/types';
 
 export interface FertilizerEntry {
   id?: string;
   name: string;
   quantity?: number;
   unit: FertilizerUnit;
+  quantityBasis?: QuantityBasis;
+  warehouseItemId?: number | null;
+  compositionSnapshot?: NutrientCompositionItem[] | null;
+  densityKgPerL?: number | null;
 }
 
 const DEFAULT_FERTILIZER_UNIT: FertilizerUnit = 'kg/acre';
@@ -28,8 +33,19 @@ function resolveFertilizerUnit(
   fallback: FertilizerUnit = DEFAULT_FERTILIZER_UNIT,
 ): FertilizerUnit {
   const normalized = unit?.trim();
+  const lowered = normalized?.toLowerCase();
+  if (lowered === 'litre/acre') return 'liter/acre';
+  if (lowered === 'litre') return 'liter';
   if (normalized && isFertilizerUnit(normalized)) return normalized;
   return fallback;
+}
+
+function resolveQuantityBasis(
+  unit: string | null | undefined,
+  basis?: QuantityBasis,
+): QuantityBasis {
+  if (basis) return basis;
+  return unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total';
 }
 
 export interface FertigationFormData {
@@ -42,6 +58,10 @@ export interface FertigationQuickAddItem {
   name: string;
   unit?: string | null;
   quantity?: number | null;
+  quantityBasis?: QuantityBasis;
+  warehouseItemId?: number | null;
+  composition?: NutrientCompositionItem[] | null;
+  densityKgPerL?: number | null;
 }
 
 interface FertigationFormProps {
@@ -77,6 +97,10 @@ export function FertigationForm({
             name: '',
             quantity: 0,
             unit: 'kg/acre',
+            quantityBasis: 'total',
+            warehouseItemId: null,
+            compositionSnapshot: null,
+            densityKgPerL: null,
           },
         ],
       });
@@ -95,7 +119,6 @@ export function FertigationForm({
   };
 
   const addQuickFertilizer = (item: FertigationQuickAddItem) => {
-    if (data.fertilizers.length >= 10) return;
     const validatedUnit = resolveFertilizerUnit(item.unit);
     const normalizedName = item.name.trim().toLowerCase();
     const alreadyExists = data.fertilizers.some(
@@ -104,6 +127,38 @@ export function FertigationForm({
         fertilizer.unit.trim().toLowerCase() === validatedUnit.trim().toLowerCase(),
     );
     if (alreadyExists) return;
+
+    const firstIncompleteIndex = data.fertilizers.findIndex(
+      (fertilizer) =>
+        !fertilizer.name.trim() || fertilizer.quantity === undefined || fertilizer.quantity <= 0,
+    );
+
+    if (firstIncompleteIndex >= 0) {
+      const nextFertilizers = [...data.fertilizers];
+      const current = nextFertilizers[firstIncompleteIndex];
+      if (!current) return;
+      nextFertilizers[firstIncompleteIndex] = {
+        ...current,
+        name: item.name.trim(),
+        unit: validatedUnit,
+        quantity:
+          current.quantity !== undefined && current.quantity > 0
+            ? current.quantity
+            : (item.quantity ?? 0),
+        quantityBasis:
+          current.quantityBasis ?? resolveQuantityBasis(validatedUnit, item.quantityBasis),
+        warehouseItemId: item.warehouseItemId ?? null,
+        compositionSnapshot: item.composition ?? null,
+        densityKgPerL: item.densityKgPerL ?? null,
+      };
+      onChange({
+        ...data,
+        fertilizers: nextFertilizers,
+      });
+      return;
+    }
+
+    if (data.fertilizers.length >= 10) return;
 
     onChange({
       ...data,
@@ -114,6 +169,10 @@ export function FertigationForm({
           name: item.name.trim(),
           quantity: item.quantity ?? 0,
           unit: validatedUnit,
+          quantityBasis: resolveQuantityBasis(validatedUnit, item.quantityBasis),
+          warehouseItemId: item.warehouseItemId ?? null,
+          compositionSnapshot: item.composition ?? null,
+          densityKgPerL: item.densityKgPerL ?? null,
         },
       ],
     });
@@ -455,6 +514,10 @@ function FertilizerRow({
       name: item.name,
       unit,
       quantity: currentQuantity > 0 ? currentQuantity : (item.quantity ?? 0),
+      quantityBasis: fertilizer.quantityBasis ?? resolveQuantityBasis(unit, item.quantityBasis),
+      warehouseItemId: item.warehouseItemId ?? null,
+      compositionSnapshot: item.composition ?? null,
+      densityKgPerL: item.densityKgPerL ?? null,
     });
     if (currentQuantity <= 0 && item.quantity !== null && item.quantity !== undefined) {
       setQuantityText(item.quantity.toString());
@@ -630,6 +693,45 @@ function FertilizerRow({
         </Pressable>
       </View>
 
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2], gap: 8 }}>
+        <Pressable
+          onPress={() => onUpdate({ quantityBasis: 'total' })}
+          style={{
+            borderRadius: borderRadius.full,
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[1],
+            backgroundColor:
+              (fertilizer.quantityBasis ?? 'total') === 'total'
+                ? colorWithOpacity(colors.success, 0.2)
+                : colors.surface[100],
+            borderWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
+          }}
+        >
+          <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+            Total Qty
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => onUpdate({ quantityBasis: 'per_acre' })}
+          style={{
+            borderRadius: borderRadius.full,
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[1],
+            backgroundColor:
+              fertilizer.quantityBasis === 'per_acre'
+                ? colorWithOpacity(colors.success, 0.2)
+                : colors.surface[100],
+            borderWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
+          }}
+        >
+          <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+            Per acre
+          </Text>
+        </Pressable>
+      </View>
+
       {/* Unit Picker Modal */}
       <UnitPickerModal
         visible={showUnitPicker}
@@ -654,6 +756,16 @@ export function validateFertigationForm(data: FertigationFormData): boolean {
 export function createEmptyFertigationFormData(): FertigationFormData {
   return {
     waterVolume: undefined,
-    fertilizers: [{ name: '', quantity: 0, unit: 'kg/acre' }],
+    fertilizers: [
+      {
+        name: '',
+        quantity: 0,
+        unit: 'kg/acre',
+        quantityBasis: 'total',
+        warehouseItemId: null,
+        compositionSnapshot: null,
+        densityKgPerL: null,
+      },
+    ],
   };
 }
