@@ -102,8 +102,7 @@ const getEmailDomain = (email: string | undefined | null) => {
 const hasCompletedProfileName = (user: User | null | undefined) =>
   Boolean(
     user?.user_metadata?.full_name ||
-    user?.user_metadata?.first_name ||
-    user?.user_metadata?.last_name,
+    (user?.user_metadata?.first_name && user?.user_metadata?.last_name),
   );
 
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
@@ -133,6 +132,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (session) {
+        const needsCompletion = !hasCompletedProfileName(session.user);
         telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
         telemetry.capture('auth_session_restored', {
           provider: session.user.app_metadata?.provider ?? null,
@@ -141,6 +141,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           user: session.user,
           session,
           isAuthenticated: true,
+          needsProfileCompletion: needsCompletion,
           isLoading: false,
         });
       } else {
@@ -824,7 +825,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
       telemetry.capture('auth_phone_otp_verify_succeeded');
 
-      const isNewUser = !hasCompletedProfileName(data.user) && !data.user?.email;
+      // Note: isNewUser is determined by metadata presence (full_name or first_name/last_name),
+      // not by whether the user has ever signed in via phone before. This heuristic may:
+      // - Re-prompt returning phone users whose metadata was cleared (by admin/migration)
+      // - Not prompt users who previously authenticated via email OTP and have email in metadata
+      // This is an intentional design trade-off for simplicity.
+      const isNewUser = !hasCompletedProfileName(data.user);
 
       if (isNewUser) {
         telemetry.capture('user_signed_up', { method: 'phone' });
@@ -902,11 +908,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
 
       if (email) {
-        const { data: existingProfiles, error: lookupError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', email)
-          .limit(1);
+        const currentUserId = get().user?.id;
+        const query = supabase.from('profiles').select('id').eq('email', email);
+        if (currentUserId) {
+          query.neq('id', currentUserId);
+        }
+        const { data: existingProfiles, error: lookupError } = await query.limit(1);
 
         if (lookupError) {
           set({
@@ -947,11 +954,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       const {
         data: { user },
+        error: getUserError,
       } = await supabase.auth.getUser();
+
+      if (getUserError) {
+        console.warn('getUser failed after updateUser:', getUserError);
+      }
 
       telemetry.capture('profile_completion_succeeded');
       set({
-        user,
+        user: user ?? get().user,
         needsProfileCompletion: false,
         isLoading: false,
       });
@@ -1108,9 +1120,7 @@ export const initAuthListener = () => {
     if (event === 'SIGNED_IN' && session) {
       const currentState = useAuthStore.getState();
       const looksLikeNewPhoneUser =
-        Boolean(currentState.pendingOTPPhone) &&
-        !hasCompletedProfileName(session.user) &&
-        !session.user.email;
+        Boolean(currentState.pendingOTPPhone) && !hasCompletedProfileName(session.user);
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
       useAuthStore.setState((state) => ({

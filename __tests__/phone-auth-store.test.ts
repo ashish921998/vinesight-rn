@@ -55,6 +55,30 @@ beforeEach(() => {
 });
 
 // ============================================================
+// initialize
+// ============================================================
+
+describe('initialize', () => {
+  it('requires profile completion when session user has email but no name metadata', async () => {
+    const mockUser = {
+      id: 'existing-user',
+      email: 'existing@example.com',
+      user_metadata: {},
+    };
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({
+      data: { session: { user: mockUser } },
+      error: null,
+    });
+
+    await useAuthStore.getState().initialize();
+
+    const state = useAuthStore.getState();
+    expect(state.isAuthenticated).toBe(true);
+    expect(state.needsProfileCompletion).toBe(true);
+  });
+});
+
+// ============================================================
 // signInWithPhone
 // ============================================================
 
@@ -168,7 +192,7 @@ describe('verifyPhoneOTP', () => {
     expect(state.user).toEqual(mockUser);
   });
 
-  it('treats users with canonical email as existing even without metadata names', async () => {
+  it('requires profile completion when name fields are missing, even if email exists', async () => {
     const mockUser = {
       id: 'user-3',
       email: 'existing@example.com',
@@ -182,7 +206,7 @@ describe('verifyPhoneOTP', () => {
     await useAuthStore.getState().verifyPhoneOTP('+919876543210', '123456');
     const state = useAuthStore.getState();
     expect(state.isAuthenticated).toBe(true);
-    expect(state.needsProfileCompletion).toBe(false);
+    expect(state.needsProfileCompletion).toBe(true);
   });
 
   it('sets needsProfileCompletion=true for new user (no full_name or email in metadata)', async () => {

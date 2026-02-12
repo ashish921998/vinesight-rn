@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -61,6 +61,7 @@ export default function PhoneLoginScreen() {
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
+  const lastNavigatedPhoneRef = useRef<string | null>(null);
 
   const {
     isLoading,
@@ -73,7 +74,8 @@ export default function PhoneLoginScreen() {
   } = useAuthStore();
 
   useEffect(() => {
-    if (pendingOTPPhone) {
+    if (pendingOTPPhone && lastNavigatedPhoneRef.current !== pendingOTPPhone) {
+      lastNavigatedPhoneRef.current = pendingOTPPhone;
       router.push({
         pathname: '/(auth)/otp-verification',
         params: { phone: pendingOTPPhone, channel: 'phone', mode: phoneAuthMode },
