@@ -1105,17 +1105,26 @@ export const initAuthListener = () => {
     // Only update state for significant auth events, not token refreshes during navigation
     if (event === 'SIGNED_IN' && session) {
       const currentState = useAuthStore.getState();
-      if (currentState.pendingOTPPhone || currentState.pendingOTPEmail) {
-        return;
-      }
+      const looksLikeNewPhoneUser =
+        Boolean(currentState.pendingOTPPhone) &&
+        !session.user.email &&
+        !session.user.user_metadata?.email &&
+        !session.user.user_metadata?.full_name &&
+        !session.user.user_metadata?.first_name &&
+        !session.user.user_metadata?.last_name;
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
-      useAuthStore.setState({
+      useAuthStore.setState((state) => ({
+        ...state,
         user: session.user,
         session,
         isAuthenticated: true,
         isLoading: false,
-      });
+        pendingOTPEmail: null,
+        pendingOTPPhone: null,
+        otpSentSuccessfully: false,
+        needsProfileCompletion: state.needsProfileCompletion || looksLikeNewPhoneUser,
+      }));
     } else if (event === 'SIGNED_OUT') {
       if (__DEV__) {
         console.log('SIGNED_OUT event received, clearing auth state');
