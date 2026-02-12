@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { telemetry } from '@/services/telemetry';
 import type { User, Session } from '@supabase/supabase-js';
+import type { PhoneAuthMode } from '@/types/auth';
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (typeof error === 'object' && error && 'message' in error) {
@@ -56,11 +57,11 @@ interface AuthActions {
   cancelOTPFlow: () => void;
 
   // Phone OTP methods
-  signInWithPhone: (phone: string) => Promise<void>;
+  signInWithPhone: (phone: string, mode?: PhoneAuthMode) => Promise<void>;
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
-  resendPhoneOTP: () => Promise<void>;
+  resendPhoneOTP: (mode?: PhoneAuthMode) => Promise<void>;
   cancelPhoneOTPFlow: () => void;
-  completeProfile: (data: { fullName: string; email?: string }) => Promise<void>;
+  completeProfile: (data: { firstName: string; lastName: string; email: string }) => Promise<void>;
 
   // Utility
   clearError: () => void;
@@ -519,6 +520,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,
+        phoneLinkingPending: false,
+        phoneLinkingNumber: null,
       });
       telemetry.reset();
 
@@ -544,6 +547,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,
+        phoneLinkingPending: false,
+        phoneLinkingNumber: null,
       });
       telemetry.reset();
     }
@@ -592,6 +597,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,
+        phoneLinkingPending: false,
+        phoneLinkingNumber: null,
       });
 
       if (__DEV__) {
@@ -740,7 +747,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // Sign in with phone (send OTP via SMS)
-  signInWithPhone: async (phone: string) => {
+  signInWithPhone: async (phone: string, mode: PhoneAuthMode = 'signin') => {
     const trimmedPhone = phone.trim();
 
     if (!isValidPhone(trimmedPhone)) {
@@ -754,22 +761,29 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       pendingOTPPhone: null,
       otpSentSuccessfully: false,
     });
-    telemetry.capture('auth_phone_otp_send_started');
+    telemetry.capture('auth_phone_otp_send_started', { mode });
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({ phone: trimmedPhone });
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: trimmedPhone,
+        options: { shouldCreateUser: mode === 'signup' },
+      });
       if (error) throw error;
 
-      telemetry.capture('auth_phone_otp_send_succeeded');
+      telemetry.capture('auth_phone_otp_send_succeeded', { mode });
       set({
         pendingOTPPhone: trimmedPhone,
         otpSentSuccessfully: true,
         isLoading: false,
       });
     } catch (error: unknown) {
-      telemetry.capture('auth_phone_otp_send_failed');
+      telemetry.capture('auth_phone_otp_send_failed', { mode });
+      const fallbackMessage =
+        mode === 'signin'
+          ? 'No account found for this phone number. If you already use email login, sign in with email and link phone from Settings.'
+          : 'Failed to send verification code';
       set({
-        errorMessage: getErrorMessage(error, 'Failed to send verification code'),
+        errorMessage: getErrorMessage(error, fallbackMessage),
         otpSentSuccessfully: false,
         isLoading: false,
       });
@@ -804,7 +818,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
       telemetry.capture('auth_phone_otp_verify_succeeded');
 
-      const isNewUser = !data.user?.user_metadata?.full_name && !data.user?.user_metadata?.email;
+      const isNewUser =
+        !data.user?.email &&
+        !data.user?.user_metadata?.email &&
+        !data.user?.user_metadata?.full_name &&
+        !data.user?.user_metadata?.first_name &&
+        !data.user?.user_metadata?.last_name;
 
       if (isNewUser) {
         telemetry.capture('user_signed_up', { method: 'phone' });
@@ -840,10 +859,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // Resend phone OTP
-  resendPhoneOTP: async () => {
+  resendPhoneOTP: async (mode: PhoneAuthMode = 'signin') => {
     const { pendingOTPPhone, signInWithPhone } = get();
     if (!pendingOTPPhone) return;
-    await signInWithPhone(pendingOTPPhone);
+    await signInWithPhone(pendingOTPPhone, mode);
   },
 
   // Cancel phone OTP flow
@@ -856,34 +875,55 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // Complete profile after phone auth sign-up
-  completeProfile: async (data: { fullName: string; email?: string }) => {
+  completeProfile: async (data: { firstName: string; lastName: string; email: string }) => {
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('profile_completion_started');
 
     try {
-      if (data.email) {
-        const { data: existingProfiles, error: lookupError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', data.email.trim().toLowerCase())
-          .limit(1);
+      const firstName = data.firstName.trim();
+      const lastName = data.lastName.trim();
+      const email = data.email.trim().toLowerCase();
 
-        if (!lookupError && existingProfiles && existingProfiles.length > 0) {
-          set({
-            errorMessage:
-              'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
-            isLoading: false,
-          });
-          return;
-        }
+      if (!firstName || !lastName || !email) {
+        set({
+          errorMessage: 'Please enter first name, last name, and email.',
+          isLoading: false,
+        });
+        return;
       }
 
-      const updateData: Record<string, string> = { full_name: data.fullName };
-      if (data.email) {
-        updateData.email = data.email;
+      if (!isValidEmail(email)) {
+        set({
+          errorMessage: 'Please enter a valid email address.',
+          isLoading: false,
+        });
+        return;
       }
+
+      const { data: existingProfiles, error: lookupError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .limit(1);
+
+      if (!lookupError && existingProfiles && existingProfiles.length > 0) {
+        set({
+          errorMessage:
+            'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.',
+          isLoading: false,
+        });
+        return;
+      }
+
+      const fullName = `${firstName} ${lastName}`.trim();
+      const updateData: Record<string, string> = {
+        full_name: fullName,
+        first_name: firstName,
+        last_name: lastName,
+      };
 
       const { error } = await supabase.auth.updateUser({
+        email,
         data: updateData,
       });
 
@@ -1074,6 +1114,8 @@ export const initAuthListener = () => {
         otpSentSuccessfully: false,
         pendingOTPType: 'email',
         needsProfileCompletion: false,
+        phoneLinkingPending: false,
+        phoneLinkingNumber: null,
       });
     } else if (event === 'TOKEN_REFRESHED' && session) {
       // Silently update session without triggering navigation changes
