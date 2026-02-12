@@ -148,7 +148,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         set({ isLoading: false });
       }
     } catch (error) {
-      console.error('Auth initialization error:', error);
+      if (__DEV__) {
+        console.error('Auth initialization error:', error);
+      }
       set({ isLoading: false });
     }
   },
@@ -180,7 +182,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
     } catch (error) {
       // Silent fail - expected if user hasn't confirmed yet
-      console.log('Session refresh failed:', error);
+      if (__DEV__) {
+        console.log('Session refresh failed:', error);
+      }
     }
   },
 
@@ -582,13 +586,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           }
           return `${localPart[0]}${localPart[1]}***@${domain}`;
         };
-        console.warn('[DELETE ACCOUNT REQUEST]', {
-          user_id: userId,
-          user_email: userEmail ? maskEmail(userEmail) : undefined,
-          delete_reason: deleteReason || 'Not provided',
-          status: 'pending',
-          requested_at: new Date().toISOString(),
-        });
+        if (__DEV__) {
+          console.warn('[DELETE ACCOUNT REQUEST]', {
+            user_id: userId,
+            user_email: userEmail ? maskEmail(userEmail) : undefined,
+            delete_reason: deleteReason || 'Not provided',
+            status: 'pending',
+            requested_at: new Date().toISOString(),
+          });
+        }
       }
 
       // Sign out after request is logged
@@ -957,7 +963,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         error: getUserError,
       } = await supabase.auth.getUser();
 
-      if (getUserError) {
+      if (getUserError && __DEV__) {
         console.warn('getUser failed after updateUser:', getUserError);
       }
 

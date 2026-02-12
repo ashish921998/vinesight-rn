@@ -151,7 +151,9 @@ export default function LabTestForm({
       resetForm();
       onClose();
     } catch (error) {
-      console.error('Error creating lab test:', error);
+      if (__DEV__) {
+        console.error('Error creating lab test:', error);
+      }
       Alert.alert(t('common.error'), t('common.errors.failedToSaveLabTest'));
     }
   };
@@ -220,7 +222,9 @@ export default function LabTestForm({
         );
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
+      if (__DEV__) {
+        console.error('Error taking photo:', error);
+      }
       Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.failedToTakePhoto'));
     }
   };
@@ -243,7 +247,9 @@ export default function LabTestForm({
         );
       }
     } catch (error) {
-      console.error('Error selecting image:', error);
+      if (__DEV__) {
+        console.error('Error selecting image:', error);
+      }
       Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.failedToSelectImage'));
     }
   };
@@ -325,7 +331,9 @@ export default function LabTestForm({
           [{ text: t('common.ok') }],
         );
       } catch (parseError) {
-        console.error('Parsing error:', parseError);
+        if (__DEV__) {
+          console.error('Parsing error:', parseError);
+        }
         Alert.alert(
           t('labTests.upload.parsingFailedTitle'),
           t('labTests.upload.parsingFailedBody'),
@@ -333,7 +341,9 @@ export default function LabTestForm({
         );
       }
     } catch (error) {
-      console.error('Error selecting PDF:', error);
+      if (__DEV__) {
+        console.error('Error selecting PDF:', error);
+      }
       Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.failedToSelectPdf'));
     } finally {
       setIsParsingPDF(false);
@@ -385,7 +395,9 @@ export default function LabTestForm({
         [{ text: t('common.ok') }],
       );
     } catch (parseError) {
-      console.error('Parsing error:', parseError);
+      if (__DEV__) {
+        console.error('Parsing error:', parseError);
+      }
       Alert.alert(t('labTests.upload.parsingFailedTitle'), t('labTests.upload.parsingFailedBody'), [
         { text: t('common.ok') },
       ]);

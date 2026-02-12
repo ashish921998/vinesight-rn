@@ -629,7 +629,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       } catch (_error: unknown) {
         const errorMessage = getErrorMessage(_error, t('common.errors.failedToUpdateFarm'));
         const errorMeta = getFarmErrorMeta(_error);
-        console.error('Failed to update farm:', _error, { farmId, updates, errorMeta });
+        if (__DEV__) {
+          console.error('Failed to update farm:', _error, { farmId, updates, errorMeta });
+        }
         telemetry.capture('farm_update_failed', {
           farm_id: farmId,
           code: errorMeta.code ?? null,
@@ -694,7 +696,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     } catch (_error: unknown) {
       const errorMessage = getErrorMessage(_error, t('common.errors.failedToCreateFarm'));
       const errorMeta = getFarmErrorMeta(_error);
-      console.error('Failed to create farm:', _error, { farmData, errorMeta });
+      if (__DEV__) {
+        console.error('Failed to create farm:', _error, { farmData, errorMeta });
+      }
       telemetry.capture('farm_create_failed', {
         code: errorMeta.code ?? null,
         message: errorMeta.message ?? errorMessage,

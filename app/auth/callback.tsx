@@ -14,13 +14,17 @@ export default function AuthCallback() {
   }>();
 
   useEffect(() => {
+    let cancelled = false;
+
     const handleCallback = async () => {
       if (error) {
-        router.replace('/(auth)/login');
+        if (!cancelled) router.replace('/(auth)/login');
         return;
       }
 
       const url = await Linking.getInitialURL();
+      if (cancelled) return;
+
       const hashParams = url ? new URLSearchParams(url.split('#')[1] || '') : null;
       const tokenFromHash = hashParams?.get('access_token');
       const refreshFromHash = hashParams?.get('refresh_token');
@@ -31,21 +35,24 @@ export default function AuthCallback() {
       if (code) {
         try {
           const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+          if (cancelled) return;
           if (sessionError) throw sessionError;
           if (data.session) {
             router.replace('/(tabs)');
             return;
           }
         } catch (err) {
-          console.error('Auth callback exchange error:', err);
-          router.replace('/(auth)/login');
+          if (__DEV__) {
+            console.error('Auth callback exchange error:', err);
+          }
+          if (!cancelled) router.replace('/(auth)/login');
         }
         return;
       }
 
       if (resolvedAccessToken) {
         if (!resolvedRefreshToken) {
-          router.replace('/(auth)/login');
+          if (!cancelled) router.replace('/(auth)/login');
           return;
         }
 
@@ -54,6 +61,7 @@ export default function AuthCallback() {
             access_token: resolvedAccessToken,
             refresh_token: resolvedRefreshToken,
           });
+          if (cancelled) return;
 
           if (sessionError) throw sessionError;
 
@@ -63,18 +71,24 @@ export default function AuthCallback() {
             router.replace('/(auth)/login');
           }
         } catch (err) {
-          console.error('Auth callback error:', err);
-          router.replace('/(auth)/login');
+          if (__DEV__) {
+            console.error('Auth callback error:', err);
+          }
+          if (!cancelled) router.replace('/(auth)/login');
         }
       } else {
         if (error_description && __DEV__) {
           console.warn('Auth callback error:', error_description);
         }
-        router.replace('/(auth)/login');
+        if (!cancelled) router.replace('/(auth)/login');
       }
     };
 
     handleCallback();
+
+    return () => {
+      cancelled = true;
+    };
   }, [access_token, refresh_token, code, error, error_description, router]);
 
   return null;

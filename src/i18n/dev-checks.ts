@@ -46,7 +46,7 @@ export function devCheckKeyParity(en: EnTranslations, mr: MrTranslations): void 
     if (!mrKeys.has(key)) missingInMr.push(key);
   }
 
-  if (missingInMr.length > 0) {
+  if (missingInMr.length > 0 && __DEV__) {
     console.error('[i18n] Marathi is missing translation keys:', missingInMr);
   }
 }
@@ -66,7 +66,7 @@ export function devCheckMrGlossaryUsage(mr: MrTranslations): void {
         `(^|[^\\u0900-\\u097F])${escapeRegExp(term)}([^\\u0900-\\u097F]|$)`,
       );
 
-      if (termRegex.test(value)) {
+      if (termRegex.test(value) && __DEV__) {
         console.error(
           `[i18n] Do not hardcode glossary term "${term}" in mr resource at "${path}". Use $t(glossary.*) nesting instead. Value: ${JSON.stringify(
             value,

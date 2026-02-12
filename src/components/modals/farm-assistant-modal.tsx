@@ -96,7 +96,9 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
         await startListening();
       } catch (err) {
         // Silently fail if speech recognition isn't ready
-        console.warn('Auto-start listening failed:', err);
+        if (__DEV__) {
+          console.warn('Auto-start listening failed:', err);
+        }
         hasAutoStartedRef.current = false;
       }
     });

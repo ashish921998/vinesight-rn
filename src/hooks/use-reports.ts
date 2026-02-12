@@ -91,7 +91,9 @@ export function useReportExport() {
           );
         }
       } catch (error) {
-        console.error('Export error:', error);
+        if (__DEV__) {
+          console.error('Export error:', error);
+        }
         setExportError(error instanceof Error ? error.message : 'Export failed');
         throw error;
       } finally {

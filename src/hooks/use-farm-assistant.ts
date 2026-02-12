@@ -332,7 +332,9 @@ export function useFarmAssistant() {
         }),
       );
     } catch (err) {
-      console.warn('Speech recognition start failed:', err);
+      if (__DEV__) {
+        console.warn('Speech recognition start failed:', err);
+      }
       storeSetStatus('idle');
       storeSetMicAvailable(false);
       storeSetError(t('ai.voice.unavailableBody'));
@@ -345,7 +347,9 @@ export function useFarmAssistant() {
     try {
       SpeechRecognitionModule.stop();
     } catch (err) {
-      console.warn('Speech recognition stop failed:', err);
+      if (__DEV__) {
+        console.warn('Speech recognition stop failed:', err);
+      }
       storeSetStatus('idle');
     }
   }, [storeSetStatus]);

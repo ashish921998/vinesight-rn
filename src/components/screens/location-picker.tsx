@@ -114,7 +114,9 @@ export default function LocationPicker({
 
       mapRef.current?.animateToRegion(region);
     } catch (error) {
-      console.error('Error getting current location:', error);
+      if (__DEV__) {
+        console.error('Error getting current location:', error);
+      }
       Alert.alert(t('common.error'), t('locationPicker.unableToGetCurrentLocation'));
     } finally {
       setLoading(false);
@@ -151,13 +153,17 @@ export default function LocationPicker({
           locationName = parts.join(', ');
         }
       } catch (error) {
-        console.error('Error reverse geocoding:', error);
+        if (__DEV__) {
+          console.error('Error reverse geocoding:', error);
+        }
       }
 
       onLocationSelect(latitude, longitude, locationName);
       onClose();
     } catch (error) {
-      console.error('Error selecting location:', error);
+      if (__DEV__) {
+        console.error('Error selecting location:', error);
+      }
       Alert.alert(t('common.error'), t('locationPicker.unableToSelectLocation'));
     } finally {
       setLoading(false);

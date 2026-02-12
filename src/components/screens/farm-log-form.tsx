@@ -28,7 +28,9 @@ export function FarmLogForm({ mode, farmId, onClose }: FarmLogFormProps) {
 
   useEffect(() => {
     if (mode === 'edit' && !editActivity) {
-      console.warn('[FarmLogForm] Missing editActivity for edit mode.');
+      if (__DEV__) {
+        console.warn('[FarmLogForm] Missing editActivity for edit mode.');
+      }
       onClose();
     }
   }, [mode, editActivity, onClose]);
