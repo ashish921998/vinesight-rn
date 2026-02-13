@@ -1,7 +1,9 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import i18n from '@/i18n';
 
 type ExpoNotifications = typeof import('expo-notifications');
+type Subscription = { remove: () => void };
 
 const ANDROID_CHANNEL_ID = 'default';
 
@@ -55,6 +57,82 @@ export async function setupAndroidChannel(): Promise<void> {
   } catch (error) {
     if (__DEV__) {
       console.error('Failed to create Android notification channel:', error);
+    }
+  }
+}
+
+/**
+ * Register for push notifications and return the Expo push token.
+ * Returns null on web or if permissions are not granted.
+ */
+export async function registerForPushNotifications(): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  try {
+    const granted = await ensureNotificationPermissions();
+    if (!granted) return null;
+
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    if (!projectId) {
+      if (__DEV__) {
+        console.error('Missing EAS projectId for push token registration');
+      }
+      return null;
+    }
+
+    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
+    return token;
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to register for push notifications:', error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Add a listener for when a notification is received while the app is foregrounded.
+ * Returns a subscription that must be removed on cleanup.
+ */
+export async function addNotificationReceivedListener(
+  callback: (notification: { request: { content: { data: Record<string, unknown> } } }) => void,
+): Promise<Subscription | null> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  return Notifications.addNotificationReceivedListener(callback);
+}
+
+/**
+ * Add a listener for when the user taps on a notification.
+ * Returns a subscription that must be removed on cleanup.
+ */
+export async function addNotificationResponseListener(
+  callback: (response: {
+    notification: { request: { content: { data: Record<string, unknown> } } };
+  }) => void,
+): Promise<Subscription | null> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  return Notifications.addNotificationResponseReceivedListener(callback);
+}
+
+/**
+ * Clear the app badge count. Call on app foreground to reset badge.
+ */
+export async function clearBadgeCount(): Promise<void> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
+
+  try {
+    await Notifications.setBadgeCountAsync(0);
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to clear badge count:', error);
     }
   }
 }

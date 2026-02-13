@@ -10,6 +10,8 @@ export type TaskNotificationSchedule = {
 interface NotificationState {
   hasHydrated: boolean;
 
+  expoPushToken: string | null;
+
   dailyWaterReminderEnabled: boolean;
   dailyWaterReminderNotificationId: string | null;
 
@@ -21,6 +23,8 @@ interface NotificationState {
 
 interface NotificationActions {
   _setHasHydrated: (value: boolean) => void;
+
+  setExpoPushToken: (token: string | null) => void;
 
   setDailyWaterReminderEnabled: (enabled: boolean) => void;
   setDailyWaterReminderNotificationId: (id: string | null) => void;
@@ -38,6 +42,8 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     (set) => ({
       hasHydrated: false,
 
+      expoPushToken: null,
+
       dailyWaterReminderEnabled: false,
       dailyWaterReminderNotificationId: null,
 
@@ -47,6 +53,8 @@ export const useNotificationStore = create<NotificationState & NotificationActio
       taskSchedules: {},
 
       _setHasHydrated: (value) => set({ hasHydrated: value }),
+
+      setExpoPushToken: (token) => set({ expoPushToken: token }),
 
       setDailyWaterReminderEnabled: (enabled) => set({ dailyWaterReminderEnabled: enabled }),
       setDailyWaterReminderNotificationId: (id) => set({ dailyWaterReminderNotificationId: id }),
