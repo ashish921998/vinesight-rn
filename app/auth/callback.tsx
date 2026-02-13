@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
@@ -14,9 +15,19 @@ export default function AuthCallback() {
   }>();
 
   useEffect(() => {
+    const redirectToLogin = (errorMessage?: string) => {
+      if (errorMessage) {
+        Alert.alert('Authentication Error', errorMessage, [
+          { text: 'OK', onPress: () => router.replace('/(auth)/login') },
+        ]);
+      } else {
+        router.replace('/(auth)/login');
+      }
+    };
+
     const handleCallback = async () => {
       if (error) {
-        router.replace('/(auth)/login');
+        redirectToLogin(error_description || 'Authentication failed. Please try again.');
         return;
       }
 
@@ -37,15 +48,17 @@ export default function AuthCallback() {
             return;
           }
         } catch (err) {
-          console.error('Auth callback exchange error:', err);
-          router.replace('/(auth)/login');
+          if (__DEV__) {
+            console.error('Auth callback exchange error:', err);
+          }
+          redirectToLogin('Failed to complete sign in. Please try again.');
         }
         return;
       }
 
       if (resolvedAccessToken) {
         if (!resolvedRefreshToken) {
-          router.replace('/(auth)/login');
+          redirectToLogin('Invalid authentication response. Please try again.');
           return;
         }
 
@@ -60,17 +73,19 @@ export default function AuthCallback() {
           if (data.session) {
             router.replace('/(tabs)');
           } else {
-            router.replace('/(auth)/login');
+            redirectToLogin();
           }
         } catch (err) {
-          console.error('Auth callback error:', err);
-          router.replace('/(auth)/login');
+          if (__DEV__) {
+            console.error('Auth callback error:', err);
+          }
+          redirectToLogin('Failed to complete sign in. Please try again.');
         }
       } else {
-        if (error_description && __DEV__) {
+        if (__DEV__ && error_description) {
           console.warn('Auth callback error:', error_description);
         }
-        router.replace('/(auth)/login');
+        redirectToLogin();
       }
     };
 

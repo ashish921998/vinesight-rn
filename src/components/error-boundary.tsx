@@ -157,6 +157,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
           <Pressable
             onPress={this.handleReset}
+            accessibilityRole="button"
+            accessibilityLabel="Try again"
             style={{
               backgroundColor: colors.primary[600],
               paddingHorizontal: spacing[8],

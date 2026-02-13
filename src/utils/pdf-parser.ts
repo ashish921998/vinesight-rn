@@ -68,7 +68,9 @@ async function readImageAsBase64(uri: string): Promise<string> {
 
     return `data:${mimeType};base64,${base64}`;
   } catch (error) {
-    console.error('Error reading image:', error);
+    if (__DEV__) {
+      console.error('Error reading image:', error);
+    }
     throw new Error('Failed to read image file');
   }
 }

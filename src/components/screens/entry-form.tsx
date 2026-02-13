@@ -749,11 +749,13 @@ export function EntryForm({
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
           const failedLog = pendingLogs[index];
-          console.error('Failed to save pending log', {
-            pendingLogId: failedLog?.id ?? null,
-            logType: failedLog?.type ?? null,
-            error: result.reason,
-          });
+          if (__DEV__) {
+            console.error('Failed to save pending log', {
+              pendingLogId: failedLog?.id ?? null,
+              logType: failedLog?.type ?? null,
+              error: result.reason,
+            });
+          }
         }
       });
       const sourceTaskLogId = pendingLogs.find((log) => log.isSourceTaskLog)?.id;
@@ -822,7 +824,9 @@ export function EntryForm({
             });
           } catch (taskUpdateError) {
             taskCompletionUpdateFailed = true;
-            console.error('Task completion update failed after log save:', taskUpdateError);
+            if (__DEV__) {
+              console.error('Task completion update failed after log save:', taskUpdateError);
+            }
           }
         }
 
@@ -847,7 +851,9 @@ export function EntryForm({
 
       onClose();
     } catch (error) {
-      console.error('Error saving logs:', error);
+      if (__DEV__) {
+        console.error('Error saving logs:', error);
+      }
       Alert.alert(t('common.error'), t('common.errors.failedToSaveLogs'));
     } finally {
       setIsSubmittingLogs(false);
