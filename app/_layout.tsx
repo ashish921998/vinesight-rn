@@ -25,6 +25,7 @@ import {
   scheduleDailyWaterReminder,
   scheduleTaskDueReminder,
 } from '@/services/notifications';
+import { useNotificationHandlers } from '@/hooks';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
@@ -123,6 +124,7 @@ const queryClient = new QueryClient({
 export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const themeHydrated = useThemeStore((state) => state.hasHydrated);
   const { isDark, m3 } = useThemeTokens();
 
@@ -141,6 +143,9 @@ export default Sentry.wrap(function RootLayout() {
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
+
+  // Set up push notification handlers and deep linking
+  useNotificationHandlers(isAuthenticated);
 
   useEffect(() => {
     // Initialize auth state

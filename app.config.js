@@ -97,6 +97,13 @@ module.exports = {
       'expo-router',
       'expo-localization',
       [
+        'expo-notifications',
+        {
+          icon: './assets/icons/adaptive-icon.png',
+          color: '#4CAF50',
+        },
+      ],
+      [
         'expo-splash-screen',
         {
           backgroundColor: '#ffffff',

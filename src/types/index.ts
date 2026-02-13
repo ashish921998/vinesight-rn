@@ -32,6 +32,9 @@ export * from './voice-assistant';
 // Voice logging types
 export * from './voice-log';
 
+// Notification types
+export * from './notification';
+
 // Re-export commonly used types for convenience
 export type {
   Farm,

@@ -1,4 +1,13 @@
+import { Platform } from 'react-native';
 import i18n from '@/i18n';
+import type {
+  NotificationPayload,
+  NotificationType,
+  NotificationRoute,
+  ParsedNotification,
+  PushTokenInsert,
+} from '@/types';
+import { supabase } from '@/lib/supabase';
 
 type ExpoNotifications = typeof import('expo-notifications');
 
@@ -105,4 +114,158 @@ export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
     },
     trigger: null,
   });
+}
+
+// --- Android Notification Channel ---
+
+export async function setupNotificationChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
+  await Notifications.setNotificationChannelAsync('default', {
+    name: 'Default',
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#4CAF50',
+  });
+}
+
+// --- Notification Payload Parsing ---
+
+const ROUTE_MAP: Record<NotificationType, NotificationRoute> = {
+  task_due: '/tasks',
+  task_assigned: '/tasks',
+  water_reminder: '/water-level',
+  low_water_alert: '/water-level',
+  weather_alert: '/weather',
+  farm_update: '/(tabs)/farms',
+  general: '/(tabs)',
+};
+
+export function parseNotificationPayload(
+  response: import('expo-notifications').NotificationResponse,
+): ParsedNotification {
+  const data = (response.notification.request.content.data ?? {}) as Partial<NotificationPayload>;
+  const type: NotificationType = data.type ?? 'general';
+  const route: NotificationRoute | null = data.route ?? ROUTE_MAP[type] ?? null;
+  const entityId: string | null = data.entityId ?? null;
+  return { type, route, entityId, raw: response };
+}
+
+// --- Push Token Registration ---
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000;
+
+async function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function getExpoPushToken(): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+  try {
+    const Notifications = await import('expo-notifications');
+    const Device = await import('expo-device');
+    if (!Device.isDevice) {
+      console.warn('[Notifications] Push tokens require a physical device');
+      return null;
+    }
+    const granted = await ensureNotificationPermissions();
+    if (!granted) return null;
+    const tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID,
+    });
+    return tokenData.data;
+  } catch (error) {
+    console.error('[Notifications] Failed to get push token:', error);
+    return null;
+  }
+}
+
+export async function registerPushToken(retryCount = 0): Promise<boolean> {
+  try {
+    const token = await getExpoPushToken();
+    if (!token) return false;
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      console.warn('[Notifications] No authenticated user for push token registration');
+      return false;
+    }
+
+    let deviceId: string | null = null;
+    try {
+      const Device = await import('expo-device');
+      deviceId = Device.modelId ?? Device.modelName ?? null;
+    } catch {
+      // Device info not critical
+    }
+
+    const payload: PushTokenInsert = {
+      user_id: user.id,
+      expo_push_token: token,
+      device_id: deviceId,
+      platform: Platform.OS as 'ios' | 'android',
+    };
+
+    const { error } = await supabase
+      .from('push_tokens')
+      .upsert(payload, { onConflict: 'user_id,expo_push_token' });
+
+    if (error) {
+      throw error;
+    }
+
+    console.log('[Notifications] Push token registered successfully');
+    return true;
+  } catch (error) {
+    console.error(
+      `[Notifications] Push token registration failed (attempt ${retryCount + 1}):`,
+      error,
+    );
+    if (retryCount < MAX_RETRIES) {
+      await delay(RETRY_DELAY_MS * Math.pow(2, retryCount));
+      return registerPushToken(retryCount + 1);
+    }
+    return false;
+  }
+}
+
+export async function unregisterPushToken(): Promise<void> {
+  try {
+    const token = await getExpoPushToken();
+    if (!token) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('push_tokens').delete().eq('user_id', user.id).eq('expo_push_token', token);
+  } catch (error) {
+    console.error('[Notifications] Failed to unregister push token:', error);
+  }
+}
+
+// --- Badge Count Management ---
+
+export async function resetBadgeCount(): Promise<void> {
+  try {
+    const Notifications = await getNotifications();
+    if (!Notifications) return;
+    await Notifications.setBadgeCountAsync(0);
+  } catch (error) {
+    console.error('[Notifications] Failed to reset badge count:', error);
+  }
+}
+
+export async function incrementBadgeCount(): Promise<void> {
+  try {
+    const Notifications = await getNotifications();
+    if (!Notifications) return;
+    const current = await Notifications.getBadgeCountAsync();
+    await Notifications.setBadgeCountAsync(current + 1);
+  } catch (error) {
+    console.error('[Notifications] Failed to increment badge count:', error);
+  }
 }
