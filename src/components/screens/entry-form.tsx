@@ -1103,17 +1103,18 @@ export function EntryForm({
 
   const selectedTaskFarm = farms?.find((f) => f.id === taskFarmId);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
+    const hasPendingLogs = pendingLogs.length > 0;
     const hasUnsavedTaskChanges =
       activeTab === 'task' &&
       (title.trim() || description.trim() || dueDate || taskPlannedInputs.length > 0);
 
-    if (pendingLogs.length > 0 || hasUnsavedTaskChanges) {
+    if (hasPendingLogs || hasUnsavedTaskChanges) {
       Alert.alert(
         t('entryForm.discardChanges.title'),
-        hasUnsavedTaskChanges && pendingLogs.length === 0
+        hasUnsavedTaskChanges && !hasPendingLogs
           ? t('entryForm.discardChanges.taskOnly')
-          : pendingLogs.length > 0 && !hasUnsavedTaskChanges
+          : !hasUnsavedTaskChanges && hasPendingLogs
             ? t('entryForm.discardChanges.logsOnly')
             : t('entryForm.discardChanges.both'),
         [
@@ -1134,7 +1135,17 @@ export function EntryForm({
       setSelectedLogType(null);
       onClose();
     }
-  };
+  }, [
+    pendingLogs.length,
+    activeTab,
+    title,
+    description,
+    dueDate,
+    taskPlannedInputs.length,
+    resetTaskForm,
+    onClose,
+    t,
+  ]);
 
   const renderTabs = () => {
     if (resolvedTabs.length < 2) return null;
@@ -2904,7 +2915,7 @@ export function EntryForm({
                     <Text
                       selectable
                       style={[
-                        { marginLeft: 8, fontWeight: '600' },
+                        { marginLeft: 8, fontWeight: '600', flexShrink: 1 },
                         {
                           color:
                             pendingLogs.length > 0
@@ -2913,9 +2924,7 @@ export function EntryForm({
                         },
                       ]}
                     >
-                      {pendingLogs.length > 0
-                        ? t('entryForm.saveLogs', { count: pendingLogs.length })
-                        : t('common.save')}
+                      {t('common.save')}
                     </Text>
                   </>
                 )}
@@ -2977,7 +2986,7 @@ export function EntryForm({
                     <Text
                       selectable
                       style={[
-                        { marginLeft: 8, fontWeight: '600' },
+                        { marginLeft: 8, fontWeight: '600', flexShrink: 1 },
                         {
                           color: isTaskValid
                             ? m3.colorScheme.onPrimary
@@ -2985,7 +2994,7 @@ export function EntryForm({
                         },
                       ]}
                     >
-                      {t('entryForm.saveTask')}
+                      {t('common.save')}
                     </Text>
                   </>
                 )}

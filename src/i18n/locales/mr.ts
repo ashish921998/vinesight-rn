@@ -32,6 +32,8 @@ export const mr = {
     general: 'सामान्य',
     filter: 'फिल्टर',
     clearAll: 'सर्व साफ करा',
+    today: 'आज',
+    yesterday: 'काल',
     units: {
       hours: 'तास',
       days: 'दिवस',
@@ -210,6 +212,8 @@ export const mr = {
       empty: {
         title: 'अजून नोंदी नाहीत',
         subtitle: 'इथे पाहण्यासाठी नोंदी करायला सुरुवात करा',
+        filteredTitle: 'जुळणाऱ्या नोंदी नाहीत',
+        filteredSubtitle: 'तुमचे फिल्टर बदलून पहा',
       },
     },
     tasks: {
@@ -808,6 +812,7 @@ export const mr = {
       nutrient: 'पोषक घटक',
       pruningDate: '$t(glossary.pruning)',
       reportDate: '$t(glossary.report)',
+      daysAfterPruningShort: 'DAP',
       colorGuide: 'रंग मार्गदर्शक:',
       optimal: 'योग्य',
       warning: 'इशारा',
@@ -1999,6 +2004,21 @@ export const mr = {
     dateRange: {
       label: 'दिनांक श्रेणी',
     },
+    season: {
+      label: 'हंगाम',
+      placeholder: 'हंगाम निवडा',
+      allSeasons: 'सर्व हंगाम',
+      selected: 'निवडलेला हंगाम',
+      active: 'सक्रिय',
+      window: 'हंगाम कालावधी: {{from}} ते {{to}}',
+      noActiveInfo: 'सक्रिय हंगाम नाही. सर्व हंगाम वापरा किंवा जुना हंगाम निवडा.',
+      presets: {
+        active: 'सक्रिय हंगाम',
+        mostRecent: 'सर्वात अलीकडचा हंगाम',
+        previous: 'मागील हंगाम',
+        thisYear: 'हे वर्ष',
+      },
+    },
     selectFromDate: 'पासूनचा दिनांक निवडा',
     selectToDate: 'पर्यंतचा दिनांक निवडा',
     reportType: {
@@ -2017,12 +2037,44 @@ export const mr = {
         stockUsage: '{{count}} वस्तू वापरल्या',
       },
     },
+    stockDetails: {
+      title: 'तपशीलवार स्टॉक वापर',
+      fertilizers: 'खते',
+      sprays: 'फवारण्या',
+      used: 'वापरलेले',
+      unit: 'युनिट',
+      consumedPercent: 'अंदाजे वापर टक्केवारी',
+      currentStock: 'सध्याचा स्टॉक',
+      estimatedOpeningStock: 'अंदाजे सुरुवातीचा स्टॉक',
+      match: 'जुळणी',
+      usageCount: 'वापर संख्या',
+      na: 'लागू नाही',
+    },
+    formal: {
+      metaTitle: '$t(glossary.report) प्रकार',
+      currentReportType: 'सध्याचा $t(glossary.report) प्रकार',
+      generatedAt: 'तयार केले',
+      executiveTitle: 'कार्यकारी सारांश',
+      revenue: 'महसूल',
+      expenses: '$t(glossary.expense)',
+      showDetails: 'तपशील दाखवा',
+      hideDetails: 'तपशील लपवा',
+      emptySection: 'निवडलेल्या दिनांक श्रेणीत नोंदी नाहीत',
+      sections: {
+        fertigationRecords: 'फर्टिगेशन नोंदी ({{count}})',
+      },
+      table: {
+        fertilizers: 'खते',
+      },
+    },
     summary: {
       totalRecords: 'एकूण नोंदी',
       waterUsage: 'पाणी वापर',
       totalHarvest: 'एकूण $t(glossary.harvest)',
       netProfit: 'निव्वळ नफा',
       stockUsageCount: 'वापरलेल्या वस्तू',
+      matchedItems: 'जुळलेल्या वस्तू',
+      stockCoverage: 'अंदाजे कव्हरेज',
     },
     exportAs: 'या स्वरूपात निर्यात करा',
     errors: {
@@ -2037,8 +2089,11 @@ export const mr = {
     },
     export: {
       meta: {
+        reportType: '$t(glossary.report) प्रकार',
         region: 'प्रदेश',
         area: 'क्षेत्रफळ',
+        season: 'हंगाम',
+        seasonWindow: 'हंगाम कालावधी',
         reportPeriod: '$t(glossary.report) कालावधी',
         to: 'ते',
       },
@@ -2053,6 +2108,8 @@ export const mr = {
       },
       table: {
         date: 'दिनांक',
+        seasonId: 'हंगाम आयडी',
+        seasonName: 'हंगाम नाव',
         duration: 'कालावधी',
         area: 'क्षेत्रफळ',
         growthStage: 'वाढीचा टप्पा',

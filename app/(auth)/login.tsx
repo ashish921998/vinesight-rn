@@ -17,12 +17,17 @@ import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
-import appLogo from '../../assets/icons/ios-light.png';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useIsDark, useM3 } from '@/styles/use-theme';
+import appLogoDark from '../../assets/icons/ios-dark.png';
+import appLogoLight from '../../assets/icons/ios-light.png';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
+  const m3 = useM3();
+  const isDark = useIsDark();
+  const appLogo = isDark ? appLogoDark : appLogoLight;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -135,9 +140,9 @@ export default function LoginScreen() {
     paddingVertical: spacing[3],
     borderRadius: borderRadius.xl,
     marginBottom: spacing[2],
-    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+    backgroundColor: colorWithOpacity(m3.colorScheme.error, isDark ? 0.2 : 0.12),
     borderWidth: 1,
-    borderColor: colorWithOpacity(m3.colorScheme.error, 0.25),
+    borderColor: colorWithOpacity(m3.colorScheme.error, isDark ? 0.42 : 0.25),
   };
 
   const errorTextStyle: TextStyle = {

@@ -4,7 +4,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, OTPInput } from '@/components/ui';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
@@ -20,6 +21,8 @@ type OTPRouteParams = {
 
 export default function OTPVerificationScreen() {
   const { t } = useTranslation();
+  const m3 = useM3();
+  const isDark = useIsDark();
 
   const { email, phone, channel, mode } = useLocalSearchParams<OTPRouteParams>();
   const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
@@ -202,7 +205,7 @@ export default function OTPVerificationScreen() {
 
   const resendDisabledTextStyle: TextStyle = {
     fontSize: fontSize.sm,
-    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7),
+    color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, isDark ? 0.92 : 0.75),
   };
 
   const resendEnabledTextStyle: TextStyle = {

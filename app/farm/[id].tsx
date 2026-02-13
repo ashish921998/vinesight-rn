@@ -23,11 +23,11 @@ import {
   useFarmRecords,
   useWeather,
   useDeleteFarm,
-  useDeleteExpenseRecord,
-  useDeleteFertigationRecord,
-  useDeleteHarvestRecord,
   useDeleteIrrigationRecord,
   useDeleteSprayRecord,
+  useDeleteHarvestRecord,
+  useDeleteExpenseRecord,
+  useDeleteFertigationRecord,
   useFarmSeasons,
   useStartFarmSeason,
   useEndFarmSeason,
@@ -35,7 +35,7 @@ import {
   useRecomputeFarmSeasonAssignments,
 } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
-import { StatsCard, ActivityLogCard, TaskRow } from '@/components/cards';
+import { StatsCard, TaskRow, TimelineLogCard } from '@/components/cards';
 import { useTranslation } from 'react-i18next';
 import type {
   IrrigationRecord,
@@ -55,6 +55,7 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from '@/utils/haptics';
 import { getSeasonTemplatesForCrop } from '@/constants/season-templates';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
+import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 
 // Workboard action type
 interface WorkboardAction {
@@ -115,6 +116,7 @@ export default function FarmDetailScreen() {
   const [selectedSeasonTemplateKey, setSelectedSeasonTemplateKey] =
     useState<string>('default_annual');
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
+  const [selectedLogTypes, setSelectedLogTypes] = useState<LogTypeId[]>([]);
   const [showSeasonSuccessOverlay, setShowSeasonSuccessOverlay] = useState(false);
   const [seasonSuccessType, setSeasonSuccessType] = useState<'start' | 'end'>('end');
   const seasonSuccessScale = React.useRef(new Animated.Value(0.92)).current;
@@ -567,12 +569,12 @@ export default function FarmDetailScreen() {
     handleDeleteFarm();
   };
 
-  // Recent activity logs - combine and sort
-  const RECENT_ACTIVITY_LIMIT = 10;
-  const recentLogs = useMemo(() => {
+  // Activity logs - combine, filter, and sort
+  const RECENT_ACTIVITY_LIMIT = 5;
+  const allLogs = useMemo(() => {
     const logs: Array<{
       id: string;
-      type: 'irrigation' | 'spray' | 'harvest' | 'expense' | 'fertigation';
+      type: LogTypeId;
       date: string;
       data: IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
     }> = [];
@@ -618,10 +620,27 @@ export default function FarmDetailScreen() {
       }),
     );
 
-    return logs
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, RECENT_ACTIVITY_LIMIT);
+    return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [irrigationRecords, sprayRecords, harvestRecords, expenseRecords, fertigationRecords]);
+
+  // Filter logs by selected types
+  const filteredLogs = useMemo(() => {
+    if (selectedLogTypes.length === 0) return allLogs;
+    return allLogs.filter((log) => selectedLogTypes.includes(log.type));
+  }, [allLogs, selectedLogTypes]);
+  const hasActiveLogTypeFilters = selectedLogTypes.length > 0;
+
+  // Get recent filtered logs
+  const recentLogs = useMemo(() => {
+    return filteredLogs.slice(0, RECENT_ACTIVITY_LIMIT);
+  }, [filteredLogs]);
+
+  // Toggle log type filter
+  const toggleLogTypeFilter = (type: LogTypeId) => {
+    setSelectedLogTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    );
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -1665,10 +1684,43 @@ export default function FarmDetailScreen() {
                 <View
                   style={{
                     flexDirection: 'row',
-                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     marginBottom: spacing[3],
                   }}
                 >
+                  <View style={{ flexShrink: 1, paddingRight: spacing[3], flexDirection: 'row' }}>
+                    <Text
+                      style={{
+                        ...m3.typography.titleMedium,
+                        color: m3.colorScheme.onSurface,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {t('farmDetails.tabs.activities')}
+                    </Text>
+                    <View
+                      style={{
+                        marginLeft: spacing[2],
+                        alignSelf: 'center',
+                        borderRadius: borderRadius.full,
+                        backgroundColor: m3.surface.surfaceContainerHigh,
+                        paddingHorizontal: spacing[2],
+                        paddingVertical: 2,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          ...m3.typography.labelSmall,
+                          color: m3.colorScheme.onSurfaceVariant,
+                        }}
+                      >
+                        {hasActiveLogTypeFilters
+                          ? `${recentLogs.length} ${t('common.filtered', { defaultValue: 'filtered' })}`
+                          : `${recentLogs.length}`}
+                      </Text>
+                    </View>
+                  </View>
                   <Pressable
                     onPress={() => {
                       if (!farm?.id) return;
@@ -1678,11 +1730,13 @@ export default function FarmDetailScreen() {
                       });
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={t('farmDetails.actions.seeAllLogs')}
+                    accessibilityLabel={`${t('farmDetails.actions.seeAllLogs')}. ${allLogs.length}`}
                     style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'center',
                       paddingHorizontal: spacing[2],
                       paddingVertical: spacing[1],
-                      borderRadius: m3.shape.cornerMedium,
+                      borderRadius: m3.shape.cornerSmall,
                       backgroundColor: pressed
                         ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
                         : 'transparent',
@@ -1699,16 +1753,149 @@ export default function FarmDetailScreen() {
                     </Text>
                   </Pressable>
                 </View>
+
+                {/* Filter Chips */}
+                <View style={{ marginBottom: spacing[4] }}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: spacing[2], paddingRight: spacing[2] }}
+                  >
+                    <Pressable
+                      onPress={() => setSelectedLogTypes([])}
+                      style={({ pressed }) => ({
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        minHeight: 36,
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: spacing[1] + 1,
+                        borderRadius: m3.shape.cornerMedium,
+                        backgroundColor: !hasActiveLogTypeFilters
+                          ? colorWithOpacity(m3.colorScheme.primary, 0.14)
+                          : m3.surface.surfaceContainer,
+                        borderWidth: 1,
+                        borderColor: !hasActiveLogTypeFilters
+                          ? m3.colorScheme.primary
+                          : m3.colorScheme.outlineVariant,
+                        opacity: pressed ? 0.8 : 1,
+                      })}
+                    >
+                      <UiSymbol
+                        name="line.3.horizontal.decrease.circle"
+                        size={12}
+                        color={
+                          !hasActiveLogTypeFilters
+                            ? m3.colorScheme.primary
+                            : m3.colorScheme.onSurfaceVariant
+                        }
+                      />
+                      <Text
+                        style={{
+                          marginLeft: spacing[1],
+                          fontSize: fontSize.sm,
+                          fontWeight: !hasActiveLogTypeFilters
+                            ? fontWeight.semibold
+                            : fontWeight.medium,
+                          color: !hasActiveLogTypeFilters
+                            ? m3.colorScheme.primary
+                            : m3.colorScheme.onSurface,
+                        }}
+                      >
+                        {t('common.all', { defaultValue: 'All' })}
+                      </Text>
+                    </Pressable>
+                    {LOG_TYPES.filter((lt) => lt.id !== 'note').map((logType) => {
+                      const isSelected = selectedLogTypes.includes(logType.id);
+                      return (
+                        <Pressable
+                          key={logType.id}
+                          onPress={() => toggleLogTypeFilter(logType.id)}
+                          style={({ pressed }) => ({
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            minHeight: 36,
+                            paddingHorizontal: spacing[3],
+                            paddingVertical: spacing[1] + 1,
+                            borderRadius: m3.shape.cornerMedium,
+                            backgroundColor: isSelected
+                              ? colorWithOpacity(logType.color, 0.14)
+                              : m3.surface.surfaceContainer,
+                            borderWidth: 1,
+                            borderColor: isSelected ? logType.color : m3.colorScheme.outlineVariant,
+                            opacity: pressed ? 0.8 : 1,
+                          })}
+                        >
+                          <UiSymbol name={logType.icon} size={12} color={logType.color} />
+                          <Text
+                            style={{
+                              marginLeft: spacing[1],
+                              fontSize: fontSize.sm,
+                              fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
+                              color: isSelected ? logType.color : m3.colorScheme.onSurface,
+                            }}
+                          >
+                            {t(logType.labelKey)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                    {hasActiveLogTypeFilters ? (
+                      <Pressable
+                        onPress={() => setSelectedLogTypes([])}
+                        style={({ pressed }) => ({
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          minHeight: 36,
+                          paddingHorizontal: spacing[3],
+                          paddingVertical: spacing[1] + 1,
+                          borderRadius: m3.shape.cornerMedium,
+                          backgroundColor: colorWithOpacity(
+                            m3.colorScheme.onSurface,
+                            m3.stateLayerOpacity.hover,
+                          ),
+                          borderWidth: 1,
+                          borderColor: m3.colorScheme.outlineVariant,
+                          opacity: pressed ? 0.8 : 1,
+                        })}
+                      >
+                        <UiSymbol name="xmark" size={11} color={m3.colorScheme.onSurfaceVariant} />
+                        <Text
+                          style={{
+                            marginLeft: spacing[1],
+                            fontSize: fontSize.sm,
+                            fontWeight: fontWeight.medium,
+                            color: m3.colorScheme.onSurface,
+                          }}
+                        >
+                          {t('common.clear', { defaultValue: 'Clear' })}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                  </ScrollView>
+                </View>
+
+                {/* Recent Activity Rows */}
                 {recentLogs.length > 0 ? (
-                  <View style={{ gap: spacing[3] }}>
+                  <View
+                    style={{
+                      borderRadius: m3.shape.cornerLarge,
+                      padding: spacing[2],
+                      backgroundColor: m3.surface.surfaceContainerLow,
+                      borderWidth: 1,
+                      borderColor: m3.colorScheme.outlineVariant,
+                      gap: spacing[2],
+                    }}
+                  >
                     {recentLogs.map((log) => (
-                      <ActivityLogCard
+                      <TimelineLogCard
                         key={log.id}
                         type={log.type}
                         date={log.date}
                         data={log.data}
+                        farmName={farm?.name ?? undefined}
                         onEdit={() => handleEditActivity(log)}
                         onDelete={() => handleDeleteActivity(log)}
+                        onPress={() => handleEditActivity(log)}
                       />
                     ))}
                   </View>
@@ -1747,7 +1934,9 @@ export default function FarmDetailScreen() {
                         fontWeight: fontWeight.semibold,
                       }}
                     >
-                      {t('farmDetails.activities.empty.title')}
+                      {selectedLogTypes.length > 0
+                        ? t('farmDetails.activities.empty.filteredTitle')
+                        : t('farmDetails.activities.empty.title')}
                     </Text>
                     <Text
                       style={{
@@ -1757,7 +1946,9 @@ export default function FarmDetailScreen() {
                         marginTop: spacing[1],
                       }}
                     >
-                      {t('farmDetails.activities.empty.subtitle')}
+                      {selectedLogTypes.length > 0
+                        ? t('farmDetails.activities.empty.filteredSubtitle')
+                        : t('farmDetails.activities.empty.subtitle')}
                     </Text>
                   </View>
                 )}

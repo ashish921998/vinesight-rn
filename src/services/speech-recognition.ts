@@ -1,8 +1,18 @@
 import { useEffect } from 'react';
-import {
-  ExpoSpeechRecognitionModule as NativeSpeechRecognitionModule,
-  useSpeechRecognitionEvent as useNativeSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
+
+let NativeSpeechRecognitionModule: unknown = null;
+let useNativeSpeechRecognitionEvent:
+  | ((eventName: string, listener: (event: unknown) => void) => void)
+  | null = null;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const speechRecognition = require('expo-speech-recognition');
+  NativeSpeechRecognitionModule = speechRecognition.ExpoSpeechRecognitionModule;
+  useNativeSpeechRecognitionEvent = speechRecognition.useSpeechRecognitionEvent;
+} catch {
+  // Module not available (Expo Go)
+}
 
 type PermissionStatus = 'granted' | 'denied' | 'undetermined';
 
@@ -94,12 +104,16 @@ const useNativeSpeechRecognitionEventAdapter: SpeechRecognitionEventHook = (
   eventName,
   listener,
 ) => {
-  useNativeSpeechRecognitionEvent(eventName as never, listener as never);
+  if (useNativeSpeechRecognitionEvent) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useNativeSpeechRecognitionEvent(eventName as never, listener as never);
+  }
 };
 
-const useSpeechRecognitionEventImpl: SpeechRecognitionEventHook = isSpeechRecognitionAvailable
-  ? useNativeSpeechRecognitionEventAdapter
-  : useFallbackSpeechRecognitionEvent;
+const useSpeechRecognitionEventImpl: SpeechRecognitionEventHook =
+  isSpeechRecognitionAvailable && useNativeSpeechRecognitionEvent
+    ? useNativeSpeechRecognitionEventAdapter
+    : useFallbackSpeechRecognitionEvent;
 
 export function useSpeechRecognitionEvent<E extends SpeechRecognitionEventName>(
   eventName: E,

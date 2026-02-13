@@ -32,6 +32,8 @@ export const hi = {
     general: 'सामान्य',
     filter: 'फ़िल्टर',
     clearAll: 'सभी साफ़ करें',
+    today: 'आज',
+    yesterday: 'कल',
     units: {
       hours: 'घंटे',
       days: 'दिन',
@@ -210,6 +212,8 @@ export const hi = {
       empty: {
         title: 'अभी तक कोई लॉग नहीं',
         subtitle: 'उन्हें यहां देखने के लिए लॉग करना शुरू करें',
+        filteredTitle: 'कोई मिलते लॉग नहीं',
+        filteredSubtitle: 'अपने फिल्टर बदलने का प्रयास करें',
       },
     },
     tasks: {
@@ -804,6 +808,7 @@ export const hi = {
       nutrient: 'पोषक तत्व',
       pruningDate: 'Pruning',
       reportDate: 'Report',
+      daysAfterPruningShort: 'DAP',
       colorGuide: 'रंग गाइड:',
       optimal: 'इष्टतम',
       warning: 'चेतावनी',
@@ -1991,6 +1996,21 @@ export const hi = {
     dateRange: {
       label: 'तारीख़ सीमा',
     },
+    season: {
+      label: 'सीज़न',
+      placeholder: 'सीज़न चुनें',
+      allSeasons: 'सभी सीज़न',
+      selected: 'चयनित सीज़न',
+      active: 'सक्रिय',
+      window: 'सीज़न अवधि: {{from}} से {{to}}',
+      noActiveInfo: 'कोई सक्रिय सीज़न नहीं है। सभी सीज़न या ऐतिहासिक सीज़न चुनें।',
+      presets: {
+        active: 'सक्रिय सीज़न',
+        mostRecent: 'हाल का सीज़न',
+        previous: 'पिछला सीज़न',
+        thisYear: 'यह वर्ष',
+      },
+    },
     selectFromDate: 'प्रारंभ तिथि चुनें',
     selectToDate: 'समाप्ति तिथि चुनें',
     reportType: {
@@ -2009,12 +2029,44 @@ export const hi = {
         stockUsage: '{{count}} वस्तुएं उपयोग की गईं',
       },
     },
+    stockDetails: {
+      title: 'विस्तृत स्टॉक उपयोग',
+      fertilizers: 'उर्वरक',
+      sprays: 'स्प्रे',
+      used: 'उपयोग',
+      unit: 'इकाई',
+      consumedPercent: 'अनुमानित उपभोग',
+      currentStock: 'वर्तमान स्टॉक',
+      estimatedOpeningStock: 'अनुमानित प्रारंभिक स्टॉक',
+      match: 'मिलान',
+      usageCount: 'उपयोग संख्या',
+      na: 'उपलब्ध नहीं',
+    },
+    formal: {
+      metaTitle: 'रिपोर्ट प्रकार',
+      currentReportType: 'वर्तमान रिपोर्ट प्रकार',
+      generatedAt: 'जनरेट किया गया',
+      executiveTitle: 'कार्यकारी सारांश',
+      revenue: 'राजस्व',
+      expenses: 'खर्च',
+      showDetails: 'विवरण दिखाएं',
+      hideDetails: 'विवरण छिपाएं',
+      emptySection: 'चुनी गई तारीख सीमा में कोई रिकॉर्ड नहीं',
+      sections: {
+        fertigationRecords: 'फर्टिगेशन रिकॉर्ड ({{count}})',
+      },
+      table: {
+        fertilizers: 'उर्वरक',
+      },
+    },
     summary: {
       totalRecords: 'कुल रिकॉर्ड',
       waterUsage: 'पानी का उपयोग',
       totalHarvest: 'कुल कटाई',
       netProfit: 'शुद्ध लाभ',
       stockUsageCount: 'उपयोग की गई वस्तुएं',
+      matchedItems: 'मिलान की गई वस्तुएं',
+      stockCoverage: 'अनुमानित कवरेज',
     },
     exportAs: 'के रूप में निर्यात करें',
     errors: {
@@ -2029,8 +2081,11 @@ export const hi = {
     },
     export: {
       meta: {
+        reportType: 'रिपोर्ट प्रकार',
         region: 'क्षेत्र',
         area: 'क्षेत्रफल',
+        season: 'सीज़न',
+        seasonWindow: 'सीज़न अवधि',
         reportPeriod: 'रिपोर्ट अवधि',
         to: 'से',
       },
@@ -2045,6 +2100,8 @@ export const hi = {
       },
       table: {
         date: 'तारीख',
+        seasonId: 'सीज़न आईडी',
+        seasonName: 'सीज़न नाम',
         duration: 'अवधि',
         area: 'क्षेत्रफल',
         growthStage: 'विकास चरण',

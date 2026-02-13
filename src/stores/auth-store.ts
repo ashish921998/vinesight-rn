@@ -132,7 +132,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (session) {
-        const needsCompletion = !hasCompletedProfileName(session.user);
         telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
         telemetry.capture('auth_session_restored', {
           provider: session.user.app_metadata?.provider ?? null,
@@ -141,7 +140,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           user: session.user,
           session,
           isAuthenticated: true,
-          needsProfileCompletion: needsCompletion,
+          // Do not force profile completion on generic session restore.
+          // Profile completion should only be required when we explicitly detect
+          // a new phone-auth flow in verifyPhoneOTP/onAuthStateChange.
+          needsProfileCompletion: false,
           isLoading: false,
         });
       } else {

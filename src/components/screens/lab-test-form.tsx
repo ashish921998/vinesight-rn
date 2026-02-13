@@ -21,6 +21,7 @@ import {
   useCreatePetioleTest,
   getParameterLabel,
 } from '../../hooks/use-lab-tests';
+import { useFarm } from '@/hooks/use-farms';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '@/constants/lab-test-parameters';
 import { parseLabTestFromImage, parseLabTestFromText } from '../../utils/pdf-parser';
 import { extractTextFromPDF } from '../../utils/pdf-to-image';
@@ -88,6 +89,7 @@ export default function LabTestForm({
   const isVisible = visible ?? true;
   const createSoilTest = useCreateSoilTest();
   const createPetioleTest = useCreatePetioleTest();
+  const { data: farm } = useFarm(farmId);
 
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -134,7 +136,7 @@ export default function LabTestForm({
     }
 
     try {
-      const record = {
+      const baseRecord = {
         farm_id: farmId,
         date: formatLocalDate(date),
         parameters: numericParams,
@@ -143,9 +145,12 @@ export default function LabTestForm({
       };
 
       if (isSoil) {
-        await createSoilTest.mutateAsync(record);
+        await createSoilTest.mutateAsync(baseRecord);
       } else {
-        await createPetioleTest.mutateAsync(record);
+        await createPetioleTest.mutateAsync({
+          ...baseRecord,
+          date_of_pruning: farm?.date_of_pruning ?? null,
+        });
       }
 
       resetForm();
