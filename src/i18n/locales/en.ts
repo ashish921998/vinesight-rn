@@ -1113,6 +1113,9 @@ export const en = {
     taskReminders: 'Task Reminders',
     taskRemindersSubtitle: 'Remind about scheduled tasks',
     notificationNote: 'Notification settings are stored locally',
+    notificationsDisabledMessage:
+      'Notifications are disabled for Vinesight. Enable them in your device settings to receive reminders and alerts.',
+    openSettings: 'Open Settings',
     madeForVineyardManagement: 'Made for vineyard management',
     signOut: 'Sign Out',
     signOutConfirmTitle: 'Sign Out',

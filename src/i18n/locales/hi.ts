@@ -1115,6 +1115,9 @@ export const hi = {
     taskReminders: 'कार्य अनुस्मारक',
     taskRemindersSubtitle: 'निर्धारित कार्यों के बारे में याद दिलाएं',
     notificationNote: 'सूचना सेटिंग्स स्थानीय रूप से संग्रहीत हैं',
+    notificationsDisabledMessage:
+      'Vinesight के लिए सूचनाएं अक्षम हैं। रिमाइंडर और अलर्ट प्राप्त करने के लिए अपनी डिवाइस सेटिंग्स में उन्हें सक्षम करें।',
+    openSettings: 'सेटिंग्स खोलें',
     madeForVineyardManagement: 'दाख की बारी प्रबंधन के लिए बनाया गया',
     signOut: 'साइन आउट',
     signOutConfirmTitle: 'साइन आउट',

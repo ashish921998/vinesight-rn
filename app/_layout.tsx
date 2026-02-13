@@ -24,6 +24,10 @@ import {
   cancelNotification,
   scheduleDailyWaterReminder,
   scheduleTaskDueReminder,
+  setupForegroundHandler,
+  setupNotificationResponseHandler,
+  setupNotificationChannel,
+  registerPushToken,
 } from '@/services/notifications';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
@@ -123,6 +127,7 @@ const queryClient = new QueryClient({
 export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const themeHydrated = useThemeStore((state) => state.hasHydrated);
   const { isDark, m3 } = useThemeTokens();
 
@@ -157,6 +162,36 @@ export default Sentry.wrap(function RootLayout() {
       cleanupAuthListener();
     };
   }, [initialize]);
+
+  // Set up notification handlers (foreground display, tap response, Android channel)
+  useEffect(() => {
+    let cleanupForeground: (() => void) | null = null;
+    let cleanupResponse: (() => void) | null = null;
+
+    const setup = async () => {
+      await setupNotificationChannel();
+      cleanupForeground = await setupForegroundHandler();
+      cleanupResponse = await setupNotificationResponseHandler();
+    };
+
+    setup();
+
+    return () => {
+      cleanupForeground?.();
+      cleanupResponse?.();
+    };
+  }, []);
+
+  // Register push token with backend when user is authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    registerPushToken().catch((error) => {
+      if (__DEV__) {
+        console.error('Failed to register push token:', error);
+      }
+    });
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!screenName) return;

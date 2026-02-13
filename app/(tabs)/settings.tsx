@@ -13,6 +13,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Linking,
   StyleSheet,
   type ViewStyle,
   type TextStyle,
@@ -38,6 +39,7 @@ import {
   ensureNotificationPermissions,
   scheduleDailyWaterReminder,
   cancelNotification,
+  getNotificationPermissionStatus,
 } from '@/services/notifications';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -152,6 +154,9 @@ export default function SettingsScreen() {
   const [selectedAreaUnit, setSelectedAreaUnit] = useState('hectares');
   const currency = useCurrency();
 
+  // Notification permission state
+  const [notificationPermissionDenied, setNotificationPermissionDenied] = useState(false);
+
   useEffect(() => {
     if (profile) {
       setEditName(profile.full_name || '');
@@ -162,6 +167,13 @@ export default function SettingsScreen() {
       setSelectedAreaUnit(user.user_metadata.area_unit as string);
     }
   }, [profile, user, currency]);
+
+  // Check notification permission status on mount
+  useEffect(() => {
+    getNotificationPermissionStatus().then((status) => {
+      setNotificationPermissionDenied(status === 'denied');
+    });
+  }, []);
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'User';
   const userEmail = profile?.email || user?.email || '';
@@ -617,43 +629,71 @@ export default function SettingsScreen() {
         >
           {t('settings.sectionNotifications')}
         </Text>
-        <View style={styles.sectionContent}>
-          <NotificationToggle
-            title={t('settings.dailyWaterReminder')}
-            subtitle={t('settings.dailyWaterReminderSubtitle')}
-            enabled={dailyWaterReminderEnabled}
-            onToggle={handleToggleDailyWaterReminder}
-            styles={styles}
-            colors={colors}
-            m3={m3}
-          />
-          <NotificationToggle
-            title={t('settings.lowWaterAlerts')}
-            subtitle={t('settings.lowWaterAlertsSubtitle')}
-            enabled={lowWaterAlertsEnabled}
-            onToggle={handleToggleLowWaterAlerts}
-            styles={styles}
-            colors={colors}
-            m3={m3}
-          />
-          <NotificationToggle
-            title={t('settings.taskReminders')}
-            subtitle={t('settings.taskRemindersSubtitle')}
-            enabled={taskRemindersEnabled}
-            onToggle={handleToggleTaskReminders}
-            isLast
-            styles={styles}
-            colors={colors}
-            m3={m3}
-          />
-        </View>
-        <Text
-          style={styles.notificationNote}
-          textBreakStrategy="highQuality"
-          lineBreakStrategyIOS="standard"
-        >
-          {t('settings.notificationNote')}
-        </Text>
+        {notificationPermissionDenied ? (
+          <View style={styles.sectionContent}>
+            <View style={styles.permissionDeniedContainer}>
+              <UISymbol name="bell.slash.fill" size={28} color={m3.colorScheme.error} />
+              <Text
+                style={[styles.permissionDeniedText, { color: m3.colorScheme.onSurface }]}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.notificationsDisabledMessage')}
+              </Text>
+              <Pressable
+                style={[
+                  styles.openSettingsButton,
+                  { backgroundColor: m3.colorScheme.primary },
+                ]}
+                onPress={() => Linking.openSettings()}
+              >
+                <Text style={[styles.openSettingsButtonText, { color: m3.colorScheme.onPrimary }]}>
+                  {t('settings.openSettings')}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <>
+            <View style={styles.sectionContent}>
+              <NotificationToggle
+                title={t('settings.dailyWaterReminder')}
+                subtitle={t('settings.dailyWaterReminderSubtitle')}
+                enabled={dailyWaterReminderEnabled}
+                onToggle={handleToggleDailyWaterReminder}
+                styles={styles}
+                colors={colors}
+                m3={m3}
+              />
+              <NotificationToggle
+                title={t('settings.lowWaterAlerts')}
+                subtitle={t('settings.lowWaterAlertsSubtitle')}
+                enabled={lowWaterAlertsEnabled}
+                onToggle={handleToggleLowWaterAlerts}
+                styles={styles}
+                colors={colors}
+                m3={m3}
+              />
+              <NotificationToggle
+                title={t('settings.taskReminders')}
+                subtitle={t('settings.taskRemindersSubtitle')}
+                enabled={taskRemindersEnabled}
+                onToggle={handleToggleTaskReminders}
+                isLast
+                styles={styles}
+                colors={colors}
+                m3={m3}
+              />
+            </View>
+            <Text
+              style={styles.notificationNote}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {t('settings.notificationNote')}
+            </Text>
+          </>
+        )}
       </View>
 
       {/* Account Section */}
@@ -1858,6 +1898,27 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     color: colors.surface[400],
     marginTop: spacing[2],
     paddingHorizontal: spacing[2],
+  } as TextStyle,
+  permissionDeniedContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing[6],
+    paddingHorizontal: spacing[4],
+    gap: spacing[3],
+  } as ViewStyle,
+  permissionDeniedText: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    lineHeight: 20,
+  } as TextStyle,
+  openSettingsButton: {
+    paddingHorizontal: spacing[6],
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.lg,
+    marginTop: spacing[2],
+  } as ViewStyle,
+  openSettingsButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   } as TextStyle,
 
   appVersionContainer: { alignItems: 'center', marginTop: spacing[8] } as ViewStyle,

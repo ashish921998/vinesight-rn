@@ -1119,6 +1119,9 @@ export const mr = {
     taskReminders: '$t(glossary.task) आठवणी',
     taskRemindersSubtitle: 'नियोजित $t(glossary.task) बद्दल आठवण',
     notificationNote: 'सूचना सेटिंग्ज स्थानिकरित्या जतन होतात',
+    notificationsDisabledMessage:
+      'Vinesight साठी सूचना बंद आहेत. स्मरणपत्रे आणि अलर्ट मिळवण्यासाठी तुमच्या डिव्हाइस सेटिंग्जमध्ये त्या सक्षम करा.',
+    openSettings: 'सेटिंग्ज उघडा',
     madeForVineyardManagement: 'द्राक्षमळा व्यवस्थापनासाठी',
     signOut: 'साइन आउट',
     signOutConfirmTitle: 'साइन आउट',
