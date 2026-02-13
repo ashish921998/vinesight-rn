@@ -205,7 +205,9 @@ export function ActivityEditForm({
               const parsedVolume = parseFloat(waterMatch[1]);
               data.waterVolume = isNaN(parsedVolume) ? 0 : parsedVolume;
             } else {
-              console.warn('[EditActivityModal] Water volume parsing failed:', r.dose);
+              if (__DEV__) {
+                console.warn('[EditActivityModal] Water volume parsing failed:', r.dose);
+              }
             }
           }
 
@@ -259,7 +261,9 @@ export function ActivityEditForm({
                 const unit = normalizeLegacySprayUnit(match[3]);
                 const parsedQuantity = parseFloat(match[2]);
                 if (isNaN(parsedQuantity)) {
-                  console.warn('[EditActivityModal] Invalid chemical quantity:', match[2]);
+                  if (__DEV__) {
+                    console.warn('[EditActivityModal] Invalid chemical quantity:', match[2]);
+                  }
                   return {
                     id: generateId(),
                     name: part,
@@ -268,7 +272,9 @@ export function ActivityEditForm({
                   };
                 }
                 if (!unit) {
-                  console.warn('[EditActivityModal] Invalid unit, using default:', match[3]);
+                  if (__DEV__) {
+                    console.warn('[EditActivityModal] Invalid unit, using default:', match[3]);
+                  }
                   return {
                     id: generateId(),
                     name: match[1].trim(),
@@ -287,7 +293,9 @@ export function ActivityEditForm({
                   densityKgPerL: null,
                 };
               }
-              console.warn('[EditActivityModal] Chemical parsing failed, using defaults:', part);
+              if (__DEV__) {
+                console.warn('[EditActivityModal] Chemical parsing failed, using defaults:', part);
+              }
               return {
                 id: generateId(),
                 name: part,
@@ -490,7 +498,9 @@ export function ActivityEditForm({
       setIsInitialized(false);
       onClose();
     } catch (error) {
-      console.error('Error updating log:', error);
+      if (__DEV__) {
+        console.error('Error updating log:', error);
+      }
       Alert.alert(t('common.error'), t('common.errors.failedToUpdateLog'));
     } finally {
       setIsSubmitting(false);

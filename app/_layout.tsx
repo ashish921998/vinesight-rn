@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Stack, usePathname, useSegments } from 'expo-router';
-import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
+import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
+import { AppState, Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
@@ -21,9 +21,14 @@ import {
 import { ErrorBoundary } from '@/components/error-boundary';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
+  addNotificationResponseListener,
   cancelNotification,
+  clearBadgeCount,
+  registerForPushNotifications,
   scheduleDailyWaterReminder,
   scheduleTaskDueReminder,
+  setupAndroidChannel,
+  setupNotificationHandler,
 } from '@/services/notifications';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
@@ -141,6 +146,48 @@ export default Sentry.wrap(function RootLayout() {
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    // Set up notification foreground handler and Android channel early,
+    // before any notifications are scheduled or received.
+    void setupNotificationHandler();
+    void setupAndroidChannel();
+
+    // Register for push notifications and store the token.
+    void registerForPushNotifications().then((token) => {
+      if (token) {
+        useNotificationStore.getState().setExpoPushToken(token);
+      }
+    });
+
+    // Clear badge count on app launch.
+    void clearBadgeCount();
+
+    // Listen for notification taps to handle deep linking.
+    let responseSubscription: { remove: () => void } | null = null;
+    void addNotificationResponseListener((response) => {
+      const data = response.notification.request.content.data;
+      if (data.type === 'task_due' && typeof data.taskId === 'string') {
+        router.push('/tasks');
+      }
+    }).then((sub) => {
+      responseSubscription = sub;
+    });
+
+    // Clear badge when app returns to foreground.
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        void clearBadgeCount();
+      }
+    });
+
+    return () => {
+      responseSubscription?.remove();
+      appStateSubscription.remove();
+    };
+  }, [router]);
 
   useEffect(() => {
     // Initialize auth state

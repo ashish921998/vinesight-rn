@@ -1,6 +1,11 @@
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import i18n from '@/i18n';
 
 type ExpoNotifications = typeof import('expo-notifications');
+type Subscription = { remove: () => void };
+
+const ANDROID_CHANNEL_ID = 'default';
 
 async function getNotifications(): Promise<ExpoNotifications | null> {
   try {
@@ -13,21 +18,160 @@ async function getNotifications(): Promise<ExpoNotifications | null> {
   }
 }
 
+/**
+ * Set up the foreground notification handler so notifications are displayed
+ * even when the app is in the foreground. Must be called once at app startup.
+ */
+export async function setupNotificationHandler(): Promise<void> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
+
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
+
+/**
+ * Create the default Android notification channel. On Android 8+ notifications
+ * are silently dropped without a channel. No-op on iOS/web.
+ */
+export async function setupAndroidChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
+
+  try {
+    await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+      name: 'Default',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      sound: 'default',
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to create Android notification channel:', error);
+    }
+  }
+}
+
+/**
+ * Register for push notifications and return the Expo push token.
+ * Returns null on web or if permissions are not granted.
+ */
+export async function registerForPushNotifications(): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  try {
+    const granted = await ensureNotificationPermissions();
+    if (!granted) return null;
+
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    if (!projectId) {
+      if (__DEV__) {
+        console.error('Missing EAS projectId for push token registration');
+      }
+      return null;
+    }
+
+    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
+    return token;
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to register for push notifications:', error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Add a listener for when a notification is received while the app is foregrounded.
+ * Returns a subscription that must be removed on cleanup.
+ */
+export async function addNotificationReceivedListener(
+  callback: (notification: { request: { content: { data: Record<string, unknown> } } }) => void,
+): Promise<Subscription | null> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  return Notifications.addNotificationReceivedListener(callback);
+}
+
+/**
+ * Add a listener for when the user taps on a notification.
+ * Returns a subscription that must be removed on cleanup.
+ */
+export async function addNotificationResponseListener(
+  callback: (response: {
+    notification: { request: { content: { data: Record<string, unknown> } } };
+  }) => void,
+): Promise<Subscription | null> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  return Notifications.addNotificationResponseReceivedListener(callback);
+}
+
+/**
+ * Clear the app badge count. Call on app foreground to reset badge.
+ */
+export async function clearBadgeCount(): Promise<void> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
+
+  try {
+    await Notifications.setBadgeCountAsync(0);
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to clear badge count:', error);
+    }
+  }
+}
+
 export async function ensureNotificationPermissions(): Promise<boolean> {
   const Notifications = await getNotifications();
   if (!Notifications) return false;
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  if (existingStatus === 'granted') return true;
+  try {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    if (existingStatus === 'granted') return true;
 
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === 'granted';
+    const { status } = await Notifications.requestPermissionsAsync({
+      ios: {
+        allowAlert: true,
+        allowSound: true,
+        allowBadge: true,
+      },
+    });
+    return status === 'granted';
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to request notification permissions:', error);
+    }
+    return false;
+  }
 }
 
 export async function cancelNotification(notificationId: string): Promise<void> {
   const Notifications = await getNotifications();
   if (!Notifications) return;
-  await Notifications.cancelScheduledNotificationAsync(notificationId);
+
+  try {
+    await Notifications.cancelScheduledNotificationAsync(notificationId);
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to cancel notification:', notificationId, error);
+    }
+  }
 }
 
 export async function scheduleDailyWaterReminder(): Promise<string | null> {
@@ -37,15 +181,23 @@ export async function scheduleDailyWaterReminder(): Promise<string | null> {
   const title = i18n.t('notifications.dailyWater.title');
   const body = i18n.t('notifications.dailyWater.body');
 
-  return Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-    },
-    // 07:00 local time daily
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 7, minute: 0 },
-  });
+  try {
+    return await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+        ...(Platform.OS === 'android' && { channelId: ANDROID_CHANNEL_ID }),
+      },
+      // 07:00 local time daily
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 7, minute: 0 },
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to schedule daily water reminder:', error);
+    }
+    return null;
+  }
 }
 
 export async function scheduleTaskDueReminder(
@@ -77,15 +229,23 @@ export async function scheduleTaskDueReminder(
   const title = i18n.t('notifications.taskDue.title');
   const body = i18n.t('notifications.taskDue.body');
 
-  return Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      data: { type: 'task_due', taskId },
-    },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerDate },
-  });
+  try {
+    return await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+        data: { type: 'task_due', taskId },
+        ...(Platform.OS === 'android' && { channelId: ANDROID_CHANNEL_ID }),
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerDate },
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to schedule task due reminder:', error);
+    }
+    return null;
+  }
 }
 
 export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
@@ -96,13 +256,20 @@ export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
   const baseBody = i18n.t('notifications.lowWater.body');
   const body = farmName ? `${farmName}: ${baseBody}` : baseBody;
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      data: { type: 'low_water' },
-    },
-    trigger: null,
-  });
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+        data: { type: 'low_water' },
+        ...(Platform.OS === 'android' && { channelId: ANDROID_CHANNEL_ID }),
+      },
+      trigger: null,
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to send low water alert:', error);
+    }
+  }
 }
