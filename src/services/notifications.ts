@@ -2,15 +2,37 @@ import i18n from '@/i18n';
 
 type ExpoNotifications = typeof import('expo-notifications');
 
+let notificationsModule: ExpoNotifications | null = null;
+
 async function getNotifications(): Promise<ExpoNotifications | null> {
+  if (notificationsModule) return notificationsModule;
   try {
-    return await import('expo-notifications');
+    notificationsModule = await import('expo-notifications');
+    return notificationsModule;
   } catch (error) {
     if (__DEV__) {
       console.log('expo-notifications not available:', error);
     }
     return null;
   }
+}
+
+/**
+ * Configure the notification handler so that notifications are presented
+ * when the app is in the foreground. Must be called once at app startup.
+ */
+export async function configureNotificationHandler(): Promise<void> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
+
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
 }
 
 export async function ensureNotificationPermissions(): Promise<boolean> {
@@ -41,7 +63,7 @@ export async function scheduleDailyWaterReminder(): Promise<string | null> {
     content: {
       title,
       body,
-      sound: true,
+      sound: 'default',
     },
     // 07:00 local time daily
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 7, minute: 0 },
@@ -81,7 +103,7 @@ export async function scheduleTaskDueReminder(
     content: {
       title,
       body,
-      sound: true,
+      sound: 'default',
       data: { type: 'task_due', taskId },
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerDate },
@@ -100,7 +122,7 @@ export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
     content: {
       title,
       body,
-      sound: true,
+      sound: 'default',
       data: { type: 'low_water' },
     },
     trigger: null,

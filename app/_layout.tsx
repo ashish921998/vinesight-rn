@@ -22,6 +22,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
   cancelNotification,
+  configureNotificationHandler,
   scheduleDailyWaterReminder,
   scheduleTaskDueReminder,
 } from '@/services/notifications';
@@ -141,6 +142,11 @@ export default Sentry.wrap(function RootLayout() {
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
+
+  useEffect(() => {
+    // Configure notification handler so foreground notifications are presented
+    configureNotificationHandler();
+  }, []);
 
   useEffect(() => {
     // Initialize auth state
