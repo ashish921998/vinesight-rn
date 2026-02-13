@@ -204,6 +204,20 @@ export {
 // Farm Assistant
 export { useFarmAssistant } from './use-farm-assistant';
 
+// Network Status Hook (offline-first)
+export { useNetworkStatus, type NetworkStatus } from './use-network-status';
+
+// PowerSync Offline-First Hooks
+// These are drop-in alternatives to the Supabase-direct hooks above.
+// They read from the local SQLite database for instant, offline-capable access.
+export { usePowerSyncFarms, usePowerSyncFarm } from './use-powersync-farms';
+export { usePowerSyncTasks, usePowerSyncAllTasks } from './use-powersync-tasks';
+export {
+  usePowerSyncWorkers,
+  usePowerSyncWorker,
+  usePowerSyncWorkerAttendance,
+} from './use-powersync-workers';
+
 // UI Hooks
 export { useFabBottomInset } from './use-fab-bottom-inset';
 export { useTabBarInset } from './use-tab-bar-inset';
