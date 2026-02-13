@@ -334,7 +334,6 @@ export function WaterLevelSheet({
                       label: t(
                         `waterLevelSheet.growthStagePicker.stages.${selectedGrowthStage.id}`,
                       ),
-                      kc: formatNumber(selectedGrowthStage.kc, { maximumFractionDigits: 2 }),
                     })
                   : t('waterLevelSheet.growthStage.placeholder')}
               </Text>
@@ -464,17 +463,6 @@ export function WaterLevelSheet({
                         }}
                       >
                         {t(`waterLevelSheet.growthStagePicker.stages.${stage.id}`)}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: fontSize.sm,
-                          color: colors.surface[500],
-                          marginTop: 2,
-                        }}
-                      >
-                        {t('waterLevelSheet.growthStagePicker.kcLabel', {
-                          kc: formatNumber(stage.kc, { maximumFractionDigits: 2 }),
-                        })}
                       </Text>
                     </View>
                     {selectedGrowthStage?.id === stage.id && (
