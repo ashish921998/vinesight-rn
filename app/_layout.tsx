@@ -24,6 +24,9 @@ import {
   cancelNotification,
   scheduleDailyWaterReminder,
   scheduleTaskDueReminder,
+  setupNotificationChannel,
+  registerForegroundHandler,
+  addNotificationResponseListener,
 } from '@/services/notifications';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
@@ -157,6 +160,27 @@ export default Sentry.wrap(function RootLayout() {
       cleanupAuthListener();
     };
   }, [initialize]);
+
+  // Set up notification channel (Android), foreground handler, and tap listener once on mount
+  useEffect(() => {
+    // Register foreground handler so notifications display while app is open
+    void registerForegroundHandler().catch(() => null);
+
+    // Create the default Android notification channel (no-op on iOS)
+    void setupNotificationChannel().catch(() => null);
+
+    // Listen for notification taps
+    let removeListener: (() => void) | null = null;
+    void addNotificationResponseListener(() => {
+      // Future: navigate to relevant screen based on notification data
+    }).then((cleanup) => {
+      removeListener = cleanup;
+    });
+
+    return () => {
+      removeListener?.();
+    };
+  }, []);
 
   useEffect(() => {
     if (!screenName) return;

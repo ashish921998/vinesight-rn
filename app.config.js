@@ -138,6 +138,13 @@ module.exports = {
             'Allow Vinesight to use speech recognition for voice queries.',
         },
       ],
+      [
+        'expo-notifications',
+        {
+          icon: './assets/icons/adaptive-icon.png',
+          color: '#ffffff',
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

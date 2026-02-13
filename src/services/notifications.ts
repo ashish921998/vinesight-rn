@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import i18n from '@/i18n';
 
 type ExpoNotifications = typeof import('expo-notifications');
@@ -11,6 +12,61 @@ async function getNotifications(): Promise<ExpoNotifications | null> {
     }
     return null;
   }
+}
+
+/**
+ * Set up the default Android notification channel.
+ * Android 8+ requires a channel; without one, scheduled notifications are silently dropped.
+ * This is a no-op on iOS / web.
+ */
+export async function setupNotificationChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
+
+  await Notifications.setNotificationChannelAsync('default', {
+    name: 'Default',
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    sound: 'default',
+  });
+}
+
+/**
+ * Register the foreground notification handler so notifications are displayed
+ * even when the app is in the foreground.
+ */
+export async function registerForegroundHandler(): Promise<void> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
+
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
+
+/**
+ * Register a listener for notification taps (response received).
+ * Returns a cleanup function to remove the listener.
+ */
+export async function addNotificationResponseListener(
+  callback: (taskId?: string) => void,
+): Promise<(() => void) | null> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+    const data = response.notification.request.content.data as Record<string, unknown> | undefined;
+    const taskId = typeof data?.taskId === 'string' ? data.taskId : undefined;
+    callback(taskId);
+  });
+
+  return () => subscription.remove();
 }
 
 export async function ensureNotificationPermissions(): Promise<boolean> {
@@ -42,6 +98,7 @@ export async function scheduleDailyWaterReminder(): Promise<string | null> {
       title,
       body,
       sound: true,
+      ...(Platform.OS === 'android' && { channelId: 'default' }),
     },
     // 07:00 local time daily
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 7, minute: 0 },
@@ -83,6 +140,7 @@ export async function scheduleTaskDueReminder(
       body,
       sound: true,
       data: { type: 'task_due', taskId },
+      ...(Platform.OS === 'android' && { channelId: 'default' }),
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerDate },
   });
@@ -102,6 +160,7 @@ export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
       body,
       sound: true,
       data: { type: 'low_water' },
+      ...(Platform.OS === 'android' && { channelId: 'default' }),
     },
     trigger: null,
   });
