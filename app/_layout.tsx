@@ -189,6 +189,8 @@ export default Sentry.wrap(function RootLayout() {
     // Guard against overlapping reschedules
     if (reschedulePromiseRef.current !== null) return;
 
+    let aborted = false;
+
     const reschedule = async () => {
       const state = useNotificationStore.getState();
 
@@ -199,7 +201,7 @@ export default Sentry.wrap(function RootLayout() {
               await cancelNotification(state.dailyWaterReminderNotificationId);
             }
             const nextId = await scheduleDailyWaterReminder();
-            if (nextId) {
+            if (nextId && !aborted) {
               useNotificationStore.setState({ dailyWaterReminderNotificationId: nextId });
             }
           } catch (error) {
@@ -214,22 +216,25 @@ export default Sentry.wrap(function RootLayout() {
         }
       }
 
+      if (aborted) return;
+
       try {
         if (state.taskRemindersEnabled) {
           try {
             const entries = Object.entries(state.taskSchedules);
             for (const [taskId, schedule] of entries) {
+              if (aborted) break;
               try {
                 if (schedule.notificationId) {
                   await cancelNotification(schedule.notificationId);
                 }
                 const nextId = await scheduleTaskDueReminder(taskId, schedule.dueDate);
-                if (nextId) {
+                if (nextId && !aborted) {
                   useNotificationStore.getState().upsertTaskSchedule(taskId, {
                     notificationId: nextId,
                     dueDate: schedule.dueDate,
                   });
-                } else {
+                } else if (!aborted) {
                   useNotificationStore.getState().removeTaskSchedule(taskId);
                 }
               } catch (error) {
@@ -249,7 +254,9 @@ export default Sentry.wrap(function RootLayout() {
           console.error('Failed to access task reminders state:', error);
         }
       } finally {
-        reschedulePromiseRef.current = null;
+        if (!aborted) {
+          reschedulePromiseRef.current = null;
+        }
       }
     };
 
@@ -257,7 +264,9 @@ export default Sentry.wrap(function RootLayout() {
     reschedulePromiseRef.current = reschedule();
 
     return () => {
-      reschedulePromiseRef.current = null;
+      aborted = true;
+      // Don't null out the ref here — let the finally block handle it
+      // to avoid a race where a new effect fires while the promise is still running
     };
   }, [language, languageHydrated, notificationsHydrated]);
 

@@ -17,17 +17,32 @@ export async function ensureNotificationPermissions(): Promise<boolean> {
   const Notifications = await getNotifications();
   if (!Notifications) return false;
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  if (existingStatus === 'granted') return true;
+  try {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    if (existingStatus === 'granted') return true;
 
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === 'granted';
+    const { status } = await Notifications.requestPermissionsAsync();
+    return status === 'granted';
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to check/request notification permissions:', error);
+    }
+    return false;
+  }
 }
 
 export async function cancelNotification(notificationId: string): Promise<void> {
   const Notifications = await getNotifications();
   if (!Notifications) return;
-  await Notifications.cancelScheduledNotificationAsync(notificationId);
+
+  try {
+    await Notifications.cancelScheduledNotificationAsync(notificationId);
+  } catch (error) {
+    // Notification may have already fired or been dismissed — not critical
+    if (__DEV__) {
+      console.warn('Failed to cancel notification:', notificationId, error);
+    }
+  }
 }
 
 export async function scheduleDailyWaterReminder(): Promise<string | null> {
@@ -37,15 +52,22 @@ export async function scheduleDailyWaterReminder(): Promise<string | null> {
   const title = i18n.t('notifications.dailyWater.title');
   const body = i18n.t('notifications.dailyWater.body');
 
-  return Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-    },
-    // 07:00 local time daily
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 7, minute: 0 },
-  });
+  try {
+    return await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+      },
+      // 07:00 local time daily
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 7, minute: 0 },
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to schedule daily water reminder:', error);
+    }
+    return null;
+  }
 }
 
 export async function scheduleTaskDueReminder(
@@ -77,15 +99,22 @@ export async function scheduleTaskDueReminder(
   const title = i18n.t('notifications.taskDue.title');
   const body = i18n.t('notifications.taskDue.body');
 
-  return Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      data: { type: 'task_due', taskId },
-    },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerDate },
-  });
+  try {
+    return await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+        data: { type: 'task_due', taskId },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerDate },
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to schedule task due reminder:', error);
+    }
+    return null;
+  }
 }
 
 export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
@@ -96,13 +125,19 @@ export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
   const baseBody = i18n.t('notifications.lowWater.body');
   const body = farmName ? `${farmName}: ${baseBody}` : baseBody;
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      data: { type: 'low_water' },
-    },
-    trigger: null,
-  });
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+        data: { type: 'low_water' },
+      },
+      trigger: null,
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('Failed to send low water alert:', error);
+    }
+  }
 }

@@ -68,7 +68,13 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     }),
     {
       name: 'vinesight-notifications',
+      version: 1,
       storage: createJSONStorage(() => ExpoSecureStoreAdapter),
+      partialize: (state) => {
+        // Exclude transient state from persistence
+        const { hasHydrated: _, _setHasHydrated: __, ...persisted } = state;
+        return persisted;
+      },
       onRehydrateStorage: () => () => {
         useNotificationStore.setState({ hasHydrated: true });
       },
