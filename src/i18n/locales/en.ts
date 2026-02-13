@@ -5,6 +5,8 @@ export const en = {
 
   common: {
     ok: 'OK',
+    on: 'On',
+    off: 'Off',
     cancel: 'Cancel',
     close: 'Close',
     save: 'Save',
@@ -1113,6 +1115,8 @@ export const en = {
     taskReminders: 'Task Reminders',
     taskRemindersSubtitle: 'Remind about scheduled tasks',
     notificationNote: 'Notification settings are stored locally',
+    notificationPreferencesLink: 'Notification Preferences',
+    notificationPreferencesLinkSubtitle: 'Manage all notification categories',
     madeForVineyardManagement: 'Made for vineyard management',
     signOut: 'Sign Out',
     signOutConfirmTitle: 'Sign Out',
@@ -2118,6 +2122,39 @@ export const en = {
       stopListening: 'Stop listening',
       submitQuery: 'Submit query',
       selectOption: 'Select option: {{option}}',
+    },
+  },
+  notificationPreferences: {
+    title: 'Notification Preferences',
+    sectionCurrent: 'ACTIVE REMINDERS',
+    sectionCategories: 'PUSH NOTIFICATION CATEGORIES',
+    currentNote: 'Toggle these in the main Settings screen',
+    categoriesNote: 'Choose which types of push notifications you receive. Preferences are saved locally.',
+    categories: {
+      vineAlerts: {
+        title: 'Vine Alerts',
+        description: 'Growth stage changes, pruning reminders, and vine health updates',
+      },
+      diseaseDetection: {
+        title: 'Disease Detection',
+        description: 'Alerts when potential diseases or pests are detected in your vineyard',
+      },
+      weatherAlerts: {
+        title: 'Weather Alerts',
+        description: 'Frost warnings, heat advisories, and severe weather notifications',
+      },
+      harvestReminders: {
+        title: 'Harvest Reminders',
+        description: 'Optimal harvest window alerts and ripeness notifications',
+      },
+      irrigationAlerts: {
+        title: 'Irrigation Alerts',
+        description: 'Soil moisture updates and irrigation schedule recommendations',
+      },
+      generalUpdates: {
+        title: 'General Updates',
+        description: 'App updates, tips, and general vineyard management news',
+      },
     },
   },
 } as const;

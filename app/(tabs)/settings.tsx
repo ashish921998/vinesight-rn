@@ -641,11 +641,35 @@ export default function SettingsScreen() {
             subtitle={t('settings.taskRemindersSubtitle')}
             enabled={taskRemindersEnabled}
             onToggle={handleToggleTaskReminders}
-            isLast
             styles={styles}
             colors={colors}
             m3={m3}
           />
+          <Pressable
+            onPress={() => router.push('/notification-preferences')}
+            style={[styles.settingsItem]}
+          >
+            <View style={styles.settingsIcon}>
+              <UISymbol name="bell.badge.fill" size={20} color={m3.colorScheme.primary} />
+            </View>
+            <View style={styles.flex1}>
+              <Text
+                style={[styles.settingsTitle, { marginLeft: 0 }]}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.notificationPreferencesLink')}
+              </Text>
+              <Text
+                style={styles.notificationSubtitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.notificationPreferencesLinkSubtitle')}
+              </Text>
+            </View>
+            <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
+          </Pressable>
         </View>
         <Text
           style={styles.notificationNote}

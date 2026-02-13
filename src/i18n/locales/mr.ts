@@ -5,6 +5,8 @@ export const mr = {
 
   common: {
     ok: 'ठीक आहे',
+    on: 'चालू',
+    off: 'बंद',
     cancel: 'रद्द',
     close: 'बंद',
     save: 'जतन करा',
@@ -1119,6 +1121,8 @@ export const mr = {
     taskReminders: '$t(glossary.task) आठवणी',
     taskRemindersSubtitle: 'नियोजित $t(glossary.task) बद्दल आठवण',
     notificationNote: 'सूचना सेटिंग्ज स्थानिकरित्या जतन होतात',
+    notificationPreferencesLink: 'सूचना प्राधान्ये',
+    notificationPreferencesLinkSubtitle: 'सर्व सूचना श्रेणी व्यवस्थापित करा',
     madeForVineyardManagement: 'द्राक्षमळा व्यवस्थापनासाठी',
     signOut: 'साइन आउट',
     signOutConfirmTitle: 'साइन आउट',
@@ -2131,6 +2135,39 @@ export const mr = {
       stopListening: 'ऐकणे थांबवा',
       submitQuery: 'प्रश्न पाठवा',
       selectOption: 'पर्याय निवडा: {{option}}',
+    },
+  },
+  notificationPreferences: {
+    title: 'सूचना प्राधान्ये',
+    sectionCurrent: 'सक्रिय स्मरणपत्रे',
+    sectionCategories: 'पुश सूचना श्रेणी',
+    currentNote: 'मुख्य सेटिंग्ज स्क्रीनमध्ये हे टॉगल करा',
+    categoriesNote: 'तुम्हाला कोणत्या प्रकारच्या पुश सूचना मिळायच्या ते निवडा. प्राधान्ये स्थानिकरित्या जतन होतात.',
+    categories: {
+      vineAlerts: {
+        title: 'वेल अलर्ट',
+        description: 'वाढीचे टप्पे बदल, छाटणी स्मरणपत्रे, आणि वेल आरोग्य अपडेट',
+      },
+      diseaseDetection: {
+        title: 'रोग ओळख',
+        description: 'तुमच्या द्राक्षमळ्यात संभाव्य रोग किंवा कीड आढळल्यास अलर्ट',
+      },
+      weatherAlerts: {
+        title: 'हवामान अलर्ट',
+        description: 'दंव चेतावणी, उष्णता सल्ला, आणि तीव्र हवामान सूचना',
+      },
+      harvestReminders: {
+        title: 'कापणी स्मरणपत्रे',
+        description: 'इष्टतम कापणी कालावधी अलर्ट आणि पिकण्याच्या सूचना',
+      },
+      irrigationAlerts: {
+        title: 'सिंचन अलर्ट',
+        description: 'मातीतील ओलावा अपडेट आणि सिंचन वेळापत्रक शिफारसी',
+      },
+      generalUpdates: {
+        title: 'सामान्य अपडेट',
+        description: 'अॅप अपडेट, टिप्स, आणि सामान्य द्राक्षमळा व्यवस्थापन बातम्या',
+      },
     },
   },
 } as const;
