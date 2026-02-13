@@ -1,3 +1,5 @@
+const IS_PRODUCTION = process.env.APP_VARIANT === 'production' || process.env.EAS_BUILD_PROFILE === 'production';
+
 module.exports = {
   expo: {
     name: 'Vinesight',
@@ -96,6 +98,16 @@ module.exports = {
     plugins: [
       'expo-router',
       'expo-localization',
+      [
+        'expo-notifications',
+        {
+          icon: './assets/icons/adaptive-icon.png',
+          color: '#4CAF50',
+          defaultChannel: 'default',
+          enableBackgroundRemoteNotifications: false,
+          iosAPNSEnvironment: IS_PRODUCTION ? 'production' : 'development',
+        },
+      ],
       [
         'expo-splash-screen',
         {

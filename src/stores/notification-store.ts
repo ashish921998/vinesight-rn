@@ -7,6 +7,16 @@ export type TaskNotificationSchedule = {
   dueDate: string; // YYYY-MM-DD
 };
 
+/** Shape of the notification category preferences synced to the server. */
+export interface NotificationCategoryPreferences {
+  vineAlertsEnabled: boolean;
+  diseaseDetectionEnabled: boolean;
+  weatherAlertsEnabled: boolean;
+  generalUpdatesEnabled: boolean;
+  harvestRemindersEnabled: boolean;
+  irrigationAlertsEnabled: boolean;
+}
+
 interface NotificationState {
   hasHydrated: boolean;
 
@@ -15,6 +25,14 @@ interface NotificationState {
 
   lowWaterAlertsEnabled: boolean;
   taskRemindersEnabled: boolean;
+
+  // Push notification category preferences
+  vineAlertsEnabled: boolean;
+  diseaseDetectionEnabled: boolean;
+  weatherAlertsEnabled: boolean;
+  generalUpdatesEnabled: boolean;
+  harvestRemindersEnabled: boolean;
+  irrigationAlertsEnabled: boolean;
 
   taskSchedules: Record<string, TaskNotificationSchedule>; // taskId -> schedule
 }
@@ -28,6 +46,20 @@ interface NotificationActions {
   setLowWaterAlertsEnabled: (enabled: boolean) => void;
   setTaskRemindersEnabled: (enabled: boolean) => void;
 
+  // Push notification category preferences
+  setVineAlertsEnabled: (enabled: boolean) => void;
+  setDiseaseDetectionEnabled: (enabled: boolean) => void;
+  setWeatherAlertsEnabled: (enabled: boolean) => void;
+  setGeneralUpdatesEnabled: (enabled: boolean) => void;
+  setHarvestRemindersEnabled: (enabled: boolean) => void;
+  setIrrigationAlertsEnabled: (enabled: boolean) => void;
+
+  /** Bulk-set category preferences (used when hydrating from server). */
+  setCategoryPreferences: (prefs: Partial<NotificationCategoryPreferences>) => void;
+
+  /** Return the current category preferences snapshot. */
+  getCategoryPreferences: () => NotificationCategoryPreferences;
+
   upsertTaskSchedule: (taskId: string, schedule: TaskNotificationSchedule) => void;
   removeTaskSchedule: (taskId: string) => void;
   clearAllTaskSchedules: () => void;
@@ -35,7 +67,7 @@ interface NotificationActions {
 
 export const useNotificationStore = create<NotificationState & NotificationActions>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       hasHydrated: false,
 
       dailyWaterReminderEnabled: false,
@@ -43,6 +75,14 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
       lowWaterAlertsEnabled: false,
       taskRemindersEnabled: false,
+
+      // Push notification category preferences (default enabled)
+      vineAlertsEnabled: true,
+      diseaseDetectionEnabled: true,
+      weatherAlertsEnabled: true,
+      generalUpdatesEnabled: true,
+      harvestRemindersEnabled: true,
+      irrigationAlertsEnabled: true,
 
       taskSchedules: {},
 
@@ -53,6 +93,27 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
       setLowWaterAlertsEnabled: (enabled) => set({ lowWaterAlertsEnabled: enabled }),
       setTaskRemindersEnabled: (enabled) => set({ taskRemindersEnabled: enabled }),
+
+      setVineAlertsEnabled: (enabled) => set({ vineAlertsEnabled: enabled }),
+      setDiseaseDetectionEnabled: (enabled) => set({ diseaseDetectionEnabled: enabled }),
+      setWeatherAlertsEnabled: (enabled) => set({ weatherAlertsEnabled: enabled }),
+      setGeneralUpdatesEnabled: (enabled) => set({ generalUpdatesEnabled: enabled }),
+      setHarvestRemindersEnabled: (enabled) => set({ harvestRemindersEnabled: enabled }),
+      setIrrigationAlertsEnabled: (enabled) => set({ irrigationAlertsEnabled: enabled }),
+
+      setCategoryPreferences: (prefs) => set(prefs),
+
+      getCategoryPreferences: () => {
+        const s = get();
+        return {
+          vineAlertsEnabled: s.vineAlertsEnabled,
+          diseaseDetectionEnabled: s.diseaseDetectionEnabled,
+          weatherAlertsEnabled: s.weatherAlertsEnabled,
+          generalUpdatesEnabled: s.generalUpdatesEnabled,
+          harvestRemindersEnabled: s.harvestRemindersEnabled,
+          irrigationAlertsEnabled: s.irrigationAlertsEnabled,
+        };
+      },
 
       upsertTaskSchedule: (taskId, schedule) =>
         set((state) => ({

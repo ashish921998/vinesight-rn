@@ -5,6 +5,8 @@ export const hi = {
 
   common: {
     ok: 'ठीक है',
+    on: 'चालू',
+    off: 'बंद',
     cancel: 'रद्द करें',
     close: 'बंद करें',
     save: 'सहेजें',
@@ -2124,6 +2126,39 @@ export const hi = {
       stopListening: 'सुनना बंद करें',
       submitQuery: 'प्रश्न भेजें',
       selectOption: 'विकल्प चुनें: {{option}}',
+    },
+  },
+  notificationPreferences: {
+    title: 'सूचना प्राथमिकताएं',
+    sectionCurrent: 'सक्रिय अनुस्मारक',
+    sectionCategories: 'पुश सूचना श्रेणियां',
+    currentNote: 'इन्हें मुख्य सेटिंग्स स्क्रीन में टॉगल करें',
+    categoriesNote: 'चुनें कि आप किस प्रकार की पुश सूचनाएं प्राप्त करना चाहते हैं। प्राथमिकताएं आपके खाते में सिंक होती हैं।',
+    categories: {
+      vineAlerts: {
+        title: 'बेल अलर्ट',
+        description: 'विकास चरण परिवर्तन, छंटाई अनुस्मारक, और बेल स्वास्थ्य अपडेट',
+      },
+      diseaseDetection: {
+        title: 'रोग पहचान',
+        description: 'जब आपके दाख की बारी में संभावित रोग या कीट पाए जाते हैं तो अलर्ट',
+      },
+      weatherAlerts: {
+        title: 'मौसम अलर्ट',
+        description: 'पाला चेतावनी, गर्मी सलाह, और गंभीर मौसम सूचनाएं',
+      },
+      harvestReminders: {
+        title: 'फसल अनुस्मारक',
+        description: 'इष्टतम फसल खिड़की अलर्ट और पकने की सूचनाएं',
+      },
+      irrigationAlerts: {
+        title: 'सिंचाई अलर्ट',
+        description: 'मिट्टी नमी अपडेट और सिंचाई अनुसूची सिफारिशें',
+      },
+      generalUpdates: {
+        title: 'सामान्य अपडेट',
+        description: 'ऐप अपडेट, सुझाव, और सामान्य दाख की बारी प्रबंधन समाचार',
+      },
     },
   },
 } as const;
