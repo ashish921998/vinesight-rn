@@ -25,6 +25,12 @@ import {
   scheduleDailyWaterReminder,
   scheduleTaskDueReminder,
 } from '@/services/notifications';
+import {
+  setupAndroidNotificationChannel,
+  setupNotificationHandlers,
+  registerPushToken,
+  cleanupNotificationHandlers,
+} from '@/services/push-notifications';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
@@ -105,6 +111,9 @@ try {
 void SplashScreen.preventAutoHideAsync().catch(() => null);
 WebBrowser.maybeCompleteAuthSession();
 
+// Set up Android notification channel early (before any notifications are sent)
+void setupAndroidNotificationChannel();
+
 // Create a client outside component to prevent recreation
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -123,6 +132,8 @@ const queryClient = new QueryClient({
 export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const themeHydrated = useThemeStore((state) => state.hasHydrated);
   const { isDark, m3 } = useThemeTokens();
 
@@ -157,6 +168,29 @@ export default Sentry.wrap(function RootLayout() {
       cleanupAuthListener();
     };
   }, [initialize]);
+
+  // Set up foreground/background notification handlers + deep linking
+  useEffect(() => {
+    let cleanup: (() => void) | null = null;
+
+    void setupNotificationHandlers().then((fn) => {
+      cleanup = fn;
+    });
+
+    return () => {
+      if (cleanup) {
+        cleanup();
+      } else {
+        cleanupNotificationHandlers();
+      }
+    };
+  }, []);
+
+  // Register push token with Supabase after authentication
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+    void registerPushToken(user.id);
+  }, [isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (!screenName) return;
