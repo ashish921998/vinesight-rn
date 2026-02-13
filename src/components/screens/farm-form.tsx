@@ -13,6 +13,9 @@ import {
   ActivityIndicator,
   ScrollView,
   Platform,
+  Keyboard,
+  KeyboardAvoidingView,
+  useWindowDimensions,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -42,6 +45,7 @@ import {
   validateAndParseOptionalFarmNumbers,
 } from '@/utils/farm-form-submit-validation';
 import { getCropVisual, type KnownCrop } from '@/utils/farm-crop-visuals';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SOIL_TEXTURE_OPTIONS = [
   { value: 'Sand', labelKey: 'farmForm.soilTexture.options.sand' },
@@ -192,6 +196,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const isIOS = Platform.OS === 'ios';
 
   const isEdit = mode === 'edit';
   const createFarm = useCreateFarm();
@@ -202,6 +209,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const [formState, setFormState] = useState<FormState>(() =>
     isEdit && farm ? buildFormStateFromFarm(farm) : buildFormStateFromFarm(undefined),
   );
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [iosPlantingDateDraft, setIosPlantingDateDraft] = useState<Date>(() => new Date());
   const [iosPruningDateDraft, setIosPruningDateDraft] = useState<Date>(() => new Date());
   const nameInputRef = useRef<TextInput>(null);
@@ -238,6 +246,26 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     }, 0);
     return () => clearTimeout(timer);
   }, [farm, farmId, isEdit]);
+
+  useEffect(() => {
+    const showEvent = isIOS ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = isIOS ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const keyboardShowListener = Keyboard.addListener(showEvent, (event) => {
+      const keyboardInset = isIOS ? insets.bottom : 0;
+      const nextHeight = Math.max(0, event.endCoordinates.height - keyboardInset);
+      setKeyboardHeight(nextHeight);
+    });
+
+    const keyboardHideListener = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+    };
+  }, [insets.bottom, isIOS]);
 
   const varieties = useMemo(
     () =>
@@ -347,6 +375,38 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     }
     return null;
   }, [formState.sandPercentage, formState.siltPercentage, formState.clayPercentage, t]);
+
+  const pickerAvailableHeight = useMemo(() => {
+    const baseViewportHeight = windowHeight - insets.top - spacing[2];
+    const keyboardAdjustedHeight = isIOS
+      ? keyboardHeight > 0
+        ? baseViewportHeight - keyboardHeight + insets.bottom
+        : baseViewportHeight
+      : keyboardHeight > 0
+        ? baseViewportHeight - keyboardHeight
+        : baseViewportHeight;
+    return Math.max(220, keyboardAdjustedHeight);
+  }, [windowHeight, insets.top, insets.bottom, keyboardHeight, isIOS]);
+
+  const androidKeyboardLift = useMemo(() => {
+    if (isIOS) return 0;
+    return Math.max(0, keyboardHeight - insets.bottom);
+  }, [isIOS, keyboardHeight, insets.bottom]);
+
+  const varietySheetHeight = useMemo(
+    () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
+    [windowHeight, pickerAvailableHeight],
+  );
+
+  const cropSheetHeight = useMemo(
+    () => Math.min(Math.round(windowHeight * 0.78), pickerAvailableHeight),
+    [windowHeight, pickerAvailableHeight],
+  );
+
+  const textureSheetHeight = useMemo(
+    () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
+    [windowHeight, pickerAvailableHeight],
+  );
 
   const handleOpenMapPicker = () => {
     setFormState((prev) => ({ ...prev, showMapPicker: true }));
@@ -1556,148 +1616,158 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             justifyContent: 'flex-end',
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surface[100],
-              borderTopLeftRadius: borderRadius['3xl'],
-              borderTopRightRadius: borderRadius['3xl'],
-              maxHeight: '70%',
-            }}
+          <KeyboardAvoidingView
+            behavior={isIOS ? 'padding' : undefined}
+            keyboardVerticalOffset={0}
+            style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: spacing[6],
-                paddingVertical: spacing[4],
-                borderBottomWidth: 1,
-                borderBottomColor: colors.surface[100],
-              }}
-            >
-              <View style={{ width: 40 }} />
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
-                }}
-              >
-                {t('farmForm.variety.modalTitle')}
-              </Text>
-              <Pressable
-                onPress={() =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    showVarietyPicker: false,
-                    varietySearchQuery: '',
-                  }))
-                }
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: colors.surface[100],
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-              </Pressable>
-            </View>
-
-            <View
-              style={{
-                paddingHorizontal: spacing[6],
-                paddingTop: spacing[4],
-                paddingBottom: spacing[2],
+                backgroundColor: colors.surface[100],
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                height: varietySheetHeight,
               }}
             >
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: colors.surface[200],
-                  borderRadius: borderRadius.xl,
-                  backgroundColor: colors.surface[50],
-                  paddingHorizontal: spacing[3],
-                  minHeight: 48,
+                  justifyContent: 'space-between',
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.surface[100],
                 }}
               >
-                <UISymbol
-                  name="magnifyingglass"
-                  size={18}
-                  color={m3.colorScheme.onSurfaceVariant}
-                />
-                <TextInput
-                  value={formState.varietySearchQuery}
-                  onChangeText={(v) => setFormState((prev) => ({ ...prev, varietySearchQuery: v }))}
-                  placeholder={t('farmForm.variety.searchPlaceholder')}
-                  placeholderTextColor={colors.surface[400]}
+                <View style={{ width: 40 }} />
+                <Text
                   style={{
-                    flex: 1,
-                    marginLeft: spacing[2],
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
                     color: colors.surface[900],
-                    fontSize: fontSize.base,
                   }}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                />
-              </View>
-            </View>
-
-            <ScrollView style={{ maxHeight: 384 }}>
-              {filteredVarieties.map((variety) => (
-                <Pressable
-                  key={variety}
-                  style={{
-                    paddingHorizontal: spacing[6],
-                    paddingVertical: spacing[4],
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
-                    backgroundColor:
-                      formState.cropVariety === variety ? colors.surface[50] : colors.surface[100],
-                  }}
-                  onPress={() => handleSelectVariety(variety)}
                 >
-                  <View
+                  {t('farmForm.variety.modalTitle')}
+                </Text>
+                <Pressable
+                  onPress={() =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      showVarietyPicker: false,
+                      varietySearchQuery: '',
+                    }))
+                  }
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colors.surface[100],
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+                </Pressable>
+              </View>
+
+              <View
+                style={{
+                  paddingHorizontal: spacing[6],
+                  paddingTop: spacing[4],
+                  paddingBottom: spacing[2],
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                    borderRadius: borderRadius.xl,
+                    backgroundColor: colors.surface[50],
+                    paddingHorizontal: spacing[3],
+                    minHeight: 48,
+                  }}
+                >
+                  <UISymbol
+                    name="magnifyingglass"
+                    size={18}
+                    color={m3.colorScheme.onSurfaceVariant}
+                  />
+                  <TextInput
+                    value={formState.varietySearchQuery}
+                    onChangeText={(v) =>
+                      setFormState((prev) => ({ ...prev, varietySearchQuery: v }))
+                    }
+                    placeholder={t('farmForm.variety.searchPlaceholder')}
+                    placeholderTextColor={colors.surface[400]}
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
+                      flex: 1,
+                      marginLeft: spacing[2],
+                      color: colors.surface[900],
+                      fontSize: fontSize.base,
                     }}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                  />
+                </View>
+              </View>
+
+              <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+                {filteredVarieties.map((variety) => (
+                  <Pressable
+                    key={variety}
+                    style={{
+                      paddingHorizontal: spacing[6],
+                      paddingVertical: spacing[4],
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor:
+                        formState.cropVariety === variety
+                          ? colors.surface[50]
+                          : colors.surface[100],
+                    }}
+                    onPress={() => handleSelectVariety(variety)}
                   >
-                    <Text
+                    <View
                       style={{
-                        fontSize: fontSize.base,
-                        color:
-                          formState.cropVariety === variety
-                            ? colors.surface[900]
-                            : colors.surface[700],
-                        fontWeight:
-                          formState.cropVariety === variety
-                            ? fontWeight.semibold
-                            : fontWeight.normal,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                       }}
                     >
-                      {getVarietyLabel(variety)}
+                      <Text
+                        style={{
+                          fontSize: fontSize.base,
+                          color:
+                            formState.cropVariety === variety
+                              ? colors.surface[900]
+                              : colors.surface[700],
+                          fontWeight:
+                            formState.cropVariety === variety
+                              ? fontWeight.semibold
+                              : fontWeight.normal,
+                        }}
+                      >
+                        {getVarietyLabel(variety)}
+                      </Text>
+                      {formState.cropVariety === variety && (
+                        <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                      )}
+                    </View>
+                  </Pressable>
+                ))}
+                {filteredVarieties.length === 0 && (
+                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                      {t('common.noResultsFound')}
                     </Text>
-                    {formState.cropVariety === variety && (
-                      <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
-                    )}
                   </View>
-                </Pressable>
-              ))}
-              {filteredVarieties.length === 0 && (
-                <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-                    {t('common.noResultsFound')}
-                  </Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
+                )}
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
         </View>
       )}
 
@@ -1713,112 +1783,185 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             justifyContent: 'flex-end',
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surface[100],
-              borderTopLeftRadius: borderRadius['3xl'],
-              borderTopRightRadius: borderRadius['3xl'],
-              maxHeight: '78%',
-            }}
+          <KeyboardAvoidingView
+            behavior={isIOS ? 'padding' : undefined}
+            keyboardVerticalOffset={0}
+            style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: spacing[6],
-                paddingVertical: spacing[4],
-                borderBottomWidth: 1,
-                borderBottomColor: colors.surface[100],
-              }}
-            >
-              <View style={{ width: 40 }} />
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
-                }}
-              >
-                {t('farmForm.cropPicker.modalTitle')}
-              </Text>
-              <Pressable
-                onPress={() =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    showCropPicker: false,
-                    cropSearchQuery: '',
-                  }))
-                }
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: colors.surface[100],
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-              </Pressable>
-            </View>
-
-            <View
-              style={{
-                paddingHorizontal: spacing[6],
-                paddingTop: spacing[4],
-                paddingBottom: spacing[2],
+                backgroundColor: colors.surface[100],
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                height: cropSheetHeight,
               }}
             >
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: colors.surface[200],
-                  borderRadius: borderRadius.xl,
-                  backgroundColor: colors.surface[50],
-                  paddingHorizontal: spacing[3],
-                  minHeight: 48,
+                  justifyContent: 'space-between',
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.surface[100],
                 }}
               >
-                <UISymbol
-                  name="magnifyingglass"
-                  size={18}
-                  color={m3.colorScheme.onSurfaceVariant}
-                />
-                <TextInput
-                  value={formState.cropSearchQuery}
-                  onChangeText={(v) => setFormState((prev) => ({ ...prev, cropSearchQuery: v }))}
-                  placeholder={t('farmForm.cropPicker.searchPlaceholder')}
-                  placeholderTextColor={colors.surface[400]}
+                <View style={{ width: 40 }} />
+                <Text
                   style={{
-                    flex: 1,
-                    marginLeft: spacing[2],
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
                     color: colors.surface[900],
-                    fontSize: fontSize.base,
                   }}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                />
+                >
+                  {t('farmForm.cropPicker.modalTitle')}
+                </Text>
+                <Pressable
+                  onPress={() =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      showCropPicker: false,
+                      cropSearchQuery: '',
+                    }))
+                  }
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colors.surface[100],
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+                </Pressable>
               </View>
-            </View>
 
-            <ScrollView style={{ maxHeight: 440 }}>
-              {filteredCropOptions.map((cropOption) => {
-                const selected =
-                  formState.selectedCrop !== 'Other' && formState.selectedCrop === cropOption.value;
-                return (
+              <View
+                style={{
+                  paddingHorizontal: spacing[6],
+                  paddingTop: spacing[4],
+                  paddingBottom: spacing[2],
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                    borderRadius: borderRadius.xl,
+                    backgroundColor: colors.surface[50],
+                    paddingHorizontal: spacing[3],
+                    minHeight: 48,
+                  }}
+                >
+                  <UISymbol
+                    name="magnifyingglass"
+                    size={18}
+                    color={m3.colorScheme.onSurfaceVariant}
+                  />
+                  <TextInput
+                    value={formState.cropSearchQuery}
+                    onChangeText={(v) => setFormState((prev) => ({ ...prev, cropSearchQuery: v }))}
+                    placeholder={t('farmForm.cropPicker.searchPlaceholder')}
+                    placeholderTextColor={colors.surface[400]}
+                    style={{
+                      flex: 1,
+                      marginLeft: spacing[2],
+                      color: colors.surface[900],
+                      fontSize: fontSize.base,
+                    }}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                  />
+                </View>
+              </View>
+
+              <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+                {filteredCropOptions.map((cropOption) => {
+                  const selected =
+                    formState.selectedCrop !== 'Other' &&
+                    formState.selectedCrop === cropOption.value;
+                  return (
+                    <Pressable
+                      key={cropOption.value}
+                      style={{
+                        paddingHorizontal: spacing[6],
+                        paddingVertical: spacing[4],
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.surface[100],
+                        backgroundColor: selected ? colors.surface[50] : colors.surface[100],
+                      }}
+                      onPress={() => handleSelectCrop(cropOption.value)}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                          <View
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: borderRadius.lg,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              marginRight: spacing[3],
+                              backgroundColor: selected
+                                ? colorWithOpacity(colors.primary[500], 0.16)
+                                : colorWithOpacity(colors.surface[600], 0.1),
+                            }}
+                          >
+                            {renderCropVisual(cropOption.value, 22, selected)}
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={{
+                                fontSize: fontSize.base,
+                                color: selected ? colors.surface[900] : colors.surface[700],
+                                fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
+                              }}
+                            >
+                              {cropOption.label}
+                            </Text>
+                            <Text
+                              style={{
+                                marginTop: 2,
+                                fontSize: fontSize.sm,
+                                color: colors.surface[500],
+                              }}
+                            >
+                              {cropOption.sublabel}
+                            </Text>
+                          </View>
+                        </View>
+                        {selected && (
+                          <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+
+                {canCreateCustomCrop && (
                   <Pressable
-                    key={cropOption.value}
+                    onPress={() => handleSelectCrop('Other', cropSearchQueryTrimmed)}
                     style={{
                       paddingHorizontal: spacing[6],
                       paddingVertical: spacing[4],
                       borderBottomWidth: 1,
                       borderBottomColor: colors.surface[100],
-                      backgroundColor: selected ? colors.surface[50] : colors.surface[100],
+                      backgroundColor:
+                        formState.selectedCrop === 'Other' &&
+                        formState.customCropName.trim().toLowerCase() === cropSearchQueryLower
+                          ? colors.surface[50]
+                          : colors.surface[100],
                     }}
-                    onPress={() => handleSelectCrop(cropOption.value)}
                   >
                     <View
                       style={{
@@ -1828,98 +1971,32 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                       }}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                        <View
+                        <UISymbol name="plus.circle.fill" size={20} color={colors.primary[500]} />
+                        <Text
                           style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: borderRadius.lg,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginRight: spacing[3],
-                            backgroundColor: selected
-                              ? colorWithOpacity(colors.primary[500], 0.16)
-                              : colorWithOpacity(colors.surface[600], 0.1),
+                            marginLeft: spacing[2],
+                            fontSize: fontSize.base,
+                            color: colors.surface[900],
+                            fontWeight: fontWeight.semibold,
                           }}
                         >
-                          {renderCropVisual(cropOption.value, 22, selected)}
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text
-                            style={{
-                              fontSize: fontSize.base,
-                              color: selected ? colors.surface[900] : colors.surface[700],
-                              fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
-                            }}
-                          >
-                            {cropOption.label}
-                          </Text>
-                          <Text
-                            style={{
-                              marginTop: 2,
-                              fontSize: fontSize.sm,
-                              color: colors.surface[500],
-                            }}
-                          >
-                            {cropOption.sublabel}
-                          </Text>
-                        </View>
+                          {t('farmForm.cropPicker.useCustomCrop', { crop: cropSearchQueryTrimmed })}
+                        </Text>
                       </View>
-                      {selected && (
-                        <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
-                      )}
                     </View>
                   </Pressable>
-                );
-              })}
+                )}
 
-              {canCreateCustomCrop && (
-                <Pressable
-                  onPress={() => handleSelectCrop('Other', cropSearchQueryTrimmed)}
-                  style={{
-                    paddingHorizontal: spacing[6],
-                    paddingVertical: spacing[4],
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
-                    backgroundColor:
-                      formState.selectedCrop === 'Other' &&
-                      formState.customCropName.trim().toLowerCase() === cropSearchQueryLower
-                        ? colors.surface[50]
-                        : colors.surface[100],
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                      <UISymbol name="plus.circle.fill" size={20} color={colors.primary[500]} />
-                      <Text
-                        style={{
-                          marginLeft: spacing[2],
-                          fontSize: fontSize.base,
-                          color: colors.surface[900],
-                          fontWeight: fontWeight.semibold,
-                        }}
-                      >
-                        {t('farmForm.cropPicker.useCustomCrop', { crop: cropSearchQueryTrimmed })}
-                      </Text>
-                    </View>
+                {filteredCropOptions.length === 0 && !canCreateCustomCrop && (
+                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                      {t('farmForm.cropPicker.noResults')}
+                    </Text>
                   </View>
-                </Pressable>
-              )}
-
-              {filteredCropOptions.length === 0 && !canCreateCustomCrop && (
-                <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-                    {t('farmForm.cropPicker.noResults')}
-                  </Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
+                )}
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
         </View>
       )}
 
@@ -1935,102 +2012,108 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             justifyContent: 'flex-end',
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surface[100],
-              borderTopLeftRadius: borderRadius['3xl'],
-              borderTopRightRadius: borderRadius['3xl'],
-              maxHeight: '70%',
-            }}
+          <KeyboardAvoidingView
+            behavior={isIOS ? 'padding' : undefined}
+            keyboardVerticalOffset={0}
+            style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: spacing[6],
-                paddingVertical: spacing[4],
-                borderBottomWidth: 1,
-                borderBottomColor: colors.surface[100],
+                backgroundColor: colors.surface[100],
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                height: textureSheetHeight,
               }}
             >
-              <View style={{ width: 40 }} />
-              <Text
+              <View
                 style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
-                }}
-              >
-                {t('farmForm.soilTexture.modalTitle')}
-              </Text>
-              <Pressable
-                onPress={() => setFormState((prev) => ({ ...prev, showTexturePicker: false }))}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: colors.surface[100],
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.surface[100],
                 }}
               >
-                <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-              </Pressable>
-            </View>
-
-            <ScrollView style={{ maxHeight: 384 }}>
-              {SOIL_TEXTURE_OPTIONS.map((texture) => (
-                <Pressable
-                  key={texture.value}
+                <View style={{ width: 40 }} />
+                <Text
                   style={{
-                    paddingHorizontal: spacing[6],
-                    paddingVertical: spacing[4],
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
-                    backgroundColor:
-                      formState.soilTextureClass === texture.value
-                        ? colors.surface[50]
-                        : colors.surface[100],
-                  }}
-                  onPress={() => {
-                    setFormState((prev) => ({
-                      ...prev,
-                      soilTextureClass: texture.value,
-                      showTexturePicker: false,
-                    }));
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
                   }}
                 >
-                  <View
+                  {t('farmForm.soilTexture.modalTitle')}
+                </Text>
+                <Pressable
+                  onPress={() => setFormState((prev) => ({ ...prev, showTexturePicker: false }))}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colors.surface[100],
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+                </Pressable>
+              </View>
+
+              <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+                {SOIL_TEXTURE_OPTIONS.map((texture) => (
+                  <Pressable
+                    key={texture.value}
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
+                      paddingHorizontal: spacing[6],
+                      paddingVertical: spacing[4],
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor:
+                        formState.soilTextureClass === texture.value
+                          ? colors.surface[50]
+                          : colors.surface[100],
+                    }}
+                    onPress={() => {
+                      setFormState((prev) => ({
+                        ...prev,
+                        soilTextureClass: texture.value,
+                        showTexturePicker: false,
+                      }));
                     }}
                   >
-                    <Text
+                    <View
                       style={{
-                        fontSize: fontSize.base,
-                        color:
-                          formState.soilTextureClass === texture.value
-                            ? colors.surface[900]
-                            : colors.surface[700],
-                        fontWeight:
-                          formState.soilTextureClass === texture.value
-                            ? fontWeight.semibold
-                            : fontWeight.normal,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                       }}
                     >
-                      {t(texture.labelKey)}
-                    </Text>
-                    {formState.soilTextureClass === texture.value && (
-                      <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
-                    )}
-                  </View>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
+                      <Text
+                        style={{
+                          fontSize: fontSize.base,
+                          color:
+                            formState.soilTextureClass === texture.value
+                              ? colors.surface[900]
+                              : colors.surface[700],
+                          fontWeight:
+                            formState.soilTextureClass === texture.value
+                              ? fontWeight.semibold
+                              : fontWeight.normal,
+                        }}
+                      >
+                        {t(texture.labelKey)}
+                      </Text>
+                      {formState.soilTextureClass === texture.value && (
+                        <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                      )}
+                    </View>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
         </View>
       )}
 
