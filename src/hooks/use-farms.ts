@@ -2,14 +2,17 @@
  * Farms Hook
  * React Query hooks for farm CRUD operations
  * Mirrors iOS SupabaseDataService.swift farms methods
+ *
+ * Phase 2: Read queries use PowerSync local SQLite DB for instant offline reads.
+ * Write mutations still go through Supabase REST API (Phase 3).
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { usePowerSyncDb } from '../lib/powersync/db';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmUpdate } from '../types';
 import { TABLES, toSupabaseTimestampString } from '../types';
-
 // ============================================================
 // MARK: - Helper to get current user ID
 // ============================================================
@@ -26,18 +29,29 @@ async function getUserId(): Promise<string> {
 }
 
 // ============================================================
-// MARK: - Fetch Farms Query
+// MARK: - Fetch Farms Query (PowerSync local read)
 // ============================================================
 
 /**
- * Fetch all farms for the current user
+ * Fetch all farms for the current user.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
  */
 export function useFarms() {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.farms.lists(),
     queryFn: async (): Promise<Farm[]> => {
       const userId = await getUserId();
 
+      if (db) {
+        return db.getAll<Farm>(
+          `SELECT * FROM farms WHERE user_id = ? ORDER BY created_at DESC`,
+          [userId],
+        );
+      }
+
+      // Fallback: Supabase REST (web or PowerSync unavailable)
       const { data, error } = await supabase
         .from(TABLES.FARMS)
         .select('*')
@@ -51,13 +65,27 @@ export function useFarms() {
 }
 
 /**
- * Fetch a single farm by ID
+ * Fetch a single farm by ID.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
  */
 export function useFarm(id: number | undefined) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.farms.detail(id!),
     queryFn: async (): Promise<Farm> => {
       const userId = await getUserId();
+
+      if (db) {
+        const row = await db.get<Farm>(
+          `SELECT * FROM farms WHERE id = ? AND user_id = ?`,
+          [id, userId],
+        );
+        if (!row) throw new Error('Farm not found');
+        return row;
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.FARMS)
         .select('*')
@@ -73,7 +101,7 @@ export function useFarm(id: number | undefined) {
 }
 
 // ============================================================
-// MARK: - Create Farm Mutation
+// MARK: - Create Farm Mutation (Supabase write — unchanged)
 // ============================================================
 
 export function useCreateFarm() {
@@ -105,7 +133,7 @@ export function useCreateFarm() {
 }
 
 // ============================================================
-// MARK: - Update Farm Mutation
+// MARK: - Update Farm Mutation (Supabase write — unchanged)
 // ============================================================
 
 export function useUpdateFarm() {
@@ -141,7 +169,7 @@ export function useUpdateFarm() {
 }
 
 // ============================================================
-// MARK: - Update Farm Water Level Mutation
+// MARK: - Update Farm Water Level Mutation (Supabase write — unchanged)
 // ============================================================
 
 export function useUpdateFarmWaterLevel() {
@@ -182,7 +210,7 @@ export function useUpdateFarmWaterLevel() {
 }
 
 // ============================================================
-// MARK: - Delete Farm Mutation
+// MARK: - Delete Farm Mutation (Supabase write — unchanged)
 // ============================================================
 
 export function useDeleteFarm() {
@@ -239,16 +267,24 @@ export function useDeleteFarm() {
 }
 
 // ============================================================
-// MARK: - Prefetch Helper
+// MARK: - Prefetch Helper (PowerSync local read)
 // ============================================================
 
 export function usePrefetchFarm() {
   const queryClient = useQueryClient();
+  const db = usePowerSyncDb();
 
   return (id: number) => {
     queryClient.prefetchQuery({
       queryKey: queryKeys.farms.detail(id),
       queryFn: async () => {
+        if (db) {
+          const row = await db.get<Farm>(`SELECT * FROM farms WHERE id = ?`, [id]);
+          if (!row) throw new Error('Farm not found');
+          return row;
+        }
+
+        // Fallback: Supabase REST
         const { data, error } = await supabase.from(TABLES.FARMS).select('*').eq('id', id).single();
 
         if (error) throw error;

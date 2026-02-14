@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { usePowerSyncDb } from '../lib/powersync/db';
 import { queryKeys } from './query-keys';
 import {
   TABLES,
@@ -44,12 +45,27 @@ async function getUserId(): Promise<string> {
 // MARK: - PROFILE
 // ============================================================
 
+/**
+ * Fetch the current user's profile.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useProfile() {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.profile.current(),
     queryFn: async (): Promise<Profile | null> => {
       const userId = await getUserId();
 
+      if (db) {
+        const row = await db.getOptional<Profile>(
+          `SELECT * FROM profiles WHERE id = ?`,
+          [userId],
+        );
+        return row ?? null;
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.PROFILES)
         .select('*')
@@ -93,12 +109,27 @@ export function useUpdateProfile() {
 // MARK: - WAREHOUSE ITEMS
 // ============================================================
 
+/**
+ * Fetch warehouse items for the current user.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useWarehouseItems(type?: string) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.warehouseItems.listByType(type),
     queryFn: async (): Promise<WarehouseItem[]> => {
       const userId = await getUserId();
 
+      if (db) {
+        const sql = type
+          ? `SELECT * FROM warehouse_items WHERE user_id = ? AND type = ? ORDER BY name ASC`
+          : `SELECT * FROM warehouse_items WHERE user_id = ? ORDER BY name ASC`;
+        const params = type ? [userId, type] : [userId];
+        return db.getAll<WarehouseItem>(sql, params);
+      }
+
+      // Fallback: Supabase REST
       let query = supabase
         .from(TABLES.WAREHOUSE_ITEMS)
         .select('*')
@@ -185,10 +216,26 @@ export function useDeleteWarehouseItem() {
 // MARK: - SOIL TEST RECORDS
 // ============================================================
 
+/**
+ * Fetch soil test records for a farm.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useSoilTestRecords(farmId: number | undefined, seasonId?: number) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: [...queryKeys.soilTestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<SoilTestRecord[]> => {
+      if (db) {
+        const sql =
+          seasonId !== undefined
+            ? `SELECT * FROM soil_test_records WHERE farm_id = ? AND season_id = ? ORDER BY date DESC`
+            : `SELECT * FROM soil_test_records WHERE farm_id = ? ORDER BY date DESC`;
+        const params = seasonId !== undefined ? [farmId, seasonId] : [farmId];
+        return db.getAll<SoilTestRecord>(sql, params);
+      }
+
+      // Fallback: Supabase REST
       let query = supabase
         .from(TABLES.SOIL_TEST_RECORDS)
         .select('*')
@@ -285,10 +332,26 @@ export function useDeleteSoilTestRecord() {
 // MARK: - PETIOLE TEST RECORDS
 // ============================================================
 
+/**
+ * Fetch petiole test records for a farm.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function usePetioleTestRecords(farmId: number | undefined, seasonId?: number) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: [...queryKeys.petioleTestRecords.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<PetioleTestRecord[]> => {
+      if (db) {
+        const sql =
+          seasonId !== undefined
+            ? `SELECT * FROM petiole_test_records WHERE farm_id = ? AND season_id = ? ORDER BY date DESC`
+            : `SELECT * FROM petiole_test_records WHERE farm_id = ? ORDER BY date DESC`;
+        const params = seasonId !== undefined ? [farmId, seasonId] : [farmId];
+        return db.getAll<PetioleTestRecord>(sql, params);
+      }
+
+      // Fallback: Supabase REST
       let query = supabase
         .from(TABLES.PETIOLE_TEST_RECORDS)
         .select('*')
@@ -385,10 +448,26 @@ export function useDeletePetioleTestRecord() {
 // MARK: - SOIL PROFILES
 // ============================================================
 
+/**
+ * Fetch soil profiles for a farm.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useSoilProfiles(farmId: number | undefined, seasonId?: number) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: [...queryKeys.soilProfiles.listByFarm(farmId!), { seasonId: seasonId ?? null }],
     queryFn: async (): Promise<SoilProfile[]> => {
+      if (db) {
+        const sql =
+          seasonId !== undefined
+            ? `SELECT * FROM soil_profiles WHERE farm_id = ? AND season_id = ? ORDER BY created_at DESC`
+            : `SELECT * FROM soil_profiles WHERE farm_id = ? ORDER BY created_at DESC`;
+        const params = seasonId !== undefined ? [farmId, seasonId] : [farmId];
+        return db.getAll<SoilProfile>(sql, params);
+      }
+
+      // Fallback: Supabase REST
       let query = supabase
         .from(TABLES.SOIL_PROFILES)
         .select('*')

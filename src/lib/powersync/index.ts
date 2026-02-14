@@ -5,3 +5,4 @@
 export { AppSchema, type AppDatabase } from './schema';
 export { SupabaseConnector } from './SupabaseConnector';
 export { PowerSyncAppProvider } from './PowerSyncProvider';
+export { usePowerSyncDb, isPowerSyncAvailable } from './db';

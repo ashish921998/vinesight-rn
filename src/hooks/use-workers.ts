@@ -6,6 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { usePowerSyncDb } from '../lib/powersync/db';
 import { queryKeys } from './query-keys';
 import {
   TABLES,
@@ -44,12 +45,26 @@ async function getUserId(): Promise<string> {
 // MARK: - WORKERS
 // ============================================================
 
+/**
+ * Fetch all workers for the current user.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useWorkers() {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.workers.lists(),
     queryFn: async (): Promise<Worker[]> => {
       const userId = await getUserId();
 
+      if (db) {
+        return db.getAll<Worker>(
+          `SELECT * FROM workers WHERE user_id = ? ORDER BY name ASC`,
+          [userId],
+        );
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.WORKERS)
         .select('*')
@@ -62,10 +77,23 @@ export function useWorkers() {
   });
 }
 
+/**
+ * Fetch a single worker by ID.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useWorker(id: number | undefined) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.workers.detail(id!),
     queryFn: async (): Promise<Worker> => {
+      if (db) {
+        const row = await db.get<Worker>(`SELECT * FROM workers WHERE id = ?`, [id]);
+        if (!row) throw new Error('Worker not found');
+        return row;
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase.from(TABLES.WORKERS).select('*').eq('id', id).single();
 
       if (error) throw error;
@@ -141,13 +169,29 @@ export function useDeleteWorker() {
 // MARK: - WORKER ATTENDANCE
 // ============================================================
 
+/**
+ * Fetch all attendance records for the current user's workers.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useAllWorkerAttendance() {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.workerAttendance.listAll(),
     queryFn: async (): Promise<WorkerAttendance[]> => {
       const userId = await getUserId();
 
-      // Use inner join through workers table to get attendance for user's workers
+      if (db) {
+        return db.getAll<WorkerAttendance>(
+          `SELECT wa.* FROM worker_attendance wa
+           INNER JOIN workers w ON wa.worker_id = w.id
+           WHERE w.user_id = ?
+           ORDER BY wa.date DESC`,
+          [userId],
+        );
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.WORKER_ATTENDANCE)
         .select('*, workers!inner(user_id)')
@@ -160,10 +204,24 @@ export function useAllWorkerAttendance() {
   });
 }
 
+/**
+ * Fetch attendance records for a specific worker.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useWorkerAttendance(workerId: number | undefined) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.workerAttendance.listByWorker(workerId!),
     queryFn: async (): Promise<WorkerAttendance[]> => {
+      if (db) {
+        return db.getAll<WorkerAttendance>(
+          `SELECT * FROM worker_attendance WHERE worker_id = ? ORDER BY date DESC`,
+          [workerId],
+        );
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.WORKER_ATTENDANCE)
         .select('*')
@@ -264,10 +322,24 @@ export function useDeleteWorkerAttendance() {
 // MARK: - WORKER TRANSACTIONS
 // ============================================================
 
+/**
+ * Fetch transactions for a specific worker.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useWorkerTransactions(workerId: number | undefined) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.workerTransactions.listByWorker(workerId!),
     queryFn: async (): Promise<WorkerTransaction[]> => {
+      if (db) {
+        return db.getAll<WorkerTransaction>(
+          `SELECT * FROM worker_transactions WHERE worker_id = ? ORDER BY date DESC`,
+          [workerId],
+        );
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.WORKER_TRANSACTIONS)
         .select('*')
@@ -281,12 +353,29 @@ export function useWorkerTransactions(workerId: number | undefined) {
   });
 }
 
+/**
+ * Fetch all transactions for the current user's workers.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useAllWorkerTransactions() {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.workerTransactions.listAll(),
     queryFn: async (): Promise<WorkerTransaction[]> => {
       const userId = await getUserId();
 
+      if (db) {
+        return db.getAll<WorkerTransaction>(
+          `SELECT wt.* FROM worker_transactions wt
+           INNER JOIN workers w ON wt.worker_id = w.id
+           WHERE w.user_id = ?
+           ORDER BY wt.date DESC`,
+          [userId],
+        );
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.WORKER_TRANSACTIONS)
         .select('*, workers!inner(user_id)')
@@ -351,10 +440,24 @@ export function useDeleteWorkerTransaction() {
 // MARK: - WORKER SETTLEMENTS
 // ============================================================
 
+/**
+ * Fetch settlements for a specific worker.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useWorkerSettlements(workerId: number | undefined) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.workerSettlements.listByWorker(workerId!),
     queryFn: async (): Promise<WorkerSettlement[]> => {
+      if (db) {
+        return db.getAll<WorkerSettlement>(
+          `SELECT * FROM worker_settlements WHERE worker_id = ? ORDER BY created_at DESC`,
+          [workerId],
+        );
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.WORKER_SETTLEMENTS)
         .select('*')
@@ -424,13 +527,26 @@ export function useUpdateWorkerSettlement() {
 // MARK: - WORK TYPES
 // ============================================================
 
+/**
+ * Fetch work types (user-specific and defaults).
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useWorkTypes() {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.workTypes.lists(),
     queryFn: async (): Promise<WorkType[]> => {
       const userId = await getUserId();
 
-      // Fetch both user-specific and default work types
+      if (db) {
+        return db.getAll<WorkType>(
+          `SELECT * FROM work_types WHERE user_id = ? OR user_id IS NULL ORDER BY is_default DESC, name ASC`,
+          [userId],
+        );
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.WORK_TYPES)
         .select('*')
@@ -470,13 +586,29 @@ export function useCreateWorkType() {
 // MARK: - TEMPORARY WORKER ENTRIES
 // ============================================================
 
+/**
+ * Fetch temporary worker entries for a farm.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useTemporaryWorkerEntries(farmId: number | undefined, seasonId?: number) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: [
       ...queryKeys.temporaryWorkerEntries.listByFarm(farmId!),
       { seasonId: seasonId ?? null },
     ],
     queryFn: async (): Promise<TemporaryWorkerEntry[]> => {
+      if (db) {
+        const sql =
+          seasonId !== undefined
+            ? `SELECT * FROM temporary_worker_entries WHERE farm_id = ? AND season_id = ? ORDER BY date DESC`
+            : `SELECT * FROM temporary_worker_entries WHERE farm_id = ? ORDER BY date DESC`;
+        const params = seasonId !== undefined ? [farmId, seasonId] : [farmId];
+        return db.getAll<TemporaryWorkerEntry>(sql, params);
+      }
+
+      // Fallback: Supabase REST
       let query = supabase
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
         .select('*')
@@ -495,11 +627,27 @@ export function useTemporaryWorkerEntries(farmId: number | undefined, seasonId?:
   });
 }
 
+/**
+ * Fetch temporary worker entries across multiple farms.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useTemporaryWorkerEntriesByFarms(farmIds: number[]) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.temporaryWorkerEntries.listByFarms(farmIds),
     queryFn: async (): Promise<TemporaryWorkerEntry[]> => {
       if (farmIds.length === 0) return [];
+
+      if (db) {
+        const placeholders = farmIds.map(() => '?').join(',');
+        return db.getAll<TemporaryWorkerEntry>(
+          `SELECT * FROM temporary_worker_entries WHERE farm_id IN (${placeholders}) ORDER BY date DESC`,
+          farmIds,
+        );
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
         .select('*')
@@ -513,13 +661,29 @@ export function useTemporaryWorkerEntriesByFarms(farmIds: number[]) {
   });
 }
 
+/**
+ * Fetch all temporary worker entries for the current user's farms.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useAllTemporaryWorkerEntries() {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.temporaryWorkerEntries.listAll(),
     queryFn: async (): Promise<TemporaryWorkerEntry[]> => {
       const userId = await getUserId();
 
-      // Join through farms table to get entries for user's farms
+      if (db) {
+        return db.getAll<TemporaryWorkerEntry>(
+          `SELECT twe.* FROM temporary_worker_entries twe
+           INNER JOIN farms f ON twe.farm_id = f.id
+           WHERE f.user_id = ?
+           ORDER BY twe.date DESC`,
+          [userId],
+        );
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.TEMPORARY_WORKER_ENTRIES)
         .select('*, farms!inner(user_id)')

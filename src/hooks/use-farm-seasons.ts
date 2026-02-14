@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { usePowerSyncDb } from '../lib/powersync/db';
 import { queryKeys } from './query-keys';
 import type { FarmSeason, FarmSeasonInsert, FarmSeasonUpdate } from '../types';
 import { TABLES } from '../types';
@@ -26,11 +27,27 @@ function sortFarmSeasonsByEndDate(items: FarmSeason[]) {
   return next;
 }
 
+/**
+ * Fetch all seasons for a farm.
+ * Reads from PowerSync local SQLite DB when available, falls back to Supabase.
+ */
 export function useFarmSeasons(farmId: number | undefined) {
+  const db = usePowerSyncDb();
+
   return useQuery({
     queryKey: queryKeys.farmSeasons.listByFarm(farmId ?? -1),
     queryFn: async (): Promise<FarmSeason[]> => {
       if (!farmId) return [];
+
+      if (db) {
+        const rows = await db.getAll<FarmSeason>(
+          `SELECT * FROM farm_seasons WHERE farm_id = ?`,
+          [farmId],
+        );
+        return sortFarmSeasonsByEndDate(rows);
+      }
+
+      // Fallback: Supabase REST
       const { data, error } = await supabase
         .from(TABLES.FARM_SEASONS)
         .select('*')
