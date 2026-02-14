@@ -46,6 +46,9 @@ export {
 export { usePendingSyncCount } from './use-pending-sync';
 export { useSyncStatus, type SyncStatus } from './use-sync-status';
 
+// Conflict Resolution
+export { useConflicts } from './use-conflicts';
+
 // Record Hooks (Irrigation, Spray, Fertigation, Harvest, Expense)
 export {
   // Irrigation

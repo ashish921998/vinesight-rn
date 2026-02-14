@@ -17,9 +17,11 @@ import {
   useLanguageStore,
   useNotificationStore,
   useThemeStore,
+  useConflictStore,
 } from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { PowerSyncProviderWrapper } from '@/lib/powersync';
+import { ConflictResolutionModal } from '@/components/modals';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
   cancelNotification,
@@ -144,11 +146,13 @@ export default Sentry.wrap(function RootLayout() {
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
-    // Initialize auth state
+    // Initialize auth state and conflict store
     const init = async () => {
       await initialize();
       // Initialize auth listener AFTER navigation is set up
       initAuthListener();
+      // Load persisted conflicts from AsyncStorage (Phase 4)
+      void useConflictStore.getState().loadConflicts();
     };
 
     init();
@@ -311,6 +315,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
               </Stack>
+              <ConflictResolutionModal />
             </I18nextProvider>
             </PowerSyncProviderWrapper>
           </QueryClientProvider>

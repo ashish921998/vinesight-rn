@@ -5,12 +5,13 @@
  * back to Supabase. This connector bridges PowerSync's local SQLite
  * database with the remote Supabase backend.
  *
- * ## Conflict Resolution Strategy: Last-Write-Wins (LWW)
+ * ## Conflict Resolution (Phase 4)
  *
- * Every PUT/PATCH operation stamps `updated_at = now()` before sending
- * to Supabase. This means the most recent offline write always overwrites
- * the server value. This is a simple, predictable strategy that works well
- * for single-user apps where the same user edits from one device at a time.
+ * Before applying PUT/PATCH operations, the connector now checks for
+ * conflicts by comparing the local record's `updated_at` with the
+ * server's current version. If a conflict is detected, it delegates
+ * to the conflict resolution service which applies the configured
+ * strategy (last-write-wins, merge, or prompt-user).
  *
  * ## Error Handling
  *
@@ -18,8 +19,10 @@
  *   skipped so the upload queue doesn't get permanently stuck.
  * - **Transient errors** (network failures, 5xx) re-throw so PowerSync
  *   retries the transaction automatically when connectivity returns.
+ * - **Pending conflicts** (user needs to resolve) skip the operation so
+ *   the queue can continue; the conflict is resolved asynchronously.
  *
- * Phase 3: Offline Writes & Conflict Resolution
+ * Phase 3 + Phase 4: Offline Writes & Conflict Resolution
  */
 
 import type {
@@ -29,6 +32,7 @@ import type {
   PowerSyncCredentials,
 } from '@powersync/common';
 import { supabase } from '../supabase';
+import { handleConflict } from '@/services/conflict-resolution-service';
 
 const POWERSYNC_URL = process.env.EXPO_PUBLIC_POWERSYNC_URL?.trim() ?? '';
 
@@ -54,10 +58,15 @@ function isFatalError(error: unknown): boolean {
 }
 
 /**
- * Apply a single CRUD operation to Supabase with last-write-wins semantics.
+ * Apply a single CRUD operation to Supabase with conflict detection.
  *
- * - PUT  → upsert (insert or overwrite) with `updated_at` set to now
- * - PATCH → update with `updated_at` set to now
+ * For PUT and PATCH operations, the conflict resolution service is
+ * consulted first. If a conflict is detected and can be auto-resolved,
+ * the resolved record is written. If the conflict requires user input,
+ * the operation is skipped (the conflict queue handles it later).
+ *
+ * - PUT  → upsert with conflict check
+ * - PATCH → update with conflict check
  * - DELETE → delete by id (idempotent — ignores "not found")
  */
 async function applyCrudOperation(op: CrudEntry): Promise<void> {
@@ -66,30 +75,152 @@ async function applyCrudOperation(op: CrudEntry): Promise<void> {
 
   switch (op.op) {
     case 'PUT': {
-      // Last-write-wins: upsert with current timestamp so this write
-      // always takes precedence over any earlier server value.
-      const record = {
+      // Build the local record from the operation data
+      const localRecord = {
         ...op.opData,
         id: op.id,
-        updated_at: now,
+        updated_at: op.opData?.updated_at ?? now,
       };
-      const { error } = await supabase.from(table).upsert(record, {
-        onConflict: 'id',
-        ignoreDuplicates: false,
-      });
-      if (error) throw error;
+
+      // ── Phase 4: Conflict detection before write ──
+      try {
+        const result = await handleConflict(
+          table,
+          op.id,
+          localRecord,
+          'PUT',
+        );
+
+        switch (result.outcome) {
+          case 'no-conflict': {
+            // No conflict — proceed with the original upsert
+            const record = { ...localRecord, updated_at: now };
+            const { error } = await supabase.from(table).upsert(record, {
+              onConflict: 'id',
+              ignoreDuplicates: false,
+            });
+            if (error) throw error;
+            break;
+          }
+          case 'resolved': {
+            // Conflict was auto-resolved — write the resolved record
+            const { error } = await supabase.from(table).upsert(result.record, {
+              onConflict: 'id',
+              ignoreDuplicates: false,
+            });
+            if (error) throw error;
+            break;
+          }
+          case 'pending-user': {
+            // Conflict requires user input — skip this operation.
+            // The conflict is stored in the queue and will be resolved
+            // asynchronously via the ConflictResolutionModal.
+            if (__DEV__) {
+              console.info(
+                `[PowerSync] Conflict on ${table}/${op.id} — awaiting user resolution`,
+              );
+            }
+            break;
+          }
+          case 'server-deleted': {
+            // Server record was deleted — proceed with upsert to recreate
+            const record = { ...localRecord, updated_at: now };
+            const { error } = await supabase.from(table).upsert(record, {
+              onConflict: 'id',
+              ignoreDuplicates: false,
+            });
+            if (error) throw error;
+            break;
+          }
+        }
+      } catch (conflictError) {
+        // If conflict detection itself fails (e.g., network error during
+        // server fetch), fall back to the original last-write-wins behavior
+        if (__DEV__) {
+          console.warn(
+            `[PowerSync] Conflict detection failed for ${table}/${op.id}, falling back to LWW:`,
+            conflictError,
+          );
+        }
+        const record = { ...localRecord, updated_at: now };
+        const { error } = await supabase.from(table).upsert(record, {
+          onConflict: 'id',
+          ignoreDuplicates: false,
+        });
+        if (error) throw error;
+      }
       break;
     }
+
     case 'PATCH': {
-      // Last-write-wins: update with current timestamp
-      const updates = {
+      // Build the local record from the operation data
+      const localUpdates = {
         ...op.opData,
-        updated_at: now,
+        updated_at: op.opData?.updated_at ?? now,
       };
-      const { error } = await supabase.from(table).update(updates).eq('id', op.id);
-      if (error) throw error;
+
+      // ── Phase 4: Conflict detection before write ──
+      try {
+        const result = await handleConflict(
+          table,
+          op.id,
+          localUpdates,
+          'PATCH',
+        );
+
+        switch (result.outcome) {
+          case 'no-conflict': {
+            // No conflict — proceed with the original update
+            const updates = { ...localUpdates, updated_at: now };
+            const { error } = await supabase.from(table).update(updates).eq('id', op.id);
+            if (error) throw error;
+            break;
+          }
+          case 'resolved': {
+            // Conflict was auto-resolved — write the resolved record
+            const { error } = await supabase
+              .from(table)
+              .upsert({ ...result.record, id: op.id }, {
+                onConflict: 'id',
+                ignoreDuplicates: false,
+              });
+            if (error) throw error;
+            break;
+          }
+          case 'pending-user': {
+            // Conflict requires user input — skip this operation
+            if (__DEV__) {
+              console.info(
+                `[PowerSync] Conflict on ${table}/${op.id} — awaiting user resolution`,
+              );
+            }
+            break;
+          }
+          case 'server-deleted': {
+            // Can't patch a deleted record — skip
+            if (__DEV__) {
+              console.warn(
+                `[PowerSync] Skipping PATCH on deleted ${table}/${op.id}`,
+              );
+            }
+            break;
+          }
+        }
+      } catch (conflictError) {
+        // Fall back to original LWW behavior if conflict detection fails
+        if (__DEV__) {
+          console.warn(
+            `[PowerSync] Conflict detection failed for ${table}/${op.id}, falling back to LWW:`,
+            conflictError,
+          );
+        }
+        const updates = { ...localUpdates, updated_at: now };
+        const { error } = await supabase.from(table).update(updates).eq('id', op.id);
+        if (error) throw error;
+      }
       break;
     }
+
     case 'DELETE': {
       const { error } = await supabase.from(table).delete().eq('id', op.id);
       // Ignore "not found" — the row may already be deleted on the server
@@ -121,13 +252,14 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
   }
 
   /**
-   * Upload local changes to Supabase.
+   * Upload local changes to Supabase with conflict detection.
    *
    * Processes CRUD operations from the PowerSync upload queue one
    * transaction at a time. Each operation is applied individually:
    *
-   * - **Last-write-wins**: Every PUT/PATCH stamps `updated_at = now()`
-   *   so the most recent offline write always overwrites the server.
+   * - **Conflict detection** (Phase 4): PUT/PATCH operations check the
+   *   server version before writing. If a conflict is detected, the
+   *   configured strategy is applied (LWW, merge, or prompt user).
    * - **Fatal errors** (constraint violations, missing tables) cause
    *   the operation to be skipped and the transaction completed so the
    *   queue doesn't get stuck.
