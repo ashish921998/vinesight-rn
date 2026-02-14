@@ -19,6 +19,8 @@ import {
   useThemeStore,
 } from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { OfflineBanner } from '@/components/ui/offline-banner';
+import { PowerSyncAppProvider } from '@/lib/powersync';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
   cancelNotification,
@@ -281,36 +283,39 @@ export default Sentry.wrap(function RootLayout() {
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <QueryClientProvider client={queryClient}>
-            <I18nextProvider i18n={i18n}>
-              <StatusBar style={isDark ? 'light' : 'dark'} />
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: m3.colorScheme.background },
-                }}
-              >
-                <Stack.Screen name="index" />
-                <Stack.Screen name="(auth)" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="add-activity" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-entry" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
-                <Stack.Screen
-                  name="add-warehouse-item"
-                  options={{ presentation: 'modal', headerShown: false }}
-                />
-                <Stack.Screen name="add-lab-test" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="water-level" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
-              </Stack>
-            </I18nextProvider>
-          </QueryClientProvider>
+          <PowerSyncAppProvider>
+            <QueryClientProvider client={queryClient}>
+              <I18nextProvider i18n={i18n}>
+                <StatusBar style={isDark ? 'light' : 'dark'} />
+                <OfflineBanner />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: m3.colorScheme.background },
+                  }}
+                >
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="add-activity" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="add-entry" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
+                  <Stack.Screen
+                    name="add-warehouse-item"
+                    options={{ presentation: 'modal', headerShown: false }}
+                  />
+                  <Stack.Screen name="add-lab-test" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="water-level" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
+                </Stack>
+              </I18nextProvider>
+            </QueryClientProvider>
+          </PowerSyncAppProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>
