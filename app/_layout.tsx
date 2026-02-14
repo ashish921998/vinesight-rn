@@ -15,10 +15,12 @@ import {
   initAuthListener,
   cleanupAuthListener,
   useLanguageStore,
+  useNetworkStore,
   useNotificationStore,
   useThemeStore,
 } from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { OfflineBanner } from '@/components/ui/offline-banner';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
   cancelNotification,
@@ -124,6 +126,7 @@ export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
   const isLoading = useAuthStore((state) => state.isLoading);
   const themeHydrated = useThemeStore((state) => state.hasHydrated);
+  const initializeNetwork = useNetworkStore((state) => state.initialize);
   const { isDark, m3 } = useThemeTokens();
 
   const pathname = usePathname();
@@ -157,6 +160,12 @@ export default Sentry.wrap(function RootLayout() {
       cleanupAuthListener();
     };
   }, [initialize]);
+
+  // Initialize network monitoring for offline support
+  useEffect(() => {
+    const cleanup = initializeNetwork();
+    return cleanup;
+  }, [initializeNetwork]);
 
   useEffect(() => {
     if (!screenName) return;
@@ -284,6 +293,7 @@ export default Sentry.wrap(function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <I18nextProvider i18n={i18n}>
               <StatusBar style={isDark ? 'light' : 'dark'} />
+              <OfflineBanner />
               <Stack
                 screenOptions={{
                   headerShown: false,

@@ -22,7 +22,7 @@ import {
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { Button } from '@/components/ui';
+import { Button, SyncStatusIndicator, LastSyncedTimestamp } from '@/components/ui';
 import type { LogTypeId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
@@ -157,11 +157,15 @@ export default function DashboardScreen() {
         <View style={containerStyle}>
           {/* Welcome Header */}
           <View style={{ marginBottom: spacing[6] }}>
-            <Text style={greetingStyle}>
-              {profile?.full_name
-                ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
-                : t(`dashboard.greeting.${greetingKey}`)}
-            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={[greetingStyle, { flex: 1 }]}>
+                {profile?.full_name
+                  ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
+                  : t(`dashboard.greeting.${greetingKey}`)}
+              </Text>
+              <SyncStatusIndicator />
+            </View>
+            <LastSyncedTimestamp />
           </View>
 
           {/* Stats Grid */}
