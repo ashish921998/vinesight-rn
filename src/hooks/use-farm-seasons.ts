@@ -1,6 +1,16 @@
+/**
+ * Farm Seasons Hook
+ * React Query hooks for farm season CRUD operations
+ *
+ * Phase 2: The useFarmSeasons read hook now reads from the local
+ * PowerSync/SQLite database for instant load times and offline capability.
+ * Write operations still go directly to Supabase.
+ */
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
+import { usePowerSyncRead, farmSeasonRowToFarmSeason } from './powersync';
 import type { FarmSeason, FarmSeasonInsert, FarmSeasonUpdate } from '../types';
 import { TABLES } from '../types';
 import { parseDbDateToLocalDate } from '../utils/date';
@@ -26,10 +36,20 @@ function sortFarmSeasonsByEndDate(items: FarmSeason[]) {
   return next;
 }
 
+/**
+ * Fetch all seasons for a given farm.
+ *
+ * Reads from the local PowerSync/SQLite database on native platforms
+ * for instant load times. Falls back to Supabase on web.
+ * The PowerSync watched query automatically updates when synced data changes.
+ */
 export function useFarmSeasons(farmId: number | undefined) {
-  return useQuery({
+  return usePowerSyncRead<FarmSeason>({
     queryKey: queryKeys.farmSeasons.listByFarm(farmId ?? -1),
-    queryFn: async (): Promise<FarmSeason[]> => {
+    sql: 'SELECT * FROM farm_seasons WHERE farm_id = ?',
+    parameters: [farmId ?? -1],
+    transform: (rows) => sortFarmSeasonsByEndDate(rows.map(farmSeasonRowToFarmSeason)),
+    fallbackQueryFn: async (): Promise<FarmSeason[]> => {
       if (!farmId) return [];
       const { data, error } = await supabase
         .from(TABLES.FARM_SEASONS)

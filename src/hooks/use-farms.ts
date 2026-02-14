@@ -2,11 +2,16 @@
  * Farms Hook
  * React Query hooks for farm CRUD operations
  * Mirrors iOS SupabaseDataService.swift farms methods
+ *
+ * Phase 2: Read operations (useFarms, useFarm) now read from the local
+ * PowerSync/SQLite database for instant load times and offline capability.
+ * Write operations still go directly to Supabase.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
+import { usePowerSyncRead, usePowerSyncReadOne, farmRowToFarm } from './powersync';
 import type { Farm, FarmInsert, FarmUpdate } from '../types';
 import { TABLES, toSupabaseTimestampString } from '../types';
 
@@ -26,16 +31,22 @@ async function getUserId(): Promise<string> {
 }
 
 // ============================================================
-// MARK: - Fetch Farms Query
+// MARK: - Fetch Farms Query (PowerSync local read)
 // ============================================================
 
 /**
- * Fetch all farms for the current user
+ * Fetch all farms for the current user.
+ *
+ * Reads from the local PowerSync/SQLite database on native platforms
+ * for instant load times. Falls back to Supabase on web.
+ * The PowerSync watched query automatically updates when synced data changes.
  */
 export function useFarms() {
-  return useQuery({
+  return usePowerSyncRead<Farm>({
     queryKey: queryKeys.farms.lists(),
-    queryFn: async (): Promise<Farm[]> => {
+    sql: 'SELECT * FROM farms ORDER BY created_at DESC',
+    transform: (rows) => rows.map(farmRowToFarm),
+    fallbackQueryFn: async (): Promise<Farm[]> => {
       const userId = await getUserId();
 
       const { data, error } = await supabase
@@ -51,12 +62,18 @@ export function useFarms() {
 }
 
 /**
- * Fetch a single farm by ID
+ * Fetch a single farm by ID.
+ *
+ * Reads from the local PowerSync/SQLite database on native platforms.
+ * Falls back to Supabase on web.
  */
 export function useFarm(id: number | undefined) {
-  return useQuery({
+  return usePowerSyncReadOne<Farm>({
     queryKey: queryKeys.farms.detail(id!),
-    queryFn: async (): Promise<Farm> => {
+    sql: 'SELECT * FROM farms WHERE id = ? LIMIT 1',
+    parameters: [id ?? -1],
+    transform: farmRowToFarm,
+    fallbackQueryFn: async (): Promise<Farm | null> => {
       const userId = await getUserId();
       const { data, error } = await supabase
         .from(TABLES.FARMS)

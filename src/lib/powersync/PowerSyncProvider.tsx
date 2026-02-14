@@ -17,6 +17,7 @@ import { Platform } from 'react-native';
 import { PowerSyncContext, PowerSyncDatabase } from '@powersync/react-native';
 
 import { supabase } from '@/lib/supabase';
+import { setInstance } from '@/hooks/powersync/powersync-instance';
 import { AppSchema } from './schema';
 import { SupabaseConnector } from './SupabaseConnector';
 
@@ -70,6 +71,11 @@ export function PowerSyncAppProvider({ children }: PowerSyncAppProviderProps) {
       try {
         // Initialise the local database (creates tables, runs migrations)
         await db.init();
+
+        // Register the instance so hooks can access it for local reads
+        if (!cancelled) {
+          setInstance(db);
+        }
 
         if (cancelled) return;
 
@@ -133,6 +139,7 @@ export function PowerSyncAppProvider({ children }: PowerSyncAppProviderProps) {
     return () => {
       cancelled = true;
       subscription.unsubscribe();
+      setInstance(null);
       db.disconnect().catch(() => null);
     };
   }, [db]);

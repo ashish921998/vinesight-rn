@@ -1,11 +1,16 @@
 /**
  * Profile & Misc Hooks
  * React Query hooks for Profile, Warehouse, Soil Tests, Calculation History
+ *
+ * Phase 2: The useProfile read hook now reads from the local
+ * PowerSync/SQLite database for instant load times and offline capability.
+ * Write operations still go directly to Supabase.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
+import { usePowerSyncReadOne, profileRowToProfile } from './powersync';
 import {
   TABLES,
   type Profile,
@@ -41,13 +46,22 @@ async function getUserId(): Promise<string> {
 }
 
 // ============================================================
-// MARK: - PROFILE
+// MARK: - PROFILE (PowerSync local read)
 // ============================================================
 
+/**
+ * Fetch the current user's profile.
+ *
+ * Reads from the local PowerSync/SQLite database on native platforms
+ * for instant load times. Falls back to Supabase on web.
+ * The PowerSync watched query automatically updates when synced data changes.
+ */
 export function useProfile() {
-  return useQuery({
+  return usePowerSyncReadOne<Profile>({
     queryKey: queryKeys.profile.current(),
-    queryFn: async (): Promise<Profile | null> => {
+    sql: 'SELECT * FROM profiles LIMIT 1',
+    transform: profileRowToProfile,
+    fallbackQueryFn: async (): Promise<Profile | null> => {
       const userId = await getUserId();
 
       const { data, error } = await supabase
