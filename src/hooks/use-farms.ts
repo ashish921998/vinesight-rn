@@ -3,32 +3,24 @@
  * React Query hooks for farm CRUD operations
  * Mirrors iOS SupabaseDataService.swift farms methods
  *
- * READ operations now delegate to offline hooks (use-offline-farms.ts)
+ * READ operations delegate to offline hooks (use-offline-farms.ts)
  * which use PowerSync local SQLite reads with Supabase fallback.
- * WRITE operations continue to go through Supabase directly.
+ *
+ * WRITE operations (Phase 3) now go through PowerSync local DB when
+ * available, falling back to direct Supabase writes otherwise.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmUpdate } from '../types';
-import { TABLES, toSupabaseTimestampString } from '../types';
+import { TABLES } from '../types';
 import { useOfflineFarms, useOfflineFarm } from './use-offline-farms';
-
-// ============================================================
-// MARK: - Helper to get current user ID
-// ============================================================
-
-async function getUserId(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session) {
-    throw new Error('Please sign in to continue');
-  }
-  return session.user.id;
-}
+import {
+  useOfflineCreateFarm,
+  useOfflineUpdateFarm,
+  useOfflineDeleteFarm,
+} from './use-offline-mutations';
 
 // ============================================================
 // MARK: - Fetch Farms Query (Offline-First)
@@ -53,24 +45,16 @@ export function useFarm(id: number | undefined) {
 }
 
 // ============================================================
-// MARK: - Create Farm Mutation
+// MARK: - Create Farm Mutation (Offline-First)
 // ============================================================
 
 export function useCreateFarm() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateFarm();
 
   return useMutation({
     mutationFn: async (farm: FarmInsert): Promise<Farm> => {
-      const userId = await getUserId();
-
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .insert({ ...farm, user_id: userId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineCreate.mutateAsync(farm);
     },
     onSuccess: (newFarm) => {
       // Add to cache
@@ -85,26 +69,16 @@ export function useCreateFarm() {
 }
 
 // ============================================================
-// MARK: - Update Farm Mutation
+// MARK: - Update Farm Mutation (Offline-First)
 // ============================================================
 
 export function useUpdateFarm() {
   const queryClient = useQueryClient();
+  const offlineUpdate = useOfflineUpdateFarm();
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: FarmUpdate }): Promise<Farm> => {
-      const userId = await getUserId();
-
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .update(updates)
-        .eq('id', id)
-        .eq('user_id', userId) // Verify ownership
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineUpdate.mutateAsync({ id, updates });
     },
     onSuccess: (updatedFarm) => {
       // Update in cache
@@ -126,6 +100,7 @@ export function useUpdateFarm() {
 
 export function useUpdateFarmWaterLevel() {
   const queryClient = useQueryClient();
+  const offlineUpdate = useOfflineUpdateFarm();
 
   return useMutation({
     mutationFn: async ({
@@ -135,18 +110,12 @@ export function useUpdateFarmWaterLevel() {
       farmId: number;
       remainingWater: number;
     }): Promise<Farm> => {
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .update({
+      return offlineUpdate.mutateAsync({
+        id: farmId,
+        updates: {
           remaining_water: remainingWater,
-          water_calculation_updated_at: toSupabaseTimestampString(new Date()),
-        })
-        .eq('id', farmId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+        },
+      });
     },
     onSuccess: (updatedFarm) => {
       // Update in cache
@@ -162,23 +131,16 @@ export function useUpdateFarmWaterLevel() {
 }
 
 // ============================================================
-// MARK: - Delete Farm Mutation
+// MARK: - Delete Farm Mutation (Offline-First)
 // ============================================================
 
 export function useDeleteFarm() {
   const queryClient = useQueryClient();
+  const offlineDelete = useOfflineDeleteFarm();
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const userId = await getUserId();
-
-      const { error } = await supabase
-        .from(TABLES.FARMS)
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId); // Verify ownership
-
-      if (error) throw error;
+      return offlineDelete.mutateAsync(id);
     },
     onSuccess: (_, deletedId) => {
       // Remove from cache
@@ -190,9 +152,6 @@ export function useDeleteFarm() {
       queryClient.removeQueries({ queryKey: queryKeys.farms.detail(deletedId) });
 
       // Invalidate all related queries for the deleted farm
-      // Note: Database should have CASCADE DELETE constraints set up
-      // to automatically delete associated records (irrigation_records,
-      // spray_records, harvest_records, expense_records, etc.)
       queryClient.invalidateQueries({
         predicate: (query) => {
           const queryKey = query.queryKey;

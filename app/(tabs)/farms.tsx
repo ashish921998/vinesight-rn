@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useFarms, useDeleteFarm, useFabBottomPosition } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { Button } from '@/components/ui';
+import { Button, PendingSyncBadge } from '@/components/ui';
 import type { Farm } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -120,6 +120,11 @@ const SearchHeader = React.memo<SearchHeaderProps>(
           >
             {t('farms.search.found', { count: filteredFarms.length })}
           </Text>
+        )}
+
+        {/* Pending Sync Badge */}
+        {!searchQuery.trim() && (
+          <PendingSyncBadge style={{ marginTop: spacing[3], alignSelf: 'flex-start' }} />
         )}
 
         {/* Quick Stats */}

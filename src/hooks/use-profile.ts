@@ -2,9 +2,11 @@
  * Profile & Misc Hooks
  * React Query hooks for Profile, Warehouse, Soil Tests, Calculation History
  *
- * Profile READ operations now delegate to offline hooks (use-offline-profile.ts)
+ * Profile READ operations delegate to offline hooks (use-offline-profile.ts)
  * which use PowerSync local SQLite reads with Supabase fallback.
- * WRITE operations continue to go through Supabase directly.
+ *
+ * Profile WRITE operations (Phase 3) now go through PowerSync local DB when
+ * available, falling back to direct Supabase writes otherwise.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -29,6 +31,7 @@ import {
 import { formatLocalDate } from '../utils/date';
 import { resolveSeasonIdForDate } from '../lib/season-context';
 import { useOfflineProfile } from './use-offline-profile';
+import { useOfflineUpdateProfile } from './use-offline-mutations';
 
 // ============================================================
 // MARK: - Helper
@@ -60,20 +63,11 @@ export function useProfile() {
 
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
+  const offlineUpdate = useOfflineUpdateProfile();
 
   return useMutation({
     mutationFn: async (updates: ProfileUpdate): Promise<Profile> => {
-      const userId = await getUserId();
-      const payload: ProfileUpdate & { id: string } = { ...updates, id: userId };
-
-      const { data, error } = await supabase
-        .from(TABLES.PROFILES)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineUpdate.mutateAsync(updates);
     },
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(queryKeys.profile.current(), updatedProfile);

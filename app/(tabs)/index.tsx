@@ -22,7 +22,7 @@ import {
 } from '@/hooks';
 import { StatsCard, QuickActionButton, ActivityLogCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { Button } from '@/components/ui';
+import { Button, PendingSyncBadge } from '@/components/ui';
 import type { LogTypeId } from '@/constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
@@ -163,6 +163,9 @@ export default function DashboardScreen() {
                 : t(`dashboard.greeting.${greetingKey}`)}
             </Text>
           </View>
+
+          {/* Pending Sync Badge */}
+          <PendingSyncBadge style={{ marginBottom: spacing[3], alignSelf: 'flex-start' }} />
 
           {/* Stats Grid */}
           <View style={{ marginBottom: spacing[6] }}>
