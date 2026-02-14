@@ -1,4 +1,5 @@
 export { Button } from './button';
+export { ConnectivityBanner } from './connectivity-banner';
 export { CropIcon } from './crop-icon';
 export { Input } from './input';
 export { OTPInput } from './otp-input';
