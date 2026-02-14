@@ -312,6 +312,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="offline-debug" options={{ presentation: 'modal' }} />
               </Stack>
             </I18nextProvider>
           </QueryClientProvider>
