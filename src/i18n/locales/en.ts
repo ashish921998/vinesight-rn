@@ -1099,6 +1099,7 @@ export const en = {
     sectionGeneral: 'GENERAL',
     sectionNotifications: 'NOTIFICATIONS',
     sectionAccount: 'ACCOUNT',
+    sectionAssistant: 'AI ASSISTANT',
     language: 'Language',
     selectLanguage: 'Select Language',
     languageEnglish: 'English',
@@ -1140,6 +1141,22 @@ export const en = {
       updateAreaUnitFailed: 'Failed to update area unit. Please try again.',
       linkPhoneFailed: 'Failed to link phone number. Please try again.',
       verifyPhoneFailed: 'Failed to verify phone number. Please try again.',
+      assistantMemoryExportFailed: 'Failed to export assistant memory. Please try again.',
+      assistantMemoryDeleteFailed: 'Failed to delete assistant memory. Please try again.',
+    },
+
+    assistantMemory: {
+      exportAction: 'Export assistant memory',
+      exportShareTitle: 'Share assistant memory export',
+      exportedTitle: 'Assistant memory exported',
+      exportedBody: 'Conversations: {{conversations}}, turns: {{turns}}, memories: {{memories}}.',
+      deleteAction: 'Delete assistant memory',
+      deleteConfirmTitle: 'Delete assistant memory?',
+      deleteConfirmBody:
+        'This permanently deletes assistant conversations, turns, and memories for your account.',
+      deletedTitle: 'Assistant memory deleted',
+      deletedBody: 'Your assistant memory data has been deleted.',
+      retentionNote: 'Assistant memory is retained for up to 180 days unless you delete it.',
     },
 
     deleteAccountModal: {

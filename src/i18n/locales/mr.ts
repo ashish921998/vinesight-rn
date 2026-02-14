@@ -1105,6 +1105,7 @@ export const mr = {
     sectionGeneral: 'सामान्य',
     sectionNotifications: 'सूचना',
     sectionAccount: 'खाते',
+    sectionAssistant: 'AI सहाय्यक',
     language: 'भाषा',
     selectLanguage: 'भाषा निवडा',
     languageEnglish: 'English',
@@ -1146,6 +1147,23 @@ export const mr = {
       updateAreaUnitFailed: 'क्षेत्रफळ एकक अद्ययावत होऊ शकले नाही. कृपया पुन्हा प्रयत्न करा.',
       linkPhoneFailed: 'फोन नंबर लिंक करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
       verifyPhoneFailed: 'फोन नंबर सत्यापित करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
+      assistantMemoryExportFailed:
+        'सहाय्यक मेमरी एक्सपोर्ट करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
+      assistantMemoryDeleteFailed: 'सहाय्यक मेमरी हटवण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
+    },
+
+    assistantMemory: {
+      exportAction: 'सहाय्यक मेमरी एक्सपोर्ट करा',
+      exportShareTitle: 'सहाय्यक मेमरी एक्सपोर्ट शेअर करा',
+      exportedTitle: 'सहाय्यक मेमरी एक्सपोर्ट झाली',
+      exportedBody: 'संवाद: {{conversations}}, टर्न: {{turns}}, मेमरी: {{memories}}.',
+      deleteAction: 'सहाय्यक मेमरी हटवा',
+      deleteConfirmTitle: 'सहाय्यक मेमरी हटवायची?',
+      deleteConfirmBody:
+        'यामुळे तुमच्या खात्यातील सहाय्यक संवाद, टर्न आणि मेमरी कायमची हटवली जाईल.',
+      deletedTitle: 'सहाय्यक मेमरी हटवली',
+      deletedBody: 'तुमचा सहाय्यक मेमरी डेटा हटवला गेला आहे.',
+      retentionNote: 'तुम्ही हटवले नाही तर सहाय्यक मेमरी 180 दिवसांपर्यंत जतन होते.',
     },
 
     deleteAccountModal: {

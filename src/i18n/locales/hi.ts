@@ -1101,6 +1101,7 @@ export const hi = {
     sectionGeneral: 'सामान्य',
     sectionNotifications: 'सूचनाएं',
     sectionAccount: 'खाता',
+    sectionAssistant: 'AI सहायक',
     language: 'भाषा',
     selectLanguage: 'भाषा चुनें',
     languageEnglish: 'English',
@@ -1142,6 +1143,22 @@ export const hi = {
       updateAreaUnitFailed: 'क्षेत्रफल इकाई अपडेट करने में विफल। कृपया पुनः प्रयास करें।',
       linkPhoneFailed: 'फोन नंबर लिंक करने में विफल। कृपया पुनः प्रयास करें।',
       verifyPhoneFailed: 'फोन नंबर सत्यापित करने में विफल। कृपया पुनः प्रयास करें।',
+      assistantMemoryExportFailed: 'सहायक मेमोरी एक्सपोर्ट करने में विफल। कृपया पुनः प्रयास करें।',
+      assistantMemoryDeleteFailed: 'सहायक मेमोरी हटाने में विफल। कृपया पुनः प्रयास करें।',
+    },
+
+    assistantMemory: {
+      exportAction: 'सहायक मेमोरी एक्सपोर्ट करें',
+      exportShareTitle: 'सहायक मेमोरी एक्सपोर्ट साझा करें',
+      exportedTitle: 'सहायक मेमोरी एक्सपोर्ट हो गई',
+      exportedBody: 'वार्तालाप: {{conversations}}, टर्न: {{turns}}, मेमोरी: {{memories}}।',
+      deleteAction: 'सहायक मेमोरी हटाएं',
+      deleteConfirmTitle: 'सहायक मेमोरी हटाएं?',
+      deleteConfirmBody:
+        'यह आपके खाते की सहायक वार्तालाप, टर्न और मेमोरी को स्थायी रूप से हटा देगा।',
+      deletedTitle: 'सहायक मेमोरी हटाई गई',
+      deletedBody: 'आपकी सहायक मेमोरी डेटा हटा दी गई है।',
+      retentionNote: 'जब तक आप हटाते नहीं हैं, सहायक मेमोरी 180 दिनों तक रखी जाती है।',
     },
 
     deleteAccountModal: {

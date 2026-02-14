@@ -7,6 +7,7 @@ import { AIMessageAttachmentInput, ChatMessage, SendMessageResponse } from '../t
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import { GLOSSARY_MR } from '@/i18n/glossary.mr';
 import { GLOSSARY_HI } from '@/i18n/glossary.hi';
+import { assistantModelConfig } from '@/constants/assistant-flags';
 import type {
   ActivityLogExtractionResult,
   VoiceLogActivityType,
@@ -375,7 +376,7 @@ class AIService {
     try {
       const response = await callOpenAIProxy({
         messages,
-        model: 'gpt-4o-mini',
+        model: assistantModelConfig.advisoryModel,
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -430,7 +431,7 @@ class AIService {
     try {
       const response = await callOpenAIProxy({
         messages,
-        model: 'gpt-4o-mini',
+        model: assistantModelConfig.extractionModel,
         temperature: 0.8,
         max_tokens: 200,
       });
@@ -504,7 +505,7 @@ Rules:
     try {
       const response = await callOpenAIProxy({
         messages,
-        model: 'gpt-4o-mini',
+        model: assistantModelConfig.extractionModel,
         temperature: 0,
         max_tokens: 250,
         response_format: { type: 'json_object' },

@@ -14,6 +14,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import { Audio } from 'expo-av';
 import {
   SpeechRecognitionModule,
   isSpeechRecognitionAvailable,
@@ -38,6 +39,11 @@ import {
   resolveVoiceLogTurn,
   shouldAttemptVoiceLogExtraction,
 } from '@/services/voice-log-assistant';
+import { sendAssistantTurn } from '@/services/assistant-gateway';
+import { assistantFeatureFlags } from '@/constants/assistant-flags';
+import { assistantMemoryService } from '@/services/assistant-memory';
+import { appendCitationsToMessage } from '@/services/rag-citations';
+import { voiceOutputService } from '@/services/voice-output';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate, formatTime } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
@@ -56,6 +62,28 @@ interface ChatAttachment {
   mimeType?: string;
   size?: number;
   kind: 'image' | 'document';
+}
+
+interface VoiceAudioPayload {
+  inputAudioBase64: string;
+  audioFormat: string;
+  durationMs?: number | null;
+}
+
+interface AssistantTurnDiagnostics {
+  source: string;
+  traceId?: string | null;
+  routeDecision?: string | null;
+  providerUsed?: string | null;
+  modelUsed?: string | null;
+  latencyMs?: number | null;
+  voiceCaptureDurationMs?: number | null;
+  voiceUploadBytes?: number | null;
+  sttProviderUsed?: string | null;
+  sttConfidence?: number | null;
+  sttLatencyMs?: number | null;
+  ttsGenerationMs?: number | null;
+  fallbackReason?: string | null;
 }
 
 const TEXT_DOCUMENT_EXTENSIONS = new Set(['txt', 'csv', 'json', 'md', 'xml', 'html', 'htm', 'log']);
@@ -181,6 +209,32 @@ function formatAttachmentSummary(attachments: ChatAttachment[]): string {
     (attachment, index) => `- ${index + 1}. ${attachment.name} (${attachment.kind})`,
   );
   return `Attached files:\n${lines.join('\n')}`;
+}
+
+function inferAudioMimeType(uri: string): string {
+  const extension = getFileExtension(uri);
+  if (extension === 'wav') return 'audio/wav';
+  if (extension === 'aac') return 'audio/aac';
+  if (extension === 'caf') return 'audio/x-caf';
+  if (extension === '3gp') return 'audio/3gpp';
+  if (extension === 'amr') return 'audio/amr';
+  if (extension === 'm4a' || extension === 'mp4') return 'audio/mp4';
+  return 'audio/mpeg';
+}
+
+function estimateBase64Bytes(base64Payload: string | null | undefined): number | null {
+  if (!base64Payload) return null;
+  const normalized = base64Payload.trim();
+  if (!normalized) return null;
+  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
+  return Math.floor((normalized.length * 3) / 4) - padding;
+}
+
+function formatDiagnosticValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return '-';
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  const normalized = String(value).trim();
+  return normalized.length > 0 ? normalized : '-';
 }
 
 function promptOpenSettings(title: string, message: string, t: (key: string) => string) {
@@ -423,15 +477,29 @@ export default function AIChatScreen() {
   const [routeClarificationPending, setRouteClarificationPending] = useState(false);
   const [pendingAmbiguousTranscript, setPendingAmbiguousTranscript] = useState<string | null>(null);
   const [voiceInputState, setVoiceInputState] = useState<VoiceInputState>('idle');
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [voicePlaybackRate, setVoicePlaybackRate] = useState(1);
+  const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
+  const [lastAssistantDiagnostics, setLastAssistantDiagnostics] =
+    useState<AssistantTurnDiagnostics | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const clearDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingVoiceTranscriptRef = useRef('');
   const hasSubmittedVoiceQueryRef = useRef(false);
   const isStartingVoiceInputRef = useRef(false);
+  const activeVoiceRecordingRef = useRef<Audio.Recording | null>(null);
+  const isStoppingVoiceRecordingRef = useRef(false);
   const sendMessageRef =
-    useRef<(text?: string, source?: 'text' | 'voice') => Promise<void>>(undefined);
+    useRef<
+      (
+        text?: string,
+        source?: 'text' | 'voice',
+        voicePayload?: VoiceAudioPayload | null,
+      ) => Promise<void>
+    >(undefined);
   const speechLocale = useMemo(() => resolveSpeechLocale(i18n.language), [i18n.language]);
   const isVoiceListening = voiceInputState === 'starting' || voiceInputState === 'listening';
+  const languageCode = useMemo(() => resolveLanguageCode(i18n.language), [i18n.language]);
 
   const DEFAULT_SUGGESTIONS = useMemo(
     () => [
@@ -503,19 +571,158 @@ export default function AIChatScreen() {
     return () => clearDraftUndoTimeout();
   }, [clearDraftUndoTimeout]);
 
+  useEffect(() => {
+    if (!assistantFeatureFlags.memoryEnabled) return;
+
+    let isCancelled = false;
+
+    const bootstrapConversation = async () => {
+      const resolvedConversationId = await assistantMemoryService.resolveLatestConversation({
+        farmId: contextFarm?.id ?? parsedFarmId ?? null,
+        locale: languageCode,
+      });
+
+      if (isCancelled || !resolvedConversationId) return;
+
+      setConversationId(resolvedConversationId);
+
+      const history = await assistantMemoryService.loadRecentMessages(resolvedConversationId, 20);
+      if (!isCancelled && history.length > 0) {
+        setMessages((prev) => (prev.length > 0 ? prev : history));
+      }
+    };
+
+    void bootstrapConversation();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [contextFarm?.id, languageCode, parsedFarmId]);
+
   const scrollToBottom = () => {
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
   };
 
+  const startVoiceRecording = useCallback(async () => {
+    if (Platform.OS === 'web') return;
+
+    try {
+      const permission = await Audio.requestPermissionsAsync();
+      if (!permission.granted) return;
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY,
+      );
+      activeVoiceRecordingRef.current = recording;
+    } catch (error) {
+      activeVoiceRecordingRef.current = null;
+      if (__DEV__) {
+        console.warn('Voice recording start failed:', error);
+      }
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+        });
+      } catch {
+        // no-op
+      }
+    }
+  }, []);
+
+  const stopVoiceRecording = useCallback(
+    async (options?: { discard?: boolean }): Promise<VoiceAudioPayload | null> => {
+      if (isStoppingVoiceRecordingRef.current) return null;
+
+      const recording = activeVoiceRecordingRef.current;
+      activeVoiceRecordingRef.current = null;
+      if (!recording) return null;
+
+      isStoppingVoiceRecordingRef.current = true;
+      try {
+        await recording.stopAndUnloadAsync();
+        const status = await recording.getStatusAsync();
+        const durationMs =
+          !status.isRecording && typeof status.durationMillis === 'number'
+            ? status.durationMillis
+            : null;
+        const uri = recording.getURI();
+        if (!uri || options?.discard) {
+          return null;
+        }
+
+        const inputAudioBase64 = await FileSystem.readAsStringAsync(uri, {
+          encoding: 'base64',
+        });
+        if (!inputAudioBase64.trim()) {
+          return null;
+        }
+
+        return {
+          inputAudioBase64,
+          audioFormat: inferAudioMimeType(uri),
+          durationMs,
+        };
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('Voice recording stop failed:', error);
+        }
+        return null;
+      } finally {
+        isStoppingVoiceRecordingRef.current = false;
+        try {
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+          });
+        } catch {
+          // no-op
+        }
+      }
+    },
+    [],
+  );
+
+  const submitVoiceTranscript = useCallback(
+    async (transcript: string) => {
+      const normalizedTranscript = transcript.trim();
+      if (!normalizedTranscript || hasSubmittedVoiceQueryRef.current) return;
+
+      hasSubmittedVoiceQueryRef.current = true;
+      setVoiceInputState('idle');
+
+      const voicePayload = await stopVoiceRecording();
+      void sendMessageRef.current?.(normalizedTranscript, 'voice', voicePayload);
+    },
+    [stopVoiceRecording],
+  );
+
   const handleSendMessage = useCallback(
-    async (text?: string, source: 'text' | 'voice' = 'text') => {
+    async (
+      text?: string,
+      source: 'text' | 'voice' = 'text',
+      voicePayload?: VoiceAudioPayload | null,
+    ) => {
       const messageText = text || inputText.trim();
       const currentAttachments = attachments;
       if ((!messageText && currentAttachments.length === 0) || isLoading) return;
+      if (isAssistantSpeaking) {
+        void voiceOutputService.stop();
+        setIsAssistantSpeaking(false);
+      }
       const attachmentSummary = formatAttachmentSummary(currentAttachments);
       const assistantInput = messageText.trim();
+      const voiceUploadBytes =
+        source === 'voice' ? estimateBase64Bytes(voicePayload?.inputAudioBase64 ?? null) : null;
       const visibleUserContent = [messageText, attachmentSummary]
         .filter(Boolean)
         .join('\n\n')
@@ -528,6 +735,7 @@ export default function AIChatScreen() {
         } catch {
           /* no-op */
         }
+        void stopVoiceRecording({ discard: true });
         setVoiceInputState('idle');
       }
 
@@ -543,15 +751,40 @@ export default function AIChatScreen() {
       setAttachments([]);
       setSuggestions([]);
       setIsLoading(true);
+      setLastAssistantDiagnostics(null);
       scrollToBottom();
 
       telemetry.capture('ai_request_made', {
         ai_use_case: 'chat',
         language: i18n.language,
         input_method: source,
+        voice_capture_duration_ms: source === 'voice' ? (voicePayload?.durationMs ?? null) : null,
+        voice_upload_bytes: voiceUploadBytes,
       });
 
       try {
+        let activeConversationId = conversationId;
+        if (assistantFeatureFlags.memoryEnabled && !activeConversationId) {
+          activeConversationId = await assistantMemoryService.createConversation({
+            farmId: contextFarm?.id ?? parsedFarmId ?? null,
+            locale: languageCode,
+          });
+          if (activeConversationId) {
+            setConversationId(activeConversationId);
+          }
+        }
+
+        let userTurnPersistedClient = false;
+        if (activeConversationId) {
+          userTurnPersistedClient = await assistantMemoryService.persistTurn({
+            conversationId: activeConversationId,
+            farmId: contextFarm?.id ?? parsedFarmId ?? null,
+            role: 'user',
+            content: visibleUserContent || assistantInput,
+            inputMode: source === 'voice' ? 'audio' : 'text',
+          });
+        }
+
         const deterministicTranscript = contextFarm?.name
           ? `${assistantInput} for farm ${contextFarm.name}`
           : assistantInput;
@@ -559,7 +792,11 @@ export default function AIChatScreen() {
 
         const deterministicIntent = classifyIntent(deterministicTranscript, candidateFarms);
 
-        if (currentAttachments.length === 0 && messageText.trim()) {
+        if (
+          !assistantFeatureFlags.routeOnServerEnabled &&
+          currentAttachments.length === 0 &&
+          messageText.trim()
+        ) {
           let forcedRoute: 'voice_log' | 'farm_query' | null = null;
           let effectiveTranscript = messageText;
 
@@ -617,7 +854,7 @@ export default function AIChatScreen() {
               ? null
               : await aiService.extractActivityLoggingIntent({
                   transcript: effectiveTranscript,
-                  language: resolveLanguageCode(i18n.language),
+                  language: languageCode,
                   farmNames: farms.map((farmItem) => farmItem.name),
                   contextFarmName: contextFarm?.name ?? null,
                 })
@@ -887,8 +1124,6 @@ export default function AIChatScreen() {
 
           if (chatRoute === 'farm_query' && candidateFarms.length > 0) {
             try {
-              const languageCode = resolveLanguageCode(i18n.language);
-
               const queryText = contextFarm?.name
                 ? `${effectiveTranscript} for farm ${contextFarm.name}`
                 : effectiveTranscript;
@@ -909,12 +1144,53 @@ export default function AIChatScreen() {
                 },
               ]);
               setSuggestions(DEFAULT_SUGGESTIONS);
+              setLastAssistantDiagnostics({
+                source: 'farm_records',
+                routeDecision: 'farm_query',
+                providerUsed: 'farm_records',
+                modelUsed: 'deterministic_query_engine',
+                latencyMs: null,
+                voiceCaptureDurationMs:
+                  source === 'voice' ? (voicePayload?.durationMs ?? null) : null,
+                voiceUploadBytes,
+              });
 
               telemetry.capture('ai_result_received', {
                 ai_use_case: 'chat',
                 confidence_score: null,
                 response_source: 'farm_records',
               });
+
+              if (activeConversationId) {
+                void assistantMemoryService.persistTurn({
+                  conversationId: activeConversationId,
+                  farmId: contextFarm?.id ?? parsedFarmId ?? null,
+                  role: 'assistant',
+                  content,
+                  inputMode: 'text',
+                  provider: 'farm_records',
+                  model: 'deterministic_query_engine',
+                });
+              }
+
+              if (source === 'voice') {
+                void voiceOutputService.playAssistantTurn(
+                  {
+                    message: {
+                      id: Date.now().toString(),
+                      role: 'assistant',
+                      content,
+                      timestamp: new Date(),
+                      conversationId: activeConversationId ?? undefined,
+                    },
+                  },
+                  {
+                    language: languageCode,
+                    rate: voicePlaybackRate,
+                    onStateChange: setIsAssistantSpeaking,
+                  },
+                );
+              }
 
               scrollToBottom();
               return;
@@ -927,12 +1203,12 @@ export default function AIChatScreen() {
         }
 
         if (
+          !assistantFeatureFlags.routeOnServerEnabled &&
           currentAttachments.length === 0 &&
           shouldUseFarmDataEngine(messageText, deterministicIntent) &&
           candidateFarms.length > 0
         ) {
           try {
-            const languageCode = resolveLanguageCode(i18n.language);
             const farmDataResponse = await executeQuery(
               deterministicTranscript,
               candidateFarms,
@@ -953,12 +1229,53 @@ export default function AIChatScreen() {
               },
             ]);
             setSuggestions(DEFAULT_SUGGESTIONS);
+            setLastAssistantDiagnostics({
+              source: 'farm_records',
+              routeDecision: 'farm_query',
+              providerUsed: 'farm_records',
+              modelUsed: 'deterministic_query_engine',
+              latencyMs: null,
+              voiceCaptureDurationMs:
+                source === 'voice' ? (voicePayload?.durationMs ?? null) : null,
+              voiceUploadBytes,
+            });
 
             telemetry.capture('ai_result_received', {
               ai_use_case: 'chat',
               confidence_score: null,
               response_source: 'farm_records',
             });
+
+            if (activeConversationId) {
+              void assistantMemoryService.persistTurn({
+                conversationId: activeConversationId,
+                farmId: contextFarm?.id ?? parsedFarmId ?? null,
+                role: 'assistant',
+                content,
+                inputMode: 'text',
+                provider: 'farm_records',
+                model: 'deterministic_query_engine',
+              });
+            }
+
+            if (source === 'voice') {
+              void voiceOutputService.playAssistantTurn(
+                {
+                  message: {
+                    id: Date.now().toString(),
+                    role: 'assistant',
+                    content,
+                    timestamp: new Date(),
+                    conversationId: activeConversationId ?? undefined,
+                  },
+                },
+                {
+                  language: languageCode,
+                  rate: voicePlaybackRate,
+                  onStateChange: setIsAssistantSpeaking,
+                },
+              );
+            }
 
             scrollToBottom();
             return;
@@ -970,10 +1287,18 @@ export default function AIChatScreen() {
         }
 
         const aiAttachments = await prepareAttachmentsForAI(currentAttachments);
-        const response = await aiService.sendMessage(
-          llmFallbackInput,
-          messages,
-          {
+        const response = await sendAssistantTurn({
+          conversationId: activeConversationId,
+          userMessage: llmFallbackInput,
+          language: languageCode,
+          inputMode: source === 'voice' ? 'audio' : 'text',
+          inputAudioBase64: source === 'voice' ? (voicePayload?.inputAudioBase64 ?? null) : null,
+          audioFormat: source === 'voice' ? (voicePayload?.audioFormat ?? null) : null,
+          attachments: aiAttachments,
+          conversationHistory: messages,
+          clientPersistedUserTurn: userTurnPersistedClient,
+          farmContext: {
+            farmId: contextFarm?.id ?? null,
             farmName: contextFarm?.name,
             cropVariety: contextFarm?.crop_variety || contextFarm?.crop,
             area: contextFarm?.area,
@@ -985,17 +1310,173 @@ export default function AIChatScreen() {
                 )
               : undefined,
           },
-          resolveLanguageCode(i18n.language),
-          aiAttachments,
-        );
+        });
 
-        setMessages((prev) => [...prev, response.message]);
+        const resolvedConversationId =
+          response.message.conversationId ?? activeConversationId ?? null;
+        if (resolvedConversationId && resolvedConversationId !== conversationId) {
+          setConversationId(resolvedConversationId);
+        }
+
+        const messageWithCitations = {
+          ...response.message,
+          conversationId: resolvedConversationId ?? undefined,
+          content: appendCitationsToMessage(
+            response.message.content,
+            response.message.citations ?? [],
+          ),
+        };
+
+        const serverVoiceLogAction = assistantFeatureFlags.routeOnServerEnabled
+          ? (response.voiceLogAction ?? null)
+          : null;
+        const serverReadyDraft =
+          serverVoiceLogAction?.kind === 'ready' && serverVoiceLogAction.draft
+            ? serverVoiceLogAction.draft
+            : null;
+
+        if (assistantFeatureFlags.routeOnServerEnabled) {
+          if (response.routeDecision === 'clarify_route') {
+            setRouteClarificationPending(true);
+            setPendingAmbiguousTranscript(llmFallbackInput);
+          } else {
+            setRouteClarificationPending(false);
+            setPendingAmbiguousTranscript(null);
+          }
+
+          if (serverVoiceLogAction?.kind === 'cancelled') {
+            setVoiceLogDraft(null);
+            setVoiceLogExpectedField(null);
+            setVoiceLogClarifyAttempts(0);
+            hideClearedDraftNotice();
+          } else if (serverVoiceLogAction?.kind === 'clarify' && serverVoiceLogAction.draft) {
+            hideClearedDraftNotice();
+            setVoiceLogDraft(serverVoiceLogAction.draft);
+            setVoiceLogExpectedField(
+              serverVoiceLogAction.expectedField ?? serverVoiceLogAction.missingFields?.[0] ?? null,
+            );
+            setVoiceLogClarifyAttempts(serverVoiceLogAction.clarifyAttempts ?? 0);
+          } else if (serverVoiceLogAction?.kind === 'ready') {
+            setVoiceLogDraft(null);
+            setVoiceLogExpectedField(null);
+            setVoiceLogClarifyAttempts(0);
+            hideClearedDraftNotice();
+          }
+        }
+
+        setMessages((prev) => [...prev, messageWithCitations]);
         setSuggestions(response.suggestions || DEFAULT_SUGGESTIONS);
+        setLastAssistantDiagnostics({
+          source: response.providerUsed ?? 'ai_gateway',
+          traceId: response.traceId ?? null,
+          routeDecision: response.routeDecision ?? null,
+          providerUsed: response.providerUsed ?? null,
+          modelUsed: response.modelUsed ?? null,
+          latencyMs: response.latencyMs ?? null,
+          voiceCaptureDurationMs: source === 'voice' ? (voicePayload?.durationMs ?? null) : null,
+          voiceUploadBytes,
+          sttProviderUsed: response.sttProviderUsed ?? null,
+          sttConfidence: response.sttConfidence ?? null,
+          sttLatencyMs: response.sttLatencyMs ?? null,
+          ttsGenerationMs: response.ttsGenerationMs ?? null,
+          fallbackReason: response.providerFallbackReason ?? null,
+        });
 
         telemetry.capture('ai_result_received', {
           ai_use_case: 'chat',
           confidence_score: null,
+          response_source: response.providerUsed ?? 'ai_gateway',
+          trace_id: response.traceId ?? null,
+          latency_ms: response.latencyMs ?? null,
+          tool_call_count: response.toolCalls?.length ?? 0,
+          model_used: response.modelUsed ?? null,
+          voice_audio_attached:
+            source === 'voice' ? Boolean(voicePayload?.inputAudioBase64) : false,
+          route_decision: response.routeDecision ?? null,
+          voice_capture_duration_ms: source === 'voice' ? (voicePayload?.durationMs ?? null) : null,
+          voice_upload_bytes: voiceUploadBytes,
+          stt_provider_used: response.sttProviderUsed ?? null,
+          stt_confidence: response.sttConfidence ?? null,
+          stt_latency_ms: response.sttLatencyMs ?? null,
+          tts_generation_ms: response.ttsGenerationMs ?? null,
+          provider_fallback_reason: response.providerFallbackReason ?? null,
         });
+
+        const shouldPersistAssistantTurnClient =
+          !assistantFeatureFlags.serverVoiceEnabled || response.providerUsed === 'openai-proxy';
+
+        if (resolvedConversationId && shouldPersistAssistantTurnClient) {
+          void assistantMemoryService.persistTurn({
+            conversationId: resolvedConversationId,
+            farmId: contextFarm?.id ?? parsedFarmId ?? null,
+            role: 'assistant',
+            content: messageWithCitations.content,
+            inputMode: 'text',
+            traceId: response.traceId ?? null,
+            latencyMs: response.latencyMs ?? null,
+            citations: response.message.citations ?? [],
+            safety: response.message.safety ?? null,
+            provider: response.providerUsed ?? null,
+            model: response.modelUsed ?? null,
+          });
+
+          if (assistantFeatureFlags.memoryEnabled && messageWithCitations.content.trim()) {
+            void assistantMemoryService.writeMemoryFact({
+              conversationId: resolvedConversationId,
+              farmId: contextFarm?.id ?? parsedFarmId ?? null,
+              memoryType: 'summary',
+              content: `${assistantInput.slice(0, 120)} -> ${messageWithCitations.content.slice(0, 200)}`,
+              metadata: {
+                trace_id: response.traceId ?? null,
+                source: 'ai_chat_screen',
+              },
+              importance: 0.4,
+            });
+          }
+        }
+
+        if (assistantFeatureFlags.routeOnServerEnabled && serverReadyDraft) {
+          const voicePrefill = buildVoiceLogFormPrefill(serverReadyDraft);
+          setAddEntry({
+            tabs: ['log'],
+            initialTab: 'log',
+            initialFarmId: serverReadyDraft.farmId,
+            initialLogType: serverReadyDraft.type,
+            initialIrrigationDurationHours:
+              serverReadyDraft.type === 'irrigation'
+                ? serverReadyDraft.irrigation.durationHours
+                : null,
+            initialLogDate: serverReadyDraft.date,
+            voiceLogPrefill: voicePrefill,
+            entrySource: 'voice_ai',
+          });
+
+          router.push({
+            pathname: '/add-entry',
+            params: {
+              ...(serverReadyDraft.farmId != null
+                ? { farmId: String(serverReadyDraft.farmId) }
+                : {}),
+              initialTab: 'log',
+              tabs: 'log',
+              initialLogType: serverReadyDraft.type,
+              initialIrrigationDurationHours:
+                serverReadyDraft.type === 'irrigation'
+                  ? String(serverReadyDraft.irrigation.durationHours ?? '')
+                  : undefined,
+              initialLogDate: serverReadyDraft.date,
+              entrySource: 'voice_ai',
+            },
+          });
+        }
+
+        if (!serverReadyDraft && (source === 'voice' || Boolean(response.message.audio))) {
+          void voiceOutputService.playAssistantTurn(response, {
+            language: languageCode,
+            rate: voicePlaybackRate,
+            onStateChange: setIsAssistantSpeaking,
+          });
+        }
 
         scrollToBottom();
       } catch (error) {
@@ -1012,13 +1493,17 @@ export default function AIChatScreen() {
       DEFAULT_SUGGESTIONS,
       attachments,
       candidateFarms,
+      conversationId,
       contextFarm,
       farms,
       i18n.language,
+      languageCode,
       inputText,
+      isAssistantSpeaking,
       isLoading,
       isVoiceListening,
       messages,
+      parsedFarmId,
       router,
       routeClarificationPending,
       setAddEntry,
@@ -1029,6 +1514,8 @@ export default function AIChatScreen() {
       voiceLogExpectedField,
       voiceLogClarifyAttempts,
       pendingAmbiguousTranscript,
+      voicePlaybackRate,
+      stopVoiceRecording,
     ],
   );
 
@@ -1048,22 +1535,22 @@ export default function AIChatScreen() {
     setInputText(transcript);
 
     if (event.isFinal && transcript.trim() && !hasSubmittedVoiceQueryRef.current) {
-      hasSubmittedVoiceQueryRef.current = true;
-      sendMessageRef.current?.(transcript.trim(), 'voice');
-      setVoiceInputState('idle');
+      void submitVoiceTranscript(transcript);
     }
   });
 
   useSpeechRecognitionEvent('end', () => {
     const finalTranscript = pendingVoiceTranscriptRef.current.trim();
     if (finalTranscript && !hasSubmittedVoiceQueryRef.current) {
-      hasSubmittedVoiceQueryRef.current = true;
-      sendMessageRef.current?.(finalTranscript, 'voice');
+      void submitVoiceTranscript(finalTranscript);
+      return;
     }
+    void stopVoiceRecording({ discard: true });
     setVoiceInputState('idle');
   });
 
   useSpeechRecognitionEvent('error', (event) => {
+    void stopVoiceRecording({ discard: true });
     if (event.error === 'aborted') {
       setVoiceInputState('idle');
       return;
@@ -1094,8 +1581,10 @@ export default function AIChatScreen() {
       } catch {
         /* no-op */
       }
+      void stopVoiceRecording({ discard: true });
+      void voiceOutputService.stop();
     };
-  }, []);
+  }, [stopVoiceRecording]);
 
   const startVoiceInput = useCallback(async () => {
     if (Platform.OS === 'web' || !isSpeechRecognitionAvailable) {
@@ -1112,6 +1601,8 @@ export default function AIChatScreen() {
     setVoiceInputState('starting');
     pendingVoiceTranscriptRef.current = '';
     hasSubmittedVoiceQueryRef.current = false;
+    void voiceOutputService.stop();
+    setIsAssistantSpeaking(false);
 
     try {
       const permission = await SpeechRecognitionModule.requestPermissionsAsync();
@@ -1120,6 +1611,8 @@ export default function AIChatScreen() {
         promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
         return;
       }
+
+      await startVoiceRecording();
 
       await Promise.resolve(
         SpeechRecognitionModule.start({
@@ -1132,6 +1625,7 @@ export default function AIChatScreen() {
       if (__DEV__) {
         console.warn('Voice input start failed:', error);
       }
+      void stopVoiceRecording({ discard: true });
       setVoiceInputState('idle');
       Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
         { text: t('common.ok') },
@@ -1139,7 +1633,7 @@ export default function AIChatScreen() {
     } finally {
       isStartingVoiceInputRef.current = false;
     }
-  }, [isLoading, speechLocale, t, voiceInputState]);
+  }, [isLoading, speechLocale, startVoiceRecording, stopVoiceRecording, t, voiceInputState]);
 
   const stopVoiceInput = useCallback(() => {
     try {
@@ -1150,6 +1644,27 @@ export default function AIChatScreen() {
       }
       setVoiceInputState('idle');
     }
+  }, []);
+
+  const handleReplayAssistantVoice = useCallback(() => {
+    if (isAssistantSpeaking) {
+      void voiceOutputService.stop();
+      setIsAssistantSpeaking(false);
+      return;
+    }
+
+    void voiceOutputService.replayLast({
+      rate: voicePlaybackRate,
+      onStateChange: setIsAssistantSpeaking,
+    });
+  }, [isAssistantSpeaking, voicePlaybackRate]);
+
+  const toggleVoicePlaybackRate = useCallback(() => {
+    setVoicePlaybackRate((prev) => {
+      if (prev < 1) return 1;
+      if (prev < 1.2) return 1.2;
+      return 0.9;
+    });
   }, []);
 
   const handlePickImage = useCallback(async () => {
@@ -1555,6 +2070,78 @@ export default function AIChatScreen() {
                 {voiceInputState === 'starting' ? t('ai.voice.starting') : t('ai.voice.listening')}
               </Text>
             )}
+            {isAssistantSpeaking && (
+              <Text
+                style={{
+                  marginBottom: spacing[2],
+                  color: m3.colorScheme.primary,
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                }}
+              >
+                Assistant is speaking...
+              </Text>
+            )}
+            {__DEV__ && lastAssistantDiagnostics && (
+              <View
+                style={{
+                  marginBottom: spacing[2],
+                  borderRadius: borderRadius.xl,
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.primary, 0.22),
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.06),
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  gap: spacing[1],
+                }}
+              >
+                <Text
+                  style={{
+                    color: m3.colorScheme.primary,
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  Local diagnostics
+                </Text>
+                <Text style={{ color: colors.surface[700], fontSize: fontSize.xs }}>
+                  source: {formatDiagnosticValue(lastAssistantDiagnostics.source)}
+                </Text>
+                <Text style={{ color: colors.surface[700], fontSize: fontSize.xs }}>
+                  trace_id: {formatDiagnosticValue(lastAssistantDiagnostics.traceId)}
+                </Text>
+                <Text style={{ color: colors.surface[700], fontSize: fontSize.xs }}>
+                  route_decision: {formatDiagnosticValue(lastAssistantDiagnostics.routeDecision)}
+                </Text>
+                <Text style={{ color: colors.surface[700], fontSize: fontSize.xs }}>
+                  provider/model: {formatDiagnosticValue(lastAssistantDiagnostics.providerUsed)} /{' '}
+                  {formatDiagnosticValue(lastAssistantDiagnostics.modelUsed)}
+                </Text>
+                <Text style={{ color: colors.surface[700], fontSize: fontSize.xs }}>
+                  latency_ms: {formatDiagnosticValue(lastAssistantDiagnostics.latencyMs)}
+                </Text>
+                <Text style={{ color: colors.surface[700], fontSize: fontSize.xs }}>
+                  voice_capture_ms / upload_bytes:{' '}
+                  {formatDiagnosticValue(lastAssistantDiagnostics.voiceCaptureDurationMs)} /{' '}
+                  {formatDiagnosticValue(lastAssistantDiagnostics.voiceUploadBytes)}
+                </Text>
+                <Text style={{ color: colors.surface[700], fontSize: fontSize.xs }}>
+                  stt_provider/conf/latency:{' '}
+                  {formatDiagnosticValue(lastAssistantDiagnostics.sttProviderUsed)} /{' '}
+                  {lastAssistantDiagnostics.sttConfidence !== null &&
+                  lastAssistantDiagnostics.sttConfidence !== undefined &&
+                  Number.isFinite(lastAssistantDiagnostics.sttConfidence)
+                    ? `${(lastAssistantDiagnostics.sttConfidence * 100).toFixed(1)}%`
+                    : '-'}{' '}
+                  / {formatDiagnosticValue(lastAssistantDiagnostics.sttLatencyMs)}
+                </Text>
+                <Text style={{ color: colors.surface[700], fontSize: fontSize.xs }}>
+                  tts_ms / fallback_reason:{' '}
+                  {formatDiagnosticValue(lastAssistantDiagnostics.ttsGenerationMs)} /{' '}
+                  {formatDiagnosticValue(lastAssistantDiagnostics.fallbackReason)}
+                </Text>
+              </View>
+            )}
             {voiceLogDraft && voiceLogDraftSummary && (
               <View
                 style={{
@@ -1704,6 +2291,53 @@ export default function AIChatScreen() {
               </View>
             )}
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] }}>
+              <Pressable
+                onPress={handleReplayAssistantVoice}
+                disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isAssistantSpeaking ? 'Stop assistant voice' : 'Replay assistant voice'
+                }
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                }}
+              >
+                <UiSymbol
+                  name={isAssistantSpeaking ? 'stop.fill' : 'speaker.wave.2.fill'}
+                  size={18}
+                  color={m3.colorScheme.primary}
+                />
+              </Pressable>
+              <Pressable
+                onPress={toggleVoicePlaybackRate}
+                disabled={isAssistantSpeaking}
+                accessibilityRole="button"
+                accessibilityLabel="Toggle voice speed"
+                style={{
+                  minWidth: 44,
+                  height: 44,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: spacing[2],
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                }}
+              >
+                <Text
+                  style={{
+                    color: m3.colorScheme.primary,
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.bold,
+                  }}
+                >
+                  {voicePlaybackRate.toFixed(1)}x
+                </Text>
+              </Pressable>
               <TextInput
                 value={inputText}
                 onChangeText={setInputText}
