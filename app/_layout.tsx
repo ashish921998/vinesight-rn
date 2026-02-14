@@ -26,6 +26,7 @@ import {
   scheduleTaskDueReminder,
 } from '@/services/notifications';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
+import { useBackgroundSync } from '@/hooks/use-background-sync';
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 
@@ -125,6 +126,9 @@ export default Sentry.wrap(function RootLayout() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const themeHydrated = useThemeStore((state) => state.hasHydrated);
   const { isDark, m3 } = useThemeTokens();
+
+  // Register background sync & foreground reconnection handler
+  useBackgroundSync();
 
   const pathname = usePathname();
   const segments = useSegments();

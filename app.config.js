@@ -27,6 +27,7 @@ module.exports = {
         usesNonExemptEncryption: false,
       },
       infoPlist: {
+        UIBackgroundModes: ['fetch', 'processing'],
         NSLocationWhenInUseUsageDescription:
           'Vinesight uses your location to show nearby farms and local weather.',
         NSMicrophoneUsageDescription: 'Allow Vinesight to use the microphone for voice queries.',
