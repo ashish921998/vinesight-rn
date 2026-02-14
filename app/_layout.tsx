@@ -26,6 +26,10 @@ import {
   scheduleTaskDueReminder,
 } from '@/services/notifications';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
+import {
+  defineBackgroundSyncTask,
+  registerBackgroundSync,
+} from '@/services/background-sync-service';
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 
@@ -105,6 +109,9 @@ try {
 void SplashScreen.preventAutoHideAsync().catch(() => null);
 WebBrowser.maybeCompleteAuthSession();
 
+// Define background sync task at module level (required by expo-task-manager)
+void defineBackgroundSyncTask();
+
 // Create a client outside component to prevent recreation
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -148,6 +155,8 @@ export default Sentry.wrap(function RootLayout() {
       await initialize();
       // Initialize auth listener AFTER navigation is set up
       initAuthListener();
+      // Register background sync for offline data refresh & queue replay
+      void registerBackgroundSync();
     };
 
     init();
