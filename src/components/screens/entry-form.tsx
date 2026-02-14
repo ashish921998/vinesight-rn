@@ -470,7 +470,7 @@ export function EntryForm({
               name: item.name,
               quantity: item.quantity ?? 0,
               unit,
-              quantityBasis: item.quantityBasis ?? 'total',
+              quantityBasis: item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
             };
           }),
         });
@@ -563,16 +563,19 @@ export function EntryForm({
       case 'fertigation': {
         const fertigationPrefill = initialVoiceLogPrefill.fertigation;
         const prefilledFertilizers = fertigationPrefill?.fertilizers?.length
-          ? fertigationPrefill.fertilizers.map((item) => ({
-              name: item.name ?? '',
-              quantity: item.quantity ?? undefined,
-              unit:
+          ? fertigationPrefill.fertilizers.map((item) => {
+              const unit =
                 item.unit &&
                 FERTILIZER_UNITS.includes(item.unit as (typeof FERTILIZER_UNITS)[number])
                   ? (item.unit as (typeof FERTILIZER_UNITS)[number])
-                  : 'kg/acre',
-              quantityBasis: item.quantityBasis ?? 'total',
-            }))
+                  : 'kg/acre';
+              return {
+                name: item.name ?? '',
+                quantity: item.quantity ?? undefined,
+                unit,
+                quantityBasis: item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+              };
+            })
           : createEmptyFertigationFormData().fertilizers;
 
         setFertigationData({
