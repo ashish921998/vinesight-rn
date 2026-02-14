@@ -917,7 +917,7 @@ export const en = {
     growthStage: {
       label: 'Growth stage',
       placeholder: 'Select growth stage',
-      selected: '{{label}} (Kc: {{kc}})',
+      selected: '{{label}}',
     },
     manual: {
       label: 'Soil water level',
@@ -925,7 +925,6 @@ export const en = {
     calculate: 'Calculate water level',
     growthStagePicker: {
       title: 'Select growth stage',
-      kcLabel: 'Kc: {{kc}}',
       stages: {
         beginningBudbreak: 'Beginning Budbreak',
         shoot30cm: 'Shoot 30cm',

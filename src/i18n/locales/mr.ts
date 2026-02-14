@@ -920,7 +920,7 @@ export const mr = {
     growthStage: {
       label: 'वाढीचा टप्पा',
       placeholder: 'वाढीचा टप्पा निवडा',
-      selected: '{{label}} (Kc: {{kc}})',
+      selected: '{{label}}',
     },
     manual: {
       label: '$t(glossary.soil)तील पाणी पातळी',
@@ -928,7 +928,6 @@ export const mr = {
     calculate: 'पाणी पातळीची गणना करा',
     growthStagePicker: {
       title: 'वाढीचा टप्पा निवडा',
-      kcLabel: 'Kc: {{kc}}',
       stages: {
         beginningBudbreak: 'सुरुवातीची कोंब फुटणे',
         shoot30cm: 'कोंब 30 सेमी',
