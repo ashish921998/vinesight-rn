@@ -26,6 +26,11 @@ export {
   useFarmSeasonStatus,
 } from './use-farm-seasons';
 
+// Offline-First Hooks (PowerSync local reads with Supabase fallback)
+export { useOfflineFarms, useOfflineFarm } from './use-offline-farms';
+export { useOfflineFarmSeasons } from './use-offline-farm-seasons';
+export { useOfflineProfile } from './use-offline-profile';
+
 // Record Hooks (Irrigation, Spray, Fertigation, Harvest, Expense)
 export {
   // Irrigation

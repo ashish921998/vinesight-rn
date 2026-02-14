@@ -2,13 +2,18 @@
  * Farms Hook
  * React Query hooks for farm CRUD operations
  * Mirrors iOS SupabaseDataService.swift farms methods
+ *
+ * READ operations now delegate to offline hooks (use-offline-farms.ts)
+ * which use PowerSync local SQLite reads with Supabase fallback.
+ * WRITE operations continue to go through Supabase directly.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
 import type { Farm, FarmInsert, FarmUpdate } from '../types';
 import { TABLES, toSupabaseTimestampString } from '../types';
+import { useOfflineFarms, useOfflineFarm } from './use-offline-farms';
 
 // ============================================================
 // MARK: - Helper to get current user ID
@@ -26,50 +31,25 @@ async function getUserId(): Promise<string> {
 }
 
 // ============================================================
-// MARK: - Fetch Farms Query
+// MARK: - Fetch Farms Query (Offline-First)
 // ============================================================
 
 /**
- * Fetch all farms for the current user
+ * Fetch all farms for the current user.
+ * Now uses PowerSync local reads for offline-first support,
+ * with automatic Supabase fallback when PowerSync is unavailable.
  */
 export function useFarms() {
-  return useQuery({
-    queryKey: queryKeys.farms.lists(),
-    queryFn: async (): Promise<Farm[]> => {
-      const userId = await getUserId();
-
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  return useOfflineFarms();
 }
 
 /**
- * Fetch a single farm by ID
+ * Fetch a single farm by ID.
+ * Now uses PowerSync local reads for offline-first support,
+ * with automatic Supabase fallback when PowerSync is unavailable.
  */
 export function useFarm(id: number | undefined) {
-  return useQuery({
-    queryKey: queryKeys.farms.detail(id!),
-    queryFn: async (): Promise<Farm> => {
-      const userId = await getUserId();
-      const { data, error } = await supabase
-        .from(TABLES.FARMS)
-        .select('*')
-        .eq('id', id)
-        .eq('user_id', userId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id && !isNaN(id),
-  });
+  return useOfflineFarm(id);
 }
 
 // ============================================================

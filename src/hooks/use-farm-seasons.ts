@@ -1,3 +1,11 @@
+/**
+ * Farm Seasons Hooks
+ *
+ * READ operations now delegate to offline hooks (use-offline-farm-seasons.ts)
+ * which use PowerSync local SQLite reads with Supabase fallback.
+ * WRITE operations continue to go through Supabase directly.
+ */
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
@@ -5,6 +13,7 @@ import type { FarmSeason, FarmSeasonInsert, FarmSeasonUpdate } from '../types';
 import { TABLES } from '../types';
 import { parseDbDateToLocalDate } from '../utils/date';
 import { recomputeSeasonAssignmentsClient } from '../lib/season-context';
+import { useOfflineFarmSeasons } from './use-offline-farm-seasons';
 
 function isRpcFunctionMissing(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
@@ -26,25 +35,13 @@ function sortFarmSeasonsByEndDate(items: FarmSeason[]) {
   return next;
 }
 
+/**
+ * Fetch all seasons for a given farm.
+ * Now uses PowerSync local reads for offline-first support,
+ * with automatic Supabase fallback when PowerSync is unavailable.
+ */
 export function useFarmSeasons(farmId: number | undefined) {
-  return useQuery({
-    queryKey: queryKeys.farmSeasons.listByFarm(farmId ?? -1),
-    queryFn: async (): Promise<FarmSeason[]> => {
-      if (!farmId) return [];
-      const { data, error } = await supabase
-        .from(TABLES.FARM_SEASONS)
-        .select('*')
-        .eq('farm_id', farmId);
-
-      if (error) {
-        // Allow gradual rollout if migration isn't applied yet.
-        if ('code' in error && error.code === '42P01') return [];
-        throw error;
-      }
-      return sortFarmSeasonsByEndDate(data ?? []);
-    },
-    enabled: !!farmId && !Number.isNaN(farmId),
-  });
+  return useOfflineFarmSeasons(farmId);
 }
 
 export function useCreateFarmSeason() {

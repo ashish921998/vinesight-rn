@@ -1,6 +1,10 @@
 /**
  * Profile & Misc Hooks
  * React Query hooks for Profile, Warehouse, Soil Tests, Calculation History
+ *
+ * Profile READ operations now delegate to offline hooks (use-offline-profile.ts)
+ * which use PowerSync local SQLite reads with Supabase fallback.
+ * WRITE operations continue to go through Supabase directly.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +28,7 @@ import {
 } from '../types';
 import { formatLocalDate } from '../utils/date';
 import { resolveSeasonIdForDate } from '../lib/season-context';
+import { useOfflineProfile } from './use-offline-profile';
 
 // ============================================================
 // MARK: - Helper
@@ -41,29 +46,16 @@ async function getUserId(): Promise<string> {
 }
 
 // ============================================================
-// MARK: - PROFILE
+// MARK: - PROFILE (Offline-First)
 // ============================================================
 
+/**
+ * Fetch the current user's profile.
+ * Now uses PowerSync local reads for offline-first support,
+ * with automatic Supabase fallback when PowerSync is unavailable.
+ */
 export function useProfile() {
-  return useQuery({
-    queryKey: queryKeys.profile.current(),
-    queryFn: async (): Promise<Profile | null> => {
-      const userId = await getUserId();
-
-      const { data, error } = await supabase
-        .from(TABLES.PROFILES)
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        // Profile might not exist yet
-        if (error.code === 'PGRST116') return null;
-        throw error;
-      }
-      return data;
-    },
-  });
+  return useOfflineProfile();
 }
 
 export function useUpdateProfile() {
