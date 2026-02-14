@@ -3,6 +3,7 @@
  * Handles report generation for CSV and PDF exports
  */
 
+import { Platform } from 'react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { cacheDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
@@ -1008,13 +1009,27 @@ export class ReportService {
     reportType: ReportType,
     areaUnit: AreaUnitPreference = 'acres',
   ): Promise<void> {
-    if (!cacheDirectory) {
-      throw new Error('Cache directory is not available on this device');
-    }
     const csv = this.generateCSV(data, reportType, areaUnit);
     const safeFarmName = this.sanitizeFileNamePart(data.farmName);
     const uniqueness = safeFarmName === 'farm' ? `_${Date.now()}` : '';
     const filename = `${safeFarmName}${uniqueness}_report_${new Date().toISOString().split('T')[0]}.csv`;
+
+    if (Platform.OS === 'web') {
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    if (!cacheDirectory) {
+      throw new Error('Cache directory is not available on this device');
+    }
     const fileUri = cacheDirectory.endsWith('/')
       ? `${cacheDirectory}${filename}`
       : `${cacheDirectory}/${filename}`;
@@ -1048,6 +1063,19 @@ export class ReportService {
     areaUnit: AreaUnitPreference = 'acres',
   ): Promise<void> {
     const html = this.generatePDFHtml(data, summary, reportType, preferredCurrency, areaUnit);
+
+    if (Platform.OS === 'web') {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Unable to open print window. Please allow pop-ups and try again.');
+      }
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+      return;
+    }
 
     const { uri } = await Print.printToFileAsync({
       html,

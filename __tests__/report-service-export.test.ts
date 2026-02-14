@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { ReportService } from '@/services/report-service';
 import {
   getSectionsForReportType,
@@ -226,5 +227,85 @@ describe('report data ordering', () => {
     );
 
     expect(report.irrigation.map((r) => r.date)).toEqual(['2026-02-10', '2026-01-10']);
+  });
+});
+
+describe('web export fallbacks', () => {
+  const originalPlatform = Platform.OS;
+
+  beforeEach(() => {
+    (Platform as { OS: string }).OS = 'web';
+  });
+
+  afterEach(() => {
+    (Platform as { OS: string }).OS = originalPlatform;
+  });
+
+  it('exportCSV triggers a Blob download on web', async () => {
+    const revokeObjectURL = jest.fn();
+    const createObjectURL = jest.fn().mockReturnValue('blob:http://localhost/fake');
+    Object.defineProperty(globalThis, 'URL', {
+      value: { createObjectURL, revokeObjectURL },
+      writable: true,
+    });
+
+    const clickMock = jest.fn();
+    const appendChildMock = jest.fn();
+    const removeChildMock = jest.fn();
+    const createElementMock = jest.fn().mockReturnValue({
+      href: '',
+      download: '',
+      click: clickMock,
+    });
+    Object.defineProperty(globalThis, 'document', {
+      value: {
+        createElement: createElementMock,
+        body: { appendChild: appendChildMock, removeChild: removeChildMock },
+      },
+      writable: true,
+    });
+
+    await ReportService.exportCSV(SAMPLE_DATA, 'stock-usage');
+
+    expect(createElementMock).toHaveBeenCalledWith('a');
+    expect(clickMock).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/fake');
+  });
+
+  it('exportPDF opens a print window on web', async () => {
+    const writeMock = jest.fn();
+    const closeMock = jest.fn();
+    const printMock = jest.fn();
+    const mockWindow = {
+      document: { write: writeMock, close: closeMock },
+      onload: null as (() => void) | null,
+      print: printMock,
+    };
+    const openMock = jest.fn().mockReturnValue(mockWindow);
+    Object.defineProperty(globalThis, 'window', {
+      value: { open: openMock },
+      writable: true,
+    });
+
+    await ReportService.exportPDF(SAMPLE_DATA, SAMPLE_SUMMARY, 'stock-usage', 'INR');
+
+    expect(openMock).toHaveBeenCalledWith('', '_blank');
+    expect(writeMock).toHaveBeenCalled();
+    expect(closeMock).toHaveBeenCalled();
+
+    // Simulate onload to verify print is called
+    if (mockWindow.onload) mockWindow.onload();
+    expect(printMock).toHaveBeenCalled();
+  });
+
+  it('exportPDF throws when pop-up is blocked', async () => {
+    Object.defineProperty(globalThis, 'window', {
+      value: { open: jest.fn().mockReturnValue(null) },
+      writable: true,
+    });
+
+    await expect(
+      ReportService.exportPDF(SAMPLE_DATA, SAMPLE_SUMMARY, 'stock-usage', 'INR'),
+    ).rejects.toThrow('Unable to open print window');
   });
 });
