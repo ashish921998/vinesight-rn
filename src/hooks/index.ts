@@ -31,6 +31,18 @@ export { useOfflineFarms, useOfflineFarm } from './use-offline-farms';
 export { useOfflineFarmSeasons } from './use-offline-farm-seasons';
 export { useOfflineProfile } from './use-offline-profile';
 
+// Offline-First Mutation Hooks (PowerSync local writes with Supabase sync)
+export {
+  useOfflineCreateFarm,
+  useOfflineUpdateFarm,
+  useOfflineUpdateFarmWaterLevel,
+  useOfflineDeleteFarm,
+  useOfflineCreateFarmSeason,
+  useOfflineUpdateFarmSeason,
+  useOfflineDeleteFarmSeason,
+  useOfflineUpdateProfile,
+} from './use-offline-mutations';
+
 // Record Hooks (Irrigation, Spray, Fertigation, Harvest, Expense)
 export {
   // Irrigation

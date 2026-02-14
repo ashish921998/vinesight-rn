@@ -2,9 +2,10 @@
  * Profile & Misc Hooks
  * React Query hooks for Profile, Warehouse, Soil Tests, Calculation History
  *
- * Profile READ operations now delegate to offline hooks (use-offline-profile.ts)
+ * Profile READ operations delegate to offline hooks (use-offline-profile.ts)
  * which use PowerSync local SQLite reads with Supabase fallback.
- * WRITE operations continue to go through Supabase directly.
+ * Profile WRITE operations delegate to offline mutation hooks for offline-first support.
+ * Other WRITE operations continue to go through Supabase directly.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,8 +13,6 @@ import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
 import {
   TABLES,
-  type Profile,
-  type ProfileUpdate,
   type WarehouseItem,
   type WarehouseItemInsert,
   type WarehouseItemUpdate,
@@ -29,6 +28,7 @@ import {
 import { formatLocalDate } from '../utils/date';
 import { resolveSeasonIdForDate } from '../lib/season-context';
 import { useOfflineProfile } from './use-offline-profile';
+import { useOfflineUpdateProfile } from './use-offline-mutations';
 
 // ============================================================
 // MARK: - Helper
@@ -58,27 +58,13 @@ export function useProfile() {
   return useOfflineProfile();
 }
 
+/**
+ * Update the current user's profile. Writes to PowerSync local SQLite first
+ * for instant UI update, then syncs to Supabase automatically.
+ * Falls back to direct Supabase upsert when PowerSync is unavailable.
+ */
 export function useUpdateProfile() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (updates: ProfileUpdate): Promise<Profile> => {
-      const userId = await getUserId();
-      const payload: ProfileUpdate & { id: string } = { ...updates, id: userId };
-
-      const { data, error } = await supabase
-        .from(TABLES.PROFILES)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (updatedProfile) => {
-      queryClient.setQueryData(queryKeys.profile.current(), updatedProfile);
-    },
-  });
+  return useOfflineUpdateProfile();
 }
 
 // ============================================================

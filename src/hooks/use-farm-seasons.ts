@@ -1,19 +1,24 @@
 /**
  * Farm Seasons Hooks
  *
- * READ operations now delegate to offline hooks (use-offline-farm-seasons.ts)
+ * READ operations delegate to offline hooks (use-offline-farm-seasons.ts)
  * which use PowerSync local SQLite reads with Supabase fallback.
- * WRITE operations continue to go through Supabase directly.
+ * Simple WRITE operations (create/update) delegate to offline mutation hooks.
+ * Complex operations (start/end season with RPC) remain Supabase-direct
+ * since they involve server-side business logic.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from './query-keys';
-import type { FarmSeason, FarmSeasonInsert, FarmSeasonUpdate } from '../types';
+import type { FarmSeason } from '../types';
 import { TABLES } from '../types';
-import { parseDbDateToLocalDate } from '../utils/date';
 import { recomputeSeasonAssignmentsClient } from '../lib/season-context';
 import { useOfflineFarmSeasons } from './use-offline-farm-seasons';
+import {
+  useOfflineCreateFarmSeason,
+  useOfflineUpdateFarmSeason,
+} from './use-offline-mutations';
 
 function isRpcFunctionMissing(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
@@ -21,94 +26,38 @@ function isRpcFunctionMissing(error: { code?: string; message?: string } | null)
   return typeof error.message === 'string' && /function .* does not exist/i.test(error.message);
 }
 
-function sortFarmSeasonsByEndDate(items: FarmSeason[]) {
-  const next = [...items];
-  next.sort((a, b) => {
-    if (!a.end_date && !b.end_date) return 0;
-    if (!a.end_date) return 1;
-    if (!b.end_date) return -1;
-    const aDate = parseDbDateToLocalDate(a.end_date);
-    const bDate = parseDbDateToLocalDate(b.end_date);
-    if (!aDate || !bDate) return 0;
-    return aDate.getTime() - bDate.getTime();
-  });
-  return next;
-}
-
 /**
  * Fetch all seasons for a given farm.
- * Now uses PowerSync local reads for offline-first support,
+ * Uses PowerSync local reads for offline-first support,
  * with automatic Supabase fallback when PowerSync is unavailable.
  */
 export function useFarmSeasons(farmId: number | undefined) {
   return useOfflineFarmSeasons(farmId);
 }
 
+/**
+ * Create a farm season. Writes to PowerSync local SQLite first for
+ * instant UI update, then syncs to Supabase automatically.
+ * Falls back to direct Supabase insert when PowerSync is unavailable.
+ */
 export function useCreateFarmSeason() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (season: FarmSeasonInsert): Promise<FarmSeason> => {
-      const { data, error } = await supabase
-        .from(TABLES.FARM_SEASONS)
-        .insert(season)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (newSeason) => {
-      queryClient.setQueryData<FarmSeason[]>(
-        queryKeys.farmSeasons.listByFarm(newSeason.farm_id),
-        (old) => {
-          if (!old) return [newSeason];
-          return sortFarmSeasonsByEndDate([...old, newSeason]);
-        },
-      );
-    },
-  });
+  return useOfflineCreateFarmSeason();
 }
 
+/**
+ * Update a farm season. Writes to PowerSync local SQLite first for
+ * instant UI update, then syncs to Supabase automatically.
+ * Falls back to direct Supabase update when PowerSync is unavailable.
+ */
 export function useUpdateFarmSeason() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      farmId,
-      updates,
-    }: {
-      id: number;
-      farmId: number;
-      updates: FarmSeasonUpdate;
-    }): Promise<FarmSeason> => {
-      const { data, error } = await supabase
-        .from(TABLES.FARM_SEASONS)
-        .update(updates)
-        .eq('id', id)
-        .eq('farm_id', farmId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (updatedSeason) => {
-      queryClient.setQueryData<FarmSeason[]>(
-        queryKeys.farmSeasons.listByFarm(updatedSeason.farm_id),
-        (old) => {
-          if (!old) return [updatedSeason];
-          const next = old.map((season) =>
-            season.id === updatedSeason.id ? updatedSeason : season,
-          );
-          return sortFarmSeasonsByEndDate(next);
-        },
-      );
-    },
-  });
+  return useOfflineUpdateFarmSeason();
 }
 
+/**
+ * Start a new farm season.
+ * Uses Supabase RPC for server-side business logic (closing previous season, etc.).
+ * This operation requires connectivity since it involves server-side logic.
+ */
 export function useStartFarmSeason() {
   const queryClient = useQueryClient();
 
@@ -184,6 +133,11 @@ export function useStartFarmSeason() {
   });
 }
 
+/**
+ * End the active farm season.
+ * Uses Supabase RPC for server-side business logic.
+ * This operation requires connectivity since it involves server-side logic.
+ */
 export function useEndFarmSeason() {
   const queryClient = useQueryClient();
 
