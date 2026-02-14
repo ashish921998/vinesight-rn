@@ -7,6 +7,7 @@ interface ConversationRow {
   farm_id?: number | null;
   locale?: string | null;
   created_at?: string | null;
+  updated_at?: string | null;
 }
 
 interface TurnRow {
@@ -24,6 +25,16 @@ export interface AssistantUserDataExport {
   memories: Array<Record<string, unknown>>;
 }
 
+export interface AssistantConversationSummary {
+  id: string;
+  farmId?: number | null;
+  locale?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  lastMessage: string | null;
+  lastMessageAt: Date | null;
+}
+
 async function getUserId(): Promise<string | null> {
   const {
     data: { session },
@@ -38,6 +49,91 @@ function parseDate(value: string | null | undefined): Date {
 }
 
 class AssistantMemoryService {
+  async listConversations(input?: {
+    farmId?: number | null;
+    limit?: number;
+  }): Promise<AssistantConversationSummary[]> {
+    if (!assistantFeatureFlags.memoryEnabled) return [];
+
+    try {
+      const userId = await getUserId();
+      if (!userId) return [];
+
+      const limit = Math.max(1, Math.min(input?.limit ?? 25, 100));
+      let conversationQuery = supabase
+        .from('assistant_conversations')
+        .select('id, farm_id, locale, created_at, updated_at')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (input?.farmId !== undefined && input.farmId !== null) {
+        conversationQuery = conversationQuery.eq('farm_id', input.farmId);
+      }
+
+      const { data: conversations, error: conversationsError } = await conversationQuery;
+      if (conversationsError) {
+        if (__DEV__)
+          console.warn('Assistant conversations list failed:', conversationsError.message);
+        return [];
+      }
+
+      const conversationRows = (conversations ?? []) as ConversationRow[];
+      if (conversationRows.length === 0) return [];
+
+      const conversationIds = conversationRows.map((row) => row.id);
+      const { data: turns, error: turnsError } = await supabase
+        .from('assistant_turns')
+        .select('conversation_id, content, created_at')
+        .in('conversation_id', conversationIds)
+        .in('role', ['user', 'assistant'])
+        .order('created_at', { ascending: false });
+
+      if (turnsError && __DEV__) {
+        console.warn('Assistant conversations last turn lookup failed:', turnsError.message);
+      }
+
+      const lastTurnByConversation = new Map<
+        string,
+        { content: string | null; createdAt: Date | null }
+      >();
+
+      (
+        (turns ?? []) as Array<{ conversation_id?: string; content?: string; created_at?: string }>
+      ).forEach((row) => {
+        const conversationId = row.conversation_id;
+        if (!conversationId || lastTurnByConversation.has(conversationId)) return;
+        lastTurnByConversation.set(conversationId, {
+          content: typeof row.content === 'string' ? row.content : null,
+          createdAt: parseDate(row.created_at),
+        });
+      });
+
+      return conversationRows
+        .map((row) => {
+          const lastTurn = lastTurnByConversation.get(row.id);
+          return {
+            id: row.id,
+            farmId: row.farm_id ?? null,
+            locale: row.locale ?? null,
+            createdAt: parseDate(row.created_at),
+            updatedAt: parseDate(row.updated_at ?? row.created_at),
+            lastMessage: lastTurn?.content ?? null,
+            lastMessageAt: lastTurn?.createdAt ?? null,
+          };
+        })
+        .sort((a, b) => {
+          const aTime = (a.lastMessageAt ?? a.updatedAt).getTime();
+          const bTime = (b.lastMessageAt ?? b.updatedAt).getTime();
+          return bTime - aTime;
+        });
+    } catch (error) {
+      if (__DEV__) console.warn('Assistant conversations list failed:', error);
+      return [];
+    }
+  }
+
   async createConversation(input: {
     farmId?: number | null;
     locale?: string | null;

@@ -291,6 +291,8 @@ interface OpenAICompletionResponse {
   }>;
 }
 
+const PROXY_MODEL = 'gpt-4o-mini';
+
 async function callOpenAIProxy(params: {
   messages: OpenAIMessage[];
   model?: string;
@@ -299,7 +301,10 @@ async function callOpenAIProxy(params: {
   response_format?: { type: string };
 }): Promise<OpenAICompletionResponse> {
   const { data, error } = await supabase.functions.invoke('openai-proxy', {
-    body: params,
+    body: {
+      ...params,
+      model: PROXY_MODEL,
+    },
   });
 
   if (error) {

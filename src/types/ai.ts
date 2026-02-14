@@ -70,6 +70,12 @@ export interface ChatMessage {
   citations?: AssistantCitation[];
   safety?: AssistantSafetyMeta | null;
   traceId?: string;
+  audioMeta?: {
+    providerUsed?: string | null;
+    sttProviderUsed?: string | null;
+    ttsSkippedReason?: string | null;
+    providerFallbackReason?: string | null;
+  };
 }
 
 export interface ChatSession {
@@ -109,5 +115,6 @@ export interface AssistantTurnResponse {
   sttConfidence?: number | null;
   sttLatencyMs?: number | null;
   ttsGenerationMs?: number | null;
+  ttsSkippedReason?: string | null;
   providerFallbackReason?: string | null;
 }

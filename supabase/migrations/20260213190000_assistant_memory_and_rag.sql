@@ -325,7 +325,17 @@ returns void
 language plpgsql
 security definer
 as $$
+declare
+  caller_user_id uuid := auth.uid();
 begin
+  if caller_user_id is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  if p_user_id is distinct from caller_user_id then
+    raise exception 'Cannot delete another user''s assistant data';
+  end if;
+
   delete from public.assistant_memories where user_id = p_user_id;
   delete from public.assistant_turns where user_id = p_user_id;
   delete from public.assistant_conversations where user_id = p_user_id;

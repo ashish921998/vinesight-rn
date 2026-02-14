@@ -158,6 +158,11 @@ const ADVISORY_MODEL = Deno.env.get('ASSISTANT_OPENAI_MODEL')?.trim() || 'gpt-4o
 const EXTRACTION_MODEL = Deno.env.get('ASSISTANT_EXTRACTION_MODEL')?.trim() || 'gpt-4o-mini';
 const EMBEDDING_MODEL =
   Deno.env.get('ASSISTANT_EMBEDDING_MODEL')?.trim() || 'text-embedding-3-small';
+const SARVAM_TTS_MODEL = Deno.env.get('ASSISTANT_SARVAM_TTS_MODEL')?.trim() || 'bulbul:v3';
+const SARVAM_TTS_EN_SPEAKER = Deno.env.get('ASSISTANT_SARVAM_TTS_EN_SPEAKER')?.trim() || 'anushka';
+const SARVAM_TTS_HI_SPEAKER = Deno.env.get('ASSISTANT_SARVAM_TTS_HI_SPEAKER')?.trim() || 'meera';
+const SARVAM_TTS_MR_SPEAKER = Deno.env.get('ASSISTANT_SARVAM_TTS_MR_SPEAKER')?.trim() || 'meera';
+const SARVAM_TTS_PACE = Number.parseFloat(Deno.env.get('ASSISTANT_SARVAM_TTS_PACE')?.trim() || '1');
 
 const USE_SARVAM_FOR_VOICE =
   (Deno.env.get('ASSISTANT_USE_SARVAM_VOICE') ?? 'true').toLowerCase() !== 'false';
@@ -864,6 +869,14 @@ async function callSarvamTts(
   if (!SARVAM_API_KEY) throw new Error('SARVAM_API_KEY is not configured');
 
   const languageCode = locale === 'mr' ? 'mr-IN' : locale === 'hi' ? 'hi-IN' : 'en-IN';
+  const speaker =
+    locale === 'mr'
+      ? SARVAM_TTS_MR_SPEAKER
+      : locale === 'hi'
+        ? SARVAM_TTS_HI_SPEAKER
+        : SARVAM_TTS_EN_SPEAKER;
+  const pace =
+    Number.isFinite(SARVAM_TTS_PACE) && SARVAM_TTS_PACE > 0 ? Math.min(SARVAM_TTS_PACE, 2) : 1;
 
   const response = await fetch('https://api.sarvam.ai/text-to-speech', {
     method: 'POST',
@@ -873,15 +886,17 @@ async function callSarvamTts(
     },
     body: JSON.stringify({
       text,
+      model: SARVAM_TTS_MODEL,
       target_language_code: languageCode,
-      speaker: locale === 'en' ? 'anushka' : 'meera',
+      speaker,
+      pace,
       format: 'mp3',
     }),
   });
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data?.message ?? 'Sarvam TTS failed');
+    throw new Error(data?.message ?? data?.error ?? 'Sarvam TTS failed');
   }
 
   const audioBase64 = data?.audio ?? data?.audio_base64;
@@ -940,8 +955,22 @@ async function resolveConversationId(
   farmId: number | null,
   locale: string,
 ): Promise<string | null> {
-  if (!userId) return inputConversationId;
-  if (inputConversationId) return inputConversationId;
+  if (!userId) return null;
+  if (inputConversationId) {
+    const { data, error } = await serviceSupabase
+      .from('assistant_conversations')
+      .select('id')
+      .eq('id', inputConversationId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Failed to validate assistant conversation ownership', error.message);
+      return null;
+    }
+
+    return data?.id ?? null;
+  }
 
   const { data, error } = await serviceSupabase
     .from('assistant_conversations')
@@ -959,6 +988,27 @@ async function resolveConversationId(
   }
 
   return data?.id ?? null;
+}
+
+function extractBearerToken(req: Request): string | null {
+  const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization');
+  if (!authHeader) return null;
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  const token = match?.[1]?.trim();
+  return token && token.length > 0 ? token : null;
+}
+
+async function resolveAuthenticatedUserId(req: Request): Promise<string | null> {
+  const bearerToken = extractBearerToken(req);
+  if (!bearerToken) return null;
+
+  const { data, error } = await serviceSupabase.auth.getUser(bearerToken);
+  if (error) {
+    console.warn('Failed to resolve authenticated user', error.message);
+    return null;
+  }
+
+  return data.user?.id ?? null;
 }
 
 async function writeConversationTurn(input: {
@@ -1368,9 +1418,18 @@ Deno.serve(async (req) => {
 
   try {
     const body = (await req.json()) as AssistantGatewayRequest;
+    const authenticatedUserId = await resolveAuthenticatedUserId(req);
     const locale = resolveLocale(body?.locale);
     const providerFallbackEnabled = body?.client_capabilities?.provider_fallback_enabled !== false;
     const clientPersistedUserTurn = body?.client_capabilities?.client_persisted_user_turn === true;
+
+    if (body?.user_id && !authenticatedUserId) {
+      return jsonResponse({ error: 'Authentication required for user-scoped requests' }, 401);
+    }
+
+    if (body?.user_id && authenticatedUserId && body.user_id !== authenticatedUserId) {
+      return jsonResponse({ error: 'user_id does not match authenticated user' }, 403);
+    }
 
     let transcript = normalizeInputText(body?.input_text);
     const inputMode: 'text' | 'audio' = body?.input_mode === 'audio' ? 'audio' : 'text';
@@ -1381,6 +1440,7 @@ Deno.serve(async (req) => {
     let sttConfidence: number | null = null;
     let sttLatencyMs: number | null = null;
     let ttsGenerationMs: number | null = null;
+    let ttsSkippedReason: string | null = null;
     let providerFallbackReason: string | null = null;
 
     if (inputMode === 'audio') {
@@ -1457,13 +1517,18 @@ Deno.serve(async (req) => {
     }
 
     const farmId = body?.farm_context?.farm_id ?? null;
-    const userId = body?.user_id ?? null;
+    const userId = authenticatedUserId;
+    const requestedConversationId = body?.conversation_id ?? null;
     const conversationId = await resolveConversationId(
-      body?.conversation_id ?? null,
+      requestedConversationId,
       userId,
       farmId,
       locale,
     );
+
+    if (requestedConversationId && !conversationId) {
+      return jsonResponse({ error: 'Conversation not found for authenticated user' }, 403);
+    }
 
     if (conversationId && !clientPersistedUserTurn) {
       await writeConversationTurn({
@@ -1759,20 +1824,29 @@ Deno.serve(async (req) => {
           audioProviderUsed = 'openai';
         }
       } catch (error) {
-        if (providerFallbackEnabled) {
-          try {
-            const ttsStartedAt = Date.now();
-            const tts = await callOpenAITts(assistantText);
-            ttsGenerationMs = Date.now() - ttsStartedAt;
-            audioBase64 = tts.base64;
-            audioMimeType = tts.mimeType;
-            audioProviderUsed = 'openai_fallback';
-            providerFallbackReason = error instanceof Error ? error.message : 'sarvam_tts_failed';
-          } catch (fallbackError) {
-            console.warn('Both TTS providers failed', error, fallbackError);
-          }
+        if (!providerFallbackEnabled) {
+          throw error instanceof Error ? error : new Error('Sarvam TTS failed');
+        }
+        try {
+          const ttsStartedAt = Date.now();
+          const tts = await callOpenAITts(assistantText);
+          ttsGenerationMs = Date.now() - ttsStartedAt;
+          audioBase64 = tts.base64;
+          audioMimeType = tts.mimeType;
+          audioProviderUsed = 'openai_fallback';
+          providerFallbackReason = error instanceof Error ? error.message : 'sarvam_tts_failed';
+        } catch (fallbackError) {
+          console.warn('Both TTS providers failed', error, fallbackError);
+          throw fallbackError instanceof Error
+            ? fallbackError
+            : new Error('Both Sarvam and OpenAI TTS failed');
         }
       }
+      if (!audioBase64) {
+        ttsSkippedReason = 'tts_returned_no_audio';
+      }
+    } else {
+      ttsSkippedReason = 'client_can_play_audio_false';
     }
 
     const memoryWrites = await writeMemory({
@@ -1812,6 +1886,7 @@ Deno.serve(async (req) => {
       stt_confidence: sttConfidence,
       stt_latency_ms: sttLatencyMs,
       tts_generation_ms: ttsGenerationMs,
+      tts_skipped_reason: ttsSkippedReason,
       route_decision: routeDecision,
       voice_log_action: voiceLogAction,
       provider_fallback_reason: providerFallbackReason,

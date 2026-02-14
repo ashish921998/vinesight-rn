@@ -78,7 +78,56 @@ interface AssistantGatewayResponse {
   stt_confidence?: number | null;
   stt_latency_ms?: number | null;
   tts_generation_ms?: number | null;
+  tts_skipped_reason?: string | null;
   provider_fallback_reason?: string | null;
+}
+
+function toDebugString(value: unknown, maxLength = 1200): string {
+  try {
+    const raw =
+      typeof value === 'string'
+        ? value
+        : value === null || value === undefined
+          ? ''
+          : JSON.stringify(value);
+    if (!raw) return '';
+    return raw.length > maxLength ? `${raw.slice(0, maxLength)}…` : raw;
+  } catch {
+    return '';
+  }
+}
+
+async function extractInvokeErrorContext(error: unknown): Promise<string> {
+  const context = (error as { context?: unknown } | null | undefined)?.context as
+    | {
+        status?: number;
+        statusText?: string;
+        json?: () => Promise<unknown>;
+        text?: () => Promise<string>;
+      }
+    | undefined;
+
+  if (!context) return '';
+
+  const status =
+    typeof context.status === 'number'
+      ? `status=${context.status}${context.statusText ? ` ${context.statusText}` : ''}`
+      : '';
+
+  let body = '';
+  try {
+    if (typeof context.json === 'function') {
+      body = toDebugString(await context.json());
+    } else if (typeof context.text === 'function') {
+      body = toDebugString(await context.text());
+    }
+  } catch {
+    // ignore parse/read failures
+  }
+
+  if (!status && !body) return '';
+  if (status && body) return `${status} body=${body}`;
+  return status || `body=${body}`;
 }
 
 function toSafetyMeta(input: AssistantGatewayResponse['safety_flags']): AssistantSafetyMeta | null {
@@ -268,12 +317,20 @@ export async function sendAssistantTurn(
     });
 
     if (error) {
-      throw new Error(error.message);
+      const invokeContext = await extractInvokeErrorContext(error);
+      const responsePayload = toDebugString(data);
+      const responseContext = responsePayload ? `response=${responsePayload}` : '';
+      const errorContext = [invokeContext, responseContext].filter(Boolean).join(' | ');
+      throw new Error(
+        `ai-gateway invoke failed: ${error.message}${errorContext ? ` | ${errorContext}` : ''}`,
+      );
     }
 
     const response = (data ?? null) as AssistantGatewayResponse | null;
     if (!response?.assistant_text?.trim()) {
-      throw new Error('Missing assistant response text');
+      const responsePayload = toDebugString(response);
+      const errorContext = responsePayload ? ` | response=${responsePayload}` : '';
+      throw new Error(`Missing assistant response text${errorContext}`);
     }
 
     const citations = normalizeAssistantCitations(response.citations);
@@ -294,6 +351,12 @@ export async function sendAssistantTurn(
         citations,
         safety: toSafetyMeta(response.safety_flags),
         traceId: response.trace_id,
+        audioMeta: {
+          providerUsed: response.audio_provider_used ?? 'ai-gateway',
+          sttProviderUsed: response.stt_provider_used ?? null,
+          ttsSkippedReason: response.tts_skipped_reason ?? null,
+          providerFallbackReason: response.provider_fallback_reason ?? null,
+        },
       },
       suggestions: Array.isArray(response.suggestions) ? response.suggestions : undefined,
       providerUsed: response.audio_provider_used ?? 'ai-gateway',
@@ -318,6 +381,7 @@ export async function sendAssistantTurn(
         Number.isFinite(response.tts_generation_ms)
           ? response.tts_generation_ms
           : null,
+      ttsSkippedReason: response.tts_skipped_reason ?? null,
       providerFallbackReason: response.provider_fallback_reason ?? null,
     };
   } catch (error) {

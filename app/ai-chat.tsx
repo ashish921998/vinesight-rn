@@ -10,11 +10,11 @@ import {
   Alert,
   Platform,
   Linking,
+  Modal,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import { Audio } from 'expo-av';
 import {
   SpeechRecognitionModule,
   isSpeechRecognitionAvailable,
@@ -42,6 +42,7 @@ import {
 import { sendAssistantTurn } from '@/services/assistant-gateway';
 import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import { assistantMemoryService } from '@/services/assistant-memory';
+import type { AssistantConversationSummary } from '@/services/assistant-memory';
 import { appendCitationsToMessage } from '@/services/rag-citations';
 import { voiceOutputService } from '@/services/voice-output';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -70,6 +71,45 @@ interface VoiceAudioPayload {
   durationMs?: number | null;
 }
 
+type ExpoRecordingStatus = {
+  isRecording?: boolean;
+  durationMillis?: number;
+};
+
+type ExpoAudioRecording = {
+  stopAndUnloadAsync: () => Promise<void>;
+  getStatusAsync: () => Promise<ExpoRecordingStatus>;
+  getURI: () => string | null;
+};
+
+type ExpoAudioModule = {
+  Audio: {
+    requestPermissionsAsync: () => Promise<{ granted: boolean }>;
+    setAudioModeAsync: (options: {
+      allowsRecordingIOS?: boolean;
+      playsInSilentModeIOS?: boolean;
+      shouldDuckAndroid?: boolean;
+      playThroughEarpieceAndroid?: boolean;
+    }) => Promise<void>;
+    Recording: {
+      createAsync: (options: unknown) => Promise<{
+        recording: ExpoAudioRecording;
+      }>;
+      RecordingOptionsPresets: {
+        HIGH_QUALITY: unknown;
+      };
+    };
+  };
+};
+
+let AudioModule: ExpoAudioModule | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  AudioModule = require('expo-av') as ExpoAudioModule;
+} catch {
+  AudioModule = null;
+}
+
 interface AssistantTurnDiagnostics {
   source: string;
   traceId?: string | null;
@@ -83,8 +123,11 @@ interface AssistantTurnDiagnostics {
   sttConfidence?: number | null;
   sttLatencyMs?: number | null;
   ttsGenerationMs?: number | null;
+  ttsSkippedReason?: string | null;
   fallbackReason?: string | null;
 }
+
+const SHOW_LOCAL_DIAGNOSTICS = false;
 
 const TEXT_DOCUMENT_EXTENSIONS = new Set(['txt', 'csv', 'json', 'md', 'xml', 'html', 'htm', 'log']);
 const TEXT_DOCUMENT_MIME_TYPES = new Set([
@@ -480,14 +523,22 @@ export default function AIChatScreen() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [voicePlaybackRate, setVoicePlaybackRate] = useState(1);
   const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
+  const [isVoiceModeVisible, setIsVoiceModeVisible] = useState(false);
+  const [isVoiceModeContinuousEnabled, setIsVoiceModeContinuousEnabled] = useState(false);
+  const [liveVoiceTranscript, setLiveVoiceTranscript] = useState('');
   const [lastAssistantDiagnostics, setLastAssistantDiagnostics] =
     useState<AssistantTurnDiagnostics | null>(null);
+  const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [conversationSummaries, setConversationSummaries] = useState<
+    AssistantConversationSummary[]
+  >([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const clearDraftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingVoiceTranscriptRef = useRef('');
   const hasSubmittedVoiceQueryRef = useRef(false);
   const isStartingVoiceInputRef = useRef(false);
-  const activeVoiceRecordingRef = useRef<Audio.Recording | null>(null);
+  const activeVoiceRecordingRef = useRef<ExpoAudioRecording | null>(null);
   const isStoppingVoiceRecordingRef = useRef(false);
   const sendMessageRef =
     useRef<
@@ -500,6 +551,46 @@ export default function AIChatScreen() {
   const speechLocale = useMemo(() => resolveSpeechLocale(i18n.language), [i18n.language]);
   const isVoiceListening = voiceInputState === 'starting' || voiceInputState === 'listening';
   const languageCode = useMemo(() => resolveLanguageCode(i18n.language), [i18n.language]);
+  const hasAssistantMessages = useMemo(
+    () => messages.some((message) => message.role === 'assistant'),
+    [messages],
+  );
+
+  const refreshConversationHistory = useCallback(async () => {
+    if (!assistantFeatureFlags.memoryEnabled) return;
+    setIsHistoryLoading(true);
+    try {
+      const summaries = await assistantMemoryService.listConversations({ limit: 30 });
+      setConversationSummaries(summaries);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }, []);
+
+  const openConversation = useCallback(async (nextConversationId: string) => {
+    if (!nextConversationId) return;
+    const history = await assistantMemoryService.loadRecentMessages(nextConversationId, 50);
+    setConversationId(nextConversationId);
+    setMessages(history);
+    setSuggestions([]);
+    setIsHistoryVisible(false);
+  }, []);
+
+  const startNewConversation = useCallback(async () => {
+    const nextConversationId = await assistantMemoryService.createConversation({
+      farmId: contextFarm?.id ?? parsedFarmId ?? null,
+      locale: languageCode,
+    });
+    if (!nextConversationId) {
+      Alert.alert(t('common.error'), t('ai.errors.failedResponse'));
+      return;
+    }
+    setConversationId(nextConversationId);
+    setMessages([]);
+    setSuggestions([]);
+    setIsHistoryVisible(false);
+    void refreshConversationHistory();
+  }, [contextFarm?.id, languageCode, parsedFarmId, refreshConversationHistory, t]);
 
   const DEFAULT_SUGGESTIONS = useMemo(
     () => [
@@ -577,10 +668,18 @@ export default function AIChatScreen() {
     let isCancelled = false;
 
     const bootstrapConversation = async () => {
-      const resolvedConversationId = await assistantMemoryService.resolveLatestConversation({
-        farmId: contextFarm?.id ?? parsedFarmId ?? null,
-        locale: languageCode,
-      });
+      const summaries = await assistantMemoryService.listConversations({ limit: 30 });
+      if (!isCancelled) {
+        setConversationSummaries(summaries);
+      }
+
+      const firstConversationId = summaries[0]?.id ?? null;
+      const resolvedConversationId =
+        firstConversationId ??
+        (await assistantMemoryService.resolveLatestConversation({
+          farmId: contextFarm?.id ?? parsedFarmId ?? null,
+          locale: languageCode,
+        }));
 
       if (isCancelled || !resolvedConversationId) return;
 
@@ -607,20 +706,21 @@ export default function AIChatScreen() {
 
   const startVoiceRecording = useCallback(async () => {
     if (Platform.OS === 'web') return;
+    if (!AudioModule?.Audio) return;
 
     try {
-      const permission = await Audio.requestPermissionsAsync();
+      const permission = await AudioModule.Audio.requestPermissionsAsync();
       if (!permission.granted) return;
 
-      await Audio.setAudioModeAsync({
+      await AudioModule.Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
         shouldDuckAndroid: true,
         playThroughEarpieceAndroid: false,
       });
 
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY,
+      const { recording } = await AudioModule.Audio.Recording.createAsync(
+        AudioModule.Audio.Recording.RecordingOptionsPresets.HIGH_QUALITY,
       );
       activeVoiceRecordingRef.current = recording;
     } catch (error) {
@@ -629,7 +729,7 @@ export default function AIChatScreen() {
         console.warn('Voice recording start failed:', error);
       }
       try {
-        await Audio.setAudioModeAsync({
+        await AudioModule.Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
           playsInSilentModeIOS: true,
         });
@@ -680,7 +780,7 @@ export default function AIChatScreen() {
       } finally {
         isStoppingVoiceRecordingRef.current = false;
         try {
-          await Audio.setAudioModeAsync({
+          await AudioModule?.Audio?.setAudioModeAsync({
             allowsRecordingIOS: false,
             playsInSilentModeIOS: true,
           });
@@ -699,6 +799,8 @@ export default function AIChatScreen() {
 
       hasSubmittedVoiceQueryRef.current = true;
       setVoiceInputState('idle');
+      setLiveVoiceTranscript(normalizedTranscript);
+      setIsVoiceModeContinuousEnabled(true);
 
       const voicePayload = await stopVoiceRecording();
       void sendMessageRef.current?.(normalizedTranscript, 'voice', voicePayload);
@@ -1379,6 +1481,7 @@ export default function AIChatScreen() {
           sttConfidence: response.sttConfidence ?? null,
           sttLatencyMs: response.sttLatencyMs ?? null,
           ttsGenerationMs: response.ttsGenerationMs ?? null,
+          ttsSkippedReason: response.ttsSkippedReason ?? null,
           fallbackReason: response.providerFallbackReason ?? null,
         });
 
@@ -1399,6 +1502,7 @@ export default function AIChatScreen() {
           stt_confidence: response.sttConfidence ?? null,
           stt_latency_ms: response.sttLatencyMs ?? null,
           tts_generation_ms: response.ttsGenerationMs ?? null,
+          tts_skipped_reason: response.ttsSkippedReason ?? null,
           provider_fallback_reason: response.providerFallbackReason ?? null,
         });
 
@@ -1480,13 +1584,18 @@ export default function AIChatScreen() {
 
         scrollToBottom();
       } catch (error) {
-        Alert.alert(
-          t('common.error'),
-          error instanceof Error ? error.message : t('ai.errors.failedResponse'),
-          [{ text: t('common.ok') }],
-        );
+        const message = error instanceof Error ? error.message : t('ai.errors.failedResponse');
+        if (__DEV__) {
+          console.error('AI chat request failed:', error);
+          Alert.alert('AI Gateway Debug', message, [{ text: t('common.ok') }]);
+          return;
+        }
+        Alert.alert(t('common.error'), message, [{ text: t('common.ok') }]);
       } finally {
         setIsLoading(false);
+        if (assistantFeatureFlags.memoryEnabled) {
+          void refreshConversationHistory();
+        }
       }
     },
     [
@@ -1516,6 +1625,7 @@ export default function AIChatScreen() {
       pendingAmbiguousTranscript,
       voicePlaybackRate,
       stopVoiceRecording,
+      refreshConversationHistory,
     ],
   );
 
@@ -1533,6 +1643,7 @@ export default function AIChatScreen() {
 
     pendingVoiceTranscriptRef.current = transcript;
     setInputText(transcript);
+    setLiveVoiceTranscript(transcript);
 
     if (event.isFinal && transcript.trim() && !hasSubmittedVoiceQueryRef.current) {
       void submitVoiceTranscript(transcript);
@@ -1557,6 +1668,7 @@ export default function AIChatScreen() {
     }
     if (event.error === 'no-speech') {
       setVoiceInputState('idle');
+      setIsVoiceModeContinuousEnabled(false);
       Alert.alert(t('ai.voice.noSpeechTitle'), t('ai.voice.noSpeechBody'), [
         { text: t('common.ok') },
       ]);
@@ -1564,11 +1676,13 @@ export default function AIChatScreen() {
     }
     if (event.error === 'not-allowed') {
       setVoiceInputState('idle');
+      setIsVoiceModeContinuousEnabled(false);
       promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
       return;
     }
 
     setVoiceInputState('idle');
+    setIsVoiceModeContinuousEnabled(false);
     Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
       { text: t('common.ok') },
     ]);
@@ -1645,6 +1759,47 @@ export default function AIChatScreen() {
       setVoiceInputState('idle');
     }
   }, []);
+
+  const openVoiceMode = useCallback(() => {
+    if (Platform.OS === 'web' || !isSpeechRecognitionAvailable) {
+      Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
+        { text: t('common.ok') },
+      ]);
+      return;
+    }
+    setIsVoiceModeVisible(true);
+    setIsVoiceModeContinuousEnabled(true);
+    setLiveVoiceTranscript('');
+    void startVoiceInput();
+  }, [startVoiceInput, t]);
+
+  const closeVoiceMode = useCallback(() => {
+    if (isVoiceListening) {
+      stopVoiceInput();
+    }
+    setIsVoiceModeVisible(false);
+    setIsVoiceModeContinuousEnabled(false);
+    setLiveVoiceTranscript('');
+  }, [isVoiceListening, stopVoiceInput]);
+
+  useEffect(() => {
+    if (!isVoiceModeVisible || !isVoiceModeContinuousEnabled) return;
+    if (isLoading || isAssistantSpeaking) return;
+    if (voiceInputState !== 'idle') return;
+
+    const timeout = setTimeout(() => {
+      void startVoiceInput();
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [
+    isAssistantSpeaking,
+    isLoading,
+    isVoiceModeContinuousEnabled,
+    isVoiceModeVisible,
+    startVoiceInput,
+    voiceInputState,
+  ]);
 
   const handleReplayAssistantVoice = useCallback(() => {
     if (isAssistantSpeaking) {
@@ -1756,11 +1911,22 @@ export default function AIChatScreen() {
               <UiSymbol name="chevron.left" size={24} color={m3.colorScheme.onBackground} />
             </Pressable>
           ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => {
+                setIsHistoryVisible(true);
+                void refreshConversationHistory();
+              }}
+              style={{ marginRight: spacing[2], padding: spacing[1] }}
+            >
+              <UiSymbol name="sidebar.left" size={20} color={m3.colorScheme.onBackground} />
+            </Pressable>
+          ),
         }}
       />
 
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
+        style={{ flex: 1, backgroundColor: colors.surface[50] }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       >
@@ -1768,7 +1934,10 @@ export default function AIChatScreen() {
           <ScrollView
             ref={scrollViewRef}
             style={{ flex: 1, paddingHorizontal: spacing[4], paddingBottom: spacing[4] }}
-            contentContainerStyle={{ paddingTop: insets.top + spacing[4] }}
+            contentContainerStyle={{
+              paddingTop: insets.top + spacing[4],
+              paddingBottom: spacing[6],
+            }}
             contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -1779,15 +1948,16 @@ export default function AIChatScreen() {
                 style={{
                   flex: 1,
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: spacing[8],
+                  justifyContent: 'flex-start',
+                  paddingTop: spacing[8],
+                  paddingBottom: spacing[6],
                 }}
               >
                 <View
                   style={{
                     width: 80,
                     height: 80,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.18),
                     borderRadius: borderRadius.full,
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1808,37 +1978,68 @@ export default function AIChatScreen() {
                 </Text>
                 <Text
                   style={{
-                    color: colors.surface[500],
+                    color: colors.surface[700],
                     fontSize: fontSize.base,
                     textAlign: 'center',
-                    marginBottom: spacing[6],
-                    paddingHorizontal: spacing[8],
+                    marginBottom: spacing[5],
+                    paddingHorizontal: spacing[5],
+                    lineHeight: 42,
                   }}
                 >
                   {t('ai.description')}
                 </Text>
-                <View style={{ width: '100%', gap: spacing[2] }}>
+                <View
+                  style={{
+                    width: '100%',
+                    borderRadius: borderRadius['2xl'],
+                    borderWidth: 1,
+                    borderColor: colorWithOpacity(colors.surface[300], 0.8),
+                    backgroundColor: colorWithOpacity(colors.surface[100], 0.96),
+                    padding: spacing[3],
+                    gap: spacing[2],
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.surface[700],
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                      paddingHorizontal: spacing[1],
+                    }}
+                  >
+                    {t('ai.suggestedQuestions')}
+                  </Text>
                   {DEFAULT_SUGGESTIONS.map((suggestion, index) => (
                     <Pressable
                       key={index}
                       onPress={() => handleSuggestionPress(suggestion)}
                       style={{
-                        padding: spacing[3],
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingHorizontal: spacing[4],
+                        paddingVertical: spacing[3],
                         borderRadius: borderRadius.xl,
                         borderWidth: 1,
-                        borderColor: colors.surface[200],
-                        backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
+                        borderColor: colorWithOpacity(m3.colorScheme.primary, 0.16),
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
                       }}
                     >
                       <Text
                         style={{
-                          color: colors.surface[700],
+                          color: colors.surface[900],
                           fontSize: fontSize.sm,
-                          textAlign: 'center',
+                          fontWeight: fontWeight.medium,
+                          flex: 1,
                         }}
                       >
                         {suggestion}
                       </Text>
+                      <UiSymbol
+                        name="chevron.right"
+                        size={14}
+                        color={colorWithOpacity(m3.colorScheme.primary, 0.75)}
+                      />
                     </Pressable>
                   ))}
                 </View>
@@ -1892,6 +2093,38 @@ export default function AIChatScreen() {
                     <Text style={{ fontSize: fontSize.base, color: m3.colorScheme.onPrimary }}>
                       {message.content}
                     </Text>
+                  )}
+                  {__DEV__ && message.role === 'assistant' && (
+                    <View
+                      style={{
+                        alignSelf: 'flex-start',
+                        marginTop: spacing[2],
+                        paddingHorizontal: spacing[2],
+                        paddingVertical: spacing[1],
+                        borderRadius: borderRadius.full,
+                        borderWidth: 1,
+                        borderColor: colorWithOpacity(m3.colorScheme.primary, 0.28),
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: m3.colorScheme.primary,
+                          fontSize: fontSize.xs,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
+                        audio_provider: {message.audio?.provider ?? 'none'}
+                        {'\n'}gateway_provider: {message.audioMeta?.providerUsed ?? 'unknown'}
+                        {'\n'}stt_provider: {message.audioMeta?.sttProviderUsed ?? 'none'}
+                        {message.audioMeta?.ttsSkippedReason
+                          ? `\ntts_skipped: ${message.audioMeta.ttsSkippedReason}`
+                          : ''}
+                        {message.audioMeta?.providerFallbackReason
+                          ? `\nfallback_reason: ${message.audioMeta.providerFallbackReason}`
+                          : ''}
+                      </Text>
+                    </View>
                   )}
                   <Text
                     style={{
@@ -1993,11 +2226,19 @@ export default function AIChatScreen() {
                         marginRight: spacing[2],
                         paddingHorizontal: spacing[4],
                         paddingVertical: spacing[2],
-                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                        borderWidth: 1,
+                        borderColor: colorWithOpacity(m3.colorScheme.primary, 0.22),
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.16),
                         borderRadius: borderRadius.full,
                       }}
                     >
-                      <Text style={{ color: m3.colorScheme.primary, fontSize: fontSize.sm }}>
+                      <Text
+                        style={{
+                          color: m3.colorScheme.primary,
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.medium,
+                        }}
+                      >
                         {suggestion}
                       </Text>
                     </Pressable>
@@ -2011,9 +2252,14 @@ export default function AIChatScreen() {
             style={{
               padding: spacing[4],
               paddingBottom: Math.max(insets.bottom, spacing[4]),
-              backgroundColor: colors.surface[100],
+              backgroundColor: colorWithOpacity(colors.surface[50], 0.98),
               borderTopWidth: 1,
-              borderTopColor: colors.surface[200],
+              borderTopColor: colors.surface[300],
+              shadowColor: colors.surface[900],
+              shadowOpacity: 0.06,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: -2 },
+              elevation: 6,
             }}
           >
             {attachments.length > 0 && (
@@ -2082,7 +2328,7 @@ export default function AIChatScreen() {
                 Assistant is speaking...
               </Text>
             )}
-            {__DEV__ && lastAssistantDiagnostics && (
+            {__DEV__ && SHOW_LOCAL_DIAGNOSTICS && lastAssistantDiagnostics && (
               <View
                 style={{
                   marginBottom: spacing[2],
@@ -2136,8 +2382,9 @@ export default function AIChatScreen() {
                   / {formatDiagnosticValue(lastAssistantDiagnostics.sttLatencyMs)}
                 </Text>
                 <Text style={{ color: colors.surface[700], fontSize: fontSize.xs }}>
-                  tts_ms / fallback_reason:{' '}
+                  tts_ms / skipped / fallback_reason:{' '}
                   {formatDiagnosticValue(lastAssistantDiagnostics.ttsGenerationMs)} /{' '}
+                  {formatDiagnosticValue(lastAssistantDiagnostics.ttsSkippedReason)} /{' '}
                   {formatDiagnosticValue(lastAssistantDiagnostics.fallbackReason)}
                 </Text>
               </View>
@@ -2290,143 +2537,506 @@ export default function AIChatScreen() {
                 </Pressable>
               </View>
             )}
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] }}>
-              <Pressable
-                onPress={handleReplayAssistantVoice}
-                disabled={isLoading}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isAssistantSpeaking ? 'Stop assistant voice' : 'Replay assistant voice'
-                }
+            <View style={{ gap: spacing[2] }}>
+              {hasAssistantMessages && (
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: spacing[2] }}>
+                  <Pressable
+                    onPress={handleReplayAssistantVoice}
+                    disabled={isLoading}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      isAssistantSpeaking ? 'Stop assistant voice' : 'Replay assistant voice'
+                    }
+                    style={{
+                      paddingHorizontal: spacing[3],
+                      height: 32,
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexDirection: 'row',
+                      gap: spacing[1],
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    }}
+                  >
+                    <UiSymbol
+                      name={isAssistantSpeaking ? 'stop.fill' : 'speaker.wave.2.fill'}
+                      size={14}
+                      color={m3.colorScheme.primary}
+                    />
+                    <Text
+                      style={{
+                        color: m3.colorScheme.primary,
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {isAssistantSpeaking ? 'Stop' : 'Replay'}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={toggleVoicePlaybackRate}
+                    disabled={isAssistantSpeaking}
+                    accessibilityRole="button"
+                    accessibilityLabel="Toggle voice speed"
+                    style={{
+                      minWidth: 52,
+                      height: 32,
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      paddingHorizontal: spacing[2],
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: m3.colorScheme.primary,
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.bold,
+                      }}
+                    >
+                      {voicePlaybackRate.toFixed(1)}x
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] }}>
+                <Pressable
+                  onPress={openAttachmentPicker}
+                  disabled={isLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Attach file"
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: borderRadius.full,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.11),
+                  }}
+                >
+                  <UiSymbol name="plus" size={19} color={m3.colorScheme.primary} />
+                </Pressable>
+                <View
+                  style={{
+                    flex: 1,
+                    minHeight: 48,
+                    maxHeight: 120,
+                    borderRadius: 24,
+                    borderWidth: 1,
+                    borderColor: colors.surface[300],
+                    backgroundColor: colors.surface[100],
+                    paddingLeft: spacing[4],
+                    paddingRight: spacing[2],
+                    paddingVertical: spacing[1],
+                    flexDirection: 'row',
+                    alignItems: 'flex-end',
+                    gap: spacing[2],
+                  }}
+                >
+                  <TextInput
+                    value={inputText}
+                    onChangeText={setInputText}
+                    placeholder={t('ai.input.placeholder')}
+                    placeholderTextColor={colorWithOpacity(colors.surface[600], 0.85)}
+                    multiline
+                    style={{
+                      flex: 1,
+                      minHeight: 36,
+                      maxHeight: 108,
+                      color: colors.surface[900],
+                      fontSize: fontSize.base,
+                      paddingTop: spacing[2],
+                      paddingBottom: spacing[2],
+                    }}
+                    textAlignVertical="center"
+                    returnKeyType="send"
+                    onSubmitEditing={() => handleSendMessage(undefined, 'text')}
+                  />
+                  {(inputText.trim() || attachments.length > 0) && !isLoading ? (
+                    <Pressable
+                      onPress={() => handleSendMessage(undefined, 'text')}
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: spacing[1],
+                        backgroundColor: m3.colorScheme.primary,
+                      }}
+                    >
+                      <UiSymbol name="arrow.up" size={16} color={m3.colorScheme.onPrimary} />
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      onPress={openVoiceMode}
+                      disabled={isLoading && !isVoiceListening}
+                      accessibilityRole="button"
+                      accessibilityLabel="Open voice mode"
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: spacing[1],
+                        backgroundColor: isVoiceListening
+                          ? colorWithOpacity(m3.colorScheme.error, 0.2)
+                          : colorWithOpacity(m3.colorScheme.primary, 0.12),
+                      }}
+                    >
+                      <UiSymbol
+                        name={isVoiceListening ? 'stop.fill' : 'mic.fill'}
+                        size={16}
+                        color={isVoiceListening ? m3.colorScheme.error : m3.colorScheme.primary}
+                      />
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+        <Modal
+          visible={isHistoryVisible}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setIsHistoryVisible(false)}
+        >
+          <Pressable
+            onPress={() => setIsHistoryVisible(false)}
+            style={{
+              flex: 1,
+              backgroundColor: colorWithOpacity(colors.surface[900], 0.22),
+              flexDirection: 'row',
+            }}
+          >
+            <Pressable
+              onPress={(event) => event.stopPropagation()}
+              style={{
+                width: '82%',
+                maxWidth: 360,
+                height: '100%',
+                backgroundColor: colors.surface[100],
+                paddingTop: insets.top + spacing[3],
+                paddingHorizontal: spacing[4],
+                paddingBottom: Math.max(insets.bottom, spacing[4]),
+                borderTopRightRadius: borderRadius['2xl'],
+                borderBottomRightRadius: borderRadius['2xl'],
+              }}
+            >
+              <View
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: borderRadius.full,
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                }}
-              >
-                <UiSymbol
-                  name={isAssistantSpeaking ? 'stop.fill' : 'speaker.wave.2.fill'}
-                  size={18}
-                  color={m3.colorScheme.primary}
-                />
-              </Pressable>
-              <Pressable
-                onPress={toggleVoicePlaybackRate}
-                disabled={isAssistantSpeaking}
-                accessibilityRole="button"
-                accessibilityLabel="Toggle voice speed"
-                style={{
-                  minWidth: 44,
-                  height: 44,
-                  borderRadius: borderRadius.full,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingHorizontal: spacing[2],
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                  justifyContent: 'space-between',
+                  marginBottom: spacing[3],
                 }}
               >
                 <Text
                   style={{
-                    color: m3.colorScheme.primary,
-                    fontSize: fontSize.xs,
-                    fontWeight: fontWeight.bold,
+                    color: colors.surface[900],
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
                   }}
                 >
-                  {voicePlaybackRate.toFixed(1)}x
+                  Chat history
                 </Text>
-              </Pressable>
-              <TextInput
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder={t('ai.input.placeholder')}
-                placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                multiline
-                style={{
-                  flex: 1,
-                  minHeight: 44,
-                  maxHeight: 120,
-                  paddingHorizontal: spacing[4],
-                  paddingVertical: spacing[3],
-                  backgroundColor: colors.surface[50],
-                  borderRadius: borderRadius['2xl'],
-                  color: colors.surface[900],
-                  fontSize: fontSize.base,
-                }}
-                textAlignVertical="top"
-                returnKeyType="send"
-                onSubmitEditing={() => handleSendMessage(undefined, 'text')}
-              />
+                <Pressable
+                  onPress={() => setIsHistoryVisible(false)}
+                  style={{ padding: spacing[1] }}
+                >
+                  <UiSymbol name="xmark" size={16} color={colors.surface[700]} />
+                </Pressable>
+              </View>
+
               <Pressable
-                onPress={openAttachmentPicker}
-                disabled={isLoading}
-                accessibilityRole="button"
-                accessibilityLabel="Attach file"
+                onPress={startNewConversation}
                 style={{
-                  width: 48,
-                  height: 48,
+                  height: 44,
                   borderRadius: borderRadius.full,
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                  flexDirection: 'row',
+                  gap: spacing[2],
+                  marginBottom: spacing[3],
                 }}
               >
-                <UiSymbol name="plus" size={20} color={m3.colorScheme.primary} />
+                <UiSymbol name="plus" size={16} color={m3.colorScheme.primary} />
+                <Text
+                  style={{
+                    color: m3.colorScheme.primary,
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  New chat
+                </Text>
               </Pressable>
-              <Pressable
-                onPress={isVoiceListening ? stopVoiceInput : startVoiceInput}
-                disabled={isLoading && !isVoiceListening}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isVoiceListening ? t('ai.voice.stopA11y') : t('ai.voice.startA11y')
-                }
+
+              {isHistoryLoading ? (
+                <View style={{ paddingVertical: spacing[6], alignItems: 'center' }}>
+                  <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+                </View>
+              ) : (
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ gap: spacing[2] }}
+                >
+                  {conversationSummaries.map((summary) => {
+                    const isActive = summary.id === conversationId;
+                    const preview = (summary.lastMessage ?? '').trim();
+                    return (
+                      <Pressable
+                        key={summary.id}
+                        onPress={() => void openConversation(summary.id)}
+                        style={{
+                          borderRadius: borderRadius.xl,
+                          borderWidth: 1,
+                          borderColor: isActive
+                            ? colorWithOpacity(m3.colorScheme.primary, 0.45)
+                            : colors.surface[300],
+                          backgroundColor: isActive
+                            ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                            : colors.surface[50],
+                          paddingHorizontal: spacing[3],
+                          paddingVertical: spacing[3],
+                          gap: spacing[1],
+                        }}
+                      >
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            color: colors.surface[900],
+                            fontSize: fontSize.sm,
+                            fontWeight: fontWeight.semibold,
+                          }}
+                        >
+                          {preview || 'New conversation'}
+                        </Text>
+                        <Text
+                          numberOfLines={2}
+                          style={{
+                            color: colors.surface[600],
+                            fontSize: fontSize.xs,
+                          }}
+                        >
+                          {formatDate(summary.lastMessageAt ?? summary.updatedAt)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                  {conversationSummaries.length === 0 && (
+                    <Text
+                      style={{
+                        color: colors.surface[600],
+                        fontSize: fontSize.sm,
+                        textAlign: 'center',
+                        paddingVertical: spacing[6],
+                      }}
+                    >
+                      No previous chats yet.
+                    </Text>
+                  )}
+                </ScrollView>
+              )}
+            </Pressable>
+          </Pressable>
+        </Modal>
+        <Modal
+          visible={isVoiceModeVisible}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={closeVoiceMode}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.surface[50],
+              paddingTop: insets.top + spacing[4],
+              paddingHorizontal: spacing[5],
+              paddingBottom: Math.max(insets.bottom, spacing[5]),
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: spacing[6],
+              }}
+            >
+              <Text
                 style={{
-                  width: 48,
-                  height: 48,
+                  color: colors.surface[900],
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
+                Voice mode
+              </Text>
+              <Pressable onPress={closeVoiceMode} style={{ padding: spacing[1] }}>
+                <UiSymbol name="xmark" size={18} color={colors.surface[700]} />
+              </Pressable>
+            </View>
+
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: spacing[4],
+              }}
+            >
+              <View
+                style={{
+                  width: 160,
+                  height: 160,
                   borderRadius: borderRadius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: isVoiceListening
-                    ? colorWithOpacity(m3.colorScheme.error, 0.16)
-                    : colorWithOpacity(m3.colorScheme.primary, 0.12),
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.2)
+                    : colorWithOpacity(colors.surface[300], 0.7),
+                  borderWidth: 2,
+                  borderColor: isVoiceListening
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.45)
+                    : colorWithOpacity(colors.surface[400], 0.5),
+                }}
+              >
+                <UiSymbol
+                  name={isVoiceListening ? 'waveform.and.mic' : 'mic.fill'}
+                  size={42}
+                  color={isVoiceListening ? m3.colorScheme.primary : colors.surface[700]}
+                />
+              </View>
+
+              <Text
+                style={{
+                  color: colors.surface[900],
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
+                {isVoiceListening ? 'Listening...' : isLoading ? 'Thinking...' : 'Tap to speak'}
+              </Text>
+
+              <View
+                style={{
+                  width: '100%',
+                  borderRadius: borderRadius.xl,
+                  borderWidth: 1,
+                  borderColor: colors.surface[300],
+                  backgroundColor: colors.surface[100],
+                  minHeight: 110,
+                  paddingHorizontal: spacing[4],
+                  paddingVertical: spacing[3],
+                }}
+              >
+                <Text
+                  style={{
+                    color: liveVoiceTranscript.trim() ? colors.surface[900] : colors.surface[500],
+                    fontSize: fontSize.base,
+                    lineHeight: 28,
+                  }}
+                >
+                  {liveVoiceTranscript.trim() || 'Your speech will appear here...'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: spacing[2], alignItems: 'center' }}>
+              <Pressable
+                onPress={() => setIsVoiceModeContinuousEnabled((prev) => !prev)}
+                style={{
+                  height: 50,
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: spacing[1],
+                  backgroundColor: isVoiceModeContinuousEnabled
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.16)
+                    : colors.surface[200],
+                }}
+              >
+                <UiSymbol
+                  name={isVoiceModeContinuousEnabled ? 'waveform' : 'waveform.slash'}
+                  size={15}
+                  color={
+                    isVoiceModeContinuousEnabled ? m3.colorScheme.primary : colors.surface[700]
+                  }
+                />
+                <Text
+                  style={{
+                    color: isVoiceModeContinuousEnabled
+                      ? m3.colorScheme.primary
+                      : colors.surface[700],
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  {isVoiceModeContinuousEnabled ? 'Continuous On' : 'Continuous Off'}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (isVoiceListening) {
+                    setIsVoiceModeContinuousEnabled(false);
+                    stopVoiceInput();
+                    return;
+                  }
+                  setIsVoiceModeContinuousEnabled(true);
+                  void startVoiceInput();
+                }}
+                disabled={isLoading}
+                style={{
+                  flex: 1,
+                  height: 50,
+                  borderRadius: borderRadius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: spacing[2],
+                  backgroundColor: isVoiceListening
+                    ? colorWithOpacity(m3.colorScheme.error, 0.18)
+                    : colorWithOpacity(m3.colorScheme.primary, 0.16),
                 }}
               >
                 <UiSymbol
                   name={isVoiceListening ? 'stop.fill' : 'mic.fill'}
-                  size={20}
+                  size={18}
                   color={isVoiceListening ? m3.colorScheme.error : m3.colorScheme.primary}
                 />
+                <Text
+                  style={{
+                    color: isVoiceListening ? m3.colorScheme.error : m3.colorScheme.primary,
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  {isVoiceListening ? 'Stop' : 'Speak'}
+                </Text>
               </Pressable>
               <Pressable
-                onPress={() => handleSendMessage(undefined, 'text')}
-                disabled={(!inputText.trim() && attachments.length === 0) || isLoading}
+                onPress={closeVoiceMode}
                 style={{
-                  width: 48,
-                  height: 48,
+                  width: 56,
+                  height: 50,
                   borderRadius: borderRadius.full,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor:
-                    (inputText.trim() || attachments.length > 0) && !isLoading
-                      ? m3.colorScheme.primary
-                      : colors.surface[200],
+                  backgroundColor: colors.surface[200],
                 }}
               >
-                <UiSymbol
-                  name="paperplane.fill"
-                  size={20}
-                  color={
-                    (inputText.trim() || attachments.length > 0) && !isLoading
-                      ? m3.colorScheme.onPrimary
-                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)
-                  }
-                />
+                <UiSymbol name="chevron.down" size={18} color={colors.surface[700]} />
               </Pressable>
             </View>
           </View>
-        </View>
+        </Modal>
       </KeyboardAvoidingView>
     </>
   );
