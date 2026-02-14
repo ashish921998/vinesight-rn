@@ -15,3 +15,4 @@ export {
   InfoCard,
   PreviewCard,
 } from './form-components';
+export { PendingSyncBadge } from './pending-sync-badge';

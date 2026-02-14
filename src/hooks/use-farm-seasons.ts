@@ -1,9 +1,11 @@
 /**
  * Farm Seasons Hooks
  *
- * READ operations now delegate to offline hooks (use-offline-farm-seasons.ts)
+ * READ operations delegate to offline hooks (use-offline-farm-seasons.ts)
  * which use PowerSync local SQLite reads with Supabase fallback.
- * WRITE operations continue to go through Supabase directly.
+ *
+ * WRITE operations (Phase 3) now go through PowerSync local DB when
+ * available, falling back to direct Supabase writes otherwise.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +16,10 @@ import { TABLES } from '../types';
 import { parseDbDateToLocalDate } from '../utils/date';
 import { recomputeSeasonAssignmentsClient } from '../lib/season-context';
 import { useOfflineFarmSeasons } from './use-offline-farm-seasons';
+import {
+  useOfflineCreateFarmSeason,
+  useOfflineUpdateFarmSeason,
+} from './use-offline-mutations';
 
 function isRpcFunctionMissing(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
@@ -46,17 +52,11 @@ export function useFarmSeasons(farmId: number | undefined) {
 
 export function useCreateFarmSeason() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateFarmSeason();
 
   return useMutation({
     mutationFn: async (season: FarmSeasonInsert): Promise<FarmSeason> => {
-      const { data, error } = await supabase
-        .from(TABLES.FARM_SEASONS)
-        .insert(season)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineCreate.mutateAsync(season);
     },
     onSuccess: (newSeason) => {
       queryClient.setQueryData<FarmSeason[]>(
@@ -72,6 +72,7 @@ export function useCreateFarmSeason() {
 
 export function useUpdateFarmSeason() {
   const queryClient = useQueryClient();
+  const offlineUpdate = useOfflineUpdateFarmSeason();
 
   return useMutation({
     mutationFn: async ({
@@ -83,16 +84,7 @@ export function useUpdateFarmSeason() {
       farmId: number;
       updates: FarmSeasonUpdate;
     }): Promise<FarmSeason> => {
-      const { data, error } = await supabase
-        .from(TABLES.FARM_SEASONS)
-        .update(updates)
-        .eq('id', id)
-        .eq('farm_id', farmId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineUpdate.mutateAsync({ id, farmId, updates });
     },
     onSuccess: (updatedSeason) => {
       queryClient.setQueryData<FarmSeason[]>(
