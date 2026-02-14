@@ -8,6 +8,9 @@
  *
  * Also provides a `runSyncPass()` function that can be called from
  * foreground reconnection handlers or manual "sync now" triggers.
+ *
+ * Phase 8 additions: circuit-breaker integration, structured logging,
+ * exponential back-off for individual item retries, mid-sync recovery.
  */
 
 import { Platform } from 'react-native';
@@ -23,8 +26,27 @@ import {
   offlineSyncConfig,
 } from '@/constants/offline-config';
 import { useSyncStore } from '@/stores/sync-store';
+import { logOfflineEvent } from './offline-logger';
+import {
+  syncCircuitBreaker,
+  mediaUploadCircuitBreaker,
+  CircuitBreakerOpenError,
+} from './circuit-breaker';
+import {
+  markSyncInProgress,
+  clearSyncInProgress,
+  validateSyncItem,
+} from './sync-queue-hardening';
 
 // ── Helpers ────────────────────────────────────────────────────────
+
+/**
+ * Calculate exponential back-off delay for a given retry count.
+ * Returns delay in ms: min(baseMs * 2^retries, maxMs).
+ */
+export function getRetryDelay(retries: number, baseMs = 1_000, maxMs = 60_000): number {
+  return Math.min(baseMs * Math.pow(2, retries), maxMs);
+}
 
 /**
  * Check whether the device conditions allow a full (heavy) sync.
@@ -67,6 +89,30 @@ export async function checkSyncConditions(): Promise<{
   return { canSync: true, canHeavySync };
 }
 
+// ── Background task history (in-memory, for debug screen) ──────────
+
+export interface BackgroundTaskRecord {
+  timestamp: string;
+  result: 'success' | 'no_data' | 'failed' | 'skipped';
+  itemsSynced: number;
+  duration: number; // ms
+  error?: string;
+}
+
+const MAX_TASK_HISTORY = 50;
+const taskHistory: BackgroundTaskRecord[] = [];
+
+export function getBackgroundTaskHistory(): readonly BackgroundTaskRecord[] {
+  return taskHistory;
+}
+
+function recordTaskRun(record: BackgroundTaskRecord): void {
+  if (taskHistory.length >= MAX_TASK_HISTORY) {
+    taskHistory.shift();
+  }
+  taskHistory.push(record);
+}
+
 // ── Sync Pass ──────────────────────────────────────────────────────
 
 /**
@@ -77,61 +123,105 @@ export async function checkSyncConditions(): Promise<{
  */
 export async function runSyncPass(): Promise<boolean> {
   const store = useSyncStore.getState();
+  const startTime = Date.now();
 
   // Prevent concurrent runs
   if (store.isSyncing) {
-    if (__DEV__) console.log('[BackgroundSync] Sync already in progress, skipping.');
+    logOfflineEvent('sync_started', { skipped: true, reason: 'already_syncing' });
     return false;
   }
 
   const { canSync, canHeavySync, reason } = await checkSyncConditions();
   if (!canSync) {
-    if (__DEV__) console.log(`[BackgroundSync] Skipping sync: ${reason}`);
+    logOfflineEvent('sync_started', { skipped: true, reason });
+    recordTaskRun({
+      timestamp: new Date().toISOString(),
+      result: 'skipped',
+      itemsSynced: 0,
+      duration: Date.now() - startTime,
+      error: reason,
+    });
     return false;
   }
 
   store.setSyncing(true);
+  await markSyncInProgress();
+  logOfflineEvent('sync_started', { canHeavySync });
 
   try {
     let didSync = false;
+    let itemsSynced = 0;
 
-    // ── Step 1: Replay pending mutations ──────────────────────────
+    // ── Step 1: Replay pending mutations (through circuit breaker) ──
     const pendingItems = Object.values(store.items).filter(
       (item) =>
         (item.status === 'pending' || item.status === 'failed') &&
         item.retries < MAX_SYNC_RETRIES,
     );
 
-    if (pendingItems.length > 0) {
+    if (pendingItems.length > 0 && syncCircuitBreaker.canExecute()) {
       store.markAllSyncing();
 
       for (const item of pendingItems) {
+        // Validate queue entry before processing
+        if (!validateSyncItem(item)) {
+          logOfflineEvent('queue_entry_corrupt', {
+            itemId: item.id,
+            rawValue: JSON.stringify(item).slice(0, 200),
+          });
+          store.removeItem(item.id);
+          continue;
+        }
+
         try {
-          // TODO: Phase 3 offline-writes integration – call the actual
-          // mutation replay logic here. For now we mark items as synced
-          // to demonstrate the pipeline.
-          //
-          // Example:
-          //   await replayMutation(item);
-          store.markSynced(item.id);
+          await syncCircuitBreaker.execute(async () => {
+            // TODO: Phase 3 offline-writes integration – call the actual
+            // mutation replay logic here. For now we mark items as synced
+            // to demonstrate the pipeline.
+            //
+            // Example:
+            //   await replayMutation(item);
+            store.markSynced(item.id);
+          });
+          logOfflineEvent('sync_item_success', { itemId: item.id, label: item.label });
           didSync = true;
+          itemsSynced++;
         } catch (error: unknown) {
+          if (error instanceof CircuitBreakerOpenError) {
+            logOfflineEvent('sync_item_failed', {
+              itemId: item.id,
+              reason: 'circuit_breaker_open',
+            });
+            break; // Stop processing – circuit is open
+          }
           const message = error instanceof Error ? error.message : 'Unknown error';
           store.markFailed(item.id, message);
+          logOfflineEvent(
+            'sync_item_failed',
+            {
+              itemId: item.id,
+              retries: item.retries + 1,
+              nextRetryDelay: getRetryDelay(item.retries + 1),
+            },
+            message,
+          );
         }
       }
     }
 
-    // ── Step 2: Retry failed media uploads (heavy) ────────────────
-    if (canHeavySync) {
+    // ── Step 2: Retry failed media uploads (heavy, through circuit breaker) ──
+    if (canHeavySync && mediaUploadCircuitBreaker.canExecute()) {
       try {
-        // TODO: Phase 5 media-cache integration – call media upload
-        // retry logic here.
-        //
-        // Example:
-        //   await retryFailedMediaUploads();
+        await mediaUploadCircuitBreaker.execute(async () => {
+          // TODO: Phase 5 media-cache integration – call media upload
+          // retry logic here.
+          //
+          // Example:
+          //   await retryFailedMediaUploads();
+        });
       } catch (error) {
-        if (__DEV__) console.warn('[BackgroundSync] Media retry failed:', error);
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        logOfflineEvent('media_upload_failed', { step: 'batch_retry' }, message);
       }
     }
 
@@ -150,11 +240,29 @@ export async function runSyncPass(): Promise<boolean> {
 
     // Record successful sync
     store.recordSync();
-    if (__DEV__) console.log('[BackgroundSync] Sync pass completed.');
+    await clearSyncInProgress();
+    const duration = Date.now() - startTime;
+    logOfflineEvent('sync_completed', { itemsSynced, duration });
+    recordTaskRun({
+      timestamp: new Date().toISOString(),
+      result: didSync ? 'success' : 'no_data',
+      itemsSynced,
+      duration,
+    });
     return didSync;
   } catch (error) {
-    if (__DEV__) console.error('[BackgroundSync] Sync pass error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const duration = Date.now() - startTime;
+    logOfflineEvent('sync_failed', { duration }, message);
+    recordTaskRun({
+      timestamp: new Date().toISOString(),
+      result: 'failed',
+      itemsSynced: 0,
+      duration,
+      error: message,
+    });
     store.setSyncing(false);
+    await clearSyncInProgress();
     return false;
   }
 }
@@ -162,14 +270,17 @@ export async function runSyncPass(): Promise<boolean> {
 // ── Background Task Definition ─────────────────────────────────────
 
 TaskManager.defineTask(BACKGROUND_SYNC_TASK_NAME, async () => {
-  if (__DEV__) console.log('[BackgroundSync] Background task triggered.');
+  logOfflineEvent('background_task_started');
 
   try {
     const didSync = await runSyncPass();
+    logOfflineEvent('background_task_completed', { didSync });
     return didSync
       ? BackgroundFetch.BackgroundFetchResult.NewData
       : BackgroundFetch.BackgroundFetchResult.NoData;
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    logOfflineEvent('background_task_failed', undefined, message);
     return BackgroundFetch.BackgroundFetchResult.Failed;
   }
 });
