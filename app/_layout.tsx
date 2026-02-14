@@ -19,6 +19,8 @@ import {
   useThemeStore,
 } from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { SyncStatusBar } from '@/components/ui/sync-status-bar';
+import { useSyncManager } from '@/hooks/use-sync-manager';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
   cancelNotification,
@@ -125,6 +127,9 @@ export default Sentry.wrap(function RootLayout() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const themeHydrated = useThemeStore((state) => state.hasHydrated);
   const { isDark, m3 } = useThemeTokens();
+
+  // Initialize offline sync manager (network listener + queue processor)
+  useSyncManager();
 
   const pathname = usePathname();
   const segments = useSegments();
@@ -284,6 +289,7 @@ export default Sentry.wrap(function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <I18nextProvider i18n={i18n}>
               <StatusBar style={isDark ? 'light' : 'dark'} />
+              <SyncStatusBar />
               <Stack
                 screenOptions={{
                   headerShown: false,

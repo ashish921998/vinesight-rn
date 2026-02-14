@@ -15,3 +15,4 @@ export {
   InfoCard,
   PreviewCard,
 } from './form-components';
+export { SyncStatusBar } from './sync-status-bar';
