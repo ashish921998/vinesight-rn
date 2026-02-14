@@ -453,6 +453,7 @@ export function EntryForm({
               name: item.name,
               quantity: item.quantity ?? undefined,
               unit,
+              quantityBasis: item.quantityBasis ?? 'total',
             };
           }),
         });
@@ -469,6 +470,7 @@ export function EntryForm({
               name: item.name,
               quantity: item.quantity ?? 0,
               unit,
+              quantityBasis: item.quantityBasis ?? 'total',
             };
           }),
         });
@@ -523,6 +525,7 @@ export function EntryForm({
                 item.unit && CHEMICAL_UNITS.includes(item.unit as (typeof CHEMICAL_UNITS)[number])
                   ? (item.unit as (typeof CHEMICAL_UNITS)[number])
                   : 'gm/L',
+              quantityBasis: item.quantityBasis ?? 'total',
             }))
           : createEmptySprayFormData().chemicals;
 
@@ -568,6 +571,7 @@ export function EntryForm({
                 FERTILIZER_UNITS.includes(item.unit as (typeof FERTILIZER_UNITS)[number])
                   ? (item.unit as (typeof FERTILIZER_UNITS)[number])
                   : 'kg/acre',
+              quantityBasis: item.quantityBasis ?? 'total',
             }))
           : createEmptyFertigationFormData().fertilizers;
 
