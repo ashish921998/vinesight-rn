@@ -53,3 +53,6 @@ lint-results.json
 *-results.json
 
 .env.local
+
+*storybook.log
+storybook-static

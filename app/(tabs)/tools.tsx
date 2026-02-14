@@ -61,6 +61,22 @@ export default function ToolsScreen() {
     ],
     [colors],
   );
+  const developerTools = useMemo(
+    () =>
+      __DEV__
+        ? [
+            {
+              id: 'widget-showcase',
+              title: 'Widget Showcase',
+              description: 'Preview widgets on iOS, Android, and Web from one screen.',
+              icon: 'square.grid.2x2.fill' as const,
+              color: colors.primary[500],
+              route: '/widgets-showcase' as Href,
+            },
+          ]
+        : [],
+    [colors],
+  );
 
   return (
     <ScrollView
@@ -166,6 +182,94 @@ export default function ToolsScreen() {
           );
         })}
       </View>
+
+      {developerTools.length > 0 ? (
+        <View>
+          <Text
+            style={{
+              color: m3.colorScheme.onSurfaceVariant,
+              ...m3.typography.labelSmall,
+              fontWeight: fontWeight.bold,
+              letterSpacing: 1,
+              marginBottom: spacing[3],
+            }}
+          >
+            Developer
+          </Text>
+          {developerTools.map((tool) => (
+            <Pressable
+              key={tool.id}
+              onPress={() => router.push(tool.route)}
+              accessibilityRole="button"
+              accessibilityLabel={`${tool.title}. ${tool.description}`}
+              style={{
+                backgroundColor: m3.surface.surfaceContainerLow,
+                borderRadius: m3.shape.cornerLarge,
+                padding: spacing[4],
+                flexDirection: 'row',
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: m3.colorScheme.outlineVariant,
+                overflow: 'hidden',
+              }}
+            >
+              {({ pressed }) => (
+                <>
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: m3.shape.cornerMedium,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: colorWithOpacity(tool.color, 0.12),
+                    }}
+                  >
+                    <SymbolIcon name={tool.icon} size={22} color={tool.color} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                    <Text
+                      style={{
+                        color: m3.colorScheme.onSurface,
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {tool.title}
+                    </Text>
+                    <Text
+                      style={{
+                        color: m3.colorScheme.onSurfaceVariant,
+                        ...m3.typography.labelSmall,
+                        marginTop: 2,
+                      }}
+                      numberOfLines={2}
+                    >
+                      {tool.description}
+                    </Text>
+                  </View>
+                  <SymbolIcon
+                    name="chevron.right"
+                    size={20}
+                    color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                  />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </>
+              )}
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </ScrollView>
   );
 }

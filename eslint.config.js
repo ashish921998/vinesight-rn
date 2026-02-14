@@ -81,6 +81,7 @@ module.exports = [
     ignores: [
       'node_modules/',
       '.expo/',
+      '.rnstorybook/',
       'dist/',
       'web-build/',
       'babel.config.js',
