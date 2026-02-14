@@ -154,14 +154,21 @@ const SARVAM_API_KEY = Deno.env.get('SARVAM_API_KEY')?.trim() ?? '';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')?.trim() ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim() ?? '';
 
-const ADVISORY_MODEL = Deno.env.get('ASSISTANT_OPENAI_MODEL')?.trim() || 'gpt-4o';
+const ADVISORY_MODEL = Deno.env.get('ASSISTANT_OPENAI_MODEL')?.trim() || 'gpt-4o-mini';
 const EXTRACTION_MODEL = Deno.env.get('ASSISTANT_EXTRACTION_MODEL')?.trim() || 'gpt-4o-mini';
 const EMBEDDING_MODEL =
   Deno.env.get('ASSISTANT_EMBEDDING_MODEL')?.trim() || 'text-embedding-3-small';
 const SARVAM_TTS_MODEL = Deno.env.get('ASSISTANT_SARVAM_TTS_MODEL')?.trim() || 'bulbul:v3';
-const SARVAM_TTS_EN_SPEAKER = Deno.env.get('ASSISTANT_SARVAM_TTS_EN_SPEAKER')?.trim() || 'anushka';
-const SARVAM_TTS_HI_SPEAKER = Deno.env.get('ASSISTANT_SARVAM_TTS_HI_SPEAKER')?.trim() || 'meera';
-const SARVAM_TTS_MR_SPEAKER = Deno.env.get('ASSISTANT_SARVAM_TTS_MR_SPEAKER')?.trim() || 'meera';
+const SARVAM_TTS_MAX_CHARS = 2500;
+const SARVAM_STT_MODEL_RAW = Deno.env.get('ASSISTANT_SARVAM_STT_MODEL')?.trim() || 'saarika:v2.5';
+const SARVAM_STT_MODEL = (() => {
+  const normalized = SARVAM_STT_MODEL_RAW.toLowerCase();
+  if (normalized === 'saarika:v2') return 'saarika:v2.5';
+  return SARVAM_STT_MODEL_RAW;
+})();
+const SARVAM_TTS_EN_SPEAKER = Deno.env.get('ASSISTANT_SARVAM_TTS_EN_SPEAKER')?.trim() || 'shubh';
+const SARVAM_TTS_HI_SPEAKER = Deno.env.get('ASSISTANT_SARVAM_TTS_HI_SPEAKER')?.trim() || 'shubh';
+const SARVAM_TTS_MR_SPEAKER = Deno.env.get('ASSISTANT_SARVAM_TTS_MR_SPEAKER')?.trim() || 'shubh';
 const SARVAM_TTS_PACE = Number.parseFloat(Deno.env.get('ASSISTANT_SARVAM_TTS_PACE')?.trim() || '1');
 
 const USE_SARVAM_FOR_VOICE =
@@ -201,6 +208,32 @@ function generateTraceId(): string {
 function normalizeInputText(value: unknown): string {
   if (typeof value !== 'string') return '';
   return value.trim();
+}
+
+function normalizeBase64Input(value: string | null | undefined): string {
+  if (!value) return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  const commaIndex = trimmed.indexOf(',');
+  if (trimmed.startsWith('data:') && commaIndex >= 0) {
+    return trimmed.slice(commaIndex + 1).trim();
+  }
+  return trimmed;
+}
+
+function normalizeOpenAiAudioMime(mimeType: string): { mime: string; filename: string } {
+  const normalized = mimeType.trim().toLowerCase();
+  if (normalized.includes('wav')) return { mime: 'audio/wav', filename: 'audio.wav' };
+  if (normalized.includes('flac')) return { mime: 'audio/flac', filename: 'audio.flac' };
+  if (normalized.includes('webm')) return { mime: 'audio/webm', filename: 'audio.webm' };
+  if (normalized.includes('ogg') || normalized.includes('oga'))
+    return { mime: 'audio/ogg', filename: 'audio.ogg' };
+  if (normalized.includes('x-m4a') || normalized.includes('m4a'))
+    return { mime: 'audio/m4a', filename: 'audio.m4a' };
+  if (normalized.includes('mp4')) return { mime: 'audio/mp4', filename: 'audio.mp4' };
+  if (normalized.includes('mpeg') || normalized.includes('mp3'))
+    return { mime: 'audio/mpeg', filename: 'audio.mp3' };
+  return { mime: 'audio/mpeg', filename: 'audio.mp3' };
 }
 
 function parseJsonObjectFromText(raw: string): Record<string, unknown> | null {
@@ -251,6 +284,36 @@ function toRoundedPositiveNumber(value: unknown): number | null {
 function toRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
+}
+
+function stringifyUnknown(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    const joined = value
+      .map((item) => stringifyUnknown(item))
+      .filter(Boolean)
+      .join('; ');
+    return joined.trim();
+  }
+  if (typeof value === 'object') {
+    const row = value as Record<string, unknown>;
+    const prioritized = [
+      stringifyUnknown(row.message),
+      stringifyUnknown(row.error),
+      stringifyUnknown(row.detail),
+      stringifyUnknown(row.details),
+      stringifyUnknown(row.reason),
+    ].filter(Boolean);
+    if (prioritized.length > 0) return prioritized.join(' | ');
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '';
+    }
+  }
+  return '';
 }
 
 function parseChemicalItems(
@@ -769,42 +832,84 @@ async function callOpenAIEmbedding(text: string): Promise<number[] | null> {
 async function callSarvamStt(
   base64Audio: string,
   mimeType: string,
+  locale: 'en' | 'hi' | 'mr',
 ): Promise<{ transcript: string; confidence: number | null }> {
   if (!SARVAM_API_KEY) throw new Error('SARVAM_API_KEY is not configured');
 
-  const response = await fetch('https://api.sarvam.ai/speech-to-text', {
-    method: 'POST',
-    headers: {
-      'api-subscription-key': SARVAM_API_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      audio: base64Audio,
-      mime_type: mimeType,
-      model: 'saarika:v3',
-      with_timestamps: false,
-    }),
-  });
+  const normalizedMimeType = (() => {
+    const normalized = mimeType.trim().toLowerCase();
+    if (!normalized) return 'audio/mpeg';
+    if (normalized.includes('wav')) return 'audio/wav';
+    if (normalized.includes('x-m4a') || normalized.includes('m4a')) return 'audio/mp4';
+    if (normalized.includes('mp4')) return 'audio/mp4';
+    if (normalized.includes('mpeg') || normalized.includes('mp3')) return 'audio/mpeg';
+    if (normalized.startsWith('audio/')) return normalized;
+    return 'audio/mpeg';
+  })();
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data?.message ?? 'Sarvam STT failed');
+  const languageCode = locale === 'mr' ? 'mr-IN' : locale === 'hi' ? 'hi-IN' : 'en-IN';
+  const candidateModels = Array.from(new Set([SARVAM_STT_MODEL, 'saarika:v2.5']));
+  const cleanBase64 = normalizeBase64Input(base64Audio);
+  const audioBytes = Uint8Array.from(atob(cleanBase64), (ch) => ch.charCodeAt(0));
+  const filename = normalizedMimeType.includes('wav')
+    ? 'audio.wav'
+    : normalizedMimeType.includes('m4a')
+      ? 'audio.m4a'
+      : normalizedMimeType.includes('mp4')
+        ? 'audio.mp4'
+        : normalizedMimeType.includes('aac')
+          ? 'audio.aac'
+          : 'audio.mp3';
+
+  let lastError = 'Sarvam STT failed';
+  for (const model of candidateModels) {
+    const form = new FormData();
+    form.append('model', model);
+    form.append('language_code', languageCode);
+    form.append('with_timestamps', 'false');
+    form.append('file', new Blob([audioBytes], { type: normalizedMimeType }), filename);
+
+    const response = await fetch('https://api.sarvam.ai/speech-to-text', {
+      method: 'POST',
+      headers: {
+        'api-subscription-key': SARVAM_API_KEY,
+      },
+      body: form,
+    });
+
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const reason = stringifyUnknown(data) || `Sarvam STT failed (${response.status})`;
+      lastError = `${reason} [model=${model}, mime=${normalizedMimeType}]`;
+      continue;
+    }
+
+    const transcript =
+      toOptionalString(data?.transcript) ??
+      toOptionalString(data?.text) ??
+      toOptionalString(data?.data?.transcript) ??
+      toOptionalString(data?.result?.transcript);
+
+    if (!transcript) {
+      lastError = `Sarvam STT returned empty transcript [model=${model}, mime=${normalizedMimeType}]`;
+      continue;
+    }
+
+    const confidenceRaw = toOptionalNumber(
+      data?.confidence ??
+        data?.avg_confidence ??
+        data?.metadata?.confidence ??
+        data?.data?.confidence,
+    );
+    const confidence =
+      confidenceRaw !== null
+        ? Math.min(1, Math.max(0, confidenceRaw > 1 ? confidenceRaw / 100 : confidenceRaw))
+        : null;
+
+    return { transcript: transcript.trim(), confidence };
   }
 
-  const transcript = data?.transcript ?? data?.text;
-  if (typeof transcript !== 'string' || !transcript.trim()) {
-    throw new Error('Sarvam STT returned empty transcript');
-  }
-
-  const confidenceRaw = toOptionalNumber(
-    data?.confidence ?? data?.avg_confidence ?? data?.metadata?.confidence,
-  );
-  const confidence =
-    confidenceRaw !== null
-      ? Math.min(1, Math.max(0, confidenceRaw > 1 ? confidenceRaw / 100 : confidenceRaw))
-      : null;
-
-  return { transcript: transcript.trim(), confidence };
+  throw new Error(lastError);
 }
 
 async function callOpenAIStt(
@@ -814,8 +919,10 @@ async function callOpenAIStt(
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured');
 
   const boundary = `----assistant-gateway-${crypto.randomUUID()}`;
-  const filename = mimeType.includes('wav') ? 'audio.wav' : 'audio.mp3';
-  const binary = Uint8Array.from(atob(base64Audio), (ch) => ch.charCodeAt(0));
+  const openAiAudio = normalizeOpenAiAudioMime(mimeType);
+  const filename = openAiAudio.filename;
+  const cleanBase64 = normalizeBase64Input(base64Audio);
+  const binary = Uint8Array.from(atob(cleanBase64), (ch) => ch.charCodeAt(0));
 
   const bodyParts: Uint8Array[] = [];
   const encoder = new TextEncoder();
@@ -828,7 +935,7 @@ async function callOpenAIStt(
 
   pushText(`--${boundary}\r\n`);
   pushText(`Content-Disposition: form-data; name="file"; filename="${filename}"\r\n`);
-  pushText(`Content-Type: ${mimeType}\r\n\r\n`);
+  pushText(`Content-Type: ${openAiAudio.mime}\r\n\r\n`);
   bodyParts.push(binary);
   pushText(`\r\n--${boundary}--\r\n`);
 
@@ -876,7 +983,9 @@ async function callSarvamTts(
         ? SARVAM_TTS_HI_SPEAKER
         : SARVAM_TTS_EN_SPEAKER;
   const pace =
-    Number.isFinite(SARVAM_TTS_PACE) && SARVAM_TTS_PACE > 0 ? Math.min(SARVAM_TTS_PACE, 2) : 1;
+    Number.isFinite(SARVAM_TTS_PACE) && SARVAM_TTS_PACE > 0
+      ? Math.max(0.5, Math.min(SARVAM_TTS_PACE, 2))
+      : 1;
 
   const response = await fetch('https://api.sarvam.ai/text-to-speech', {
     method: 'POST',
@@ -885,21 +994,25 @@ async function callSarvamTts(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      text,
+      text: text.slice(0, SARVAM_TTS_MAX_CHARS),
       model: SARVAM_TTS_MODEL,
       target_language_code: languageCode,
       speaker,
       pace,
-      format: 'mp3',
+      output_audio_codec: 'mp3',
     }),
   });
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data?.message ?? data?.error ?? 'Sarvam TTS failed');
+    const message = stringifyUnknown(data) || 'Sarvam TTS failed';
+    throw new Error(message);
   }
 
-  const audioBase64 = data?.audio ?? data?.audio_base64;
+  const audioBase64 =
+    (Array.isArray(data?.audios) && typeof data.audios[0] === 'string' ? data.audios[0] : null) ||
+    (typeof data?.audio === 'string' && data.audio) ||
+    (typeof data?.audio_base64 === 'string' && data.audio_base64);
   if (typeof audioBase64 !== 'string' || audioBase64.length === 0) {
     throw new Error('Sarvam TTS returned no audio data');
   }
@@ -1462,10 +1575,12 @@ Deno.serve(async (req) => {
           output: { stt_provider: 'client_transcript' },
         });
       } else {
+        const sarvamUnsupportedContainer = /\b(mp4|m4a|x-m4a)\b/i.test(audioMimeType);
+
         try {
-          if (USE_SARVAM_FOR_VOICE) {
+          if (USE_SARVAM_FOR_VOICE && !sarvamUnsupportedContainer) {
             const sttStartedAt = Date.now();
-            const sttResult = await callSarvamStt(audioBase64, audioMimeType);
+            const sttResult = await callSarvamStt(audioBase64, audioMimeType, locale);
             sttLatencyMs = Date.now() - sttStartedAt;
             transcript = sttResult.transcript;
             sttConfidence = sttResult.confidence;

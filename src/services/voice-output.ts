@@ -1,5 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Speech from 'expo-speech';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio';
 import type { AssistantTurnResponse } from '@/types/ai';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 
@@ -9,34 +11,6 @@ interface PlaybackOptions {
   onStateChange?: (isPlaying: boolean) => void;
 }
 
-type ExpoAudioModule = {
-  Audio: {
-    Sound: {
-      createAsync: (
-        source: { uri: string },
-        initialStatus?: { shouldPlay?: boolean; rate?: number },
-      ) => Promise<{ sound: ExpoAudioSound }>;
-    };
-  };
-};
-
-type ExpoAudioSound = {
-  setOnPlaybackStatusUpdate: (
-    listener: (status: { didJustFinish?: boolean; isLoaded?: boolean }) => void,
-  ) => void;
-  stopAsync: () => Promise<void>;
-  unloadAsync: () => Promise<void>;
-  playAsync: () => Promise<void>;
-};
-
-let AudioModule: ExpoAudioModule | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  AudioModule = require('expo-av') as ExpoAudioModule;
-} catch {
-  AudioModule = null;
-}
-
 function resolveLocale(language: SupportedLanguageCode): string {
   if (language === 'mr') return 'mr-IN';
   if (language === 'hi') return 'hi-IN';
@@ -44,7 +18,9 @@ function resolveLocale(language: SupportedLanguageCode): string {
 }
 
 class VoiceOutputService {
-  private activeSound: ExpoAudioSound | null = null;
+  private activePlayer: AudioPlayer | null = null;
+
+  private activePlayerSubscription: { remove: () => void } | null = null;
 
   private lastMessageText: string | null = null;
 
@@ -52,41 +28,30 @@ class VoiceOutputService {
 
   private lastAudioUri: string | null = null;
 
-  private async playAudioBase64(
-    base64Audio: string,
-    mimeType: string,
-    options: PlaybackOptions,
-  ): Promise<boolean> {
-    if (!AudioModule?.Audio || !FileSystem.cacheDirectory) {
-      return false;
-    }
+  private async playAudioUri(fileUri: string, options: PlaybackOptions): Promise<boolean> {
+    if (!fileUri) return false;
 
-    const extension = mimeType.includes('wav') ? 'wav' : 'mp3';
-    const fileUri = `${FileSystem.cacheDirectory}assistant-voice-${Date.now()}.${extension}`;
-
-    await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
-      encoding: FileSystem.EncodingType.Base64,
+    await setAudioModeAsync({
+      allowsRecording: false,
+      playsInSilentMode: true,
+      interruptionMode: 'duckOthers',
+      shouldRouteThroughEarpiece: false,
+      shouldPlayInBackground: false,
     });
 
     await this.stop();
-    const { sound } = await AudioModule.Audio.Sound.createAsync(
-      { uri: fileUri },
-      {
-        shouldPlay: true,
-        rate: options.rate ?? 1,
-      },
-    );
-
-    this.activeSound = sound;
+    const player = createAudioPlayer(fileUri);
+    player.playbackRate = options.rate ?? 1;
+    this.activePlayer = player;
     this.lastAudioUri = fileUri;
 
     options.onStateChange?.(true);
-
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.didJustFinish || status.isLoaded === false) {
+    this.activePlayerSubscription = player.addListener('playbackStatusUpdate', (status) => {
+      if (status.didJustFinish || status.isLoaded === false || !status.playing) {
         options.onStateChange?.(false);
       }
     });
+    player.play();
 
     return true;
   }
@@ -101,15 +66,16 @@ class VoiceOutputService {
 
     try {
       const audio = response.message.audio;
-      if (audio?.base64) {
-        const played = await this.playAudioBase64(
-          audio.base64,
-          audio.mimeType ?? 'audio/mpeg',
-          options,
-        );
-        if (played) {
-          return;
-        }
+      if (audio?.base64 && FileSystem.cacheDirectory) {
+        const extension = (audio.mimeType ?? 'audio/mpeg').includes('wav') ? 'wav' : 'mp3';
+        const fileUri = `${FileSystem.cacheDirectory}assistant-voice-${Date.now()}.${extension}`;
+
+        await FileSystem.writeAsStringAsync(fileUri, audio.base64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        const played = await this.playAudioUri(fileUri, options);
+        if (played) return;
       }
 
       if (text) {
@@ -137,26 +103,15 @@ class VoiceOutputService {
     rate?: number;
     onStateChange?: (isPlaying: boolean) => void;
   }): Promise<void> {
-    const rate = options?.rate ?? 0.9;
+    const rate = options?.rate ?? 1;
 
-    if (this.lastAudioUri && AudioModule?.Audio) {
-      try {
-        await this.stop();
-        const { sound } = await AudioModule.Audio.Sound.createAsync(
-          { uri: this.lastAudioUri },
-          { shouldPlay: true, rate },
-        );
-        this.activeSound = sound;
-        options?.onStateChange?.(true);
-        sound.setOnPlaybackStatusUpdate((status) => {
-          if (status.didJustFinish || status.isLoaded === false) {
-            options?.onStateChange?.(false);
-          }
-        });
-        return;
-      } catch {
-        // Fall through to Speech replay.
-      }
+    if (this.lastAudioUri) {
+      const played = await this.playAudioUri(this.lastAudioUri, {
+        language: this.lastLanguage,
+        rate,
+        onStateChange: options?.onStateChange,
+      }).catch(() => false);
+      if (played) return;
     }
 
     if (this.lastMessageText) {
@@ -178,21 +133,21 @@ class VoiceOutputService {
       // no-op
     }
 
-    if (!this.activeSound) return;
+    this.activePlayerSubscription?.remove();
+    this.activePlayerSubscription = null;
 
+    if (!this.activePlayer) return;
     try {
-      await this.activeSound.stopAsync();
+      this.activePlayer.pause();
     } catch {
       // no-op
     }
-
     try {
-      await this.activeSound.unloadAsync();
+      this.activePlayer.remove();
     } catch {
       // no-op
     }
-
-    this.activeSound = null;
+    this.activePlayer = null;
   }
 }
 

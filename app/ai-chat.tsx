@@ -13,13 +13,15 @@ import {
   Modal,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  SpeechRecognitionModule,
-  isSpeechRecognitionAvailable,
-  useSpeechRecognitionEvent,
-} from '@/services/speech-recognition';
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from 'expo-audio';
+import { SpeechRecognitionModule, useSpeechRecognitionEvent } from '@/services/speech-recognition';
 
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -69,45 +71,6 @@ interface VoiceAudioPayload {
   inputAudioBase64: string;
   audioFormat: string;
   durationMs?: number | null;
-}
-
-type ExpoRecordingStatus = {
-  isRecording?: boolean;
-  durationMillis?: number;
-};
-
-type ExpoAudioRecording = {
-  stopAndUnloadAsync: () => Promise<void>;
-  getStatusAsync: () => Promise<ExpoRecordingStatus>;
-  getURI: () => string | null;
-};
-
-type ExpoAudioModule = {
-  Audio: {
-    requestPermissionsAsync: () => Promise<{ granted: boolean }>;
-    setAudioModeAsync: (options: {
-      allowsRecordingIOS?: boolean;
-      playsInSilentModeIOS?: boolean;
-      shouldDuckAndroid?: boolean;
-      playThroughEarpieceAndroid?: boolean;
-    }) => Promise<void>;
-    Recording: {
-      createAsync: (options: unknown) => Promise<{
-        recording: ExpoAudioRecording;
-      }>;
-      RecordingOptionsPresets: {
-        HIGH_QUALITY: unknown;
-      };
-    };
-  };
-};
-
-let AudioModule: ExpoAudioModule | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  AudioModule = require('expo-av') as ExpoAudioModule;
-} catch {
-  AudioModule = null;
 }
 
 interface AssistantTurnDiagnostics {
@@ -261,7 +224,8 @@ function inferAudioMimeType(uri: string): string {
   if (extension === 'caf') return 'audio/x-caf';
   if (extension === '3gp') return 'audio/3gpp';
   if (extension === 'amr') return 'audio/amr';
-  if (extension === 'm4a' || extension === 'mp4') return 'audio/mp4';
+  if (extension === 'm4a') return 'audio/x-m4a';
+  if (extension === 'mp4') return 'audio/mp4';
   return 'audio/mpeg';
 }
 
@@ -538,8 +502,11 @@ export default function AIChatScreen() {
   const pendingVoiceTranscriptRef = useRef('');
   const hasSubmittedVoiceQueryRef = useRef(false);
   const isStartingVoiceInputRef = useRef(false);
-  const activeVoiceRecordingRef = useRef<ExpoAudioRecording | null>(null);
+  const activeVoiceRecordingRef = useRef(false);
+  const voiceRecordingStartedAtRef = useRef<number | null>(null);
+  const lastVoiceCaptureErrorRef = useRef<string | null>(null);
   const isStoppingVoiceRecordingRef = useRef(false);
+  const voiceRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const sendMessageRef =
     useRef<
       (
@@ -673,22 +640,16 @@ export default function AIChatScreen() {
         setConversationSummaries(summaries);
       }
 
-      const firstConversationId = summaries[0]?.id ?? null;
-      const resolvedConversationId =
-        firstConversationId ??
-        (await assistantMemoryService.resolveLatestConversation({
-          farmId: contextFarm?.id ?? parsedFarmId ?? null,
-          locale: languageCode,
-        }));
+      const nextConversationId = await assistantMemoryService.createConversation({
+        farmId: contextFarm?.id ?? parsedFarmId ?? null,
+        locale: languageCode,
+      });
 
-      if (isCancelled || !resolvedConversationId) return;
+      if (isCancelled || !nextConversationId) return;
 
-      setConversationId(resolvedConversationId);
-
-      const history = await assistantMemoryService.loadRecentMessages(resolvedConversationId, 20);
-      if (!isCancelled && history.length > 0) {
-        setMessages((prev) => (prev.length > 0 ? prev : history));
-      }
+      setConversationId(nextConversationId);
+      setMessages([]);
+      setSuggestions(DEFAULT_SUGGESTIONS);
     };
 
     void bootstrapConversation();
@@ -696,7 +657,7 @@ export default function AIChatScreen() {
     return () => {
       isCancelled = true;
     };
-  }, [contextFarm?.id, languageCode, parsedFarmId]);
+  }, [DEFAULT_SUGGESTIONS, contextFarm?.id, languageCode, parsedFarmId]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -706,66 +667,109 @@ export default function AIChatScreen() {
 
   const startVoiceRecording = useCallback(async () => {
     if (Platform.OS === 'web') return;
-    if (!AudioModule?.Audio) return;
 
     try {
-      const permission = await AudioModule.Audio.requestPermissionsAsync();
+      const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) return;
 
-      await AudioModule.Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+        interruptionMode: 'duckOthers',
+        shouldRouteThroughEarpiece: false,
+        shouldPlayInBackground: false,
       });
 
-      const { recording } = await AudioModule.Audio.Recording.createAsync(
-        AudioModule.Audio.Recording.RecordingOptionsPresets.HIGH_QUALITY,
-      );
-      activeVoiceRecordingRef.current = recording;
+      await voiceRecorder.prepareToRecordAsync();
+      voiceRecorder.record();
+      activeVoiceRecordingRef.current = true;
+      voiceRecordingStartedAtRef.current = Date.now();
+      lastVoiceCaptureErrorRef.current = null;
     } catch (error) {
-      activeVoiceRecordingRef.current = null;
+      activeVoiceRecordingRef.current = false;
+      voiceRecordingStartedAtRef.current = null;
       if (__DEV__) {
         console.warn('Voice recording start failed:', error);
       }
       try {
-        await AudioModule.Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
+        await setAudioModeAsync({
+          allowsRecording: false,
+          playsInSilentMode: true,
+          interruptionMode: 'duckOthers',
+          shouldRouteThroughEarpiece: false,
+          shouldPlayInBackground: false,
         });
       } catch {
         // no-op
       }
     }
-  }, []);
+  }, [voiceRecorder]);
 
   const stopVoiceRecording = useCallback(
     async (options?: { discard?: boolean }): Promise<VoiceAudioPayload | null> => {
       if (isStoppingVoiceRecordingRef.current) return null;
 
-      const recording = activeVoiceRecordingRef.current;
-      activeVoiceRecordingRef.current = null;
-      if (!recording) return null;
+      if (!activeVoiceRecordingRef.current && isStartingVoiceInputRef.current) {
+        for (let attempt = 0; attempt < 25; attempt++) {
+          if (activeVoiceRecordingRef.current) break;
+          await new Promise((resolve) => setTimeout(resolve, 40));
+        }
+      }
+
+      if (!activeVoiceRecordingRef.current) {
+        lastVoiceCaptureErrorRef.current = 'recording_not_active';
+        return null;
+      }
+      activeVoiceRecordingRef.current = false;
 
       isStoppingVoiceRecordingRef.current = true;
       try {
-        await recording.stopAndUnloadAsync();
-        const status = await recording.getStatusAsync();
-        const durationMs =
-          !status.isRecording && typeof status.durationMillis === 'number'
-            ? status.durationMillis
-            : null;
-        const uri = recording.getURI();
+        const startedAt = voiceRecordingStartedAtRef.current;
+        if (startedAt) {
+          const elapsed = Date.now() - startedAt;
+          if (elapsed < 700) {
+            await new Promise((resolve) => setTimeout(resolve, 700 - elapsed));
+          }
+        }
+
+        await voiceRecorder.stop();
+        let status = voiceRecorder.getStatus();
+        let durationMs = typeof status.durationMillis === 'number' ? status.durationMillis : null;
+        let uri = voiceRecorder.uri ?? status.url;
+
+        // On some devices the recorder status/file URL is not ready immediately after stop().
+        for (let attempt = 0; attempt < 15 && (!uri || !durationMs || durationMs <= 0); attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, 80));
+          status = voiceRecorder.getStatus();
+          durationMs =
+            typeof status.durationMillis === 'number' ? status.durationMillis : durationMs;
+          uri = voiceRecorder.uri ?? status.url ?? uri;
+        }
+
         if (!uri || options?.discard) {
+          if (!uri && !options?.discard) {
+            lastVoiceCaptureErrorRef.current = 'recording_uri_missing';
+          }
           return null;
+        }
+
+        for (let attempt = 0; attempt < 15; attempt++) {
+          const info = await FileSystem.getInfoAsync(uri);
+          if (info.exists && typeof info.size === 'number' && info.size > 0) {
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 80));
         }
 
         const inputAudioBase64 = await FileSystem.readAsStringAsync(uri, {
           encoding: 'base64',
         });
         if (!inputAudioBase64.trim()) {
+          lastVoiceCaptureErrorRef.current = 'recording_base64_empty';
           return null;
         }
+
+        lastVoiceCaptureErrorRef.current = null;
 
         return {
           inputAudioBase64,
@@ -773,23 +777,29 @@ export default function AIChatScreen() {
           durationMs,
         };
       } catch (error) {
+        lastVoiceCaptureErrorRef.current =
+          error instanceof Error && error.message ? error.message : 'recording_stop_failed';
         if (__DEV__) {
           console.warn('Voice recording stop failed:', error);
         }
         return null;
       } finally {
         isStoppingVoiceRecordingRef.current = false;
+        voiceRecordingStartedAtRef.current = null;
         try {
-          await AudioModule?.Audio?.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            playsInSilentModeIOS: true,
+          await setAudioModeAsync({
+            allowsRecording: false,
+            playsInSilentMode: true,
+            interruptionMode: 'duckOthers',
+            shouldRouteThroughEarpiece: false,
+            shouldPlayInBackground: false,
           });
         } catch {
           // no-op
         }
       }
     },
-    [],
+    [voiceRecorder],
   );
 
   const submitVoiceTranscript = useCallback(
@@ -803,10 +813,41 @@ export default function AIChatScreen() {
       setIsVoiceModeContinuousEnabled(true);
 
       const voicePayload = await stopVoiceRecording();
+      if (!voicePayload?.inputAudioBase64?.trim()) {
+        hasSubmittedVoiceQueryRef.current = false;
+        Alert.alert(
+          'Server STT not used',
+          'No audio payload was captured, so this turn would skip server speech-to-text. Please retry after rebuilding the app with microphone recording support.',
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
       void sendMessageRef.current?.(normalizedTranscript, 'voice', voicePayload);
     },
-    [stopVoiceRecording],
+    [stopVoiceRecording, t],
   );
+
+  const finalizeVoiceCaptureAndSend = useCallback(async () => {
+    if (hasSubmittedVoiceQueryRef.current) return;
+    hasSubmittedVoiceQueryRef.current = true;
+    setVoiceInputState('idle');
+    const voicePayload = await stopVoiceRecording();
+    if (!voicePayload?.inputAudioBase64?.trim()) {
+      hasSubmittedVoiceQueryRef.current = false;
+      const reason = lastVoiceCaptureErrorRef.current
+        ? ` (${lastVoiceCaptureErrorRef.current})`
+        : '';
+      Alert.alert(
+        'Server STT not used',
+        `No audio payload was captured${reason}. Tap Speak, wait 1 second, talk for at least 1 second, then tap Stop.`,
+        [{ text: t('common.ok') }],
+      );
+      return;
+    }
+
+    const previewText = liveVoiceTranscript.trim() || 'Voice message';
+    void sendMessageRef.current?.(previewText, 'voice', voicePayload);
+  }, [liveVoiceTranscript, stopVoiceRecording, t]);
 
   const handleSendMessage = useCallback(
     async (
@@ -1645,12 +1686,23 @@ export default function AIChatScreen() {
     setInputText(transcript);
     setLiveVoiceTranscript(transcript);
 
-    if (event.isFinal && transcript.trim() && !hasSubmittedVoiceQueryRef.current) {
+    if (
+      !assistantFeatureFlags.serverVoiceEnabled &&
+      event.isFinal &&
+      transcript.trim() &&
+      !hasSubmittedVoiceQueryRef.current
+    ) {
       void submitVoiceTranscript(transcript);
     }
   });
 
   useSpeechRecognitionEvent('end', () => {
+    if (assistantFeatureFlags.serverVoiceEnabled) {
+      if (!hasSubmittedVoiceQueryRef.current && voiceInputState !== 'idle') {
+        void finalizeVoiceCaptureAndSend();
+      }
+      return;
+    }
     const finalTranscript = pendingVoiceTranscriptRef.current.trim();
     if (finalTranscript && !hasSubmittedVoiceQueryRef.current) {
       void submitVoiceTranscript(finalTranscript);
@@ -1661,6 +1713,14 @@ export default function AIChatScreen() {
   });
 
   useSpeechRecognitionEvent('error', (event) => {
+    if (assistantFeatureFlags.serverVoiceEnabled) {
+      if (event.error === 'aborted') {
+        setVoiceInputState('idle');
+        return;
+      }
+      // Let manual stop continue to work even if speech recognition is unavailable.
+      return;
+    }
     void stopVoiceRecording({ discard: true });
     if (event.error === 'aborted') {
       setVoiceInputState('idle');
@@ -1701,7 +1761,7 @@ export default function AIChatScreen() {
   }, [stopVoiceRecording]);
 
   const startVoiceInput = useCallback(async () => {
-    if (Platform.OS === 'web' || !isSpeechRecognitionAvailable) {
+    if (Platform.OS === 'web') {
       Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
         { text: t('common.ok') },
       ]);
@@ -1727,6 +1787,15 @@ export default function AIChatScreen() {
       }
 
       await startVoiceRecording();
+      if (!activeVoiceRecordingRef.current) {
+        setVoiceInputState('idle');
+        Alert.alert(
+          'Server STT not ready',
+          'Microphone recording could not be started, so server speech-to-text cannot be used.',
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
 
       await Promise.resolve(
         SpeechRecognitionModule.start({
@@ -1749,7 +1818,11 @@ export default function AIChatScreen() {
     }
   }, [isLoading, speechLocale, startVoiceRecording, stopVoiceRecording, t, voiceInputState]);
 
-  const stopVoiceInput = useCallback(() => {
+  const stopVoiceInput = useCallback(async () => {
+    if (assistantFeatureFlags.serverVoiceEnabled) {
+      await finalizeVoiceCaptureAndSend();
+      return;
+    }
     try {
       SpeechRecognitionModule.stop();
     } catch (error) {
@@ -1758,10 +1831,10 @@ export default function AIChatScreen() {
       }
       setVoiceInputState('idle');
     }
-  }, []);
+  }, [finalizeVoiceCaptureAndSend]);
 
   const openVoiceMode = useCallback(() => {
-    if (Platform.OS === 'web' || !isSpeechRecognitionAvailable) {
+    if (Platform.OS === 'web') {
       Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
         { text: t('common.ok') },
       ]);
@@ -1775,7 +1848,7 @@ export default function AIChatScreen() {
 
   const closeVoiceMode = useCallback(() => {
     if (isVoiceListening) {
-      stopVoiceInput();
+      void stopVoiceInput();
     }
     setIsVoiceModeVisible(false);
     setIsVoiceModeContinuousEnabled(false);
@@ -2986,7 +3059,7 @@ export default function AIChatScreen() {
                 onPress={() => {
                   if (isVoiceListening) {
                     setIsVoiceModeContinuousEnabled(false);
-                    stopVoiceInput();
+                    void stopVoiceInput();
                     return;
                   }
                   setIsVoiceModeContinuousEnabled(true);
