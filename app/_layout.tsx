@@ -19,6 +19,7 @@ import {
   useThemeStore,
 } from '@/stores';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { OfflineBanner } from '@/components/ui/offline-banner';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
   cancelNotification,
@@ -284,6 +285,7 @@ export default Sentry.wrap(function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <I18nextProvider i18n={i18n}>
               <StatusBar style={isDark ? 'light' : 'dark'} />
+              <OfflineBanner />
               <Stack
                 screenOptions={{
                   headerShown: false,

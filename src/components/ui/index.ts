@@ -15,3 +15,9 @@ export {
   InfoCard,
   PreviewCard,
 } from './form-components';
+
+// Offline-first UI indicators
+export { OfflineBanner } from './offline-banner';
+export { SyncStatusBadge } from './sync-status-badge';
+export { SyncItemIndicator } from './sync-item-indicator';
+export { StaleDataBanner } from './stale-data-banner';
