@@ -2,6 +2,9 @@
  * Records Hooks
  * React Query hooks for farm record CRUD operations
  * Covers: Irrigation, Spray, Fertigation, Harvest, Expense, Daily Note records
+ *
+ * WRITE operations (Phase 3) now go through PowerSync local DB when
+ * available, falling back to direct Supabase writes otherwise.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -23,6 +26,19 @@ import {
   type FertilizerItem,
 } from '../types';
 import { resolveSeasonIdForDate } from '../lib/season-context';
+import {
+  useOfflineCreateIrrigationRecord,
+  useOfflineDeleteIrrigationRecord,
+  useOfflineCreateSprayRecord,
+  useOfflineDeleteSprayRecord,
+  useOfflineCreateFertigationRecord,
+  useOfflineDeleteFertigationRecord,
+  useOfflineCreateHarvestRecord,
+  useOfflineDeleteHarvestRecord,
+  useOfflineCreateExpenseRecord,
+  useOfflineDeleteExpenseRecord,
+  useOfflineUpsertDailyNote,
+} from './use-offline-record-mutations';
 
 // ============================================================
 // MARK: - IRRIGATION RECORDS
@@ -71,6 +87,7 @@ export function useIrrigationRecordsByFarms(farmIds: number[]) {
 
 export function useCreateIrrigationRecord() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateIrrigationRecord();
 
   return useMutation({
     mutationFn: async (record: IrrigationRecordInsert): Promise<IrrigationRecord> => {
@@ -80,14 +97,7 @@ export function useCreateIrrigationRecord() {
           farmId: record.farm_id,
           date: record.date,
         }));
-      const { data, error } = await supabase
-        .from(TABLES.IRRIGATION_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineCreate.mutateAsync({ ...record, season_id: seasonId });
     },
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
@@ -131,12 +141,11 @@ export function useUpdateIrrigationRecord() {
 
 export function useDeleteIrrigationRecord() {
   const queryClient = useQueryClient();
+  const offlineDelete = useOfflineDeleteIrrigationRecord();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.IRRIGATION_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
+    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+      return offlineDelete.mutateAsync({ id, farmId });
     },
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
@@ -193,6 +202,7 @@ export function useSprayRecordsByFarms(farmIds: number[]) {
 
 export function useCreateSprayRecord() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateSprayRecord();
 
   return useMutation({
     mutationFn: async (record: SprayRecordInsert): Promise<SprayRecord> => {
@@ -202,14 +212,7 @@ export function useCreateSprayRecord() {
           farmId: record.farm_id,
           date: record.date,
         }));
-      const { data, error } = await supabase
-        .from(TABLES.SPRAY_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineCreate.mutateAsync({ ...record, season_id: seasonId });
     },
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
@@ -250,12 +253,11 @@ export function useUpdateSprayRecord() {
 
 export function useDeleteSprayRecord() {
   const queryClient = useQueryClient();
+  const offlineDelete = useOfflineDeleteSprayRecord();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.SPRAY_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
+    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+      return offlineDelete.mutateAsync({ id, farmId });
     },
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
@@ -312,6 +314,7 @@ export function useFertigationRecordsByFarms(farmIds: number[]) {
 
 export function useCreateFertigationRecord() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateFertigationRecord();
 
   return useMutation({
     mutationFn: async (record: FertigationRecordInsert): Promise<FertigationRecord> => {
@@ -321,14 +324,7 @@ export function useCreateFertigationRecord() {
           farmId: record.farm_id,
           date: record.date,
         }));
-      const { data, error } = await supabase
-        .from(TABLES.FERTIGATION_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineCreate.mutateAsync({ ...record, season_id: seasonId });
     },
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
@@ -369,12 +365,11 @@ export function useUpdateFertigationRecord() {
 
 export function useDeleteFertigationRecord() {
   const queryClient = useQueryClient();
+  const offlineDelete = useOfflineDeleteFertigationRecord();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.FERTIGATION_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
+    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+      return offlineDelete.mutateAsync({ id, farmId });
     },
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
@@ -431,6 +426,7 @@ export function useHarvestRecordsByFarms(farmIds: number[]) {
 
 export function useCreateHarvestRecord() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateHarvestRecord();
 
   return useMutation({
     mutationFn: async (record: HarvestRecordInsert): Promise<HarvestRecord> => {
@@ -440,14 +436,7 @@ export function useCreateHarvestRecord() {
           farmId: record.farm_id,
           date: record.date,
         }));
-      const { data, error } = await supabase
-        .from(TABLES.HARVEST_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineCreate.mutateAsync({ ...record, season_id: seasonId });
     },
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
@@ -488,12 +477,11 @@ export function useUpdateHarvestRecord() {
 
 export function useDeleteHarvestRecord() {
   const queryClient = useQueryClient();
+  const offlineDelete = useOfflineDeleteHarvestRecord();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.HARVEST_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
+    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+      return offlineDelete.mutateAsync({ id, farmId });
     },
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
@@ -550,6 +538,7 @@ export function useExpenseRecordsByFarms(farmIds: number[]) {
 
 export function useCreateExpenseRecord() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateExpenseRecord();
 
   return useMutation({
     mutationFn: async (record: ExpenseRecordInsert): Promise<ExpenseRecord> => {
@@ -559,14 +548,7 @@ export function useCreateExpenseRecord() {
           farmId: record.farm_id,
           date: record.date,
         }));
-      const { data, error } = await supabase
-        .from(TABLES.EXPENSE_RECORDS)
-        .insert({ ...record, season_id: seasonId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineCreate.mutateAsync({ ...record, season_id: seasonId });
     },
     onSuccess: (newRecord) => {
       queryClient.invalidateQueries({
@@ -607,12 +589,11 @@ export function useUpdateExpenseRecord() {
 
 export function useDeleteExpenseRecord() {
   const queryClient = useQueryClient();
+  const offlineDelete = useOfflineDeleteExpenseRecord();
 
   return useMutation({
-    mutationFn: async ({ id, farmId: _farmId }: { id: number; farmId: number }): Promise<void> => {
-      const { error } = await supabase.from(TABLES.EXPENSE_RECORDS).delete().eq('id', id);
-
-      if (error) throw error;
+    mutationFn: async ({ id, farmId }: { id: number; farmId: number }): Promise<void> => {
+      return offlineDelete.mutateAsync({ id, farmId });
     },
     onSuccess: (_, { farmId }) => {
       queryClient.invalidateQueries({
@@ -646,6 +627,7 @@ export function useDailyNoteByDate(farmId: number | undefined, date: string | un
 
 export function useUpsertDailyNote() {
   const queryClient = useQueryClient();
+  const offlineUpsert = useOfflineUpsertDailyNote();
 
   return useMutation({
     mutationFn: async ({
@@ -658,23 +640,7 @@ export function useUpsertDailyNote() {
       notes: string;
     }): Promise<DailyNoteRecord> => {
       const seasonId = await resolveSeasonIdForDate({ farmId: farm_id, date });
-      const { data, error } = await supabase
-        .from(TABLES.DAILY_NOTES)
-        .upsert(
-          {
-            farm_id,
-            season_id: seasonId,
-            date,
-            notes: notes.trim(),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'farm_id,date' },
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineUpsert.mutateAsync({ farm_id, date, notes, season_id: seasonId });
     },
     onSuccess: (savedNote) => {
       queryClient.invalidateQueries({

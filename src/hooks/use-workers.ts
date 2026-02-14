@@ -2,6 +2,9 @@
  * Workers Hooks
  * React Query hooks for worker management
  * Covers: Workers, Attendance, Transactions, Settlements, Work Types
+ *
+ * WRITE operations (Phase 3) now go through PowerSync local DB when
+ * available, falling back to direct Supabase writes otherwise.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +27,16 @@ import {
   type TemporaryWorkerEntryInsert,
 } from '../types';
 import { resolveSeasonIdForDate } from '../lib/season-context';
+import {
+  useOfflineCreateWorker,
+  useOfflineUpdateWorker,
+  useOfflineDeleteWorker,
+  useOfflineCreateWorkerAttendance,
+  useOfflineDeleteWorkerAttendance,
+  useOfflineCreateWorkerTransaction,
+  useOfflineCreateTemporaryWorkerEntry,
+  useOfflineDeleteTemporaryWorkerEntry,
+} from './use-offline-worker-mutations';
 
 // ============================================================
 // MARK: - Helper
@@ -77,19 +90,11 @@ export function useWorker(id: number | undefined) {
 
 export function useCreateWorker() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateWorker();
 
   return useMutation({
     mutationFn: async (worker: WorkerInsert): Promise<Worker> => {
-      const userId = await getUserId();
-
-      const { data, error } = await supabase
-        .from(TABLES.WORKERS)
-        .insert({ ...worker, user_id: userId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineCreate.mutateAsync(worker);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.workers.all });
@@ -99,18 +104,11 @@ export function useCreateWorker() {
 
 export function useUpdateWorker() {
   const queryClient = useQueryClient();
+  const offlineUpdate = useOfflineUpdateWorker();
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: WorkerUpdate }): Promise<Worker> => {
-      const { data, error } = await supabase
-        .from(TABLES.WORKERS)
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineUpdate.mutateAsync({ id, updates });
     },
     onSuccess: (updatedWorker) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.workers.all });
@@ -123,12 +121,11 @@ export function useUpdateWorker() {
 
 export function useDeleteWorker() {
   const queryClient = useQueryClient();
+  const offlineDelete = useOfflineDeleteWorker();
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const { error } = await supabase.from(TABLES.WORKERS).delete().eq('id', id);
-
-      if (error) throw error;
+      return offlineDelete.mutateAsync(id);
     },
     onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.workers.all });
@@ -179,17 +176,11 @@ export function useWorkerAttendance(workerId: number | undefined) {
 
 export function useCreateWorkerAttendance() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateWorkerAttendance();
 
   return useMutation({
     mutationFn: async (attendance: WorkerAttendanceInsert): Promise<WorkerAttendance> => {
-      const { data, error } = await supabase
-        .from(TABLES.WORKER_ATTENDANCE)
-        .insert(attendance)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineCreate.mutateAsync(attendance);
     },
     onSuccess: (newAttendance) => {
       queryClient.invalidateQueries({

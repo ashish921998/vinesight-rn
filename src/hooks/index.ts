@@ -46,6 +46,41 @@ export {
 export { usePendingSyncCount } from './use-pending-sync';
 export { useSyncStatus, type SyncStatus } from './use-sync-status';
 
+// Offline Record Mutations (PowerSync local writes with Supabase fallback)
+export {
+  useOfflineCreateIrrigationRecord,
+  useOfflineDeleteIrrigationRecord,
+  useOfflineCreateSprayRecord,
+  useOfflineDeleteSprayRecord,
+  useOfflineCreateFertigationRecord,
+  useOfflineDeleteFertigationRecord,
+  useOfflineCreateHarvestRecord,
+  useOfflineDeleteHarvestRecord,
+  useOfflineCreateExpenseRecord,
+  useOfflineDeleteExpenseRecord,
+  useOfflineUpsertDailyNote,
+} from './use-offline-record-mutations';
+
+// Offline Task Mutations
+export {
+  useOfflineCreateTask,
+  useOfflineUpdateTask,
+  useOfflineCompleteTask,
+  useOfflineDeleteTask,
+} from './use-offline-task-mutations';
+
+// Offline Worker Mutations
+export {
+  useOfflineCreateWorker,
+  useOfflineUpdateWorker,
+  useOfflineDeleteWorker,
+  useOfflineCreateWorkerAttendance,
+  useOfflineDeleteWorkerAttendance,
+  useOfflineCreateWorkerTransaction,
+  useOfflineCreateTemporaryWorkerEntry,
+  useOfflineDeleteTemporaryWorkerEntry,
+} from './use-offline-worker-mutations';
+
 // Record Hooks (Irrigation, Spray, Fertigation, Harvest, Expense)
 export {
   // Irrigation

@@ -16,3 +16,4 @@ export {
   PreviewCard,
 } from './form-components';
 export { PendingSyncBadge } from './pending-sync-badge';
+export { OfflineBanner } from './offline-banner';

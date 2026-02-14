@@ -8,14 +8,14 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, type ViewStyle } from 'react-native';
 import { usePendingSyncCount } from '@/hooks/use-pending-sync';
 import { useM3 } from '@/styles/use-theme';
 import { fontSize, fontWeight, borderRadius, spacing } from '@/styles/theme';
 
 interface PendingSyncBadgeProps {
   /** Optional style override for the container */
-  style?: object;
+  style?: ViewStyle;
 }
 
 /**
@@ -39,9 +39,14 @@ export function PendingSyncBadge({ style }: PendingSyncBadgeProps) {
   return (
     <View
       style={[
-        styles.container,
         {
-          backgroundColor: m3.tertiaryContainer,
+          flexDirection: 'row' as const,
+          alignItems: 'center' as const,
+          paddingHorizontal: spacing[2],
+          paddingVertical: spacing[1],
+          borderRadius: borderRadius.full,
+          gap: 4,
+          backgroundColor: m3.colorScheme.tertiaryContainer,
         },
         style,
       ]}
@@ -49,18 +54,20 @@ export function PendingSyncBadge({ style }: PendingSyncBadgeProps) {
       accessibilityLabel={`${count} change${count === 1 ? '' : 's'} pending sync`}
     >
       <Text
-        style={[
-          styles.icon,
-          { color: m3.onTertiaryContainer },
-        ]}
+        style={{
+          fontSize: fontSize.xs,
+          fontWeight: fontWeight.bold,
+          color: m3.colorScheme.onTertiaryContainer,
+        }}
       >
         ↑
       </Text>
       <Text
-        style={[
-          styles.text,
-          { color: m3.onTertiaryContainer },
-        ]}
+        style={{
+          fontSize: fontSize.xs,
+          fontWeight: fontWeight.semibold,
+          color: m3.colorScheme.onTertiaryContainer,
+        }}
         numberOfLines={1}
       >
         {label}
@@ -68,22 +75,3 @@ export function PendingSyncBadge({ style }: PendingSyncBadgeProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    gap: 4,
-  },
-  icon: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.bold as '700',
-  },
-  text: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold as '600',
-  },
-});

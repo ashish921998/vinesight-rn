@@ -1,6 +1,9 @@
 /**
  * Task Hooks for Vinesight
  * React Query hooks for task reminders CRUD operations
+ *
+ * WRITE operations (Phase 3) now go through PowerSync local DB when
+ * available, falling back to direct Supabase writes otherwise.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,6 +13,12 @@ import { formatLocalDate } from '../utils/date';
 import { resolveSeasonIdForDate } from '../lib/season-context';
 import { encodeTaskPlanInDescription } from '../utils/task-plan';
 import { telemetry } from '../services/telemetry';
+import {
+  useOfflineCreateTask,
+  useOfflineUpdateTask,
+  useOfflineCompleteTask,
+  useOfflineDeleteTask,
+} from './use-offline-task-mutations';
 
 // Query keys for tasks
 export const taskQueryKeys = {
@@ -104,10 +113,10 @@ export function useAllTasks(seasonId?: number) {
  */
 export function useCreateTask() {
   const queryClient = useQueryClient();
+  const offlineCreate = useOfflineCreateTask();
 
   return useMutation({
     mutationFn: async (task: TaskReminderInsert): Promise<TaskReminder> => {
-      const userId = await getUserId();
       const assignmentDate = task.due_date
         ? task.due_date.slice(0, 10)
         : formatLocalDate(new Date());
@@ -118,38 +127,7 @@ export function useCreateTask() {
           date: assignmentDate,
         }));
 
-      const payload = {
-        ...task,
-        season_id: seasonId,
-        created_by: userId,
-      };
-
-      const firstAttempt = await supabase.from('task_reminders').insert(payload).select().single();
-      if (!firstAttempt.error) return firstAttempt.data;
-
-      if (!isMissingPlannedInputsColumnError(firstAttempt.error, 'planned_inputs' in payload)) {
-        throw firstAttempt.error;
-      }
-      telemetry.capture('task_planned_inputs_column_missing', {
-        operation: 'insert',
-      });
-
-      const { planned_inputs: _plannedInputs, ...fallbackPayload } = payload;
-      const encodedDescription = encodeTaskPlanInDescription(
-        fallbackPayload.description,
-        payload.planned_inputs,
-      );
-      const fallbackAttempt = await supabase
-        .from('task_reminders')
-        .insert({
-          ...fallbackPayload,
-          description: encodedDescription,
-        })
-        .select()
-        .single();
-
-      if (fallbackAttempt.error) throw fallbackAttempt.error;
-      return fallbackAttempt.data;
+      return offlineCreate.mutateAsync({ ...task, season_id: seasonId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
@@ -162,6 +140,7 @@ export function useCreateTask() {
  */
 export function useUpdateTask() {
   const queryClient = useQueryClient();
+  const offlineUpdate = useOfflineUpdateTask();
 
   return useMutation({
     mutationFn: async ({
@@ -171,39 +150,7 @@ export function useUpdateTask() {
       id: number;
       updates: TaskReminderUpdate;
     }): Promise<TaskReminder> => {
-      const firstAttempt = await supabase
-        .from('task_reminders')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (!firstAttempt.error) return firstAttempt.data;
-
-      if (!isMissingPlannedInputsColumnError(firstAttempt.error, 'planned_inputs' in updates)) {
-        throw firstAttempt.error;
-      }
-      telemetry.capture('task_planned_inputs_column_missing', {
-        operation: 'update',
-      });
-
-      const { planned_inputs: _plannedInputs, ...fallbackUpdates } = updates;
-      const encodedDescription =
-        'description' in updates
-          ? encodeTaskPlanInDescription(fallbackUpdates.description, updates.planned_inputs)
-          : fallbackUpdates.description;
-      const fallbackAttempt = await supabase
-        .from('task_reminders')
-        .update({
-          ...fallbackUpdates,
-          ...(encodedDescription !== undefined ? { description: encodedDescription } : {}),
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (fallbackAttempt.error) throw fallbackAttempt.error;
-      return fallbackAttempt.data;
+      return offlineUpdate.mutateAsync({ id, updates });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
@@ -216,22 +163,11 @@ export function useUpdateTask() {
  */
 export function useCompleteTask() {
   const queryClient = useQueryClient();
+  const offlineComplete = useOfflineCompleteTask();
 
   return useMutation({
     mutationFn: async (id: number): Promise<TaskReminder> => {
-      const { data, error } = await supabase
-        .from('task_reminders')
-        .update({
-          status: 'completed',
-          completed: true,
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return offlineComplete.mutateAsync(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
@@ -244,12 +180,11 @@ export function useCompleteTask() {
  */
 export function useDeleteTask() {
   const queryClient = useQueryClient();
+  const offlineDelete = useOfflineDeleteTask();
 
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
-      const { error } = await supabase.from('task_reminders').delete().eq('id', id);
-
-      if (error) throw error;
+      return offlineDelete.mutateAsync(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
