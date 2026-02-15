@@ -258,15 +258,12 @@ export default function LabTestForm({
 
   const handleSelectPDF = async () => {
     try {
-      setIsParsingPDF(true);
-
       const result = await DocumentPicker.getDocumentAsync({
         type: 'application/pdf',
         copyToCacheDirectory: true,
       });
 
       if (result.canceled || !result.assets || result.assets.length === 0) {
-        setIsParsingPDF(false);
         return;
       }
 
@@ -274,7 +271,6 @@ export default function LabTestForm({
 
       if (!file.uri) {
         Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.invalidPdfFile'));
-        setIsParsingPDF(false);
         return;
       }
 
@@ -282,7 +278,6 @@ export default function LabTestForm({
     } catch (error) {
       console.error('Error selecting PDF:', error);
       Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.failedToSelectPdf'));
-      setIsParsingPDF(false);
     }
   };
 

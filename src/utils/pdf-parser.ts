@@ -89,15 +89,29 @@ export async function parseLabTestFromImage(
 
     const response = data as ParseResponse;
 
+    const chemicalNameMap: Record<string, string> = {
+      'no3-n': 'nitrate_nitrogen',
+      'nh4-n': 'ammoniacal_nitrogen',
+      nitrate_n: 'nitrate_nitrogen',
+      ammonium_n: 'ammoniacal_nitrogen',
+      'n-no3': 'nitrate_nitrogen',
+      'n-nh4': 'ammoniacal_nitrogen',
+    };
+
     const cleanParameters: Record<string, number> = {};
     for (const { name, value } of response.parameters || []) {
-      let normalizedKey = name
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/[^a-z0-9_]/g, '');
+      const lowerName = name.trim().toLowerCase();
 
-      // Fix common spelling variations
+      if (chemicalNameMap[lowerName]) {
+        const param = parameters.find((p) => p.key === chemicalNameMap[lowerName]);
+        if (param && typeof value === 'number' && !isNaN(value)) {
+          cleanParameters[param.key] = value;
+        }
+        continue;
+      }
+
+      let normalizedKey = lowerName.replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
       if (normalizedKey === 'ammonical_nitrogen') {
         normalizedKey = 'ammoniacal_nitrogen';
       }
