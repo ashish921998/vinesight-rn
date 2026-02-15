@@ -15,11 +15,13 @@ import {
   normalizeDate,
   type DateRange,
 } from '@/utils/worker-analytics';
-import { m3, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export default function WorkerAnalyticsDetailScreen() {
   const { t } = useTranslation();
+  const m3 = useM3();
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const rawWorkerId = Number(id);
@@ -547,6 +549,7 @@ export default function WorkerAnalyticsDetailScreen() {
 }
 
 function StatChip({ label, value }: { label: string; value: string }) {
+  const m3 = useM3();
   return (
     <View
       style={{

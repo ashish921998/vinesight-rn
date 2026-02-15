@@ -297,7 +297,7 @@ async function callOpenAIProxy(params: {
   max_tokens?: number;
   response_format?: { type: string };
 }): Promise<OpenAICompletionResponse> {
-  const { data, error } = await supabase.functions.invoke('openai-proxy', {
+  const { data, error } = await supabase.functions.invoke('dynamic-api', {
     body: params,
   });
 

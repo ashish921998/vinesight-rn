@@ -23,49 +23,8 @@ import {
 } from '../../hooks/use-lab-tests';
 import { useFarm } from '@/hooks/use-farms';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '@/constants/lab-test-parameters';
-import { parseLabTestFromImage, parseLabTestFromText } from '../../utils/pdf-parser';
-import { extractTextFromPDF } from '../../utils/pdf-to-image';
-
-function normalizeParameterKey(key: string, isSoil: boolean): string {
-  if (isSoil) {
-    const soilKeyMap: Record<string, string> = {
-      pH: 'ph',
-      EC: 'ec',
-      OC: 'organicCarbon',
-      OM: 'organicMatter',
-      N: 'nitrogen',
-      P: 'phosphorus',
-      K: 'potassium',
-      Ca: 'calcium',
-      Mg: 'magnesium',
-      S: 'sulfur',
-      Fe: 'iron',
-      Mn: 'manganese',
-      Zn: 'zinc',
-      Cu: 'copper',
-      B: 'boron',
-    };
-    return soilKeyMap[key] || key;
-  } else {
-    const petioleKeyMap: Record<string, string> = {
-      N: 'total_nitrogen',
-      P: 'phosphorus',
-      K: 'potassium',
-      Ca: 'calcium',
-      Mg: 'magnesium',
-      S: 'sulfur',
-      Fe: 'iron',
-      Mn: 'manganese',
-      Zn: 'zinc',
-      Cu: 'copper',
-      B: 'boron',
-      Mo: 'molybdenum',
-      Na: 'sodium',
-      Cl: 'chloride',
-    };
-    return petioleKeyMap[key] || key;
-  }
-}
+import { parseLabTestFromImage } from '../../utils/pdf-parser';
+import { normalizeParameterKey } from '../../utils/lab-test-utils';
 
 interface LabTestFormProps {
   visible?: boolean;
@@ -255,8 +214,6 @@ export default function LabTestForm({
 
   const handleSelectPDF = async () => {
     try {
-      setIsParsingPDF(true);
-
       const result = await DocumentPicker.getDocumentAsync({
         type: 'application/pdf',
         copyToCacheDirectory: true,
@@ -267,81 +224,16 @@ export default function LabTestForm({
       }
 
       const file = result.assets[0];
+
       if (!file.uri) {
         Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.invalidPdfFile'));
         return;
       }
 
-      try {
-        const extractedText = await extractTextFromPDF(file.uri);
-
-        if (!extractedText) {
-          Alert.alert(
-            t('labTests.upload.pdfProcessingTitle'),
-            t('labTests.upload.pdfProcessingBody'),
-            [
-              {
-                text: t('common.ok'),
-                style: 'default',
-              },
-            ],
-          );
-          return;
-        }
-
-        const parsedData = await parseLabTestFromText(extractedText, testType);
-
-        if (Object.keys(parsedData.parameters).length === 0) {
-          Alert.alert(
-            t('labTests.upload.noDataFoundTitle'),
-            t('labTests.upload.noDataFoundPdfBody'),
-            [{ text: t('common.ok') }],
-          );
-          return;
-        }
-
-        if (parsedData.testDate) {
-          const parsedDate = new Date(parsedData.testDate);
-          if (!isNaN(parsedDate.getTime())) {
-            setDate(parsedDate);
-          }
-        }
-
-        if (parsedData.parameters) {
-          const stringParams: Record<string, string> = {};
-          Object.entries(parsedData.parameters).forEach(([key, value]) => {
-            const normalizedKey = normalizeParameterKey(key, isSoil);
-            stringParams[normalizedKey] = (value as number).toString();
-          });
-          setParameters(stringParams);
-        }
-
-        if (parsedData.recommendations) {
-          setRecommendations(parsedData.recommendations);
-        }
-
-        if (parsedData.notes) {
-          setNotes(parsedData.notes);
-        }
-
-        Alert.alert(
-          t('labTests.upload.successTitle'),
-          t('labTests.upload.successBody', { count: Object.keys(parsedData.parameters).length }),
-          [{ text: t('common.ok') }],
-        );
-      } catch (parseError) {
-        console.error('Parsing error:', parseError);
-        Alert.alert(
-          t('labTests.upload.parsingFailedTitle'),
-          t('labTests.upload.parsingFailedBody'),
-          [{ text: t('common.ok') }],
-        );
-      }
+      await parseAndPopulateForm(file.uri);
     } catch (error) {
       console.error('Error selecting PDF:', error);
       Alert.alert(t('labTests.upload.uploadFailedTitle'), t('labTests.upload.failedToSelectPdf'));
-    } finally {
-      setIsParsingPDF(false);
     }
   };
 
@@ -370,7 +262,7 @@ export default function LabTestForm({
       if (parsedData.parameters) {
         const stringParams: Record<string, string> = {};
         Object.entries(parsedData.parameters).forEach(([key, value]) => {
-          const normalizedKey = normalizeParameterKey(key, isSoil);
+          const normalizedKey = normalizeParameterKey(key, testType);
           stringParams[normalizedKey] = value.toString();
         });
         setParameters(stringParams);
