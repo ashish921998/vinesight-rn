@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useCreateFarm, useFarm, useUpdateFarm, usePlatform, useResponsiveHeight } from '@/hooks';
+import { useCreateFarm, useFarm, useUpdateFarm, isIOS, useResponsiveHeight } from '@/hooks';
 import { CROP_VARIETIES, CROPS, type CropType } from '@/constants/crop-varieties';
 import type { Farm, FarmInsert, FarmUpdate } from '@/types';
 import { useTranslation } from 'react-i18next';
@@ -197,7 +197,6 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const { windowHeight } = useResponsiveHeight();
-  const { isIOS } = usePlatform();
 
   const isEdit = mode === 'edit';
   const createFarm = useCreateFarm();
@@ -264,7 +263,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       keyboardShowListener.remove();
       keyboardHideListener.remove();
     };
-  }, [insets.bottom, isIOS]);
+  }, [insets.bottom]);
 
   const varieties = useMemo(
     () =>
@@ -385,12 +384,12 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         ? baseViewportHeight - keyboardHeight
         : baseViewportHeight;
     return Math.max(220, keyboardAdjustedHeight);
-  }, [windowHeight, insets.top, insets.bottom, keyboardHeight, isIOS]);
+  }, [windowHeight, insets.top, insets.bottom, keyboardHeight]);
 
   const androidKeyboardLift = useMemo(() => {
     if (isIOS) return 0;
     return Math.max(0, keyboardHeight - insets.bottom);
-  }, [isIOS, keyboardHeight, insets.bottom]);
+  }, [keyboardHeight, insets.bottom]);
 
   const varietySheetHeight = useMemo(
     () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
@@ -1605,8 +1604,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             keyboardVerticalOffset={0}
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
-            <View
-              onStartShouldSetResponder={() => true}
+            <Pressable
+              onPress={() => {}}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -1751,7 +1750,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   </View>
                 )}
               </ScrollView>
-            </View>
+            </Pressable>
           </KeyboardAvoidingView>
         </ModalBackdrop>
       )}
@@ -1993,8 +1992,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             keyboardVerticalOffset={0}
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
-            <View
-              onStartShouldSetResponder={() => true}
+            <Pressable
+              onPress={() => {}}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -2089,7 +2088,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   </Pressable>
                 ))}
               </ScrollView>
-            </View>
+            </Pressable>
           </KeyboardAvoidingView>
         </ModalBackdrop>
       )}

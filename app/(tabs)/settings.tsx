@@ -75,6 +75,7 @@ const COUNTRIES: Country[] = [
 ];
 
 const DEFAULT_COUNTRY = COUNTRIES[0];
+const MAX_PHONE_NUMBER_EDITS_PER_FLOW = 2;
 
 type LinkPhoneParams = {
   linkPhone?: string;
@@ -145,6 +146,9 @@ export default function SettingsScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [linkPhoneInput, setLinkPhoneInput] = useState('');
   const [linkPhoneCode, setLinkPhoneCode] = useState('');
+  const [isPhoneLinkCodeStep, setIsPhoneLinkCodeStep] = useState(false);
+  const [phoneNumberEditCount, setPhoneNumberEditCount] = useState(0);
+  const [linkPhoneLocalError, setLinkPhoneLocalError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
@@ -169,6 +173,7 @@ export default function SettingsScreen() {
   const linkedAuthPhone = user?.phone || null;
   const hasSavedPhoneToVerify = Boolean(userPhone) && !linkedAuthPhone;
   const isLinkPhoneModalVisible = showLinkPhoneModal || phoneLinkingPending;
+  const isShowingPhoneCodeStep = isPhoneLinkCodeStep || phoneLinkingPending;
   const phoneActionTitle = linkedAuthPhone
     ? t('settings.linkPhone.changePhone')
     : hasSavedPhoneToVerify
@@ -218,12 +223,21 @@ export default function SettingsScreen() {
     if (!normalizedLocalNumber) return '';
     return `${selectedCountry.dialCode}${normalizedLocalNumber}`;
   };
+  const linkPhoneDisplayNumber = (phoneLinkingNumber ?? buildE164PhoneNumber()) || linkPhoneInput;
+
+  useEffect(() => {
+    if (!linkPhoneLocalError) return;
+    setLinkPhoneLocalError(null);
+  }, [linkPhoneInput, linkPhoneLocalError]);
 
   useEffect(() => {
     if (linkPhone !== '1') return;
 
     clearError();
+    setLinkPhoneLocalError(null);
     setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    setPhoneNumberEditCount(0);
     const trimmedValue = (linkedAuthPhone ?? userPhone ?? '').trim();
     if (!trimmedValue) {
       setSelectedCountry(DEFAULT_COUNTRY);
@@ -246,6 +260,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     if (!phoneLinkingPending) return;
+    setIsPhoneLinkCodeStep(true);
     setShowLinkPhoneModal(true);
   }, [phoneLinkingPending]);
 
@@ -333,7 +348,10 @@ export default function SettingsScreen() {
   const handleOpenLinkPhone = () => {
     router.setParams({ linkPhone: '1' });
     clearError();
+    setLinkPhoneLocalError(null);
     setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    setPhoneNumberEditCount(0);
     setCountrySearch('');
     setPhoneFormFromValue(linkedAuthPhone ?? userPhone ?? '');
     setShowLinkPhoneModal(true);
@@ -341,19 +359,25 @@ export default function SettingsScreen() {
 
   const handleCloseLinkPhone = () => {
     clearError();
+    setLinkPhoneLocalError(null);
     cancelPhoneLinking();
     setShowCountryPicker(false);
     setCountrySearch('');
     setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    setPhoneNumberEditCount(0);
     setShowLinkPhoneModal(false);
     router.setParams({ linkPhone: undefined });
   };
 
   const handleLinkPhoneSuccessClose = () => {
     clearError();
+    setLinkPhoneLocalError(null);
     setShowCountryPicker(false);
     setCountrySearch('');
     setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    setPhoneNumberEditCount(0);
     setShowLinkPhoneModal(false);
     router.setParams({ linkPhone: undefined });
   };
@@ -362,7 +386,14 @@ export default function SettingsScreen() {
     const phone = buildE164PhoneNumber();
     if (!phone) return;
     clearError();
+    setLinkPhoneLocalError(null);
+    // Show OTP step immediately while verification SMS request completes in background.
+    setIsPhoneLinkCodeStep(true);
     await linkPhoneNumber(phone);
+    const { errorMessage, phoneLinkingPending: stillPending } = useAuthStore.getState();
+    if (errorMessage || !stillPending) {
+      setIsPhoneLinkCodeStep(false);
+    }
   };
 
   const handleVerifyPhoneLinkCode = async () => {
@@ -388,7 +419,24 @@ export default function SettingsScreen() {
     const pendingPhone = phoneLinkingNumber ?? buildE164PhoneNumber();
     if (!pendingPhone) return;
     clearError();
+    setLinkPhoneLocalError(null);
     await linkPhoneNumber(pendingPhone);
+  };
+
+  const handleEditPhoneNumber = () => {
+    if (phoneNumberEditCount >= MAX_PHONE_NUMBER_EDITS_PER_FLOW) {
+      setLinkPhoneLocalError(
+        `You can change the phone number up to ${MAX_PHONE_NUMBER_EDITS_PER_FLOW} times in one verification flow.`,
+      );
+      return;
+    }
+
+    clearError();
+    setLinkPhoneLocalError(null);
+    setPhoneNumberEditCount((prev) => prev + 1);
+    setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    cancelPhoneLinking();
   };
 
   const handleSelectCountry = (country: Country) => {
@@ -905,7 +953,7 @@ export default function SettingsScreen() {
                 textBreakStrategy="highQuality"
                 lineBreakStrategyIOS="standard"
               >
-                {phoneLinkingPending
+                {isShowingPhoneCodeStep
                   ? t('settings.linkPhone.verifyTitle')
                   : hasSavedPhoneToVerify
                     ? t('settings.linkPhone.verifyTitle')
@@ -932,22 +980,22 @@ export default function SettingsScreen() {
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
-                  {phoneLinkingPending
+                  {isShowingPhoneCodeStep
                     ? t('settings.linkPhone.verifySubtitle')
                     : t('settings.linkPhone.subtitle')}
                 </Text>
-                {phoneLinkingPending ? (
+                {isShowingPhoneCodeStep ? (
                   <Text
                     style={styles.inputHint}
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
-                    {phoneLinkingNumber ?? linkPhoneInput}
+                    {linkPhoneDisplayNumber}
                   </Text>
                 ) : null}
               </View>
 
-              {!phoneLinkingPending ? (
+              {!isShowingPhoneCodeStep ? (
                 <View style={styles.mb4}>
                   <Text
                     style={styles.inputLabel}
@@ -1011,17 +1059,26 @@ export default function SettingsScreen() {
                       {t('settings.linkPhone.resend')}
                     </Text>
                   </Pressable>
+                  <Pressable onPress={handleEditPhoneNumber} disabled={authLoading}>
+                    <Text
+                      style={styles.inputHint}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {t('settings.linkPhone.changePhone')}
+                    </Text>
+                  </Pressable>
                 </View>
               )}
 
-              {authErrorMessage ? (
+              {authErrorMessage || linkPhoneLocalError ? (
                 <View style={[styles.alertBox, styles.dangerAlert, { marginBottom: 0 }]}>
                   <Text
                     style={styles.alertText}
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
-                    {authErrorMessage}
+                    {authErrorMessage || linkPhoneLocalError}
                   </Text>
                 </View>
               ) : null}
@@ -1030,11 +1087,11 @@ export default function SettingsScreen() {
 
           <View style={styles.modalFooter}>
             <Pressable
-              onPress={phoneLinkingPending ? handleVerifyPhoneLinkCode : handleSendPhoneLinkCode}
+              onPress={isShowingPhoneCodeStep ? handleVerifyPhoneLinkCode : handleSendPhoneLinkCode}
               disabled={
                 authLoading ||
-                (!phoneLinkingPending && !linkPhoneInput.trim()) ||
-                (phoneLinkingPending && linkPhoneCode.trim().length !== 6)
+                (!isShowingPhoneCodeStep && !linkPhoneInput.trim()) ||
+                (isShowingPhoneCodeStep && linkPhoneCode.trim().length !== 6)
               }
               style={[
                 styles.saveButton,
@@ -1049,7 +1106,7 @@ export default function SettingsScreen() {
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
-                  {phoneLinkingPending
+                  {isShowingPhoneCodeStep
                     ? t('settings.linkPhone.verify')
                     : t('settings.linkPhone.sendCode')}
                 </Text>

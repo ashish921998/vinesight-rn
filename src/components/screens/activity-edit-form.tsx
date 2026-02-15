@@ -55,7 +55,7 @@ import {
   useUpdateHarvestRecord,
   useUpdateExpenseRecord,
   useUpdateFertigationRecord,
-  usePlatform,
+  isIOS,
   useResponsiveHeight,
 } from '@/hooks';
 import { toSupabaseDateString, fromSupabaseDateString } from '@/types';
@@ -96,7 +96,6 @@ export function ActivityEditForm({
   const m3 = useM3();
   const isVisible = visible ?? true;
   const { windowHeight } = useResponsiveHeight();
-  const { isIOS } = usePlatform();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

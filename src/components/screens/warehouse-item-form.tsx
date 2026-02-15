@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useCreateWarehouseItem,
   useUpdateWarehouseItem,
-  usePlatform,
+  isIOS,
   useResponsiveHeight,
 } from '../../hooks';
 import {
@@ -115,7 +115,6 @@ export default function WarehouseItemForm({
   const colors = useThemeColors();
   const m3 = useM3();
   const { windowHeight } = useResponsiveHeight();
-  const { isIOS } = usePlatform();
   const insets = useSafeAreaInsets();
   const isVisible = visible ?? true;
   const createMutation = useCreateWarehouseItem();
@@ -221,7 +220,7 @@ export default function WarehouseItemForm({
       keyboardShowListener.remove();
       keyboardHideListener.remove();
     };
-  }, [insets.bottom, isIOS]);
+  }, [insets.bottom]);
 
   const pickerAvailableHeight = useMemo(() => {
     const baseViewportHeight = windowHeight - insets.top - spacing[2];
@@ -233,7 +232,7 @@ export default function WarehouseItemForm({
         ? baseViewportHeight - keyboardHeight
         : baseViewportHeight;
     return Math.max(220, keyboardAdjustedHeight);
-  }, [windowHeight, insets.top, insets.bottom, keyboardHeight, isIOS]);
+  }, [windowHeight, insets.top, insets.bottom, keyboardHeight]);
 
   const catalogueSheetHeight = useMemo(
     () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
@@ -284,6 +283,10 @@ export default function WarehouseItemForm({
   };
 
   const clearPresetSelection = () => {
+    if (!selectedCatalogueId) {
+      setShowCataloguePicker(false);
+      return;
+    }
     if (manualCatalogueDraft) {
       setName(manualCatalogueDraft.name);
       setType(manualCatalogueDraft.type);
@@ -306,12 +309,14 @@ export default function WarehouseItemForm({
     setCompositionRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...updates } : row)));
     setCompositionSource('manual');
     setSelectedCatalogueId('');
+    setManualCatalogueDraft(null);
   };
 
   const addCompositionRow = () => {
     if (compositionRows.length >= 12) return;
     setCompositionRows((prev) => [...prev, createCompositionRow()]);
     setSelectedCatalogueId('');
+    setManualCatalogueDraft(null);
   };
 
   const removeCompositionRow = (id: string) => {
@@ -321,6 +326,7 @@ export default function WarehouseItemForm({
     });
     setCompositionSource('manual');
     setSelectedCatalogueId('');
+    setManualCatalogueDraft(null);
   };
   const handleTypeSelect = (nextType: WarehouseItemType) => {
     setType(nextType);
@@ -718,8 +724,8 @@ export default function WarehouseItemForm({
             keyboardVerticalOffset={0}
             style={{ justifyContent: 'flex-end' }}
           >
-            <View
-              onStartShouldSetResponder={() => true}
+            <Pressable
+              onPress={() => {}}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -736,7 +742,7 @@ export default function WarehouseItemForm({
                   paddingHorizontal: spacing[6],
                   paddingVertical: spacing[4],
                   borderBottomWidth: 1,
-                  borderBottomColor: colors.surface[100],
+                  borderBottomColor: colors.surface[200],
                 }}
               >
                 <View style={{ width: 40 }} />
@@ -913,7 +919,7 @@ export default function WarehouseItemForm({
                   </View>
                 )}
               </ScrollView>
-            </View>
+            </Pressable>
           </KeyboardAvoidingView>
         </Pressable>
       </Modal>

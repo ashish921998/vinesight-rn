@@ -76,7 +76,7 @@ import {
   useRecentSprayChemicals,
   useRecentFertigationItems,
   queryKeys,
-  usePlatform,
+  isIOS,
   useResponsiveHeight,
 } from '@/hooks';
 import { useCreateTask, useUpdateTask } from '@/hooks/use-tasks';
@@ -242,7 +242,6 @@ export function EntryForm({
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { windowHeight } = useResponsiveHeight();
-  const { isIOS } = usePlatform();
   const resolvedTabs = useMemo<EntryTab[]>(
     () => (tabs && tabs.length > 0 ? tabs : ['log', 'task']),
     [tabs],
