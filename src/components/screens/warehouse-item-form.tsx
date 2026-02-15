@@ -1,16 +1,23 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Alert,
+  BackHandler,
+  Keyboard,
   KeyboardAvoidingView,
-  Platform,
+  Modal,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
-  useWindowDimensions,
 } from 'react-native';
-import { useCreateWarehouseItem, useUpdateWarehouseItem } from '../../hooks';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  useCreateWarehouseItem,
+  useUpdateWarehouseItem,
+  usePlatform,
+  useResponsiveHeight,
+} from '../../hooks';
 import {
   NutrientCompositionItem,
   WarehouseItem,
@@ -99,8 +106,9 @@ export default function WarehouseItemForm({
 }: Props) {
   const colors = useThemeColors();
   const m3 = useM3();
-  const { height: windowHeight } = useWindowDimensions();
-  const isIOS = Platform.OS === 'ios';
+  const { windowHeight } = useResponsiveHeight();
+  const { isIOS } = usePlatform();
+  const insets = useSafeAreaInsets();
   const isVisible = visible ?? true;
   const createMutation = useCreateWarehouseItem();
   const updateMutation = useUpdateWarehouseItem();
@@ -121,6 +129,7 @@ export default function WarehouseItemForm({
   const [selectedCatalogueId, setSelectedCatalogueId] = useState('');
   const [catalogueSearchQuery, setCatalogueSearchQuery] = useState('');
   const [showCataloguePicker, setShowCataloguePicker] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const currency = useCurrency();
   const isEditing = !!editingItem;
@@ -177,9 +186,52 @@ export default function WarehouseItemForm({
     return selected ? [selected, ...filteredCatalogueItems] : filteredCatalogueItems;
   }, [filteredCatalogueItems, selectedCatalogueId]);
 
+  useEffect(() => {
+    if (!showCataloguePicker) return;
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      setShowCataloguePicker(false);
+      return true;
+    });
+    return () => backHandler.remove();
+  }, [showCataloguePicker]);
+
+  useEffect(() => {
+    const showEvent = isIOS ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = isIOS ? 'keyboardWillHide' : 'keyboardDidHide';
+    const keyboardShowListener = Keyboard.addListener(showEvent, (event) => {
+      const keyboardInset = isIOS ? insets.bottom : 0;
+      const nextHeight = Math.max(0, event.endCoordinates.height - keyboardInset);
+      setKeyboardHeight(nextHeight);
+    });
+    const keyboardHideListener = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+    };
+  }, [insets.bottom, isIOS]);
+
+  const pickerAvailableHeight = useMemo(() => {
+    const baseViewportHeight = windowHeight - insets.top - spacing[2];
+    const keyboardAdjustedHeight = isIOS
+      ? keyboardHeight > 0
+        ? baseViewportHeight - keyboardHeight + insets.bottom
+        : baseViewportHeight
+      : keyboardHeight > 0
+        ? baseViewportHeight - keyboardHeight
+        : baseViewportHeight;
+    return Math.max(220, keyboardAdjustedHeight);
+  }, [windowHeight, insets.top, insets.bottom, keyboardHeight, isIOS]);
+
+  const androidKeyboardLift = useMemo(() => {
+    if (isIOS) return 0;
+    return Math.max(0, keyboardHeight - insets.bottom);
+  }, [isIOS, keyboardHeight, insets.bottom]);
+
   const catalogueSheetHeight = useMemo(
-    () => Math.min(Math.round(windowHeight * 0.7), windowHeight - 80),
-    [windowHeight],
+    () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
+    [windowHeight, pickerAvailableHeight],
   );
 
   const resetForm = () => {
@@ -372,399 +424,362 @@ export default function WarehouseItemForm({
 
   return (
     <View style={{ flex: 1 }}>
-    <FormModal
-      visible={isVisible}
-      onClose={onClose}
-      title={isEditing ? 'Edit Item' : 'Add Item'}
-      onSave={handleSubmit}
-      saveLabel={isEditing ? 'Save Changes' : 'Add Item'}
-      isLoading={isLoading}
-      isSaveDisabled={!isValid}
-      showResetButton={!isEditing}
-      onReset={handleReset}
-      presentation={presentation}
-    >
-      <SectionHeader
-        title="Catalogue"
-        subtitle="Optional. Search and select if available, or continue with manual item entry."
-        style={{ marginBottom: 12 }}
-      />
-
-      <Pressable
-        style={{
-          backgroundColor: colors.surface[100],
-          borderWidth: 2,
-          borderColor: colors.surface[200],
-          borderRadius: borderRadius.xl,
-          paddingHorizontal: spacing[4],
-          paddingVertical: spacing[4],
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: spacing[2],
-        }}
-        onPress={() => {
-          setCatalogueSearchQuery('');
-          setShowCataloguePicker(true);
-        }}
+      <FormModal
+        visible={isVisible}
+        onClose={onClose}
+        title={isEditing ? 'Edit Item' : 'Add Item'}
+        onSave={handleSubmit}
+        saveLabel={isEditing ? 'Save Changes' : 'Add Item'}
+        isLoading={isLoading}
+        isSaveDisabled={!isValid}
+        showResetButton={!isEditing}
+        onReset={handleReset}
+        presentation={presentation}
       >
+        <SectionHeader
+          title="Catalogue"
+          subtitle="Optional. Search and select if available, or continue with manual item entry."
+          style={{ marginBottom: 12 }}
+        />
+
+        <Pressable
+          style={{
+            backgroundColor: colors.surface[100],
+            borderWidth: 2,
+            borderColor: colors.surface[200],
+            borderRadius: borderRadius.xl,
+            paddingHorizontal: spacing[4],
+            paddingVertical: spacing[4],
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: spacing[2],
+          }}
+          onPress={() => {
+            setCatalogueSearchQuery('');
+            setShowCataloguePicker(true);
+          }}
+        >
+          <Text
+            style={{
+              fontSize: fontSize.base,
+              color: selectedCatalogueId ? colors.surface[900] : colors.surface[400],
+              fontWeight: selectedCatalogueId ? fontWeight.medium : fontWeight.normal,
+              flex: 1,
+            }}
+            numberOfLines={1}
+          >
+            {selectedCatalogueId
+              ? (() => {
+                  const preset = WAREHOUSE_PRESETS.find((p) => p.id === selectedCatalogueId);
+                  return preset
+                    ? `${preset.label} - ${preset.manufacturer}`
+                    : 'Select from catalogue (or skip)';
+                })()
+              : 'Select from catalogue (or skip)'}
+          </Text>
+          <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
+        </Pressable>
+
         <Text
           style={{
-            fontSize: fontSize.base,
-            color: selectedCatalogueId ? colors.surface[900] : colors.surface[400],
-            fontWeight: selectedCatalogueId ? fontWeight.medium : fontWeight.normal,
-            flex: 1,
+            marginBottom: 18,
+            color: m3.colorScheme.onSurfaceVariant,
+            fontSize: fontSize.xs,
           }}
-          numberOfLines={1}
         >
-          {selectedCatalogueId
-            ? (() => {
-                const preset = WAREHOUSE_PRESETS.find((p) => p.id === selectedCatalogueId);
-                return preset ? `${preset.label} - ${preset.manufacturer}` : 'Select from catalogue (or skip)';
-              })()
-            : 'Select from catalogue (or skip)'}
+          Product not listed in catalogue? Leave it unselected and enter item details + composition
+          manually.
         </Text>
-        <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
-      </Pressable>
 
-      <Text
-        style={{
-          marginBottom: 18,
-          color: m3.colorScheme.onSurfaceVariant,
-          fontSize: fontSize.xs,
-        }}
-      >
-        Product not listed in catalogue? Leave it unselected and enter item details + composition
-        manually.
-      </Text>
+        {/* Item Details */}
+        <SectionHeader title="Item Details" style={{ marginBottom: 16 }} />
 
-      {/* Item Details */}
-      <SectionHeader title="Item Details" style={{ marginBottom: 16 }} />
-
-      <FormInput
-        label="Item Name"
-        value={name}
-        onChangeText={setName}
-        placeholder="e.g., NPK 19:19:19"
-        required
-        style={{ marginBottom: 12 }}
-      />
-
-      <PillSelector
-        options={ITEM_TYPES}
-        selectedValue={type}
-        onSelect={(value) => handleTypeSelect(value as WarehouseItemType)}
-        style={{ marginBottom: 20 }}
-      />
-
-      <FormInput
-        label="Manufacturer (Optional)"
-        value={manufacturer}
-        onChangeText={setManufacturer}
-        placeholder="e.g., Mahadhan / Vanita Agro"
-        style={{ marginBottom: 12 }}
-      />
-
-      <FormInput
-        label="Density (kg/L, Optional)"
-        value={densityKgPerL}
-        onChangeText={setDensityKgPerL}
-        placeholder="Defaults to 1.00"
-        keyboardType="decimal-pad"
-        style={{ marginBottom: 16 }}
-      />
-
-      {/* Composition */}
-      <SectionHeader
-        title="Nutrient Composition"
-        subtitle={
-          type === 'fertilizer'
-            ? 'Required for fertilizers. Enter guaranteed nutrient percentages.'
-            : 'Optional for sprays (required only if nutrient-bearing).'
-        }
-        style={{ marginBottom: 12 }}
-      />
-
-      {compositionRows.map((row, index) => (
-        <View key={row.id} style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-          <View style={{ flex: 1.1 }}>
-            <FormInput
-              label={index === 0 ? 'Nutrient' : 'Nutrient'}
-              value={row.nutrient_code}
-              onChangeText={(nutrient_code) => updateCompositionRow(row.id, { nutrient_code })}
-              placeholder="N, P2O5, K2O, Ca..."
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label={index === 0 ? 'Percent (%)' : 'Percent (%)'}
-              value={row.percent}
-              onChangeText={(percent) => updateCompositionRow(row.id, { percent })}
-              placeholder="0 - 100"
-              keyboardType="decimal-pad"
-            />
-          </View>
-          <Pressable
-            onPress={() => removeCompositionRow(row.id)}
-            style={{ alignSelf: 'center', paddingHorizontal: 10, paddingVertical: 10 }}
-          >
-            <Text style={{ color: m3.colorScheme.error, fontWeight: '700' }}>Remove</Text>
-          </Pressable>
-        </View>
-      ))}
-
-      <Pressable
-        onPress={addCompositionRow}
-        style={{
-          alignSelf: 'flex-start',
-          marginBottom: 20,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          borderRadius: 999,
-          backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.14),
-        }}
-      >
-        <Text style={{ color: m3.colorScheme.tertiary, fontWeight: '600' }}>+ Add Nutrient</Text>
-      </Pressable>
-
-      {/* Quantity & Unit */}
-      <SectionHeader title="Quantity & Unit" style={{ marginBottom: 16 }} />
-
-      <FormInput
-        label="Quantity"
-        value={quantity}
-        onChangeText={setQuantity}
-        placeholder="0"
-        keyboardType="decimal-pad"
-        required
-        style={{ marginBottom: 12 }}
-      />
-
-      <CardSelector
-        options={unitOptions}
-        selectedValue={unit}
-        onSelect={(value) => setUnit(value as WarehouseUnit)}
-        columns={2}
-        style={{ marginBottom: 20 }}
-      />
-
-      {/* Pricing & Alert */}
-      <SectionHeader title="Pricing & Alerts" style={{ marginBottom: 16 }} />
-
-      <FormInput
-        label={`Unit Price (${currency})`}
-        value={unitPrice}
-        onChangeText={setUnitPrice}
-        placeholder="0.00"
-        keyboardType="decimal-pad"
-        prefix={currency === 'INR' ? '₹' : '$'}
-        suffix={`per ${unit}`}
-        required
-        style={{ marginBottom: 12 }}
-      />
-
-      <FormInput
-        label="Low Stock Alert (Optional)"
-        value={reorderQuantity}
-        onChangeText={setReorderQuantity}
-        placeholder="Leave empty to disable"
-        keyboardType="decimal-pad"
-        suffix={unit}
-        style={{ marginBottom: 12 }}
-      />
-
-      <FormInput
-        label="Notes (Optional)"
-        value={notes}
-        onChangeText={setNotes}
-        placeholder="Any additional details..."
-        multiline
-        numberOfLines={2}
-        style={{ marginBottom: 16 }}
-      />
-
-      {/* Total Value Preview */}
-      {quantity && unitPrice && (
-        <PreviewCard
-          title="TOTAL VALUE"
-          items={[
-            {
-              label: `${quantity} ${unit} × ${currency === 'INR' ? '₹' : '$'}${unitPrice}`,
-              value: formatCurrency(parseFloat(totalValue), currency),
-            },
-            {
-              label: 'Valid nutrient lines',
-              value: String(validComposition.length),
-            },
-          ]}
-          backgroundColor={colorWithOpacity(colors.success, 0.12)}
+        <FormInput
+          label="Item Name"
+          value={name}
+          onChangeText={setName}
+          placeholder="e.g., NPK 19:19:19"
+          required
+          style={{ marginBottom: 12 }}
         />
-      )}
-    </FormModal>
 
-    {/* Catalogue Picker Bottom Sheet — matches variety picker pattern in farm-form */}
-    {showCataloguePicker && (
-      <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-          justifyContent: 'flex-end',
-        }}
-      >
-        <Pressable style={{ flex: 1 }} onPress={() => setShowCataloguePicker(false)} />
-        <KeyboardAvoidingView
-          behavior={isIOS ? 'padding' : undefined}
-          keyboardVerticalOffset={0}
-          style={{ justifyContent: 'flex-end' }}
-        >
-          <View
-            style={{
-              backgroundColor: colors.surface[100],
-              borderTopLeftRadius: borderRadius['3xl'],
-              borderTopRightRadius: borderRadius['3xl'],
-              height: catalogueSheetHeight,
-            }}
-          >
-            {/* Header */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: spacing[6],
-                paddingVertical: spacing[4],
-                borderBottomWidth: 1,
-                borderBottomColor: colors.surface[100],
-              }}
-            >
-              <View style={{ width: 40 }} />
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: fontWeight.semibold,
-                  color: colors.surface[900],
-                }}
-              >
-                Select from Catalogue
-              </Text>
-              <Pressable
-                onPress={() => setShowCataloguePicker(false)}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: colors.surface[100],
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-              </Pressable>
+        <PillSelector
+          options={ITEM_TYPES}
+          selectedValue={type}
+          onSelect={(value) => handleTypeSelect(value as WarehouseItemType)}
+          style={{ marginBottom: 20 }}
+        />
+
+        <FormInput
+          label="Manufacturer (Optional)"
+          value={manufacturer}
+          onChangeText={setManufacturer}
+          placeholder="e.g., Mahadhan / Vanita Agro"
+          style={{ marginBottom: 12 }}
+        />
+
+        <FormInput
+          label="Density (kg/L, Optional)"
+          value={densityKgPerL}
+          onChangeText={setDensityKgPerL}
+          placeholder="Defaults to 1.00"
+          keyboardType="decimal-pad"
+          style={{ marginBottom: 16 }}
+        />
+
+        {/* Composition */}
+        <SectionHeader
+          title="Nutrient Composition"
+          subtitle={
+            type === 'fertilizer'
+              ? 'Required for fertilizers. Enter guaranteed nutrient percentages.'
+              : 'Optional for sprays (required only if nutrient-bearing).'
+          }
+          style={{ marginBottom: 12 }}
+        />
+
+        {compositionRows.map((row, index) => (
+          <View key={row.id} style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+            <View style={{ flex: 1.1 }}>
+              <FormInput
+                label={index === 0 ? 'Nutrient' : 'Nutrient'}
+                value={row.nutrient_code}
+                onChangeText={(nutrient_code) => updateCompositionRow(row.id, { nutrient_code })}
+                placeholder="N, P2O5, K2O, Ca..."
+              />
             </View>
+            <View style={{ flex: 1 }}>
+              <FormInput
+                label={index === 0 ? 'Percent (%)' : 'Percent (%)'}
+                value={row.percent}
+                onChangeText={(percent) => updateCompositionRow(row.id, { percent })}
+                placeholder="0 - 100"
+                keyboardType="decimal-pad"
+              />
+            </View>
+            <Pressable
+              onPress={() => removeCompositionRow(row.id)}
+              style={{ alignSelf: 'center', paddingHorizontal: 10, paddingVertical: 10 }}
+            >
+              <Text style={{ color: m3.colorScheme.error, fontWeight: '700' }}>Remove</Text>
+            </Pressable>
+          </View>
+        ))}
 
-            {/* Search */}
+        <Pressable
+          onPress={addCompositionRow}
+          style={{
+            alignSelf: 'flex-start',
+            marginBottom: 20,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 999,
+            backgroundColor: colorWithOpacity(m3.colorScheme.tertiary, 0.14),
+          }}
+        >
+          <Text style={{ color: m3.colorScheme.tertiary, fontWeight: '600' }}>+ Add Nutrient</Text>
+        </Pressable>
+
+        {/* Quantity & Unit */}
+        <SectionHeader title="Quantity & Unit" style={{ marginBottom: 16 }} />
+
+        <FormInput
+          label="Quantity"
+          value={quantity}
+          onChangeText={setQuantity}
+          placeholder="0"
+          keyboardType="decimal-pad"
+          required
+          style={{ marginBottom: 12 }}
+        />
+
+        <CardSelector
+          options={unitOptions}
+          selectedValue={unit}
+          onSelect={(value) => setUnit(value as WarehouseUnit)}
+          columns={2}
+          style={{ marginBottom: 20 }}
+        />
+
+        {/* Pricing & Alert */}
+        <SectionHeader title="Pricing & Alerts" style={{ marginBottom: 16 }} />
+
+        <FormInput
+          label={`Unit Price (${currency})`}
+          value={unitPrice}
+          onChangeText={setUnitPrice}
+          placeholder="0.00"
+          keyboardType="decimal-pad"
+          prefix={currency === 'INR' ? '₹' : '$'}
+          suffix={`per ${unit}`}
+          required
+          style={{ marginBottom: 12 }}
+        />
+
+        <FormInput
+          label="Low Stock Alert (Optional)"
+          value={reorderQuantity}
+          onChangeText={setReorderQuantity}
+          placeholder="Leave empty to disable"
+          keyboardType="decimal-pad"
+          suffix={unit}
+          style={{ marginBottom: 12 }}
+        />
+
+        <FormInput
+          label="Notes (Optional)"
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Any additional details..."
+          multiline
+          numberOfLines={2}
+          style={{ marginBottom: 16 }}
+        />
+
+        {/* Total Value Preview */}
+        {quantity && unitPrice && (
+          <PreviewCard
+            title="TOTAL VALUE"
+            items={[
+              {
+                label: `${quantity} ${unit} × ${currency === 'INR' ? '₹' : '$'}${unitPrice}`,
+                value: formatCurrency(parseFloat(totalValue), currency),
+              },
+              {
+                label: 'Valid nutrient lines',
+                value: String(validComposition.length),
+              },
+            ]}
+            backgroundColor={colorWithOpacity(colors.success, 0.12)}
+          />
+        )}
+      </FormModal>
+
+      {/* Catalogue Picker Bottom Sheet */}
+      <Modal
+        visible={showCataloguePicker}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setShowCataloguePicker(false)}
+      >
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            justifyContent: 'flex-end',
+          }}
+          onPress={() => setShowCataloguePicker(false)}
+        >
+          <KeyboardAvoidingView
+            behavior={isIOS ? 'padding' : undefined}
+            keyboardVerticalOffset={0}
+            style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
+          >
             <View
               style={{
-                paddingHorizontal: spacing[6],
-                paddingTop: spacing[4],
-                paddingBottom: spacing[2],
+                backgroundColor: colors.surface[100],
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                height: catalogueSheetHeight,
               }}
             >
+              {/* Header */}
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: colors.surface[200],
-                  borderRadius: borderRadius.xl,
-                  backgroundColor: colors.surface[50],
-                  paddingHorizontal: spacing[3],
-                  minHeight: 48,
-                }}
-              >
-                <UISymbol
-                  name="magnifyingglass"
-                  size={18}
-                  color={m3.colorScheme.onSurfaceVariant}
-                />
-                <TextInput
-                  value={catalogueSearchQuery}
-                  onChangeText={setCatalogueSearchQuery}
-                  placeholder="Search by product, grade, or manufacturer"
-                  placeholderTextColor={colors.surface[400]}
-                  style={{
-                    flex: 1,
-                    marginLeft: spacing[2],
-                    color: colors.surface[900],
-                    fontSize: fontSize.base,
-                  }}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-            </View>
-
-            {/* "Skip / No selection" option */}
-            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-              <Pressable
-                style={{
+                  justifyContent: 'space-between',
                   paddingHorizontal: spacing[6],
                   paddingVertical: spacing[4],
                   borderBottomWidth: 1,
                   borderBottomColor: colors.surface[100],
-                  backgroundColor: !selectedCatalogueId
-                    ? colors.surface[50]
-                    : colors.surface[100],
                 }}
-                onPress={() => {
-                  setSelectedCatalogueId('');
-                  setCompositionSource('manual');
-                  setShowCataloguePicker(false);
+              >
+                <View style={{ width: 40 }} />
+                <Text
+                  style={{
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  Select from Catalogue
+                </Text>
+                <Pressable
+                  onPress={() => setShowCataloguePicker(false)}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colors.surface[100],
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+                </Pressable>
+              </View>
+
+              {/* Search */}
+              <View
+                style={{
+                  paddingHorizontal: spacing[6],
+                  paddingTop: spacing[4],
+                  paddingBottom: spacing[2],
                 }}
               >
                 <View
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                    borderRadius: borderRadius.xl,
+                    backgroundColor: colors.surface[50],
+                    paddingHorizontal: spacing[3],
+                    minHeight: 48,
                   }}
                 >
-                  <Text
+                  <UISymbol
+                    name="magnifyingglass"
+                    size={18}
+                    color={m3.colorScheme.onSurfaceVariant}
+                  />
+                  <TextInput
+                    value={catalogueSearchQuery}
+                    onChangeText={setCatalogueSearchQuery}
+                    placeholder="Search by product, grade, or manufacturer"
+                    placeholderTextColor={colors.surface[400]}
                     style={{
+                      flex: 1,
+                      marginLeft: spacing[2],
+                      color: colors.surface[900],
                       fontSize: fontSize.base,
-                      color: !selectedCatalogueId ? colors.surface[900] : colors.surface[700],
-                      fontWeight: !selectedCatalogueId ? fontWeight.semibold : fontWeight.normal,
-                      fontStyle: 'italic',
                     }}
-                  >
-                    Skip (manual entry)
-                  </Text>
-                  {!selectedCatalogueId && (
-                    <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
-                  )}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
                 </View>
-              </Pressable>
+              </View>
 
-              {/* Catalogue items */}
-              {visibleCatalogueItems.map((preset) => (
+              {/* "Skip / No selection" option */}
+              <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
                 <Pressable
-                  key={preset.id}
                   style={{
-                    paddingHorizontal: spacing[6],
                     paddingVertical: spacing[4],
+                    paddingLeft: spacing[8],
+                    paddingRight: spacing[6],
                     borderBottomWidth: 1,
                     borderBottomColor: colors.surface[100],
-                    backgroundColor:
-                      selectedCatalogueId === preset.id
-                        ? colors.surface[50]
-                        : colors.surface[100],
+                    backgroundColor: !selectedCatalogueId
+                      ? colors.surface[50]
+                      : colors.surface[100],
                   }}
                   onPress={() => {
-                    applyPreset(preset);
+                    setSelectedCatalogueId('');
+                    setCompositionSource('manual');
                     setShowCataloguePicker(false);
                   }}
                 >
@@ -775,53 +790,93 @@ export default function WarehouseItemForm({
                       justifyContent: 'space-between',
                     }}
                   >
-                    <View style={{ flex: 1, marginRight: spacing[3] }}>
-                      <Text
-                        style={{
-                          fontSize: fontSize.base,
-                          color:
-                            selectedCatalogueId === preset.id
-                              ? colors.surface[900]
-                              : colors.surface[700],
-                          fontWeight:
-                            selectedCatalogueId === preset.id
-                              ? fontWeight.semibold
-                              : fontWeight.normal,
-                        }}
-                        numberOfLines={1}
-                      >
-                        {preset.label}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: fontSize.xs,
-                          color: colors.surface[500],
-                          marginTop: 2,
-                        }}
-                        numberOfLines={1}
-                      >
-                        {preset.manufacturer}
-                      </Text>
-                    </View>
-                    {selectedCatalogueId === preset.id && (
+                    <Text
+                      style={{
+                        fontSize: fontSize.base,
+                        color: colors.surface[900],
+                        fontWeight: !selectedCatalogueId ? fontWeight.semibold : fontWeight.medium,
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      Skip (manual entry)
+                    </Text>
+                    {!selectedCatalogueId && (
                       <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
                     )}
                   </View>
                 </Pressable>
-              ))}
 
-              {visibleCatalogueItems.length === 0 && (
-                <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-                    No catalogue matches found.
-                  </Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
-    )}
+                {/* Catalogue items */}
+                {visibleCatalogueItems.map((preset) => (
+                  <Pressable
+                    key={preset.id}
+                    style={{
+                      paddingVertical: spacing[4],
+                      paddingLeft: spacing[8],
+                      paddingRight: spacing[6],
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor:
+                        selectedCatalogueId === preset.id
+                          ? colors.surface[50]
+                          : colors.surface[100],
+                    }}
+                    onPress={() => {
+                      applyPreset(preset);
+                      setShowCataloguePicker(false);
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <View style={{ flex: 1, marginRight: spacing[3] }}>
+                        <Text
+                          style={{
+                            fontSize: fontSize.base,
+                            color: colors.surface[900],
+                            fontWeight:
+                              selectedCatalogueId === preset.id
+                                ? fontWeight.semibold
+                                : fontWeight.medium,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {preset.label}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: fontSize.xs,
+                            color: colors.surface[600],
+                            marginTop: 2,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {preset.manufacturer}
+                        </Text>
+                      </View>
+                      {selectedCatalogueId === preset.id && (
+                        <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                      )}
+                    </View>
+                  </Pressable>
+                ))}
+
+                {visibleCatalogueItems.length === 0 && (
+                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                      No catalogue matches found.
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

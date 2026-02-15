@@ -14,16 +14,15 @@ import {
   KeyboardAvoidingView,
   Alert,
   ActivityIndicator,
-  Platform,
   type TextInputProps,
   Keyboard,
-  useWindowDimensions,
   UIManager,
   findNodeHandle,
 } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/ui/app-icon';
+import { ModalBackdrop } from '@/components/ui/modal-backdrop';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -77,6 +76,8 @@ import {
   useRecentSprayChemicals,
   useRecentFertigationItems,
   queryKeys,
+  usePlatform,
+  useResponsiveHeight,
 } from '@/hooks';
 import { useCreateTask, useUpdateTask } from '@/hooks/use-tasks';
 import {
@@ -240,8 +241,8 @@ export function EntryForm({
   const isVisible = visible ?? true;
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
-  const isIOS = Platform.OS === 'ios';
+  const { windowHeight } = useResponsiveHeight();
+  const { isIOS } = usePlatform();
   const resolvedTabs = useMemo<EntryTab[]>(
     () => (tabs && tabs.length > 0 ? tabs : ['log', 'task']),
     [tabs],
@@ -2389,7 +2390,7 @@ export function EntryForm({
             </Pressable>
           )}
         </Pressable>
-        {showDueDatePicker && Platform.OS === 'ios' && (
+        {showDueDatePicker && isIOS && (
           <Modal
             transparent
             visible={showDueDatePicker}
@@ -2465,7 +2466,7 @@ export function EntryForm({
             </Pressable>
           </Modal>
         )}
-        {showDueDatePicker && Platform.OS !== 'ios' && (
+        {showDueDatePicker && !isIOS && (
           <DateTimePicker
             value={(() => {
               if (!dueDate) return new Date();
@@ -2633,17 +2634,11 @@ export function EntryForm({
         )}
 
         {showTypePicker && (
-          <Pressable
-            onPress={() => setShowTypePicker(false)}
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.4),
-              zIndex: 60,
-            }}
+          <ModalBackdrop
+            visible
+            onDismiss={() => setShowTypePicker(false)}
+            opacity={0.4}
+            zIndex={60}
           >
             <View
               style={{
@@ -2722,24 +2717,15 @@ export function EntryForm({
                 ))}
               </ScrollView>
             </View>
-          </Pressable>
+          </ModalBackdrop>
         )}
 
         {showPriorityPicker && (
-          <Pressable
-            onPress={() => setShowPriorityPicker(false)}
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.4),
-                zIndex: 50,
-              },
-              { zIndex: 60 },
-            ]}
+          <ModalBackdrop
+            visible
+            onDismiss={() => setShowPriorityPicker(false)}
+            opacity={0.4}
+            zIndex={60}
           >
             <View
               style={{
@@ -2831,7 +2817,7 @@ export function EntryForm({
                 </Pressable>
               ))}
             </View>
-          </Pressable>
+          </ModalBackdrop>
         )}
 
         <ScrollView
