@@ -1,9 +1,9 @@
 /**
- * Lab Test Parser Utility using OpenAI (via Supabase Edge Function proxy)
+ * Lab Test Parser Utility using OpenAI (via Supabase Edge Function)
  * Extracts lab test data from PDF reports or images
  */
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '../constants/lab-test-parameters';
 
@@ -14,148 +14,109 @@ export interface ParsedLabTest {
   notes?: string;
 }
 
-interface OpenAIProxyResponse {
-  choices: Array<{
-    message?: {
-      content?: string | null;
-    };
-  }>;
-  error?: { message?: string };
+interface ParseResponse {
+  parameters: Array<{ name: string; value: number }>;
+  summary: string | null;
+  rawNotes: string | null;
+  confidence: number | null;
+  testDate: string | null;
 }
 
-async function callOpenAIProxy(params: {
-  messages: Array<{
-    role: 'system' | 'user';
-    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
-  }>;
-  model?: string;
-  temperature?: number;
-  max_tokens?: number;
-  response_format?: { type: string };
-}): Promise<OpenAIProxyResponse> {
-  const { data, error } = await supabase.functions.invoke('openai-proxy', {
-    body: params,
-  });
-
-  if (error) {
-    throw new Error(`AI proxy request failed: ${error.message}`);
-  }
-
-  if (data?.error) {
-    throw new Error(`AI proxy error: ${data.error.message ?? data.error}`);
-  }
-
-  return data as OpenAIProxyResponse;
-}
-
-/**
- * Read image file as base64
- */
-async function readImageAsBase64(uri: string): Promise<string> {
+async function readFileAsBase64(uri: string): Promise<{ dataUrl: string; filename: string }> {
   try {
     const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: 'base64',
+      encoding: FileSystem.EncodingType.Base64,
     });
 
+    const lowerUri = uri.toLowerCase();
     let mimeType = 'image/jpeg';
-    if (uri.endsWith('.png')) {
+    let filename = 'report.jpg';
+
+    if (lowerUri.endsWith('.pdf')) {
+      mimeType = 'application/pdf';
+      filename = 'lab-report.pdf';
+    } else if (lowerUri.endsWith('.png')) {
       mimeType = 'image/png';
-    } else if (uri.endsWith('.webp')) {
+      filename = 'report.png';
+    } else if (lowerUri.endsWith('.webp')) {
       mimeType = 'image/webp';
-    } else if (uri.endsWith('.gif')) {
+      filename = 'report.webp';
+    } else if (lowerUri.endsWith('.gif')) {
       mimeType = 'image/gif';
+      filename = 'report.gif';
     }
 
-    return `data:${mimeType};base64,${base64}`;
+    const dataUrl = `data:${mimeType};base64,${base64}`;
+    return { dataUrl, filename };
   } catch (error) {
-    console.error('Error reading image:', error);
-    throw new Error('Failed to read image file');
+    console.error('[PDF Parser] Error reading file:', error);
+    throw new Error(
+      `Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
   }
 }
 
 /**
- * Parse lab test data from image using OpenAI Vision
+ * Parse lab test data from image or PDF using OpenAI
  */
 export async function parseLabTestFromImage(
-  imageUri: string,
+  fileUri: string,
   testType: 'soil' | 'petiole',
 ): Promise<ParsedLabTest> {
   const parameters = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
-  const paramKeys = parameters.map((p) => `${p.key} (${p.label})`).join(', ');
-  const paramKeyNames = parameters.map((p) => p.key).join(', ');
 
   try {
-    const base64Image = await readImageAsBase64(imageUri);
+    const { dataUrl, filename } = await readFileAsBase64(fileUri);
 
-    const response = await callOpenAIProxy({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are an expert at extracting lab test data from agricultural test reports.
-
-Available parameters: ${paramKeys}
-
-Extract the test data from the image and return a JSON object with this exact structure:
-{
-  "testDate": "YYYY-MM-DD" (optional, extract from report if available),
-  "parameters": {
-    "key": numeric_value (only include parameters that are present in the report)
-  },
-  "recommendations": "text" (optional, extract recommendations if available),
-  "notes": "text" (optional, extract any additional notes)
-}
-
-Only include parameters that are explicitly mentioned with values in the report.
-Use parameter keys from this list exactly: ${paramKeyNames}
-Convert all numeric values to numbers (not strings).
-Pay attention to units and convert if necessary to match the expected units.`,
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Extract ${testType} test data from this lab report image:`,
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: base64Image,
-              },
-            },
-          ],
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0,
-      max_tokens: 4000,
+    const { data, error } = await supabase.functions.invoke('dynamic-api', {
+      body: {
+        action: 'parse',
+        file_data: dataUrl,
+        filename,
+        test_type: testType,
+      },
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No response from AI proxy');
+    if (error) {
+      console.error('AI proxy request error:', JSON.stringify(error, null, 2));
+      throw new Error(`AI proxy request failed: ${error.message}`);
     }
 
-    const parsed = JSON.parse(content);
+    if (data?.error) {
+      console.error('AI proxy returned error:', JSON.stringify(data.error, null, 2));
+      throw new Error(`AI proxy error: ${data.error.message ?? JSON.stringify(data.error)}`);
+    }
+
+    const response = data as ParseResponse;
 
     const cleanParameters: Record<string, number> = {};
-    for (const [key, value] of Object.entries(parsed.parameters || {})) {
-      const param = parameters.find((p) => p.key === key);
+    for (const { name, value } of response.parameters || []) {
+      let normalizedKey = name
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+
+      // Fix common spelling variations
+      if (normalizedKey === 'ammonical_nitrogen') {
+        normalizedKey = 'ammoniacal_nitrogen';
+      }
+
+      const param = parameters.find((p) => p.key === normalizedKey || p.key === name.toLowerCase());
       if (param && typeof value === 'number' && !isNaN(value)) {
-        cleanParameters[key] = value;
+        cleanParameters[param.key] = value;
       }
     }
 
     return {
-      testDate: parsed.testDate,
+      testDate: response.testDate || undefined,
       parameters: cleanParameters,
-      recommendations: parsed.recommendations,
-      notes: parsed.notes,
+      recommendations: response.summary || undefined,
+      notes: response.rawNotes || undefined,
     };
   } catch (error) {
-    console.error('Error parsing lab test from image:', error);
-    throw new Error('Failed to parse lab test data from image');
+    console.error('Error parsing lab test:', error);
+    throw new Error('Failed to parse lab test data');
   }
 }
 
@@ -167,45 +128,25 @@ export async function parseLabTestFromText(
   testType: 'soil' | 'petiole',
 ): Promise<ParsedLabTest> {
   const parameters = testType === 'soil' ? SOIL_PARAMETERS : PETIOLE_PARAMETERS;
-  const paramKeys = parameters.map((p) => `${p.key} (${p.label})`).join(', ');
-  const paramKeyNames = parameters.map((p) => p.key).join(', ');
 
   try {
-    const response = await callOpenAIProxy({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are an expert at extracting lab test data from agricultural test reports.
-
-Available parameters: ${paramKeys}
-
-Extract the test data from the provided text and return a JSON object with this exact structure:
-{
-  "testDate": "YYYY-MM-DD" (optional, extract from report if available),
-  "parameters": {
-    "key": numeric_value (only include parameters that are present in the report)
-  },
-  "recommendations": "text" (optional, extract recommendations if available),
-  "notes": "text" (optional, extract any additional notes)
-}
-
-Only include parameters that are explicitly mentioned with values in the report.
-Use parameter keys from this list exactly: ${paramKeyNames}
-Convert all numeric values to numbers (not strings).
-Pay attention to units and convert if necessary to match the expected units.`,
-        },
-        {
-          role: 'user',
-          content: `Extract ${testType} test data from this lab report text:\n\n${text}`,
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0,
-      max_tokens: 4000,
+    const { data, error } = await supabase.functions.invoke('dynamic-api', {
+      body: {
+        action: 'parse_text',
+        text,
+        test_type: testType,
+      },
     });
 
-    const content = response.choices[0]?.message?.content;
+    if (error) {
+      throw new Error(`AI proxy request failed: ${error.message}`);
+    }
+
+    if (data?.error) {
+      throw new Error(`AI proxy error: ${data.error.message ?? JSON.stringify(data.error)}`);
+    }
+
+    const content = data.choices?.[0]?.message?.content;
     if (!content) {
       throw new Error('No response from AI proxy');
     }

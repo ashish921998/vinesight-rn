@@ -549,6 +549,7 @@ export default function WorkerAnalyticsDetailScreen() {
 }
 
 function StatChip({ label, value }: { label: string; value: string }) {
+  const m3 = useM3();
   return (
     <View
       style={{
