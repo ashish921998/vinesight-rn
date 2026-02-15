@@ -59,7 +59,7 @@ interface AuthActions {
   // Phone OTP methods
   signInWithPhone: (phone: string, mode?: PhoneAuthMode) => Promise<void>;
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
-  resendPhoneOTP: (mode?: PhoneAuthMode) => Promise<void>;
+  resendPhoneOTP: (mode?: PhoneAuthMode, phone?: string) => Promise<void>;
   cancelPhoneOTPFlow: () => void;
   completeProfile: (data: { firstName: string; lastName: string; email?: string }) => Promise<void>;
 
@@ -675,6 +675,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
+    const wasAuthenticated = get().isAuthenticated;
     set({ errorMessage: null, isLoading: true });
 
     const { pendingOTPType } = get();
@@ -710,7 +711,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       telemetry.capture('auth_otp_verify_failed', { type: pendingOTPType });
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
-        isAuthenticated: false,
+        isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
     }
@@ -808,6 +809,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
+    const wasAuthenticated = get().isAuthenticated;
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('auth_phone_otp_verify_started');
 
@@ -861,17 +863,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       telemetry.capture('auth_phone_otp_verify_failed');
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
-        isAuthenticated: false,
+        isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
     }
   },
 
   // Resend phone OTP
-  resendPhoneOTP: async (mode: PhoneAuthMode = 'signin') => {
+  resendPhoneOTP: async (mode: PhoneAuthMode = 'signin', phone?: string) => {
     const { pendingOTPPhone, signInWithPhone } = get();
-    if (!pendingOTPPhone) return;
-    await signInWithPhone(pendingOTPPhone, mode);
+    const resendPhone = phone?.trim() || pendingOTPPhone;
+    if (!resendPhone) {
+      set({ errorMessage: 'Phone number is missing. Please enter it again.' });
+      return;
+    }
+    await signInWithPhone(resendPhone, mode);
   },
 
   // Cancel phone OTP flow

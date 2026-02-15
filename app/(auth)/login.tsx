@@ -59,7 +59,7 @@ export default function LoginScreen() {
   // Navigate to main app when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/(tabs)');
+      router.replace('/');
     }
   }, [isAuthenticated]);
 

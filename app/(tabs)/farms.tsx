@@ -9,13 +9,12 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
-  Platform,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useFarms, useDeleteFarm, useFabBottomPosition } from '@/hooks';
+import { useFarms, useDeleteFarm, useFabBottomPosition, isAndroid } from '@/hooks';
 import { FarmCard } from '@/components/cards';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { Button } from '@/components/ui';
@@ -256,7 +255,6 @@ export default function FarmsScreen() {
   const deleteFarm = useDeleteFarm();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const isAndroid = Platform.OS === 'android';
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchQuery(text);
