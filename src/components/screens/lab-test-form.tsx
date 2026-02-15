@@ -24,51 +24,7 @@ import {
 import { useFarm } from '@/hooks/use-farms';
 import { SOIL_PARAMETERS, PETIOLE_PARAMETERS } from '@/constants/lab-test-parameters';
 import { parseLabTestFromImage } from '../../utils/pdf-parser';
-
-function normalizeParameterKey(key: string, isSoil: boolean): string {
-  if (isSoil) {
-    const soilKeyMap: Record<string, string> = {
-      pH: 'ph',
-      EC: 'ec',
-      OC: 'organicCarbon',
-      OM: 'organicMatter',
-      N: 'nitrogen',
-      P: 'phosphorus',
-      K: 'potassium',
-      Ca: 'calcium',
-      Mg: 'magnesium',
-      S: 'sulfur',
-      Fe: 'iron',
-      Mn: 'manganese',
-      Zn: 'zinc',
-      Cu: 'copper',
-      B: 'boron',
-    };
-    return soilKeyMap[key] || key;
-  } else {
-    const petioleKeyMap: Record<string, string> = {
-      N: 'total_nitrogen',
-      TN: 'total_nitrogen',
-      'NO3-N': 'nitrate_nitrogen',
-      'NH4-N': 'ammoniacal_nitrogen',
-      ammonical_nitrogen: 'ammoniacal_nitrogen',
-      P: 'phosphorus',
-      K: 'potassium',
-      Ca: 'calcium',
-      Mg: 'magnesium',
-      S: 'sulfur',
-      Fe: 'iron',
-      Mn: 'manganese',
-      Zn: 'zinc',
-      Cu: 'copper',
-      B: 'boron',
-      Mo: 'molybdenum',
-      Na: 'sodium',
-      Cl: 'chloride',
-    };
-    return petioleKeyMap[key] || petioleKeyMap[key.toLowerCase()] || key;
-  }
-}
+import { normalizeParameterKey } from '../../utils/lab-test-utils';
 
 interface LabTestFormProps {
   visible?: boolean;
@@ -306,7 +262,7 @@ export default function LabTestForm({
       if (parsedData.parameters) {
         const stringParams: Record<string, string> = {};
         Object.entries(parsedData.parameters).forEach(([key, value]) => {
-          const normalizedKey = normalizeParameterKey(key, isSoil);
+          const normalizedKey = normalizeParameterKey(key, testType);
           stringParams[normalizedKey] = value.toString();
         });
         setParameters(stringParams);
