@@ -55,6 +55,14 @@ interface CompositionRow {
   percent: string;
 }
 
+interface ManualCatalogueDraft {
+  name: string;
+  type: WarehouseItemType;
+  unit: WarehouseUnit;
+  manufacturer: string;
+  compositionRows: CompositionRow[];
+}
+
 const ITEM_TYPES = [
   {
     value: 'fertilizer' as WarehouseItemType,
@@ -130,6 +138,9 @@ export default function WarehouseItemForm({
   const [catalogueSearchQuery, setCatalogueSearchQuery] = useState('');
   const [showCataloguePicker, setShowCataloguePicker] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [manualCatalogueDraft, setManualCatalogueDraft] = useState<ManualCatalogueDraft | null>(
+    null,
+  );
 
   const currency = useCurrency();
   const isEditing = !!editingItem;
@@ -224,11 +235,6 @@ export default function WarehouseItemForm({
     return Math.max(220, keyboardAdjustedHeight);
   }, [windowHeight, insets.top, insets.bottom, keyboardHeight, isIOS]);
 
-  const androidKeyboardLift = useMemo(() => {
-    if (isIOS) return 0;
-    return Math.max(0, keyboardHeight - insets.bottom);
-  }, [isIOS, keyboardHeight, insets.bottom]);
-
   const catalogueSheetHeight = useMemo(
     () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
     [windowHeight, pickerAvailableHeight],
@@ -248,6 +254,9 @@ export default function WarehouseItemForm({
     setCompositionSource('manual');
     setSelectedCatalogueId('');
     setCatalogueSearchQuery('');
+    setShowCataloguePicker(false);
+    setKeyboardHeight(0);
+    setManualCatalogueDraft(null);
   };
 
   const handleReset = () => {
@@ -255,6 +264,16 @@ export default function WarehouseItemForm({
   };
 
   const applyPreset = (preset: WarehouseNutrientPreset) => {
+    setManualCatalogueDraft(
+      (prev) =>
+        prev ?? {
+          name,
+          type,
+          unit,
+          manufacturer,
+          compositionRows: compositionRows.map((row) => ({ ...row })),
+        },
+    );
     setName(preset.name);
     setType(preset.type);
     setUnit(preset.unit);
@@ -262,6 +281,25 @@ export default function WarehouseItemForm({
     setCompositionRows(preset.composition.map((item) => createCompositionRow(item)));
     setCompositionSource('preset');
     setSelectedCatalogueId(preset.id);
+  };
+
+  const clearPresetSelection = () => {
+    if (manualCatalogueDraft) {
+      setName(manualCatalogueDraft.name);
+      setType(manualCatalogueDraft.type);
+      setUnit(manualCatalogueDraft.unit);
+      setManufacturer(manualCatalogueDraft.manufacturer);
+      setCompositionRows(
+        manualCatalogueDraft.compositionRows.length > 0
+          ? manualCatalogueDraft.compositionRows.map((row) => ({ ...row }))
+          : [createCompositionRow()],
+      );
+    }
+
+    setCompositionSource('manual');
+    setSelectedCatalogueId('');
+    setShowCataloguePicker(false);
+    setManualCatalogueDraft(null);
   };
 
   const updateCompositionRow = (id: string, updates: Partial<CompositionRow>) => {
@@ -298,6 +336,9 @@ export default function WarehouseItemForm({
 
       if (shouldUpdate) {
         if (editingItem) {
+          setShowCataloguePicker(false);
+          setKeyboardHeight(0);
+          setManualCatalogueDraft(null);
           setName(editingItem.name);
           setType(editingItem.type as WarehouseItemType);
           setQuantity(editingItem.quantity.toString());
@@ -673,11 +714,12 @@ export default function WarehouseItemForm({
           onPress={() => setShowCataloguePicker(false)}
         >
           <KeyboardAvoidingView
-            behavior={isIOS ? 'padding' : undefined}
+            behavior={isIOS ? 'padding' : 'height'}
             keyboardVerticalOffset={0}
-            style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
+            style={{ justifyContent: 'flex-end' }}
           >
             <View
+              onStartShouldSetResponder={() => true}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -778,9 +820,7 @@ export default function WarehouseItemForm({
                       : colors.surface[100],
                   }}
                   onPress={() => {
-                    setSelectedCatalogueId('');
-                    setCompositionSource('manual');
-                    setShowCataloguePicker(false);
+                    clearPresetSelection();
                   }}
                 >
                   <View

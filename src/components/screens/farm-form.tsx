@@ -1606,6 +1606,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
             <View
+              onStartShouldSetResponder={() => true}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -1768,6 +1769,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
             <View
+              onStartShouldSetResponder={() => true}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -1992,6 +1994,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
             <View
+              onStartShouldSetResponder={() => true}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
