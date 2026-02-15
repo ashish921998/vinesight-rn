@@ -16,6 +16,7 @@ import {
   useUpdateWarehouseItem,
   isIOS,
   useResponsiveHeight,
+  useAndroidKeyboardLift,
 } from '../../hooks';
 import {
   NutrientCompositionItem,
@@ -239,10 +240,7 @@ export default function WarehouseItemForm({
     [windowHeight, pickerAvailableHeight],
   );
 
-  const androidKeyboardLift = useMemo(() => {
-    if (isIOS) return 0;
-    return Math.max(0, keyboardHeight - insets.bottom);
-  }, [keyboardHeight, insets.bottom]);
+  const androidKeyboardLift = useAndroidKeyboardLift(keyboardHeight, insets.bottom);
 
   const resetForm = () => {
     setName('');

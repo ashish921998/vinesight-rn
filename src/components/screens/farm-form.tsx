@@ -17,7 +17,14 @@ import {
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useCreateFarm, useFarm, useUpdateFarm, isIOS, useResponsiveHeight } from '@/hooks';
+import {
+  useCreateFarm,
+  useFarm,
+  useUpdateFarm,
+  isIOS,
+  useResponsiveHeight,
+  useAndroidKeyboardLift,
+} from '@/hooks';
 import { CROP_VARIETIES, CROPS, type CropType } from '@/constants/crop-varieties';
 import type { Farm, FarmInsert, FarmUpdate } from '@/types';
 import { useTranslation } from 'react-i18next';
@@ -386,10 +393,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     return Math.max(220, keyboardAdjustedHeight);
   }, [windowHeight, insets.top, insets.bottom, keyboardHeight]);
 
-  const androidKeyboardLift = useMemo(() => {
-    if (isIOS) return 0;
-    return Math.max(0, keyboardHeight - insets.bottom);
-  }, [keyboardHeight, insets.bottom]);
+  const androidKeyboardLift = useAndroidKeyboardLift(keyboardHeight, insets.bottom);
 
   const varietySheetHeight = useMemo(
     () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
