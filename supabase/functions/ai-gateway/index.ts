@@ -95,6 +95,30 @@ interface SafetyFlags {
   escalation_suggested: boolean;
 }
 
+interface CostBreakdown {
+  stt_cost_usd: number;
+  llm_input_cost_usd: number;
+  llm_output_cost_usd: number;
+  tts_cost_usd: number;
+  embedding_cost_usd: number;
+  total_cost_usd: number;
+}
+
+interface TelemetryEvent {
+  event_name: string;
+  user_id: string | null;
+  farm_id: number | null;
+  trace_id: string;
+  properties: Record<string, unknown>;
+  timestamp: string;
+}
+
+interface CircuitBreakerState {
+  failures: number;
+  lastFailureTime: number;
+  isOpen: boolean;
+}
+
 interface MemorySearchRow {
   content?: string | null;
   similarity?: number | null;
@@ -174,6 +198,37 @@ const SARVAM_TTS_PACE = Number.parseFloat(Deno.env.get('ASSISTANT_SARVAM_TTS_PAC
 const USE_SARVAM_FOR_VOICE =
   (Deno.env.get('ASSISTANT_USE_SARVAM_VOICE') ?? 'true').toLowerCase() !== 'false';
 
+const MAX_AUDIO_SIZE_MB = 10;
+const MAX_TEXT_LENGTH = 5000;
+const MAX_AUDIO_BASE64_LENGTH = Math.floor((MAX_AUDIO_SIZE_MB * 1024 * 1024 * 4) / 3);
+const MIN_AUDIO_BASE64_LENGTH = 1000;
+const MIN_AUDIO_ESTIMATED_BYTES = 700;
+
+const STT_TIMEOUT_MS = 15000;
+const TTS_TIMEOUT_MS = 10000;
+const LLM_TIMEOUT_MS = 30000;
+
+const FAILURE_THRESHOLD = 5;
+const RESET_TIMEOUT_MS = 60000;
+const circuitBreakers = new Map<string, CircuitBreakerState>();
+
+const responseCache = new Map<string, { text: string; timestamp: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+const PRICING = {
+  sarvam: {
+    stt_per_second: 0.00013,
+    tts_per_char: 0.00000001,
+  },
+  openai: {
+    stt_per_second: 0.0001,
+    tts_per_char: 0.000015,
+    gpt_4o_mini_input_per_1k: 0.00015,
+    gpt_4o_mini_output_per_1k: 0.0006,
+    embedding_3_small_per_1k: 0.00002,
+  },
+};
+
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.warn('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in ai-gateway');
 }
@@ -205,6 +260,23 @@ function generateTraceId(): string {
   return crypto.randomUUID();
 }
 
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  errorMessage: string,
+): Promise<T> {
+  let timeoutHandle: number | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutHandle !== null) clearTimeout(timeoutHandle);
+  }
+}
+
 function normalizeInputText(value: unknown): string {
   if (typeof value !== 'string') return '';
   return value.trim();
@@ -221,6 +293,64 @@ function normalizeBase64Input(value: string | null | undefined): string {
   return trimmed;
 }
 
+function estimateBase64Bytes(base64Value: string): number {
+  const normalized = base64Value.trim();
+  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
+  return Math.max(0, Math.floor((normalized.length * 3) / 4) - padding);
+}
+
+function isLikelyInvalidAudioError(message: string): boolean {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes('audio data too small') ||
+    lowered.includes('failed to read the file') ||
+    lowered.includes('invalid audio') ||
+    lowered.includes('decode') ||
+    lowered.includes('unsupported') ||
+    lowered.includes('empty transcript') ||
+    lowered.includes('recording')
+  );
+}
+
+function detectAudioFormatFromHeader(
+  binary: Uint8Array,
+): { mime: string; filename: string } | null {
+  if (binary.length < 12) return null;
+
+  // WAV: starts with "RIFF"
+  if (binary[0] === 0x52 && binary[1] === 0x49 && binary[2] === 0x46 && binary[3] === 0x46) {
+    return { mime: 'audio/wav', filename: 'audio.wav' };
+  }
+  // FLAC: starts with "fLaC"
+  if (binary[0] === 0x66 && binary[1] === 0x4c && binary[2] === 0x61 && binary[3] === 0x43) {
+    return { mime: 'audio/flac', filename: 'audio.flac' };
+  }
+  // OGG: starts with "OggS"
+  if (binary[0] === 0x4f && binary[1] === 0x67 && binary[2] === 0x67 && binary[3] === 0x53) {
+    return { mime: 'audio/ogg', filename: 'audio.ogg' };
+  }
+  // MP3: starts with ID3 tag or 0xFF 0xFB sync word
+  if (
+    (binary[0] === 0x49 && binary[1] === 0x44 && binary[2] === 0x33) ||
+    (binary[0] === 0xff && (binary[1] & 0xe0) === 0xe0)
+  ) {
+    return { mime: 'audio/mpeg', filename: 'audio.mp3' };
+  }
+  // CAF: starts with "caff"
+  if (binary[0] === 0x63 && binary[1] === 0x61 && binary[2] === 0x66 && binary[3] === 0x66) {
+    return { mime: 'audio/mp4', filename: 'audio.caf' };
+  }
+  // MP4/M4A: "ftyp" at offset 4
+  if (binary[4] === 0x66 && binary[5] === 0x74 && binary[6] === 0x79 && binary[7] === 0x70) {
+    return { mime: 'audio/mp4', filename: 'audio.m4a' };
+  }
+  // WebM: starts with 0x1A 0x45 0xDF 0xA3 (EBML header)
+  if (binary[0] === 0x1a && binary[1] === 0x45 && binary[2] === 0xdf && binary[3] === 0xa3) {
+    return { mime: 'audio/webm', filename: 'audio.webm' };
+  }
+  return null;
+}
+
 function normalizeOpenAiAudioMime(mimeType: string): { mime: string; filename: string } {
   const normalized = mimeType.trim().toLowerCase();
   if (normalized.includes('wav')) return { mime: 'audio/wav', filename: 'audio.wav' };
@@ -229,10 +359,12 @@ function normalizeOpenAiAudioMime(mimeType: string): { mime: string; filename: s
   if (normalized.includes('ogg') || normalized.includes('oga'))
     return { mime: 'audio/ogg', filename: 'audio.ogg' };
   if (normalized.includes('x-m4a') || normalized.includes('m4a'))
-    return { mime: 'audio/m4a', filename: 'audio.m4a' };
-  if (normalized.includes('mp4')) return { mime: 'audio/mp4', filename: 'audio.mp4' };
+    return { mime: 'audio/mpeg', filename: 'audio.mp3' };
+  if (normalized.includes('mp4')) return { mime: 'audio/mpeg', filename: 'audio.mp3' };
   if (normalized.includes('mpeg') || normalized.includes('mp3'))
     return { mime: 'audio/mpeg', filename: 'audio.mp3' };
+  if (normalized.includes('caf')) return { mime: 'audio/mpeg', filename: 'audio.mp3' };
+  if (normalized.includes('aac')) return { mime: 'audio/mpeg', filename: 'audio.mp3' };
   return { mime: 'audio/mpeg', filename: 'audio.mp3' };
 }
 
@@ -314,6 +446,101 @@ function stringifyUnknown(value: unknown): string {
     }
   }
   return '';
+}
+
+function estimateTokens(text: string): number {
+  const normalized = text.trim();
+  if (!normalized) return 0;
+  return Math.ceil(normalized.length / 4);
+}
+
+function roundUsd(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(value * 1_000_000) / 1_000_000;
+}
+
+function calculateCost(input: {
+  sttProviderUsed: string | null;
+  audioDurationSeconds: number;
+  inputTokens: number;
+  outputTokens: number;
+  embeddingTokens: number;
+  ttsProviderUsed: string | null;
+  ttsCharCount: number;
+}): CostBreakdown {
+  let sttCost = 0;
+  if (input.sttProviderUsed === 'sarvam') {
+    sttCost = input.audioDurationSeconds * PRICING.sarvam.stt_per_second;
+  } else if (input.sttProviderUsed === 'openai' || input.sttProviderUsed === 'openai_fallback') {
+    sttCost = input.audioDurationSeconds * PRICING.openai.stt_per_second;
+  }
+
+  const llmInputCost = (input.inputTokens / 1000) * PRICING.openai.gpt_4o_mini_input_per_1k;
+  const llmOutputCost = (input.outputTokens / 1000) * PRICING.openai.gpt_4o_mini_output_per_1k;
+  const embeddingCost = (input.embeddingTokens / 1000) * PRICING.openai.embedding_3_small_per_1k;
+
+  let ttsCost = 0;
+  if (input.ttsProviderUsed === 'sarvam') {
+    ttsCost = input.ttsCharCount * PRICING.sarvam.tts_per_char;
+  } else if (input.ttsProviderUsed === 'openai' || input.ttsProviderUsed === 'openai_fallback') {
+    ttsCost = input.ttsCharCount * PRICING.openai.tts_per_char;
+  }
+
+  return {
+    stt_cost_usd: roundUsd(sttCost),
+    llm_input_cost_usd: roundUsd(llmInputCost),
+    llm_output_cost_usd: roundUsd(llmOutputCost),
+    tts_cost_usd: roundUsd(ttsCost),
+    embedding_cost_usd: roundUsd(embeddingCost),
+    total_cost_usd: roundUsd(sttCost + llmInputCost + llmOutputCost + ttsCost + embeddingCost),
+  };
+}
+
+function getCacheKey(transcript: string, locale: string, farmId: number | null): string {
+  return `${locale}:${farmId ?? 'none'}:${transcript.toLowerCase().trim()}`;
+}
+
+function checkCircuitBreaker(provider: string): boolean {
+  const state = circuitBreakers.get(provider);
+  if (!state || !state.isOpen) return true;
+  if (Date.now() - state.lastFailureTime > RESET_TIMEOUT_MS) {
+    state.isOpen = false;
+    state.failures = 0;
+    circuitBreakers.set(provider, state);
+    return true;
+  }
+  return false;
+}
+
+function recordProviderFailure(provider: string): void {
+  const state = circuitBreakers.get(provider) ?? {
+    failures: 0,
+    lastFailureTime: 0,
+    isOpen: false,
+  };
+  state.failures += 1;
+  state.lastFailureTime = Date.now();
+  if (state.failures >= FAILURE_THRESHOLD) {
+    state.isOpen = true;
+    console.error(`Circuit breaker opened for ${provider} after ${state.failures} failures`);
+  }
+  circuitBreakers.set(provider, state);
+}
+
+function recordProviderSuccess(provider: string): void {
+  const state = circuitBreakers.get(provider);
+  if (!state) return;
+  state.failures = Math.max(0, state.failures - 1);
+  if (state.failures === 0) state.isOpen = false;
+  circuitBreakers.set(provider, state);
+}
+
+async function trackTelemetry(event: TelemetryEvent): Promise<void> {
+  try {
+    await serviceSupabase.from('telemetry_events').insert(event);
+  } catch (error) {
+    console.warn('Telemetry tracking failed', stringifyUnknown(error));
+  }
 }
 
 function parseChemicalItems(
@@ -752,7 +979,7 @@ async function callOpenAIChat(input: {
   prompt: string;
   locale: 'en' | 'hi' | 'mr';
   contextBlocks: string[];
-}): Promise<string> {
+}): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
   if (!OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is not configured');
   }
@@ -804,7 +1031,13 @@ async function callOpenAIChat(input: {
     throw new Error('OpenAI returned an empty response');
   }
 
-  return content.trim();
+  const usage = toRecord(data?.usage);
+  const inputTokens =
+    toOptionalNumber(usage?.prompt_tokens) ?? toOptionalNumber(usage?.input_tokens) ?? 0;
+  const outputTokens =
+    toOptionalNumber(usage?.completion_tokens) ?? toOptionalNumber(usage?.output_tokens) ?? 0;
+
+  return { text: content.trim(), inputTokens, outputTokens };
 }
 
 async function callOpenAIEmbedding(text: string): Promise<number[] | null> {
@@ -846,6 +1079,10 @@ async function callSarvamStt(
     if (normalized.startsWith('audio/')) return normalized;
     return 'audio/mpeg';
   })();
+
+  if (normalizedMimeType.includes('mp4')) {
+    throw new Error('sarvam_unsupported_audio_container');
+  }
 
   const languageCode = locale === 'mr' ? 'mr-IN' : locale === 'hi' ? 'hi-IN' : 'en-IN';
   const candidateModels = Array.from(new Set([SARVAM_STT_MODEL, 'saarika:v2.5']));
@@ -918,46 +1155,37 @@ async function callOpenAIStt(
 ): Promise<{ transcript: string; confidence: number | null }> {
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured');
 
-  const boundary = `----assistant-gateway-${crypto.randomUUID()}`;
-  const openAiAudio = normalizeOpenAiAudioMime(mimeType);
-  const filename = openAiAudio.filename;
   const cleanBase64 = normalizeBase64Input(base64Audio);
   const binary = Uint8Array.from(atob(cleanBase64), (ch) => ch.charCodeAt(0));
 
-  const bodyParts: Uint8Array[] = [];
-  const encoder = new TextEncoder();
+  const headerDetected = detectAudioFormatFromHeader(binary);
+  const mimeBasedAudio = normalizeOpenAiAudioMime(mimeType);
+  const openAiAudio = headerDetected ?? mimeBasedAudio;
 
-  const pushText = (value: string) => bodyParts.push(encoder.encode(value));
+  const headerHex = Array.from(binary.slice(0, 12))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join(' ');
+  console.log(
+    `[OpenAI STT] clientMime=${mimeType} mimeNormalized=${mimeBasedAudio.mime}/${mimeBasedAudio.filename} headerDetected=${headerDetected ? `${headerDetected.mime}/${headerDetected.filename}` : 'none'} using=${openAiAudio.mime}/${openAiAudio.filename} bytes=${binary.length} header=${headerHex}`,
+  );
 
-  pushText(`--${boundary}\r\n`);
-  pushText(`Content-Disposition: form-data; name="model"\r\n\r\n`);
-  pushText(`whisper-1\r\n`);
-
-  pushText(`--${boundary}\r\n`);
-  pushText(`Content-Disposition: form-data; name="file"; filename="${filename}"\r\n`);
-  pushText(`Content-Type: ${openAiAudio.mime}\r\n\r\n`);
-  bodyParts.push(binary);
-  pushText(`\r\n--${boundary}--\r\n`);
-
-  const totalLength = bodyParts.reduce((sum, part) => sum + part.length, 0);
-  const merged = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const part of bodyParts) {
-    merged.set(part, offset);
-    offset += part.length;
-  }
+  const form = new FormData();
+  form.append('model', 'whisper-1');
+  form.append('file', new Blob([binary], { type: openAiAudio.mime }), openAiAudio.filename);
 
   const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': `multipart/form-data; boundary=${boundary}`,
     },
-    body: merged,
+    body: form,
   });
 
   const data = await response.json();
   if (!response.ok) {
+    console.error(
+      `[OpenAI STT] rejected: ${JSON.stringify(data?.error)} mime=${openAiAudio.mime} filename=${openAiAudio.filename} bytes=${binary.length}`,
+    );
     throw new Error(data?.error?.message ?? 'OpenAI STT failed');
   }
 
@@ -1049,12 +1277,9 @@ async function callOpenAITts(text: string): Promise<{ base64: string; mimeType: 
   }
 
   const bytes = new Uint8Array(await response.arrayBuffer());
-  let binary = '';
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
+  const binary = Array.from(bytes)
+    .map((byte) => String.fromCharCode(byte))
+    .join('');
 
   return {
     base64: btoa(binary),
@@ -1174,6 +1399,7 @@ async function searchMemoryContext(input: {
   userId: string | null;
   farmId: number | null;
   enabled: boolean;
+  embeddingTokenCounter?: { value: number };
   toolCalls: ToolCall[];
 }): Promise<{ contextBlocks: string[]; citations: Citation[] }> {
   if (!input.enabled || !input.userId || !input.query.trim()) {
@@ -1186,6 +1412,9 @@ async function searchMemoryContext(input: {
     return { contextBlocks: [], citations: [] };
   }
 
+  if (input.embeddingTokenCounter) {
+    input.embeddingTokenCounter.value += estimateTokens(input.query);
+  }
   const embedding = await callOpenAIEmbedding(input.query);
   if (!embedding) {
     input.toolCalls.push({
@@ -1245,6 +1474,7 @@ async function searchRagContext(input: {
   query: string;
   locale: 'en' | 'hi' | 'mr';
   enabled: boolean;
+  embeddingTokenCounter?: { value: number };
   toolCalls: ToolCall[];
 }): Promise<{ contextBlocks: string[]; citations: Citation[] }> {
   if (!input.enabled || !input.query.trim()) {
@@ -1257,6 +1487,9 @@ async function searchRagContext(input: {
     return { contextBlocks: [], citations: [] };
   }
 
+  if (input.embeddingTokenCounter) {
+    input.embeddingTokenCounter.value += estimateTokens(input.query);
+  }
   const embedding = await callOpenAIEmbedding(input.query);
   if (!embedding) {
     input.toolCalls.push({
@@ -1368,7 +1601,15 @@ async function queryFarmRecords(input: {
     return { answer: null, citations: [] };
   }
 
-  const rows: FarmRecordRow[] = Array.isArray(data) ? (data as FarmRecordRow[]) : [];
+  const validateFarmRecord = (row: unknown): row is FarmRecordRow => {
+    if (!row || typeof row !== 'object') return false;
+    const candidate = row as Record<string, unknown>;
+    const validId = typeof candidate.id === 'string' || typeof candidate.id === 'number';
+    const validDate = candidate.date === null || typeof candidate.date === 'string';
+    return validId && validDate;
+  };
+
+  const rows: FarmRecordRow[] = Array.isArray(data) ? data.filter(validateFarmRecord) : [];
   input.toolCalls.push({
     tool: 'log_activity.query',
     status: 'ok',
@@ -1544,9 +1785,38 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'user_id does not match authenticated user' }, 403);
     }
 
+    if (body?.input_text && body.input_text.length > MAX_TEXT_LENGTH) {
+      return jsonResponse({ error: `Text input exceeds ${MAX_TEXT_LENGTH} characters` }, 400);
+    }
+
+    if (body?.input_audio_b64) {
+      const cleanBase64 = normalizeBase64Input(body.input_audio_b64);
+      if (cleanBase64.length > MAX_AUDIO_BASE64_LENGTH) {
+        return jsonResponse(
+          { error: `Audio exceeds ${MAX_AUDIO_SIZE_MB}MB limit`, max_size_mb: MAX_AUDIO_SIZE_MB },
+          413,
+        );
+      }
+      if (cleanBase64.length > 0 && cleanBase64.length < MIN_AUDIO_BASE64_LENGTH) {
+        return jsonResponse(
+          {
+            error: 'INVALID_AUDIO',
+            message: 'Audio recording is too short. Please speak for at least 1 second.',
+            min_base64_length: MIN_AUDIO_BASE64_LENGTH,
+          },
+          400,
+        );
+      }
+    }
+
     let transcript = normalizeInputText(body?.input_text);
     const inputMode: 'text' | 'audio' = body?.input_mode === 'audio' ? 'audio' : 'text';
     let effectiveInputMode: 'text' | 'audio' = inputMode;
+    const embeddingTokenCounter = { value: 0 };
+    let llmInputTokens = 0;
+    let llmOutputTokens = 0;
+    let preflightSafetyFlags: SafetyFlags | null = null;
+    let cacheHit = false;
 
     const toolCalls: ToolCall[] = [];
     let sttProviderUsed: string | null = null;
@@ -1555,6 +1825,19 @@ Deno.serve(async (req) => {
     let ttsGenerationMs: number | null = null;
     let ttsSkippedReason: string | null = null;
     let providerFallbackReason: string | null = null;
+
+    await trackTelemetry({
+      event_name: 'ai_gateway_request_started',
+      user_id: authenticatedUserId,
+      farm_id: body?.farm_context?.farm_id ?? null,
+      trace_id: traceId,
+      properties: {
+        input_mode: inputMode,
+        locale,
+        has_audio: Boolean(body?.input_audio_b64),
+      },
+      timestamp: new Date().toISOString(),
+    });
 
     if (inputMode === 'audio') {
       const audioBase64 = body?.input_audio_b64?.trim();
@@ -1575,54 +1858,116 @@ Deno.serve(async (req) => {
           output: { stt_provider: 'client_transcript' },
         });
       } else {
-        const sarvamUnsupportedContainer = /\b(mp4|m4a|x-m4a)\b/i.test(audioMimeType);
+        const normalizedAudioBase64 = normalizeBase64Input(audioBase64);
+        const estimatedAudioBytes = estimateBase64Bytes(normalizedAudioBase64);
+        if (normalizedAudioBase64.length < MIN_AUDIO_BASE64_LENGTH) {
+          return jsonResponse(
+            {
+              error: 'INVALID_AUDIO',
+              message: 'Audio recording is too short. Please speak for at least 1 second.',
+              base64_length: normalizedAudioBase64.length,
+            },
+            400,
+          );
+        }
+        if (estimatedAudioBytes < MIN_AUDIO_ESTIMATED_BYTES) {
+          return jsonResponse(
+            {
+              error: 'INVALID_AUDIO',
+              message: 'Audio data is too small to transcribe. Please try again.',
+              estimated_audio_bytes: estimatedAudioBytes,
+            },
+            400,
+          );
+        }
+
+        const sarvamUnsupportedContainer = /\b(mp4|m4a|x-m4a|caf|x-caf)\b/i.test(audioMimeType);
+        console.log(
+          `[STT dispatch] audioMimeType=${audioMimeType} sarvamUnsupported=${sarvamUnsupportedContainer} useSarvam=${USE_SARVAM_FOR_VOICE} base64len=${normalizedAudioBase64.length} estimatedBytes=${estimatedAudioBytes}`,
+        );
 
         try {
+          let sttResult: { transcript: string; confidence: number | null };
           if (USE_SARVAM_FOR_VOICE && !sarvamUnsupportedContainer) {
-            const sttStartedAt = Date.now();
-            const sttResult = await callSarvamStt(audioBase64, audioMimeType, locale);
-            sttLatencyMs = Date.now() - sttStartedAt;
-            transcript = sttResult.transcript;
-            sttConfidence = sttResult.confidence;
-            sttProviderUsed = 'sarvam';
-            toolCalls.push({
-              tool: 'farm_context.get',
-              status: 'ok',
-              output: {
-                stt_provider: 'sarvam',
-                stt_confidence: sttConfidence,
-                stt_latency_ms: sttLatencyMs,
-              },
-            });
+            const canUseSarvam = checkCircuitBreaker('sarvam_stt');
+            if (canUseSarvam) {
+              try {
+                const sttStartedAt = Date.now();
+                sttResult = await withTimeout(
+                  callSarvamStt(audioBase64, audioMimeType, locale),
+                  STT_TIMEOUT_MS,
+                  `Sarvam STT timed out after ${STT_TIMEOUT_MS}ms`,
+                );
+                sttLatencyMs = Date.now() - sttStartedAt;
+                sttProviderUsed = 'sarvam';
+                sttConfidence = sttResult.confidence;
+                recordProviderSuccess('sarvam_stt');
+              } catch (error) {
+                recordProviderFailure('sarvam_stt');
+                if (!providerFallbackEnabled) throw error;
+                console.warn('Sarvam STT failed, falling back to OpenAI:', stringifyUnknown(error));
+                const sttStartedAt = Date.now();
+                sttResult = await withTimeout(
+                  callOpenAIStt(audioBase64, audioMimeType),
+                  STT_TIMEOUT_MS,
+                  `OpenAI STT fallback timed out after ${STT_TIMEOUT_MS}ms`,
+                );
+                sttLatencyMs = Date.now() - sttStartedAt;
+                sttProviderUsed = 'openai_fallback';
+                sttConfidence = sttResult.confidence;
+                providerFallbackReason =
+                  error instanceof Error ? error.message : 'sarvam_stt_failed';
+              }
+            } else {
+              console.warn('Sarvam STT circuit breaker open; using OpenAI directly');
+              const sttStartedAt = Date.now();
+              sttResult = await withTimeout(
+                callOpenAIStt(audioBase64, audioMimeType),
+                STT_TIMEOUT_MS,
+                `OpenAI STT timed out after ${STT_TIMEOUT_MS}ms`,
+              );
+              sttLatencyMs = Date.now() - sttStartedAt;
+              sttProviderUsed = 'openai';
+              sttConfidence = sttResult.confidence;
+              providerFallbackReason = 'sarvam_stt_circuit_open';
+            }
           } else {
             const sttStartedAt = Date.now();
-            const sttResult = await callOpenAIStt(audioBase64, audioMimeType);
+            sttResult = await withTimeout(
+              callOpenAIStt(audioBase64, audioMimeType),
+              STT_TIMEOUT_MS,
+              `OpenAI STT timed out after ${STT_TIMEOUT_MS}ms`,
+            );
             sttLatencyMs = Date.now() - sttStartedAt;
-            transcript = sttResult.transcript;
-            sttConfidence = sttResult.confidence;
             sttProviderUsed = 'openai';
+            sttConfidence = sttResult.confidence;
           }
-        } catch (error) {
-          if (!providerFallbackEnabled) {
-            throw error;
-          }
-
-          const sttStartedAt = Date.now();
-          const sttResult = await callOpenAIStt(audioBase64, audioMimeType);
-          sttLatencyMs = Date.now() - sttStartedAt;
           transcript = sttResult.transcript;
-          sttConfidence = sttResult.confidence;
-          sttProviderUsed = 'openai_fallback';
-          providerFallbackReason = error instanceof Error ? error.message : 'sarvam_stt_failed';
           toolCalls.push({
             tool: 'farm_context.get',
             status: 'ok',
             output: {
-              stt_provider: 'openai_fallback',
+              stt_provider: sttProviderUsed,
               stt_confidence: sttConfidence,
               stt_latency_ms: sttLatencyMs,
+              provider_fallback_reason: providerFallbackReason,
             },
           });
+        } catch (error) {
+          const errorMessage = stringifyUnknown(error);
+          if (isLikelyInvalidAudioError(errorMessage)) {
+            return jsonResponse(
+              {
+                error: 'INVALID_AUDIO_FORMAT',
+                message:
+                  'The audio recording could not be processed. Please try again and speak for at least 1 second.',
+                details: errorMessage,
+                stt_provider_used: sttProviderUsed,
+              },
+              400,
+            );
+          }
+          throw error;
         }
       }
     }
@@ -1709,12 +2054,16 @@ Deno.serve(async (req) => {
           Boolean(nextRouteState.voice_log_draft),
         )
       ) {
-        llmExtraction = await extractActivityIntent({
-          transcript: effectiveTranscript,
-          locale,
-          farmNames: farmsForRouting.map((farmRow) => farmRow.name),
-          contextFarmName: contextFarmForRouting?.name ?? body?.farm_context?.farm_name ?? null,
-        });
+        llmExtraction = await withTimeout(
+          extractActivityIntent({
+            transcript: effectiveTranscript,
+            locale,
+            farmNames: farmsForRouting.map((farmRow) => farmRow.name),
+            contextFarmName: contextFarmForRouting?.name ?? body?.farm_context?.farm_name ?? null,
+          }),
+          LLM_TIMEOUT_MS,
+          `Intent extraction timed out after ${LLM_TIMEOUT_MS}ms`,
+        );
       }
 
       const deterministicQuery = buildDeterministicQueryIntent({
@@ -1749,6 +2098,18 @@ Deno.serve(async (req) => {
           deterministic_confidence: deterministicQuery.confidence,
           forced_route: forcedRoute,
         },
+      });
+      await trackTelemetry({
+        event_name: 'route_decided',
+        user_id: userId,
+        farm_id: farmId,
+        trace_id: traceId,
+        properties: {
+          route: routeDecision,
+          llm_intent: llmExtraction?.intent ?? null,
+          confidence: llmExtraction?.intentConfidence ?? null,
+        },
+        timestamp: new Date().toISOString(),
       });
 
       if (routeDecision === 'clarify_route') {
@@ -1867,31 +2228,58 @@ Deno.serve(async (req) => {
           userId,
           farmId,
           enabled: body?.client_capabilities?.memory_enabled !== false,
+          embeddingTokenCounter,
           toolCalls,
         }),
         searchRagContext({
           query: effectiveTranscript,
           locale,
           enabled: body?.client_capabilities?.rag_enabled !== false,
+          embeddingTokenCounter,
           toolCalls,
         }),
       ]);
 
       citations = [...citations, ...memoryContext.citations, ...ragContext.citations];
-
-      const farmContextBlock = body?.farm_context
-        ? `Farm context: ${JSON.stringify(body.farm_context)}`
-        : '';
-
-      assistantText = await callOpenAIChat({
-        prompt: effectiveTranscript,
-        locale,
-        contextBlocks: [
-          farmContextBlock,
-          ...memoryContext.contextBlocks,
-          ...ragContext.contextBlocks,
-        ].filter(Boolean),
-      });
+      const strictGuardrailsPreflight = isSprayOrFertigationTopic(effectiveTranscript);
+      if (strictGuardrailsPreflight && citations.length === 0) {
+        console.warn('Blocking spray/fertigation query with no citations');
+        assistantText = buildBlockedAdviceMessage(locale, true);
+        preflightSafetyFlags = {
+          blocked: true,
+          risk_level: 'critical',
+          reasons: ['Spray/fertigation advice requires verified sources'],
+          escalation_suggested: true,
+        };
+      } else {
+        const farmContextBlock = body?.farm_context
+          ? `Farm context: ${JSON.stringify(body.farm_context)}`
+          : '';
+        const cacheKey = getCacheKey(effectiveTranscript, locale, farmId);
+        const cached = responseCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+          cacheHit = true;
+          assistantText = cached.text;
+        } else {
+          const chatResult = await withTimeout(
+            callOpenAIChat({
+              prompt: effectiveTranscript,
+              locale,
+              contextBlocks: [
+                farmContextBlock,
+                ...memoryContext.contextBlocks,
+                ...ragContext.contextBlocks,
+              ].filter(Boolean),
+            }),
+            LLM_TIMEOUT_MS,
+            `Advisory generation timed out after ${LLM_TIMEOUT_MS}ms`,
+          );
+          assistantText = chatResult.text;
+          llmInputTokens = chatResult.inputTokens;
+          llmOutputTokens = chatResult.outputTokens;
+          responseCache.set(cacheKey, { text: assistantText, timestamp: Date.now() });
+        }
+      }
     }
 
     if (routeStateDirty) {
@@ -1901,12 +2289,17 @@ Deno.serve(async (req) => {
     const strictGuardrailsRequired = isSprayOrFertigationTopic(
       `${effectiveTranscript}\n${assistantText}`,
     );
-    const safetyFlags = buildSafetyFlags({
-      adviceText: assistantText,
-      transcript: effectiveTranscript,
-      routeDecision,
-      citationCount: citations.length,
-    });
+    let safetyFlags: SafetyFlags;
+    if (preflightSafetyFlags) {
+      safetyFlags = preflightSafetyFlags;
+    } else {
+      safetyFlags = buildSafetyFlags({
+        adviceText: assistantText,
+        transcript: effectiveTranscript,
+        routeDecision,
+        citationCount: citations.length,
+      });
+    }
     toolCalls.push({
       tool: 'safety.check_advice',
       status: 'ok',
@@ -1920,31 +2313,52 @@ Deno.serve(async (req) => {
     let audioBase64: string | null = null;
     let audioMimeType: string | null = null;
     let audioProviderUsed: string | null = null;
+    let usedSarvamTts = false;
 
     if (body?.client_capabilities?.can_play_audio !== false) {
       try {
-        if (USE_SARVAM_FOR_VOICE) {
+        if (USE_SARVAM_FOR_VOICE && checkCircuitBreaker('sarvam_tts')) {
+          usedSarvamTts = true;
           const ttsStartedAt = Date.now();
-          const tts = await callSarvamTts(assistantText, locale);
+          const tts = await withTimeout(
+            callSarvamTts(assistantText, locale),
+            TTS_TIMEOUT_MS,
+            `Sarvam TTS timed out after ${TTS_TIMEOUT_MS}ms`,
+          );
           ttsGenerationMs = Date.now() - ttsStartedAt;
           audioBase64 = tts.base64;
           audioMimeType = tts.mimeType;
           audioProviderUsed = 'sarvam';
+          recordProviderSuccess('sarvam_tts');
         } else {
           const ttsStartedAt = Date.now();
-          const tts = await callOpenAITts(assistantText);
+          const tts = await withTimeout(
+            callOpenAITts(assistantText),
+            TTS_TIMEOUT_MS,
+            `OpenAI TTS timed out after ${TTS_TIMEOUT_MS}ms`,
+          );
           ttsGenerationMs = Date.now() - ttsStartedAt;
           audioBase64 = tts.base64;
           audioMimeType = tts.mimeType;
           audioProviderUsed = 'openai';
+          if (USE_SARVAM_FOR_VOICE) {
+            providerFallbackReason = providerFallbackReason ?? 'sarvam_tts_circuit_open';
+          }
         }
       } catch (error) {
+        if (usedSarvamTts) {
+          recordProviderFailure('sarvam_tts');
+        }
         if (!providerFallbackEnabled) {
           throw error instanceof Error ? error : new Error('Sarvam TTS failed');
         }
         try {
           const ttsStartedAt = Date.now();
-          const tts = await callOpenAITts(assistantText);
+          const tts = await withTimeout(
+            callOpenAITts(assistantText),
+            TTS_TIMEOUT_MS,
+            `OpenAI TTS fallback timed out after ${TTS_TIMEOUT_MS}ms`,
+          );
           ttsGenerationMs = Date.now() - ttsStartedAt;
           audioBase64 = tts.base64;
           audioMimeType = tts.mimeType;
@@ -1975,6 +2389,29 @@ Deno.serve(async (req) => {
     });
 
     const latency = Date.now() - start;
+    const costBreakdown = calculateCost({
+      sttProviderUsed,
+      audioDurationSeconds: sttLatencyMs ? sttLatencyMs / 1000 : 0,
+      inputTokens: llmInputTokens,
+      outputTokens: llmOutputTokens,
+      embeddingTokens: embeddingTokenCounter.value,
+      ttsProviderUsed: audioProviderUsed,
+      ttsCharCount: assistantText.length,
+    });
+
+    await trackTelemetry({
+      event_name: 'provider_selected',
+      user_id: userId,
+      farm_id: farmId,
+      trace_id: traceId,
+      properties: {
+        stt_provider: sttProviderUsed,
+        tts_provider: audioProviderUsed,
+        fallback_reason: providerFallbackReason ?? null,
+        cache_hit: cacheHit,
+      },
+      timestamp: new Date().toISOString(),
+    });
 
     const assistantTurnId = await writeConversationTurn({
       conversationId,
@@ -2002,6 +2439,7 @@ Deno.serve(async (req) => {
       stt_latency_ms: sttLatencyMs,
       tts_generation_ms: ttsGenerationMs,
       tts_skipped_reason: ttsSkippedReason,
+      cost_breakdown: costBreakdown,
       route_decision: routeDecision,
       voice_log_action: voiceLogAction,
       provider_fallback_reason: providerFallbackReason,

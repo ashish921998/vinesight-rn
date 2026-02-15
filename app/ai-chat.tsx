@@ -22,7 +22,6 @@ import {
   useAudioRecorder,
 } from 'expo-audio';
 import { SpeechRecognitionModule, useSpeechRecognitionEvent } from '@/services/speech-recognition';
-
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,7 +40,12 @@ import {
   resolveVoiceLogTurn,
   shouldAttemptVoiceLogExtraction,
 } from '@/services/voice-log-assistant';
-import { sendAssistantTurn } from '@/services/assistant-gateway';
+import {
+  AssistantGatewayError,
+  AssistantGatewayErrorCode,
+  cancelPendingAssistantTurnRequest,
+  sendAssistantTurn,
+} from '@/services/assistant-gateway';
 import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import { assistantMemoryService } from '@/services/assistant-memory';
 import type { AssistantConversationSummary } from '@/services/assistant-memory';
@@ -73,6 +77,13 @@ interface VoiceAudioPayload {
   durationMs?: number | null;
 }
 
+interface FailedChatRequest {
+  text: string;
+  source: 'text' | 'voice';
+  voicePayload: VoiceAudioPayload | null;
+  attachments: ChatAttachment[];
+}
+
 interface AssistantTurnDiagnostics {
   source: string;
   traceId?: string | null;
@@ -91,6 +102,25 @@ interface AssistantTurnDiagnostics {
 }
 
 const SHOW_LOCAL_DIAGNOSTICS = false;
+const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024;
+const MIN_VOICE_AUDIO_DURATION_MS = 500;
+const MIN_VOICE_AUDIO_BASE64_LENGTH = 1000;
+const MIN_VOICE_AUDIO_ESTIMATED_BYTES = 700;
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+]);
+const ALLOWED_DOCUMENT_MIME_TYPES = new Set([
+  'application/pdf',
+  'text/plain',
+  'text/csv',
+  'application/json',
+  'application/xml',
+  'text/markdown',
+]);
 
 const TEXT_DOCUMENT_EXTENSIONS = new Set(['txt', 'csv', 'json', 'md', 'xml', 'html', 'htm', 'log']);
 const TEXT_DOCUMENT_MIME_TYPES = new Set([
@@ -235,6 +265,54 @@ function estimateBase64Bytes(base64Payload: string | null | undefined): number |
   if (!normalized) return null;
   const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
   return Math.floor((normalized.length * 3) / 4) - padding;
+}
+
+function validateVoiceAudioPayload(payload: VoiceAudioPayload | null): {
+  ok: boolean;
+  reason?: string;
+  estimatedBytes?: number | null;
+} {
+  if (!payload?.inputAudioBase64?.trim()) {
+    return { ok: false, reason: 'empty_audio_payload', estimatedBytes: null };
+  }
+
+  const estimatedBytes = estimateBase64Bytes(payload.inputAudioBase64);
+  const durationMs = payload.durationMs ?? null;
+
+  if (durationMs !== null && durationMs > 0 && durationMs < MIN_VOICE_AUDIO_DURATION_MS) {
+    return { ok: false, reason: 'audio_duration_too_short', estimatedBytes };
+  }
+
+  if (payload.inputAudioBase64.length < MIN_VOICE_AUDIO_BASE64_LENGTH) {
+    return { ok: false, reason: 'audio_base64_too_short', estimatedBytes };
+  }
+
+  if (
+    estimatedBytes !== null &&
+    Number.isFinite(estimatedBytes) &&
+    estimatedBytes < MIN_VOICE_AUDIO_ESTIMATED_BYTES
+  ) {
+    return { ok: false, reason: 'audio_bytes_too_small', estimatedBytes };
+  }
+
+  return { ok: true, estimatedBytes };
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isAllowedDocumentMimeType(
+  mimeType: string | undefined,
+  name: string,
+  uri: string,
+): boolean {
+  if (!mimeType) {
+    const extension = getFileExtension(name) ?? getFileExtension(uri);
+    return extension ? TEXT_DOCUMENT_EXTENSIONS.has(extension) || extension === 'pdf' : false;
+  }
+  if (mimeType.startsWith('text/')) return true;
+  return ALLOWED_DOCUMENT_MIME_TYPES.has(mimeType);
 }
 
 function formatDiagnosticValue(value: string | number | null | undefined): string {
@@ -489,7 +567,9 @@ export default function AIChatScreen() {
   const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
   const [isVoiceModeVisible, setIsVoiceModeVisible] = useState(false);
   const [isVoiceModeContinuousEnabled, setIsVoiceModeContinuousEnabled] = useState(false);
+  const [voiceModeError, setVoiceModeError] = useState<string | null>(null);
   const [liveVoiceTranscript, setLiveVoiceTranscript] = useState('');
+  const [failedRequest, setFailedRequest] = useState<FailedChatRequest | null>(null);
   const [lastAssistantDiagnostics, setLastAssistantDiagnostics] =
     useState<AssistantTurnDiagnostics | null>(null);
   const [isHistoryVisible, setIsHistoryVisible] = useState(false);
@@ -513,15 +593,44 @@ export default function AIChatScreen() {
         text?: string,
         source?: 'text' | 'voice',
         voicePayload?: VoiceAudioPayload | null,
+        options?: { overrideAttachments?: ChatAttachment[] },
       ) => Promise<void>
     >(undefined);
+  const stopVoiceRecordingRef = useRef<
+    (options?: { discard?: boolean }) => Promise<VoiceAudioPayload | null>
+  >(async () => null);
+  const activeAssistantRequestIdRef = useRef<string | null>(null);
+  const activeAssistantAbortControllerRef = useRef<AbortController | null>(null);
   const speechLocale = useMemo(() => resolveSpeechLocale(i18n.language), [i18n.language]);
   const isVoiceListening = voiceInputState === 'starting' || voiceInputState === 'listening';
   const languageCode = useMemo(() => resolveLanguageCode(i18n.language), [i18n.language]);
-  const hasAssistantMessages = useMemo(
-    () => messages.some((message) => message.role === 'assistant'),
-    [messages],
-  );
+  const shouldShowVoicePlaybackControls = useMemo(() => {
+    if (isAssistantSpeaking) return true;
+
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const message = messages[i];
+      if (message.role !== 'assistant') continue;
+      if (message.inputMode === 'audio') return true;
+      if (message.audio?.base64 || message.audio?.url) return true;
+      return false;
+    }
+
+    return false;
+  }, [isAssistantSpeaking, messages]);
+
+  const cancelInFlightAssistantRequest = useCallback(() => {
+    const requestId = activeAssistantRequestIdRef.current;
+    const abortController = activeAssistantAbortControllerRef.current;
+    activeAssistantRequestIdRef.current = null;
+    activeAssistantAbortControllerRef.current = null;
+
+    if (abortController) {
+      abortController.abort();
+    }
+    if (requestId) {
+      cancelPendingAssistantTurnRequest(requestId);
+    }
+  }, []);
 
   const refreshConversationHistory = useCallback(async () => {
     if (!assistantFeatureFlags.memoryEnabled) return;
@@ -705,30 +814,40 @@ export default function AIChatScreen() {
     }
   }, [voiceRecorder]);
 
+  const waitForRecordingStart = useCallback(async (timeoutMs: number): Promise<boolean> => {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+      if (activeVoiceRecordingRef.current) return true;
+      await sleep(50);
+    }
+    return false;
+  }, []);
+
   const stopVoiceRecording = useCallback(
     async (options?: { discard?: boolean }): Promise<VoiceAudioPayload | null> => {
       if (isStoppingVoiceRecordingRef.current) return null;
-
-      if (!activeVoiceRecordingRef.current && isStartingVoiceInputRef.current) {
-        for (let attempt = 0; attempt < 25; attempt++) {
-          if (activeVoiceRecordingRef.current) break;
-          await new Promise((resolve) => setTimeout(resolve, 40));
-        }
-      }
-
-      if (!activeVoiceRecordingRef.current) {
-        lastVoiceCaptureErrorRef.current = 'recording_not_active';
-        return null;
-      }
-      activeVoiceRecordingRef.current = false;
-
       isStoppingVoiceRecordingRef.current = true;
+
       try {
+        if (!activeVoiceRecordingRef.current && isStartingVoiceInputRef.current) {
+          const started = await waitForRecordingStart(2000);
+          if (!started) {
+            lastVoiceCaptureErrorRef.current = 'recording_start_timeout';
+            return null;
+          }
+        }
+
+        if (!activeVoiceRecordingRef.current) {
+          lastVoiceCaptureErrorRef.current = 'recording_not_active';
+          return null;
+        }
+        activeVoiceRecordingRef.current = false;
+
         const startedAt = voiceRecordingStartedAtRef.current;
         if (startedAt) {
           const elapsed = Date.now() - startedAt;
           if (elapsed < 700) {
-            await new Promise((resolve) => setTimeout(resolve, 700 - elapsed));
+            await sleep(700 - elapsed);
           }
         }
 
@@ -739,7 +858,7 @@ export default function AIChatScreen() {
 
         // On some devices the recorder status/file URL is not ready immediately after stop().
         for (let attempt = 0; attempt < 15 && (!uri || !durationMs || durationMs <= 0); attempt++) {
-          await new Promise((resolve) => setTimeout(resolve, 80));
+          await sleep(80);
           status = voiceRecorder.getStatus();
           durationMs =
             typeof status.durationMillis === 'number' ? status.durationMillis : durationMs;
@@ -753,12 +872,23 @@ export default function AIChatScreen() {
           return null;
         }
 
-        for (let attempt = 0; attempt < 15; attempt++) {
+        let capturedFileSizeBytes: number | null = null;
+        for (let attempt = 0; attempt < 20; attempt++) {
           const info = await FileSystem.getInfoAsync(uri);
           if (info.exists && typeof info.size === 'number' && info.size > 0) {
+            capturedFileSizeBytes = info.size;
             break;
           }
-          await new Promise((resolve) => setTimeout(resolve, 80));
+          await sleep(100);
+        }
+
+        if (
+          capturedFileSizeBytes !== null &&
+          capturedFileSizeBytes > 0 &&
+          capturedFileSizeBytes < MIN_VOICE_AUDIO_ESTIMATED_BYTES
+        ) {
+          lastVoiceCaptureErrorRef.current = 'recording_file_too_small';
+          return null;
         }
 
         const inputAudioBase64 = await FileSystem.readAsStringAsync(uri, {
@@ -771,9 +901,17 @@ export default function AIChatScreen() {
 
         lastVoiceCaptureErrorRef.current = null;
 
+        const audioFormat = inferAudioMimeType(uri);
+        if (__DEV__) {
+          const estimatedBytes = estimateBase64Bytes(inputAudioBase64);
+          console.log(
+            `[Voice capture] uri=${uri} format=${audioFormat} durationMs=${durationMs} base64len=${inputAudioBase64.length} estimatedBytes=${estimatedBytes}`,
+          );
+        }
+
         return {
           inputAudioBase64,
-          audioFormat: inferAudioMimeType(uri),
+          audioFormat,
           durationMs,
         };
       } catch (error) {
@@ -799,7 +937,7 @@ export default function AIChatScreen() {
         }
       }
     },
-    [voiceRecorder],
+    [voiceRecorder, waitForRecordingStart],
   );
 
   const submitVoiceTranscript = useCallback(
@@ -813,13 +951,18 @@ export default function AIChatScreen() {
       setIsVoiceModeContinuousEnabled(true);
 
       const voicePayload = await stopVoiceRecording();
-      if (!voicePayload?.inputAudioBase64?.trim()) {
+      const voicePayloadValidation = validateVoiceAudioPayload(voicePayload);
+      if (!voicePayloadValidation.ok) {
         hasSubmittedVoiceQueryRef.current = false;
-        Alert.alert(
-          'Server STT not used',
-          'No audio payload was captured, so this turn would skip server speech-to-text. Please retry after rebuilding the app with microphone recording support.',
-          [{ text: t('common.ok') }],
-        );
+        telemetry.capture('voice_payload_rejected_before_send', {
+          reason: voicePayloadValidation.reason ?? null,
+          duration_ms: voicePayload?.durationMs ?? null,
+          base64_length: voicePayload?.inputAudioBase64?.length ?? 0,
+          estimated_bytes: voicePayloadValidation.estimatedBytes ?? null,
+        });
+        Alert.alert('Recording Too Short', 'Please speak for at least 1 second and try again.', [
+          { text: t('common.ok') },
+        ]);
         return;
       }
       void sendMessageRef.current?.(normalizedTranscript, 'voice', voicePayload);
@@ -832,14 +975,21 @@ export default function AIChatScreen() {
     hasSubmittedVoiceQueryRef.current = true;
     setVoiceInputState('idle');
     const voicePayload = await stopVoiceRecording();
-    if (!voicePayload?.inputAudioBase64?.trim()) {
+    const voicePayloadValidation = validateVoiceAudioPayload(voicePayload);
+    if (!voicePayloadValidation.ok) {
       hasSubmittedVoiceQueryRef.current = false;
+      telemetry.capture('voice_payload_rejected_before_send', {
+        reason: voicePayloadValidation.reason ?? null,
+        duration_ms: voicePayload?.durationMs ?? null,
+        base64_length: voicePayload?.inputAudioBase64?.length ?? 0,
+        estimated_bytes: voicePayloadValidation.estimatedBytes ?? null,
+      });
       const reason = lastVoiceCaptureErrorRef.current
         ? ` (${lastVoiceCaptureErrorRef.current})`
         : '';
       Alert.alert(
-        'Server STT not used',
-        `No audio payload was captured${reason}. Tap Speak, wait 1 second, talk for at least 1 second, then tap Stop.`,
+        'Recording Too Short',
+        `Audio was too short${reason}. Tap Speak, wait at least 1 second, then tap Stop.`,
         [{ text: t('common.ok') }],
       );
       return;
@@ -854,10 +1004,12 @@ export default function AIChatScreen() {
       text?: string,
       source: 'text' | 'voice' = 'text',
       voicePayload?: VoiceAudioPayload | null,
+      options?: { overrideAttachments?: ChatAttachment[] },
     ) => {
       const messageText = text || inputText.trim();
-      const currentAttachments = attachments;
+      const currentAttachments = options?.overrideAttachments ?? attachments;
       if ((!messageText && currentAttachments.length === 0) || isLoading) return;
+      setFailedRequest(null);
       if (isAssistantSpeaking) {
         void voiceOutputService.stop();
         setIsAssistantSpeaking(false);
@@ -1283,6 +1435,7 @@ export default function AIChatScreen() {
                   id: Date.now().toString(),
                   role: 'assistant',
                   content,
+                  inputMode: source === 'voice' ? 'audio' : 'text',
                   timestamp: new Date(),
                 },
               ]);
@@ -1368,6 +1521,7 @@ export default function AIChatScreen() {
                 id: Date.now().toString(),
                 role: 'assistant',
                 content,
+                inputMode: source === 'voice' ? 'audio' : 'text',
                 timestamp: new Date(),
               },
             ]);
@@ -1430,30 +1584,40 @@ export default function AIChatScreen() {
         }
 
         const aiAttachments = await prepareAttachmentsForAI(currentAttachments);
-        const response = await sendAssistantTurn({
-          conversationId: activeConversationId,
-          userMessage: llmFallbackInput,
-          language: languageCode,
-          inputMode: source === 'voice' ? 'audio' : 'text',
-          inputAudioBase64: source === 'voice' ? (voicePayload?.inputAudioBase64 ?? null) : null,
-          audioFormat: source === 'voice' ? (voicePayload?.audioFormat ?? null) : null,
-          attachments: aiAttachments,
-          conversationHistory: messages,
-          clientPersistedUserTurn: userTurnPersistedClient,
-          farmContext: {
-            farmId: contextFarm?.id ?? null,
-            farmName: contextFarm?.name,
-            cropVariety: contextFarm?.crop_variety || contextFarm?.crop,
-            area: contextFarm?.area,
-            region: contextFarm?.region,
-            daysSincePruning: contextFarm?.date_of_pruning
-              ? Math.floor(
-                  (new Date().getTime() - new Date(contextFarm.date_of_pruning).getTime()) /
-                    (1000 * 60 * 60 * 24),
-                )
-              : undefined,
+        const assistantRequestId = `ai-chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const assistantRequestAbortController = new AbortController();
+        activeAssistantRequestIdRef.current = assistantRequestId;
+        activeAssistantAbortControllerRef.current = assistantRequestAbortController;
+        const response = await sendAssistantTurn(
+          {
+            conversationId: activeConversationId,
+            userMessage: llmFallbackInput,
+            language: languageCode,
+            inputMode: source === 'voice' ? 'audio' : 'text',
+            inputAudioBase64: source === 'voice' ? (voicePayload?.inputAudioBase64 ?? null) : null,
+            audioFormat: source === 'voice' ? (voicePayload?.audioFormat ?? null) : null,
+            attachments: aiAttachments,
+            conversationHistory: messages,
+            clientPersistedUserTurn: userTurnPersistedClient,
+            farmContext: {
+              farmId: contextFarm?.id ?? null,
+              farmName: contextFarm?.name,
+              cropVariety: contextFarm?.crop_variety || contextFarm?.crop,
+              area: contextFarm?.area,
+              region: contextFarm?.region,
+              daysSincePruning: contextFarm?.date_of_pruning
+                ? Math.floor(
+                    (new Date().getTime() - new Date(contextFarm.date_of_pruning).getTime()) /
+                      (1000 * 60 * 60 * 24),
+                  )
+                : undefined,
+            },
           },
-        });
+          {
+            requestId: assistantRequestId,
+            signal: assistantRequestAbortController.signal,
+          },
+        );
 
         const resolvedConversationId =
           response.message.conversationId ?? activeConversationId ?? null;
@@ -1615,7 +1779,7 @@ export default function AIChatScreen() {
           });
         }
 
-        if (!serverReadyDraft && (source === 'voice' || Boolean(response.message.audio))) {
+        if (!serverReadyDraft && source === 'voice') {
           void voiceOutputService.playAssistantTurn(response, {
             language: languageCode,
             rate: voicePlaybackRate,
@@ -1625,6 +1789,44 @@ export default function AIChatScreen() {
 
         scrollToBottom();
       } catch (error) {
+        const requestWasCancelled =
+          error instanceof AssistantGatewayError &&
+          error.code === AssistantGatewayErrorCode.CANCELED;
+        if (requestWasCancelled) {
+          return;
+        }
+        const invalidVoicePayload =
+          error instanceof AssistantGatewayError &&
+          error.code === AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED;
+        if (source === 'voice') {
+          setIsVoiceModeContinuousEnabled(false);
+          try {
+            SpeechRecognitionModule.abort();
+          } catch {
+            /* no-op */
+          }
+          void stopVoiceRecording({ discard: true });
+          setVoiceInputState('idle');
+          setVoiceModeError(
+            invalidVoicePayload
+              ? 'Recording was too short. Please speak for at least 1 second.'
+              : error instanceof Error
+                ? error.message
+                : 'Voice request failed.',
+          );
+        }
+        if (invalidVoicePayload) {
+          Alert.alert('Recording Too Short', 'Please speak for at least 1 second and try again.', [
+            { text: t('common.ok') },
+          ]);
+          return;
+        }
+        setFailedRequest({
+          text: messageText,
+          source,
+          voicePayload: source === 'voice' ? (voicePayload ?? null) : null,
+          attachments: [...currentAttachments],
+        });
         const message = error instanceof Error ? error.message : t('ai.errors.failedResponse');
         if (__DEV__) {
           console.error('AI chat request failed:', error);
@@ -1633,6 +1835,8 @@ export default function AIChatScreen() {
         }
         Alert.alert(t('common.error'), message, [{ text: t('common.ok') }]);
       } finally {
+        activeAssistantRequestIdRef.current = null;
+        activeAssistantAbortControllerRef.current = null;
         setIsLoading(false);
         if (assistantFeatureFlags.memoryEnabled) {
           void refreshConversationHistory();
@@ -1674,6 +1878,10 @@ export default function AIChatScreen() {
     sendMessageRef.current = handleSendMessage;
   }, [handleSendMessage]);
 
+  useEffect(() => {
+    stopVoiceRecordingRef.current = stopVoiceRecording;
+  }, [stopVoiceRecording]);
+
   useSpeechRecognitionEvent('start', () => {
     setVoiceInputState('listening');
   });
@@ -1698,8 +1906,8 @@ export default function AIChatScreen() {
 
   useSpeechRecognitionEvent('end', () => {
     if (assistantFeatureFlags.serverVoiceEnabled) {
-      if (!hasSubmittedVoiceQueryRef.current && voiceInputState !== 'idle') {
-        void finalizeVoiceCaptureAndSend();
+      if (!activeVoiceRecordingRef.current) {
+        setVoiceInputState('idle');
       }
       return;
     }
@@ -1719,6 +1927,7 @@ export default function AIChatScreen() {
         return;
       }
       // Let manual stop continue to work even if speech recognition is unavailable.
+      setVoiceModeError(t('ai.voice.unavailableBody'));
       return;
     }
     void stopVoiceRecording({ discard: true });
@@ -1729,6 +1938,7 @@ export default function AIChatScreen() {
     if (event.error === 'no-speech') {
       setVoiceInputState('idle');
       setIsVoiceModeContinuousEnabled(false);
+      setVoiceModeError(t('ai.voice.noSpeechBody'));
       Alert.alert(t('ai.voice.noSpeechTitle'), t('ai.voice.noSpeechBody'), [
         { text: t('common.ok') },
       ]);
@@ -1737,12 +1947,14 @@ export default function AIChatScreen() {
     if (event.error === 'not-allowed') {
       setVoiceInputState('idle');
       setIsVoiceModeContinuousEnabled(false);
+      setVoiceModeError(t('ai.voice.permissionBody'));
       promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
       return;
     }
 
     setVoiceInputState('idle');
     setIsVoiceModeContinuousEnabled(false);
+    setVoiceModeError(t('ai.voice.unavailableBody'));
     Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
       { text: t('common.ok') },
     ]);
@@ -1750,15 +1962,21 @@ export default function AIChatScreen() {
 
   useEffect(() => {
     return () => {
-      try {
-        SpeechRecognitionModule.abort();
-      } catch {
-        /* no-op */
-      }
-      void stopVoiceRecording({ discard: true });
-      void voiceOutputService.stop();
+      const cleanup = async () => {
+        cancelInFlightAssistantRequest();
+        try {
+          SpeechRecognitionModule.abort();
+        } catch {
+          /* no-op */
+        }
+        if (activeVoiceRecordingRef.current) {
+          await stopVoiceRecordingRef.current({ discard: true });
+        }
+        await voiceOutputService.stop();
+      };
+      void cleanup();
     };
-  }, [stopVoiceRecording]);
+  }, [cancelInFlightAssistantRequest]);
 
   const startVoiceInput = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -1771,6 +1989,7 @@ export default function AIChatScreen() {
       return;
     }
 
+    setVoiceModeError(null);
     isStartingVoiceInputRef.current = true;
     setVoiceInputState('starting');
     pendingVoiceTranscriptRef.current = '';
@@ -1782,6 +2001,8 @@ export default function AIChatScreen() {
       const permission = await SpeechRecognitionModule.requestPermissionsAsync();
       if (!permission.granted) {
         setVoiceInputState('idle');
+        setIsVoiceModeContinuousEnabled(false);
+        setVoiceModeError(t('ai.voice.permissionBody'));
         promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
         return;
       }
@@ -1789,11 +2010,11 @@ export default function AIChatScreen() {
       await startVoiceRecording();
       if (!activeVoiceRecordingRef.current) {
         setVoiceInputState('idle');
-        Alert.alert(
-          'Server STT not ready',
-          'Microphone recording could not be started, so server speech-to-text cannot be used.',
-          [{ text: t('common.ok') }],
-        );
+        setIsVoiceModeContinuousEnabled(false);
+        const message =
+          'Microphone recording could not be started, so server speech-to-text cannot be used.';
+        setVoiceModeError(message);
+        Alert.alert('Server STT not ready', message, [{ text: t('common.ok') }]);
         return;
       }
 
@@ -1810,6 +2031,8 @@ export default function AIChatScreen() {
       }
       void stopVoiceRecording({ discard: true });
       setVoiceInputState('idle');
+      setIsVoiceModeContinuousEnabled(false);
+      setVoiceModeError(error instanceof Error ? error.message : t('ai.voice.unavailableBody'));
       Alert.alert(t('ai.voice.unavailableTitle'), t('ai.voice.unavailableBody'), [
         { text: t('common.ok') },
       ]);
@@ -1842,22 +2065,32 @@ export default function AIChatScreen() {
     }
     setIsVoiceModeVisible(true);
     setIsVoiceModeContinuousEnabled(true);
+    setVoiceModeError(null);
     setLiveVoiceTranscript('');
     void startVoiceInput();
   }, [startVoiceInput, t]);
 
   const closeVoiceMode = useCallback(() => {
+    cancelInFlightAssistantRequest();
     if (isVoiceListening) {
-      void stopVoiceInput();
+      try {
+        SpeechRecognitionModule.abort();
+      } catch {
+        /* no-op */
+      }
+      void stopVoiceRecording({ discard: true });
+      setVoiceInputState('idle');
     }
     setIsVoiceModeVisible(false);
     setIsVoiceModeContinuousEnabled(false);
+    setVoiceModeError(null);
     setLiveVoiceTranscript('');
-  }, [isVoiceListening, stopVoiceInput]);
+  }, [cancelInFlightAssistantRequest, isVoiceListening, stopVoiceRecording]);
 
   useEffect(() => {
     if (!isVoiceModeVisible || !isVoiceModeContinuousEnabled) return;
     if (isLoading || isAssistantSpeaking) return;
+    if (voiceModeError) return;
     if (voiceInputState !== 'idle') return;
 
     const timeout = setTimeout(() => {
@@ -1870,6 +2103,7 @@ export default function AIChatScreen() {
     isLoading,
     isVoiceModeContinuousEnabled,
     isVoiceModeVisible,
+    voiceModeError,
     startVoiceInput,
     voiceInputState,
   ]);
@@ -1905,14 +2139,44 @@ export default function AIChatScreen() {
       if (result.canceled || !result.assets?.length) return;
       const asset = result.assets[0];
       if (!asset.uri) return;
+      const mimeType =
+        asset.mimeType ??
+        inferAttachmentMimeType({
+          id: '',
+          name: asset.fileName || 'image.jpg',
+          uri: asset.uri,
+          kind: 'image',
+        });
+      const fileSize = asset.fileSize ?? undefined;
+      if (typeof fileSize === 'number' && fileSize > MAX_ATTACHMENT_SIZE_BYTES) {
+        Alert.alert(
+          t('common.error'),
+          'Image exceeds the 10MB limit. Please choose a smaller file.',
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
+      if (!ALLOWED_IMAGE_MIME_TYPES.has(mimeType.toLowerCase())) {
+        Alert.alert(t('common.error'), 'Unsupported image type. Use JPG, PNG, WEBP, or HEIC.', [
+          { text: t('common.ok') },
+        ]);
+        return;
+      }
+      const fileInfo = await FileSystem.getInfoAsync(asset.uri);
+      if (!fileInfo.exists) {
+        Alert.alert(t('common.error'), 'Selected image is no longer available.', [
+          { text: t('common.ok') },
+        ]);
+        return;
+      }
       setAttachments((prev) => [
         ...prev,
         {
           id: `${Date.now()}-${asset.uri}`,
           name: asset.fileName || `image-${prev.length + 1}.jpg`,
           uri: asset.uri,
-          mimeType: asset.mimeType,
-          size: asset.fileSize,
+          mimeType,
+          size: fileSize,
           kind: 'image',
         },
       ]);
@@ -1933,14 +2197,39 @@ export default function AIChatScreen() {
       if (result.canceled || !result.assets?.length) return;
       const asset = result.assets[0];
       if (!asset.uri) return;
+      const mimeType = asset.mimeType ?? undefined;
+      const fileSize = asset.size ?? undefined;
+      if (typeof fileSize === 'number' && fileSize > MAX_ATTACHMENT_SIZE_BYTES) {
+        Alert.alert(
+          t('common.error'),
+          'File exceeds the 10MB limit. Please choose a smaller file.',
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
+      if (!isAllowedDocumentMimeType(mimeType, asset.name || '', asset.uri)) {
+        Alert.alert(
+          t('common.error'),
+          'Unsupported file type. Try PDF, TXT, CSV, JSON, XML, or Markdown.',
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
+      const fileInfo = await FileSystem.getInfoAsync(asset.uri);
+      if (!fileInfo.exists) {
+        Alert.alert(t('common.error'), 'Selected file is no longer available.', [
+          { text: t('common.ok') },
+        ]);
+        return;
+      }
       setAttachments((prev) => [
         ...prev,
         {
           id: `${Date.now()}-${asset.uri}`,
           name: asset.name || `document-${prev.length + 1}`,
           uri: asset.uri,
-          mimeType: asset.mimeType,
-          size: asset.size,
+          mimeType,
+          size: fileSize,
           kind: 'document',
         },
       ]);
@@ -1964,6 +2253,13 @@ export default function AIChatScreen() {
     setAttachments((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
+  const retryFailedRequest = useCallback(() => {
+    if (!failedRequest || isLoading) return;
+    void handleSendMessage(failedRequest.text, failedRequest.source, failedRequest.voicePayload, {
+      overrideAttachments: failedRequest.attachments,
+    });
+  }, [failedRequest, handleSendMessage, isLoading]);
+
   const handleSuggestionPress = (suggestion: string) => {
     handleSendMessage(suggestion, 'text');
   };
@@ -1971,6 +2267,11 @@ export default function AIChatScreen() {
   const formatMessageTime = (date: Date) => {
     return formatTime(date);
   };
+
+  const handleBackPress = useCallback(() => {
+    cancelInFlightAssistantRequest();
+    router.back();
+  }, [cancelInFlightAssistantRequest, router]);
 
   return (
     <>
@@ -1980,7 +2281,7 @@ export default function AIChatScreen() {
           headerStyle: { backgroundColor: m3.colorScheme.background },
           headerTintColor: m3.colorScheme.onBackground,
           headerLeft: () => (
-            <Pressable onPress={() => router.back()} style={{ marginLeft: spacing[2] }}>
+            <Pressable onPress={handleBackPress} style={{ marginLeft: spacing[2] }}>
               <UiSymbol name="chevron.left" size={24} color={m3.colorScheme.onBackground} />
             </Pressable>
           ),
@@ -2610,8 +2911,56 @@ export default function AIChatScreen() {
                 </Pressable>
               </View>
             )}
+            {failedRequest && !isLoading && (
+              <View
+                style={{
+                  marginBottom: spacing[2],
+                  borderRadius: borderRadius.xl,
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.error, 0.4),
+                  backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.08),
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: spacing[2],
+                }}
+              >
+                <Text style={{ flex: 1, color: m3.colorScheme.error, fontSize: fontSize.xs }}>
+                  Last request failed.
+                </Text>
+                <Pressable
+                  onPress={retryFailedRequest}
+                  accessibilityRole="button"
+                  style={{
+                    paddingHorizontal: spacing[2],
+                    paddingVertical: spacing[1],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.14),
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: m3.colorScheme.error,
+                      fontSize: fontSize.xs,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    Retry
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setFailedRequest(null)}
+                  accessibilityRole="button"
+                  style={{ padding: spacing[1] }}
+                >
+                  <UiSymbol name="xmark" size={12} color={m3.colorScheme.error} />
+                </Pressable>
+              </View>
+            )}
             <View style={{ gap: spacing[2] }}>
-              {hasAssistantMessages && (
+              {shouldShowVoicePlaybackControls && (
                 <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: spacing[2] }}>
                   <Pressable
                     onPress={handleReplayAssistantVoice}
@@ -3018,6 +3367,44 @@ export default function AIChatScreen() {
                   {liveVoiceTranscript.trim() || 'Your speech will appear here...'}
                 </Text>
               </View>
+              {voiceModeError && (
+                <View
+                  style={{
+                    width: '100%',
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 1,
+                    borderColor: colorWithOpacity(m3.colorScheme.error, 0.36),
+                    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.08),
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[3],
+                    gap: spacing[2],
+                  }}
+                >
+                  <Text style={{ color: m3.colorScheme.error, fontSize: fontSize.sm }}>
+                    {voiceModeError}
+                  </Text>
+                  <Pressable
+                    onPress={closeVoiceMode}
+                    style={{
+                      alignSelf: 'flex-start',
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[1],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.16),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: m3.colorScheme.error,
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      Close
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
 
             <View style={{ flexDirection: 'row', gap: spacing[2], alignItems: 'center' }}>

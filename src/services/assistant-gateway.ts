@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { aiService } from '@/services/ai-service';
 import { assistantFeatureFlags, assistantModelConfig } from '@/constants/assistant-flags';
 import { normalizeAssistantCitations } from '@/services/rag-citations';
+import { telemetry } from '@/services/telemetry';
 import type {
   AIMessageAttachmentInput,
   AssistantAudio,
@@ -14,6 +15,61 @@ import type {
   ChatMessage,
 } from '@/types/ai';
 import type { SupportedLanguageCode } from '@/i18n/languages';
+
+const REQUEST_TIMEOUT_MS = 45_000;
+const MAX_AUDIO_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_AUDIO_BASE64_LENGTH = Math.ceil((MAX_AUDIO_SIZE_BYTES * 4) / 3);
+
+export enum AssistantGatewayErrorCode {
+  NETWORK_ERROR = 'NETWORK_ERROR',
+  TIMEOUT = 'TIMEOUT',
+  SERVER_ERROR = 'SERVER_ERROR',
+  INVALID_RESPONSE = 'INVALID_RESPONSE',
+  AUDIO_VALIDATION_FAILED = 'AUDIO_VALIDATION_FAILED',
+  AUTHENTICATION_FAILED = 'AUTHENTICATION_FAILED',
+  RATE_LIMITED = 'RATE_LIMITED',
+  CANCELED = 'CANCELED',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export class AssistantGatewayError extends Error {
+  code: AssistantGatewayErrorCode;
+  details?: Record<string, unknown>;
+  originalError?: Error;
+
+  constructor(
+    code: AssistantGatewayErrorCode,
+    message: string,
+    details?: Record<string, unknown>,
+    originalError?: Error,
+  ) {
+    super(message);
+    this.name = 'AssistantGatewayError';
+    this.code = code;
+    this.details = details;
+    this.originalError = originalError;
+  }
+}
+
+export interface SendAssistantTurnProgress {
+  phase: 'preparing' | 'sending' | 'processing' | 'complete';
+  percentage: number;
+}
+
+export interface SendAssistantTurnOptions {
+  requestId?: string;
+  onProgress?: (progress: SendAssistantTurnProgress) => void;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+interface PendingGatewayRequest {
+  id: string;
+  controller: AbortController;
+  startedAt: number;
+}
+
+const pendingGatewayRequests = new Map<string, PendingGatewayRequest>();
 
 interface AssistantGatewayRequest {
   conversation_id: string | null;
@@ -128,6 +184,185 @@ async function extractInvokeErrorContext(error: unknown): Promise<string> {
   if (!status && !body) return '';
   if (status && body) return `${status} body=${body}`;
   return status || `body=${body}`;
+}
+
+function normalizeBase64Payload(value: string): string {
+  return value.replace(/^data:[^;]+;base64,/i, '').trim();
+}
+
+function estimateBase64Bytes(base64Payload: string): number {
+  const normalized = base64Payload.trim();
+  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
+  return Math.max(0, Math.floor((normalized.length * 3) / 4) - padding);
+}
+
+function validateAudioPayload(
+  base64Audio: string,
+): { valid: true; bytes: number } | { valid: false; error: string } {
+  const normalized = normalizeBase64Payload(base64Audio);
+  if (!normalized) {
+    return { valid: false, error: 'Audio payload is empty' };
+  }
+
+  if (normalized.length > MAX_AUDIO_BASE64_LENGTH) {
+    const sizeMb = estimateBase64Bytes(normalized) / (1024 * 1024);
+    return {
+      valid: false,
+      error: `Audio payload too large (${sizeMb.toFixed(2)}MB > 10MB)`,
+    };
+  }
+
+  if (normalized.length % 4 !== 0) {
+    return { valid: false, error: 'Invalid base64 length' };
+  }
+
+  const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/;
+  if (!base64Regex.test(normalized)) {
+    return { valid: false, error: 'Invalid base64 format' };
+  }
+
+  return { valid: true, bytes: estimateBase64Bytes(normalized) };
+}
+
+function parseInvokeError(
+  error: unknown,
+  context: string,
+  extras?: Record<string, unknown>,
+): AssistantGatewayError {
+  if (error instanceof AssistantGatewayError) return error;
+
+  const baseError = error instanceof Error ? error : new Error(String(error));
+  const rawMessage = baseError.message || 'Unknown assistant gateway error';
+  const normalizedMessage = rawMessage.toLowerCase();
+  const details: Record<string, unknown> = {
+    context,
+    rawMessage,
+    ...(extras ?? {}),
+  };
+
+  if (normalizedMessage.includes('abort')) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.CANCELED,
+      'Request was canceled',
+      details,
+      baseError,
+    );
+  }
+
+  if (normalizedMessage.includes('timeout')) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.TIMEOUT,
+      'Request timed out',
+      details,
+      baseError,
+    );
+  }
+
+  if (
+    normalizedMessage.includes('network request failed') ||
+    normalizedMessage.includes('econnreset') ||
+    normalizedMessage.includes('enotfound') ||
+    normalizedMessage.includes('econnrefused') ||
+    normalizedMessage.includes('failed to fetch')
+  ) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.NETWORK_ERROR,
+      'Network request failed',
+      details,
+      baseError,
+    );
+  }
+
+  if (normalizedMessage.includes('status=401') || normalizedMessage.includes('status=403')) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.AUTHENTICATION_FAILED,
+      'Authentication failed',
+      details,
+      baseError,
+    );
+  }
+
+  if (normalizedMessage.includes('status=429') || normalizedMessage.includes('rate limit')) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.RATE_LIMITED,
+      'Rate limited',
+      details,
+      baseError,
+    );
+  }
+
+  if (
+    normalizedMessage.includes('invalid_audio') ||
+    normalizedMessage.includes('invalid audio') ||
+    normalizedMessage.includes('audio recording is too short') ||
+    normalizedMessage.includes('audio data is too small') ||
+    (normalizedMessage.includes('status=400') && normalizedMessage.includes('audio'))
+  ) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED,
+      'Audio recording is too short or invalid. Please try again and speak longer.',
+      details,
+      baseError,
+    );
+  }
+
+  if (normalizedMessage.includes('status=5')) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.SERVER_ERROR,
+      'Server error',
+      details,
+      baseError,
+    );
+  }
+
+  if (normalizedMessage.includes('missing assistant response text')) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.INVALID_RESPONSE,
+      'Assistant response was empty',
+      details,
+      baseError,
+    );
+  }
+
+  return new AssistantGatewayError(
+    AssistantGatewayErrorCode.UNKNOWN,
+    rawMessage,
+    details,
+    baseError,
+  );
+}
+
+function shouldFallbackToLegacy(error: AssistantGatewayError): boolean {
+  return (
+    error.code === AssistantGatewayErrorCode.NETWORK_ERROR ||
+    error.code === AssistantGatewayErrorCode.TIMEOUT ||
+    error.code === AssistantGatewayErrorCode.SERVER_ERROR
+  );
+}
+
+export function cancelPendingAssistantTurnRequest(requestId: string): boolean {
+  const request = pendingGatewayRequests.get(requestId);
+  if (!request) return false;
+  request.controller.abort();
+  pendingGatewayRequests.delete(requestId);
+  telemetry.capture('assistant_gateway_request_cancelled', {
+    request_id: requestId,
+    duration_ms: Date.now() - request.startedAt,
+  });
+  return true;
+}
+
+export function cancelAllPendingAssistantTurnRequests(): number {
+  let cancelled = 0;
+  for (const [requestId, request] of pendingGatewayRequests.entries()) {
+    request.controller.abort();
+    cancelled += 1;
+    pendingGatewayRequests.delete(requestId);
+  }
+  telemetry.capture('assistant_gateway_all_requests_cancelled', {
+    count: cancelled,
+  });
+  return cancelled;
 }
 
 function toSafetyMeta(input: AssistantGatewayResponse['safety_flags']): AssistantSafetyMeta | null {
@@ -266,20 +501,59 @@ async function fallbackToLegacyAssistant(
 
 export async function sendAssistantTurn(
   input: SendAssistantTurnInput,
+  options?: SendAssistantTurnOptions,
 ): Promise<AssistantTurnResponse> {
   if (!assistantFeatureFlags.serverVoiceEnabled) {
     return fallbackToLegacyAssistant(input);
   }
 
+  const requestId =
+    options?.requestId ?? `ai-gateway-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const requestStart = Date.now();
+  const timeoutMs = options?.timeoutMs ?? REQUEST_TIMEOUT_MS;
+  let requestTimedOut = false;
+  const controller = new AbortController();
+  const previousRequest = pendingGatewayRequests.get(requestId);
+  if (previousRequest) {
+    previousRequest.controller.abort();
+    pendingGatewayRequests.delete(requestId);
+  }
+  pendingGatewayRequests.set(requestId, {
+    id: requestId,
+    controller,
+    startedAt: requestStart,
+  });
+  const externalSignal = options?.signal;
+  const abortFromExternal = () => controller.abort();
+  if (externalSignal?.aborted) {
+    controller.abort();
+  } else {
+    externalSignal?.addEventListener('abort', abortFromExternal);
+  }
 
   try {
+    options?.onProgress?.({ phase: 'preparing', percentage: 10 });
     const userId = await resolveUserId();
     const requestedInputMode = input.inputMode ?? 'text';
     const hasAudioPayload =
       requestedInputMode === 'audio' &&
       typeof input.inputAudioBase64 === 'string' &&
       input.inputAudioBase64.trim().length > 0;
+
+    if (hasAudioPayload) {
+      const validation = validateAudioPayload(input.inputAudioBase64 as string);
+      if (!validation.valid) {
+        throw new AssistantGatewayError(
+          AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED,
+          validation.error,
+          {
+            requestId,
+            inputMode: requestedInputMode,
+          },
+        );
+      }
+    }
+
     const effectiveInputMode: AssistantInputMode = hasAudioPayload ? 'audio' : 'text';
     const normalizedInput = input.userMessage.trim();
 
@@ -304,7 +578,7 @@ export async function sendAssistantTurn(
           }
         : null,
       client_capabilities: {
-        can_play_audio: true,
+        can_play_audio: effectiveInputMode === 'audio',
         provider_fallback_enabled: assistantFeatureFlags.providerFallbackEnabled,
         rag_enabled: assistantFeatureFlags.ragEnabled,
         memory_enabled: assistantFeatureFlags.memoryEnabled,
@@ -312,32 +586,64 @@ export async function sendAssistantTurn(
       },
     };
 
-    const { data, error } = await supabase.functions.invoke('ai-gateway', {
-      body: payload,
-    });
+    options?.onProgress?.({ phase: 'sending', percentage: 35 });
+    const timeoutId = setTimeout(() => {
+      requestTimedOut = true;
+      controller.abort();
+    }, timeoutMs);
+
+    let data: AssistantGatewayResponse | null = null;
+    let error: unknown = null;
+    try {
+      const invokeResult = await supabase.functions.invoke<AssistantGatewayResponse>('ai-gateway', {
+        body: payload,
+        signal: controller.signal,
+      });
+      data = invokeResult.data ?? null;
+      error = invokeResult.error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (requestTimedOut) {
+      throw new AssistantGatewayError(
+        AssistantGatewayErrorCode.TIMEOUT,
+        `Request timeout after ${timeoutMs}ms`,
+        { requestId, timeoutMs },
+      );
+    }
 
     if (error) {
+      const invokeErrorMessage = error instanceof Error ? error.message : String(error);
       const invokeContext = await extractInvokeErrorContext(error);
       const responsePayload = toDebugString(data);
       const responseContext = responsePayload ? `response=${responsePayload}` : '';
       const errorContext = [invokeContext, responseContext].filter(Boolean).join(' | ');
       throw new Error(
-        `ai-gateway invoke failed: ${error.message}${errorContext ? ` | ${errorContext}` : ''}`,
+        `ai-gateway invoke failed: ${invokeErrorMessage}${errorContext ? ` | ${errorContext}` : ''}`,
       );
     }
 
-    const response = (data ?? null) as AssistantGatewayResponse | null;
+    const response = data;
     if (!response?.assistant_text?.trim()) {
       const responsePayload = toDebugString(response);
       const errorContext = responsePayload ? ` | response=${responsePayload}` : '';
-      throw new Error(`Missing assistant response text${errorContext}`);
+      throw new AssistantGatewayError(
+        AssistantGatewayErrorCode.INVALID_RESPONSE,
+        `Missing assistant response text${errorContext}`,
+        {
+          requestId,
+        },
+      );
     }
+
+    options?.onProgress?.({ phase: 'processing', percentage: 80 });
 
     const citations = normalizeAssistantCitations(response.citations);
     const audio = buildAudioPayload(response);
     const elapsed = Date.now() - requestStart;
 
-    return {
+    const result: AssistantTurnResponse = {
       message: {
         id: response.turn_id ?? Date.now().toString(),
         role: 'assistant',
@@ -384,10 +690,43 @@ export async function sendAssistantTurn(
       ttsSkippedReason: response.tts_skipped_reason ?? null,
       providerFallbackReason: response.provider_fallback_reason ?? null,
     };
+    options?.onProgress?.({ phase: 'complete', percentage: 100 });
+    return result;
   } catch (error) {
-    if (!assistantFeatureFlags.providerFallbackEnabled) {
-      throw error instanceof Error ? error : new Error('Assistant gateway failed');
+    let parsedError = parseInvokeError(error, 'sendAssistantTurn', {
+      requestId,
+      durationMs: Date.now() - requestStart,
+    });
+    if (requestTimedOut && parsedError.code === AssistantGatewayErrorCode.CANCELED) {
+      parsedError = new AssistantGatewayError(
+        AssistantGatewayErrorCode.TIMEOUT,
+        `Request timeout after ${timeoutMs}ms`,
+        {
+          requestId,
+          durationMs: Date.now() - requestStart,
+        },
+        parsedError,
+      );
     }
-    return fallbackToLegacyAssistant(input);
+
+    telemetry.capture('assistant_gateway_error', {
+      request_id: requestId,
+      error_code: parsedError.code,
+      error_message: parsedError.message,
+      duration_ms: Date.now() - requestStart,
+    });
+
+    if (assistantFeatureFlags.providerFallbackEnabled && shouldFallbackToLegacy(parsedError)) {
+      telemetry.capture('assistant_gateway_fallback_triggered', {
+        request_id: requestId,
+        reason: parsedError.code,
+      });
+      return fallbackToLegacyAssistant(input);
+    }
+
+    throw parsedError;
+  } finally {
+    pendingGatewayRequests.delete(requestId);
+    externalSignal?.removeEventListener('abort', abortFromExternal);
   }
 }

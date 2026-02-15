@@ -255,6 +255,9 @@ const LOG_INTENT_MIN_CONFIDENCE = 0.55;
 const QUERY_INTENT_MIN_CONFIDENCE = 0.55;
 const ADVISORY_INTENT_MIN_CONFIDENCE = 0.6;
 const ROUTE_MARGIN = 0.1;
+const MAX_EXPENSE_AMOUNT = 10000000;
+const MAX_HARVEST_QUANTITY_KG = 100000;
+const MAX_WATER_VOLUME_LITERS = 1000000;
 
 function toLocalDateString(date: Date): string {
   const year = date.getFullYear();
@@ -271,6 +274,10 @@ function normalizeText(value: string): string {
     .replace(/[^a-z0-9\s\u0900-\u097f]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function roundNumber(value: number): number {
@@ -327,13 +334,16 @@ function parseWaterVolume(transcript: string): number | null {
   const numericOnlyMatch = text.match(/^(\d+(?:\.\d+)?)$/);
   if (numericOnlyMatch?.[1]) {
     const parsed = Number.parseFloat(numericOnlyMatch[1]);
-    if (Number.isFinite(parsed) && parsed > 0) return roundNumber(parsed);
+    if (Number.isFinite(parsed) && parsed > 0 && parsed <= MAX_WATER_VOLUME_LITERS) {
+      return roundNumber(parsed);
+    }
+    return null;
   }
 
   const match = text.match(/(\d+(?:\.\d+)?)\s*(liters?|liter|litre|litres|l|एल|लीटर|लिटर)/i);
   if (!match?.[1]) return null;
   const parsed = Number.parseFloat(match[1]);
-  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > MAX_WATER_VOLUME_LITERS) return null;
   return roundNumber(parsed);
 }
 
@@ -344,13 +354,16 @@ function parseQuantityKg(transcript: string): number | null {
   const numericOnlyMatch = text.match(/^(\d+(?:\.\d+)?)$/);
   if (numericOnlyMatch?.[1]) {
     const parsed = Number.parseFloat(numericOnlyMatch[1]);
-    if (Number.isFinite(parsed) && parsed > 0) return roundNumber(parsed);
+    if (Number.isFinite(parsed) && parsed > 0 && parsed <= MAX_HARVEST_QUANTITY_KG) {
+      return roundNumber(parsed);
+    }
+    return null;
   }
 
   const match = text.match(/(\d+(?:\.\d+)?)\s*(kg|kgs|kilograms?|किलो|किग्रा|किलोग्राम)/i);
   if (!match?.[1]) return null;
   const parsed = Number.parseFloat(match[1]);
-  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > MAX_HARVEST_QUANTITY_KG) return null;
   return roundNumber(parsed);
 }
 
@@ -363,7 +376,7 @@ function parseAmount(transcript: string): number | null {
   const picked = rupeeMatch?.[1] ?? genericMatch?.[1];
   if (!picked) return null;
   const parsed = Number.parseFloat(picked.replace(/,/g, ''));
-  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > MAX_EXPENSE_AMOUNT) return null;
   return roundNumber(parsed);
 }
 
@@ -415,20 +428,42 @@ function parseExpenseType(transcript: string): string | null {
 function parseLogDate(transcript: string): string | null {
   const now = new Date();
   const text = transcript.toLowerCase();
+  const hasHindiKalToken = /(^|[\s,.;!?()[\]{}"'-])कल($|[\s,.;!?()[\]{}"'-])/u.test(transcript);
   const hasMarathiKaalToken = /(^|[\s,.;!?()[\]{}"'-])काल($|[\s,.;!?()[\]{}"'-])/u.test(transcript);
 
-  // Hindi "कल" and Marathi "काल" are ambiguous in some contexts.
-  // The LLM extraction (parseLogDateFromLLM) runs first and handles this
-  // contextually. This deterministic fallback defaults to "yesterday"
-  // since activity logs most commonly reference past events.
-  if (/\b(yesterday)\b/i.test(text) || /कल/i.test(transcript) || hasMarathiKaalToken) {
+  if (/\b(yesterday)\b/i.test(text)) {
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     return toLocalDateString(yesterday);
   }
 
+  if (/\b(tomorrow)\b/i.test(text)) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    return toLocalDateString(tomorrow);
+  }
+
   if (/\b(today)\b/i.test(text) || /आज/i.test(transcript)) {
     return toLocalDateString(now);
+  }
+
+  if (hasHindiKalToken || hasMarathiKaalToken) {
+    const hasPastTense = /(की|किया|दिया|था|थे|थी|केला|केली|केले|दिला|दिली|झाला|झाली)/i.test(
+      transcript,
+    );
+    const hasFutureTense = /(करूंगा|करूँगा|दूंगा|देऊंगा|होगा|करेन|देईन|करणार|करणार आहे|होईल)/i.test(
+      transcript,
+    );
+
+    if (hasFutureTense && !hasPastTense) {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(now.getDate() + 1);
+      return toLocalDateString(tomorrow);
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    return toLocalDateString(yesterday);
   }
 
   return null;
@@ -495,8 +530,6 @@ export function decideChatRoute(input: {
 }): HybridChatRoute {
   const { transcript, hasActiveDraft, llmExtraction, deterministicQueryIntent } = input;
 
-  if (hasActiveDraft) return 'voice_log';
-
   const queryScore = Math.max(
     scoreFromLLMIntent(llmExtraction, 'query_history'),
     scoreFromDeterministicQueryIntent(deterministicQueryIntent),
@@ -504,10 +537,38 @@ export function decideChatRoute(input: {
   const logScore = scoreFromLLMIntent(llmExtraction, 'log_activity');
   const advisoryScore = scoreFromLLMIntent(llmExtraction, 'advisory');
 
+  if (hasActiveDraft) {
+    const hasExplicitQueryIntent =
+      /\b(show|history|how\s+much|how\s+many|total|list|records?)\b/i.test(transcript) ||
+      /दिखाओ|दिखाएं|दाखवा|इतिहास|कितना|कितने|किती/i.test(transcript);
+    const hasExplicitAdvisoryIntent =
+      /\b(should\s+i|what\s+should|recommend|suggest|advice|how\s+to)\b/i.test(transcript) ||
+      /सुझाव|सलाह|सल्ला|कैसे|कसा|मुझे\s+क्या/i.test(transcript);
+
+    const wantsToEscapeDraft = hasExplicitQueryIntent || hasExplicitAdvisoryIntent;
+    const hasStrongAlternateIntent =
+      (queryScore >= QUERY_INTENT_MIN_CONFIDENCE ||
+        advisoryScore >= ADVISORY_INTENT_MIN_CONFIDENCE) &&
+      logScore < LOG_INTENT_MIN_CONFIDENCE - 0.1;
+
+    if (!wantsToEscapeDraft || !hasStrongAlternateIntent) {
+      return 'voice_log';
+    }
+  }
+
+  if (
+    advisoryScore >= ADVISORY_INTENT_MIN_CONFIDENCE &&
+    advisoryScore >= queryScore + ROUTE_MARGIN &&
+    advisoryScore >= logScore + ROUTE_MARGIN
+  ) {
+    return 'advisory';
+  }
+
   if (
     queryScore >= QUERY_INTENT_MIN_CONFIDENCE &&
     logScore >= LOG_INTENT_MIN_CONFIDENCE &&
-    Math.abs(queryScore - logScore) <= ROUTE_MARGIN
+    Math.abs(queryScore - logScore) <= ROUTE_MARGIN &&
+    advisoryScore < Math.max(queryScore, logScore)
   ) {
     return 'clarify_route';
   }
@@ -618,17 +679,22 @@ function findFarmMatchesByName(name: string, farms: Farm[]): Farm[] {
   const normalizedName = normalizeText(name);
   if (!normalizedName) return [];
 
-  const normalizedNeedle = ` ${normalizedName} `;
+  const farmsWithId = farms.filter((farm) => farm.id !== undefined && farm.id !== null);
 
-  return farms.filter((farm) => {
-    if (farm.id === undefined || farm.id === null) return false;
+  const exactMatches = farmsWithId.filter((farm) => normalizeText(farm.name) === normalizedName);
+  if (exactMatches.length > 0) return exactMatches;
+
+  const boundaryPattern = new RegExp(`\\b${escapeRegex(normalizedName)}\\b`, 'i');
+  const boundaryMatches = farmsWithId.filter((farm) =>
+    boundaryPattern.test(normalizeText(farm.name)),
+  );
+  if (boundaryMatches.length > 0) return boundaryMatches;
+
+  return farmsWithId.filter((farm) => {
     const normalizedFarmName = normalizeText(farm.name);
     if (!normalizedFarmName) return false;
-    const farmToken = ` ${normalizedFarmName} `;
     return (
-      farmToken.includes(normalizedNeedle) ||
-      normalizedNeedle.includes(farmToken) ||
-      normalizedFarmName === normalizedName
+      normalizedFarmName.includes(normalizedName) || normalizedName.includes(normalizedFarmName)
     );
   });
 }
