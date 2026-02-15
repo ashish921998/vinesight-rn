@@ -4,7 +4,6 @@ import {
   BackHandler,
   Keyboard,
   KeyboardAvoidingView,
-  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -35,6 +34,7 @@ import {
   FormInput,
   PreviewCard,
 } from '../ui/form-components';
+import { ModalBackdrop } from '../ui/modal-backdrop';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -238,6 +238,11 @@ export default function WarehouseItemForm({
     () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
     [windowHeight, pickerAvailableHeight],
   );
+
+  const androidKeyboardLift = useMemo(() => {
+    if (isIOS) return 0;
+    return Math.max(0, keyboardHeight - insets.bottom);
+  }, [keyboardHeight, insets.bottom]);
 
   const resetForm = () => {
     setName('');
@@ -704,25 +709,17 @@ export default function WarehouseItemForm({
       </FormModal>
 
       {/* Catalogue Picker Bottom Sheet */}
-      <Modal
-        visible={showCataloguePicker}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setShowCataloguePicker(false)}
-      >
-        <Pressable
-          style={{
-            flex: 1,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            justifyContent: 'flex-end',
-          }}
-          onPress={() => setShowCataloguePicker(false)}
+      {showCataloguePicker && (
+        <ModalBackdrop
+          visible
+          onDismiss={() => setShowCataloguePicker(false)}
+          alignment="flex-end"
+          opacity={0.5}
         >
           <KeyboardAvoidingView
-            behavior={isIOS ? 'padding' : 'height'}
+            behavior={isIOS ? 'padding' : undefined}
             keyboardVerticalOffset={0}
-            style={{ justifyContent: 'flex-end' }}
+            style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
             <Pressable
               onPress={() => {}}
@@ -921,8 +918,8 @@ export default function WarehouseItemForm({
               </ScrollView>
             </Pressable>
           </KeyboardAvoidingView>
-        </Pressable>
-      </Modal>
+        </ModalBackdrop>
+      )}
     </View>
   );
 }

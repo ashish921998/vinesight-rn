@@ -159,6 +159,10 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'mic.fill': 'mic',
   'stop.fill': 'stop-circle',
 
+  // Eye icons for password visibility toggle
+  eye: 'eye-outline',
+  'eye.slash': 'eye-off-outline',
+
   // Additional common mappings
   'chevron.up.chevron.down': 'swap-vertical',
   'arrow.left': 'arrow-back',
