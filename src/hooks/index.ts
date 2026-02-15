@@ -208,5 +208,5 @@ export { useFarmAssistant } from './use-farm-assistant';
 export { useFabBottomInset } from './use-fab-bottom-inset';
 export { useTabBarInset } from './use-tab-bar-inset';
 export { useFabBottomPosition } from './use-fab-bottom-position';
-export { isIOS, isAndroid, platform } from './use-platform';
+export { usePlatform, isIOS, isAndroid, platform } from './use-platform';
 export { useResponsiveHeight } from './use-responsive-height';

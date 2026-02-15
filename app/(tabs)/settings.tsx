@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   type ViewStyle,
   type TextStyle,
@@ -20,7 +19,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
-import { useProfile, useUpdateProfile, useCurrency } from '@/hooks';
+import { useProfile, useUpdateProfile, useCurrency, isIOS } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import {
@@ -387,11 +386,14 @@ export default function SettingsScreen() {
     if (!phone) return;
     clearError();
     setLinkPhoneLocalError(null);
-    // Show OTP step immediately while verification SMS request completes in background.
     setIsPhoneLinkCodeStep(true);
-    await linkPhoneNumber(phone);
-    const { errorMessage, phoneLinkingPending: stillPending } = useAuthStore.getState();
-    if (errorMessage || !stillPending) {
+    try {
+      await linkPhoneNumber(phone);
+      const { errorMessage, phoneLinkingPending: stillPending } = useAuthStore.getState();
+      if (errorMessage || !stillPending) {
+        setIsPhoneLinkCodeStep(false);
+      }
+    } catch {
       setIsPhoneLinkCodeStep(false);
     }
   };
@@ -552,7 +554,7 @@ export default function SettingsScreen() {
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 32 }}
       contentInsetAdjustmentBehavior="automatic"
-      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      automaticallyAdjustKeyboardInsets={isIOS}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
     >
@@ -793,10 +795,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowEditProfile(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
+        <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -816,7 +815,7 @@ export default function SettingsScreen() {
             style={styles.flex1}
             contentContainerStyle={{ padding: 16 }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -942,10 +941,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={handleCloseLinkPhone}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
+        <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -969,7 +965,7 @@ export default function SettingsScreen() {
             style={styles.flex1}
             contentContainerStyle={{ padding: 16 }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -1224,7 +1220,7 @@ export default function SettingsScreen() {
             style={styles.flex1}
             contentContainerStyle={{ padding: 16 }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -1292,7 +1288,7 @@ export default function SettingsScreen() {
             style={styles.flex1}
             contentContainerStyle={{ padding: 16 }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -1359,7 +1355,7 @@ export default function SettingsScreen() {
             style={styles.flex1}
             contentContainerStyle={{ padding: 16 }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -1420,7 +1416,7 @@ export default function SettingsScreen() {
             style={styles.flex1}
             contentContainerStyle={{ padding: 16 }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -1473,10 +1469,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowDeleteAccount(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
+        <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -1496,7 +1489,7 @@ export default function SettingsScreen() {
             style={styles.flex1}
             contentContainerStyle={{ padding: 16 }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >

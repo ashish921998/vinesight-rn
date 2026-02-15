@@ -1,19 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  Alert,
-  StyleSheet,
-  Platform,
-} from 'react-native';
+import { View, Text, FlatList, Pressable, RefreshControl, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { useWorkers, useDeleteWorker, useFabBottomPosition } from '@/hooks';
+import { useWorkers, useDeleteWorker, useFabBottomPosition, isAndroid } from '@/hooks';
 import { useModalStore } from '@/stores';
 import { AttendanceView, WorkerAnalyticsView, TempWorkerForm } from '@/components/screens';
 import { WorkerSettlementModal } from '@/components/modals/worker-settlement-modal';
@@ -43,7 +34,6 @@ export default function WorkersScreen() {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const isAndroid = Platform.OS === 'android';
   const fabBottom = useFabBottomPosition();
   const { setAddWorker } = useModalStore();
   const { data: workers, isLoading, refetch } = useWorkers();
@@ -268,7 +258,7 @@ export default function WorkersScreen() {
         </View>
         <View
           style={{
-            height: Platform.OS === 'ios' ? 0.5 : 1,
+            height: isAndroid ? 1 : 0.5,
             backgroundColor: m3.colorScheme.outlineVariant,
             marginHorizontal: spacing[4],
           }}

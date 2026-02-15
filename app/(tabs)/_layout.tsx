@@ -7,11 +7,11 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Platform } from 'react-native';
 import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { isAndroid } from '@/hooks';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -20,7 +20,6 @@ export default function TabLayout() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
-  const isAndroid = Platform.OS === 'android';
   const { m3, isDark } = useThemeTokens();
   const defaultHeaderOptions = useMemo(
     () => ({

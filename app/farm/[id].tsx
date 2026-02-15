@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  Platform,
   Pressable,
   RefreshControl,
   ActivityIndicator,
@@ -33,6 +32,8 @@ import {
   useEndFarmSeason,
   useFarmSeasonStatus,
   useRecomputeFarmSeasonAssignments,
+  isAndroid,
+  isIOS,
 } from '@/hooks';
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
 import { StatsCard, TaskRow, TimelineLogCard } from '@/components/cards';
@@ -75,8 +76,6 @@ export default function FarmDetailScreen() {
   const { setEditActivity, setAddEntry } = useModalStore();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const isAndroid = Platform.OS === 'android';
-  const isIOS = Platform.OS === 'ios';
   const farmId = id ? parseInt(id, 10) : undefined;
 
   const { data: farm, isLoading: farmLoading, refetch: refetchFarm } = useFarm(farmId);
@@ -1085,7 +1084,7 @@ export default function FarmDetailScreen() {
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
-            paddingTop: insets.top + (Platform.OS === 'ios' ? spacing[2] : spacing[1]),
+            paddingTop: insets.top + (isIOS ? spacing[2] : spacing[1]),
             paddingBottom: bottomBarHeight + spacing[6],
           }}
           contentInsetAdjustmentBehavior="never"
@@ -2538,7 +2537,7 @@ export default function FarmDetailScreen() {
         </Pressable>
       )}
 
-      {showSeasonStartPicker && Platform.OS !== 'ios' && (
+      {showSeasonStartPicker && !isIOS && (
         <DateTimePicker
           value={seasonStartDate}
           mode="date"
@@ -2556,7 +2555,7 @@ export default function FarmDetailScreen() {
         />
       )}
 
-      {showSeasonEndPicker && seasonFormMode === 'end' && Platform.OS !== 'ios' && (
+      {showSeasonEndPicker && seasonFormMode === 'end' && !isIOS && (
         <DateTimePicker
           value={seasonEndDate}
           mode="date"
