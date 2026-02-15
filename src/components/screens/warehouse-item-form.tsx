@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useCreateWarehouseItem, useUpdateWarehouseItem } from '../../hooks';
 import {
   NutrientCompositionItem,
@@ -89,6 +99,8 @@ export default function WarehouseItemForm({
 }: Props) {
   const colors = useThemeColors();
   const m3 = useM3();
+  const { height: windowHeight } = useWindowDimensions();
+  const isIOS = Platform.OS === 'ios';
   const isVisible = visible ?? true;
   const createMutation = useCreateWarehouseItem();
   const updateMutation = useUpdateWarehouseItem();
@@ -164,6 +176,11 @@ export default function WarehouseItemForm({
     const selected = WAREHOUSE_PRESETS.find((preset) => preset.id === selectedCatalogueId);
     return selected ? [selected, ...filteredCatalogueItems] : filteredCatalogueItems;
   }, [filteredCatalogueItems, selectedCatalogueId]);
+
+  const catalogueSheetHeight = useMemo(
+    () => Math.min(Math.round(windowHeight * 0.7), windowHeight - 80),
+    [windowHeight],
+  );
 
   const resetForm = () => {
     setName('');
@@ -354,7 +371,7 @@ export default function WarehouseItemForm({
     quantity && unitPrice ? (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2) : '0.00';
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
     <FormModal
       visible={isVisible}
       onClose={onClose}
@@ -585,30 +602,31 @@ export default function WarehouseItemForm({
       )}
     </FormModal>
 
-    {/* Catalogue Picker Bottom Sheet */}
-    <Modal
-        visible={showCataloguePicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowCataloguePicker(false)}
+    {/* Catalogue Picker Bottom Sheet — matches variety picker pattern in farm-form */}
+    {showCataloguePicker && (
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+          justifyContent: 'flex-end',
+        }}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            justifyContent: 'flex-end',
-          }}
+        <Pressable style={{ flex: 1 }} onPress={() => setShowCataloguePicker(false)} />
+        <KeyboardAvoidingView
+          behavior={isIOS ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
+          style={{ justifyContent: 'flex-end' }}
         >
-          <Pressable
-            style={{ flex: 1 }}
-            onPress={() => setShowCataloguePicker(false)}
-          />
           <View
             style={{
               backgroundColor: colors.surface[100],
               borderTopLeftRadius: borderRadius['3xl'],
               borderTopRightRadius: borderRadius['3xl'],
-              maxHeight: '70%',
+              height: catalogueSheetHeight,
             }}
           >
             {/* Header */}
@@ -620,7 +638,7 @@ export default function WarehouseItemForm({
                 paddingHorizontal: spacing[6],
                 paddingVertical: spacing[4],
                 borderBottomWidth: 1,
-                borderBottomColor: colors.surface[200],
+                borderBottomColor: colors.surface[100],
               }}
             >
               <View style={{ width: 40 }} />
@@ -718,12 +736,8 @@ export default function WarehouseItemForm({
                   <Text
                     style={{
                       fontSize: fontSize.base,
-                      color: !selectedCatalogueId
-                        ? colors.surface[900]
-                        : colors.surface[700],
-                      fontWeight: !selectedCatalogueId
-                        ? fontWeight.semibold
-                        : fontWeight.normal,
+                      color: !selectedCatalogueId ? colors.surface[900] : colors.surface[700],
+                      fontWeight: !selectedCatalogueId ? fontWeight.semibold : fontWeight.normal,
                       fontStyle: 'italic',
                     }}
                   >
@@ -805,8 +819,9 @@ export default function WarehouseItemForm({
               )}
             </ScrollView>
           </View>
-        </View>
-    </Modal>
-    </>
+        </KeyboardAvoidingView>
+      </View>
+    )}
+    </View>
   );
 }
