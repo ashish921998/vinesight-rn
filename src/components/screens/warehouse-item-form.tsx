@@ -398,17 +398,20 @@ export default function WarehouseItemForm({
             const preset = WAREHOUSE_PRESETS.find((item) => item.id === catalogueId);
             if (preset) applyPreset(preset);
           }}
+          style={{ color: m3.colorScheme.onSurface }}
+          dropdownIconColor={m3.colorScheme.onSurface}
         >
-          <Picker.Item label="Select from catalogue (or skip)" value="" />
+          <Picker.Item label="Select from catalogue (or skip)" value="" color={m3.colorScheme.onSurface} />
           {visibleCatalogueItems.map((preset) => (
             <Picker.Item
               key={preset.id}
               label={`${preset.label} - ${preset.manufacturer}`}
               value={preset.id}
+              color={m3.colorScheme.onSurface}
             />
           ))}
           {visibleCatalogueItems.length === 0 ? (
-            <Picker.Item label="No catalogue matches" value="" />
+            <Picker.Item label="No catalogue matches" value="" color={m3.colorScheme.onSurface} />
           ) : null}
         </Picker>
       </View>
