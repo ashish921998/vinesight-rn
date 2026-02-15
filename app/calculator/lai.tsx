@@ -235,8 +235,7 @@ export default function LAICalculatorScreen() {
                     color: colorWithOpacity(m3.colorScheme.primary, 0.85),
                   }}
                 >
-                  Leaf Area Index is the ratio of total leaf area to ground area. Optimal LAI for
-                  table grapes is 1.5-2.5.
+                  For table grapes, an LAI range around 1.5-2.5 is generally considered balanced.
                 </Text>
               </View>
 

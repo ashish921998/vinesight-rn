@@ -155,6 +155,22 @@ export default function TrendsTable({
     return <Text style={styles.decrease}> ↓</Text>;
   };
 
+  const getDaysAfterPruning = (testDate: Date, pruningDate: Date): number | null => {
+    if (Number.isNaN(testDate.getTime()) || Number.isNaN(pruningDate.getTime())) {
+      return null;
+    }
+
+    const testDay = Date.UTC(testDate.getFullYear(), testDate.getMonth(), testDate.getDate());
+    const pruningDay = Date.UTC(
+      pruningDate.getFullYear(),
+      pruningDate.getMonth(),
+      pruningDate.getDate(),
+    );
+    const days = Math.floor((testDay - pruningDay) / (24 * 60 * 60 * 1000));
+
+    return days >= 0 ? days : null;
+  };
+
   return (
     <ScrollView style={{ flex: 1 }} nestedScrollEnabled>
       <View style={styles.container}>
@@ -166,21 +182,20 @@ export default function TrendsTable({
             const pruningDate =
               testType === 'petiole' && item.dateOfPruning ? new Date(item.dateOfPruning) : null;
             const hasPruningDate = pruningDate !== null && !Number.isNaN(pruningDate.getTime());
+            const daysAfterPruning = hasPruningDate ? getDaysAfterPruning(date, pruningDate) : null;
             return (
               <View key={`header-${item.date}-${index}`} style={styles.headerDateContainer}>
-                {hasPruningDate && (
+                {testType === 'petiole' && (
                   <View style={styles.headerDateBlock}>
-                    <Text style={styles.headerDateLabel}>{t('trends.table.pruningDate')}</Text>
-                    <Text style={styles.headerDateValue}>
-                      {formatDate(pruningDate, {
-                        month: 'short',
-                        day: '2-digit',
-                        year: 'numeric',
-                      })}
+                    <Text style={styles.headerDateLabel}>
+                      {t('trends.table.daysAfterPruningShort')}
+                    </Text>
+                    <Text style={styles.headerMetaValue}>
+                      {daysAfterPruning !== null ? daysAfterPruning : '--'}
                     </Text>
                   </View>
                 )}
-                {hasPruningDate && (
+                {testType === 'petiole' && (
                   <Text style={styles.headerDateLabel}>{t('trends.table.reportDate')}</Text>
                 )}
                 <Text style={styles.headerDateMonth}>{formatDate(date, { month: 'short' })}</Text>
@@ -445,9 +460,9 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     color: m3.colorScheme.onSurfaceVariant,
     textTransform: 'uppercase' as const,
   },
-  headerDateValue: {
-    fontSize: 10,
-    fontWeight: '600' as const,
+  headerMetaValue: {
+    fontSize: 12,
+    fontWeight: '700' as const,
     color: m3.colorScheme.onSurface,
   },
   headerDateBlock: {

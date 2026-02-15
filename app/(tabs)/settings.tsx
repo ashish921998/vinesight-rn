@@ -18,6 +18,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
 import { useProfile, useUpdateProfile, useCurrency } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
@@ -42,6 +43,7 @@ import {
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getDefaultCurrency } from '@/i18n/currency';
+import { resolveAreaUnitPreference } from '@/utils/preferences';
 
 interface Country {
   name: string;
@@ -149,7 +151,7 @@ export default function SettingsScreen() {
 
   // Local preferences state
   const [selectedCurrency, setSelectedCurrency] = useState(getDefaultCurrency());
-  const [selectedAreaUnit, setSelectedAreaUnit] = useState('hectares');
+  const [selectedAreaUnit, setSelectedAreaUnit] = useState<'acres' | 'hectares'>('acres');
   const currency = useCurrency();
 
   useEffect(() => {
@@ -158,9 +160,7 @@ export default function SettingsScreen() {
       setSelectedCurrency(currency);
       // Area unit from user metadata
     }
-    if (user?.user_metadata?.area_unit) {
-      setSelectedAreaUnit(user.user_metadata.area_unit as string);
-    }
+    setSelectedAreaUnit(resolveAreaUnitPreference(user?.user_metadata?.area_unit));
   }, [profile, user, currency]);
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'User';
@@ -1148,7 +1148,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowLanguagePicker(false)}
       >
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -1206,7 +1206,7 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </Modal>
 
       {/* Theme Picker Modal */}
@@ -1216,7 +1216,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowThemePicker(false)}
       >
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -1273,7 +1273,7 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </Modal>
 
       {/* Currency Picker Modal */}
@@ -1283,7 +1283,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowCurrencyPicker(false)}
       >
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -1334,7 +1334,7 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </Modal>
 
       {/* Area Unit Picker Modal */}
@@ -1344,7 +1344,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowAreaPicker(false)}
       >
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -1374,7 +1374,7 @@ export default function SettingsScreen() {
                   onPress={async () => {
                     try {
                       await updateUserAreaUnit(unit.id as 'hectares' | 'acres');
-                      setSelectedAreaUnit(unit.id);
+                      setSelectedAreaUnit(resolveAreaUnitPreference(unit.id));
                       setShowAreaPicker(false);
                     } catch (error) {
                       if (__DEV__) {
@@ -1406,7 +1406,7 @@ export default function SettingsScreen() {
               ))}
             </View>
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </Modal>
 
       {/* Delete Account Modal */}

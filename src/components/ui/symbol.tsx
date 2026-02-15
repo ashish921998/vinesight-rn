@@ -89,6 +89,11 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'person.fill': 'person',
   'person.2': 'people-outline',
   'person.2.fill': 'people',
+  'person.badge.clock': 'person-add-outline',
+  'person.badge.clock.fill': 'person-add',
+
+  // Money
+  banknote: 'cash',
 
   // Note: 'house' and 'house.fill' are mapped to MaterialCommunityIcons (barn) in SYMBOL_TO_MATERIAL_ICON
 

@@ -32,6 +32,8 @@ export const en = {
     general: 'General',
     filter: 'Filter',
     clearAll: 'Clear all',
+    today: 'Today',
+    yesterday: 'Yesterday',
     units: {
       hours: 'hours',
       days: 'days',
@@ -210,6 +212,8 @@ export const en = {
       empty: {
         title: 'No Logs Yet',
         subtitle: 'Start logging to see them here',
+        filteredTitle: 'No matching logs',
+        filteredSubtitle: 'Try changing your filters',
       },
     },
     tasks: {
@@ -804,6 +808,7 @@ export const en = {
       nutrient: 'Nutrient',
       pruningDate: 'Pruning',
       reportDate: 'Report',
+      daysAfterPruningShort: 'DAP',
       colorGuide: 'Color Guide:',
       optimal: 'Optimal',
       warning: 'Warning',
@@ -912,7 +917,7 @@ export const en = {
     growthStage: {
       label: 'Growth stage',
       placeholder: 'Select growth stage',
-      selected: '{{label}} (Kc: {{kc}})',
+      selected: '{{label}}',
     },
     manual: {
       label: 'Soil water level',
@@ -920,7 +925,6 @@ export const en = {
     calculate: 'Calculate water level',
     growthStagePicker: {
       title: 'Select growth stage',
-      kcLabel: 'Kc: {{kc}}',
       stages: {
         beginningBudbreak: 'Beginning Budbreak',
         shoot30cm: 'Shoot 30cm',
@@ -1986,6 +1990,21 @@ export const en = {
     dateRange: {
       label: 'Date Range',
     },
+    season: {
+      label: 'Season',
+      placeholder: 'Select season',
+      allSeasons: 'All seasons',
+      selected: 'Selected season',
+      active: 'Active',
+      window: 'Season window: {{from}} to {{to}}',
+      noActiveInfo: 'No active season. Use all seasons or select a historical season.',
+      presets: {
+        active: 'Active season',
+        mostRecent: 'Most recent season',
+        previous: 'Previous season',
+        thisYear: 'This year',
+      },
+    },
     selectFromDate: 'Select From Date',
     selectToDate: 'Select To Date',
     reportType: {
@@ -2004,12 +2023,44 @@ export const en = {
         stockUsage: '{{count}} items used',
       },
     },
+    stockDetails: {
+      title: 'Detailed Stock Usage',
+      fertilizers: 'Fertilizers',
+      sprays: 'Sprays',
+      used: 'Used',
+      unit: 'Unit',
+      consumedPercent: 'Estimated Consumed',
+      currentStock: 'Current Stock',
+      estimatedOpeningStock: 'Estimated Opening Stock',
+      match: 'Match',
+      usageCount: 'Usage Count',
+      na: 'N/A',
+    },
+    formal: {
+      metaTitle: 'Report Type',
+      currentReportType: 'Current Report Type',
+      generatedAt: 'Generated At',
+      executiveTitle: 'Executive Summary',
+      revenue: 'Revenue',
+      expenses: 'Expenses',
+      showDetails: 'Show details',
+      hideDetails: 'Hide details',
+      emptySection: 'No records in selected range',
+      sections: {
+        fertigationRecords: 'Fertigation Records ({{count}})',
+      },
+      table: {
+        fertilizers: 'Fertilizers',
+      },
+    },
     summary: {
       totalRecords: 'Total Records',
       waterUsage: 'Water Usage',
       totalHarvest: 'Total Harvest',
       netProfit: 'Net Profit',
       stockUsageCount: 'Unique Items Used',
+      matchedItems: 'Matched Items',
+      stockCoverage: 'Estimated Coverage',
     },
     exportAs: 'Export as',
     errors: {
@@ -2024,8 +2075,11 @@ export const en = {
     },
     export: {
       meta: {
+        reportType: 'Report Type',
         region: 'Region',
         area: 'Area',
+        season: 'Season',
+        seasonWindow: 'Season Window',
         reportPeriod: 'Report Period',
         to: 'to',
       },
@@ -2040,6 +2094,8 @@ export const en = {
       },
       table: {
         date: 'Date',
+        seasonId: 'Season ID',
+        seasonName: 'Season Name',
         duration: 'Duration',
         area: 'Area',
         growthStage: 'Growth Stage',

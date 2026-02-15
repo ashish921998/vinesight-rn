@@ -14,12 +14,13 @@ import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3 } from '@/styles/use-theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export default function ProfileCompletionScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
+  const isDark = useIsDark();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -118,9 +119,9 @@ export default function ProfileCompletionScreen() {
     paddingVertical: spacing[3],
     borderRadius: borderRadius.xl,
     marginBottom: spacing[2],
-    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+    backgroundColor: colorWithOpacity(m3.colorScheme.error, isDark ? 0.2 : 0.12),
     borderWidth: 1,
-    borderColor: colorWithOpacity(m3.colorScheme.error, 0.25),
+    borderColor: colorWithOpacity(m3.colorScheme.error, isDark ? 0.42 : 0.25),
   };
 
   const errorTextStyle: TextStyle = {

@@ -5,10 +5,74 @@
 
 export type ReportFormat = 'pdf' | 'csv';
 export type ReportType = 'operations' | 'financial' | 'comprehensive' | 'stock-usage';
+export type ReportCompareMode = 'previous' | 'yoy';
+export type ReportSectionKey =
+  | 'meta'
+  | 'executive'
+  | 'irrigation'
+  | 'spray'
+  | 'fertigation'
+  | 'harvest'
+  | 'expense'
+  | 'stock';
+
+export const REPORT_SECTION_ORDER: ReportSectionKey[] = [
+  'meta',
+  'executive',
+  'irrigation',
+  'spray',
+  'fertigation',
+  'harvest',
+  'expense',
+  'stock',
+];
+
+const REPORT_TYPE_SECTION_MAP: Record<ReportType, ReportSectionKey[]> = {
+  comprehensive: [
+    'meta',
+    'executive',
+    'irrigation',
+    'spray',
+    'fertigation',
+    'harvest',
+    'expense',
+    'stock',
+  ],
+  operations: ['meta', 'executive', 'irrigation', 'spray', 'fertigation', 'harvest'],
+  financial: ['meta', 'executive', 'expense'],
+  'stock-usage': ['meta', 'executive', 'stock'],
+};
+
+export function getSectionsForReportType(reportType: ReportType): ReportSectionKey[] {
+  return [...REPORT_TYPE_SECTION_MAP[reportType]];
+}
 
 export interface DateRange {
   from: string; // ISO date string YYYY-MM-DD
   to: string;
+}
+
+export interface ReportCompareOptions {
+  enabled: boolean;
+  baselineSeasonId?: number;
+  mode?: ReportCompareMode;
+}
+
+export interface ReportFilters {
+  farmId: number | null;
+  dateRange: DateRange;
+  seasonId?: number;
+  includeUnassigned?: boolean;
+  compare?: ReportCompareOptions;
+}
+
+export interface ReportSeasonContext {
+  mode: 'all' | 'season';
+  seasonId?: number | null;
+  seasonName?: string | null;
+  seasonStart?: string | null;
+  seasonEnd?: string | null;
+  includeUnassigned?: boolean;
 }
 
 export interface ExportOptions {
@@ -32,6 +96,7 @@ export interface ReportData {
   farmArea: number;
   farmRegion: string;
   dateRange: DateRange;
+  seasonContext?: ReportSeasonContext;
   irrigation: ReportIrrigationRecord[];
   spray: ReportSprayRecord[];
   fertigation: ReportFertigationRecord[];
@@ -48,10 +113,17 @@ export interface ReportStockUsageRecord {
   areaTreated: number; // Total area this item was applied to
   cost?: number; // Estimated cost
   usageCount: number; // Number of times used
+  warehouseItemId?: number | null;
+  currentStockQuantity?: number | null;
+  estimatedOpeningStockQuantity?: number | null;
+  estimatedConsumedPercent?: number | null;
+  matchStrategy?: 'warehouse_item_id' | 'name_unit_fallback' | 'unmatched';
 }
 
 export interface ReportIrrigationRecord {
   date: string;
+  seasonId?: number | null;
+  seasonName?: string | null;
   duration: number;
   area: number;
   growthStage: string;
@@ -62,6 +134,8 @@ export interface ReportIrrigationRecord {
 
 export interface ReportSprayRecord {
   date: string;
+  seasonId?: number | null;
+  seasonName?: string | null;
   chemical: string;
   dose: string;
   area: number;
@@ -72,6 +146,8 @@ export interface ReportSprayRecord {
 
 export interface ReportFertigationRecord {
   date: string;
+  seasonId?: number | null;
+  seasonName?: string | null;
   fertilizers: string;
   area: number;
   notes?: string;
@@ -79,6 +155,8 @@ export interface ReportFertigationRecord {
 
 export interface ReportHarvestRecord {
   date: string;
+  seasonId?: number | null;
+  seasonName?: string | null;
   quantity: number;
   grade: string;
   price?: number;
@@ -88,6 +166,8 @@ export interface ReportHarvestRecord {
 
 export interface ReportExpenseRecord {
   date: string;
+  seasonId?: number | null;
+  seasonName?: string | null;
   type: string;
   cost: number;
   remarks?: string;

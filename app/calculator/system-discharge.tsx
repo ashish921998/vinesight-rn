@@ -417,30 +417,6 @@ export default function SystemDischargeScreen() {
                   placeholder="2.0"
                 />
 
-                <View
-                  style={{
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-                    borderRadius: borderRadius.xl,
-                    padding: spacing[3],
-                    marginTop: spacing[3],
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.medium,
-                      color: m3.colorScheme.primary,
-                      marginBottom: spacing[1],
-                    }}
-                  >
-                    Formula
-                  </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.primary }}>
-                    P/H = 10000 ÷ (DBL × DBP){'\n'}
-                    System Discharge = (P/H × Drippers × Discharge) ÷ 10000
-                  </Text>
-                </View>
-
                 <Pressable
                   onPress={calculateMethod1}
                   disabled={!canCalculateMethod1 || results !== null}
@@ -531,29 +507,6 @@ export default function SystemDischargeScreen() {
                   unit=""
                   placeholder="10"
                 />
-
-                <View
-                  style={{
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-                    borderRadius: borderRadius.xl,
-                    padding: spacing[3],
-                    marginTop: spacing[3],
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.medium,
-                      color: m3.colorScheme.primary,
-                      marginBottom: spacing[1],
-                    }}
-                  >
-                    Formula
-                  </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.primary }}>
-                    System Discharge = ((100 ÷ DBL) × (100 ÷ DBD) × Discharge × Lines) ÷ 10000
-                  </Text>
-                </View>
 
                 <Pressable
                   onPress={calculateMethod2}

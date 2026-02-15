@@ -25,6 +25,48 @@ export const labTestQueryKeys = {
   petioleTrends: (farmId: number) => ['petiole-trends', farmId] as const,
 };
 
+async function backfillMissingPetiolePruningDates(
+  farmId: number,
+  tests: PetioleTestRecord[],
+): Promise<PetioleTestRecord[]> {
+  const idsToBackfill = tests
+    .filter((test) => !test.date_of_pruning)
+    .map((test) => test.id)
+    .filter((id): id is number => typeof id === 'number');
+
+  if (idsToBackfill.length === 0) {
+    return tests;
+  }
+
+  const { data: farmData, error: farmError } = await supabase
+    .from('farms')
+    .select('date_of_pruning')
+    .eq('id', farmId)
+    .single();
+
+  if (farmError || !farmData?.date_of_pruning) {
+    return tests;
+  }
+
+  const pruningDate = farmData.date_of_pruning;
+  const { error: updateError } = await supabase
+    .from('petiole_test_records')
+    .update({ date_of_pruning: pruningDate })
+    .in('id', idsToBackfill);
+
+  if (updateError) {
+    return tests;
+  }
+
+  const idsSet = new Set(idsToBackfill);
+  return tests.map((test) => {
+    if (!test.id || !idsSet.has(test.id) || test.date_of_pruning) {
+      return test;
+    }
+    return { ...test, date_of_pruning: pruningDate };
+  });
+}
+
 /**
  * Fetch soil test records for a farm
  */
@@ -69,7 +111,8 @@ export function usePetioleTests(farmId: number, seasonId?: number) {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as PetioleTestRecord[];
+      const testData = (data ?? []) as PetioleTestRecord[];
+      return backfillMissingPetiolePruningDates(farmId, testData);
     },
     enabled: farmId > 0,
   });
@@ -259,7 +302,8 @@ export function usePetioleTestTrends(farmId: number) {
         .order('date', { ascending: true });
 
       if (error) throw error;
-      const testData = data as PetioleTestRecord[];
+      const rawData = (data ?? []) as PetioleTestRecord[];
+      const testData = await backfillMissingPetiolePruningDates(farmId, rawData);
       const trends = LabTrendsService.calculatePetioleTrends(testData || []);
       return trends;
     },
