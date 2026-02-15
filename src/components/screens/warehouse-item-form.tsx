@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useCreateWarehouseItem, useUpdateWarehouseItem } from '../../hooks';
 import {
   NutrientCompositionItem,
@@ -20,9 +19,11 @@ import {
   PreviewCard,
 } from '../ui/form-components';
 import { useM3, useThemeColors } from '@/styles/use-theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { ICON_REGISTRY } from '@/constants/icon-registry';
 import { WAREHOUSE_PRESETS, type WarehouseNutrientPreset } from '@/constants/nutrient-presets';
+import { Symbol as UISymbol } from '@/components/ui/symbol';
 
 interface Props {
   visible?: boolean;
@@ -107,6 +108,7 @@ export default function WarehouseItemForm({
   const [compositionSource, setCompositionSource] = useState<'manual' | 'preset'>('manual');
   const [selectedCatalogueId, setSelectedCatalogueId] = useState('');
   const [catalogueSearchQuery, setCatalogueSearchQuery] = useState('');
+  const [showCataloguePicker, setShowCataloguePicker] = useState(false);
 
   const currency = useCurrency();
   const isEditing = !!editingItem;
@@ -352,6 +354,7 @@ export default function WarehouseItemForm({
     quantity && unitPrice ? (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2) : '0.00';
 
   return (
+    <>
     <FormModal
       visible={isVisible}
       onClose={onClose}
@@ -369,54 +372,49 @@ export default function WarehouseItemForm({
         subtitle="Optional. Search and select if available, or continue with manual item entry."
         style={{ marginBottom: 12 }}
       />
-      <FormInput
-        label="Search Catalogue (Optional)"
-        value={catalogueSearchQuery}
-        onChangeText={setCatalogueSearchQuery}
-        placeholder="Search by product, grade, or manufacturer"
-        style={{ marginBottom: 10 }}
-      />
-      <View
+
+      <Pressable
         style={{
-          borderWidth: 1,
-          borderColor: colorWithOpacity(m3.colorScheme.outline, 0.35),
-          borderRadius: 12,
-          overflow: 'hidden',
-          marginBottom: 8,
-          backgroundColor: colorWithOpacity(m3.colorScheme.surfaceVariant, 0.32),
+          backgroundColor: colors.surface[100],
+          borderWidth: 2,
+          borderColor: colors.surface[200],
+          borderRadius: borderRadius.xl,
+          paddingHorizontal: spacing[4],
+          paddingVertical: spacing[4],
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: spacing[2],
+        }}
+        onPress={() => {
+          setCatalogueSearchQuery('');
+          setShowCataloguePicker(true);
         }}
       >
-        <Picker
-          selectedValue={selectedCatalogueId}
-          onValueChange={(value) => {
-            const catalogueId = String(value);
-            if (!catalogueId) {
-              setSelectedCatalogueId('');
-              setCompositionSource('manual');
-              return;
-            }
-            const preset = WAREHOUSE_PRESETS.find((item) => item.id === catalogueId);
-            if (preset) applyPreset(preset);
+        <Text
+          style={{
+            fontSize: fontSize.base,
+            color: selectedCatalogueId ? colors.surface[900] : colors.surface[400],
+            fontWeight: selectedCatalogueId ? fontWeight.medium : fontWeight.normal,
+            flex: 1,
           }}
+          numberOfLines={1}
         >
-          <Picker.Item label="Select from catalogue (or skip)" value="" />
-          {visibleCatalogueItems.map((preset) => (
-            <Picker.Item
-              key={preset.id}
-              label={`${preset.label} - ${preset.manufacturer}`}
-              value={preset.id}
-            />
-          ))}
-          {visibleCatalogueItems.length === 0 ? (
-            <Picker.Item label="No catalogue matches" value="" />
-          ) : null}
-        </Picker>
-      </View>
+          {selectedCatalogueId
+            ? (() => {
+                const preset = WAREHOUSE_PRESETS.find((p) => p.id === selectedCatalogueId);
+                return preset ? `${preset.label} - ${preset.manufacturer}` : 'Select from catalogue (or skip)';
+              })()
+            : 'Select from catalogue (or skip)'}
+        </Text>
+        <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
+      </Pressable>
+
       <Text
         style={{
           marginBottom: 18,
           color: m3.colorScheme.onSurfaceVariant,
-          fontSize: 12,
+          fontSize: fontSize.xs,
         }}
       >
         Product not listed in catalogue? Leave it unselected and enter item details + composition
@@ -586,5 +584,229 @@ export default function WarehouseItemForm({
         />
       )}
     </FormModal>
+
+    {/* Catalogue Picker Bottom Sheet */}
+    <Modal
+        visible={showCataloguePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCataloguePicker(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            justifyContent: 'flex-end',
+          }}
+        >
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={() => setShowCataloguePicker(false)}
+          />
+          <View
+            style={{
+              backgroundColor: colors.surface[100],
+              borderTopLeftRadius: borderRadius['3xl'],
+              borderTopRightRadius: borderRadius['3xl'],
+              maxHeight: '70%',
+            }}
+          >
+            {/* Header */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[4],
+                borderBottomWidth: 1,
+                borderBottomColor: colors.surface[200],
+              }}
+            >
+              <View style={{ width: 40 }} />
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                }}
+              >
+                Select from Catalogue
+              </Text>
+              <Pressable
+                onPress={() => setShowCataloguePicker(false)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: colors.surface[100],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+              </Pressable>
+            </View>
+
+            {/* Search */}
+            <View
+              style={{
+                paddingHorizontal: spacing[6],
+                paddingTop: spacing[4],
+                paddingBottom: spacing[2],
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: colors.surface[50],
+                  paddingHorizontal: spacing[3],
+                  minHeight: 48,
+                }}
+              >
+                <UISymbol
+                  name="magnifyingglass"
+                  size={18}
+                  color={m3.colorScheme.onSurfaceVariant}
+                />
+                <TextInput
+                  value={catalogueSearchQuery}
+                  onChangeText={setCatalogueSearchQuery}
+                  placeholder="Search by product, grade, or manufacturer"
+                  placeholderTextColor={colors.surface[400]}
+                  style={{
+                    flex: 1,
+                    marginLeft: spacing[2],
+                    color: colors.surface[900],
+                    fontSize: fontSize.base,
+                  }}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+
+            {/* "Skip / No selection" option */}
+            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+              <Pressable
+                style={{
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.surface[100],
+                  backgroundColor: !selectedCatalogueId
+                    ? colors.surface[50]
+                    : colors.surface[100],
+                }}
+                onPress={() => {
+                  setSelectedCatalogueId('');
+                  setCompositionSource('manual');
+                  setShowCataloguePicker(false);
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      color: !selectedCatalogueId
+                        ? colors.surface[900]
+                        : colors.surface[700],
+                      fontWeight: !selectedCatalogueId
+                        ? fontWeight.semibold
+                        : fontWeight.normal,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    Skip (manual entry)
+                  </Text>
+                  {!selectedCatalogueId && (
+                    <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                  )}
+                </View>
+              </Pressable>
+
+              {/* Catalogue items */}
+              {visibleCatalogueItems.map((preset) => (
+                <Pressable
+                  key={preset.id}
+                  style={{
+                    paddingHorizontal: spacing[6],
+                    paddingVertical: spacing[4],
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.surface[100],
+                    backgroundColor:
+                      selectedCatalogueId === preset.id
+                        ? colors.surface[50]
+                        : colors.surface[100],
+                  }}
+                  onPress={() => {
+                    applyPreset(preset);
+                    setShowCataloguePicker(false);
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <View style={{ flex: 1, marginRight: spacing[3] }}>
+                      <Text
+                        style={{
+                          fontSize: fontSize.base,
+                          color:
+                            selectedCatalogueId === preset.id
+                              ? colors.surface[900]
+                              : colors.surface[700],
+                          fontWeight:
+                            selectedCatalogueId === preset.id
+                              ? fontWeight.semibold
+                              : fontWeight.normal,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {preset.label}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.xs,
+                          color: colors.surface[500],
+                          marginTop: 2,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {preset.manufacturer}
+                      </Text>
+                    </View>
+                    {selectedCatalogueId === preset.id && (
+                      <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                    )}
+                  </View>
+                </Pressable>
+              ))}
+
+              {visibleCatalogueItems.length === 0 && (
+                <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                    No catalogue matches found.
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+    </Modal>
+    </>
   );
 }
