@@ -680,6 +680,17 @@ export const en = {
     },
     quickStats: {
       title: 'Quick Stats',
+      loading: 'Quick stats loading',
+      error: 'Quick stats error',
+      empty: 'Quick stats empty',
+      overview: 'Quick stats overview',
+      trendLabel: 'Trend',
+      statAccessibility: '{{label}}: {{value}}, {{trendLabel}} {{trendDirection}} {{trendValue}}',
+      trend: {
+        up: 'up',
+        down: 'down',
+        neutral: 'no change',
+      },
       stats: {
         activeFarms: 'Active Farms',
         workersToday: 'Workers Today',
@@ -697,7 +708,7 @@ export const en = {
       },
       humidity: 'Humidity',
       wind: 'Wind',
-      forecast: '3 day forecast',
+      forecast: '3-day forecast',
       days: {
         today: 'Today',
         tomorrow: 'Tomorrow',

@@ -16,11 +16,10 @@ const validCategories = [
   'ai',
   'input',
 ];
+const categoriesUsage = validCategories.join('|');
 
 if (!widgetName) {
-  console.error(
-    'Usage: npm run generate-widget <WidgetName> [foundation|dashboard|feature|advanced|calculator|journal|lab-test|ai|input]',
-  );
+  console.error(`Usage: npm run generate-widget <WidgetName> [${categoriesUsage}]`);
   process.exit(1);
 }
 

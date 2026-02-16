@@ -179,7 +179,7 @@ export const TaskSummaryWidget: React.FC<TaskSummaryWidgetProps> = ({
   const { t } = useTranslation();
   const m3 = useM3();
 
-  const overdueCount = tasks.filter((t) => t.status === 'overdue').length;
+  const overdueCount = tasks.filter((task) => task.status === 'overdue').length;
 
   if (loadingState === 'loading') {
     return (

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BaseWidgetProps, LoadingState } from '@widgets/shared/types';
 import { useM3 } from '@/styles/use-theme';
-import { spacing, shadows, borderRadius } from '@/styles/theme';
+import { spacing, shadows, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 
@@ -279,13 +279,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing[2],
   },
   message: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
     textAlign: 'center',
   },
   retry: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
     marginTop: spacing[3],
   },
   currentRow: {

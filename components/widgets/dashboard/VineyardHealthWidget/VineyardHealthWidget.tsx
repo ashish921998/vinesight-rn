@@ -73,6 +73,8 @@ const getStatusDotColor = (
       return scheme.outline;
     case 'info':
       return scheme.secondary;
+    default:
+      return scheme.primary;
   }
 };
 
@@ -88,6 +90,8 @@ const getBadgeColors = (status: StatusType, scheme: ReturnType<typeof useM3>['co
       return { bg: colorWithOpacity(scheme.outline, 0.12), text: scheme.outline };
     case 'info':
       return { bg: colorWithOpacity(scheme.secondary, 0.12), text: scheme.secondary };
+    default:
+      return { bg: colorWithOpacity(scheme.primary, 0.12), text: scheme.primary };
   }
 };
 

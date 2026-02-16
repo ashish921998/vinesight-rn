@@ -683,6 +683,17 @@ export const mr = {
     },
     quickStats: {
       title: 'जलद आकडे',
+      loading: 'जलद आकडे लोड होत आहेत',
+      error: 'जलद आकड्यांमध्ये त्रुटी',
+      empty: 'जलद आकडे उपलब्ध नाहीत',
+      overview: 'जलद आकड्यांचा आढावा',
+      trendLabel: 'कल',
+      statAccessibility: '{{label}}: {{value}}, {{trendLabel}} {{trendDirection}} {{trendValue}}',
+      trend: {
+        up: 'वाढ',
+        down: 'घट',
+        neutral: 'बदल नाही',
+      },
       stats: {
         activeFarms: 'सक्रिय शेते',
         workersToday: 'आजचे $t(glossary.worker)',

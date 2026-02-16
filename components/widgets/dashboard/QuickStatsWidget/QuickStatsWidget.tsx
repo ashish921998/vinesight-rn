@@ -72,14 +72,23 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
   loadingState = 'idle',
   onRetry,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const m3 = useM3();
+  const numberFormatter = new Intl.NumberFormat(i18n.language);
+
+  const localizeTrendValue = (value: string) => {
+    const match = value.match(/^([+-]?)(\d+(?:\.\d+)?)(%?)$/);
+    if (!match) return value;
+    const [, sign, numeric, suffix] = match;
+    const formattedValue = numberFormatter.format(Number(numeric));
+    return `${sign}${formattedValue}${suffix}`;
+  };
 
   if (loadingState === 'loading') {
     return (
       <View
         testID={testID}
-        accessibilityLabel={accessibilityLabel ?? 'Quick stats loading'}
+        accessibilityLabel={accessibilityLabel ?? t('widgets.quickStats.loading')}
         style={[
           styles.container,
           styles.centered,
@@ -101,7 +110,7 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
     return (
       <View
         testID={testID}
-        accessibilityLabel={accessibilityLabel ?? 'Quick stats error'}
+        accessibilityLabel={accessibilityLabel ?? t('widgets.quickStats.error')}
         style={[
           styles.container,
           styles.centered,
@@ -131,7 +140,7 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
     return (
       <View
         testID={testID}
-        accessibilityLabel={accessibilityLabel ?? 'Quick stats empty'}
+        accessibilityLabel={accessibilityLabel ?? t('widgets.quickStats.empty')}
         style={[
           styles.container,
           styles.centered,
@@ -158,7 +167,7 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
   return (
     <View
       testID={testID}
-      accessibilityLabel={accessibilityLabel ?? 'Quick stats overview'}
+      accessibilityLabel={accessibilityLabel ?? t('widgets.quickStats.overview')}
       style={[
         styles.container,
         {
@@ -175,10 +184,18 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
       <View style={styles.grid}>
         {stats.map((stat) => {
           const color = getTrendColor(stat.trend, m3.colorScheme.onSurfaceVariant);
+          const trendDirectionLabel = t(`widgets.quickStats.trend.${stat.trend}`);
+          const localizedTrendValue = localizeTrendValue(stat.trendValue);
           return (
             <View
               key={stat.labelKey}
-              accessibilityLabel={`${t(stat.labelKey)}: ${stat.value}, trend ${stat.trend} ${stat.trendValue}`}
+              accessibilityLabel={t('widgets.quickStats.statAccessibility', {
+                label: t(stat.labelKey),
+                value: stat.value,
+                trendLabel: t('widgets.quickStats.trendLabel'),
+                trendDirection: trendDirectionLabel,
+                trendValue: localizedTrendValue,
+              })}
               style={[
                 styles.card,
                 {
@@ -247,7 +264,8 @@ const styles = StyleSheet.create({
     gap: spacing[3],
   },
   card: {
-    width: '48%',
+    flex: 1,
+    minWidth: '45%',
     borderWidth: 1,
     borderRadius: borderRadius.xl,
     padding: spacing[3],

@@ -680,6 +680,17 @@ export const hi = {
     },
     quickStats: {
       title: 'त्वरित आँकड़े',
+      loading: 'त्वरित आँकड़े लोड हो रहे हैं',
+      error: 'त्वरित आँकड़ों में त्रुटि',
+      empty: 'त्वरित आँकड़े उपलब्ध नहीं',
+      overview: 'त्वरित आँकड़ों का अवलोकन',
+      trendLabel: 'रुझान',
+      statAccessibility: '{{label}}: {{value}}, {{trendLabel}} {{trendDirection}} {{trendValue}}',
+      trend: {
+        up: 'बढ़ रहा है',
+        down: 'घट रहा है',
+        neutral: 'कोई परिवर्तन नहीं',
+      },
       stats: {
         activeFarms: 'सक्रिय खेत',
         workersToday: 'आज के कामगार',

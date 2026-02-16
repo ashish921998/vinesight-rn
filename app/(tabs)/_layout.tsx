@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
+import { BackHandler, ToastAndroid } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
@@ -55,6 +56,35 @@ export default function TabLayout() {
       }}
     />
   );
+
+  useEffect(() => {
+    if (!isAndroid) return;
+
+    let lastBackPressAt = 0;
+    const backPressIntervalMs = 1200;
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (router.canGoBack()) {
+        router.back();
+        return true;
+      }
+
+      const now = Date.now();
+      if (now - lastBackPressAt < backPressIntervalMs) {
+        BackHandler.exitApp();
+        return true;
+      }
+
+      lastBackPressAt = now;
+      ToastAndroid.show(
+        t('common.pressBackAgainToExit', 'Press back again to exit'),
+        ToastAndroid.SHORT,
+      );
+      return true;
+    });
+
+    return () => sub.remove();
+  }, [router, t]);
 
   useEffect(() => {
     if (isLoading) return;

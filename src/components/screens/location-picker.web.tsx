@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  Alert,
+  Platform,
+} from 'react-native';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -80,17 +88,19 @@ export default function LocationPicker({
       let locationName: string | undefined;
 
       try {
-        const results = await Location.reverseGeocodeAsync({ latitude, longitude });
-        if (results.length > 0) {
-          const location = results[0];
-          const parts = [
-            location.name,
-            location.street,
-            location.city,
-            location.region,
-            location.country,
-          ].filter(Boolean);
-          locationName = parts.join(', ');
+        if (Platform.OS !== 'web') {
+          const results = await Location.reverseGeocodeAsync({ latitude, longitude });
+          if (results.length > 0) {
+            const location = results[0];
+            const parts = [
+              location.name,
+              location.street,
+              location.city,
+              location.region,
+              location.country,
+            ].filter(Boolean);
+            locationName = parts.join(', ');
+          }
         }
       } catch (error) {
         console.error('Error reverse geocoding:', error);
@@ -153,7 +163,10 @@ export default function LocationPicker({
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.confirmButton, !selectedCoordinate && styles.confirmButtonDisabled]}
+            style={[
+              styles.confirmButton,
+              (!selectedCoordinate || loading) && styles.confirmButtonDisabled,
+            ]}
             onPress={handleConfirm}
             disabled={!selectedCoordinate || loading}
           >

@@ -162,7 +162,7 @@ describe('WeatherWidget', () => {
       <WeatherWidget currentWeather={demoWeather} forecast={demoForecast} />,
     );
 
-    expect(getByLabelText('3 day forecast')).toBeTruthy();
+    expect(getByLabelText('3-day forecast')).toBeTruthy();
     expect(getByLabelText(/Today: Sunny, high 28 degrees, low 19 degrees/)).toBeTruthy();
   });
 
