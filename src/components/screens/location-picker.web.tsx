@@ -151,6 +151,9 @@ export default function LocationPicker({
             style={styles.locationButton}
             onPress={handleGetCurrentLocation}
             disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel={t('locationPicker.useCurrent')}
+            accessibilityState={{ disabled: loading }}
           >
             {loading ? (
               <ActivityIndicator color={colors.success} />

@@ -2163,6 +2163,10 @@ export const en = {
     },
     alerts: {
       exportFailedTitle: 'Export Failed',
+      downloadCompleteTitle: 'Download complete',
+      downloadCompleteBody: 'Saved to:\n{{fileUri}}',
+      downloadReportTitle: 'Download report',
+      chooseFormatBody: 'Choose format',
     },
     noFarms: {
       title: 'No Farms Available',

@@ -2168,6 +2168,10 @@ export const hi = {
     },
     alerts: {
       exportFailedTitle: 'निर्यात विफल',
+      downloadCompleteTitle: 'डाउनलोड पूर्ण',
+      downloadCompleteBody: 'सहेजा गया:\n{{fileUri}}',
+      downloadReportTitle: 'रिपोर्ट डाउनलोड करें',
+      chooseFormatBody: 'प्रारूप चुनें',
     },
     noFarms: {
       title: 'कोई खेत उपलब्ध नहीं',

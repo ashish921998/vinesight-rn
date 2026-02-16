@@ -3,7 +3,7 @@
  * Calculate irrigation system discharge rates
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,11 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  type LayoutChangeEvent,
 } from 'react-native';
 
 import { Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -32,6 +34,7 @@ interface SystemDischargeResults {
 export default function SystemDischargeScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
+  const insets = useSafeAreaInsets();
   const [dbl, setDbl] = useState('');
   const [refillTankValue, setRefillTankValue] = useState('');
 
@@ -46,6 +49,8 @@ export default function SystemDischargeScreen() {
   const [numberOfLines, setNumberOfLines] = useState('');
 
   const [results, setResults] = useState<SystemDischargeResults | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const inputPositionsRef = useRef<Record<string, number>>({});
 
   const canSelectMethod = useMemo(() => {
     const dblVal = parseFloat(dbl);
@@ -161,6 +166,16 @@ export default function SystemDischargeScreen() {
     setResults(null);
   };
 
+  const handleInputLayout = (fieldKey: string, y: number) => {
+    inputPositionsRef.current[fieldKey] = y;
+  };
+
+  const handleInputFocus = (fieldKey: string) => {
+    const y = inputPositionsRef.current[fieldKey];
+    if (typeof y !== 'number') return;
+    scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 140), animated: true });
+  };
+
   return (
     <>
       <Stack.Screen
@@ -172,9 +187,11 @@ export default function SystemDischargeScreen() {
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 44 : 0}
           style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
         >
           <ScrollView
+            ref={scrollViewRef}
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
             contentInsetAdjustmentBehavior="automatic"
@@ -217,18 +234,24 @@ export default function SystemDischargeScreen() {
               </View>
 
               <InputRow
+                fieldKey="dbl"
                 label="Distance Between Lines (DBL)"
                 value={dbl}
                 onChangeText={setDbl}
                 unit="m"
                 placeholder="3.0"
+                onInputFocus={handleInputFocus}
+                onInputLayout={handleInputLayout}
               />
               <InputRow
+                fieldKey="refillTankValue"
                 label="Refill Tank Value (optional)"
                 value={refillTankValue}
                 onChangeText={setRefillTankValue}
                 unit=""
                 placeholder="From MAD calc"
+                onInputFocus={handleInputFocus}
+                onInputLayout={handleInputLayout}
               />
 
               <Text
@@ -396,25 +419,34 @@ export default function SystemDischargeScreen() {
                 </View>
 
                 <InputRow
+                  fieldKey="dbp"
                   label="Distance Between Plants (DBP)"
                   value={dbp}
                   onChangeText={setDbp}
                   unit="m"
                   placeholder="1.5"
+                  onInputFocus={handleInputFocus}
+                  onInputLayout={handleInputLayout}
                 />
                 <InputRow
+                  fieldKey="drippersPerPlant"
                   label="Drippers per Plant"
                   value={drippersPerPlant}
                   onChangeText={setDrippersPerPlant}
                   unit=""
                   placeholder="4"
+                  onInputFocus={handleInputFocus}
+                  onInputLayout={handleInputLayout}
                 />
                 <InputRow
+                  fieldKey="dischargePerHour1"
                   label="Discharge per Dripper"
                   value={dischargePerHour1}
                   onChangeText={setDischargePerHour1}
                   unit="L/hr"
                   placeholder="2.0"
+                  onInputFocus={handleInputFocus}
+                  onInputLayout={handleInputLayout}
                 />
 
                 <Pressable
@@ -487,25 +519,34 @@ export default function SystemDischargeScreen() {
                 </View>
 
                 <InputRow
+                  fieldKey="dbd"
                   label="Distance Between Drippers (DBD)"
                   value={dbd}
                   onChangeText={setDbd}
                   unit="m"
                   placeholder="0.5"
+                  onInputFocus={handleInputFocus}
+                  onInputLayout={handleInputLayout}
                 />
                 <InputRow
+                  fieldKey="dischargePerHour2"
                   label="Discharge per Dripper"
                   value={dischargePerHour2}
                   onChangeText={setDischargePerHour2}
                   unit="L/hr"
                   placeholder="2.0"
+                  onInputFocus={handleInputFocus}
+                  onInputLayout={handleInputLayout}
                 />
                 <InputRow
+                  fieldKey="numberOfLines"
                   label="Number of Lines"
                   value={numberOfLines}
                   onChangeText={setNumberOfLines}
                   unit=""
                   placeholder="10"
+                  onInputFocus={handleInputFocus}
+                  onInputLayout={handleInputLayout}
                 />
 
                 <Pressable
@@ -725,18 +766,34 @@ export default function SystemDischargeScreen() {
 
 // Input Row Component
 interface InputRowProps {
+  fieldKey: string;
   label: string;
   value: string;
   onChangeText: (text: string) => void;
   unit: string;
   placeholder: string;
+  onInputLayout: (fieldKey: string, y: number) => void;
+  onInputFocus: (fieldKey: string) => void;
 }
 
-function InputRow({ label, value, onChangeText, unit, placeholder }: InputRowProps) {
+function InputRow({
+  fieldKey,
+  label,
+  value,
+  onChangeText,
+  unit,
+  placeholder,
+  onInputLayout,
+  onInputFocus,
+}: InputRowProps) {
   const colors = useThemeColors();
   const m3 = useM3();
+  const handleLayout = (event: LayoutChangeEvent) => {
+    onInputLayout(fieldKey, event.nativeEvent.layout.y);
+  };
+
   return (
-    <View style={{ marginBottom: spacing[3] }}>
+    <View style={{ marginBottom: spacing[3] }} onLayout={handleLayout}>
       <Text style={{ fontSize: fontSize.sm, color: colors.surface[600], marginBottom: spacing[1] }}>
         {label}
       </Text>
@@ -751,6 +808,7 @@ function InputRow({ label, value, onChangeText, unit, placeholder }: InputRowPro
         <TextInput
           value={value}
           onChangeText={onChangeText}
+          onFocus={() => onInputFocus(fieldKey)}
           placeholder={placeholder}
           placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
           keyboardType="decimal-pad"

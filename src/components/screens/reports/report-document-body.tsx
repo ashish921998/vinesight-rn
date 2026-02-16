@@ -121,7 +121,9 @@ export function ReportDocumentBody({
       ],
     }));
 
-  const stockRows: ReportSectionRow[] = preview.data.stock
+  const matchedStockRows = preview.data.stock.filter((row) => row.matchStrategy !== 'unmatched');
+
+  const stockRows: ReportSectionRow[] = matchedStockRows
     .slice(0, ROW_LIMIT)
     .map((row, index) => ({
       id: `stock-${row.type}-${row.itemName}-${row.unit}-${index}`,
@@ -280,9 +282,9 @@ export function ReportDocumentBody({
         ? renderSectionCard(
             stockAccentColor,
             <ReportSectionBlock
-              title={t('reports.stockDetails.title')}
+              title={`${t('reports.stockDetails.title')} (${matchedStockRows.length}/${preview.data.stock.length})`}
               rows={stockRows}
-              hiddenCount={Math.max(0, preview.data.stock.length - ROW_LIMIT)}
+              hiddenCount={Math.max(0, matchedStockRows.length - ROW_LIMIT)}
               variant="compact-inline"
               icon={SECTION_ICONS.stock}
               accentColor={stockAccentColor}

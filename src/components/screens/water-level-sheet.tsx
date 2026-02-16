@@ -22,7 +22,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useNotificationStore } from '@/stores';
 import { ensureNotificationPermissions, notifyLowWaterAlert } from '@/services/notifications';
 import { useTranslation } from 'react-i18next';
-import { formatNumber, formatDate } from '@/i18n/format';
+import { formatNumber, formatDate, formatTime } from '@/i18n/format';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticMedium, triggerHapticSuccess } from '@/utils/haptics';
@@ -77,14 +77,7 @@ export function WaterLevelSheet({
     try {
       const date = new Date(timestamp);
       if (Number.isNaN(date.getTime())) return '--';
-      return formatDate(date, {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      });
+      return `${formatDate(date)} ${formatTime(date, { hour: '2-digit', minute: '2-digit', hour12: true })}`;
     } catch {
       return '--';
     }
@@ -214,11 +207,15 @@ export function WaterLevelSheet({
       isSaveDisabled={calculatedWaterLevel === null}
       presentation={presentation}
     >
-      <SectionHeader
-        title={t('waterLevelSheet.sections.waterLevels.title')}
-        subtitle={t('waterLevelSheet.sections.waterLevels.subtitle')}
-        style={{ marginBottom: spacing[4] }}
-      />
+      <Text
+        style={{
+          fontSize: fontSize.base,
+          color: colors.surface[500],
+          marginBottom: spacing[4],
+        }}
+      >
+        {t('waterLevelSheet.sections.waterLevels.subtitle')}
+      </Text>
 
       <PreviewCard
         title={t('waterLevelSheet.preview.current.title')}
@@ -234,6 +231,7 @@ export function WaterLevelSheet({
           {
             label: t('waterLevelSheet.preview.labels.lastUpdated'),
             value: formatLastUpdated(farm.water_calculation_updated_at),
+            compactValue: true,
           },
         ]}
         backgroundColor={colors.surface[100]}
@@ -463,6 +461,15 @@ export function WaterLevelSheet({
                         }}
                       >
                         {t(`waterLevelSheet.growthStagePicker.stages.${stage.id}`)}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.sm,
+                          color: colors.surface[500],
+                          marginTop: spacing[1],
+                        }}
+                      >
+                        Kc: {stage.kc.toFixed(2)}
                       </Text>
                     </View>
                     {selectedGrowthStage?.id === stage.id && (

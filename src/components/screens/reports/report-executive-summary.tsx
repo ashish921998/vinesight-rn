@@ -82,9 +82,7 @@ export function ReportExecutiveSummary({
   const showFinancial = visibleSections.has('expense');
   const showStockOnly = visibleSections.has('stock') && !showOperations && !showFinancial;
 
-  const matchedStockRows = preview.data.stock.filter(
-    (row) => row.estimatedConsumedPercent != null,
-  ).length;
+  const matchedStockRows = preview.data.stock.filter((row) => row.matchStrategy !== 'unmatched').length;
   const estimatedStockCoveragePercent =
     preview.data.stock.length > 0 ? (matchedStockRows / preview.data.stock.length) * 100 : 0;
 

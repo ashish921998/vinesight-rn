@@ -2176,6 +2176,10 @@ export const mr = {
     },
     alerts: {
       exportFailedTitle: 'निर्यात अयशस्वी',
+      downloadCompleteTitle: 'डाउनलोड पूर्ण',
+      downloadCompleteBody: 'जतन केले:\n{{fileUri}}',
+      downloadReportTitle: 'रिपोर्ट डाउनलोड करा',
+      chooseFormatBody: 'स्वरूप निवडा',
     },
     noFarms: {
       title: '$t(glossary.farm) उपलब्ध नाहीत',

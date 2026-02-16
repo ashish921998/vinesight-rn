@@ -218,7 +218,7 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
               </Text>
               <View style={styles.trendRow}>
                 <Ionicons name={getTrendIcon(stat.trend)} size={12} color={color} />
-                <Text style={[styles.trendText, { color }]}>{stat.trendValue}</Text>
+                <Text style={[styles.trendText, { color }]}>{localizedTrendValue}</Text>
               </View>
             </View>
           );

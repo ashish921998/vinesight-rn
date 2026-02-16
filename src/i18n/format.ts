@@ -37,19 +37,63 @@ export function formatDate(
   date: Date | string | number,
   options?: Intl.DateTimeFormatOptions,
 ): string {
-  const d = date instanceof Date ? date : new Date(date);
+  const parseInputDate = (input: Date | string | number): Date => {
+    if (input instanceof Date) return input;
+    if (typeof input === 'string') {
+      const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);
+      if (dateOnlyMatch) {
+        const year = Number(dateOnlyMatch[1]);
+        const month = Number(dateOnlyMatch[2]) - 1;
+        const day = Number(dateOnlyMatch[3]);
+        return new Date(Date.UTC(year, month, day));
+      }
+    }
+    return new Date(input);
+  };
+
+  const d = parseInputDate(date);
   if (Number.isNaN(d.getTime())) {
     return '';
   }
-  return new Intl.DateTimeFormat(getLocaleWithLatinDigits(), {
+
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const year = String(d.getUTCFullYear());
+  const formattedDate = `${day}-${month}-${year}`;
+
+  const includesTime =
+    options?.hour != null ||
+    options?.minute != null ||
+    options?.second != null ||
+    options?.timeStyle != null;
+
+  if (!includesTime) return formattedDate;
+
+  const time = new Intl.DateTimeFormat(getLocaleWithLatinDigits(), {
     numberingSystem: 'latn',
-    ...options,
+    hour: options?.hour ?? '2-digit',
+    minute: options?.minute ?? '2-digit',
+    second: options?.second,
+    hour12: options?.hour12,
+    timeZone: options?.timeZone,
+    timeZoneName: options?.timeZoneName,
   }).format(d);
+
+  return `${formattedDate} ${time}`;
 }
 
 export function formatTime(
   date: Date | string | number,
   options?: Intl.DateTimeFormatOptions,
 ): string {
-  return formatDate(date, { hour: '2-digit', minute: '2-digit', ...options });
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) {
+    return '';
+  }
+  return new Intl.DateTimeFormat(getLocaleWithLatinDigits(), {
+    numberingSystem: 'latn',
+    hour: '2-digit',
+    minute: '2-digit',
+    ...options,
+  }).format(d);
 }
