@@ -54,5 +54,6 @@ lint-results.json
 
 .env.local
 
+# Storybook
 *storybook.log
 storybook-static

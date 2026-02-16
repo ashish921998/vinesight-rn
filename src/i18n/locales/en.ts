@@ -671,6 +671,90 @@ export const en = {
     },
   },
 
+  widgets: {
+    common: {
+      loading: 'Loading…',
+      error: 'Failed to load data',
+      empty: 'No data available',
+      retry: 'Try again',
+    },
+    quickStats: {
+      title: 'Quick Stats',
+      stats: {
+        activeFarms: 'Active Farms',
+        workersToday: 'Workers Today',
+        waterReserve: 'Water Reserve',
+        seasonExpenses: 'Season Expenses',
+      },
+    },
+    weather: {
+      title: 'Vineyard Weather',
+      conditions: {
+        sunny: 'Sunny',
+        cloudy: 'Cloudy',
+        rainy: 'Rainy',
+        partlyCloudy: 'Partly Cloudy',
+      },
+      humidity: 'Humidity',
+      wind: 'Wind',
+      forecast: '3 day forecast',
+      days: {
+        today: 'Today',
+        tomorrow: 'Tomorrow',
+        dayAfter: 'Day After',
+      },
+    },
+    vineyardHealth: {
+      title: 'Vineyard Health',
+      overallStatus: 'Overall status',
+      metrics: {
+        waterStatus: 'Water Status',
+        diseaseRisk: 'Disease Risk',
+        growthStage: 'Growth Stage',
+        soilMoisture: 'Soil Moisture',
+      },
+      values: {
+        minimal: 'Minimal',
+        veraison: 'Véraison',
+      },
+    },
+    taskSummary: {
+      title: 'Upcoming Tasks',
+      tasksCount: '{{count}} tasks',
+      overdueCount: '{{count}} overdue',
+      status: {
+        overdue: 'Overdue',
+        dueToday: 'Due today',
+        upcoming: 'Upcoming',
+      },
+      labels: {
+        irrigationBlockA: 'Irrigation - Block A',
+        sprayFungicide: 'Spray - Fungicide',
+        fertigationRound3: 'Fertigation Round 3',
+        harvestSampling: 'Harvest Sampling',
+        dueToday: 'Due today',
+        tomorrow: 'Tomorrow',
+        in3Days: 'In 3 days',
+        overdue: 'Overdue',
+      },
+      empty: 'No upcoming tasks',
+    },
+    template: {
+      title: 'Widget Template',
+      testWidget: {
+        label: 'Test Widget',
+      },
+    },
+  },
+
+  developerTools: {
+    section: 'Developer',
+    widgetShowcase: {
+      title: 'Widget Showcase',
+      description: 'Preview widgets on iOS, Android, and Web from one screen.',
+    },
+  },
+
   calculator: {
     mad: {
       title: 'MAD Calculator',

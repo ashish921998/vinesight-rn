@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-unused-styles */
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Alert } from 'react-native';
 import * as Location from 'expo-location';
@@ -16,6 +15,11 @@ interface LocationPickerProps {
   initialLongitude?: number;
 }
 
+interface Coordinate {
+  latitude: number;
+  longitude: number;
+}
+
 export default function LocationPicker({
   visible,
   onClose,
@@ -28,10 +32,7 @@ export default function LocationPicker({
   const m3 = useM3();
   const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
   const [loading, setLoading] = useState(false);
-  const [selectedCoordinate, setSelectedCoordinate] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const [selectedCoordinate, setSelectedCoordinate] = useState<Coordinate | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -112,7 +113,12 @@ export default function LocationPicker({
       <View style={styles.modalContent}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('locationPicker.title')}</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.closeButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+          >
             <Ionicons name="close" size={24} color={colors.gray[500]} />
           </TouchableOpacity>
         </View>

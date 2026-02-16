@@ -1,53 +1,78 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BaseWidgetProps, StatusType } from '@widgets/shared/types';
+import { BaseWidgetProps, StatusType, LoadingState } from '@widgets/shared/types';
 import { useM3 } from '@/styles/use-theme';
-import { spacing, borderRadius, shadows, fontSize, fontWeight, colors } from '@/styles/theme';
+import { spacing, borderRadius, shadows, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useTranslation } from 'react-i18next';
 
 export interface VineyardHealthWidgetProps extends BaseWidgetProps {
   title?: string;
   metrics?: HealthMetric[];
-  overallStatus?: { status: StatusType; label: string };
+  overallStatus?: { status: StatusType; labelKey: string };
+  loadingState?: LoadingState;
+  onRetry?: () => void;
 }
 
-interface HealthMetric {
+export interface HealthMetric {
   id: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
-  label: string;
-  value: string;
+  labelKey: string;
+  valueKey?: string;
+  value?: string;
   status: StatusType;
 }
 
 const DEMO_METRICS: HealthMetric[] = [
-  { id: 'water', icon: 'water', label: 'Water Status', value: '72%', status: 'optimal' },
+  {
+    id: 'water',
+    icon: 'water',
+    labelKey: 'widgets.vineyardHealth.metrics.waterStatus',
+    value: '72%',
+    status: 'optimal',
+  },
   {
     id: 'disease',
     icon: 'shield-checkmark',
-    label: 'Disease Risk',
-    value: 'Minimal',
+    labelKey: 'widgets.vineyardHealth.metrics.diseaseRisk',
+    valueKey: 'widgets.vineyardHealth.values.minimal',
     status: 'optimal',
   },
-  { id: 'growth', icon: 'leaf', label: 'Growth Stage', value: 'Véraison', status: 'info' },
-  { id: 'soil', icon: 'earth', label: 'Soil Moisture', value: '45%', status: 'due' },
+  {
+    id: 'growth',
+    icon: 'leaf',
+    labelKey: 'widgets.vineyardHealth.metrics.growthStage',
+    valueKey: 'widgets.vineyardHealth.values.veraison',
+    status: 'info',
+  },
+  {
+    id: 'soil',
+    icon: 'earth',
+    labelKey: 'widgets.vineyardHealth.metrics.soilMoisture',
+    value: '45%',
+    status: 'due',
+  },
 ];
 
 const OVERALL_STATUS = 'optimal' as StatusType;
-const OVERALL_LABEL = 'Optimal';
+const OVERALL_LABEL_KEY = 'widgets.vineyardHealth.overallStatus';
 
-const getStatusDotColor = (status: StatusType): string => {
+const getStatusDotColor = (
+  status: StatusType,
+  scheme: ReturnType<typeof useM3>['colorScheme'],
+): string => {
   switch (status) {
     case 'optimal':
-      return colors.water.good;
+      return scheme.primary;
     case 'critical':
-      return colors.water.critical;
+      return scheme.error;
     case 'due':
-      return colors.water.medium;
+      return scheme.warning;
     case 'delayed':
-      return colors.water.low;
+      return scheme.outline;
     case 'info':
-      return colors.secondary[500];
+      return scheme.secondary;
   }
 };
 
@@ -70,12 +95,95 @@ export const VineyardHealthWidget: React.FC<VineyardHealthWidgetProps> = ({
   testID,
   accessibilityLabel = 'Vineyard Health Widget',
   style,
-  title = 'Vineyard Health',
+  title,
   metrics = DEMO_METRICS,
-  overallStatus = { status: OVERALL_STATUS, label: OVERALL_LABEL },
+  overallStatus = { status: OVERALL_STATUS, labelKey: OVERALL_LABEL_KEY },
+  loadingState = 'idle',
+  onRetry,
 }) => {
+  const { t } = useTranslation();
   const m3 = useM3();
   const badge = getBadgeColors(overallStatus.status, m3.colorScheme);
+
+  if (loadingState === 'loading') {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        style={[
+          styles.card,
+          styles.centered,
+          {
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderColor: m3.colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Text style={[styles.message, { color: m3.colorScheme.onSurfaceVariant }]}>
+          {t('widgets.common.loading')}
+        </Text>
+      </View>
+    );
+  }
+
+  if (loadingState === 'error') {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        style={[
+          styles.card,
+          styles.centered,
+          {
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderColor: m3.colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Ionicons name="alert-circle" size={32} color={m3.colorScheme.error} style={styles.icon} />
+        <Text style={[styles.message, { color: m3.colorScheme.error }]}>
+          {t('widgets.common.error')}
+        </Text>
+        {onRetry && (
+          <Pressable onPress={onRetry}>
+            <Text style={[styles.retry, { color: m3.colorScheme.primary }]}>
+              {t('widgets.common.retry')}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    );
+  }
+
+  if (loadingState === 'idle' && metrics.length === 0) {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        style={[
+          styles.card,
+          styles.centered,
+          {
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderColor: m3.colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Ionicons
+          name="heart-outline"
+          size={32}
+          color={m3.colorScheme.onSurfaceVariant}
+          style={styles.icon}
+        />
+        <Text style={[styles.message, { color: m3.colorScheme.onSurfaceVariant }]}>
+          {t('widgets.common.empty')}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View
@@ -93,28 +201,32 @@ export const VineyardHealthWidget: React.FC<VineyardHealthWidgetProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <Text
+          testID={`${testID || 'vineyard-health-widget'}-title`}
           style={[styles.title, { color: m3.colorScheme.onSurface }]}
           accessibilityRole="header"
         >
-          {title}
+          {title ?? t('widgets.vineyardHealth.title')}
         </Text>
         <View
+          testID={`${testID || 'vineyard-health-widget'}-overall-status`}
           style={[styles.badge, { backgroundColor: badge.bg }]}
-          accessibilityLabel={`Overall status: ${overallStatus.label}`}
+          accessibilityLabel={`Overall status: ${t(overallStatus.labelKey)}`}
         >
-          <Text style={[styles.badgeText, { color: badge.text }]}>{overallStatus.label}</Text>
+          <Text style={[styles.badgeText, { color: badge.text }]}>{t(overallStatus.labelKey)}</Text>
         </View>
       </View>
 
       {/* Metrics */}
       <View style={styles.metricsList}>
         {metrics.map((metric, index) => {
-          const dotColor = getStatusDotColor(metric.status);
+          const dotColor = getStatusDotColor(metric.status, m3.colorScheme);
           const isLast = index === metrics.length - 1;
+          const value = metric.valueKey ? t(metric.valueKey) : metric.value;
 
           return (
             <View
               key={metric.id}
+              testID={`${testID || 'vineyard-health-widget'}-metric-${metric.id}`}
               style={[
                 styles.metricRow,
                 !isLast && {
@@ -122,7 +234,7 @@ export const VineyardHealthWidget: React.FC<VineyardHealthWidgetProps> = ({
                   borderBottomColor: m3.colorScheme.outlineVariant,
                 },
               ]}
-              accessibilityLabel={`${metric.label}: ${metric.value}`}
+              accessibilityLabel={`${t(metric.labelKey)}: ${value}`}
             >
               <View style={styles.metricLeft}>
                 <View
@@ -133,13 +245,19 @@ export const VineyardHealthWidget: React.FC<VineyardHealthWidgetProps> = ({
                 >
                   <Ionicons name={metric.icon} size={16} color={m3.colorScheme.primary} />
                 </View>
-                <Text style={[styles.metricLabel, { color: m3.colorScheme.onSurface }]}>
-                  {metric.label}
+                <Text
+                  testID={`${testID || 'vineyard-health-widget'}-metric-${metric.id}-label`}
+                  style={[styles.metricLabel, { color: m3.colorScheme.onSurface }]}
+                >
+                  {t(metric.labelKey)}
                 </Text>
               </View>
               <View style={styles.metricRight}>
-                <Text style={[styles.metricValue, { color: m3.colorScheme.onSurfaceVariant }]}>
-                  {metric.value}
+                <Text
+                  testID={`${testID || 'vineyard-health-widget'}-metric-${metric.id}-value`}
+                  style={[styles.metricValue, { color: m3.colorScheme.onSurfaceVariant }]}
+                >
+                  {value}
                 </Text>
                 <View style={[styles.statusDot, { backgroundColor: dotColor }]} />
               </View>
@@ -157,6 +275,24 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius['2xl'],
     padding: spacing[4],
     ...shadows.sm,
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 150,
+  },
+  icon: {
+    marginBottom: spacing[2],
+  },
+  message: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    textAlign: 'center',
+  },
+  retry: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    marginTop: spacing[3],
   },
   header: {
     flexDirection: 'row',

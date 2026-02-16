@@ -5,11 +5,21 @@ const fs = require('fs');
 const path = require('path');
 
 const [widgetName, category = 'feature'] = process.argv.slice(2);
-const validCategories = ['foundation', 'dashboard', 'feature', 'advanced'];
+const validCategories = [
+  'foundation',
+  'dashboard',
+  'feature',
+  'advanced',
+  'calculator',
+  'journal',
+  'lab-test',
+  'ai',
+  'input',
+];
 
 if (!widgetName) {
   console.error(
-    'Usage: npm run generate-widget <WidgetName> [foundation|dashboard|feature|advanced]',
+    'Usage: npm run generate-widget <WidgetName> [foundation|dashboard|feature|advanced|calculator|journal|lab-test|ai|input]',
   );
   process.exit(1);
 }
@@ -31,6 +41,8 @@ fs.mkdirSync(baseDir, { recursive: true });
 const componentContent = `import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { BaseWidgetProps } from '@widgets/shared/types';
+// TODO: Import i18n hook when available
+// import { useTranslation } from 'react-i18next';
 
 export type ${widgetName}Props = BaseWidgetProps;
 
@@ -39,9 +51,12 @@ export const ${widgetName}: React.FC<${widgetName}Props> = ({
   accessibilityLabel,
   style,
 }) => {
+  // TODO: Implement loading/error states
+  // const { t } = useTranslation();
+
   return (
     <View testID={testID} accessibilityLabel={accessibilityLabel} style={[styles.container, style]}>
-      <Text>${widgetName}</Text>
+      <Text>{/* TODO: Use t('widgets.${widgetName.toLowerCase()}.title') */}${widgetName}</Text>
     </View>
   );
 };
@@ -52,7 +67,7 @@ const styles = StyleSheet.create({
 `;
 
 const testContent = `import React from 'react';
-import { render } from '../../shared/utils/testUtils';
+import { render } from '@widgets/shared/utils/testUtils';
 import { ${widgetName} } from './${widgetName}';
 
 describe('${widgetName}', () => {

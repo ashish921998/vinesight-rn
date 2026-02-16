@@ -671,6 +671,90 @@ export const hi = {
     },
   },
 
+  widgets: {
+    common: {
+      loading: 'लोड हो रहा है…',
+      error: 'डेटा लोड करने में विफल',
+      empty: 'कोई डेटा उपलब्ध नहीं',
+      retry: 'पुनः प्रयास करें',
+    },
+    quickStats: {
+      title: 'त्वरित आँकड़े',
+      stats: {
+        activeFarms: 'सक्रिय खेत',
+        workersToday: 'आज के कामगार',
+        waterReserve: 'पानी का भंडार',
+        seasonExpenses: 'सीज़न का खर्च',
+      },
+    },
+    weather: {
+      title: 'वाइनयार्ड मौसम',
+      conditions: {
+        sunny: 'धूप',
+        cloudy: 'बादल',
+        rainy: 'बारिश',
+        partlyCloudy: 'आंशिक रूप से बादल',
+      },
+      humidity: 'नमी',
+      wind: 'हवा',
+      forecast: '3 दिन का पूर्वानुमान',
+      days: {
+        today: 'आज',
+        tomorrow: 'कल',
+        dayAfter: 'उसके बाद',
+      },
+    },
+    vineyardHealth: {
+      title: 'वाइनयार्ड स्वास्थ्य',
+      overallStatus: 'समग्र स्थिति',
+      metrics: {
+        waterStatus: 'पानी की स्थिति',
+        diseaseRisk: 'रोग का जोखिम',
+        growthStage: 'वृद्धि चरण',
+        soilMoisture: 'मिट्टी की नमी',
+      },
+      values: {
+        minimal: 'न्यूनतम',
+        veraison: 'Véraison',
+      },
+    },
+    taskSummary: {
+      title: 'आगामी कार्य',
+      tasksCount: '{{count}} कार्य',
+      overdueCount: '{{count}} ओवरड्यू',
+      status: {
+        overdue: 'ओवरड्यू',
+        dueToday: 'आज देय',
+        upcoming: 'आगामी',
+      },
+      labels: {
+        irrigationBlockA: 'सिंचाई - ब्लॉक A',
+        sprayFungicide: 'स्प्रे - फफूंदनाशक',
+        fertigationRound3: 'फर्टिगेशन राउंड 3',
+        harvestSampling: 'हार्वेस्ट सैंपलिंग',
+        dueToday: 'आज देय',
+        tomorrow: 'कल',
+        in3Days: '3 दिन में',
+        overdue: 'ओवरड्यू',
+      },
+      empty: 'कोई आगामी कार्य नहीं',
+    },
+    template: {
+      title: 'विजेट टेम्पलेट',
+      testWidget: {
+        label: 'टेस्ट विजेट',
+      },
+    },
+  },
+
+  developerTools: {
+    section: 'डेवलपर',
+    widgetShowcase: {
+      title: 'विजेट शोकेस',
+      description: 'iOS, Android और Web पर विजेट्स एक स्क्रीन से देखें।',
+    },
+  },
+
   calculator: {
     mad: {
       title: 'MAD कैलकुलेटर',

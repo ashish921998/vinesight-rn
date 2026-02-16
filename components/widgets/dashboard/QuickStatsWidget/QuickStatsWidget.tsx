@@ -1,46 +1,67 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BaseWidgetProps, TrendDirection } from '@widgets/shared/types';
+import { BaseWidgetProps, TrendDirection, LoadingState } from '@widgets/shared/types';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, shadows, fontSize, fontWeight, colors } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useTranslation } from 'react-i18next';
 
 interface StatItem {
   icon: keyof typeof Ionicons.glyphMap;
-  label: string;
+  labelKey: string;
   value: string;
   trend: TrendDirection;
   trendValue: string;
 }
 
 const STATS: StatItem[] = [
-  { icon: 'leaf-outline', label: 'Active Farms', value: '4', trend: 'up', trendValue: '+1' },
+  {
+    icon: 'leaf-outline',
+    labelKey: 'widgets.quickStats.stats.activeFarms',
+    value: '4',
+    trend: 'up',
+    trendValue: '+1',
+  },
   {
     icon: 'people-outline',
-    label: 'Workers Today',
+    labelKey: 'widgets.quickStats.stats.workersToday',
     value: '12',
     trend: 'neutral',
     trendValue: '0',
   },
   {
     icon: 'water-outline',
-    label: 'Water Reserve',
+    labelKey: 'widgets.quickStats.stats.waterReserve',
     value: '68%',
     trend: 'down',
     trendValue: '-5%',
   },
   {
     icon: 'cash-outline',
-    label: 'Season Expenses',
+    labelKey: 'widgets.quickStats.stats.seasonExpenses',
     value: '₹2.4L',
     trend: 'up',
     trendValue: '+12%',
   },
 ];
 
+const getTrendColor = (trend: TrendDirection, onSurfaceVariant: string) => {
+  if (trend === 'up') return colors.success;
+  if (trend === 'down') return colors.error;
+  return onSurfaceVariant;
+};
+
+const getTrendIcon = (trend: TrendDirection): keyof typeof Ionicons.glyphMap => {
+  if (trend === 'up') return 'arrow-up';
+  if (trend === 'down') return 'arrow-down';
+  return 'remove';
+};
+
 export interface QuickStatsWidgetProps extends BaseWidgetProps {
   stats?: StatItem[];
+  loadingState?: LoadingState;
+  onRetry?: () => void;
 }
 
 export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
@@ -48,20 +69,91 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
   accessibilityLabel,
   style,
   stats = STATS,
+  loadingState = 'idle',
+  onRetry,
 }) => {
+  const { t } = useTranslation();
   const m3 = useM3();
 
-  const trendColor = (trend: TrendDirection) => {
-    if (trend === 'up') return colors.success;
-    if (trend === 'down') return colors.error;
-    return m3.colorScheme.onSurfaceVariant;
-  };
+  if (loadingState === 'loading') {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel ?? 'Quick stats loading'}
+        style={[
+          styles.container,
+          styles.centered,
+          {
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderColor: m3.colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Text style={[styles.message, { color: m3.colorScheme.onSurfaceVariant }]}>
+          {t('widgets.common.loading')}
+        </Text>
+      </View>
+    );
+  }
 
-  const trendIcon = (trend: TrendDirection): keyof typeof Ionicons.glyphMap => {
-    if (trend === 'up') return 'arrow-up';
-    if (trend === 'down') return 'arrow-down';
-    return 'remove';
-  };
+  if (loadingState === 'error') {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel ?? 'Quick stats error'}
+        style={[
+          styles.container,
+          styles.centered,
+          {
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderColor: m3.colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Ionicons name="alert-circle" size={32} color={m3.colorScheme.error} style={styles.icon} />
+        <Text style={[styles.message, { color: m3.colorScheme.error }]}>
+          {t('widgets.common.error')}
+        </Text>
+        {onRetry && (
+          <Pressable onPress={onRetry}>
+            <Text style={[styles.retry, { color: m3.colorScheme.primary }]}>
+              {t('widgets.common.retry')}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    );
+  }
+
+  if (loadingState === 'idle' && stats.length === 0) {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel ?? 'Quick stats empty'}
+        style={[
+          styles.container,
+          styles.centered,
+          {
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderColor: m3.colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Ionicons
+          name="stats-chart-outline"
+          size={32}
+          color={m3.colorScheme.onSurfaceVariant}
+          style={styles.icon}
+        />
+        <Text style={[styles.message, { color: m3.colorScheme.onSurfaceVariant }]}>
+          {t('widgets.common.empty')}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View
@@ -77,14 +169,16 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
         style,
       ]}
     >
-      <Text style={[styles.title, { color: m3.colorScheme.onSurface }]}>Quick Stats</Text>
+      <Text style={[styles.title, { color: m3.colorScheme.onSurface }]}>
+        {t('widgets.quickStats.title')}
+      </Text>
       <View style={styles.grid}>
         {stats.map((stat) => {
-          const color = trendColor(stat.trend);
+          const color = getTrendColor(stat.trend, m3.colorScheme.onSurfaceVariant);
           return (
             <View
-              key={stat.label}
-              accessibilityLabel={`${stat.label}: ${stat.value}, trend ${stat.trend} ${stat.trendValue}`}
+              key={stat.labelKey}
+              accessibilityLabel={`${t(stat.labelKey)}: ${stat.value}, trend ${stat.trend} ${stat.trendValue}`}
               style={[
                 styles.card,
                 {
@@ -103,10 +197,10 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
               </View>
               <Text style={[styles.value, { color: m3.colorScheme.onSurface }]}>{stat.value}</Text>
               <Text style={[styles.label, { color: m3.colorScheme.onSurfaceVariant }]}>
-                {stat.label}
+                {t(stat.labelKey)}
               </Text>
               <View style={styles.trendRow}>
-                <Ionicons name={trendIcon(stat.trend)} size={12} color={color} />
+                <Ionicons name={getTrendIcon(stat.trend)} size={12} color={color} />
                 <Text style={[styles.trendText, { color }]}>{stat.trendValue}</Text>
               </View>
             </View>
@@ -122,6 +216,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: borderRadius['2xl'],
     padding: spacing[4],
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 150,
+  },
+  icon: {
+    marginBottom: spacing[2],
+  },
+  message: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    textAlign: 'center',
+  },
+  retry: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    marginTop: spacing[3],
   },
   title: {
     fontSize: fontSize.base,

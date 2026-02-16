@@ -674,6 +674,90 @@ export const mr = {
     },
   },
 
+  widgets: {
+    common: {
+      loading: 'लोड होत आहे…',
+      error: 'डेटा लोड करण्यात अयशस्वी',
+      empty: 'कोणतेही डेटा उपलब्ध नाही',
+      retry: 'पुन्हा प्रयत्न करा',
+    },
+    quickStats: {
+      title: 'जलद आकडे',
+      stats: {
+        activeFarms: 'सक्रिय शेते',
+        workersToday: 'आजचे $t(glossary.worker)',
+        waterReserve: 'पाण्याचा साठा',
+        seasonExpenses: 'हंगामाचा $t(glossary.expense)',
+      },
+    },
+    weather: {
+      title: 'व्हाइनयार्ड $t(glossary.weather)',
+      conditions: {
+        sunny: 'सूर्यप्रकाश',
+        cloudy: 'ढगाळ',
+        rainy: 'पावसाळी',
+        partlyCloudy: 'आंशिक ढगाळ',
+      },
+      humidity: 'नमी',
+      wind: 'वारा',
+      forecast: '3 दिवसांचा अंदाज',
+      days: {
+        today: 'आज',
+        tomorrow: 'उद्या',
+        dayAfter: 'त्यानंतर',
+      },
+    },
+    vineyardHealth: {
+      title: 'व्हाइनयार्ड आरोग्य',
+      overallStatus: 'एकंदरीत स्थिती',
+      metrics: {
+        waterStatus: 'पाण्याची स्थिती',
+        diseaseRisk: 'रोगाचा धोका',
+        growthStage: 'वाढीचा टप्पा',
+        soilMoisture: 'मातीची नमी',
+      },
+      values: {
+        minimal: 'किमान',
+        veraison: 'Véraison',
+      },
+    },
+    taskSummary: {
+      title: 'आगामी कार्ये',
+      tasksCount: '{{count}} कार्ये',
+      overdueCount: '{{count}} विलंबित',
+      status: {
+        overdue: 'विलंबित',
+        dueToday: 'आज देय',
+        upcoming: 'आगामी',
+      },
+      labels: {
+        irrigationBlockA: '$t(glossary.irrigation) - ब्लॉक A',
+        sprayFungicide: 'स्प्रे - फंगिसाइड',
+        fertigationRound3: 'फर्टिगेशन फेज 3',
+        harvestSampling: 'हार्वेस्ट सॅम्पलिंग',
+        dueToday: 'आज देय',
+        tomorrow: 'उद्या',
+        in3Days: '3 दिवसांत',
+        overdue: 'विलंबित',
+      },
+      empty: 'कोणतेही आगामी कार्य नाहीत',
+    },
+    template: {
+      title: 'विजेट टेम्पलेट',
+      testWidget: {
+        label: 'टेस्ट विजेट',
+      },
+    },
+  },
+
+  developerTools: {
+    section: 'डेव्हलपर',
+    widgetShowcase: {
+      title: 'विजेट शोकेस',
+      description: 'iOS, Android आणि Web वर विजेट्स एका स्क्रीनवरून पहा.',
+    },
+  },
+
   calculator: {
     mad: {
       title: 'MAD कॅल्क्युलेटर',

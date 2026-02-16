@@ -1,52 +1,156 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BaseWidgetProps } from '@widgets/shared/types';
+import { BaseWidgetProps, LoadingState } from '@widgets/shared/types';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, shadows, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useTranslation } from 'react-i18next';
+
+interface CurrentWeatherData {
+  temperature: number;
+  conditionKey: string;
+  humidity: number;
+  wind: number;
+  icon: keyof typeof Ionicons.glyphMap;
+}
+
+interface ForecastDay {
+  labelKey: string;
+  high: number;
+  low: number;
+  icon: keyof typeof Ionicons.glyphMap;
+  conditionKey: string;
+}
 
 export interface WeatherWidgetProps extends BaseWidgetProps {
   /** Optional title override */
   title?: string;
   /** Current weather data */
-  currentWeather?: typeof CURRENT_WEATHER;
+  currentWeather?: CurrentWeatherData | null;
   /** 3-day forecast data */
   forecast?: ForecastDay[];
+  loadingState?: LoadingState;
+  onRetry?: () => void;
 }
-
-interface ForecastDay {
-  label: string;
-  high: number;
-  low: number;
-  icon: keyof typeof Ionicons.glyphMap;
-  condition: string;
-}
-
-const CURRENT_WEATHER = {
-  temperature: 28,
-  condition: 'Partly Cloudy',
-  humidity: 65,
-  wind: 12,
-  icon: 'partly-sunny' as keyof typeof Ionicons.glyphMap,
-} as const;
 
 const FORECAST: ForecastDay[] = [
-  { label: 'Today', high: 28, low: 19, icon: 'sunny', condition: 'Sunny' },
-  { label: 'Tomorrow', high: 30, low: 21, icon: 'cloudy', condition: 'Cloudy' },
-  { label: 'Day After', high: 26, low: 18, icon: 'rainy', condition: 'Rainy' },
+  {
+    labelKey: 'widgets.weather.days.today',
+    high: 28,
+    low: 19,
+    icon: 'sunny',
+    conditionKey: 'widgets.weather.conditions.sunny',
+  },
+  {
+    labelKey: 'widgets.weather.days.tomorrow',
+    high: 30,
+    low: 21,
+    icon: 'cloudy',
+    conditionKey: 'widgets.weather.conditions.cloudy',
+  },
+  {
+    labelKey: 'widgets.weather.days.dayAfter',
+    high: 26,
+    low: 18,
+    icon: 'rainy',
+    conditionKey: 'widgets.weather.conditions.rainy',
+  },
 ];
 
 export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
-  title = 'Vineyard Weather',
-  currentWeather = CURRENT_WEATHER,
+  title,
+  currentWeather,
   forecast = FORECAST,
   testID,
   accessibilityLabel,
   style,
+  loadingState = 'idle',
+  onRetry,
 }) => {
+  const { t } = useTranslation();
   const m3 = useM3();
   const { colorScheme, surface, typography } = m3;
+
+  if (loadingState === 'loading') {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel ?? 'Weather loading'}
+        style={[
+          styles.card,
+          styles.centered,
+          {
+            backgroundColor: surface.surfaceContainerLow,
+            borderColor: colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Text style={[styles.message, { color: colorScheme.onSurfaceVariant }]}>
+          {t('widgets.common.loading')}
+        </Text>
+      </View>
+    );
+  }
+
+  if (loadingState === 'error') {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel ?? 'Weather error'}
+        style={[
+          styles.card,
+          styles.centered,
+          {
+            backgroundColor: surface.surfaceContainerLow,
+            borderColor: colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Ionicons name="alert-circle" size={32} color={colorScheme.error} style={styles.icon} />
+        <Text style={[styles.message, { color: colorScheme.error }]}>
+          {t('widgets.common.error')}
+        </Text>
+        {onRetry && (
+          <Pressable onPress={onRetry}>
+            <Text style={[styles.retry, { color: colorScheme.primary }]}>
+              {t('widgets.common.retry')}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    );
+  }
+
+  if (!currentWeather) {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel ?? 'Weather empty'}
+        style={[
+          styles.card,
+          styles.centered,
+          {
+            backgroundColor: surface.surfaceContainerLow,
+            borderColor: colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Ionicons
+          name="cloud-outline"
+          size={32}
+          color={colorScheme.onSurfaceVariant}
+          style={styles.icon}
+        />
+        <Text style={[styles.message, { color: colorScheme.onSurfaceVariant }]}>
+          {t('widgets.common.empty')}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View
@@ -67,7 +171,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         style={[typography.labelLarge, { color: colorScheme.onSurfaceVariant }]}
         accessibilityRole="header"
       >
-        {title}
+        {title ?? t('widgets.weather.title')}
       </Text>
 
       {/* Current conditions row */}
@@ -77,7 +181,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
             name={currentWeather.icon}
             size={40}
             color={colorScheme.primary}
-            accessibilityLabel={currentWeather.condition}
+            accessibilityLabel={t(currentWeather.conditionKey)}
           />
           <Text
             style={[
@@ -93,9 +197,9 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         <View style={styles.detailsSection}>
           <Text
             style={[typography.bodyMedium, { color: colorScheme.onSurface }]}
-            accessibilityLabel={`Condition: ${currentWeather.condition}`}
+            accessibilityLabel={`Condition: ${t(currentWeather.conditionKey)}`}
           >
-            {currentWeather.condition}
+            {t(currentWeather.conditionKey)}
           </Text>
           <View style={styles.detailRow}>
             <Ionicons name="water-outline" size={14} color={colorScheme.onSurfaceVariant} />
@@ -104,7 +208,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
                 typography.bodyMedium,
                 { color: colorScheme.onSurfaceVariant, marginLeft: spacing[1] },
               ]}
-              accessibilityLabel={`Humidity ${currentWeather.humidity} percent`}
+              accessibilityLabel={`${t('widgets.weather.humidity')} ${currentWeather.humidity} percent`}
             >
               {currentWeather.humidity}%
             </Text>
@@ -119,7 +223,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
                 typography.bodyMedium,
                 { color: colorScheme.onSurfaceVariant, marginLeft: spacing[1] },
               ]}
-              accessibilityLabel={`Wind ${currentWeather.wind} kilometers per hour`}
+              accessibilityLabel={`${t('widgets.weather.wind')} ${currentWeather.wind} kilometers per hour`}
             >
               {currentWeather.wind} km/h
             </Text>
@@ -131,18 +235,18 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({
       <View style={[styles.divider, { backgroundColor: colorScheme.outlineVariant }]} />
 
       {/* 3-day forecast */}
-      <View style={styles.forecastRow} accessibilityLabel="3 day forecast">
+      <View style={styles.forecastRow} accessibilityLabel={t('widgets.weather.forecast')}>
         {forecast.map((day) => (
           <View
-            key={day.label}
+            key={day.labelKey}
             style={[
               styles.forecastDay,
               { backgroundColor: colorWithOpacity(colorScheme.primary, 0.06) },
             ]}
-            accessibilityLabel={`${day.label}: ${day.condition}, high ${day.high} degrees, low ${day.low} degrees`}
+            accessibilityLabel={`${t(day.labelKey)}: ${t(day.conditionKey)}, high ${day.high} degrees, low ${day.low} degrees`}
           >
             <Text style={[typography.labelSmall, { color: colorScheme.onSurfaceVariant }]}>
-              {day.label}
+              {t(day.labelKey)}
             </Text>
             <Ionicons
               name={day.icon}
@@ -165,6 +269,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: borderRadius['2xl'],
     padding: spacing[4],
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 150,
+  },
+  icon: {
+    marginBottom: spacing[2],
+  },
+  message: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  retry: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: spacing[3],
   },
   currentRow: {
     flexDirection: 'row',

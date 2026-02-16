@@ -1,8 +1,12 @@
 import { ViewStyle } from 'react-native';
 
+/** Base props shared by all widget components */
 export interface BaseWidgetProps {
+  /** Test identifier for testing frameworks */
   testID?: string;
+  /** Accessibility label for screen readers */
   accessibilityLabel?: string;
+  /** Custom styles to merge with widget container */
   style?: ViewStyle;
 }
 

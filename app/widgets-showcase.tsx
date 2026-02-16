@@ -11,6 +11,61 @@ import { QuickStatsWidget } from '@widgets/dashboard/QuickStatsWidget';
 import { spacing } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 
+const SHOWCASE_WEATHER = {
+  temperature: 28,
+  conditionKey: 'widgets.weather.conditions.partlyCloudy',
+  humidity: 65,
+  wind: 12,
+  icon: 'partly-sunny' as const,
+};
+
+const SHOWCASE_FORECAST = [
+  {
+    labelKey: 'widgets.weather.days.today',
+    high: 28,
+    low: 19,
+    icon: 'sunny' as const,
+    conditionKey: 'widgets.weather.conditions.sunny',
+  },
+  {
+    labelKey: 'widgets.weather.days.tomorrow',
+    high: 30,
+    low: 21,
+    icon: 'cloudy' as const,
+    conditionKey: 'widgets.weather.conditions.cloudy',
+  },
+  {
+    labelKey: 'widgets.weather.days.dayAfter',
+    high: 26,
+    low: 18,
+    icon: 'rainy' as const,
+    conditionKey: 'widgets.weather.conditions.rainy',
+  },
+];
+
+const ScaffoldingCard: React.FC<{ title: string; children: React.ReactNode }> = ({
+  title,
+  children,
+}) => {
+  const m3 = useThemeTokens().m3;
+  return (
+    <View
+      style={{
+        backgroundColor: m3.surface.surfaceContainerLow,
+        borderRadius: m3.shape.cornerLarge,
+        borderWidth: 1,
+        borderColor: m3.colorScheme.outlineVariant,
+        padding: spacing[4],
+      }}
+    >
+      <Text style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurfaceVariant }}>
+        {title}
+      </Text>
+      <View style={{ marginTop: spacing[2] }}>{children}</View>
+    </View>
+  );
+};
+
 export default function WidgetsShowcaseScreen() {
   const insets = useSafeAreaInsets();
   const { m3 } = useThemeTokens();
@@ -45,7 +100,11 @@ export default function WidgetsShowcaseScreen() {
       </View>
 
       <View style={{ gap: spacing[3] }}>
-        <WeatherWidget testID="showcase-weather" />
+        <WeatherWidget
+          testID="showcase-weather"
+          currentWeather={SHOWCASE_WEATHER}
+          forecast={SHOWCASE_FORECAST}
+        />
         <VineyardHealthWidget testID="showcase-health" />
         <TaskSummaryWidget testID="showcase-tasks" />
         <QuickStatsWidget testID="showcase-stats" />
@@ -62,38 +121,12 @@ export default function WidgetsShowcaseScreen() {
           Scaffolding
         </Text>
         <View style={{ gap: spacing[3] }}>
-          <View
-            style={{
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderRadius: m3.shape.cornerLarge,
-              borderWidth: 1,
-              borderColor: m3.colorScheme.outlineVariant,
-              padding: spacing[4],
-            }}
-          >
-            <Text style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurfaceVariant }}>
-              TestWidget
-            </Text>
-            <View style={{ marginTop: spacing[2] }}>
-              <TestWidget testID="showcase-test-widget" />
-            </View>
-          </View>
-          <View
-            style={{
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderRadius: m3.shape.cornerLarge,
-              borderWidth: 1,
-              borderColor: m3.colorScheme.outlineVariant,
-              padding: spacing[4],
-            }}
-          >
-            <Text style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurfaceVariant }}>
-              WidgetTemplate
-            </Text>
-            <View style={{ marginTop: spacing[2] }}>
-              <WidgetTemplate />
-            </View>
-          </View>
+          <ScaffoldingCard title="TestWidget">
+            <TestWidget testID="showcase-test-widget" />
+          </ScaffoldingCard>
+          <ScaffoldingCard title="WidgetTemplate">
+            <WidgetTemplate />
+          </ScaffoldingCard>
         </View>
       </View>
     </ScrollView>

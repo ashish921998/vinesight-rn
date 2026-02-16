@@ -109,6 +109,7 @@ export default function TabLayout() {
       <>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <Tabs
+          backBehavior="history"
           screenOptions={{
             tabBarActiveTintColor: m3.colorScheme.primary,
             tabBarInactiveTintColor: m3.colorScheme.onSurfaceVariant,

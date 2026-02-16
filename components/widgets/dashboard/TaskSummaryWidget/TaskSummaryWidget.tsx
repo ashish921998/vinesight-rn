@@ -1,21 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BaseWidgetProps } from '@widgets/shared/types';
+import { BaseWidgetProps, LoadingState } from '@widgets/shared/types';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, shadows, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type TaskStatus = 'overdue' | 'due' | 'upcoming';
+export type TaskStatus = 'overdue' | 'due' | 'upcoming';
 
-interface TaskItem {
+export interface TaskItem {
   id: string;
-  name: string;
-  dueLabel: string;
+  nameKey: string;
+  dueLabelKey: string;
   status: TaskStatus;
   accentColor: string;
 }
@@ -23,6 +24,8 @@ interface TaskItem {
 export interface TaskSummaryWidgetProps extends BaseWidgetProps {
   /** Override the demo task list (optional). */
   tasks?: TaskItem[];
+  loadingState?: LoadingState;
+  onRetry?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -39,29 +42,29 @@ const ACTIVITY_COLORS = {
 const DEMO_TASKS: TaskItem[] = [
   {
     id: '1',
-    name: 'Irrigation - Block A',
-    dueLabel: 'Due today',
+    nameKey: 'widgets.taskSummary.labels.irrigationBlockA',
+    dueLabelKey: 'widgets.taskSummary.labels.dueToday',
     status: 'due',
     accentColor: ACTIVITY_COLORS.irrigation,
   },
   {
     id: '2',
-    name: 'Spray - Fungicide',
-    dueLabel: 'Overdue',
+    nameKey: 'widgets.taskSummary.labels.sprayFungicide',
+    dueLabelKey: 'widgets.taskSummary.labels.overdue',
     status: 'overdue',
     accentColor: ACTIVITY_COLORS.spray,
   },
   {
     id: '3',
-    name: 'Fertigation Round 3',
-    dueLabel: 'Tomorrow',
+    nameKey: 'widgets.taskSummary.labels.fertigationRound3',
+    dueLabelKey: 'widgets.taskSummary.labels.tomorrow',
     status: 'upcoming',
     accentColor: ACTIVITY_COLORS.fertigation,
   },
   {
     id: '4',
-    name: 'Harvest Sampling',
-    dueLabel: 'In 3 days',
+    nameKey: 'widgets.taskSummary.labels.harvestSampling',
+    dueLabelKey: 'widgets.taskSummary.labels.in3Days',
     status: 'upcoming',
     accentColor: ACTIVITY_COLORS.harvest,
   },
@@ -71,10 +74,13 @@ const DEMO_TASKS: TaskItem[] = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_CONFIG: Record<TaskStatus, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
-  overdue: { label: 'Overdue', icon: 'alert-circle' },
-  due: { label: 'Due today', icon: 'time-outline' },
-  upcoming: { label: 'Upcoming', icon: 'calendar-outline' },
+const STATUS_CONFIG: Record<
+  TaskStatus,
+  { labelKey: string; icon: keyof typeof Ionicons.glyphMap }
+> = {
+  overdue: { labelKey: 'widgets.taskSummary.status.overdue', icon: 'alert-circle' },
+  due: { labelKey: 'widgets.taskSummary.status.dueToday', icon: 'time-outline' },
+  upcoming: { labelKey: 'widgets.taskSummary.status.upcoming', icon: 'calendar-outline' },
 };
 
 function useStatusColors(status: TaskStatus) {
@@ -106,23 +112,27 @@ function useStatusColors(status: TaskStatus) {
 const StatusPill: React.FC<{ status: TaskStatus }> = ({ status }) => {
   const { text, bg } = useStatusColors(status);
   const config = STATUS_CONFIG[status];
+  const { t } = useTranslation();
 
   return (
     <View
+      testID={`status-pill-${status}`}
       style={[styles.pill, { backgroundColor: bg }]}
-      accessibilityLabel={`Status: ${config.label}`}
+      accessibilityLabel={`Status: ${t(config.labelKey)}`}
     >
       <Ionicons name={config.icon} size={12} color={text} />
-      <Text style={[styles.pillText, { color: text }]}>{config.label}</Text>
+      <Text style={[styles.pillText, { color: text }]}>{t(config.labelKey)}</Text>
     </View>
   );
 };
 
 const TaskRow: React.FC<{ task: TaskItem; isLast: boolean }> = ({ task, isLast }) => {
   const m3 = useM3();
+  const { t } = useTranslation();
 
   return (
     <View
+      testID={`task-${task.id}`}
       style={[
         styles.taskRow,
         { borderLeftColor: task.accentColor },
@@ -131,15 +141,22 @@ const TaskRow: React.FC<{ task: TaskItem; isLast: boolean }> = ({ task, isLast }
           borderBottomColor: m3.colorScheme.outlineVariant,
         },
       ]}
-      accessibilityLabel={`${task.name}, ${task.dueLabel}, ${STATUS_CONFIG[task.status].label}`}
+      accessibilityLabel={`${t(task.nameKey)}, ${t(task.dueLabelKey)}, ${t(STATUS_CONFIG[task.status].labelKey)}`}
       accessibilityRole="text"
     >
       <View style={styles.taskInfo}>
-        <Text style={[styles.taskName, { color: m3.colorScheme.onSurface }]} numberOfLines={1}>
-          {task.name}
+        <Text
+          testID={`task-${task.id}-name`}
+          style={[styles.taskName, { color: m3.colorScheme.onSurface }]}
+          numberOfLines={1}
+        >
+          {t(task.nameKey)}
         </Text>
-        <Text style={[styles.taskDue, { color: m3.colorScheme.onSurfaceVariant }]}>
-          {task.dueLabel}
+        <Text
+          testID={`task-${task.id}-due`}
+          style={[styles.taskDue, { color: m3.colorScheme.onSurfaceVariant }]}
+        >
+          {t(task.dueLabelKey)}
         </Text>
       </View>
       <StatusPill status={task.status} />
@@ -156,10 +173,65 @@ export const TaskSummaryWidget: React.FC<TaskSummaryWidgetProps> = ({
   accessibilityLabel = 'Upcoming tasks summary',
   style,
   tasks = DEMO_TASKS,
+  loadingState = 'idle',
+  onRetry,
 }) => {
+  const { t } = useTranslation();
   const m3 = useM3();
 
   const overdueCount = tasks.filter((t) => t.status === 'overdue').length;
+
+  if (loadingState === 'loading') {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        style={[
+          styles.card,
+          styles.centered,
+          {
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderColor: m3.colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Text style={[styles.message, { color: m3.colorScheme.onSurfaceVariant }]}>
+          {t('widgets.common.loading')}
+        </Text>
+      </View>
+    );
+  }
+
+  if (loadingState === 'error') {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        style={[
+          styles.card,
+          styles.centered,
+          {
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderColor: m3.colorScheme.outlineVariant,
+          },
+          style,
+        ]}
+      >
+        <Ionicons name="alert-circle" size={32} color={m3.colorScheme.error} style={styles.icon} />
+        <Text style={[styles.message, { color: m3.colorScheme.error }]}>
+          {t('widgets.common.error')}
+        </Text>
+        {onRetry && (
+          <Pressable onPress={onRetry}>
+            <Text style={[styles.retry, { color: m3.colorScheme.primary }]}>
+              {t('widgets.common.retry')}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    );
+  }
 
   return (
     <View
@@ -184,14 +256,18 @@ export const TaskSummaryWidget: React.FC<TaskSummaryWidgetProps> = ({
             color={m3.colorScheme.primary}
             style={styles.headerIcon}
           />
-          <Text style={[styles.headerTitle, { color: m3.colorScheme.onSurface }]}>
-            Upcoming Tasks
+          <Text
+            testID={`${testID || 'task-summary-widget'}-title`}
+            style={[styles.headerTitle, { color: m3.colorScheme.onSurface }]}
+          >
+            {t('widgets.taskSummary.title')}
           </Text>
         </View>
 
         <View style={styles.headerBadges}>
           {overdueCount > 0 && (
             <View
+              testID={`${testID || 'task-summary-widget'}-overdue-badge`}
               style={[
                 styles.badge,
                 { backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12) },
@@ -199,11 +275,12 @@ export const TaskSummaryWidget: React.FC<TaskSummaryWidgetProps> = ({
               accessibilityLabel={`${overdueCount} overdue`}
             >
               <Text style={[styles.badgeText, { color: m3.colorScheme.error }]}>
-                {overdueCount} overdue
+                {t('widgets.taskSummary.overdueCount', { count: overdueCount })}
               </Text>
             </View>
           )}
           <View
+            testID={`${testID || 'task-summary-widget'}-total-badge`}
             style={[
               styles.badge,
               { backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12) },
@@ -211,18 +288,32 @@ export const TaskSummaryWidget: React.FC<TaskSummaryWidgetProps> = ({
             accessibilityLabel={`${tasks.length} total tasks`}
           >
             <Text style={[styles.badgeText, { color: m3.colorScheme.primary }]}>
-              {tasks.length}
+              {t('widgets.taskSummary.tasksCount', { count: tasks.length })}
             </Text>
           </View>
         </View>
       </View>
 
       {/* Task list */}
-      <View style={styles.list}>
-        {tasks.map((task, index) => (
-          <TaskRow key={task.id} task={task} isLast={index === tasks.length - 1} />
-        ))}
-      </View>
+      {tasks.length === 0 ? (
+        <View style={[styles.centered, { minHeight: 100 }]}>
+          <Ionicons
+            name="checkbox-outline"
+            size={32}
+            color={m3.colorScheme.onSurfaceVariant}
+            style={styles.icon}
+          />
+          <Text style={[styles.message, { color: m3.colorScheme.onSurfaceVariant }]}>
+            {t('widgets.taskSummary.empty')}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.list}>
+          {tasks.map((task, index) => (
+            <TaskRow key={task.id} task={task} isLast={index === tasks.length - 1} />
+          ))}
+        </View>
+      )}
     </View>
   );
 };
@@ -236,6 +327,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: borderRadius['2xl'],
     overflow: 'hidden',
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing[6],
+  },
+  icon: {
+    marginBottom: spacing[2],
+  },
+  message: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    textAlign: 'center',
+  },
+  retry: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    marginTop: spacing[3],
   },
 
   // Header
