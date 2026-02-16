@@ -74,15 +74,21 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const m3 = useM3();
-  const numberFormatter = new Intl.NumberFormat(i18n.language);
+  const numberFormatter = React.useMemo(
+    () => new Intl.NumberFormat(i18n.language),
+    [i18n.language],
+  );
 
-  const localizeTrendValue = (value: string) => {
-    const match = value.match(/^([+-]?)(\d+(?:\.\d+)?)(%?)$/);
-    if (!match) return value;
-    const [, sign, numeric, suffix] = match;
-    const formattedValue = numberFormatter.format(Number(numeric));
-    return `${sign}${formattedValue}${suffix}`;
-  };
+  const localizeTrendValue = React.useCallback(
+    (value: string) => {
+      const match = value.match(/^([+-]?)(\d+(?:\.\d+)?)(%?)$/);
+      if (!match) return value;
+      const [, sign, numeric, suffix] = match;
+      const formattedValue = numberFormatter.format(Number(numeric));
+      return `${sign}${formattedValue}${suffix}`;
+    },
+    [numberFormatter],
+  );
 
   if (loadingState === 'loading') {
     return (
@@ -126,7 +132,11 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
           {t('widgets.common.error')}
         </Text>
         {onRetry && (
-          <Pressable onPress={onRetry}>
+          <Pressable
+            onPress={onRetry}
+            accessibilityRole="button"
+            accessibilityLabel={t('widgets.common.retry')}
+          >
             <Text style={[styles.retry, { color: m3.colorScheme.primary }]}>
               {t('widgets.common.retry')}
             </Text>

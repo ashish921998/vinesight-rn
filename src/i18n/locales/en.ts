@@ -2158,6 +2158,7 @@ export const en = {
       stockCoverage: 'Estimated Coverage',
     },
     exportAs: 'Export as',
+    downloadReport: 'Download Report',
     errors: {
       unableToExport: 'Unable to export report. Please try again.',
     },

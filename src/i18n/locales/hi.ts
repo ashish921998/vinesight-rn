@@ -2163,6 +2163,7 @@ export const hi = {
       stockCoverage: 'अनुमानित कवरेज',
     },
     exportAs: 'के रूप में निर्यात करें',
+    downloadReport: 'रिपोर्ट डाउनलोड करें',
     errors: {
       unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ। कृपया पुनः प्रयास करें।',
     },

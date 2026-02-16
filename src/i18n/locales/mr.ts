@@ -2171,6 +2171,7 @@ export const mr = {
       stockCoverage: 'अंदाजे कव्हरेज',
     },
     exportAs: 'या स्वरूपात निर्यात करा',
+    downloadReport: 'रिपोर्ट डाउनलोड करा',
     errors: {
       unableToExport: '$t(glossary.report) निर्यात करणे अशक्य. कृपया पुन्हा प्रयत्न करा.',
     },

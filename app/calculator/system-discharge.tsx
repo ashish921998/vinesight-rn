@@ -12,7 +12,6 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  type LayoutChangeEvent,
 } from 'react-native';
 
 import { Stack } from 'expo-router';
@@ -30,6 +29,12 @@ interface SystemDischargeResults {
   irrigationHours?: number | null;
   method: 1 | 2;
 }
+
+// Standard iOS navigation bar height for keyboard offset calculations
+const IOS_NAV_BAR_HEIGHT = 44;
+
+// Offset to ensure focused input appears below the header/toolbar area
+const INPUT_FOCUS_SCROLL_OFFSET = 140;
 
 export default function SystemDischargeScreen() {
   const colors = useThemeColors();
@@ -50,7 +55,9 @@ export default function SystemDischargeScreen() {
 
   const [results, setResults] = useState<SystemDischargeResults | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
   const inputPositionsRef = useRef<Record<string, number>>({});
+  const inputRowRefs = useRef<Record<string, React.RefObject<View | null>>>({});
 
   const canSelectMethod = useMemo(() => {
     const dblVal = parseFloat(dbl);
@@ -166,14 +173,27 @@ export default function SystemDischargeScreen() {
     setResults(null);
   };
 
-  const handleInputLayout = (fieldKey: string, y: number) => {
-    inputPositionsRef.current[fieldKey] = y;
+  const handleInputLayout = (fieldKey: string) => {
+    const rowRef = inputRowRefs.current[fieldKey];
+    const scrollContentNode = scrollContentRef.current;
+    if (rowRef?.current && scrollContentNode) {
+      rowRef.current.measureLayout(
+        scrollContentNode,
+        (x, y) => {
+          inputPositionsRef.current[fieldKey] = y;
+        },
+        () => {},
+      );
+    }
   };
 
   const handleInputFocus = (fieldKey: string) => {
     const y = inputPositionsRef.current[fieldKey];
     if (typeof y !== 'number') return;
-    scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 140), animated: true });
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(0, y - INPUT_FOCUS_SCROLL_OFFSET),
+      animated: true,
+    });
   };
 
   return (
@@ -187,7 +207,7 @@ export default function SystemDischargeScreen() {
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 44 : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + IOS_NAV_BAR_HEIGHT : 0}
           style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
         >
           <ScrollView
@@ -198,70 +218,7 @@ export default function SystemDischargeScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View
-              style={{
-                backgroundColor: colors.surface[100],
-                borderRadius: borderRadius['2xl'],
-                padding: spacing[4],
-                marginTop: spacing[4],
-              }}
-            >
-              <View
-                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
-              >
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                    borderRadius: borderRadius.lg,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <UISymbol name="speedometer" size={18} color={m3.colorScheme.primary} />
-                </View>
-                <Text
-                  style={{
-                    fontSize: fontSize.base,
-                    fontWeight: fontWeight.semibold,
-                    color: colors.surface[900],
-                    marginLeft: spacing[2],
-                  }}
-                >
-                  System Parameters
-                </Text>
-              </View>
-
-              <InputRow
-                fieldKey="dbl"
-                label="Distance Between Lines (DBL)"
-                value={dbl}
-                onChangeText={setDbl}
-                unit="m"
-                placeholder="3.0"
-                onInputFocus={handleInputFocus}
-                onInputLayout={handleInputLayout}
-              />
-              <InputRow
-                fieldKey="refillTankValue"
-                label="Refill Tank Value (optional)"
-                value={refillTankValue}
-                onChangeText={setRefillTankValue}
-                unit=""
-                placeholder="From MAD calc"
-                onInputFocus={handleInputFocus}
-                onInputLayout={handleInputLayout}
-              />
-
-              <Text
-                style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[2] }}
-              >
-                Use the refill tank value from MAD to estimate irrigation hours.
-              </Text>
-            </View>
-
-            {canSelectMethod && (
+            <View ref={scrollContentRef} collapsable={false}>
               <View
                 style={{
                   backgroundColor: colors.surface[100],
@@ -283,7 +240,7 @@ export default function SystemDischargeScreen() {
                       justifyContent: 'center',
                     }}
                   >
-                    <UISymbol name="git-branch" size={18} color={m3.colorScheme.primary} />
+                    <UISymbol name="speedometer" size={18} color={m3.colorScheme.primary} />
                   </View>
                   <Text
                     style={{
@@ -293,394 +250,493 @@ export default function SystemDischargeScreen() {
                       marginLeft: spacing[2],
                     }}
                   >
-                    Select Calculation Method
-                  </Text>
-                </View>
-
-                <Pressable
-                  onPress={() => {
-                    setSelectedMethod(1);
-                    setResults(null);
-                  }}
-                  style={{
-                    borderRadius: borderRadius.xl,
-                    padding: spacing[3],
-                    marginBottom: spacing[2],
-                    backgroundColor:
-                      selectedMethod === 1
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                        : colors.surface[100],
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          fontSize: fontSize.sm,
-                          fontWeight: fontWeight.medium,
-                          color: colors.surface[900],
-                        }}
-                      >
-                        System Discharge 1
-                      </Text>
-                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                        Using plants per hectare and drippers
-                      </Text>
-                    </View>
-                    {selectedMethod === 1 ? (
-                      <UISymbol
-                        name="checkmark.circle.fill"
-                        size={18}
-                        color={m3.colorScheme.primary}
-                      />
-                    ) : null}
-                  </View>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => {
-                    setSelectedMethod(2);
-                    setResults(null);
-                  }}
-                  style={{
-                    borderRadius: borderRadius.xl,
-                    padding: spacing[3],
-                    backgroundColor:
-                      selectedMethod === 2
-                        ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                        : colors.surface[100],
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          fontSize: fontSize.sm,
-                          fontWeight: fontWeight.medium,
-                          color: colors.surface[900],
-                        }}
-                      >
-                        System Discharge 2
-                      </Text>
-                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                        Using dripper spacing
-                      </Text>
-                    </View>
-                    {selectedMethod === 2 ? (
-                      <UISymbol
-                        name="checkmark.circle.fill"
-                        size={18}
-                        color={m3.colorScheme.primary}
-                      />
-                    ) : null}
-                  </View>
-                </Pressable>
-              </View>
-            )}
-
-            {selectedMethod === 1 && (
-              <View
-                style={{
-                  backgroundColor: colors.surface[100],
-                  borderRadius: borderRadius['2xl'],
-                  padding: spacing[4],
-                  marginTop: spacing[4],
-                }}
-              >
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
-                >
-                  <View
-                    style={{
-                      width: 32,
-                      height: 32,
-                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                      borderRadius: borderRadius.lg,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <UISymbol
-                      name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
-                      size={18}
-                      color={m3.colorScheme.primary}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: fontSize.base,
-                      fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
-                      marginLeft: spacing[2],
-                    }}
-                  >
-                    Method 1: Plants per Hectare
+                    System Parameters
                   </Text>
                 </View>
 
                 <InputRow
-                  fieldKey="dbp"
-                  label="Distance Between Plants (DBP)"
-                  value={dbp}
-                  onChangeText={setDbp}
+                  fieldKey="dbl"
+                  label="Distance Between Lines (DBL)"
+                  value={dbl}
+                  onChangeText={setDbl}
                   unit="m"
-                  placeholder="1.5"
+                  placeholder="3.0"
                   onInputFocus={handleInputFocus}
                   onInputLayout={handleInputLayout}
+                  inputRowRefs={inputRowRefs}
                 />
                 <InputRow
-                  fieldKey="drippersPerPlant"
-                  label="Drippers per Plant"
-                  value={drippersPerPlant}
-                  onChangeText={setDrippersPerPlant}
+                  fieldKey="refillTankValue"
+                  label="Refill Tank Value (optional)"
+                  value={refillTankValue}
+                  onChangeText={setRefillTankValue}
                   unit=""
-                  placeholder="4"
+                  placeholder="From MAD calc"
                   onInputFocus={handleInputFocus}
                   onInputLayout={handleInputLayout}
-                />
-                <InputRow
-                  fieldKey="dischargePerHour1"
-                  label="Discharge per Dripper"
-                  value={dischargePerHour1}
-                  onChangeText={setDischargePerHour1}
-                  unit="L/hr"
-                  placeholder="2.0"
-                  onInputFocus={handleInputFocus}
-                  onInputLayout={handleInputLayout}
+                  inputRowRefs={inputRowRefs}
                 />
 
-                <Pressable
-                  onPress={calculateMethod1}
-                  disabled={!canCalculateMethod1 || results !== null}
-                  style={{
-                    marginTop: spacing[4],
-                    paddingVertical: spacing[3],
-                    borderRadius: borderRadius.xl,
-                    alignItems: 'center',
-                    backgroundColor:
-                      canCalculateMethod1 && !results
-                        ? m3.colorScheme.primary
-                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontWeight: fontWeight.semibold,
-                      color:
-                        canCalculateMethod1 && !results
-                          ? m3.colorScheme.onPrimary
-                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-                    }}
-                  >
-                    Calculate
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-
-            {selectedMethod === 2 && (
-              <View
-                style={{
-                  backgroundColor: colors.surface[100],
-                  borderRadius: borderRadius['2xl'],
-                  padding: spacing[4],
-                  marginTop: spacing[4],
-                }}
-              >
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
-                >
-                  <View
-                    style={{
-                      width: 32,
-                      height: 32,
-                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                      borderRadius: borderRadius.lg,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <UISymbol
-                      name="square.grid.2x2.fill"
-                      size={18}
-                      color={m3.colorScheme.primary}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: fontSize.base,
-                      fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
-                      marginLeft: spacing[2],
-                    }}
-                  >
-                    Method 2: Dripper Spacing
-                  </Text>
-                </View>
-
-                <InputRow
-                  fieldKey="dbd"
-                  label="Distance Between Drippers (DBD)"
-                  value={dbd}
-                  onChangeText={setDbd}
-                  unit="m"
-                  placeholder="0.5"
-                  onInputFocus={handleInputFocus}
-                  onInputLayout={handleInputLayout}
-                />
-                <InputRow
-                  fieldKey="dischargePerHour2"
-                  label="Discharge per Dripper"
-                  value={dischargePerHour2}
-                  onChangeText={setDischargePerHour2}
-                  unit="L/hr"
-                  placeholder="2.0"
-                  onInputFocus={handleInputFocus}
-                  onInputLayout={handleInputLayout}
-                />
-                <InputRow
-                  fieldKey="numberOfLines"
-                  label="Number of Lines"
-                  value={numberOfLines}
-                  onChangeText={setNumberOfLines}
-                  unit=""
-                  placeholder="10"
-                  onInputFocus={handleInputFocus}
-                  onInputLayout={handleInputLayout}
-                />
-
-                <Pressable
-                  onPress={calculateMethod2}
-                  disabled={!canCalculateMethod2 || results !== null}
-                  style={{
-                    marginTop: spacing[4],
-                    paddingVertical: spacing[3],
-                    borderRadius: borderRadius.xl,
-                    alignItems: 'center',
-                    backgroundColor:
-                      canCalculateMethod2 && !results
-                        ? m3.colorScheme.primary
-                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontWeight: fontWeight.semibold,
-                      color:
-                        canCalculateMethod2 && !results
-                          ? m3.colorScheme.onPrimary
-                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-                    }}
-                  >
-                    Calculate
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-
-            {results && (
-              <View
-                style={{
-                  backgroundColor: colors.surface[100],
-                  borderRadius: borderRadius['2xl'],
-                  padding: spacing[4],
-                  marginTop: spacing[4],
-                }}
-              >
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
-                >
-                  <View
-                    style={{
-                      width: 32,
-                      height: 32,
-                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                      borderRadius: borderRadius.lg,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <UISymbol
-                      name="checkmark.circle.fill"
-                      size={18}
-                      color={m3.colorScheme.primary}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: fontSize.base,
-                      fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
-                      marginLeft: spacing[2],
-                    }}
-                  >
-                    Calculation Results
-                  </Text>
-                </View>
-
-                {results.plantsPerHectare ? (
-                  <View
-                    style={{
-                      backgroundColor: colors.surface[50],
-                      borderRadius: borderRadius.xl,
-                      padding: spacing[3],
-                      marginBottom: spacing[3],
-                    }}
-                  >
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                      Plants per Hectare (P/H)
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: fontSize.lg,
-                        fontWeight: fontWeight.semibold,
-                        color: colors.surface[900],
-                      }}
-                    >
-                      {results.plantsPerHectare.toFixed(2)}
-                    </Text>
-                  </View>
-                ) : null}
-
-                <View
-                  style={{
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                    borderRadius: borderRadius.xl,
-                    padding: spacing[4],
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: fontSize['3xl'],
-                      fontWeight: fontWeight.bold,
-                      color: m3.colorScheme.primary,
-                    }}
-                  >
-                    {results.systemDischarge.toFixed(2)}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: fontSize.sm,
-                      color: colorWithOpacity(m3.colorScheme.primary, 0.85),
-                      marginTop: spacing[1],
-                    }}
-                  >
-                    m³/hr System Discharge
-                  </Text>
-                </View>
                 <Text
                   style={{
                     fontSize: fontSize.xs,
                     color: colors.surface[500],
-                    textAlign: 'center',
                     marginTop: spacing[2],
                   }}
                 >
-                  Equivalent: {(results.systemDischarge * 1000).toFixed(0)} L/hr
+                  Use the refill tank value from MAD to estimate irrigation hours.
                 </Text>
+              </View>
 
-                {results.irrigationHours ? (
+              {canSelectMethod && (
+                <View
+                  style={{
+                    backgroundColor: colors.surface[100],
+                    borderRadius: borderRadius['2xl'],
+                    padding: spacing[4],
+                    marginTop: spacing[4],
+                  }}
+                >
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
+                  >
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                        borderRadius: borderRadius.lg,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <UISymbol name="git-branch" size={18} color={m3.colorScheme.primary} />
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.semibold,
+                        color: colors.surface[900],
+                        marginLeft: spacing[2],
+                      }}
+                    >
+                      Select Calculation Method
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    onPress={() => {
+                      setSelectedMethod(1);
+                      setResults(null);
+                    }}
+                    style={{
+                      borderRadius: borderRadius.xl,
+                      padding: spacing[3],
+                      marginBottom: spacing[2],
+                      backgroundColor:
+                        selectedMethod === 1
+                          ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                          : colors.surface[100],
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: fontWeight.medium,
+                            color: colors.surface[900],
+                          }}
+                        >
+                          System Discharge 1
+                        </Text>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                          Using plants per hectare and drippers
+                        </Text>
+                      </View>
+                      {selectedMethod === 1 ? (
+                        <UISymbol
+                          name="checkmark.circle.fill"
+                          size={18}
+                          color={m3.colorScheme.primary}
+                        />
+                      ) : null}
+                    </View>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      setSelectedMethod(2);
+                      setResults(null);
+                    }}
+                    style={{
+                      borderRadius: borderRadius.xl,
+                      padding: spacing[3],
+                      backgroundColor:
+                        selectedMethod === 2
+                          ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                          : colors.surface[100],
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: fontWeight.medium,
+                            color: colors.surface[900],
+                          }}
+                        >
+                          System Discharge 2
+                        </Text>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                          Using dripper spacing
+                        </Text>
+                      </View>
+                      {selectedMethod === 2 ? (
+                        <UISymbol
+                          name="checkmark.circle.fill"
+                          size={18}
+                          color={m3.colorScheme.primary}
+                        />
+                      ) : null}
+                    </View>
+                  </Pressable>
+                </View>
+              )}
+
+              {selectedMethod === 1 && (
+                <View
+                  style={{
+                    backgroundColor: colors.surface[100],
+                    borderRadius: borderRadius['2xl'],
+                    padding: spacing[4],
+                    marginTop: spacing[4],
+                  }}
+                >
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
+                  >
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                        borderRadius: borderRadius.lg,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <UISymbol
+                        name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+                        size={18}
+                        color={m3.colorScheme.primary}
+                      />
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.semibold,
+                        color: colors.surface[900],
+                        marginLeft: spacing[2],
+                      }}
+                    >
+                      Method 1: Plants per Hectare
+                    </Text>
+                  </View>
+
+                  <InputRow
+                    fieldKey="dbp"
+                    label="Distance Between Plants (DBP)"
+                    value={dbp}
+                    onChangeText={setDbp}
+                    unit="m"
+                    placeholder="1.5"
+                    onInputFocus={handleInputFocus}
+                    onInputLayout={handleInputLayout}
+                    inputRowRefs={inputRowRefs}
+                  />
+                  <InputRow
+                    fieldKey="drippersPerPlant"
+                    label="Drippers per Plant"
+                    value={drippersPerPlant}
+                    onChangeText={setDrippersPerPlant}
+                    unit=""
+                    placeholder="4"
+                    onInputFocus={handleInputFocus}
+                    onInputLayout={handleInputLayout}
+                    inputRowRefs={inputRowRefs}
+                  />
+                  <InputRow
+                    fieldKey="dischargePerHour1"
+                    label="Discharge per Dripper"
+                    value={dischargePerHour1}
+                    onChangeText={setDischargePerHour1}
+                    unit="L/hr"
+                    placeholder="2.0"
+                    onInputFocus={handleInputFocus}
+                    onInputLayout={handleInputLayout}
+                    inputRowRefs={inputRowRefs}
+                  />
+
+                  <Pressable
+                    onPress={calculateMethod1}
+                    disabled={!canCalculateMethod1 || results !== null}
+                    style={{
+                      marginTop: spacing[4],
+                      paddingVertical: spacing[3],
+                      borderRadius: borderRadius.xl,
+                      alignItems: 'center',
+                      backgroundColor:
+                        canCalculateMethod1 && !results
+                          ? m3.colorScheme.primary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: fontWeight.semibold,
+                        color:
+                          canCalculateMethod1 && !results
+                            ? m3.colorScheme.onPrimary
+                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                      }}
+                    >
+                      Calculate
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {selectedMethod === 2 && (
+                <View
+                  style={{
+                    backgroundColor: colors.surface[100],
+                    borderRadius: borderRadius['2xl'],
+                    padding: spacing[4],
+                    marginTop: spacing[4],
+                  }}
+                >
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
+                  >
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                        borderRadius: borderRadius.lg,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <UISymbol
+                        name="square.grid.2x2.fill"
+                        size={18}
+                        color={m3.colorScheme.primary}
+                      />
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.semibold,
+                        color: colors.surface[900],
+                        marginLeft: spacing[2],
+                      }}
+                    >
+                      Method 2: Dripper Spacing
+                    </Text>
+                  </View>
+
+                  <InputRow
+                    fieldKey="dbd"
+                    label="Distance Between Drippers (DBD)"
+                    value={dbd}
+                    onChangeText={setDbd}
+                    unit="m"
+                    placeholder="0.5"
+                    onInputFocus={handleInputFocus}
+                    onInputLayout={handleInputLayout}
+                    inputRowRefs={inputRowRefs}
+                  />
+                  <InputRow
+                    fieldKey="dischargePerHour2"
+                    label="Discharge per Dripper"
+                    value={dischargePerHour2}
+                    onChangeText={setDischargePerHour2}
+                    unit="L/hr"
+                    placeholder="2.0"
+                    onInputFocus={handleInputFocus}
+                    onInputLayout={handleInputLayout}
+                    inputRowRefs={inputRowRefs}
+                  />
+                  <InputRow
+                    fieldKey="numberOfLines"
+                    label="Number of Lines"
+                    value={numberOfLines}
+                    onChangeText={setNumberOfLines}
+                    unit=""
+                    placeholder="10"
+                    onInputFocus={handleInputFocus}
+                    onInputLayout={handleInputLayout}
+                    inputRowRefs={inputRowRefs}
+                  />
+
+                  <Pressable
+                    onPress={calculateMethod2}
+                    disabled={!canCalculateMethod2 || results !== null}
+                    style={{
+                      marginTop: spacing[4],
+                      paddingVertical: spacing[3],
+                      borderRadius: borderRadius.xl,
+                      alignItems: 'center',
+                      backgroundColor:
+                        canCalculateMethod2 && !results
+                          ? m3.colorScheme.primary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: fontWeight.semibold,
+                        color:
+                          canCalculateMethod2 && !results
+                            ? m3.colorScheme.onPrimary
+                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                      }}
+                    >
+                      Calculate
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {results && (
+                <View
+                  style={{
+                    backgroundColor: colors.surface[100],
+                    borderRadius: borderRadius['2xl'],
+                    padding: spacing[4],
+                    marginTop: spacing[4],
+                  }}
+                >
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}
+                  >
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                        borderRadius: borderRadius.lg,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <UISymbol
+                        name="checkmark.circle.fill"
+                        size={18}
+                        color={m3.colorScheme.primary}
+                      />
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: fontSize.base,
+                        fontWeight: fontWeight.semibold,
+                        color: colors.surface[900],
+                        marginLeft: spacing[2],
+                      }}
+                    >
+                      Calculation Results
+                    </Text>
+                  </View>
+
+                  {results.plantsPerHectare ? (
+                    <View
+                      style={{
+                        backgroundColor: colors.surface[50],
+                        borderRadius: borderRadius.xl,
+                        padding: spacing[3],
+                        marginBottom: spacing[3],
+                      }}
+                    >
+                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                        Plants per Hectare (P/H)
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.lg,
+                          fontWeight: fontWeight.semibold,
+                          color: colors.surface[900],
+                        }}
+                      >
+                        {results.plantsPerHectare.toFixed(2)}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  <View
+                    style={{
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                      borderRadius: borderRadius.xl,
+                      padding: spacing[4],
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: fontSize['3xl'],
+                        fontWeight: fontWeight.bold,
+                        color: m3.colorScheme.primary,
+                      }}
+                    >
+                      {results.systemDischarge.toFixed(2)}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        color: colorWithOpacity(m3.colorScheme.primary, 0.85),
+                        marginTop: spacing[1],
+                      }}
+                    >
+                      m³/hr System Discharge
+                    </Text>
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: fontSize.xs,
+                      color: colors.surface[500],
+                      textAlign: 'center',
+                      marginTop: spacing[2],
+                    }}
+                  >
+                    Equivalent: {(results.systemDischarge * 1000).toFixed(0)} L/hr
+                  </Text>
+
+                  {results.irrigationHours ? (
+                    <View
+                      style={{
+                        backgroundColor: colors.surface[50],
+                        borderRadius: borderRadius.xl,
+                        padding: spacing[3],
+                        marginTop: spacing[3],
+                      }}
+                    >
+                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                        Irrigation Duration
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.lg,
+                          fontWeight: fontWeight.semibold,
+                          color: colors.surface[900],
+                        }}
+                      >
+                        {formatDuration(results.irrigationHours)}
+                      </Text>
+                    </View>
+                  ) : null}
+
                   <View
                     style={{
                       backgroundColor: colors.surface[50],
@@ -689,74 +745,52 @@ export default function SystemDischargeScreen() {
                       marginTop: spacing[3],
                     }}
                   >
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                      Irrigation Duration
-                    </Text>
                     <Text
                       style={{
-                        fontSize: fontSize.lg,
-                        fontWeight: fontWeight.semibold,
-                        color: colors.surface[900],
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.medium,
+                        color: colors.surface[600],
+                        marginBottom: spacing[1],
                       }}
                     >
-                      {formatDuration(results.irrigationHours)}
+                      What this means
+                    </Text>
+                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                      Your system can deliver {(results.systemDischarge * 1000).toFixed(0)} liters
+                      per hour. Use this value for pump sizing and irrigation scheduling.
                     </Text>
                   </View>
-                ) : null}
+                </View>
+              )}
 
-                <View
+              {results && (
+                <Pressable
+                  onPress={reset}
                   style={{
-                    backgroundColor: colors.surface[50],
-                    borderRadius: borderRadius.xl,
-                    padding: spacing[3],
-                    marginTop: spacing[3],
+                    backgroundColor: colors.surface[100],
+                    borderRadius: borderRadius['2xl'],
+                    paddingVertical: spacing[4],
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                    marginTop: spacing[4],
                   }}
                 >
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: fontWeight.medium,
-                      color: colors.surface[600],
-                      marginBottom: spacing[1],
-                    }}
-                  >
-                    What this means
-                  </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                    Your system can deliver {(results.systemDischarge * 1000).toFixed(0)} liters per
-                    hour. Use this value for pump sizing and irrigation scheduling.
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {results && (
-              <Pressable
-                onPress={reset}
-                style={{
-                  backgroundColor: colors.surface[100],
-                  borderRadius: borderRadius['2xl'],
-                  paddingVertical: spacing[4],
-                  alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: colors.surface[200],
-                  marginTop: spacing[4],
-                }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <UISymbol name="refresh" size={18} color={m3.colorScheme.onSurfaceVariant} />
-                  <Text
-                    style={{
-                      color: colors.surface[600],
-                      fontWeight: fontWeight.medium,
-                      marginLeft: spacing[2],
-                    }}
-                  >
-                    Reset Calculator
-                  </Text>
-                </View>
-              </Pressable>
-            )}
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <UISymbol name="refresh" size={18} color={m3.colorScheme.onSurfaceVariant} />
+                    <Text
+                      style={{
+                        color: colors.surface[600],
+                        fontWeight: fontWeight.medium,
+                        marginLeft: spacing[2],
+                      }}
+                    >
+                      Reset Calculator
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
@@ -772,8 +806,9 @@ interface InputRowProps {
   onChangeText: (text: string) => void;
   unit: string;
   placeholder: string;
-  onInputLayout: (fieldKey: string, y: number) => void;
+  onInputLayout: (fieldKey: string) => void;
   onInputFocus: (fieldKey: string) => void;
+  inputRowRefs: React.MutableRefObject<Record<string, React.RefObject<View | null>>>;
 }
 
 function InputRow({
@@ -785,15 +820,27 @@ function InputRow({
   placeholder,
   onInputLayout,
   onInputFocus,
+  inputRowRefs,
 }: InputRowProps) {
   const colors = useThemeColors();
   const m3 = useM3();
-  const handleLayout = (event: LayoutChangeEvent) => {
-    onInputLayout(fieldKey, event.nativeEvent.layout.y);
+
+  // Create ref for this input row if it doesn't exist
+  if (!inputRowRefs.current[fieldKey]) {
+    inputRowRefs.current[fieldKey] = React.createRef<View>();
+  }
+
+  const handleLayout = () => {
+    onInputLayout(fieldKey);
   };
 
   return (
-    <View style={{ marginBottom: spacing[3] }} onLayout={handleLayout}>
+    <View
+      ref={inputRowRefs.current[fieldKey]}
+      style={{ marginBottom: spacing[3] }}
+      onLayout={handleLayout}
+      collapsable={false}
+    >
       <Text style={{ fontSize: fontSize.sm, color: colors.surface[600], marginBottom: spacing[1] }}>
         {label}
       </Text>

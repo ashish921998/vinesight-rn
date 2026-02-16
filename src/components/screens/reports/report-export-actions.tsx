@@ -184,7 +184,7 @@ export function ReportExportActions({
                 color: disabled ? colorWithOpacity(primary, 0.5) : primary,
               }}
             >
-              Download Report
+              {t('reports.downloadReport')}
             </Text>
           </>
         )}

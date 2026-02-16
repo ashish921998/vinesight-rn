@@ -172,6 +172,9 @@ export default function LocationPicker({
             ]}
             onPress={handleConfirm}
             disabled={!selectedCoordinate || loading}
+            accessibilityRole="button"
+            accessibilityLabel={t('locationPicker.confirm')}
+            accessibilityState={{ disabled: !selectedCoordinate || loading }}
           >
             {loading ? (
               <ActivityIndicator color={m3.colorScheme.onPrimary} />
@@ -230,8 +233,8 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
       backgroundColor: colors.surface[50],
     },
     mapFallbackIcon: {
-      width: 72,
-      height: 72,
+      width: spacing[18],
+      height: spacing[18],
       borderRadius: borderRadius.full,
       alignItems: 'center',
       justifyContent: 'center',

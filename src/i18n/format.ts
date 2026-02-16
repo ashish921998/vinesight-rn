@@ -67,19 +67,54 @@ export function formatDate(
     options?.second != null ||
     options?.timeStyle != null;
 
-  if (!includesTime) return formattedDate;
+  const includesDateOptions =
+    options?.month != null ||
+    options?.day != null ||
+    options?.year != null ||
+    options?.weekday != null ||
+    options?.dateStyle != null ||
+    options?.era != null;
 
-  const time = new Intl.DateTimeFormat(getLocaleWithLatinDigits(), {
+  if (!includesTime && !includesDateOptions) return formattedDate;
+
+  if (includesDateOptions && !includesTime) {
+    return new Intl.DateTimeFormat(getLocaleWithLatinDigits(), {
+      numberingSystem: 'latn',
+      ...options,
+    }).format(d);
+  }
+
+  // Use the same timezone for both date and time to ensure consistency
+  const timeZone = options?.timeZone;
+  const locale = getLocaleWithLatinDigits();
+
+  // When time is included, use the same timezone for date extraction
+  // to ensure day/month/year match the time string
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    numberingSystem: 'latn',
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
+  const parts = dateFormatter.formatToParts(d);
+  const partMap = new Map(parts.map((p) => [p.type, p.value]));
+  const formattedDay = partMap.get('day') || String(d.getUTCDate()).padStart(2, '0');
+  const formattedMonth = partMap.get('month') || String(d.getUTCMonth() + 1).padStart(2, '0');
+  const formattedYear = partMap.get('year') || String(d.getUTCFullYear());
+
+  const time = new Intl.DateTimeFormat(locale, {
     numberingSystem: 'latn',
     hour: options?.hour ?? '2-digit',
     minute: options?.minute ?? '2-digit',
     second: options?.second,
     hour12: options?.hour12,
-    timeZone: options?.timeZone,
+    timeZone,
     timeZoneName: options?.timeZoneName,
   }).format(d);
 
-  return `${formattedDate} ${time}`;
+  return `${formattedDay}-${formattedMonth}-${formattedYear} ${time}`;
 }
 
 export function formatTime(
