@@ -12,6 +12,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useAndroidBackHandler } from '@/hooks/useAndroidBackHandler';
+import { isAndroid } from '@/hooks';
 
 export default function TabLayout() {
   const { t } = useTranslation();
