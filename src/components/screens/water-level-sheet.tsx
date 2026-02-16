@@ -22,7 +22,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useNotificationStore } from '@/stores';
 import { ensureNotificationPermissions, notifyLowWaterAlert } from '@/services/notifications';
 import { useTranslation } from 'react-i18next';
-import { formatNumber, formatDate, formatTime } from '@/i18n/format';
+import { formatNumber, formatDate } from '@/i18n/format';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticMedium, triggerHapticSuccess } from '@/utils/haptics';

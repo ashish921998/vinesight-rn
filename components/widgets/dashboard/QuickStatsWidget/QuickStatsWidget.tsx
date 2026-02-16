@@ -149,7 +149,7 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
     );
   }
 
-  if (loadingState === 'idle' && stats.length === 0) {
+  if ((loadingState === 'idle' || loadingState === 'success') && stats.length === 0) {
     return (
       <View
         testID={testID}

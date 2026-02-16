@@ -37,7 +37,12 @@ export function formatDate(
   date: Date | string | number,
   options?: Intl.DateTimeFormatOptions,
 ): string {
-  const parseInputDate = (input: Date | string | number): { date: Date; isUTCDate: boolean } => {
+  interface ParseInputDateResult {
+    date: Date;
+    isUTCDate: boolean;
+  }
+
+  const parseInputDate = (input: Date | string | number): ParseInputDateResult => {
     if (input instanceof Date) return { date: input, isUTCDate: false };
     if (typeof input === 'string') {
       const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);

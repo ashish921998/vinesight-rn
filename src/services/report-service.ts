@@ -547,6 +547,9 @@ export class ReportService {
       let resolvedQuantityBasis = quantityBasis;
       if (concentrationBaseUnit) {
         if (!waterVolumeL || !Number.isFinite(waterVolumeL) || waterVolumeL <= 0) {
+          console.warn(
+            `Item "${name}" added to unmatched usage: missing water volume required for concentration-based unit "${unit}"`,
+          );
           const unmatchedKey = `${type}::${normalizedName}::${unit.trim().toLowerCase()}`;
           const existingUnmatched = unmatchedUsageMap.get(unmatchedKey);
           if (existingUnmatched) {
@@ -896,9 +899,7 @@ export class ReportService {
         pushEmptySection('FERTIGATION RECORDS');
       } else {
         rows.push(`FERTIGATION RECORDS (${data.fertigation.length})`);
-        rows.push(
-          `Date,Days After Pruning,Season,Fertilizers,Notes`,
-        );
+        rows.push(`Date,Days After Pruning,Season,Fertilizers,Notes`);
         data.fertigation.forEach((r) => {
           rows.push(
             `${this.escapeCSV(r.date)},${this.formatDaysAfterPruningValue(r.daysAfterPruning)},${this.escapeCSV(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))},${this.escapeCSV(r.fertilizers)},${this.escapeCSV(r.notes || '')}`,
@@ -942,7 +943,9 @@ export class ReportService {
       if (matchedStockRows.length === 0) {
         pushEmptySection('STOCK USAGE SUMMARY');
       } else {
-        rows.push(`STOCK USAGE SUMMARY (Matched ${matchedStockRows.length} of ${data.stock.length})`);
+        rows.push(
+          `STOCK USAGE SUMMARY (Matched ${matchedStockRows.length} of ${data.stock.length})`,
+        );
         rows.push(
           'Item,Type,Total Quantity Used,Unit,Total Area Treated,Usage Count,Current Stock,Estimated Opening Stock,Estimated Consumed %,Match',
         );
@@ -1035,7 +1038,7 @@ export class ReportService {
             },
           ]
         : []),
-      ...(visibleSections.has('harvest')
+      ...(visibleSections.has('harvest') && visibleSections.has('expense')
         ? [
             {
               label: 'Revenue',
