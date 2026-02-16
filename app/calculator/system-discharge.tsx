@@ -57,7 +57,7 @@ export default function SystemDischargeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
   const inputPositionsRef = useRef<Record<string, number>>({});
-  const inputRowRefs = useRef<Record<string, React.RefObject<View | null>>>(() => ({
+  const inputRowRefs = useRef<Record<string, React.RefObject<View | null>>>({
     dbl: React.createRef<View>(),
     refillTankValue: React.createRef<View>(),
     dbp: React.createRef<View>(),
@@ -68,7 +68,7 @@ export default function SystemDischargeScreen() {
     lateralSpacing: React.createRef<View>(),
     lateralLength: React.createRef<View>(),
     lateralDiameter: React.createRef<View>(),
-  }));
+  });
 
   const canSelectMethod = useMemo(() => {
     const dblVal = parseFloat(dbl);
