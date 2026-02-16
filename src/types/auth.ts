@@ -113,7 +113,7 @@ export interface AuthActions {
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
 
   /** Resend phone OTP code */
-  resendPhoneOTP: (mode?: PhoneAuthMode) => Promise<void>;
+  resendPhoneOTP: (mode?: PhoneAuthMode, phone?: string) => Promise<void>;
 
   /** Cancel phone OTP flow */
   cancelPhoneOTPFlow: () => void;

@@ -1000,7 +1000,7 @@ export const hi = {
     growthStage: {
       label: 'विकास चरण',
       placeholder: 'विकास चरण चुनें',
-      selected: '{{label}} (Kc: {{kc}})',
+      selected: '{{label}}',
     },
     manual: {
       label: 'मिट्टी के पानी का स्तर',
@@ -1008,7 +1008,6 @@ export const hi = {
     calculate: 'पानी का स्तर गणना करें',
     growthStagePicker: {
       title: 'विकास चरण चुनें',
-      kcLabel: 'Kc: {{kc}}',
       stages: {
         beginningBudbreak: 'कलियों का आरंभ',
         shoot30cm: 'शूट 30 सेमी',

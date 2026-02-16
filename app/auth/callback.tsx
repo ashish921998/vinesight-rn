@@ -33,7 +33,7 @@ export default function AuthCallback() {
           const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
           if (sessionError) throw sessionError;
           if (data.session) {
-            router.replace('/(tabs)');
+            router.replace('/');
             return;
           }
         } catch (err) {
@@ -58,7 +58,7 @@ export default function AuthCallback() {
           if (sessionError) throw sessionError;
 
           if (data.session) {
-            router.replace('/(tabs)');
+            router.replace('/');
           } else {
             router.replace('/(auth)/login');
           }

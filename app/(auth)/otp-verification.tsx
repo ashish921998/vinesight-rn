@@ -54,7 +54,7 @@ export default function OTPVerificationScreen() {
     if (isAuthenticated && needsProfileCompletion) {
       router.replace('/(auth)/profile-completion');
     } else if (isAuthenticated) {
-      router.replace('/(tabs)');
+      router.replace('/');
     }
   }, [isAuthenticated, needsProfileCompletion]);
 
@@ -111,7 +111,7 @@ export default function OTPVerificationScreen() {
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     if (isPhoneOTP) {
-      await resendPhoneOTP(phoneAuthMode);
+      await resendPhoneOTP(phoneAuthMode, identifier);
     } else {
       await resendOTP();
     }

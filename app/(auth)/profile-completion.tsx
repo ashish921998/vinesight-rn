@@ -38,7 +38,7 @@ export default function ProfileCompletionScreen() {
 
   useEffect(() => {
     if (isAuthenticated && !needsProfileCompletion) {
-      router.replace('/(tabs)');
+      router.replace('/');
     }
   }, [isAuthenticated, needsProfileCompletion]);
 

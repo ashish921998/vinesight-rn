@@ -23,6 +23,24 @@ const CORE_PETIOLE_PARAMS = [
   'sulfur',
 ] as const;
 
+export const validateAndCleanParameters = (
+  rawParams: Array<{ name: string; value: number }>,
+  testType: TestType,
+): Record<string, number> => {
+  const parameters = testType === 'soil' ? soilParamOptions : petioleParamOptions;
+  const cleanParams: Record<string, number> = {};
+
+  for (const { name, value } of rawParams) {
+    const normalizedKey = normalizeParameterKey(name, testType);
+    const param = parameters.find((p) => p.key === normalizedKey);
+    if (param && typeof value === 'number' && !isNaN(value)) {
+      cleanParams[param.key] = value;
+    }
+  }
+
+  return cleanParams;
+};
+
 export const normalizeParameterKey = (key: string, testType: TestType) => {
   const soilKeyMap: Record<string, string> = {
     pH: 'ph',
@@ -49,6 +67,7 @@ export const normalizeParameterKey = (key: string, testType: TestType) => {
 
   const petioleKeyMap: Record<string, string> = {
     N: 'total_nitrogen',
+    TN: 'total_nitrogen',
     P: 'phosphorus',
     K: 'potassium',
     Ca: 'calcium',
@@ -62,6 +81,12 @@ export const normalizeParameterKey = (key: string, testType: TestType) => {
     Mo: 'molybdenum',
     Na: 'sodium',
     Cl: 'chloride',
+    'NO3-N': 'nitrate_nitrogen',
+    'NH4-N': 'ammoniacal_nitrogen',
+    'N-NO3': 'nitrate_nitrogen',
+    'N-NH4': 'ammoniacal_nitrogen',
+    nitrate_n: 'nitrate_nitrogen',
+    ammonium_n: 'ammoniacal_nitrogen',
     ammonical_nitrogen: 'ammoniacal_nitrogen',
   };
 

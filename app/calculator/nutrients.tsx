@@ -224,11 +224,11 @@ export default function NutrientCalculatorScreen() {
                     marginBottom: spacing[1],
                   }}
                 >
-                  How it works
+                  Usage tip
                 </Text>
                 <Text style={{ fontSize: fontSize.xs, color: m3.colorScheme.tertiary }}>
-                  Nutrient requirements vary by growth stage. The calculator adjusts N-P-K
-                  recommendations based on crop demand at each stage.
+                  Use stage-wise results as a planning baseline, then fine-tune with field
+                  observations and lab reports.
                 </Text>
               </View>
 

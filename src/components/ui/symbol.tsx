@@ -92,6 +92,13 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'person.badge.clock': 'person-add-outline',
   'person.badge.clock.fill': 'person-add',
 
+  // Communication
+  phone: 'call-outline',
+  'phone.fill': 'call',
+  mail: 'mail-outline',
+  'mail.fill': 'mail',
+  globe: 'globe-outline',
+
   // Money
   banknote: 'cash',
 
@@ -151,6 +158,10 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   mic: 'mic-outline',
   'mic.fill': 'mic',
   'stop.fill': 'stop-circle',
+
+  // Eye icons for password visibility toggle
+  eye: 'eye-outline',
+  'eye.slash': 'eye-off-outline',
 
   // Additional common mappings
   'chevron.up.chevron.down': 'swap-vertical',

@@ -1,7 +1,8 @@
-import { Platform } from 'react-native';
+import { isAndroid } from './use-platform';
 
 import { useFabBottomPosition as useFabBottomPositionAndroid } from './use-fab-bottom-position.android';
 import { useFabBottomPosition as useFabBottomPositionIOS } from './use-fab-bottom-position.ios';
 
-export const useFabBottomPosition =
-  Platform.OS === 'android' ? useFabBottomPositionAndroid : useFabBottomPositionIOS;
+export const useFabBottomPosition = isAndroid
+  ? useFabBottomPositionAndroid
+  : useFabBottomPositionIOS;

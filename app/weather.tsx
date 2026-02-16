@@ -846,9 +846,6 @@ export default function WeatherScreen() {
                 >
                   {etc.dailyETc} mm
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                  Kc: {etc.cropCoefficient}
-                </Text>
               </View>
               <View
                 style={{
@@ -870,9 +867,6 @@ export default function WeatherScreen() {
                   }}
                 >
                   {etc.weeklyETc} mm
-                </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                  ET₀: {etc.referenceET} mm
                 </Text>
               </View>
               {irrigationSchedule && (
