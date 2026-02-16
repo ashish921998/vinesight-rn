@@ -380,7 +380,7 @@ export default function LocationPicker({
             <View style={styles.resultsContainer}>
               <FlatList
                 data={searchResults}
-                keyExtractor={(_, index) => index.toString()}
+                keyExtractor={(item) => item.placeId}
                 keyboardShouldPersistTaps="handled"
                 renderItem={({ item }) => {
                   return (

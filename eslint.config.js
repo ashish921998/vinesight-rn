@@ -74,6 +74,7 @@ module.exports = [
     languageOptions: {
       globals: {
         ...globals.node,
+        __DEV__: 'readonly',
       },
     },
   },

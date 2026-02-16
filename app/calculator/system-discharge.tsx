@@ -61,13 +61,11 @@ export default function SystemDischargeScreen() {
     dbl: React.createRef<View>(),
     refillTankValue: React.createRef<View>(),
     dbp: React.createRef<View>(),
-    pressure: React.createRef<View>(),
-    emitterCount: React.createRef<View>(),
-    emitterSpacing: React.createRef<View>(),
-    emitterDischarge: React.createRef<View>(),
-    lateralSpacing: React.createRef<View>(),
-    lateralLength: React.createRef<View>(),
-    lateralDiameter: React.createRef<View>(),
+    drippersPerPlant: React.createRef<View>(),
+    dischargePerHour1: React.createRef<View>(),
+    dbd: React.createRef<View>(),
+    dischargePerHour2: React.createRef<View>(),
+    numberOfLines: React.createRef<View>(),
   });
 
   const canSelectMethod = useMemo(() => {
@@ -868,6 +866,7 @@ function InputRow({
           placeholder={placeholder}
           placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
           keyboardType="decimal-pad"
+          accessibilityLabel={label}
           style={{
             flex: 1,
             paddingHorizontal: spacing[4],
