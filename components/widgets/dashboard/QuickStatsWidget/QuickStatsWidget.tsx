@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BaseWidgetProps, TrendDirection, LoadingState } from '@widgets/shared/types';
 import { useM3 } from '@/styles/use-theme';
-import { spacing, borderRadius, shadows, fontSize, fontWeight, colors } from '@/styles/theme';
+import { spacing, borderRadius, shadows, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
 
@@ -46,10 +46,13 @@ const STATS: StatItem[] = [
   },
 ];
 
-const getTrendColor = (trend: TrendDirection, onSurfaceVariant: string) => {
-  if (trend === 'up') return colors.success;
-  if (trend === 'down') return colors.error;
-  return onSurfaceVariant;
+const getTrendColor = (
+  trend: TrendDirection,
+  colorScheme: ReturnType<typeof useM3>['colorScheme'],
+) => {
+  if (trend === 'up') return colorScheme.success;
+  if (trend === 'down') return colorScheme.error;
+  return colorScheme.onSurfaceVariant;
 };
 
 const getTrendIcon = (trend: TrendDirection): keyof typeof Ionicons.glyphMap => {
@@ -193,7 +196,7 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
       </Text>
       <View style={styles.grid}>
         {stats.map((stat) => {
-          const color = getTrendColor(stat.trend, m3.colorScheme.onSurfaceVariant);
+          const color = getTrendColor(stat.trend, m3.colorScheme);
           const trendDirectionLabel = t(`widgets.quickStats.trend.${stat.trend}`);
           const localizedTrendValue = localizeTrendValue(stat.trendValue);
           return (

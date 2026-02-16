@@ -37,28 +37,28 @@ export function formatDate(
   date: Date | string | number,
   options?: Intl.DateTimeFormatOptions,
 ): string {
-  const parseInputDate = (input: Date | string | number): Date => {
-    if (input instanceof Date) return input;
+  const parseInputDate = (input: Date | string | number): { date: Date; isUTCDate: boolean } => {
+    if (input instanceof Date) return { date: input, isUTCDate: false };
     if (typeof input === 'string') {
       const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);
       if (dateOnlyMatch) {
         const year = Number(dateOnlyMatch[1]);
         const month = Number(dateOnlyMatch[2]) - 1;
         const day = Number(dateOnlyMatch[3]);
-        return new Date(Date.UTC(year, month, day));
+        return { date: new Date(Date.UTC(year, month, day)), isUTCDate: true };
       }
     }
-    return new Date(input);
+    return { date: new Date(input), isUTCDate: false };
   };
 
-  const d = parseInputDate(date);
+  const { date: d, isUTCDate } = parseInputDate(date);
   if (Number.isNaN(d.getTime())) {
     return '';
   }
 
-  const day = String(d.getUTCDate()).padStart(2, '0');
-  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const year = String(d.getUTCFullYear());
+  const day = String(isUTCDate ? d.getUTCDate() : d.getDate()).padStart(2, '0');
+  const month = String((isUTCDate ? d.getUTCMonth() : d.getMonth()) + 1).padStart(2, '0');
+  const year = String(isUTCDate ? d.getUTCFullYear() : d.getFullYear());
   const formattedDate = `${day}-${month}-${year}`;
 
   const includesTime =
@@ -80,6 +80,7 @@ export function formatDate(
   if (includesDateOptions && !includesTime) {
     return new Intl.DateTimeFormat(getLocaleWithLatinDigits(), {
       numberingSystem: 'latn',
+      timeZone: isUTCDate ? 'UTC' : undefined,
       ...options,
     }).format(d);
   }
@@ -88,21 +89,47 @@ export function formatDate(
   const timeZone = options?.timeZone;
   const locale = getLocaleWithLatinDigits();
 
-  // When time is included, use the same timezone for date extraction
-  // to ensure day/month/year match the time string
+  const yearOption = options?.year ?? 'numeric';
+  const monthOption = options?.month ?? '2-digit';
+  const dayOption = options?.day ?? '2-digit';
+
+  const hasTextMonth =
+    monthOption === 'short' || monthOption === 'long' || monthOption === 'narrow';
+
+  if (hasTextMonth) {
+    return new Intl.DateTimeFormat(locale, {
+      numberingSystem: 'latn',
+      timeZone,
+      year: yearOption,
+      month: monthOption,
+      day: dayOption,
+      weekday: options?.weekday,
+      era: options?.era,
+      hour: options?.hour ?? '2-digit',
+      minute: options?.minute ?? '2-digit',
+      second: options?.second,
+      hour12: options?.hour12,
+      timeZoneName: options?.timeZoneName,
+    }).format(d);
+  }
+
   const dateFormatter = new Intl.DateTimeFormat(locale, {
     numberingSystem: 'latn',
     timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+    year: yearOption,
+    month: monthOption,
+    day: dayOption,
   });
 
   const parts = dateFormatter.formatToParts(d);
   const partMap = new Map(parts.map((p) => [p.type, p.value]));
-  const formattedDay = partMap.get('day') || String(d.getUTCDate()).padStart(2, '0');
-  const formattedMonth = partMap.get('month') || String(d.getUTCMonth() + 1).padStart(2, '0');
-  const formattedYear = partMap.get('year') || String(d.getUTCFullYear());
+  const formattedDay =
+    partMap.get('day') || String(isUTCDate ? d.getUTCDate() : d.getDate()).padStart(2, '0');
+  const formattedMonth =
+    partMap.get('month') ||
+    String((isUTCDate ? d.getUTCMonth() : d.getMonth()) + 1).padStart(2, '0');
+  const formattedYear =
+    partMap.get('year') || String(isUTCDate ? d.getUTCFullYear() : d.getFullYear());
 
   const time = new Intl.DateTimeFormat(locale, {
     numberingSystem: 'latn',

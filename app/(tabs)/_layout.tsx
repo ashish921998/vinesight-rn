@@ -80,7 +80,7 @@ export default function TabLayout() {
         t('common.pressBackAgainToExit', 'Press back again to exit'),
         ToastAndroid.SHORT,
       );
-      return true;
+      return false;
     });
 
     return () => sub.remove();

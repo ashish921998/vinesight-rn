@@ -77,7 +77,14 @@ export function WaterLevelSheet({
     try {
       const date = new Date(timestamp);
       if (Number.isNaN(date.getTime())) return '--';
-      return `${formatDate(date)} ${formatTime(date, { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' })}`;
+      return formatDate(date, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
     } catch {
       return '--';
     }
