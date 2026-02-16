@@ -93,7 +93,7 @@ export default function LocationPicker({
   const searchInputRef = useRef<TextInput>(null);
   const mapRef = useRef<MapView>(null);
   const wasVisibleRef = useRef(false);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!visible) {

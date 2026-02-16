@@ -57,7 +57,18 @@ export default function SystemDischargeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
   const inputPositionsRef = useRef<Record<string, number>>({});
-  const inputRowRefs = useRef<Record<string, React.RefObject<View | null>>>({});
+  const inputRowRefs = useRef<Record<string, React.RefObject<View | null>>>(() => ({
+    dbl: React.createRef<View>(),
+    refillTankValue: React.createRef<View>(),
+    dbp: React.createRef<View>(),
+    pressure: React.createRef<View>(),
+    emitterCount: React.createRef<View>(),
+    emitterSpacing: React.createRef<View>(),
+    emitterDischarge: React.createRef<View>(),
+    lateralSpacing: React.createRef<View>(),
+    lateralLength: React.createRef<View>(),
+    lateralDiameter: React.createRef<View>(),
+  }));
 
   const canSelectMethod = useMemo(() => {
     const dblVal = parseFloat(dbl);
@@ -825,10 +836,8 @@ function InputRow({
   const colors = useThemeColors();
   const m3 = useM3();
 
-  // Create ref for this input row if it doesn't exist
-  if (!inputRowRefs.current[fieldKey]) {
-    inputRowRefs.current[fieldKey] = React.createRef<View>();
-  }
+  // Use the pre-initialized ref from parent
+  const rowRef = inputRowRefs.current[fieldKey];
 
   const handleLayout = () => {
     onInputLayout(fieldKey);
@@ -836,7 +845,7 @@ function InputRow({
 
   return (
     <View
-      ref={inputRowRefs.current[fieldKey]}
+      ref={rowRef}
       style={{ marginBottom: spacing[3] }}
       onLayout={handleLayout}
       collapsable={false}
