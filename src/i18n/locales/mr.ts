@@ -958,6 +958,10 @@ export const mr = {
     mapsUnavailableTitle: 'नकाशा उपलब्ध नाही',
     mapsUnavailableBody:
       'या बिल्डमध्ये नकाशा उपलब्ध नाही. तुम्ही सध्याचे ठिकाण वापरू शकता किंवा समन्वय (coordinates) हाताने टाकू शकता.',
+    searchPlaceholder: 'पत्ता शोधा...',
+    unknownLocation: 'अज्ञात ठिकाण',
+    noResultsFound: 'कोणतेही परिणाम आढळले नाहीत',
+    unableToGetLocationDetails: 'ठिकाणाचे तपशील मिळवण्यात अक्षम',
   },
 
   waterLevelSheet: {

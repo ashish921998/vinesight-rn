@@ -955,6 +955,10 @@ export const en = {
     mapsUnavailableTitle: 'Map unavailable',
     mapsUnavailableBody:
       'Map view is not available in this build. You can still use your current location, or enter coordinates manually.',
+    searchPlaceholder: 'Search for an address...',
+    unknownLocation: 'Unknown location',
+    noResultsFound: 'No results found',
+    unableToGetLocationDetails: 'Unable to get location details',
   },
 
   waterLevelSheet: {

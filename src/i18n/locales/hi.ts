@@ -954,6 +954,10 @@ export const hi = {
     mapsUnavailableTitle: 'मानचित्र अनुपलब्ध',
     mapsUnavailableBody:
       'इस बिल्ड में मानचित्र दृश्य उपलब्ध नहीं है। आप अभी भी अपना वर्तमान स्थान उपयोग कर सकते हैं, या मैन्युअल रूप से निर्देशांक दर्ज कर सकते हैं।',
+    searchPlaceholder: 'पता खोजें...',
+    unknownLocation: 'अज्ञात स्थान',
+    noResultsFound: 'कोई परिणाम नहीं मिला',
+    unableToGetLocationDetails: 'स्थान का विवरण प्राप्त करने में असमर्थ',
   },
 
   waterLevelSheet: {

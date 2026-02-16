@@ -1,6 +1,17 @@
 /* eslint-disable react-native/no-unused-styles */
-import React, { Component, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Alert } from 'react-native';
+import React, { Component, useEffect, useRef, useState, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  Alert,
+  TextInput,
+  FlatList,
+  Keyboard,
+  Platform,
+} from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +19,14 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+
+const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+
+interface SearchResult {
+  placeId: string;
+  name: string;
+  displayName: string;
+}
 
 interface LocationPickerProps {
   visible: boolean;
@@ -67,12 +86,21 @@ export default function LocationPicker({
     longitude: number;
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const searchInputRef = useRef<TextInput>(null);
   const mapRef = useRef<MapView>(null);
   const wasVisibleRef = useRef(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!visible) {
       wasVisibleRef.current = false;
+      setSearchQuery('');
+      setSearchResults([]);
+      setShowResults(false);
       return;
     }
 
@@ -90,6 +118,150 @@ export default function LocationPicker({
       setSelectedCoordinate(null);
     }
   }, [initialLatitude, initialLongitude, visible]);
+
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    if (!GOOGLE_PLACES_API_KEY) {
+      console.error('Google Places API key not configured');
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setShowResults(true);
+
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${GOOGLE_PLACES_API_KEY}&language=en`,
+      );
+
+      const data = await response.json();
+
+      if (__DEV__) {
+        console.log('Google Places results for', query, ':', JSON.stringify(data, null, 2));
+      }
+
+      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+        console.error('Google Places API error:', data.status, data.error_message);
+        setSearchResults([]);
+        return;
+      }
+
+      const results: SearchResult[] = (data.predictions || []).map(
+        (prediction: {
+          place_id: string;
+          structured_formatting?: { main_text?: string };
+          description: string;
+        }) => ({
+          placeId: prediction.place_id,
+          name: prediction.structured_formatting?.main_text || prediction.description.split(',')[0],
+          displayName: prediction.description,
+        }),
+      );
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Error searching location:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  const getPlaceDetails = useCallback(
+    async (placeId: string): Promise<{ lat: number; lng: number } | null> => {
+      if (!GOOGLE_PLACES_API_KEY) {
+        return null;
+      }
+
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${GOOGLE_PLACES_API_KEY}`,
+        );
+
+        const data = await response.json();
+
+        if (data.status === 'OK' && data.result?.geometry?.location) {
+          return data.result.geometry.location;
+        }
+
+        return null;
+      } catch (error) {
+        console.error('Error fetching place details:', error);
+        return null;
+      }
+    },
+    [],
+  );
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (!text.trim()) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      performSearch(text);
+    }, 400);
+  };
+
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      performSearch(searchQuery);
+    }
+    Keyboard.dismiss();
+  };
+
+  const handleResultPress = async (result: SearchResult) => {
+    setIsSearching(true);
+    setShowResults(false);
+    Keyboard.dismiss();
+
+    try {
+      const location = await getPlaceDetails(result.placeId);
+
+      if (location && Number.isFinite(location.lat) && Number.isFinite(location.lng)) {
+        setSelectedCoordinate({ latitude: location.lat, longitude: location.lng });
+
+        mapRef.current?.animateToRegion(
+          {
+            latitude: location.lat,
+            longitude: location.lng,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          500,
+        );
+      } else {
+        Alert.alert(t('common.error'), t('locationPicker.unableToGetLocationDetails'));
+      }
+    } catch (error) {
+      console.error('Error selecting location:', error);
+      Alert.alert(t('common.error'), t('locationPicker.unableToGetLocationDetails'));
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowResults(false);
+    searchInputRef.current?.focus();
+  };
 
   const handleGetCurrentLocation = async () => {
     setLoading(true);
@@ -174,6 +346,64 @@ export default function LocationPicker({
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color={colors.gray[500]} />
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputWrapper}>
+            <Ionicons name="search" size={20} color={colors.gray[500]} style={styles.searchIcon} />
+            <TextInput
+              ref={searchInputRef}
+              style={styles.searchInput}
+              placeholder={t('locationPicker.searchPlaceholder')}
+              placeholderTextColor={colors.gray[500]}
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              onSubmitEditing={handleSearchSubmit}
+              returnKeyType="search"
+              autoCorrect={false}
+              autoCapitalize="words"
+            />
+            {isSearching && (
+              <ActivityIndicator
+                size="small"
+                color={m3.colorScheme.primary}
+                style={styles.searchLoader}
+              />
+            )}
+            {searchQuery.length > 0 && !isSearching && (
+              <TouchableOpacity onPress={handleClearSearch} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={18} color={colors.gray[500]} />
+              </TouchableOpacity>
+            )}
+          </View>
+          {showResults && searchResults.length > 0 && (
+            <View style={styles.resultsContainer}>
+              <FlatList
+                data={searchResults}
+                keyExtractor={(_, index) => index.toString()}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => {
+                  return (
+                    <TouchableOpacity
+                      style={styles.resultItem}
+                      onPress={() => handleResultPress(item)}
+                    >
+                      <Ionicons name="location" size={18} color={m3.colorScheme.primary} />
+                      <Text style={styles.resultText} numberOfLines={2}>
+                        {item.displayName}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+                ItemSeparatorComponent={() => <View style={styles.resultSeparator} />}
+              />
+            </View>
+          )}
+          {showResults && searchQuery.trim() && searchResults.length === 0 && !isSearching && (
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText}>{t('locationPicker.noResultsFound')}</Text>
+            </View>
+          )}
         </View>
 
         <MapErrorBoundary
@@ -296,6 +526,82 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>, m3: ReturnType<
     },
     closeButton: {
       padding: spacing[1],
+    },
+    searchContainer: {
+      padding: spacing[3],
+      backgroundColor: colors.surface[100],
+      zIndex: 10,
+    },
+    searchInputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface[50],
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+      borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.8),
+      paddingHorizontal: spacing[3],
+    },
+    searchIcon: {
+      marginRight: spacing[2],
+    },
+    searchInput: {
+      flex: 1,
+      paddingVertical: Platform.OS === 'ios' ? spacing[3] : spacing[2],
+      fontSize: fontSize.base,
+      color: m3.colorScheme.onSurface,
+    },
+    searchLoader: {
+      marginLeft: spacing[2],
+    },
+    clearButton: {
+      padding: spacing[1],
+      marginLeft: spacing[1],
+    },
+    resultsContainer: {
+      marginTop: spacing[2],
+      backgroundColor: colors.surface[100],
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+      borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.5),
+      maxHeight: 200,
+      ...Platform.select({
+        ios: {
+          shadowColor: m3.colorScheme.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 3,
+        },
+      }),
+    },
+    resultItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: spacing[3],
+      gap: spacing[2],
+    },
+    resultText: {
+      flex: 1,
+      fontSize: fontSize.sm,
+      color: m3.colorScheme.onSurface,
+    },
+    resultSeparator: {
+      height: 1,
+      backgroundColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.3),
+      marginLeft: spacing[3] + 18 + spacing[2],
+    },
+    noResultsContainer: {
+      marginTop: spacing[2],
+      padding: spacing[4],
+      backgroundColor: colors.surface[50],
+      borderRadius: borderRadius.lg,
+      alignItems: 'center',
+    },
+    noResultsText: {
+      fontSize: fontSize.sm,
+      color: m3.colorScheme.onSurfaceVariant,
     },
     map: {
       flex: 1,
