@@ -2,5 +2,6 @@
   "name": "android-widget-plugin",
   "version": "1.0.0",
   "description": "Expo config plugin for Android home screen widget support",
-  "main": "index.js"
+  "main": "index.js",
+  "private": true
 }

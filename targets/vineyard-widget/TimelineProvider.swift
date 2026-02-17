@@ -20,11 +20,14 @@ struct Provider: TimelineProvider {
     
     func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> Void) {
         let entry = loadWidgetData()
-        
+
         // Update every 15 minutes (widgets have limits on update frequency)
-        let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+        guard let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 15, to: Date()) else {
+            completion(Timeline(entries: [entry], policy: .atEnd))
+            return
+        }
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdateDate))
-        
+
         completion(timeline)
     }
     

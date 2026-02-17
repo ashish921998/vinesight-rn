@@ -100,6 +100,7 @@ export class ReportService {
     let safe = value;
     if (safe.length > 0 && /^[=+\-@\t\r]/.test(safe)) {
       safe = `'${safe}`;
+      return `"${safe.replace(/"/g, '""')}"`;
     }
     if (safe.includes('"') || safe.includes(',') || safe.includes('\n')) {
       return `"${safe.replace(/"/g, '""')}"`;

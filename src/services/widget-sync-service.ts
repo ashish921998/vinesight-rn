@@ -20,19 +20,10 @@ export class WidgetSyncService {
 
       const jsonString = JSON.stringify(payload);
 
-      if (Platform.OS === 'ios') {
-        // iOS: Use WidgetBridge native module to store as Data in App Group UserDefaults.
-        // The widget extension reads via defaults.data(forKey:) + JSONDecoder,
-        // so the value MUST be stored as raw Data — not via SharedGroupPreferences
-        // which stores NSDictionary/plist objects that are invisible to .data(forKey:).
-        if (WidgetBridge?.updateWidget) {
-          await WidgetBridge.updateWidget(jsonString);
-        }
+      if (WidgetBridge?.updateWidget) {
+        await WidgetBridge.updateWidget(jsonString);
       } else {
-        // Android: Use SharedPreferences via native module
-        if (WidgetBridge?.updateWidget) {
-          await WidgetBridge.updateWidget(jsonString);
-        }
+        throw new Error('WidgetBridge native module is not available');
       }
     } catch (error) {
       console.error('Failed to sync weather widget:', error);
@@ -47,16 +38,10 @@ export class WidgetSyncService {
     try {
       const jsonString = JSON.stringify(config);
 
-      if (Platform.OS === 'ios') {
-        // Use WidgetBridge to store as Data so the widget extension can read via
-        // defaults.data(forKey:) + JSONDecoder.
-        if (WidgetBridge?.saveWidgetConfig) {
-          await WidgetBridge.saveWidgetConfig(jsonString);
-        }
+      if (WidgetBridge?.saveWidgetConfig) {
+        await WidgetBridge.saveWidgetConfig(jsonString);
       } else {
-        if (WidgetBridge?.saveWidgetConfig) {
-          await WidgetBridge.saveWidgetConfig(jsonString);
-        }
+        throw new Error('WidgetBridge native module is not available');
       }
     } catch (error) {
       console.error('Failed to save widget config:', error);

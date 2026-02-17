@@ -26,8 +26,8 @@ export interface WeatherForecastDay {
 }
 
 export interface WidgetConfig {
-  selectedFarmId: number | null;
-  selectedFarmName: string | null;
+  selectedFarmId: number;
+  selectedFarmName: string;
 }
 
 export interface WidgetDataPayload {

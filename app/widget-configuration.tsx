@@ -42,7 +42,7 @@ export default function WidgetConfigurationScreen() {
   }, [config, configLoading, farms]);
 
   const handleSave = async () => {
-    if (!selectedFarmId || !farms) return;
+    if (selectedFarmId == null || farms == null) return;
 
     const selectedFarm = farms.find((f) => f.id === selectedFarmId);
     if (!selectedFarm) return;
@@ -91,21 +91,17 @@ export default function WidgetConfigurationScreen() {
 
   const syncWeatherForFarm = async (farmId: number, latitude?: number, longitude?: number) => {
     try {
-      // Get weather data for the farm
-      const weatherData = await fetchWeatherForFarm(latitude, longitude);
+      // Get weather data for the farm (service format)
+      const serviceData = await fetchWeatherForFarm(latitude, longitude);
 
-      if (weatherData && farms) {
+      if (serviceData && farms) {
         const farm = farms.find((f) => f.id === farmId);
         if (farm) {
           const syncFarmId = farm.id;
           if (typeof syncFarmId !== 'number') return;
-          await WidgetSyncService.syncWeather({
-            farmId: syncFarmId,
-            farmName: farm.name,
-            current: weatherData.current,
-            forecast: weatherData.forecast.slice(0, 3),
-            lastUpdated: Date.now(),
-          });
+          // Transform service data to widget format before syncing
+          const widgetData = mapServiceWeatherToWidget(serviceData, syncFarmId, farm.name);
+          await WidgetSyncService.syncWeather(widgetData);
         }
       }
     } catch (syncError) {
@@ -136,6 +132,67 @@ export default function WidgetConfigurationScreen() {
     } catch (_fetchError) {
       return null;
     }
+  };
+
+  /**
+   * Maps service ForecastDay format to widget WeatherForecastDay format
+   * Service: { date, maxTemp, minTemp, condition, icon }
+   * Widget: { day, high, low, condition, icon }
+   */
+  const mapServiceWeatherToWidget = (
+    serviceData: {
+      current: {
+        temperature: number;
+        condition: string;
+        humidity: number;
+        windSpeed: number;
+        icon: string;
+      };
+      forecast: Array<{
+        date?: string;
+        day?: string;
+        maxTemp?: number;
+        high?: number;
+        minTemp?: number;
+        low?: number;
+        condition: string;
+        icon: string;
+      }>;
+    },
+    farmId: number,
+    farmName: string,
+  ): import('@/types/widget').WeatherWidgetData => {
+    const today = new Date();
+    const formatDay = (dateStr: string): string => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString(undefined, { weekday: 'short' });
+    };
+
+    return {
+      farmId,
+      farmName,
+      current: {
+        temperature: serviceData.current.temperature,
+        condition: serviceData.current.condition,
+        humidity: serviceData.current.humidity,
+        windSpeed: serviceData.current.windSpeed,
+        icon: serviceData.current.icon,
+      },
+      forecast: serviceData.forecast.map((day, index) => ({
+        day:
+          day.day ??
+          (day.date
+            ? formatDay(day.date)
+            : formatDay(
+                new Date(today.getTime() + (index + 1) * 24 * 60 * 60 * 1000).toISOString(),
+              )),
+        high: day.high ?? day.maxTemp ?? 0,
+        low: day.low ?? day.minTemp ?? 0,
+        condition: day.condition,
+        icon: day.icon,
+      })),
+      lastUpdated: Date.now(),
+    };
   };
 
   if (farmsLoading || configLoading) {
@@ -239,7 +296,7 @@ export default function WidgetConfigurationScreen() {
             title={t('widgetConfig.saveButton', 'Save Configuration')}
             onPress={handleSave}
             isLoading={isSaving}
-            disabled={!selectedFarmId || isSaving}
+            disabled={selectedFarmId == null || isSaving}
             style={styles.saveButton}
           />
 

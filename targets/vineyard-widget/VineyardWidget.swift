@@ -63,7 +63,7 @@ struct LargeWidgetView: View {
                         HStack {
                             Image(systemName: "wind")
                                 .foregroundColor(.gray)
-                            Text("\(Int(weather.current.windSpeed)) mph")
+                            Text("\(Int(weather.current.windSpeed)) km/h")
                                 .font(.subheadline)
                         }
                     }

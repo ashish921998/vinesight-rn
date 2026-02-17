@@ -64,14 +64,23 @@ export default function WeatherScreen() {
     return null;
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<number>(() => Date.now());
 
   // Update selected farm when farms data loads or farmId changes
   // Using queueMicrotask to avoid setState-in-effect lint error while maintaining functionality
   useEffect(() => {
-    if (farmId) {
+    if (farmId && farms) {
       const parsed = Number.parseInt(farmId, 10);
-      if (Number.isFinite(parsed) && parsed !== selectedFarmId) {
+      // Validate that the parsed ID exists in the farms list
+      const isValidFarmId = Number.isFinite(parsed) && farms.some((f) => f.id === parsed);
+      if (isValidFarmId && parsed !== selectedFarmId) {
         queueMicrotask(() => setSelectedFarmId(parsed));
+      } else if (!isValidFarmId && farms.length > 0) {
+        // Fall back to first available farm if ID is invalid
+        const firstId = farms[0]?.id;
+        if (typeof firstId === 'number') {
+          queueMicrotask(() => setSelectedFarmId(firstId));
+        }
       }
     } else if (selectedFarmId === null && farms && farms.length > 0) {
       const firstId = farms[0]?.id;
@@ -84,10 +93,12 @@ export default function WeatherScreen() {
   const selectedFarm = farms?.find((f) => f.id === selectedFarmId);
 
   // Get weather for selected farm (simplified - using mock data)
-  const weatherData = getMockWeatherData(selectedFarm);
+  const weatherData = getMockWeatherData(selectedFarm, lastUpdated);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    // Update lastUpdated timestamp on refresh
+    setLastUpdated(Date.now());
     // In production, this would refetch weather data
     setTimeout(() => setIsRefreshing(false), 1000);
   };
@@ -155,7 +166,7 @@ export default function WeatherScreen() {
             </View>
           </View>
 
-          <View style={styles.weatherDetails}>
+          <View style={[styles.weatherDetails, { borderTopColor: m3.colorScheme.outline }]}>
             <WeatherDetailItem
               icon="humidity"
               label={t('weather.humidity', 'Humidity')}
@@ -298,7 +309,9 @@ function InsightCard({
 }) {
   return (
     <View style={[styles.insightCard, { borderBottomColor: m3.colorScheme.outline }]}>
-      <View style={styles.insightIconContainer}>
+      <View
+        style={[styles.insightIconContainer, { backgroundColor: m3.colorScheme.primaryContainer }]}
+      >
         <SymbolIcon name={resolveSymbolIconName(icon)} size={24} color={m3.colorScheme.primary} />
       </View>
       <View style={styles.insightContent}>
@@ -330,11 +343,17 @@ function getWeatherIconName(condition: string): string {
   return 'sun.max.fill';
 }
 
-function getMockWeatherData(farm: Farm | undefined): WeatherScreenData | null {
+function getMockWeatherData(farm: Farm | undefined, lastUpdated: number): WeatherScreenData | null {
   if (!farm) return null;
 
   // Ensure farm.id exists, otherwise use a fallback
   const farmId = farm.id ?? 0;
+
+  // Get localized day names using browser's locale
+  const today = new Date();
+  const formatDay = (date: Date): string => {
+    return date.toLocaleDateString(undefined, { weekday: 'short' });
+  };
 
   return {
     farmId,
@@ -357,7 +376,7 @@ function getMockWeatherData(farm: Farm | undefined): WeatherScreenData | null {
         humidity: 65,
       },
       {
-        day: 'Tue',
+        day: formatDay(new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000)),
         high: 78,
         low: 62,
         condition: 'Sunny',
@@ -366,7 +385,7 @@ function getMockWeatherData(farm: Farm | undefined): WeatherScreenData | null {
         humidity: 55,
       },
       {
-        day: 'Wed',
+        day: formatDay(new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000)),
         high: 73,
         low: 58,
         condition: 'Cloudy',
@@ -375,7 +394,7 @@ function getMockWeatherData(farm: Farm | undefined): WeatherScreenData | null {
         humidity: 70,
       },
       {
-        day: 'Thu',
+        day: formatDay(new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000)),
         high: 68,
         low: 55,
         condition: 'Rainy',
@@ -384,7 +403,7 @@ function getMockWeatherData(farm: Farm | undefined): WeatherScreenData | null {
         humidity: 85,
       },
       {
-        day: 'Fri',
+        day: formatDay(new Date(today.getTime() + 4 * 24 * 60 * 60 * 1000)),
         high: 70,
         low: 56,
         condition: 'Partly Cloudy',
@@ -393,7 +412,7 @@ function getMockWeatherData(farm: Farm | undefined): WeatherScreenData | null {
         humidity: 65,
       },
       {
-        day: 'Sat',
+        day: formatDay(new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000)),
         high: 76,
         low: 60,
         condition: 'Sunny',
@@ -402,7 +421,7 @@ function getMockWeatherData(farm: Farm | undefined): WeatherScreenData | null {
         humidity: 50,
       },
       {
-        day: 'Sun',
+        day: formatDay(new Date(today.getTime() + 6 * 24 * 60 * 60 * 1000)),
         high: 79,
         low: 63,
         condition: 'Sunny',
@@ -411,7 +430,7 @@ function getMockWeatherData(farm: Farm | undefined): WeatherScreenData | null {
         humidity: 45,
       },
     ],
-    lastUpdated: Date.now(),
+    lastUpdated,
   };
 }
 
@@ -462,7 +481,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingTop: spacing[4],
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
   },
   detailItem: {
     alignItems: 'center',
@@ -539,7 +557,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: borderRadius.lg,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing[3],

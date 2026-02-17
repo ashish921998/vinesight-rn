@@ -26,8 +26,8 @@ struct WeatherData: Codable {
 }
 
 struct WidgetConfig: Codable {
-    let selectedFarmId: Int?
-    let selectedFarmName: String?
+    let selectedFarmId: Int
+    let selectedFarmName: String
 }
 
 struct SimpleEntry: TimelineEntry {
