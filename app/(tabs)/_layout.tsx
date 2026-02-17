@@ -12,6 +12,7 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
+import { usePushTokenRegistration } from '@/hooks/use-push-tokens';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -37,6 +38,9 @@ export default function TabLayout() {
     }),
     [m3],
   );
+
+  // Register push token when user is authenticated
+  usePushTokenRegistration();
 
   const sf = (name: string) => name as SFSymbol;
 

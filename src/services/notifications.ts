@@ -1,6 +1,27 @@
 import i18n from '@/i18n';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import { supabase } from '@/lib/supabase';
 
-type ExpoNotifications = typeof import('expo-notifications');
+// ============================================================
+// MARK: - Push Token Types
+// ============================================================
+
+export interface DevicePushToken {
+  id?: number;
+  user_id: string;
+  expo_push_token: string;
+  device_id: string | null;
+  device_name: string | null;
+  platform: 'ios' | 'android' | 'web';
+  created_at?: string;
+}
+
+// ============================================================
+// MARK: - Notification Permissions
+// ============================================================
+
+type ExpoNotifications = typeof Notifications;
 
 async function getNotifications(): Promise<ExpoNotifications | null> {
   try {
@@ -105,4 +126,153 @@ export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
     },
     trigger: null,
   });
+}
+
+// ============================================================
+// MARK: - Push Token Registration
+// ============================================================
+
+/**
+ * Get the Expo push token for the current device
+ * Returns null if not available or permissions not granted
+ */
+export async function getExpoPushToken(): Promise<string | null> {
+  if (!Device.isDevice) {
+    if (__DEV__) {
+      console.log('Push notifications require a physical device');
+    }
+    return null;
+  }
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') {
+      if (__DEV__) {
+        console.log('Push notification permissions not granted');
+      }
+      return null;
+    }
+  }
+
+  try {
+    const token = await Notifications.getExpoPushTokenAsync({
+      projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
+    });
+    return token.data;
+  } catch (error) {
+    if (__DEV__) {
+      console.log('Error getting Expo push token:', error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Register or update the device push token in Supabase
+ */
+export async function registerPushToken(
+  userId: string,
+  expoPushToken: string,
+): Promise<boolean> {
+  try {
+    const platform: 'ios' | 'android' | 'web' =
+      Device.platform?.toLowerCase() === 'ios'
+        ? 'ios'
+        : Device.platform?.toLowerCase() === 'android'
+          ? 'android'
+          : 'web';
+
+    const deviceName = Device.modelName || 'Unknown Device';
+    const deviceId = Device.osBuildId || Device.deviceId || null;
+
+    // Check if token already exists for this user
+    const { data: existing } = await supabase
+      .from('device_push_tokens')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('expo_push_token', expoPushToken)
+      .maybeSingle();
+
+    if (existing) {
+      // Token already registered, update last seen
+      await supabase
+        .from('device_push_tokens')
+        .update({ device_name: deviceName, device_id: deviceId })
+        .eq('id', existing.id);
+      return true;
+    }
+
+    // Insert new token
+    const { error } = await supabase.from('device_push_tokens').insert({
+      user_id: userId,
+      expo_push_token: expoPushToken,
+      device_id: deviceId,
+      device_name: deviceName,
+      platform,
+    });
+
+    if (error) {
+      if (__DEV__) {
+        console.log('Error registering push token:', error);
+      }
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    if (__DEV__) {
+      console.log('Error in registerPushToken:', error);
+    }
+    return false;
+  }
+}
+
+/**
+ * Remove push token from Supabase (e.g., when user signs out)
+ */
+export async function unregisterPushToken(userId: string): Promise<void> {
+  try {
+    await supabase.from('device_push_tokens').delete().eq('user_id', userId);
+  } catch (error) {
+    if (__DEV__) {
+      console.log('Error unregistering push token:', error);
+    }
+  }
+}
+
+/**
+ * Send a push notification for a task assignment
+ * This calls the Supabase Edge Function to send the notification
+ */
+export async function notifyTaskAssignment(
+  assignedUserId: string,
+  taskId: number,
+  taskTitle: string,
+  assignerName?: string,
+): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-task-notification', {
+      body: {
+        user_id: assignedUserId,
+        task_id: taskId,
+        task_title: taskTitle,
+        assigner_name: assignerName,
+      },
+    });
+
+    if (error) {
+      if (__DEV__) {
+        console.log('Error sending task notification:', error);
+      }
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    if (__DEV__) {
+      console.log('Error invoking task notification function:', error);
+    }
+    return false;
+  }
 }

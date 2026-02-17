@@ -10,6 +10,8 @@ import { formatLocalDate } from '../utils/date';
 import { resolveSeasonIdForDate } from '../lib/season-context';
 import { encodeTaskPlanInDescription } from '../utils/task-plan';
 import { telemetry } from '../services/telemetry';
+import { notifyTaskAssignment } from '../services/notifications';
+import { useAuthStore } from '../stores';
 
 // Query keys for tasks
 export const taskQueryKeys = {
@@ -104,6 +106,7 @@ export function useAllTasks(seasonId?: number) {
  */
 export function useCreateTask() {
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
 
   return useMutation({
     mutationFn: async (task: TaskReminderInsert): Promise<TaskReminder> => {
@@ -151,8 +154,19 @@ export function useCreateTask() {
       if (fallbackAttempt.error) throw fallbackAttempt.error;
       return fallbackAttempt.data;
     },
-    onSuccess: () => {
+    onSuccess: async (createdTask) => {
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
+
+      // Send push notification if task is assigned to someone
+      if (createdTask.assigned_to_user_id && createdTask.assigned_to_user_id !== user?.id) {
+        const assignerName = user?.email?.split('@')[0] || 'Someone';
+        await notifyTaskAssignment(
+          createdTask.assigned_to_user_id,
+          createdTask.id!,
+          createdTask.title,
+          assignerName,
+        );
+      }
     },
   });
 }
