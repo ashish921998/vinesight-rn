@@ -7,13 +7,13 @@ interface AllProvidersProps {
   children: React.ReactNode;
 }
 
+/**
+ * AllProviders wraps components with necessary context providers for testing.
+ * Note: The useM3() hook uses Zustand's useThemeStore which is a global singleton
+ * and does not require a provider wrapper. The store initializes automatically.
+ */
 const AllProviders = ({ children }: AllProvidersProps) => {
-  return (
-    <I18nextProvider i18n={i18n}>
-      {/* TODO: Add theme store provider when widgets are tested */}
-      {children}
-    </I18nextProvider>
-  );
+  return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 };
 
 const customRender = (ui: React.ReactElement, options?: Omit<RenderOptions, 'wrapper'>) =>
