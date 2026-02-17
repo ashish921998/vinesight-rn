@@ -11,6 +11,7 @@ interface ReportExportActionsProps {
   isExporting: boolean;
   onExportPdf: () => void;
   onExportCsv: () => void;
+  onDownload: () => void;
   panelStyle: object;
 }
 
@@ -19,6 +20,7 @@ export function ReportExportActions({
   isExporting,
   onExportPdf,
   onExportCsv,
+  onDownload,
   panelStyle,
 }: ReportExportActionsProps) {
   const m3 = useM3();
@@ -146,6 +148,47 @@ export function ReportExportActions({
           )}
         </Pressable>
       </View>
+
+      <Pressable
+        onPress={onDownload}
+        disabled={disabled}
+        style={({ pressed }) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: spacing[2],
+          minHeight: 46,
+          borderRadius: borderRadius.xl,
+          borderCurve: 'continuous',
+          borderWidth: 1,
+          borderColor: disabled ? colorWithOpacity(primary, 0.25) : colorWithOpacity(primary, 0.45),
+          backgroundColor: pressed
+            ? colorWithOpacity(primary, 0.08)
+            : colorWithOpacity(primary, 0.04),
+          opacity: disabled ? 0.55 : 1,
+        })}
+      >
+        {isExporting ? (
+          <ActivityIndicator size="small" color={primary} />
+        ) : (
+          <>
+            <Icon
+              name="arrow.down.circle.fill"
+              size={18}
+              color={disabled ? colorWithOpacity(primary, 0.5) : primary}
+            />
+            <Text
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: fontWeight.semibold,
+                color: disabled ? colorWithOpacity(primary, 0.5) : primary,
+              }}
+            >
+              {t('reports.downloadReport')}
+            </Text>
+          </>
+        )}
+      </Pressable>
     </View>
   );
 }

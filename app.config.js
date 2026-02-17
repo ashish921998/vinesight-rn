@@ -18,6 +18,9 @@ module.exports = {
       scheme: 'vinesight',
       usesAppleSignIn: true,
       buildNumber: '1.2.2',
+      entitlements: {
+        'com.apple.security.application-groups': ['group.com.vinesight.app'],
+      },
       icon: {
         light: './assets/icons/ios-light.png',
         dark: './assets/icons/ios-dark.png',
@@ -96,14 +99,16 @@ module.exports = {
     plugins: [
       'expo-router',
       'expo-localization',
+      '@bacons/apple-targets',
+      './plugins/android-widget',
       [
         'expo-build-properties',
         {
           android: {
             ndkVersion: '27.1.12297006',
-            compileSdkVersion: 35,
-            targetSdkVersion: 35,
-            buildToolsVersion: '35.0.0',
+            compileSdkVersion: 36,
+            targetSdkVersion: 36,
+            buildToolsVersion: '36.0.0',
           },
         },
       ],

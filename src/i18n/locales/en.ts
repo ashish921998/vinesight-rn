@@ -671,6 +671,101 @@ export const en = {
     },
   },
 
+  widgets: {
+    common: {
+      loading: 'Loading…',
+      error: 'Failed to load data',
+      empty: 'No data available',
+      retry: 'Try again',
+    },
+    quickStats: {
+      title: 'Quick Stats',
+      loading: 'Quick stats loading',
+      error: 'Quick stats error',
+      empty: 'Quick stats empty',
+      overview: 'Quick stats overview',
+      trendLabel: 'Trend',
+      statAccessibility: '{{label}}: {{value}}, {{trendLabel}} {{trendDirection}} {{trendValue}}',
+      trend: {
+        up: 'up',
+        down: 'down',
+        neutral: 'no change',
+      },
+      stats: {
+        activeFarms: 'Active Farms',
+        workersToday: 'Workers Today',
+        waterReserve: 'Water Reserve',
+        seasonExpenses: 'Season Expenses',
+      },
+    },
+    weather: {
+      title: 'Vineyard Weather',
+      conditions: {
+        sunny: 'Sunny',
+        cloudy: 'Cloudy',
+        rainy: 'Rainy',
+        partlyCloudy: 'Partly Cloudy',
+      },
+      humidity: 'Humidity',
+      wind: 'Wind',
+      forecast: '3-day forecast',
+      days: {
+        today: 'Today',
+        tomorrow: 'Tomorrow',
+        dayAfter: 'Day After',
+      },
+    },
+    vineyardHealth: {
+      title: 'Vineyard Health',
+      overallStatus: 'Overall status',
+      metrics: {
+        waterStatus: 'Water Status',
+        diseaseRisk: 'Disease Risk',
+        growthStage: 'Growth Stage',
+        soilMoisture: 'Soil Moisture',
+      },
+      values: {
+        minimal: 'Minimal',
+        veraison: 'Véraison',
+      },
+    },
+    taskSummary: {
+      title: 'Upcoming Tasks',
+      tasksCount: '{{count}} tasks',
+      overdueCount: '{{count}} overdue',
+      status: {
+        overdue: 'Overdue',
+        dueToday: 'Due today',
+        upcoming: 'Upcoming',
+      },
+      labels: {
+        irrigationBlockA: 'Irrigation - Block A',
+        sprayFungicide: 'Spray - Fungicide',
+        fertigationRound3: 'Fertigation Round 3',
+        harvestSampling: 'Harvest Sampling',
+        dueToday: 'Due today',
+        tomorrow: 'Tomorrow',
+        in3Days: 'In 3 days',
+        overdue: 'Overdue',
+      },
+      empty: 'No upcoming tasks',
+    },
+    template: {
+      title: 'Widget Template',
+      testWidget: {
+        label: 'Test Widget',
+      },
+    },
+  },
+
+  developerTools: {
+    section: 'Developer',
+    widgetShowcase: {
+      title: 'Widget Showcase',
+      description: 'Preview widgets on iOS, Android, and Web from one screen.',
+    },
+  },
+
   calculator: {
     mad: {
       title: 'MAD Calculator',
@@ -860,6 +955,10 @@ export const en = {
     mapsUnavailableTitle: 'Map unavailable',
     mapsUnavailableBody:
       'Map view is not available in this build. You can still use your current location, or enter coordinates manually.',
+    searchPlaceholder: 'Search for an address...',
+    unknownLocation: 'Unknown location',
+    noResultsFound: 'No results found',
+    unableToGetLocationDetails: 'Unable to get location details',
   },
 
   waterLevelSheet: {
@@ -2063,11 +2162,16 @@ export const en = {
       stockCoverage: 'Estimated Coverage',
     },
     exportAs: 'Export as',
+    downloadReport: 'Download Report',
     errors: {
       unableToExport: 'Unable to export report. Please try again.',
     },
     alerts: {
       exportFailedTitle: 'Export Failed',
+      downloadCompleteTitle: 'Download complete',
+      downloadCompleteBody: 'Saved to:\n{{fileUri}}',
+      downloadReportTitle: 'Download report',
+      chooseFormatBody: 'Choose format',
     },
     noFarms: {
       title: 'No Farms Available',

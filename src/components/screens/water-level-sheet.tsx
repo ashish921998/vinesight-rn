@@ -79,7 +79,7 @@ export function WaterLevelSheet({
       if (Number.isNaN(date.getTime())) return '--';
       return formatDate(date, {
         day: '2-digit',
-        month: 'short',
+        month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
@@ -214,11 +214,15 @@ export function WaterLevelSheet({
       isSaveDisabled={calculatedWaterLevel === null}
       presentation={presentation}
     >
-      <SectionHeader
-        title={t('waterLevelSheet.sections.waterLevels.title')}
-        subtitle={t('waterLevelSheet.sections.waterLevels.subtitle')}
-        style={{ marginBottom: spacing[4] }}
-      />
+      <Text
+        style={{
+          fontSize: fontSize.base,
+          color: colors.surface[500],
+          marginBottom: spacing[4],
+        }}
+      >
+        {t('waterLevelSheet.sections.waterLevels.subtitle')}
+      </Text>
 
       <PreviewCard
         title={t('waterLevelSheet.preview.current.title')}
@@ -234,6 +238,7 @@ export function WaterLevelSheet({
           {
             label: t('waterLevelSheet.preview.labels.lastUpdated'),
             value: formatLastUpdated(farm.water_calculation_updated_at),
+            compactValue: true,
           },
         ]}
         backgroundColor={colors.surface[100]}
@@ -463,6 +468,15 @@ export function WaterLevelSheet({
                         }}
                       >
                         {t(`waterLevelSheet.growthStagePicker.stages.${stage.id}`)}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: fontSize.sm,
+                          color: colors.surface[500],
+                          marginTop: spacing[1],
+                        }}
+                      >
+                        Kc: {stage.kc.toFixed(2)}
                       </Text>
                     </View>
                     {selectedGrowthStage?.id === stage.id && (

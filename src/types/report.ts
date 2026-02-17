@@ -122,8 +122,10 @@ export interface ReportStockUsageRecord {
 
 export interface ReportIrrigationRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   duration: number;
   area: number;
   growthStage: string;
@@ -134,8 +136,10 @@ export interface ReportIrrigationRecord {
 
 export interface ReportSprayRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   chemical: string;
   dose: string;
   area: number;
@@ -146,8 +150,10 @@ export interface ReportSprayRecord {
 
 export interface ReportFertigationRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   fertilizers: string;
   area: number;
   notes?: string;
@@ -155,8 +161,10 @@ export interface ReportFertigationRecord {
 
 export interface ReportHarvestRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   quantity: number;
   grade: string;
   price?: number;
@@ -166,8 +174,10 @@ export interface ReportHarvestRecord {
 
 export interface ReportExpenseRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   type: string;
   cost: number;
   remarks?: string;

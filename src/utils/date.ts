@@ -26,3 +26,20 @@ export const parseDbDateToLocalDate = (value: string): Date | null => {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
+
+export const getDaysAfterPruning = (
+  recordDate: string,
+  pruningDate: string | null | undefined,
+): number | null => {
+  if (!pruningDate) return null;
+
+  const record = parseDbDateToLocalDate(recordDate);
+  const pruning = parseDbDateToLocalDate(pruningDate);
+  if (!record || !pruning) return null;
+
+  const recordDay = Date.UTC(record.getFullYear(), record.getMonth(), record.getDate());
+  const pruningDay = Date.UTC(pruning.getFullYear(), pruning.getMonth(), pruning.getDate());
+  const diffDays = Math.floor((recordDay - pruningDay) / (24 * 60 * 60 * 1000));
+
+  return diffDays >= 0 ? diffDays : null;
+};
