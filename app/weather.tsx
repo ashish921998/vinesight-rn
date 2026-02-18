@@ -102,16 +102,16 @@ export default function WeatherScreen() {
     const firstFarmId = farms[0]?.id;
     return typeof firstFarmId === 'number' ? firstFarmId : null;
   }, [farms, requestedFarmId]);
+  const effectiveSelectedFarmId = selectedFarmId ?? defaultFarmId;
 
   // Get selected farm coordinates
   const selectedFarm = useMemo(() => {
     if (!farms || farms.length === 0) return null;
-    const effectiveSelectedFarmId = selectedFarmId ?? defaultFarmId;
     if (effectiveSelectedFarmId !== null) {
       return farms.find((f) => f.id === effectiveSelectedFarmId) || farms[0];
     }
     return farms[0];
-  }, [farms, selectedFarmId, defaultFarmId]);
+  }, [farms, effectiveSelectedFarmId]);
 
   // Fetch weather data
   const { weather, etc, alerts, irrigationSchedule, isLoading, error, refetch, isRefetching } =
@@ -331,7 +331,7 @@ export default function WeatherScreen() {
                     flexDirection: 'row',
                     alignItems: 'center',
                     backgroundColor:
-                      selectedFarmId === farm.id
+                      effectiveSelectedFarmId === farm.id
                         ? colorWithOpacity(m3.colorScheme.primary, 0.12)
                         : colors.surface[100],
                   }}
@@ -340,14 +340,18 @@ export default function WeatherScreen() {
                     style={{
                       flex: 1,
                       color:
-                        selectedFarmId === farm.id ? m3.colorScheme.primary : colors.surface[700],
+                        effectiveSelectedFarmId === farm.id
+                          ? m3.colorScheme.primary
+                          : colors.surface[700],
                       fontWeight:
-                        selectedFarmId === farm.id ? fontWeight.semibold : fontWeight.normal,
+                        effectiveSelectedFarmId === farm.id
+                          ? fontWeight.semibold
+                          : fontWeight.normal,
                     }}
                   >
                     {farm.name}
                   </Text>
-                  {selectedFarmId === farm.id && (
+                  {effectiveSelectedFarmId === farm.id && (
                     <Icon name="checkmark" size={20} color={m3.colorScheme.primary} />
                   )}
                 </Pressable>

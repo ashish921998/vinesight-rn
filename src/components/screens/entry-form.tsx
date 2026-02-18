@@ -751,16 +751,15 @@ export function EntryForm({
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
           const failedLog = pendingLogs[index];
-          const error = result.reason as Error;
-          const rawMessage =
-            error instanceof Error ? error.message : String(error ?? 'Unknown error');
-          const safeErrorMessage =
-            rawMessage.length > 200 ? `${rawMessage.slice(0, 200)}...` : rawMessage;
+          const error = result.reason;
+          const errorMeta = getFarmErrorMeta(error);
+          const errorName = error instanceof Error ? error.name : 'UnknownError';
           console.error('Failed to save pending log', {
             pendingLogId: failedLog?.id ?? null,
             logType: failedLog?.type ?? null,
-            errorName: error?.name,
-            errorMessage: safeErrorMessage,
+            errorName,
+            errorCode: errorMeta.code ?? null,
+            errorHint: errorMeta.hint ?? null,
           });
         }
       });
@@ -872,7 +871,7 @@ export function EntryForm({
         if (shouldCaptureFarmErrorInSentry(errorMeta)) {
           Sentry.withScope((scope) => {
             scope.setTag('feature', 'entry-log');
-            scope.setTag('pendingLogId', failedLogContext?.id ?? 'unknown');
+            scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
             scope.setTag('logType', failedLogContext?.type ?? 'unknown');
             scope.setExtra('errorMeta', errorMeta);
             Sentry.captureException(

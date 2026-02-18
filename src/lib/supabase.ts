@@ -141,11 +141,9 @@ export const supabase: SupabaseClient = (() => {
       },
     });
 
-    client.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'TOKEN_REFRESHED' && !session) {
-        if (authStorageKey) {
-          await ExpoSecureStoreAdapter.removeItem(authStorageKey);
-        }
+    client.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_OUT' && authStorageKey) {
+        await ExpoSecureStoreAdapter.removeItem(authStorageKey);
       }
     });
 

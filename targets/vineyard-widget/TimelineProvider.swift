@@ -40,10 +40,17 @@ struct Provider: TimelineProvider {
         // Load weather data and (new) config from payload
         var weather: WeatherData? = nil
         var config: WidgetConfig? = nil
-        if let data = defaults.data(forKey: "widgetData"),
-           let decoded = try? JSONDecoder().decode(WidgetDataPayload.self, from: data) {
-            weather = decoded.weather
-            config = decoded.config
+        if let data = defaults.data(forKey: "widgetData") {
+            if let decoded = try? JSONDecoder().decode(WidgetDataPayload.self, from: data) {
+                weather = decoded.weather
+                config = decoded.config
+            } else if let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let configObject = root["config"],
+                      let configData = try? JSONSerialization.data(withJSONObject: configObject),
+                      let extractedConfig = try? JSONDecoder().decode(WidgetConfig.self, from: configData) {
+                // Fallback: keep reading config even if WeatherData payload shape drifts.
+                config = extractedConfig
+            }
         }
         
         // Backward compatibility: if payload has no config, read legacy key
@@ -78,7 +85,7 @@ struct Provider: TimelineProvider {
             date: Date(),
             weather: nil,
             config: nil,
-            isStale: false
+            isStale: true
         )
     }
     

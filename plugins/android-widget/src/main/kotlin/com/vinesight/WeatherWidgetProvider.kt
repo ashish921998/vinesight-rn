@@ -37,6 +37,13 @@ class WeatherWidgetProvider : AppWidgetProvider() {
         // Called when the last widget instance is removed
         super.onDisabled(context)
     }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        super.onDeleted(context, appWidgetIds)
+        appWidgetIds.forEach { widgetId ->
+            WeatherWidgetManager.clearWidgetData(context, widgetId)
+        }
+    }
     
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
@@ -74,13 +81,13 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             
             // Update widget text with weather data
             if (widgetData != null) {
-                val displayText = buildString {
-                    appendLine("${Math.round(widgetData.temperature)}° ${widgetData.condition}")
-                    if (widgetData.location.isNotEmpty()) {
-                        appendLine(widgetData.location)
-                    }
-                    append("Humidity: ${Math.round(widgetData.humidity)}%")
+                val lines = mutableListOf<String>()
+                lines.add("${Math.round(widgetData.temperature)}° ${widgetData.condition}")
+                if (widgetData.location.isNotEmpty()) {
+                    lines.add(widgetData.location)
                 }
+                lines.add("Humidity: ${Math.round(widgetData.humidity)}%")
+                val displayText = lines.joinToString("\n")
                 views.setTextViewText(
                     R.id.widget_text,
                     displayText

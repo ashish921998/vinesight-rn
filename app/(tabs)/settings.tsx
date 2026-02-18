@@ -17,6 +17,8 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import * as Application from 'expo-application';
+import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
 import { useProfile, useUpdateProfile, useCurrency, isIOS } from '@/hooks';
@@ -91,6 +93,16 @@ export default function SettingsScreen() {
   const m3 = useM3();
   const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
   const { t } = useTranslation();
+  const appVersion =
+    Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? 'unknown';
+  const appBuild =
+    Application.nativeBuildVersion ??
+    String(
+      Constants.expoConfig?.ios?.buildNumber ?? Constants.expoConfig?.android?.versionCode ?? '',
+    );
+  const appVersionLabel = appBuild
+    ? `Vinesight v${appVersion} (${appBuild})`
+    : `Vinesight v${appVersion}`;
 
   const {
     user,
@@ -786,7 +798,7 @@ export default function SettingsScreen() {
           textBreakStrategy="highQuality"
           lineBreakStrategyIOS="standard"
         >
-          Vinesight v1.0.0
+          {appVersionLabel}
         </Text>
         <Text
           style={styles.appVersionSubtitle}
@@ -973,7 +985,7 @@ export default function SettingsScreen() {
 
             <ScrollView
               style={styles.flex1}
-              contentContainerStyle={{ padding: 16 }}
+              contentContainerStyle={{ padding: spacing[4] }}
               contentInsetAdjustmentBehavior="automatic"
               automaticallyAdjustKeyboardInsets={isIOS}
               keyboardShouldPersistTaps="handled"

@@ -254,7 +254,7 @@ const withWidgetResources = (config) => {
 
       if (!fs.existsSync(widgetLayoutPath)) {
         const widgetLayoutContent = `<?xml version="1.0" encoding="utf-8"?>
-  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -271,7 +271,7 @@ const withWidgetResources = (config) => {
         android:textStyle="bold"
         android:textColor="#FFFFFF"
         android:gravity="center" />
-        
+
 </LinearLayout>`;
         fs.writeFileSync(widgetLayoutPath, widgetLayoutContent);
       }

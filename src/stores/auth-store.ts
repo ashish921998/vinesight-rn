@@ -536,7 +536,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
       telemetry.reset();
       queryClient.clear();
-      await queryPersister.removeClient();
+      try {
+        await queryPersister.removeClient();
+      } catch (_persisterError) {
+        // Best effort: sign-out should still succeed if cache persistence cleanup fails.
+        if (__DEV__) {
+          console.error('Failed to remove persisted query cache during sign out success path');
+        }
+      }
 
       // Force clear any cached sessions from storage
       try {
@@ -565,7 +572,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
       telemetry.reset();
       queryClient.clear();
-      await queryPersister.removeClient();
+      try {
+        await queryPersister.removeClient();
+      } catch (_persisterError) {
+        // Best effort: local auth state has already been cleared.
+        if (__DEV__) {
+          console.error('Failed to remove persisted query cache during sign out recovery path');
+        }
+      }
     }
   },
 
