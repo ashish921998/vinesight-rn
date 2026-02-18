@@ -255,7 +255,7 @@ const withWidgetResources = (config) => {
       if (!fs.existsSync(widgetInfoPath)) {
         const widgetInfoContent = `<?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="250dp"
+    android:minWidth="180dp"
     android:minHeight="110dp"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_weather"
@@ -325,6 +325,8 @@ const withWidgetResources = (config) => {
       const widgetStrings = [
         '<string name="widget_temp_condition">%1$d° %2$s</string>',
         '<string name="widget_humidity">Humidity: %1$d%%</string>',
+        '<string name="widget_loading">Loading weather...</string>',
+        '<string name="widget_error">Unable to load weather</string>',
         '<string name="widget_no_weather_data">No weather data</string>',
       ];
 

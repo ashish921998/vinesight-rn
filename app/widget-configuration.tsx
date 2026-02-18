@@ -134,7 +134,10 @@ export default function WidgetConfigurationScreen() {
           if (typeof syncFarmId !== 'number') return;
           // Transform service data to widget format before syncing
           const widgetData = mapServiceWeatherToWidget(serviceData, syncFarmId, farm.name);
-          await WidgetSyncService.syncWeather(widgetData);
+          await WidgetSyncService.syncWeather(widgetData, {
+            selectedFarmId: syncFarmId,
+            selectedFarmName: farm.name,
+          });
         }
       }
     } catch (syncError) {

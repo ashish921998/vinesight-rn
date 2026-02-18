@@ -12,10 +12,11 @@ export class WidgetSyncService {
   /**
    * Sync weather data to the widget
    */
-  static async syncWeather(weatherData: WeatherWidgetData): Promise<void> {
+  static async syncWeather(weatherData: WeatherWidgetData, config?: WidgetConfig): Promise<void> {
     try {
       const payload: WidgetDataPayload = {
         weather: weatherData,
+        config,
       };
 
       const jsonString = JSON.stringify(payload);

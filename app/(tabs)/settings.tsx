@@ -395,7 +395,6 @@ export default function SettingsScreen() {
   };
 
   const handleSendPhoneLinkCode = async () => {
-    clearError();
     const phone = buildE164PhoneNumber();
     if (!phone) {
       setLinkPhoneLocalError(
@@ -403,6 +402,7 @@ export default function SettingsScreen() {
       );
       return;
     }
+    clearError();
     setLinkPhoneLocalError(null);
     setIsPhoneLinkCodeStep(true);
     try {

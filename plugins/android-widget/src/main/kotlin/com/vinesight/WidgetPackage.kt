@@ -38,8 +38,16 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
 
   @ReactMethod
   fun updateWidget(payloadJson: String, promise: Promise) {
+    val context = reactApplicationContext
+    val appWidgetManager = AppWidgetManager.getInstance(context)
+    val widgetIds = getWidgetIds(context)
+
     try {
-      val context = reactApplicationContext
+      widgetIds.forEach { widgetId ->
+        WeatherWidgetManager.saveWidgetStatus(context, widgetId, WeatherWidgetManager.WeatherWidgetStatus.LOADING)
+        WeatherWidgetProvider.updateWidget(context, appWidgetManager, widgetId)
+      }
+
       val payload = JSONObject(payloadJson)
       val weather = payload.optJSONObject("weather") ?: payload
       val current = weather.optJSONObject("current")
@@ -51,13 +59,8 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
         windSpeed = current?.optDouble("windSpeed", 0.0) ?: 0.0,
         location = weather.optString("farmName", ""),
         lastUpdated = weather.optLong("lastUpdated", System.currentTimeMillis()),
+        status = WeatherWidgetManager.WeatherWidgetStatus.READY
       )
-
-      val appWidgetManager = AppWidgetManager.getInstance(context)
-      val componentName = ComponentName(context, WeatherWidgetProvider::class.java)
-      val activeWidgetIds = appWidgetManager.getAppWidgetIds(componentName).toSet()
-      val storedWidgetIds = WeatherWidgetManager.getAllWidgetIds(context).toSet()
-      val widgetIds = (activeWidgetIds + storedWidgetIds).toList()
 
       widgetIds.forEach { widgetId ->
         WeatherWidgetManager.saveWidgetData(context, widgetId, widgetData)
@@ -70,6 +73,10 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
       }
       promise.resolve(response)
     } catch (e: Exception) {
+      widgetIds.forEach { widgetId ->
+        WeatherWidgetManager.saveWidgetStatus(context, widgetId, WeatherWidgetManager.WeatherWidgetStatus.ERROR)
+        WeatherWidgetProvider.updateWidget(context, appWidgetManager, widgetId)
+      }
       promise.reject("UPDATE_ERROR", e.message, e)
     }
   }
@@ -114,6 +121,14 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
 
   private fun getPrefs(context: Context) =
     context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+  private fun getWidgetIds(context: Context): List<Int> {
+    val appWidgetManager = AppWidgetManager.getInstance(context)
+    val componentName = ComponentName(context, WeatherWidgetProvider::class.java)
+    val activeWidgetIds = appWidgetManager.getAppWidgetIds(componentName).toSet()
+    val storedWidgetIds = WeatherWidgetManager.getAllWidgetIds(context).toSet()
+    return (activeWidgetIds + storedWidgetIds).toList()
+  }
 
   companion object {
     private const val PREFS_NAME = "com.vinesight.widget.prefs"

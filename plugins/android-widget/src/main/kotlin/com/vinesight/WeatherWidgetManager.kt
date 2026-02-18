@@ -16,6 +16,12 @@ object WeatherWidgetManager {
     
     private const val PREFS_NAME = "com.vinesight.widget.prefs"
     private const val UPDATES_ENABLED_KEY = "updates_enabled"
+
+    enum class WeatherWidgetStatus {
+        LOADING,
+        ERROR,
+        READY
+    }
     
     /**
      * Data class representing weather information for the widget
@@ -26,7 +32,8 @@ object WeatherWidgetManager {
         val humidity: Double,
         val windSpeed: Double,
         val location: String,
-        val lastUpdated: Long
+        val lastUpdated: Long,
+        val status: WeatherWidgetStatus = WeatherWidgetStatus.READY
     )
     
     /**
@@ -41,6 +48,7 @@ object WeatherWidgetManager {
             put("windSpeed", data.windSpeed)
             put("location", data.location)
             put("lastUpdated", data.lastUpdated)
+            put("status", data.status.name)
         }
         prefs.edit().putString("widget_$widgetId", json.toString()).apply()
     }
@@ -60,12 +68,29 @@ object WeatherWidgetManager {
                 humidity = json.optDouble("humidity", 0.0),
                 windSpeed = json.optDouble("windSpeed", 0.0),
                 location = json.optString("location", ""),
-                lastUpdated = json.optLong("lastUpdated", 0L)
+                lastUpdated = json.optLong("lastUpdated", 0L),
+                status = WeatherWidgetStatus.values().firstOrNull {
+                    it.name == json.optString("status", WeatherWidgetStatus.READY.name)
+                } ?: WeatherWidgetStatus.READY
             )
         } catch (e: Exception) {
             android.util.Log.e("WeatherWidgetManager", "Failed to parse widget data for ID $widgetId", e)
             null
         }
+    }
+
+    fun saveWidgetStatus(context: Context, widgetId: Int, status: WeatherWidgetStatus) {
+        val existing = getWidgetData(context, widgetId)
+        val base = existing ?: WeatherWidgetData(
+            temperature = 0.0,
+            condition = "",
+            humidity = 0.0,
+            windSpeed = 0.0,
+            location = "",
+            lastUpdated = System.currentTimeMillis(),
+            status = status
+        )
+        saveWidgetData(context, widgetId, base.copy(status = status, lastUpdated = System.currentTimeMillis()))
     }
     
     /**

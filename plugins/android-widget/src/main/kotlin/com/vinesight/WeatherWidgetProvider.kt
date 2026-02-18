@@ -82,28 +82,44 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             
             // Update widget text with weather data
             if (widgetData != null) {
-                val lines = mutableListOf<String>()
-                lines.add(
-                    context.getString(
-                        R.string.widget_temp_condition,
-                        widgetData.temperature.roundToInt(),
-                        widgetData.condition
-                    )
-                )
-                if (widgetData.location.isNotEmpty()) {
-                    lines.add(widgetData.location)
+                when (widgetData.status) {
+                    WeatherWidgetManager.WeatherWidgetStatus.LOADING -> {
+                        views.setTextViewText(
+                            R.id.widget_text,
+                            context.getString(R.string.widget_loading)
+                        )
+                    }
+                    WeatherWidgetManager.WeatherWidgetStatus.ERROR -> {
+                        views.setTextViewText(
+                            R.id.widget_text,
+                            context.getString(R.string.widget_error)
+                        )
+                    }
+                    WeatherWidgetManager.WeatherWidgetStatus.READY -> {
+                        val lines = mutableListOf<String>()
+                        lines.add(
+                            context.getString(
+                                R.string.widget_temp_condition,
+                                widgetData.temperature.roundToInt(),
+                                widgetData.condition
+                            )
+                        )
+                        if (widgetData.location.isNotEmpty()) {
+                            lines.add(widgetData.location)
+                        }
+                        lines.add(
+                            context.getString(
+                                R.string.widget_humidity,
+                                widgetData.humidity.roundToInt()
+                            )
+                        )
+                        val displayText = lines.joinToString("\n")
+                        views.setTextViewText(
+                            R.id.widget_text,
+                            displayText
+                        )
+                    }
                 }
-                lines.add(
-                    context.getString(
-                        R.string.widget_humidity,
-                        widgetData.humidity.roundToInt()
-                    )
-                )
-                val displayText = lines.joinToString("\n")
-                views.setTextViewText(
-                    R.id.widget_text,
-                    displayText
-                )
             } else {
                 views.setTextViewText(
                     R.id.widget_text,
