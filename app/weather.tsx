@@ -81,7 +81,7 @@ export default function WeatherScreen() {
       medium: { bg: colorWithOpacity(colors.warning, 0.18), text: colors.warning },
       high: { bg: colorWithOpacity(m3.colorScheme.error, 0.16), text: m3.colorScheme.error },
     }),
-    [colors.success, colors.warning, m3],
+    [colors.success, colors.warning, m3.colorScheme.error],
   );
 
   const requestedFarmId = useMemo(() => {

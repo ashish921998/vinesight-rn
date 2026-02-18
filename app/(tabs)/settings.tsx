@@ -395,6 +395,7 @@ export default function SettingsScreen() {
   };
 
   const handleSendPhoneLinkCode = async () => {
+    clearError();
     const phone = buildE164PhoneNumber();
     if (!phone) {
       setLinkPhoneLocalError(
@@ -402,8 +403,6 @@ export default function SettingsScreen() {
       );
       return;
     }
-    setShowLinkPhoneModal(true);
-    clearError();
     setLinkPhoneLocalError(null);
     setIsPhoneLinkCodeStep(true);
     try {
@@ -411,11 +410,9 @@ export default function SettingsScreen() {
       const { errorMessage, phoneLinkingPending: stillPending } = useAuthStore.getState();
       if (errorMessage || !stillPending) {
         setIsPhoneLinkCodeStep(false);
-        setShowLinkPhoneModal(true);
       }
     } catch {
       setIsPhoneLinkCodeStep(false);
-      setShowLinkPhoneModal(true);
     }
   };
 
@@ -1090,14 +1087,14 @@ export default function SettingsScreen() {
                   </View>
                 )}
 
-                {authErrorMessage || linkPhoneLocalError ? (
+                {linkPhoneLocalError || authErrorMessage ? (
                   <View style={[styles.alertBox, styles.dangerAlert, { marginBottom: 0 }]}>
                     <Text
                       style={styles.alertText}
                       textBreakStrategy="highQuality"
                       lineBreakStrategyIOS="standard"
                     >
-                      {authErrorMessage || linkPhoneLocalError}
+                      {linkPhoneLocalError ?? authErrorMessage}
                     </Text>
                   </View>
                 ) : null}

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import com.vinesight.app.R
+import kotlin.math.roundToInt
 
 /**
  * Weather Widget Provider for Home Screen Widgets
@@ -82,11 +83,11 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             // Update widget text with weather data
             if (widgetData != null) {
                 val lines = mutableListOf<String>()
-                lines.add("${Math.round(widgetData.temperature)}° ${widgetData.condition}")
+                lines.add("${widgetData.temperature.roundToInt()}° ${widgetData.condition}")
                 if (widgetData.location.isNotEmpty()) {
                     lines.add(widgetData.location)
                 }
-                lines.add("Humidity: ${Math.round(widgetData.humidity)}%")
+                lines.add("Humidity: ${widgetData.humidity.roundToInt()}%")
                 val displayText = lines.joinToString("\n")
                 views.setTextViewText(
                     R.id.widget_text,

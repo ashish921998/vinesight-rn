@@ -89,6 +89,11 @@ export default function PhoneLoginScreen() {
     }
   }, [pendingOTPPhone, phoneAuthMode]);
 
+  const normalizedPhoneNumber = useMemo(
+    () => buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber),
+    [selectedCountry.dialCode, phoneNumber],
+  );
+
   useEffect(() => {
     if (isAuthenticated && needsProfileCompletion) {
       router.replace('/(auth)/profile-completion');
@@ -98,7 +103,7 @@ export default function PhoneLoginScreen() {
   }, [isAuthenticated, needsProfileCompletion]);
 
   const handleSendCode = async () => {
-    const fullPhoneNumber = buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber);
+    const fullPhoneNumber = normalizedPhoneNumber;
     if (!fullPhoneNumber) {
       setLocalPhoneError(
         t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid phone number' }),
@@ -402,11 +407,7 @@ export default function PhoneLoginScreen() {
                 title={t('authPhone.sendCode')}
                 onPress={handleSendCode}
                 isLoading={isLoading}
-                disabled={
-                  !phoneNumber ||
-                  !buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber) ||
-                  isLoading
-                }
+                disabled={!phoneNumber || !normalizedPhoneNumber || isLoading}
                 style={{ marginTop: spacing[4] }}
               />
             </View>

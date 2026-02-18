@@ -759,7 +759,7 @@ export function EntryForm({
             logType: failedLog?.type ?? null,
             errorName,
             errorCode: errorMeta.code ?? null,
-            errorHint: errorMeta.hint ?? null,
+            ...(__DEV__ ? { errorHint: errorMeta.hint ?? null } : {}),
           });
         }
       });
@@ -829,14 +829,20 @@ export function EntryForm({
             });
           } catch (taskUpdateError) {
             taskCompletionUpdateFailed = true;
-            console.error('Task completion update failed after log save:', taskUpdateError);
+            const taskUpdateErrorMeta = getFarmErrorMeta(taskUpdateError);
+            const taskUpdateErrorName =
+              taskUpdateError instanceof Error ? taskUpdateError.name : 'UnknownError';
+            console.error('Task completion update failed after log save', {
+              errorName: taskUpdateErrorName,
+              errorCode: taskUpdateErrorMeta.code ?? null,
+              ...(__DEV__ ? { errorHint: taskUpdateErrorMeta.hint ?? null } : {}),
+            });
 
-            const errorMeta = getFarmErrorMeta(taskUpdateError);
-            if (shouldCaptureFarmErrorInSentry(errorMeta)) {
+            if (shouldCaptureFarmErrorInSentry(taskUpdateErrorMeta)) {
               Sentry.withScope((scope) => {
                 scope.setTag('feature', 'entry-log');
                 scope.setExtra('taskId', sourceTaskId);
-                scope.setExtra('errorMeta', errorMeta);
+                scope.setExtra('errorMeta', { code: taskUpdateErrorMeta.code ?? null });
                 Sentry.captureException(
                   taskUpdateError instanceof Error
                     ? taskUpdateError
@@ -873,7 +879,7 @@ export function EntryForm({
             scope.setTag('feature', 'entry-log');
             scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
             scope.setTag('logType', failedLogContext?.type ?? 'unknown');
-            scope.setExtra('errorMeta', errorMeta);
+            scope.setExtra('errorMeta', { code: errorMeta.code ?? null });
             Sentry.captureException(
               firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
             );

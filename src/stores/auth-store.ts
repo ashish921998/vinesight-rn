@@ -629,6 +629,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
       });
+      telemetry.reset();
+      queryClient.clear();
+      try {
+        await queryPersister.removeClient();
+      } catch (_persisterError) {
+        if (__DEV__) {
+          console.error('Failed to remove persisted query cache during delete account');
+        }
+      }
 
       if (__DEV__) {
         console.log('Account deletion request logged successfully');
