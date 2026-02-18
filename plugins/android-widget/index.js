@@ -1,57 +1,112 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-const { withMainApplication, withAndroidManifest, AndroidConfig } = require('@expo/config-plugins');
+const { withAndroidManifest, withDangerousMod, AndroidConfig } = require('@expo/config-plugins');
+const fs = require('fs');
+const path = require('path');
 
 const { getMainApplicationOrThrow } = AndroidConfig.Manifest;
+
+/**
+ * Helper function to modify Kotlin files
+ */
+function withMainApplicationKotlin(config) {
+  return withDangerousMod(config, [
+    'android',
+    (config) => {
+      const applicationPath = path.join(
+        config.modRequest.platformProjectRoot,
+        'app',
+        'src',
+        'main',
+        'java',
+        'com',
+        'vinesight',
+        'app',
+        'MainApplication.kt',
+      );
+
+      let contents = fs.readFileSync(applicationPath, 'utf8');
+
+      // Check if already modified
+      if (contents.includes('com.vinesight.WidgetPackage')) {
+        return config;
+      }
+
+      // Add import statement after the last import
+      const importStatement = 'import com.vinesight.WidgetPackage';
+      const lastImportIndex = contents.lastIndexOf('\nimport ');
+      if (lastImportIndex !== -1) {
+        const lastImportEnd = contents.indexOf('\n', lastImportIndex + 1);
+        contents =
+          contents.substring(0, lastImportEnd) +
+          '\n' +
+          importStatement +
+          contents.substring(lastImportEnd);
+      }
+
+      // Add package to getPackages() method
+      const packageAddition = '              add(WidgetPackage())';
+
+      // Find the packages.apply block and add before the closing brace
+      const packagesMatch = contents.match(
+        /PackageList\(this\)\.packages\.apply \{[\s\S]*?\n\s*\}/m,
+      );
+      if (packagesMatch) {
+        const applyBlock = packagesMatch[0];
+        const newApplyBlock = applyBlock.replace(/(\n\s*\})$/, '\n' + packageAddition + '$1');
+        contents = contents.replace(applyBlock, newApplyBlock);
+      }
+
+      fs.writeFileSync(applicationPath, contents);
+
+      return config;
+    },
+  ]);
+}
 
 /**
  * Expo Config Plugin for Android Home Screen Widget Support
  *
  * This plugin:
- * 1. Registers WidgetPackage in MainApplication.java
+ * 1. Registers WidgetPackage in MainApplication.kt
  * 2. Adds WeatherWidgetProvider receiver to AndroidManifest.xml
  */
 
 /**
- * Adds WidgetPackage import and registration to MainApplication.java
+ * Copies Kotlin source files to the Android project
  */
-const withWidgetPackage = (config) => {
-  return withMainApplication(config, (config) => {
-    const { modResults } = config;
-    let { contents } = modResults;
+const withKotlinSources = (config) => {
+  return withDangerousMod(config, [
+    'android',
+    (config) => {
+      const pluginPath = path.join(__dirname, 'src/main/kotlin/com/vinesight');
+      const targetPath = path.join(
+        config.modRequest.platformProjectRoot,
+        'app',
+        'src',
+        'main',
+        'java',
+        'com',
+        'vinesight',
+      );
 
-    // Check if already modified
-    if (contents.includes('com.vinesight.WidgetPackage')) {
+      // Create target directory if it doesn't exist
+      if (!fs.existsSync(targetPath)) {
+        fs.mkdirSync(targetPath, { recursive: true });
+      }
+
+      // Copy all Kotlin files from plugin to target
+      const files = fs.readdirSync(pluginPath);
+      for (const file of files) {
+        if (file.endsWith('.kt')) {
+          const srcFile = path.join(pluginPath, file);
+          const destFile = path.join(targetPath, file);
+          fs.copyFileSync(srcFile, destFile);
+        }
+      }
+
       return config;
-    }
-
-    // Add import statement after the last import
-    const importStatement = 'import com.vinesight.WidgetPackage;';
-    const lastImportMatch = contents.match(/import .*;/g);
-    if (lastImportMatch && lastImportMatch.length > 0) {
-      const lastImport = lastImportMatch[lastImportMatch.length - 1];
-      contents = contents.replace(lastImport, `${lastImport}\n${importStatement}`);
-    }
-
-    // Add package to getPackages() method
-    // Look for the line that returns the packages list and add our package before the closing bracket
-    const packageAddition = '      packages.add(new WidgetPackage());';
-
-    // Find the pattern where packages are added and add our package
-    // Look for "return packages;" or similar and add before it
-    const returnPackagesMatch = contents.match(
-      /(packages\.add\([^)]+\);\s*)+(?=\s*return packages;)/,
-    );
-    if (returnPackagesMatch) {
-      const existingAdditions = returnPackagesMatch[0];
-      contents = contents.replace(existingAdditions, `${existingAdditions}\n${packageAddition}`);
-    } else {
-      // Alternative: find "return packages;" and add before it
-      contents = contents.replace(/return packages;/g, `${packageAddition}\n    return packages;`);
-    }
-
-    modResults.contents = contents;
-    return config;
-  });
+    },
+  ]);
 };
 
 /**
@@ -110,10 +165,79 @@ const withWidgetReceiver = (config) => {
 };
 
 /**
+ * Creates the widget XML resource file
+ *
+ * NOTE: XML files are only created if they don't exist. This prevents overwriting
+ * user customizations, but also means template updates won't apply to existing builds.
+ */
+const withWidgetResources = (config) => {
+  return withDangerousMod(config, [
+    'android',
+    (config) => {
+      const resPath = path.join(config.modRequest.platformProjectRoot, 'app', 'src', 'main', 'res');
+      const xmlPath = path.join(resPath, 'xml');
+      const widgetInfoPath = path.join(xmlPath, 'weather_widget_info.xml');
+
+      // Create xml directory if it doesn't exist
+      if (!fs.existsSync(xmlPath)) {
+        fs.mkdirSync(xmlPath, { recursive: true });
+      }
+
+      // Create widget info XML if it doesn't exist
+      if (!fs.existsSync(widgetInfoPath)) {
+        const widgetInfoContent = `<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_weather"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen">
+</appwidget-provider>`;
+        fs.writeFileSync(widgetInfoPath, widgetInfoContent);
+      }
+
+      // Create layout directory and widget layout if needed
+      const layoutPath = path.join(resPath, 'layout');
+      const widgetLayoutPath = path.join(layoutPath, 'widget_weather.xml');
+
+      if (!fs.existsSync(layoutPath)) {
+        fs.mkdirSync(layoutPath, { recursive: true });
+      }
+
+      if (!fs.existsSync(widgetLayoutPath)) {
+        const widgetLayoutContent = `<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+    
+    <TextView
+        android:id="@+id/widget_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Weather Widget"
+        android:textSize="16sp"
+        android:textColor="@android:color/black" />
+        
+</LinearLayout>`;
+        fs.writeFileSync(widgetLayoutPath, widgetLayoutContent);
+      }
+
+      return config;
+    },
+  ]);
+};
+
+/**
  * Main plugin function
  */
 const withAndroidWidget = (config) => {
-  config = withWidgetPackage(config);
+  config = withWidgetResources(config);
+  config = withKotlinSources(config);
+  config = withMainApplicationKotlin(config);
   config = withWidgetReceiver(config);
   return config;
 };
