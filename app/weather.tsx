@@ -79,13 +79,20 @@ export default function WeatherScreen() {
   const [showFarmPicker, setShowFarmPicker] = useState(false);
   const [showGrowthPicker, setShowGrowthPicker] = useState(false);
   const [showSoilPicker, setShowSoilPicker] = useState(false);
+  const authRedirectPath = useMemo(
+    () => (farmIdParam ? `/weather?farmId=${encodeURIComponent(farmIdParam)}` : '/weather'),
+    [farmIdParam],
+  );
 
   useEffect(() => {
     if (isLoadingAuth) return;
     if (!isAuthenticated) {
-      router.replace('/(auth)/login');
+      router.replace({
+        pathname: '/(auth)/login',
+        params: { redirect: authRedirectPath },
+      });
     }
-  }, [isAuthenticated, isLoadingAuth, router]);
+  }, [isAuthenticated, isLoadingAuth, router, authRedirectPath]);
 
   const urgencyColors = useMemo(
     () => ({
@@ -122,10 +129,9 @@ export default function WeatherScreen() {
   // Get selected farm coordinates
   const selectedFarm = useMemo(() => {
     if (!farms || farms.length === 0) return null;
-    if (effectiveSelectedFarmId !== null) {
-      return farms.find((f) => f.id === effectiveSelectedFarmId) || farms[0];
-    }
-    return farms[0];
+    return effectiveSelectedFarmId !== null
+      ? (farms.find((f) => f.id === effectiveSelectedFarmId) ?? farms[0])
+      : farms[0];
   }, [farms, effectiveSelectedFarmId]);
 
   // Fetch weather data

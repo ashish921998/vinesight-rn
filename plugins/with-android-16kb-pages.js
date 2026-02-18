@@ -17,7 +17,16 @@ const withAndroid16kbPages = (config) => {
     'android',
     (config) => {
       const buildGradlePath = path.join(config.modRequest.platformProjectRoot, 'build.gradle');
-      let contents = fs.readFileSync(buildGradlePath, 'utf8');
+      let contents;
+      try {
+        contents = fs.readFileSync(buildGradlePath, 'utf8');
+      } catch (error) {
+        console.warn(
+          `[with-android-16kb-pages] Failed to read build.gradle at ${buildGradlePath}:`,
+          error,
+        );
+        return config;
+      }
 
       const marker = '// [16KB Page Size Support]';
       if (contents.includes(marker)) {
@@ -55,7 +64,14 @@ subprojects { sub ->
 `;
 
       contents += snippet;
-      fs.writeFileSync(buildGradlePath, contents);
+      try {
+        fs.writeFileSync(buildGradlePath, contents);
+      } catch (error) {
+        console.warn(
+          `[with-android-16kb-pages] Failed to write build.gradle at ${buildGradlePath}:`,
+          error,
+        );
+      }
 
       return config;
     },

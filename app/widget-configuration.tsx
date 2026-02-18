@@ -100,7 +100,19 @@ export default function WidgetConfigurationScreen() {
       await saveConfig(farmId, selectedFarm.name);
 
       // Fetch and sync weather data for selected farm
-      await syncWeatherForFarm(farmId, latitude, longitude);
+      try {
+        await syncWeatherForFarm(farmId, latitude, longitude);
+      } catch (_syncError) {
+        Alert.alert(
+          t('widgetConfig.successTitle', 'Widget Configured'),
+          t(
+            'widgetConfig.partialSyncMessage',
+            'Widget configured, but weather data could not be synced. It will update automatically later.',
+          ),
+          [{ text: t('common.ok', 'OK') }],
+        );
+        return;
+      }
 
       // Track widget configuration
       telemetry.capture('widget_configured', {

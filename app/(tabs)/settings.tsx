@@ -1045,7 +1045,13 @@ export default function SettingsScreen() {
                       </Pressable>
                       <TextInput
                         value={linkPhoneInput}
-                        onChangeText={(value) => setLinkPhoneInput(sanitizeLocalPhoneInput(value))}
+                        onChangeText={(value) => {
+                          if (value.trim().startsWith('+')) {
+                            setPhoneFormFromValue(value);
+                            return;
+                          }
+                          setLinkPhoneInput(sanitizeLocalPhoneInput(value));
+                        }}
                         placeholder={t('settings.linkPhone.phonePlaceholder')}
                         placeholderTextColor={colors.gray[400]}
                         keyboardType="phone-pad"

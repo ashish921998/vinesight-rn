@@ -13,7 +13,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -57,7 +57,11 @@ const DEFAULT_COUNTRY = COUNTRIES[0]; // India
 export default function PhoneLoginScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
-  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const { mode, redirect } = useLocalSearchParams<{ mode?: string; redirect?: string }>();
+  const redirectPath = useMemo(() => {
+    if (typeof redirect === 'string' && redirect.startsWith('/')) return redirect;
+    return '/';
+  }, [redirect]);
   const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
 
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -82,12 +86,17 @@ export default function PhoneLoginScreen() {
       lastNavigatedPhoneRef.current = pendingOTPPhone;
       router.push({
         pathname: '/(auth)/otp-verification',
-        params: { phone: pendingOTPPhone, channel: 'phone', mode: phoneAuthMode },
+        params: {
+          phone: pendingOTPPhone,
+          channel: 'phone',
+          mode: phoneAuthMode,
+          redirect: redirectPath,
+        },
       });
     } else if (!pendingOTPPhone) {
       lastNavigatedPhoneRef.current = null;
     }
-  }, [pendingOTPPhone, phoneAuthMode]);
+  }, [pendingOTPPhone, phoneAuthMode, redirectPath]);
 
   const normalizedPhoneNumber = useMemo(
     () => buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber),
@@ -98,9 +107,9 @@ export default function PhoneLoginScreen() {
     if (isAuthenticated && needsProfileCompletion) {
       router.replace('/(auth)/profile-completion');
     } else if (isAuthenticated) {
-      router.replace('/');
+      router.replace(redirectPath as Href);
     }
-  }, [isAuthenticated, needsProfileCompletion]);
+  }, [isAuthenticated, needsProfileCompletion, redirectPath]);
 
   const handleSendCode = async () => {
     const fullPhoneNumber = normalizedPhoneNumber;
