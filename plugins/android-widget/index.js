@@ -276,6 +276,32 @@ const withWidgetResources = (config) => {
         fs.writeFileSync(widgetLayoutPath, widgetLayoutContent);
       }
 
+      // Ensure strings.xml includes widget text resources
+      const valuesPath = path.join(resPath, 'values');
+      const stringsPath = path.join(valuesPath, 'strings.xml');
+      if (!fs.existsSync(valuesPath)) {
+        fs.mkdirSync(valuesPath, { recursive: true });
+      }
+      let stringsContent = fs.existsSync(stringsPath)
+        ? fs.readFileSync(stringsPath, 'utf8')
+        : '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+
+      const widgetStrings = [
+        '<string name="widget_temp_condition">%1$d° %2$s</string>',
+        '<string name="widget_humidity">Humidity: %1$d%%</string>',
+        '<string name="widget_no_weather_data">No weather data</string>',
+      ];
+
+      widgetStrings.forEach((entry) => {
+        const nameMatch = entry.match(/name="([^"]+)"/);
+        const key = nameMatch?.[1];
+        if (!key) return;
+        if (!stringsContent.includes(`name="${key}"`)) {
+          stringsContent = stringsContent.replace('</resources>', `  ${entry}\n</resources>`);
+        }
+      });
+      fs.writeFileSync(stringsPath, stringsContent);
+
       return config;
     },
   ]);

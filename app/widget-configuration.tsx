@@ -13,10 +13,34 @@ import { Button } from '@/components/ui';
 import { useFarms } from '@/hooks';
 import { useWidgetConfig } from '@/hooks/use-widget-config';
 import { WidgetSyncService } from '@/services/widget-sync-service';
+import { WeatherService } from '@/services/weather-service';
+import type { WeatherWidgetData } from '@/types/widget';
 
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 import { telemetry } from '@/services/telemetry';
+
+interface ServiceWeatherData {
+  current: {
+    temperature: number;
+    condition: string;
+    humidity: number;
+    windSpeed: number;
+    icon?: string;
+    conditionCode?: number;
+  };
+  forecast: Array<{
+    date?: string;
+    day?: string;
+    maxTemp?: number;
+    high?: number;
+    minTemp?: number;
+    low?: number;
+    condition: string;
+    icon?: string;
+    conditionCode?: number;
+  }>;
+}
 
 export default function WidgetConfigurationScreen() {
   const { t } = useTranslation();
@@ -110,28 +134,31 @@ export default function WidgetConfigurationScreen() {
     }
   };
 
-  const fetchWeatherForFarm = async (_latitude?: number, _longitude?: number) => {
-    // Use existing weather service to fetch data
-    // This is a simplified version - in production, you'd use the actual weather service
-    try {
-      // Mock weather data for now - replace with actual API call using _latitude/_longitude
-      return {
-        current: {
-          temperature: 72,
-          condition: 'Partly Cloudy',
-          humidity: 65,
-          windSpeed: 12,
-          icon: 'partly-cloudy',
-        },
-        forecast: [
-          { day: 'Tue', high: 75, low: 60, condition: 'Sunny', icon: 'sunny' },
-          { day: 'Wed', high: 68, low: 58, condition: 'Rainy', icon: 'rainy' },
-          { day: 'Thu', high: 78, low: 62, condition: 'Sunny', icon: 'sunny' },
-        ],
-      };
-    } catch (_fetchError) {
-      return null;
+  const fetchWeatherForFarm = async (
+    latitude?: number,
+    longitude?: number,
+  ): Promise<ServiceWeatherData> => {
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      throw new Error('Missing farm coordinates for widget weather sync');
     }
+
+    const weatherData = await WeatherService.getWeatherData(latitude, longitude, 3);
+    return {
+      current: {
+        temperature: weatherData.current.temperature,
+        condition: weatherData.current.condition,
+        humidity: weatherData.current.humidity,
+        windSpeed: weatherData.current.windSpeed,
+        conditionCode: weatherData.current.conditionCode,
+      },
+      forecast: weatherData.forecast.slice(0, 3).map((day) => ({
+        date: day.date,
+        maxTemp: day.maxTemp,
+        minTemp: day.minTemp,
+        condition: day.condition,
+        conditionCode: day.conditionCode,
+      })),
+    };
   };
 
   /**
@@ -140,31 +167,22 @@ export default function WidgetConfigurationScreen() {
    * Widget: { day, high, low, condition, icon }
    */
   const mapServiceWeatherToWidget = (
-    serviceData: {
-      current: {
-        temperature: number;
-        condition: string;
-        humidity: number;
-        windSpeed: number;
-        icon: string;
-      };
-      forecast: Array<{
-        date?: string;
-        day?: string;
-        maxTemp?: number;
-        high?: number;
-        minTemp?: number;
-        low?: number;
-        condition: string;
-        icon: string;
-      }>;
-    },
+    serviceData: ServiceWeatherData,
     farmId: number,
     farmName: string,
-  ): import('@/types/widget').WeatherWidgetData => {
+  ): WeatherWidgetData => {
     const today = new Date();
+    const deriveIcon = (condition: string): string => {
+      const lower = condition.toLowerCase();
+      if (lower.includes('sun') || lower.includes('clear')) return 'sunny';
+      if (lower.includes('partly')) return 'partly-cloudy';
+      if (lower.includes('cloud')) return 'cloudy';
+      if (lower.includes('rain') || lower.includes('drizzle')) return 'rainy';
+      return 'partly-cloudy';
+    };
     const formatDay = (dateStr: string): string => {
       const date = new Date(dateStr);
+      if (Number.isNaN(date.getTime())) return '';
       return date.toLocaleDateString(undefined, { weekday: 'short' });
     };
 
@@ -176,7 +194,7 @@ export default function WidgetConfigurationScreen() {
         condition: serviceData.current.condition,
         humidity: serviceData.current.humidity,
         windSpeed: serviceData.current.windSpeed,
-        icon: serviceData.current.icon,
+        icon: serviceData.current.icon ?? deriveIcon(serviceData.current.condition),
       },
       forecast: serviceData.forecast.map((day, index) => ({
         day:
@@ -189,7 +207,7 @@ export default function WidgetConfigurationScreen() {
         high: day.high ?? day.maxTemp ?? 0,
         low: day.low ?? day.minTemp ?? 0,
         condition: day.condition,
-        icon: day.icon,
+        icon: day.icon ?? deriveIcon(day.condition),
       })),
       lastUpdated: Date.now(),
     };
@@ -251,6 +269,7 @@ export default function WidgetConfigurationScreen() {
             <Picker
               selectedValue={selectedFarmId}
               onValueChange={(itemValue) => setSelectedFarmId(itemValue)}
+              accessibilityLabel={t('widgetConfig.selectFarm', 'Select farm')}
               style={styles.picker}
             >
               {farms.map((farm) => (

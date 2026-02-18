@@ -143,7 +143,11 @@ export const supabase: SupabaseClient = (() => {
 
     client.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_OUT' && authStorageKey) {
-        await ExpoSecureStoreAdapter.removeItem(authStorageKey);
+        try {
+          await ExpoSecureStoreAdapter.removeItem(authStorageKey);
+        } catch {
+          // Defensive catch: removeItem already handles errors internally.
+        }
       }
     });
 

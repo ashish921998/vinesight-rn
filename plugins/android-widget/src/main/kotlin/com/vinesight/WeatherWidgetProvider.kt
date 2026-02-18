@@ -83,11 +83,22 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             // Update widget text with weather data
             if (widgetData != null) {
                 val lines = mutableListOf<String>()
-                lines.add("${widgetData.temperature.roundToInt()}° ${widgetData.condition}")
+                lines.add(
+                    context.getString(
+                        R.string.widget_temp_condition,
+                        widgetData.temperature.roundToInt(),
+                        widgetData.condition
+                    )
+                )
                 if (widgetData.location.isNotEmpty()) {
                     lines.add(widgetData.location)
                 }
-                lines.add("Humidity: ${widgetData.humidity.roundToInt()}%")
+                lines.add(
+                    context.getString(
+                        R.string.widget_humidity,
+                        widgetData.humidity.roundToInt()
+                    )
+                )
                 val displayText = lines.joinToString("\n")
                 views.setTextViewText(
                     R.id.widget_text,
@@ -96,7 +107,7 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             } else {
                 views.setTextViewText(
                     R.id.widget_text,
-                    "No weather data"
+                    context.getString(R.string.widget_no_weather_data)
                 )
             }
             
