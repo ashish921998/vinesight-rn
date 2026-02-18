@@ -11,6 +11,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.uimanager.ViewManager
+import java.time.Instant
 import org.json.JSONObject
 
 /**
@@ -61,7 +62,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
         humidity = current?.optDouble("humidity", 0.0) ?: 0.0,
         windSpeed = current?.optDouble("windSpeed", 0.0) ?: 0.0,
         location = weather.optString("farmName", ""),
-        lastUpdated = weather.optLong("lastUpdated", System.currentTimeMillis()),
+        lastUpdated = normalizeTimestamp(weather.opt("lastUpdated")),
         status = WeatherWidgetManager.WeatherWidgetStatus.READY
       )
 
@@ -109,8 +110,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
     try {
       val context = reactApplicationContext
       val appWidgetManager = AppWidgetManager.getInstance(context)
-      val componentName = ComponentName(context, WeatherWidgetProvider::class.java)
-      val widgetIds = appWidgetManager.getAppWidgetIds(componentName)
+      val widgetIds = getWidgetIds(context)
 
       widgetIds.forEach { widgetId ->
         WeatherWidgetProvider.updateWidget(context, appWidgetManager, widgetId)
@@ -131,6 +131,28 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
     val activeWidgetIds = appWidgetManager.getAppWidgetIds(componentName).toSet()
     val storedWidgetIds = WeatherWidgetManager.getAllWidgetIds(context).toSet()
     return (activeWidgetIds + storedWidgetIds).toList()
+  }
+
+  private fun normalizeTimestamp(value: Any?): Long {
+    val now = System.currentTimeMillis()
+    return when (value) {
+      is Number -> {
+        val ts = value.toLong()
+        if (ts in 1_000_000_000L..9_999_999_999L) ts * 1000 else ts
+      }
+      is String -> {
+        val trimmed = value.trim()
+        trimmed.toLongOrNull()?.let { ts ->
+          return if (ts in 1_000_000_000L..9_999_999_999L) ts * 1000 else ts
+        }
+        try {
+          Instant.parse(trimmed).toEpochMilli()
+        } catch (_: Exception) {
+          now
+        }
+      }
+      else -> now
+    }
   }
 
   companion object {

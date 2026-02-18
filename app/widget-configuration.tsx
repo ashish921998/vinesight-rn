@@ -75,7 +75,13 @@ export default function WidgetConfigurationScreen() {
       setIsSaving(true);
 
       const farmId = selectedFarm.id;
-      if (typeof farmId !== 'number') return;
+      if (typeof farmId !== 'number') {
+        Alert.alert(
+          t('widgetConfig.errorTitle', 'Error'),
+          t('widgetConfig.invalidFarmSelection', 'Invalid farm selection. Please try again.'),
+        );
+        return;
+      }
       const latitude = selectedFarm.latitude ?? undefined;
       const longitude = selectedFarm.longitude ?? undefined;
 

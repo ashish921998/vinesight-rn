@@ -106,6 +106,18 @@ const hasCompletedProfileName = (user: User | null | undefined) =>
     (user?.user_metadata?.first_name && user?.user_metadata?.last_name),
   );
 
+const clearQueryCache = async (context: string) => {
+  queryClient.clear();
+  try {
+    await queryPersister.removeClient();
+  } catch (_persisterError) {
+    // Best effort: auth flows should still complete if persistence cleanup fails.
+    if (__DEV__) {
+      console.error(`Failed to remove persisted query cache during ${context}`);
+    }
+  }
+};
+
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Initial state
   user: null,
@@ -535,15 +547,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
       });
       telemetry.reset();
-      queryClient.clear();
-      try {
-        await queryPersister.removeClient();
-      } catch (_persisterError) {
-        // Best effort: sign-out should still succeed if cache persistence cleanup fails.
-        if (__DEV__) {
-          console.error('Failed to remove persisted query cache during sign out success path');
-        }
-      }
+      await clearQueryCache('sign out success path');
 
       // Force clear any cached sessions from storage
       try {
@@ -571,15 +575,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
       });
       telemetry.reset();
-      queryClient.clear();
-      try {
-        await queryPersister.removeClient();
-      } catch (_persisterError) {
-        // Best effort: local auth state has already been cleared.
-        if (__DEV__) {
-          console.error('Failed to remove persisted query cache during sign out recovery path');
-        }
-      }
+      await clearQueryCache('sign out recovery path');
     }
   },
 
@@ -630,14 +626,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
       });
       telemetry.reset();
-      queryClient.clear();
-      try {
-        await queryPersister.removeClient();
-      } catch (_persisterError) {
-        if (__DEV__) {
-          console.error('Failed to remove persisted query cache during delete account');
-        }
-      }
+      await clearQueryCache('delete account');
 
       if (__DEV__) {
         console.log('Account deletion request logged successfully');

@@ -111,7 +111,12 @@ struct LargeWidgetView: View {
                 } else {
                     HStack {
                         Spacer()
-                        Text("widget.updated_prefix \(formattedDate(weather.lastUpdated))")
+                        Text(
+                            String(
+                                format: NSLocalizedString("widget.updated_prefix %@", comment: ""),
+                                formattedDate(weather.lastUpdated)
+                            )
+                        )
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -141,10 +146,10 @@ struct LargeWidgetView: View {
     
     private func iconName(for condition: String) -> String {
         switch condition.lowercased() {
-        case let c where c.contains("sun") || c.contains("clear"):
-            return "sun.max.fill"
         case let c where c.contains("partly") || c.contains("partly-cloudy"):
             return "cloud.sun.fill"
+        case let c where c.contains("sun") || c.contains("clear"):
+            return "sun.max.fill"
         case let c where c.contains("cloud") && !c.contains("sun"):
             return "cloud.fill"
         case let c where c.contains("rain"):

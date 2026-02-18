@@ -17,9 +17,9 @@ import {
 const WEATHER_COORDINATE_PRECISION = 3;
 
 const normalizeCoordinate = (value?: number): number | undefined => {
-  if (!Number.isFinite(value)) return undefined;
+  if (value === undefined || !Number.isFinite(value)) return undefined;
   const factor = 10 ** WEATHER_COORDINATE_PRECISION;
-  return Math.round((value as number) * factor) / factor;
+  return Math.round(value * factor) / factor;
 };
 
 // Query keys for weather data

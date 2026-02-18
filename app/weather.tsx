@@ -101,10 +101,11 @@ export default function WeatherScreen() {
     const firstFarmId = farms[0]?.id;
     return typeof firstFarmId === 'number' ? firstFarmId : null;
   }, [farms, requestedFarmId]);
-  const effectiveSelectedFarmId = useMemo(
-    () => selectedFarmId ?? defaultFarmId,
-    [selectedFarmId, defaultFarmId],
-  );
+  const effectiveSelectedFarmId = useMemo(() => {
+    if (selectedFarmId == null) return defaultFarmId;
+    const hasSelectedFarm = farms?.some((farm) => farm.id === selectedFarmId) ?? false;
+    return hasSelectedFarm ? selectedFarmId : defaultFarmId;
+  }, [selectedFarmId, defaultFarmId, farms]);
 
   // Get selected farm coordinates
   const selectedFarm = useMemo(() => {
