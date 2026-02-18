@@ -176,8 +176,8 @@ struct VineyardWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             VineyardWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("widget.configuration_display_name")
-        .description("widget.configuration_description")
+        .configurationDisplayName(Text("widget.configuration_display_name"))
+        .description(Text("widget.configuration_description"))
         .supportedFamilies([.systemLarge])
     }
 }

@@ -67,7 +67,7 @@ export default function WeatherScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
-  const { farmId: farmIdParam } = useLocalSearchParams<{ farmId?: string | string[] }>();
+  const { farmId: farmIdParam } = useLocalSearchParams<{ farmId?: string }>();
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [growthStage, setGrowthStage] = useState<GrapeGrowthStage>('Fruit set');
@@ -85,9 +85,8 @@ export default function WeatherScreen() {
   );
 
   const requestedFarmId = useMemo(() => {
-    const rawFarmId = Array.isArray(farmIdParam) ? farmIdParam[0] : farmIdParam;
-    if (!rawFarmId) return null;
-    const parsed = Number.parseInt(rawFarmId, 10);
+    if (!farmIdParam) return null;
+    const parsed = Number.parseInt(farmIdParam, 10);
     return Number.isFinite(parsed) ? parsed : null;
   }, [farmIdParam]);
 
@@ -102,7 +101,10 @@ export default function WeatherScreen() {
     const firstFarmId = farms[0]?.id;
     return typeof firstFarmId === 'number' ? firstFarmId : null;
   }, [farms, requestedFarmId]);
-  const effectiveSelectedFarmId = selectedFarmId ?? defaultFarmId;
+  const effectiveSelectedFarmId = useMemo(
+    () => selectedFarmId ?? defaultFarmId,
+    [selectedFarmId, defaultFarmId],
+  );
 
   // Get selected farm coordinates
   const selectedFarm = useMemo(() => {

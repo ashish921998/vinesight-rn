@@ -49,7 +49,10 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
       }
 
       val payload = JSONObject(payloadJson)
-      val weather = payload.optJSONObject("weather") ?: payload
+      val weather = payload.optJSONObject("weather") ?: run {
+        android.util.Log.w("WidgetBridge", "No 'weather' key in payload, using payload root")
+        payload
+      }
       val current = weather.optJSONObject("current")
 
       val widgetData = WeatherWidgetManager.WeatherWidgetData(

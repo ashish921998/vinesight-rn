@@ -11,6 +11,13 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? '
 
 const SUPABASE_CONFIG_ERROR_MESSAGE =
   'Supabase is not configured for this build. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.';
+let authStateSubscription: unknown = null;
+
+function isAuthSubscription(value: unknown): value is { unsubscribe: () => void } {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as { unsubscribe?: unknown };
+  return typeof candidate.unsubscribe === 'function';
+}
 
 // ============================================================
 // MARK: - Secure Storage Adapter
@@ -141,15 +148,17 @@ export const supabase: SupabaseClient = (() => {
       },
     });
 
-    client.auth.onAuthStateChange(async (event) => {
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT' && authStorageKey) {
-        try {
-          await ExpoSecureStoreAdapter.removeItem(authStorageKey);
-        } catch {
-          // Defensive catch: removeItem already handles errors internally.
-        }
+        void ExpoSecureStoreAdapter.removeItem(authStorageKey);
       }
     });
+    if (isAuthSubscription(authStateSubscription)) {
+      authStateSubscription.unsubscribe();
+    }
+    authStateSubscription = subscription;
 
     return client;
   } catch (error) {
