@@ -112,6 +112,18 @@ function shouldCreateSupabaseClient(): boolean {
   }
 }
 
+function getSupabaseAuthStorageKey(): string | null {
+  try {
+    const url = new URL(SUPABASE_URL);
+    const hostname = url.hostname;
+    const projectRef = hostname.split('.')[0];
+    if (!projectRef) return null;
+    return `sb-${projectRef}-auth-token`;
+  } catch {
+    return null;
+  }
+}
+
 export const supabase: SupabaseClient = (() => {
   if (!shouldCreateSupabaseClient()) {
     return createUnconfiguredSupabaseClient();
@@ -129,7 +141,10 @@ export const supabase: SupabaseClient = (() => {
 
     client.auth.onAuthStateChange(async (event, session) => {
       if (event === 'TOKEN_REFRESHED' && !session) {
-        await SecureStore.deleteItemAsync('sb-auth-token');
+        const authKey = getSupabaseAuthStorageKey();
+        if (authKey) {
+          await ExpoSecureStoreAdapter.removeItem(authKey);
+        }
       }
     });
 

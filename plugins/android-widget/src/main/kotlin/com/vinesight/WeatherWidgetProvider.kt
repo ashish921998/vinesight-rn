@@ -74,9 +74,16 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             
             // Update widget text with weather data
             if (widgetData != null) {
+                val displayText = buildString {
+                    appendLine("${Math.round(widgetData.temperature)}° ${widgetData.condition}")
+                    if (widgetData.location.isNotEmpty()) {
+                        appendLine(widgetData.location)
+                    }
+                    append("Humidity: ${Math.round(widgetData.humidity)}%")
+                }
                 views.setTextViewText(
                     R.id.widget_text,
-                    widgetData.toString()
+                    displayText
                 )
             } else {
                 views.setTextViewText(

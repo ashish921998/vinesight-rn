@@ -187,7 +187,7 @@ const withWidgetResources = (config) => {
       if (!fs.existsSync(widgetInfoPath)) {
         const widgetInfoContent = `<?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="110dp"
+    android:minWidth="250dp"
     android:minHeight="110dp"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_weather"
