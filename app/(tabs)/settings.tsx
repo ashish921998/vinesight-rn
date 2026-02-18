@@ -75,7 +75,15 @@ const COUNTRIES: Country[] = [
 
 const DEFAULT_COUNTRY = COUNTRIES[0];
 const MAX_PHONE_NUMBER_EDITS_PER_FLOW = 2;
-const LOCAL_PHONE_DIGITS = 10;
+
+/**
+ * Validates if a phone number is a valid E.164 format
+ * E.164 numbers must start with + and have 1-15 digits (excluding the +)
+ */
+function isValidE164PhoneNumber(phoneNumber: string): boolean {
+  const e164Pattern = /^\+[1-9]\d{0,14}$/;
+  return e164Pattern.test(phoneNumber) && phoneNumber.length >= 8;
+}
 
 type LinkPhoneParams = {
   linkPhone?: string;
@@ -172,7 +180,7 @@ export default function SettingsScreen() {
   const userPhone = profile?.phone || '';
   const linkedAuthPhone = user?.phone || null;
   const hasSavedPhoneToVerify = Boolean(userPhone) && !linkedAuthPhone;
-  const isLinkPhoneModalVisible = showLinkPhoneModal || phoneLinkingPending || linkPhone === '1';
+  const isLinkPhoneModalVisible = showLinkPhoneModal || phoneLinkingPending;
   const isShowingPhoneCodeStep = isPhoneLinkCodeStep || phoneLinkingPending;
   const phoneActionTitle = linkedAuthPhone
     ? t('settings.linkPhone.changePhone')
@@ -191,8 +199,7 @@ export default function SettingsScreen() {
     );
   }, [countrySearch]);
 
-  const sanitizeLocalPhoneInput = (value: string) =>
-    value.replace(/[^\d]/g, '').slice(0, LOCAL_PHONE_DIGITS);
+  const sanitizeLocalPhoneInput = (value: string) => value.replace(/[^\d]/g, '');
 
   const setPhoneFormFromValue = (value: string) => {
     const trimmed = value.trim();
@@ -219,11 +226,13 @@ export default function SettingsScreen() {
 
   const buildE164PhoneNumber = () => {
     const digitsOnly = sanitizeLocalPhoneInput(linkPhoneInput);
-    if (digitsOnly.length !== LOCAL_PHONE_DIGITS) return '';
-    return `${selectedCountry.dialCode}${digitsOnly}`;
+    if (!digitsOnly) return '';
+    const fullNumber = `${selectedCountry.dialCode}${digitsOnly}`;
+    if (!isValidE164PhoneNumber(fullNumber)) return '';
+    return fullNumber;
   };
   const linkPhoneDisplayNumber = (phoneLinkingNumber ?? buildE164PhoneNumber()) || linkPhoneInput;
-  const isLocalPhoneValid = sanitizeLocalPhoneInput(linkPhoneInput).length === LOCAL_PHONE_DIGITS;
+  const isLocalPhoneValid = linkPhoneInput && isValidE164PhoneNumber(buildE164PhoneNumber());
 
   useEffect(() => {
     if (!linkPhoneLocalError) return;
@@ -1032,7 +1041,7 @@ export default function SettingsScreen() {
                         placeholder={t('settings.linkPhone.phonePlaceholder')}
                         placeholderTextColor={colors.gray[400]}
                         keyboardType="phone-pad"
-                        maxLength={LOCAL_PHONE_DIGITS}
+                        maxLength={15}
                         autoCapitalize="none"
                         autoCorrect={false}
                         style={styles.linkPhoneInputField}

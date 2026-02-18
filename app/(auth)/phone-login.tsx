@@ -52,7 +52,15 @@ const COUNTRIES: Country[] = [
 ];
 
 const DEFAULT_COUNTRY = COUNTRIES[0]; // India
-const LOCAL_PHONE_DIGITS = 10;
+
+/**
+ * Validates if a phone number is a valid E.164 format
+ * E.164 numbers must start with + and have 1-15 digits (excluding the +)
+ */
+function isValidE164PhoneNumber(phoneNumber: string): boolean {
+  const e164Pattern = /^\+[1-9]\d{0,14}$/;
+  return e164Pattern.test(phoneNumber) && phoneNumber.length >= 8;
+}
 
 export default function PhoneLoginScreen() {
   const { t } = useTranslation();
@@ -98,15 +106,15 @@ export default function PhoneLoginScreen() {
   }, [isAuthenticated, needsProfileCompletion]);
 
   const handleSendCode = async () => {
-    if (phoneNumber.length !== LOCAL_PHONE_DIGITS) {
+    const fullPhoneNumber = selectedCountry.dialCode + phoneNumber;
+    if (!isValidE164PhoneNumber(fullPhoneNumber)) {
       setLocalPhoneError(
-        t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid 10-digit phone number' }),
+        t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid phone number' }),
       );
       return;
     }
     clearError();
     setLocalPhoneError(null);
-    const fullPhoneNumber = selectedCountry.dialCode + phoneNumber;
     await signInWithPhone(fullPhoneNumber, phoneAuthMode);
   };
 
@@ -374,11 +382,11 @@ export default function PhoneLoginScreen() {
                 value={phoneNumber}
                 onChangeText={(value) => {
                   setLocalPhoneError(null);
-                  setPhoneNumber(value.replace(/[^\d]/g, '').slice(0, LOCAL_PHONE_DIGITS));
+                  setPhoneNumber(value.replace(/[^\d]/g, ''));
                 }}
                 leftIcon="phone.fill"
                 keyboardType="phone-pad"
-                maxLength={LOCAL_PHONE_DIGITS}
+                maxLength={15}
                 autoCapitalize="none"
                 textContentType="telephoneNumber"
                 autoComplete="tel"
@@ -402,7 +410,11 @@ export default function PhoneLoginScreen() {
                 title={t('authPhone.sendCode')}
                 onPress={handleSendCode}
                 isLoading={isLoading}
-                disabled={phoneNumber.length !== LOCAL_PHONE_DIGITS || isLoading}
+                disabled={
+                  !phoneNumber ||
+                  !isValidE164PhoneNumber(selectedCountry.dialCode + phoneNumber) ||
+                  isLoading
+                }
                 style={{ marginTop: spacing[4] }}
               />
             </View>

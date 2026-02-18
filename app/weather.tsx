@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
@@ -91,6 +91,8 @@ export default function WeatherScreen() {
     return Number.isFinite(parsed) ? parsed : null;
   }, [farmIdParam]);
 
+  const hasInitializedRef = useRef(false);
+
   // Get selected farm coordinates
   const selectedFarm = useMemo(() => {
     if (!farms || farms.length === 0) return null;
@@ -108,22 +110,27 @@ export default function WeatherScreen() {
     );
 
   // Prefer farm from deep-link params, otherwise fall back to first farm.
-  React.useEffect(() => {
+  useEffect(() => {
     if (!farms || farms.length === 0) return;
 
-    if (requestedFarmId !== null) {
-      const matchedFarm = farms.find((farm) => farm.id === requestedFarmId);
-      if (matchedFarm && typeof matchedFarm.id === 'number' && matchedFarm.id !== selectedFarmId) {
-        setSelectedFarmId(matchedFarm.id);
-        return;
-      }
-    }
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
 
-    const firstFarmId = farms[0]?.id;
-    if (typeof firstFarmId === 'number' && firstFarmId !== selectedFarmId) {
-      setSelectedFarmId(firstFarmId);
-    }
-  }, [farms, requestedFarmId, selectedFarmId]);
+    queueMicrotask(() => {
+      if (requestedFarmId !== null) {
+        const matchedFarm = farms.find((farm) => farm.id === requestedFarmId);
+        if (matchedFarm && typeof matchedFarm.id === 'number') {
+          setSelectedFarmId(matchedFarm.id);
+          return;
+        }
+      }
+
+      const firstFarmId = farms[0]?.id;
+      if (typeof firstFarmId === 'number') {
+        setSelectedFarmId(firstFarmId);
+      }
+    });
+  }, [farms, requestedFarmId]);
 
   if (farmsLoading || isLoading) {
     return (
