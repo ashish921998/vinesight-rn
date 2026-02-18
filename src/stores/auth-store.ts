@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import * as Sentry from '@sentry/react-native';
 import { supabase } from '@/lib/supabase';
 import { telemetry } from '@/services/telemetry';
 import type { User, Session } from '@supabase/supabase-js';
@@ -99,6 +100,14 @@ const getEmailDomain = (email: string | undefined | null) => {
   return domain?.trim() || null;
 };
 
+const setSentryUser = (user: User | null) => {
+  if (user) {
+    Sentry.setUser({ id: user.id, email: user.email });
+  } else {
+    Sentry.setUser(null);
+  }
+};
+
 const hasCompletedProfileName = (user: User | null | undefined) =>
   Boolean(
     user?.user_metadata?.full_name ||
@@ -132,6 +141,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (session) {
+        setSentryUser(session.user);
         telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
         telemetry.capture('auth_session_restored', {
           provider: session.user.app_metadata?.provider ?? null,
@@ -199,6 +209,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (error) throw error;
 
+      setSentryUser(data.user);
       telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       telemetry.capture('auth_sign_in_succeeded', { method: 'password' });
       telemetry.capture('user_logged_in', { method: 'password' });
@@ -236,6 +247,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
+          setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
         telemetry.capture('auth_sign_up_succeeded', { method: 'password', confirmed: true });
@@ -301,6 +313,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
+          setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
         telemetry.capture('auth_sign_up_succeeded', { method: 'otp', confirmed: true });
@@ -386,6 +399,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
+          setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
           telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
           telemetry.capture('user_logged_in', { method: 'google' });
@@ -408,6 +422,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           });
           if (error) throw error;
           if (data.user) {
+            setSentryUser(data.user);
             telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
           }
           telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
@@ -470,6 +485,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
       if (error) throw error;
 
+      setSentryUser(data.user);
       telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       telemetry.capture('auth_sign_in_succeeded', { method: 'apple' });
       telemetry.capture('user_logged_in', { method: 'apple' });
@@ -503,6 +519,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Sign out
   signOut: async () => {
     set({ errorMessage: null, isLoading: true });
+    setSentryUser(null);
     telemetry.capture('auth_sign_out');
     telemetry.capture('user_logged_out');
 
@@ -691,6 +708,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (data.user) {
+        setSentryUser(data.user);
         telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       }
       telemetry.capture('auth_otp_verify_succeeded', { type: pendingOTPType });
@@ -823,6 +841,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (data.user) {
+        setSentryUser(data.user);
         telemetry.identify(data.user.id, {
           email_domain: getEmailDomain(data.user.email),
         });
@@ -1129,6 +1148,7 @@ export const initAuthListener = () => {
       const currentState = useAuthStore.getState();
       const looksLikeNewPhoneUser =
         Boolean(currentState.pendingOTPPhone) && !hasCompletedProfileName(session.user);
+      setSentryUser(session.user);
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
       useAuthStore.setState((state) => ({
@@ -1146,6 +1166,7 @@ export const initAuthListener = () => {
       if (__DEV__) {
         console.log('SIGNED_OUT event received, clearing auth state');
       }
+      setSentryUser(null);
       telemetry.capture('auth_state_changed', { event: 'SIGNED_OUT' });
       telemetry.reset();
       useAuthStore.setState({
