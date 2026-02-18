@@ -2,6 +2,7 @@ package com.vinesight
 
 import android.appwidget.AppWidgetManager
 import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactPackage
 import com.facebook.react.bridge.ReactMethod
@@ -51,7 +52,7 @@ class WidgetModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     @ReactMethod
     fun updateWeatherWidget(widgetId: Int, weatherData: ReadableMap, promise: Promise) {
         try {
-            val context = reactApplicationContext
+            val context = getReactApplicationContext()
             
             // Parse weather data from React Native map
             val temperature = weatherData.getDouble("temperature")
@@ -101,7 +102,7 @@ class WidgetModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     @ReactMethod
     fun getWidgetData(widgetId: Int, promise: Promise) {
         try {
-            val context = reactApplicationContext
+            val context = getReactApplicationContext()
             val widgetData = WeatherWidgetManager.getWidgetData(context, widgetId)
             
             if (widgetData != null) {
@@ -132,7 +133,7 @@ class WidgetModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     @ReactMethod
     fun clearWidgetData(widgetId: Int, promise: Promise) {
         try {
-            val context = reactApplicationContext
+            val context = getReactApplicationContext()
             WeatherWidgetManager.clearWidgetData(context, widgetId)
             promise.resolve(null)
             
@@ -150,7 +151,7 @@ class WidgetModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     @ReactMethod
     fun setWidgetUpdatesEnabled(enabled: Boolean, promise: Promise) {
         try {
-            val context = reactApplicationContext
+            val context = getReactApplicationContext()
             WeatherWidgetManager.setUpdatesEnabled(context, enabled)
             promise.resolve(null)
             
