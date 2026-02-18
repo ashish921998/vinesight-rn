@@ -173,7 +173,7 @@ export function CalendarAttendanceTab({ workers }: CalendarAttendanceTabProps) {
               borderRadius: borderRadius['2xl'],
               borderWidth: 1,
               marginTop: spacing[2],
-              backgroundColor: colors.white,
+              backgroundColor: m3.surface.surfaceContainerLow,
               borderColor: UI.border,
             }}
           >
