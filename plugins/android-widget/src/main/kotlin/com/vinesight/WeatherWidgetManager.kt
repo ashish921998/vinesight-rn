@@ -55,12 +55,12 @@ object WeatherWidgetManager {
         return try {
             val json = JSONObject(jsonString)
             WeatherWidgetData(
-                temperature = json.getDouble("temperature"),
+                temperature = json.optDouble("temperature", 0.0),
                 condition = json.optString("condition", ""),
-                humidity = json.getDouble("humidity"),
-                windSpeed = json.getDouble("windSpeed"),
+                humidity = json.optDouble("humidity", 0.0),
+                windSpeed = json.optDouble("windSpeed", 0.0),
                 location = json.optString("location", ""),
-                lastUpdated = json.getLong("lastUpdated")
+                lastUpdated = json.optLong("lastUpdated", 0L)
             )
         } catch (e: Exception) {
             android.util.Log.e("WeatherWidgetManager", "Failed to parse widget data for ID $widgetId", e)

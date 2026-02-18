@@ -2,10 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Stack, usePathname, useSegments } from 'expo-router';
 import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -31,6 +28,7 @@ import {
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
+import { queryClient, queryPersister, QUERY_CACHE_MAX_AGE_MS } from '@/lib/query-cache';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -107,27 +105,6 @@ try {
 // Prevent auto-hide splash screen
 void SplashScreen.preventAutoHideAsync().catch(() => null);
 WebBrowser.maybeCompleteAuthSession();
-
-// Create a client outside component to prevent recreation
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      retry: 1,
-    },
-  },
-});
-
-const queryPersister = createAsyncStoragePersister({
-  storage: AsyncStorage,
-  key: 'VINESIGHT_REACT_QUERY_CACHE',
-  throttleTime: 1000,
-});
 
 export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
@@ -294,7 +271,7 @@ export default Sentry.wrap(function RootLayout() {
             client={queryClient}
             persistOptions={{
               persister: queryPersister,
-              maxAge: 1000 * 60 * 60 * 24, // 24 hours
+              maxAge: QUERY_CACHE_MAX_AGE_MS,
             }}
           >
             <I18nextProvider i18n={i18n}>

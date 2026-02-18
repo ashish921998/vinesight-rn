@@ -24,36 +24,65 @@ function withMainApplicationKotlin(config) {
         'MainApplication.kt',
       );
 
-      let contents = fs.readFileSync(applicationPath, 'utf8');
+      if (!fs.existsSync(applicationPath)) {
+        console.warn(`[android-widget] MainApplication.kt not found at: ${applicationPath}`);
+        return config;
+      }
+
+      let contents;
+      try {
+        contents = fs.readFileSync(applicationPath, 'utf8');
+      } catch (error) {
+        console.warn(
+          `[android-widget] Failed to read MainApplication.kt at ${applicationPath}:`,
+          error,
+        );
+        return config;
+      }
+
+      const importStatement = 'import com.vinesight.WidgetPackage';
+      const packageCall = 'add(WidgetPackage())';
+      const hasImport = contents.includes(importStatement);
+      const hasPackageCall = contents.includes(packageCall);
 
       // Check if already modified
-      if (contents.includes('com.vinesight.WidgetPackage')) {
+      if (hasImport && hasPackageCall) {
         return config;
       }
 
       // Add import statement after the last import
-      const importStatement = 'import com.vinesight.WidgetPackage';
-      const lastImportIndex = contents.lastIndexOf('\nimport ');
-      if (lastImportIndex !== -1) {
-        const lastImportEnd = contents.indexOf('\n', lastImportIndex + 1);
-        contents =
-          contents.substring(0, lastImportEnd) +
-          '\n' +
-          importStatement +
-          contents.substring(lastImportEnd);
+      if (!hasImport) {
+        const lastImportIndex = contents.lastIndexOf('\nimport ');
+        if (lastImportIndex !== -1) {
+          const lastImportEnd = contents.indexOf('\n', lastImportIndex + 1);
+          contents =
+            contents.substring(0, lastImportEnd) +
+            '\n' +
+            importStatement +
+            contents.substring(lastImportEnd);
+        }
       }
 
       // Add package to getPackages() method
-      const packageAddition = '              add(WidgetPackage())';
+      const packageAddition = `              ${packageCall}`;
 
       // Find the packages.apply block and add before the closing brace
-      const packagesMatch = contents.match(
-        /PackageList\(this\)\.packages\.apply \{[\s\S]*?\n\s*\}/m,
-      );
-      if (packagesMatch) {
-        const applyBlock = packagesMatch[0];
-        const newApplyBlock = applyBlock.replace(/(\n\s*\})$/, '\n' + packageAddition + '$1');
-        contents = contents.replace(applyBlock, newApplyBlock);
+      if (!hasPackageCall) {
+        const packagesMatch = contents.match(
+          /PackageList\(this\)\.packages\.apply \{[\s\S]*?\n\s*\}/m,
+        );
+        if (packagesMatch) {
+          const applyBlock = packagesMatch[0];
+          const newApplyBlock = applyBlock.replace(/(\n\s*\})$/, '\n' + packageAddition + '$1');
+          contents = contents.replace(applyBlock, newApplyBlock);
+        }
+      }
+
+      if (!contents.includes(importStatement) || !contents.includes(packageCall)) {
+        console.warn(
+          '[android-widget] Failed to safely inject WidgetPackage into MainApplication.kt. Skipping write.',
+        );
+        return config;
       }
 
       fs.writeFileSync(applicationPath, contents);
@@ -95,12 +124,30 @@ const withKotlinSources = (config) => {
       }
 
       // Copy all Kotlin files from plugin to target
-      const files = fs.readdirSync(pluginPath);
+      if (!fs.existsSync(pluginPath)) {
+        console.warn(`[android-widget] Kotlin source directory not found: ${pluginPath}`);
+        return config;
+      }
+
+      let files = [];
+      try {
+        files = fs.readdirSync(pluginPath);
+      } catch (error) {
+        console.warn(
+          `[android-widget] Failed to read Kotlin source directory ${pluginPath}:`,
+          error,
+        );
+        return config;
+      }
       for (const file of files) {
         if (file.endsWith('.kt')) {
           const srcFile = path.join(pluginPath, file);
           const destFile = path.join(targetPath, file);
-          fs.copyFileSync(srcFile, destFile);
+          try {
+            fs.copyFileSync(srcFile, destFile);
+          } catch (error) {
+            console.warn(`[android-widget] Failed to copy ${srcFile} -> ${destFile}:`, error);
+          }
         }
       }
 
@@ -207,20 +254,23 @@ const withWidgetResources = (config) => {
 
       if (!fs.existsSync(widgetLayoutPath)) {
         const widgetLayoutContent = `<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="@android:color/white">
+    android:background="#4CAF50"
+    android:gravity="center">
     
     <TextView
         android:id="@+id/widget_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Weather Widget"
-        android:textSize="16sp"
-        android:textColor="@android:color/black" />
+        android:text="VineSight Widget"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:gravity="center" />
         
 </LinearLayout>`;
         fs.writeFileSync(widgetLayoutPath, widgetLayoutContent);

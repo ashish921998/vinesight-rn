@@ -43,6 +43,10 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getDefaultCurrency } from '@/i18n/currency';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
+import {
+  buildE164PhoneNumber as buildNormalizedE164PhoneNumber,
+  sanitizePhoneDigits,
+} from '@/utils/phone';
 
 interface Country {
   name: string;
@@ -75,15 +79,6 @@ const COUNTRIES: Country[] = [
 
 const DEFAULT_COUNTRY = COUNTRIES[0];
 const MAX_PHONE_NUMBER_EDITS_PER_FLOW = 2;
-
-/**
- * Validates if a phone number is a valid E.164 format
- * E.164 numbers must start with + and have 1-15 digits (excluding the +)
- */
-function isValidE164PhoneNumber(phoneNumber: string): boolean {
-  const e164Pattern = /^\+[1-9]\d{0,14}$/;
-  return e164Pattern.test(phoneNumber) && phoneNumber.length >= 8;
-}
 
 type LinkPhoneParams = {
   linkPhone?: string;
@@ -199,7 +194,7 @@ export default function SettingsScreen() {
     );
   }, [countrySearch]);
 
-  const sanitizeLocalPhoneInput = (value: string) => value.replace(/[^\d]/g, '');
+  const sanitizeLocalPhoneInput = (value: string) => sanitizePhoneDigits(value);
 
   const setPhoneFormFromValue = (value: string) => {
     const trimmed = value.trim();
@@ -225,14 +220,10 @@ export default function SettingsScreen() {
   };
 
   const buildE164PhoneNumber = () => {
-    const digitsOnly = sanitizeLocalPhoneInput(linkPhoneInput);
-    if (!digitsOnly) return '';
-    const fullNumber = `${selectedCountry.dialCode}${digitsOnly}`;
-    if (!isValidE164PhoneNumber(fullNumber)) return '';
-    return fullNumber;
+    return buildNormalizedE164PhoneNumber(selectedCountry.dialCode, linkPhoneInput);
   };
   const linkPhoneDisplayNumber = (phoneLinkingNumber ?? buildE164PhoneNumber()) || linkPhoneInput;
-  const isLocalPhoneValid = linkPhoneInput && isValidE164PhoneNumber(buildE164PhoneNumber());
+  const isLocalPhoneValid = Boolean(linkPhoneInput) && Boolean(buildE164PhoneNumber());
 
   useEffect(() => {
     if (!linkPhoneLocalError) return;
@@ -395,7 +386,7 @@ export default function SettingsScreen() {
     const phone = buildE164PhoneNumber();
     if (!phone) {
       setLinkPhoneLocalError(
-        t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid 10-digit phone number' }),
+        t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid phone number' }),
       );
       return;
     }

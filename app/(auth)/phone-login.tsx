@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { buildE164PhoneNumber } from '@/utils/phone';
 
 interface Country {
   name: string;
@@ -52,15 +53,6 @@ const COUNTRIES: Country[] = [
 ];
 
 const DEFAULT_COUNTRY = COUNTRIES[0]; // India
-
-/**
- * Validates if a phone number is a valid E.164 format
- * E.164 numbers must start with + and have 1-15 digits (excluding the +)
- */
-function isValidE164PhoneNumber(phoneNumber: string): boolean {
-  const e164Pattern = /^\+[1-9]\d{0,14}$/;
-  return e164Pattern.test(phoneNumber) && phoneNumber.length >= 8;
-}
 
 export default function PhoneLoginScreen() {
   const { t } = useTranslation();
@@ -106,8 +98,8 @@ export default function PhoneLoginScreen() {
   }, [isAuthenticated, needsProfileCompletion]);
 
   const handleSendCode = async () => {
-    const fullPhoneNumber = selectedCountry.dialCode + phoneNumber;
-    if (!isValidE164PhoneNumber(fullPhoneNumber)) {
+    const fullPhoneNumber = buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber);
+    if (!fullPhoneNumber) {
       setLocalPhoneError(
         t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid phone number' }),
       );
@@ -412,7 +404,7 @@ export default function PhoneLoginScreen() {
                 isLoading={isLoading}
                 disabled={
                   !phoneNumber ||
-                  !isValidE164PhoneNumber(selectedCountry.dialCode + phoneNumber) ||
+                  !buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber) ||
                   isLoading
                 }
                 style={{ marginTop: spacing[4] }}

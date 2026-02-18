@@ -37,21 +37,24 @@ struct Provider: TimelineProvider {
             return errorEntry(message: "Unable to Load")
         }
         
-        // Load weather data
+        // Load weather data and (new) config from payload
         var weather: WeatherData? = nil
+        var config: WidgetConfig? = nil
         if let data = defaults.data(forKey: "widgetData"),
            let decoded = try? JSONDecoder().decode(WidgetDataPayload.self, from: data) {
             weather = decoded.weather
+            config = decoded.config
         }
         
-        // Load config
-        var config: WidgetConfig? = nil
-        if let configData = defaults.data(forKey: "widgetConfig"),
+        // Backward compatibility: if payload has no config, read legacy key
+        if config == nil,
+           let configData = defaults.data(forKey: "widgetConfig"),
            let decodedConfig = try? JSONDecoder().decode(WidgetConfig.self, from: configData) {
             config = decodedConfig
         }
         
         // Check if data is stale (older than 24 hours)
+        // Nil weather is considered stale so the widget can show a warning/placeholder state.
         // JS sends Date.now() in milliseconds; convert to seconds for comparison
         let isStale: Bool
         if let lastUpdated = weather?.lastUpdated {
@@ -59,7 +62,7 @@ struct Provider: TimelineProvider {
             let twentyFourHoursAgo = Date().addingTimeInterval(-24 * 60 * 60).timeIntervalSince1970
             isStale = lastUpdatedSec < twentyFourHoursAgo
         } else {
-            isStale = false
+            isStale = true
         }
         
         return SimpleEntry(

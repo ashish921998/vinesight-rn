@@ -130,9 +130,11 @@ export const supabase: SupabaseClient = (() => {
   }
 
   try {
+    const authStorageKey = getSupabaseAuthStorageKey();
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         storage: ExpoSecureStoreAdapter,
+        ...(authStorageKey ? { storageKey: authStorageKey } : {}),
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false, // Required for mobile apps
@@ -141,9 +143,8 @@ export const supabase: SupabaseClient = (() => {
 
     client.auth.onAuthStateChange(async (event, session) => {
       if (event === 'TOKEN_REFRESHED' && !session) {
-        const authKey = getSupabaseAuthStorageKey();
-        if (authKey) {
-          await ExpoSecureStoreAdapter.removeItem(authKey);
+        if (authStorageKey) {
+          await ExpoSecureStoreAdapter.removeItem(authStorageKey);
         }
       }
     });

@@ -752,13 +752,15 @@ export function EntryForm({
         if (result.status === 'rejected') {
           const failedLog = pendingLogs[index];
           const error = result.reason as Error;
+          const rawMessage =
+            error instanceof Error ? error.message : String(error ?? 'Unknown error');
+          const safeErrorMessage =
+            rawMessage.length > 200 ? `${rawMessage.slice(0, 200)}...` : rawMessage;
           console.error('Failed to save pending log', {
             pendingLogId: failedLog?.id ?? null,
             logType: failedLog?.type ?? null,
             errorName: error?.name,
-            errorMessage: error?.message,
-            errorStack: error?.stack,
-            error,
+            errorMessage: safeErrorMessage,
           });
         }
       });
@@ -853,6 +855,7 @@ export function EntryForm({
 
       if (failedCount > 0) {
         const firstFailedIndex = results.findIndex((result) => result.status === 'rejected');
+        const failedLogContext = firstFailedIndex >= 0 ? pendingLogs[firstFailedIndex] : null;
         const firstFailedError =
           results[firstFailedIndex]?.status === 'rejected'
             ? (results[firstFailedIndex] as PromiseRejectedResult).reason
@@ -869,6 +872,8 @@ export function EntryForm({
         if (shouldCaptureFarmErrorInSentry(errorMeta)) {
           Sentry.withScope((scope) => {
             scope.setTag('feature', 'entry-log');
+            scope.setTag('pendingLogId', failedLogContext?.id ?? 'unknown');
+            scope.setTag('logType', failedLogContext?.type ?? 'unknown');
             scope.setExtra('errorMeta', errorMeta);
             Sentry.captureException(
               firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),

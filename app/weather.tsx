@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
@@ -91,14 +91,27 @@ export default function WeatherScreen() {
     return Number.isFinite(parsed) ? parsed : null;
   }, [farmIdParam]);
 
-  const hasInitializedRef = useRef(false);
+  const defaultFarmId = useMemo(() => {
+    if (!farms || farms.length === 0) return null;
+    if (requestedFarmId !== null) {
+      const matchedFarm = farms.find((farm) => farm.id === requestedFarmId);
+      if (matchedFarm && typeof matchedFarm.id === 'number') {
+        return matchedFarm.id;
+      }
+    }
+    const firstFarmId = farms[0]?.id;
+    return typeof firstFarmId === 'number' ? firstFarmId : null;
+  }, [farms, requestedFarmId]);
 
   // Get selected farm coordinates
   const selectedFarm = useMemo(() => {
     if (!farms || farms.length === 0) return null;
-    if (selectedFarmId !== null) return farms.find((f) => f.id === selectedFarmId) || farms[0];
+    const effectiveSelectedFarmId = selectedFarmId ?? defaultFarmId;
+    if (effectiveSelectedFarmId !== null) {
+      return farms.find((f) => f.id === effectiveSelectedFarmId) || farms[0];
+    }
     return farms[0];
-  }, [farms, selectedFarmId]);
+  }, [farms, selectedFarmId, defaultFarmId]);
 
   // Fetch weather data
   const { weather, etc, alerts, irrigationSchedule, isLoading, error, refetch, isRefetching } =
@@ -108,29 +121,6 @@ export default function WeatherScreen() {
       growthStage,
       soilType,
     );
-
-  // Prefer farm from deep-link params, otherwise fall back to first farm.
-  useEffect(() => {
-    if (!farms || farms.length === 0) return;
-
-    if (hasInitializedRef.current) return;
-    hasInitializedRef.current = true;
-
-    queueMicrotask(() => {
-      if (requestedFarmId !== null) {
-        const matchedFarm = farms.find((farm) => farm.id === requestedFarmId);
-        if (matchedFarm && typeof matchedFarm.id === 'number') {
-          setSelectedFarmId(matchedFarm.id);
-          return;
-        }
-      }
-
-      const firstFarmId = farms[0]?.id;
-      if (typeof firstFarmId === 'number') {
-        setSelectedFarmId(firstFarmId);
-      }
-    });
-  }, [farms, requestedFarmId]);
 
   if (farmsLoading || isLoading) {
     return (

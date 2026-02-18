@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
+import { queryClient, queryPersister } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
 import type { User, Session } from '@supabase/supabase-js';
 import type { PhoneAuthMode } from '@/types/auth';
@@ -534,6 +535,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
       });
       telemetry.reset();
+      queryClient.clear();
+      await queryPersister.removeClient();
 
       // Force clear any cached sessions from storage
       try {
@@ -561,6 +564,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
       });
       telemetry.reset();
+      queryClient.clear();
+      await queryPersister.removeClient();
     }
   },
 
