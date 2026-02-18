@@ -85,7 +85,15 @@ function withMainApplicationKotlin(config) {
         return config;
       }
 
-      fs.writeFileSync(applicationPath, contents);
+      try {
+        fs.writeFileSync(applicationPath, contents);
+      } catch (error) {
+        console.warn(
+          `[android-widget] Failed to write MainApplication.kt at ${applicationPath}:`,
+          error,
+        );
+        return config;
+      }
 
       return config;
     },
@@ -285,6 +293,13 @@ const withWidgetResources = (config) => {
       let stringsContent = fs.existsSync(stringsPath)
         ? fs.readFileSync(stringsPath, 'utf8')
         : '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+
+      if (!stringsContent.includes('</resources>')) {
+        console.warn(
+          `[android-widget] strings.xml at ${stringsPath} is malformed (missing </resources>). Rebuilding minimal resources file.`,
+        );
+        stringsContent = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+      }
 
       const widgetStrings = [
         '<string name="widget_temp_condition">%1$d° %2$s</string>',

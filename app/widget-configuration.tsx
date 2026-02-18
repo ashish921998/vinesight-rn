@@ -76,16 +76,25 @@ export default function WidgetConfigurationScreen() {
 
       const farmId = selectedFarm.id;
       if (typeof farmId !== 'number') return;
+      const latitude = selectedFarm.latitude ?? undefined;
+      const longitude = selectedFarm.longitude ?? undefined;
+
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        Alert.alert(
+          t('widgetConfig.errorTitle', 'Error'),
+          t(
+            'widgetConfig.coordinatesRequired',
+            'This farm is missing location coordinates. Please add coordinates and try again.',
+          ),
+        );
+        return;
+      }
 
       // Save widget configuration
       await saveConfig(farmId, selectedFarm.name);
 
       // Fetch and sync weather data for selected farm
-      await syncWeatherForFarm(
-        farmId,
-        selectedFarm.latitude ?? undefined,
-        selectedFarm.longitude ?? undefined,
-      );
+      await syncWeatherForFarm(farmId, latitude, longitude);
 
       // Track widget configuration
       telemetry.capture('widget_configured', {
@@ -118,7 +127,7 @@ export default function WidgetConfigurationScreen() {
       // Get weather data for the farm (service format)
       const serviceData = await fetchWeatherForFarm(latitude, longitude);
 
-      if (serviceData && farms) {
+      if (farms) {
         const farm = farms.find((f) => f.id === farmId);
         if (farm) {
           const syncFarmId = farm.id;
@@ -130,7 +139,7 @@ export default function WidgetConfigurationScreen() {
       }
     } catch (syncError) {
       console.error('Failed to sync weather for widget:', syncError);
-      // Don't throw - widget will show cached data or error state
+      throw syncError;
     }
   };
 
@@ -181,7 +190,10 @@ export default function WidgetConfigurationScreen() {
       return 'partly-cloudy';
     };
     const formatDay = (dateStr: string): string => {
-      const date = new Date(dateStr);
+      const dateParts = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      const date = dateParts
+        ? new Date(Number(dateParts[1]), Number(dateParts[2]) - 1, Number(dateParts[3]))
+        : new Date(dateStr);
       if (Number.isNaN(date.getTime())) return '';
       return date.toLocaleDateString(undefined, { weekday: 'short' });
     };
@@ -194,7 +206,10 @@ export default function WidgetConfigurationScreen() {
         condition: serviceData.current.condition,
         humidity: serviceData.current.humidity,
         windSpeed: serviceData.current.windSpeed,
-        icon: serviceData.current.icon ?? deriveIcon(serviceData.current.condition),
+        icon:
+          serviceData.current.conditionCode != null
+            ? WeatherService.getWeatherIcon(serviceData.current.conditionCode)
+            : (serviceData.current.icon ?? deriveIcon(serviceData.current.condition)),
       },
       forecast: serviceData.forecast.map((day, index) => ({
         day:
@@ -207,7 +222,10 @@ export default function WidgetConfigurationScreen() {
         high: day.high ?? day.maxTemp ?? 0,
         low: day.low ?? day.minTemp ?? 0,
         condition: day.condition,
-        icon: day.icon ?? deriveIcon(day.condition),
+        icon:
+          day.conditionCode != null
+            ? WeatherService.getWeatherIcon(day.conditionCode)
+            : (day.icon ?? deriveIcon(day.condition)),
       })),
       lastUpdated: Date.now(),
     };
