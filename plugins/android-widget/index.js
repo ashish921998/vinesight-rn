@@ -137,9 +137,8 @@ const withKotlinSources = (config) => {
         return config;
       }
 
-      let files = [];
       try {
-        files = fs.readdirSync(pluginPath);
+        fs.readdirSync(pluginPath, { withFileTypes: true });
       } catch (error) {
         console.warn(
           `[android-widget] Failed to read Kotlin source directory ${pluginPath}:`,
@@ -147,17 +146,31 @@ const withKotlinSources = (config) => {
         );
         return config;
       }
-      for (const file of files) {
-        if (file.endsWith('.kt')) {
-          const srcFile = path.join(pluginPath, file);
-          const destFile = path.join(targetPath, file);
+
+      const copyKotlinFilesRecursively = (srcDir, destDir) => {
+        for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+          const srcPath = path.join(srcDir, entry.name);
+          const destPath = path.join(destDir, entry.name);
+
+          if (entry.isDirectory()) {
+            if (!fs.existsSync(destPath)) {
+              fs.mkdirSync(destPath, { recursive: true });
+            }
+            copyKotlinFilesRecursively(srcPath, destPath);
+            continue;
+          }
+
+          if (!entry.isFile() || !entry.name.endsWith('.kt')) continue;
+          if (fs.existsSync(destPath)) continue;
           try {
-            fs.copyFileSync(srcFile, destFile);
+            fs.copyFileSync(srcPath, destPath);
           } catch (error) {
-            console.warn(`[android-widget] Failed to copy ${srcFile} -> ${destFile}:`, error);
+            console.warn(`[android-widget] Failed to copy ${srcPath} -> ${destPath}:`, error);
           }
         }
-      }
+      };
+
+      copyKotlinFilesRecursively(pluginPath, targetPath);
 
       return config;
     },
@@ -249,7 +262,11 @@ const withWidgetResources = (config) => {
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen">
 </appwidget-provider>`;
-        fs.writeFileSync(widgetInfoPath, widgetInfoContent);
+        try {
+          fs.writeFileSync(widgetInfoPath, widgetInfoContent);
+        } catch (error) {
+          console.warn(`[android-widget] Failed to write ${widgetInfoPath}:`, error);
+        }
       }
 
       // Create layout directory and widget layout if needed
@@ -267,7 +284,7 @@ const withWidgetResources = (config) => {
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#4CAF50"
+    android:background="@color/widget_background"
     android:gravity="center">
     
     <TextView
@@ -281,7 +298,11 @@ const withWidgetResources = (config) => {
         android:gravity="center" />
 
 </LinearLayout>`;
-        fs.writeFileSync(widgetLayoutPath, widgetLayoutContent);
+        try {
+          fs.writeFileSync(widgetLayoutPath, widgetLayoutContent);
+        } catch (error) {
+          console.warn(`[android-widget] Failed to write ${widgetLayoutPath}:`, error);
+        }
       }
 
       // Ensure strings.xml includes widget text resources
@@ -315,7 +336,37 @@ const withWidgetResources = (config) => {
           stringsContent = stringsContent.replace('</resources>', `  ${entry}\n</resources>`);
         }
       });
-      fs.writeFileSync(stringsPath, stringsContent);
+      try {
+        fs.writeFileSync(stringsPath, stringsContent);
+      } catch (error) {
+        console.warn(`[android-widget] Failed to write ${stringsPath}:`, error);
+      }
+
+      // Ensure colors.xml includes widget background color resource
+      const colorsPath = path.join(valuesPath, 'colors.xml');
+      let colorsContent = fs.existsSync(colorsPath)
+        ? fs.readFileSync(colorsPath, 'utf8')
+        : '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+
+      if (!colorsContent.includes('</resources>')) {
+        console.warn(
+          `[android-widget] colors.xml at ${colorsPath} is malformed (missing </resources>). Rebuilding minimal resources file.`,
+        );
+        colorsContent = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+      }
+
+      if (!colorsContent.includes('name="widget_background"')) {
+        colorsContent = colorsContent.replace(
+          '</resources>',
+          '  <color name="widget_background">#4CAF50</color>\n</resources>',
+        );
+      }
+
+      try {
+        fs.writeFileSync(colorsPath, colorsContent);
+      } catch (error) {
+        console.warn(`[android-widget] Failed to write ${colorsPath}:`, error);
+      }
 
       return config;
     },
