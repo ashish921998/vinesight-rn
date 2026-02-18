@@ -161,7 +161,6 @@ const withKotlinSources = (config) => {
           }
 
           if (!entry.isFile() || !entry.name.endsWith('.kt')) continue;
-          if (fs.existsSync(destPath)) continue;
           try {
             fs.copyFileSync(srcPath, destPath);
           } catch (error) {

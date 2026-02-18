@@ -11,7 +11,9 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.uimanager.ViewManager
-import java.time.Instant
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 import org.json.JSONObject
 
 /**
@@ -145,14 +147,34 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
         trimmed.toLongOrNull()?.let { ts ->
           return if (ts in 1_000_000_000L..9_999_999_999L) ts * 1000 else ts
         }
-        try {
-          Instant.parse(trimmed).toEpochMilli()
-        } catch (_: Exception) {
-          now
-        }
+        parseIsoTimestamp(trimmed) ?: now
       }
       else -> now
     }
+  }
+
+  private fun parseIsoTimestamp(value: String): Long? {
+    val patterns = listOf(
+      "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+      "yyyy-MM-dd'T'HH:mm:ssX",
+      "yyyy-MM-dd'T'HH:mm:ss.SSS",
+      "yyyy-MM-dd'T'HH:mm:ss"
+    )
+    for (pattern in patterns) {
+      try {
+        val formatter = SimpleDateFormat(pattern, Locale.US).apply {
+          isLenient = true
+          if (!pattern.endsWith("X")) {
+            timeZone = TimeZone.getTimeZone("UTC")
+          }
+        }
+        val parsed = formatter.parse(value)
+        if (parsed != null) return parsed.time
+      } catch (_: Exception) {
+        // Try the next pattern.
+      }
+    }
+    return null
   }
 
   companion object {
