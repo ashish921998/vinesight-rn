@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/stores';
 import type { TFunction } from 'i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
@@ -64,6 +65,9 @@ function getDayName(dateString: string, t: TFunction): string {
 }
 
 export default function WeatherScreen() {
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isLoadingAuth = useAuthStore((state) => state.isLoading);
   const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
@@ -75,6 +79,14 @@ export default function WeatherScreen() {
   const [showFarmPicker, setShowFarmPicker] = useState(false);
   const [showGrowthPicker, setShowGrowthPicker] = useState(false);
   const [showSoilPicker, setShowSoilPicker] = useState(false);
+
+  useEffect(() => {
+    if (isLoadingAuth) return;
+    if (!isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, isLoadingAuth, router]);
+
   const urgencyColors = useMemo(
     () => ({
       low: { bg: colorWithOpacity(colors.success, 0.16), text: colors.success },
@@ -124,6 +136,10 @@ export default function WeatherScreen() {
       growthStage,
       soilType,
     );
+
+  if (isLoadingAuth || !isAuthenticated) {
+    return null;
+  }
 
   if (farmsLoading || isLoading) {
     return (

@@ -48,6 +48,7 @@ import { resolveAreaUnitPreference } from '@/utils/preferences';
 import {
   buildE164PhoneNumber as buildNormalizedE164PhoneNumber,
   sanitizePhoneDigits,
+  isValidE164PhoneNumber,
 } from '@/utils/phone';
 
 interface Country {
@@ -226,12 +227,19 @@ export default function SettingsScreen() {
         setLinkPhoneInput(sanitizeLocalPhoneInput(trimmed.slice(matched.dialCode.length)));
         return;
       }
+
+      setLinkPhoneInput(trimmed);
+      return;
     }
 
     setLinkPhoneInput(sanitizeLocalPhoneInput(trimmed));
   };
 
   const buildE164PhoneNumber = () => {
+    const raw = linkPhoneInput.trim();
+    if (raw.startsWith('+')) {
+      if (isValidE164PhoneNumber(raw)) return raw;
+    }
     return buildNormalizedE164PhoneNumber(selectedCountry.dialCode, linkPhoneInput);
   };
   const linkPhoneDisplayNumber = (phoneLinkingNumber ?? buildE164PhoneNumber()) || linkPhoneInput;
