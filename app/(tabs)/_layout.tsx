@@ -170,7 +170,13 @@ export default function TabLayout() {
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('gearshape', focused),
             }}
           />
-          <Tabs.Screen name="farms" options={{ href: null }} />
+          <Tabs.Screen
+            name="farms"
+            options={{
+              href: null,
+              tabBarButton: () => null,
+            }}
+          />
         </Tabs>
       </>
     );

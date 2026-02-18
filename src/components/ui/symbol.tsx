@@ -75,6 +75,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 
   // Business
   calendar: 'calendar-outline',
+  'calendar.badge.clock': 'calendar-clear-outline',
+  'calendar.badge.exclamationmark': 'calendar-outline',
   clock: 'time-outline',
   'clock.fill': 'time',
   location: 'location-outline',

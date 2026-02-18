@@ -2,6 +2,7 @@ import WidgetKit
 import SwiftUI
 
 struct Provider: TimelineProvider {
+    typealias Entry = SimpleEntry
     let appGroupID = "group.com.vinesight.app"
     
     func placeholder(in context: Context) -> SimpleEntry {
@@ -39,8 +40,8 @@ struct Provider: TimelineProvider {
         // Load weather data
         var weather: WeatherData? = nil
         if let data = defaults.data(forKey: "widgetData"),
-           let decoded = try? JSONDecoder().decode([String: WeatherData].self, from: data) {
-            weather = decoded["weather"]
+           let decoded = try? JSONDecoder().decode(WidgetDataPayload.self, from: data) {
+            weather = decoded.weather
         }
         
         // Load config

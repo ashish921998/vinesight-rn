@@ -14,6 +14,14 @@ import {
   SoilType,
 } from '../types/weather';
 
+const WEATHER_COORDINATE_PRECISION = 3;
+
+const normalizeCoordinate = (value?: number): number | undefined => {
+  if (!Number.isFinite(value)) return undefined;
+  const factor = 10 ** WEATHER_COORDINATE_PRECISION;
+  return Math.round((value as number) * factor) / factor;
+};
+
 // Query keys for weather data
 export const weatherQueryKeys = {
   all: ['weather'] as const,
@@ -24,9 +32,12 @@ export const weatherQueryKeys = {
  * Hook to fetch weather data for a location
  */
 export function useWeather(latitude?: number, longitude?: number) {
+  const normalizedLatitude = normalizeCoordinate(latitude);
+  const normalizedLongitude = normalizeCoordinate(longitude);
+
   return useQuery<WeatherData, Error>({
-    queryKey: weatherQueryKeys.weather(latitude, longitude),
-    queryFn: () => WeatherService.getWeatherData(latitude, longitude),
+    queryKey: weatherQueryKeys.weather(normalizedLatitude, normalizedLongitude),
+    queryFn: () => WeatherService.getWeatherData(normalizedLatitude, normalizedLongitude),
     staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
     retry: 2,

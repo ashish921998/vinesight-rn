@@ -52,6 +52,7 @@ const COUNTRIES: Country[] = [
 ];
 
 const DEFAULT_COUNTRY = COUNTRIES[0]; // India
+const LOCAL_PHONE_DIGITS = 10;
 
 export default function PhoneLoginScreen() {
   const { t } = useTranslation();
@@ -64,6 +65,7 @@ export default function PhoneLoginScreen() {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const lastNavigatedPhoneRef = useRef<string | null>(null);
+  const [localPhoneError, setLocalPhoneError] = useState<string | null>(null);
 
   const {
     isLoading,
@@ -96,12 +98,15 @@ export default function PhoneLoginScreen() {
   }, [isAuthenticated, needsProfileCompletion]);
 
   const handleSendCode = async () => {
-    if (!phoneNumber) return;
+    if (phoneNumber.length !== LOCAL_PHONE_DIGITS) {
+      setLocalPhoneError(
+        t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid 10-digit phone number' }),
+      );
+      return;
+    }
     clearError();
-    const digitsOnly = phoneNumber.replace(/[^\d]/g, '');
-    const normalizedLocalNumber = digitsOnly.replace(/^0+/, '');
-    if (!normalizedLocalNumber) return;
-    const fullPhoneNumber = selectedCountry.dialCode + normalizedLocalNumber;
+    setLocalPhoneError(null);
+    const fullPhoneNumber = selectedCountry.dialCode + phoneNumber;
     await signInWithPhone(fullPhoneNumber, phoneAuthMode);
   };
 
@@ -367,9 +372,13 @@ export default function PhoneLoginScreen() {
               <Input
                 placeholder={t('authPhone.phoneNumber')}
                 value={phoneNumber}
-                onChangeText={setPhoneNumber}
+                onChangeText={(value) => {
+                  setLocalPhoneError(null);
+                  setPhoneNumber(value.replace(/[^\d]/g, '').slice(0, LOCAL_PHONE_DIGITS));
+                }}
                 leftIcon="phone.fill"
                 keyboardType="phone-pad"
+                maxLength={LOCAL_PHONE_DIGITS}
                 autoCapitalize="none"
                 textContentType="telephoneNumber"
                 autoComplete="tel"
@@ -377,14 +386,14 @@ export default function PhoneLoginScreen() {
               />
 
               {/* Error Message */}
-              {errorMessage && (
+              {(errorMessage || localPhoneError) && (
                 <View style={errorContainerStyle}>
                   <UiSymbol
                     name="exclamationmark.circle.fill"
                     size={18}
                     color={m3.colorScheme.error}
                   />
-                  <Text style={errorTextStyle}>{errorMessage}</Text>
+                  <Text style={errorTextStyle}>{localPhoneError ?? errorMessage}</Text>
                 </View>
               )}
 
@@ -393,7 +402,7 @@ export default function PhoneLoginScreen() {
                 title={t('authPhone.sendCode')}
                 onPress={handleSendCode}
                 isLoading={isLoading}
-                disabled={!phoneNumber || isLoading}
+                disabled={phoneNumber.length !== LOCAL_PHONE_DIGITS || isLoading}
                 style={{ marginTop: spacing[4] }}
               />
             </View>
@@ -438,8 +447,9 @@ export default function PhoneLoginScreen() {
         transparent
         onRequestClose={() => setShowCountryPicker(false)}
       >
-        <Pressable style={modalOverlayStyle} onPress={() => setShowCountryPicker(false)}>
-          <Pressable style={modalContentStyle} onPress={() => {}}>
+        <View style={modalOverlayStyle}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowCountryPicker(false)} />
+          <View style={modalContentStyle}>
             <View style={modalHeaderStyle}>
               <Text style={modalTitleStyle}>{t('authPhone.selectCountry')}</Text>
               <Pressable
@@ -467,13 +477,13 @@ export default function PhoneLoginScreen() {
 
             <FlatList
               data={filteredCountries}
-              keyExtractor={(item) => item.code}
+              keyExtractor={(item) => `${item.code}-${item.dialCode}`}
               renderItem={renderCountryItem}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             />
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
     </KeyboardAvoidingView>
   );

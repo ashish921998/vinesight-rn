@@ -118,7 +118,7 @@ export const supabase: SupabaseClient = (() => {
   }
 
   try {
-    return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         storage: ExpoSecureStoreAdapter,
         autoRefreshToken: true,
@@ -126,6 +126,14 @@ export const supabase: SupabaseClient = (() => {
         detectSessionInUrl: false, // Required for mobile apps
       },
     });
+
+    client.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        await SecureStore.deleteItemAsync('sb-auth-token');
+      }
+    });
+
+    return client;
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
       console.error('Supabase client initialization failed:', error);

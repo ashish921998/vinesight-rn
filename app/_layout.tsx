@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Stack, usePathname, useSegments } from 'expo-router';
 import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -118,6 +121,12 @@ const queryClient = new QueryClient({
       retry: 1,
     },
   },
+});
+
+const queryPersister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: 'VINESIGHT_REACT_QUERY_CACHE',
+  throttleTime: 1000,
 });
 
 export default Sentry.wrap(function RootLayout() {
@@ -281,7 +290,13 @@ export default Sentry.wrap(function RootLayout() {
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <QueryClientProvider client={queryClient}>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{
+              persister: queryPersister,
+              maxAge: 1000 * 60 * 60 * 24, // 24 hours
+            }}
+          >
             <I18nextProvider i18n={i18n}>
               <StatusBar style={isDark ? 'light' : 'dark'} />
               <Stack
@@ -310,7 +325,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
               </Stack>
             </I18nextProvider>
-          </QueryClientProvider>
+          </PersistQueryClientProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>

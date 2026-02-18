@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
@@ -66,6 +67,7 @@ export default function WeatherScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
+  const { farmId: farmIdParam } = useLocalSearchParams<{ farmId?: string | string[] }>();
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [growthStage, setGrowthStage] = useState<GrapeGrowthStage>('Fruit set');
@@ -82,10 +84,17 @@ export default function WeatherScreen() {
     [colors.success, colors.warning, m3],
   );
 
+  const requestedFarmId = useMemo(() => {
+    const rawFarmId = Array.isArray(farmIdParam) ? farmIdParam[0] : farmIdParam;
+    if (!rawFarmId) return null;
+    const parsed = Number.parseInt(rawFarmId, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [farmIdParam]);
+
   // Get selected farm coordinates
   const selectedFarm = useMemo(() => {
     if (!farms || farms.length === 0) return null;
-    if (selectedFarmId) return farms.find((f) => f.id === selectedFarmId) || farms[0];
+    if (selectedFarmId !== null) return farms.find((f) => f.id === selectedFarmId) || farms[0];
     return farms[0];
   }, [farms, selectedFarmId]);
 
@@ -98,12 +107,23 @@ export default function WeatherScreen() {
       soilType,
     );
 
-  // Set initial farm when farms load
+  // Prefer farm from deep-link params, otherwise fall back to first farm.
   React.useEffect(() => {
-    if (farms && farms.length > 0 && !selectedFarmId && farms[0].id !== undefined) {
-      setSelectedFarmId(farms[0].id);
+    if (!farms || farms.length === 0) return;
+
+    if (requestedFarmId !== null) {
+      const matchedFarm = farms.find((farm) => farm.id === requestedFarmId);
+      if (matchedFarm && typeof matchedFarm.id === 'number' && matchedFarm.id !== selectedFarmId) {
+        setSelectedFarmId(matchedFarm.id);
+        return;
+      }
     }
-  }, [farms, selectedFarmId]);
+
+    const firstFarmId = farms[0]?.id;
+    if (typeof firstFarmId === 'number' && firstFarmId !== selectedFarmId) {
+      setSelectedFarmId(firstFarmId);
+    }
+  }, [farms, requestedFarmId, selectedFarmId]);
 
   if (farmsLoading || isLoading) {
     return (
