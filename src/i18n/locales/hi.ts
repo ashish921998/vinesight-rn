@@ -1217,6 +1217,10 @@ export const hi = {
     lowWaterAlertsSubtitle: 'जब पानी गंभीर रूप से कम हो तो अलर्ट करें',
     taskReminders: 'कार्य अनुस्मारक',
     taskRemindersSubtitle: 'निर्धारित कार्यों के बारे में याद दिलाएं',
+    warehouseReorderAlerts: 'गोदाम पुनः ऑर्डर अलर्ट',
+    warehouseReorderAlertsSubtitle: 'जब वस्तु पुनः ऑर्डर मात्रा से कम हो तो अलर्ट करें',
+    petioleTestReminders: 'पेटीओल परीक्षण अनुस्मारक',
+    petioleTestRemindersSubtitle: 'छंटाई के 30, 60, 90, 120वें दिन से एक दिन पहले याद दिलाएं',
     notificationNote: 'सूचना सेटिंग्स स्थानीय रूप से संग्रहीत हैं',
     madeForVineyardManagement: 'दाख की बारी प्रबंधन के लिए बनाया गया',
     signOut: 'साइन आउट',
@@ -1424,7 +1428,18 @@ export const hi = {
     },
     taskDue: {
       title: '$t(glossary.task) अनुस्मारक',
-      body: 'आपके पास एक निर्धारित कार्य है जो देय है।',
+      body: 'आपके पास एक निर्धारित कार्य आज देय है।',
+    },
+    taskDueTomorrow: {
+      body: 'आपके पास एक निर्धारित कार्य कल देय है।',
+    },
+    warehouseReorder: {
+      title: 'पुनः ऑर्डर अलर्ट',
+      body: '{{itemName}} कम है ({{quantity}} {{unit}} शेष, {{reorderQty}} {{unit}} पर पुनः ऑर्डर करें)',
+    },
+    petioleTest: {
+      title: 'पेटीओल परीक्षण अनुस्मारक',
+      body: '{{farmName}}: {{day}}वें दिन का पेटीओल परीक्षण कल है',
     },
   },
 

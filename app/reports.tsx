@@ -18,7 +18,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInUp, Layout } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borderRadius, spacing } from '@/styles/theme';
 import { useFarms, useProfile } from '@/hooks';
 import {
@@ -384,7 +384,7 @@ export default function ReportsScreen() {
   const showStickyExport = Boolean(farms && farms.length > 0);
 
   return (
-    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }} edges={['top']}>
       <Stack.Screen options={{ title: t('reports.title') }} />
 
       <ScrollView
@@ -504,7 +504,6 @@ export default function ReportsScreen() {
             canExport={Boolean(preview)}
             isExporting={isExporting}
             onExportPdf={() => handleExport('pdf')}
-            onExportCsv={() => handleExport('csv')}
             onDownload={handleDownloadPrompt}
             panelStyle={{ paddingBottom: spacing[6] + insets.bottom }}
           />
@@ -632,6 +631,6 @@ export default function ReportsScreen() {
           </Pressable>
         </Modal>
       )}
-    </View>
+    </SafeAreaView>
   );
 }

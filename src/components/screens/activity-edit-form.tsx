@@ -209,17 +209,7 @@ export function ActivityEditForm({
             }
           }
 
-          const allowedUnits = [
-            'gm/L',
-            'ml/L',
-            'gm/acre',
-            'ml/acre',
-            'ppm',
-            'kg',
-            'gram',
-            'liter',
-            'ml',
-          ] as const;
+          const allowedUnits = ['gm/L', 'ml/L', 'ppm', 'kg', 'gram', 'liter', 'ml'] as const;
           type AllowedUnit = (typeof allowedUnits)[number];
           const allowedUnitByLowercase = new Map<string, AllowedUnit>(
             allowedUnits.map((unit) => [unit.toLowerCase(), unit]),
@@ -237,16 +227,22 @@ export function ActivityEditForm({
             if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
               return 'ml/L';
             }
+            if (lowered === 'gm/acre') return 'gram';
+            if (lowered === 'ml/acre') return 'ml';
             return allowedUnitByLowercase.get(lowered) ?? null;
           };
 
           if (r.chemical_items && r.chemical_items.length > 0) {
             data.chemicals = r.chemical_items.map((item) => ({
+              ...(item.unit?.trim().toLowerCase().includes('/acre')
+                ? ({ quantityBasis: item.quantity_basis ?? 'per_acre' } as const)
+                : ({ quantityBasis: item.quantity_basis ?? 'total' } as const)),
               id: generateId(),
               name: item.name,
               quantity: item.quantity ?? 0,
-              unit: (item.unit as SprayFormData['chemicals'][number]['unit']) ?? 'ml/L',
-              quantityBasis: item.quantity_basis ?? 'total',
+              unit:
+                (item.unit ? normalizeLegacySprayUnit(item.unit) : null) ??
+                ('ml/L' as SprayFormData['chemicals'][number]['unit']),
               warehouseItemId: item.warehouse_item_id ?? null,
               compositionSnapshot: item.composition_snapshot ?? null,
               densityKgPerL: item.density_kg_per_l ?? null,

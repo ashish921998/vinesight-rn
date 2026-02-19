@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
   type TextInputProps,
   Keyboard,
+  Platform,
   UIManager,
   findNodeHandle,
 } from 'react-native';
@@ -24,24 +25,27 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Sentry from '@sentry/react-native';
 import { AppIcon } from '@/components/ui/app-icon';
 import { ModalBackdrop } from '@/components/ui/modal-backdrop';
-import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient as _LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
-import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
+import { androidTextPadding } from '@/styles/theme';
+import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
+import { PendingLogs, type PendingLog } from '@/components/screens/entry-form/PendingLogs';
+import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
+import { LogForm } from '@/components/screens/entry-form/LogForm';
 
 import {
-  IrrigationForm,
-  SprayForm,
-  HarvestForm,
-  ExpenseForm,
-  FertigationForm,
+  IrrigationForm as _IrrigationForm,
+  SprayForm as _SprayForm,
+  HarvestForm as _HarvestForm,
+  ExpenseForm as _ExpenseForm,
+  FertigationForm as _FertigationForm,
   validateIrrigationForm,
   validateSprayForm,
   validateHarvestForm,
@@ -64,7 +68,7 @@ import {
   type LogTypeId,
   HARVEST_GRADES,
   CHEMICAL_UNITS,
-  FERTILIZER_UNITS,
+  ACTIVITY_TYPES as _ACTIVITY_TYPES,
 } from '@/constants/calculator-models';
 import {
   useCreateIrrigationRecord,
@@ -94,12 +98,11 @@ import {
 } from '@/types/task';
 import { TASK_TEMPLATES } from '@/constants/task-templates';
 import { toSupabaseDateString } from '@/types/database';
-import type { Farm, QuantityBasis } from '@/types';
+import type { Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useAuthStore, useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
-import { getExpenseIconName } from '@/utils/expense-icons';
 import { submitEntryPendingLog } from '@/utils/entry-log-submission';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import {
@@ -112,8 +115,6 @@ import {
   encodeTaskPlanInDescription,
   stripTaskPlanFromDescription,
 } from '@/utils/task-plan';
-
-type EntryTab = 'log' | 'task';
 
 interface EntryFormProps {
   visible?: boolean;
@@ -138,21 +139,6 @@ interface EntryFormProps {
   presentation?: 'modal' | 'screen';
 }
 
-interface PendingLog {
-  id: string;
-  type: LogTypeId;
-  data:
-    | IrrigationFormData
-    | SprayFormData
-    | HarvestFormData
-    | ExpenseFormData
-    | FertigationFormData;
-  displayDescription: string;
-  isSourceTaskLog?: boolean;
-}
-
-const ACTIVITY_TYPES = LOG_TYPES.filter((lt) => lt.id !== 'note');
-
 const TASK_TYPES: TaskType[] = [
   'irrigation',
   'spray',
@@ -170,28 +156,58 @@ function isValidChemicalUnit(unit: string): unit is SprayFormData['chemicals'][n
   return CHEMICAL_UNITS.includes(unit as SprayFormData['chemicals'][number]['unit']);
 }
 
-function isValidFertilizerUnit(
-  unit: string,
-): unit is FertigationFormData['fertilizers'][number]['unit'] {
-  return FERTILIZER_UNITS.includes(unit as FertigationFormData['fertilizers'][number]['unit']);
+function normalizeFertigationDoseUnit(unit: string | null | undefined): 'kg/acre' | 'liter/acre' {
+  if (typeof unit !== 'string') return 'kg/acre';
+  const trimmed = unit.trim();
+  if (!trimmed) return 'kg/acre';
+  const normalized = trimmed.toLowerCase();
+  if (normalized === 'kg' || normalized === 'kg/acre' || normalized === 'kg per acre') {
+    return 'kg/acre';
+  }
+  if (
+    normalized === 'liter' ||
+    normalized === 'litre' ||
+    normalized === 'l' ||
+    normalized === 'liter/acre' ||
+    normalized === 'litre/acre' ||
+    normalized === 'l/acre' ||
+    normalized === 'liter per acre' ||
+    normalized === 'litre per acre'
+  ) {
+    return 'liter/acre';
+  }
+  if (normalized === 'ppm') return 'kg/acre';
+  return 'kg/acre';
 }
 
-function normalizeFertigationDoseUnit(unit: string): string {
-  const normalized = unit.trim().toLowerCase();
-  if (normalized === 'kg/acre') return 'kg';
-  if (normalized === 'liter/acre' || normalized === 'litre/acre') return 'liter';
-  if (normalized === 'litre') return 'liter';
-  return unit.trim();
-}
-
-function resolveFertigationQuantityBasis(
+function resolveFertigationPrefill(
   unit: string | null | undefined,
-  quantityBasis: QuantityBasis | null | undefined,
-): QuantityBasis {
-  if (quantityBasis) return quantityBasis;
-  const normalizedUnit = unit?.trim().toLowerCase();
-  if (!normalizedUnit) return 'per_acre';
-  return normalizedUnit.includes('/acre') ? 'per_acre' : 'total';
+): Pick<FertigationFormData['fertilizers'][number], 'unit' | 'quantityBasis'> {
+  const normalized = normalizeFertigationDoseUnit(unit);
+  if (normalized === 'liter/acre') return { unit: 'liter', quantityBasis: 'per_acre' };
+  if (normalized === 'kg/acre') return { unit: 'kg', quantityBasis: 'per_acre' };
+  return {
+    unit: 'kg',
+    quantityBasis: 'per_acre',
+  };
+}
+
+function normalizeSprayDoseUnit(unit: string): string {
+  const normalized = unit.trim().toLowerCase();
+  if (
+    normalized === 'gm/liter' ||
+    normalized === 'gm/litre' ||
+    normalized === 'gm/l' ||
+    normalized === 'g/l'
+  ) {
+    return 'gm/L';
+  }
+  if (normalized === 'ml/liter' || normalized === 'ml/litre' || normalized === 'ml/l') {
+    return 'ml/L';
+  }
+  if (normalized === 'gm/acre') return 'gram';
+  if (normalized === 'ml/acre') return 'ml';
+  return unit.trim();
 }
 
 function normalizePlannedInputs(items: PlannedInputItem[]): PlannedInputItem[] {
@@ -252,12 +268,11 @@ export function EntryForm({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
-  const { data: profile } = useProfile();
+  const { data: profile } = useProfile({ enabled: false });
   const user = useAuthStore((state) => state.user);
   const preferredAreaUnit = resolveAreaUnitPreference(
     profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
   );
-  const fertigationPerAreaLabel = preferredAreaUnit === 'hectares' ? 'Per hectare' : 'Per acre';
 
   const isVisible = visible ?? true;
   const queryClient = useQueryClient();
@@ -315,16 +330,21 @@ export function EntryForm({
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
   const [isSubmittingLogs, setIsSubmittingLogs] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [footerHeight, setFooterHeight] = useState(112);
   const logFormScrollViewRef = useRef<ScrollView>(null);
   const focusedInputRef = useRef<number | null>(null);
   const scrollOffsetRef = useRef(0);
   const keyboardHeightRef = useRef(0);
 
   const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
-  const [sprayData, setSprayData] = useState<SprayFormData>(createEmptySprayFormData());
-  const [harvestData, setHarvestData] = useState<HarvestFormData>(createEmptyHarvestFormData());
-  const [expenseData, setExpenseData] = useState<ExpenseFormData>(createEmptyExpenseFormData());
-  const [fertigationData, setFertigationData] = useState<FertigationFormData>(
+  const [sprayData, setSprayData] = useState<SprayFormData>(() => createEmptySprayFormData());
+  const [harvestData, setHarvestData] = useState<HarvestFormData>(() =>
+    createEmptyHarvestFormData(),
+  );
+  const [expenseData, setExpenseData] = useState<ExpenseFormData>(() =>
+    createEmptyExpenseFormData(),
+  );
+  const [fertigationData, setFertigationData] = useState<FertigationFormData>(() =>
     createEmptyFertigationFormData(),
   );
   const [taskPlannedInputs, setTaskPlannedInputs] = useState<PlannedInputItem[]>([]);
@@ -466,7 +486,7 @@ export function EntryForm({
         setSprayData({
           waterVolume: undefined,
           chemicals: initialLogPrefill.sprayChemicals.map((item) => {
-            const normalizedUnit = item.unit?.trim();
+            const normalizedUnit = item.unit ? normalizeSprayDoseUnit(item.unit) : null;
             const unit =
               normalizedUnit && isValidChemicalUnit(normalizedUnit) ? normalizedUnit : 'gm/L';
             return {
@@ -474,7 +494,9 @@ export function EntryForm({
               name: item.name,
               quantity: item.quantity ?? undefined,
               unit,
-              quantityBasis: item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+              quantityBasis:
+                item.quantityBasis ??
+                (item.unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total'),
             };
           }),
         });
@@ -483,15 +505,13 @@ export function EntryForm({
         setFertigationData({
           waterVolume: undefined,
           fertilizers: initialLogPrefill.fertigationItems.map((item) => {
-            const normalizedUnit = item.unit ? normalizeFertigationDoseUnit(item.unit) : null;
-            const unit =
-              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg';
+            const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
             return {
               id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
               name: item.name,
               quantity: item.quantity ?? 0,
               unit,
-              quantityBasis: resolveFertigationQuantityBasis(item.unit, item.quantityBasis),
+              quantityBasis,
             };
           }),
         });
@@ -539,9 +559,11 @@ export function EntryForm({
         const sprayPrefill = initialVoiceLogPrefill.spray;
         const prefilledChemicals = sprayPrefill?.chemicals?.length
           ? sprayPrefill.chemicals.map((item, index) => {
+              const normalizedUnit = item.unit ? normalizeSprayDoseUnit(item.unit) : null;
               const unit =
-                item.unit && CHEMICAL_UNITS.includes(item.unit as (typeof CHEMICAL_UNITS)[number])
-                  ? (item.unit as (typeof CHEMICAL_UNITS)[number])
+                normalizedUnit &&
+                CHEMICAL_UNITS.includes(normalizedUnit as (typeof CHEMICAL_UNITS)[number])
+                  ? (normalizedUnit as (typeof CHEMICAL_UNITS)[number])
                   : 'gm/L';
               return {
                 id: createPrefillId('chem', index),
@@ -549,7 +571,8 @@ export function EntryForm({
                 quantity: item.quantity ?? undefined,
                 unit,
                 quantityBasis:
-                  item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+                  item.quantityBasis ??
+                  (item.unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total'),
               };
             })
           : createEmptySprayFormData().chemicals;
@@ -589,17 +612,12 @@ export function EntryForm({
         const fertigationPrefill = initialVoiceLogPrefill.fertigation;
         const prefilledFertilizers = fertigationPrefill?.fertilizers?.length
           ? fertigationPrefill.fertilizers.map((item) => {
-              const normalizedUnit = item.unit ? normalizeFertigationDoseUnit(item.unit) : null;
-              const unit =
-                normalizedUnit &&
-                FERTILIZER_UNITS.includes(normalizedUnit as (typeof FERTILIZER_UNITS)[number])
-                  ? (normalizedUnit as (typeof FERTILIZER_UNITS)[number])
-                  : 'kg';
+              const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
               return {
                 name: item.name ?? '',
                 quantity: item.quantity ?? undefined,
                 unit,
-                quantityBasis: resolveFertigationQuantityBasis(item.unit, item.quantityBasis),
+                quantityBasis,
               };
             })
           : createEmptyFertigationFormData().fertilizers;
@@ -1072,8 +1090,13 @@ export function EntryForm({
     });
   }, []);
 
-  const removeTaskPlannedInput = useCallback((index: number) => {
-    setTaskPlannedInputs((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+  const removeTaskPlannedInput = useCallback((item: PlannedInputItem) => {
+    setTaskPlannedInputs((prev) => {
+      const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
+      return prev.filter(
+        (i) => `${i.name.trim().toLowerCase()}::${(i.unit ?? '').trim().toLowerCase()}` !== key,
+      );
+    });
   }, []);
 
   const addCustomTaskPlannedInput = useCallback(() => {
@@ -1161,18 +1184,22 @@ export function EntryForm({
         if (taskRemindersEnabled && nextDueDate && hasDueDateChanged) {
           const granted = await ensureNotificationPermissions();
           if (granted) {
-            const notificationId = await scheduleTaskDueReminder(taskId, nextDueDate);
-            if (notificationId) {
-              if (existing?.notificationId) {
-                await cancelNotification(existing.notificationId);
-              }
-              upsertTaskSchedule(taskId, { notificationId, dueDate: nextDueDate });
+            if (existing?.notificationIds?.length) {
+              await Promise.allSettled(
+                existing.notificationIds.map((id) => cancelNotification(id)),
+              );
+            }
+            const notificationIds = await scheduleTaskDueReminder(taskId, nextDueDate);
+            if (notificationIds.length > 0) {
+              upsertTaskSchedule(taskId, { notificationIds, dueDate: nextDueDate });
+            } else {
+              removeTaskSchedule(taskId);
             }
           }
         }
 
-        if (!nextDueDate && existing?.notificationId && hasDueDateChanged) {
-          await cancelNotification(existing.notificationId);
+        if (!nextDueDate && existing?.notificationIds?.length && hasDueDateChanged) {
+          await Promise.allSettled(existing.notificationIds.map((id) => cancelNotification(id)));
           removeTaskSchedule(taskId);
         }
       } catch (notificationError) {
@@ -1232,257 +1259,6 @@ export function EntryForm({
     onClose,
     t,
   ]);
-
-  const renderTabs = () => {
-    if (resolvedTabs.length < 2) return null;
-    return (
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}>
-        <View
-          style={{
-            backgroundColor: colors.surface[100],
-            borderRadius: 999,
-            padding: 4,
-            flexDirection: 'row',
-          }}
-        >
-          {resolvedTabs.map((tab) => {
-            const isActive = activeTab === tab;
-            const label = tab === 'log' ? t('entryForm.tabs.log') : t('entryForm.tabs.task');
-            const iconName = tab === 'log' ? 'document-text' : 'checkbox-outline';
-            return (
-              <Pressable
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={[
-                  { flex: 1, borderRadius: 999, overflow: 'hidden' },
-                  { marginHorizontal: 2 },
-                ]}
-              >
-                {isActive ? (
-                  <LinearGradient
-                    colors={[
-                      colorWithOpacity(m3.colorScheme.primary, 0.95),
-                      colorWithOpacity(m3.colorScheme.primary, 0.7),
-                    ]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{
-                      width: '100%',
-                      borderRadius: 999,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <AppIcon name={iconName} size={16} color={m3.colorScheme.onPrimary} />
-                    <Text
-                      selectable
-                      style={[
-                        { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                        { color: m3.colorScheme.onPrimary },
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  </LinearGradient>
-                ) : (
-                  <View
-                    style={{
-                      width: '100%',
-                      borderRadius: 999,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <AppIcon name={iconName} size={16} color={m3.colorScheme.onSurfaceVariant} />
-                    <Text
-                      selectable
-                      style={[
-                        { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                        { color: m3.colorScheme.onSurfaceVariant },
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-    );
-  };
-
-  const renderLogTypeSelector = () => (
-    <View
-      style={{
-        backgroundColor: colors.surface[100],
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 16,
-      }}
-    >
-      <Text
-        selectable
-        style={{
-          fontSize: 16,
-          fontWeight: '600',
-          color: m3.colorScheme.onSurface,
-          marginBottom: 12,
-        }}
-      >
-        {t('entryForm.activityType')}
-      </Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        {ACTIVITY_TYPES.map((logType) => {
-          const isSelected = selectedLogType === logType.id;
-          return (
-            <Pressable
-              key={logType.id}
-              onPress={() => {
-                setSelectedLogType(logType.id as LogTypeId);
-                setShowLogFormModal(true);
-              }}
-              style={{
-                width: '18%',
-                paddingVertical: 10,
-                alignItems: 'center',
-                borderRadius: 12,
-                borderWidth: 1,
-                backgroundColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                  : colors.surface[50],
-                borderColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.25)
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-              }}
-            >
-              <View
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 999,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 6,
-                  backgroundColor: isSelected ? `${logType.color}20` : `${logType.color}12`,
-                }}
-              >
-                <AppIcon name={logType.icon} size={16} color={logType.color} />
-              </View>
-              <Text
-                selectable
-                style={[
-                  { fontSize: 10, fontWeight: '600', textAlign: 'center', lineHeight: 12 },
-                  { color: isSelected ? m3.colorScheme.primary : m3.colorScheme.onSurface },
-                ]}
-                numberOfLines={2}
-              >
-                {t(logType.labelKey)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-
-  const renderLogForm = () => {
-    if (!selectedLogType) return null;
-    return (
-      <View style={{ backgroundColor: colors.surface[100], borderRadius: 16, padding: 16 }}>
-        {selectedLogType === 'irrigation' && (
-          <IrrigationForm
-            data={irrigationData}
-            onChange={setIrrigationData}
-            onInputFocus={scrollToFocusedInput}
-          />
-        )}
-        {selectedLogType === 'spray' && (
-          <SprayForm
-            data={sprayData}
-            onChange={setSprayData}
-            onInputFocus={scrollToFocusedInput}
-            quickAddItems={sprayQuickAddItems}
-          />
-        )}
-        {selectedLogType === 'harvest' && (
-          <HarvestForm
-            data={harvestData}
-            onChange={setHarvestData}
-            onInputFocus={scrollToFocusedInput}
-          />
-        )}
-        {selectedLogType === 'expense' && (
-          <ExpenseForm
-            data={expenseData}
-            onChange={setExpenseData}
-            onInputFocus={scrollToFocusedInput}
-          />
-        )}
-        {selectedLogType === 'fertigation' && (
-          <FertigationForm
-            data={fertigationData}
-            onChange={setFertigationData}
-            onInputFocus={scrollToFocusedInput}
-            quickAddItems={fertigationQuickAddItems}
-            perAreaLabel={fertigationPerAreaLabel}
-          />
-        )}
-
-        <Pressable
-          onPress={addLogToSession}
-          disabled={!isLogFormValid || !activeFarm}
-          style={[
-            {
-              marginTop: 16,
-              paddingVertical: 12,
-              borderRadius: 12,
-              alignItems: 'center',
-              flexDirection: 'row',
-              justifyContent: 'center',
-            },
-            {
-              backgroundColor:
-                isLogFormValid && activeFarm
-                  ? m3.colorScheme.primary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-            },
-          ]}
-        >
-          <AppIcon
-            name="add-circle"
-            size={20}
-            color={
-              isLogFormValid
-                ? m3.colorScheme.onPrimary
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-            }
-          />
-          <Text
-            selectable
-            style={[
-              { marginLeft: 8, fontWeight: '600' },
-              {
-                color: isLogFormValid
-                  ? m3.colorScheme.onPrimary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-              },
-            ]}
-          >
-            {t('entryForm.addEntry')}
-          </Text>
-        </Pressable>
-      </View>
-    );
-  };
-
   const renderLogFormModal = () => {
     if (!selectedLogType) return null;
     const logType = LOG_TYPES.find((lt) => lt.id === selectedLogType);
@@ -1555,7 +1331,25 @@ export function EntryForm({
               }}
               scrollEventThrottle={16}
             >
-              {renderLogForm()}
+              <LogForm
+                selectedLogType={selectedLogType}
+                irrigationData={irrigationData}
+                sprayData={sprayData}
+                harvestData={harvestData}
+                expenseData={expenseData}
+                fertigationData={fertigationData}
+                onIrrigationChange={setIrrigationData}
+                onSprayChange={setSprayData}
+                onHarvestChange={setHarvestData}
+                onExpenseChange={setExpenseData}
+                onFertigationChange={setFertigationData}
+                onInputFocus={scrollToFocusedInput}
+                onAdd={addLogToSession}
+                isValid={isLogFormValid}
+                hasFarm={!!activeFarm}
+                sprayQuickAddItems={sprayQuickAddItems}
+                fertigationQuickAddItems={fertigationQuickAddItems}
+              />
             </ScrollView>
           </KeyboardAvoidingView>
         </View>
@@ -1625,88 +1419,6 @@ export function EntryForm({
             {t('entryForm.addEntry')}
           </Text>
         </Pressable>
-      </View>
-    );
-  };
-
-  const renderPendingLogs = () => {
-    if (pendingLogs.length === 0) return null;
-    return (
-      <View
-        style={{
-          backgroundColor: colors.surface[100],
-          borderRadius: 16,
-          padding: 16,
-          marginBottom: 16,
-        }}
-      >
-        <Text
-          selectable
-          style={{
-            fontSize: 16,
-            fontWeight: '600',
-            color: m3.colorScheme.onSurface,
-            marginBottom: 12,
-          }}
-        >
-          {t('entryForm.pendingLogs', { count: pendingLogs.length })}
-        </Text>
-        {pendingLogs.map((log) => {
-          const logType = LOG_TYPES.find((lt) => lt.id === log.type);
-          const iconName =
-            log.type === 'expense'
-              ? getExpenseIconName(
-                  (log.data as ExpenseFormData | undefined)?.type,
-                  resolveSymbolIconName(logType?.icon),
-                )
-              : resolveSymbolIconName(logType?.icon);
-          return (
-            <View
-              key={log.id}
-              style={[
-                {
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  padding: 12,
-                  borderRadius: 12,
-                  marginBottom: 8,
-                },
-                { backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1) },
-              ]}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 999,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: `${logType?.color}15`,
-                }}
-              >
-                <UiSymbol
-                  name={iconName}
-                  size={18}
-                  color={logType?.color ?? m3.colorScheme.primary}
-                />
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text
-                  selectable
-                  style={{ fontSize: 14, fontWeight: '600', color: m3.colorScheme.onSurface }}
-                >
-                  {logType ? t(logType.labelKey) : t('entryForm.addLog')}
-                </Text>
-                <Text selectable style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
-                  {log.displayDescription}
-                </Text>
-              </View>
-              <Pressable onPress={() => removeLogFromSession(log.id)}>
-                <AppIcon name="trash-outline" size={20} color={m3.colorScheme.error} />
-              </Pressable>
-            </View>
-          );
-        })}
       </View>
     );
   };
@@ -1877,7 +1589,13 @@ export function EntryForm({
         </View>
       </View>
 
-      {renderLogTypeSelector()}
+      <LogTypeSelector
+        selectedLogType={selectedLogType}
+        onSelect={(type) => {
+          setSelectedLogType(type);
+          setShowLogFormModal(true);
+        }}
+      />
       {selectedLogType === null && (
         <View
           style={{
@@ -1894,7 +1612,7 @@ export function EntryForm({
           </Text>
         </View>
       )}
-      {renderPendingLogs()}
+      <PendingLogs pendingLogs={pendingLogs} onRemove={removeLogFromSession} />
     </>
   );
 
@@ -2270,9 +1988,9 @@ export function EntryForm({
               showsHorizontalScrollIndicator={false}
               style={{ marginBottom: 12 }}
             >
-              {taskPlanningSuggestions.map((item, index) => (
+              {taskPlanningSuggestions.map((item) => (
                 <Pressable
-                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  key={`${item.name}-${item.unit ?? 'unit'}-${item.source ?? 'source'}`}
                   onPress={() => addTaskPlannedInput(item)}
                   style={{
                     marginRight: 8,
@@ -2371,9 +2089,9 @@ export function EntryForm({
 
           {taskPlannedInputs.length > 0 && (
             <View style={{ gap: 6 }}>
-              {taskPlannedInputs.map((item, index) => (
+              {taskPlannedInputs.map((item) => (
                 <View
-                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  key={`${item.name}-${item.unit ?? 'unit'}-${item.source ?? 'source'}`}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -2395,7 +2113,7 @@ export function EntryForm({
                       {item.unit ?? ''}
                     </Text>
                   </View>
-                  <Pressable onPress={() => removeTaskPlannedInput(index)}>
+                  <Pressable onPress={() => removeTaskPlannedInput(item)}>
                     <AppIcon
                       name="close-circle"
                       size={18}
@@ -2574,7 +2292,7 @@ export function EntryForm({
   const content = (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <KeyboardAvoidingView
-        behavior={isIOS ? 'padding' : 'height'}
+        behavior={isIOS ? 'padding' : undefined}
         keyboardVerticalOffset={isIOS ? 0 : 20}
         style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
       >
@@ -2598,16 +2316,23 @@ export function EntryForm({
               }}
             />
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 40 }} />
-            <View style={{ flex: 1, alignItems: 'center' }}>
+          <View style={{ minHeight: 44, justifyContent: 'center', position: 'relative' }}>
+            <View style={{ paddingHorizontal: 52, alignItems: 'center', justifyContent: 'center' }}>
               <Text
                 selectable
                 style={{
                   fontSize: 18,
+                  lineHeight: 24,
                   fontWeight: '600',
                   color: m3.colorScheme.onSurface,
                   textAlign: 'center',
+                  ...(Platform.OS === 'android'
+                    ? {
+                        includeFontPadding: true,
+                        paddingBottom: androidTextPadding.bottom,
+                        paddingRight: androidTextPadding.right,
+                      }
+                    : null),
                 }}
                 numberOfLines={1}
                 ellipsizeMode="tail"
@@ -2618,15 +2343,19 @@ export function EntryForm({
                     ? t('entryForm.editTask')
                     : t('entryForm.addTask')}
               </Text>
-              <Text
-                selectable
-                style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
-                numberOfLines={1}
-              >
-                {activeFarm?.name}
-              </Text>
             </View>
-            <Pressable onPress={handleClose} style={{ width: 40, alignItems: 'flex-end' }}>
+            <Pressable
+              onPress={handleClose}
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <AppIcon
                 name="close-circle"
                 size={26}
@@ -2634,9 +2363,18 @@ export function EntryForm({
               />
             </Pressable>
           </View>
+          <View style={{ marginTop: 2, alignItems: 'center', minHeight: 16 }}>
+            <Text
+              selectable
+              style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
+              numberOfLines={1}
+            >
+              {activeFarm?.name}
+            </Text>
+          </View>
         </View>
 
-        {renderTabs()}
+        <Tabs tabs={resolvedTabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         {showDatePicker && !isIOS && (
           <DateTimePicker
@@ -2908,10 +2646,13 @@ export function EntryForm({
 
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: footerHeight + insets.bottom + 24,
+          }}
+          scrollIndicatorInsets={{ bottom: footerHeight + insets.bottom + 24 }}
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
-          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
           showsVerticalScrollIndicator={true}
         >
           {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
@@ -2923,10 +2664,16 @@ export function EntryForm({
         {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
 
         <View
+          onLayout={(event) => {
+            const nextHeight = Math.ceil(event.nativeEvent.layout.height);
+            setFooterHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+          }}
           style={{
+            flexShrink: 0,
             backgroundColor: colors.surface[100],
             paddingHorizontal: 16,
-            paddingVertical: 16,
+            paddingTop: 16,
+            paddingBottom: Platform.OS === 'ios' ? Math.max(16, insets.bottom) : 16,
             borderTopWidth: 1,
             borderColor: colors.surface[100],
           }}

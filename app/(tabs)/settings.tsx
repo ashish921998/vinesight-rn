@@ -116,6 +116,7 @@ export default function SettingsScreen() {
     cancelPhoneLinking,
     phoneLinkingPending,
     phoneLinkingNumber,
+    phoneLinkingLoading,
     clearError,
     errorMessage: authErrorMessage,
     isLoading: authLoading,
@@ -140,6 +141,23 @@ export default function SettingsScreen() {
   const setTaskRemindersEnabled = useNotificationStore((s) => s.setTaskRemindersEnabled);
   const taskSchedules = useNotificationStore((s) => s.taskSchedules);
   const clearAllTaskSchedules = useNotificationStore((s) => s.clearAllTaskSchedules);
+
+  const warehouseReorderAlertsEnabled = useNotificationStore(
+    (s) => s.warehouseReorderAlertsEnabled,
+  );
+  const setWarehouseReorderAlertsEnabled = useNotificationStore(
+    (s) => s.setWarehouseReorderAlertsEnabled,
+  );
+  const clearNotifiedWarehouseItemIds = useNotificationStore(
+    (s) => s.clearNotifiedWarehouseItemIds,
+  );
+
+  const petioleTestRemindersEnabled = useNotificationStore((s) => s.petioleTestRemindersEnabled);
+  const setPetioleTestRemindersEnabled = useNotificationStore(
+    (s) => s.setPetioleTestRemindersEnabled,
+  );
+  const petioleTestSchedules = useNotificationStore((s) => s.petioleTestSchedules);
+  const clearAllPetioleTestSchedules = useNotificationStore((s) => s.clearAllPetioleTestSchedules);
   const { data: profile, refetch: refetchProfile } = useProfile();
   const updateProfile = useUpdateProfile();
 
@@ -171,7 +189,7 @@ export default function SettingsScreen() {
   const [countrySearch, setCountrySearch] = useState('');
 
   // Local preferences state
-  const [selectedCurrency, setSelectedCurrency] = useState(getDefaultCurrency());
+  const [selectedCurrency, setSelectedCurrency] = useState(() => getDefaultCurrency());
   const [selectedAreaUnit, setSelectedAreaUnit] = useState<'acres' | 'hectares'>('acres');
   const currency = useCurrency();
 
@@ -332,7 +350,7 @@ export default function SettingsScreen() {
     }
 
     // Disable: cancel any scheduled task notifications we know about
-    const ids = Object.values(taskSchedules).map((s) => s.notificationId);
+    const ids = Object.values(taskSchedules).flatMap((s) => s.notificationIds ?? []);
     await Promise.allSettled(ids.map((id) => cancelNotification(id)));
     clearAllTaskSchedules();
     setTaskRemindersEnabled(false);
@@ -350,6 +368,38 @@ export default function SettingsScreen() {
     }
 
     setLowWaterAlertsEnabled(false);
+  };
+
+  const handleToggleWarehouseReorderAlerts = async (enabled: boolean) => {
+    if (enabled) {
+      const granted = await ensureNotificationPermissions();
+      if (!granted) {
+        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+        return;
+      }
+      setWarehouseReorderAlertsEnabled(true);
+      return;
+    }
+    setWarehouseReorderAlertsEnabled(false);
+    clearNotifiedWarehouseItemIds();
+  };
+
+  const handleTogglePetioleTestReminders = async (enabled: boolean) => {
+    if (enabled) {
+      const granted = await ensureNotificationPermissions();
+      if (!granted) {
+        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+        return;
+      }
+      setPetioleTestRemindersEnabled(true);
+      return;
+    }
+
+    // Disable: cancel any scheduled petiole test notifications
+    const ids = Object.values(petioleTestSchedules).flatMap((s) => s.notificationIds ?? []);
+    await Promise.allSettled(ids.map((id) => cancelNotification(id)));
+    clearAllPetioleTestSchedules();
+    setPetioleTestRemindersEnabled(false);
   };
 
   const handleDeleteAccount = () => {
@@ -711,6 +761,24 @@ export default function SettingsScreen() {
             subtitle={t('settings.taskRemindersSubtitle')}
             enabled={taskRemindersEnabled}
             onToggle={handleToggleTaskReminders}
+            styles={styles}
+            colors={colors}
+            m3={m3}
+          />
+          <NotificationToggle
+            title={t('settings.warehouseReorderAlerts')}
+            subtitle={t('settings.warehouseReorderAlertsSubtitle')}
+            enabled={warehouseReorderAlertsEnabled}
+            onToggle={handleToggleWarehouseReorderAlerts}
+            styles={styles}
+            colors={colors}
+            m3={m3}
+          />
+          <NotificationToggle
+            title={t('settings.petioleTestReminders')}
+            subtitle={t('settings.petioleTestRemindersSubtitle')}
+            enabled={petioleTestRemindersEnabled}
+            onToggle={handleTogglePetioleTestReminders}
             isLast
             styles={styles}
             colors={colors}
@@ -1074,7 +1142,7 @@ export default function SettingsScreen() {
                       maxLength={6}
                       style={styles.input}
                     />
-                    <Pressable onPress={handleResendPhoneLinkCode} disabled={authLoading}>
+                    <Pressable onPress={handleResendPhoneLinkCode} disabled={phoneLinkingLoading}>
                       <Text
                         style={styles.inputHint}
                         textBreakStrategy="highQuality"
@@ -1083,7 +1151,7 @@ export default function SettingsScreen() {
                         {t('settings.linkPhone.resend')}
                       </Text>
                     </Pressable>
-                    <Pressable onPress={handleEditPhoneNumber} disabled={authLoading}>
+                    <Pressable onPress={handleEditPhoneNumber} disabled={phoneLinkingLoading}>
                       <Text
                         style={styles.inputHint}
                         textBreakStrategy="highQuality"
@@ -1115,16 +1183,26 @@ export default function SettingsScreen() {
                   isShowingPhoneCodeStep ? handleVerifyPhoneLinkCode : handleSendPhoneLinkCode
                 }
                 disabled={
-                  authLoading ||
+                  phoneLinkingLoading ||
                   (!isShowingPhoneCodeStep && !isLocalPhoneValid) ||
                   (isShowingPhoneCodeStep && linkPhoneCode.trim().length !== 6)
                 }
-                style={[
-                  styles.saveButton,
-                  { backgroundColor: colors.primary[600], marginBottom: spacing[3] },
-                ]}
+                style={({ pressed }) => {
+                  const isDisabled =
+                    phoneLinkingLoading ||
+                    (!isShowingPhoneCodeStep && !isLocalPhoneValid) ||
+                    (isShowingPhoneCodeStep && linkPhoneCode.trim().length !== 6);
+                  return [
+                    styles.saveButton,
+                    {
+                      backgroundColor: colors.primary[600],
+                      marginBottom: spacing[3],
+                      opacity: isDisabled ? 0.5 : pressed ? 0.8 : 1,
+                    },
+                  ];
+                }}
               >
-                {authLoading ? (
+                {phoneLinkingLoading ? (
                   <ActivityIndicator color={m3.colorScheme.onPrimary} />
                 ) : (
                   <Text
@@ -1141,7 +1219,7 @@ export default function SettingsScreen() {
 
               <Pressable
                 onPress={handleCloseLinkPhone}
-                disabled={authLoading}
+                disabled={phoneLinkingLoading}
                 style={styles.saveButton}
               >
                 <Text

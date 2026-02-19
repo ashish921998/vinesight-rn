@@ -27,6 +27,8 @@ jest.mock('@/services/telemetry', () => ({
 jest.mock('@/lib/query-cache', () => ({
   queryClient: {
     clear: jest.fn(),
+    setQueryData: jest.fn(),
+    invalidateQueries: jest.fn().mockResolvedValue(undefined),
   },
   queryPersister: {
     removeClient: jest.fn().mockResolvedValue(undefined),
@@ -369,7 +371,14 @@ describe('cancelPhoneOTPFlow', () => {
 describe('completeProfile', () => {
   beforeEach(() => {
     useAuthStore.setState({
-      user: { id: 'u1', email: 'initial@example.com', user_metadata: { area_unit: 'acres' } },
+      user: {
+        id: 'u1',
+        email: 'initial@example.com',
+        aud: 'authenticated',
+        app_metadata: {},
+        user_metadata: { area_unit: 'acres' },
+        created_at: new Date(0).toISOString(),
+      },
       isAuthenticated: true,
     });
   });

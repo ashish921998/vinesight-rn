@@ -190,7 +190,7 @@ describe('reports formal rendering', () => {
       </>,
     );
 
-    expect(getByText('reports.stockDetails.title')).toBeTruthy();
+    expect(getByText(/reports\.stockDetails\.title/)).toBeTruthy();
     expect(getByText('reports.summary.stockUsageCount')).toBeTruthy();
     expect(queryByText('reports.summary.netProfit')).toBeNull();
   });
