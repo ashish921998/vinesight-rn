@@ -38,20 +38,26 @@ const initialState = {
   hasSeenOnboarding: false,
 };
 
-function mockProfilesLookup(
-  result: { data: Array<{ id: string }>; error: null } = { data: [], error: null },
+function mockProfilesTable(
+  lookupResult: { data: Array<{ id: string }>; error: null } = { data: [], error: null },
 ) {
-  const limit = jest.fn().mockResolvedValue(result);
+  const limit = jest.fn().mockResolvedValue(lookupResult);
+  const neq = jest.fn(() => ({ limit }));
+  const single = jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } });
   const eq = jest.fn(() => ({ limit }));
   const select = jest.fn(() => ({ eq }));
-  (supabase.from as jest.Mock).mockReturnValue({ select });
-  return { limit, eq, select };
+  const upsert = jest.fn().mockResolvedValue({ error: null });
+  (supabase.from as jest.Mock).mockImplementation(() => ({
+    select: jest.fn(() => ({ eq: jest.fn(() => ({ limit, neq, single })) })),
+    upsert,
+  }));
+  return { limit, eq, neq, single, select, upsert };
 }
 
 beforeEach(() => {
   useAuthStore.setState(initialState);
   jest.clearAllMocks();
-  mockProfilesLookup();
+  mockProfilesTable();
 });
 
 // ============================================================
@@ -59,7 +65,7 @@ beforeEach(() => {
 // ============================================================
 
 describe('initialize', () => {
-  it('requires profile completion when session user has email but no name metadata', async () => {
+  it('does not require profile completion on restored session', async () => {
     const mockUser = {
       id: 'existing-user',
       email: 'existing@example.com',
@@ -74,7 +80,7 @@ describe('initialize', () => {
 
     const state = useAuthStore.getState();
     expect(state.isAuthenticated).toBe(true);
-    expect(state.needsProfileCompletion).toBe(true);
+    expect(state.needsProfileCompletion).toBe(false);
   });
 });
 
@@ -338,6 +344,13 @@ describe('cancelPhoneOTPFlow', () => {
 // ============================================================
 
 describe('completeProfile', () => {
+  beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'initial@example.com', user_metadata: { area_unit: 'acres' } },
+      isAuthenticated: true,
+    });
+  });
+
   it('rejects missing required fields', async () => {
     await useAuthStore.getState().completeProfile({
       firstName: 'Alice',
@@ -445,7 +458,7 @@ describe('completeProfile', () => {
   });
 
   it('does not update profile when email already exists in another account', async () => {
-    mockProfilesLookup({ data: [{ id: 'existing-user-id' }], error: null });
+    mockProfilesTable({ data: [{ id: 'existing-user-id' }], error: null });
 
     await useAuthStore.getState().completeProfile({
       firstName: 'Bob',
