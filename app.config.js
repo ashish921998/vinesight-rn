@@ -98,6 +98,7 @@ module.exports = {
     },
     plugins: [
       'expo-router',
+      '@sentry/react-native/expo',
       'expo-localization',
       '@bacons/apple-targets',
       './plugins/android-widget',
