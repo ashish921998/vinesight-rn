@@ -84,12 +84,13 @@ const DEFAULT_COUNTRY = COUNTRIES[0];
 const MAX_PHONE_NUMBER_EDITS_PER_FLOW = 2;
 
 interface LinkPhoneParams {
-  linkPhone?: string;
+  linkPhone?: string | string[];
 }
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { linkPhone } = useLocalSearchParams() as LinkPhoneParams;
+  const linkPhoneValue = Array.isArray(linkPhone) ? linkPhone[0] : linkPhone;
   const colors = useThemeColors();
   const m3 = useM3();
   const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
@@ -228,7 +229,8 @@ export default function SettingsScreen() {
         return;
       }
 
-      setLinkPhoneInput(trimmed);
+      const sanitizedDigits = sanitizeLocalPhoneInput(trimmed);
+      setLinkPhoneInput(sanitizedDigits ? `+${sanitizedDigits}` : '');
       return;
     }
 
@@ -252,7 +254,7 @@ export default function SettingsScreen() {
   }, [linkPhoneInput, linkPhoneLocalError]);
 
   useEffect(() => {
-    if (linkPhone !== '1') return;
+    if (linkPhoneValue !== '1') return;
 
     clearError();
     setLinkPhoneLocalError(null);
@@ -277,7 +279,7 @@ export default function SettingsScreen() {
       setLinkPhoneInput(trimmedValue);
     }
     setShowLinkPhoneModal(true);
-  }, [linkPhone, clearError, linkedAuthPhone, userPhone]);
+  }, [linkPhoneValue, clearError, linkedAuthPhone, userPhone]);
 
   useEffect(() => {
     if (!phoneLinkingPending) return;

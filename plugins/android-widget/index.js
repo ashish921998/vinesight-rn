@@ -299,10 +299,12 @@ const withWidgetResources = (config) => {
       // Ensure strings.xml includes widget text resources
       const valuesPath = path.join(resPath, 'values');
       const stringsPath = path.join(valuesPath, 'strings.xml');
+      const defaultResourcesXml =
+        '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
       if (!fs.existsSync(valuesPath)) {
         fs.mkdirSync(valuesPath, { recursive: true });
       }
-      let stringsContent = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+      let stringsContent = defaultResourcesXml;
       if (fs.existsSync(stringsPath)) {
         try {
           stringsContent = fs.readFileSync(stringsPath, 'utf8');
@@ -315,35 +317,89 @@ const withWidgetResources = (config) => {
         console.warn(
           `[android-widget] strings.xml at ${stringsPath} is malformed (missing </resources>). Rebuilding minimal resources file.`,
         );
-        stringsContent = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+        stringsContent = defaultResourcesXml;
       }
 
-      const widgetStrings = [
-        '<string name="widget_temp_condition">%1$d° %2$s</string>',
-        '<string name="widget_humidity">Humidity: %1$d%%</string>',
-        '<string name="widget_loading">Loading weather...</string>',
-        '<string name="widget_error">Unable to load weather</string>',
-        '<string name="widget_no_weather_data">No weather data</string>',
-      ];
+      const upsertWidgetStrings = (content, stringEntries) => {
+        let updatedContent = content;
+        stringEntries.forEach(({ key, value }) => {
+          if (!updatedContent.includes(`name="${key}"`)) {
+            updatedContent = updatedContent.replace(
+              '</resources>',
+              `  <string name="${key}">${value}</string>\n</resources>`,
+            );
+          }
+        });
+        return updatedContent;
+      };
 
-      widgetStrings.forEach((entry) => {
-        const nameMatch = entry.match(/name="([^"]+)"/);
-        const key = nameMatch?.[1];
-        if (!key) return;
-        if (!stringsContent.includes(`name="${key}"`)) {
-          stringsContent = stringsContent.replace('</resources>', `  ${entry}\n</resources>`);
-        }
-      });
+      const widgetStrings = [
+        { key: 'widget_temp_condition', value: '%1$d° %2$s' },
+        { key: 'widget_humidity', value: 'Humidity: %1$d%%' },
+        { key: 'widget_loading', value: 'Loading weather...' },
+        { key: 'widget_error', value: 'Unable to load weather' },
+        { key: 'widget_no_weather_data', value: 'No weather data' },
+      ];
+      stringsContent = upsertWidgetStrings(stringsContent, widgetStrings);
       try {
         fs.writeFileSync(stringsPath, stringsContent);
       } catch (error) {
         console.warn(`[android-widget] Failed to write ${stringsPath}:`, error);
       }
 
+      const localizedWidgetStrings = {
+        'values-hi': [
+          { key: 'widget_temp_condition', value: '%1$d° %2$s' },
+          { key: 'widget_humidity', value: 'नमी: %1$d%%' },
+          { key: 'widget_loading', value: 'मौसम लोड हो रहा है...' },
+          { key: 'widget_error', value: 'मौसम लोड नहीं हो सका' },
+          { key: 'widget_no_weather_data', value: 'कोई मौसम डेटा नहीं' },
+        ],
+        'values-mr': [
+          { key: 'widget_temp_condition', value: '%1$d° %2$s' },
+          { key: 'widget_humidity', value: 'आर्द्रता: %1$d%%' },
+          { key: 'widget_loading', value: 'हवामान लोड होत आहे...' },
+          { key: 'widget_error', value: 'हवामान लोड करता आले नाही' },
+          { key: 'widget_no_weather_data', value: 'हवामान डेटा उपलब्ध नाही' },
+        ],
+      };
+
+      Object.entries(localizedWidgetStrings).forEach(([valuesDirName, stringEntries]) => {
+        const localizedValuesPath = path.join(resPath, valuesDirName);
+        const localizedStringsPath = path.join(localizedValuesPath, 'strings.xml');
+        if (!fs.existsSync(localizedValuesPath)) {
+          fs.mkdirSync(localizedValuesPath, { recursive: true });
+        }
+
+        let localizedStringsContent = defaultResourcesXml;
+        if (fs.existsSync(localizedStringsPath)) {
+          try {
+            localizedStringsContent = fs.readFileSync(localizedStringsPath, 'utf8');
+          } catch (error) {
+            console.warn(`[android-widget] Failed to read ${localizedStringsPath}:`, error);
+          }
+        }
+
+        if (!localizedStringsContent.includes('</resources>')) {
+          console.warn(
+            `[android-widget] strings.xml at ${localizedStringsPath} is malformed (missing </resources>). Rebuilding minimal resources file.`,
+          );
+          localizedStringsContent = defaultResourcesXml;
+        }
+
+        localizedStringsContent = upsertWidgetStrings(localizedStringsContent, stringEntries);
+
+        try {
+          fs.writeFileSync(localizedStringsPath, localizedStringsContent);
+        } catch (error) {
+          console.warn(`[android-widget] Failed to write ${localizedStringsPath}:`, error);
+        }
+      });
+
       // Ensure colors.xml includes widget background color resource
       const colorsPath = path.join(valuesPath, 'colors.xml');
       // Keep existing XML if present to preserve user edits (unlike Kotlin copyFileSync overwrite above).
-      let colorsContent = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+      let colorsContent = defaultResourcesXml;
       if (fs.existsSync(colorsPath)) {
         try {
           colorsContent = fs.readFileSync(colorsPath, 'utf8');
@@ -356,7 +412,7 @@ const withWidgetResources = (config) => {
         console.warn(
           `[android-widget] colors.xml at ${colorsPath} is malformed (missing </resources>). Rebuilding minimal resources file.`,
         );
-        colorsContent = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+        colorsContent = defaultResourcesXml;
       }
 
       if (!colorsContent.includes('name="widget_background"')) {

@@ -1301,7 +1301,9 @@ export const en = {
       success: 'Phone number linked successfully',
       alreadyLinked: 'Phone number is already linked to your account',
       changePhone: 'Change Phone Number',
-      editLimitReached:
+      editLimitReached_one:
+        'You can change the phone number up to {{count}} time in one verification flow.',
+      editLimitReached_other:
         'You can change the phone number up to {{count}} times in one verification flow.',
       verified: 'Verified phone number',
       notLinked: 'No verified phone number linked',
