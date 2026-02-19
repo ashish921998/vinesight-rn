@@ -991,7 +991,9 @@ export function PreviewCard({ title, items, backgroundColor }: PreviewCardProps)
         {items.map((item, index) => (
           <View key={index} style={itemStyle}>
             <Text style={labelTextStyle}>{item.label}</Text>
-            <Text style={item.compactValue ? compactValueTextStyle : valueTextStyle}>{item.value}</Text>
+            <Text style={item.compactValue ? compactValueTextStyle : valueTextStyle}>
+              {item.value}
+            </Text>
           </View>
         ))}
       </View>

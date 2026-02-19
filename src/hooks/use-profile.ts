@@ -44,7 +44,8 @@ async function getUserId(): Promise<string> {
 // MARK: - PROFILE
 // ============================================================
 
-export function useProfile() {
+export function useProfile(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   return useQuery({
     queryKey: queryKeys.profile.current(),
     queryFn: async (): Promise<Profile | null> => {
@@ -63,6 +64,7 @@ export function useProfile() {
       }
       return data;
     },
+    enabled,
   });
 }
 

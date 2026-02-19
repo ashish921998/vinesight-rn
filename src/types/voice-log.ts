@@ -1,3 +1,4 @@
+import type { QuantityBasis } from './database';
 export type VoiceLogActivityType = 'irrigation' | 'spray' | 'harvest' | 'expense' | 'fertigation';
 
 export type VoiceLogOriginContext = 'dashboard' | 'farm';
@@ -17,12 +18,14 @@ export interface VoiceLogChemicalItem {
   name: string;
   quantity: number | null;
   unit: string | null;
+  quantityBasis?: QuantityBasis | null;
 }
 
 export interface VoiceLogFertilizerItem {
   name: string;
   quantity: number | null;
   unit: string | null;
+  quantityBasis?: QuantityBasis | null;
 }
 
 export interface IrrigationData {

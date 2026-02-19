@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import Animated, { FadeInUp, Layout } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borderRadius, spacing } from '@/styles/theme';
-import { useFarms } from '@/hooks';
+import { useFarms, useProfile } from '@/hooks';
 import {
   useReportData,
   useReportExport,
@@ -91,9 +91,12 @@ export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { data: farms, isLoading: farmsLoading } = useFarms();
+  const { data: profile } = useProfile();
   const { user } = useAuthStore();
 
-  const areaUnit = resolveAreaUnitPreference(user?.user_metadata?.area_unit);
+  const areaUnit = resolveAreaUnitPreference(
+    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  );
 
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);

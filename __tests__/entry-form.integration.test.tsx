@@ -52,6 +52,8 @@ jest.mock('@/hooks', () => ({
   useCreateFertigationRecord: () => ({ mutateAsync: mockCreateFertigationMutate }),
   useUpdateFarmWaterLevel: () => ({ mutateAsync: mockUpdateWaterLevelMutate }),
   useFarms: () => ({ data: [] }),
+  useProfile: () => ({ data: { area_unit_preference: 'acres' } }),
+  useResponsiveHeight: () => ({ windowHeight: 800 }),
   useWarehouseItems: () => ({ data: [] }),
   useRecentSprayChemicals: () => ({ data: [] }),
   useRecentFertigationItems: () => ({ data: [] }),
@@ -68,6 +70,13 @@ jest.mock('@/hooks/use-tasks', () => ({
 }));
 
 jest.mock('@/stores', () => ({
+  useAuthStore: (selector: (state: Record<string, unknown>) => unknown) =>
+    selector({
+      user: {
+        id: 'test-user',
+        user_metadata: { area_unit: 'acres' },
+      },
+    }),
   useNotificationStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       taskRemindersEnabled: false,
@@ -146,10 +155,10 @@ describe('EntryForm UI integration', () => {
     fireEvent.press(screen.getByText('entryForm.addEntry'));
 
     await waitFor(() => {
-      expect(screen.getByText('entryForm.saveLogs')).toBeTruthy();
+      expect(screen.getByText('common.save')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByText('entryForm.saveLogs'));
+    fireEvent.press(screen.getByText('common.save'));
 
     await waitFor(() => {
       expect(mockCreateExpenseMutate).toHaveBeenCalledTimes(1);

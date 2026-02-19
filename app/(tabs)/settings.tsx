@@ -193,9 +193,10 @@ export default function SettingsScreen() {
     if (profile) {
       setEditName(profile.full_name || '');
       setSelectedCurrency(currency);
-      // Area unit from user metadata
     }
-    setSelectedAreaUnit(resolveAreaUnitPreference(user?.user_metadata?.area_unit));
+    setSelectedAreaUnit(
+      resolveAreaUnitPreference(profile?.area_unit_preference ?? user?.user_metadata?.area_unit),
+    );
   }, [profile, user, currency]);
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'User';
@@ -1519,8 +1520,13 @@ export default function SettingsScreen() {
                   key={unit.id}
                   onPress={async () => {
                     try {
+                      await updateProfile.mutateAsync({
+                        area_unit_preference: unit.id as 'hectares' | 'acres',
+                      });
+                      // Keep auth metadata in sync during migration period.
                       await updateUserAreaUnit(unit.id as 'hectares' | 'acres');
                       setSelectedAreaUnit(resolveAreaUnitPreference(unit.id));
+                      refetchProfile();
                       setShowAreaPicker(false);
                     } catch (error) {
                       if (__DEV__) {

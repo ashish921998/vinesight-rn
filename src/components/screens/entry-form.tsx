@@ -101,7 +101,17 @@ import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
-import { stripTaskPlanFromDescription, decodeTaskPlanFromDescription } from '@/utils/task-plan';
+import { submitEntryPendingLog } from '@/utils/entry-log-submission';
+import {
+  ensureNotificationPermissions,
+  scheduleTaskDueReminder,
+  cancelNotification,
+} from '@/services/notifications';
+import {
+  decodeTaskPlanFromDescription,
+  encodeTaskPlanInDescription,
+  stripTaskPlanFromDescription,
+} from '@/utils/task-plan';
 
 interface EntryFormProps {
   visible?: boolean;
@@ -496,15 +506,20 @@ export function EntryForm({
       case 'spray': {
         const sprayPrefill = initialVoiceLogPrefill.spray;
         const prefilledChemicals = sprayPrefill?.chemicals?.length
-          ? sprayPrefill.chemicals.map((item, index) => ({
-              id: createPrefillId('chem', index),
-              name: item.name ?? '',
-              quantity: item.quantity ?? undefined,
-              unit:
+          ? sprayPrefill.chemicals.map((item, index) => {
+              const unit =
                 item.unit && CHEMICAL_UNITS.includes(item.unit as (typeof CHEMICAL_UNITS)[number])
                   ? (item.unit as (typeof CHEMICAL_UNITS)[number])
-                  : 'gm/L',
-            }))
+                  : 'gm/L';
+              return {
+                id: createPrefillId('chem', index),
+                name: item.name ?? '',
+                quantity: item.quantity ?? undefined,
+                unit,
+                quantityBasis:
+                  item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+              };
+            })
           : createEmptySprayFormData().chemicals;
 
         setSprayData({
@@ -998,7 +1013,7 @@ export function EntryForm({
     if (type === 'fertigation') {
       return fertigationQuickAddItems.map((item) => ({
         name: item.name,
-        unit: item.unit ?? 'kg/acre',
+        unit: item.unit ?? 'kg',
         quantity: item.quantity ?? null,
         source: 'recent',
       }));
@@ -1032,7 +1047,7 @@ export function EntryForm({
     const quantityValue = plannedItemQty.trim() ? Number(plannedItemQty) : null;
     addTaskPlannedInput({
       name: plannedItemName.trim(),
-      unit: plannedItemUnit.trim() || (type === 'spray' ? 'gm/L' : 'kg/acre'),
+      unit: plannedItemUnit.trim() || (type === 'spray' ? 'gm/L' : 'kg'),
       quantity: Number.isFinite(quantityValue) ? quantityValue : null,
       source: 'custom',
     });
@@ -1188,7 +1203,6 @@ export function EntryForm({
     onClose,
     t,
   ]);
-
   const renderLogFormModal = () => {
     if (!selectedLogType) return null;
     const logType = LOG_TYPES.find((lt) => lt.id === selectedLogType);
@@ -1935,7 +1949,7 @@ export function EntryForm({
                   <Text style={{ fontSize: 12, color: m3.colorScheme.onSurface }}>{item.name}</Text>
                   <Text style={{ fontSize: 11, color: m3.colorScheme.onSurfaceVariant }}>
                     {item.quantity ? `${item.quantity} ` : ''}
-                    {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg/acre')}
+                    {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg')}
                   </Text>
                 </Pressable>
               ))}
