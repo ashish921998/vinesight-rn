@@ -5,6 +5,7 @@ import { queryClient, queryPersister } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
 import type { User, Session } from '@supabase/supabase-js';
 import type { PhoneAuthMode } from '@/types/auth';
+import type { Profile } from '@/types';
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (typeof error === 'object' && error && 'message' in error) {
@@ -1113,13 +1114,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       const normalizedAreaUnit =
         get().user?.user_metadata?.area_unit === 'hectares' ? 'hectares' : 'acres';
-      queryClient.setQueryData(PROFILE_CURRENT_QUERY_KEY, (previous: unknown) => ({
-        ...(typeof previous === 'object' && previous ? previous : {}),
-        id: currentUserId,
-        full_name: fullName,
-        email: email ?? get().user?.email ?? null,
-        area_unit_preference: normalizedAreaUnit,
-      }));
+      queryClient.setQueryData<Profile | null>(
+        PROFILE_CURRENT_QUERY_KEY,
+        (previous: Profile | null | undefined) => ({
+          ...(previous ?? {}),
+          id: currentUserId,
+          full_name: fullName,
+          email: email ?? get().user?.email ?? null,
+          area_unit_preference: normalizedAreaUnit,
+        }),
+      );
       await queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
 
       const {

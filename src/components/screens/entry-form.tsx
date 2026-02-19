@@ -68,7 +68,6 @@ import {
   type LogTypeId,
   HARVEST_GRADES,
   CHEMICAL_UNITS,
-  FERTILIZER_UNITS,
   ACTIVITY_TYPES as _ACTIVITY_TYPES,
 } from '@/constants/calculator-models';
 import {
@@ -155,17 +154,39 @@ function isValidChemicalUnit(unit: string): unit is SprayFormData['chemicals'][n
   return CHEMICAL_UNITS.includes(unit as SprayFormData['chemicals'][number]['unit']);
 }
 
-function isValidFertilizerUnit(
-  unit: string,
-): unit is FertigationFormData['fertilizers'][number]['unit'] {
-  return FERTILIZER_UNITS.includes(unit as FertigationFormData['fertilizers'][number]['unit']);
+function normalizeFertigationDoseUnit(unit: string | null | undefined): string {
+  if (typeof unit !== 'string') return '';
+  const trimmed = unit.trim();
+  if (!trimmed) return '';
+  const normalized = trimmed.toLowerCase();
+  if (normalized === 'kg' || normalized === 'kg/acre' || normalized === 'kg per acre') {
+    return 'kg/acre';
+  }
+  if (
+    normalized === 'liter' ||
+    normalized === 'litre' ||
+    normalized === 'l' ||
+    normalized === 'liter/acre' ||
+    normalized === 'litre/acre' ||
+    normalized === 'l/acre' ||
+    normalized === 'liter per acre' ||
+    normalized === 'litre per acre'
+  ) {
+    return 'liter/acre';
+  }
+  return trimmed;
 }
 
-function normalizeFertigationDoseUnit(unit: string): string {
-  const normalized = unit.trim().toLowerCase();
-  if (normalized === 'litre/acre') return 'liter/acre';
-  if (normalized === 'litre') return 'liter';
-  return unit.trim();
+function resolveFertigationPrefill(
+  unit: string | null | undefined,
+): Pick<FertigationFormData['fertilizers'][number], 'unit' | 'quantityBasis'> {
+  const normalized = normalizeFertigationDoseUnit(unit);
+  if (normalized === 'liter/acre') return { unit: 'liter', quantityBasis: 'per_acre' };
+  if (normalized === 'kg/acre') return { unit: 'kg', quantityBasis: 'per_acre' };
+  return {
+    unit: 'kg',
+    quantityBasis: 'per_acre',
+  };
 }
 
 function normalizeSprayDoseUnit(unit: string): string {
@@ -476,14 +497,13 @@ export function EntryForm({
         setFertigationData({
           waterVolume: undefined,
           fertilizers: initialLogPrefill.fertigationItems.map((item) => {
-            const normalizedUnit = item.unit?.trim();
-            const unit =
-              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg';
+            const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
             return {
               id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
               name: item.name,
               quantity: item.quantity ?? 0,
               unit,
+              quantityBasis,
             };
           }),
         });
@@ -583,15 +603,15 @@ export function EntryForm({
       case 'fertigation': {
         const fertigationPrefill = initialVoiceLogPrefill.fertigation;
         const prefilledFertilizers = fertigationPrefill?.fertilizers?.length
-          ? fertigationPrefill.fertilizers.map((item) => ({
-              name: item.name ?? '',
-              quantity: item.quantity ?? undefined,
-              unit:
-                item.unit &&
-                FERTILIZER_UNITS.includes(item.unit as (typeof FERTILIZER_UNITS)[number])
-                  ? (item.unit as (typeof FERTILIZER_UNITS)[number])
-                  : 'kg',
-            }))
+          ? fertigationPrefill.fertilizers.map((item) => {
+              const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
+              return {
+                name: item.name ?? '',
+                quantity: item.quantity ?? undefined,
+                unit,
+                quantityBasis,
+              };
+            })
           : createEmptyFertigationFormData().fertilizers;
 
         setFertigationData({

@@ -148,6 +148,9 @@ export default function SettingsScreen() {
   const setWarehouseReorderAlertsEnabled = useNotificationStore(
     (s) => s.setWarehouseReorderAlertsEnabled,
   );
+  const clearNotifiedWarehouseItemIds = useNotificationStore(
+    (s) => s.clearNotifiedWarehouseItemIds,
+  );
 
   const petioleTestRemindersEnabled = useNotificationStore((s) => s.petioleTestRemindersEnabled);
   const setPetioleTestRemindersEnabled = useNotificationStore(
@@ -378,6 +381,7 @@ export default function SettingsScreen() {
       return;
     }
     setWarehouseReorderAlertsEnabled(false);
+    clearNotifiedWarehouseItemIds();
   };
 
   const handleTogglePetioleTestReminders = async (enabled: boolean) => {

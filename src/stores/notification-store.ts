@@ -51,6 +51,7 @@ interface NotificationActions {
 
   addNotifiedWarehouseItemId: (id: string | number) => void;
   removeNotifiedWarehouseItemId: (id: string | number) => void;
+  clearNotifiedWarehouseItemIds: () => void;
 }
 
 export const useNotificationStore = create<NotificationState & NotificationActions>()(
@@ -117,6 +118,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           next.delete(id);
           return { notifiedWarehouseItemIds: next };
         }),
+      clearNotifiedWarehouseItemIds: () => set({ notifiedWarehouseItemIds: new Set() }),
     }),
     {
       name: 'vinesight-notifications',
