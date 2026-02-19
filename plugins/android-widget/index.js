@@ -152,6 +152,8 @@ const withKotlinSources = (config) => {
 
           if (!entry.isFile() || !entry.name.endsWith('.kt')) continue;
           try {
+            // Intentionally overwrite Kotlin sources so native bridge/provider code stays current.
+            // This differs from withWidgetResources, where XML files are preserved for user customization.
             fs.copyFileSync(srcPath, destPath);
           } catch (error) {
             console.warn(`[android-widget] Failed to copy ${srcPath} -> ${destPath}:`, error);
@@ -300,9 +302,14 @@ const withWidgetResources = (config) => {
       if (!fs.existsSync(valuesPath)) {
         fs.mkdirSync(valuesPath, { recursive: true });
       }
-      let stringsContent = fs.existsSync(stringsPath)
-        ? fs.readFileSync(stringsPath, 'utf8')
-        : '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+      let stringsContent = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+      if (fs.existsSync(stringsPath)) {
+        try {
+          stringsContent = fs.readFileSync(stringsPath, 'utf8');
+        } catch (error) {
+          console.warn(`[android-widget] Failed to read ${stringsPath}:`, error);
+        }
+      }
 
       if (!stringsContent.includes('</resources>')) {
         console.warn(
@@ -335,9 +342,15 @@ const withWidgetResources = (config) => {
 
       // Ensure colors.xml includes widget background color resource
       const colorsPath = path.join(valuesPath, 'colors.xml');
-      let colorsContent = fs.existsSync(colorsPath)
-        ? fs.readFileSync(colorsPath, 'utf8')
-        : '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+      // Keep existing XML if present to preserve user edits (unlike Kotlin copyFileSync overwrite above).
+      let colorsContent = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
+      if (fs.existsSync(colorsPath)) {
+        try {
+          colorsContent = fs.readFileSync(colorsPath, 'utf8');
+        } catch (error) {
+          console.warn(`[android-widget] Failed to read ${colorsPath}:`, error);
+        }
+      }
 
       if (!colorsContent.includes('</resources>')) {
         console.warn(

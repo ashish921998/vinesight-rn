@@ -83,13 +83,13 @@ const COUNTRIES: Country[] = [
 const DEFAULT_COUNTRY = COUNTRIES[0];
 const MAX_PHONE_NUMBER_EDITS_PER_FLOW = 2;
 
-type LinkPhoneParams = {
+interface LinkPhoneParams {
   linkPhone?: string;
-};
+}
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { linkPhone } = useLocalSearchParams<LinkPhoneParams>();
+  const { linkPhone } = useLocalSearchParams() as LinkPhoneParams;
   const colors = useThemeColors();
   const m3 = useM3();
   const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
@@ -235,15 +235,16 @@ export default function SettingsScreen() {
     setLinkPhoneInput(sanitizeLocalPhoneInput(trimmed));
   };
 
-  const buildE164PhoneNumber = () => {
+  const normalizedE164PhoneNumber = useMemo(() => {
     const raw = linkPhoneInput.trim();
     if (raw.startsWith('+')) {
       return isValidE164PhoneNumber(raw) ? raw : '';
     }
     return buildNormalizedE164PhoneNumber(selectedCountry.dialCode, linkPhoneInput);
-  };
-  const linkPhoneDisplayNumber = (phoneLinkingNumber ?? buildE164PhoneNumber()) || linkPhoneInput;
-  const isLocalPhoneValid = Boolean(linkPhoneInput) && Boolean(buildE164PhoneNumber());
+  }, [linkPhoneInput, selectedCountry.dialCode]);
+  const linkPhoneDisplayNumber =
+    (phoneLinkingNumber ?? normalizedE164PhoneNumber) || linkPhoneInput;
+  const isLocalPhoneValid = Boolean(linkPhoneInput) && Boolean(normalizedE164PhoneNumber);
 
   useEffect(() => {
     if (!linkPhoneLocalError) return;
@@ -403,7 +404,7 @@ export default function SettingsScreen() {
   };
 
   const handleSendPhoneLinkCode = async () => {
-    const phone = buildE164PhoneNumber();
+    const phone = normalizedE164PhoneNumber;
     if (!phone) {
       setLinkPhoneLocalError(
         t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid phone number' }),
@@ -426,7 +427,7 @@ export default function SettingsScreen() {
 
   const handleVerifyPhoneLinkCode = async () => {
     const code = linkPhoneCode.trim();
-    const formattedPhone = buildE164PhoneNumber();
+    const formattedPhone = normalizedE164PhoneNumber;
     const pendingPhone = phoneLinkingNumber ?? formattedPhone;
     if (!pendingPhone || code.length !== 6) return;
 
@@ -444,7 +445,7 @@ export default function SettingsScreen() {
   };
 
   const handleResendPhoneLinkCode = async () => {
-    const pendingPhone = phoneLinkingNumber ?? buildE164PhoneNumber();
+    const pendingPhone = phoneLinkingNumber ?? normalizedE164PhoneNumber;
     if (!pendingPhone) return;
     clearError();
     setLinkPhoneLocalError(null);
@@ -454,7 +455,9 @@ export default function SettingsScreen() {
   const handleEditPhoneNumber = () => {
     if (phoneNumberEditCount >= MAX_PHONE_NUMBER_EDITS_PER_FLOW) {
       setLinkPhoneLocalError(
-        `You can change the phone number up to ${MAX_PHONE_NUMBER_EDITS_PER_FLOW} times in one verification flow.`,
+        t('settings.linkPhone.editLimitReached', {
+          count: MAX_PHONE_NUMBER_EDITS_PER_FLOW,
+        }),
       );
       return;
     }
