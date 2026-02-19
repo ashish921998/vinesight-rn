@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,8 @@ import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
+import { useNotificationStore } from '@/stores';
+import { notifyWarehouseReorder } from '@/services/notifications';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
 
@@ -42,6 +44,30 @@ export default function WarehouseScreen() {
   const [filter, setFilter] = useState<FilterType>('all');
 
   const currency = useCurrency();
+  const warehouseReorderAlertsEnabled = useNotificationStore(
+    (s) => s.warehouseReorderAlertsEnabled,
+  );
+  // Track items we've already notified in this session to avoid duplicates
+  const notifiedIdsRef = useRef<Set<string | number>>(new Set());
+
+  useEffect(() => {
+    if (!warehouseReorderAlertsEnabled || !items || items.length === 0) return;
+
+    const lowStockToNotify = items.filter(
+      (item) =>
+        item.reorder_quantity &&
+        item.quantity <= item.reorder_quantity &&
+        item.id != null &&
+        !notifiedIdsRef.current.has(item.id),
+    );
+
+    for (const item of lowStockToNotify) {
+      notifiedIdsRef.current.add(item.id!);
+      notifyWarehouseReorder(item.name, item.quantity, item.unit, item.reorder_quantity!).catch(
+        () => {},
+      );
+    }
+  }, [warehouseReorderAlertsEnabled, items]);
 
   const openAddItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });

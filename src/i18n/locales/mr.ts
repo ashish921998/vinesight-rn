@@ -1221,6 +1221,10 @@ export const mr = {
     lowWaterAlertsSubtitle: '$t(glossary.waterLevel) खूप कमी असल्यास इशारा',
     taskReminders: '$t(glossary.task) आठवणी',
     taskRemindersSubtitle: 'नियोजित $t(glossary.task) बद्दल आठवण',
+    warehouseReorderAlerts: 'गोदाम पुनर्भरण इशारे',
+    warehouseReorderAlertsSubtitle: 'वस्तू पुनर्भरण मर्यादेपेक्षा कमी झाल्यावर इशारा द्या',
+    petioleTestReminders: '$t(glossary.petiole) चाचणी आठवणी',
+    petioleTestRemindersSubtitle: 'छाटणीच्या ३०, ६०, ९०, १२० दिवसांच्या एक दिवस आधी आठवण',
     notificationNote: 'सूचना सेटिंग्ज स्थानिकरित्या जतन होतात',
     madeForVineyardManagement: 'द्राक्षमळा व्यवस्थापनासाठी',
     signOut: 'साइन आउट',
@@ -1431,7 +1435,18 @@ export const mr = {
     },
     taskDue: {
       title: '$t(glossary.task) आठवण',
-      body: 'आपले नियोजित $t(glossary.task) बाकी आहे.',
+      body: 'आपले नियोजित $t(glossary.task) आज बाकी आहे.',
+    },
+    taskDueTomorrow: {
+      body: 'आपले नियोजित $t(glossary.task) उद्या बाकी आहे.',
+    },
+    warehouseReorder: {
+      title: 'पुनर्भरण इशारा',
+      body: '{{itemName}} कमी आहे ({{quantity}} {{unit}} शिल्लक, {{reorderQty}} {{unit}} वर पुनर्भरण करा)',
+    },
+    petioleTest: {
+      title: '$t(glossary.petiole) चाचणी आठवण',
+      body: '{{farmName}}: {{day}}व्या दिवसाची $t(glossary.petiole) चाचणी उद्या आहे',
     },
   },
 

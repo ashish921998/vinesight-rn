@@ -243,17 +243,17 @@ export default function TaskForm({
 
       try {
         // Cancel previous schedule if any.
-        if (existing?.notificationId) {
-          await cancelNotification(existing.notificationId);
+        if (existing?.notificationIds?.length) {
+          await Promise.all(existing.notificationIds.map((id) => cancelNotification(id)));
           removeTaskSchedule(taskId);
         }
 
         if (taskRemindersEnabled && saved.due_date) {
           const granted = await ensureNotificationPermissions();
           if (granted) {
-            const notificationId = await scheduleTaskDueReminder(taskId, saved.due_date);
-            if (notificationId) {
-              upsertTaskSchedule(taskId, { notificationId, dueDate: saved.due_date });
+            const notificationIds = await scheduleTaskDueReminder(taskId, saved.due_date);
+            if (notificationIds.length > 0) {
+              upsertTaskSchedule(taskId, { notificationIds, dueDate: saved.due_date });
             }
           }
         }

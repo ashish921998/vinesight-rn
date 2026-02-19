@@ -1215,6 +1215,10 @@ export const en = {
     lowWaterAlertsSubtitle: 'Alert when water is critically low',
     taskReminders: 'Task Reminders',
     taskRemindersSubtitle: 'Remind about scheduled tasks',
+    warehouseReorderAlerts: 'Warehouse Reorder Alerts',
+    warehouseReorderAlertsSubtitle: 'Alert when items fall below reorder quantity',
+    petioleTestReminders: 'Petiole Test Reminders',
+    petioleTestRemindersSubtitle: 'Remind one day before Day 30, 60, 90, 120 of pruning',
     notificationNote: 'Notification settings are stored locally',
     madeForVineyardManagement: 'Made for vineyard management',
     signOut: 'Sign Out',
@@ -1422,7 +1426,18 @@ export const en = {
     },
     taskDue: {
       title: '$t(glossary.task) reminder',
-      body: 'You have a scheduled task due.',
+      body: 'You have a scheduled task due today.',
+    },
+    taskDueTomorrow: {
+      body: 'You have a scheduled task due tomorrow.',
+    },
+    warehouseReorder: {
+      title: 'Reorder Alert',
+      body: '{{itemName}} is low ({{quantity}} {{unit}} remaining, reorder at {{reorderQty}} {{unit}})',
+    },
+    petioleTest: {
+      title: 'Petiole Test Reminder',
+      body: '{{farmName}}: Day {{day}} petiole test is tomorrow',
     },
   },
 

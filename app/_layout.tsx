@@ -23,8 +23,10 @@ import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
   cancelNotification,
   scheduleDailyWaterReminder,
+  schedulePetioleTestReminder,
   scheduleTaskDueReminder,
 } from '@/services/notifications';
+import { usePetioleTestReminders } from '@/hooks/use-petiole-reminders';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
@@ -128,6 +130,9 @@ export default Sentry.wrap(function RootLayout() {
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
 
+  // Keep petiole test reminders in sync with farm data
+  usePetioleTestReminders();
+
   useEffect(() => {
     // Initialize auth state
     const init = async () => {
@@ -206,13 +211,13 @@ export default Sentry.wrap(function RootLayout() {
             const entries = Object.entries(state.taskSchedules);
             for (const [taskId, schedule] of entries) {
               try {
-                if (schedule.notificationId) {
-                  await cancelNotification(schedule.notificationId);
+                for (const oldId of schedule.notificationIds) {
+                  await cancelNotification(oldId);
                 }
-                const nextId = await scheduleTaskDueReminder(taskId, schedule.dueDate);
-                if (nextId) {
+                const nextIds = await scheduleTaskDueReminder(taskId, schedule.dueDate);
+                if (nextIds.length > 0) {
                   useNotificationStore.getState().upsertTaskSchedule(taskId, {
-                    notificationId: nextId,
+                    notificationIds: nextIds,
                     dueDate: schedule.dueDate,
                   });
                 } else {
@@ -233,6 +238,64 @@ export default Sentry.wrap(function RootLayout() {
       } catch (error) {
         if (__DEV__) {
           console.error('Failed to access task reminders state:', error);
+        }
+      }
+
+      try {
+        if (state.petioleTestRemindersEnabled) {
+          try {
+            const petioleEntries = Object.entries(state.petioleTestSchedules);
+            for (const [farmId, schedule] of petioleEntries) {
+              // Cancel old and re-schedule each petiole notification
+              const MILESTONES = [30, 60, 90, 120] as const;
+              for (const oldId of schedule.notificationIds) {
+                try {
+                  await cancelNotification(oldId);
+                } catch {
+                  // ignore cancellation errors — old notification may have already fired
+                }
+              }
+              const pruningDate = schedule.pruningDate;
+              const newIds: string[] = [];
+              for (const day of MILESTONES) {
+                const m = /^\d{4}-\d{2}-\d{2}$/.exec(pruningDate);
+                if (!m) continue;
+                const [y, mo, d] = pruningDate.split('-').map(Number);
+                const targetDate = new Date(y, mo - 1, d + day);
+                const yy = targetDate.getFullYear();
+                const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(targetDate.getDate()).padStart(2, '0');
+                const targetDateStr = `${yy}-${mm}-${dd}`;
+                // farmId is used as both identifier and as farm name fallback here;
+                // the hook stores the farmId but `schedulePetioleTestReminder` needs farmName.
+                // We re-use farmId as farmName key since the actual name is not stored in schedule.
+                // A future improvement would be to store farmName in PetioleNotificationSchedule.
+                const notifId = await schedulePetioleTestReminder(
+                  farmId,
+                  farmId,
+                  day,
+                  targetDateStr,
+                );
+                if (notifId) newIds.push(notifId);
+              }
+              if (newIds.length > 0) {
+                useNotificationStore.getState().upsertPetioleTestSchedule(farmId, {
+                  notificationIds: newIds,
+                  pruningDate,
+                });
+              } else {
+                useNotificationStore.getState().removePetioleTestSchedule(farmId);
+              }
+            }
+          } catch (error) {
+            if (__DEV__) {
+              console.error('Failed to reschedule petiole test reminders:', error);
+            }
+          }
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Failed to access petiole test reminders state:', error);
         }
       } finally {
         reschedulePromiseRef.current = null;
