@@ -78,6 +78,7 @@ import {
   useCreateFertigationRecord,
   useUpdateFarmWaterLevel,
   useFarms,
+  useProfile,
   useWarehouseItems,
   useRecentSprayChemicals,
   useRecentFertigationItems,
@@ -100,9 +101,10 @@ import { toSupabaseDateString } from '@/types/database';
 import type { Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
-import { useNotificationStore } from '@/stores';
+import { useAuthStore, useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
 import { submitEntryPendingLog } from '@/utils/entry-log-submission';
+import { resolveAreaUnitPreference } from '@/utils/preferences';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
@@ -154,10 +156,10 @@ function isValidChemicalUnit(unit: string): unit is SprayFormData['chemicals'][n
   return CHEMICAL_UNITS.includes(unit as SprayFormData['chemicals'][number]['unit']);
 }
 
-function normalizeFertigationDoseUnit(unit: string | null | undefined): string {
-  if (typeof unit !== 'string') return '';
+function normalizeFertigationDoseUnit(unit: string | null | undefined): 'kg/acre' | 'liter/acre' {
+  if (typeof unit !== 'string') return 'kg/acre';
   const trimmed = unit.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return 'kg/acre';
   const normalized = trimmed.toLowerCase();
   if (normalized === 'kg' || normalized === 'kg/acre' || normalized === 'kg per acre') {
     return 'kg/acre';
@@ -174,7 +176,8 @@ function normalizeFertigationDoseUnit(unit: string | null | undefined): string {
   ) {
     return 'liter/acre';
   }
-  return trimmed;
+  if (normalized === 'ppm') return 'kg/acre';
+  return 'kg/acre';
 }
 
 function resolveFertigationPrefill(
@@ -265,6 +268,11 @@ export function EntryForm({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
+  const { data: profile } = useProfile({ enabled: false });
+  const user = useAuthStore((state) => state.user);
+  const preferredAreaUnit = resolveAreaUnitPreference(
+    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  );
 
   const isVisible = visible ?? true;
   const queryClient = useQueryClient();
@@ -768,6 +776,7 @@ export function EntryForm({
           farm: {
             id: farmId,
             area: activeFarm.area,
+            areaUnit: preferredAreaUnit,
             total_tank_capacity: activeFarm.total_tank_capacity,
             system_discharge: activeFarm.system_discharge,
             remaining_water: activeFarm.remaining_water,

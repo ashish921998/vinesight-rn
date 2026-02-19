@@ -193,6 +193,28 @@ const upsertProfileNameFromAuthUser = async (
   if (upsertError) throw upsertError;
 };
 
+const upsertProfileNameFromAuthUserBestEffort = async (
+  user: User | null | undefined,
+  preferredFullName?: string | null,
+): Promise<void> => {
+  try {
+    await upsertProfileNameFromAuthUser(user, preferredFullName);
+  } catch (error: unknown) {
+    telemetry.capture('profile_name_upsert_failed', {
+      user_id: user?.id ?? null,
+      preferred_full_name: preferredFullName?.trim() || null,
+      error: getErrorMessage(error, 'profile name upsert failed'),
+    });
+    if (__DEV__) {
+      console.warn('Best-effort profile name upsert failed:', {
+        userId: user?.id ?? null,
+        preferredFullName: preferredFullName?.trim() || null,
+        error,
+      });
+    }
+  }
+};
+
 const clearQueryCache = async (context: string) => {
   queryClient.clear();
   try {
@@ -339,7 +361,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
-          await upsertProfileNameFromAuthUser(data.user, name?.trim() || null);
+          await upsertProfileNameFromAuthUserBestEffort(data.user, name?.trim() || null);
           setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
@@ -406,7 +428,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
-          await upsertProfileNameFromAuthUser(data.user, name?.trim() || null);
+          await upsertProfileNameFromAuthUserBestEffort(data.user, name?.trim() || null);
           setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
@@ -493,7 +515,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
-          await upsertProfileNameFromAuthUser(data.user);
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
           setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
           telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
@@ -516,7 +538,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
             refresh_token: refreshToken,
           });
           if (error) throw error;
-          await upsertProfileNameFromAuthUser(data.user);
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
           if (data.user) {
             setSentryUser(data.user);
             telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
@@ -588,7 +610,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         .filter(Boolean)
         .join(' ')
         .trim();
-      await upsertProfileNameFromAuthUser(data.user, appleNameFromCredential || null);
+      await upsertProfileNameFromAuthUserBestEffort(data.user, appleNameFromCredential || null);
       setSentryUser(data.user);
       telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       telemetry.capture('auth_sign_in_succeeded', { method: 'apple' });
@@ -654,6 +676,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         needsProfileCompletion: false,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
       telemetry.reset();
       await clearQueryCache('sign out success path');
@@ -684,6 +707,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         needsProfileCompletion: false,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
       telemetry.reset();
       await clearQueryCache('sign out recovery path');
@@ -737,6 +761,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         needsProfileCompletion: false,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
       telemetry.reset();
       await clearQueryCache('delete account');
@@ -822,7 +847,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.user) {
         if (pendingOTPType === 'signup') {
-          await upsertProfileNameFromAuthUser(data.user);
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
         }
         setSentryUser(data.user);
         telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
@@ -1333,6 +1358,7 @@ export const initAuthListener = () => {
         needsProfileCompletion: false,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
     } else if (event === 'TOKEN_REFRESHED' && session) {
       // Silently update session without triggering navigation changes

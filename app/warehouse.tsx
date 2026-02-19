@@ -47,7 +47,6 @@ export default function WarehouseScreen() {
   const warehouseReorderAlertsEnabled = useNotificationStore(
     (s) => s.warehouseReorderAlertsEnabled,
   );
-  const notifiedWarehouseItemIds = useNotificationStore((s) => s.notifiedWarehouseItemIds);
   const addNotifiedWarehouseItemId = useNotificationStore((s) => s.addNotifiedWarehouseItemId);
   const removeNotifiedWarehouseItemId = useNotificationStore(
     (s) => s.removeNotifiedWarehouseItemId,
@@ -62,7 +61,7 @@ export default function WarehouseScreen() {
           item.reorder_quantity &&
           item.quantity <= item.reorder_quantity &&
           item.id != null &&
-          !notifiedWarehouseItemIds.has(item.id),
+          !useNotificationStore.getState().notifiedWarehouseItemIds.has(item.id),
       );
 
       for (const item of lowStockToNotify) {
@@ -79,7 +78,7 @@ export default function WarehouseScreen() {
           item.id != null &&
           item.reorder_quantity &&
           item.quantity > item.reorder_quantity &&
-          notifiedWarehouseItemIds.has(item.id)
+          useNotificationStore.getState().notifiedWarehouseItemIds.has(item.id)
         ) {
           removeNotifiedWarehouseItemId(item.id);
         }
@@ -88,7 +87,6 @@ export default function WarehouseScreen() {
   }, [
     warehouseReorderAlertsEnabled,
     items,
-    notifiedWarehouseItemIds,
     addNotifiedWarehouseItemId,
     removeNotifiedWarehouseItemId,
   ]);
