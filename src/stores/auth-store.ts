@@ -115,6 +115,71 @@ const hasCompletedProfileName = (user: User | null | undefined) =>
     (user?.user_metadata?.first_name && user?.user_metadata?.last_name),
   );
 
+const resolveUserFullName = (
+  user: User | null | undefined,
+  preferredFullName?: string | null,
+): string | null => {
+  const explicit = preferredFullName?.trim();
+  if (explicit) return explicit;
+
+  const metadata = user?.user_metadata;
+  const fullName =
+    typeof metadata?.full_name === 'string'
+      ? metadata.full_name
+      : typeof metadata?.name === 'string'
+        ? metadata.name
+        : null;
+  if (fullName?.trim()) return fullName.trim();
+
+  const firstName =
+    typeof metadata?.first_name === 'string'
+      ? metadata.first_name
+      : typeof metadata?.given_name === 'string'
+        ? metadata.given_name
+        : null;
+  const lastName =
+    typeof metadata?.last_name === 'string'
+      ? metadata.last_name
+      : typeof metadata?.family_name === 'string'
+        ? metadata.family_name
+        : null;
+  const combined = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(' ').trim();
+  return combined || null;
+};
+
+const upsertProfileNameFromAuthUser = async (
+  user: User | null | undefined,
+  preferredFullName?: string | null,
+): Promise<void> => {
+  if (!user?.id) return;
+
+  const { data: existingProfile, error: readError } = await supabase
+    .from('profiles')
+    .select('full_name,email')
+    .eq('id', user.id)
+    .single();
+  if (readError && readError.code !== 'PGRST116') {
+    throw readError;
+  }
+  if (existingProfile?.full_name && existingProfile.full_name.trim().length > 0) return;
+
+  const resolvedFullName = resolveUserFullName(user, preferredFullName);
+  if (!resolvedFullName) return;
+
+  const upsertPayload: { id: string; full_name: string; email?: string | null } = {
+    id: user.id,
+    full_name: resolvedFullName,
+  };
+  if (readError?.code === 'PGRST116' && user.email) {
+    upsertPayload.email = user.email;
+  }
+
+  const { error: upsertError } = await supabase
+    .from('profiles')
+    .upsert(upsertPayload, { onConflict: 'id' });
+  if (upsertError) throw upsertError;
+};
+
 const clearQueryCache = async (context: string) => {
   queryClient.clear();
   try {
@@ -412,6 +477,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
+          await upsertProfileNameFromAuthUser(data.user);
           setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
           telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
@@ -434,6 +500,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
             refresh_token: refreshToken,
           });
           if (error) throw error;
+          await upsertProfileNameFromAuthUser(data.user);
           if (data.user) {
             setSentryUser(data.user);
             telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
@@ -498,6 +565,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
       if (error) throw error;
 
+      const appleNameFromCredential = [
+        credential.fullName?.givenName?.trim(),
+        credential.fullName?.familyName?.trim(),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      await upsertProfileNameFromAuthUser(data.user, appleNameFromCredential || null);
       setSentryUser(data.user);
       telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       telemetry.capture('auth_sign_in_succeeded', { method: 'apple' });
@@ -1000,6 +1075,23 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const { error } = await supabase.auth.updateUser(updateUserPayload);
 
       if (error) throw error;
+
+      const currentUserId = get().user?.id;
+      if (!currentUserId) {
+        throw new Error('Missing authenticated user while completing profile');
+      }
+
+      const { error: profileError } = await supabase.from('profiles').upsert(
+        {
+          id: currentUserId,
+          full_name: fullName,
+          email: email ?? get().user?.email ?? null,
+          area_unit_preference:
+            get().user?.user_metadata?.area_unit === 'hectares' ? 'hectares' : 'acres',
+        },
+        { onConflict: 'id' },
+      );
+      if (profileError) throw profileError;
 
       const {
         data: { user },

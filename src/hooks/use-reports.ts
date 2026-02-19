@@ -146,7 +146,8 @@ export function useReportData(filters: ReportFilters) {
     const next: Record<number, string> = {};
     (farmSeasons ?? []).forEach((season) => {
       if (season.id == null) return;
-      next[season.id] = `${formatDate(season.start_date)} to ${formatDate(season.end_date ?? today)}`;
+      next[season.id] =
+        `${formatDate(season.start_date)} to ${formatDate(season.end_date ?? today)}`;
     });
     return next;
   }, [farmSeasons]);

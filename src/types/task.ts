@@ -3,6 +3,7 @@
  */
 
 import { ICON_REGISTRY } from '@/constants/icon-registry';
+import type { QuantityBasis } from './database';
 
 // Task types matching the database schema
 export type TaskType =
@@ -23,6 +24,7 @@ export interface PlannedInputItem {
   name: string;
   quantity?: number | null;
   unit?: string | null;
+  quantityBasis?: QuantityBasis | null;
   source?: 'warehouse' | 'recent' | 'custom' | null;
 }
 

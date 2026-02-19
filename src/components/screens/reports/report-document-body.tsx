@@ -123,47 +123,45 @@ export function ReportDocumentBody({
 
   const matchedStockRows = preview.data.stock.filter((row) => row.matchStrategy !== 'unmatched');
 
-  const stockRows: ReportSectionRow[] = matchedStockRows
-    .slice(0, ROW_LIMIT)
-    .map((row, index) => ({
-      id: `stock-${row.type}-${row.itemName}-${row.unit}-${index}`,
-      lines: [
-        { label: t('reports.export.table.type'), value: `${row.itemName} (${row.type})` },
-        {
-          label: t('reports.stockDetails.used'),
-          value: `${formatNumber(row.quantityUsed)} ${row.unit}`,
-          monospace: true,
-        },
-        {
-          label: t('reports.stockDetails.currentStock'),
-          value:
-            row.currentStockQuantity != null
-              ? `${formatNumber(row.currentStockQuantity)} ${row.unit}`
-              : t('reports.stockDetails.na'),
-          monospace: true,
-        },
-        {
-          label: t('reports.stockDetails.estimatedOpeningStock'),
-          value:
-            row.estimatedOpeningStockQuantity != null
-              ? `${formatNumber(row.estimatedOpeningStockQuantity)} ${row.unit}`
-              : t('reports.stockDetails.na'),
-          monospace: true,
-        },
-        {
-          label: t('reports.stockDetails.consumedPercent'),
-          value:
-            row.estimatedConsumedPercent != null
-              ? `${formatNumber(row.estimatedConsumedPercent)}%`
-              : t('reports.stockDetails.na'),
-          monospace: true,
-        },
-        {
-          label: t('reports.stockDetails.match'),
-          value: row.matchStrategy ?? t('reports.stockDetails.na'),
-        },
-      ],
-    }));
+  const stockRows: ReportSectionRow[] = matchedStockRows.slice(0, ROW_LIMIT).map((row, index) => ({
+    id: `stock-${row.type}-${row.itemName}-${row.unit}-${index}`,
+    lines: [
+      { label: t('reports.export.table.type'), value: `${row.itemName} (${row.type})` },
+      {
+        label: t('reports.stockDetails.used'),
+        value: `${formatNumber(row.quantityUsed)} ${row.unit}`,
+        monospace: true,
+      },
+      {
+        label: t('reports.stockDetails.currentStock'),
+        value:
+          row.currentStockQuantity != null
+            ? `${formatNumber(row.currentStockQuantity)} ${row.unit}`
+            : t('reports.stockDetails.na'),
+        monospace: true,
+      },
+      {
+        label: t('reports.stockDetails.estimatedOpeningStock'),
+        value:
+          row.estimatedOpeningStockQuantity != null
+            ? `${formatNumber(row.estimatedOpeningStockQuantity)} ${row.unit}`
+            : t('reports.stockDetails.na'),
+        monospace: true,
+      },
+      {
+        label: t('reports.stockDetails.consumedPercent'),
+        value:
+          row.estimatedConsumedPercent != null
+            ? `${formatNumber(row.estimatedConsumedPercent)}%`
+            : t('reports.stockDetails.na'),
+        monospace: true,
+      },
+      {
+        label: t('reports.stockDetails.match'),
+        value: row.matchStrategy ?? t('reports.stockDetails.na'),
+      },
+    ],
+  }));
 
   // ── Section card wrapper with left accent bar ──────────────────────────
 

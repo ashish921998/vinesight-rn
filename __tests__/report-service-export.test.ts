@@ -271,9 +271,16 @@ describe('report export parity', () => {
     expect(csv).toContain('STOCK USAGE SUMMARY (Matched 1 of 2)');
     expect(csv).toContain('M45,spray,10,kg,1,1,40,50,20,warehouse_item_id');
     expect(csv).toContain('UNMATCHED LOG ITEMS (1)');
-    expect(csv).toContain('Unknown Mix,spray,3,unit,1,1,No warehouse match or missing water volume');
+    expect(csv).toContain(
+      'Unknown Mix,spray,3,unit,1,1,No warehouse match or missing water volume',
+    );
 
-    const html = ReportService.generatePDFHtml(stockFocusedData, SAMPLE_SUMMARY, 'stock-usage', 'INR');
+    const html = ReportService.generatePDFHtml(
+      stockFocusedData,
+      SAMPLE_SUMMARY,
+      'stock-usage',
+      'INR',
+    );
     expect(html).toContain('Stock Usage Summary (Matched 1 of 2)');
     expect(html).toContain('Unmatched Log Items (1)');
   });

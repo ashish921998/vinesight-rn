@@ -74,6 +74,7 @@ import {
   useCreateFertigationRecord,
   useUpdateFarmWaterLevel,
   useFarms,
+  useProfile,
   useWarehouseItems,
   useRecentSprayChemicals,
   useRecentFertigationItems,
@@ -93,13 +94,14 @@ import {
 } from '@/types/task';
 import { TASK_TEMPLATES } from '@/constants/task-templates';
 import { toSupabaseDateString } from '@/types/database';
-import type { Farm } from '@/types';
+import type { Farm, QuantityBasis } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
-import { useNotificationStore } from '@/stores';
+import { useAuthStore, useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
 import { getExpenseIconName } from '@/utils/expense-icons';
 import { submitEntryPendingLog } from '@/utils/entry-log-submission';
+import { resolveAreaUnitPreference } from '@/utils/preferences';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
@@ -176,9 +178,20 @@ function isValidFertilizerUnit(
 
 function normalizeFertigationDoseUnit(unit: string): string {
   const normalized = unit.trim().toLowerCase();
-  if (normalized === 'litre/acre') return 'liter/acre';
+  if (normalized === 'kg/acre') return 'kg';
+  if (normalized === 'liter/acre' || normalized === 'litre/acre') return 'liter';
   if (normalized === 'litre') return 'liter';
   return unit.trim();
+}
+
+function resolveFertigationQuantityBasis(
+  unit: string | null | undefined,
+  quantityBasis: QuantityBasis | null | undefined,
+): QuantityBasis {
+  if (quantityBasis) return quantityBasis;
+  const normalizedUnit = unit?.trim().toLowerCase();
+  if (!normalizedUnit) return 'per_acre';
+  return normalizedUnit.includes('/acre') ? 'per_acre' : 'total';
 }
 
 function normalizePlannedInputs(items: PlannedInputItem[]): PlannedInputItem[] {
@@ -239,6 +252,12 @@ export function EntryForm({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
+  const { data: profile } = useProfile();
+  const user = useAuthStore((state) => state.user);
+  const preferredAreaUnit = resolveAreaUnitPreference(
+    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  );
+  const fertigationPerAreaLabel = preferredAreaUnit === 'hectares' ? 'Per hectare' : 'Per acre';
 
   const isVisible = visible ?? true;
   const queryClient = useQueryClient();
@@ -455,6 +474,7 @@ export function EntryForm({
               name: item.name,
               quantity: item.quantity ?? undefined,
               unit,
+              quantityBasis: item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
             };
           }),
         });
@@ -463,14 +483,15 @@ export function EntryForm({
         setFertigationData({
           waterVolume: undefined,
           fertilizers: initialLogPrefill.fertigationItems.map((item) => {
-            const normalizedUnit = item.unit?.trim();
+            const normalizedUnit = item.unit ? normalizeFertigationDoseUnit(item.unit) : null;
             const unit =
-              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg/acre';
+              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg';
             return {
               id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
               name: item.name,
               quantity: item.quantity ?? 0,
               unit,
+              quantityBasis: resolveFertigationQuantityBasis(item.unit, item.quantityBasis),
             };
           }),
         });
@@ -517,15 +538,20 @@ export function EntryForm({
       case 'spray': {
         const sprayPrefill = initialVoiceLogPrefill.spray;
         const prefilledChemicals = sprayPrefill?.chemicals?.length
-          ? sprayPrefill.chemicals.map((item, index) => ({
-              id: createPrefillId('chem', index),
-              name: item.name ?? '',
-              quantity: item.quantity ?? undefined,
-              unit:
+          ? sprayPrefill.chemicals.map((item, index) => {
+              const unit =
                 item.unit && CHEMICAL_UNITS.includes(item.unit as (typeof CHEMICAL_UNITS)[number])
                   ? (item.unit as (typeof CHEMICAL_UNITS)[number])
-                  : 'gm/L',
-            }))
+                  : 'gm/L';
+              return {
+                id: createPrefillId('chem', index),
+                name: item.name ?? '',
+                quantity: item.quantity ?? undefined,
+                unit,
+                quantityBasis:
+                  item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+              };
+            })
           : createEmptySprayFormData().chemicals;
 
         setSprayData({
@@ -562,15 +588,20 @@ export function EntryForm({
       case 'fertigation': {
         const fertigationPrefill = initialVoiceLogPrefill.fertigation;
         const prefilledFertilizers = fertigationPrefill?.fertilizers?.length
-          ? fertigationPrefill.fertilizers.map((item) => ({
-              name: item.name ?? '',
-              quantity: item.quantity ?? undefined,
-              unit:
-                item.unit &&
-                FERTILIZER_UNITS.includes(item.unit as (typeof FERTILIZER_UNITS)[number])
-                  ? (item.unit as (typeof FERTILIZER_UNITS)[number])
-                  : 'kg/acre',
-            }))
+          ? fertigationPrefill.fertilizers.map((item) => {
+              const normalizedUnit = item.unit ? normalizeFertigationDoseUnit(item.unit) : null;
+              const unit =
+                normalizedUnit &&
+                FERTILIZER_UNITS.includes(normalizedUnit as (typeof FERTILIZER_UNITS)[number])
+                  ? (normalizedUnit as (typeof FERTILIZER_UNITS)[number])
+                  : 'kg';
+              return {
+                name: item.name ?? '',
+                quantity: item.quantity ?? undefined,
+                unit,
+                quantityBasis: resolveFertigationQuantityBasis(item.unit, item.quantityBasis),
+              };
+            })
           : createEmptyFertigationFormData().fertilizers;
 
         setFertigationData({
@@ -727,6 +758,7 @@ export function EntryForm({
           farm: {
             id: farmId,
             area: activeFarm.area,
+            areaUnit: preferredAreaUnit,
             total_tank_capacity: activeFarm.total_tank_capacity,
             system_discharge: activeFarm.system_discharge,
             remaining_water: activeFarm.remaining_water,
@@ -1019,7 +1051,7 @@ export function EntryForm({
     if (type === 'fertigation') {
       return fertigationQuickAddItems.map((item) => ({
         name: item.name,
-        unit: item.unit ?? 'kg/acre',
+        unit: item.unit ?? 'kg',
         quantity: item.quantity ?? null,
         source: 'recent',
       }));
@@ -1048,7 +1080,7 @@ export function EntryForm({
     const quantityValue = plannedItemQty.trim() ? Number(plannedItemQty) : null;
     addTaskPlannedInput({
       name: plannedItemName.trim(),
-      unit: plannedItemUnit.trim() || (type === 'spray' ? 'gm/L' : 'kg/acre'),
+      unit: plannedItemUnit.trim() || (type === 'spray' ? 'gm/L' : 'kg'),
       quantity: Number.isFinite(quantityValue) ? quantityValue : null,
       source: 'custom',
     });
@@ -1400,6 +1432,7 @@ export function EntryForm({
             onChange={setFertigationData}
             onInputFocus={scrollToFocusedInput}
             quickAddItems={fertigationQuickAddItems}
+            perAreaLabel={fertigationPerAreaLabel}
           />
         )}
 
@@ -2254,7 +2287,7 @@ export function EntryForm({
                   <Text style={{ fontSize: 12, color: m3.colorScheme.onSurface }}>{item.name}</Text>
                   <Text style={{ fontSize: 11, color: m3.colorScheme.onSurfaceVariant }}>
                     {item.quantity ? `${item.quantity} ` : ''}
-                    {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg/acre')}
+                    {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg')}
                   </Text>
                 </Pressable>
               ))}
