@@ -453,7 +453,7 @@ export function EntryForm({
               name: item.name,
               quantity: item.quantity ?? undefined,
               unit,
-              quantityBasis: item.quantityBasis ?? 'total',
+              quantityBasis: item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
             };
           }),
         });
@@ -517,16 +517,20 @@ export function EntryForm({
       case 'spray': {
         const sprayPrefill = initialVoiceLogPrefill.spray;
         const prefilledChemicals = sprayPrefill?.chemicals?.length
-          ? sprayPrefill.chemicals.map((item, index) => ({
-              id: createPrefillId('chem', index),
-              name: item.name ?? '',
-              quantity: item.quantity ?? undefined,
-              unit:
+          ? sprayPrefill.chemicals.map((item, index) => {
+              const unit =
                 item.unit && CHEMICAL_UNITS.includes(item.unit as (typeof CHEMICAL_UNITS)[number])
                   ? (item.unit as (typeof CHEMICAL_UNITS)[number])
-                  : 'gm/L',
-              quantityBasis: item.quantityBasis ?? 'total',
-            }))
+                  : 'gm/L';
+              return {
+                id: createPrefillId('chem', index),
+                name: item.name ?? '',
+                quantity: item.quantity ?? undefined,
+                unit,
+                quantityBasis:
+                  item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+              };
+            })
           : createEmptySprayFormData().chemicals;
 
         setSprayData({
@@ -573,7 +577,8 @@ export function EntryForm({
                 name: item.name ?? '',
                 quantity: item.quantity ?? undefined,
                 unit,
-                quantityBasis: item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+                quantityBasis:
+                  item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
               };
             })
           : createEmptyFertigationFormData().fertilizers;

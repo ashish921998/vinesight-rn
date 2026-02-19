@@ -127,6 +127,7 @@ export async function submitEntryPendingLog(params: {
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,
+        area: farmArea,
         weather: '',
         operator: '',
         date_of_pruning: farm.date_of_pruning,
@@ -188,6 +189,7 @@ export async function submitEntryPendingLog(params: {
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,
+        area: farmArea,
         date_of_pruning: farm.date_of_pruning,
       });
       return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
