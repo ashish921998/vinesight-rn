@@ -58,6 +58,8 @@ export default function SystemDischargeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
   const focusedFieldKeyRef = useRef<string | null>(null);
+  const focusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keyboardShowTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputPositionsRef = useRef<Record<string, number>>({});
   const inputRowRefs = useRef<Record<string, React.RefObject<View | null>>>({
     dbl: React.createRef<View>(),
@@ -197,7 +199,19 @@ export default function SystemDischargeScreen() {
             animated,
           });
         },
-        () => {},
+        () => {
+          const fallbackY = inputPositionsRef.current[fieldKey];
+          if (typeof fallbackY === 'number') {
+            scrollViewRef.current?.scrollTo({
+              y: Math.max(0, fallbackY - INPUT_FOCUS_SCROLL_OFFSET),
+              animated,
+            });
+            return;
+          }
+          if (__DEV__) {
+            console.warn(`Failed to measure layout for field "${fieldKey}"`);
+          }
+        },
       );
     }
   }, []);
@@ -220,8 +234,11 @@ export default function SystemDischargeScreen() {
     focusedFieldKeyRef.current = fieldKey;
     scrollToField(fieldKey, true);
 
+    if (focusTimeoutRef.current) {
+      clearTimeout(focusTimeoutRef.current);
+    }
     // A second pass after keyboard animation improves reliability on both iOS/Android.
-    setTimeout(() => {
+    focusTimeoutRef.current = setTimeout(() => {
       if (focusedFieldKeyRef.current === fieldKey) {
         scrollToField(fieldKey, true);
       }
@@ -232,7 +249,10 @@ export default function SystemDischargeScreen() {
     const onKeyboardDidShow = () => {
       const focusedFieldKey = focusedFieldKeyRef.current;
       if (!focusedFieldKey) return;
-      setTimeout(() => {
+      if (keyboardShowTimeoutRef.current) {
+        clearTimeout(keyboardShowTimeoutRef.current);
+      }
+      keyboardShowTimeoutRef.current = setTimeout(() => {
         if (focusedFieldKeyRef.current === focusedFieldKey) {
           scrollToField(focusedFieldKey, true);
         }
@@ -242,9 +262,25 @@ export default function SystemDischargeScreen() {
     const showSub = Keyboard.addListener('keyboardDidShow', onKeyboardDidShow);
     const hideSub = Keyboard.addListener('keyboardDidHide', () => {
       focusedFieldKeyRef.current = null;
+      if (keyboardShowTimeoutRef.current) {
+        clearTimeout(keyboardShowTimeoutRef.current);
+        keyboardShowTimeoutRef.current = null;
+      }
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+        focusTimeoutRef.current = null;
+      }
     });
 
     return () => {
+      if (keyboardShowTimeoutRef.current) {
+        clearTimeout(keyboardShowTimeoutRef.current);
+        keyboardShowTimeoutRef.current = null;
+      }
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+        focusTimeoutRef.current = null;
+      }
       showSub.remove();
       hideSub.remove();
     };
