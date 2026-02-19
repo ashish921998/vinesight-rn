@@ -238,7 +238,7 @@ export default function SettingsScreen() {
   const buildE164PhoneNumber = () => {
     const raw = linkPhoneInput.trim();
     if (raw.startsWith('+')) {
-      if (isValidE164PhoneNumber(raw)) return raw;
+      return isValidE164PhoneNumber(raw) ? raw : '';
     }
     return buildNormalizedE164PhoneNumber(selectedCountry.dialCode, linkPhoneInput);
   };
@@ -839,7 +839,7 @@ export default function SettingsScreen() {
 
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
             automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
@@ -1255,7 +1255,7 @@ export default function SettingsScreen() {
           </View>
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
             automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
@@ -1323,7 +1323,7 @@ export default function SettingsScreen() {
           </View>
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
             automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
@@ -1390,7 +1390,7 @@ export default function SettingsScreen() {
           </View>
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
             automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
@@ -1451,7 +1451,7 @@ export default function SettingsScreen() {
           </View>
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
             automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
@@ -1524,7 +1524,7 @@ export default function SettingsScreen() {
 
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
             automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"

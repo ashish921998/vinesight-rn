@@ -92,7 +92,8 @@ export default function WeatherScreen() {
         params: { redirect: authRedirectPath },
       });
     }
-  }, [isAuthenticated, isLoadingAuth, router, authRedirectPath]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router from useRouter() is stable across renders
+  }, [isAuthenticated, isLoadingAuth, authRedirectPath]);
 
   const urgencyColors = useMemo(
     () => ({

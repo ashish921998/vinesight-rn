@@ -137,16 +137,6 @@ const withKotlinSources = (config) => {
         return config;
       }
 
-      try {
-        fs.readdirSync(pluginPath, { withFileTypes: true });
-      } catch (error) {
-        console.warn(
-          `[android-widget] Failed to read Kotlin source directory ${pluginPath}:`,
-          error,
-        );
-        return config;
-      }
-
       const copyKotlinFilesRecursively = (srcDir, destDir) => {
         for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
           const srcPath = path.join(srcDir, entry.name);
