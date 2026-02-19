@@ -519,7 +519,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Sign out
   signOut: async () => {
     set({ errorMessage: null, isLoading: true });
-    setSentryUser(null);
     telemetry.capture('auth_sign_out');
     telemetry.capture('user_logged_out');
 
@@ -535,6 +534,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (__DEV__) {
         console.log('Sign out successful, clearing state');
       }
+
+      setSentryUser(null);
 
       // Explicitly clear state
       set({
@@ -562,6 +563,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (__DEV__) {
         console.error('Sign out error:', error);
       }
+
+      setSentryUser(null);
 
       // Even if sign out fails, clear the local state to allow user to try again
       set({
@@ -612,6 +615,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       // Sign out after request is logged
       await supabase.auth.signOut({ scope: 'global' });
+
+      setSentryUser(null);
 
       // Clear state
       set({
