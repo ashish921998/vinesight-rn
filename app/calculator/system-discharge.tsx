@@ -281,6 +281,7 @@ export default function SystemDischargeScreen() {
         clearTimeout(focusTimeoutRef.current);
         focusTimeoutRef.current = null;
       }
+      focusedFieldKeyRef.current = null;
       showSub.remove();
       hideSub.remove();
     };

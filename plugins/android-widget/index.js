@@ -151,8 +151,15 @@ const withKotlinSources = (config) => {
           }
 
           if (!entry.isFile() || !entry.name.endsWith('.kt')) continue;
+          const skipOverwrite =
+            process.env.EXPO_ANDROID_WIDGET_SKIP_KOTLIN_OVERWRITE === '1' &&
+            fs.existsSync(destPath);
+          if (skipOverwrite) {
+            continue;
+          }
           try {
             // Intentionally overwrite Kotlin sources so native bridge/provider code stays current.
+            // Set EXPO_ANDROID_WIDGET_SKIP_KOTLIN_OVERWRITE=1 to preserve local Android edits during development.
             // This differs from withWidgetResources, where XML files are preserved for user customization.
             fs.copyFileSync(srcPath, destPath);
           } catch (error) {

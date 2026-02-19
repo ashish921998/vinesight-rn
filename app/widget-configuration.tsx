@@ -204,17 +204,42 @@ export default function WidgetConfigurationScreen() {
     const today = new Date();
     const deriveIcon = (condition: string): string => {
       const lower = condition.toLowerCase();
+      if (lower.includes('thunder') || lower.includes('storm') || lower.includes('lightning')) {
+        return 'thunderstorm';
+      }
+      if (
+        lower.includes('snow') ||
+        lower.includes('sleet') ||
+        lower.includes('hail') ||
+        lower.includes('ice')
+      ) {
+        return 'snowy';
+      }
+      if (
+        lower.includes('fog') ||
+        lower.includes('mist') ||
+        lower.includes('haze') ||
+        lower.includes('smoke')
+      ) {
+        return 'foggy';
+      }
+      if (lower.includes('wind') || lower.includes('breeze')) return 'windy';
       if (lower.includes('partly')) return 'partly-cloudy';
       if (lower.includes('sun') || lower.includes('clear')) return 'sunny';
       if (lower.includes('cloud')) return 'cloudy';
       if (lower.includes('rain') || lower.includes('drizzle')) return 'rainy';
       return 'partly-cloudy';
     };
-    const formatDay = (dateStr: string): string => {
-      const dateParts = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      const date = dateParts
-        ? new Date(Number(dateParts[1]), Number(dateParts[2]) - 1, Number(dateParts[3]))
-        : new Date(dateStr);
+    const formatDay = (dateInput: string | Date): string => {
+      let date: Date;
+      if (dateInput instanceof Date) {
+        date = dateInput;
+      } else {
+        const dateParts = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        date = dateParts
+          ? new Date(Number(dateParts[1]), Number(dateParts[2]) - 1, Number(dateParts[3]))
+          : new Date(dateInput);
+      }
       if (Number.isNaN(date.getTime())) return '';
       return date.toLocaleDateString(undefined, { weekday: 'short' });
     };
@@ -237,9 +262,7 @@ export default function WidgetConfigurationScreen() {
           day.day ??
           (day.date
             ? formatDay(day.date)
-            : formatDay(
-                new Date(today.getTime() + (index + 1) * 24 * 60 * 60 * 1000).toISOString(),
-              )),
+            : formatDay(new Date(today.getTime() + (index + 1) * 24 * 60 * 60 * 1000))),
         high: day.high ?? day.maxTemp ?? 0,
         low: day.low ?? day.minTemp ?? 0,
         condition: day.condition,
