@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   View,
@@ -208,34 +208,37 @@ export default function SettingsScreen() {
     );
   }, [countrySearch]);
 
-  const sanitizeLocalPhoneInput = (value: string) => sanitizePhoneDigits(value);
+  const sanitizeLocalPhoneInput = useCallback((value: string) => sanitizePhoneDigits(value), []);
 
-  const setPhoneFormFromValue = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      setSelectedCountry(DEFAULT_COUNTRY);
-      setLinkPhoneInput('');
-      return;
-    }
-
-    if (trimmed.startsWith('+')) {
-      const matched = [...COUNTRIES]
-        .sort((a, b) => b.dialCode.length - a.dialCode.length)
-        .find((country) => trimmed.startsWith(country.dialCode));
-
-      if (matched) {
-        setSelectedCountry(matched);
-        setLinkPhoneInput(sanitizeLocalPhoneInput(trimmed.slice(matched.dialCode.length)));
+  const setPhoneFormFromValue = useCallback(
+    (value: string) => {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        setSelectedCountry(DEFAULT_COUNTRY);
+        setLinkPhoneInput('');
         return;
       }
 
-      const sanitizedDigits = sanitizeLocalPhoneInput(trimmed);
-      setLinkPhoneInput(sanitizedDigits ? `+${sanitizedDigits}` : '');
-      return;
-    }
+      if (trimmed.startsWith('+')) {
+        const matched = [...COUNTRIES]
+          .sort((a, b) => b.dialCode.length - a.dialCode.length)
+          .find((country) => trimmed.startsWith(country.dialCode));
 
-    setLinkPhoneInput(sanitizeLocalPhoneInput(trimmed));
-  };
+        if (matched) {
+          setSelectedCountry(matched);
+          setLinkPhoneInput(sanitizeLocalPhoneInput(trimmed.slice(matched.dialCode.length)));
+          return;
+        }
+
+        const sanitizedDigits = sanitizeLocalPhoneInput(trimmed);
+        setLinkPhoneInput(sanitizedDigits ? `+${sanitizedDigits}` : '');
+        return;
+      }
+
+      setLinkPhoneInput(sanitizeLocalPhoneInput(trimmed));
+    },
+    [sanitizeLocalPhoneInput],
+  );
 
   const normalizedE164PhoneNumber = useMemo(() => {
     const raw = linkPhoneInput.trim();
@@ -262,24 +265,9 @@ export default function SettingsScreen() {
     setIsPhoneLinkCodeStep(false);
     setPhoneNumberEditCount(0);
     const trimmedValue = (linkedAuthPhone ?? userPhone ?? '').trim();
-    if (!trimmedValue) {
-      setSelectedCountry(DEFAULT_COUNTRY);
-      setLinkPhoneInput('');
-    } else if (trimmedValue.startsWith('+')) {
-      const matched = [...COUNTRIES]
-        .sort((a, b) => b.dialCode.length - a.dialCode.length)
-        .find((country) => trimmedValue.startsWith(country.dialCode));
-      if (matched) {
-        setSelectedCountry(matched);
-        setLinkPhoneInput(trimmedValue.slice(matched.dialCode.length));
-      } else {
-        setLinkPhoneInput(trimmedValue);
-      }
-    } else {
-      setLinkPhoneInput(trimmedValue);
-    }
+    setPhoneFormFromValue(trimmedValue);
     setShowLinkPhoneModal(true);
-  }, [linkPhoneValue, clearError, linkedAuthPhone, userPhone]);
+  }, [linkPhoneValue, clearError, linkedAuthPhone, userPhone, setPhoneFormFromValue]);
 
   useEffect(() => {
     if (!phoneLinkingPending) return;
