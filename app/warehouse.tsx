@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -47,8 +47,11 @@ export default function WarehouseScreen() {
   const warehouseReorderAlertsEnabled = useNotificationStore(
     (s) => s.warehouseReorderAlertsEnabled,
   );
-  // Track items we've already notified in this session to avoid duplicates
-  const notifiedIdsRef = useRef<Set<string | number>>(new Set());
+  const notifiedWarehouseItemIds = useNotificationStore((s) => s.notifiedWarehouseItemIds);
+  const addNotifiedWarehouseItemId = useNotificationStore((s) => s.addNotifiedWarehouseItemId);
+  const removeNotifiedWarehouseItemId = useNotificationStore(
+    (s) => s.removeNotifiedWarehouseItemId,
+  );
 
   useEffect(() => {
     if (!warehouseReorderAlertsEnabled || !items || items.length === 0) return;
@@ -58,11 +61,11 @@ export default function WarehouseScreen() {
         item.reorder_quantity &&
         item.quantity <= item.reorder_quantity &&
         item.id != null &&
-        !notifiedIdsRef.current.has(item.id),
+        !notifiedWarehouseItemIds.has(item.id),
     );
 
     for (const item of lowStockToNotify) {
-      notifiedIdsRef.current.add(item.id!);
+      addNotifiedWarehouseItemId(item.id!);
       notifyWarehouseReorder(item.name, item.quantity, item.unit, item.reorder_quantity!).catch(
         () => {},
       );
@@ -73,12 +76,18 @@ export default function WarehouseScreen() {
         item.id != null &&
         item.reorder_quantity &&
         item.quantity > item.reorder_quantity &&
-        notifiedIdsRef.current.has(item.id)
+        notifiedWarehouseItemIds.has(item.id)
       ) {
-        notifiedIdsRef.current.delete(item.id);
+        removeNotifiedWarehouseItemId(item.id);
       }
     });
-  }, [warehouseReorderAlertsEnabled, items]);
+  }, [
+    warehouseReorderAlertsEnabled,
+    items,
+    notifiedWarehouseItemIds,
+    addNotifiedWarehouseItemId,
+    removeNotifiedWarehouseItemId,
+  ]);
 
   const openAddItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });

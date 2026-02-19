@@ -345,7 +345,7 @@ export default function SettingsScreen() {
     }
 
     // Disable: cancel any scheduled task notifications we know about
-    const ids = Object.values(taskSchedules).flatMap((s) => s.notificationIds);
+    const ids = Object.values(taskSchedules).flatMap((s) => s.notificationIds ?? []);
     await Promise.allSettled(ids.map((id) => cancelNotification(id)));
     clearAllTaskSchedules();
     setTaskRemindersEnabled(false);
@@ -390,7 +390,7 @@ export default function SettingsScreen() {
     }
 
     // Disable: cancel any scheduled petiole test notifications
-    const ids = Object.values(petioleTestSchedules).flatMap((s) => s.notificationIds);
+    const ids = Object.values(petioleTestSchedules).flatMap((s) => s.notificationIds ?? []);
     await Promise.allSettled(ids.map((id) => cancelNotification(id)));
     clearAllPetioleTestSchedules();
     setPetioleTestRemindersEnabled(false);

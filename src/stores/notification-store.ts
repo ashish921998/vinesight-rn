@@ -18,7 +18,6 @@ interface NotificationState {
 
   dailyWaterReminderEnabled: boolean;
   dailyWaterReminderNotificationId: string | null;
-  dailyWaterReminderNotificationIds: string[];
 
   lowWaterAlertsEnabled: boolean;
   taskRemindersEnabled: boolean;
@@ -27,6 +26,8 @@ interface NotificationState {
 
   taskSchedules: Record<string, TaskNotificationSchedule>; // taskId -> schedule
   petioleTestSchedules: Record<string, PetioleNotificationSchedule>; // farmId -> schedule
+
+  notifiedWarehouseItemIds: Set<string | number>;
 }
 
 interface NotificationActions {
@@ -47,6 +48,9 @@ interface NotificationActions {
   upsertPetioleTestSchedule: (farmId: string, schedule: PetioleNotificationSchedule) => void;
   removePetioleTestSchedule: (farmId: string) => void;
   clearAllPetioleTestSchedules: () => void;
+
+  addNotifiedWarehouseItemId: (id: string | number) => void;
+  removeNotifiedWarehouseItemId: (id: string | number) => void;
 }
 
 export const useNotificationStore = create<NotificationState & NotificationActions>()(
@@ -56,7 +60,6 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
       dailyWaterReminderEnabled: false,
       dailyWaterReminderNotificationId: null,
-      dailyWaterReminderNotificationIds: [],
 
       lowWaterAlertsEnabled: false,
       taskRemindersEnabled: false,
@@ -65,6 +68,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
       taskSchedules: {},
       petioleTestSchedules: {},
+      notifiedWarehouseItemIds: new Set(),
 
       _setHasHydrated: (value) => set({ hasHydrated: value }),
 
@@ -100,20 +104,67 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           return { petioleTestSchedules: next };
         }),
       clearAllPetioleTestSchedules: () => set({ petioleTestSchedules: {} }),
+
+      addNotifiedWarehouseItemId: (id) =>
+        set((state) => {
+          const next = new Set(state.notifiedWarehouseItemIds);
+          next.add(id);
+          return { notifiedWarehouseItemIds: next };
+        }),
+      removeNotifiedWarehouseItemId: (id) =>
+        set((state) => {
+          const next = new Set(state.notifiedWarehouseItemIds);
+          next.delete(id);
+          return { notifiedWarehouseItemIds: next };
+        }),
     }),
     {
       name: 'vinesight-notifications',
-      version: 1,
-      migrate: (persistedState: unknown) => {
-        const state = persistedState as Partial<NotificationState & NotificationActions>;
-        if (state && state.dailyWaterReminderNotificationId !== undefined) {
-          const legacyId = state.dailyWaterReminderNotificationId as string | null;
-          state.dailyWaterReminderNotificationIds = legacyId ? [legacyId] : [];
-          delete state.dailyWaterReminderNotificationId;
+      version: 2,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as Record<string, unknown>;
+        if (!state) return persistedState;
+        if (version < 1) {
+          const migrateSchedules = (key: string) => {
+            if (state[key] && typeof state[key] === 'object') {
+              const schedules = state[key] as Record<string, Record<string, unknown>>;
+              for (const id in schedules) {
+                const schedule = schedules[id];
+                if (
+                  'notificationId' in schedule &&
+                  !('notificationIds' in schedule) &&
+                  typeof schedule.notificationId === 'string'
+                ) {
+                  schedule.notificationIds = schedule.notificationId
+                    ? [schedule.notificationId]
+                    : [];
+                  delete schedule.notificationId;
+                }
+              }
+            }
+          };
+          migrateSchedules('taskSchedules');
+          migrateSchedules('petioleTestSchedules');
         }
-        return state as NotificationState & NotificationActions;
+        if (version < 2) {
+          state.notifiedWarehouseItemIds = [];
+        }
+        return state as unknown as NotificationState & NotificationActions;
       },
-      storage: createJSONStorage(() => ExpoSecureStoreAdapter),
+      storage: createJSONStorage(() => ExpoSecureStoreAdapter, {
+        reviver: (key, value) => {
+          if (key === 'notifiedWarehouseItemIds' && Array.isArray(value)) {
+            return new Set(value);
+          }
+          return value;
+        },
+        replacer: (key, value) => {
+          if (key === 'notifiedWarehouseItemIds' && value instanceof Set) {
+            return Array.from(value);
+          }
+          return value;
+        },
+      }),
       onRehydrateStorage: () => () => {
         useNotificationStore.setState({ hasHydrated: true });
       },

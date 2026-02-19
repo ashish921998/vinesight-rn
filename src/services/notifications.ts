@@ -194,14 +194,6 @@ export async function notifyWarehouseReorder(
  * @param farmId    Stable identifier used in notification data payload
  * @param day       Pruning milestone day: 30 | 60 | 90 | 120
  * @param targetDate  The actual milestone date (YYYY-MM-DD); reminder fires the day before at 07:00
- * @returns The notification ID, or null if the date is already past
- */
-/**
- * Schedules a petiole test reminder for one day before a target pruning milestone.
- * @param farmName  Display name of the farm
- * @param farmId    Stable identifier used in notification data payload
- * @param day       Pruning milestone day: 30 | 60 | 90 | 120
- * @param targetDate  The actual milestone date (YYYY-MM-DD); reminder fires the day before at 07:00
  * @returns The notification ID, or null if the date is already past or invalid
  */
 export async function schedulePetioleTestReminder(
