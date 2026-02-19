@@ -196,6 +196,14 @@ export async function notifyWarehouseReorder(
  * @param targetDate  The actual milestone date (YYYY-MM-DD); reminder fires the day before at 07:00
  * @returns The notification ID, or null if the date is already past
  */
+/**
+ * Schedules a petiole test reminder for one day before a target pruning milestone.
+ * @param farmName  Display name of the farm
+ * @param farmId    Stable identifier used in notification data payload
+ * @param day       Pruning milestone day: 30 | 60 | 90 | 120
+ * @param targetDate  The actual milestone date (YYYY-MM-DD); reminder fires the day before at 07:00
+ * @returns The notification ID, or null if the date is already past or invalid
+ */
 export async function schedulePetioleTestReminder(
   farmName: string,
   farmId: string,
@@ -209,7 +217,17 @@ export async function schedulePetioleTestReminder(
   if (!m) return null;
 
   const [y, mo, d] = targetDate.split('-').map((n) => Number(n));
-  // Reminder is 1 day BEFORE the milestone
+
+  const target = new Date(y, mo - 1, d);
+  if (
+    Number.isNaN(target.getTime()) ||
+    target.getFullYear() !== y ||
+    target.getMonth() !== mo - 1 ||
+    target.getDate() !== d
+  ) {
+    return null;
+  }
+
   const reminderDate = new Date(y, mo - 1, d - 1, 7, 0, 0);
 
   if (Number.isNaN(reminderDate.getTime())) return null;

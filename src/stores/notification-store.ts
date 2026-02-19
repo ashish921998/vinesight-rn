@@ -2,21 +2,23 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { ExpoSecureStoreAdapter } from '@/lib/supabase';
 
-export type TaskNotificationSchedule = {
-  notificationIds: string[]; // IDs for day-before and/or due-date notifications
-  dueDate: string; // YYYY-MM-DD
-};
+export interface TaskNotificationSchedule {
+  notificationIds: string[];
+  dueDate: string;
+}
 
-export type PetioleNotificationSchedule = {
-  notificationIds: string[]; // IDs for day 30, 60, 90, 120 reminders
-  pruningDate: string; // YYYY-MM-DD — the farm's date_of_pruning at time of scheduling
-};
+export interface PetioleNotificationSchedule {
+  notificationIds: string[];
+  pruningDate: string;
+  farmName?: string;
+}
 
 interface NotificationState {
   hasHydrated: boolean;
 
   dailyWaterReminderEnabled: boolean;
   dailyWaterReminderNotificationId: string | null;
+  dailyWaterReminderNotificationIds: string[];
 
   lowWaterAlertsEnabled: boolean;
   taskRemindersEnabled: boolean;
@@ -54,6 +56,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
 
       dailyWaterReminderEnabled: false,
       dailyWaterReminderNotificationId: null,
+      dailyWaterReminderNotificationIds: [],
 
       lowWaterAlertsEnabled: false,
       taskRemindersEnabled: false,
@@ -100,6 +103,16 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     }),
     {
       name: 'vinesight-notifications',
+      version: 1,
+      migrate: (persistedState: unknown) => {
+        const state = persistedState as Partial<NotificationState & NotificationActions>;
+        if (state && state.dailyWaterReminderNotificationId !== undefined) {
+          const legacyId = state.dailyWaterReminderNotificationId as string | null;
+          state.dailyWaterReminderNotificationIds = legacyId ? [legacyId] : [];
+          delete state.dailyWaterReminderNotificationId;
+        }
+        return state as NotificationState & NotificationActions;
+      },
       storage: createJSONStorage(() => ExpoSecureStoreAdapter),
       onRehydrateStorage: () => () => {
         useNotificationStore.setState({ hasHydrated: true });

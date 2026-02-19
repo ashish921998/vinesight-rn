@@ -67,6 +67,17 @@ export default function WarehouseScreen() {
         () => {},
       );
     }
+
+    items.forEach((item) => {
+      if (
+        item.id != null &&
+        item.reorder_quantity &&
+        item.quantity > item.reorder_quantity &&
+        notifiedIdsRef.current.has(item.id)
+      ) {
+        notifiedIdsRef.current.delete(item.id);
+      }
+    });
   }, [warehouseReorderAlertsEnabled, items]);
 
   const openAddItem = (item?: WarehouseItem | null) => {

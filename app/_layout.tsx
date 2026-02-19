@@ -26,6 +26,7 @@ import {
   schedulePetioleTestReminder,
   scheduleTaskDueReminder,
 } from '@/services/notifications';
+import { addDays } from '@/utils/date';
 import { usePetioleTestReminders } from '@/hooks/use-petiole-reminders';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
@@ -211,9 +212,17 @@ export default Sentry.wrap(function RootLayout() {
             const entries = Object.entries(state.taskSchedules);
             for (const [taskId, schedule] of entries) {
               try {
-                for (const oldId of schedule.notificationIds) {
-                  await cancelNotification(oldId);
-                }
+                const legacy = schedule as {
+                  notificationIds?: string[];
+                  notificationId?: string;
+                  dueDate: string;
+                };
+                const oldIds = Array.isArray(legacy.notificationIds)
+                  ? legacy.notificationIds
+                  : legacy.notificationId
+                    ? [legacy.notificationId]
+                    : [];
+                await Promise.allSettled(oldIds.map((id) => cancelNotification(id)));
                 const nextIds = await scheduleTaskDueReminder(taskId, schedule.dueDate);
                 if (nextIds.length > 0) {
                   useNotificationStore.getState().upsertTaskSchedule(taskId, {
@@ -246,32 +255,18 @@ export default Sentry.wrap(function RootLayout() {
           try {
             const petioleEntries = Object.entries(state.petioleTestSchedules);
             for (const [farmId, schedule] of petioleEntries) {
-              // Cancel old and re-schedule each petiole notification
               const MILESTONES = [30, 60, 90, 120] as const;
-              for (const oldId of schedule.notificationIds) {
-                try {
-                  await cancelNotification(oldId);
-                } catch {
-                  // ignore cancellation errors — old notification may have already fired
-                }
-              }
+              await Promise.allSettled(
+                schedule.notificationIds.map((id) => cancelNotification(id)),
+              );
               const pruningDate = schedule.pruningDate;
+              const farmName = schedule.farmName ?? farmId;
               const newIds: string[] = [];
               for (const day of MILESTONES) {
-                const m = /^\d{4}-\d{2}-\d{2}$/.exec(pruningDate);
-                if (!m) continue;
-                const [y, mo, d] = pruningDate.split('-').map(Number);
-                const targetDate = new Date(y, mo - 1, d + day);
-                const yy = targetDate.getFullYear();
-                const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-                const dd = String(targetDate.getDate()).padStart(2, '0');
-                const targetDateStr = `${yy}-${mm}-${dd}`;
-                // farmId is used as both identifier and as farm name fallback here;
-                // the hook stores the farmId but `schedulePetioleTestReminder` needs farmName.
-                // We re-use farmId as farmName key since the actual name is not stored in schedule.
-                // A future improvement would be to store farmName in PetioleNotificationSchedule.
+                const targetDateStr = addDays(pruningDate, day);
+                if (!targetDateStr) continue;
                 const notifId = await schedulePetioleTestReminder(
-                  farmId,
+                  farmName,
                   farmId,
                   day,
                   targetDateStr,
@@ -282,6 +277,7 @@ export default Sentry.wrap(function RootLayout() {
                 useNotificationStore.getState().upsertPetioleTestSchedule(farmId, {
                   notificationIds: newIds,
                   pruningDate,
+                  farmName,
                 });
               } else {
                 useNotificationStore.getState().removePetioleTestSchedule(farmId);

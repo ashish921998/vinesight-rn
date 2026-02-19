@@ -1,25 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFarms } from '@/hooks/use-farms';
 import { useNotificationStore } from '@/stores/notification-store';
 import { schedulePetioleTestReminder, cancelNotification } from '@/services/notifications';
+import { addDays } from '@/utils/date';
 
 const PRUNING_MILESTONES = [30, 60, 90, 120] as const;
-
-/**
- * Adds the given number of days to a YYYY-MM-DD date string.
- * Returns null if the input is not a valid date string.
- */
-function addDays(dateStr: string, days: number): string | null {
-  const m = /^\d{4}-\d{2}-\d{2}$/.exec(dateStr);
-  if (!m) return null;
-  const [y, mo, d] = dateStr.split('-').map(Number);
-  const date = new Date(y, mo - 1, d + days);
-  if (Number.isNaN(date.getTime())) return null;
-  const yy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${yy}-${mm}-${dd}`;
-}
 
 /**
  * Hook that manages petiole test reminder scheduling across all farms.
@@ -33,21 +18,19 @@ function addDays(dateStr: string, days: number): string | null {
  */
 export function usePetioleTestReminders() {
   const { data: farms } = useFarms();
-  const {
-    petioleTestRemindersEnabled,
-    petioleTestSchedules,
-    upsertPetioleTestSchedule,
-    removePetioleTestSchedule,
-    clearAllPetioleTestSchedules,
-  } = useNotificationStore();
+  const { petioleTestRemindersEnabled } = useNotificationStore();
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
+    cancelledRef.current = false;
+
     if (!petioleTestRemindersEnabled) {
-      // Cancel all existing petiole reminders
-      const allIds = Object.values(petioleTestSchedules).flatMap((s) => s.notificationIds);
+      const allIds = Object.values(useNotificationStore.getState().petioleTestSchedules).flatMap(
+        (s) => s.notificationIds,
+      );
       if (allIds.length > 0) {
         Promise.allSettled(allIds.map((id) => cancelNotification(id))).catch(() => {});
-        clearAllPetioleTestSchedules();
+        useNotificationStore.getState().clearAllPetioleTestSchedules();
       }
       return;
     }
@@ -60,34 +43,28 @@ export function usePetioleTestReminders() {
 
       const farmId = String(farm.id ?? farm.name);
 
-      // Petiole tests are only relevant for grape crops
       if (!farm.crop || farm.crop.toLowerCase() !== 'grape') {
-        // If we had previously scheduled reminders for this farm (e.g. crop was changed),
-        // cancel them now
-        const existing = petioleTestSchedules[farmId];
+        const existing = useNotificationStore.getState().petioleTestSchedules[farmId];
         if (existing) {
           Promise.allSettled(existing.notificationIds.map((id) => cancelNotification(id))).catch(
             () => {},
           );
-          removePetioleTestSchedule(farmId);
+          useNotificationStore.getState().removePetioleTestSchedule(farmId);
         }
         return;
       }
 
-      const existing = petioleTestSchedules[farmId];
+      const existing = useNotificationStore.getState().petioleTestSchedules[farmId];
 
-      // Skip re-scheduling if pruning date hasn't changed
       if (existing && existing.pruningDate === pruningDate) return;
 
-      // Cancel old notifications for this farm before re-scheduling
       if (existing) {
         Promise.allSettled(existing.notificationIds.map((id) => cancelNotification(id))).catch(
           () => {},
         );
-        removePetioleTestSchedule(farmId);
+        useNotificationStore.getState().removePetioleTestSchedule(farmId);
       }
 
-      // Schedule reminders for each milestone
       const schedulingPromises = PRUNING_MILESTONES.map((day) => {
         const targetDate = addDays(pruningDate, day);
         if (!targetDate) return Promise.resolve(null);
@@ -95,6 +72,10 @@ export function usePetioleTestReminders() {
       });
 
       Promise.allSettled(schedulingPromises).then((results) => {
+        if (cancelledRef.current || !useNotificationStore.getState().petioleTestRemindersEnabled) {
+          return;
+        }
+
         const notificationIds = results
           .filter(
             (r): r is PromiseFulfilledResult<string | null> =>
@@ -103,16 +84,17 @@ export function usePetioleTestReminders() {
           .map((r) => r.value as string);
 
         if (notificationIds.length > 0) {
-          upsertPetioleTestSchedule(farmId, { notificationIds, pruningDate });
+          useNotificationStore.getState().upsertPetioleTestSchedule(farmId, {
+            notificationIds,
+            pruningDate,
+            farmName: farm.name,
+          });
         }
       });
     });
-  }, [
-    petioleTestRemindersEnabled,
-    farms,
-    petioleTestSchedules,
-    upsertPetioleTestSchedule,
-    removePetioleTestSchedule,
-    clearAllPetioleTestSchedules,
-  ]);
+
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [petioleTestRemindersEnabled, farms]);
 }

@@ -242,9 +242,8 @@ export default function TaskForm({
       const existing = taskSchedules[taskId];
 
       try {
-        // Cancel previous schedule if any.
         if (existing?.notificationIds?.length) {
-          await Promise.all(existing.notificationIds.map((id) => cancelNotification(id)));
+          await Promise.allSettled(existing.notificationIds.map((id) => cancelNotification(id)));
           removeTaskSchedule(taskId);
         }
 
@@ -258,7 +257,6 @@ export default function TaskForm({
           }
         }
       } catch (notificationError) {
-        // Log notification error but don't fail the save operation
         if (__DEV__) {
           console.error('Failed to schedule task notification:', notificationError);
         }
