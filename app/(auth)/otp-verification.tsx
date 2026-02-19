@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Text, Pressable, type ViewStyle, type TextStyle } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, type Href } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, OTPInput } from '@/components/ui';
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
@@ -17,6 +17,7 @@ type OTPRouteParams = {
   phone?: string;
   channel?: string;
   mode?: string;
+  redirect?: string;
 };
 
 export default function OTPVerificationScreen() {
@@ -24,7 +25,11 @@ export default function OTPVerificationScreen() {
   const m3 = useM3();
   const isDark = useIsDark();
 
-  const { email, phone, channel, mode } = useLocalSearchParams<OTPRouteParams>();
+  const { email, phone, channel, mode, redirect } = useLocalSearchParams<OTPRouteParams>();
+  const redirectPath = useMemo(() => {
+    if (typeof redirect === 'string' && redirect.startsWith('/')) return redirect;
+    return '/';
+  }, [redirect]);
   const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
   const isPhoneOTP = channel === 'phone' && !!phone;
   const identifier = isPhoneOTP ? phone : email;
@@ -54,9 +59,9 @@ export default function OTPVerificationScreen() {
     if (isAuthenticated && needsProfileCompletion) {
       router.replace('/(auth)/profile-completion');
     } else if (isAuthenticated) {
-      router.replace('/');
+      router.replace(redirectPath as Href);
     }
-  }, [isAuthenticated, needsProfileCompletion]);
+  }, [isAuthenticated, needsProfileCompletion, redirectPath]);
 
   // Cooldown timer
   useEffect(() => {
@@ -111,7 +116,7 @@ export default function OTPVerificationScreen() {
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     if (isPhoneOTP) {
-      await resendPhoneOTP(phoneAuthMode);
+      await resendPhoneOTP(phoneAuthMode, identifier);
     } else {
       await resendOTP();
     }

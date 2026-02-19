@@ -74,6 +74,7 @@ module.exports = [
     languageOptions: {
       globals: {
         ...globals.node,
+        __DEV__: 'readonly',
       },
     },
   },
@@ -81,6 +82,7 @@ module.exports = [
     ignores: [
       'node_modules/',
       '.expo/',
+      '.rnstorybook/',
       'dist/',
       'web-build/',
       'babel.config.js',

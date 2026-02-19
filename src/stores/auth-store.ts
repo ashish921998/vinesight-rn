@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import * as Sentry from '@sentry/react-native';
 import { supabase } from '@/lib/supabase';
+import { queryClient, queryPersister } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
 import type { User, Session } from '@supabase/supabase-js';
 import type { PhoneAuthMode } from '@/types/auth';
@@ -59,7 +61,7 @@ interface AuthActions {
   // Phone OTP methods
   signInWithPhone: (phone: string, mode?: PhoneAuthMode) => Promise<void>;
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
-  resendPhoneOTP: (mode?: PhoneAuthMode) => Promise<void>;
+  resendPhoneOTP: (mode?: PhoneAuthMode, phone?: string) => Promise<void>;
   cancelPhoneOTPFlow: () => void;
   completeProfile: (data: { firstName: string; lastName: string; email?: string }) => Promise<void>;
 
@@ -97,6 +99,14 @@ const getEmailDomain = (email: string | undefined | null) => {
   if (!email) return null;
   const [, domain] = email.split('@');
   return domain?.trim() || null;
+};
+
+const setSentryUser = (user: User | null) => {
+  if (user) {
+    Sentry.setUser({ id: user.id, email: user.email });
+  } else {
+    Sentry.setUser(null);
+  }
 };
 
 const hasCompletedProfileName = (user: User | null | undefined) =>
@@ -167,6 +177,18 @@ const upsertProfileNameFromAuthUser = async (
   if (upsertError) throw upsertError;
 };
 
+const clearQueryCache = async (context: string) => {
+  queryClient.clear();
+  try {
+    await queryPersister.removeClient();
+  } catch (_persisterError) {
+    // Best effort: auth flows should still complete if persistence cleanup fails.
+    if (__DEV__) {
+      console.error(`Failed to remove persisted query cache during ${context}`);
+    }
+  }
+};
+
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Initial state
   user: null,
@@ -194,6 +216,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (session) {
+        setSentryUser(session.user);
         telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
         telemetry.capture('auth_session_restored', {
           provider: session.user.app_metadata?.provider ?? null,
@@ -261,6 +284,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (error) throw error;
 
+      setSentryUser(data.user);
       telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       telemetry.capture('auth_sign_in_succeeded', { method: 'password' });
       telemetry.capture('user_logged_in', { method: 'password' });
@@ -298,6 +322,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
+          setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
         telemetry.capture('auth_sign_up_succeeded', { method: 'password', confirmed: true });
@@ -363,6 +388,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
+          setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
         telemetry.capture('auth_sign_up_succeeded', { method: 'otp', confirmed: true });
@@ -449,6 +475,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
           await upsertProfileNameFromAuthUser(data.user);
+          setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
           telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
           telemetry.capture('user_logged_in', { method: 'google' });
@@ -472,6 +499,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           if (error) throw error;
           await upsertProfileNameFromAuthUser(data.user);
           if (data.user) {
+            setSentryUser(data.user);
             telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
           }
           telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
@@ -542,7 +570,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         .join(' ')
         .trim();
       await upsertProfileNameFromAuthUser(data.user, appleNameFromCredential || null);
-
+      setSentryUser(data.user);
       telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       telemetry.capture('auth_sign_in_succeeded', { method: 'apple' });
       telemetry.capture('user_logged_in', { method: 'apple' });
@@ -592,6 +620,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         console.log('Sign out successful, clearing state');
       }
 
+      setSentryUser(null);
+
       // Explicitly clear state
       set({
         user: null,
@@ -607,6 +637,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
       });
       telemetry.reset();
+      await clearQueryCache('sign out success path');
 
       // Force clear any cached sessions from storage
       try {
@@ -618,6 +649,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (__DEV__) {
         console.error('Sign out error:', error);
       }
+
+      setSentryUser(null);
 
       // Even if sign out fails, clear the local state to allow user to try again
       set({
@@ -634,6 +667,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
       });
       telemetry.reset();
+      await clearQueryCache('sign out recovery path');
     }
   },
 
@@ -669,6 +703,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       // Sign out after request is logged
       await supabase.auth.signOut({ scope: 'global' });
 
+      setSentryUser(null);
+
       // Clear state
       set({
         user: null,
@@ -683,6 +719,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
       });
+      telemetry.reset();
+      await clearQueryCache('delete account');
 
       if (__DEV__) {
         console.log('Account deletion request logged successfully');
@@ -748,6 +786,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
+    const wasAuthenticated = get().isAuthenticated;
     set({ errorMessage: null, isLoading: true });
 
     const { pendingOTPType } = get();
@@ -763,6 +802,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (data.user) {
+        setSentryUser(data.user);
         telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       }
       telemetry.capture('auth_otp_verify_succeeded', { type: pendingOTPType });
@@ -783,7 +823,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       telemetry.capture('auth_otp_verify_failed', { type: pendingOTPType });
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
-        isAuthenticated: false,
+        isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
     }
@@ -881,6 +921,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
+    const wasAuthenticated = get().isAuthenticated;
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('auth_phone_otp_verify_started');
 
@@ -894,6 +935,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (data.user) {
+        setSentryUser(data.user);
         telemetry.identify(data.user.id, {
           email_domain: getEmailDomain(data.user.email),
         });
@@ -934,17 +976,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       telemetry.capture('auth_phone_otp_verify_failed');
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
-        isAuthenticated: false,
+        isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
     }
   },
 
   // Resend phone OTP
-  resendPhoneOTP: async (mode: PhoneAuthMode = 'signin') => {
+  resendPhoneOTP: async (mode: PhoneAuthMode = 'signin', phone?: string) => {
     const { pendingOTPPhone, signInWithPhone } = get();
-    if (!pendingOTPPhone) return;
-    await signInWithPhone(pendingOTPPhone, mode);
+    const resendPhone = phone?.trim() || pendingOTPPhone;
+    if (!resendPhone) {
+      set({ errorMessage: 'Phone number is missing. Please enter it again.' });
+      return;
+    }
+    await signInWithPhone(resendPhone, mode);
   },
 
   // Cancel phone OTP flow
@@ -1213,6 +1259,7 @@ export const initAuthListener = () => {
       const currentState = useAuthStore.getState();
       const looksLikeNewPhoneUser =
         Boolean(currentState.pendingOTPPhone) && !hasCompletedProfileName(session.user);
+      setSentryUser(session.user);
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
       useAuthStore.setState((state) => ({
@@ -1230,6 +1277,7 @@ export const initAuthListener = () => {
       if (__DEV__) {
         console.log('SIGNED_OUT event received, clearing auth state');
       }
+      setSentryUser(null);
       telemetry.capture('auth_state_changed', { event: 'SIGNED_OUT' });
       telemetry.reset();
       useAuthStore.setState({

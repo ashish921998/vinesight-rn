@@ -12,14 +12,19 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
-  Platform,
   Keyboard,
   KeyboardAvoidingView,
-  useWindowDimensions,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useCreateFarm, useFarm, useUpdateFarm } from '@/hooks';
+import {
+  useCreateFarm,
+  useFarm,
+  useUpdateFarm,
+  isIOS,
+  useResponsiveHeight,
+  useAndroidKeyboardLift,
+} from '@/hooks';
 import { CROP_VARIETIES, CROPS, type CropType } from '@/constants/crop-varieties';
 import type { Farm, FarmInsert, FarmUpdate } from '@/types';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +35,7 @@ import {
   InfoCard,
   Button,
   CropIcon,
+  ModalBackdrop,
 } from '@/components/ui';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -197,8 +203,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
-  const isIOS = Platform.OS === 'ios';
+  const { windowHeight } = useResponsiveHeight();
 
   const isEdit = mode === 'edit';
   const createFarm = useCreateFarm();
@@ -265,7 +270,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       keyboardShowListener.remove();
       keyboardHideListener.remove();
     };
-  }, [insets.bottom, isIOS]);
+  }, [insets.bottom]);
 
   const varieties = useMemo(
     () =>
@@ -386,12 +391,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         ? baseViewportHeight - keyboardHeight
         : baseViewportHeight;
     return Math.max(220, keyboardAdjustedHeight);
-  }, [windowHeight, insets.top, insets.bottom, keyboardHeight, isIOS]);
+  }, [windowHeight, insets.top, insets.bottom, keyboardHeight]);
 
-  const androidKeyboardLift = useMemo(() => {
-    if (isIOS) return 0;
-    return Math.max(0, keyboardHeight - insets.bottom);
-  }, [isIOS, keyboardHeight, insets.bottom]);
+  const androidKeyboardLift = useAndroidKeyboardLift(keyboardHeight, insets.bottom);
 
   const varietySheetHeight = useMemo(
     () => Math.min(Math.round(windowHeight * 0.7), pickerAvailableHeight),
@@ -1417,18 +1419,12 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           message={t('farmForm.infoCardMessage')}
         />
       </FullScreenForm>
-      {formState.showDatePicker && Platform.OS === 'ios' && (
-        <Pressable
-          onPress={() => setFormState((prev) => ({ ...prev, showDatePicker: false }))}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 50,
-          }}
+      {formState.showDatePicker && isIOS && (
+        <ModalBackdrop
+          visible
+          onDismiss={() => setFormState((prev) => ({ ...prev, showDatePicker: false }))}
+          opacity={0.5}
+          zIndex={50}
         >
           <View
             style={{
@@ -1495,9 +1491,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               </Text>
             </Pressable>
           </View>
-        </Pressable>
+        </ModalBackdrop>
       )}
-      {formState.showDatePicker && Platform.OS !== 'ios' && (
+      {formState.showDatePicker && !isIOS && (
         <DateTimePicker
           value={ensureValidDate(formState.plantingDate)}
           mode="date"
@@ -1517,18 +1513,12 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           }}
         />
       )}
-      {formState.showPruningDatePicker && Platform.OS === 'ios' && (
-        <Pressable
-          onPress={() => setFormState((prev) => ({ ...prev, showPruningDatePicker: false }))}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            zIndex: 50,
-          }}
+      {formState.showPruningDatePicker && isIOS && (
+        <ModalBackdrop
+          visible
+          onDismiss={() => setFormState((prev) => ({ ...prev, showPruningDatePicker: false }))}
+          opacity={0.5}
+          zIndex={50}
         >
           <View
             style={{
@@ -1587,9 +1577,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               </Text>
             </Pressable>
           </View>
-        </Pressable>
+        </ModalBackdrop>
       )}
-      {formState.showPruningDatePicker && Platform.OS !== 'ios' && (
+      {formState.showPruningDatePicker && !isIOS && (
         <DateTimePicker
           value={formState.dateOfPruning ?? new Date()}
           mode="date"
@@ -1605,23 +1595,21 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       )}
 
       {formState.showVarietyPicker && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            justifyContent: 'flex-end',
-          }}
+        <ModalBackdrop
+          visible
+          onDismiss={() =>
+            setFormState((prev) => ({ ...prev, showVarietyPicker: false, varietySearchQuery: '' }))
+          }
+          alignment="flex-end"
+          opacity={0.5}
         >
           <KeyboardAvoidingView
             behavior={isIOS ? 'padding' : undefined}
             keyboardVerticalOffset={0}
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
-            <View
+            <Pressable
+              onPress={() => {}}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -1766,22 +1754,17 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   </View>
                 )}
               </ScrollView>
-            </View>
+            </Pressable>
           </KeyboardAvoidingView>
-        </View>
+        </ModalBackdrop>
       )}
 
       {formState.showCropPicker && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            justifyContent: 'flex-end',
-          }}
+        <ModalBackdrop
+          visible
+          onDismiss={() => setFormState((prev) => ({ ...prev, showCropPicker: false }))}
+          alignment="flex-end"
+          opacity={0.5}
         >
           <KeyboardAvoidingView
             behavior={isIOS ? 'padding' : undefined}
@@ -1789,6 +1772,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
             <View
+              onStartShouldSetResponder={() => true}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -1997,27 +1981,23 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
-        </View>
+        </ModalBackdrop>
       )}
 
       {formState.showTexturePicker && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
-            justifyContent: 'flex-end',
-          }}
+        <ModalBackdrop
+          visible
+          onDismiss={() => setFormState((prev) => ({ ...prev, showTexturePicker: false }))}
+          alignment="flex-end"
+          opacity={0.5}
         >
           <KeyboardAvoidingView
             behavior={isIOS ? 'padding' : undefined}
             keyboardVerticalOffset={0}
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
-            <View
+            <Pressable
+              onPress={() => {}}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -2112,9 +2092,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   </Pressable>
                 ))}
               </ScrollView>
-            </View>
+            </Pressable>
           </KeyboardAvoidingView>
-        </View>
+        </ModalBackdrop>
       )}
 
       <LocationPicker

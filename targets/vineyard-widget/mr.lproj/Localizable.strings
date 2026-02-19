@@ -1,0 +1,6 @@
+"widget.data_outdated" = "डेटा कालबाह्य असू शकतो";
+"widget.updated_prefix %@" = "अपडेट: %@";
+"widget.unable_to_load" = "लोड करता आले नाही";
+"widget.open_app_to_sync" = "हवामान सिंक करण्यासाठी Vinesight उघडा";
+"widget.configuration_display_name" = "वाइनयार्ड हवामान";
+"widget.configuration_description" = "तुमच्या वाइनयार्डसाठी सध्याचे हवामान आणि अंदाज पहा.";

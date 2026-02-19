@@ -674,6 +674,101 @@ export const mr = {
     },
   },
 
+  widgets: {
+    common: {
+      loading: 'लोड होत आहे…',
+      error: 'डेटा लोड करण्यात अयशस्वी',
+      empty: 'कोणतेही डेटा उपलब्ध नाही',
+      retry: 'पुन्हा प्रयत्न करा',
+    },
+    quickStats: {
+      title: 'जलद आकडे',
+      loading: 'जलद आकडे लोड होत आहेत',
+      error: 'जलद आकड्यांमध्ये त्रुटी',
+      empty: 'जलद आकडे उपलब्ध नाहीत',
+      overview: 'जलद आकड्यांचा आढावा',
+      trendLabel: 'कल',
+      statAccessibility: '{{label}}: {{value}}, {{trendLabel}} {{trendDirection}} {{trendValue}}',
+      trend: {
+        up: 'वाढ',
+        down: 'घट',
+        neutral: 'बदल नाही',
+      },
+      stats: {
+        activeFarms: 'सक्रिय शेते',
+        workersToday: 'आजचे $t(glossary.worker)',
+        waterReserve: 'पाण्याचा साठा',
+        seasonExpenses: 'हंगामाचा $t(glossary.expense)',
+      },
+    },
+    weather: {
+      title: 'व्हाइनयार्ड $t(glossary.weather)',
+      conditions: {
+        sunny: 'सूर्यप्रकाश',
+        cloudy: 'ढगाळ',
+        rainy: 'पावसाळी',
+        partlyCloudy: 'आंशिक ढगाळ',
+      },
+      humidity: 'नमी',
+      wind: 'वारा',
+      forecast: '3 दिवसांचा अंदाज',
+      days: {
+        today: 'आज',
+        tomorrow: 'उद्या',
+        dayAfter: 'त्यानंतर',
+      },
+    },
+    vineyardHealth: {
+      title: 'व्हाइनयार्ड आरोग्य',
+      overallStatus: 'एकंदरीत स्थिती',
+      metrics: {
+        waterStatus: 'पाण्याची स्थिती',
+        diseaseRisk: 'रोगाचा धोका',
+        growthStage: 'वाढीचा टप्पा',
+        soilMoisture: 'मातीची नमी',
+      },
+      values: {
+        minimal: 'किमान',
+        veraison: 'Véraison',
+      },
+    },
+    taskSummary: {
+      title: 'आगामी कार्ये',
+      tasksCount: '{{count}} कार्ये',
+      overdueCount: '{{count}} विलंबित',
+      status: {
+        overdue: 'विलंबित',
+        dueToday: 'आज देय',
+        upcoming: 'आगामी',
+      },
+      labels: {
+        irrigationBlockA: '$t(glossary.irrigation) - ब्लॉक A',
+        sprayFungicide: 'स्प्रे - फंगिसाइड',
+        fertigationRound3: 'फर्टिगेशन फेज 3',
+        harvestSampling: 'हार्वेस्ट सॅम्पलिंग',
+        dueToday: 'आज देय',
+        tomorrow: 'उद्या',
+        in3Days: '3 दिवसांत',
+        overdue: 'विलंबित',
+      },
+      empty: 'कोणतेही आगामी कार्य नाहीत',
+    },
+    template: {
+      title: 'विजेट टेम्पलेट',
+      testWidget: {
+        label: 'टेस्ट विजेट',
+      },
+    },
+  },
+
+  developerTools: {
+    section: 'डेव्हलपर',
+    widgetShowcase: {
+      title: 'विजेट शोकेस',
+      description: 'iOS, Android आणि Web वर विजेट्स एका स्क्रीनवरून पहा.',
+    },
+  },
+
   calculator: {
     mad: {
       title: 'MAD कॅल्क्युलेटर',
@@ -863,6 +958,10 @@ export const mr = {
     mapsUnavailableTitle: 'नकाशा उपलब्ध नाही',
     mapsUnavailableBody:
       'या बिल्डमध्ये नकाशा उपलब्ध नाही. तुम्ही सध्याचे ठिकाण वापरू शकता किंवा समन्वय (coordinates) हाताने टाकू शकता.',
+    searchPlaceholder: 'पत्ता शोधा...',
+    unknownLocation: 'अज्ञात ठिकाण',
+    noResultsFound: 'कोणतेही परिणाम आढळले नाहीत',
+    unableToGetLocationDetails: 'ठिकाणाचे तपशील मिळवण्यात अक्षम',
   },
 
   waterLevelSheet: {
@@ -1211,6 +1310,9 @@ export const mr = {
       success: 'फोन नंबर यशस्वीरित्या लिंक झाला',
       alreadyLinked: 'फोन नंबर आधीपासून तुमच्या खात्याशी लिंक आहे',
       changePhone: 'फोन नंबर बदला',
+      editLimitReached_one: 'एका सत्यापन प्रवाहात तुम्ही फोन नंबर {{count}} वेळेपर्यंत बदलू शकता.',
+      editLimitReached_other:
+        'एका सत्यापन प्रवाहात तुम्ही फोन नंबर {{count}} वेळांपर्यंत बदलू शकता.',
       verified: 'पडताळलेला फोन नंबर',
       notLinked: 'कोणताही पडताळलेला फोन नंबर लिंक नाही',
       verificationRequired: 'फोन साइन-इन वापरण्यासाठी फोन नंबर पडताळा',
@@ -2076,11 +2178,16 @@ export const mr = {
       stockCoverage: 'अंदाजे कव्हरेज',
     },
     exportAs: 'या स्वरूपात निर्यात करा',
+    downloadReport: 'रिपोर्ट डाउनलोड करा',
     errors: {
       unableToExport: '$t(glossary.report) निर्यात करणे अशक्य. कृपया पुन्हा प्रयत्न करा.',
     },
     alerts: {
       exportFailedTitle: 'निर्यात अयशस्वी',
+      downloadCompleteTitle: 'डाउनलोड पूर्ण',
+      downloadCompleteBody: 'जतन केले:\n{{fileUri}}',
+      downloadReportTitle: 'रिपोर्ट डाउनलोड करा',
+      chooseFormatBody: 'स्वरूप निवडा',
     },
     noFarms: {
       title: '$t(glossary.farm) उपलब्ध नाहीत',

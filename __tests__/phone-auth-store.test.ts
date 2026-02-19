@@ -24,6 +24,15 @@ jest.mock('@/services/telemetry', () => ({
   },
 }));
 
+jest.mock('@/lib/query-cache', () => ({
+  queryClient: {
+    clear: jest.fn(),
+  },
+  queryPersister: {
+    removeClient: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
 const initialState = {
   user: null,
   session: null,
@@ -65,7 +74,7 @@ beforeEach(() => {
 // ============================================================
 
 describe('initialize', () => {
-  it('does not require profile completion on restored session', async () => {
+  it('restores session without forcing profile completion from stale metadata', async () => {
     const mockUser = {
       id: 'existing-user',
       email: 'existing@example.com',
@@ -278,9 +287,23 @@ describe('verifyPhoneOTP', () => {
 // ============================================================
 
 describe('resendPhoneOTP', () => {
-  it('does nothing when no pendingOTPPhone', async () => {
+  it('shows an actionable error when no pendingOTPPhone is available', async () => {
     await useAuthStore.getState().resendPhoneOTP();
+    expect(useAuthStore.getState().errorMessage).toBe(
+      'Phone number is missing. Please enter it again.',
+    );
     expect(supabase.auth.signInWithOtp).not.toHaveBeenCalled();
+  });
+
+  it('uses explicit phone when pendingOTPPhone is missing', async () => {
+    (supabase.auth.signInWithOtp as jest.Mock).mockResolvedValue({ error: null });
+
+    await useAuthStore.getState().resendPhoneOTP('signin', '+14155552671');
+
+    expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
+      phone: '+14155552671',
+      options: { shouldCreateUser: false },
+    });
   });
 
   it('calls signInWithPhone with the pending phone number', async () => {

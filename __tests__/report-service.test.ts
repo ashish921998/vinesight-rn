@@ -15,7 +15,11 @@ jest.mock(
   'expo-file-system/legacy',
   () => ({
     cacheDirectory: '/tmp/',
+    documentDirectory: '/tmp/',
     writeAsStringAsync: jest.fn(),
+    copyAsync: jest.fn(),
+    getInfoAsync: jest.fn().mockResolvedValue({ exists: true, isDirectory: true }),
+    makeDirectoryAsync: jest.fn(),
   }),
   { virtual: true },
 );

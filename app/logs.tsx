@@ -47,6 +47,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getExpenseIconName } from '@/utils/expense-icons';
 import { useM3, useThemeColors } from '@/styles/use-theme';
+import { getDaysAfterPruning } from '@/utils/date';
 
 interface CombinedLog {
   id: string;
@@ -55,6 +56,7 @@ interface CombinedLog {
   description: string;
   data: IrrigationRecord | SprayRecord | HarvestRecord | ExpenseRecord | FertigationRecord;
   searchableText?: string;
+  daysAfterPruning?: number | null;
 }
 
 export default function LogsScreen() {
@@ -188,6 +190,16 @@ export default function LogsScreen() {
     [t],
   );
 
+  const farmPruningDateByFarmId = useMemo<Record<number, string | null>>(
+    () =>
+      farms.reduce<Record<number, string | null>>((acc, farm) => {
+        if (farm.id == null) return acc;
+        acc[farm.id] = farm.date_of_pruning ?? null;
+        return acc;
+      }, {}),
+    [farms],
+  );
+
   const openAndroidDatePicker = (current: Date | undefined, onSelect: (date: Date) => void) => {
     DateTimePickerAndroid.open({
       value: current ?? new Date(),
@@ -211,6 +223,10 @@ export default function LogsScreen() {
         type: 'irrigation',
         date: r.date,
         description: t('logs.irrigationDurationHoursShort', { hours: displayDuration }),
+        daysAfterPruning: getDaysAfterPruning(
+          r.date,
+          r.date_of_pruning ?? farmPruningDateByFarmId[r.farm_id],
+        ),
         data: r,
       });
     });
@@ -221,6 +237,10 @@ export default function LogsScreen() {
         type: 'spray',
         date: r.date,
         description: r.chemical || t('logs.sprayApplication'),
+        daysAfterPruning: getDaysAfterPruning(
+          r.date,
+          r.date_of_pruning ?? farmPruningDateByFarmId[r.farm_id],
+        ),
         data: r,
       }),
     );
@@ -234,6 +254,10 @@ export default function LogsScreen() {
           quantityKg: (r.quantity ?? 0).toFixed(1),
           grade: r.grade || t('common.na'),
         }),
+        daysAfterPruning: getDaysAfterPruning(
+          r.date,
+          r.date_of_pruning ?? farmPruningDateByFarmId[r.farm_id],
+        ),
         data: r,
       }),
     );
@@ -247,6 +271,10 @@ export default function LogsScreen() {
           cost: formatCurrency(r.cost ?? 0, currency),
           type: r.type || t('common.general'),
         }),
+        daysAfterPruning: getDaysAfterPruning(
+          r.date,
+          r.date_of_pruning ?? farmPruningDateByFarmId[r.farm_id],
+        ),
         data: r,
       }),
     );
@@ -262,6 +290,10 @@ export default function LogsScreen() {
         date: r.date,
         description,
         searchableText,
+        daysAfterPruning: getDaysAfterPruning(
+          r.date,
+          r.date_of_pruning ?? farmPruningDateByFarmId[r.farm_id],
+        ),
         data: r,
       });
     });
@@ -276,6 +308,7 @@ export default function LogsScreen() {
     t,
     currency,
     getFertigationDescription,
+    farmPruningDateByFarmId,
   ]);
 
   const filteredLogs = useMemo(() => {
@@ -1018,19 +1051,52 @@ export default function LogsScreen() {
                               >
                                 {log.description}
                               </Text>
-                              <Text
+                              <View
                                 style={{
-                                  fontSize: fontSize.xs,
-                                  color: colors.surface[500],
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
                                   marginTop: spacing[1],
+                                  gap: spacing[2],
                                 }}
                               >
-                                {formatDate(parsedDate, {
-                                  weekday: 'short',
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
-                              </Text>
+                                <Text
+                                  style={{
+                                    fontSize: fontSize.xs,
+                                    color: colors.surface[500],
+                                  }}
+                                >
+                                  {formatDate(parsedDate, {
+                                    weekday: 'short',
+                                    month: 'short',
+                                    day: 'numeric',
+                                  })}
+                                </Text>
+                                {log.daysAfterPruning != null && (
+                                  <View
+                                    style={{
+                                      borderRadius: borderRadius.full,
+                                      paddingHorizontal: spacing[2],
+                                      paddingVertical: 2,
+                                      backgroundColor: colorWithOpacity(
+                                        m3.colorScheme.primary,
+                                        0.12,
+                                      ),
+                                    }}
+                                  >
+                                    <Text
+                                      style={{
+                                        fontSize: fontSize.xs,
+                                        fontWeight: fontWeight.semibold,
+                                        color: m3.colorScheme.primary,
+                                      }}
+                                    >
+                                      {t('farmDetails.pruning.daysShort', {
+                                        count: log.daysAfterPruning,
+                                      })}
+                                    </Text>
+                                  </View>
+                                )}
+                              </View>
                             </View>
                             <View style={{ flexDirection: 'row', gap: spacing[2] }}>
                               <Pressable

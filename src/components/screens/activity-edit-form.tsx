@@ -14,10 +14,8 @@ import {
   ActivityIndicator,
   type TextInputProps,
   Keyboard,
-  useWindowDimensions,
   UIManager,
   findNodeHandle,
-  Platform,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { Button, FormModal, SectionHeader } from '@/components/ui';
@@ -57,6 +55,8 @@ import {
   useUpdateHarvestRecord,
   useUpdateExpenseRecord,
   useUpdateFertigationRecord,
+  isIOS,
+  useResponsiveHeight,
 } from '@/hooks';
 import { toSupabaseDateString, fromSupabaseDateString } from '@/types';
 import type {
@@ -95,7 +95,7 @@ export function ActivityEditForm({
   const { t } = useTranslation();
   const m3 = useM3();
   const isVisible = visible ?? true;
-  const { height: windowHeight } = useWindowDimensions();
+  const { windowHeight } = useResponsiveHeight();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -633,7 +633,7 @@ export function ActivityEditForm({
 
       {renderForm()}
 
-      {showDatePicker && Platform.OS === 'ios' && (
+      {showDatePicker && isIOS && (
         <View
           style={{
             position: 'absolute',
@@ -701,7 +701,7 @@ export function ActivityEditForm({
         </View>
       )}
 
-      {showDatePicker && Platform.OS !== 'ios' && (
+      {showDatePicker && !isIOS && (
         <DateTimePicker
           value={selectedDate}
           mode="date"

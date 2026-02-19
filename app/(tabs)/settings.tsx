@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   View,
@@ -12,15 +12,16 @@ import {
   ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import * as Application from 'expo-application';
+import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
-import { useProfile, useUpdateProfile, useCurrency } from '@/hooks';
+import { useProfile, useUpdateProfile, useCurrency, isIOS } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import {
@@ -44,6 +45,11 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getDefaultCurrency } from '@/i18n/currency';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
+import {
+  buildE164PhoneNumber as buildNormalizedE164PhoneNumber,
+  sanitizePhoneDigits,
+  isValidE164PhoneNumber,
+} from '@/utils/phone';
 
 interface Country {
   name: string;
@@ -75,18 +81,30 @@ const COUNTRIES: Country[] = [
 ];
 
 const DEFAULT_COUNTRY = COUNTRIES[0];
+const MAX_PHONE_NUMBER_EDITS_PER_FLOW = 2;
 
-type LinkPhoneParams = {
-  linkPhone?: string;
-};
+interface LinkPhoneParams {
+  linkPhone?: string | string[];
+}
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { linkPhone } = useLocalSearchParams<LinkPhoneParams>();
+  const { linkPhone } = useLocalSearchParams() as LinkPhoneParams;
+  const linkPhoneValue = Array.isArray(linkPhone) ? linkPhone[0] : linkPhone;
   const colors = useThemeColors();
   const m3 = useM3();
   const styles = useMemo(() => createStyles(colors, m3), [colors, m3]);
   const { t } = useTranslation();
+  const appVersion =
+    Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? 'unknown';
+  const appBuild =
+    Application.nativeBuildVersion ??
+    String(
+      Constants.expoConfig?.ios?.buildNumber ?? Constants.expoConfig?.android?.versionCode ?? '',
+    );
+  const appVersionLabel = appBuild
+    ? `Vinesight v${appVersion} (${appBuild})`
+    : `Vinesight v${appVersion}`;
 
   const {
     user,
@@ -145,6 +163,9 @@ export default function SettingsScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [linkPhoneInput, setLinkPhoneInput] = useState('');
   const [linkPhoneCode, setLinkPhoneCode] = useState('');
+  const [isPhoneLinkCodeStep, setIsPhoneLinkCodeStep] = useState(false);
+  const [phoneNumberEditCount, setPhoneNumberEditCount] = useState(0);
+  const [linkPhoneLocalError, setLinkPhoneLocalError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
@@ -170,6 +191,7 @@ export default function SettingsScreen() {
   const linkedAuthPhone = user?.phone || null;
   const hasSavedPhoneToVerify = Boolean(userPhone) && !linkedAuthPhone;
   const isLinkPhoneModalVisible = showLinkPhoneModal || phoneLinkingPending;
+  const isShowingPhoneCodeStep = isPhoneLinkCodeStep || phoneLinkingPending;
   const phoneActionTitle = linkedAuthPhone
     ? t('settings.linkPhone.changePhone')
     : hasSavedPhoneToVerify
@@ -187,66 +209,70 @@ export default function SettingsScreen() {
     );
   }, [countrySearch]);
 
-  const setPhoneFormFromValue = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      setSelectedCountry(DEFAULT_COUNTRY);
-      setLinkPhoneInput('');
-      return;
-    }
+  const sanitizeLocalPhoneInput = useCallback((value: string) => sanitizePhoneDigits(value), []);
 
-    if (trimmed.startsWith('+')) {
-      const matched = [...COUNTRIES]
-        .sort((a, b) => b.dialCode.length - a.dialCode.length)
-        .find((country) => trimmed.startsWith(country.dialCode));
-
-      if (matched) {
-        setSelectedCountry(matched);
-        setLinkPhoneInput(trimmed.slice(matched.dialCode.length));
+  const setPhoneFormFromValue = useCallback(
+    (value: string) => {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        setSelectedCountry(DEFAULT_COUNTRY);
+        setLinkPhoneInput('');
         return;
       }
-    }
 
-    setLinkPhoneInput(trimmed);
-  };
+      if (trimmed.startsWith('+')) {
+        const matched = [...COUNTRIES]
+          .sort((a, b) => b.dialCode.length - a.dialCode.length)
+          .find((country) => trimmed.startsWith(country.dialCode));
 
-  const buildE164PhoneNumber = () => {
+        if (matched) {
+          setSelectedCountry(matched);
+          setLinkPhoneInput(sanitizeLocalPhoneInput(trimmed.slice(matched.dialCode.length)));
+          return;
+        }
+
+        const sanitizedDigits = sanitizeLocalPhoneInput(trimmed);
+        setLinkPhoneInput(sanitizedDigits ? `+${sanitizedDigits}` : '');
+        return;
+      }
+
+      setLinkPhoneInput(sanitizeLocalPhoneInput(trimmed));
+    },
+    [sanitizeLocalPhoneInput],
+  );
+
+  const normalizedE164PhoneNumber = useMemo(() => {
     const raw = linkPhoneInput.trim();
-    if (!raw) return '';
-    if (raw.startsWith('+')) return raw;
-    const digitsOnly = raw.replace(/[^\d]/g, '');
-    const normalizedLocalNumber = digitsOnly.replace(/^0+/, '');
-    if (!normalizedLocalNumber) return '';
-    return `${selectedCountry.dialCode}${normalizedLocalNumber}`;
-  };
+    if (raw.startsWith('+')) {
+      return isValidE164PhoneNumber(raw) ? raw : '';
+    }
+    return buildNormalizedE164PhoneNumber(selectedCountry.dialCode, linkPhoneInput);
+  }, [linkPhoneInput, selectedCountry.dialCode]);
+  const linkPhoneDisplayNumber =
+    (phoneLinkingNumber ?? normalizedE164PhoneNumber) || linkPhoneInput;
+  const isLocalPhoneValid = Boolean(linkPhoneInput) && Boolean(normalizedE164PhoneNumber);
 
   useEffect(() => {
-    if (linkPhone !== '1') return;
+    if (!linkPhoneLocalError) return;
+    setLinkPhoneLocalError(null);
+  }, [linkPhoneInput, linkPhoneLocalError]);
+
+  useEffect(() => {
+    if (linkPhoneValue !== '1') return;
 
     clearError();
+    setLinkPhoneLocalError(null);
     setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    setPhoneNumberEditCount(0);
     const trimmedValue = (linkedAuthPhone ?? userPhone ?? '').trim();
-    if (!trimmedValue) {
-      setSelectedCountry(DEFAULT_COUNTRY);
-      setLinkPhoneInput('');
-    } else if (trimmedValue.startsWith('+')) {
-      const matched = [...COUNTRIES]
-        .sort((a, b) => b.dialCode.length - a.dialCode.length)
-        .find((country) => trimmedValue.startsWith(country.dialCode));
-      if (matched) {
-        setSelectedCountry(matched);
-        setLinkPhoneInput(trimmedValue.slice(matched.dialCode.length));
-      } else {
-        setLinkPhoneInput(trimmedValue);
-      }
-    } else {
-      setLinkPhoneInput(trimmedValue);
-    }
+    setPhoneFormFromValue(trimmedValue);
     setShowLinkPhoneModal(true);
-  }, [linkPhone, clearError, linkedAuthPhone, userPhone]);
+  }, [linkPhoneValue, clearError, linkedAuthPhone, userPhone, setPhoneFormFromValue]);
 
   useEffect(() => {
     if (!phoneLinkingPending) return;
+    setIsPhoneLinkCodeStep(true);
     setShowLinkPhoneModal(true);
   }, [phoneLinkingPending]);
 
@@ -334,7 +360,10 @@ export default function SettingsScreen() {
   const handleOpenLinkPhone = () => {
     router.setParams({ linkPhone: '1' });
     clearError();
+    setLinkPhoneLocalError(null);
     setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    setPhoneNumberEditCount(0);
     setCountrySearch('');
     setPhoneFormFromValue(linkedAuthPhone ?? userPhone ?? '');
     setShowLinkPhoneModal(true);
@@ -342,33 +371,54 @@ export default function SettingsScreen() {
 
   const handleCloseLinkPhone = () => {
     clearError();
+    setLinkPhoneLocalError(null);
     cancelPhoneLinking();
     setShowCountryPicker(false);
     setCountrySearch('');
     setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    setPhoneNumberEditCount(0);
     setShowLinkPhoneModal(false);
     router.setParams({ linkPhone: undefined });
   };
 
   const handleLinkPhoneSuccessClose = () => {
     clearError();
+    setLinkPhoneLocalError(null);
     setShowCountryPicker(false);
     setCountrySearch('');
     setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    setPhoneNumberEditCount(0);
     setShowLinkPhoneModal(false);
     router.setParams({ linkPhone: undefined });
   };
 
   const handleSendPhoneLinkCode = async () => {
-    const phone = buildE164PhoneNumber();
-    if (!phone) return;
+    const phone = normalizedE164PhoneNumber;
+    if (!phone) {
+      setLinkPhoneLocalError(
+        t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid phone number' }),
+      );
+      return;
+    }
     clearError();
-    await linkPhoneNumber(phone);
+    setLinkPhoneLocalError(null);
+    setIsPhoneLinkCodeStep(true);
+    try {
+      await linkPhoneNumber(phone);
+      const { errorMessage, phoneLinkingPending: stillPending } = useAuthStore.getState();
+      if (errorMessage || !stillPending) {
+        setIsPhoneLinkCodeStep(false);
+      }
+    } catch {
+      setIsPhoneLinkCodeStep(false);
+    }
   };
 
   const handleVerifyPhoneLinkCode = async () => {
     const code = linkPhoneCode.trim();
-    const formattedPhone = buildE164PhoneNumber();
+    const formattedPhone = normalizedE164PhoneNumber;
     const pendingPhone = phoneLinkingNumber ?? formattedPhone;
     if (!pendingPhone || code.length !== 6) return;
 
@@ -386,10 +436,29 @@ export default function SettingsScreen() {
   };
 
   const handleResendPhoneLinkCode = async () => {
-    const pendingPhone = phoneLinkingNumber ?? buildE164PhoneNumber();
+    const pendingPhone = phoneLinkingNumber ?? normalizedE164PhoneNumber;
     if (!pendingPhone) return;
     clearError();
+    setLinkPhoneLocalError(null);
     await linkPhoneNumber(pendingPhone);
+  };
+
+  const handleEditPhoneNumber = () => {
+    if (phoneNumberEditCount >= MAX_PHONE_NUMBER_EDITS_PER_FLOW) {
+      setLinkPhoneLocalError(
+        t('settings.linkPhone.editLimitReached', {
+          count: MAX_PHONE_NUMBER_EDITS_PER_FLOW,
+        }),
+      );
+      return;
+    }
+
+    clearError();
+    setLinkPhoneLocalError(null);
+    setPhoneNumberEditCount((prev) => prev + 1);
+    setLinkPhoneCode('');
+    setIsPhoneLinkCodeStep(false);
+    cancelPhoneLinking();
   };
 
   const handleSelectCountry = (country: Country) => {
@@ -505,7 +574,7 @@ export default function SettingsScreen() {
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 32 }}
       contentInsetAdjustmentBehavior="automatic"
-      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      automaticallyAdjustKeyboardInsets={isIOS}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
     >
@@ -728,7 +797,7 @@ export default function SettingsScreen() {
           textBreakStrategy="highQuality"
           lineBreakStrategyIOS="standard"
         >
-          Vinesight v1.0.0
+          {appVersionLabel}
         </Text>
         <Text
           style={styles.appVersionSubtitle}
@@ -746,10 +815,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowEditProfile(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
+        <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -767,9 +833,9 @@ export default function SettingsScreen() {
 
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -895,186 +961,203 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={handleCloseLinkPhone}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
-          <View style={styles.modalHeader}>
-            <View style={styles.modalHeaderInner}>
-              <Text
-                style={styles.modalTitle}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                {phoneLinkingPending
-                  ? t('settings.linkPhone.verifyTitle')
-                  : hasSavedPhoneToVerify
-                    ? t('settings.linkPhone.verifyTitle')
-                    : t('settings.linkPhone.title')}
-              </Text>
-              <Pressable onPress={handleCloseLinkPhone}>
-                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
-              </Pressable>
-            </View>
-          </View>
-
-          <ScrollView
-            style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
-            contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-          >
-            <View style={styles.formCard}>
-              <View style={styles.mb4}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+          <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderInner}>
                 <Text
-                  style={styles.inputLabel}
+                  style={styles.modalTitle}
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
-                  {phoneLinkingPending
-                    ? t('settings.linkPhone.verifySubtitle')
-                    : t('settings.linkPhone.subtitle')}
+                  {isShowingPhoneCodeStep
+                    ? t('settings.linkPhone.verifyTitle')
+                    : hasSavedPhoneToVerify
+                      ? t('settings.linkPhone.verifyTitle')
+                      : t('settings.linkPhone.title')}
                 </Text>
-                {phoneLinkingPending ? (
-                  <Text
-                    style={styles.inputHint}
-                    textBreakStrategy="highQuality"
-                    lineBreakStrategyIOS="standard"
-                  >
-                    {phoneLinkingNumber ?? linkPhoneInput}
-                  </Text>
-                ) : null}
+                <Pressable onPress={handleCloseLinkPhone}>
+                  <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                </Pressable>
               </View>
+            </View>
 
-              {!phoneLinkingPending ? (
+            <ScrollView
+              style={styles.flex1}
+              contentContainerStyle={{ padding: spacing[4] }}
+              contentInsetAdjustmentBehavior="automatic"
+              automaticallyAdjustKeyboardInsets={isIOS}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
+              <View style={styles.formCard}>
                 <View style={styles.mb4}>
                   <Text
                     style={styles.inputLabel}
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
-                    {t('settings.linkPhone.phoneLabel')}
+                    {isShowingPhoneCodeStep
+                      ? t('settings.linkPhone.verifySubtitle')
+                      : t('settings.linkPhone.subtitle')}
                   </Text>
-                  <View style={styles.linkPhoneInputRow}>
-                    <Pressable
-                      onPress={() => setShowCountryPicker(true)}
-                      style={styles.linkPhoneCountryButton}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('authPhone.selectCountryA11y')}
-                    >
-                      <Text
-                        style={styles.linkPhoneCountryCode}
-                        textBreakStrategy="highQuality"
-                        lineBreakStrategyIOS="standard"
-                      >
-                        {selectedCountry.dialCode}
-                      </Text>
-                      <UISymbol name="chevron.down" size={14} color={colors.surface[500]} />
-                    </Pressable>
-                    <TextInput
-                      value={linkPhoneInput}
-                      onChangeText={setLinkPhoneInput}
-                      placeholder={t('settings.linkPhone.phonePlaceholder')}
-                      placeholderTextColor={colors.gray[400]}
-                      keyboardType="phone-pad"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      style={styles.linkPhoneInputField}
-                    />
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.mb4}>
-                  <Text
-                    style={styles.inputLabel}
-                    textBreakStrategy="highQuality"
-                    lineBreakStrategyIOS="standard"
-                  >
-                    {t('settings.linkPhone.codeLabel')}
-                  </Text>
-                  <TextInput
-                    value={linkPhoneCode}
-                    onChangeText={setLinkPhoneCode}
-                    placeholder={t('settings.linkPhone.codePlaceholder')}
-                    placeholderTextColor={colors.gray[400]}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    style={styles.input}
-                  />
-                  <Pressable onPress={handleResendPhoneLinkCode} disabled={authLoading}>
+                  {isShowingPhoneCodeStep ? (
                     <Text
                       style={styles.inputHint}
                       textBreakStrategy="highQuality"
                       lineBreakStrategyIOS="standard"
                     >
-                      {t('settings.linkPhone.resend')}
+                      {linkPhoneDisplayNumber}
                     </Text>
-                  </Pressable>
+                  ) : null}
                 </View>
-              )}
 
-              {authErrorMessage ? (
-                <View style={[styles.alertBox, styles.dangerAlert, { marginBottom: 0 }]}>
+                {!isShowingPhoneCodeStep ? (
+                  <View style={styles.mb4}>
+                    <Text
+                      style={styles.inputLabel}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {t('settings.linkPhone.phoneLabel')}
+                    </Text>
+                    <View style={styles.linkPhoneInputRow}>
+                      <Pressable
+                        onPress={() => setShowCountryPicker(true)}
+                        style={styles.linkPhoneCountryButton}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('authPhone.selectCountryA11y')}
+                      >
+                        <Text
+                          style={styles.linkPhoneCountryCode}
+                          textBreakStrategy="highQuality"
+                          lineBreakStrategyIOS="standard"
+                        >
+                          {selectedCountry.dialCode}
+                        </Text>
+                        <UISymbol name="chevron.down" size={14} color={colors.surface[500]} />
+                      </Pressable>
+                      <TextInput
+                        value={linkPhoneInput}
+                        onChangeText={(value) => {
+                          if (value.trim().startsWith('+')) {
+                            setPhoneFormFromValue(value);
+                            return;
+                          }
+                          setLinkPhoneInput(sanitizeLocalPhoneInput(value));
+                        }}
+                        placeholder={t('settings.linkPhone.phonePlaceholder')}
+                        placeholderTextColor={colors.gray[400]}
+                        keyboardType="phone-pad"
+                        maxLength={15}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        style={styles.linkPhoneInputField}
+                      />
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.mb4}>
+                    <Text
+                      style={styles.inputLabel}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {t('settings.linkPhone.codeLabel')}
+                    </Text>
+                    <TextInput
+                      value={linkPhoneCode}
+                      onChangeText={setLinkPhoneCode}
+                      placeholder={t('settings.linkPhone.codePlaceholder')}
+                      placeholderTextColor={colors.gray[400]}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      style={styles.input}
+                    />
+                    <Pressable onPress={handleResendPhoneLinkCode} disabled={authLoading}>
+                      <Text
+                        style={styles.inputHint}
+                        textBreakStrategy="highQuality"
+                        lineBreakStrategyIOS="standard"
+                      >
+                        {t('settings.linkPhone.resend')}
+                      </Text>
+                    </Pressable>
+                    <Pressable onPress={handleEditPhoneNumber} disabled={authLoading}>
+                      <Text
+                        style={styles.inputHint}
+                        textBreakStrategy="highQuality"
+                        lineBreakStrategyIOS="standard"
+                      >
+                        {t('settings.linkPhone.changePhone')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+
+                {linkPhoneLocalError || authErrorMessage ? (
+                  <View style={[styles.alertBox, styles.dangerAlert, { marginBottom: 0 }]}>
+                    <Text
+                      style={styles.alertText}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {linkPhoneLocalError ?? authErrorMessage}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <Pressable
+                onPress={
+                  isShowingPhoneCodeStep ? handleVerifyPhoneLinkCode : handleSendPhoneLinkCode
+                }
+                disabled={
+                  authLoading ||
+                  (!isShowingPhoneCodeStep && !isLocalPhoneValid) ||
+                  (isShowingPhoneCodeStep && linkPhoneCode.trim().length !== 6)
+                }
+                style={[
+                  styles.saveButton,
+                  { backgroundColor: colors.primary[600], marginBottom: spacing[3] },
+                ]}
+              >
+                {authLoading ? (
+                  <ActivityIndicator color={m3.colorScheme.onPrimary} />
+                ) : (
                   <Text
-                    style={styles.alertText}
+                    style={styles.saveButtonText}
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
-                    {authErrorMessage}
+                    {isShowingPhoneCodeStep
+                      ? t('settings.linkPhone.verify')
+                      : t('settings.linkPhone.sendCode')}
                   </Text>
-                </View>
-              ) : null}
-            </View>
-          </ScrollView>
+                )}
+              </Pressable>
 
-          <View style={styles.modalFooter}>
-            <Pressable
-              onPress={phoneLinkingPending ? handleVerifyPhoneLinkCode : handleSendPhoneLinkCode}
-              disabled={
-                authLoading ||
-                (!phoneLinkingPending && !linkPhoneInput.trim()) ||
-                (phoneLinkingPending && linkPhoneCode.trim().length !== 6)
-              }
-              style={[
-                styles.saveButton,
-                { backgroundColor: colors.primary[600], marginBottom: spacing[3] },
-              ]}
-            >
-              {authLoading ? (
-                <ActivityIndicator color={m3.colorScheme.onPrimary} />
-              ) : (
+              <Pressable
+                onPress={handleCloseLinkPhone}
+                disabled={authLoading}
+                style={styles.saveButton}
+              >
                 <Text
-                  style={styles.saveButtonText}
+                  style={[
+                    styles.settingsTitle,
+                    { flex: 0, marginLeft: 0, color: colors.surface[700] },
+                  ]}
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
-                  {phoneLinkingPending
-                    ? t('settings.linkPhone.verify')
-                    : t('settings.linkPhone.sendCode')}
+                  {t('settings.linkPhone.cancel')}
                 </Text>
-              )}
-            </Pressable>
-
-            <Pressable
-              onPress={handleCloseLinkPhone}
-              disabled={authLoading}
-              style={styles.saveButton}
-            >
-              <Text
-                style={[
-                  styles.settingsTitle,
-                  { flex: 0, marginLeft: 0, color: colors.surface[700] },
-                ]}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                {t('settings.linkPhone.cancel')}
-              </Text>
-            </Pressable>
-          </View>
-        </KeyboardAvoidingView>
+              </Pressable>
+            </View>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </Modal>
 
       <Modal
@@ -1166,9 +1249,9 @@ export default function SettingsScreen() {
           </View>
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -1234,9 +1317,9 @@ export default function SettingsScreen() {
           </View>
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -1301,9 +1384,9 @@ export default function SettingsScreen() {
           </View>
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -1362,9 +1445,9 @@ export default function SettingsScreen() {
           </View>
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -1422,10 +1505,7 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowDeleteAccount(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
+        <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderInner}>
               <Text
@@ -1443,9 +1523,9 @@ export default function SettingsScreen() {
 
           <ScrollView
             style={styles.flex1}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: spacing[4] }}
             contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets={isIOS}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >

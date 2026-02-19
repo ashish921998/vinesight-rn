@@ -1,6 +1,7 @@
 export { Button } from './button';
 export { CropIcon } from './crop-icon';
 export { Input } from './input';
+export { ModalBackdrop } from './modal-backdrop';
 export { OTPInput } from './otp-input';
 export { UnitPickerModal } from './unit-picker-modal';
 export {

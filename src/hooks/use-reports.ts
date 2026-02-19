@@ -25,6 +25,8 @@ import {
 } from '../types/report';
 import { useCurrency } from './use-currency';
 import type { AreaUnitPreference } from '@/utils/preferences';
+import { formatLocalDate } from '@/utils/date';
+import { formatDate } from '@/i18n/format';
 import type {
   ExpenseRecord,
   FarmSeason,
@@ -139,6 +141,17 @@ export function useReportData(filters: ReportFilters) {
     return next;
   }, [farmSeasons]);
 
+  const seasonWindowById = useMemo<Record<number, string>>(() => {
+    const today = formatLocalDate(new Date());
+    const next: Record<number, string> = {};
+    (farmSeasons ?? []).forEach((season) => {
+      if (season.id == null) return;
+      next[season.id] =
+        `${formatDate(season.start_date)} to ${formatDate(season.end_date ?? today)}`;
+    });
+    return next;
+  }, [farmSeasons]);
+
   const seasonContext = useMemo<ReportSeasonContext>(() => {
     if (typeof seasonId === 'number') {
       return {
@@ -160,25 +173,45 @@ export function useReportData(filters: ReportFilters) {
     };
   }, [includeUnassigned, seasonId, selectedSeason]);
 
+  // When seasonId is set, the DB hooks already filter by season_id — no client-side re-filter needed.
+  // When seasonId is undefined and includeUnassigned is false, we still need to
+  // exclude records with no season assignment.
+  const needsClientFilter = typeof seasonId !== 'number' && !includeUnassigned;
+
   const irrigations = useMemo<IrrigationRecord[]>(
-    () => filterRecordsForSeason(irrigationsRaw ?? [], seasonId, includeUnassigned),
-    [includeUnassigned, irrigationsRaw, seasonId],
+    () =>
+      needsClientFilter
+        ? filterRecordsForSeason(irrigationsRaw ?? [], seasonId, includeUnassigned)
+        : (irrigationsRaw ?? []),
+    [includeUnassigned, irrigationsRaw, needsClientFilter, seasonId],
   );
   const sprays = useMemo<SprayRecord[]>(
-    () => filterRecordsForSeason(spraysRaw ?? [], seasonId, includeUnassigned),
-    [includeUnassigned, seasonId, spraysRaw],
+    () =>
+      needsClientFilter
+        ? filterRecordsForSeason(spraysRaw ?? [], seasonId, includeUnassigned)
+        : (spraysRaw ?? []),
+    [includeUnassigned, needsClientFilter, seasonId, spraysRaw],
   );
   const fertigations = useMemo<FertigationRecord[]>(
-    () => filterRecordsForSeason(fertigationsRaw ?? [], seasonId, includeUnassigned),
-    [fertigationsRaw, includeUnassigned, seasonId],
+    () =>
+      needsClientFilter
+        ? filterRecordsForSeason(fertigationsRaw ?? [], seasonId, includeUnassigned)
+        : (fertigationsRaw ?? []),
+    [fertigationsRaw, includeUnassigned, needsClientFilter, seasonId],
   );
   const harvests = useMemo<HarvestRecord[]>(
-    () => filterRecordsForSeason(harvestsRaw ?? [], seasonId, includeUnassigned),
-    [harvestsRaw, includeUnassigned, seasonId],
+    () =>
+      needsClientFilter
+        ? filterRecordsForSeason(harvestsRaw ?? [], seasonId, includeUnassigned)
+        : (harvestsRaw ?? []),
+    [harvestsRaw, includeUnassigned, needsClientFilter, seasonId],
   );
   const expenses = useMemo<ExpenseRecord[]>(
-    () => filterRecordsForSeason(expensesRaw ?? [], seasonId, includeUnassigned),
-    [expensesRaw, includeUnassigned, seasonId],
+    () =>
+      needsClientFilter
+        ? filterRecordsForSeason(expensesRaw ?? [], seasonId, includeUnassigned)
+        : (expensesRaw ?? []),
+    [expensesRaw, includeUnassigned, needsClientFilter, seasonId],
   );
 
   const preview = useMemo<ReportPreview | null>(() => {
@@ -197,6 +230,7 @@ export function useReportData(filters: ReportFilters) {
       {
         seasonContext,
         seasonNameById,
+        seasonWindowById,
       },
     );
   }, [
@@ -208,6 +242,7 @@ export function useReportData(filters: ReportFilters) {
     irrigations,
     seasonContext,
     seasonNameById,
+    seasonWindowById,
     sprays,
     warehouseItems,
   ]);
@@ -242,7 +277,7 @@ export function useReportData(filters: ReportFilters) {
  */
 export function useReportExport() {
   const preferredCurrency = useCurrency();
-  const [isExporting, setIsExporting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
   const exportReport = useCallback(
@@ -252,7 +287,7 @@ export function useReportExport() {
       reportType: ReportType,
       areaUnit: AreaUnitPreference = 'acres',
     ) => {
-      setIsExporting(true);
+      setIsProcessing(true);
       setExportError(null);
 
       try {
@@ -272,16 +307,49 @@ export function useReportExport() {
         setExportError(error instanceof Error ? error.message : 'Export failed');
         throw error;
       } finally {
-        setIsExporting(false);
+        setIsProcessing(false);
+      }
+    },
+    [preferredCurrency],
+  );
+
+  const downloadReport = useCallback(
+    async (
+      preview: ReportPreview,
+      format: ReportFormat,
+      reportType: ReportType,
+      areaUnit: AreaUnitPreference = 'acres',
+    ): Promise<string> => {
+      setIsProcessing(true);
+      setExportError(null);
+
+      try {
+        if (format === 'csv') {
+          return await ReportService.downloadCSV(preview.data, reportType, areaUnit);
+        }
+        return await ReportService.downloadPDF(
+          preview.data,
+          preview.summary,
+          reportType,
+          preferredCurrency,
+          areaUnit,
+        );
+      } catch (error) {
+        console.error('Download error:', error);
+        setExportError(error instanceof Error ? error.message : 'Download failed');
+        throw error;
+      } finally {
+        setIsProcessing(false);
       }
     },
     [preferredCurrency],
   );
 
   return {
-    isExporting,
+    isExporting: isProcessing,
     exportError,
     exportReport,
+    downloadReport,
     clearError: () => setExportError(null),
   };
 }

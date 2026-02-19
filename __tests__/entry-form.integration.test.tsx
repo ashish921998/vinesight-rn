@@ -53,6 +53,7 @@ jest.mock('@/hooks', () => ({
   useUpdateFarmWaterLevel: () => ({ mutateAsync: mockUpdateWaterLevelMutate }),
   useFarms: () => ({ data: [] }),
   useProfile: () => ({ data: { area_unit_preference: 'acres' } }),
+  useResponsiveHeight: () => ({ windowHeight: 800 }),
   useWarehouseItems: () => ({ data: [] }),
   useRecentSprayChemicals: () => ({ data: [] }),
   useRecentFertigationItems: () => ({ data: [] }),

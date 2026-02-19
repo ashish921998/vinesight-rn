@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -33,6 +33,11 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const redirectPath = useMemo(() => {
+    if (typeof redirect === 'string' && redirect.startsWith('/')) return redirect;
+    return '/';
+  }, [redirect]);
 
   const {
     isLoading,
@@ -51,17 +56,17 @@ export default function LoginScreen() {
     if (pendingOTPEmail) {
       router.push({
         pathname: '/(auth)/otp-verification',
-        params: { email: pendingOTPEmail },
+        params: { email: pendingOTPEmail, redirect: redirectPath },
       });
     }
-  }, [pendingOTPEmail]);
+  }, [pendingOTPEmail, redirectPath]);
 
   // Navigate to main app when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/');
+      router.replace(redirectPath as Href);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, redirectPath]);
 
   const handleAuth = async () => {
     if (!email || !password) return;
@@ -307,7 +312,7 @@ export default function LoginScreen() {
               onPress={() =>
                 router.push({
                   pathname: '/(auth)/phone-login',
-                  params: { mode: isSignUp ? 'signup' : 'signin' },
+                  params: { mode: isSignUp ? 'signup' : 'signin', redirect: redirectPath },
                 })
               }
               disabled={isLoading}
