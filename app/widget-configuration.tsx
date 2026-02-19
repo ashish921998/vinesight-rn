@@ -15,32 +15,13 @@ import { useWidgetConfig } from '@/hooks/use-widget-config';
 import { WidgetSyncService } from '@/services/widget-sync-service';
 import { WeatherService } from '@/services/weather-service';
 import type { WeatherWidgetData } from '@/types/widget';
+import type { WeatherData } from '@/types/weather';
 
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 import { telemetry } from '@/services/telemetry';
 
-interface ServiceWeatherData {
-  current: {
-    temperature: number;
-    condition: string;
-    humidity: number;
-    windSpeed: number;
-    icon?: string;
-    conditionCode?: number;
-  };
-  forecast: Array<{
-    date?: string;
-    day?: string;
-    maxTemp?: number;
-    high?: number;
-    minTemp?: number;
-    low?: number;
-    condition: string;
-    icon?: string;
-    conditionCode?: number;
-  }>;
-}
+type ServiceWeatherData = Pick<WeatherData, 'current' | 'forecast'>;
 
 export default function WidgetConfigurationScreen() {
   const { t } = useTranslation();
@@ -174,20 +155,8 @@ export default function WidgetConfigurationScreen() {
 
     const weatherData = await WeatherService.getWeatherData(latitude, longitude, 3);
     return {
-      current: {
-        temperature: weatherData.current.temperature,
-        condition: weatherData.current.condition,
-        humidity: weatherData.current.humidity,
-        windSpeed: weatherData.current.windSpeed,
-        conditionCode: weatherData.current.conditionCode,
-      },
-      forecast: weatherData.forecast.slice(0, 3).map((day) => ({
-        date: day.date,
-        maxTemp: day.maxTemp,
-        minTemp: day.minTemp,
-        condition: day.condition,
-        conditionCode: day.conditionCode,
-      })),
+      current: weatherData.current,
+      forecast: weatherData.forecast.slice(0, 3),
     };
   };
 
@@ -255,21 +224,17 @@ export default function WidgetConfigurationScreen() {
         icon:
           serviceData.current.conditionCode != null
             ? WeatherService.getWeatherIcon(serviceData.current.conditionCode)
-            : (serviceData.current.icon ?? deriveIcon(serviceData.current.condition)),
+            : deriveIcon(serviceData.current.condition),
       },
       forecast: serviceData.forecast.map((day, index) => ({
-        day:
-          day.day ??
-          (day.date
-            ? formatDay(day.date)
-            : formatDay(new Date(today.getTime() + (index + 1) * 24 * 60 * 60 * 1000))),
-        high: day.high ?? day.maxTemp ?? 0,
-        low: day.low ?? day.minTemp ?? 0,
+        day: formatDay(day.date ?? new Date(today.getTime() + (index + 1) * 24 * 60 * 60 * 1000)),
+        high: day.maxTemp ?? 0,
+        low: day.minTemp ?? 0,
         condition: day.condition,
         icon:
           day.conditionCode != null
             ? WeatherService.getWeatherIcon(day.conditionCode)
-            : (day.icon ?? deriveIcon(day.condition)),
+            : deriveIcon(day.condition),
       })),
       lastUpdated: Date.now(),
     };
