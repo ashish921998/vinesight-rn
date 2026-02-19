@@ -94,7 +94,7 @@ import {
 } from '@/types/task';
 import { TASK_TEMPLATES } from '@/constants/task-templates';
 import { toSupabaseDateString } from '@/types/database';
-import type { Farm } from '@/types';
+import type { Farm, QuantityBasis } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useAuthStore, useNotificationStore } from '@/stores';
@@ -182,6 +182,16 @@ function normalizeFertigationDoseUnit(unit: string): string {
   if (normalized === 'liter/acre' || normalized === 'litre/acre') return 'liter';
   if (normalized === 'litre') return 'liter';
   return unit.trim();
+}
+
+function resolveFertigationQuantityBasis(
+  unit: string | null | undefined,
+  quantityBasis: QuantityBasis | null | undefined,
+): QuantityBasis {
+  if (quantityBasis) return quantityBasis;
+  const normalizedUnit = unit?.trim().toLowerCase();
+  if (!normalizedUnit) return 'per_acre';
+  return normalizedUnit.includes('/acre') ? 'per_acre' : 'total';
 }
 
 function normalizePlannedInputs(items: PlannedInputItem[]): PlannedInputItem[] {
@@ -481,7 +491,7 @@ export function EntryForm({
               name: item.name,
               quantity: item.quantity ?? 0,
               unit,
-              quantityBasis: item.quantityBasis ?? 'per_acre',
+              quantityBasis: resolveFertigationQuantityBasis(item.unit, item.quantityBasis),
             };
           }),
         });
@@ -589,7 +599,7 @@ export function EntryForm({
                 name: item.name ?? '',
                 quantity: item.quantity ?? undefined,
                 unit,
-                quantityBasis: item.quantityBasis ?? 'per_acre',
+                quantityBasis: resolveFertigationQuantityBasis(item.unit, item.quantityBasis),
               };
             })
           : createEmptyFertigationFormData().fertilizers;

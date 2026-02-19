@@ -93,7 +93,6 @@ describe('submitEntryPendingLog', () => {
         date: '2026-02-11',
         chemical: 'Copper Oxychloride (2 gm/L)',
         dose: 'Water: 200L',
-        area: 10,
         nutrient_totals_elemental: { N: 1.2 },
         nutrient_totals_elemental_per_acre: { N: 0.12 },
         nutrient_calc_coverage: 100,
@@ -188,7 +187,6 @@ describe('submitEntryPendingLog', () => {
         farm_id: 7,
         date: '2026-02-11',
         water_volume: 500,
-        area: 10,
         nutrient_totals_elemental: { N: 1.2 },
         nutrient_totals_elemental_per_acre: { N: 0.12 },
         nutrient_calc_coverage: 100,
@@ -226,6 +224,45 @@ describe('submitEntryPendingLog', () => {
         fertilizers: [
           expect.objectContaining({
             name: 'Urea',
+            unit: 'kg',
+            quantity_basis: 'per_acre',
+            quantity: 4.04686,
+          }),
+        ],
+      }),
+    );
+  });
+
+  it('normalizes per-area spray quantity from hectares to acres', async () => {
+    const submitters = createSubmitters();
+
+    await submitEntryPendingLog({
+      log: {
+        id: 'log-spray-hectare',
+        type: 'spray',
+        data: {
+          waterVolume: 300,
+          chemicals: [
+            {
+              id: 'c1',
+              name: 'Sulphur',
+              quantity: 10,
+              unit: 'kg',
+              quantityBasis: 'per_acre',
+            },
+          ],
+        },
+      },
+      dateStr: '2026-02-11',
+      farm: { ...baseFarm, areaUnit: 'hectares' },
+      submitters,
+    });
+
+    expect(submitters.createSpray).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chemical_items: [
+          expect.objectContaining({
+            name: 'Sulphur',
             unit: 'kg',
             quantity_basis: 'per_acre',
             quantity: 4.04686,

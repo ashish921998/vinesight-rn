@@ -155,7 +155,7 @@ const upsertProfileNameFromAuthUser = async (
 
   const { data: existingProfile, error: readError } = await supabase
     .from('profiles')
-    .select('full_name')
+    .select('full_name,email')
     .eq('id', user.id)
     .single();
   if (readError && readError.code !== 'PGRST116') {
@@ -166,14 +166,17 @@ const upsertProfileNameFromAuthUser = async (
   const resolvedFullName = resolveUserFullName(user, preferredFullName);
   if (!resolvedFullName) return;
 
-  const { error: upsertError } = await supabase.from('profiles').upsert(
-    {
-      id: user.id,
-      full_name: resolvedFullName,
-      email: user.email ?? null,
-    },
-    { onConflict: 'id' },
-  );
+  const upsertPayload: { id: string; full_name: string; email?: string | null } = {
+    id: user.id,
+    full_name: resolvedFullName,
+  };
+  if (readError?.code === 'PGRST116' && user.email) {
+    upsertPayload.email = user.email;
+  }
+
+  const { error: upsertError } = await supabase
+    .from('profiles')
+    .upsert(upsertPayload, { onConflict: 'id' });
   if (upsertError) throw upsertError;
 };
 

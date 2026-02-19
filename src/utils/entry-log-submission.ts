@@ -110,15 +110,20 @@ export async function submitEntryPendingLog(params: {
         .join(', ');
       const chemicalItems = data.chemicals
         .filter((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0)
-        .map((c) => ({
-          name: c.name.trim(),
-          unit: c.unit,
-          quantity: c.quantity!,
-          quantity_basis: c.quantityBasis ?? 'total',
-          warehouse_item_id: c.warehouseItemId ?? null,
-          composition_snapshot: c.compositionSnapshot ?? null,
-          density_kg_per_l: c.densityKgPerL ?? null,
-        }));
+        .map((c) => {
+          const quantityBasis = c.quantityBasis ?? 'total';
+          const quantity =
+            quantityBasis === 'per_acre' ? c.quantity! * perAreaToPerAcreFactor : c.quantity!;
+          return {
+            name: c.name.trim(),
+            unit: c.unit,
+            quantity,
+            quantity_basis: quantityBasis,
+            warehouse_item_id: c.warehouseItemId ?? null,
+            composition_snapshot: c.compositionSnapshot ?? null,
+            density_kg_per_l: c.densityKgPerL ?? null,
+          };
+        });
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: chemicalItems,
         areaAcre: farmArea,
@@ -133,7 +138,6 @@ export async function submitEntryPendingLog(params: {
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,
-        area: farmArea,
         weather: '',
         operator: '',
         date_of_pruning: farm.date_of_pruning,
@@ -200,7 +204,6 @@ export async function submitEntryPendingLog(params: {
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,
-        area: farmArea,
         date_of_pruning: farm.date_of_pruning,
       });
       return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };

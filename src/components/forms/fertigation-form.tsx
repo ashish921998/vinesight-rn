@@ -49,6 +49,13 @@ function resolveQuantityBasis(
   return unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total';
 }
 
+function resolveQuickAddQuantityBasis(item: FertigationQuickAddItem): QuantityBasis {
+  if (item.quantityBasis) return item.quantityBasis;
+  const unit = item.unit?.trim();
+  if (!unit) return 'per_acre';
+  return resolveQuantityBasis(unit);
+}
+
 export interface FertigationFormData {
   waterVolume?: number;
   fertilizers: FertilizerEntry[];
@@ -148,9 +155,7 @@ export function FertigationForm({
           current.quantity !== undefined && current.quantity > 0
             ? current.quantity
             : (item.quantity ?? 0),
-        quantityBasis:
-          current.quantityBasis ??
-          resolveQuantityBasis(item.unit?.trim() ?? validatedUnit, item.quantityBasis),
+        quantityBasis: current.quantityBasis ?? resolveQuickAddQuantityBasis(item),
         warehouseItemId: item.warehouseItemId ?? null,
         compositionSnapshot: item.composition ?? null,
         densityKgPerL: item.densityKgPerL ?? null,
@@ -173,10 +178,7 @@ export function FertigationForm({
           name: item.name.trim(),
           quantity: item.quantity ?? 0,
           unit: validatedUnit,
-          quantityBasis: resolveQuantityBasis(
-            item.unit?.trim() ?? validatedUnit,
-            item.quantityBasis,
-          ),
+          quantityBasis: resolveQuickAddQuantityBasis(item),
           warehouseItemId: item.warehouseItemId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
@@ -411,6 +413,7 @@ export function FertigationForm({
                   }}
                 >
                   {f.quantity ?? 0} {f.unit}
+                  {f.quantityBasis === 'per_acre' ? ` (${perAreaLabel})` : ''}
                 </Text>
               </View>
             ))}
