@@ -48,6 +48,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'arrow.clockwise': 'refresh',
   'arrow.up.left.and.arrow.down.right': 'resize',
   'arrow.up.circle.fill': 'arrow-up-circle',
+  'arrow.down.circle.fill': 'arrow-down-circle',
   'envelope.fill': 'mail',
   'lock.fill': 'lock-closed',
 
@@ -135,6 +136,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'flask.fill': 'flask',
   cube: 'cube-outline',
   'cube.fill': 'cube',
+  'cube.box.fill': 'cube',
   'square.stack.3d.up': 'cube-outline',
   'square.stack.3d.up.fill': 'cube',
   'wrench.and.screwdriver': 'build-outline',

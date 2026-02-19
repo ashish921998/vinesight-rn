@@ -41,6 +41,8 @@ function resolveChemicalUnit(
   if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
     return 'ml/L';
   }
+  if (lowered === 'gm/acre') return 'gram';
+  if (lowered === 'ml/acre') return 'ml';
   if (normalized && isChemicalUnit(normalized)) return normalized;
   return fallback;
 }
@@ -207,7 +209,8 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
             ? current.quantity
             : (item.quantity ?? undefined),
         quantityBasis:
-          current.quantityBasis ?? resolveQuantityBasis(validatedUnit, item.quantityBasis),
+          current.quantityBasis ??
+          resolveQuantityBasis(item.unit?.trim() ?? validatedUnit, item.quantityBasis),
         warehouseItemId: item.warehouseItemId ?? null,
         compositionSnapshot: item.composition ?? null,
         densityKgPerL: item.densityKgPerL ?? null,
@@ -230,7 +233,10 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
           name: item.name.trim(),
           quantity: item.quantity ?? undefined,
           unit: validatedUnit,
-          quantityBasis: resolveQuantityBasis(validatedUnit, item.quantityBasis),
+          quantityBasis: resolveQuantityBasis(
+            item.unit?.trim() ?? validatedUnit,
+            item.quantityBasis,
+          ),
           warehouseItemId: item.warehouseItemId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
@@ -528,7 +534,9 @@ function ChemicalRow({
       name: item.name,
       unit,
       quantity: chemical.quantity ?? item.quantity ?? undefined,
-      quantityBasis: chemical.quantityBasis ?? resolveQuantityBasis(unit, item.quantityBasis),
+      quantityBasis:
+        chemical.quantityBasis ??
+        resolveQuantityBasis(item.unit?.trim() ?? unit, item.quantityBasis),
       warehouseItemId: item.warehouseItemId ?? null,
       compositionSnapshot: item.composition ?? null,
       densityKgPerL: item.densityKgPerL ?? null,

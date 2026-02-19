@@ -116,6 +116,7 @@ export default function SettingsScreen() {
     cancelPhoneLinking,
     phoneLinkingPending,
     phoneLinkingNumber,
+    phoneLinkingLoading,
     clearError,
     errorMessage: authErrorMessage,
     isLoading: authLoading,
@@ -1137,7 +1138,7 @@ export default function SettingsScreen() {
                       maxLength={6}
                       style={styles.input}
                     />
-                    <Pressable onPress={handleResendPhoneLinkCode} disabled={authLoading}>
+                    <Pressable onPress={handleResendPhoneLinkCode} disabled={phoneLinkingLoading}>
                       <Text
                         style={styles.inputHint}
                         textBreakStrategy="highQuality"
@@ -1146,7 +1147,7 @@ export default function SettingsScreen() {
                         {t('settings.linkPhone.resend')}
                       </Text>
                     </Pressable>
-                    <Pressable onPress={handleEditPhoneNumber} disabled={authLoading}>
+                    <Pressable onPress={handleEditPhoneNumber} disabled={phoneLinkingLoading}>
                       <Text
                         style={styles.inputHint}
                         textBreakStrategy="highQuality"
@@ -1178,16 +1179,26 @@ export default function SettingsScreen() {
                   isShowingPhoneCodeStep ? handleVerifyPhoneLinkCode : handleSendPhoneLinkCode
                 }
                 disabled={
-                  authLoading ||
+                  phoneLinkingLoading ||
                   (!isShowingPhoneCodeStep && !isLocalPhoneValid) ||
                   (isShowingPhoneCodeStep && linkPhoneCode.trim().length !== 6)
                 }
-                style={[
-                  styles.saveButton,
-                  { backgroundColor: colors.primary[600], marginBottom: spacing[3] },
-                ]}
+                style={({ pressed }) => {
+                  const isDisabled =
+                    phoneLinkingLoading ||
+                    (!isShowingPhoneCodeStep && !isLocalPhoneValid) ||
+                    (isShowingPhoneCodeStep && linkPhoneCode.trim().length !== 6);
+                  return [
+                    styles.saveButton,
+                    {
+                      backgroundColor: colors.primary[600],
+                      marginBottom: spacing[3],
+                      opacity: isDisabled ? 0.5 : pressed ? 0.8 : 1,
+                    },
+                  ];
+                }}
               >
-                {authLoading ? (
+                {phoneLinkingLoading ? (
                   <ActivityIndicator color={m3.colorScheme.onPrimary} />
                 ) : (
                   <Text
@@ -1204,7 +1215,7 @@ export default function SettingsScreen() {
 
               <Pressable
                 onPress={handleCloseLinkPhone}
-                disabled={authLoading}
+                disabled={phoneLinkingLoading}
                 style={styles.saveButton}
               >
                 <Text

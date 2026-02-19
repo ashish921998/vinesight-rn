@@ -59,7 +59,7 @@ module.exports = {
     android: {
       package: 'com.vinesight.app',
       versionCode: 18,
-      permissions: ['android.permission.RECORD_AUDIO'],
+      permissions: ['android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS'],
       config: {
         googleMaps: {
           apiKey:

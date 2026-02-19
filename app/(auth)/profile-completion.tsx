@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores';
+import { useProfile } from '@/hooks';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
@@ -22,29 +23,80 @@ export default function ProfileCompletionScreen() {
   const m3 = useM3();
   const isDark = useIsDark();
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+  const [firstNameDraft, setFirstNameDraft] = useState<string | null>(null);
+  const [lastNameDraft, setLastNameDraft] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const hasRedirectedRef = useRef(false);
 
   const {
     isLoading,
     errorMessage,
     isAuthenticated,
     needsProfileCompletion,
+    user,
     completeProfile,
     clearError,
   } = useAuthStore();
+  const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
+  const hasProfileName = Boolean(profile?.full_name && profile.full_name.trim().length > 0);
+
+  const { defaultFirstName, defaultLastName, defaultEmail } = useMemo(() => {
+    const metadata = user?.user_metadata ?? {};
+    const metadataFirstName =
+      typeof metadata?.first_name === 'string'
+        ? metadata.first_name
+        : typeof metadata?.given_name === 'string'
+          ? metadata.given_name
+          : '';
+    const metadataLastName =
+      typeof metadata?.last_name === 'string'
+        ? metadata.last_name
+        : typeof metadata?.family_name === 'string'
+          ? metadata.family_name
+          : '';
+    const metadataFullName =
+      typeof metadata?.full_name === 'string'
+        ? metadata.full_name
+        : typeof metadata?.name === 'string'
+          ? metadata.name
+          : '';
+    const splitFullName = metadataFullName.trim().split(/\s+/).filter(Boolean);
+    const derivedFirstName = splitFullName[0] ?? '';
+    const derivedLastName = splitFullName.slice(1).join(' ');
+
+    return {
+      defaultFirstName: metadataFirstName || derivedFirstName || '',
+      defaultLastName: metadataLastName || derivedLastName || '',
+      defaultEmail: user?.email ?? '',
+    };
+  }, [user]);
+
+  const firstNameValue = firstNameDraft ?? defaultFirstName;
+  const lastNameValue = lastNameDraft ?? defaultLastName;
+  const emailValue = emailDraft ?? defaultEmail;
 
   useEffect(() => {
-    if (isAuthenticated && !needsProfileCompletion) {
+    if (
+      isAuthenticated &&
+      !profileLoading &&
+      !needsProfileCompletion &&
+      hasProfileName &&
+      !hasRedirectedRef.current
+    ) {
+      hasRedirectedRef.current = true;
       router.replace('/');
     }
-  }, [isAuthenticated, needsProfileCompletion]);
+    if (!isAuthenticated || needsProfileCompletion || !hasProfileName) {
+      hasRedirectedRef.current = false;
+    }
+  }, [isAuthenticated, needsProfileCompletion, hasProfileName, profileLoading]);
 
   const handleContinue = async () => {
-    if (!firstName.trim() || !lastName.trim()) return;
-    const trimmedEmail = email.trim();
+    const trimmedFirstName = firstNameValue.trim();
+    const trimmedLastName = lastNameValue.trim();
+    if (!trimmedFirstName || !trimmedLastName) return;
+    const trimmedEmail = emailValue.trim();
     if (trimmedEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(trimmedEmail)) {
@@ -55,8 +107,8 @@ export default function ProfileCompletionScreen() {
     setEmailError(null);
     clearError();
     await completeProfile({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      firstName: trimmedFirstName,
+      lastName: trimmedLastName,
       email: trimmedEmail || undefined,
     });
   };
@@ -158,8 +210,8 @@ export default function ProfileCompletionScreen() {
             <View style={formInnerStyle}>
               <Input
                 placeholder={t('profileCompletion.firstName')}
-                value={firstName}
-                onChangeText={setFirstName}
+                value={firstNameValue}
+                onChangeText={setFirstNameDraft}
                 leftIcon="person.fill"
                 autoCapitalize="words"
                 textContentType="givenName"
@@ -168,8 +220,8 @@ export default function ProfileCompletionScreen() {
 
               <Input
                 placeholder={t('profileCompletion.lastName')}
-                value={lastName}
-                onChangeText={setLastName}
+                value={lastNameValue}
+                onChangeText={setLastNameDraft}
                 leftIcon="person.fill"
                 autoCapitalize="words"
                 textContentType="familyName"
@@ -178,8 +230,8 @@ export default function ProfileCompletionScreen() {
 
               <Input
                 placeholder={t('profileCompletion.emailPlaceholder')}
-                value={email}
-                onChangeText={setEmail}
+                value={emailValue}
+                onChangeText={setEmailDraft}
                 leftIcon="mail"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -203,7 +255,7 @@ export default function ProfileCompletionScreen() {
                 title={t('profileCompletion.continue')}
                 onPress={handleContinue}
                 isLoading={isLoading}
-                disabled={!firstName.trim() || !lastName.trim() || isLoading}
+                disabled={!firstNameValue.trim() || !lastNameValue.trim() || isLoading}
                 style={{ marginTop: spacing[4] }}
               />
             </View>

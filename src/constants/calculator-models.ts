@@ -338,17 +338,7 @@ export type HarvestGrade = (typeof HARVEST_GRADES)[number];
 // MARK: - Chemical Units
 // ============================================================
 
-export const CHEMICAL_UNITS = [
-  'gm/L',
-  'ml/L',
-  'gm/acre',
-  'ml/acre',
-  'ppm',
-  'kg',
-  'gram',
-  'liter',
-  'ml',
-] as const;
+export const CHEMICAL_UNITS = ['gm/L', 'ml/L', 'ppm', 'kg', 'gram', 'liter', 'ml'] as const;
 export type ChemicalUnit = (typeof CHEMICAL_UNITS)[number];
 
 // ============================================================

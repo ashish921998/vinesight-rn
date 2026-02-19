@@ -58,7 +58,11 @@ export async function scheduleDailyWaterReminder(): Promise<string | null> {
  *
  * Returns an array of scheduled notification IDs (may be empty if all dates are in the past).
  */
-export async function scheduleTaskDueReminder(taskId: string, dueDate: string): Promise<string[]> {
+export async function scheduleTaskDueReminder(
+  taskId: string,
+  dueDate: string,
+  options?: { allowImmediateToday?: boolean },
+): Promise<string[]> {
   const Notifications = await getNotifications();
   if (!Notifications) return [];
 
@@ -121,7 +125,7 @@ export async function scheduleTaskDueReminder(taskId: string, dueDate: string): 
     const isToday =
       nowDate.getFullYear() === y && nowDate.getMonth() === mo - 1 && nowDate.getDate() === d;
 
-    if (isToday) {
+    if (isToday && options?.allowImmediateToday !== false) {
       const title = i18n.t('notifications.taskDue.title');
       const body = i18n.t('notifications.taskDue.body');
       try {
@@ -227,18 +231,34 @@ export async function schedulePetioleTestReminder(
   reminderDate.setHours(7, 0, 0, 0);
 
   if (Number.isNaN(reminderDate.getTime())) return null;
-  if (reminderDate.getTime() <= Date.now()) return null;
 
+  const now = Date.now();
   const title = i18n.t('notifications.petioleTest.title');
   const body = i18n.t('notifications.petioleTest.body', { farmName, day });
+  const content = {
+    title,
+    body,
+    sound: true as const,
+    data: { type: 'petiole_test', farmId, day },
+  };
 
-  return Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      data: { type: 'petiole_test', farmId, day },
-    },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderDate },
-  });
+  if (reminderDate.getTime() > now) {
+    return Notifications.scheduleNotificationAsync({
+      content,
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderDate },
+    });
+  }
+
+  // Reminder time already passed — fire immediately if it was today
+  const nowDate = new Date(now);
+  const isToday =
+    nowDate.getFullYear() === reminderDate.getFullYear() &&
+    nowDate.getMonth() === reminderDate.getMonth() &&
+    nowDate.getDate() === reminderDate.getDate();
+
+  if (isToday) {
+    return Notifications.scheduleNotificationAsync({ content, trigger: null });
+  }
+
+  return null;
 }

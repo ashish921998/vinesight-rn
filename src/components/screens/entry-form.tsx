@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
   type TextInputProps,
   Keyboard,
+  Platform,
   UIManager,
   findNodeHandle,
 } from 'react-native';
@@ -33,6 +34,7 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
+import { androidTextPadding } from '@/styles/theme';
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
 import { PendingLogs, type PendingLog } from '@/components/screens/entry-form/PendingLogs';
 import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
@@ -166,6 +168,24 @@ function normalizeFertigationDoseUnit(unit: string): string {
   return unit.trim();
 }
 
+function normalizeSprayDoseUnit(unit: string): string {
+  const normalized = unit.trim().toLowerCase();
+  if (
+    normalized === 'gm/liter' ||
+    normalized === 'gm/litre' ||
+    normalized === 'gm/l' ||
+    normalized === 'g/l'
+  ) {
+    return 'gm/L';
+  }
+  if (normalized === 'ml/liter' || normalized === 'ml/litre' || normalized === 'ml/l') {
+    return 'ml/L';
+  }
+  if (normalized === 'gm/acre') return 'gram';
+  if (normalized === 'ml/acre') return 'ml';
+  return unit.trim();
+}
+
 function normalizePlannedInputs(items: PlannedInputItem[]): PlannedInputItem[] {
   const deduped = new Map<string, PlannedInputItem>();
   for (const item of items) {
@@ -281,6 +301,7 @@ export function EntryForm({
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
   const [isSubmittingLogs, setIsSubmittingLogs] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [footerHeight, setFooterHeight] = useState(112);
   const logFormScrollViewRef = useRef<ScrollView>(null);
   const focusedInputRef = useRef<number | null>(null);
   const scrollOffsetRef = useRef(0);
@@ -436,7 +457,7 @@ export function EntryForm({
         setSprayData({
           waterVolume: undefined,
           chemicals: initialLogPrefill.sprayChemicals.map((item) => {
-            const normalizedUnit = item.unit?.trim();
+            const normalizedUnit = item.unit ? normalizeSprayDoseUnit(item.unit) : null;
             const unit =
               normalizedUnit && isValidChemicalUnit(normalizedUnit) ? normalizedUnit : 'gm/L';
             return {
@@ -444,6 +465,9 @@ export function EntryForm({
               name: item.name,
               quantity: item.quantity ?? undefined,
               unit,
+              quantityBasis:
+                item.quantityBasis ??
+                (item.unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total'),
             };
           }),
         });
@@ -454,7 +478,7 @@ export function EntryForm({
           fertilizers: initialLogPrefill.fertigationItems.map((item) => {
             const normalizedUnit = item.unit?.trim();
             const unit =
-              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg/acre';
+              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg';
             return {
               id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
               name: item.name,
@@ -507,9 +531,11 @@ export function EntryForm({
         const sprayPrefill = initialVoiceLogPrefill.spray;
         const prefilledChemicals = sprayPrefill?.chemicals?.length
           ? sprayPrefill.chemicals.map((item, index) => {
+              const normalizedUnit = item.unit ? normalizeSprayDoseUnit(item.unit) : null;
               const unit =
-                item.unit && CHEMICAL_UNITS.includes(item.unit as (typeof CHEMICAL_UNITS)[number])
-                  ? (item.unit as (typeof CHEMICAL_UNITS)[number])
+                normalizedUnit &&
+                CHEMICAL_UNITS.includes(normalizedUnit as (typeof CHEMICAL_UNITS)[number])
+                  ? (normalizedUnit as (typeof CHEMICAL_UNITS)[number])
                   : 'gm/L';
               return {
                 id: createPrefillId('chem', index),
@@ -517,7 +543,8 @@ export function EntryForm({
                 quantity: item.quantity ?? undefined,
                 unit,
                 quantityBasis:
-                  item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+                  item.quantityBasis ??
+                  (item.unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total'),
               };
             })
           : createEmptySprayFormData().chemicals;
@@ -563,7 +590,7 @@ export function EntryForm({
                 item.unit &&
                 FERTILIZER_UNITS.includes(item.unit as (typeof FERTILIZER_UNITS)[number])
                   ? (item.unit as (typeof FERTILIZER_UNITS)[number])
-                  : 'kg/acre',
+                  : 'kg',
             }))
           : createEmptyFertigationFormData().fertilizers;
 
@@ -2236,7 +2263,7 @@ export function EntryForm({
   const content = (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <KeyboardAvoidingView
-        behavior={isIOS ? 'padding' : 'height'}
+        behavior={isIOS ? 'padding' : undefined}
         keyboardVerticalOffset={isIOS ? 0 : 20}
         style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
       >
@@ -2260,16 +2287,23 @@ export function EntryForm({
               }}
             />
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 40 }} />
-            <View style={{ flex: 1, alignItems: 'center' }}>
+          <View style={{ minHeight: 44, justifyContent: 'center', position: 'relative' }}>
+            <View style={{ paddingHorizontal: 52, alignItems: 'center', justifyContent: 'center' }}>
               <Text
                 selectable
                 style={{
                   fontSize: 18,
+                  lineHeight: 24,
                   fontWeight: '600',
                   color: m3.colorScheme.onSurface,
                   textAlign: 'center',
+                  ...(Platform.OS === 'android'
+                    ? {
+                        includeFontPadding: true,
+                        paddingBottom: androidTextPadding.bottom,
+                        paddingRight: androidTextPadding.right,
+                      }
+                    : null),
                 }}
                 numberOfLines={1}
                 ellipsizeMode="tail"
@@ -2280,21 +2314,34 @@ export function EntryForm({
                     ? t('entryForm.editTask')
                     : t('entryForm.addTask')}
               </Text>
-              <Text
-                selectable
-                style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
-                numberOfLines={1}
-              >
-                {activeFarm?.name}
-              </Text>
             </View>
-            <Pressable onPress={handleClose} style={{ width: 40, alignItems: 'flex-end' }}>
+            <Pressable
+              onPress={handleClose}
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <AppIcon
                 name="close-circle"
                 size={26}
                 color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
               />
             </Pressable>
+          </View>
+          <View style={{ marginTop: 2, alignItems: 'center', minHeight: 16 }}>
+            <Text
+              selectable
+              style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
+              numberOfLines={1}
+            >
+              {activeFarm?.name}
+            </Text>
           </View>
         </View>
 
@@ -2570,10 +2617,13 @@ export function EntryForm({
 
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: footerHeight + insets.bottom + 24,
+          }}
+          scrollIndicatorInsets={{ bottom: footerHeight + insets.bottom + 24 }}
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
-          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
           showsVerticalScrollIndicator={true}
         >
           {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
@@ -2585,10 +2635,16 @@ export function EntryForm({
         {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
 
         <View
+          onLayout={(event) => {
+            const nextHeight = Math.ceil(event.nativeEvent.layout.height);
+            setFooterHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+          }}
           style={{
+            flexShrink: 0,
             backgroundColor: colors.surface[100],
             paddingHorizontal: 16,
-            paddingVertical: 16,
+            paddingTop: 16,
+            paddingBottom: Platform.OS === 'ios' ? Math.max(16, insets.bottom) : 16,
             borderTopWidth: 1,
             borderColor: colors.surface[100],
           }}

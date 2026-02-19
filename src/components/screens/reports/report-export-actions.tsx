@@ -10,7 +10,6 @@ interface ReportExportActionsProps {
   canExport: boolean;
   isExporting: boolean;
   onExportPdf: () => void;
-  onExportCsv: () => void;
   onDownload: () => void;
   panelStyle: object;
 }
@@ -19,7 +18,6 @@ export function ReportExportActions({
   canExport,
   isExporting,
   onExportPdf,
-  onExportCsv,
   onDownload,
   panelStyle,
 }: ReportExportActionsProps) {
@@ -105,9 +103,9 @@ export function ReportExportActions({
           )}
         </Pressable>
 
-        {/* CSV — Secondary outlined button */}
+        {/* Download — Secondary outlined button */}
         <Pressable
-          onPress={onExportCsv}
+          onPress={onDownload}
           disabled={disabled}
           style={({ pressed }) => ({
             flex: 1,
@@ -131,64 +129,23 @@ export function ReportExportActions({
           ) : (
             <>
               <Icon
-                name="square.grid.2x2.fill"
+                name="arrow.down.circle.fill"
                 size={18}
                 color={disabled ? colorWithOpacity(primary, 0.5) : primary}
               />
               <Text
                 style={{
-                  fontSize: fontSize.base,
+                  fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
                   color: disabled ? colorWithOpacity(primary, 0.5) : primary,
                 }}
               >
-                Export CSV
+                {t('reports.downloadReport')}
               </Text>
             </>
           )}
         </Pressable>
       </View>
-
-      <Pressable
-        onPress={onDownload}
-        disabled={disabled}
-        style={({ pressed }) => ({
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: spacing[2],
-          minHeight: 46,
-          borderRadius: borderRadius.xl,
-          borderCurve: 'continuous',
-          borderWidth: 1,
-          borderColor: disabled ? colorWithOpacity(primary, 0.25) : colorWithOpacity(primary, 0.45),
-          backgroundColor: pressed
-            ? colorWithOpacity(primary, 0.08)
-            : colorWithOpacity(primary, 0.04),
-          opacity: disabled ? 0.55 : 1,
-        })}
-      >
-        {isExporting ? (
-          <ActivityIndicator size="small" color={primary} />
-        ) : (
-          <>
-            <Icon
-              name="arrow.down.circle.fill"
-              size={18}
-              color={disabled ? colorWithOpacity(primary, 0.5) : primary}
-            />
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.semibold,
-                color: disabled ? colorWithOpacity(primary, 0.5) : primary,
-              }}
-            >
-              {t('reports.downloadReport')}
-            </Text>
-          </>
-        )}
-      </Pressable>
     </View>
   );
 }

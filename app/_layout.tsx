@@ -106,8 +106,18 @@ try {
 }
 
 // Prevent auto-hide splash screen
-void SplashScreen.preventAutoHideAsync().catch(() => null);
+const splashKey = '@@vinesight-splash-prevented';
+const globalThisWithSplash = globalThis as typeof globalThis & { [key: string]: boolean };
+if (globalThisWithSplash[splashKey] !== true) {
+  void SplashScreen.preventAutoHideAsync().catch(() => null);
+  globalThisWithSplash[splashKey] = true;
+}
 WebBrowser.maybeCompleteAuthSession();
+
+function PetioleReminderSync() {
+  usePetioleTestReminders();
+  return null;
+}
 
 export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
@@ -130,9 +140,6 @@ export default Sentry.wrap(function RootLayout() {
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
-
-  // Keep petiole test reminders in sync with farm data
-  usePetioleTestReminders();
 
   useEffect(() => {
     // Initialize auth state
@@ -223,7 +230,9 @@ export default Sentry.wrap(function RootLayout() {
                     ? [legacy.notificationId]
                     : [];
                 await Promise.allSettled(oldIds.map((id) => cancelNotification(id)));
-                const nextIds = await scheduleTaskDueReminder(taskId, schedule.dueDate);
+                const nextIds = await scheduleTaskDueReminder(taskId, schedule.dueDate, {
+                  allowImmediateToday: false,
+                });
                 if (nextIds.length > 0) {
                   useNotificationStore.getState().upsertTaskSchedule(taskId, {
                     notificationIds: nextIds,
@@ -309,7 +318,11 @@ export default Sentry.wrap(function RootLayout() {
   useEffect(() => {
     // Hide splash screen when auth + language are loaded
     if (!isLoading && languageHydrated && themeHydrated) {
-      void SplashScreen.hideAsync().catch(() => null);
+      SplashScreen.hideAsync().catch((error) => {
+        if (__DEV__) {
+          console.warn('Failed to hide splash screen (safe to ignore during hot reload):', error);
+        }
+      });
     }
   }, [isLoading, languageHydrated, themeHydrated]);
 
@@ -333,6 +346,7 @@ export default Sentry.wrap(function RootLayout() {
               maxAge: QUERY_CACHE_MAX_AGE_MS,
             }}
           >
+            <PetioleReminderSync />
             <I18nextProvider i18n={i18n}>
               <StatusBar style={isDark ? 'light' : 'dark'} />
               <Stack

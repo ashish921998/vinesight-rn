@@ -123,7 +123,7 @@ export function LogForm({
           name="add-circle"
           size={20}
           color={
-            isValid
+            isValid && hasFarm
               ? m3.colorScheme.onPrimary
               : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
           }
@@ -133,9 +133,10 @@ export function LogForm({
           style={[
             { marginLeft: 8, fontWeight: '600' },
             {
-              color: isValid
-                ? m3.colorScheme.onPrimary
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+              color:
+                isValid && hasFarm
+                  ? m3.colorScheme.onPrimary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
             },
           ]}
         >

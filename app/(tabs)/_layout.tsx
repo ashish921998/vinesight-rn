@@ -174,7 +174,6 @@ export default function TabLayout() {
             name="farms"
             options={{
               href: null,
-              tabBarButton: () => null,
             }}
           />
         </Tabs>

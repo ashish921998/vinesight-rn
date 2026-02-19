@@ -14,6 +14,14 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
+const isDuplicateEmailError = (error: unknown): boolean => {
+  const message = getErrorMessage(error, '').toLowerCase();
+  return (
+    message.includes('already') &&
+    (message.includes('registered') || message.includes('exists') || message.includes('in use'))
+  );
+};
+
 // OTP types matching Supabase
 type EmailOTPType = 'signup' | 'email';
 
@@ -33,6 +41,7 @@ interface AuthState {
   needsProfileCompletion: boolean;
   phoneLinkingPending: boolean;
   phoneLinkingNumber: string | null;
+  phoneLinkingLoading: boolean;
 
   // Onboarding
   hasSeenOnboarding: boolean;
@@ -108,6 +117,9 @@ const setSentryUser = (user: User | null) => {
     Sentry.setUser(null);
   }
 };
+
+const PROFILE_QUERY_KEY = ['profile'] as const;
+const PROFILE_CURRENT_QUERY_KEY = ['profile', 'current'] as const;
 
 const hasCompletedProfileName = (user: User | null | undefined) =>
   Boolean(
@@ -206,6 +218,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   needsProfileCompletion: false,
   phoneLinkingPending: false,
   phoneLinkingNumber: null,
+  phoneLinkingLoading: false,
   hasSeenOnboarding: false,
 
   // Initialize - check existing session
@@ -325,6 +338,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
+          await upsertProfileNameFromAuthUser(data.user, name?.trim() || null);
           setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
@@ -391,6 +405,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
+          await upsertProfileNameFromAuthUser(data.user, name?.trim() || null);
           setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
@@ -805,6 +820,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (data.user) {
+        if (pendingOTPType === 'signup') {
+          await upsertProfileNameFromAuthUser(data.user);
+        }
         setSentryUser(data.user);
         telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       }
@@ -1093,6 +1111,17 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       );
       if (profileError) throw profileError;
 
+      const normalizedAreaUnit =
+        get().user?.user_metadata?.area_unit === 'hectares' ? 'hectares' : 'acres';
+      queryClient.setQueryData(PROFILE_CURRENT_QUERY_KEY, (previous: unknown) => ({
+        ...(typeof previous === 'object' && previous ? previous : {}),
+        id: currentUserId,
+        full_name: fullName,
+        email: email ?? get().user?.email ?? null,
+        area_unit_preference: normalizedAreaUnit,
+      }));
+      await queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
+
       const {
         data: { user },
         error: getUserError,
@@ -1110,8 +1139,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
     } catch (error: unknown) {
       telemetry.capture('profile_completion_failed');
+      const duplicateEmailMessage =
+        'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.';
       set({
-        errorMessage: getErrorMessage(error, 'Failed to update profile'),
+        errorMessage: isDuplicateEmailError(error)
+          ? duplicateEmailMessage
+          : getErrorMessage(error, 'Failed to update profile'),
         isLoading: false,
       });
     }
@@ -1125,7 +1158,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
-    set({ errorMessage: null, isLoading: true });
+    set({ errorMessage: null, phoneLinkingLoading: true });
     telemetry.capture('phone_linking_started');
 
     try {
@@ -1136,13 +1169,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       set({
         phoneLinkingPending: true,
         phoneLinkingNumber: trimmedPhone,
-        isLoading: false,
+        phoneLinkingLoading: false,
       });
     } catch (error: unknown) {
       telemetry.capture('phone_linking_failed');
       set({
         errorMessage: getErrorMessage(error, 'Failed to send verification code'),
-        isLoading: false,
+        phoneLinkingLoading: false,
       });
     }
   },
@@ -1155,7 +1188,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
-    set({ errorMessage: null, isLoading: true });
+    set({ errorMessage: null, phoneLinkingLoading: true });
     telemetry.capture('phone_linking_verify_started');
 
     try {
@@ -1173,13 +1206,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         session: data.session,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
-        isLoading: false,
+        phoneLinkingLoading: false,
       });
     } catch (_error: unknown) {
       telemetry.capture('phone_linking_verify_failed');
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
-        isLoading: false,
+        phoneLinkingLoading: false,
       });
     }
   },
@@ -1188,6 +1221,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     set({
       phoneLinkingPending: false,
       phoneLinkingNumber: null,
+      phoneLinkingLoading: false,
       errorMessage: null,
     });
   },

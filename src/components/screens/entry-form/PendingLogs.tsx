@@ -12,7 +12,7 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 export interface PendingLog {
@@ -60,62 +60,69 @@ export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
       >
         {t('entryForm.pendingLogs', { count: pendingLogs.length })}
       </Text>
-      {pendingLogs.map((log) => {
-        const logType = LOG_TYPES.find((lt) => lt.id === log.type);
-        const iconName =
-          log.type === 'expense'
-            ? getExpenseIconName(
-                (log.data as ExpenseFormData | undefined)?.type,
-                resolveSymbolIconName(logType?.icon),
-              )
-            : resolveSymbolIconName(logType?.icon);
-        return (
-          <View
-            key={log.id}
-            style={[
-              {
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 12,
-                borderRadius: 12,
-                marginBottom: 8,
-              },
-              { backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1) },
-            ]}
-          >
+      <ScrollView
+        nestedScrollEnabled
+        style={{ maxHeight: 280 }}
+        contentContainerStyle={{ paddingBottom: 4 }}
+        showsVerticalScrollIndicator={pendingLogs.length > 3}
+      >
+        {pendingLogs.map((log) => {
+          const logType = LOG_TYPES.find((lt) => lt.id === log.type);
+          const iconName =
+            log.type === 'expense'
+              ? getExpenseIconName(
+                  (log.data as ExpenseFormData | undefined)?.type,
+                  resolveSymbolIconName(logType?.icon),
+                )
+              : resolveSymbolIconName(logType?.icon);
+          return (
             <View
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 999,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: `${logType?.color}15`,
-              }}
+              key={log.id}
+              style={[
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 12,
+                  borderRadius: 12,
+                  marginBottom: 8,
+                },
+                { backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1) },
+              ]}
             >
-              <UiSymbol
-                name={iconName}
-                size={18}
-                color={logType?.color ?? m3.colorScheme.primary}
-              />
-            </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text
-                selectable
-                style={{ fontSize: 14, fontWeight: '600', color: m3.colorScheme.onSurface }}
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 999,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: `${logType?.color ?? m3.colorScheme.primary}15`,
+                }}
               >
-                {logType ? t(logType.labelKey) : t('entryForm.addLog')}
-              </Text>
-              <Text selectable style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
-                {log.displayDescription}
-              </Text>
+                <UiSymbol
+                  name={iconName}
+                  size={18}
+                  color={logType?.color ?? m3.colorScheme.primary}
+                />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text
+                  selectable
+                  style={{ fontSize: 14, fontWeight: '600', color: m3.colorScheme.onSurface }}
+                >
+                  {logType ? t(logType.labelKey) : t('entryForm.addLog')}
+                </Text>
+                <Text selectable style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
+                  {log.displayDescription}
+                </Text>
+              </View>
+              <Pressable onPress={() => onRemove(log.id)}>
+                <AppIcon name="trash-outline" size={20} color={m3.colorScheme.error} />
+              </Pressable>
             </View>
-            <Pressable onPress={() => onRemove(log.id)}>
-              <AppIcon name="trash-outline" size={20} color={m3.colorScheme.error} />
-            </Pressable>
-          </View>
-        );
-      })}
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
