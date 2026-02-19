@@ -204,8 +204,8 @@ export default function WidgetConfigurationScreen() {
     const today = new Date();
     const deriveIcon = (condition: string): string => {
       const lower = condition.toLowerCase();
-      if (lower.includes('sun') || lower.includes('clear')) return 'sunny';
       if (lower.includes('partly')) return 'partly-cloudy';
+      if (lower.includes('sun') || lower.includes('clear')) return 'sunny';
       if (lower.includes('cloud')) return 'cloudy';
       if (lower.includes('rain') || lower.includes('drizzle')) return 'rainy';
       return 'partly-cloudy';
