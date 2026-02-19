@@ -1304,6 +1304,8 @@ export const hi = {
       success: 'फोन नंबर सफलतापूर्वक लिंक हो गया',
       alreadyLinked: 'फोन नंबर पहले से आपके खाते से लिंक है',
       changePhone: 'फोन नंबर बदलें',
+      editLimitReached_one: 'एक सत्यापन प्रक्रिया में आप फोन नंबर {{count}} बार बदल सकते हैं।',
+      editLimitReached_other: 'एक सत्यापन प्रक्रिया में आप फोन नंबर {{count}} बार तक बदल सकते हैं।',
       verified: 'सत्यापित फोन नंबर',
       notLinked: 'कोई सत्यापित फोन नंबर लिंक नहीं है',
       verificationRequired: 'फोन साइन-इन के लिए अपना फोन नंबर सत्यापित करें',

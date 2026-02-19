@@ -1214,16 +1214,18 @@ export class ReportService {
         ),
         Math.max(0, matchedStockRows.length - maxRowsPerSection),
       );
-      const visibleUnmatchedRows = unmatchedStockRows.slice(0, maxRowsPerSection);
-      appendSectionTable(
-        `⚠️ Unmatched Log Items (${unmatchedStockRows.length})`,
-        ['Item', 'Type', 'Total Qty', 'Unit', 'Area Treated', 'Count', 'Reason'],
-        visibleUnmatchedRows.map(
-          (r) =>
-            `<tr><td>${this.escapeHtml(r.itemName)}</td><td>${this.escapeHtml(r.type)}</td><td>${r.quantityUsed}</td><td>${this.escapeHtml(r.unit)}</td><td>${r.areaTreated}</td><td>${r.usageCount}</td><td>No warehouse match or missing water volume</td></tr>`,
-        ),
-        Math.max(0, unmatchedStockRows.length - maxRowsPerSection),
-      );
+      if (unmatchedStockRows.length > 0) {
+        const visibleUnmatchedRows = unmatchedStockRows.slice(0, maxRowsPerSection);
+        appendSectionTable(
+          `⚠️ Unmatched Log Items (${unmatchedStockRows.length})`,
+          ['Item', 'Type', 'Total Qty', 'Unit', 'Area Treated', 'Count', 'Reason'],
+          visibleUnmatchedRows.map(
+            (r) =>
+              `<tr><td>${this.escapeHtml(r.itemName)}</td><td>${this.escapeHtml(r.type)}</td><td>${r.quantityUsed}</td><td>${this.escapeHtml(r.unit)}</td><td>${r.areaTreated}</td><td>${r.usageCount}</td><td>No warehouse match or missing water volume</td></tr>`,
+          ),
+          Math.max(0, unmatchedStockRows.length - maxRowsPerSection),
+        );
+      }
     }
 
     html += `

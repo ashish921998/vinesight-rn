@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Sentry from '@sentry/react-native';
 import { AppIcon } from '@/components/ui/app-icon';
 import { ModalBackdrop } from '@/components/ui/modal-backdrop';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -33,6 +34,7 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { resolveSymbolIconName } from '@/constants/icon-registry';
+import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
 
 import {
   IrrigationForm,
@@ -749,10 +751,15 @@ export function EntryForm({
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
           const failedLog = pendingLogs[index];
+          const error = result.reason;
+          const errorMeta = getFarmErrorMeta(error);
+          const errorName = error instanceof Error ? error.name : 'UnknownError';
           console.error('Failed to save pending log', {
             pendingLogId: failedLog?.id ?? null,
             logType: failedLog?.type ?? null,
-            error: result.reason,
+            errorName,
+            errorCode: errorMeta.code ?? null,
+            ...(__DEV__ ? { errorHint: errorMeta.hint ?? null } : {}),
           });
         }
       });
@@ -822,7 +829,27 @@ export function EntryForm({
             });
           } catch (taskUpdateError) {
             taskCompletionUpdateFailed = true;
-            console.error('Task completion update failed after log save:', taskUpdateError);
+            const taskUpdateErrorMeta = getFarmErrorMeta(taskUpdateError);
+            const taskUpdateErrorName =
+              taskUpdateError instanceof Error ? taskUpdateError.name : 'UnknownError';
+            console.error('Task completion update failed after log save', {
+              errorName: taskUpdateErrorName,
+              errorCode: taskUpdateErrorMeta.code ?? null,
+              ...(__DEV__ ? { errorHint: taskUpdateErrorMeta.hint ?? null } : {}),
+            });
+
+            if (shouldCaptureFarmErrorInSentry(taskUpdateErrorMeta)) {
+              Sentry.withScope((scope) => {
+                scope.setTag('feature', 'entry-log');
+                scope.setExtra('taskId', sourceTaskId);
+                scope.setExtra('errorMeta', { code: taskUpdateErrorMeta.code ?? null });
+                Sentry.captureException(
+                  taskUpdateError instanceof Error
+                    ? taskUpdateError
+                    : new Error('Task completion update failed'),
+                );
+              });
+            }
           }
         }
 
@@ -832,6 +859,33 @@ export function EntryForm({
       }
 
       if (failedCount > 0) {
+        const firstFailedIndex = results.findIndex((result) => result.status === 'rejected');
+        const failedLogContext = firstFailedIndex >= 0 ? pendingLogs[firstFailedIndex] : null;
+        const firstFailedError =
+          results[firstFailedIndex]?.status === 'rejected'
+            ? (results[firstFailedIndex] as PromiseRejectedResult).reason
+            : null;
+
+        const errorMessage =
+          firstFailedError instanceof Error
+            ? firstFailedError.message
+            : typeof firstFailedError === 'string'
+              ? firstFailedError
+              : 'An unexpected error occurred (see logs for details)';
+
+        const errorMeta = getFarmErrorMeta(firstFailedError);
+        if (shouldCaptureFarmErrorInSentry(errorMeta)) {
+          Sentry.withScope((scope) => {
+            scope.setTag('feature', 'entry-log');
+            scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
+            scope.setTag('logType', failedLogContext?.type ?? 'unknown');
+            scope.setExtra('errorMeta', { code: errorMeta.code ?? null });
+            Sentry.captureException(
+              firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
+            );
+          });
+        }
+
         Alert.alert(
           t('entryForm.partialSuccess.title'),
           failedCount === 1

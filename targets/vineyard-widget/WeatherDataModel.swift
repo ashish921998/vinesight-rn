@@ -30,6 +30,11 @@ struct WidgetConfig: Codable {
     let selectedFarmName: String
 }
 
+struct WidgetDataPayload: Codable {
+    let weather: WeatherData?
+    let config: WidgetConfig?
+}
+
 struct SimpleEntry: TimelineEntry {
     let date: Date
     let weather: WeatherData?

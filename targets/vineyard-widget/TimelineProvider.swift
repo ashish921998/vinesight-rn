@@ -2,6 +2,7 @@ import WidgetKit
 import SwiftUI
 
 struct Provider: TimelineProvider {
+    typealias Entry = SimpleEntry
     let appGroupID = "group.com.vinesight.app"
     
     func placeholder(in context: Context) -> SimpleEntry {
@@ -36,21 +37,31 @@ struct Provider: TimelineProvider {
             return errorEntry(message: "Unable to Load")
         }
         
-        // Load weather data
+        // Load weather data and (new) config from payload
         var weather: WeatherData? = nil
-        if let data = defaults.data(forKey: "widgetData"),
-           let decoded = try? JSONDecoder().decode([String: WeatherData].self, from: data) {
-            weather = decoded["weather"]
+        var config: WidgetConfig? = nil
+        if let data = defaults.data(forKey: "widgetData") {
+            if let decoded = try? JSONDecoder().decode(WidgetDataPayload.self, from: data) {
+                weather = decoded.weather
+                config = decoded.config
+            } else if let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let configObject = root["config"],
+                      let configData = try? JSONSerialization.data(withJSONObject: configObject),
+                      let extractedConfig = try? JSONDecoder().decode(WidgetConfig.self, from: configData) {
+                // Fallback: keep reading config even if WeatherData payload shape drifts.
+                config = extractedConfig
+            }
         }
         
-        // Load config
-        var config: WidgetConfig? = nil
-        if let configData = defaults.data(forKey: "widgetConfig"),
+        // Backward compatibility: if payload has no config, read legacy key
+        if config == nil,
+           let configData = defaults.data(forKey: "widgetConfig"),
            let decodedConfig = try? JSONDecoder().decode(WidgetConfig.self, from: configData) {
             config = decodedConfig
         }
         
         // Check if data is stale (older than 24 hours)
+        // Nil weather is considered stale so the widget can show a warning/placeholder state.
         // JS sends Date.now() in milliseconds; convert to seconds for comparison
         let isStale: Bool
         if let lastUpdated = weather?.lastUpdated {
@@ -58,7 +69,7 @@ struct Provider: TimelineProvider {
             let twentyFourHoursAgo = Date().addingTimeInterval(-24 * 60 * 60).timeIntervalSince1970
             isStale = lastUpdatedSec < twentyFourHoursAgo
         } else {
-            isStale = false
+            isStale = true
         }
         
         return SimpleEntry(
@@ -74,7 +85,7 @@ struct Provider: TimelineProvider {
             date: Date(),
             weather: nil,
             config: nil,
-            isStale: false
+            isStale: true
         )
     }
     

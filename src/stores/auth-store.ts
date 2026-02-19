@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
+import { queryClient, queryPersister } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
 import type { User, Session } from '@supabase/supabase-js';
 import type { PhoneAuthMode } from '@/types/auth';
@@ -104,6 +105,18 @@ const hasCompletedProfileName = (user: User | null | undefined) =>
     user?.user_metadata?.full_name ||
     (user?.user_metadata?.first_name && user?.user_metadata?.last_name),
   );
+
+const clearQueryCache = async (context: string) => {
+  queryClient.clear();
+  try {
+    await queryPersister.removeClient();
+  } catch (_persisterError) {
+    // Best effort: auth flows should still complete if persistence cleanup fails.
+    if (__DEV__) {
+      console.error(`Failed to remove persisted query cache during ${context}`);
+    }
+  }
+};
 
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Initial state
@@ -534,6 +547,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
       });
       telemetry.reset();
+      await clearQueryCache('sign out success path');
 
       // Force clear any cached sessions from storage
       try {
@@ -561,6 +575,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
       });
       telemetry.reset();
+      await clearQueryCache('sign out recovery path');
     }
   },
 
@@ -610,6 +625,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
       });
+      telemetry.reset();
+      await clearQueryCache('delete account');
 
       if (__DEV__) {
         console.log('Account deletion request logged successfully');

@@ -103,7 +103,7 @@ struct LargeWidgetView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.orange)
                             .font(.caption)
-                        Text("Data may be outdated")
+                        Text("widget.data_outdated")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                         Spacer()
@@ -111,7 +111,12 @@ struct LargeWidgetView: View {
                 } else {
                     HStack {
                         Spacer()
-                        Text("Updated: \(formattedDate(weather.lastUpdated))")
+                        Text(
+                            String(
+                                format: NSLocalizedString("widget.updated_prefix %@", comment: ""),
+                                formattedDate(weather.lastUpdated)
+                            )
+                        )
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -123,11 +128,11 @@ struct LargeWidgetView: View {
                         .font(.system(size: 48))
                         .foregroundColor(.gray)
                     
-                    Text("Unable to Load")
+                    Text("widget.unable_to_load")
                         .font(.headline)
                         .foregroundColor(.secondary)
                     
-                    Text("Open Vinesight to sync weather data")
+                    Text("widget.open_app_to_sync")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -141,10 +146,10 @@ struct LargeWidgetView: View {
     
     private func iconName(for condition: String) -> String {
         switch condition.lowercased() {
-        case let c where c.contains("sun") || c.contains("clear"):
-            return "sun.max.fill"
         case let c where c.contains("partly") || c.contains("partly-cloudy"):
             return "cloud.sun.fill"
+        case let c where c.contains("sun") || c.contains("clear"):
+            return "sun.max.fill"
         case let c where c.contains("cloud") && !c.contains("sun"):
             return "cloud.fill"
         case let c where c.contains("rain"):
@@ -176,8 +181,8 @@ struct VineyardWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             VineyardWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Vineyard Weather")
-        .description("View current weather and forecast for your vineyard.")
+        .configurationDisplayName(Text("widget.configuration_display_name"))
+        .description(Text("widget.configuration_description"))
         .supportedFamilies([.systemLarge])
     }
 }

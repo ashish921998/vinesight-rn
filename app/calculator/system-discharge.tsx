@@ -3,7 +3,7 @@
  * Calculate irrigation system discharge rates
  */
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 
 import { Stack } from 'expo-router';
@@ -56,6 +57,9 @@ export default function SystemDischargeScreen() {
   const [results, setResults] = useState<SystemDischargeResults | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
+  const focusedFieldKeyRef = useRef<string | null>(null);
+  const focusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keyboardShowTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputPositionsRef = useRef<Record<string, number>>({});
   const inputRowRefs = useRef<Record<string, React.RefObject<View | null>>>({
     dbl: React.createRef<View>(),
@@ -182,13 +186,43 @@ export default function SystemDischargeScreen() {
     setResults(null);
   };
 
+  const scrollToField = useCallback((fieldKey: string, animated = true) => {
+    const rowRef = inputRowRefs.current[fieldKey];
+    const scrollContentNode = scrollContentRef.current;
+    if (rowRef?.current && scrollContentNode) {
+      rowRef.current.measureLayout(
+        scrollContentNode,
+        (_x, y) => {
+          inputPositionsRef.current[fieldKey] = y;
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, y - INPUT_FOCUS_SCROLL_OFFSET),
+            animated,
+          });
+        },
+        () => {
+          const fallbackY = inputPositionsRef.current[fieldKey];
+          if (typeof fallbackY === 'number') {
+            scrollViewRef.current?.scrollTo({
+              y: Math.max(0, fallbackY - INPUT_FOCUS_SCROLL_OFFSET),
+              animated,
+            });
+            return;
+          }
+          if (__DEV__) {
+            console.warn(`Failed to measure layout for field "${fieldKey}"`);
+          }
+        },
+      );
+    }
+  }, []);
+
   const handleInputLayout = (fieldKey: string) => {
     const rowRef = inputRowRefs.current[fieldKey];
     const scrollContentNode = scrollContentRef.current;
     if (rowRef?.current && scrollContentNode) {
       rowRef.current.measureLayout(
         scrollContentNode,
-        (x, y) => {
+        (_x, y) => {
           inputPositionsRef.current[fieldKey] = y;
         },
         () => {},
@@ -197,13 +231,61 @@ export default function SystemDischargeScreen() {
   };
 
   const handleInputFocus = (fieldKey: string) => {
-    const y = inputPositionsRef.current[fieldKey];
-    if (typeof y !== 'number') return;
-    scrollViewRef.current?.scrollTo({
-      y: Math.max(0, y - INPUT_FOCUS_SCROLL_OFFSET),
-      animated: true,
-    });
+    focusedFieldKeyRef.current = fieldKey;
+    scrollToField(fieldKey, true);
+
+    if (focusTimeoutRef.current) {
+      clearTimeout(focusTimeoutRef.current);
+    }
+    // A second pass after keyboard animation improves reliability on both iOS/Android.
+    focusTimeoutRef.current = setTimeout(() => {
+      if (focusedFieldKeyRef.current === fieldKey) {
+        scrollToField(fieldKey, true);
+      }
+    }, 120);
   };
+
+  useEffect(() => {
+    const onKeyboardDidShow = () => {
+      const focusedFieldKey = focusedFieldKeyRef.current;
+      if (!focusedFieldKey) return;
+      if (keyboardShowTimeoutRef.current) {
+        clearTimeout(keyboardShowTimeoutRef.current);
+      }
+      keyboardShowTimeoutRef.current = setTimeout(() => {
+        if (focusedFieldKeyRef.current === focusedFieldKey) {
+          scrollToField(focusedFieldKey, true);
+        }
+      }, 80);
+    };
+
+    const showSub = Keyboard.addListener('keyboardDidShow', onKeyboardDidShow);
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      focusedFieldKeyRef.current = null;
+      if (keyboardShowTimeoutRef.current) {
+        clearTimeout(keyboardShowTimeoutRef.current);
+        keyboardShowTimeoutRef.current = null;
+      }
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+        focusTimeoutRef.current = null;
+      }
+    });
+
+    return () => {
+      if (keyboardShowTimeoutRef.current) {
+        clearTimeout(keyboardShowTimeoutRef.current);
+        keyboardShowTimeoutRef.current = null;
+      }
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+        focusTimeoutRef.current = null;
+      }
+      focusedFieldKeyRef.current = null;
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [scrollToField]);
 
   return (
     <>
@@ -224,6 +306,7 @@ export default function SystemDischargeScreen() {
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 32 }}
             contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
