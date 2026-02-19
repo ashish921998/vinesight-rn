@@ -22,7 +22,7 @@ export interface FertilizerEntry {
   densityKgPerL?: number | null;
 }
 
-const DEFAULT_FERTILIZER_UNIT: FertilizerUnit = 'kg/acre';
+const DEFAULT_FERTILIZER_UNIT: FertilizerUnit = 'kg';
 
 function isFertilizerUnit(value: string): value is FertilizerUnit {
   return FERTILIZER_UNITS.includes(value as FertilizerUnit);
@@ -34,7 +34,8 @@ function resolveFertilizerUnit(
 ): FertilizerUnit {
   const normalized = unit?.trim();
   const lowered = normalized?.toLowerCase();
-  if (lowered === 'litre/acre') return 'liter/acre';
+  if (lowered === 'kg/acre') return 'kg';
+  if (lowered === 'liter/acre' || lowered === 'litre/acre') return 'liter';
   if (lowered === 'litre') return 'liter';
   if (normalized && isFertilizerUnit(normalized)) return normalized;
   return fallback;
@@ -69,6 +70,7 @@ interface FertigationFormProps {
   onChange: (data: FertigationFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
   quickAddItems?: FertigationQuickAddItem[];
+  perAreaLabel?: string;
 }
 
 export function FertigationForm({
@@ -76,6 +78,7 @@ export function FertigationForm({
   onChange,
   onInputFocus,
   quickAddItems = [],
+  perAreaLabel = 'Per acre',
 }: FertigationFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
@@ -96,7 +99,7 @@ export function FertigationForm({
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             name: '',
             quantity: 0,
-            unit: 'kg/acre',
+            unit: 'kg',
             quantityBasis: 'per_acre',
             warehouseItemId: null,
             compositionSnapshot: null,
@@ -146,7 +149,8 @@ export function FertigationForm({
             ? current.quantity
             : (item.quantity ?? 0),
         quantityBasis:
-          current.quantityBasis ?? resolveQuantityBasis(validatedUnit, item.quantityBasis),
+          current.quantityBasis ??
+          resolveQuantityBasis(item.unit?.trim() ?? validatedUnit, item.quantityBasis),
         warehouseItemId: item.warehouseItemId ?? null,
         compositionSnapshot: item.composition ?? null,
         densityKgPerL: item.densityKgPerL ?? null,
@@ -169,7 +173,10 @@ export function FertigationForm({
           name: item.name.trim(),
           quantity: item.quantity ?? 0,
           unit: validatedUnit,
-          quantityBasis: resolveQuantityBasis(validatedUnit, item.quantityBasis),
+          quantityBasis: resolveQuantityBasis(
+            item.unit?.trim() ?? validatedUnit,
+            item.quantityBasis,
+          ),
           warehouseItemId: item.warehouseItemId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
@@ -269,7 +276,7 @@ export function FertigationForm({
                   </Text>
                   <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                     {item.quantity ? `${item.quantity} ` : ''}
-                    {item.unit ?? 'kg/acre'}
+                    {item.unit ?? 'kg'}
                   </Text>
                 </Pressable>
               ))}
@@ -331,6 +338,7 @@ export function FertigationForm({
             onRemove={() => removeFertilizer(index)}
             showRemove={data.fertilizers.length > 1}
             onInputFocus={onInputFocus}
+            perAreaLabel={perAreaLabel}
           />
         ))}
 
@@ -447,6 +455,7 @@ interface FertilizerRowProps {
   onRemove: () => void;
   showRemove: boolean;
   onInputFocus?: TextInputProps['onFocus'];
+  perAreaLabel: string;
 }
 
 function FertilizerRow({
@@ -456,6 +465,7 @@ function FertilizerRow({
   onRemove,
   showRemove,
   onInputFocus,
+  perAreaLabel,
 }: FertilizerRowProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -516,7 +526,9 @@ function FertilizerRow({
       name: item.name,
       unit,
       quantity: currentQuantity > 0 ? currentQuantity : (item.quantity ?? 0),
-      quantityBasis: fertilizer.quantityBasis ?? resolveQuantityBasis(unit, item.quantityBasis),
+      quantityBasis:
+        fertilizer.quantityBasis ??
+        resolveQuantityBasis(item.unit?.trim() ?? unit, item.quantityBasis),
       warehouseItemId: item.warehouseItemId ?? null,
       compositionSnapshot: item.composition ?? null,
       densityKgPerL: item.densityKgPerL ?? null,
@@ -603,7 +615,7 @@ function FertilizerRow({
                     </Text>
                     <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
                       {item.quantity ? `${item.quantity} ` : ''}
-                      {item.unit ?? 'kg/acre'}
+                      {item.unit ?? 'kg'}
                     </Text>
                   </Pressable>
                 ))}
@@ -729,7 +741,7 @@ function FertilizerRow({
           }}
         >
           <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
-            Per acre
+            {perAreaLabel}
           </Text>
         </Pressable>
       </View>
@@ -762,7 +774,7 @@ export function createEmptyFertigationFormData(): FertigationFormData {
       {
         name: '',
         quantity: 0,
-        unit: 'kg/acre',
+        unit: 'kg',
         quantityBasis: 'per_acre',
         warehouseItemId: null,
         compositionSnapshot: null,

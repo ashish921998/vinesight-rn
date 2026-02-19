@@ -54,7 +54,7 @@ export default function OTPVerificationScreen() {
     if (isAuthenticated && needsProfileCompletion) {
       router.replace('/(auth)/profile-completion');
     } else if (isAuthenticated) {
-      router.replace('/(tabs)');
+      router.replace('/');
     }
   }, [isAuthenticated, needsProfileCompletion]);
 

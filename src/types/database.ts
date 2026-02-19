@@ -358,6 +358,7 @@ export interface Profile {
   phone?: string | null;
   user_type?: UserType | null;
   consultant_organization_id?: string | null;
+  area_unit_preference?: 'hectares' | 'acres' | null;
   currency_preference?: Currency | null;
   preferred_spacing_unit?: SpacingUnit | null;
   created_at?: string | null;

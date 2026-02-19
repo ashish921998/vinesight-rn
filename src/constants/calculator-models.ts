@@ -353,7 +353,7 @@ export type ChemicalUnit = (typeof CHEMICAL_UNITS)[number];
 // MARK: - Fertilizer Units
 // ============================================================
 
-export const FERTILIZER_UNITS = ['kg/acre', 'liter/acre', 'kg', 'liter', 'gram', 'ml'] as const;
+export const FERTILIZER_UNITS = ['kg', 'liter', 'gram', 'ml'] as const;
 export type FertilizerUnit = (typeof FERTILIZER_UNITS)[number];
 
 // ============================================================

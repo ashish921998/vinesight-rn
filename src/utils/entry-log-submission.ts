@@ -15,6 +15,8 @@ import type {
 } from '@/components/forms';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
 import { mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
+import { resolveAreaUnitPreference } from '@/utils/preferences';
+import type { AreaUnitPreference } from '@/utils/preferences';
 
 export interface EntryPendingLogSubmission {
   id: string;
@@ -30,6 +32,7 @@ export interface EntryPendingLogSubmission {
 export interface EntryLogFarmContext {
   id: number;
   area?: number | null;
+  areaUnit?: AreaUnitPreference | null;
   total_tank_capacity?: number | null;
   system_discharge?: number | null;
   remaining_water?: number | null;
@@ -59,7 +62,10 @@ export async function submitEntryPendingLog(params: {
 }): Promise<EntryLogSubmissionResult> {
   const { log, dateStr, farm, submitters } = params;
   const farmId = farm.id;
-  const farmArea = farm.area ?? 0;
+  const areaUnit = resolveAreaUnitPreference(farm.areaUnit ?? 'acres');
+  const farmArea =
+    typeof farm.area === 'number' && Number.isFinite(farm.area) && farm.area > 0 ? farm.area : 0;
+  const perAreaToPerAcreFactor = areaUnit === 'hectares' ? 0.404686 : 1;
 
   switch (log.type) {
     case 'irrigation': {
@@ -167,15 +173,20 @@ export async function submitEntryPendingLog(params: {
       const data = log.data as FertigationFormData;
       const fertilizers = data.fertilizers
         .filter((f) => f.name.trim() && f.quantity !== undefined && f.quantity > 0)
-        .map((f) => ({
-          name: f.name.trim(),
-          unit: f.unit,
-          quantity: f.quantity!,
-          quantity_basis: f.quantityBasis ?? 'total',
-          warehouse_item_id: f.warehouseItemId ?? null,
-          composition_snapshot: f.compositionSnapshot ?? null,
-          density_kg_per_l: f.densityKgPerL ?? null,
-        }));
+        .map((f) => {
+          const quantityBasis = f.quantityBasis ?? 'total';
+          const quantity =
+            quantityBasis === 'per_acre' ? f.quantity! * perAreaToPerAcreFactor : f.quantity!;
+          return {
+            name: f.name.trim(),
+            unit: f.unit,
+            quantity,
+            quantity_basis: quantityBasis,
+            warehouse_item_id: f.warehouseItemId ?? null,
+            composition_snapshot: f.compositionSnapshot ?? null,
+            density_kg_per_l: f.densityKgPerL ?? null,
+          };
+        });
       const nutrientTotals = calculateNutrientTotalsForLog({
         items: fertilizers,
         areaAcre: farmArea,

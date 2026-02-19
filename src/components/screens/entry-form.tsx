@@ -73,6 +73,7 @@ import {
   useCreateFertigationRecord,
   useUpdateFarmWaterLevel,
   useFarms,
+  useProfile,
   useWarehouseItems,
   useRecentSprayChemicals,
   useRecentFertigationItems,
@@ -93,10 +94,11 @@ import { toSupabaseDateString } from '@/types/database';
 import type { Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
-import { useNotificationStore } from '@/stores';
+import { useAuthStore, useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
 import { getExpenseIconName } from '@/utils/expense-icons';
 import { submitEntryPendingLog } from '@/utils/entry-log-submission';
+import { resolveAreaUnitPreference } from '@/utils/preferences';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
@@ -173,7 +175,8 @@ function isValidFertilizerUnit(
 
 function normalizeFertigationDoseUnit(unit: string): string {
   const normalized = unit.trim().toLowerCase();
-  if (normalized === 'litre/acre') return 'liter/acre';
+  if (normalized === 'kg/acre') return 'kg';
+  if (normalized === 'liter/acre' || normalized === 'litre/acre') return 'liter';
   if (normalized === 'litre') return 'liter';
   return unit.trim();
 }
@@ -236,6 +239,12 @@ export function EntryForm({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
+  const { data: profile } = useProfile();
+  const user = useAuthStore((state) => state.user);
+  const preferredAreaUnit = resolveAreaUnitPreference(
+    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  );
+  const fertigationPerAreaLabel = preferredAreaUnit === 'hectares' ? 'Per hectare' : 'Per acre';
 
   const isVisible = visible ?? true;
   const queryClient = useQueryClient();
@@ -462,15 +471,15 @@ export function EntryForm({
         setFertigationData({
           waterVolume: undefined,
           fertilizers: initialLogPrefill.fertigationItems.map((item) => {
-            const normalizedUnit = item.unit?.trim();
+            const normalizedUnit = item.unit ? normalizeFertigationDoseUnit(item.unit) : null;
             const unit =
-              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg/acre';
+              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg';
             return {
               id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
               name: item.name,
               quantity: item.quantity ?? 0,
               unit,
-              quantityBasis: item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+              quantityBasis: item.quantityBasis ?? 'per_acre',
             };
           }),
         });
@@ -568,17 +577,17 @@ export function EntryForm({
         const fertigationPrefill = initialVoiceLogPrefill.fertigation;
         const prefilledFertilizers = fertigationPrefill?.fertilizers?.length
           ? fertigationPrefill.fertilizers.map((item) => {
+              const normalizedUnit = item.unit ? normalizeFertigationDoseUnit(item.unit) : null;
               const unit =
-                item.unit &&
-                FERTILIZER_UNITS.includes(item.unit as (typeof FERTILIZER_UNITS)[number])
-                  ? (item.unit as (typeof FERTILIZER_UNITS)[number])
-                  : 'kg/acre';
+                normalizedUnit &&
+                FERTILIZER_UNITS.includes(normalizedUnit as (typeof FERTILIZER_UNITS)[number])
+                  ? (normalizedUnit as (typeof FERTILIZER_UNITS)[number])
+                  : 'kg';
               return {
                 name: item.name ?? '',
                 quantity: item.quantity ?? undefined,
                 unit,
-                quantityBasis:
-                  item.quantityBasis ?? (unit.includes('/acre') ? 'per_acre' : 'total'),
+                quantityBasis: item.quantityBasis ?? 'per_acre',
               };
             })
           : createEmptyFertigationFormData().fertilizers;
@@ -737,6 +746,7 @@ export function EntryForm({
           farm: {
             id: farmId,
             area: activeFarm.area,
+            areaUnit: preferredAreaUnit,
             total_tank_capacity: activeFarm.total_tank_capacity,
             system_discharge: activeFarm.system_discharge,
             remaining_water: activeFarm.remaining_water,
@@ -977,7 +987,7 @@ export function EntryForm({
     if (type === 'fertigation') {
       return fertigationQuickAddItems.map((item) => ({
         name: item.name,
-        unit: item.unit ?? 'kg/acre',
+        unit: item.unit ?? 'kg',
         quantity: item.quantity ?? null,
         source: 'recent',
       }));
@@ -1006,7 +1016,7 @@ export function EntryForm({
     const quantityValue = plannedItemQty.trim() ? Number(plannedItemQty) : null;
     addTaskPlannedInput({
       name: plannedItemName.trim(),
-      unit: plannedItemUnit.trim() || (type === 'spray' ? 'gm/L' : 'kg/acre'),
+      unit: plannedItemUnit.trim() || (type === 'spray' ? 'gm/L' : 'kg'),
       quantity: Number.isFinite(quantityValue) ? quantityValue : null,
       source: 'custom',
     });
@@ -1358,6 +1368,7 @@ export function EntryForm({
             onChange={setFertigationData}
             onInputFocus={scrollToFocusedInput}
             quickAddItems={fertigationQuickAddItems}
+            perAreaLabel={fertigationPerAreaLabel}
           />
         )}
 
@@ -2212,7 +2223,7 @@ export function EntryForm({
                   <Text style={{ fontSize: 12, color: m3.colorScheme.onSurface }}>{item.name}</Text>
                   <Text style={{ fontSize: 11, color: m3.colorScheme.onSurfaceVariant }}>
                     {item.quantity ? `${item.quantity} ` : ''}
-                    {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg/acre')}
+                    {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg')}
                   </Text>
                 </Pressable>
               ))}

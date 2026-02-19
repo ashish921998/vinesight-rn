@@ -172,7 +172,7 @@ describe('submitEntryPendingLog', () => {
             {
               name: 'Urea',
               quantity: 20,
-              unit: 'kg/acre',
+              unit: 'kg',
               quantityBasis: 'total',
             },
           ],
@@ -195,5 +195,43 @@ describe('submitEntryPendingLog', () => {
       }),
     );
     expect(result.recordId).toBe(15);
+  });
+
+  it('normalizes per-area fertigation quantity from hectares to acres', async () => {
+    const submitters = createSubmitters();
+
+    await submitEntryPendingLog({
+      log: {
+        id: 'log-fertigation-hectare',
+        type: 'fertigation',
+        data: {
+          waterVolume: 500,
+          fertilizers: [
+            {
+              name: 'Urea',
+              quantity: 10,
+              unit: 'kg',
+              quantityBasis: 'per_acre',
+            },
+          ],
+        },
+      },
+      dateStr: '2026-02-11',
+      farm: { ...baseFarm, areaUnit: 'hectares' },
+      submitters,
+    });
+
+    expect(submitters.createFertigation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fertilizers: [
+          expect.objectContaining({
+            name: 'Urea',
+            unit: 'kg',
+            quantity_basis: 'per_acre',
+            quantity: 4.04686,
+          }),
+        ],
+      }),
+    );
   });
 });

@@ -11,6 +11,7 @@ import {
   Pressable,
   SafeAreaView,
   Image,
+  Alert,
   type ImageSourcePropType,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -72,18 +73,20 @@ export default function OnboardingScreen() {
         currency: selectedCurrency,
         areaUnit: selectedAreaUnit,
       });
-      updateProfile.mutate(
-        { currency_preference: selectedCurrency },
-        {
-          onError: (error) => {
-            console.error(
-              'Failed to update profile with currency preference:',
-              selectedCurrency,
-              error,
-            );
-          },
-        },
-      );
+      try {
+        await updateProfile.mutateAsync({
+          currency_preference: selectedCurrency,
+          area_unit_preference: selectedAreaUnit,
+        });
+      } catch (error) {
+        console.error(
+          'Failed to update profile preferences:',
+          { currency: selectedCurrency, areaUnit: selectedAreaUnit },
+          error,
+        );
+        Alert.alert(t('common.error'), t('settings.errors.updateProfileFailed'));
+        return;
+      }
     }
 
     if (currentStep === 'notifications') {
@@ -92,7 +95,7 @@ export default function OnboardingScreen() {
 
     if (isLastStep) {
       completeOnboarding();
-      router.replace('/(tabs)');
+      router.replace('/');
     } else {
       nextStep();
     }
@@ -121,11 +124,6 @@ export default function OnboardingScreen() {
       // enabling notifications so onboarding can still complete.
       setPreferences({ notificationsEnabled: false });
     }
-  };
-
-  const handleSkip = () => {
-    completeOnboarding();
-    router.replace('/(tabs)');
   };
 
   const renderProgressIndicator = () => (
@@ -831,23 +829,6 @@ export default function OnboardingScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       {/* Progress Indicator */}
       {renderProgressIndicator()}
-
-      {/* Skip Button */}
-      {!isLastStep && (
-        <Pressable
-          onPress={handleSkip}
-          style={{ position: 'absolute', right: spacing[4], top: spacing[12], zIndex: 10 }}
-        >
-          <Text
-            style={{
-              color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.9),
-              fontSize: fontSize.base,
-            }}
-          >
-            {t('common.skip')}
-          </Text>
-        </Pressable>
-      )}
 
       {/* Content */}
       {renderCurrentStep()}
