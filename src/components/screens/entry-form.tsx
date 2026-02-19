@@ -24,24 +24,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Sentry from '@sentry/react-native';
 import { AppIcon } from '@/components/ui/app-icon';
 import { ModalBackdrop } from '@/components/ui/modal-backdrop';
-import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient as _LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
-import { resolveSymbolIconName } from '@/constants/icon-registry';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
+import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
+import { PendingLogs, type PendingLog } from '@/components/screens/entry-form/PendingLogs';
+import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
+import { LogForm } from '@/components/screens/entry-form/LogForm';
 
 import {
-  IrrigationForm,
-  SprayForm,
-  HarvestForm,
-  ExpenseForm,
-  FertigationForm,
+  IrrigationForm as _IrrigationForm,
+  SprayForm as _SprayForm,
+  HarvestForm as _HarvestForm,
+  ExpenseForm as _ExpenseForm,
+  FertigationForm as _FertigationForm,
   validateIrrigationForm,
   validateSprayForm,
   validateHarvestForm,
@@ -65,6 +67,7 @@ import {
   HARVEST_GRADES,
   CHEMICAL_UNITS,
   FERTILIZER_UNITS,
+  ACTIVITY_TYPES as _ACTIVITY_TYPES,
 } from '@/constants/calculator-models';
 import {
   useCreateIrrigationRecord,
@@ -98,20 +101,7 @@ import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
-import { getExpenseIconName } from '@/utils/expense-icons';
-import { submitEntryPendingLog } from '@/utils/entry-log-submission';
-import {
-  ensureNotificationPermissions,
-  scheduleTaskDueReminder,
-  cancelNotification,
-} from '@/services/notifications';
-import {
-  decodeTaskPlanFromDescription,
-  encodeTaskPlanInDescription,
-  stripTaskPlanFromDescription,
-} from '@/utils/task-plan';
-
-type EntryTab = 'log' | 'task';
+import { stripTaskPlanFromDescription, decodeTaskPlanFromDescription } from '@/utils/task-plan';
 
 interface EntryFormProps {
   visible?: boolean;
@@ -135,21 +125,6 @@ interface EntryFormProps {
   onTaskSaveSuccess?: () => void;
   presentation?: 'modal' | 'screen';
 }
-
-interface PendingLog {
-  id: string;
-  type: LogTypeId;
-  data:
-    | IrrigationFormData
-    | SprayFormData
-    | HarvestFormData
-    | ExpenseFormData
-    | FertigationFormData;
-  displayDescription: string;
-  isSourceTaskLog?: boolean;
-}
-
-const ACTIVITY_TYPES = LOG_TYPES.filter((lt) => lt.id !== 'note');
 
 const TASK_TYPES: TaskType[] = [
   'irrigation',
@@ -302,10 +277,14 @@ export function EntryForm({
   const keyboardHeightRef = useRef(0);
 
   const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
-  const [sprayData, setSprayData] = useState<SprayFormData>(createEmptySprayFormData());
-  const [harvestData, setHarvestData] = useState<HarvestFormData>(createEmptyHarvestFormData());
-  const [expenseData, setExpenseData] = useState<ExpenseFormData>(createEmptyExpenseFormData());
-  const [fertigationData, setFertigationData] = useState<FertigationFormData>(
+  const [sprayData, setSprayData] = useState<SprayFormData>(() => createEmptySprayFormData());
+  const [harvestData, setHarvestData] = useState<HarvestFormData>(() =>
+    createEmptyHarvestFormData(),
+  );
+  const [expenseData, setExpenseData] = useState<ExpenseFormData>(() =>
+    createEmptyExpenseFormData(),
+  );
+  const [fertigationData, setFertigationData] = useState<FertigationFormData>(() =>
     createEmptyFertigationFormData(),
   );
   const [taskPlannedInputs, setTaskPlannedInputs] = useState<PlannedInputItem[]>([]);
@@ -1040,8 +1019,13 @@ export function EntryForm({
     });
   }, []);
 
-  const removeTaskPlannedInput = useCallback((index: number) => {
-    setTaskPlannedInputs((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+  const removeTaskPlannedInput = useCallback((item: PlannedInputItem) => {
+    setTaskPlannedInputs((prev) => {
+      const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
+      return prev.filter(
+        (i) => `${i.name.trim().toLowerCase()}::${(i.unit ?? '').trim().toLowerCase()}` !== key,
+      );
+    });
   }, []);
 
   const addCustomTaskPlannedInput = useCallback(() => {
@@ -1205,255 +1189,6 @@ export function EntryForm({
     t,
   ]);
 
-  const renderTabs = () => {
-    if (resolvedTabs.length < 2) return null;
-    return (
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}>
-        <View
-          style={{
-            backgroundColor: colors.surface[100],
-            borderRadius: 999,
-            padding: 4,
-            flexDirection: 'row',
-          }}
-        >
-          {resolvedTabs.map((tab) => {
-            const isActive = activeTab === tab;
-            const label = tab === 'log' ? t('entryForm.tabs.log') : t('entryForm.tabs.task');
-            const iconName = tab === 'log' ? 'document-text' : 'checkbox-outline';
-            return (
-              <Pressable
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={[
-                  { flex: 1, borderRadius: 999, overflow: 'hidden' },
-                  { marginHorizontal: 2 },
-                ]}
-              >
-                {isActive ? (
-                  <LinearGradient
-                    colors={[
-                      colorWithOpacity(m3.colorScheme.primary, 0.95),
-                      colorWithOpacity(m3.colorScheme.primary, 0.7),
-                    ]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{
-                      width: '100%',
-                      borderRadius: 999,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <AppIcon name={iconName} size={16} color={m3.colorScheme.onPrimary} />
-                    <Text
-                      selectable
-                      style={[
-                        { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                        { color: m3.colorScheme.onPrimary },
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  </LinearGradient>
-                ) : (
-                  <View
-                    style={{
-                      width: '100%',
-                      borderRadius: 999,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <AppIcon name={iconName} size={16} color={m3.colorScheme.onSurfaceVariant} />
-                    <Text
-                      selectable
-                      style={[
-                        { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                        { color: m3.colorScheme.onSurfaceVariant },
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-    );
-  };
-
-  const renderLogTypeSelector = () => (
-    <View
-      style={{
-        backgroundColor: colors.surface[100],
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 16,
-      }}
-    >
-      <Text
-        selectable
-        style={{
-          fontSize: 16,
-          fontWeight: '600',
-          color: m3.colorScheme.onSurface,
-          marginBottom: 12,
-        }}
-      >
-        {t('entryForm.activityType')}
-      </Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        {ACTIVITY_TYPES.map((logType) => {
-          const isSelected = selectedLogType === logType.id;
-          return (
-            <Pressable
-              key={logType.id}
-              onPress={() => {
-                setSelectedLogType(logType.id as LogTypeId);
-                setShowLogFormModal(true);
-              }}
-              style={{
-                width: '18%',
-                paddingVertical: 10,
-                alignItems: 'center',
-                borderRadius: 12,
-                borderWidth: 1,
-                backgroundColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                  : colors.surface[50],
-                borderColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.25)
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-              }}
-            >
-              <View
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 999,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 6,
-                  backgroundColor: isSelected ? `${logType.color}20` : `${logType.color}12`,
-                }}
-              >
-                <AppIcon name={logType.icon} size={16} color={logType.color} />
-              </View>
-              <Text
-                selectable
-                style={[
-                  { fontSize: 10, fontWeight: '600', textAlign: 'center', lineHeight: 12 },
-                  { color: isSelected ? m3.colorScheme.primary : m3.colorScheme.onSurface },
-                ]}
-                numberOfLines={2}
-              >
-                {t(logType.labelKey)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-
-  const renderLogForm = () => {
-    if (!selectedLogType) return null;
-    return (
-      <View style={{ backgroundColor: colors.surface[100], borderRadius: 16, padding: 16 }}>
-        {selectedLogType === 'irrigation' && (
-          <IrrigationForm
-            data={irrigationData}
-            onChange={setIrrigationData}
-            onInputFocus={scrollToFocusedInput}
-          />
-        )}
-        {selectedLogType === 'spray' && (
-          <SprayForm
-            data={sprayData}
-            onChange={setSprayData}
-            onInputFocus={scrollToFocusedInput}
-            quickAddItems={sprayQuickAddItems}
-          />
-        )}
-        {selectedLogType === 'harvest' && (
-          <HarvestForm
-            data={harvestData}
-            onChange={setHarvestData}
-            onInputFocus={scrollToFocusedInput}
-          />
-        )}
-        {selectedLogType === 'expense' && (
-          <ExpenseForm
-            data={expenseData}
-            onChange={setExpenseData}
-            onInputFocus={scrollToFocusedInput}
-          />
-        )}
-        {selectedLogType === 'fertigation' && (
-          <FertigationForm
-            data={fertigationData}
-            onChange={setFertigationData}
-            onInputFocus={scrollToFocusedInput}
-            quickAddItems={fertigationQuickAddItems}
-          />
-        )}
-
-        <Pressable
-          onPress={addLogToSession}
-          disabled={!isLogFormValid || !activeFarm}
-          style={[
-            {
-              marginTop: 16,
-              paddingVertical: 12,
-              borderRadius: 12,
-              alignItems: 'center',
-              flexDirection: 'row',
-              justifyContent: 'center',
-            },
-            {
-              backgroundColor:
-                isLogFormValid && activeFarm
-                  ? m3.colorScheme.primary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-            },
-          ]}
-        >
-          <AppIcon
-            name="add-circle"
-            size={20}
-            color={
-              isLogFormValid
-                ? m3.colorScheme.onPrimary
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-            }
-          />
-          <Text
-            selectable
-            style={[
-              { marginLeft: 8, fontWeight: '600' },
-              {
-                color: isLogFormValid
-                  ? m3.colorScheme.onPrimary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-              },
-            ]}
-          >
-            {t('entryForm.addEntry')}
-          </Text>
-        </Pressable>
-      </View>
-    );
-  };
-
   const renderLogFormModal = () => {
     if (!selectedLogType) return null;
     const logType = LOG_TYPES.find((lt) => lt.id === selectedLogType);
@@ -1526,7 +1261,25 @@ export function EntryForm({
               }}
               scrollEventThrottle={16}
             >
-              {renderLogForm()}
+              <LogForm
+                selectedLogType={selectedLogType}
+                irrigationData={irrigationData}
+                sprayData={sprayData}
+                harvestData={harvestData}
+                expenseData={expenseData}
+                fertigationData={fertigationData}
+                onIrrigationChange={setIrrigationData}
+                onSprayChange={setSprayData}
+                onHarvestChange={setHarvestData}
+                onExpenseChange={setExpenseData}
+                onFertigationChange={setFertigationData}
+                onInputFocus={scrollToFocusedInput}
+                onAdd={addLogToSession}
+                isValid={isLogFormValid}
+                hasFarm={!!activeFarm}
+                sprayQuickAddItems={sprayQuickAddItems}
+                fertigationQuickAddItems={fertigationQuickAddItems}
+              />
             </ScrollView>
           </KeyboardAvoidingView>
         </View>
@@ -1596,88 +1349,6 @@ export function EntryForm({
             {t('entryForm.addEntry')}
           </Text>
         </Pressable>
-      </View>
-    );
-  };
-
-  const renderPendingLogs = () => {
-    if (pendingLogs.length === 0) return null;
-    return (
-      <View
-        style={{
-          backgroundColor: colors.surface[100],
-          borderRadius: 16,
-          padding: 16,
-          marginBottom: 16,
-        }}
-      >
-        <Text
-          selectable
-          style={{
-            fontSize: 16,
-            fontWeight: '600',
-            color: m3.colorScheme.onSurface,
-            marginBottom: 12,
-          }}
-        >
-          {t('entryForm.pendingLogs', { count: pendingLogs.length })}
-        </Text>
-        {pendingLogs.map((log) => {
-          const logType = LOG_TYPES.find((lt) => lt.id === log.type);
-          const iconName =
-            log.type === 'expense'
-              ? getExpenseIconName(
-                  (log.data as ExpenseFormData | undefined)?.type,
-                  resolveSymbolIconName(logType?.icon),
-                )
-              : resolveSymbolIconName(logType?.icon);
-          return (
-            <View
-              key={log.id}
-              style={[
-                {
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  padding: 12,
-                  borderRadius: 12,
-                  marginBottom: 8,
-                },
-                { backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1) },
-              ]}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 999,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: `${logType?.color}15`,
-                }}
-              >
-                <UiSymbol
-                  name={iconName}
-                  size={18}
-                  color={logType?.color ?? m3.colorScheme.primary}
-                />
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text
-                  selectable
-                  style={{ fontSize: 14, fontWeight: '600', color: m3.colorScheme.onSurface }}
-                >
-                  {logType ? t(logType.labelKey) : t('entryForm.addLog')}
-                </Text>
-                <Text selectable style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
-                  {log.displayDescription}
-                </Text>
-              </View>
-              <Pressable onPress={() => removeLogFromSession(log.id)}>
-                <AppIcon name="trash-outline" size={20} color={m3.colorScheme.error} />
-              </Pressable>
-            </View>
-          );
-        })}
       </View>
     );
   };
@@ -1848,7 +1519,13 @@ export function EntryForm({
         </View>
       </View>
 
-      {renderLogTypeSelector()}
+      <LogTypeSelector
+        selectedLogType={selectedLogType}
+        onSelect={(type) => {
+          setSelectedLogType(type);
+          setShowLogFormModal(true);
+        }}
+      />
       {selectedLogType === null && (
         <View
           style={{
@@ -1865,7 +1542,7 @@ export function EntryForm({
           </Text>
         </View>
       )}
-      {renderPendingLogs()}
+      <PendingLogs pendingLogs={pendingLogs} onRemove={removeLogFromSession} />
     </>
   );
 
@@ -2241,9 +1918,9 @@ export function EntryForm({
               showsHorizontalScrollIndicator={false}
               style={{ marginBottom: 12 }}
             >
-              {taskPlanningSuggestions.map((item, index) => (
+              {taskPlanningSuggestions.map((item) => (
                 <Pressable
-                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  key={`${item.name}-${item.unit ?? 'unit'}-${item.source ?? 'source'}`}
                   onPress={() => addTaskPlannedInput(item)}
                   style={{
                     marginRight: 8,
@@ -2342,9 +2019,9 @@ export function EntryForm({
 
           {taskPlannedInputs.length > 0 && (
             <View style={{ gap: 6 }}>
-              {taskPlannedInputs.map((item, index) => (
+              {taskPlannedInputs.map((item) => (
                 <View
-                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  key={`${item.name}-${item.unit ?? 'unit'}-${item.source ?? 'source'}`}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -2366,7 +2043,7 @@ export function EntryForm({
                       {item.unit ?? ''}
                     </Text>
                   </View>
-                  <Pressable onPress={() => removeTaskPlannedInput(index)}>
+                  <Pressable onPress={() => removeTaskPlannedInput(item)}>
                     <AppIcon
                       name="close-circle"
                       size={18}
@@ -2607,7 +2284,7 @@ export function EntryForm({
           </View>
         </View>
 
-        {renderTabs()}
+        <Tabs tabs={resolvedTabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         {showDatePicker && !isIOS && (
           <DateTimePicker

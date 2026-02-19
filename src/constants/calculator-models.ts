@@ -300,6 +300,8 @@ export function getLogType(id: LogTypeId): LogType {
   return LOG_TYPES.find((lt) => lt.id === id) ?? LOG_TYPES[0];
 }
 
+export const ACTIVITY_TYPES = LOG_TYPES.filter((lt) => lt.id !== 'note');
+
 // ============================================================
 // MARK: - Expense Types
 // ============================================================

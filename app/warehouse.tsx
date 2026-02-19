@@ -54,33 +54,37 @@ export default function WarehouseScreen() {
   );
 
   useEffect(() => {
-    if (!warehouseReorderAlertsEnabled || !items || items.length === 0) return;
+    (async () => {
+      if (!warehouseReorderAlertsEnabled || !items || items.length === 0) return;
 
-    const lowStockToNotify = items.filter(
-      (item) =>
-        item.reorder_quantity &&
-        item.quantity <= item.reorder_quantity &&
-        item.id != null &&
-        !notifiedWarehouseItemIds.has(item.id),
-    );
-
-    for (const item of lowStockToNotify) {
-      addNotifiedWarehouseItemId(item.id!);
-      notifyWarehouseReorder(item.name, item.quantity, item.unit, item.reorder_quantity!).catch(
-        () => {},
+      const lowStockToNotify = items.filter(
+        (item) =>
+          item.reorder_quantity &&
+          item.quantity <= item.reorder_quantity &&
+          item.id != null &&
+          !notifiedWarehouseItemIds.has(item.id),
       );
-    }
 
-    items.forEach((item) => {
-      if (
-        item.id != null &&
-        item.reorder_quantity &&
-        item.quantity > item.reorder_quantity &&
-        notifiedWarehouseItemIds.has(item.id)
-      ) {
-        removeNotifiedWarehouseItemId(item.id);
+      for (const item of lowStockToNotify) {
+        try {
+          await notifyWarehouseReorder(item.name, item.quantity, item.unit, item.reorder_quantity!);
+          addNotifiedWarehouseItemId(item.id!);
+        } catch {
+          // Notification failed, silently continue
+        }
       }
-    });
+
+      items.forEach((item) => {
+        if (
+          item.id != null &&
+          item.reorder_quantity &&
+          item.quantity > item.reorder_quantity &&
+          notifiedWarehouseItemIds.has(item.id)
+        ) {
+          removeNotifiedWarehouseItemId(item.id);
+        }
+      });
+    })();
   }, [
     warehouseReorderAlertsEnabled,
     items,

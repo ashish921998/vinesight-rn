@@ -82,7 +82,9 @@ export async function scheduleTaskDueReminder(taskId: string, dueDate: string): 
   const scheduledIds: string[] = [];
 
   // --- Notification 1: Day before at 07:00 ---
-  const dayBeforeDate = new Date(y, mo - 1, d - 1, 7, 0, 0);
+  const dayBeforeDate = new Date(y, mo - 1, d);
+  dayBeforeDate.setDate(dayBeforeDate.getDate() - 1);
+  dayBeforeDate.setHours(7, 0, 0, 0);
   if (dayBeforeDate.getTime() > now) {
     const title = i18n.t('notifications.taskDue.title');
     const body = i18n.t('notifications.taskDueTomorrow.body');
@@ -220,7 +222,9 @@ export async function schedulePetioleTestReminder(
     return null;
   }
 
-  const reminderDate = new Date(y, mo - 1, d - 1, 7, 0, 0);
+  const reminderDate = new Date(y, mo - 1, d);
+  reminderDate.setDate(reminderDate.getDate() - 1);
+  reminderDate.setHours(7, 0, 0, 0);
 
   if (Number.isNaN(reminderDate.getTime())) return null;
   if (reminderDate.getTime() <= Date.now()) return null;

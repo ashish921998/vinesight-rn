@@ -185,7 +185,7 @@ export default function SettingsScreen() {
   const [countrySearch, setCountrySearch] = useState('');
 
   // Local preferences state
-  const [selectedCurrency, setSelectedCurrency] = useState(getDefaultCurrency());
+  const [selectedCurrency, setSelectedCurrency] = useState(() => getDefaultCurrency());
   const [selectedAreaUnit, setSelectedAreaUnit] = useState<'acres' | 'hectares'>('acres');
   const currency = useCurrency();
 

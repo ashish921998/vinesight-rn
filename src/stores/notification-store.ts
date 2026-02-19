@@ -147,7 +147,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
           migrateSchedules('petioleTestSchedules');
         }
         if (version < 2) {
-          state.notifiedWarehouseItemIds = [];
+          state.notifiedWarehouseItemIds = new Set();
         }
         return state as unknown as NotificationState & NotificationActions;
       },
