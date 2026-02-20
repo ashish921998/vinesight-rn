@@ -306,7 +306,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
   const cropSearchQueryTrimmed = formState.cropSearchQuery.trim();
   const cropSearchQueryLower = cropSearchQueryTrimmed.toLowerCase();
-  const varietySearchQueryLower = formState.varietySearchQuery.trim().toLowerCase();
+  const varietySearchQueryTrimmed = formState.varietySearchQuery.trim();
+  const varietySearchQueryLower = varietySearchQueryTrimmed.toLowerCase();
 
   const filteredCropOptions = useMemo(() => {
     if (!cropSearchQueryLower) return knownCropOptions;
@@ -330,6 +331,16 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     if (!varietySearchQueryLower) return varieties;
     return varieties.filter((variety) => variety.toLowerCase().includes(varietySearchQueryLower));
   }, [varieties, varietySearchQueryLower]);
+
+  const canCreateCustomVariety = useMemo(() => {
+    if (!varietySearchQueryTrimmed) return false;
+    return !varieties.some((variety) => variety.toLowerCase() === varietySearchQueryLower);
+  }, [varietySearchQueryLower, varietySearchQueryTrimmed, varieties]);
+
+  const popularVarieties = useMemo(() => {
+    const nonCustom = varieties.filter((v) => v !== 'Custom');
+    return nonCustom.slice(0, 5);
+  }, [varieties]);
 
   const selectedCropLabel = useMemo(() => {
     if (formState.selectedCrop === 'Other') {
@@ -492,6 +503,16 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       showVarietyPicker: false,
       varietySearchQuery: '',
       customVariety: variety === 'Custom' ? '' : prev.customVariety,
+    }));
+  };
+
+  const handleUseCustomVariety = (varietyName: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      cropVariety: 'Custom',
+      customVariety: varietyName,
+      showVarietyPicker: false,
+      varietySearchQuery: '',
     }));
   };
 
@@ -1007,7 +1028,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: spacing[5],
+            marginBottom: spacing[3],
           }}
           onPress={() =>
             setFormState((prev) => ({ ...prev, showVarietyPicker: true, varietySearchQuery: '' }))
@@ -1026,6 +1047,42 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           </Text>
           <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
         </Pressable>
+
+        {popularVarieties.length > 0 && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: 20 }}>
+            {popularVarieties.map((variety) => {
+              const isSelected = formState.cropVariety === variety;
+              return (
+                <Pressable
+                  key={variety}
+                  onPress={() => handleSelectVariety(variety)}
+                  style={{
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    borderRadius: borderRadius.full,
+                    backgroundColor: isSelected
+                      ? colorWithOpacity(colors.primary[500], 0.14)
+                      : colors.surface[100],
+                    borderWidth: 1,
+                    borderColor: isSelected
+                      ? colorWithOpacity(colors.primary[500], 0.4)
+                      : colors.surface[200],
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isSelected ? colors.primary[700] : colors.surface[700],
+                      fontWeight: isSelected ? fontWeight.semibold : fontWeight.medium,
+                      fontSize: fontSize.sm,
+                    }}
+                  >
+                    {variety}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
         {formState.cropVariety === 'Custom' && (
           <FormInput
@@ -1746,7 +1803,47 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                     </View>
                   </Pressable>
                 ))}
-                {filteredVarieties.length === 0 && (
+                {canCreateCustomVariety && (
+                  <Pressable
+                    onPress={() => handleUseCustomVariety(varietySearchQueryTrimmed)}
+                    style={{
+                      paddingHorizontal: spacing[6],
+                      paddingVertical: spacing[4],
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.surface[100],
+                      backgroundColor:
+                        formState.cropVariety === 'Custom' &&
+                        formState.customVariety.trim().toLowerCase() === varietySearchQueryLower
+                          ? colors.surface[50]
+                          : colors.surface[100],
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <UISymbol name="plus.circle.fill" size={20} color={colors.primary[500]} />
+                        <Text
+                          style={{
+                            marginLeft: spacing[2],
+                            fontSize: fontSize.base,
+                            color: colors.surface[900],
+                            fontWeight: fontWeight.semibold,
+                          }}
+                        >
+                          {t('farmForm.variety.useCustomVariety', {
+                            variety: varietySearchQueryTrimmed,
+                          })}
+                        </Text>
+                      </View>
+                    </View>
+                  </Pressable>
+                )}
+                {filteredVarieties.length === 0 && !canCreateCustomVariety && (
                   <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
                     <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
                       {t('common.noResultsFound')}

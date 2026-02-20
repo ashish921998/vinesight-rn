@@ -395,6 +395,7 @@ export const en = {
       customNamePlaceholder: 'Enter variety name',
       modalTitle: 'Select Variety',
       searchPlaceholder: 'Search variety',
+      useCustomVariety: 'Use "{{variety}}"',
     },
     plantingDate: {
       selectPlaceholder: 'Select date',

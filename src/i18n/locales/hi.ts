@@ -395,6 +395,7 @@ export const hi = {
       customNamePlaceholder: 'किस्म का नाम दर्ज करें',
       modalTitle: 'किस्म चुनें',
       searchPlaceholder: 'किस्म खोजें',
+      useCustomVariety: '"{{variety}}" उपयोग करें',
     },
     plantingDate: {
       selectPlaceholder: 'तारीख चुनें',

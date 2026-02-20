@@ -395,6 +395,7 @@ export const mr = {
       customNamePlaceholder: 'वाण नाव टाका',
       modalTitle: 'वाण निवडा',
       searchPlaceholder: 'वाण शोधा',
+      useCustomVariety: '"{{variety}}" वापरा',
     },
     plantingDate: {
       selectPlaceholder: 'दिनांक निवडा',
