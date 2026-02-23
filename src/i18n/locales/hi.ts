@@ -148,6 +148,7 @@ export const hi = {
       noTarget: 'इस सीज़न के लिए लक्ष्य कटाई तिथि सेट नहीं है।',
       noData: 'अभी तक कोई PHI आधारित स्प्रे रिकॉर्ड नहीं है।',
       safeDate: '{{date}} से सुरक्षित',
+      inlineDate: 'सुरक्षित कटाई तिथि: {{date}}',
       blockedBy: '{{reason}} के कारण अवरुद्ध',
       ctaSetTarget: 'लक्ष्य तिथि सेट करें',
       ctaOpenChecker: 'Safe-to-spray चेकर खोलें',
@@ -618,12 +619,18 @@ export const hi = {
       namePlaceholder: 'रसायन का नाम',
       qtyPlaceholder: 'मात्रा',
       selectUnit: 'इकाई चुनें',
+      totalQty: 'कुल मात्रा',
+      perAcre: 'प्रति एकड़',
     },
     quickAdd: 'त्वरित जोड़',
     catalogOnly: {
       title: 'कैटलॉग मिक्स',
       selectedMix: 'चयनित: {{name}}',
       requiredHint: 'आगे बढ़ने के लिए कैटलॉग मिक्स चुनें',
+    },
+    catalogOptional: {
+      title: 'कैटलॉग मिक्स (वैकल्पिक)',
+      hint: 'वैकल्पिक: PHI जांच सक्षम करने के लिए कैटलॉग मिक्स चुनें',
     },
     noMatchesHint: 'कोई मिलान नहीं मिला। कस्टम रसायन नाम के साथ जारी रखें।',
     validation: {
@@ -1295,6 +1302,20 @@ export const hi = {
     petioleTestRemindersSubtitle: 'छंटाई के 30, 60, 90, 120वें दिन से एक दिन पहले याद दिलाएं',
     notificationNote: 'सूचना सेटिंग्स स्थानीय रूप से संग्रहीत हैं',
     madeForVineyardManagement: 'दाख की बारी प्रबंधन के लिए बनाया गया',
+    sentry: {
+      testButton: 'Sentry टेस्ट इवेंट भेजें',
+      testButtonA11y: 'Sentry टेस्ट इवेंट भेजें',
+      transportDisabledTitle: 'Sentry ट्रांसपोर्ट निष्क्रिय है',
+      transportDisabledDescriptionDev:
+        'यह ऐप डेवलपमेंट में Sentry बंद रखता है। सत्यापन के लिए preview/production build में जांचें, या स्थानीय परीक्षण हेतु app/_layout.tsx में Sentry अस्थायी रूप से सक्षम करें।',
+      transportDisabledDescriptionProd:
+        'Sentry DSN गायब है। EXPO_PUBLIC_SENTRY_DSN जोड़ें और पुनः build करें।',
+      testSentTitle: 'Sentry टेस्ट इवेंट भेजा गया',
+      testSentDescription: 'कुछ क्षणों में अपने Sentry प्रोजेक्ट में टेस्ट issue देखें।',
+      testSentDescriptionWithId: 'इवेंट आईडी: {{eventId}}',
+      testFailedTitle: 'Sentry टेस्ट विफल',
+      testFailedDescription: 'टेस्ट इवेंट भेजा नहीं जा सका। Sentry कॉन्फ़िगरेशन जांचें।',
+    },
     signOut: 'साइन आउट',
     signOutConfirmTitle: 'साइन आउट',
     signOutConfirmBody: 'क्या आप वाकई साइन आउट करना चाहते हैं?',

@@ -1,4 +1,6 @@
 import { addDays, formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
+import { supabase } from '@/lib/supabase';
+import { TABLES } from '@/types/database';
 import type {
   ChemicalMix,
   ChemicalMixComponent,
@@ -198,4 +200,28 @@ export function isPhiConflict(args: {
   if (!safeHarvestDate || !targetHarvestDate) return false;
   if (!isValidDateString(safeHarvestDate) || !isValidDateString(targetHarvestDate)) return false;
   return dayDiff(safeHarvestDate, targetHarvestDate) > 0;
+}
+
+export interface SprayPhiRow {
+  safe_harvest_date: string | null;
+  phi_blocking_component: string | null;
+  chemical: string | null;
+  date: string;
+}
+
+export async function fetchSprayPhiRows(
+  farmId: number,
+  seasonId?: number | null,
+): Promise<SprayPhiRow[]> {
+  let query = supabase
+    .from(TABLES.SPRAY_RECORDS)
+    .select('safe_harvest_date,phi_blocking_component,chemical,date')
+    .eq('farm_id', farmId)
+    .order('date', { ascending: false });
+  if (seasonId !== undefined && seasonId !== null) {
+    query = query.eq('season_id', seasonId);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as SprayPhiRow[];
 }

@@ -112,10 +112,17 @@ export default function SettingsScreen() {
   const handleSendSentryTestEvent = useCallback(() => {
     if (!canSendSentryEvent) {
       Alert.alert(
-        'Sentry transport is disabled',
+        t('settings.sentry.transportDisabledTitle', {
+          defaultValue: 'Sentry transport is disabled',
+        }),
         __DEV__
-          ? 'This app disables Sentry in development. Test with a preview/production build, or temporarily enable Sentry in app/_layout.tsx for local verification.'
-          : 'Sentry DSN is missing. Add EXPO_PUBLIC_SENTRY_DSN and rebuild.',
+          ? t('settings.sentry.transportDisabledDescriptionDev', {
+              defaultValue:
+                'This app disables Sentry in development. Test with a preview/production build, or temporarily enable Sentry in app/_layout.tsx for local verification.',
+            })
+          : t('settings.sentry.transportDisabledDescriptionProd', {
+              defaultValue: 'Sentry DSN is missing. Add EXPO_PUBLIC_SENTRY_DSN and rebuild.',
+            }),
       );
       return;
     }
@@ -123,18 +130,28 @@ export default function SettingsScreen() {
     try {
       const eventId = Sentry.captureException(new Error('Sentry setup verification error'));
       Alert.alert(
-        'Sentry test event sent',
+        t('settings.sentry.testSentTitle', { defaultValue: 'Sentry test event sent' }),
         eventId
-          ? `Event ID: ${eventId}`
-          : 'Check your Sentry project in a few moments for the test issue.',
+          ? t('settings.sentry.testSentDescriptionWithId', {
+              defaultValue: 'Event ID: {{eventId}}',
+              eventId,
+            })
+          : t('settings.sentry.testSentDescription', {
+              defaultValue: 'Check your Sentry project in a few moments for the test issue.',
+            }),
       );
     } catch (error) {
       if (__DEV__) {
         console.error('Failed to send Sentry test event:', error);
       }
-      Alert.alert('Sentry test failed', 'Unable to send a test event. Check Sentry configuration.');
+      Alert.alert(
+        t('settings.sentry.testFailedTitle', { defaultValue: 'Sentry test failed' }),
+        t('settings.sentry.testFailedDescription', {
+          defaultValue: 'Unable to send a test event. Check Sentry configuration.',
+        }),
+      );
     }
-  }, [canSendSentryEvent]);
+  }, [canSendSentryEvent, t]);
 
   const {
     user,
@@ -909,14 +926,16 @@ export default function SettingsScreen() {
             onPress={handleSendSentryTestEvent}
             style={styles.sentryTestButton}
             accessibilityRole="button"
-            accessibilityLabel="Send Sentry test event"
+            accessibilityLabel={t('settings.sentry.testButtonA11y', {
+              defaultValue: 'Send Sentry test event',
+            })}
           >
             <Text
               style={styles.sentryTestButtonText}
               textBreakStrategy="highQuality"
               lineBreakStrategyIOS="standard"
             >
-              Send Sentry test event
+              {t('settings.sentry.testButton', { defaultValue: 'Send Sentry test event' })}
             </Text>
           </Pressable>
         ) : null}

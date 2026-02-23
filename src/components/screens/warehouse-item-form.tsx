@@ -464,6 +464,17 @@ export default function WarehouseItemForm({
       densityKgPerL.trim().length > 0 && Number.isFinite(densityValue) && densityValue > 0
         ? densityValue
         : null;
+    const previousCatalogProductId = editingItem?.catalog_product_id ?? null;
+    const previousCatalogMappingStatus = editingItem?.catalog_mapping_status ?? 'unmapped';
+    const previousCatalogMappingSource = editingItem?.catalog_mapping_source ?? 'manual';
+    const previousCatalogMappedAt = editingItem?.catalog_mapped_at ?? null;
+    const preservePreviousCatalogMapping =
+      selectedCatalogProductId != null &&
+      !selectedCatalogProduct &&
+      previousCatalogProductId != null &&
+      previousCatalogProductId === selectedCatalogProductId;
+    const resolvedCatalogProductId =
+      selectedCatalogProduct?.id ?? selectedCatalogProductId ?? previousCatalogProductId;
 
     const itemData = {
       name: name.trim(),
@@ -478,16 +489,24 @@ export default function WarehouseItemForm({
       composition,
       composition_source: compositionSource,
       composition_updated_at: new Date().toISOString(),
-      catalog_product_id: selectedCatalogProduct?.id ?? null,
+      catalog_product_id: resolvedCatalogProductId,
       catalog_mapping_status: (selectedCatalogProduct
         ? selectedCatalogProduct.verification_tier === 'verified'
           ? 'mapped_verified'
           : 'mapped_provisional'
-        : 'unmapped') as CatalogMappingStatus,
+        : preservePreviousCatalogMapping
+          ? previousCatalogMappingStatus
+          : 'unmapped') as CatalogMappingStatus,
       catalog_mapping_source: (selectedCatalogProduct
         ? 'preset'
-        : 'manual') as CatalogMappingSource,
-      catalog_mapped_at: selectedCatalogProduct ? new Date().toISOString() : null,
+        : preservePreviousCatalogMapping
+          ? previousCatalogMappingSource
+          : 'manual') as CatalogMappingSource,
+      catalog_mapped_at: selectedCatalogProduct
+        ? new Date().toISOString()
+        : preservePreviousCatalogMapping
+          ? previousCatalogMappedAt
+          : null,
     };
 
     try {

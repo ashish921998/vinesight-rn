@@ -148,6 +148,7 @@ export const en = {
       noTarget: 'No target harvest date set for this season.',
       noData: 'No PHI spray records available yet.',
       safeDate: 'Safe from {{date}}',
+      inlineDate: 'Safe harvest date: {{date}}',
       blockedBy: 'Blocked by {{reason}}',
       ctaSetTarget: 'Set target date',
       ctaOpenChecker: 'Open safe-to-spray checker',
@@ -617,12 +618,18 @@ export const en = {
       namePlaceholder: 'Chemical name',
       qtyPlaceholder: 'Qty',
       selectUnit: 'Select unit',
+      totalQty: 'Total Qty',
+      perAcre: 'Per acre',
     },
     quickAdd: 'Quick Add',
     catalogOnly: {
       title: 'Catalog Mixes',
       selectedMix: 'Selected: {{name}}',
       requiredHint: 'Choose a catalog mix to continue',
+    },
+    catalogOptional: {
+      title: 'Catalog mix (optional)',
+      hint: 'Optional: choose a catalog mix to enable PHI checks',
     },
     noMatchesHint: 'No matches. Continue with custom chemical name.',
     validation: {
@@ -1293,6 +1300,20 @@ export const en = {
     petioleTestRemindersSubtitle: 'Remind one day before Day 30, 60, 90, 120 of pruning',
     notificationNote: 'Notification settings are stored locally',
     madeForVineyardManagement: 'Made for vineyard management',
+    sentry: {
+      testButton: 'Send Sentry test event',
+      testButtonA11y: 'Send Sentry test event',
+      transportDisabledTitle: 'Sentry transport is disabled',
+      transportDisabledDescriptionDev:
+        'This app disables Sentry in development. Test with a preview/production build, or temporarily enable Sentry in app/_layout.tsx for local verification.',
+      transportDisabledDescriptionProd:
+        'Sentry DSN is missing. Add EXPO_PUBLIC_SENTRY_DSN and rebuild.',
+      testSentTitle: 'Sentry test event sent',
+      testSentDescription: 'Check your Sentry project in a few moments for the test issue.',
+      testSentDescriptionWithId: 'Event ID: {{eventId}}',
+      testFailedTitle: 'Sentry test failed',
+      testFailedDescription: 'Unable to send a test event. Check Sentry configuration.',
+    },
     signOut: 'Sign Out',
     signOutConfirmTitle: 'Sign Out',
     signOutConfirmBody: 'Are you sure you want to sign out?',

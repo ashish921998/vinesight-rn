@@ -5,16 +5,16 @@ import { queryKeys } from '@/hooks/query-keys';
 import { TABLES } from '@/types/database';
 import type { ChemicalMix, ChemicalMixComponent } from '@/types/phi';
 
-type ChemicalMixRow = {
+interface ChemicalMixRow {
   id: number;
   name: string;
   target_problem: string | null;
   application_mode: 'preventive' | 'curative' | 'both' | 'unspecified' | null;
   source_page: number | null;
   is_active: boolean;
-};
+}
 
-type ChemicalMixComponentRow = {
+interface ChemicalMixComponentRow {
   id: number;
   mix_id: number;
   product_id: number;
@@ -25,15 +25,15 @@ type ChemicalMixComponentRow = {
   dose_basis: 'per_liter' | 'per_100_liter' | 'fixed_per_tank';
   base_tank_liters: number | null;
   sequence_no: number | null;
-};
+}
 
-type ChemicalPhiRuleRow = {
+interface ChemicalPhiRuleRow {
   product_id: number;
   crop: string;
   phi_days: number;
   verified: boolean;
   source_note: string | null;
-};
+}
 
 function mapCatalogData(
   mixes: ChemicalMixRow[],

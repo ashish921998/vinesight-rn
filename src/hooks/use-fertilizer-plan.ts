@@ -5,7 +5,7 @@ import type { FertilizerPlan } from '@/types/fertilizer-plan';
 
 export function useFertilizerPlan(farmId?: number) {
   return useQuery({
-    queryKey: farmId ? queryKeys.fertilizerPlan.detail(farmId) : queryKeys.fertilizerPlan.all,
+    queryKey: farmId ? queryKeys.fertilizerPlan.detail(farmId) : ['fertilizerPlan', 'disabled'],
     queryFn: async (): Promise<FertilizerPlan | null> => {
       if (!farmId) return null;
       return fetchFertilizerPlanForFarm(farmId);

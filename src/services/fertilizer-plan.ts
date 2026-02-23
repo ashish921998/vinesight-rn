@@ -19,8 +19,8 @@ export async function fetchFertilizerPlanForFarm(farmId: number): Promise<Fertil
   if (__DEV__) {
     const match = MOCK_PLANS.find((plan) => plan.farm_id === farmId);
     if (match) return match;
-    if (MOCK_PLANS.length === 0) return null;
     return { ...MOCK_PLANS[0], farm_id: farmId };
   }
+  // TODO: Replace with a Supabase-backed query once the fertilizer plan schema is finalized.
   return null;
 }

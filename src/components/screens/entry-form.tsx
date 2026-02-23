@@ -868,7 +868,6 @@ export function EntryForm({
           sprayData.governingPhiDays != null
             ? {
                 ...sprayData,
-                phiStatus: 'verified',
               }
             : {
                 ...sprayData,

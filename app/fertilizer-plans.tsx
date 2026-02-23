@@ -16,7 +16,11 @@ export default function FertilizerPlansScreen() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ farmId?: string }>();
-  const farmId = params.farmId ? Number.parseInt(params.farmId, 10) : undefined;
+  const farmId = useMemo(() => {
+    if (!params.farmId) return undefined;
+    const parsed = Number.parseInt(params.farmId, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }, [params.farmId]);
   const { data: profile } = useProfile({ enabled: true });
   const { data: farm } = useFarm(farmId);
   const { data: fertilizerPlan, isLoading } = useFertilizerPlan(farmId);

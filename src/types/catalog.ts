@@ -13,6 +13,7 @@ export interface MasterCatalogProductAlias {
   alias_kind: CatalogAliasKind;
   source?: string | null;
   created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface MasterCatalogProductComposition {

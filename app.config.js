@@ -104,7 +104,6 @@ module.exports = {
         '@sentry/react-native/expo',
         {
           url: 'https://sentry.io/',
-          note: 'Use SENTRY_AUTH_TOKEN env to authenticate with Sentry.',
           project: 'react-native',
           organization: 'vinesight-6s',
         },
@@ -113,12 +112,10 @@ module.exports = {
       '@bacons/apple-targets',
       './plugins/android-widget',
       './plugins/with-android-16kb-pages',
+      './plugins/with-ios-entitlements-codesign',
       [
         'expo-build-properties',
         {
-          ios: {
-            codeSigningAllowEntitlementsModification: true,
-          },
           android: {
             ndkVersion: '27.1.12297006',
             compileSdkVersion: 36,

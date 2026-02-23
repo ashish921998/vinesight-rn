@@ -1,3 +1,4 @@
+import { PHI_CALC_VERSION } from '@/services/phi-service';
 import { submitEntryPendingLog, type EntryLogSubmitters } from '@/utils/entry-log-submission';
 
 jest.mock('@/services/nutrient-flow-service', () => ({
@@ -136,7 +137,7 @@ describe('submitEntryPendingLog', () => {
         catalog_mix_id: 991,
         governing_phi_days: 20,
         safe_harvest_date: '2026-02-20',
-        phi_calc_version: 'v1',
+        phi_calc_version: PHI_CALC_VERSION,
         phi_blocking_component: 'Lannate',
         phi_status: 'verified',
       }),

@@ -115,16 +115,14 @@ export function useUpdateFarmSeason() {
 export function useUpdateFarmSeasonTargetHarvestDate() {
   const updateSeason = useUpdateFarmSeason();
 
+  interface UpdateFarmSeasonTargetArgs {
+    id: number;
+    farmId: number;
+    targetHarvestDate: string | null;
+  }
+
   return useMutation({
-    mutationFn: async ({
-      id,
-      farmId,
-      targetHarvestDate,
-    }: {
-      id: number;
-      farmId: number;
-      targetHarvestDate: string | null;
-    }) =>
+    mutationFn: async ({ id, farmId, targetHarvestDate }: UpdateFarmSeasonTargetArgs) =>
       updateSeason.mutateAsync({
         id,
         farmId,

@@ -192,13 +192,15 @@ export default function SpraySafeCheckerScreen() {
       {activeSeason?.id ? (
         <Pressable
           disabled={updateTargetHarvestDate.isPending}
-          onPress={() =>
+          onPress={() => {
+            const seasonId = activeSeason.id;
+            if (!seasonId) return;
             updateTargetHarvestDate.mutate({
-              id: activeSeason.id ?? 0,
+              id: seasonId,
               farmId: activeSeason.farm_id,
               targetHarvestDate: targetDate,
-            })
-          }
+            });
+          }}
           style={{
             borderRadius: borderRadius.full,
             alignSelf: 'flex-start',
@@ -219,7 +221,7 @@ export default function SpraySafeCheckerScreen() {
           {t('common.loading', { defaultValue: 'Loading…' })}
         </Text>
       ) : (
-        matrixQuery.data.map((item) => {
+        (matrixQuery.data ?? []).map((item) => {
           const style = statusColors[item.status];
           return (
             <View

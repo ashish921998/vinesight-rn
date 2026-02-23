@@ -229,8 +229,8 @@ export default function FarmDetailScreen() {
     activeSeasonRecord?.id ?? null,
   );
   const isGrapeFarm = useMemo(() => {
-    const cropText = `${farm?.crop ?? ''} ${farm?.crop_variety ?? ''}`.toLowerCase();
-    return cropText.includes('grape');
+    const grapePattern = /\b(grapes?|vitis)\b/i;
+    return grapePattern.test(farm?.crop ?? '') || grapePattern.test(farm?.crop_variety ?? '');
   }, [farm?.crop, farm?.crop_variety]);
   const lockedSeasonStartDate = useMemo(() => {
     if (!activeSeasonRecord) return null;
@@ -1374,7 +1374,10 @@ export default function FarmDetailScreen() {
                           marginLeft: spacing[1],
                         }}
                       >
-                        {`Safe harvest date: ${earliestSafeHarvest.earliestDate}`}
+                        {t('farmDetails.safeHarvest.inlineDate', {
+                          date: earliestSafeHarvest.earliestDate,
+                          defaultValue: 'Safe harvest date: {{date}}',
+                        })}
                       </Text>
                     </View>
                   ) : null}

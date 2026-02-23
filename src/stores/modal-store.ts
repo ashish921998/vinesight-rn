@@ -21,7 +21,7 @@ type EditActivityRecord =
   | ExpenseRecord
   | FertigationRecord;
 
-export type AddEntryRoutePayload = {
+export interface AddEntryRoutePayload {
   tabs?: Array<'log' | 'task'>;
   initialTab?: 'log' | 'task';
   initialFarmId?: number | null;
@@ -37,7 +37,7 @@ export type AddEntryRoutePayload = {
     sprayChemicals?: PlannedInputItem[];
     fertigationItems?: PlannedInputItem[];
   } | null;
-};
+}
 
 export type EditActivityRoutePayload = {
   farm: Farm;

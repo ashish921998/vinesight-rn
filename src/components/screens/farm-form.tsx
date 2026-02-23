@@ -743,8 +743,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     };
 
     try {
-      await createFarm.mutateAsync(farmData);
-      telemetry.capture('Farm created', {
+      const createdFarm = await createFarm.mutateAsync(farmData);
+      telemetry.capture('farm_created', {
+        farm_id: createdFarm?.id ?? null,
         location: formState.region.trim(),
         area: areaValue,
         area_unit: 'acres',

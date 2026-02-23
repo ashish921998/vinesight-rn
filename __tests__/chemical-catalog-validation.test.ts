@@ -1,8 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-
-type DoseUnit = 'gm' | 'ml';
-type DoseBasis = 'per_liter' | 'per_100_liter' | 'fixed_per_tank';
+import type { DoseBasis, DoseUnit } from '@/types/phi';
 
 interface ProductFile {
   products: Array<{

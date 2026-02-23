@@ -289,6 +289,10 @@ export function SprayForm({
         };
       });
 
+      if (chemicals.length === 0) {
+        return;
+      }
+
       onChange({
         ...data,
         catalogMixId: mix.id,
@@ -297,7 +301,7 @@ export function SprayForm({
         safeHarvestDate: null,
         phiBlockingComponent: null,
         phiStatus: 'verified',
-        chemicals: chemicals.length > 0 ? chemicals : data.chemicals,
+        chemicals,
       });
     },
     [data, onChange],
@@ -882,7 +886,7 @@ function ChemicalRow({
             }}
           >
             <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
-              Total Qty
+              {t('sprayForm.chemicals.totalQty', { defaultValue: 'Total Qty' })}
             </Text>
           </Pressable>
           <Pressable
@@ -900,7 +904,7 @@ function ChemicalRow({
             }}
           >
             <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
-              Per acre
+              {t('sprayForm.chemicals.perAcre', { defaultValue: 'Per acre' })}
             </Text>
           </Pressable>
         </View>

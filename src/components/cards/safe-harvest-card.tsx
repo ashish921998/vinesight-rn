@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { borderRadius, fontWeight, spacing } from '@/styles/theme';
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { parseDbDateToLocalDate } from '@/utils/date';
 
 interface SafeHarvestCardProps {
   earliestDate: string | null | undefined;
@@ -24,6 +25,12 @@ export function SafeHarvestCard({
 }: SafeHarvestCardProps) {
   const { t } = useTranslation();
   const m3 = useM3();
+  const formatDisplayDate = (value: string | null | undefined) => {
+    if (!value) return null;
+    const parsed = parseDbDateToLocalDate(value);
+    return parsed ? parsed.toLocaleDateString() : null;
+  };
+  const formattedTargetDate = formatDisplayDate(targetHarvestDate);
 
   return (
     <View
@@ -97,12 +104,16 @@ export function SafeHarvestCard({
           marginTop: spacing[1],
         }}
       >
-        {targetHarvestDate ?? t('farmDetails.safeHarvest.noTarget')}
+        {formattedTargetDate ?? t('farmDetails.safeHarvest.noTarget')}
       </Text>
 
       <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[2] }}>
         <Pressable
           onPress={onSetTargetDate}
+          accessibilityRole="button"
+          accessibilityLabel={t('farmDetails.safeHarvest.ctaSetTarget', {
+            defaultValue: 'Set target date',
+          })}
           style={{
             paddingHorizontal: spacing[2],
             paddingVertical: 6,
@@ -121,6 +132,10 @@ export function SafeHarvestCard({
         </Pressable>
         <Pressable
           onPress={onOpenChecker}
+          accessibilityRole="button"
+          accessibilityLabel={t('farmDetails.safeHarvest.ctaOpenChecker', {
+            defaultValue: 'Open safe-to-spray checker',
+          })}
           style={{
             paddingHorizontal: spacing[2],
             paddingVertical: 6,
