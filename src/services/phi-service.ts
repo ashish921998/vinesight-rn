@@ -135,7 +135,7 @@ export function computeEarliestSafeHarvest(
   if (valid.length === 0) {
     return { earliestDate: null, reason: null };
   }
-  const earliestDate = valid.sort((a, b) => dayDiff(a, b))[valid.length - 1];
+  const earliestDate = valid.sort((a, b) => dayDiff(b, a))[0];
   const blocker = records.find((record) => record.safe_harvest_date === earliestDate);
   if (!blocker) {
     return { earliestDate, reason: null };

@@ -1337,6 +1337,27 @@ export default function FarmDetailScreen() {
                     </View>
                   </View>
 
+                  {farm.region ? (
+                    <View
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
+                    >
+                      <UiSymbol
+                        name="location-outline"
+                        size={16}
+                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                      />
+                      <Text
+                        style={{
+                          color: m3.colorScheme.onSurfaceVariant,
+                          ...m3.typography.bodyMedium,
+                          marginLeft: spacing[1],
+                        }}
+                      >
+                        {farm.region}
+                      </Text>
+                    </View>
+                  ) : null}
+
                   {isGrapeFarm && earliestSafeHarvest?.earliestDate ? (
                     <View
                       style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
