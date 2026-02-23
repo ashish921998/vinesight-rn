@@ -13,7 +13,7 @@ module.exports = {
       barStyle: 'auto',
     },
     ios: {
-      appleTeamId: process.env.EXPO_APPLE_TEAM_ID || 'WJP847UZY2',
+      appleTeamId: process.env.EXPO_APPLE_TEAM_ID || undefined,
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.ios',
       scheme: 'vinesight',

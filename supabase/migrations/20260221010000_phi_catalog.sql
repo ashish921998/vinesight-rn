@@ -243,3 +243,36 @@ create index if not exists warehouse_items_mapping_status_idx
 -- Security model note:
 -- This migration does not change RLS/grants. Keep catalog table access aligned with
 -- the project's existing database security standard (RLS or grants).
+
+-- ============================================================
+-- Catalog RLS (authenticated read-only)
+-- ============================================================
+do $$
+declare
+  tbl text;
+begin
+  foreach tbl in array array[
+    'chemical_products',
+    'chemical_product_aliases',
+    'chemical_product_compositions',
+    'chemical_mixes',
+    'chemical_mix_components',
+    'chemical_phi_rules'
+  ]
+  loop
+    execute format('alter table public.%I enable row level security', tbl);
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = tbl
+        and policyname = 'Allow authenticated read access'
+    ) then
+      execute format(
+        'create policy "Allow authenticated read access" on public.%I for select to authenticated using (true)',
+        tbl
+      );
+    end if;
+  end loop;
+end $$;
