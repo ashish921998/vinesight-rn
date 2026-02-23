@@ -104,7 +104,7 @@ module.exports = {
         '@sentry/react-native/expo',
         {
           url: 'https://sentry.io/',
-          project: 'react-native',
+          project: process.env.SENTRY_PROJECT || 'vinesight-rn',
           organization: 'vinesight-6s',
         },
       ],

@@ -1,6 +1,8 @@
 -- Unified PHI + Maharashtra master catalog schema
 -- This migration is intentionally additive/idempotent and safe for pre-apply consolidation.
 
+create extension if not exists moddatetime schema extensions;
+
 -- ============================================================
 -- Core catalog: products
 -- ============================================================
@@ -150,6 +152,24 @@ create unique index if not exists chemical_phi_rules_unique_active
 create index if not exists chemical_phi_rules_verified_idx
   on public.chemical_phi_rules (product_id, lower(crop), verified);
 
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'che_chemical_phi_rules_effective_from_to_check'
+      and conrelid = 'public.chemical_phi_rules'::regclass
+  ) then
+    alter table public.chemical_phi_rules
+      add constraint che_chemical_phi_rules_effective_from_to_check
+      check (
+        effective_from is null
+        or effective_to is null
+        or effective_from <= effective_to
+      );
+  end if;
+end $$;
+
 -- ============================================================
 -- Existing table extensions
 -- ============================================================
@@ -240,9 +260,10 @@ create index if not exists warehouse_items_catalog_product_idx
 create index if not exists warehouse_items_mapping_status_idx
   on public.warehouse_items (catalog_mapping_status, type);
 
--- Security model note:
--- This migration does not change RLS/grants. Keep catalog table access aligned with
--- the project's existing database security standard (RLS or grants).
+-- Catalog security model:
+-- This migration enables row-level security and creates read-only SELECT policies
+-- for the authenticated role on the catalog tables below. Writes should use
+-- service-role credentials (seeding/migrations/admin operations).
 
 -- ============================================================
 -- Catalog RLS (authenticated read-only)
@@ -275,4 +296,39 @@ begin
       );
     end if;
   end loop;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_trigger where tgname = 'handle_chemical_products_updated_at'
+  ) then
+    create trigger handle_chemical_products_updated_at
+      before update on public.chemical_products
+      for each row execute procedure extensions.moddatetime(updated_at);
+  end if;
+
+  if not exists (
+    select 1 from pg_trigger where tgname = 'handle_chemical_product_compositions_updated_at'
+  ) then
+    create trigger handle_chemical_product_compositions_updated_at
+      before update on public.chemical_product_compositions
+      for each row execute procedure extensions.moddatetime(updated_at);
+  end if;
+
+  if not exists (
+    select 1 from pg_trigger where tgname = 'handle_chemical_mixes_updated_at'
+  ) then
+    create trigger handle_chemical_mixes_updated_at
+      before update on public.chemical_mixes
+      for each row execute procedure extensions.moddatetime(updated_at);
+  end if;
+
+  if not exists (
+    select 1 from pg_trigger where tgname = 'handle_chemical_phi_rules_updated_at'
+  ) then
+    create trigger handle_chemical_phi_rules_updated_at
+      before update on public.chemical_phi_rules
+      for each row execute procedure extensions.moddatetime(updated_at);
+  end if;
 end $$;
