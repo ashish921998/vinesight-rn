@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatDate, formatCurrency } from '@/i18n/format';
@@ -72,6 +73,7 @@ export function WorkerSettlementModal({
   const { t } = useTranslation();
   const isAndroid = Platform.OS === 'android';
   const currency = useCurrency();
+  const insets = useSafeAreaInsets();
 
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
 
@@ -279,8 +281,8 @@ export function WorkerSettlementModal({
             alignItems: 'center',
             justifyContent: 'space-between',
             paddingHorizontal: spacing[4],
-            paddingTop: isAndroid ? spacing[4] : spacing[6],
-            paddingBottom: spacing[3],
+            paddingTop: insets.top + spacing[4],
+            paddingBottom: spacing[4],
             borderBottomWidth: 1,
             borderBottomColor: m3.colorScheme.outlineVariant,
           }}
@@ -291,12 +293,15 @@ export function WorkerSettlementModal({
           <Pressable
             onPress={onClose}
             style={{
-              padding: spacing[2],
+              width: 36,
+              height: 36,
+              alignItems: 'center',
+              justifyContent: 'center',
               backgroundColor: m3.surface.surfaceContainerHighest,
               borderRadius: borderRadius.full,
             }}
           >
-            <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold }}>✕</Text>
+            <Text style={{ fontSize: fontSize.lg, fontWeight: fontWeight.bold }}>✕</Text>
           </Pressable>
         </View>
 
@@ -480,7 +485,7 @@ export function WorkerSettlementModal({
                     <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
                       {t('period')}
                     </Text>
-                    <Text style={{ fontSize: fontSize.sm }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
                       {formatDate(new Date(periodDates.start), { month: 'short', day: 'numeric' })}{' '}
                       - {formatDate(new Date(periodDates.end), { month: 'short', day: 'numeric' })}
                     </Text>
@@ -489,7 +494,7 @@ export function WorkerSettlementModal({
                     <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
                       {t('daysWorked')}
                     </Text>
-                    <Text style={{ fontSize: fontSize.sm }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
                       {settlementCalculation.days_worked.toFixed(1)}
                     </Text>
                   </View>
@@ -497,7 +502,7 @@ export function WorkerSettlementModal({
                     <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurfaceVariant }}>
                       {t('settlement.calculatedGross')}
                     </Text>
-                    <Text style={{ fontSize: fontSize.sm }}>
+                    <Text style={{ fontSize: fontSize.sm, color: m3.colorScheme.onSurface }}>
                       {settlementCalculation.gross_amount.toFixed(2)}
                     </Text>
                   </View>

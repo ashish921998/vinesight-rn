@@ -20,6 +20,7 @@ export {
   useFarmSeasons,
   useCreateFarmSeason,
   useUpdateFarmSeason,
+  useUpdateFarmSeasonTargetHarvestDate,
   useStartFarmSeason,
   useEndFarmSeason,
   useRecomputeFarmSeasonAssignments,
@@ -172,6 +173,24 @@ export { useAnalytics } from './use-analytics';
 
 // Report Hooks
 export { useReportData, useReportExport, getDefaultDateRange } from './use-reports';
+
+// Fertilizer Plan
+export { useFertilizerPlan } from './use-fertilizer-plan';
+export {
+  useChemicalCatalog,
+  useChemicalMixSearch,
+  useChemicalMixById,
+} from './use-chemical-catalog';
+export {
+  useMasterProducts,
+  useMasterProductSearch,
+  useMasterProductById,
+} from './use-master-catalog';
+export {
+  usePhiComputation,
+  useEarliestSafeHarvestForSeason,
+  useSafeToSprayMatrix,
+} from './use-phi';
 
 // Lab Tests Hooks
 export {

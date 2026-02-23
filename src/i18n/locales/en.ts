@@ -143,6 +143,16 @@ export const en = {
       recordsSubtitle: 'Records',
       soilWaterTitle: 'Soil Water',
     },
+    safeHarvest: {
+      title: 'Earliest Safe Harvest',
+      noTarget: 'No target harvest date set for this season.',
+      noData: 'No PHI spray records available yet.',
+      safeDate: 'Safe from {{date}}',
+      blockedBy: 'Blocked by {{reason}}',
+      ctaSetTarget: 'Set target date',
+      ctaOpenChecker: 'Open safe-to-spray checker',
+      saveTarget: 'Save target date',
+    },
     water: {
       noIrrigationLoggedYet: 'No irrigation logged yet',
       mmUsed: '{{value}} mm used',
@@ -203,6 +213,23 @@ export const en = {
         soilMoisture: 'Soil Moisture',
         tempWorker: 'Temp\nWorker',
       },
+    },
+    fertilizerPlan: {
+      title: 'Fertilizer Plan',
+      subtitle: 'Consultant-provided plan for this farm.',
+      upcomingCount_one: '{{count}} item',
+      upcomingCount_other: '{{count}} items',
+      emptyTitle: 'No fertilizer plan yet',
+      emptySubtitle: 'Your consultant has not shared a plan yet.',
+      cta: 'Contact consultant',
+      consultantLabel: 'Plan by {{name}}',
+      consultantUnknown: 'Consultant plan',
+      updatedLabel: 'Updated {{date}}',
+      loading: 'Loading plan…',
+      inputsCount_one: '{{count}} input',
+      inputsCount_other: '{{count}} inputs',
+      noInputs: 'No inputs',
+      unknownInput: 'Unknown input',
     },
     tabs: {
       activities: 'Logs',
@@ -521,6 +548,9 @@ export const en = {
     pendingLogs_other: 'Pending logs ({{count}})',
     farmLabel: 'Farm *',
     selectFarm: 'Select farm',
+    allFarms: 'All farms',
+    allFarmsExpenseOnly: 'All farms can only be used for expense logs.',
+    allFarmsNoFarms: 'No farms available to apply this expense.',
     partialSuccess: {
       title: 'Partial Success',
       body_one: '{{count}} log failed to save. Please review and try again.',
@@ -553,6 +583,15 @@ export const en = {
       both: 'You have unsaved changes. Are you sure you want to close?',
       discard: 'Discard',
     },
+    phiErrors: {
+      catalogRequiredTitle: 'Catalog mix required',
+      catalogRequiredBody: 'Choose a preloaded catalog mix before adding this spray log.',
+      computeFailedTitle: 'PHI unavailable',
+      computeFailedBody: 'Unable to compute PHI for this mix on the selected date.',
+      conflictTitle: 'Harvest safety conflict',
+      conflictBody:
+        'This spray blocks harvest until {{safeDate}} due to {{component}}, but target harvest is {{targetDate}}.',
+    },
   },
 
   activityEdit: {
@@ -580,6 +619,11 @@ export const en = {
       selectUnit: 'Select unit',
     },
     quickAdd: 'Quick Add',
+    catalogOnly: {
+      title: 'Catalog Mixes',
+      selectedMix: 'Selected: {{name}}',
+      requiredHint: 'Choose a catalog mix to continue',
+    },
     noMatchesHint: 'No matches. Continue with custom chemical name.',
     validation: {
       ready: 'Ready to add',
@@ -660,6 +704,8 @@ export const en = {
       systemDischarge: 'System Discharge',
       laiCalculator: 'LAI Calculator',
       nutrientCalculator: 'Nutrient Calculator',
+      tankMixCalculator: 'Tank Mix Calculator',
+      safeToSprayChecker: 'Safe-to-Spray Checker',
     },
     descriptions: {
       weatherIrrigation:
@@ -668,7 +714,33 @@ export const en = {
       systemDischarge: 'Calculate and track irrigation system discharge rates',
       laiCalculator: 'Calculate Leaf Area Index for canopy management',
       nutrientCalculator: 'Calculate fertilizer and nutrient requirements based on lab tests',
+      tankMixCalculator: 'Calculate exact gm/ml quantity for each component based on tank liters',
+      safeToSprayChecker: 'Check which sprays are safe to apply for your target harvest date',
     },
+  },
+
+  tankMix: {
+    title: 'Tank Mix Calculator',
+    subtitle: 'Select a catalog mix and calculate exact quantities for your tank size.',
+    searchLabel: 'Search mix',
+    searchPlaceholder: 'Search by mix or problem',
+    tankSizeLabel: 'Tank size (liters)',
+    catalogMixes: 'Catalog mixes',
+    genericProblem: 'General protection',
+    resultTitle: 'Required quantities for {{liters}}L',
+    resultDose: 'Dose: {{value}} {{unit}} ({{basis}})',
+    resultTotal: 'Total: {{value}} {{unit}}',
+  },
+
+  safeToSpray: {
+    title: 'Safe-to-Spray Checker',
+    subtitle: 'Enter target harvest date to check safe spray windows.',
+    targetDate: 'Target harvest date',
+    saveSeasonTarget: 'Save target date to season',
+    blocking: 'Governing PHI: {{days}} days ({{component}})',
+    latestDate: 'Latest safe spray date: {{date}}',
+    daysLeft: '{{count}} day(s) left',
+    windowPassed: 'Window passed by {{count}} day(s)',
   },
 
   widgets: {
@@ -1470,7 +1542,7 @@ export const en = {
       title: 'Quick actions',
       irrigation: 'Irrigation',
       spray: 'Spray',
-      harvest: 'Harvest',
+      expense: 'Expense',
       note: 'Note',
     },
     recentActivity: {
@@ -1489,6 +1561,8 @@ export const en = {
       dismissA11y: 'Dismiss farm picker',
       closeA11y: 'Close farm picker',
       selectFarmA11y: 'Select farm: {{name}}',
+      selectAllFarmsA11y: 'Select all farms',
+      allFarms: 'All farms',
       noFarms: 'No farms available',
     },
   },

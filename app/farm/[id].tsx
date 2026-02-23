@@ -12,7 +12,7 @@ import {
   Easing,
   TextInput,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -21,6 +21,7 @@ import {
   useFarm,
   useFarmRecords,
   useWeather,
+  useProfile,
   useDeleteFarm,
   useDeleteIrrigationRecord,
   useDeleteSprayRecord,
@@ -32,6 +33,7 @@ import {
   useEndFarmSeason,
   useFarmSeasonStatus,
   useRecomputeFarmSeasonAssignments,
+  useEarliestSafeHarvestForSeason,
   isAndroid,
   isIOS,
 } from '@/hooks';
@@ -90,6 +92,7 @@ export default function FarmDetailScreen() {
 
   const { data: tasks, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
+  const { data: profile } = useProfile({ enabled: true });
   const { data: farmSeasons, refetch: refetchSeasons } = useFarmSeasons(farmId);
   const { needsReview: needsSeasonReview } = useFarmSeasonStatus(farmId);
   const completeMutation = useCompleteTask();
@@ -123,8 +126,8 @@ export default function FarmDetailScreen() {
   const seasonSuccessTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const showFab = isAndroid;
   const bottomBarHeight = showFab ? 0 : 72 + insets.bottom;
-  const workboardActions = useMemo<WorkboardAction[]>(
-    () => [
+  const workboardActions = useMemo<WorkboardAction[]>(() => {
+    const actions: WorkboardAction[] = [
       {
         id: 'ai',
         titleKey: 'farmDetails.workboard.actions.ai',
@@ -149,9 +152,17 @@ export default function FarmDetailScreen() {
         icon: 'square.stack.3d.up.fill',
         color: colors.task[500],
       },
-    ],
-    [colors.task, m3],
-  );
+    ];
+    if (profile?.consultant_organization_id) {
+      actions.push({
+        id: 'fertilizer-plans',
+        titleKey: 'farmDetails.fertilizerPlan.title',
+        icon: 'leaf.fill',
+        color: colors.fertigation[500],
+      });
+    }
+    return actions;
+  }, [colors.fertigation, colors.task, m3, profile?.consultant_organization_id]);
 
   // Calculate stats
   const totalRecords = useMemo(
@@ -213,6 +224,14 @@ export default function FarmDetailScreen() {
     if (!farmSeasons || farmSeasons.length === 0) return null;
     return farmSeasons.find((season) => season.end_date === null) ?? null;
   }, [farmSeasons]);
+  const { data: earliestSafeHarvest } = useEarliestSafeHarvestForSeason(
+    farmId,
+    activeSeasonRecord?.id ?? null,
+  );
+  const isGrapeFarm = useMemo(() => {
+    const cropText = `${farm?.crop ?? ''} ${farm?.crop_variety ?? ''}`.toLowerCase();
+    return cropText.includes('grape');
+  }, [farm?.crop, farm?.crop_variety]);
   const lockedSeasonStartDate = useMemo(() => {
     if (!activeSeasonRecord) return null;
     return parseDbDateToLocalDate(activeSeasonRecord.start_date);
@@ -894,6 +913,9 @@ export default function FarmDetailScreen() {
       case 'soil':
         router.push(`/soil-profiling?farmId=${id}`);
         break;
+      case 'fertilizer-plans':
+        router.push(`/fertilizer-plans?farmId=${id}` as Href);
+        break;
     }
   };
 
@@ -1315,14 +1337,14 @@ export default function FarmDetailScreen() {
                     </View>
                   </View>
 
-                  {farm.region && (
+                  {isGrapeFarm && earliestSafeHarvest?.earliestDate ? (
                     <View
                       style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
                     >
                       <UiSymbol
-                        name="location-outline"
+                        name="shield.checkered"
                         size={16}
-                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                        color={colorWithOpacity(m3.colorScheme.primary, 0.8)}
                       />
                       <Text
                         style={{
@@ -1331,10 +1353,10 @@ export default function FarmDetailScreen() {
                           marginLeft: spacing[1],
                         }}
                       >
-                        {farm.region}
+                        {`Safe harvest date: ${earliestSafeHarvest.earliestDate}`}
                       </Text>
                     </View>
-                  )}
+                  ) : null}
                 </View>
               </View>
 

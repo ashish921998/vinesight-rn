@@ -67,6 +67,7 @@ export interface FarmSeason {
   user_id?: string;
   start_date: string;
   end_date: string | null;
+  target_harvest_date?: string | null;
   season_name?: string | null;
   crop_type_snapshot?: string | null;
   template_key?: string | null;
@@ -128,6 +129,7 @@ export interface SprayChemicalItem {
   quantity: number;
   quantity_basis?: QuantityBasis;
   warehouse_item_id?: number | null;
+  catalog_product_id?: number | null;
   composition_snapshot?: NutrientCompositionItem[] | null;
   density_kg_per_l?: number | null;
 }
@@ -137,9 +139,15 @@ export interface SprayRecord {
   farm_id: number;
   season_id?: number | null;
   date: string;
+  catalog_mix_id?: number | null;
   chemical: string;
   chemical_items?: SprayChemicalItem[] | null;
   dose: string;
+  governing_phi_days?: number | null;
+  safe_harvest_date?: string | null;
+  phi_calc_version?: string | null;
+  phi_blocking_component?: string | null;
+  phi_status?: 'verified' | 'legacy_unverified' | 'unknown' | null;
   nutrient_totals_elemental?: Record<string, number> | null;
   nutrient_totals_elemental_per_acre?: Record<string, number> | null;
   nutrient_calc_coverage?: number | null;
@@ -164,6 +172,7 @@ export interface FertilizerItem {
   quantity: number;
   quantity_basis?: QuantityBasis;
   warehouse_item_id?: number | null;
+  catalog_product_id?: number | null;
   composition_snapshot?: NutrientCompositionItem[] | null;
   density_kg_per_l?: number | null;
 }
@@ -391,6 +400,10 @@ export interface WarehouseItem {
   default_dose_basis?: QuantityBasis | null;
   composition_source?: 'manual' | 'preset' | string;
   composition_updated_at?: string | null;
+  catalog_product_id?: number | null;
+  catalog_mapping_status?: 'mapped_verified' | 'mapped_provisional' | 'unmapped';
+  catalog_mapping_source?: 'manual' | 'preset' | 'auto';
+  catalog_mapped_at?: string | null;
   notes?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -637,6 +650,12 @@ export function fromSupabaseTimestampString(timestampString: string): Date | nul
 export const TABLES = {
   FARMS: 'farms',
   FARM_SEASONS: 'farm_seasons',
+  CHEMICAL_PRODUCTS: 'chemical_products',
+  CHEMICAL_PRODUCT_ALIASES: 'chemical_product_aliases',
+  CHEMICAL_PRODUCT_COMPOSITIONS: 'chemical_product_compositions',
+  CHEMICAL_MIXES: 'chemical_mixes',
+  CHEMICAL_MIX_COMPONENTS: 'chemical_mix_components',
+  CHEMICAL_PHI_RULES: 'chemical_phi_rules',
   IRRIGATION_RECORDS: 'irrigation_records',
   SPRAY_RECORDS: 'spray_records',
   FERTIGATION_RECORDS: 'fertigation_records',

@@ -25,6 +25,7 @@ export type AddEntryRoutePayload = {
   tabs?: Array<'log' | 'task'>;
   initialTab?: 'log' | 'task';
   initialFarmId?: number | null;
+  initialApplyToAllFarms?: boolean;
   initialLogType?: LogTypeId | null;
   initialIrrigationDurationHours?: number | null;
   initialLogDate?: string | null;

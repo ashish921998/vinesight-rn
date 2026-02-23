@@ -144,6 +144,16 @@ export const mr = {
       recordsSubtitle: 'रेकॉर्ड्स',
       soilWaterTitle: '$t(glossary.soil)तील पाणी',
     },
+    safeHarvest: {
+      title: 'लवकरात लवकर सुरक्षित $t(glossary.harvest)',
+      noTarget: 'या हंगामासाठी लक्ष्य $t(glossary.harvest) दिनांक सेट केलेला नाही.',
+      noData: 'अजून PHI आधारित $t(glossary.spray) नोंदी उपलब्ध नाहीत.',
+      safeDate: '{{date}} पासून सुरक्षित',
+      blockedBy: '{{reason}} मुळे अडथळा',
+      ctaSetTarget: 'लक्ष्य दिनांक सेट करा',
+      ctaOpenChecker: 'Safe-to-spray तपासा',
+      saveTarget: 'लक्ष्य दिनांक जतन करा',
+    },
     water: {
       noIrrigationLoggedYet: 'अजून $t(glossary.irrigation) नोंदवलेले नाही',
       mmUsed: '{{value}} mm वापरले',
@@ -203,6 +213,23 @@ export const mr = {
         soilMoisture: '$t(glossary.soil)तील ओलावा',
         tempWorker: 'तात्पुरता\n$t(glossary.worker)',
       },
+    },
+    fertilizerPlan: {
+      title: '$t(glossary.fertilizer) योजना',
+      subtitle: 'या शेतासाठी सल्लागाराने दिलेली योजना.',
+      upcomingCount_one: '{{count}} आयटम',
+      upcomingCount_other: '{{count}} आयटम',
+      emptyTitle: 'सध्या $t(glossary.fertilizer) योजना नाही',
+      emptySubtitle: 'तुमच्या सल्लागाराने अद्याप योजना शेअर केलेली नाही.',
+      cta: 'सल्लागाराशी संपर्क करा',
+      consultantLabel: '{{name}} यांची योजना',
+      consultantUnknown: 'सल्लागार योजना',
+      updatedLabel: '{{date}} रोजी अद्ययावत',
+      loading: 'योजना लोड होत आहे…',
+      inputsCount_one: '{{count}} इनपुट',
+      inputsCount_other: '{{count}} इनपुट',
+      noInputs: 'इनपुट नाहीत',
+      unknownInput: 'अज्ञात इनपुट',
     },
     tabs: {
       activities: 'नोंदी',
@@ -518,6 +545,9 @@ export const mr = {
     saveTask: '$t(glossary.task) जतन करा',
     farmLabel: '$t(glossary.farm) *',
     selectFarm: '$t(glossary.farm) निवडा',
+    allFarms: 'सर्व $t(glossary.farm)',
+    allFarmsExpenseOnly: 'सर्व $t(glossary.farm) पर्याय फक्त $t(glossary.expense) नोंदीसाठी आहे.',
+    allFarmsNoFarms: 'हा $t(glossary.expense) लागू करण्यासाठी $t(glossary.farm) उपलब्ध नाहीत.',
     partialSuccess: {
       title: 'आंशिक यश',
       body_one: '{{count}} लॉग जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.',
@@ -555,6 +585,15 @@ export const mr = {
       both: 'जतन न केलेले बदल आहेत. बंद करायचे आहे का?',
       discard: 'रद्द करा',
     },
+    phiErrors: {
+      catalogRequiredTitle: 'कॅटलॉग मिक्स आवश्यक',
+      catalogRequiredBody: 'ही $t(glossary.spray) नोंद जोडण्यापूर्वी प्रीलोडेड मिक्स निवडा.',
+      computeFailedTitle: 'PHI उपलब्ध नाही',
+      computeFailedBody: 'निवडलेल्या दिनांकासाठी PHI गणना करता आली नाही.',
+      conflictTitle: '$t(glossary.harvest) सुरक्षा संघर्ष',
+      conflictBody:
+        'हा $t(glossary.spray) {{component}} मुळे {{safeDate}} पर्यंत $t(glossary.harvest) थांबवतो, पण लक्ष्य दिनांक {{targetDate}} आहे.',
+    },
   },
 
   activityEdit: {
@@ -582,6 +621,11 @@ export const mr = {
       selectUnit: 'युनिट निवडा',
     },
     quickAdd: 'जलद जोडा',
+    catalogOnly: {
+      title: 'कॅटलॉग मिक्स',
+      selectedMix: 'निवडलेले: {{name}}',
+      requiredHint: 'पुढे जाण्यासाठी कॅटलॉग मिक्स निवडा',
+    },
     noMatchesHint: 'जुळणारे सापडले नाही. सानुकूल रसायन नावासह पुढे जा.',
     validation: {
       ready: 'जोडण्यासाठी तयार',
@@ -662,6 +706,8 @@ export const mr = {
       systemDischarge: 'सिस्टम डिस्चार्ज',
       laiCalculator: 'LAI कॅल्क्युलेटर',
       nutrientCalculator: 'पोषक कॅल्क्युलेटर',
+      tankMixCalculator: 'टँक मिक्स कॅल्क्युलेटर',
+      safeToSprayChecker: 'Safe-to-spray तपासणी',
     },
     descriptions: {
       weatherIrrigation:
@@ -671,7 +717,33 @@ export const mr = {
       laiCalculator: 'कॅनपी व्यवस्थापनासाठी Leaf Area Index गणा',
       nutrientCalculator:
         '$t(glossary.labTest) वरून $t(glossary.fertigation) आणि पोषक आवश्यकता गणा',
+      tankMixCalculator: 'टँक क्षमतेनुसार प्रत्येक घटकाचे अचूक gm/ml प्रमाण काढा',
+      safeToSprayChecker: 'लक्ष्य $t(glossary.harvest) दिनांकासाठी सुरक्षित स्प्रे विंडो तपासा',
     },
+  },
+
+  tankMix: {
+    title: 'टँक मिक्स कॅल्क्युलेटर',
+    subtitle: 'कॅटलॉग मिक्स निवडा आणि टँकसाठी अचूक प्रमाण काढा.',
+    searchLabel: 'मिक्स शोधा',
+    searchPlaceholder: 'मिक्स किंवा समस्या शोधा',
+    tankSizeLabel: 'टँक आकार (लिटर)',
+    catalogMixes: 'कॅटलॉग मिक्स',
+    genericProblem: 'सामान्य संरक्षण',
+    resultTitle: '{{liters}}L साठी आवश्यक प्रमाण',
+    resultDose: 'डोस: {{value}} {{unit}} ({{basis}})',
+    resultTotal: 'एकूण: {{value}} {{unit}}',
+  },
+
+  safeToSpray: {
+    title: 'Safe-to-spray तपासणी',
+    subtitle: 'लक्ष्य $t(glossary.harvest) दिनांक टाका आणि सुरक्षित स्प्रे पाहा.',
+    targetDate: 'लक्ष्य $t(glossary.harvest) दिनांक',
+    saveSeasonTarget: 'हा दिनांक हंगामासाठी जतन करा',
+    blocking: 'गव्हर्निंग PHI: {{days}} दिवस ({{component}})',
+    latestDate: 'शेवटचा सुरक्षित स्प्रे दिनांक: {{date}}',
+    daysLeft: '{{count}} दिवस शिल्लक',
+    windowPassed: 'विंडो {{count}} दिवसांपूर्वी संपली',
   },
 
   widgets: {
@@ -1479,7 +1551,7 @@ export const mr = {
       title: 'त्वरित क्रिया',
       irrigation: '$t(glossary.irrigation)',
       spray: '$t(glossary.spray)',
-      harvest: '$t(glossary.harvest)',
+      expense: '$t(glossary.expense)',
       note: 'नोंद',
     },
     recentActivity: {
@@ -1498,6 +1570,8 @@ export const mr = {
       dismissA11y: '$t(glossary.farm) निवड बंद करा',
       closeA11y: '$t(glossary.farm) निवड बंद करा',
       selectFarmA11y: '$t(glossary.farm) निवडा: {{name}}',
+      selectAllFarmsA11y: 'सर्व $t(glossary.farm) निवडा',
+      allFarms: 'सर्व $t(glossary.farm)',
       noFarms: '$t(glossary.farm) उपलब्ध नाहीत',
     },
   },

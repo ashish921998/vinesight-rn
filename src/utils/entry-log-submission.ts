@@ -14,6 +14,7 @@ import type {
   SprayFormData,
 } from '@/components/forms';
 import { calculateNutrientTotalsForLog } from '@/services/nutrient-flow-service';
+import { PHI_CALC_VERSION } from '@/services/phi-service';
 import { mapExpenseTypeIdToRecordType } from '@/utils/expense-type';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import type { AreaUnitPreference } from '@/utils/preferences';
@@ -120,6 +121,7 @@ export async function submitEntryPendingLog(params: {
             quantity,
             quantity_basis: quantityBasis,
             warehouse_item_id: c.warehouseItemId ?? null,
+            catalog_product_id: c.catalogProductId ?? null,
             composition_snapshot: c.compositionSnapshot ?? null,
             density_kg_per_l: c.densityKgPerL ?? null,
           };
@@ -132,9 +134,15 @@ export async function submitEntryPendingLog(params: {
       const created = await submitters.createSpray({
         farm_id: farmId,
         date: dateStr,
+        catalog_mix_id: data.catalogMixId ?? null,
         chemical: chemicalStr,
         chemical_items: chemicalItems,
         dose: `Water: ${data.waterVolume}L`,
+        governing_phi_days: data.governingPhiDays ?? null,
+        safe_harvest_date: data.safeHarvestDate ?? null,
+        phi_calc_version: data.catalogMixId ? PHI_CALC_VERSION : null,
+        phi_blocking_component: data.phiBlockingComponent ?? null,
+        phi_status: data.phiStatus ?? (data.catalogMixId ? 'verified' : 'legacy_unverified'),
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,
@@ -188,6 +196,7 @@ export async function submitEntryPendingLog(params: {
             quantity,
             quantity_basis: quantityBasis,
             warehouse_item_id: f.warehouseItemId ?? null,
+            catalog_product_id: f.catalogProductId ?? null,
             composition_snapshot: f.compositionSnapshot ?? null,
             density_kg_per_l: f.densityKgPerL ?? null,
           };

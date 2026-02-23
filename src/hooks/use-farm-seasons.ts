@@ -112,6 +112,27 @@ export function useUpdateFarmSeason() {
   });
 }
 
+export function useUpdateFarmSeasonTargetHarvestDate() {
+  const updateSeason = useUpdateFarmSeason();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      farmId,
+      targetHarvestDate,
+    }: {
+      id: number;
+      farmId: number;
+      targetHarvestDate: string | null;
+    }) =>
+      updateSeason.mutateAsync({
+        id,
+        farmId,
+        updates: { target_harvest_date: targetHarvestDate },
+      }),
+  });
+}
+
 export function useStartFarmSeason() {
   const queryClient = useQueryClient();
 

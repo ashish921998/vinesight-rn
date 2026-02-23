@@ -96,7 +96,7 @@ try {
     dsn: sentryDsn,
     enabled: !__DEV__ && Boolean(sentryDsn), // Only track errors in production when configured
     debug: __DEV__, // Show debug info in development
-    tracesSampleRate: 0.2, // Sample 20% of transactions for performance monitoring
+    tracesSampleRate: 1.0,
     integrations: [Sentry.reactNativeTracingIntegration()],
   });
 } catch (error) {

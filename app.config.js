@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.1.2',
+    version: '3.1.3',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
@@ -13,11 +13,12 @@ module.exports = {
       barStyle: 'auto',
     },
     ios: {
+      appleTeamId: process.env.EXPO_APPLE_TEAM_ID || 'WJP847UZY2',
       supportsTablet: true,
       bundleIdentifier: 'com.vinesight.ios',
       scheme: 'vinesight',
       usesAppleSignIn: true,
-      buildNumber: '1.2.4',
+      buildNumber: '1.2.5',
       entitlements: {
         'com.apple.security.application-groups': ['group.com.vinesight.app'],
       },
@@ -58,7 +59,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 18,
+      versionCode: 19,
       permissions: ['android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS'],
       config: {
         googleMaps: {
@@ -99,7 +100,15 @@ module.exports = {
     plugins: [
       'expo-router',
       'expo-notifications',
-      '@sentry/react-native/expo',
+      [
+        '@sentry/react-native/expo',
+        {
+          url: 'https://sentry.io/',
+          note: 'Use SENTRY_AUTH_TOKEN env to authenticate with Sentry.',
+          project: 'react-native',
+          organization: 'vinesight-6s',
+        },
+      ],
       'expo-localization',
       '@bacons/apple-targets',
       './plugins/android-widget',
@@ -107,6 +116,9 @@ module.exports = {
       [
         'expo-build-properties',
         {
+          ios: {
+            codeSigningAllowEntitlementsModification: true,
+          },
           android: {
             ndkVersion: '27.1.12297006',
             compileSdkVersion: 36,

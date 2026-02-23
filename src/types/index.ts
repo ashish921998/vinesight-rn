@@ -31,6 +31,9 @@ export * from './voice-assistant';
 
 // Voice logging types
 export * from './voice-log';
+export * from './fertilizer-plan';
+export * from './phi';
+export * from './catalog';
 
 // Re-export commonly used types for convenience
 export type {
@@ -64,3 +67,28 @@ export type {
   TemporaryWorkerEntry,
   DataError,
 } from './database';
+
+export type {
+  PhiStatus,
+  DoseBasis,
+  DoseUnit,
+  CropType,
+  ChemicalProduct,
+  ChemicalMix,
+  ChemicalMixComponent,
+  PhiRule,
+  PhiComputationResult,
+  SafeToSprayStatus,
+} from './phi';
+
+export type {
+  CatalogInputType,
+  CatalogVerificationTier,
+  CatalogAliasKind,
+  CatalogComponentType,
+  CatalogMappingStatus,
+  CatalogMappingSource,
+  MasterCatalogProduct,
+  MasterCatalogProductAlias,
+  MasterCatalogProductComposition,
+} from './catalog';

@@ -18,6 +18,7 @@ export interface FertilizerEntry {
   unit: FertilizerUnit;
   quantityBasis?: QuantityBasis;
   warehouseItemId?: number | null;
+  catalogProductId?: number | null;
   compositionSnapshot?: NutrientCompositionItem[] | null;
   densityKgPerL?: number | null;
 }
@@ -68,6 +69,7 @@ export interface FertigationQuickAddItem {
   quantity?: number | null;
   quantityBasis?: QuantityBasis;
   warehouseItemId?: number | null;
+  catalogProductId?: number | null;
   composition?: NutrientCompositionItem[] | null;
   densityKgPerL?: number | null;
 }
@@ -109,6 +111,7 @@ export function FertigationForm({
             unit: 'kg',
             quantityBasis: 'per_acre',
             warehouseItemId: null,
+            catalogProductId: null,
             compositionSnapshot: null,
             densityKgPerL: null,
           },
@@ -157,6 +160,7 @@ export function FertigationForm({
             : (item.quantity ?? 0),
         quantityBasis: current.quantityBasis ?? resolveQuickAddQuantityBasis(item),
         warehouseItemId: item.warehouseItemId ?? null,
+        catalogProductId: item.catalogProductId ?? null,
         compositionSnapshot: item.composition ?? null,
         densityKgPerL: item.densityKgPerL ?? null,
       };
@@ -180,6 +184,7 @@ export function FertigationForm({
           unit: validatedUnit,
           quantityBasis: resolveQuickAddQuantityBasis(item),
           warehouseItemId: item.warehouseItemId ?? null,
+          catalogProductId: item.catalogProductId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
         },
@@ -533,6 +538,7 @@ function FertilizerRow({
         fertilizer.quantityBasis ??
         resolveQuantityBasis(item.unit?.trim() ?? unit, item.quantityBasis),
       warehouseItemId: item.warehouseItemId ?? null,
+      catalogProductId: item.catalogProductId ?? null,
       compositionSnapshot: item.composition ?? null,
       densityKgPerL: item.densityKgPerL ?? null,
     });
@@ -780,6 +786,7 @@ export function createEmptyFertigationFormData(): FertigationFormData {
         unit: 'kg',
         quantityBasis: 'per_acre',
         warehouseItemId: null,
+        catalogProductId: null,
         compositionSnapshot: null,
         densityKgPerL: null,
       },

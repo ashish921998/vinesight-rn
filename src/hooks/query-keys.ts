@@ -115,6 +115,12 @@ export const queryKeys = {
     current: () => [...queryKeys.profile.all, 'current'] as const,
   },
 
+  // Fertilizer Plan
+  fertilizerPlan: {
+    all: ['fertilizerPlan'] as const,
+    detail: (farmId: number) => [...queryKeys.fertilizerPlan.all, { farmId }] as const,
+  },
+
   // Warehouse Items
   warehouseItems: {
     all: ['warehouseItems'] as const,
@@ -180,5 +186,37 @@ export const queryKeys = {
     farmsNeedingAttention: () => [...queryKeys.dashboard.all, 'farmsNeedingAttention'] as const,
     recentActivities: (limit?: number) =>
       [...queryKeys.dashboard.all, 'recentActivities', limit] as const,
+  },
+
+  // Chemical catalog
+  chemicalCatalog: {
+    all: ['chemicalCatalog'] as const,
+    mixes: () => [...queryKeys.chemicalCatalog.all, 'mixes'] as const,
+    search: (query: string) => [...queryKeys.chemicalCatalog.all, 'search', query] as const,
+    mixDetail: (mixId: number) => [...queryKeys.chemicalCatalog.all, 'mix', mixId] as const,
+  },
+
+  // Master catalog
+  masterCatalog: {
+    all: ['masterCatalog'] as const,
+    products: () => [...queryKeys.masterCatalog.all, 'products'] as const,
+    productsByType: (inputTypes: string[], stateCode: string) =>
+      [
+        ...queryKeys.masterCatalog.products(),
+        { inputTypes: [...inputTypes].sort(), stateCode },
+      ] as const,
+    productDetail: (productId: number) =>
+      [...queryKeys.masterCatalog.all, 'product', productId] as const,
+  },
+
+  // PHI
+  phi: {
+    all: ['phi'] as const,
+    computation: (mixId: number, sprayDate: string) =>
+      [...queryKeys.phi.all, 'computation', mixId, sprayDate] as const,
+    earliestSafeHarvest: (farmId: number, seasonId: number | null) =>
+      [...queryKeys.phi.all, 'earliestSafeHarvest', { farmId, seasonId }] as const,
+    safeToSprayMatrix: (farmId: number, seasonId: number | null, targetHarvestDate: string) =>
+      [...queryKeys.phi.all, 'safeToSprayMatrix', { farmId, seasonId, targetHarvestDate }] as const,
   },
 } as const;

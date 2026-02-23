@@ -1,0 +1,1 @@
+import './validate-master-catalog';

@@ -15,7 +15,9 @@
     },
     "production": {
       "env": {
-        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "SENTRY_AUTH_TOKEN": "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",
+        "SENTRY_ALLOW_FAILURE": "true"
       },
       "android": {
         "buildType": "app-bundle"

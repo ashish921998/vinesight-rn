@@ -1,0 +1,210 @@
+{
+  "version": "v1",
+  "stateCode": "MH",
+  "rows": [
+    {
+      "productKey": "propineb_70_wp",
+      "componentCode": "PROPINEB",
+      "componentType": "active_ingredient",
+      "percent": 70,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Product label"
+    },
+    {
+      "productKey": "dimethomorph_50_wp",
+      "componentCode": "DIMETHOMORPH",
+      "componentType": "active_ingredient",
+      "percent": 50,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Product label"
+    },
+    {
+      "productKey": "mancozeb_75_wp",
+      "componentCode": "MANCOZEB",
+      "componentType": "active_ingredient",
+      "percent": 75,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Product label"
+    },
+    {
+      "productKey": "fosetyl_al_80_wp",
+      "componentCode": "FOSETYL_AL",
+      "componentType": "active_ingredient",
+      "percent": 80,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Product label"
+    },
+    {
+      "productKey": "methomyl_40_sp",
+      "componentCode": "METHOMYL",
+      "componentType": "active_ingredient",
+      "percent": 40,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Product label"
+    },
+    {
+      "productKey": "thiamethoxam_25_wg",
+      "componentCode": "THIAMETHOXAM",
+      "componentType": "active_ingredient",
+      "percent": 25,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Product label"
+    },
+    {
+      "productKey": "lambda_cyhalothrin_5_ec",
+      "componentCode": "LAMBDA_CYHALOTHRIN",
+      "componentType": "active_ingredient",
+      "percent": 5,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Product label"
+    },
+    {
+      "productKey": "mandipropamide_23_4_sc",
+      "componentCode": "MANDIPROPAMIDE",
+      "componentType": "active_ingredient",
+      "percent": 23.4,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Product label"
+    },
+    {
+      "productKey": "imidacloprid_17_8_sl",
+      "componentCode": "IMIDACLOPRID",
+      "componentType": "active_ingredient",
+      "percent": 17.8,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Product label"
+    },
+
+    {
+      "productKey": "mahadhan_19_19_19",
+      "componentCode": "N",
+      "componentType": "nutrient",
+      "percent": 19,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+    {
+      "productKey": "mahadhan_19_19_19",
+      "componentCode": "P2O5",
+      "componentType": "nutrient",
+      "percent": 19,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+    {
+      "productKey": "mahadhan_19_19_19",
+      "componentCode": "K2O",
+      "componentType": "nutrient",
+      "percent": 19,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+
+    {
+      "productKey": "mahadhan_12_61_00",
+      "componentCode": "N",
+      "componentType": "nutrient",
+      "percent": 12,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+    {
+      "productKey": "mahadhan_12_61_00",
+      "componentCode": "P2O5",
+      "componentType": "nutrient",
+      "percent": 61,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+
+    {
+      "productKey": "mahadhan_00_52_34",
+      "componentCode": "P2O5",
+      "componentType": "nutrient",
+      "percent": 52,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+    {
+      "productKey": "mahadhan_00_52_34",
+      "componentCode": "K2O",
+      "componentType": "nutrient",
+      "percent": 34,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+
+    {
+      "productKey": "mahadhan_13_00_45",
+      "componentCode": "N",
+      "componentType": "nutrient",
+      "percent": 13,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+    {
+      "productKey": "mahadhan_13_00_45",
+      "componentCode": "K2O",
+      "componentType": "nutrient",
+      "percent": 45,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+
+    {
+      "productKey": "mahadhan_dap_18_46_00",
+      "componentCode": "N",
+      "componentType": "nutrient",
+      "percent": 18,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+    {
+      "productKey": "mahadhan_dap_18_46_00",
+      "componentCode": "P2O5",
+      "componentType": "nutrient",
+      "percent": 46,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+
+    {
+      "productKey": "mahadhan_ammonium_sulphate",
+      "componentCode": "N",
+      "componentType": "nutrient",
+      "percent": 20.5,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    },
+    {
+      "productKey": "mahadhan_ammonium_sulphate",
+      "componentCode": "S",
+      "componentType": "nutrient",
+      "percent": 23,
+      "basis": "declared",
+      "verified": false,
+      "sourceNote": "Manufacturer literature"
+    }
+  ]
+}

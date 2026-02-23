@@ -14,11 +14,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useCreateWarehouseItem,
   useUpdateWarehouseItem,
+  useMasterProducts,
   isIOS,
   useResponsiveHeight,
   useAndroidKeyboardLift,
 } from '../../hooks';
 import {
+  CatalogInputType,
+  CatalogMappingSource,
+  CatalogMappingStatus,
+  MasterCatalogProduct,
   NutrientCompositionItem,
   WarehouseItem,
   WarehouseItemType,
@@ -40,7 +45,6 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { ICON_REGISTRY } from '@/constants/icon-registry';
-import { WAREHOUSE_PRESETS, type WarehouseNutrientPreset } from '@/constants/nutrient-presets';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 
 interface Props {
@@ -72,6 +76,35 @@ const ITEM_TYPES = [
   },
   { value: 'spray' as WarehouseItemType, label: 'Spray', icon: 'spraycan' as const },
 ];
+
+function mapCatalogInputTypeToWarehouseType(inputType: CatalogInputType): WarehouseItemType {
+  return inputType === 'fertilizer' ? 'fertilizer' : 'spray';
+}
+
+function mapWarehouseTypeToCatalogInputTypes(type: WarehouseItemType): CatalogInputType[] {
+  if (type === 'fertilizer') {
+    return ['fertilizer', 'biostimulant', 'other'];
+  }
+  return ['spray', 'adjuvant', 'biostimulant', 'other'];
+}
+
+function resolveDefaultWarehouseUnitForProduct(product: MasterCatalogProduct): WarehouseUnit {
+  if (product.input_type === 'fertilizer') return 'kg';
+  const formulation = (product.formulation ?? '').toUpperCase();
+  const liquidTokens = ['EC', 'SL', 'SC', 'AS', 'EW', 'UL', 'CS'];
+  if (liquidTokens.some((token) => formulation.includes(token))) return 'liter';
+  return 'kg';
+}
+
+function mapCatalogCompositionsToRows(product: MasterCatalogProduct): CompositionRow[] {
+  const rows = (product.compositions ?? []).map((composition) =>
+    createCompositionRow({
+      nutrient_code: composition.component_code,
+      percent: composition.percent,
+    }),
+  );
+  return rows.length > 0 ? rows : [createCompositionRow()];
+}
 
 function createCompositionRow(item?: Partial<NutrientCompositionItem>): CompositionRow {
   return {
@@ -134,7 +167,7 @@ export default function WarehouseItemForm({
     createCompositionRow(),
   ]);
   const [compositionSource, setCompositionSource] = useState<'manual' | 'preset'>('manual');
-  const [selectedCatalogueId, setSelectedCatalogueId] = useState('');
+  const [selectedCatalogProductId, setSelectedCatalogProductId] = useState<number | null>(null);
   const [catalogueSearchQuery, setCatalogueSearchQuery] = useState('');
   const [showCataloguePicker, setShowCataloguePicker] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -179,23 +212,41 @@ export default function WarehouseItemForm({
     [colors.warning, m3.colorScheme.primary],
   );
 
+  const catalogInputTypes = useMemo(() => mapWarehouseTypeToCatalogInputTypes(type), [type]);
+  const { data: catalogProducts = [] } = useMasterProducts({
+    inputTypes: catalogInputTypes,
+    stateCode: 'MH',
+  });
+  const selectedCatalogProduct = useMemo(
+    () => catalogProducts.find((product) => product.id === selectedCatalogProductId) ?? null,
+    [catalogProducts, selectedCatalogProductId],
+  );
+
   // Track previous state to prevent unnecessary updates
   const prevVisibleRef = useRef(isVisible);
   const prevEditingItemIdRef = useRef(editingItem?.id);
   const filteredCatalogueItems = useMemo(() => {
     const query = catalogueSearchQuery.trim().toLowerCase();
-    if (!query) return WAREHOUSE_PRESETS;
-    return WAREHOUSE_PRESETS.filter((preset) =>
-      `${preset.label} ${preset.name} ${preset.manufacturer}`.toLowerCase().includes(query),
+    if (!query) return catalogProducts;
+    return catalogProducts.filter((product) =>
+      [
+        product.name,
+        product.manufacturer ?? '',
+        product.active_ingredient ?? '',
+        ...(product.aliases ?? []).map((alias) => alias.alias),
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(query),
     );
-  }, [catalogueSearchQuery]);
+  }, [catalogProducts, catalogueSearchQuery]);
   const visibleCatalogueItems = useMemo(() => {
-    if (!selectedCatalogueId) return filteredCatalogueItems;
-    if (filteredCatalogueItems.some((preset) => preset.id === selectedCatalogueId))
+    if (!selectedCatalogProductId) return filteredCatalogueItems;
+    if (filteredCatalogueItems.some((product) => product.id === selectedCatalogProductId))
       return filteredCatalogueItems;
-    const selected = WAREHOUSE_PRESETS.find((preset) => preset.id === selectedCatalogueId);
+    const selected = catalogProducts.find((product) => product.id === selectedCatalogProductId);
     return selected ? [selected, ...filteredCatalogueItems] : filteredCatalogueItems;
-  }, [filteredCatalogueItems, selectedCatalogueId]);
+  }, [catalogProducts, filteredCatalogueItems, selectedCatalogProductId]);
 
   useEffect(() => {
     if (!showCataloguePicker) return;
@@ -254,7 +305,7 @@ export default function WarehouseItemForm({
     setDensityKgPerL('');
     setCompositionRows([createCompositionRow()]);
     setCompositionSource('manual');
-    setSelectedCatalogueId('');
+    setSelectedCatalogProductId(null);
     setCatalogueSearchQuery('');
     setShowCataloguePicker(false);
     setKeyboardHeight(0);
@@ -265,7 +316,7 @@ export default function WarehouseItemForm({
     resetForm();
   };
 
-  const applyPreset = (preset: WarehouseNutrientPreset) => {
+  const applyCatalogProduct = (product: MasterCatalogProduct) => {
     setManualCatalogueDraft(
       (prev) =>
         prev ?? {
@@ -276,17 +327,18 @@ export default function WarehouseItemForm({
           compositionRows: compositionRows.map((row) => ({ ...row })),
         },
     );
-    setName(preset.name);
-    setType(preset.type);
-    setUnit(preset.unit);
-    setManufacturer(preset.manufacturer);
-    setCompositionRows(preset.composition.map((item) => createCompositionRow(item)));
+    const nextType = mapCatalogInputTypeToWarehouseType(product.input_type);
+    setName(product.name);
+    setType(nextType);
+    setUnit(resolveDefaultWarehouseUnitForProduct(product));
+    setManufacturer(product.manufacturer ?? '');
+    setCompositionRows(mapCatalogCompositionsToRows(product));
     setCompositionSource('preset');
-    setSelectedCatalogueId(preset.id);
+    setSelectedCatalogProductId(product.id);
   };
 
-  const clearPresetSelection = () => {
-    if (!selectedCatalogueId) {
+  const clearCatalogSelection = () => {
+    if (!selectedCatalogProductId) {
       setShowCataloguePicker(false);
       return;
     }
@@ -303,7 +355,7 @@ export default function WarehouseItemForm({
     }
 
     setCompositionSource('manual');
-    setSelectedCatalogueId('');
+    setSelectedCatalogProductId(null);
     setShowCataloguePicker(false);
     setManualCatalogueDraft(null);
   };
@@ -311,14 +363,14 @@ export default function WarehouseItemForm({
   const updateCompositionRow = (id: string, updates: Partial<CompositionRow>) => {
     setCompositionRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...updates } : row)));
     setCompositionSource('manual');
-    setSelectedCatalogueId('');
+    setSelectedCatalogProductId(null);
     setManualCatalogueDraft(null);
   };
 
   const addCompositionRow = () => {
     if (compositionRows.length >= 12) return;
     setCompositionRows((prev) => [...prev, createCompositionRow()]);
-    setSelectedCatalogueId('');
+    setSelectedCatalogProductId(null);
     setManualCatalogueDraft(null);
   };
 
@@ -328,11 +380,14 @@ export default function WarehouseItemForm({
       return next.length > 0 ? next : [createCompositionRow()];
     });
     setCompositionSource('manual');
-    setSelectedCatalogueId('');
+    setSelectedCatalogProductId(null);
     setManualCatalogueDraft(null);
   };
   const handleTypeSelect = (nextType: WarehouseItemType) => {
     setType(nextType);
+    setCompositionSource('manual');
+    setSelectedCatalogProductId(null);
+    setManualCatalogueDraft(null);
   };
 
   // Reset form when modal opens/closes or editing item changes
@@ -366,10 +421,7 @@ export default function WarehouseItemForm({
               : [createCompositionRow()],
           );
           setCompositionSource(editingItem.composition_source === 'preset' ? 'preset' : 'manual');
-          const matchedPreset = WAREHOUSE_PRESETS.find(
-            (preset) => preset.name === editingItem.name,
-          );
-          setSelectedCatalogueId(matchedPreset?.id ?? '');
+          setSelectedCatalogProductId(editingItem.catalog_product_id ?? null);
           setCatalogueSearchQuery('');
         } else {
           resetForm();
@@ -426,6 +478,16 @@ export default function WarehouseItemForm({
       composition,
       composition_source: compositionSource,
       composition_updated_at: new Date().toISOString(),
+      catalog_product_id: selectedCatalogProduct?.id ?? null,
+      catalog_mapping_status: (selectedCatalogProduct
+        ? selectedCatalogProduct.verification_tier === 'verified'
+          ? 'mapped_verified'
+          : 'mapped_provisional'
+        : 'unmapped') as CatalogMappingStatus,
+      catalog_mapping_source: (selectedCatalogProduct
+        ? 'preset'
+        : 'manual') as CatalogMappingSource,
+      catalog_mapped_at: selectedCatalogProduct ? new Date().toISOString() : null,
     };
 
     try {
@@ -450,7 +512,7 @@ export default function WarehouseItemForm({
       Alert.alert(
         i18n.t('common.error'),
         needsMigration
-          ? `${i18n.t('common.errors.failedToSaveItem')}\n\nDB schema may be missing nutrient columns. Please run the SQL in docs/sql/2026-02-11-nutrient-composition-tracking.sql.\n\n${details}`
+          ? `${i18n.t('common.errors.failedToSaveItem')}\n\nDB schema may be missing catalog/mapping columns. Please apply the latest Supabase migration and retry.\n\n${details}`
           : i18n.t('common.errors.failedToSaveItem'),
       );
     }
@@ -513,19 +575,14 @@ export default function WarehouseItemForm({
           <Text
             style={{
               fontSize: fontSize.base,
-              color: selectedCatalogueId ? colors.surface[900] : colors.surface[400],
-              fontWeight: selectedCatalogueId ? fontWeight.medium : fontWeight.normal,
+              color: selectedCatalogProductId ? colors.surface[900] : colors.surface[400],
+              fontWeight: selectedCatalogProductId ? fontWeight.medium : fontWeight.normal,
               flex: 1,
             }}
             numberOfLines={1}
           >
-            {selectedCatalogueId
-              ? (() => {
-                  const preset = WAREHOUSE_PRESETS.find((p) => p.id === selectedCatalogueId);
-                  return preset
-                    ? `${preset.label} - ${preset.manufacturer}`
-                    : 'Select from catalogue (or skip)';
-                })()
+            {selectedCatalogProduct
+              ? `${selectedCatalogProduct.name} - ${selectedCatalogProduct.manufacturer ?? 'Unknown manufacturer'}`
               : 'Select from catalogue (or skip)'}
           </Text>
           <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
@@ -816,12 +873,12 @@ export default function WarehouseItemForm({
                     paddingRight: spacing[6],
                     borderBottomWidth: 1,
                     borderBottomColor: colors.surface[100],
-                    backgroundColor: !selectedCatalogueId
+                    backgroundColor: !selectedCatalogProductId
                       ? colors.surface[50]
                       : colors.surface[100],
                   }}
                   onPress={() => {
-                    clearPresetSelection();
+                    clearCatalogSelection();
                   }}
                 >
                   <View
@@ -835,22 +892,24 @@ export default function WarehouseItemForm({
                       style={{
                         fontSize: fontSize.base,
                         color: colors.surface[900],
-                        fontWeight: !selectedCatalogueId ? fontWeight.semibold : fontWeight.medium,
+                        fontWeight: !selectedCatalogProductId
+                          ? fontWeight.semibold
+                          : fontWeight.medium,
                         fontStyle: 'italic',
                       }}
                     >
                       Skip (manual entry)
                     </Text>
-                    {!selectedCatalogueId && (
+                    {!selectedCatalogProductId && (
                       <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
                     )}
                   </View>
                 </Pressable>
 
                 {/* Catalogue items */}
-                {visibleCatalogueItems.map((preset) => (
+                {visibleCatalogueItems.map((product) => (
                   <Pressable
-                    key={preset.id}
+                    key={product.id}
                     style={{
                       paddingVertical: spacing[4],
                       paddingLeft: spacing[8],
@@ -858,12 +917,12 @@ export default function WarehouseItemForm({
                       borderBottomWidth: 1,
                       borderBottomColor: colors.surface[100],
                       backgroundColor:
-                        selectedCatalogueId === preset.id
+                        selectedCatalogProductId === product.id
                           ? colors.surface[50]
                           : colors.surface[100],
                     }}
                     onPress={() => {
-                      applyPreset(preset);
+                      applyCatalogProduct(product);
                       setShowCataloguePicker(false);
                     }}
                   >
@@ -880,13 +939,13 @@ export default function WarehouseItemForm({
                             fontSize: fontSize.base,
                             color: colors.surface[900],
                             fontWeight:
-                              selectedCatalogueId === preset.id
+                              selectedCatalogProductId === product.id
                                 ? fontWeight.semibold
                                 : fontWeight.medium,
                           }}
                           numberOfLines={1}
                         >
-                          {preset.label}
+                          {product.name}
                         </Text>
                         <Text
                           style={{
@@ -896,10 +955,10 @@ export default function WarehouseItemForm({
                           }}
                           numberOfLines={1}
                         >
-                          {preset.manufacturer}
+                          {product.manufacturer ?? 'Unknown manufacturer'}
                         </Text>
                       </View>
-                      {selectedCatalogueId === preset.id && (
+                      {selectedCatalogProductId === product.id && (
                         <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
                       )}
                     </View>
