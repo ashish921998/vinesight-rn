@@ -628,6 +628,7 @@ export const mr = {
       title: 'कॅटलॉग मिक्स',
       selectedMix: 'निवडलेले: {{name}}',
       requiredHint: 'पुढे जाण्यासाठी कॅटलॉग मिक्स निवडा',
+      fallbackLabel: 'कॅटलॉग मिक्स',
     },
     catalogOptional: {
       title: 'कॅटलॉग मिक्स (ऐच्छिक)',

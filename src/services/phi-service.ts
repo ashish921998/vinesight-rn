@@ -123,14 +123,17 @@ export function computePhiForMix(mix: ChemicalMix, sprayDate: string): PhiComput
   };
 }
 
-export function computeEarliestSafeHarvest(
-  records: Array<{
-    safe_harvest_date?: string | null;
-    phi_blocking_component?: string | null;
-    chemical?: string | null;
-    date?: string | null;
-  }>,
-): { earliestDate: string | null; reason: string | null } {
+export interface PhiRecord {
+  safe_harvest_date?: string | null;
+  phi_blocking_component?: string | null;
+  chemical?: string | null;
+  date?: string | null;
+}
+
+export function computeEarliestSafeHarvest(records: PhiRecord[]): {
+  earliestDate: string | null;
+  reason: string | null;
+} {
   const valid = records
     .map((record) => record.safe_harvest_date)
     .filter((value): value is string => typeof value === 'string' && isValidDateString(value));
@@ -151,12 +154,14 @@ export function computeEarliestSafeHarvest(
   };
 }
 
-export function buildSafeToSprayStatus(args: {
+export interface BuildSafeToSprayArgs {
   mixes: ChemicalMix[];
   targetHarvestDate: string;
   today?: string;
   yellowBufferDays?: number;
-}): SafeToSprayStatus[] {
+}
+
+export function buildSafeToSprayStatus(args: BuildSafeToSprayArgs): SafeToSprayStatus[] {
   const { mixes, targetHarvestDate, yellowBufferDays = SAFE_TO_SPRAY_YELLOW_BUFFER_DAYS } = args;
   if (!isValidDateString(targetHarvestDate)) return [];
   const today =
@@ -192,10 +197,12 @@ export function buildSafeToSprayStatus(args: {
     });
 }
 
-export function isPhiConflict(args: {
-  safeHarvestDate: string | null | undefined;
-  targetHarvestDate: string | null | undefined;
-}): boolean {
+export interface PhiConflictArgs {
+  safeHarvestDate?: string | null;
+  targetHarvestDate?: string | null;
+}
+
+export function isPhiConflict(args: PhiConflictArgs): boolean {
   const { safeHarvestDate, targetHarvestDate } = args;
   if (!safeHarvestDate || !targetHarvestDate) return false;
   if (!isValidDateString(safeHarvestDate) || !isValidDateString(targetHarvestDate)) return false;

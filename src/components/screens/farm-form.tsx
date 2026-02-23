@@ -746,10 +746,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       const createdFarm = await createFarm.mutateAsync(farmData);
       telemetry.capture('farm_created', {
         farm_id: createdFarm?.id ?? null,
-        location: formState.region.trim(),
-        area: areaValue,
-        area_unit: 'acres',
-        crop_type: finalCrop,
+        region: formState.region.trim(),
+        area_acres: areaValue,
+        crop: finalCrop,
         variety: finalVariety,
         soil_texture: formState.soilTextureClass || null,
       });

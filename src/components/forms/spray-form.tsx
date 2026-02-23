@@ -168,11 +168,10 @@ export function SprayForm({
     const clamped = clampChemicalRows(data.chemicals);
     if (clamped.length === data.chemicals.length) return;
     onChangeRef.current({
-      waterVolume: data.waterVolume,
-      notes: data.notes,
+      ...data,
       chemicals: clamped,
     });
-  }, [data.chemicals, data.notes, data.waterVolume]);
+  }, [data]);
 
   const addChemical = () => {
     if (data.chemicals.length < MAX_CHEMICAL_ROWS) {
@@ -422,7 +421,10 @@ export function SprayForm({
                       {mix.name}
                     </Text>
                     <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                      {mix.target_problem ?? 'Catalog mix'}
+                      {mix.target_problem ??
+                        t('sprayForm.catalogOnly.fallbackLabel', {
+                          defaultValue: 'Catalog mix',
+                        })}
                     </Text>
                   </Pressable>
                 );

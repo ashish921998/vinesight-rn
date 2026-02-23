@@ -43,7 +43,11 @@ interface MixFile {
 function loadJson<T>(fileName: string): T {
   const absolutePath = path.resolve(process.cwd(), 'assets/data/master', fileName);
   const raw = fs.readFileSync(absolutePath, 'utf8');
-  return JSON.parse(raw) as T;
+  const parsed = JSON.parse(raw) as unknown;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`Expected object JSON root in ${fileName}`);
+  }
+  return parsed as T;
 }
 
 describe('master catalog validation', () => {
@@ -90,7 +94,7 @@ describe('master catalog validation', () => {
     const products = loadJson<ProductFile>('maharashtra_products_v1.json');
     const phi = loadJson<PhiFile>('maharashtra_phi_rules_v1.json');
     const verifiedPhiByProduct = new Map(
-      phi.rows.filter((row) => row.verified !== false).map((row) => [row.productKey, row]),
+      phi.rows.filter((row) => row.verified).map((row) => [row.productKey, row]),
     );
 
     const verifiedSprays = products.products.filter(

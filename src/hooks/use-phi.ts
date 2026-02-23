@@ -41,11 +41,13 @@ export function useEarliestSafeHarvestForSeason(
   });
 }
 
-export function useSafeToSprayMatrix(args: {
+export interface SafeToSprayMatrixArgs {
   farmId: number | undefined;
   seasonId?: number | null;
   targetHarvestDate: string | null | undefined;
-}) {
+}
+
+export function useSafeToSprayMatrix(args: SafeToSprayMatrixArgs) {
   const { targetHarvestDate, farmId, seasonId } = args;
   const catalog = useChemicalCatalog();
   const data = useMemo<SafeToSprayStatus[]>(() => {

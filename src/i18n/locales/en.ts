@@ -626,6 +626,7 @@ export const en = {
       title: 'Catalog Mixes',
       selectedMix: 'Selected: {{name}}',
       requiredHint: 'Choose a catalog mix to continue',
+      fallbackLabel: 'Catalog mix',
     },
     catalogOptional: {
       title: 'Catalog mix (optional)',

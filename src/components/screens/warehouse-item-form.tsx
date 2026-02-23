@@ -168,6 +168,7 @@ export default function WarehouseItemForm({
   ]);
   const [compositionSource, setCompositionSource] = useState<'manual' | 'preset'>('manual');
   const [selectedCatalogProductId, setSelectedCatalogProductId] = useState<number | null>(null);
+  const [catalogSelectionTouched, setCatalogSelectionTouched] = useState(false);
   const [catalogueSearchQuery, setCatalogueSearchQuery] = useState('');
   const [showCataloguePicker, setShowCataloguePicker] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -306,6 +307,7 @@ export default function WarehouseItemForm({
     setCompositionRows([createCompositionRow()]);
     setCompositionSource('manual');
     setSelectedCatalogProductId(null);
+    setCatalogSelectionTouched(false);
     setCatalogueSearchQuery('');
     setShowCataloguePicker(false);
     setKeyboardHeight(0);
@@ -335,6 +337,7 @@ export default function WarehouseItemForm({
     setCompositionRows(mapCatalogCompositionsToRows(product));
     setCompositionSource('preset');
     setSelectedCatalogProductId(product.id);
+    setCatalogSelectionTouched(true);
   };
 
   const clearCatalogSelection = () => {
@@ -356,6 +359,7 @@ export default function WarehouseItemForm({
 
     setCompositionSource('manual');
     setSelectedCatalogProductId(null);
+    setCatalogSelectionTouched(true);
     setShowCataloguePicker(false);
     setManualCatalogueDraft(null);
   };
@@ -364,6 +368,7 @@ export default function WarehouseItemForm({
     setCompositionRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...updates } : row)));
     setCompositionSource('manual');
     setSelectedCatalogProductId(null);
+    setCatalogSelectionTouched(true);
     setManualCatalogueDraft(null);
   };
 
@@ -371,6 +376,7 @@ export default function WarehouseItemForm({
     if (compositionRows.length >= 12) return;
     setCompositionRows((prev) => [...prev, createCompositionRow()]);
     setSelectedCatalogProductId(null);
+    setCatalogSelectionTouched(true);
     setManualCatalogueDraft(null);
   };
 
@@ -381,12 +387,14 @@ export default function WarehouseItemForm({
     });
     setCompositionSource('manual');
     setSelectedCatalogProductId(null);
+    setCatalogSelectionTouched(true);
     setManualCatalogueDraft(null);
   };
   const handleTypeSelect = (nextType: WarehouseItemType) => {
     setType(nextType);
     setCompositionSource('manual');
     setSelectedCatalogProductId(null);
+    setCatalogSelectionTouched(true);
     setManualCatalogueDraft(null);
   };
 
@@ -422,6 +430,7 @@ export default function WarehouseItemForm({
           );
           setCompositionSource(editingItem.composition_source === 'preset' ? 'preset' : 'manual');
           setSelectedCatalogProductId(editingItem.catalog_product_id ?? null);
+          setCatalogSelectionTouched(false);
           setCatalogueSearchQuery('');
         } else {
           resetForm();
@@ -474,7 +483,10 @@ export default function WarehouseItemForm({
       previousCatalogProductId != null &&
       previousCatalogProductId === selectedCatalogProductId;
     const resolvedCatalogProductId =
-      selectedCatalogProduct?.id ?? selectedCatalogProductId ?? previousCatalogProductId;
+      selectedCatalogProduct?.id ??
+      (catalogSelectionTouched
+        ? selectedCatalogProductId
+        : (selectedCatalogProductId ?? previousCatalogProductId));
 
     const itemData = {
       name: name.trim(),

@@ -627,6 +627,7 @@ export const hi = {
       title: 'कैटलॉग मिक्स',
       selectedMix: 'चयनित: {{name}}',
       requiredHint: 'आगे बढ़ने के लिए कैटलॉग मिक्स चुनें',
+      fallbackLabel: 'कैटलॉग मिक्स',
     },
     catalogOptional: {
       title: 'कैटलॉग मिक्स (वैकल्पिक)',

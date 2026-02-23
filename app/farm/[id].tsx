@@ -228,6 +228,17 @@ export default function FarmDetailScreen() {
     farmId,
     activeSeasonRecord?.id ?? null,
   );
+  const earliestSafeHarvestDateLabel = useMemo(() => {
+    const raw = earliestSafeHarvest?.earliestDate;
+    if (!raw) return null;
+    const parsed = parseDbDateToLocalDate(raw);
+    if (!parsed) return raw;
+    return parsed.toLocaleDateString(undefined, {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }, [earliestSafeHarvest?.earliestDate]);
   const isGrapeFarm = useMemo(() => {
     const grapePattern = /\b(grapes?|vitis)\b/i;
     return grapePattern.test(farm?.crop ?? '') || grapePattern.test(farm?.crop_variety ?? '');
@@ -1375,7 +1386,7 @@ export default function FarmDetailScreen() {
                         }}
                       >
                         {t('farmDetails.safeHarvest.inlineDate', {
-                          date: earliestSafeHarvest.earliestDate,
+                          date: earliestSafeHarvestDateLabel ?? earliestSafeHarvest.earliestDate,
                           defaultValue: 'Safe harvest date: {{date}}',
                         })}
                       </Text>
