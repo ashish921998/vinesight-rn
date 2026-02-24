@@ -52,6 +52,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
+import { isGrapeCrop } from '@/utils/crop';
 
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -239,10 +240,10 @@ export default function FarmDetailScreen() {
       year: 'numeric',
     });
   }, [earliestSafeHarvest?.earliestDate]);
-  const isGrapeFarm = useMemo(() => {
-    const grapePattern = /\b(grapes?|vitis)\b/i;
-    return grapePattern.test(farm?.crop ?? '') || grapePattern.test(farm?.crop_variety ?? '');
-  }, [farm?.crop, farm?.crop_variety]);
+  const isGrapeFarm = useMemo(
+    () => isGrapeCrop(farm?.crop, farm?.crop_variety),
+    [farm?.crop, farm?.crop_variety],
+  );
   const lockedSeasonStartDate = useMemo(() => {
     if (!activeSeasonRecord) return null;
     return parseDbDateToLocalDate(activeSeasonRecord.start_date);

@@ -108,6 +108,7 @@ import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
 import { useAuthStore, useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
+import { isGrapeCrop } from '@/utils/crop';
 import {
   submitEntryPendingLog,
   type EntryLogFarmContext,
@@ -355,8 +356,7 @@ export function EntryForm({
       ? farms?.find((f) => f.id === selectedFarmId)
       : null) ??
     null;
-  const normalizedCrop = (activeFarm?.crop ?? '').trim().toLowerCase();
-  const isGrapeFarm = normalizedCrop === 'grape' || normalizedCrop === 'grapes';
+  const isGrapeFarm = isGrapeCrop(activeFarm?.crop, activeFarm?.crop_variety);
   const logFarmId = activeFarm?.id;
   const { data: sprayWarehouseItems } = useWarehouseItems('spray');
   const { data: fertilizerWarehouseItems } = useWarehouseItems('fertilizer');

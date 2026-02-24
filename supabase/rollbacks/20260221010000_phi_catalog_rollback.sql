@@ -48,6 +48,21 @@ alter table if exists public.farm_seasons
   drop column if exists target_harvest_date;
 
 -- ============================================================
+-- Drop catalog RLS policies and triggers explicitly (clarity/idempotency)
+-- ============================================================
+drop policy if exists "Allow authenticated read access" on public.chemical_phi_rules;
+drop policy if exists "Allow authenticated read access" on public.chemical_mix_components;
+drop policy if exists "Allow authenticated read access" on public.chemical_mixes;
+drop policy if exists "Allow authenticated read access" on public.chemical_product_compositions;
+drop policy if exists "Allow authenticated read access" on public.chemical_product_aliases;
+drop policy if exists "Allow authenticated read access" on public.chemical_products;
+
+drop trigger if exists handle_chemical_phi_rules_updated_at on public.chemical_phi_rules;
+drop trigger if exists handle_chemical_mixes_updated_at on public.chemical_mixes;
+drop trigger if exists handle_chemical_product_compositions_updated_at on public.chemical_product_compositions;
+drop trigger if exists handle_chemical_products_updated_at on public.chemical_products;
+
+-- ============================================================
 -- Drop PHI/catalog tables (dependencies handled by order/cascade)
 -- ============================================================
 drop table if exists public.chemical_phi_rules cascade;
