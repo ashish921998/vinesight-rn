@@ -203,8 +203,10 @@ function normalizeWarehouseFertilizerUnit(unit: string | null | undefined): Fert
   if (
     normalized === 'liter' ||
     normalized === 'litre' ||
+    normalized === 'l' ||
     normalized === 'liter/acre' ||
     normalized === 'litre/acre' ||
+    normalized === 'l/acre' ||
     normalized === 'liter per acre' ||
     normalized === 'litre per acre'
   ) {
@@ -470,23 +472,25 @@ export function EntryForm({
 
   useEffect(() => {
     if (!sprayPhiComputation) return;
-    if (sprayData.catalogMixId !== sprayPhiComputation.catalogMixId) return;
-    if (
-      sprayData.governingPhiDays === sprayPhiComputation.governingPhiDays &&
-      sprayData.safeHarvestDate === sprayPhiComputation.safeHarvestDate &&
-      sprayData.phiBlockingComponent === sprayPhiComputation.blockingComponentName &&
-      sprayData.phiStatus === sprayPhiComputation.phiStatus
-    ) {
-      return;
-    }
-    setSprayData((prev) => ({
-      ...prev,
-      governingPhiDays: sprayPhiComputation.governingPhiDays,
-      safeHarvestDate: sprayPhiComputation.safeHarvestDate,
-      phiBlockingComponent: sprayPhiComputation.blockingComponentName,
-      phiStatus: sprayPhiComputation.phiStatus,
-    }));
-  }, [sprayData, sprayPhiComputation]);
+    setSprayData((prev) => {
+      if (prev.catalogMixId !== sprayPhiComputation.catalogMixId) return prev;
+      if (
+        prev.governingPhiDays === sprayPhiComputation.governingPhiDays &&
+        prev.safeHarvestDate === sprayPhiComputation.safeHarvestDate &&
+        prev.phiBlockingComponent === sprayPhiComputation.blockingComponentName &&
+        prev.phiStatus === sprayPhiComputation.phiStatus
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        governingPhiDays: sprayPhiComputation.governingPhiDays,
+        safeHarvestDate: sprayPhiComputation.safeHarvestDate,
+        phiBlockingComponent: sprayPhiComputation.blockingComponentName,
+        phiStatus: sprayPhiComputation.phiStatus,
+      };
+    });
+  }, [sprayPhiComputation]);
 
   const fertigationQuickAddItems = useMemo<FertigationQuickAddItem[]>(() => {
     const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
@@ -774,10 +778,11 @@ export function EntryForm({
     }
   }, [selectedLogType, irrigationData, sprayData, harvestData, expenseData, fertigationData]);
 
-  const canSubmitLog = Boolean(isLogFormValid && (activeFarm || isAllFarmsSelected));
-  const canSaveLogs = Boolean(
-    pendingLogs.length > 0 && !isSubmittingLogs && (activeFarm || isAllFarmsSelected),
+  const hasFarmForCurrentLog = Boolean(
+    activeFarm || (isAllFarmsSelected && selectedLogType === 'expense'),
   );
+  const canSubmitLog = Boolean(isLogFormValid && hasFarmForCurrentLog);
+  const canSaveLogs = Boolean(pendingLogs.length > 0 && !isSubmittingLogs && hasFarmForCurrentLog);
 
   const getLogDescription = useCallback((type: LogTypeId, data: unknown): string => {
     switch (type) {
@@ -1078,7 +1083,9 @@ export function EntryForm({
           .map((log) => log.id);
 
         if (successfulIds.length > 0) {
-          successfulIds.forEach((id) => allFarmsSucceededByLogRef.current.delete(id));
+          successfulIds.forEach((id) => {
+            allFarmsSucceededByLogRef.current.delete(id);
+          });
           setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
           await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
           triggerHapticSuccess();
@@ -1163,7 +1170,9 @@ export function EntryForm({
       let taskCompletionUpdateFailed = false;
 
       if (successfulIds.length > 0) {
-        successfulIds.forEach((id) => allFarmsSucceededByLogRef.current.delete(id));
+        successfulIds.forEach((id) => {
+          allFarmsSucceededByLogRef.current.delete(id);
+        });
         // Track telemetry for successfully created records
         pendingLogs
           .filter((log) => successfulIds.includes(log.id))
@@ -1681,7 +1690,7 @@ export function EntryForm({
                 onInputFocus={scrollToFocusedInput}
                 onAdd={addLogToSession}
                 isValid={isLogFormValid}
-                hasFarm={Boolean(activeFarm || isAllFarmsSelected)}
+                hasFarm={hasFarmForCurrentLog}
                 sprayQuickAddItems={sprayQuickAddItems}
                 fertigationQuickAddItems={fertigationQuickAddItems}
                 sprayCatalogMixes={catalogMixes}

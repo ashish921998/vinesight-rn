@@ -110,6 +110,7 @@ export function SprayForm({
   const m3 = useM3();
   const { t } = useTranslation();
   const onChangeRef = useRef(onChange);
+  const dataRef = useRef(data);
   const isValid =
     data.waterVolume !== undefined &&
     data.waterVolume > 0 &&
@@ -162,6 +163,10 @@ export function SprayForm({
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   useEffect(() => {
     if (data.chemicals.length <= MAX_CHEMICAL_ROWS) return;
@@ -293,7 +298,7 @@ export function SprayForm({
       }
 
       onChange({
-        ...data,
+        ...dataRef.current,
         catalogMixId: mix.id,
         catalogMixName: mix.name,
         governingPhiDays: null,
@@ -303,7 +308,7 @@ export function SprayForm({
         chemicals,
       });
     },
-    [data, onChange],
+    [onChange],
   );
 
   const focusFirstChemicalName = () => {

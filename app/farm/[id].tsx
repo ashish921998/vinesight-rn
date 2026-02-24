@@ -12,7 +12,7 @@ import {
   Easing,
   TextInput,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -234,7 +234,7 @@ export default function FarmDetailScreen() {
     if (!raw) return null;
     const parsed = parseDbDateToLocalDate(raw);
     if (!parsed) return raw;
-    return parsed.toLocaleDateString(undefined, {
+    return formatDate(parsed, {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -926,7 +926,7 @@ export default function FarmDetailScreen() {
         router.push(`/soil-profiling?farmId=${id}`);
         break;
       case 'fertilizer-plans':
-        router.push(`/fertilizer-plans?farmId=${id}` as Href);
+        router.push({ pathname: '/fertilizer-plans', params: { farmId: id } });
         break;
     }
   };
