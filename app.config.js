@@ -105,7 +105,7 @@ module.exports = {
         {
           url: 'https://sentry.io/',
           project: process.env.SENTRY_PROJECT || 'vinesight-rn',
-          organization: 'vinesight-6s',
+          organization: process.env.SENTRY_ORG || 'vinesight-6s',
         },
       ],
       'expo-localization',
