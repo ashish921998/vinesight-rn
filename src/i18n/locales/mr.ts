@@ -149,7 +149,7 @@ export const mr = {
       noTarget: 'या हंगामासाठी लक्ष्य $t(glossary.harvest) दिनांक सेट केलेला नाही.',
       noData: 'अजून PHI आधारित $t(glossary.spray) नोंदी उपलब्ध नाहीत.',
       safeDate: '{{date}} पासून सुरक्षित',
-      inlineDate: 'सुरक्षित कापणी दिनांक: {{date}}',
+      inlineDate: 'सुरक्षित $t(glossary.harvest) दिनांक: {{date}}',
       blockedBy: '{{reason}} मुळे अडथळा',
       ctaSetTarget: 'लक्ष्य दिनांक सेट करा',
       ctaOpenChecker: 'Safe-to-spray तपासा',
