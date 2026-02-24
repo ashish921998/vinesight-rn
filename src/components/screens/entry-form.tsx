@@ -781,8 +781,11 @@ export function EntryForm({
   const hasFarmForCurrentLog = Boolean(
     activeFarm || (isAllFarmsSelected && selectedLogType === 'expense'),
   );
+  const hasFarmForPendingSession = Boolean(activeFarm || isAllFarmsSelected);
   const canSubmitLog = Boolean(isLogFormValid && hasFarmForCurrentLog);
-  const canSaveLogs = Boolean(pendingLogs.length > 0 && !isSubmittingLogs && hasFarmForCurrentLog);
+  const canSaveLogs = Boolean(
+    pendingLogs.length > 0 && !isSubmittingLogs && hasFarmForPendingSession,
+  );
 
   const getLogDescription = useCallback((type: LogTypeId, data: unknown): string => {
     switch (type) {

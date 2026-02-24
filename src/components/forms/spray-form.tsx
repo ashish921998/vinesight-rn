@@ -296,6 +296,9 @@ export function SprayForm({
       if (chemicals.length === 0) {
         return;
       }
+      if (chemicals.length > MAX_CHEMICAL_ROWS) {
+        return;
+      }
 
       onChange({
         ...dataRef.current,
