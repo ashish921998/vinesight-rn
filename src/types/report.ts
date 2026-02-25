@@ -114,16 +114,19 @@ export interface ReportStockUsageRecord {
   cost?: number; // Estimated cost
   usageCount: number; // Number of times used
   warehouseItemId?: number | null;
+  catalogProductId?: number | null;
   currentStockQuantity?: number | null;
   estimatedOpeningStockQuantity?: number | null;
   estimatedConsumedPercent?: number | null;
-  matchStrategy?: 'warehouse_item_id' | 'name_unit_fallback' | 'unmatched';
+  matchStrategy?: 'warehouse_item_id' | 'catalog_product_id' | 'name_unit_fallback' | 'unmatched';
 }
 
 export interface ReportIrrigationRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   duration: number;
   area: number;
   growthStage: string;
@@ -134,8 +137,10 @@ export interface ReportIrrigationRecord {
 
 export interface ReportSprayRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   chemical: string;
   dose: string;
   area: number;
@@ -146,8 +151,10 @@ export interface ReportSprayRecord {
 
 export interface ReportFertigationRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   fertilizers: string;
   area: number;
   notes?: string;
@@ -155,8 +162,10 @@ export interface ReportFertigationRecord {
 
 export interface ReportHarvestRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   quantity: number;
   grade: string;
   price?: number;
@@ -166,8 +175,10 @@ export interface ReportHarvestRecord {
 
 export interface ReportExpenseRecord {
   date: string;
+  daysAfterPruning?: number | null;
   seasonId?: number | null;
   seasonName?: string | null;
+  seasonWindow?: string | null;
   type: string;
   cost: number;
   remarks?: string;

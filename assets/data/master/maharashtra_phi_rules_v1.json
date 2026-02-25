@@ -1,0 +1,116 @@
+{
+  "version": "v1",
+  "stateCode": "MH",
+  "rows": [
+    {
+      "productKey": "propineb_70_wp",
+      "crop": "grape",
+      "phiDays": 21,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    },
+    {
+      "productKey": "copper_oxychloride",
+      "crop": "grape",
+      "phiDays": 14,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    },
+    {
+      "productKey": "dimethomorph_50_wp",
+      "crop": "grape",
+      "phiDays": 10,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    },
+    {
+      "productKey": "mancozeb_75_wp",
+      "crop": "grape",
+      "phiDays": 28,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    },
+    {
+      "productKey": "fosetyl_al_80_wp",
+      "crop": "grape",
+      "phiDays": 30,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    },
+    {
+      "productKey": "methomyl_40_sp",
+      "crop": "grape",
+      "phiDays": 14,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    },
+    {
+      "productKey": "thiamethoxam_25_wg",
+      "crop": "grape",
+      "phiDays": 7,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    },
+    {
+      "productKey": "lambda_cyhalothrin_5_ec",
+      "crop": "grape",
+      "phiDays": 7,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    },
+    {
+      "productKey": "mandipropamide_23_4_sc",
+      "crop": "grape",
+      "phiDays": 10,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    },
+    {
+      "productKey": "imidacloprid_17_8_sl",
+      "crop": "grape",
+      "phiDays": 7,
+      "evidenceLevel": "label",
+      "sourceNote": "Label guidance (grape)",
+      "sourceUrl": null,
+      "verified": true,
+      "effectiveFrom": null,
+      "effectiveTo": null
+    }
+  ]
+}

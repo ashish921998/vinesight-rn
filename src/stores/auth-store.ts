@@ -1,8 +1,11 @@
 import { create } from 'zustand';
+import * as Sentry from '@sentry/react-native';
 import { supabase } from '@/lib/supabase';
+import { queryClient, queryPersister } from '@/lib/query-cache';
 import { telemetry } from '@/services/telemetry';
 import type { User, Session } from '@supabase/supabase-js';
 import type { PhoneAuthMode } from '@/types/auth';
+import type { Profile } from '@/types';
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (typeof error === 'object' && error && 'message' in error) {
@@ -10,6 +13,14 @@ const getErrorMessage = (error: unknown, fallback: string) => {
     if (typeof message === 'string' && message.trim()) return message;
   }
   return fallback;
+};
+
+const isDuplicateEmailError = (error: unknown): boolean => {
+  const message = getErrorMessage(error, '').toLowerCase();
+  return (
+    message.includes('already') &&
+    (message.includes('registered') || message.includes('exists') || message.includes('in use'))
+  );
 };
 
 // OTP types matching Supabase
@@ -31,6 +42,7 @@ interface AuthState {
   needsProfileCompletion: boolean;
   phoneLinkingPending: boolean;
   phoneLinkingNumber: string | null;
+  phoneLinkingLoading: boolean;
 
   // Onboarding
   hasSeenOnboarding: boolean;
@@ -59,7 +71,7 @@ interface AuthActions {
   // Phone OTP methods
   signInWithPhone: (phone: string, mode?: PhoneAuthMode) => Promise<void>;
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
-  resendPhoneOTP: (mode?: PhoneAuthMode) => Promise<void>;
+  resendPhoneOTP: (mode?: PhoneAuthMode, phone?: string) => Promise<void>;
   cancelPhoneOTPFlow: () => void;
   completeProfile: (data: { firstName: string; lastName: string; email?: string }) => Promise<void>;
 
@@ -99,11 +111,121 @@ const getEmailDomain = (email: string | undefined | null) => {
   return domain?.trim() || null;
 };
 
+const setSentryUser = (user: User | null) => {
+  if (user) {
+    Sentry.setUser({ id: user.id, email: user.email });
+  } else {
+    Sentry.setUser(null);
+  }
+};
+
+const PROFILE_QUERY_KEY = ['profile'] as const;
+const PROFILE_CURRENT_QUERY_KEY = ['profile', 'current'] as const;
+
 const hasCompletedProfileName = (user: User | null | undefined) =>
   Boolean(
     user?.user_metadata?.full_name ||
     (user?.user_metadata?.first_name && user?.user_metadata?.last_name),
   );
+
+const resolveUserFullName = (
+  user: User | null | undefined,
+  preferredFullName?: string | null,
+): string | null => {
+  const explicit = preferredFullName?.trim();
+  if (explicit) return explicit;
+
+  const metadata = user?.user_metadata;
+  const fullName =
+    typeof metadata?.full_name === 'string'
+      ? metadata.full_name
+      : typeof metadata?.name === 'string'
+        ? metadata.name
+        : null;
+  if (fullName?.trim()) return fullName.trim();
+
+  const firstName =
+    typeof metadata?.first_name === 'string'
+      ? metadata.first_name
+      : typeof metadata?.given_name === 'string'
+        ? metadata.given_name
+        : null;
+  const lastName =
+    typeof metadata?.last_name === 'string'
+      ? metadata.last_name
+      : typeof metadata?.family_name === 'string'
+        ? metadata.family_name
+        : null;
+  const combined = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(' ').trim();
+  return combined || null;
+};
+
+const upsertProfileNameFromAuthUser = async (
+  user: User | null | undefined,
+  preferredFullName?: string | null,
+): Promise<void> => {
+  if (!user?.id) return;
+
+  const { data: existingProfile, error: readError } = await supabase
+    .from('profiles')
+    .select('full_name,email')
+    .eq('id', user.id)
+    .single();
+  if (readError && readError.code !== 'PGRST116') {
+    throw readError;
+  }
+  if (existingProfile?.full_name && existingProfile.full_name.trim().length > 0) return;
+
+  const resolvedFullName = resolveUserFullName(user, preferredFullName);
+  if (!resolvedFullName) return;
+
+  const upsertPayload: { id: string; full_name: string; email?: string | null } = {
+    id: user.id,
+    full_name: resolvedFullName,
+  };
+  if (readError?.code === 'PGRST116' && user.email) {
+    upsertPayload.email = user.email;
+  }
+
+  const { error: upsertError } = await supabase
+    .from('profiles')
+    .upsert(upsertPayload, { onConflict: 'id' });
+  if (upsertError) throw upsertError;
+};
+
+const upsertProfileNameFromAuthUserBestEffort = async (
+  user: User | null | undefined,
+  preferredFullName?: string | null,
+): Promise<void> => {
+  try {
+    await upsertProfileNameFromAuthUser(user, preferredFullName);
+  } catch (error: unknown) {
+    telemetry.capture('profile_name_upsert_failed', {
+      user_id: user?.id ?? null,
+      preferred_full_name: preferredFullName?.trim() || null,
+      error: getErrorMessage(error, 'profile name upsert failed'),
+    });
+    if (__DEV__) {
+      console.warn('Best-effort profile name upsert failed:', {
+        userId: user?.id ?? null,
+        preferredFullName: preferredFullName?.trim() || null,
+        error,
+      });
+    }
+  }
+};
+
+const clearQueryCache = async (context: string) => {
+  queryClient.clear();
+  try {
+    await queryPersister.removeClient();
+  } catch (_persisterError) {
+    // Best effort: auth flows should still complete if persistence cleanup fails.
+    if (__DEV__) {
+      console.error(`Failed to remove persisted query cache during ${context}`);
+    }
+  }
+};
 
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Initial state
@@ -119,6 +241,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   needsProfileCompletion: false,
   phoneLinkingPending: false,
   phoneLinkingNumber: null,
+  phoneLinkingLoading: false,
   hasSeenOnboarding: false,
 
   // Initialize - check existing session
@@ -132,6 +255,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (session) {
+        setSentryUser(session.user);
         telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
         telemetry.capture('auth_session_restored', {
           provider: session.user.app_metadata?.provider ?? null,
@@ -199,6 +323,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (error) throw error;
 
+      setSentryUser(data.user);
       telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       telemetry.capture('auth_sign_in_succeeded', { method: 'password' });
       telemetry.capture('user_logged_in', { method: 'password' });
@@ -236,6 +361,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
+          await upsertProfileNameFromAuthUserBestEffort(data.user, name?.trim() || null);
+          setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
         telemetry.capture('auth_sign_up_succeeded', { method: 'password', confirmed: true });
@@ -301,6 +428,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (data.session) {
         if (data.user) {
+          await upsertProfileNameFromAuthUserBestEffort(data.user, name?.trim() || null);
+          setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
         }
         telemetry.capture('auth_sign_up_succeeded', { method: 'otp', confirmed: true });
@@ -386,6 +515,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
+          setSentryUser(data.user);
           telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
           telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
           telemetry.capture('user_logged_in', { method: 'google' });
@@ -407,7 +538,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
             refresh_token: refreshToken,
           });
           if (error) throw error;
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
           if (data.user) {
+            setSentryUser(data.user);
             telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
           }
           telemetry.capture('auth_sign_in_succeeded', { method: 'google' });
@@ -470,6 +603,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
       if (error) throw error;
 
+      const appleNameFromCredential = [
+        credential.fullName?.givenName?.trim(),
+        credential.fullName?.familyName?.trim(),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      await upsertProfileNameFromAuthUserBestEffort(data.user, appleNameFromCredential || null);
+      setSentryUser(data.user);
       telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       telemetry.capture('auth_sign_in_succeeded', { method: 'apple' });
       telemetry.capture('user_logged_in', { method: 'apple' });
@@ -519,6 +661,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         console.log('Sign out successful, clearing state');
       }
 
+      setSentryUser(null);
+
       // Explicitly clear state
       set({
         user: null,
@@ -532,8 +676,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         needsProfileCompletion: false,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
       telemetry.reset();
+      await clearQueryCache('sign out success path');
 
       // Force clear any cached sessions from storage
       try {
@@ -545,6 +691,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (__DEV__) {
         console.error('Sign out error:', error);
       }
+
+      setSentryUser(null);
 
       // Even if sign out fails, clear the local state to allow user to try again
       set({
@@ -559,8 +707,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         needsProfileCompletion: false,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
       telemetry.reset();
+      await clearQueryCache('sign out recovery path');
     }
   },
 
@@ -596,6 +746,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       // Sign out after request is logged
       await supabase.auth.signOut({ scope: 'global' });
 
+      setSentryUser(null);
+
       // Clear state
       set({
         user: null,
@@ -609,7 +761,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         needsProfileCompletion: false,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
+      telemetry.reset();
+      await clearQueryCache('delete account');
 
       if (__DEV__) {
         console.log('Account deletion request logged successfully');
@@ -675,6 +830,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
+    const wasAuthenticated = get().isAuthenticated;
     set({ errorMessage: null, isLoading: true });
 
     const { pendingOTPType } = get();
@@ -690,6 +846,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (data.user) {
+        if (pendingOTPType === 'signup') {
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
+        }
+        setSentryUser(data.user);
         telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
       }
       telemetry.capture('auth_otp_verify_succeeded', { type: pendingOTPType });
@@ -710,7 +870,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       telemetry.capture('auth_otp_verify_failed', { type: pendingOTPType });
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
-        isAuthenticated: false,
+        isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
     }
@@ -808,6 +968,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
+    const wasAuthenticated = get().isAuthenticated;
     set({ errorMessage: null, isLoading: true });
     telemetry.capture('auth_phone_otp_verify_started');
 
@@ -821,6 +982,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       if (error) throw error;
 
       if (data.user) {
+        setSentryUser(data.user);
         telemetry.identify(data.user.id, {
           email_domain: getEmailDomain(data.user.email),
         });
@@ -861,17 +1023,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       telemetry.capture('auth_phone_otp_verify_failed');
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
-        isAuthenticated: false,
+        isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
     }
   },
 
   // Resend phone OTP
-  resendPhoneOTP: async (mode: PhoneAuthMode = 'signin') => {
+  resendPhoneOTP: async (mode: PhoneAuthMode = 'signin', phone?: string) => {
     const { pendingOTPPhone, signInWithPhone } = get();
-    if (!pendingOTPPhone) return;
-    await signInWithPhone(pendingOTPPhone, mode);
+    const resendPhone = phone?.trim() || pendingOTPPhone;
+    if (!resendPhone) {
+      set({ errorMessage: 'Phone number is missing. Please enter it again.' });
+      return;
+    }
+    await signInWithPhone(resendPhone, mode);
   },
 
   // Cancel phone OTP flow
@@ -954,6 +1120,37 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       if (error) throw error;
 
+      const currentUserId = get().user?.id;
+      if (!currentUserId) {
+        throw new Error('Missing authenticated user while completing profile');
+      }
+
+      const { error: profileError } = await supabase.from('profiles').upsert(
+        {
+          id: currentUserId,
+          full_name: fullName,
+          email: email ?? get().user?.email ?? null,
+          area_unit_preference:
+            get().user?.user_metadata?.area_unit === 'hectares' ? 'hectares' : 'acres',
+        },
+        { onConflict: 'id' },
+      );
+      if (profileError) throw profileError;
+
+      const normalizedAreaUnit =
+        get().user?.user_metadata?.area_unit === 'hectares' ? 'hectares' : 'acres';
+      queryClient.setQueryData<Profile | null>(
+        PROFILE_CURRENT_QUERY_KEY,
+        (previous: Profile | null | undefined) => ({
+          ...(previous ?? {}),
+          id: currentUserId,
+          full_name: fullName,
+          email: email ?? get().user?.email ?? null,
+          area_unit_preference: normalizedAreaUnit,
+        }),
+      );
+      await queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
+
       const {
         data: { user },
         error: getUserError,
@@ -971,8 +1168,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       });
     } catch (error: unknown) {
       telemetry.capture('profile_completion_failed');
+      const duplicateEmailMessage =
+        'An account with this email already exists. Please sign in with your email first, then link your phone number from Settings.';
       set({
-        errorMessage: getErrorMessage(error, 'Failed to update profile'),
+        errorMessage: isDuplicateEmailError(error)
+          ? duplicateEmailMessage
+          : getErrorMessage(error, 'Failed to update profile'),
         isLoading: false,
       });
     }
@@ -986,7 +1187,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
-    set({ errorMessage: null, isLoading: true });
+    set({ errorMessage: null, phoneLinkingLoading: true });
     telemetry.capture('phone_linking_started');
 
     try {
@@ -997,13 +1198,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       set({
         phoneLinkingPending: true,
         phoneLinkingNumber: trimmedPhone,
-        isLoading: false,
+        phoneLinkingLoading: false,
       });
     } catch (error: unknown) {
       telemetry.capture('phone_linking_failed');
       set({
         errorMessage: getErrorMessage(error, 'Failed to send verification code'),
-        isLoading: false,
+        phoneLinkingLoading: false,
       });
     }
   },
@@ -1016,7 +1217,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return;
     }
 
-    set({ errorMessage: null, isLoading: true });
+    set({ errorMessage: null, phoneLinkingLoading: true });
     telemetry.capture('phone_linking_verify_started');
 
     try {
@@ -1034,13 +1235,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         session: data.session,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
-        isLoading: false,
+        phoneLinkingLoading: false,
       });
     } catch (_error: unknown) {
       telemetry.capture('phone_linking_verify_failed');
       set({
         errorMessage: 'Invalid or expired code. Please try again.',
-        isLoading: false,
+        phoneLinkingLoading: false,
       });
     }
   },
@@ -1049,6 +1250,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     set({
       phoneLinkingPending: false,
       phoneLinkingNumber: null,
+      phoneLinkingLoading: false,
       errorMessage: null,
     });
   },
@@ -1123,6 +1325,7 @@ export const initAuthListener = () => {
       const currentState = useAuthStore.getState();
       const looksLikeNewPhoneUser =
         Boolean(currentState.pendingOTPPhone) && !hasCompletedProfileName(session.user);
+      setSentryUser(session.user);
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
       useAuthStore.setState((state) => ({
@@ -1140,6 +1343,7 @@ export const initAuthListener = () => {
       if (__DEV__) {
         console.log('SIGNED_OUT event received, clearing auth state');
       }
+      setSentryUser(null);
       telemetry.capture('auth_state_changed', { event: 'SIGNED_OUT' });
       telemetry.reset();
       useAuthStore.setState({
@@ -1154,6 +1358,7 @@ export const initAuthListener = () => {
         needsProfileCompletion: false,
         phoneLinkingPending: false,
         phoneLinkingNumber: null,
+        phoneLinkingLoading: false,
       });
     } else if (event === 'TOKEN_REFRESHED' && session) {
       // Silently update session without triggering navigation changes

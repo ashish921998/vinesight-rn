@@ -7,11 +7,12 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Platform } from 'react-native';
 import { useAuthStore } from '@/stores';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useAndroidBackHandler } from '@/hooks/useAndroidBackHandler';
+import { isAndroid } from '@/hooks';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -20,7 +21,6 @@ export default function TabLayout() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
-  const isAndroid = Platform.OS === 'android';
   const { m3, isDark } = useThemeTokens();
   const defaultHeaderOptions = useMemo(
     () => ({
@@ -56,6 +56,8 @@ export default function TabLayout() {
       }}
     />
   );
+
+  useAndroidBackHandler();
 
   useEffect(() => {
     if (isLoading) return;
@@ -109,6 +111,7 @@ export default function TabLayout() {
       <>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <Tabs
+          backBehavior="history"
           screenOptions={{
             tabBarActiveTintColor: m3.colorScheme.primary,
             tabBarInactiveTintColor: m3.colorScheme.onSurfaceVariant,
@@ -167,7 +170,12 @@ export default function TabLayout() {
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('gearshape', focused),
             }}
           />
-          <Tabs.Screen name="farms" options={{ href: null }} />
+          <Tabs.Screen
+            name="farms"
+            options={{
+              href: null,
+            }}
+          />
         </Tabs>
       </>
     );

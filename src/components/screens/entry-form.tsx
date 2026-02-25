@@ -14,33 +14,39 @@ import {
   KeyboardAvoidingView,
   Alert,
   ActivityIndicator,
-  Platform,
   type TextInputProps,
   Keyboard,
-  useWindowDimensions,
+  Platform,
   UIManager,
   findNodeHandle,
 } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Sentry from '@sentry/react-native';
 import { AppIcon } from '@/components/ui/app-icon';
-import { Symbol as UiSymbol } from '@/components/ui/symbol';
+import { ModalBackdrop } from '@/components/ui/modal-backdrop';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient as _LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
-import { resolveSymbolIconName } from '@/constants/icon-registry';
+import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
+import { androidTextPadding } from '@/styles/theme';
+import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
+import { PendingLogs, type PendingLog } from '@/components/screens/entry-form/PendingLogs';
+import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
+import { LogForm } from '@/components/screens/entry-form/LogForm';
+import { ALL_FARMS_ID } from '@/constants/farm-selection';
 
 import {
-  IrrigationForm,
-  SprayForm,
-  HarvestForm,
-  ExpenseForm,
-  FertigationForm,
+  IrrigationForm as _IrrigationForm,
+  SprayForm as _SprayForm,
+  HarvestForm as _HarvestForm,
+  ExpenseForm as _ExpenseForm,
+  FertigationForm as _FertigationForm,
   validateIrrigationForm,
   validateSprayForm,
   validateHarvestForm,
@@ -63,7 +69,8 @@ import {
   type LogTypeId,
   HARVEST_GRADES,
   CHEMICAL_UNITS,
-  FERTILIZER_UNITS,
+  type FertilizerUnit,
+  ACTIVITY_TYPES as _ACTIVITY_TYPES,
 } from '@/constants/calculator-models';
 import {
   useCreateIrrigationRecord,
@@ -73,10 +80,16 @@ import {
   useCreateFertigationRecord,
   useUpdateFarmWaterLevel,
   useFarms,
+  useProfile,
   useWarehouseItems,
   useRecentSprayChemicals,
   useRecentFertigationItems,
+  useFarmSeasonStatus,
+  useChemicalMixSearch,
+  usePhiComputation,
   queryKeys,
+  isIOS,
+  useResponsiveHeight,
 } from '@/hooks';
 import { useCreateTask, useUpdateTask } from '@/hooks/use-tasks';
 import {
@@ -93,10 +106,15 @@ import { toSupabaseDateString } from '@/types/database';
 import type { Farm } from '@/types';
 import type { VoiceLogFormPrefill } from '@/types/voice-log';
 import { telemetry } from '@/services/telemetry';
-import { useNotificationStore } from '@/stores';
+import { useAuthStore, useNotificationStore } from '@/stores';
 import { mapExpenseRecordTypeToTypeId } from '@/utils/expense-type';
-import { getExpenseIconName } from '@/utils/expense-icons';
-import { submitEntryPendingLog } from '@/utils/entry-log-submission';
+import { isGrapeCrop } from '@/utils/crop';
+import {
+  submitEntryPendingLog,
+  type EntryLogFarmContext,
+  type EntryLogSubmitters,
+} from '@/utils/entry-log-submission';
+import { resolveAreaUnitPreference } from '@/utils/preferences';
 import {
   ensureNotificationPermissions,
   scheduleTaskDueReminder,
@@ -107,8 +125,7 @@ import {
   encodeTaskPlanInDescription,
   stripTaskPlanFromDescription,
 } from '@/utils/task-plan';
-
-type EntryTab = 'log' | 'task';
+import { isPhiConflict } from '@/services/phi-service';
 
 interface EntryFormProps {
   visible?: boolean;
@@ -117,6 +134,7 @@ interface EntryFormProps {
   initialTab?: EntryTab;
   farm?: Farm;
   initialFarmId?: number | null;
+  initialApplyToAllFarms?: boolean;
   initialLogType?: LogTypeId | null;
   initialLogPrefill?: {
     sprayChemicals?: PlannedInputItem[];
@@ -132,21 +150,6 @@ interface EntryFormProps {
   onTaskSaveSuccess?: () => void;
   presentation?: 'modal' | 'screen';
 }
-
-interface PendingLog {
-  id: string;
-  type: LogTypeId;
-  data:
-    | IrrigationFormData
-    | SprayFormData
-    | HarvestFormData
-    | ExpenseFormData
-    | FertigationFormData;
-  displayDescription: string;
-  isSourceTaskLog?: boolean;
-}
-
-const ACTIVITY_TYPES = LOG_TYPES.filter((lt) => lt.id !== 'note');
 
 const TASK_TYPES: TaskType[] = [
   'irrigation',
@@ -165,16 +168,95 @@ function isValidChemicalUnit(unit: string): unit is SprayFormData['chemicals'][n
   return CHEMICAL_UNITS.includes(unit as SprayFormData['chemicals'][number]['unit']);
 }
 
-function isValidFertilizerUnit(
-  unit: string,
-): unit is FertigationFormData['fertilizers'][number]['unit'] {
-  return FERTILIZER_UNITS.includes(unit as FertigationFormData['fertilizers'][number]['unit']);
+function normalizeFertigationDoseUnit(unit: string | null | undefined): 'kg/acre' | 'liter/acre' {
+  if (typeof unit !== 'string') return 'kg/acre';
+  const trimmed = unit.trim();
+  if (!trimmed) return 'kg/acre';
+  const normalized = trimmed.toLowerCase();
+  if (normalized === 'kg' || normalized === 'kg/acre' || normalized === 'kg per acre') {
+    return 'kg/acre';
+  }
+  if (
+    normalized === 'liter' ||
+    normalized === 'litre' ||
+    normalized === 'l' ||
+    normalized === 'liter/acre' ||
+    normalized === 'litre/acre' ||
+    normalized === 'l/acre' ||
+    normalized === 'liter per acre' ||
+    normalized === 'litre per acre'
+  ) {
+    return 'liter/acre';
+  }
+  if (normalized === 'ppm') return 'kg/acre';
+  return 'kg/acre';
 }
 
-function normalizeFertigationDoseUnit(unit: string): string {
+function normalizeWarehouseFertilizerUnit(unit: string | null | undefined): FertilizerUnit {
+  if (typeof unit !== 'string') return 'kg';
+  const trimmed = unit.trim();
+  if (!trimmed) return 'kg';
+  const normalized = trimmed.toLowerCase();
+  if (normalized === 'kg' || normalized === 'kg/acre' || normalized === 'kg per acre') {
+    return 'kg';
+  }
+  if (
+    normalized === 'liter' ||
+    normalized === 'litre' ||
+    normalized === 'l' ||
+    normalized === 'liter/acre' ||
+    normalized === 'litre/acre' ||
+    normalized === 'l/acre' ||
+    normalized === 'liter per acre' ||
+    normalized === 'litre per acre'
+  ) {
+    return 'liter';
+  }
+  if (normalized === 'gram' || normalized === 'gm' || normalized === 'gram/acre') {
+    return 'gram';
+  }
+  if (normalized === 'ml' || normalized === 'ml/acre') {
+    return 'ml';
+  }
+  return 'kg';
+}
+
+function inferWarehouseFertilizerQuantityBasis(
+  unit: string | null | undefined,
+): 'per_acre' | undefined {
+  if (typeof unit !== 'string') return undefined;
   const normalized = unit.trim().toLowerCase();
-  if (normalized === 'litre/acre') return 'liter/acre';
-  if (normalized === 'litre') return 'liter';
+  if (!normalized) return undefined;
+  return normalized.includes('/acre') || normalized.includes('per acre') ? 'per_acre' : undefined;
+}
+
+function resolveFertigationPrefill(
+  unit: string | null | undefined,
+): Pick<FertigationFormData['fertilizers'][number], 'unit' | 'quantityBasis'> {
+  const normalized = normalizeFertigationDoseUnit(unit);
+  if (normalized === 'liter/acre') return { unit: 'liter', quantityBasis: 'per_acre' };
+  if (normalized === 'kg/acre') return { unit: 'kg', quantityBasis: 'per_acre' };
+  return {
+    unit: 'kg',
+    quantityBasis: 'per_acre',
+  };
+}
+
+function normalizeSprayDoseUnit(unit: string): string {
+  const normalized = unit.trim().toLowerCase();
+  if (
+    normalized === 'gm/liter' ||
+    normalized === 'gm/litre' ||
+    normalized === 'gm/l' ||
+    normalized === 'g/l'
+  ) {
+    return 'gm/L';
+  }
+  if (normalized === 'ml/liter' || normalized === 'ml/litre' || normalized === 'ml/l') {
+    return 'ml/L';
+  }
+  if (normalized === 'gm/acre') return 'gram';
+  if (normalized === 'ml/acre') return 'ml';
   return unit.trim();
 }
 
@@ -221,6 +303,7 @@ export function EntryForm({
   initialTab,
   farm,
   initialFarmId,
+  initialApplyToAllFarms,
   initialLogType,
   initialLogPrefill,
   sourceTaskId,
@@ -236,12 +319,16 @@ export function EntryForm({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
+  const { data: profile } = useProfile({ enabled: false });
+  const user = useAuthStore((state) => state.user);
+  const preferredAreaUnit = resolveAreaUnitPreference(
+    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  );
 
   const isVisible = visible ?? true;
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
-  const isIOS = Platform.OS === 'ios';
+  const { windowHeight } = useResponsiveHeight();
   const resolvedTabs = useMemo<EntryTab[]>(
     () => (tabs && tabs.length > 0 ? tabs : ['log', 'task']),
     [tabs],
@@ -257,24 +344,38 @@ export function EntryForm({
   const [activeTab, setActiveTab] = useState<EntryTab>(defaultTab);
 
   const { data: farms } = useFarms();
-  const [selectedFarmId, setSelectedFarmId] = useState<number | null>(
-    farm?.id ?? initialFarmId ?? null,
-  );
+  const [selectedFarmId, setSelectedFarmId] = useState<number | null>(() => {
+    if (initialApplyToAllFarms) return ALL_FARMS_ID;
+    return farm?.id ?? initialFarmId ?? null;
+  });
   const [showLogFarmPicker, setShowLogFarmPicker] = useState(false);
   const [showTaskFarmPicker, setShowTaskFarmPicker] = useState(false);
 
-  const activeFarm = farm ?? farms?.find((f) => f.id === selectedFarmId) ?? null;
+  const isAllFarmsSelected = selectedFarmId === ALL_FARMS_ID;
+  const activeFarm =
+    farm ??
+    (selectedFarmId !== null && selectedFarmId !== ALL_FARMS_ID
+      ? farms?.find((f) => f.id === selectedFarmId)
+      : null) ??
+    null;
+  const isGrapeFarm = isGrapeCrop(activeFarm?.crop, activeFarm?.crop_variety);
   const logFarmId = activeFarm?.id;
   const { data: sprayWarehouseItems } = useWarehouseItems('spray');
   const { data: fertilizerWarehouseItems } = useWarehouseItems('fertilizer');
   const { data: recentSprayChemicals } = useRecentSprayChemicals(logFarmId ?? undefined);
   const { data: recentFertigationItems } = useRecentFertigationItems(logFarmId ?? undefined);
+  const { activeSeason } = useFarmSeasonStatus(logFarmId ?? undefined);
+  const { data: catalogMixes = [] } = useChemicalMixSearch('', isGrapeFarm);
 
   useEffect(() => {
     if (!isVisible) return;
     setActiveTab(defaultTab);
     if (farm?.id) {
       setSelectedFarmId(farm.id);
+      return;
+    }
+    if (initialApplyToAllFarms) {
+      setSelectedFarmId(ALL_FARMS_ID);
       return;
     }
     if (initialFarmId) {
@@ -284,7 +385,15 @@ export function EntryForm({
     if (!selectedFarmId && farms && farms.length > 0 && farms[0].id) {
       setSelectedFarmId(farms[0].id);
     }
-  }, [isVisible, defaultTab, farm?.id, farms, initialFarmId, selectedFarmId]);
+  }, [
+    isVisible,
+    defaultTab,
+    farm?.id,
+    farms,
+    initialApplyToAllFarms,
+    initialFarmId,
+    selectedFarmId,
+  ]);
 
   // Log state
   const [selectedDate, setSelectedDate] = useState<Date>(() => parsedInitialLogDate ?? new Date());
@@ -292,19 +401,30 @@ export function EntryForm({
   const [selectedLogType, setSelectedLogType] = useState<LogTypeId | null>(null);
   const [showLogFormModal, setShowLogFormModal] = useState(false);
   const [pendingLogs, setPendingLogs] = useState<PendingLog[]>([]);
+  const allFarmsSucceededByLogRef = useRef<Map<string, Set<number>>>(new Map());
   const [isSubmittingLogs, setIsSubmittingLogs] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [footerHeight, setFooterHeight] = useState(112);
   const logFormScrollViewRef = useRef<ScrollView>(null);
   const focusedInputRef = useRef<number | null>(null);
   const scrollOffsetRef = useRef(0);
   const keyboardHeightRef = useRef(0);
 
   const [irrigationData, setIrrigationData] = useState<IrrigationFormData>({ duration: undefined });
-  const [sprayData, setSprayData] = useState<SprayFormData>(createEmptySprayFormData());
-  const [harvestData, setHarvestData] = useState<HarvestFormData>(createEmptyHarvestFormData());
-  const [expenseData, setExpenseData] = useState<ExpenseFormData>(createEmptyExpenseFormData());
-  const [fertigationData, setFertigationData] = useState<FertigationFormData>(
+  const [sprayData, setSprayData] = useState<SprayFormData>(() => createEmptySprayFormData());
+  const [harvestData, setHarvestData] = useState<HarvestFormData>(() =>
+    createEmptyHarvestFormData(),
+  );
+  const [expenseData, setExpenseData] = useState<ExpenseFormData>(() =>
+    createEmptyExpenseFormData(),
+  );
+  const [fertigationData, setFertigationData] = useState<FertigationFormData>(() =>
     createEmptyFertigationFormData(),
+  );
+  const selectedDateIso = useMemo(() => toSupabaseDateString(selectedDate), [selectedDate]);
+  const { data: sprayPhiComputation } = usePhiComputation(
+    sprayData.catalogMixId ?? null,
+    selectedDateIso,
   );
   const [taskPlannedInputs, setTaskPlannedInputs] = useState<PlannedInputItem[]>([]);
   const [plannedItemName, setPlannedItemName] = useState('');
@@ -318,6 +438,7 @@ export function EntryForm({
       quantity: null,
       quantityBasis: undefined,
       warehouseItemId: item.id ?? null,
+      catalogProductId: item.catalog_product_id ?? null,
       composition: item.composition ?? null,
       densityKgPerL: item.density_kg_per_l ?? null,
     }));
@@ -349,13 +470,36 @@ export function EntryForm({
     return Array.from(deduped.values()).slice(0, 15);
   }, [sprayWarehouseItems, recentSprayChemicals]);
 
+  useEffect(() => {
+    if (!sprayPhiComputation) return;
+    setSprayData((prev) => {
+      if (prev.catalogMixId !== sprayPhiComputation.catalogMixId) return prev;
+      if (
+        prev.governingPhiDays === sprayPhiComputation.governingPhiDays &&
+        prev.safeHarvestDate === sprayPhiComputation.safeHarvestDate &&
+        prev.phiBlockingComponent === sprayPhiComputation.blockingComponentName &&
+        prev.phiStatus === sprayPhiComputation.phiStatus
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        governingPhiDays: sprayPhiComputation.governingPhiDays,
+        safeHarvestDate: sprayPhiComputation.safeHarvestDate,
+        phiBlockingComponent: sprayPhiComputation.blockingComponentName,
+        phiStatus: sprayPhiComputation.phiStatus,
+      };
+    });
+  }, [sprayPhiComputation]);
+
   const fertigationQuickAddItems = useMemo<FertigationQuickAddItem[]>(() => {
     const byWarehouse = (fertilizerWarehouseItems ?? []).map((item) => ({
       name: item.name,
-      unit: normalizeFertigationDoseUnit(item.unit),
+      unit: normalizeWarehouseFertilizerUnit(item.unit),
       quantity: null,
-      quantityBasis: undefined,
+      quantityBasis: inferWarehouseFertilizerQuantityBasis(item.unit),
       warehouseItemId: item.id ?? null,
+      catalogProductId: item.catalog_product_id ?? null,
       composition: item.composition ?? null,
       densityKgPerL: item.density_kg_per_l ?? null,
     }));
@@ -445,7 +589,7 @@ export function EntryForm({
         setSprayData({
           waterVolume: undefined,
           chemicals: initialLogPrefill.sprayChemicals.map((item) => {
-            const normalizedUnit = item.unit?.trim();
+            const normalizedUnit = item.unit ? normalizeSprayDoseUnit(item.unit) : null;
             const unit =
               normalizedUnit && isValidChemicalUnit(normalizedUnit) ? normalizedUnit : 'gm/L';
             return {
@@ -453,6 +597,9 @@ export function EntryForm({
               name: item.name,
               quantity: item.quantity ?? undefined,
               unit,
+              quantityBasis:
+                item.quantityBasis ??
+                (item.unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total'),
             };
           }),
         });
@@ -461,20 +608,32 @@ export function EntryForm({
         setFertigationData({
           waterVolume: undefined,
           fertilizers: initialLogPrefill.fertigationItems.map((item) => {
-            const normalizedUnit = item.unit?.trim();
-            const unit =
-              normalizedUnit && isValidFertilizerUnit(normalizedUnit) ? normalizedUnit : 'kg/acre';
+            const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
             return {
               id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
               name: item.name,
               quantity: item.quantity ?? 0,
               unit,
+              quantityBasis,
             };
           }),
         });
       }
     }
   }, [isVisible, initialLogType, initialLogPrefill]);
+
+  useEffect(() => {
+    if (selectedFarmId !== ALL_FARMS_ID) return;
+    if (selectedLogType && selectedLogType !== 'expense') {
+      if (farm?.id) {
+        setSelectedFarmId(farm.id);
+        return;
+      }
+      if (farms && farms.length > 0 && farms[0].id) {
+        setSelectedFarmId(farms[0].id);
+      }
+    }
+  }, [selectedFarmId, selectedLogType, farm?.id, farms]);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -515,15 +674,23 @@ export function EntryForm({
       case 'spray': {
         const sprayPrefill = initialVoiceLogPrefill.spray;
         const prefilledChemicals = sprayPrefill?.chemicals?.length
-          ? sprayPrefill.chemicals.map((item, index) => ({
-              id: createPrefillId('chem', index),
-              name: item.name ?? '',
-              quantity: item.quantity ?? undefined,
-              unit:
-                item.unit && CHEMICAL_UNITS.includes(item.unit as (typeof CHEMICAL_UNITS)[number])
-                  ? (item.unit as (typeof CHEMICAL_UNITS)[number])
-                  : 'gm/L',
-            }))
+          ? sprayPrefill.chemicals.map((item, index) => {
+              const normalizedUnit = item.unit ? normalizeSprayDoseUnit(item.unit) : null;
+              const unit =
+                normalizedUnit &&
+                CHEMICAL_UNITS.includes(normalizedUnit as (typeof CHEMICAL_UNITS)[number])
+                  ? (normalizedUnit as (typeof CHEMICAL_UNITS)[number])
+                  : 'gm/L';
+              return {
+                id: createPrefillId('chem', index),
+                name: item.name ?? '',
+                quantity: item.quantity ?? undefined,
+                unit,
+                quantityBasis:
+                  item.quantityBasis ??
+                  (item.unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total'),
+              };
+            })
           : createEmptySprayFormData().chemicals;
 
         setSprayData({
@@ -560,15 +727,15 @@ export function EntryForm({
       case 'fertigation': {
         const fertigationPrefill = initialVoiceLogPrefill.fertigation;
         const prefilledFertilizers = fertigationPrefill?.fertilizers?.length
-          ? fertigationPrefill.fertilizers.map((item) => ({
-              name: item.name ?? '',
-              quantity: item.quantity ?? undefined,
-              unit:
-                item.unit &&
-                FERTILIZER_UNITS.includes(item.unit as (typeof FERTILIZER_UNITS)[number])
-                  ? (item.unit as (typeof FERTILIZER_UNITS)[number])
-                  : 'kg/acre',
-            }))
+          ? fertigationPrefill.fertilizers.map((item) => {
+              const { unit, quantityBasis } = resolveFertigationPrefill(item.unit);
+              return {
+                name: item.name ?? '',
+                quantity: item.quantity ?? undefined,
+                unit,
+                quantityBasis,
+              };
+            })
           : createEmptyFertigationFormData().fertilizers;
 
         setFertigationData({
@@ -611,12 +778,25 @@ export function EntryForm({
     }
   }, [selectedLogType, irrigationData, sprayData, harvestData, expenseData, fertigationData]);
 
+  const hasFarmForCurrentLog = Boolean(
+    activeFarm || (isAllFarmsSelected && selectedLogType === 'expense'),
+  );
+  const hasFarmForPendingSession = Boolean(activeFarm || isAllFarmsSelected);
+  const canSubmitLog = Boolean(isLogFormValid && hasFarmForCurrentLog);
+  const canSaveLogs = Boolean(
+    pendingLogs.length > 0 && !isSubmittingLogs && hasFarmForPendingSession,
+  );
+
   const getLogDescription = useCallback((type: LogTypeId, data: unknown): string => {
     switch (type) {
       case 'irrigation':
         return `${(data as IrrigationFormData).duration} hours`;
       case 'spray': {
         const spray = data as SprayFormData;
+        const mixName = spray.catalogMixName?.trim();
+        if (mixName) {
+          return `${mixName} • ${spray.waterVolume}L`;
+        }
         const chemCount = spray.chemicals.length;
         return `${spray.waterVolume}L water, ${chemCount} chemical${chemCount !== 1 ? 's' : ''}`;
       }
@@ -641,6 +821,8 @@ export function EntryForm({
 
   const addLogToSession = useCallback(() => {
     if (!selectedLogType || !isLogFormValid) return;
+    if (!activeFarm && !isAllFarmsSelected) return;
+    if (isAllFarmsSelected && selectedLogType !== 'expense') return;
 
     let data: PendingLog['data'];
     switch (selectedLogType) {
@@ -649,7 +831,60 @@ export function EntryForm({
         setIrrigationData({ duration: undefined });
         break;
       case 'spray':
-        data = { ...sprayData };
+        if (
+          isGrapeFarm &&
+          sprayData.catalogMixId &&
+          sprayData.safeHarvestDate &&
+          sprayData.governingPhiDays != null &&
+          isPhiConflict({
+            safeHarvestDate: sprayData.safeHarvestDate,
+            targetHarvestDate: activeSeason?.target_harvest_date ?? null,
+          })
+        ) {
+          Alert.alert(
+            t('entryForm.phiErrors.conflictTitle', { defaultValue: 'Harvest safety conflict' }),
+            t('entryForm.phiErrors.conflictBody', {
+              defaultValue:
+                'This spray blocks harvest until {{safeDate}} due to {{component}}, but target harvest is {{targetDate}}.',
+              safeDate: sprayData.safeHarvestDate,
+              component: sprayData.phiBlockingComponent ?? 'a component',
+              targetDate: activeSeason?.target_harvest_date ?? '-',
+            }),
+          );
+          return;
+        }
+
+        if (
+          isGrapeFarm &&
+          sprayData.phiStatus === 'unknown' &&
+          (!sprayData.catalogMixId ||
+            sprayData.safeHarvestDate == null ||
+            sprayData.governingPhiDays == null)
+        ) {
+          Alert.alert(
+            t('entryForm.phiErrors.computeFailedTitle', { defaultValue: 'PHI unavailable' }),
+            t('entryForm.phiErrors.computeFailedBody', {
+              defaultValue:
+                'This spray will be saved with unknown PHI status because no verified catalog mapping was found.',
+            }),
+          );
+        }
+
+        data =
+          isGrapeFarm &&
+          sprayData.catalogMixId &&
+          sprayData.safeHarvestDate &&
+          sprayData.governingPhiDays != null
+            ? {
+                ...sprayData,
+              }
+            : {
+                ...sprayData,
+                governingPhiDays: null,
+                safeHarvestDate: null,
+                phiBlockingComponent: null,
+                phiStatus: sprayData.phiStatus ?? 'unknown',
+              };
         setSprayData(createEmptySprayFormData());
         break;
       case 'harvest':
@@ -668,9 +903,13 @@ export function EntryForm({
         return;
     }
 
+    const draftScope: PendingLog['scope'] =
+      isAllFarmsSelected && selectedLogType === 'expense' ? 'all_farms' : 'single_farm';
     const newLog: PendingLog = {
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       type: selectedLogType,
+      scope: draftScope,
+      farmId: draftScope === 'all_farms' ? null : (activeFarm?.id ?? null),
       data,
       displayDescription: getLogDescription(selectedLogType, data),
       isSourceTaskLog: false,
@@ -698,50 +937,241 @@ export function EntryForm({
     sourceTaskId,
     sourceTaskType,
     getLogDescription,
+    activeFarm,
+    isGrapeFarm,
+    isAllFarmsSelected,
+    activeSeason?.target_harvest_date,
+    t,
   ]);
 
   const removeLogFromSession = useCallback((id: string) => {
+    allFarmsSucceededByLogRef.current.delete(id);
     setPendingLogs((prev) => prev.filter((log) => log.id !== id));
   }, []);
 
   const saveAllLogs = async () => {
-    if (pendingLogs.length === 0 || !activeFarm?.id) return;
+    if (pendingLogs.length === 0) return;
 
     setIsSubmittingLogs(true);
     const dateStr = toSupabaseDateString(selectedDate);
-    const farmId = activeFarm.id;
-    if (!farmId) {
-      setIsSubmittingLogs(false);
-      return;
-    }
+    const createdFrom = entrySource === 'voice_ai' ? 'voice_ai' : 'manual';
+    const hasAllFarmsDrafts = pendingLogs.some((log) => log.scope === 'all_farms');
+    const hasSingleFarmDrafts = pendingLogs.some((log) => log.scope === 'single_farm');
+
+    const submitters: EntryLogSubmitters = {
+      createIrrigation: async (payload) => createIrrigation.mutateAsync(payload),
+      createSpray: async (payload) => createSpray.mutateAsync(payload),
+      createHarvest: async (payload) => createHarvest.mutateAsync(payload),
+      createExpense: async (payload) => createExpense.mutateAsync(payload),
+      createFertigation: async (payload) => createFertigation.mutateAsync(payload),
+      updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
+    };
+
+    const buildFarmContext = (farmItem: Farm): EntryLogFarmContext => ({
+      id: farmItem.id ?? 0,
+      area: farmItem.area,
+      areaUnit: preferredAreaUnit,
+      total_tank_capacity: farmItem.total_tank_capacity,
+      system_discharge: farmItem.system_discharge,
+      remaining_water: farmItem.remaining_water,
+      date_of_pruning: farmItem.date_of_pruning,
+    });
+
+    const saveLog = async (
+      log: (typeof pendingLogs)[number],
+      farmContext: EntryLogFarmContext,
+    ): Promise<{ pendingLogId: string; type: LogTypeId; recordId: number | null }> =>
+      submitEntryPendingLog({
+        log,
+        dateStr,
+        farm: farmContext,
+        submitters,
+      });
 
     try {
-      const saveLog = async (
-        log: (typeof pendingLogs)[number],
-      ): Promise<{ pendingLogId: string; type: LogTypeId; recordId: number | null }> => {
-        return submitEntryPendingLog({
-          log,
-          dateStr,
-          farm: {
-            id: farmId,
-            area: activeFarm.area,
-            total_tank_capacity: activeFarm.total_tank_capacity,
-            system_discharge: activeFarm.system_discharge,
-            remaining_water: activeFarm.remaining_water,
-            date_of_pruning: activeFarm.date_of_pruning,
-          },
-          submitters: {
-            createIrrigation: async (payload) => createIrrigation.mutateAsync(payload),
-            createSpray: async (payload) => createSpray.mutateAsync(payload),
-            createHarvest: async (payload) => createHarvest.mutateAsync(payload),
-            createExpense: async (payload) => createExpense.mutateAsync(payload),
-            createFertigation: async (payload) => createFertigation.mutateAsync(payload),
-            updateWaterLevel: async (payload) => updateWaterLevel.mutateAsync(payload),
-          },
-        });
-      };
+      if (hasAllFarmsDrafts && hasSingleFarmDrafts) {
+        Alert.alert(
+          t('common.error'),
+          t('entryForm.mixedDraftScopes', {
+            defaultValue:
+              'This draft session contains both all-farms and single-farm entries. Please save or remove one scope before continuing.',
+          }),
+        );
+        return;
+      }
 
-      const results = await Promise.allSettled(pendingLogs.map((log) => saveLog(log)));
+      if (hasAllFarmsDrafts) {
+        const farmsToUse = (farms ?? []).filter((farmItem) => typeof farmItem.id === 'number');
+        if (farmsToUse.length === 0) {
+          Alert.alert(t('common.error'), t('entryForm.allFarmsNoFarms'));
+          return;
+        }
+
+        const hasNonExpenseLogs = pendingLogs.some((log) => log.type !== 'expense');
+        if (hasNonExpenseLogs) {
+          Alert.alert(t('common.error'), t('entryForm.allFarmsExpenseOnly'));
+          return;
+        }
+
+        const successfulFarmIdsByLog = new Map<string, Set<number>>();
+        pendingLogs.forEach((log) => {
+          successfulFarmIdsByLog.set(
+            log.id,
+            new Set(allFarmsSucceededByLogRef.current.get(log.id) ?? []),
+          );
+        });
+
+        const submissions = farmsToUse.flatMap((farmItem) =>
+          pendingLogs.flatMap((log) => {
+            const farmId = farmItem.id as number;
+            if (successfulFarmIdsByLog.get(log.id)?.has(farmId)) {
+              return [];
+            }
+            return [
+              {
+                logId: log.id,
+                logType: log.type,
+                farmId,
+                promise: saveLog(log, buildFarmContext(farmItem)),
+              },
+            ];
+          }),
+        );
+
+        const results = await Promise.allSettled(
+          submissions.map((submission) => submission.promise),
+        );
+        let failedCount = 0;
+        let firstFailedError: unknown = null;
+        let failedLogContext: (typeof pendingLogs)[number] | null = null;
+
+        results.forEach((result, index) => {
+          const submission = submissions[index];
+          if (result.status === 'fulfilled') {
+            try {
+              telemetry.capture('record_created', {
+                record_type: submission.logType,
+                created_from: createdFrom,
+                farm_id: submission.farmId,
+              });
+              telemetry.capture('meaningful_action', {
+                action_type: 'record_created',
+                feature_name: submission.logType,
+              });
+            } catch {
+              // Ignore telemetry errors
+            }
+            successfulFarmIdsByLog.get(submission.logId)?.add(submission.farmId);
+            return;
+          }
+
+          failedCount += 1;
+          if (!firstFailedError) {
+            firstFailedError = result.reason;
+            failedLogContext = pendingLogs.find((log) => log.id === submission.logId) ?? null;
+          }
+
+          const error = result.reason;
+          const errorMeta = getFarmErrorMeta(error);
+          const errorName = error instanceof Error ? error.name : 'UnknownError';
+          console.error('Failed to save pending log', {
+            pendingLogId: submission.logId,
+            logType: submission.logType,
+            farmId: submission.farmId,
+            errorName,
+            errorCode: errorMeta.code ?? null,
+            ...(__DEV__ ? { errorHint: errorMeta.hint ?? null } : {}),
+          });
+        });
+
+        pendingLogs.forEach((log) => {
+          const succeededFarmIds = successfulFarmIdsByLog.get(log.id);
+          if (!succeededFarmIds || succeededFarmIds.size === 0) {
+            allFarmsSucceededByLogRef.current.delete(log.id);
+            return;
+          }
+          allFarmsSucceededByLogRef.current.set(log.id, new Set(succeededFarmIds));
+        });
+
+        const successfulIds = pendingLogs
+          .filter((log) => {
+            const succeededFarmIds = successfulFarmIdsByLog.get(log.id);
+            return Boolean(succeededFarmIds && succeededFarmIds.size === farmsToUse.length);
+          })
+          .map((log) => log.id);
+
+        if (successfulIds.length > 0) {
+          successfulIds.forEach((id) => {
+            allFarmsSucceededByLogRef.current.delete(id);
+          });
+          setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
+          await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+          triggerHapticSuccess();
+          onLogSaveSuccess?.();
+        }
+
+        if (failedCount > 0) {
+          const errorMessage =
+            firstFailedError instanceof Error
+              ? firstFailedError.message
+              : typeof firstFailedError === 'string'
+                ? firstFailedError
+                : 'An unexpected error occurred (see logs for details)';
+
+          const errorMeta = getFarmErrorMeta(firstFailedError);
+          if (shouldCaptureFarmErrorInSentry(errorMeta)) {
+            Sentry.withScope((scope) => {
+              scope.setTag('feature', 'entry-log');
+              scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
+              scope.setTag('logType', failedLogContext?.type ?? 'unknown');
+              scope.setExtra('errorMeta', { code: errorMeta.code ?? null });
+              Sentry.captureException(
+                firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
+              );
+            });
+          }
+
+          Alert.alert(
+            t('entryForm.partialSuccess.title'),
+            failedCount === 1
+              ? t('entryForm.partialSuccess.body_one', { count: failedCount })
+              : t('entryForm.partialSuccess.body_other', { count: failedCount }),
+          );
+          return;
+        }
+
+        onClose();
+        return;
+      }
+
+      const singleFarmIds = Array.from(
+        new Set(
+          pendingLogs
+            .filter((log) => log.scope === 'single_farm')
+            .map((log) => log.farmId)
+            .filter((farmId): farmId is number => typeof farmId === 'number'),
+        ),
+      );
+      if (singleFarmIds.length !== 1) {
+        Alert.alert(
+          t('common.error'),
+          t('entryForm.mixedDraftFarms', {
+            defaultValue:
+              'This draft session includes entries for multiple farms. Please save or remove entries so all drafts target one farm.',
+          }),
+        );
+        return;
+      }
+      const farmId = singleFarmIds[0] ?? null;
+      const singleFarmContext =
+        (farm && farm.id === farmId ? farm : null) ??
+        farms?.find((farmItem) => farmItem.id === farmId) ??
+        null;
+      if (!farmId || !singleFarmContext) return;
+
+      const results = await Promise.allSettled(
+        pendingLogs.map((log) => saveLog(log, buildFarmContext(singleFarmContext))),
+      );
       const successfulIds = pendingLogs
         .filter((_, index) => results[index]?.status === 'fulfilled')
         .map((log) => log.id);
@@ -749,10 +1179,15 @@ export function EntryForm({
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
           const failedLog = pendingLogs[index];
+          const error = result.reason;
+          const errorMeta = getFarmErrorMeta(error);
+          const errorName = error instanceof Error ? error.name : 'UnknownError';
           console.error('Failed to save pending log', {
             pendingLogId: failedLog?.id ?? null,
             logType: failedLog?.type ?? null,
-            error: result.reason,
+            errorName,
+            errorCode: errorMeta.code ?? null,
+            ...(__DEV__ ? { errorHint: errorMeta.hint ?? null } : {}),
           });
         }
       });
@@ -772,7 +1207,9 @@ export function EntryForm({
       let taskCompletionUpdateFailed = false;
 
       if (successfulIds.length > 0) {
-        const createdFrom = entrySource === 'voice_ai' ? 'voice_ai' : 'manual';
+        successfulIds.forEach((id) => {
+          allFarmsSucceededByLogRef.current.delete(id);
+        });
         // Track telemetry for successfully created records
         pendingLogs
           .filter((log) => successfulIds.includes(log.id))
@@ -822,7 +1259,27 @@ export function EntryForm({
             });
           } catch (taskUpdateError) {
             taskCompletionUpdateFailed = true;
-            console.error('Task completion update failed after log save:', taskUpdateError);
+            const taskUpdateErrorMeta = getFarmErrorMeta(taskUpdateError);
+            const taskUpdateErrorName =
+              taskUpdateError instanceof Error ? taskUpdateError.name : 'UnknownError';
+            console.error('Task completion update failed after log save', {
+              errorName: taskUpdateErrorName,
+              errorCode: taskUpdateErrorMeta.code ?? null,
+              ...(__DEV__ ? { errorHint: taskUpdateErrorMeta.hint ?? null } : {}),
+            });
+
+            if (shouldCaptureFarmErrorInSentry(taskUpdateErrorMeta)) {
+              Sentry.withScope((scope) => {
+                scope.setTag('feature', 'entry-log');
+                scope.setExtra('taskId', sourceTaskId);
+                scope.setExtra('errorMeta', { code: taskUpdateErrorMeta.code ?? null });
+                Sentry.captureException(
+                  taskUpdateError instanceof Error
+                    ? taskUpdateError
+                    : new Error('Task completion update failed'),
+                );
+              });
+            }
           }
         }
 
@@ -832,6 +1289,33 @@ export function EntryForm({
       }
 
       if (failedCount > 0) {
+        const firstFailedIndex = results.findIndex((result) => result.status === 'rejected');
+        const failedLogContext = firstFailedIndex >= 0 ? pendingLogs[firstFailedIndex] : null;
+        const firstFailedError =
+          results[firstFailedIndex]?.status === 'rejected'
+            ? (results[firstFailedIndex] as PromiseRejectedResult).reason
+            : null;
+
+        const errorMessage =
+          firstFailedError instanceof Error
+            ? firstFailedError.message
+            : typeof firstFailedError === 'string'
+              ? firstFailedError
+              : 'An unexpected error occurred (see logs for details)';
+
+        const errorMeta = getFarmErrorMeta(firstFailedError);
+        if (shouldCaptureFarmErrorInSentry(errorMeta)) {
+          Sentry.withScope((scope) => {
+            scope.setTag('feature', 'entry-log');
+            scope.setExtra('pendingLogId', failedLogContext?.id ?? 'unknown');
+            scope.setTag('logType', failedLogContext?.type ?? 'unknown');
+            scope.setExtra('errorMeta', { code: errorMeta.code ?? null });
+            Sentry.captureException(
+              firstFailedError instanceof Error ? firstFailedError : new Error(errorMessage),
+            );
+          });
+        }
+
         Alert.alert(
           t('entryForm.partialSuccess.title'),
           failedCount === 1
@@ -965,7 +1449,7 @@ export function EntryForm({
     if (type === 'fertigation') {
       return fertigationQuickAddItems.map((item) => ({
         name: item.name,
-        unit: item.unit ?? 'kg/acre',
+        unit: item.unit ?? 'kg',
         quantity: item.quantity ?? null,
         source: 'recent',
       }));
@@ -986,15 +1470,20 @@ export function EntryForm({
     });
   }, []);
 
-  const removeTaskPlannedInput = useCallback((index: number) => {
-    setTaskPlannedInputs((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+  const removeTaskPlannedInput = useCallback((item: PlannedInputItem) => {
+    setTaskPlannedInputs((prev) => {
+      const key = `${item.name.trim().toLowerCase()}::${(item.unit ?? '').trim().toLowerCase()}`;
+      return prev.filter(
+        (i) => `${i.name.trim().toLowerCase()}::${(i.unit ?? '').trim().toLowerCase()}` !== key,
+      );
+    });
   }, []);
 
   const addCustomTaskPlannedInput = useCallback(() => {
     const quantityValue = plannedItemQty.trim() ? Number(plannedItemQty) : null;
     addTaskPlannedInput({
       name: plannedItemName.trim(),
-      unit: plannedItemUnit.trim() || (type === 'spray' ? 'gm/L' : 'kg/acre'),
+      unit: plannedItemUnit.trim() || (type === 'spray' ? 'gm/L' : 'kg'),
       quantity: Number.isFinite(quantityValue) ? quantityValue : null,
       source: 'custom',
     });
@@ -1075,18 +1564,22 @@ export function EntryForm({
         if (taskRemindersEnabled && nextDueDate && hasDueDateChanged) {
           const granted = await ensureNotificationPermissions();
           if (granted) {
-            const notificationId = await scheduleTaskDueReminder(taskId, nextDueDate);
-            if (notificationId) {
-              if (existing?.notificationId) {
-                await cancelNotification(existing.notificationId);
-              }
-              upsertTaskSchedule(taskId, { notificationId, dueDate: nextDueDate });
+            if (existing?.notificationIds?.length) {
+              await Promise.allSettled(
+                existing.notificationIds.map((id) => cancelNotification(id)),
+              );
+            }
+            const notificationIds = await scheduleTaskDueReminder(taskId, nextDueDate);
+            if (notificationIds.length > 0) {
+              upsertTaskSchedule(taskId, { notificationIds, dueDate: nextDueDate });
+            } else {
+              removeTaskSchedule(taskId);
             }
           }
         }
 
-        if (!nextDueDate && existing?.notificationId && hasDueDateChanged) {
-          await cancelNotification(existing.notificationId);
+        if (!nextDueDate && existing?.notificationIds?.length && hasDueDateChanged) {
+          await Promise.allSettled(existing.notificationIds.map((id) => cancelNotification(id)));
           removeTaskSchedule(taskId);
         }
       } catch (notificationError) {
@@ -1123,6 +1616,7 @@ export function EntryForm({
             text: t('entryForm.discardChanges.discard'),
             style: 'destructive',
             onPress: () => {
+              allFarmsSucceededByLogRef.current.clear();
               setPendingLogs([]);
               resetTaskForm();
               setSelectedLogType(null);
@@ -1146,256 +1640,6 @@ export function EntryForm({
     onClose,
     t,
   ]);
-
-  const renderTabs = () => {
-    if (resolvedTabs.length < 2) return null;
-    return (
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}>
-        <View
-          style={{
-            backgroundColor: colors.surface[100],
-            borderRadius: 999,
-            padding: 4,
-            flexDirection: 'row',
-          }}
-        >
-          {resolvedTabs.map((tab) => {
-            const isActive = activeTab === tab;
-            const label = tab === 'log' ? t('entryForm.tabs.log') : t('entryForm.tabs.task');
-            const iconName = tab === 'log' ? 'document-text' : 'checkbox-outline';
-            return (
-              <Pressable
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={[
-                  { flex: 1, borderRadius: 999, overflow: 'hidden' },
-                  { marginHorizontal: 2 },
-                ]}
-              >
-                {isActive ? (
-                  <LinearGradient
-                    colors={[
-                      colorWithOpacity(m3.colorScheme.primary, 0.95),
-                      colorWithOpacity(m3.colorScheme.primary, 0.7),
-                    ]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{
-                      width: '100%',
-                      borderRadius: 999,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <AppIcon name={iconName} size={16} color={m3.colorScheme.onPrimary} />
-                    <Text
-                      selectable
-                      style={[
-                        { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                        { color: m3.colorScheme.onPrimary },
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  </LinearGradient>
-                ) : (
-                  <View
-                    style={{
-                      width: '100%',
-                      borderRadius: 999,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <AppIcon name={iconName} size={16} color={m3.colorScheme.onSurfaceVariant} />
-                    <Text
-                      selectable
-                      style={[
-                        { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                        { color: m3.colorScheme.onSurfaceVariant },
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-    );
-  };
-
-  const renderLogTypeSelector = () => (
-    <View
-      style={{
-        backgroundColor: colors.surface[100],
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 16,
-      }}
-    >
-      <Text
-        selectable
-        style={{
-          fontSize: 16,
-          fontWeight: '600',
-          color: m3.colorScheme.onSurface,
-          marginBottom: 12,
-        }}
-      >
-        {t('entryForm.activityType')}
-      </Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        {ACTIVITY_TYPES.map((logType) => {
-          const isSelected = selectedLogType === logType.id;
-          return (
-            <Pressable
-              key={logType.id}
-              onPress={() => {
-                setSelectedLogType(logType.id as LogTypeId);
-                setShowLogFormModal(true);
-              }}
-              style={{
-                width: '18%',
-                paddingVertical: 10,
-                alignItems: 'center',
-                borderRadius: 12,
-                borderWidth: 1,
-                backgroundColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                  : colors.surface[50],
-                borderColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.25)
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-              }}
-            >
-              <View
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 999,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 6,
-                  backgroundColor: isSelected ? `${logType.color}20` : `${logType.color}12`,
-                }}
-              >
-                <AppIcon name={logType.icon} size={16} color={logType.color} />
-              </View>
-              <Text
-                selectable
-                style={[
-                  { fontSize: 10, fontWeight: '600', textAlign: 'center', lineHeight: 12 },
-                  { color: isSelected ? m3.colorScheme.primary : m3.colorScheme.onSurface },
-                ]}
-                numberOfLines={2}
-              >
-                {t(logType.labelKey)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-
-  const renderLogForm = () => {
-    if (!selectedLogType) return null;
-    return (
-      <View style={{ backgroundColor: colors.surface[100], borderRadius: 16, padding: 16 }}>
-        {selectedLogType === 'irrigation' && (
-          <IrrigationForm
-            data={irrigationData}
-            onChange={setIrrigationData}
-            onInputFocus={scrollToFocusedInput}
-          />
-        )}
-        {selectedLogType === 'spray' && (
-          <SprayForm
-            data={sprayData}
-            onChange={setSprayData}
-            onInputFocus={scrollToFocusedInput}
-            quickAddItems={sprayQuickAddItems}
-          />
-        )}
-        {selectedLogType === 'harvest' && (
-          <HarvestForm
-            data={harvestData}
-            onChange={setHarvestData}
-            onInputFocus={scrollToFocusedInput}
-          />
-        )}
-        {selectedLogType === 'expense' && (
-          <ExpenseForm
-            data={expenseData}
-            onChange={setExpenseData}
-            onInputFocus={scrollToFocusedInput}
-          />
-        )}
-        {selectedLogType === 'fertigation' && (
-          <FertigationForm
-            data={fertigationData}
-            onChange={setFertigationData}
-            onInputFocus={scrollToFocusedInput}
-            quickAddItems={fertigationQuickAddItems}
-          />
-        )}
-
-        <Pressable
-          onPress={addLogToSession}
-          disabled={!isLogFormValid || !activeFarm}
-          style={[
-            {
-              marginTop: 16,
-              paddingVertical: 12,
-              borderRadius: 12,
-              alignItems: 'center',
-              flexDirection: 'row',
-              justifyContent: 'center',
-            },
-            {
-              backgroundColor:
-                isLogFormValid && activeFarm
-                  ? m3.colorScheme.primary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-            },
-          ]}
-        >
-          <AppIcon
-            name="add-circle"
-            size={20}
-            color={
-              isLogFormValid
-                ? m3.colorScheme.onPrimary
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-            }
-          />
-          <Text
-            selectable
-            style={[
-              { marginLeft: 8, fontWeight: '600' },
-              {
-                color: isLogFormValid
-                  ? m3.colorScheme.onPrimary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-              },
-            ]}
-          >
-            {t('entryForm.addEntry')}
-          </Text>
-        </Pressable>
-      </View>
-    );
-  };
-
   const renderLogFormModal = () => {
     if (!selectedLogType) return null;
     const logType = LOG_TYPES.find((lt) => lt.id === selectedLogType);
@@ -1468,7 +1712,54 @@ export function EntryForm({
               }}
               scrollEventThrottle={16}
             >
-              {renderLogForm()}
+              {selectedLogType === 'spray' ? (
+                <View
+                  style={{
+                    marginTop: 16,
+                    marginBottom: 4,
+                    padding: 12,
+                    borderRadius: 12,
+                    backgroundColor: colorWithOpacity(m3.colorScheme.secondaryContainer, 0.5),
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: m3.colorScheme.onSurfaceVariant,
+                      ...m3.typography.labelSmall,
+                    }}
+                  >
+                    {isGrapeFarm
+                      ? t('entryForm.phiScope.grapeOnlyEnabled', {
+                          defaultValue:
+                            'PHI safety checks are currently available for grape sprays.',
+                        })
+                      : t('entryForm.phiScope.grapeOnlyDisabled', {
+                          defaultValue:
+                            'PHI safety validation is currently available for grape sprays only.',
+                        })}
+                  </Text>
+                </View>
+              ) : null}
+              <LogForm
+                selectedLogType={selectedLogType}
+                irrigationData={irrigationData}
+                sprayData={sprayData}
+                harvestData={harvestData}
+                expenseData={expenseData}
+                fertigationData={fertigationData}
+                onIrrigationChange={setIrrigationData}
+                onSprayChange={setSprayData}
+                onHarvestChange={setHarvestData}
+                onExpenseChange={setExpenseData}
+                onFertigationChange={setFertigationData}
+                onInputFocus={scrollToFocusedInput}
+                onAdd={addLogToSession}
+                isValid={isLogFormValid}
+                hasFarm={hasFarmForCurrentLog}
+                sprayQuickAddItems={sprayQuickAddItems}
+                fertigationQuickAddItems={fertigationQuickAddItems}
+                sprayCatalogMixes={catalogMixes}
+              />
             </ScrollView>
           </KeyboardAvoidingView>
         </View>
@@ -1497,7 +1788,7 @@ export function EntryForm({
       >
         <Pressable
           onPress={addLogToSession}
-          disabled={!isLogFormValid || !activeFarm}
+          disabled={!canSubmitLog}
           style={[
             {
               paddingVertical: 14,
@@ -1507,10 +1798,9 @@ export function EntryForm({
               justifyContent: 'center',
             },
             {
-              backgroundColor:
-                isLogFormValid && activeFarm
-                  ? m3.colorScheme.primary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+              backgroundColor: canSubmitLog
+                ? m3.colorScheme.primary
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
             },
           ]}
         >
@@ -1518,7 +1808,7 @@ export function EntryForm({
             name="add-circle"
             size={20}
             color={
-              isLogFormValid && activeFarm
+              canSubmitLog
                 ? m3.colorScheme.onPrimary
                 : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
             }
@@ -1528,98 +1818,15 @@ export function EntryForm({
             style={[
               { marginLeft: 8, fontWeight: '600', fontSize: 16 },
               {
-                color:
-                  isLogFormValid && activeFarm
-                    ? m3.colorScheme.onPrimary
-                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                color: canSubmitLog
+                  ? m3.colorScheme.onPrimary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
               },
             ]}
           >
             {t('entryForm.addEntry')}
           </Text>
         </Pressable>
-      </View>
-    );
-  };
-
-  const renderPendingLogs = () => {
-    if (pendingLogs.length === 0) return null;
-    return (
-      <View
-        style={{
-          backgroundColor: colors.surface[100],
-          borderRadius: 16,
-          padding: 16,
-          marginBottom: 16,
-        }}
-      >
-        <Text
-          selectable
-          style={{
-            fontSize: 16,
-            fontWeight: '600',
-            color: m3.colorScheme.onSurface,
-            marginBottom: 12,
-          }}
-        >
-          {t('entryForm.pendingLogs', { count: pendingLogs.length })}
-        </Text>
-        {pendingLogs.map((log) => {
-          const logType = LOG_TYPES.find((lt) => lt.id === log.type);
-          const iconName =
-            log.type === 'expense'
-              ? getExpenseIconName(
-                  (log.data as ExpenseFormData | undefined)?.type,
-                  resolveSymbolIconName(logType?.icon),
-                )
-              : resolveSymbolIconName(logType?.icon);
-          return (
-            <View
-              key={log.id}
-              style={[
-                {
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  padding: 12,
-                  borderRadius: 12,
-                  marginBottom: 8,
-                },
-                { backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1) },
-              ]}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 999,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: `${logType?.color}15`,
-                }}
-              >
-                <UiSymbol
-                  name={iconName}
-                  size={18}
-                  color={logType?.color ?? m3.colorScheme.primary}
-                />
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text
-                  selectable
-                  style={{ fontSize: 14, fontWeight: '600', color: m3.colorScheme.onSurface }}
-                >
-                  {logType ? t(logType.labelKey) : t('entryForm.addLog')}
-                </Text>
-                <Text selectable style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
-                  {log.displayDescription}
-                </Text>
-              </View>
-              <Pressable onPress={() => removeLogFromSession(log.id)}>
-                <AppIcon name="trash-outline" size={20} color={m3.colorScheme.error} />
-              </Pressable>
-            </View>
-          );
-        })}
       </View>
     );
   };
@@ -1649,7 +1856,12 @@ export function EntryForm({
             {t('entryForm.farmLabel')}
           </Text>
           <Pressable
-            onPress={() => setShowLogFarmPicker(!showLogFarmPicker)}
+            disabled={pendingLogs.length > 0}
+            accessibilityState={{ disabled: pendingLogs.length > 0 }}
+            onPress={() => {
+              if (pendingLogs.length > 0) return;
+              setShowLogFarmPicker(!showLogFarmPicker);
+            }}
             style={{
               backgroundColor: colors.surface[50],
               borderRadius: 12,
@@ -1660,6 +1872,7 @@ export function EntryForm({
               justifyContent: 'space-between',
               borderWidth: 1,
               borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+              opacity: pendingLogs.length > 0 ? 0.7 : 1,
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1668,7 +1881,9 @@ export function EntryForm({
                 selectable
                 style={{ fontSize: 16, color: m3.colorScheme.onSurface, marginLeft: 8 }}
               >
-                {activeFarm?.name || t('entryForm.selectFarm')}
+                {isAllFarmsSelected
+                  ? t('entryForm.allFarms')
+                  : activeFarm?.name || t('entryForm.selectFarm')}
               </Text>
             </View>
             <AppIcon
@@ -1688,6 +1903,35 @@ export function EntryForm({
                 overflow: 'hidden',
               }}
             >
+              {selectedLogType === 'expense' && (
+                <Pressable
+                  key="all-farms"
+                  onPress={() => {
+                    setSelectedFarmId(ALL_FARMS_ID);
+                    setShowLogFarmPicker(false);
+                  }}
+                  style={{
+                    padding: 16,
+                    borderBottomWidth: 1,
+                    borderColor: colors.surface[100],
+                    backgroundColor: isAllFarmsSelected
+                      ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                      : colors.surface[100],
+                  }}
+                >
+                  <Text
+                    selectable
+                    style={{
+                      color: isAllFarmsSelected
+                        ? m3.colorScheme.primary
+                        : m3.colorScheme.onSurfaceVariant,
+                      fontWeight: isAllFarmsSelected ? '500' : '400',
+                    }}
+                  >
+                    {t('entryForm.allFarms')}
+                  </Text>
+                </Pressable>
+              )}
               {farms.map((f) => (
                 <Pressable
                   key={f.id}
@@ -1790,7 +2034,13 @@ export function EntryForm({
         </View>
       </View>
 
-      {renderLogTypeSelector()}
+      <LogTypeSelector
+        selectedLogType={selectedLogType}
+        onSelect={(type) => {
+          setSelectedLogType(type);
+          setShowLogFormModal(true);
+        }}
+      />
       {selectedLogType === null && (
         <View
           style={{
@@ -1807,7 +2057,7 @@ export function EntryForm({
           </Text>
         </View>
       )}
-      {renderPendingLogs()}
+      <PendingLogs pendingLogs={pendingLogs} onRemove={removeLogFromSession} />
     </>
   );
 
@@ -2183,9 +2433,9 @@ export function EntryForm({
               showsHorizontalScrollIndicator={false}
               style={{ marginBottom: 12 }}
             >
-              {taskPlanningSuggestions.map((item, index) => (
+              {taskPlanningSuggestions.map((item) => (
                 <Pressable
-                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  key={`${item.name}-${item.unit ?? 'unit'}-${item.source ?? 'source'}`}
                   onPress={() => addTaskPlannedInput(item)}
                   style={{
                     marginRight: 8,
@@ -2200,7 +2450,7 @@ export function EntryForm({
                   <Text style={{ fontSize: 12, color: m3.colorScheme.onSurface }}>{item.name}</Text>
                   <Text style={{ fontSize: 11, color: m3.colorScheme.onSurfaceVariant }}>
                     {item.quantity ? `${item.quantity} ` : ''}
-                    {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg/acre')}
+                    {item.unit ?? (type === 'spray' ? 'gm/L' : 'kg')}
                   </Text>
                 </Pressable>
               ))}
@@ -2284,9 +2534,9 @@ export function EntryForm({
 
           {taskPlannedInputs.length > 0 && (
             <View style={{ gap: 6 }}>
-              {taskPlannedInputs.map((item, index) => (
+              {taskPlannedInputs.map((item) => (
                 <View
-                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                  key={`${item.name}-${item.unit ?? 'unit'}-${item.source ?? 'source'}`}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -2308,7 +2558,7 @@ export function EntryForm({
                       {item.unit ?? ''}
                     </Text>
                   </View>
-                  <Pressable onPress={() => removeTaskPlannedInput(index)}>
+                  <Pressable onPress={() => removeTaskPlannedInput(item)}>
                     <AppIcon
                       name="close-circle"
                       size={18}
@@ -2389,7 +2639,7 @@ export function EntryForm({
             </Pressable>
           )}
         </Pressable>
-        {showDueDatePicker && Platform.OS === 'ios' && (
+        {showDueDatePicker && isIOS && (
           <Modal
             transparent
             visible={showDueDatePicker}
@@ -2465,7 +2715,7 @@ export function EntryForm({
             </Pressable>
           </Modal>
         )}
-        {showDueDatePicker && Platform.OS !== 'ios' && (
+        {showDueDatePicker && !isIOS && (
           <DateTimePicker
             value={(() => {
               if (!dueDate) return new Date();
@@ -2487,7 +2737,7 @@ export function EntryForm({
   const content = (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <KeyboardAvoidingView
-        behavior={isIOS ? 'padding' : 'height'}
+        behavior={isIOS ? 'padding' : undefined}
         keyboardVerticalOffset={isIOS ? 0 : 20}
         style={{ flex: 1, backgroundColor: m3.colorScheme.background }}
       >
@@ -2511,16 +2761,23 @@ export function EntryForm({
               }}
             />
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 40 }} />
-            <View style={{ flex: 1, alignItems: 'center' }}>
+          <View style={{ minHeight: 44, justifyContent: 'center', position: 'relative' }}>
+            <View style={{ paddingHorizontal: 52, alignItems: 'center', justifyContent: 'center' }}>
               <Text
                 selectable
                 style={{
                   fontSize: 18,
+                  lineHeight: 24,
                   fontWeight: '600',
                   color: m3.colorScheme.onSurface,
                   textAlign: 'center',
+                  ...(Platform.OS === 'android'
+                    ? {
+                        includeFontPadding: true,
+                        paddingBottom: androidTextPadding.bottom,
+                        paddingRight: androidTextPadding.right,
+                      }
+                    : null),
                 }}
                 numberOfLines={1}
                 ellipsizeMode="tail"
@@ -2531,15 +2788,19 @@ export function EntryForm({
                     ? t('entryForm.editTask')
                     : t('entryForm.addTask')}
               </Text>
-              <Text
-                selectable
-                style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
-                numberOfLines={1}
-              >
-                {activeFarm?.name}
-              </Text>
             </View>
-            <Pressable onPress={handleClose} style={{ width: 40, alignItems: 'flex-end' }}>
+            <Pressable
+              onPress={handleClose}
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <AppIcon
                 name="close-circle"
                 size={26}
@@ -2547,9 +2808,18 @@ export function EntryForm({
               />
             </Pressable>
           </View>
+          <View style={{ marginTop: 2, alignItems: 'center', minHeight: 16 }}>
+            <Text
+              selectable
+              style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
+              numberOfLines={1}
+            >
+              {activeFarm?.name}
+            </Text>
+          </View>
         </View>
 
-        {renderTabs()}
+        <Tabs tabs={resolvedTabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         {showDatePicker && !isIOS && (
           <DateTimePicker
@@ -2633,17 +2903,11 @@ export function EntryForm({
         )}
 
         {showTypePicker && (
-          <Pressable
-            onPress={() => setShowTypePicker(false)}
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.4),
-              zIndex: 60,
-            }}
+          <ModalBackdrop
+            visible
+            onDismiss={() => setShowTypePicker(false)}
+            opacity={0.4}
+            zIndex={60}
           >
             <View
               style={{
@@ -2722,24 +2986,15 @@ export function EntryForm({
                 ))}
               </ScrollView>
             </View>
-          </Pressable>
+          </ModalBackdrop>
         )}
 
         {showPriorityPicker && (
-          <Pressable
-            onPress={() => setShowPriorityPicker(false)}
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.4),
-                zIndex: 50,
-              },
-              { zIndex: 60 },
-            ]}
+          <ModalBackdrop
+            visible
+            onDismiss={() => setShowPriorityPicker(false)}
+            opacity={0.4}
+            zIndex={60}
           >
             <View
               style={{
@@ -2831,15 +3086,18 @@ export function EntryForm({
                 </Pressable>
               ))}
             </View>
-          </Pressable>
+          </ModalBackdrop>
         )}
 
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: footerHeight + insets.bottom + 24,
+          }}
+          scrollIndicatorInsets={{ bottom: footerHeight + insets.bottom + 24 }}
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="automatic"
-          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
           showsVerticalScrollIndicator={true}
         >
           {activeTab === 'log' ? renderLogContent() : renderTaskContent()}
@@ -2851,10 +3109,16 @@ export function EntryForm({
         {activeTab === 'log' && isKeyboardVisible && !showLogFormModal && renderStickyAddButton()}
 
         <View
+          onLayout={(event) => {
+            const nextHeight = Math.ceil(event.nativeEvent.layout.height);
+            setFooterHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+          }}
           style={{
+            flexShrink: 0,
             backgroundColor: colors.surface[100],
             paddingHorizontal: 16,
-            paddingVertical: 16,
+            paddingTop: 16,
+            paddingBottom: Platform.OS === 'ios' ? Math.max(16, insets.bottom) : 16,
             borderTopWidth: 1,
             borderColor: colors.surface[100],
           }}
@@ -2881,7 +3145,7 @@ export function EntryForm({
               </Pressable>
               <Pressable
                 onPress={saveAllLogs}
-                disabled={pendingLogs.length === 0 || isSubmittingLogs || !activeFarm}
+                disabled={!canSaveLogs}
                 style={[
                   {
                     flex: 1,
@@ -2892,10 +3156,9 @@ export function EntryForm({
                     justifyContent: 'center',
                   },
                   {
-                    backgroundColor:
-                      pendingLogs.length > 0 && !isSubmittingLogs && activeFarm
-                        ? m3.colorScheme.primary
-                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                    backgroundColor: canSaveLogs
+                      ? m3.colorScheme.primary
+                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                   },
                 ]}
               >
@@ -2907,7 +3170,7 @@ export function EntryForm({
                       name="save"
                       size={18}
                       color={
-                        pendingLogs.length > 0
+                        canSaveLogs
                           ? m3.colorScheme.onPrimary
                           : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
                       }
@@ -2917,10 +3180,9 @@ export function EntryForm({
                       style={[
                         { marginLeft: 8, fontWeight: '600', flexShrink: 1 },
                         {
-                          color:
-                            pendingLogs.length > 0
-                              ? m3.colorScheme.onPrimary
-                              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                          color: canSaveLogs
+                            ? m3.colorScheme.onPrimary
+                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
                         },
                       ]}
                     >

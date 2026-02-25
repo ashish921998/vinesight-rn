@@ -18,8 +18,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInUp, Layout } from 'react-native-reanimated';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borderRadius, spacing } from '@/styles/theme';
-import { useFarms } from '@/hooks';
+import { useFarms, useProfile } from '@/hooks';
 import {
   useReportData,
   useReportExport,
@@ -87,11 +88,15 @@ function getSeasonBounds(
 export default function ReportsScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { data: farms, isLoading: farmsLoading } = useFarms();
+  const { data: profile } = useProfile();
   const { user } = useAuthStore();
 
-  const areaUnit = resolveAreaUnitPreference(user?.user_metadata?.area_unit);
+  const areaUnit = resolveAreaUnitPreference(
+    profile?.area_unit_preference ?? user?.user_metadata?.area_unit,
+  );
 
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
@@ -115,7 +120,7 @@ export default function ReportsScreen() {
   );
 
   const { preview, isLoading: dataLoading, seasons } = useReportData(reportFilters);
-  const { isExporting, exportReport } = useReportExport();
+  const { isExporting, exportReport, downloadReport } = useReportExport();
 
   React.useEffect(() => {
     if (farms && farms.length > 0 && selectedFarmId == null) {
@@ -300,6 +305,37 @@ export default function ReportsScreen() {
     }
   };
 
+  const handleDownload = async (format: ReportFormat) => {
+    if (!preview) {
+      Alert.alert(t('common.error'), t('common.errors.noReportDataAvailable'));
+      return;
+    }
+
+    try {
+      const fileUri = await downloadReport(preview, format, reportType, areaUnit);
+      telemetry.capture('data_exported', {
+        export_type: `${format}_download`,
+        scope: 'farm',
+        farm_id: selectedFarmId,
+      });
+      Alert.alert(
+        t('reports.alerts.downloadCompleteTitle'),
+        t('reports.alerts.downloadCompleteBody', { fileUri }),
+      );
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : t('reports.errors.unableToExport');
+      Alert.alert(t('reports.alerts.exportFailedTitle'), errorMessage);
+    }
+  };
+
+  const handleDownloadPrompt = () => {
+    Alert.alert(t('reports.alerts.downloadReportTitle'), t('reports.alerts.chooseFormatBody'), [
+      { text: 'PDF', onPress: () => void handleDownload('pdf') },
+      { text: 'CSV', onPress: () => void handleDownload('csv') },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  };
+
   const handleDateChange = (type: 'from' | 'to', date: Date | undefined) => {
     if (date) {
       const dateStr = formatLocalDate(date);
@@ -348,7 +384,7 @@ export default function ReportsScreen() {
   const showStickyExport = Boolean(farms && farms.length > 0);
 
   return (
-    <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: m3.colorScheme.background }} edges={['top']}>
       <Stack.Screen options={{ title: t('reports.title') }} />
 
       <ScrollView
@@ -357,7 +393,7 @@ export default function ReportsScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: spacing[4],
-          paddingBottom: showStickyExport ? spacing[24] : spacing[10],
+          paddingBottom: (showStickyExport ? spacing[24] : spacing[10]) + insets.bottom,
           gap: spacing[4],
         }}
       >
@@ -468,8 +504,8 @@ export default function ReportsScreen() {
             canExport={Boolean(preview)}
             isExporting={isExporting}
             onExportPdf={() => handleExport('pdf')}
-            onExportCsv={() => handleExport('csv')}
-            panelStyle={{}}
+            onDownload={handleDownloadPrompt}
+            panelStyle={{ paddingBottom: spacing[6] + insets.bottom }}
           />
         </View>
       ) : null}
@@ -525,6 +561,7 @@ export default function ReportsScreen() {
                 borderCurve: 'continuous',
                 padding: spacing[4],
                 paddingTop: spacing[2],
+                paddingBottom: spacing[4] + insets.bottom,
                 gap: spacing[3],
               }}
               onStartShouldSetResponder={() => true}
@@ -594,6 +631,6 @@ export default function ReportsScreen() {
           </Pressable>
         </Modal>
       )}
-    </View>
+    </SafeAreaView>
   );
 }

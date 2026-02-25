@@ -11,6 +11,11 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? '
 
 const SUPABASE_CONFIG_ERROR_MESSAGE =
   'Supabase is not configured for this build. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.';
+interface AuthSubscription {
+  unsubscribe: () => void;
+}
+
+let authStateSubscription: AuthSubscription | null = null;
 
 // ============================================================
 // MARK: - Secure Storage Adapter
@@ -112,20 +117,49 @@ function shouldCreateSupabaseClient(): boolean {
   }
 }
 
+function getSupabaseAuthStorageKey(): string | null {
+  try {
+    const url = new URL(SUPABASE_URL);
+    const hostname = url.hostname;
+    const projectRef = hostname.split('.')[0];
+    if (!projectRef) return null;
+    return `sb-${projectRef}-auth-token`;
+  } catch {
+    return null;
+  }
+}
+
 export const supabase: SupabaseClient = (() => {
   if (!shouldCreateSupabaseClient()) {
     return createUnconfiguredSupabaseClient();
   }
 
   try {
-    return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    const authStorageKey = getSupabaseAuthStorageKey();
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         storage: ExpoSecureStoreAdapter,
+        ...(authStorageKey ? { storageKey: authStorageKey } : {}),
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false, // Required for mobile apps
       },
     });
+
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT' && authStorageKey) {
+        void ExpoSecureStoreAdapter.removeItem(authStorageKey);
+      }
+    });
+    const previousSubscription = authStateSubscription as AuthSubscription | null;
+    if (previousSubscription) {
+      previousSubscription.unsubscribe();
+    }
+    authStateSubscription = subscription;
+
+    return client;
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
       console.error('Supabase client initialization failed:', error);

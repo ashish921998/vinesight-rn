@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,8 @@ import { colorWithOpacity } from '@/utils/color';
 import { formatCurrency } from '@/i18n/format';
 import { useCurrency } from '@/hooks/use-currency';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
+import { useNotificationStore } from '@/stores';
+import { notifyWarehouseReorder } from '@/services/notifications';
 
 type FilterType = 'all' | 'fertilizer' | 'spray';
 
@@ -42,6 +44,52 @@ export default function WarehouseScreen() {
   const [filter, setFilter] = useState<FilterType>('all');
 
   const currency = useCurrency();
+  const warehouseReorderAlertsEnabled = useNotificationStore(
+    (s) => s.warehouseReorderAlertsEnabled,
+  );
+  const addNotifiedWarehouseItemId = useNotificationStore((s) => s.addNotifiedWarehouseItemId);
+  const removeNotifiedWarehouseItemId = useNotificationStore(
+    (s) => s.removeNotifiedWarehouseItemId,
+  );
+
+  useEffect(() => {
+    (async () => {
+      if (!warehouseReorderAlertsEnabled || !items || items.length === 0) return;
+
+      const lowStockToNotify = items.filter(
+        (item) =>
+          item.reorder_quantity &&
+          item.quantity <= item.reorder_quantity &&
+          item.id != null &&
+          !useNotificationStore.getState().notifiedWarehouseItemIds.has(item.id),
+      );
+
+      for (const item of lowStockToNotify) {
+        try {
+          await notifyWarehouseReorder(item.name, item.quantity, item.unit, item.reorder_quantity!);
+          addNotifiedWarehouseItemId(item.id!);
+        } catch {
+          // Notification failed, silently continue
+        }
+      }
+
+      items.forEach((item) => {
+        if (
+          item.id != null &&
+          item.reorder_quantity &&
+          item.quantity > item.reorder_quantity &&
+          useNotificationStore.getState().notifiedWarehouseItemIds.has(item.id)
+        ) {
+          removeNotifiedWarehouseItemId(item.id);
+        }
+      });
+    })();
+  }, [
+    warehouseReorderAlertsEnabled,
+    items,
+    addNotifiedWarehouseItemId,
+    removeNotifiedWarehouseItemId,
+  ]);
 
   const openAddItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });

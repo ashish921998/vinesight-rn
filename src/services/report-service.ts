@@ -5,7 +5,15 @@
 
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { cacheDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
+import {
+  cacheDirectory,
+  documentDirectory,
+  writeAsStringAsync,
+  copyAsync,
+  getInfoAsync,
+  makeDirectoryAsync,
+  deleteAsync,
+} from 'expo-file-system/legacy';
 import {
   ReportData,
   ReportSummary,
@@ -20,6 +28,7 @@ import {
 import { formatDate, formatCurrency } from '@/i18n/format';
 import { getDefaultCurrency } from '@/i18n/currency';
 import { AreaUnitPreference, convertAreaFromAcres } from '@/utils/preferences';
+import { getDaysAfterPruning } from '@/utils/date';
 import {
   UNIT_ALIASES_TO_KG,
   UNIT_ALIASES_TO_LITER,
@@ -41,10 +50,12 @@ import {
 interface ReportGenerationOptions {
   seasonContext?: ReportSeasonContext;
   seasonNameById?: Record<number, string>;
+  seasonWindowById?: Record<number, string>;
 }
 
 export class ReportService {
   private static readonly EMPTY_SECTION_TEXT = 'No records in selected range';
+  private static readonly REPORTS_DIR_NAME = 'reports';
 
   private static sanitizeFileNamePart(value: string, fallback: string = 'farm'): string {
     const sanitized = Array.from(value)
@@ -56,27 +67,71 @@ export class ReportService {
     return sanitized || fallback;
   }
 
-  /**
-   * Escape a value for CSV output
-   */
-  private static escapeCSV(value: string): string {
-    if (value.includes('"') || value.includes(',') || value.includes('\n')) {
-      return `"${value.replace(/"/g, '""')}"`;
+  private static buildReportFileName(farmName: string, extension: 'csv' | 'pdf'): string {
+    const safeFarmName = this.sanitizeFileNamePart(farmName);
+    const timestamp = Date.now();
+    return `${safeFarmName}_report_${new Date().toISOString().split('T')[0]}_${timestamp}.${extension}`;
+  }
+
+  private static joinUri(base: string, filename: string): string {
+    return base.endsWith('/') ? `${base}${filename}` : `${base}/${filename}`;
+  }
+
+  private static async ensureReportsDirectory(): Promise<string> {
+    const baseDir = documentDirectory ?? cacheDirectory;
+    if (!baseDir) {
+      throw new Error('No writable directory is available on this device');
     }
-    return value;
+
+    const reportsDir = this.joinUri(baseDir, this.REPORTS_DIR_NAME);
+    const info = await getInfoAsync(reportsDir);
+    if (!info.exists) {
+      await makeDirectoryAsync(reportsDir, { intermediates: true });
+    }
+    return reportsDir;
   }
 
   /**
-   * Filter records by date range
+   * Escape a value for CSV output.
+   * Guards against formula injection by prefixing cells that start with
+   * characters Excel/Google Sheets would interpret as formulas.
+   */
+  private static escapeCSV(value: string): string {
+    let safe = value;
+    if (safe.length > 0 && /^[=+\-@\t\r]/.test(safe)) {
+      safe = `'${safe}`;
+      return `"${safe.replace(/"/g, '""')}"`;
+    }
+    if (safe.includes('"') || safe.includes(',') || safe.includes('\n')) {
+      return `"${safe.replace(/"/g, '""')}"`;
+    }
+    return safe;
+  }
+
+  /**
+   * Escape a value for safe HTML interpolation.
+   */
+  private static escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /**
+   * Filter records by date range.
+   * Uses ISO string comparison (YYYY-MM-DD) to avoid timezone drift
+   * that occurs when parsing date-only strings as UTC Date objects.
    */
   static filterByDateRange<T extends { date: string }>(records: T[], dateRange: DateRange): T[] {
-    const fromDate = new Date(dateRange.from);
-    const toDate = new Date(dateRange.to);
-    toDate.setHours(23, 59, 59, 999); // Include entire end day
+    const from = dateRange.from; // YYYY-MM-DD
+    const to = dateRange.to; // YYYY-MM-DD
 
     return records.filter((record) => {
-      const recordDate = new Date(record.date);
-      return recordDate >= fromDate && recordDate <= toDate;
+      const recordDate = record.date.slice(0, 10); // normalize timestamps to YYYY-MM-DD
+      return recordDate >= from && recordDate <= to;
     });
   }
 
@@ -114,6 +169,14 @@ export class ReportService {
     return seasonNameById?.[seasonId] ?? `Season ${seasonId}`;
   }
 
+  private static resolveSeasonWindow(
+    seasonId: number | null | undefined,
+    seasonWindowById?: Record<number, string>,
+  ): string | null {
+    if (seasonId == null) return null;
+    return seasonWindowById?.[seasonId] ?? null;
+  }
+
   private static formatSeasonContextLabel(seasonContext?: ReportSeasonContext): string {
     if (!seasonContext || seasonContext.mode === 'all') {
       return 'All seasons';
@@ -128,12 +191,65 @@ export class ReportService {
   }
 
   private static formatSeasonCell(
+    seasonContext: ReportSeasonContext | undefined,
     seasonId: number | null | undefined,
     seasonName: string | null | undefined,
+    seasonWindow: string | null | undefined,
   ): string {
+    if (seasonContext?.mode === 'all') {
+      if (seasonWindow && seasonWindow.trim().length > 0) return seasonWindow;
+      return '-';
+    }
     if (seasonName && seasonName.trim().length > 0) return seasonName;
     if (seasonId != null) return `Season ${seasonId}`;
     return '-';
+  }
+
+  private static formatDaysAfterPruningValue(daysAfterPruning: number | null | undefined): string {
+    if (daysAfterPruning == null || !Number.isFinite(daysAfterPruning)) return '-';
+    return String(daysAfterPruning);
+  }
+
+  private static formatDaysAfterPruningTag(daysAfterPruning: number | null | undefined): string {
+    if (daysAfterPruning == null || !Number.isFinite(daysAfterPruning)) return '-';
+    return `${daysAfterPruning}d`;
+  }
+
+  private static resolveSprayChemicalLabel(record: SprayRecord): string {
+    const chemicalItems = (record.chemical_items ?? []) as SprayChemicalItem[];
+    const names = chemicalItems.map((item) => item.name?.trim()).filter(Boolean);
+    if (names.length > 0) return names.join(', ');
+    return record.chemical?.trim() || 'N/A';
+  }
+
+  private static resolveSprayDoseLabel(record: SprayRecord): string {
+    const chemicalItems = (record.chemical_items ?? []) as SprayChemicalItem[];
+    const dosageItems = chemicalItems
+      .filter(
+        (item) =>
+          item.name?.trim() &&
+          Number.isFinite(item.quantity) &&
+          item.quantity > 0 &&
+          item.unit?.trim(),
+      )
+      .map((item) => {
+        const quantityBasis = item.quantity_basis ?? 'total';
+        const normalizedUnit = item.unit.trim();
+        const needsPerAcreSuffix =
+          quantityBasis === 'per_acre' && !normalizedUnit.toLowerCase().includes('/acre');
+        return `${item.quantity} ${normalizedUnit}${needsPerAcreSuffix ? '/acre' : ''}`;
+      });
+
+    const waterMatch = record.dose?.match(/Water:\s*([0-9]+(?:\.[0-9]+)?)\s*L/i);
+    const waterLabel = waterMatch?.[1] ? `Water: ${waterMatch[1]}L` : null;
+
+    if (dosageItems.length > 0 && waterLabel) {
+      return `${dosageItems.join(', ')}; ${waterLabel}`;
+    }
+    if (dosageItems.length > 0) {
+      return dosageItems.join(', ');
+    }
+    return record.dose?.trim() || 'N/A';
   }
 
   private static normalizeName(value: string): string {
@@ -187,7 +303,8 @@ export class ReportService {
     const normalized = this.normalizeUnit(unit);
     let totalQuantity = quantity * normalized.multiplier;
     const needsAreaMultiplier = quantityBasis === 'per_acre' || normalized.perAcre;
-    if (needsAreaMultiplier && Number.isFinite(area) && area > 0) {
+    if (needsAreaMultiplier) {
+      if (!Number.isFinite(area) || area <= 0) return null;
       totalQuantity *= area;
     }
 
@@ -195,6 +312,20 @@ export class ReportService {
       quantity: totalQuantity,
       normalizedUnit: normalized.normalizedUnit,
     };
+  }
+
+  private static parseWaterVolumeFromDose(dose: string | null | undefined): number | null {
+    const match = dose?.match(/Water:\s*([0-9]+(?:\.[0-9]+)?)\s*L/i);
+    if (!match?.[1]) return null;
+    const parsed = Number.parseFloat(match[1]);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  private static resolveConcentrationBaseUnit(unit: string): string | null {
+    const compact = unit.trim().toLowerCase().replace(/\s+/g, '');
+    const concentrationMatch = /^(.*)\/(l|liter|litre)$/.exec(compact);
+    if (!concentrationMatch?.[1]) return null;
+    return concentrationMatch[1];
   }
 
   /**
@@ -223,6 +354,7 @@ export class ReportService {
     unit: string;
     quantityBasis?: QuantityBasis;
     warehouseItemId?: number | null;
+    catalogProductId?: number | null;
   }> {
     const chemicalItems = (record.chemical_items ?? []) as SprayChemicalItem[];
     if (chemicalItems.length > 0) {
@@ -233,6 +365,7 @@ export class ReportService {
           unit: item.unit?.trim() ?? '',
           quantityBasis: item.quantity_basis,
           warehouseItemId: item.warehouse_item_id ?? null,
+          catalogProductId: item.catalog_product_id ?? null,
         }))
         .filter(
           (item) => item.name && item.unit && Number.isFinite(item.quantity) && item.quantity > 0,
@@ -243,6 +376,7 @@ export class ReportService {
       ...item,
       quantityBasis: 'total' as const,
       warehouseItemId: null,
+      catalogProductId: null,
     }));
   }
 
@@ -252,6 +386,7 @@ export class ReportService {
     unit: string;
     quantityBasis?: QuantityBasis;
     warehouseItemId?: number | null;
+    catalogProductId?: number | null;
   }> {
     const fertilizerItems = (record.fertilizers ?? []) as FertilizerItem[];
     return fertilizerItems
@@ -261,6 +396,7 @@ export class ReportService {
         unit: item.unit?.trim() ?? '',
         quantityBasis: item.quantity_basis,
         warehouseItemId: item.warehouse_item_id ?? null,
+        catalogProductId: item.catalog_product_id ?? null,
       }))
       .filter(
         (item) => item.name && item.unit && Number.isFinite(item.quantity) && item.quantity > 0,
@@ -277,11 +413,13 @@ export class ReportService {
       ReportStockUsageRecord & {
         normalizedName: string;
         warehouseItemIds: Set<number>;
+        catalogProductIds: Set<number>;
       }
     >,
     warehouseItems: WarehouseItem[],
   ): ReportStockUsageRecord[] {
     const byId = new Map<number, WarehouseItem>();
+    const byCatalogProductId = new Map<string, WarehouseItem[]>();
     const byNameUnitType = new Map<string, WarehouseItem[]>();
 
     warehouseItems.forEach((item) => {
@@ -295,6 +433,12 @@ export class ReportService {
       const key = `${type}::${normalizedName}::${normalizedUnit}`;
       const existing = byNameUnitType.get(key) ?? [];
       byNameUnitType.set(key, [...existing, item]);
+
+      if (item.catalog_product_id != null) {
+        const catalogKey = `${type}::${item.catalog_product_id}`;
+        const existingCatalog = byCatalogProductId.get(catalogKey) ?? [];
+        byCatalogProductId.set(catalogKey, [...existingCatalog, item]);
+      }
     });
 
     return rows
@@ -309,6 +453,18 @@ export class ReportService {
             matchedWarehouse = found;
             matchStrategy = 'warehouse_item_id';
             break;
+          }
+        }
+
+        if (!matchedWarehouse && row.catalogProductIds.size > 0) {
+          const sortedCatalogProductIds = Array.from(row.catalogProductIds).sort((a, b) => a - b);
+          for (const catalogProductId of sortedCatalogProductIds) {
+            const candidates = byCatalogProductId.get(`${row.type}::${catalogProductId}`) ?? [];
+            if (candidates.length === 1) {
+              matchedWarehouse = candidates[0];
+              matchStrategy = 'catalog_product_id';
+              break;
+            }
           }
         }
 
@@ -330,6 +486,7 @@ export class ReportService {
             areaTreated: this.toRounded(row.areaTreated, 2),
             usageCount: row.usageCount,
             warehouseItemId: null,
+            catalogProductId: null,
             currentStockQuantity: null,
             estimatedOpeningStockQuantity: null,
             estimatedConsumedPercent: null,
@@ -360,6 +517,7 @@ export class ReportService {
           areaTreated: this.toRounded(row.areaTreated, 2),
           usageCount: row.usageCount,
           warehouseItemId: matchedWarehouse.id,
+          catalogProductId: matchedWarehouse.catalog_product_id ?? null,
           currentStockQuantity:
             currentStockQuantity != null ? this.toRounded(currentStockQuantity, 4) : null,
           estimatedOpeningStockQuantity:
@@ -392,8 +550,10 @@ export class ReportService {
       ReportStockUsageRecord & {
         normalizedName: string;
         warehouseItemIds: Set<number>;
+        catalogProductIds: Set<number>;
       }
     >();
+    const unmatchedUsageMap = new Map<string, ReportStockUsageRecord>();
     const filteredSprays = this.filterByDateRange(sprays, dateRange);
     const filteredFertigations = this.filterByDateRange(fertigations, dateRange);
 
@@ -405,11 +565,60 @@ export class ReportService {
       quantityBasis: QuantityBasis | null | undefined,
       area: number,
       warehouseItemId?: number | null,
+      catalogProductId?: number | null,
+      waterVolumeL?: number | null,
     ) => {
       const normalizedName = this.normalizeName(name);
       if (!normalizedName) return;
 
-      const resolved = this.resolveAppliedQuantity(quantity, unit, quantityBasis, area);
+      const concentrationBaseUnit = this.resolveConcentrationBaseUnit(unit);
+      let resolvedQuantity = quantity;
+      let resolvedUnit = unit;
+      let resolvedQuantityBasis = quantityBasis;
+      if (concentrationBaseUnit) {
+        if (!waterVolumeL || !Number.isFinite(waterVolumeL) || waterVolumeL <= 0) {
+          console.warn(
+            `Item "${name}" added to unmatched usage: missing water volume required for concentration-based unit "${unit}"`,
+          );
+          const unmatchedKey = `${type}::${normalizedName}::${unit.trim().toLowerCase()}`;
+          const existingUnmatched = unmatchedUsageMap.get(unmatchedKey);
+          if (existingUnmatched) {
+            existingUnmatched.quantityUsed += quantity;
+            existingUnmatched.areaTreated += area;
+            existingUnmatched.usageCount += 1;
+          } else {
+            unmatchedUsageMap.set(unmatchedKey, {
+              itemName: name.trim().replace(/\s+/g, ' '),
+              type,
+              quantityUsed: quantity,
+              unit: unit.trim().toLowerCase(),
+              areaTreated: area,
+              usageCount: 1,
+              warehouseItemId: null,
+              catalogProductId: null,
+              currentStockQuantity: null,
+              estimatedOpeningStockQuantity: null,
+              estimatedConsumedPercent: null,
+              matchStrategy: 'unmatched',
+            });
+          }
+          return;
+        }
+        resolvedQuantity = quantity * waterVolumeL;
+        resolvedUnit = concentrationBaseUnit;
+        // Preserve the original per-acre basis: if the water volume is specified per-acre,
+        // the resolved quantity remains per-acre and will be multiplied by area downstream.
+        if (resolvedQuantityBasis !== 'per_acre') {
+          resolvedQuantityBasis = 'total';
+        }
+      }
+
+      const resolved = this.resolveAppliedQuantity(
+        resolvedQuantity,
+        resolvedUnit,
+        resolvedQuantityBasis,
+        area,
+      );
       if (!resolved) return;
 
       const key = `${type}::${normalizedName}::${resolved.normalizedUnit}`;
@@ -420,6 +629,9 @@ export class ReportService {
         existing.usageCount += 1;
         if (warehouseItemId != null) {
           existing.warehouseItemIds.add(warehouseItemId);
+        }
+        if (catalogProductId != null) {
+          existing.catalogProductIds.add(catalogProductId);
         }
         return;
       }
@@ -433,10 +645,13 @@ export class ReportService {
         usageCount: 1,
         normalizedName,
         warehouseItemIds: warehouseItemId != null ? new Set([warehouseItemId]) : new Set<number>(),
+        catalogProductIds:
+          catalogProductId != null ? new Set([catalogProductId]) : new Set<number>(),
       });
     };
 
     filteredSprays.forEach((record) => {
+      const waterVolumeL = this.parseWaterVolumeFromDose(record.dose);
       this.resolveSprayUsageItems(record).forEach((item) => {
         upsertUsage(
           'spray',
@@ -446,6 +661,8 @@ export class ReportService {
           item.quantityBasis,
           record.area,
           item.warehouseItemId,
+          item.catalogProductId,
+          waterVolumeL,
         );
       });
     });
@@ -460,11 +677,22 @@ export class ReportService {
           item.quantityBasis,
           record.area,
           item.warehouseItemId,
+          item.catalogProductId,
         );
       });
     });
 
-    return this.matchWarehouseAndEstimateStock(Array.from(usageMap.values()), warehouseItems);
+    const matchedAndUnmatchedFromWarehouse = this.matchWarehouseAndEstimateStock(
+      Array.from(usageMap.values()),
+      warehouseItems,
+    );
+    const missingWaterRows = Array.from(unmatchedUsageMap.values()).map((row) => ({
+      ...row,
+      quantityUsed: this.toRounded(row.quantityUsed, 4),
+      areaTreated: this.toRounded(row.areaTreated, 2),
+    }));
+
+    return [...matchedAndUnmatchedFromWarehouse, ...missingWaterRows];
   }
 
   /**
@@ -481,7 +709,7 @@ export class ReportService {
     warehouseItems: WarehouseItem[],
     options: ReportGenerationOptions = {},
   ): ReportData {
-    const { seasonContext, seasonNameById } = options;
+    const { seasonContext, seasonNameById, seasonWindowById } = options;
     const stockUsage = this.calculateStockUsage(sprays, fertigations, dateRange, warehouseItems);
     const irrigationRecords = this.sortRecordsByDateDesc(
       this.filterByDateRange(irrigations, dateRange),
@@ -500,9 +728,11 @@ export class ReportService {
       dateRange,
       seasonContext,
       irrigation: irrigationRecords.map((r) => ({
-        date: r.date,
+        date: formatDate(r.date),
+        daysAfterPruning: getDaysAfterPruning(r.date, r.date_of_pruning ?? farm.date_of_pruning),
         seasonId: r.season_id ?? null,
         seasonName: this.resolveSeasonName(r.season_id, seasonNameById),
+        seasonWindow: this.resolveSeasonWindow(r.season_id, seasonWindowById),
         duration: r.duration,
         area: r.area,
         growthStage: r.growth_stage,
@@ -511,20 +741,24 @@ export class ReportService {
         notes: r.notes || undefined,
       })),
       spray: sprayRecords.map((r) => ({
-        date: r.date,
+        date: formatDate(r.date),
+        daysAfterPruning: getDaysAfterPruning(r.date, r.date_of_pruning ?? farm.date_of_pruning),
         seasonId: r.season_id ?? null,
         seasonName: this.resolveSeasonName(r.season_id, seasonNameById),
-        chemical: r.chemical,
-        dose: r.dose,
+        seasonWindow: this.resolveSeasonWindow(r.season_id, seasonWindowById),
+        chemical: this.resolveSprayChemicalLabel(r),
+        dose: this.resolveSprayDoseLabel(r),
         area: r.area,
         weather: r.weather,
         operator: r.operator,
         notes: r.notes || undefined,
       })),
       fertigation: fertigationRecords.map((r) => ({
-        date: r.date,
+        date: formatDate(r.date),
+        daysAfterPruning: getDaysAfterPruning(r.date, r.date_of_pruning ?? farm.date_of_pruning),
         seasonId: r.season_id ?? null,
         seasonName: this.resolveSeasonName(r.season_id, seasonNameById),
+        seasonWindow: this.resolveSeasonWindow(r.season_id, seasonWindowById),
         fertilizers: r.fertilizers
           ? r.fertilizers.map((f) => `${f.name} (${f.quantity} ${f.unit})`).join(', ')
           : 'N/A',
@@ -532,19 +766,23 @@ export class ReportService {
         notes: r.notes || undefined,
       })),
       harvest: harvestRecords.map((r) => ({
-        date: r.date,
+        date: formatDate(r.date),
+        daysAfterPruning: getDaysAfterPruning(r.date, r.date_of_pruning ?? farm.date_of_pruning),
         seasonId: r.season_id ?? null,
         seasonName: this.resolveSeasonName(r.season_id, seasonNameById),
+        seasonWindow: this.resolveSeasonWindow(r.season_id, seasonWindowById),
         quantity: r.quantity,
         grade: r.grade,
-        price: r.price || undefined,
+        price: r.price ?? undefined,
         buyer: r.buyer || undefined,
         notes: r.notes || undefined,
       })),
       expense: expenseRecords.map((r) => ({
-        date: r.date,
+        date: formatDate(r.date),
+        daysAfterPruning: getDaysAfterPruning(r.date, r.date_of_pruning ?? farm.date_of_pruning),
         seasonId: r.season_id ?? null,
         seasonName: this.resolveSeasonName(r.season_id, seasonNameById),
+        seasonWindow: this.resolveSeasonWindow(r.season_id, seasonWindowById),
         type: r.type,
         cost: r.cost,
         remarks: r.remarks || undefined,
@@ -556,15 +794,22 @@ export class ReportService {
   /**
    * Calculate report summary statistics
    */
-  static calculateSummary(data: ReportData): ReportSummary {
+  static calculateSummary(data: ReportData, reportType?: ReportType): ReportSummary {
+    const visibleSections = reportType ? this.getVisibleSections(reportType) : null;
     const totalIrrigationHours = data.irrigation.reduce((sum, r) => sum + r.duration, 0);
     const totalWaterUsage = data.irrigation.reduce(
       (sum, r) => sum + r.duration * r.systemDischarge,
       0,
     );
     const totalHarvest = data.harvest.reduce((sum, r) => sum + r.quantity, 0);
-    const totalRevenue = data.harvest.reduce((sum, r) => sum + r.quantity * (r.price || 0), 0);
-    const totalExpenses = data.expense.reduce((sum, r) => sum + r.cost, 0);
+
+    const hasHarvestSection = !visibleSections || visibleSections.has('harvest');
+    const hasExpenseSection = !visibleSections || visibleSections.has('expense');
+    const totalRevenue = hasHarvestSection
+      ? data.harvest.reduce((sum, r) => sum + r.quantity * (r.price ?? 0), 0)
+      : 0;
+    const totalExpenses = hasExpenseSection ? data.expense.reduce((sum, r) => sum + r.cost, 0) : 0;
+    const showNetProfit = hasHarvestSection && hasExpenseSection;
 
     return {
       totalRecords:
@@ -572,14 +817,15 @@ export class ReportService {
         data.spray.length +
         data.fertigation.length +
         data.harvest.length +
-        data.expense.length,
+        data.expense.length +
+        data.stock.length,
       dateRange: `${data.dateRange.from} to ${data.dateRange.to}`,
       totalIrrigationHours: Math.round(totalIrrigationHours * 10) / 10,
       totalWaterUsage: Math.round(totalWaterUsage),
       totalHarvest: Math.round(totalHarvest * 10) / 10,
       totalRevenue: Math.round(totalRevenue),
       totalExpenses: Math.round(totalExpenses),
-      netProfit: Math.round(totalRevenue - totalExpenses),
+      netProfit: showNetProfit ? Math.round(totalRevenue - totalExpenses) : 0,
       irrigationCount: data.irrigation.length,
       sprayCount: data.spray.length,
       fertigationCount: data.fertigation.length,
@@ -634,17 +880,19 @@ export class ReportService {
       rows.push(this.EMPTY_SECTION_TEXT);
       rows.push('');
     };
+    const matchedStockRows = data.stock.filter((row) => row.matchStrategy !== 'unmatched');
+    const unmatchedStockRows = data.stock.filter((row) => row.matchStrategy === 'unmatched');
 
     // Header
     rows.push(`Farm Report - ${data.farmName}`);
     rows.push(`Report Type: ${this.formatReportType(reportType)}`);
     rows.push(`Region: ${data.farmRegion}`);
     rows.push(`Area: ${convertAreaFromAcres(data.farmArea, areaUnit)} ${areaUnitLabel}`);
-    rows.push(`Date Range: ${data.dateRange.from} to ${data.dateRange.to}`);
+    rows.push(`Date Range: ${formatDate(data.dateRange.from)} to ${formatDate(data.dateRange.to)}`);
     rows.push(`Season: ${this.formatSeasonContextLabel(data.seasonContext)}`);
     if (data.seasonContext?.mode === 'season') {
       rows.push(
-        `Season Window: ${data.seasonContext.seasonStart ?? '-'} to ${data.seasonContext.seasonEnd ?? 'Active'}`,
+        `Season Window: ${data.seasonContext.seasonStart ? formatDate(data.seasonContext.seasonStart) : '-'} to ${data.seasonContext.seasonEnd ? formatDate(data.seasonContext.seasonEnd) : 'Active'}`,
       );
     }
     rows.push(
@@ -658,11 +906,11 @@ export class ReportService {
       } else {
         rows.push(`IRRIGATION RECORDS (${data.irrigation.length})`);
         rows.push(
-          `Date,Season ID,Season Name,Duration (hrs),Area (${areaUnitLabel}),Growth Stage,Moisture Status,System Discharge (L/h),Notes`,
+          `Date,Days After Pruning,Season,Duration (hrs),Growth Stage,Moisture Status,Notes`,
         );
         data.irrigation.forEach((r) => {
           rows.push(
-            `${this.escapeCSV(r.date)},${r.seasonId ?? ''},${this.escapeCSV(r.seasonName ?? '')},${r.duration},${convertAreaFromAcres(r.area, areaUnit)},${this.escapeCSV(r.growthStage)},${this.escapeCSV(r.moistureStatus)},${r.systemDischarge},${this.escapeCSV(r.notes || '')}`,
+            `${this.escapeCSV(r.date)},${this.formatDaysAfterPruningValue(r.daysAfterPruning)},${this.escapeCSV(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))},${r.duration},${this.escapeCSV(r.growthStage)},${this.escapeCSV(r.moistureStatus)},${this.escapeCSV(r.notes || '')}`,
           );
         });
         rows.push('');
@@ -674,12 +922,10 @@ export class ReportService {
         pushEmptySection('SPRAY RECORDS');
       } else {
         rows.push(`SPRAY RECORDS (${data.spray.length})`);
-        rows.push(
-          `Date,Season ID,Season Name,Chemical,Dose,Area (${areaUnitLabel}),Weather,Operator,Notes`,
-        );
+        rows.push(`Date,Days After Pruning,Season,Chemical,Dose,Operator,Notes`);
         data.spray.forEach((r) => {
           rows.push(
-            `${this.escapeCSV(r.date)},${r.seasonId ?? ''},${this.escapeCSV(r.seasonName ?? '')},${this.escapeCSV(r.chemical)},${this.escapeCSV(r.dose)},${convertAreaFromAcres(r.area, areaUnit)},${this.escapeCSV(r.weather)},${this.escapeCSV(r.operator)},${this.escapeCSV(r.notes || '')}`,
+            `${this.escapeCSV(r.date)},${this.formatDaysAfterPruningValue(r.daysAfterPruning)},${this.escapeCSV(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))},${this.escapeCSV(r.chemical)},${this.escapeCSV(r.dose)},${this.escapeCSV(r.operator)},${this.escapeCSV(r.notes || '')}`,
           );
         });
         rows.push('');
@@ -691,10 +937,10 @@ export class ReportService {
         pushEmptySection('FERTIGATION RECORDS');
       } else {
         rows.push(`FERTIGATION RECORDS (${data.fertigation.length})`);
-        rows.push(`Date,Season ID,Season Name,Fertilizers,Area (${areaUnitLabel}),Notes`);
+        rows.push(`Date,Days After Pruning,Season,Fertilizers,Notes`);
         data.fertigation.forEach((r) => {
           rows.push(
-            `${this.escapeCSV(r.date)},${r.seasonId ?? ''},${this.escapeCSV(r.seasonName ?? '')},${this.escapeCSV(r.fertilizers)},${convertAreaFromAcres(r.area, areaUnit)},${this.escapeCSV(r.notes || '')}`,
+            `${this.escapeCSV(r.date)},${this.formatDaysAfterPruningValue(r.daysAfterPruning)},${this.escapeCSV(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))},${this.escapeCSV(r.fertilizers)},${this.escapeCSV(r.notes || '')}`,
           );
         });
         rows.push('');
@@ -706,10 +952,10 @@ export class ReportService {
         pushEmptySection('HARVEST RECORDS');
       } else {
         rows.push(`HARVEST RECORDS (${data.harvest.length})`);
-        rows.push('Date,Season ID,Season Name,Quantity (kg),Grade,Price,Buyer,Notes');
+        rows.push('Date,Days After Pruning,Season,Quantity (kg),Grade,Price,Buyer,Notes');
         data.harvest.forEach((r) => {
           rows.push(
-            `${this.escapeCSV(r.date)},${r.seasonId ?? ''},${this.escapeCSV(r.seasonName ?? '')},${r.quantity},${this.escapeCSV(r.grade)},${r.price || ''},${this.escapeCSV(r.buyer || '')},${this.escapeCSV(r.notes || '')}`,
+            `${this.escapeCSV(r.date)},${this.formatDaysAfterPruningValue(r.daysAfterPruning)},${this.escapeCSV(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))},${r.quantity},${this.escapeCSV(r.grade)},${r.price ?? ''},${this.escapeCSV(r.buyer || '')},${this.escapeCSV(r.notes || '')}`,
           );
         });
         rows.push('');
@@ -721,10 +967,10 @@ export class ReportService {
         pushEmptySection('EXPENSE RECORDS');
       } else {
         rows.push(`EXPENSE RECORDS (${data.expense.length})`);
-        rows.push('Date,Season ID,Season Name,Type,Cost,Remarks');
+        rows.push('Date,Days After Pruning,Season,Type,Cost,Remarks');
         data.expense.forEach((r) => {
           rows.push(
-            `${this.escapeCSV(r.date)},${r.seasonId ?? ''},${this.escapeCSV(r.seasonName ?? '')},${this.escapeCSV(r.type)},${r.cost},${this.escapeCSV(r.remarks || '')}`,
+            `${this.escapeCSV(r.date)},${this.formatDaysAfterPruningValue(r.daysAfterPruning)},${this.escapeCSV(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))},${this.escapeCSV(r.type)},${r.cost},${this.escapeCSV(r.remarks || '')}`,
           );
         });
         rows.push('');
@@ -732,16 +978,28 @@ export class ReportService {
     }
 
     if (visibleSections.has('stock')) {
-      if (data.stock.length === 0) {
+      if (matchedStockRows.length === 0) {
         pushEmptySection('STOCK USAGE SUMMARY');
       } else {
-        rows.push('STOCK USAGE SUMMARY');
+        rows.push(
+          `STOCK USAGE SUMMARY (Matched ${matchedStockRows.length} of ${data.stock.length})`,
+        );
         rows.push(
           'Item,Type,Total Quantity Used,Unit,Total Area Treated,Usage Count,Current Stock,Estimated Opening Stock,Estimated Consumed %,Match',
         );
-        data.stock.forEach((r) => {
+        matchedStockRows.forEach((r) => {
           rows.push(
             `${this.escapeCSV(r.itemName)},${r.type},${r.quantityUsed},${r.unit},${r.areaTreated},${r.usageCount},${r.currentStockQuantity ?? ''},${r.estimatedOpeningStockQuantity ?? ''},${r.estimatedConsumedPercent ?? ''},${r.matchStrategy ?? ''}`,
+          );
+        });
+        rows.push('');
+      }
+      if (unmatchedStockRows.length > 0) {
+        rows.push(`UNMATCHED LOG ITEMS (${unmatchedStockRows.length})`);
+        rows.push('Item,Type,Total Quantity Used,Unit,Total Area Treated,Usage Count,Reason');
+        unmatchedStockRows.forEach((r) => {
+          rows.push(
+            `${this.escapeCSV(r.itemName)},${r.type},${r.quantityUsed},${r.unit},${r.areaTreated},${r.usageCount},No warehouse match or missing water volume`,
           );
         });
         rows.push('');
@@ -764,6 +1022,8 @@ export class ReportService {
     const visibleSections = this.getVisibleSections(reportType);
     const maxRowsPerSection = 20;
     const areaUnitLabel = areaUnit === 'hectares' ? 'hectares' : 'acres';
+    const matchedStockRows = data.stock.filter((row) => row.matchStrategy !== 'unmatched');
+    const unmatchedStockRows = data.stock.filter((row) => row.matchStrategy === 'unmatched');
 
     const styles = `
       <style>
@@ -816,7 +1076,7 @@ export class ReportService {
             },
           ]
         : []),
-      ...(visibleSections.has('expense')
+      ...(visibleSections.has('harvest') && visibleSections.has('expense')
         ? [
             {
               label: 'Revenue',
@@ -825,6 +1085,10 @@ export class ReportService {
               }),
               className: '',
             },
+          ]
+        : []),
+      ...(visibleSections.has('expense')
+        ? [
             {
               label: 'Expenses',
               value: formatCurrency(summary.totalExpenses, preferredCurrency, {
@@ -834,11 +1098,17 @@ export class ReportService {
             },
           ]
         : []),
-      {
-        label: 'Net Profit',
-        value: formatCurrency(summary.netProfit, preferredCurrency, { minimumFractionDigits: 0 }),
-        className: summary.netProfit >= 0 ? 'profit' : 'loss',
-      },
+      ...(visibleSections.has('harvest') && visibleSections.has('expense')
+        ? [
+            {
+              label: 'Net Profit',
+              value: formatCurrency(summary.netProfit, preferredCurrency, {
+                minimumFractionDigits: 0,
+              }),
+              className: summary.netProfit >= 0 ? 'profit' : 'loss',
+            },
+          ]
+        : []),
     ];
 
     let html = `
@@ -847,15 +1117,15 @@ export class ReportService {
       <head>${styles}</head>
       <body>
         <div class="header">
-          <h1>🍇 ${data.farmName}</h1>
+          <h1>🍇 ${this.escapeHtml(data.farmName)}</h1>
           <p class="meta">
-            Report Type: ${this.formatReportType(reportType)}<br>
-            Region: ${data.farmRegion} | Area: ${convertAreaFromAcres(data.farmArea, areaUnit)} ${areaUnitLabel}<br>
-            Report Period: ${data.dateRange.from} to ${data.dateRange.to}<br>
-            Season: ${this.formatSeasonContextLabel(data.seasonContext)}
+            Report Type: ${this.escapeHtml(this.formatReportType(reportType))}<br>
+            Region: ${this.escapeHtml(data.farmRegion)} | Area: ${convertAreaFromAcres(data.farmArea, areaUnit)} ${areaUnitLabel}<br>
+            Report Period: ${formatDate(data.dateRange.from)} to ${formatDate(data.dateRange.to)}<br>
+            Season: ${this.escapeHtml(this.formatSeasonContextLabel(data.seasonContext))}
             ${
               data.seasonContext?.mode === 'season'
-                ? `<br>Season Window: ${data.seasonContext.seasonStart ?? '-'} to ${data.seasonContext.seasonEnd ?? 'Active'}`
+                ? `<br>Season Window: ${data.seasonContext.seasonStart ? formatDate(data.seasonContext.seasonStart) : '-'} to ${data.seasonContext.seasonEnd ? formatDate(data.seasonContext.seasonEnd) : 'Active'}`
                 : ''
             }
           </p>
@@ -887,7 +1157,7 @@ export class ReportService {
       }
       html += `
         <table>
-          <tr>${headers.map((header) => `<th>${header}</th>`).join('')}</tr>
+          <tr>${headers.map((header) => `<th>${this.escapeHtml(header)}</th>`).join('')}</tr>
           ${rowMarkup.join('')}
         </table>
         ${hiddenCount > 0 ? `<p class="more-records">... and ${hiddenCount} more records</p>` : ''}
@@ -898,10 +1168,10 @@ export class ReportService {
       const visibleRows = data.irrigation.slice(0, maxRowsPerSection);
       appendSectionTable(
         `💧 Irrigation Records (${data.irrigation.length})`,
-        ['Date', 'Season', 'Duration', `Area (${areaUnitLabel})`, 'Growth Stage', 'Discharge'],
+        ['Date', 'DAP', 'Season', 'Duration', 'Growth Stage'],
         visibleRows.map(
           (r) =>
-            `<tr><td>${r.date}</td><td>${this.formatSeasonCell(r.seasonId, r.seasonName)}</td><td>${r.duration}h</td><td>${convertAreaFromAcres(r.area, areaUnit)}</td><td>${r.growthStage}</td><td>${r.systemDischarge} L/h</td></tr>`,
+            `<tr><td>${this.escapeHtml(r.date)}</td><td>${this.formatDaysAfterPruningTag(r.daysAfterPruning)}</td><td>${this.escapeHtml(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))}</td><td>${r.duration}h</td><td>${this.escapeHtml(r.growthStage)}</td></tr>`,
         ),
         Math.max(0, data.irrigation.length - maxRowsPerSection),
       );
@@ -911,10 +1181,10 @@ export class ReportService {
       const visibleRows = data.spray.slice(0, maxRowsPerSection);
       appendSectionTable(
         `🧪 Spray Records (${data.spray.length})`,
-        ['Date', 'Season', 'Chemical', 'Dose', `Area (${areaUnitLabel})`, 'Weather'],
+        ['Date', 'DAP', 'Season', 'Chemical', 'Dose'],
         visibleRows.map(
           (r) =>
-            `<tr><td>${r.date}</td><td>${this.formatSeasonCell(r.seasonId, r.seasonName)}</td><td>${r.chemical}</td><td>${r.dose}</td><td>${convertAreaFromAcres(r.area, areaUnit)}</td><td>${r.weather}</td></tr>`,
+            `<tr><td>${this.escapeHtml(r.date)}</td><td>${this.formatDaysAfterPruningTag(r.daysAfterPruning)}</td><td>${this.escapeHtml(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))}</td><td>${this.escapeHtml(r.chemical)}</td><td>${this.escapeHtml(r.dose)}</td></tr>`,
         ),
         Math.max(0, data.spray.length - maxRowsPerSection),
       );
@@ -924,10 +1194,10 @@ export class ReportService {
       const visibleRows = data.fertigation.slice(0, maxRowsPerSection);
       appendSectionTable(
         `🧴 Fertigation Records (${data.fertigation.length})`,
-        ['Date', 'Season', 'Fertilizers', `Area (${areaUnitLabel})`],
+        ['Date', 'DAP', 'Season', 'Fertilizers'],
         visibleRows.map(
           (r) =>
-            `<tr><td>${r.date}</td><td>${this.formatSeasonCell(r.seasonId, r.seasonName)}</td><td>${r.fertilizers}</td><td>${convertAreaFromAcres(r.area, areaUnit)}</td></tr>`,
+            `<tr><td>${this.escapeHtml(r.date)}</td><td>${this.formatDaysAfterPruningTag(r.daysAfterPruning)}</td><td>${this.escapeHtml(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))}</td><td>${this.escapeHtml(r.fertilizers)}</td></tr>`,
         ),
         Math.max(0, data.fertigation.length - maxRowsPerSection),
       );
@@ -937,10 +1207,10 @@ export class ReportService {
       const visibleRows = data.harvest.slice(0, maxRowsPerSection);
       appendSectionTable(
         `🍇 Harvest Records (${data.harvest.length})`,
-        ['Date', 'Season', 'Quantity', 'Grade', 'Price', 'Buyer'],
+        ['Date', 'DAP', 'Season', 'Quantity', 'Grade', 'Price', 'Buyer'],
         visibleRows.map(
           (r) =>
-            `<tr><td>${r.date}</td><td>${this.formatSeasonCell(r.seasonId, r.seasonName)}</td><td>${r.quantity} kg</td><td>${r.grade}</td><td>${r.price ? formatCurrency(r.price, preferredCurrency, { minimumFractionDigits: 0 }) : '-'}</td><td>${r.buyer || '-'}</td></tr>`,
+            `<tr><td>${this.escapeHtml(r.date)}</td><td>${this.formatDaysAfterPruningTag(r.daysAfterPruning)}</td><td>${this.escapeHtml(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))}</td><td>${r.quantity} kg</td><td>${this.escapeHtml(r.grade)}</td><td>${r.price ? formatCurrency(r.price, preferredCurrency, { minimumFractionDigits: 0 }) : '-'}</td><td>${this.escapeHtml(r.buyer || '-')}</td></tr>`,
         ),
         Math.max(0, data.harvest.length - maxRowsPerSection),
       );
@@ -950,19 +1220,19 @@ export class ReportService {
       const visibleRows = data.expense.slice(0, maxRowsPerSection);
       appendSectionTable(
         `💰 Expense Records (${data.expense.length})`,
-        ['Date', 'Season', 'Type', 'Cost', 'Remarks'],
+        ['Date', 'DAP', 'Season', 'Type', 'Cost', 'Remarks'],
         visibleRows.map(
           (r) =>
-            `<tr><td>${r.date}</td><td>${this.formatSeasonCell(r.seasonId, r.seasonName)}</td><td>${r.type}</td><td>${formatCurrency(r.cost, preferredCurrency, { minimumFractionDigits: 0 })}</td><td>${r.remarks || '-'}</td></tr>`,
+            `<tr><td>${this.escapeHtml(r.date)}</td><td>${this.formatDaysAfterPruningTag(r.daysAfterPruning)}</td><td>${this.escapeHtml(this.formatSeasonCell(data.seasonContext, r.seasonId, r.seasonName, r.seasonWindow))}</td><td>${this.escapeHtml(r.type)}</td><td>${formatCurrency(r.cost, preferredCurrency, { minimumFractionDigits: 0 })}</td><td>${this.escapeHtml(r.remarks || '-')}</td></tr>`,
         ),
         Math.max(0, data.expense.length - maxRowsPerSection),
       );
     }
 
     if (visibleSections.has('stock')) {
-      const visibleRows = data.stock.slice(0, maxRowsPerSection);
+      const visibleRows = matchedStockRows.slice(0, maxRowsPerSection);
       appendSectionTable(
-        `📦 Stock Usage Summary (${data.stock.length})`,
+        `📦 Stock Usage Summary (Matched ${matchedStockRows.length} of ${data.stock.length})`,
         [
           'Item',
           'Type',
@@ -977,10 +1247,22 @@ export class ReportService {
         ],
         visibleRows.map(
           (r) =>
-            `<tr><td>${r.itemName}</td><td>${r.type}</td><td>${r.quantityUsed}</td><td>${r.unit}</td><td>${r.areaTreated}</td><td>${r.usageCount}</td><td>${r.currentStockQuantity ?? '-'}</td><td>${r.estimatedOpeningStockQuantity ?? '-'}</td><td>${r.estimatedConsumedPercent != null ? `${r.estimatedConsumedPercent}%` : '-'}</td><td>${r.matchStrategy ?? '-'}</td></tr>`,
+            `<tr><td>${this.escapeHtml(r.itemName)}</td><td>${this.escapeHtml(r.type)}</td><td>${r.quantityUsed}</td><td>${this.escapeHtml(r.unit)}</td><td>${r.areaTreated}</td><td>${r.usageCount}</td><td>${r.currentStockQuantity ?? '-'}</td><td>${r.estimatedOpeningStockQuantity ?? '-'}</td><td>${r.estimatedConsumedPercent != null ? `${r.estimatedConsumedPercent}%` : '-'}</td><td>${this.escapeHtml(r.matchStrategy ?? '-')}</td></tr>`,
         ),
-        Math.max(0, data.stock.length - maxRowsPerSection),
+        Math.max(0, matchedStockRows.length - maxRowsPerSection),
       );
+      if (unmatchedStockRows.length > 0) {
+        const visibleUnmatchedRows = unmatchedStockRows.slice(0, maxRowsPerSection);
+        appendSectionTable(
+          `⚠️ Unmatched Log Items (${unmatchedStockRows.length})`,
+          ['Item', 'Type', 'Total Qty', 'Unit', 'Area Treated', 'Count', 'Reason'],
+          visibleUnmatchedRows.map(
+            (r) =>
+              `<tr><td>${this.escapeHtml(r.itemName)}</td><td>${this.escapeHtml(r.type)}</td><td>${r.quantityUsed}</td><td>${this.escapeHtml(r.unit)}</td><td>${r.areaTreated}</td><td>${r.usageCount}</td><td>No warehouse match or missing water volume</td></tr>`,
+          ),
+          Math.max(0, unmatchedStockRows.length - maxRowsPerSection),
+        );
+      }
     }
 
     html += `
@@ -1012,15 +1294,12 @@ export class ReportService {
       throw new Error('Cache directory is not available on this device');
     }
     const csv = this.generateCSV(data, reportType, areaUnit);
-    const safeFarmName = this.sanitizeFileNamePart(data.farmName);
-    const uniqueness = safeFarmName === 'farm' ? `_${Date.now()}` : '';
-    const filename = `${safeFarmName}${uniqueness}_report_${new Date().toISOString().split('T')[0]}.csv`;
-    const fileUri = cacheDirectory.endsWith('/')
-      ? `${cacheDirectory}${filename}`
-      : `${cacheDirectory}/${filename}`;
+    const filename = this.buildReportFileName(data.farmName, 'csv');
+    const fileUri = this.joinUri(cacheDirectory, filename);
     try {
       await writeAsStringAsync(fileUri, csv);
     } catch (error) {
+      const safeFarmName = this.sanitizeFileNamePart(data.farmName);
       throw new Error(
         `Failed to write report file (${filename}) for farm: ${safeFarmName}. ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -1035,6 +1314,30 @@ export class ReportService {
     } else {
       throw new Error('Sharing is not available on this device');
     }
+  }
+
+  /**
+   * Download report as CSV file
+   */
+  static async downloadCSV(
+    data: ReportData,
+    reportType: ReportType,
+    areaUnit: AreaUnitPreference = 'acres',
+  ): Promise<string> {
+    const csv = this.generateCSV(data, reportType, areaUnit);
+    const filename = this.buildReportFileName(data.farmName, 'csv');
+    const reportsDirectory = await this.ensureReportsDirectory();
+    const fileUri = this.joinUri(reportsDirectory, filename);
+
+    try {
+      await writeAsStringAsync(fileUri, csv);
+    } catch (error) {
+      const safeFarmName = this.sanitizeFileNamePart(data.farmName);
+      throw new Error(
+        `Failed to write report file (${filename}) for farm: ${safeFarmName}. ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    return fileUri;
   }
 
   /**
@@ -1063,5 +1366,34 @@ export class ReportService {
     } else {
       throw new Error('Sharing is not available on this device');
     }
+  }
+
+  /**
+   * Download report as PDF file
+   */
+  static async downloadPDF(
+    data: ReportData,
+    summary: ReportSummary,
+    reportType: ReportType,
+    preferredCurrency: string = getDefaultCurrency(),
+    areaUnit: AreaUnitPreference = 'acres',
+  ): Promise<string> {
+    const html = this.generatePDFHtml(data, summary, reportType, preferredCurrency, areaUnit);
+
+    const { uri: tempUri } = await Print.printToFileAsync({
+      html,
+      base64: false,
+    });
+
+    const filename = this.buildReportFileName(data.farmName, 'pdf');
+    const reportsDirectory = await this.ensureReportsDirectory();
+    const destinationUri = this.joinUri(reportsDirectory, filename);
+
+    try {
+      await copyAsync({ from: tempUri, to: destinationUri });
+    } finally {
+      deleteAsync(tempUri, { idempotent: true }).catch(() => {});
+    }
+    return destinationUri;
   }
 }

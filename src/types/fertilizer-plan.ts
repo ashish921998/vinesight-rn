@@ -1,0 +1,13 @@
+export interface FertilizerPlanItem {
+  name: string;
+  quantity?: number | null;
+  unit?: string | null;
+}
+
+export interface FertilizerPlan {
+  farm_id: number;
+  consultant_name?: string | null;
+  updated_at?: string | null;
+  notes?: string | null;
+  items: FertilizerPlanItem[];
+}

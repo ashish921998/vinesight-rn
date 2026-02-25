@@ -143,6 +143,17 @@ export const hi = {
       recordsSubtitle: 'रिकॉर्ड',
       soilWaterTitle: 'मिट्टी का पानी',
     },
+    safeHarvest: {
+      title: 'सबसे पहले सुरक्षित कटाई',
+      noTarget: 'इस सीज़न के लिए लक्ष्य कटाई तिथि सेट नहीं है।',
+      noData: 'अभी तक कोई PHI आधारित स्प्रे रिकॉर्ड नहीं है।',
+      safeDate: '{{date}} से सुरक्षित',
+      inlineDate: 'सुरक्षित कटाई तिथि: {{date}}',
+      blockedBy: '{{reason}} के कारण अवरुद्ध',
+      ctaSetTarget: 'लक्ष्य तिथि सेट करें',
+      ctaOpenChecker: 'Safe-to-spray चेकर खोलें',
+      saveTarget: 'लक्ष्य तिथि सहेजें',
+    },
     water: {
       noIrrigationLoggedYet: 'अभी तक कोई सिंचाई लॉग नहीं की गई',
       mmUsed: '{{value}} मिमी उपयोग किया गया',
@@ -203,6 +214,23 @@ export const hi = {
         soilMoisture: 'मिट्टी की नमी',
         tempWorker: 'अस्थायी\n$t(glossary.worker)',
       },
+    },
+    fertilizerPlan: {
+      title: 'उर्वरक योजना',
+      subtitle: 'इस खेत के लिए सलाहकार द्वारा दी गई योजना।',
+      upcomingCount_one: '{{count}} आइटम',
+      upcomingCount_other: '{{count}} आइटम',
+      emptyTitle: 'अभी कोई उर्वरक योजना नहीं',
+      emptySubtitle: 'आपके सलाहकार ने अभी तक योजना साझा नहीं की है।',
+      cta: 'सलाहकार से संपर्क करें',
+      consultantLabel: '{{name}} द्वारा योजना',
+      consultantUnknown: 'सलाहकार योजना',
+      updatedLabel: '{{date}} को अपडेट',
+      loading: 'योजना लोड हो रही है…',
+      inputsCount_one: '{{count}} इनपुट',
+      inputsCount_other: '{{count}} इनपुट',
+      noInputs: 'कोई इनपुट नहीं',
+      unknownInput: 'अज्ञात इनपुट',
     },
     tabs: {
       activities: 'लॉग्स',
@@ -521,6 +549,9 @@ export const hi = {
     pendingLogs_other: 'लंबित लॉग ({{count}})',
     farmLabel: 'खेत *',
     selectFarm: 'खेत चुनें',
+    allFarms: 'सभी खेत',
+    allFarmsExpenseOnly: 'सभी खेत विकल्प केवल खर्च लॉग के लिए उपलब्ध है।',
+    allFarmsNoFarms: 'इस खर्च को लागू करने के लिए कोई खेत उपलब्ध नहीं है।',
     partialSuccess: {
       title: 'आंशिक सफलता',
       body_one: '{{count}} लॉग सहेजने में विफल। कृपया समीक्षा करें और पुनः प्रयास करें।',
@@ -554,6 +585,15 @@ export const hi = {
       both: 'आपके पास असहेजे गए परिवर्तन हैं। क्या आप वाकई बंद करना चाहते हैं?',
       discard: 'रद्द करें',
     },
+    phiErrors: {
+      catalogRequiredTitle: 'कैटलॉग मिक्स आवश्यक',
+      catalogRequiredBody: 'यह स्प्रे लॉग जोड़ने से पहले प्रीलोडेड मिक्स चुनें।',
+      computeFailedTitle: 'PHI उपलब्ध नहीं',
+      computeFailedBody: 'चुनी गई तारीख के लिए PHI की गणना नहीं हो सकी।',
+      conflictTitle: 'कटाई सुरक्षा संघर्ष',
+      conflictBody:
+        'यह स्प्रे {{component}} के कारण {{safeDate}} तक कटाई रोकता है, जबकि लक्ष्य तिथि {{targetDate}} है।',
+    },
   },
 
   activityEdit: {
@@ -579,8 +619,20 @@ export const hi = {
       namePlaceholder: 'रसायन का नाम',
       qtyPlaceholder: 'मात्रा',
       selectUnit: 'इकाई चुनें',
+      totalQty: 'कुल मात्रा',
+      perAcre: 'प्रति एकड़',
     },
     quickAdd: 'त्वरित जोड़',
+    catalogOnly: {
+      title: 'कैटलॉग मिक्स',
+      selectedMix: 'चयनित: {{name}}',
+      requiredHint: 'आगे बढ़ने के लिए कैटलॉग मिक्स चुनें',
+      fallbackLabel: 'कैटलॉग मिक्स',
+    },
+    catalogOptional: {
+      title: 'कैटलॉग मिक्स (वैकल्पिक)',
+      hint: 'वैकल्पिक: PHI जांच सक्षम करने के लिए कैटलॉग मिक्स चुनें',
+    },
     noMatchesHint: 'कोई मिलान नहीं मिला। कस्टम रसायन नाम के साथ जारी रखें।',
     validation: {
       ready: 'जोड़ने के लिए तैयार',
@@ -661,6 +713,8 @@ export const hi = {
       systemDischarge: 'सिस्टम डिस्चार्ज',
       laiCalculator: 'LAI कैलकुलेटर',
       nutrientCalculator: 'पोषक तत्व कैलकुलेटर',
+      tankMixCalculator: 'टैंक मिक्स कैलकुलेटर',
+      safeToSprayChecker: 'Safe-to-spray चेकर',
     },
     descriptions: {
       weatherIrrigation: 'मौसम पूर्वानुमान जांचें और ET0 के आधार पर सिंचाई आवश्यकताओं की गणना करें',
@@ -668,6 +722,127 @@ export const hi = {
       systemDischarge: 'सिंचाई सिस्टम डिस्चार्ज दरों की गणना करें और ट्रैक करें',
       laiCalculator: 'कैनोपी प्रबंधन के लिए पत्ती क्षेत्र सूचकांक की गणना करें',
       nutrientCalculator: 'लैब परीक्षणों के आधार पर उर्वरक और पोषक तत्वों की आवश्यकता की गणना करें',
+      tankMixCalculator: 'टैंक लीटर के आधार पर प्रत्येक घटक की सटीक gm/ml मात्रा निकालें',
+      safeToSprayChecker: 'लक्ष्य कटाई तिथि के लिए सुरक्षित स्प्रे विंडो जांचें',
+    },
+  },
+
+  tankMix: {
+    title: 'टैंक मिक्स कैलकुलेटर',
+    subtitle: 'कैटलॉग मिक्स चुनें और टैंक के लिए सटीक मात्रा निकालें।',
+    searchLabel: 'मिक्स खोजें',
+    searchPlaceholder: 'मिक्स या समस्या खोजें',
+    tankSizeLabel: 'टैंक आकार (लीटर)',
+    catalogMixes: 'कैटलॉग मिक्स',
+    genericProblem: 'सामान्य सुरक्षा',
+    resultTitle: '{{liters}}L के लिए आवश्यक मात्रा',
+    resultDose: 'डोज: {{value}} {{unit}} ({{basis}})',
+    resultTotal: 'कुल: {{value}} {{unit}}',
+  },
+
+  safeToSpray: {
+    title: 'Safe-to-spray चेकर',
+    subtitle: 'लक्ष्य कटाई तिथि दर्ज करें और सुरक्षित स्प्रे देखें।',
+    targetDate: 'लक्ष्य कटाई तिथि',
+    saveSeasonTarget: 'सीज़न में लक्ष्य तिथि सहेजें',
+    blocking: 'गवर्निंग PHI: {{days}} दिन ({{component}})',
+    latestDate: 'अंतिम सुरक्षित स्प्रे तिथि: {{date}}',
+    daysLeft: '{{count}} दिन शेष',
+    windowPassed: 'विंडो {{count}} दिन पहले समाप्त हुई',
+  },
+
+  widgets: {
+    common: {
+      loading: 'लोड हो रहा है…',
+      error: 'डेटा लोड करने में विफल',
+      empty: 'कोई डेटा उपलब्ध नहीं',
+      retry: 'पुनः प्रयास करें',
+    },
+    quickStats: {
+      title: 'त्वरित आँकड़े',
+      loading: 'त्वरित आँकड़े लोड हो रहे हैं',
+      error: 'त्वरित आँकड़ों में त्रुटि',
+      empty: 'त्वरित आँकड़े उपलब्ध नहीं',
+      overview: 'त्वरित आँकड़ों का अवलोकन',
+      trendLabel: 'रुझान',
+      statAccessibility: '{{label}}: {{value}}, {{trendLabel}} {{trendDirection}} {{trendValue}}',
+      trend: {
+        up: 'बढ़ रहा है',
+        down: 'घट रहा है',
+        neutral: 'कोई परिवर्तन नहीं',
+      },
+      stats: {
+        activeFarms: 'सक्रिय खेत',
+        workersToday: 'आज के कामगार',
+        waterReserve: 'पानी का भंडार',
+        seasonExpenses: 'सीज़न का खर्च',
+      },
+    },
+    weather: {
+      title: 'वाइनयार्ड मौसम',
+      conditions: {
+        sunny: 'धूप',
+        cloudy: 'बादल',
+        rainy: 'बारिश',
+        partlyCloudy: 'आंशिक रूप से बादल',
+      },
+      humidity: 'नमी',
+      wind: 'हवा',
+      forecast: '3 दिन का पूर्वानुमान',
+      days: {
+        today: 'आज',
+        tomorrow: 'कल',
+        dayAfter: 'उसके बाद',
+      },
+    },
+    vineyardHealth: {
+      title: 'वाइनयार्ड स्वास्थ्य',
+      overallStatus: 'समग्र स्थिति',
+      metrics: {
+        waterStatus: 'पानी की स्थिति',
+        diseaseRisk: 'रोग का जोखिम',
+        growthStage: 'वृद्धि चरण',
+        soilMoisture: 'मिट्टी की नमी',
+      },
+      values: {
+        minimal: 'न्यूनतम',
+        veraison: 'Véraison',
+      },
+    },
+    taskSummary: {
+      title: 'आगामी कार्य',
+      tasksCount: '{{count}} कार्य',
+      overdueCount: '{{count}} ओवरड्यू',
+      status: {
+        overdue: 'ओवरड्यू',
+        dueToday: 'आज देय',
+        upcoming: 'आगामी',
+      },
+      labels: {
+        irrigationBlockA: 'सिंचाई - ब्लॉक A',
+        sprayFungicide: 'स्प्रे - फफूंदनाशक',
+        fertigationRound3: 'फर्टिगेशन राउंड 3',
+        harvestSampling: 'हार्वेस्ट सैंपलिंग',
+        dueToday: 'आज देय',
+        tomorrow: 'कल',
+        in3Days: '3 दिन में',
+        overdue: 'ओवरड्यू',
+      },
+      empty: 'कोई आगामी कार्य नहीं',
+    },
+    template: {
+      title: 'विजेट टेम्पलेट',
+      testWidget: {
+        label: 'टेस्ट विजेट',
+      },
+    },
+  },
+
+  developerTools: {
+    section: 'डेवलपर',
+    widgetShowcase: {
+      title: 'विजेट शोकेस',
+      description: 'iOS, Android और Web पर विजेट्स एक स्क्रीन से देखें।',
     },
   },
 
@@ -859,6 +1034,10 @@ export const hi = {
     mapsUnavailableTitle: 'मानचित्र अनुपलब्ध',
     mapsUnavailableBody:
       'इस बिल्ड में मानचित्र दृश्य उपलब्ध नहीं है। आप अभी भी अपना वर्तमान स्थान उपयोग कर सकते हैं, या मैन्युअल रूप से निर्देशांक दर्ज कर सकते हैं।',
+    searchPlaceholder: 'पता खोजें...',
+    unknownLocation: 'अज्ञात स्थान',
+    noResultsFound: 'कोई परिणाम नहीं मिला',
+    unableToGetLocationDetails: 'स्थान का विवरण प्राप्त करने में असमर्थ',
   },
 
   waterLevelSheet: {
@@ -916,7 +1095,7 @@ export const hi = {
     growthStage: {
       label: 'विकास चरण',
       placeholder: 'विकास चरण चुनें',
-      selected: '{{label}} (Kc: {{kc}})',
+      selected: '{{label}}',
     },
     manual: {
       label: 'मिट्टी के पानी का स्तर',
@@ -924,7 +1103,6 @@ export const hi = {
     calculate: 'पानी का स्तर गणना करें',
     growthStagePicker: {
       title: 'विकास चरण चुनें',
-      kcLabel: 'Kc: {{kc}}',
       stages: {
         beginningBudbreak: 'कलियों का आरंभ',
         shoot30cm: 'शूट 30 सेमी',
@@ -1120,8 +1298,26 @@ export const hi = {
     lowWaterAlertsSubtitle: 'जब पानी गंभीर रूप से कम हो तो अलर्ट करें',
     taskReminders: 'कार्य अनुस्मारक',
     taskRemindersSubtitle: 'निर्धारित कार्यों के बारे में याद दिलाएं',
+    warehouseReorderAlerts: 'गोदाम पुनः ऑर्डर अलर्ट',
+    warehouseReorderAlertsSubtitle: 'जब वस्तु पुनः ऑर्डर मात्रा से कम हो तो अलर्ट करें',
+    petioleTestReminders: 'पेटीओल परीक्षण अनुस्मारक',
+    petioleTestRemindersSubtitle: 'छंटाई के 30, 60, 90, 120वें दिन से एक दिन पहले याद दिलाएं',
     notificationNote: 'सूचना सेटिंग्स स्थानीय रूप से संग्रहीत हैं',
     madeForVineyardManagement: 'दाख की बारी प्रबंधन के लिए बनाया गया',
+    sentry: {
+      testButton: 'Sentry टेस्ट इवेंट भेजें',
+      testButtonA11y: 'Sentry टेस्ट इवेंट भेजें',
+      transportDisabledTitle: 'Sentry ट्रांसपोर्ट निष्क्रिय है',
+      transportDisabledDescriptionDev:
+        'यह ऐप डेवलपमेंट में Sentry बंद रखता है। सत्यापन के लिए preview/production build में जांचें, या स्थानीय परीक्षण हेतु app/_layout.tsx में Sentry अस्थायी रूप से सक्षम करें।',
+      transportDisabledDescriptionProd:
+        'Sentry DSN गायब है। EXPO_PUBLIC_SENTRY_DSN जोड़ें और पुनः build करें।',
+      testSentTitle: 'Sentry टेस्ट इवेंट भेजा गया',
+      testSentDescription: 'कुछ क्षणों में अपने Sentry प्रोजेक्ट में टेस्ट issue देखें।',
+      testSentDescriptionWithId: 'इवेंट आईडी: {{eventId}}',
+      testFailedTitle: 'Sentry टेस्ट विफल',
+      testFailedDescription: 'टेस्ट इवेंट भेजा नहीं जा सका। Sentry कॉन्फ़िगरेशन जांचें।',
+    },
     signOut: 'साइन आउट',
     signOutConfirmTitle: 'साइन आउट',
     signOutConfirmBody: 'क्या आप वाकई साइन आउट करना चाहते हैं?',
@@ -1223,6 +1419,8 @@ export const hi = {
       success: 'फोन नंबर सफलतापूर्वक लिंक हो गया',
       alreadyLinked: 'फोन नंबर पहले से आपके खाते से लिंक है',
       changePhone: 'फोन नंबर बदलें',
+      editLimitReached_one: 'एक सत्यापन प्रक्रिया में आप फोन नंबर {{count}} बार बदल सकते हैं।',
+      editLimitReached_other: 'एक सत्यापन प्रक्रिया में आप फोन नंबर {{count}} बार तक बदल सकते हैं।',
       verified: 'सत्यापित फोन नंबर',
       notLinked: 'कोई सत्यापित फोन नंबर लिंक नहीं है',
       verificationRequired: 'फोन साइन-इन के लिए अपना फोन नंबर सत्यापित करें',
@@ -1341,7 +1539,18 @@ export const hi = {
     },
     taskDue: {
       title: '$t(glossary.task) अनुस्मारक',
-      body: 'आपके पास एक निर्धारित कार्य है जो देय है।',
+      body: 'आपके पास एक निर्धारित कार्य आज देय है।',
+    },
+    taskDueTomorrow: {
+      body: 'आपके पास एक निर्धारित कार्य कल देय है।',
+    },
+    warehouseReorder: {
+      title: 'पुनः ऑर्डर अलर्ट',
+      body: '{{itemName}} कम है ({{quantity}} {{unit}} शेष, {{reorderQty}} {{unit}} पर पुनः ऑर्डर करें)',
+    },
+    petioleTest: {
+      title: 'पेटीओल परीक्षण अनुस्मारक',
+      body: '{{farmName}}: {{day}}वें दिन का पेटीओल परीक्षण कल है',
     },
   },
 
@@ -1374,7 +1583,7 @@ export const hi = {
       title: 'त्वरित क्रियाएं',
       irrigation: 'सिंचाई',
       spray: 'छिड़काव',
-      harvest: 'कटाई',
+      expense: 'खर्च',
       note: 'नोट',
     },
     recentActivity: {
@@ -1393,6 +1602,8 @@ export const hi = {
       dismissA11y: 'खेत चयनकर्ता खारिज करें',
       closeA11y: 'खेत चयनकर्ता बंद करें',
       selectFarmA11y: 'खेत चुनें: {{name}}',
+      selectAllFarmsA11y: 'सभी खेत चुनें',
+      allFarms: 'सभी खेत',
       noFarms: 'कोई खेत उपलब्ध नहीं',
     },
   },
@@ -2086,11 +2297,16 @@ export const hi = {
       stockCoverage: 'अनुमानित कवरेज',
     },
     exportAs: 'के रूप में निर्यात करें',
+    downloadReport: 'रिपोर्ट डाउनलोड करें',
     errors: {
       unableToExport: 'रिपोर्ट निर्यात करने में असमर्थ। कृपया पुनः प्रयास करें।',
     },
     alerts: {
       exportFailedTitle: 'निर्यात विफल',
+      downloadCompleteTitle: 'डाउनलोड पूर्ण',
+      downloadCompleteBody: 'सहेजा गया:\n{{fileUri}}',
+      downloadReportTitle: 'रिपोर्ट डाउनलोड करें',
+      chooseFormatBody: 'प्रारूप चुनें',
     },
     noFarms: {
       title: 'कोई खेत उपलब्ध नहीं',

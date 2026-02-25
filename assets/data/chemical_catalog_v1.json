@@ -1,0 +1,237 @@
+{
+  "version": "v1",
+  "crop": "grape",
+  "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+  "products": [
+    {
+      "code": "propineb_70_wp",
+      "name": "Antracol (Propineb 70 WP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Propineb 70%",
+      "phiDays": 21,
+      "phiSource": "Label guidance (grape)"
+    },
+    {
+      "code": "copper_oxychloride",
+      "name": "Topgun (Copper Oxychloride)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Copper Oxychloride",
+      "phiDays": 14,
+      "phiSource": "Label guidance (grape)"
+    },
+    {
+      "code": "dimethomorph_50_wp",
+      "name": "Acrobat (Dimethomorph 50 WP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Dimethomorph 50%",
+      "phiDays": 10,
+      "phiSource": "Label guidance (grape)"
+    },
+    {
+      "code": "mancozeb_75_wp",
+      "name": "M45 (Mancozeb 75 WP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Mancozeb 75%",
+      "phiDays": 28,
+      "phiSource": "Label guidance (grape)"
+    },
+    {
+      "code": "fosetyl_al_80_wp",
+      "name": "Aliette (Fosetyl-AL 80 WP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Fosetyl-AL 80%",
+      "phiDays": 30,
+      "phiSource": "Label guidance (grape)"
+    },
+    {
+      "code": "methomyl_40_sp",
+      "name": "Lannate (Methomyl 40 SP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Methomyl 40%",
+      "phiDays": 14,
+      "phiSource": "Label guidance (grape)"
+    },
+    {
+      "code": "thiamethoxam_25_wg",
+      "name": "Actra (Thiamethoxam 25 WG)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Thiamethoxam 25%",
+      "phiDays": 7,
+      "phiSource": "Label guidance (grape)"
+    },
+    {
+      "code": "lambda_cyhalothrin_5_ec",
+      "name": "Karate (Lambda-cyhalothrin 5 EC)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Lambda-cyhalothrin 5%",
+      "phiDays": 7,
+      "phiSource": "Label guidance (grape)"
+    },
+    {
+      "code": "mandipropamide_23_4_sc",
+      "name": "Revus (Mandipropamide 23.4 SC)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Mandipropamide 23.4%",
+      "phiDays": 10,
+      "phiSource": "Label guidance (grape)"
+    },
+    {
+      "code": "imidacloprid_17_8_sl",
+      "name": "Confidor (Imidacloprid 17.8 SL)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Imidacloprid 17.8%",
+      "phiDays": 7,
+      "phiSource": "Label guidance (grape)"
+    }
+  ],
+  "mixes": [
+    {
+      "name": "Antracol",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "components": [
+        {
+          "productCode": "propineb_70_wp",
+          "doseValue": 3,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        }
+      ]
+    },
+    {
+      "name": "Antracol + Topgun",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "components": [
+        {
+          "productCode": "propineb_70_wp",
+          "doseValue": 3,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        },
+        {
+          "productCode": "copper_oxychloride",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + M45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "components": [
+        {
+          "productCode": "dimethomorph_50_wp",
+          "doseValue": 1,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        },
+        {
+          "productCode": "mancozeb_75_wp",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        }
+      ]
+    },
+    {
+      "name": "Aliette + Lannate",
+      "targetProblem": "Downy mildew + sucking pests",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "components": [
+        {
+          "productCode": "fosetyl_al_80_wp",
+          "doseValue": 3,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        },
+        {
+          "productCode": "methomyl_40_sp",
+          "doseValue": 1,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        }
+      ]
+    },
+    {
+      "name": "Aliette + M45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "components": [
+        {
+          "productCode": "fosetyl_al_80_wp",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        },
+        {
+          "productCode": "mancozeb_75_wp",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        }
+      ]
+    },
+    {
+      "name": "Actra + Karate",
+      "targetProblem": "Thrips + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "components": [
+        {
+          "productCode": "thiamethoxam_25_wg",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter"
+        },
+        {
+          "productCode": "lambda_cyhalothrin_5_ec",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter"
+        }
+      ]
+    },
+    {
+      "name": "Revus + Confidor",
+      "targetProblem": "Downy mildew + flea beetles",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "components": [
+        {
+          "productCode": "mandipropamide_23_4_sc",
+          "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter"
+        },
+        {
+          "productCode": "imidacloprid_17_8_sl",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter"
+        }
+      ]
+    },
+    {
+      "name": "Revus",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "components": [
+        {
+          "productCode": "mandipropamide_23_4_sc",
+          "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter"
+        }
+      ]
+    }
+  ]
+}

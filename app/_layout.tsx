@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Stack, usePathname, useSegments } from 'expo-router';
 import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -23,11 +23,15 @@ import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
   cancelNotification,
   scheduleDailyWaterReminder,
+  schedulePetioleTestReminder,
   scheduleTaskDueReminder,
 } from '@/services/notifications';
+import { addDays } from '@/utils/date';
+import { usePetioleTestReminders } from '@/hooks/use-petiole-reminders';
 import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry';
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
+import { queryClient, queryPersister, QUERY_CACHE_MAX_AGE_MS } from '@/lib/query-cache';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -88,11 +92,15 @@ if (Platform.OS === 'android' && !androidTextPatched) {
 
 // Initialize Sentry (avoid crashing startup if env/config is missing)
 try {
+  const tracesSampleRateEnv = Number.parseFloat(
+    process.env.EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? '',
+  );
+  const tracesSampleRate = Number.isFinite(tracesSampleRateEnv) ? tracesSampleRateEnv : 0.7;
   Sentry.init({
     dsn: sentryDsn,
     enabled: !__DEV__ && Boolean(sentryDsn), // Only track errors in production when configured
     debug: __DEV__, // Show debug info in development
-    tracesSampleRate: 1.0, // Capture 100% of transactions for performance monitoring
+    tracesSampleRate,
     integrations: [Sentry.reactNativeTracingIntegration()],
   });
 } catch (error) {
@@ -102,23 +110,18 @@ try {
 }
 
 // Prevent auto-hide splash screen
-void SplashScreen.preventAutoHideAsync().catch(() => null);
+const splashKey = '@@vinesight-splash-prevented';
+const globalThisWithSplash = globalThis as typeof globalThis & { [key: string]: boolean };
+if (globalThisWithSplash[splashKey] !== true) {
+  void SplashScreen.preventAutoHideAsync().catch(() => null);
+  globalThisWithSplash[splashKey] = true;
+}
 WebBrowser.maybeCompleteAuthSession();
 
-// Create a client outside component to prevent recreation
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      retry: 1,
-    },
-  },
-});
+function PetioleReminderSync() {
+  usePetioleTestReminders();
+  return null;
+}
 
 export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
@@ -220,13 +223,23 @@ export default Sentry.wrap(function RootLayout() {
             const entries = Object.entries(state.taskSchedules);
             for (const [taskId, schedule] of entries) {
               try {
-                if (schedule.notificationId) {
-                  await cancelNotification(schedule.notificationId);
-                }
-                const nextId = await scheduleTaskDueReminder(taskId, schedule.dueDate);
-                if (nextId) {
+                const legacy = schedule as {
+                  notificationIds?: string[];
+                  notificationId?: string;
+                  dueDate: string;
+                };
+                const oldIds = Array.isArray(legacy.notificationIds)
+                  ? legacy.notificationIds
+                  : legacy.notificationId
+                    ? [legacy.notificationId]
+                    : [];
+                await Promise.allSettled(oldIds.map((id) => cancelNotification(id)));
+                const nextIds = await scheduleTaskDueReminder(taskId, schedule.dueDate, {
+                  allowImmediateToday: false,
+                });
+                if (nextIds.length > 0) {
                   useNotificationStore.getState().upsertTaskSchedule(taskId, {
-                    notificationId: nextId,
+                    notificationIds: nextIds,
                     dueDate: schedule.dueDate,
                   });
                 } else {
@@ -248,6 +261,51 @@ export default Sentry.wrap(function RootLayout() {
         if (__DEV__) {
           console.error('Failed to access task reminders state:', error);
         }
+      }
+
+      try {
+        if (state.petioleTestRemindersEnabled) {
+          try {
+            const petioleEntries = Object.entries(state.petioleTestSchedules);
+            for (const [farmId, schedule] of petioleEntries) {
+              const MILESTONES = [30, 60, 90, 120] as const;
+              await Promise.allSettled(
+                schedule.notificationIds.map((id) => cancelNotification(id)),
+              );
+              const pruningDate = schedule.pruningDate;
+              const farmName = schedule.farmName ?? farmId;
+              const newIds: string[] = [];
+              for (const day of MILESTONES) {
+                const targetDateStr = addDays(pruningDate, day);
+                if (!targetDateStr) continue;
+                const notifId = await schedulePetioleTestReminder(
+                  farmName,
+                  farmId,
+                  day,
+                  targetDateStr,
+                );
+                if (notifId) newIds.push(notifId);
+              }
+              if (newIds.length > 0) {
+                useNotificationStore.getState().upsertPetioleTestSchedule(farmId, {
+                  notificationIds: newIds,
+                  pruningDate,
+                  farmName,
+                });
+              } else {
+                useNotificationStore.getState().removePetioleTestSchedule(farmId);
+              }
+            }
+          } catch (error) {
+            if (__DEV__) {
+              console.error('Failed to reschedule petiole test reminders:', error);
+            }
+          }
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Failed to access petiole test reminders state:', error);
+        }
       } finally {
         reschedulePromiseRef.current = null;
       }
@@ -264,7 +322,11 @@ export default Sentry.wrap(function RootLayout() {
   useEffect(() => {
     // Hide splash screen when auth + language are loaded
     if (!isLoading && languageHydrated && themeHydrated) {
-      void SplashScreen.hideAsync().catch(() => null);
+      SplashScreen.hideAsync().catch((error) => {
+        if (__DEV__) {
+          console.warn('Failed to hide splash screen (safe to ignore during hot reload):', error);
+        }
+      });
     }
   }, [isLoading, languageHydrated, themeHydrated]);
 
@@ -281,7 +343,14 @@ export default Sentry.wrap(function RootLayout() {
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <QueryClientProvider client={queryClient}>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{
+              persister: queryPersister,
+              maxAge: QUERY_CACHE_MAX_AGE_MS,
+            }}
+          >
+            <PetioleReminderSync />
             <I18nextProvider i18n={i18n}>
               <StatusBar style={isDark ? 'light' : 'dark'} />
               <Stack
@@ -310,7 +379,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
               </Stack>
             </I18nextProvider>
-          </QueryClientProvider>
+          </PersistQueryClientProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>

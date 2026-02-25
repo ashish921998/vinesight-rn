@@ -34,10 +34,17 @@ const parseEntrySource = (value?: string | string[]) => {
   return raw === 'voice_ai' ? 'voice_ai' : raw === 'manual' ? 'manual' : null;
 };
 
+const parseBooleanParam = (value?: string | string[]) => {
+  if (value == null) return false;
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === 'true';
+};
+
 export default function AddEntryRoute() {
   const router = useRouter();
   const params = useLocalSearchParams<{
     farmId?: string;
+    allFarms?: string;
     initialTab?: 'log' | 'task';
     tabs?: string;
     initialLogType?: LogTypeId;
@@ -50,9 +57,16 @@ export default function AddEntryRoute() {
 
   const initialFarmId = useMemo(() => {
     if (!params.farmId) return undefined;
+    if (params.farmId === 'all') return undefined;
     const parsed = parseInt(params.farmId, 10);
     return Number.isNaN(parsed) ? undefined : parsed;
   }, [params.farmId]);
+
+  const initialApplyToAllFarms = useMemo(() => {
+    if (params.farmId === 'all') return true;
+    if (parseBooleanParam(params.allFarms)) return true;
+    return addEntry?.initialApplyToAllFarms ?? false;
+  }, [params.allFarms, params.farmId, addEntry?.initialApplyToAllFarms]);
 
   const tabs = useMemo(
     () => parseTabs(params.tabs) ?? addEntry?.tabs,
@@ -97,6 +111,7 @@ export default function AddEntryRoute() {
         tabs={tabs}
         initialTab={initialTab}
         initialFarmId={initialFarmId ?? addEntry?.initialFarmId ?? null}
+        initialApplyToAllFarms={initialApplyToAllFarms}
         initialLogType={initialLogType ?? null}
         initialIrrigationDurationHours={initialIrrigationDurationHours}
         initialLogDate={initialLogDate}

@@ -7,7 +7,6 @@ import {
   Alert,
   Pressable,
   StyleSheet,
-  Platform,
   Modal,
 } from 'react-native';
 import Animated, {
@@ -26,7 +25,7 @@ import type { Farm, Worker, WorkerAttendance, WorkerAttendanceInsert, WorkStatus
 import { spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { useTabBarInset } from '@/hooks/use-tab-bar-inset';
+import { useTabBarInset, isAndroid, isIOS } from '@/hooks';
 import { WorkerSelectSheet, FarmSelectSheet } from './index';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
 import { normalizeDate, addDays } from '@/utils/worker-analytics';
@@ -37,7 +36,7 @@ const STORAGE_KEYS = {
   ATTENDANCE_RANGE_LENGTH: 'attendance_range_length',
 };
 
-const isIos = Platform.OS === 'ios';
+const isIos = isIOS;
 
 interface ToastState {
   visible: boolean;
@@ -133,7 +132,6 @@ export function MarkAttendanceTab({
 
   const tabBarInset = useTabBarInset();
   const bottomActionBarHeight = 88;
-  const isAndroid = Platform.OS === 'android';
   const actionBarBottom = isAndroid ? 0 : tabBarInset;
   const [cellData, setCellData] = useState<Map<string, CellData>>(new Map());
   const [loading, setLoading] = useState(false);
@@ -479,7 +477,7 @@ export function MarkAttendanceTab({
 
   const handleDateRangeChange = (type: 'from' | 'to', event: DateTimePickerEvent, date?: Date) => {
     if (event.type === 'dismissed') {
-      if (Platform.OS === 'android') {
+      if (isAndroid) {
         if (type === 'from') setShowFromPicker(false);
         if (type === 'to') setShowToPicker(false);
       }
@@ -496,7 +494,7 @@ export function MarkAttendanceTab({
       }
     }
 
-    if (Platform.OS === 'android') {
+    if (isAndroid) {
       if (type === 'from') setShowFromPicker(false);
       if (type === 'to') setShowToPicker(false);
     }
@@ -1057,7 +1055,7 @@ export function MarkAttendanceTab({
                                 lineHeight: 14,
                                 fontWeight: fontWeight.bold,
                                 textAlign: 'center',
-                                ...(Platform.OS === 'android'
+                                ...(isAndroid
                                   ? { includeFontPadding: false, textAlignVertical: 'center' }
                                   : null),
                                 color: hasStatus

@@ -1,0 +1,6 @@
+"widget.data_outdated" = "डेटा पुराना हो सकता है";
+"widget.updated_prefix %@" = "अपडेट किया गया: %@";
+"widget.unable_to_load" = "लोड नहीं हो सका";
+"widget.open_app_to_sync" = "मौसम सिंक करने के लिए Vinesight खोलें";
+"widget.configuration_display_name" = "वाइनयार्ड मौसम";
+"widget.configuration_description" = "अपने वाइनयार्ड के लिए वर्तमान मौसम और पूर्वानुमान देखें।";

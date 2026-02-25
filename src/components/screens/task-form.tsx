@@ -242,23 +242,21 @@ export default function TaskForm({
       const existing = taskSchedules[taskId];
 
       try {
-        // Cancel previous schedule if any.
-        if (existing?.notificationId) {
-          await cancelNotification(existing.notificationId);
+        if (existing?.notificationIds?.length) {
+          await Promise.allSettled(existing.notificationIds.map((id) => cancelNotification(id)));
           removeTaskSchedule(taskId);
         }
 
         if (taskRemindersEnabled && saved.due_date) {
           const granted = await ensureNotificationPermissions();
           if (granted) {
-            const notificationId = await scheduleTaskDueReminder(taskId, saved.due_date);
-            if (notificationId) {
-              upsertTaskSchedule(taskId, { notificationId, dueDate: saved.due_date });
+            const notificationIds = await scheduleTaskDueReminder(taskId, saved.due_date);
+            if (notificationIds.length > 0) {
+              upsertTaskSchedule(taskId, { notificationIds, dueDate: saved.due_date });
             }
           }
         }
       } catch (notificationError) {
-        // Log notification error but don't fail the save operation
         if (__DEV__) {
           console.error('Failed to schedule task notification:', notificationError);
         }

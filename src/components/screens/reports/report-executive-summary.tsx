@@ -82,11 +82,11 @@ export function ReportExecutiveSummary({
   const showFinancial = visibleSections.has('expense');
   const showStockOnly = visibleSections.has('stock') && !showOperations && !showFinancial;
 
-  const matchedStockRows = preview.data.stock.filter(
-    (row) => row.estimatedConsumedPercent != null,
+  const matchedStockRowCount = preview.data.stock.filter(
+    (row) => row.matchStrategy !== 'unmatched',
   ).length;
   const estimatedStockCoveragePercent =
-    preview.data.stock.length > 0 ? (matchedStockRows / preview.data.stock.length) * 100 : 0;
+    preview.data.stock.length > 0 ? (matchedStockRowCount / preview.data.stock.length) * 100 : 0;
 
   const summaryTiles = showStockOnly
     ? [
@@ -105,7 +105,7 @@ export function ReportExecutiveSummary({
         {
           key: 'stock-matched',
           label: t('reports.summary.matchedItems'),
-          value: formatNumber(matchedStockRows),
+          value: formatNumber(matchedStockRowCount),
           color: CARD_COLORS.stockMatched,
         },
         {

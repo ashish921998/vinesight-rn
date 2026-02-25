@@ -10,7 +10,7 @@ interface ReportExportActionsProps {
   canExport: boolean;
   isExporting: boolean;
   onExportPdf: () => void;
-  onExportCsv: () => void;
+  onDownload: () => void;
   panelStyle: object;
 }
 
@@ -18,7 +18,7 @@ export function ReportExportActions({
   canExport,
   isExporting,
   onExportPdf,
-  onExportCsv,
+  onDownload,
   panelStyle,
 }: ReportExportActionsProps) {
   const m3 = useM3();
@@ -103,9 +103,9 @@ export function ReportExportActions({
           )}
         </Pressable>
 
-        {/* CSV — Secondary outlined button */}
+        {/* Download — Secondary outlined button */}
         <Pressable
-          onPress={onExportCsv}
+          onPress={onDownload}
           disabled={disabled}
           style={({ pressed }) => ({
             flex: 1,
@@ -129,18 +129,18 @@ export function ReportExportActions({
           ) : (
             <>
               <Icon
-                name="square.grid.2x2.fill"
+                name="arrow.down.circle.fill"
                 size={18}
                 color={disabled ? colorWithOpacity(primary, 0.5) : primary}
               />
               <Text
                 style={{
-                  fontSize: fontSize.base,
+                  fontSize: fontSize.sm,
                   fontWeight: fontWeight.semibold,
                   color: disabled ? colorWithOpacity(primary, 0.5) : primary,
                 }}
               >
-                Export CSV
+                {t('reports.downloadReport')}
               </Text>
             </>
           )}

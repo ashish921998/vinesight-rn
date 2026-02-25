@@ -1,0 +1,6 @@
+"widget.data_outdated" = "Data may be outdated";
+"widget.updated_prefix %@" = "Updated: %@";
+"widget.unable_to_load" = "Unable to Load";
+"widget.open_app_to_sync" = "Open Vinesight to sync weather data";
+"widget.configuration_display_name" = "Vineyard Weather";
+"widget.configuration_description" = "View current weather and forecast for your vineyard.";

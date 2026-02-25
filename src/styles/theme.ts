@@ -271,6 +271,7 @@ const createM3Theme = (isDark: boolean) => {
   const onAccent = isDark ? themeColors.gray[50] : themeColors.surface[100];
   const primary = isDark ? colors.primary[300] : colors.primary[500];
   const error = isDark ? '#ff453a' : colors.error;
+  const success = isDark ? '#32d74b' : colors.success;
 
   return {
     colorScheme: {
@@ -294,6 +295,9 @@ const createM3Theme = (isDark: boolean) => {
       errorContainer: isDark ? '#5c1a1a' : '#FDE8E8',
       onErrorContainer: isDark ? '#FECACA' : '#7F1D1D',
 
+      success,
+      onSuccess: onAccent,
+
       background: themeColors.surface[50],
       onBackground: themeColors.gray[900],
 
@@ -312,7 +316,7 @@ const createM3Theme = (isDark: boolean) => {
       shadow: '#000000',
       scrim: '#000000',
 
-      // Not an official role; used for “Needs attention” affordances.
+      // Not an official role; used for "Needs attention" affordances.
       warning: colors.warning,
       onWarning: onAccent,
     },

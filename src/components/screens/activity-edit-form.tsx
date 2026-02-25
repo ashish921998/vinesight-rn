@@ -14,10 +14,8 @@ import {
   ActivityIndicator,
   type TextInputProps,
   Keyboard,
-  useWindowDimensions,
   UIManager,
   findNodeHandle,
-  Platform,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import { Button, FormModal, SectionHeader } from '@/components/ui';
@@ -57,6 +55,8 @@ import {
   useUpdateHarvestRecord,
   useUpdateExpenseRecord,
   useUpdateFertigationRecord,
+  isIOS,
+  useResponsiveHeight,
 } from '@/hooks';
 import { toSupabaseDateString, fromSupabaseDateString } from '@/types';
 import type {
@@ -95,7 +95,7 @@ export function ActivityEditForm({
   const { t } = useTranslation();
   const m3 = useM3();
   const isVisible = visible ?? true;
-  const { height: windowHeight } = useWindowDimensions();
+  const { windowHeight } = useResponsiveHeight();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -209,17 +209,7 @@ export function ActivityEditForm({
             }
           }
 
-          const allowedUnits = [
-            'gm/L',
-            'ml/L',
-            'gm/acre',
-            'ml/acre',
-            'ppm',
-            'kg',
-            'gram',
-            'liter',
-            'ml',
-          ] as const;
+          const allowedUnits = ['gm/L', 'ml/L', 'ppm', 'kg', 'gram', 'liter', 'ml'] as const;
           type AllowedUnit = (typeof allowedUnits)[number];
           const allowedUnitByLowercase = new Map<string, AllowedUnit>(
             allowedUnits.map((unit) => [unit.toLowerCase(), unit]),
@@ -237,17 +227,30 @@ export function ActivityEditForm({
             if (lowered === 'ml/liter' || lowered === 'ml/litre' || lowered === 'ml/l') {
               return 'ml/L';
             }
+            if (lowered === 'gm/acre') return 'gram';
+            if (lowered === 'ml/acre') return 'ml';
             return allowedUnitByLowercase.get(lowered) ?? null;
           };
 
+          data.catalogMixId = r.catalog_mix_id ?? null;
+          data.governingPhiDays = r.governing_phi_days ?? null;
+          data.safeHarvestDate = r.safe_harvest_date ?? null;
+          data.phiBlockingComponent = r.phi_blocking_component ?? null;
+          data.phiStatus = r.phi_status ?? null;
+
           if (r.chemical_items && r.chemical_items.length > 0) {
             data.chemicals = r.chemical_items.map((item) => ({
+              ...(item.unit?.trim().toLowerCase().includes('/acre')
+                ? ({ quantityBasis: item.quantity_basis ?? 'per_acre' } as const)
+                : ({ quantityBasis: item.quantity_basis ?? 'total' } as const)),
               id: generateId(),
               name: item.name,
               quantity: item.quantity ?? 0,
-              unit: (item.unit as SprayFormData['chemicals'][number]['unit']) ?? 'ml/L',
-              quantityBasis: item.quantity_basis ?? 'total',
+              unit:
+                (item.unit ? normalizeLegacySprayUnit(item.unit) : null) ??
+                ('ml/L' as SprayFormData['chemicals'][number]['unit']),
               warehouseItemId: item.warehouse_item_id ?? null,
+              catalogProductId: item.catalog_product_id ?? null,
               compositionSnapshot: item.composition_snapshot ?? null,
               densityKgPerL: item.density_kg_per_l ?? null,
             }));
@@ -283,6 +286,7 @@ export function ActivityEditForm({
                   unit,
                   quantityBasis: 'total' as const,
                   warehouseItemId: null,
+                  catalogProductId: null,
                   compositionSnapshot: null,
                   densityKgPerL: null,
                 };
@@ -295,6 +299,7 @@ export function ActivityEditForm({
                 unit: 'ml/L' as const,
                 quantityBasis: 'total' as const,
                 warehouseItemId: null,
+                catalogProductId: null,
                 compositionSnapshot: null,
                 densityKgPerL: null,
               };
@@ -344,6 +349,7 @@ export function ActivityEditForm({
               unit: f.unit as FertigationFormData['fertilizers'][number]['unit'],
               quantityBasis: f.quantity_basis ?? 'total',
               warehouseItemId: f.warehouse_item_id ?? null,
+              catalogProductId: f.catalog_product_id ?? null,
               compositionSnapshot: f.composition_snapshot ?? null,
               densityKgPerL: f.density_kg_per_l ?? null,
             }));
@@ -396,6 +402,7 @@ export function ActivityEditForm({
               quantity: c.quantity!,
               quantity_basis: c.quantityBasis ?? 'total',
               warehouse_item_id: c.warehouseItemId ?? null,
+              catalog_product_id: c.catalogProductId ?? null,
               composition_snapshot: c.compositionSnapshot ?? null,
               density_kg_per_l: c.densityKgPerL ?? null,
             }));
@@ -462,6 +469,7 @@ export function ActivityEditForm({
             quantity: f.quantity ?? 0,
             quantity_basis: f.quantityBasis ?? 'total',
             warehouse_item_id: f.warehouseItemId ?? null,
+            catalog_product_id: f.catalogProductId ?? null,
             composition_snapshot: f.compositionSnapshot ?? null,
             density_kg_per_l: f.densityKgPerL ?? null,
           }));
@@ -633,7 +641,7 @@ export function ActivityEditForm({
 
       {renderForm()}
 
-      {showDatePicker && Platform.OS === 'ios' && (
+      {showDatePicker && isIOS && (
         <View
           style={{
             position: 'absolute',
@@ -701,7 +709,7 @@ export function ActivityEditForm({
         </View>
       )}
 
-      {showDatePicker && Platform.OS !== 'ios' && (
+      {showDatePicker && !isIOS && (
         <DateTimePicker
           value={selectedDate}
           mode="date"

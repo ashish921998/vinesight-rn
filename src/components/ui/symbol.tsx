@@ -48,6 +48,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'arrow.clockwise': 'refresh',
   'arrow.up.left.and.arrow.down.right': 'resize',
   'arrow.up.circle.fill': 'arrow-up-circle',
+  'arrow.down.circle.fill': 'arrow-down-circle',
   'envelope.fill': 'mail',
   'lock.fill': 'lock-closed',
 
@@ -75,6 +76,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 
   // Business
   calendar: 'calendar-outline',
+  'calendar.badge.clock': 'calendar-clear-outline',
+  'calendar.badge.exclamationmark': 'calendar-outline',
   clock: 'time-outline',
   'clock.fill': 'time',
   location: 'location-outline',
@@ -91,6 +94,13 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'person.2.fill': 'people',
   'person.badge.clock': 'person-add-outline',
   'person.badge.clock.fill': 'person-add',
+
+  // Communication
+  phone: 'call-outline',
+  'phone.fill': 'call',
+  mail: 'mail-outline',
+  'mail.fill': 'mail',
+  globe: 'globe-outline',
 
   // Money
   banknote: 'cash',
@@ -126,6 +136,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'flask.fill': 'flask',
   cube: 'cube-outline',
   'cube.fill': 'cube',
+  'cube.box.fill': 'cube',
   'square.stack.3d.up': 'cube-outline',
   'square.stack.3d.up.fill': 'cube',
   'wrench.and.screwdriver': 'build-outline',
@@ -151,6 +162,10 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   mic: 'mic-outline',
   'mic.fill': 'mic',
   'stop.fill': 'stop-circle',
+
+  // Eye icons for password visibility toggle
+  eye: 'eye-outline',
+  'eye.slash': 'eye-off-outline',
 
   // Additional common mappings
   'chevron.up.chevron.down': 'swap-vertical',

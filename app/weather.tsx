@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/stores';
 import type { TFunction } from 'i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
@@ -63,9 +65,13 @@ function getDayName(dateString: string, t: TFunction): string {
 }
 
 export default function WeatherScreen() {
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isLoadingAuth = useAuthStore((state) => state.isLoading);
   const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
+  const { farmId: farmIdParam } = useLocalSearchParams<{ farmId?: string }>();
   const { data: farms, isLoading: farmsLoading } = useFarms();
   const [selectedFarmId, setSelectedFarmId] = useState<number | null>(null);
   const [growthStage, setGrowthStage] = useState<GrapeGrowthStage>('Fruit set');
@@ -73,21 +79,61 @@ export default function WeatherScreen() {
   const [showFarmPicker, setShowFarmPicker] = useState(false);
   const [showGrowthPicker, setShowGrowthPicker] = useState(false);
   const [showSoilPicker, setShowSoilPicker] = useState(false);
+  const authRedirectPath = useMemo(
+    () => (farmIdParam ? `/weather?farmId=${encodeURIComponent(farmIdParam)}` : '/weather'),
+    [farmIdParam],
+  );
+
+  useEffect(() => {
+    if (isLoadingAuth) return;
+    if (!isAuthenticated) {
+      router.replace({
+        pathname: '/(auth)/login',
+        params: { redirect: authRedirectPath },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router from useRouter() is stable across renders
+  }, [isAuthenticated, isLoadingAuth, authRedirectPath]);
+
   const urgencyColors = useMemo(
     () => ({
       low: { bg: colorWithOpacity(colors.success, 0.16), text: colors.success },
       medium: { bg: colorWithOpacity(colors.warning, 0.18), text: colors.warning },
       high: { bg: colorWithOpacity(m3.colorScheme.error, 0.16), text: m3.colorScheme.error },
     }),
-    [colors.success, colors.warning, m3],
+    [colors.success, colors.warning, m3.colorScheme.error],
   );
+
+  const requestedFarmId = useMemo(() => {
+    if (!farmIdParam) return null;
+    const parsed = Number.parseInt(farmIdParam, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [farmIdParam]);
+
+  const defaultFarmId = useMemo(() => {
+    if (!farms || farms.length === 0) return null;
+    if (requestedFarmId !== null) {
+      const matchedFarm = farms.find((farm) => farm.id === requestedFarmId);
+      if (matchedFarm && typeof matchedFarm.id === 'number') {
+        return matchedFarm.id;
+      }
+    }
+    const firstFarmId = farms[0]?.id;
+    return typeof firstFarmId === 'number' ? firstFarmId : null;
+  }, [farms, requestedFarmId]);
+  const effectiveSelectedFarmId = useMemo(() => {
+    if (selectedFarmId == null) return defaultFarmId;
+    const hasSelectedFarm = farms?.some((farm) => farm.id === selectedFarmId) ?? false;
+    return hasSelectedFarm ? selectedFarmId : defaultFarmId;
+  }, [selectedFarmId, defaultFarmId, farms]);
 
   // Get selected farm coordinates
   const selectedFarm = useMemo(() => {
     if (!farms || farms.length === 0) return null;
-    if (selectedFarmId) return farms.find((f) => f.id === selectedFarmId) || farms[0];
-    return farms[0];
-  }, [farms, selectedFarmId]);
+    return effectiveSelectedFarmId !== null
+      ? (farms.find((f) => f.id === effectiveSelectedFarmId) ?? farms[0])
+      : farms[0];
+  }, [farms, effectiveSelectedFarmId]);
 
   // Fetch weather data
   const { weather, etc, alerts, irrigationSchedule, isLoading, error, refetch, isRefetching } =
@@ -98,12 +144,9 @@ export default function WeatherScreen() {
       soilType,
     );
 
-  // Set initial farm when farms load
-  React.useEffect(() => {
-    if (farms && farms.length > 0 && !selectedFarmId && farms[0].id !== undefined) {
-      setSelectedFarmId(farms[0].id);
-    }
-  }, [farms, selectedFarmId]);
+  if (isLoadingAuth || !isAuthenticated) {
+    return null;
+  }
 
   if (farmsLoading || isLoading) {
     return (
@@ -314,7 +357,7 @@ export default function WeatherScreen() {
                     flexDirection: 'row',
                     alignItems: 'center',
                     backgroundColor:
-                      selectedFarmId === farm.id
+                      effectiveSelectedFarmId === farm.id
                         ? colorWithOpacity(m3.colorScheme.primary, 0.12)
                         : colors.surface[100],
                   }}
@@ -323,14 +366,18 @@ export default function WeatherScreen() {
                     style={{
                       flex: 1,
                       color:
-                        selectedFarmId === farm.id ? m3.colorScheme.primary : colors.surface[700],
+                        effectiveSelectedFarmId === farm.id
+                          ? m3.colorScheme.primary
+                          : colors.surface[700],
                       fontWeight:
-                        selectedFarmId === farm.id ? fontWeight.semibold : fontWeight.normal,
+                        effectiveSelectedFarmId === farm.id
+                          ? fontWeight.semibold
+                          : fontWeight.normal,
                     }}
                   >
                     {farm.name}
                   </Text>
-                  {selectedFarmId === farm.id && (
+                  {effectiveSelectedFarmId === farm.id && (
                     <Icon name="checkmark" size={20} color={m3.colorScheme.primary} />
                   )}
                 </Pressable>
@@ -846,9 +893,6 @@ export default function WeatherScreen() {
                 >
                   {etc.dailyETc} mm
                 </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                  Kc: {etc.cropCoefficient}
-                </Text>
               </View>
               <View
                 style={{
@@ -870,9 +914,6 @@ export default function WeatherScreen() {
                   }}
                 >
                   {etc.weeklyETc} mm
-                </Text>
-                <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                  ET₀: {etc.referenceET} mm
                 </Text>
               </View>
               {irrigationSchedule && (

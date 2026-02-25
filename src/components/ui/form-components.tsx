@@ -929,6 +929,7 @@ export function InfoCard({
 interface PreviewItem {
   label: string;
   value: string;
+  compactValue?: boolean;
 }
 
 interface PreviewCardProps {
@@ -977,6 +978,12 @@ export function PreviewCard({ title, items, backgroundColor }: PreviewCardProps)
     color: colors.surface[900],
   };
 
+  const compactValueTextStyle: TextStyle = {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.surface[900],
+  };
+
   return (
     <View style={containerStyle}>
       <Text style={titleTextStyle}>{title}</Text>
@@ -984,7 +991,9 @@ export function PreviewCard({ title, items, backgroundColor }: PreviewCardProps)
         {items.map((item, index) => (
           <View key={index} style={itemStyle}>
             <Text style={labelTextStyle}>{item.label}</Text>
-            <Text style={valueTextStyle}>{item.value}</Text>
+            <Text style={item.compactValue ? compactValueTextStyle : valueTextStyle}>
+              {item.value}
+            </Text>
           </View>
         ))}
       </View>

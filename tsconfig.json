@@ -13,6 +13,9 @@
       "@/components/*": ["./src/components/*"],
       "@/constants/*": ["./src/constants/*"],
       "@/utils/*": ["./src/utils/*"],
+      // Widget library: isolated from app code, uses @widgets/* prefix for consistency
+      "@widgets/*": ["./components/widgets/*"],
+      "@widgets/shared": ["./components/widgets/shared"],
       // Keep explicit legacy/subpath mappings because this codebase imports
       // `expo-file-system/legacy`, which is not part of the root package export path.
       "expo-file-system/legacy": ["./node_modules/expo-file-system/build/legacy/index.d.ts"],
