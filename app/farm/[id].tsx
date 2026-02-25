@@ -1393,6 +1393,30 @@ export default function FarmDetailScreen() {
                       </Text>
                     </View>
                   ) : null}
+
+                  {!isGrapeFarm ? (
+                    <View
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
+                    >
+                      <UiSymbol
+                        name="info.circle"
+                        size={14}
+                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                      />
+                      <Text
+                        style={{
+                          color: m3.colorScheme.onSurfaceVariant,
+                          ...m3.typography.labelSmall,
+                          marginLeft: spacing[1],
+                        }}
+                      >
+                        {t('farmDetails.safeHarvest.grapeOnlyNote', {
+                          defaultValue:
+                            'PHI safe-harvest checks are currently available for grape farms only.',
+                        })}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
 

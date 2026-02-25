@@ -127,17 +127,18 @@ async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
   );
 }
 
-export function useChemicalCatalog() {
+export function useChemicalCatalog(enabled = true) {
   return useQuery({
     queryKey: queryKeys.chemicalCatalog.mixes(),
     queryFn: fetchChemicalCatalog,
     staleTime: 60_000,
+    enabled,
   });
 }
 
-export function useChemicalMixSearch(query: string) {
+export function useChemicalMixSearch(query: string, enabled = true) {
   const normalized = query.trim().toLowerCase();
-  const catalogQuery = useChemicalCatalog();
+  const catalogQuery = useChemicalCatalog(enabled);
 
   const data = useMemo(() => {
     const mixes = catalogQuery.data ?? [];

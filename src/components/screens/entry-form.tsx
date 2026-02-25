@@ -365,7 +365,7 @@ export function EntryForm({
   const { data: recentSprayChemicals } = useRecentSprayChemicals(logFarmId ?? undefined);
   const { data: recentFertigationItems } = useRecentFertigationItems(logFarmId ?? undefined);
   const { activeSeason } = useFarmSeasonStatus(logFarmId ?? undefined);
-  const { data: catalogMixes = [] } = useChemicalMixSearch('');
+  const { data: catalogMixes = [] } = useChemicalMixSearch('', isGrapeFarm);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -856,6 +856,7 @@ export function EntryForm({
 
         if (
           isGrapeFarm &&
+          sprayData.phiStatus === 'unknown' &&
           (!sprayData.catalogMixId ||
             sprayData.safeHarvestDate == null ||
             sprayData.governingPhiDays == null)
@@ -1678,6 +1679,35 @@ export function EntryForm({
               }}
               scrollEventThrottle={16}
             >
+              {selectedLogType === 'spray' ? (
+                <View
+                  style={{
+                    marginHorizontal: 16,
+                    marginTop: 16,
+                    marginBottom: 4,
+                    padding: 12,
+                    borderRadius: 12,
+                    backgroundColor: colorWithOpacity(m3.colorScheme.secondaryContainer, 0.5),
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: m3.colorScheme.onSurfaceVariant,
+                      ...m3.typography.labelSmall,
+                    }}
+                  >
+                    {isGrapeFarm
+                      ? t('entryForm.phiScope.grapeOnlyEnabled', {
+                          defaultValue:
+                            'PHI safety checks are currently available for grape sprays.',
+                        })
+                      : t('entryForm.phiScope.grapeOnlyDisabled', {
+                          defaultValue:
+                            'PHI safety validation is currently available for grape sprays only.',
+                        })}
+                  </Text>
+                </View>
+              ) : null}
               <LogForm
                 selectedLogType={selectedLogType}
                 irrigationData={irrigationData}

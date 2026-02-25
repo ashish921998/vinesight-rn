@@ -857,6 +857,8 @@ function ChemicalRow({
 
         {/* Unit Picker */}
         <Pressable
+          disabled={readOnly}
+          accessibilityState={{ disabled: readOnly }}
           onPress={() => (!readOnly ? setShowUnitPicker(true) : null)}
           style={{
             flex: 1,
