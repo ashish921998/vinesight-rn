@@ -43,7 +43,6 @@ import {
 import { ModalBackdrop } from '../ui/modal-backdrop';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import theme from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { ICON_REGISTRY } from '@/constants/icon-registry';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
@@ -647,14 +646,14 @@ export default function WarehouseItemForm({
         <SectionHeader
           title="Item Type"
           subtitle="Choose fertilizer or spray before searching the catalogue."
-          style={{ marginBottom: theme.spacing[3] }}
+          style={{ marginBottom: spacing[3] }}
         />
 
         <PillSelector
           options={ITEM_TYPES}
           selectedValue={type}
           onSelect={(value) => handleTypeSelect(value as WarehouseItemType)}
-          style={{ marginBottom: theme.spacing[5] }}
+          style={{ marginBottom: spacing[5] }}
         />
 
         <SectionHeader
@@ -1076,12 +1075,17 @@ export default function WarehouseItemForm({
                 )}
 
                 {!catalogProductsLoading && catalogProductsError && (
-                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                    <Text style={{ fontSize: fontSize.sm, color: colors.error[500] }}>
-                      Could not load catalogue items. Check PHI catalog migration/seed data and
-                      retry.
-                    </Text>
-                  </View>
+                  <>
+                    {__DEV__ &&
+                      console.debug(
+                        'Catalog products error: PHI catalog migration/seed data issue',
+                      )}
+                    <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                      <Text style={{ fontSize: fontSize.sm, color: colors.error[500] }}>
+                        Could not load catalogue items. Please try again later.
+                      </Text>
+                    </View>
+                  </>
                 )}
 
                 {!catalogProductsLoading &&
