@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type { ChatMessage } from '@/types/ai';
 import { assistantFeatureFlags } from '@/constants/assistant-flags';
+import { ASSISTANT_MEMORY_RETENTION_DAYS } from '@/constants/assistant-memory';
 
 interface ConversationRow {
   id: string;
@@ -263,7 +264,7 @@ class AssistantMemoryService {
       if (!userId) return;
 
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 180);
+      expiresAt.setDate(expiresAt.getDate() + ASSISTANT_MEMORY_RETENTION_DAYS);
 
       const { error } = await supabase.from('assistant_memories').insert({
         conversation_id: input.conversationId,

@@ -103,9 +103,9 @@ interface AssistantTurnDiagnostics {
 
 const SHOW_LOCAL_DIAGNOSTICS = false;
 const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024;
-const MIN_VOICE_AUDIO_DURATION_MS = 500;
-const MIN_VOICE_AUDIO_BASE64_LENGTH = 1000;
-const MIN_VOICE_AUDIO_ESTIMATED_BYTES = 700;
+const MIN_VOICE_AUDIO_DURATION_MS = 1000;
+const MIN_VOICE_AUDIO_BASE64_LENGTH = 1400;
+const MIN_VOICE_AUDIO_ESTIMATED_BYTES = 1000;
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/jpg',
@@ -265,6 +265,18 @@ function estimateBase64Bytes(base64Payload: string | null | undefined): number |
   if (!normalized) return null;
   const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
   return Math.floor((normalized.length * 3) / 4) - padding;
+}
+
+function resolveAttachmentFileSizeBytes(
+  assetSize: number | undefined,
+  fileInfo: { size?: number } | null | undefined,
+): number | undefined {
+  if (typeof assetSize === 'number' && Number.isFinite(assetSize)) return assetSize;
+  if (fileInfo && typeof fileInfo.size === 'number' && Number.isFinite(fileInfo.size)) {
+    return fileInfo.size;
+  }
+  const totalBytes = (fileInfo as { totalBytes?: number } | null | undefined)?.totalBytes;
+  return typeof totalBytes === 'number' && Number.isFinite(totalBytes) ? totalBytes : undefined;
 }
 
 function validateVoiceAudioPayload(payload: VoiceAudioPayload | null): {
@@ -587,20 +599,21 @@ export default function AIChatScreen() {
   const lastVoiceCaptureErrorRef = useRef<string | null>(null);
   const isStoppingVoiceRecordingRef = useRef(false);
   const voiceRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const sendMessageRef =
-    useRef<
-      (
+  const sendMessageRef = useRef<
+    | ((
         text?: string,
         source?: 'text' | 'voice',
         voicePayload?: VoiceAudioPayload | null,
         options?: { overrideAttachments?: ChatAttachment[] },
-      ) => Promise<void>
-    >(undefined);
+      ) => Promise<void>)
+    | null
+  >(null);
   const stopVoiceRecordingRef = useRef<
     (options?: { discard?: boolean }) => Promise<VoiceAudioPayload | null>
   >(async () => null);
   const activeAssistantRequestIdRef = useRef<string | null>(null);
   const activeAssistantAbortControllerRef = useRef<AbortController | null>(null);
+  const conversationAsyncTokenRef = useRef(0);
   const speechLocale = useMemo(() => resolveSpeechLocale(i18n.language), [i18n.language]);
   const isVoiceListening = voiceInputState === 'starting' || voiceInputState === 'listening';
   const languageCode = useMemo(() => resolveLanguageCode(i18n.language), [i18n.language]);
@@ -632,6 +645,15 @@ export default function AIChatScreen() {
     }
   }, []);
 
+  const beginConversationAsyncAction = useCallback(() => {
+    conversationAsyncTokenRef.current += 1;
+    return conversationAsyncTokenRef.current;
+  }, []);
+
+  const isConversationAsyncTokenCurrent = useCallback((token: number) => {
+    return conversationAsyncTokenRef.current === token;
+  }, []);
+
   const refreshConversationHistory = useCallback(async () => {
     if (!assistantFeatureFlags.memoryEnabled) return;
     setIsHistoryLoading(true);
@@ -643,30 +665,73 @@ export default function AIChatScreen() {
     }
   }, []);
 
-  const openConversation = useCallback(async (nextConversationId: string) => {
-    if (!nextConversationId) return;
-    const history = await assistantMemoryService.loadRecentMessages(nextConversationId, 50);
-    setConversationId(nextConversationId);
-    setMessages(history);
-    setSuggestions([]);
-    setIsHistoryVisible(false);
-  }, []);
+  const openConversation = useCallback(
+    async (nextConversationId: string) => {
+      if (!assistantFeatureFlags.memoryEnabled) return;
+      if (!nextConversationId) return;
+      setIsHistoryVisible(false);
+      cancelInFlightAssistantRequest();
+      setIsLoading(false);
+      const requestToken = beginConversationAsyncAction();
+      try {
+        const history = await assistantMemoryService.loadRecentMessages(nextConversationId, 50);
+        if (!isConversationAsyncTokenCurrent(requestToken)) return;
+        setConversationId(nextConversationId);
+        setMessages(history);
+        setSuggestions([]);
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('Open conversation failed:', error);
+        }
+        if (!isConversationAsyncTokenCurrent(requestToken)) return;
+        Alert.alert(t('common.error'), t('ai.errors.failedResponse'), [{ text: t('common.ok') }]);
+      }
+    },
+    [
+      beginConversationAsyncAction,
+      cancelInFlightAssistantRequest,
+      isConversationAsyncTokenCurrent,
+      t,
+    ],
+  );
 
   const startNewConversation = useCallback(async () => {
-    const nextConversationId = await assistantMemoryService.createConversation({
-      farmId: contextFarm?.id ?? parsedFarmId ?? null,
-      locale: languageCode,
-    });
-    if (!nextConversationId) {
-      Alert.alert(t('common.error'), t('ai.errors.failedResponse'));
-      return;
-    }
-    setConversationId(nextConversationId);
-    setMessages([]);
-    setSuggestions([]);
     setIsHistoryVisible(false);
-    void refreshConversationHistory();
-  }, [contextFarm?.id, languageCode, parsedFarmId, refreshConversationHistory, t]);
+    if (!assistantFeatureFlags.memoryEnabled) return;
+    cancelInFlightAssistantRequest();
+    setIsLoading(false);
+    const requestToken = beginConversationAsyncAction();
+    try {
+      const nextConversationId = await assistantMemoryService.createConversation({
+        farmId: contextFarm?.id ?? parsedFarmId ?? null,
+        locale: languageCode,
+      });
+      if (!isConversationAsyncTokenCurrent(requestToken)) return;
+      if (!nextConversationId) {
+        Alert.alert(t('common.error'), t('ai.errors.failedResponse'));
+        return;
+      }
+      setConversationId(nextConversationId);
+      setMessages([]);
+      setSuggestions([]);
+      void refreshConversationHistory();
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Start conversation failed:', error);
+      }
+      if (!isConversationAsyncTokenCurrent(requestToken)) return;
+      Alert.alert(t('common.error'), t('ai.errors.failedResponse'), [{ text: t('common.ok') }]);
+    }
+  }, [
+    beginConversationAsyncAction,
+    cancelInFlightAssistantRequest,
+    contextFarm?.id,
+    isConversationAsyncTokenCurrent,
+    languageCode,
+    parsedFarmId,
+    refreshConversationHistory,
+    t,
+  ]);
 
   const DEFAULT_SUGGESTIONS = useMemo(
     () => [
@@ -742,11 +807,14 @@ export default function AIChatScreen() {
     if (!assistantFeatureFlags.memoryEnabled) return;
 
     let isCancelled = false;
+    cancelInFlightAssistantRequest();
+    setIsLoading(false);
+    const requestToken = beginConversationAsyncAction();
 
     const bootstrapConversation = async () => {
       try {
         const summaries = await assistantMemoryService.listConversations({ limit: 30 });
-        if (!isCancelled) {
+        if (!isCancelled && isConversationAsyncTokenCurrent(requestToken)) {
           setConversationSummaries(summaries);
         }
 
@@ -755,7 +823,7 @@ export default function AIChatScreen() {
           locale: languageCode,
         });
 
-        if (isCancelled) return;
+        if (isCancelled || !isConversationAsyncTokenCurrent(requestToken)) return;
 
         if (!nextConversationId) {
           setMessages((prev) => [
@@ -773,7 +841,7 @@ export default function AIChatScreen() {
         setMessages([]);
         setSuggestions(DEFAULT_SUGGESTIONS);
       } catch (error) {
-        if (isCancelled) return;
+        if (isCancelled || !isConversationAsyncTokenCurrent(requestToken)) return;
         if (__DEV__) {
           console.warn('Conversation bootstrap failed:', error);
         }
@@ -793,7 +861,16 @@ export default function AIChatScreen() {
     return () => {
       isCancelled = true;
     };
-  }, [DEFAULT_SUGGESTIONS, contextFarm?.id, languageCode, parsedFarmId, t]);
+  }, [
+    DEFAULT_SUGGESTIONS,
+    beginConversationAsyncAction,
+    cancelInFlightAssistantRequest,
+    contextFarm?.id,
+    isConversationAsyncTokenCurrent,
+    languageCode,
+    parsedFarmId,
+    t,
+  ]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -873,8 +950,8 @@ export default function AIChatScreen() {
         const startedAt = voiceRecordingStartedAtRef.current;
         if (startedAt) {
           const elapsed = Date.now() - startedAt;
-          if (elapsed < 700) {
-            await sleep(700 - elapsed);
+          if (elapsed < MIN_VOICE_AUDIO_DURATION_MS) {
+            await sleep(MIN_VOICE_AUDIO_DURATION_MS - elapsed);
           }
         }
 
@@ -1075,6 +1152,9 @@ export default function AIChatScreen() {
       setIsLoading(true);
       setLastAssistantDiagnostics(null);
       scrollToBottom();
+      const conversationActionToken = beginConversationAsyncAction();
+      const isStaleConversationAction = () =>
+        !isConversationAsyncTokenCurrent(conversationActionToken);
 
       telemetry.capture('ai_request_made', {
         ai_use_case: 'chat',
@@ -1091,6 +1171,7 @@ export default function AIChatScreen() {
             farmId: contextFarm?.id ?? parsedFarmId ?? null,
             locale: languageCode,
           });
+          if (isStaleConversationAction()) return;
           if (activeConversationId) {
             setConversationId(activeConversationId);
           }
@@ -1105,6 +1186,7 @@ export default function AIChatScreen() {
             content: visibleUserContent || assistantInput,
             inputMode: source === 'voice' ? 'audio' : 'text',
           });
+          if (isStaleConversationAction()) return;
         }
 
         const deterministicTranscript = contextFarm?.name
@@ -1183,6 +1265,7 @@ export default function AIChatScreen() {
                   contextFarmName: contextFarm?.name ?? null,
                 })
             : null;
+          if (isStaleConversationAction()) return;
 
           const chatRoute =
             forcedRoute ??
@@ -1453,6 +1536,7 @@ export default function AIChatScreen() {
                 : effectiveTranscript;
 
               const farmDataResponse = await executeQuery(queryText, candidateFarms, languageCode);
+              if (isStaleConversationAction()) return;
 
               const content =
                 farmDataResponse.answer.verbalizedText ??
@@ -1540,6 +1624,7 @@ export default function AIChatScreen() {
               candidateFarms,
               languageCode,
             );
+            if (isStaleConversationAction()) return;
 
             const content =
               farmDataResponse.answer.verbalizedText ??
@@ -1614,6 +1699,7 @@ export default function AIChatScreen() {
         }
 
         const aiAttachments = await prepareAttachmentsForAI(currentAttachments);
+        if (isStaleConversationAction()) return;
         const assistantRequestId = `ai-chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const assistantRequestAbortController = new AbortController();
         activeAssistantRequestIdRef.current = assistantRequestId;
@@ -1624,6 +1710,7 @@ export default function AIChatScreen() {
             userMessage: llmFallbackInput,
             language: languageCode,
             inputMode: source === 'voice' ? 'audio' : 'text',
+            clientCanPlayAudio: true,
             inputAudioBase64: source === 'voice' ? (voicePayload?.inputAudioBase64 ?? null) : null,
             audioFormat: source === 'voice' ? (voicePayload?.audioFormat ?? null) : null,
             attachments: aiAttachments,
@@ -1648,6 +1735,7 @@ export default function AIChatScreen() {
             signal: assistantRequestAbortController.signal,
           },
         );
+        if (isStaleConversationAction()) return;
 
         const resolvedConversationId =
           response.message.conversationId ?? activeConversationId ?? null;
@@ -1819,6 +1907,7 @@ export default function AIChatScreen() {
 
         scrollToBottom();
       } catch (error) {
+        if (isStaleConversationAction()) return;
         const requestWasCancelled =
           error instanceof AssistantGatewayError &&
           error.code === AssistantGatewayErrorCode.CANCELED;
@@ -1865,17 +1954,20 @@ export default function AIChatScreen() {
         }
         Alert.alert(t('common.error'), message, [{ text: t('common.ok') }]);
       } finally {
-        activeAssistantRequestIdRef.current = null;
-        activeAssistantAbortControllerRef.current = null;
-        setIsLoading(false);
-        if (assistantFeatureFlags.memoryEnabled) {
-          void refreshConversationHistory();
+        if (!isStaleConversationAction()) {
+          activeAssistantRequestIdRef.current = null;
+          activeAssistantAbortControllerRef.current = null;
+          setIsLoading(false);
+          if (assistantFeatureFlags.memoryEnabled) {
+            void refreshConversationHistory();
+          }
         }
       }
     },
     [
       DEFAULT_SUGGESTIONS,
       attachments,
+      beginConversationAsyncAction,
       candidateFarms,
       conversationId,
       contextFarm,
@@ -1884,6 +1976,7 @@ export default function AIChatScreen() {
       languageCode,
       inputText,
       isAssistantSpeaking,
+      isConversationAsyncTokenCurrent,
       isLoading,
       isVoiceListening,
       messages,
@@ -2200,6 +2293,15 @@ export default function AIChatScreen() {
         ]);
         return;
       }
+      const resolvedFileSize = resolveAttachmentFileSizeBytes(fileSize, fileInfo);
+      if (typeof resolvedFileSize === 'number' && resolvedFileSize > MAX_ATTACHMENT_SIZE_BYTES) {
+        Alert.alert(
+          t('common.error'),
+          'Image exceeds the 10MB limit. Please choose a smaller file.',
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
       setAttachments((prev) => [
         ...prev,
         {
@@ -2207,7 +2309,7 @@ export default function AIChatScreen() {
           name: asset.fileName || `image-${prev.length + 1}.jpg`,
           uri: asset.uri,
           mimeType,
-          size: fileSize,
+          size: resolvedFileSize,
           kind: 'image',
         },
       ]);
@@ -2251,6 +2353,15 @@ export default function AIChatScreen() {
         Alert.alert(t('common.error'), t('ai.voice.fileUnavailable'), [{ text: t('common.ok') }]);
         return;
       }
+      const resolvedFileSize = resolveAttachmentFileSizeBytes(fileSize, fileInfo);
+      if (typeof resolvedFileSize === 'number' && resolvedFileSize > MAX_ATTACHMENT_SIZE_BYTES) {
+        Alert.alert(
+          t('common.error'),
+          'File exceeds the 10MB limit. Please choose a smaller file.',
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
       setAttachments((prev) => [
         ...prev,
         {
@@ -2258,7 +2369,7 @@ export default function AIChatScreen() {
           name: asset.name || `document-${prev.length + 1}`,
           uri: asset.uri,
           mimeType,
-          size: fileSize,
+          size: resolvedFileSize,
           kind: 'document',
         },
       ]);
@@ -2314,17 +2425,19 @@ export default function AIChatScreen() {
               <UiSymbol name="chevron.left" size={24} color={m3.colorScheme.onBackground} />
             </Pressable>
           ),
-          headerRight: () => (
-            <Pressable
-              onPress={() => {
-                setIsHistoryVisible(true);
-                void refreshConversationHistory();
-              }}
-              style={{ marginRight: spacing[2], padding: spacing[1] }}
-            >
-              <UiSymbol name="sidebar.left" size={20} color={m3.colorScheme.onBackground} />
-            </Pressable>
-          ),
+          headerRight: () =>
+            assistantFeatureFlags.memoryEnabled ? (
+              <Pressable
+                onPress={() => {
+                  if (!assistantFeatureFlags.memoryEnabled) return;
+                  setIsHistoryVisible(true);
+                  void refreshConversationHistory();
+                }}
+                style={{ marginRight: spacing[2], padding: spacing[1] }}
+              >
+                <UiSymbol name="sidebar.left" size={20} color={m3.colorScheme.onBackground} />
+              </Pressable>
+            ) : null,
         }}
       />
 
@@ -2728,7 +2841,7 @@ export default function AIChatScreen() {
                   fontWeight: fontWeight.medium,
                 }}
               >
-                Assistant is speaking...
+                {t('ai.chat.assistantSpeaking')}
               </Text>
             )}
             {__DEV__ && SHOW_LOCAL_DIAGNOSTICS && lastAssistantDiagnostics && (
@@ -2957,7 +3070,7 @@ export default function AIChatScreen() {
                 }}
               >
                 <Text style={{ flex: 1, color: m3.colorScheme.error, fontSize: fontSize.xs }}>
-                  Last request failed.
+                  {t('ai.chat.failedRequest')}
                 </Text>
                 <Pressable
                   onPress={retryFailedRequest}
@@ -2976,7 +3089,7 @@ export default function AIChatScreen() {
                       fontWeight: fontWeight.semibold,
                     }}
                   >
-                    Retry
+                    {t('ai.chat.retry')}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -2996,7 +3109,9 @@ export default function AIChatScreen() {
                     disabled={isLoading}
                     accessibilityRole="button"
                     accessibilityLabel={
-                      isAssistantSpeaking ? 'Stop assistant voice' : 'Replay assistant voice'
+                      isAssistantSpeaking
+                        ? t('ai.chat.stopVoiceA11y')
+                        : t('ai.chat.replayVoiceA11y')
                     }
                     style={{
                       paddingHorizontal: spacing[3],
@@ -3021,14 +3136,14 @@ export default function AIChatScreen() {
                         fontWeight: fontWeight.semibold,
                       }}
                     >
-                      {isAssistantSpeaking ? 'Stop' : 'Replay'}
+                      {isAssistantSpeaking ? t('ai.chat.stop') : t('ai.chat.replay')}
                     </Text>
                   </Pressable>
                   <Pressable
                     onPress={toggleVoicePlaybackRate}
                     disabled={isAssistantSpeaking}
                     accessibilityRole="button"
-                    accessibilityLabel="Toggle voice speed"
+                    accessibilityLabel={t('ai.chat.toggleVoiceSpeedA11y')}
                     style={{
                       minWidth: 52,
                       height: 32,
@@ -3056,7 +3171,7 @@ export default function AIChatScreen() {
                   onPress={openAttachmentPicker}
                   disabled={isLoading}
                   accessibilityRole="button"
-                  accessibilityLabel="Attach file"
+                  accessibilityLabel={t('ai.chat.attachFileA11y')}
                   style={{
                     width: 42,
                     height: 42,
@@ -3124,7 +3239,7 @@ export default function AIChatScreen() {
                       onPress={openVoiceMode}
                       disabled={isLoading && !isVoiceListening}
                       accessibilityRole="button"
-                      accessibilityLabel="Open voice mode"
+                      accessibilityLabel={t('ai.chat.openVoiceModeA11y')}
                       style={{
                         width: 34,
                         height: 34,
@@ -3149,153 +3264,155 @@ export default function AIChatScreen() {
             </View>
           </View>
         </View>
-        <Modal
-          visible={isHistoryVisible}
-          animationType="slide"
-          transparent
-          onRequestClose={() => setIsHistoryVisible(false)}
-        >
-          <Pressable
-            onPress={() => setIsHistoryVisible(false)}
-            style={{
-              flex: 1,
-              backgroundColor: colorWithOpacity(colors.surface[900], 0.22),
-              flexDirection: 'row',
-            }}
+        {assistantFeatureFlags.memoryEnabled && (
+          <Modal
+            visible={isHistoryVisible}
+            animationType="slide"
+            transparent
+            onRequestClose={() => setIsHistoryVisible(false)}
           >
             <Pressable
-              onPress={(event) => event.stopPropagation()}
+              onPress={() => setIsHistoryVisible(false)}
               style={{
-                width: '82%',
-                maxWidth: 360,
-                height: '100%',
-                backgroundColor: colors.surface[100],
-                paddingTop: insets.top + spacing[3],
-                paddingHorizontal: spacing[4],
-                paddingBottom: Math.max(insets.bottom, spacing[4]),
-                borderTopRightRadius: borderRadius['2xl'],
-                borderBottomRightRadius: borderRadius['2xl'],
+                flex: 1,
+                backgroundColor: colorWithOpacity(colors.surface[900], 0.22),
+                flexDirection: 'row',
               }}
             >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: spacing[3],
-                }}
-              >
-                <Text
-                  style={{
-                    color: colors.surface[900],
-                    fontSize: fontSize.lg,
-                    fontWeight: fontWeight.semibold,
-                  }}
-                >
-                  Chat history
-                </Text>
-                <Pressable
-                  onPress={() => setIsHistoryVisible(false)}
-                  style={{ padding: spacing[1] }}
-                >
-                  <UiSymbol name="xmark" size={16} color={colors.surface[700]} />
-                </Pressable>
-              </View>
-
               <Pressable
-                onPress={startNewConversation}
+                onPress={(event) => event.stopPropagation()}
                 style={{
-                  height: 44,
-                  borderRadius: borderRadius.full,
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                  gap: spacing[2],
-                  marginBottom: spacing[3],
+                  width: '82%',
+                  maxWidth: 360,
+                  height: '100%',
+                  backgroundColor: colors.surface[100],
+                  paddingTop: insets.top + spacing[3],
+                  paddingHorizontal: spacing[4],
+                  paddingBottom: Math.max(insets.bottom, spacing[4]),
+                  borderTopRightRadius: borderRadius['2xl'],
+                  borderBottomRightRadius: borderRadius['2xl'],
                 }}
               >
-                <UiSymbol name="plus" size={16} color={m3.colorScheme.primary} />
-                <Text
+                <View
                   style={{
-                    color: m3.colorScheme.primary,
-                    fontSize: fontSize.sm,
-                    fontWeight: fontWeight.semibold,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: spacing[3],
                   }}
                 >
-                  New chat
-                </Text>
-              </Pressable>
-
-              {isHistoryLoading ? (
-                <View style={{ paddingVertical: spacing[6], alignItems: 'center' }}>
-                  <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+                  <Text
+                    style={{
+                      color: colors.surface[900],
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {t('ai.chat.history')}
+                  </Text>
+                  <Pressable
+                    onPress={() => setIsHistoryVisible(false)}
+                    style={{ padding: spacing[1] }}
+                  >
+                    <UiSymbol name="xmark" size={16} color={colors.surface[700]} />
+                  </Pressable>
                 </View>
-              ) : (
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ gap: spacing[2] }}
+
+                <Pressable
+                  onPress={startNewConversation}
+                  style={{
+                    height: 44,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    gap: spacing[2],
+                    marginBottom: spacing[3],
+                  }}
                 >
-                  {conversationSummaries.map((summary) => {
-                    const isActive = summary.id === conversationId;
-                    const preview = (summary.lastMessage ?? '').trim();
-                    return (
-                      <Pressable
-                        key={summary.id}
-                        onPress={() => void openConversation(summary.id)}
+                  <UiSymbol name="plus" size={16} color={m3.colorScheme.primary} />
+                  <Text
+                    style={{
+                      color: m3.colorScheme.primary,
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {t('ai.chat.newChat')}
+                  </Text>
+                </Pressable>
+
+                {isHistoryLoading ? (
+                  <View style={{ paddingVertical: spacing[6], alignItems: 'center' }}>
+                    <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+                  </View>
+                ) : (
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ gap: spacing[2] }}
+                  >
+                    {conversationSummaries.map((summary) => {
+                      const isActive = summary.id === conversationId;
+                      const preview = (summary.lastMessage ?? '').trim();
+                      return (
+                        <Pressable
+                          key={summary.id}
+                          onPress={() => void openConversation(summary.id)}
+                          style={{
+                            borderRadius: borderRadius.xl,
+                            borderWidth: 1,
+                            borderColor: isActive
+                              ? colorWithOpacity(m3.colorScheme.primary, 0.45)
+                              : colors.surface[300],
+                            backgroundColor: isActive
+                              ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                              : colors.surface[50],
+                            paddingHorizontal: spacing[3],
+                            paddingVertical: spacing[3],
+                            gap: spacing[1],
+                          }}
+                        >
+                          <Text
+                            numberOfLines={1}
+                            style={{
+                              color: colors.surface[900],
+                              fontSize: fontSize.sm,
+                              fontWeight: fontWeight.semibold,
+                            }}
+                          >
+                            {preview || t('ai.chat.newConversation')}
+                          </Text>
+                          <Text
+                            numberOfLines={2}
+                            style={{
+                              color: colors.surface[600],
+                              fontSize: fontSize.xs,
+                            }}
+                          >
+                            {formatDate(summary.lastMessageAt ?? summary.updatedAt)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                    {conversationSummaries.length === 0 && (
+                      <Text
                         style={{
-                          borderRadius: borderRadius.xl,
-                          borderWidth: 1,
-                          borderColor: isActive
-                            ? colorWithOpacity(m3.colorScheme.primary, 0.45)
-                            : colors.surface[300],
-                          backgroundColor: isActive
-                            ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                            : colors.surface[50],
-                          paddingHorizontal: spacing[3],
-                          paddingVertical: spacing[3],
-                          gap: spacing[1],
+                          color: colors.surface[600],
+                          fontSize: fontSize.sm,
+                          textAlign: 'center',
+                          paddingVertical: spacing[6],
                         }}
                       >
-                        <Text
-                          numberOfLines={1}
-                          style={{
-                            color: colors.surface[900],
-                            fontSize: fontSize.sm,
-                            fontWeight: fontWeight.semibold,
-                          }}
-                        >
-                          {preview || 'New conversation'}
-                        </Text>
-                        <Text
-                          numberOfLines={2}
-                          style={{
-                            color: colors.surface[600],
-                            fontSize: fontSize.xs,
-                          }}
-                        >
-                          {formatDate(summary.lastMessageAt ?? summary.updatedAt)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                  {conversationSummaries.length === 0 && (
-                    <Text
-                      style={{
-                        color: colors.surface[600],
-                        fontSize: fontSize.sm,
-                        textAlign: 'center',
-                        paddingVertical: spacing[6],
-                      }}
-                    >
-                      No previous chats yet.
-                    </Text>
-                  )}
-                </ScrollView>
-              )}
+                        {t('ai.chat.noPreviousChats')}
+                      </Text>
+                    )}
+                  </ScrollView>
+                )}
+              </Pressable>
             </Pressable>
-          </Pressable>
-        </Modal>
+          </Modal>
+        )}
         <Modal
           visible={isVoiceModeVisible}
           animationType="slide"
@@ -3326,7 +3443,7 @@ export default function AIChatScreen() {
                   fontWeight: fontWeight.semibold,
                 }}
               >
-                Voice mode
+                {t('ai.chat.voiceMode')}
               </Text>
               <Pressable onPress={closeVoiceMode} style={{ padding: spacing[1] }}>
                 <UiSymbol name="xmark" size={18} color={colors.surface[700]} />
@@ -3371,7 +3488,11 @@ export default function AIChatScreen() {
                   fontWeight: fontWeight.semibold,
                 }}
               >
-                {isVoiceListening ? 'Listening...' : isLoading ? 'Thinking...' : 'Tap to speak'}
+                {isVoiceListening
+                  ? t('ai.voice.listening')
+                  : isLoading
+                    ? t('ai.chat.thinking')
+                    : t('ai.chat.tapToSpeak')}
               </Text>
 
               <View
@@ -3393,7 +3514,7 @@ export default function AIChatScreen() {
                     lineHeight: 28,
                   }}
                 >
-                  {liveVoiceTranscript.trim() || 'Your speech will appear here...'}
+                  {liveVoiceTranscript.trim() || t('ai.chat.transcriptPlaceholder')}
                 </Text>
               </View>
               {voiceModeError && (

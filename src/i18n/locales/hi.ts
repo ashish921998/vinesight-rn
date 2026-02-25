@@ -1354,7 +1354,7 @@ export const hi = {
         'यह आपके खाते की सहायक वार्तालाप, टर्न और मेमोरी को स्थायी रूप से हटा देगा।',
       deletedTitle: 'सहायक मेमोरी हटाई गई',
       deletedBody: 'आपकी सहायक मेमोरी डेटा हटा दी गई है।',
-      retentionNote: 'जब तक आप हटाते नहीं हैं, सहायक मेमोरी 180 दिनों तक रखी जाती है।',
+      retentionNote: 'जब तक आप हटाते नहीं हैं, सहायक मेमोरी {{days}} दिनों तक रखी जाती है।',
     },
 
     deleteAccountModal: {
@@ -1460,7 +1460,7 @@ export const hi = {
       recordingTooShortTitle: 'रिकॉर्डिंग बहुत छोटी',
       recordingTooShortBody: 'कृपया कम से कम 1 सेकंड बोलें और दोबारा प्रयास करें।',
       recordingTooShortDetailBody:
-        'ऑडियो बहुत छोटा था{{reason}}। बोलें दबाएँ, कम से कम 1 सेकंड रुकें, फिर रोकें दबाएँ।',
+        'ऑडियो बहुत छोटा था {{reason}}। बोलें दबाएँ, कम से कम 1 सेकंड रुकें, फिर रोकें दबाएँ।',
       voiceMessage: 'वॉइस मैसेज',
       sttNotReadyTitle: 'सर्वर STT तैयार नहीं',
       sttNotReadyBody:
@@ -1472,6 +1472,26 @@ export const hi = {
       choosePrompt: 'क्या जोड़ना है चुनें',
       image: 'इमेज',
       file: 'फ़ाइल',
+    },
+    chat: {
+      assistantSpeaking: 'सहायक बोल रहा है...',
+      retry: 'फिर से प्रयास करें',
+      history: 'चैट इतिहास',
+      voiceMode: 'वॉइस मोड',
+      thinking: 'सोच रहा है...',
+      tapToSpeak: 'बोलने के लिए टैप करें',
+      transcriptPlaceholder: 'आपकी आवाज़ यहाँ दिखाई देगी...',
+      failedRequest: 'पिछला अनुरोध विफल हुआ।',
+      newChat: 'नई चैट',
+      newConversation: 'नई बातचीत',
+      noPreviousChats: 'अभी तक कोई पिछली चैट नहीं है।',
+      stop: 'रोकें',
+      replay: 'फिर चलाएँ',
+      replayVoiceA11y: 'सहायक की आवाज़ फिर चलाएँ',
+      stopVoiceA11y: 'सहायक की आवाज़ रोकें',
+      toggleVoiceSpeedA11y: 'वॉइस गति बदलें',
+      attachFileA11y: 'फ़ाइल जोड़ें',
+      openVoiceModeA11y: 'वॉइस मोड खोलें',
     },
     conversationBootstrapFailed: 'नई बातचीत शुरू नहीं हो सकी। कृपया दोबारा प्रयास करें।',
     logging: {

@@ -50,6 +50,7 @@ import { getDefaultCurrency } from '@/i18n/currency';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import { assistantMemoryService } from '@/services/assistant-memory';
 import { telemetry } from '@/services/telemetry';
+import { ASSISTANT_MEMORY_RETENTION_DAYS } from '@/constants/assistant-memory';
 import {
   buildE164PhoneNumber as buildNormalizedE164PhoneNumber,
   sanitizePhoneDigits,
@@ -473,7 +474,7 @@ export default function SettingsScreen() {
 
       const payload = {
         exported_at: new Date().toISOString(),
-        retention_days: 180,
+        retention_days: ASSISTANT_MEMORY_RETENTION_DAYS,
         ...exportData,
       };
 
@@ -1006,7 +1007,9 @@ export default function SettingsScreen() {
           textBreakStrategy="highQuality"
           lineBreakStrategyIOS="standard"
         >
-          {t('settings.assistantMemory.retentionNote')}
+          {t('settings.assistantMemory.retentionNote', {
+            days: ASSISTANT_MEMORY_RETENTION_DAYS,
+          })}
         </Text>
       </View>
 

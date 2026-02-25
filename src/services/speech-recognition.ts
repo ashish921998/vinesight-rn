@@ -107,7 +107,7 @@ const useNativeSpeechRecognitionEventAdapter: SpeechRecognitionEventHook = (
   // useNativeSpeechRecognitionEvent is guaranteed non-null here because
   // useSpeechRecognitionEventImpl is only set to this adapter when
   // the native module was successfully loaded (module-level constant).
-  useNativeSpeechRecognitionEvent!(eventName as never, listener as never);
+  (useNativeSpeechRecognitionEvent! as SpeechRecognitionEventHook)(eventName, listener);
 };
 
 const useSpeechRecognitionEventImpl: SpeechRecognitionEventHook =

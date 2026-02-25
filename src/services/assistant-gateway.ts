@@ -466,6 +466,7 @@ export interface SendAssistantTurnInput {
   userMessage: string;
   language: SupportedLanguageCode;
   inputMode?: AssistantInputMode;
+  clientCanPlayAudio?: boolean;
   inputAudioBase64?: string | null;
   audioFormat?: string | null;
   attachments?: AIMessageAttachmentInput[];
@@ -584,6 +585,11 @@ export async function sendAssistantTurn(
     const effectiveInputMode: AssistantInputMode = hasAudioPayload ? 'audio' : 'text';
     const normalizedInput = input.userMessage.trim();
 
+    const clientCanPlayAudio =
+      typeof input.clientCanPlayAudio === 'boolean'
+        ? input.clientCanPlayAudio
+        : effectiveInputMode === 'audio';
+
     const payload: AssistantGatewayRequest = {
       conversation_id: input.conversationId ?? null,
       user_id: userId,
@@ -605,7 +611,7 @@ export async function sendAssistantTurn(
           }
         : null,
       client_capabilities: {
-        can_play_audio: effectiveInputMode === 'audio',
+        can_play_audio: clientCanPlayAudio || effectiveInputMode === 'audio',
         provider_fallback_enabled: assistantFeatureFlags.providerFallbackEnabled,
         rag_enabled: assistantFeatureFlags.ragEnabled,
         memory_enabled: assistantFeatureFlags.memoryEnabled,
