@@ -96,6 +96,66 @@ function resolveDefaultWarehouseUnitForProduct(product: MasterCatalogProduct): W
   return 'kg';
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getManufacturerBrandCandidates(manufacturer?: string | null): string[] {
+  const value = manufacturer?.trim();
+  if (!value) return [];
+
+  const candidates = new Set<string>();
+  const addCandidate = (candidate?: string | null) => {
+    const normalized = candidate?.trim().replace(/\s+/g, ' ');
+    if (!normalized || normalized.length < 2) return;
+    candidates.add(normalized);
+  };
+
+  addCandidate(value);
+
+  for (const match of value.matchAll(/\(([^)]+)\)/g)) {
+    addCandidate(match[1]);
+  }
+
+  for (const part of value.split(/[/,-]/g)) {
+    addCandidate(part);
+  }
+
+  return [...candidates].sort((a, b) => b.length - a.length);
+}
+
+function formatCatalogueProductDisplayName(product: MasterCatalogProduct): string {
+  const sourceName = product.name?.trim() || '';
+  if (!sourceName) return product.name;
+  if (product.input_type !== 'fertilizer') return sourceName;
+
+  let strippedName = sourceName;
+  for (const candidate of getManufacturerBrandCandidates(product.manufacturer)) {
+    const prefixPattern = new RegExp(`^${escapeRegExp(candidate)}(?=\\b|\\s|[-/:|])`, 'i');
+    if (!prefixPattern.test(strippedName)) continue;
+
+    strippedName = strippedName
+      .replace(prefixPattern, '')
+      .replace(/^[\s\-/:|]+/, '')
+      .trim();
+    break;
+  }
+
+  return strippedName.length >= 3 ? strippedName : sourceName;
+}
+
+function formatCatalogueProductSubtitle(product: MasterCatalogProduct): string {
+  const parts = [product.active_ingredient, product.formulation]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+
+  if (parts.length > 0) {
+    return parts.join(' • ');
+  }
+
+  return product.input_type === 'fertilizer' ? 'Fertilizer' : 'Spray';
+}
+
 function mapCatalogCompositionsToRows(product: MasterCatalogProduct): CompositionRow[] {
   const rows = (product.compositions ?? []).map((composition) =>
     createCompositionRow({
@@ -214,9 +274,13 @@ export default function WarehouseItemForm({
   );
 
   const catalogInputTypes = useMemo(() => mapWarehouseTypeToCatalogInputTypes(type), [type]);
-  const { data: catalogProducts = [] } = useMasterProducts({
+  const {
+    data: catalogProducts = [],
+    isLoading: catalogProductsLoading,
+    error: catalogProductsError,
+  } = useMasterProducts({
     inputTypes: catalogInputTypes,
-    stateCode: 'MH',
+    stateCode: null,
   });
   const selectedCatalogProduct = useMemo(
     () => catalogProducts.find((product) => product.id === selectedCatalogProductId) ?? null,
@@ -333,7 +397,7 @@ export default function WarehouseItemForm({
     setName(product.name);
     setType(nextType);
     setUnit(resolveDefaultWarehouseUnitForProduct(product));
-    setManufacturer(product.manufacturer ?? '');
+    setManufacturer('');
     setCompositionRows(mapCatalogCompositionsToRows(product));
     setCompositionSource('preset');
     setSelectedCatalogProductId(product.id);
@@ -580,6 +644,19 @@ export default function WarehouseItemForm({
         presentation={presentation}
       >
         <SectionHeader
+          title="Item Type"
+          subtitle="Choose fertilizer or spray before searching the catalogue."
+          style={{ marginBottom: 12 }}
+        />
+
+        <PillSelector
+          options={ITEM_TYPES}
+          selectedValue={type}
+          onSelect={(value) => handleTypeSelect(value as WarehouseItemType)}
+          style={{ marginBottom: 20 }}
+        />
+
+        <SectionHeader
           title="Catalogue"
           subtitle="Optional. Search and select if available, or continue with manual item entry."
           style={{ marginBottom: 12 }}
@@ -613,7 +690,7 @@ export default function WarehouseItemForm({
             numberOfLines={1}
           >
             {selectedCatalogProduct
-              ? `${selectedCatalogProduct.name} - ${selectedCatalogProduct.manufacturer ?? 'Unknown manufacturer'}`
+              ? formatCatalogueProductDisplayName(selectedCatalogProduct)
               : 'Select from catalogue (or skip)'}
           </Text>
           <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
@@ -642,18 +719,11 @@ export default function WarehouseItemForm({
           style={{ marginBottom: 12 }}
         />
 
-        <PillSelector
-          options={ITEM_TYPES}
-          selectedValue={type}
-          onSelect={(value) => handleTypeSelect(value as WarehouseItemType)}
-          style={{ marginBottom: 20 }}
-        />
-
         <FormInput
           label="Manufacturer (Optional)"
           value={manufacturer}
           onChangeText={setManufacturer}
-          placeholder="e.g., Mahadhan / Vanita Agro"
+          placeholder="e.g., Vanita Agro"
           style={{ marginBottom: 12 }}
         />
 
@@ -976,7 +1046,7 @@ export default function WarehouseItemForm({
                           }}
                           numberOfLines={1}
                         >
-                          {product.name}
+                          {formatCatalogueProductDisplayName(product)}
                         </Text>
                         <Text
                           style={{
@@ -986,7 +1056,7 @@ export default function WarehouseItemForm({
                           }}
                           numberOfLines={1}
                         >
-                          {product.manufacturer ?? 'Unknown manufacturer'}
+                          {formatCatalogueProductSubtitle(product)}
                         </Text>
                       </View>
                       {selectedCatalogProductId === product.id && (
@@ -996,13 +1066,34 @@ export default function WarehouseItemForm({
                   </Pressable>
                 ))}
 
-                {visibleCatalogueItems.length === 0 && (
+                {catalogProductsLoading && (
                   <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
                     <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-                      No catalogue matches found.
+                      Loading catalogue items...
                     </Text>
                   </View>
                 )}
+
+                {!catalogProductsLoading && catalogProductsError && (
+                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.error[500] }}>
+                      Could not load catalogue items. Check PHI catalog migration/seed data and
+                      retry.
+                    </Text>
+                  </View>
+                )}
+
+                {!catalogProductsLoading &&
+                  !catalogProductsError &&
+                  visibleCatalogueItems.length === 0 && (
+                    <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                      <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                        {catalogProducts.length === 0
+                          ? 'No catalogue items available yet. PHI catalog may not be seeded in this environment.'
+                          : 'No catalogue matches found.'}
+                      </Text>
+                    </View>
+                  )}
               </ScrollView>
             </Pressable>
           </KeyboardAvoidingView>
