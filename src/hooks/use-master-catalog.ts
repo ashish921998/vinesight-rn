@@ -43,24 +43,32 @@ function mapProductsWithDetails(
 
 async function fetchMasterProducts(args: {
   inputTypes?: CatalogInputType[];
-  stateCode?: string;
+  stateCode?: string | null;
 }): Promise<MasterCatalogProduct[]> {
-  const stateCode = args.stateCode?.trim().toUpperCase() || 'MH';
+  const stateCode = args.stateCode?.trim().toUpperCase() || null;
 
-  let productQuery = supabase
-    .from(TABLES.CHEMICAL_PRODUCTS)
-    .select(
-      'id,name,manufacturer,active_ingredient,input_type,verification_tier,formulation,state_code,source_reference,is_active,created_at,updated_at',
-    )
-    .eq('is_active', true)
-    .eq('state_code', stateCode)
-    .order('name', { ascending: true });
+  const selectColumns =
+    'id,name,manufacturer,active_ingredient,input_type,verification_tier,formulation,state_code,source_reference,is_active,created_at,updated_at';
 
-  if (args.inputTypes && args.inputTypes.length > 0) {
-    productQuery = productQuery.in('input_type', args.inputTypes);
-  }
+  const buildProductQuery = (options?: { stateCode?: string }) => {
+    let query = supabase
+      .from(TABLES.CHEMICAL_PRODUCTS)
+      .select(selectColumns)
+      .eq('is_active', true)
+      .order('name', { ascending: true });
 
-  const productsResult = await productQuery;
+    if (options?.stateCode) {
+      query = query.eq('state_code', options.stateCode);
+    }
+
+    if (args.inputTypes && args.inputTypes.length > 0) {
+      query = query.in('input_type', args.inputTypes);
+    }
+
+    return query;
+  };
+
+  const productsResult = await buildProductQuery(stateCode ? { stateCode } : undefined);
   if (productsResult.error?.code === '42P01') return [];
   if (productsResult.error) throw productsResult.error;
 
@@ -98,10 +106,10 @@ async function fetchMasterProducts(args: {
 
 export function useMasterProducts(options?: {
   inputTypes?: CatalogInputType[];
-  stateCode?: string;
+  stateCode?: string | null;
 }) {
   const inputTypes = options?.inputTypes ?? [];
-  const stateCode = options?.stateCode ?? 'MH';
+  const stateCode = options?.stateCode?.trim().toUpperCase() || null;
 
   return useQuery({
     queryKey: queryKeys.masterCatalog.productsByType(inputTypes, stateCode),
@@ -118,7 +126,7 @@ export function useMasterProductSearch(
   query: string,
   options?: {
     inputTypes?: CatalogInputType[];
-    stateCode?: string;
+    stateCode?: string | null;
   },
 ) {
   const normalizedQuery = query.trim().toLowerCase();
@@ -148,7 +156,7 @@ export function useMasterProductById(
   productId: number | null | undefined,
   options?: {
     inputTypes?: CatalogInputType[];
-    stateCode?: string;
+    stateCode?: string | null;
   },
 ) {
   const productsQuery = useMasterProducts(options);

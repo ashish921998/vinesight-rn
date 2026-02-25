@@ -200,10 +200,10 @@ export const queryKeys = {
   masterCatalog: {
     all: ['masterCatalog'] as const,
     products: () => [...queryKeys.masterCatalog.all, 'products'] as const,
-    productsByType: (inputTypes: string[], stateCode: string) =>
+    productsByType: (inputTypes: string[], stateCode: string | null) =>
       [
         ...queryKeys.masterCatalog.products(),
-        { inputTypes: [...inputTypes].sort(), stateCode },
+        { inputTypes: [...inputTypes].sort(), stateCode: stateCode ?? null },
       ] as const,
     productDetail: (productId: number) =>
       [...queryKeys.masterCatalog.all, 'product', productId] as const,
