@@ -30,6 +30,6 @@ export const assistantFeatureFlags: AssistantFeatureFlags = {
 };
 
 export const assistantModelConfig = {
-  advisoryModel: 'gpt-4o-mini',
-  extractionModel: 'gpt-4o-mini',
+  advisoryModel: process.env.EXPO_PUBLIC_ASSISTANT_OPENAI_MODEL?.trim() || 'gpt-4o-mini',
+  extractionModel: process.env.EXPO_PUBLIC_ASSISTANT_EXTRACTION_MODEL?.trim() || 'gpt-4o-mini',
 };

@@ -1460,7 +1460,7 @@ export const hi = {
       recordingTooShortTitle: 'रिकॉर्डिंग बहुत छोटी',
       recordingTooShortBody: 'कृपया कम से कम 1 सेकंड बोलें और दोबारा प्रयास करें।',
       recordingTooShortDetailBody:
-        'ऑडियो बहुत छोटा था {{reason}}। बोलें दबाएँ, कम से कम 1 सेकंड रुकें, फिर रोकें दबाएँ।',
+        'ऑडियो बहुत छोटा था {{reason}} के कारण। बोलें दबाएँ, कम से कम 1 सेकंड रुकें, फिर रोकें दबाएँ।',
       voiceMessage: 'वॉइस मैसेज',
       sttNotReadyTitle: 'सर्वर STT तैयार नहीं',
       sttNotReadyBody:
@@ -1472,6 +1472,11 @@ export const hi = {
       choosePrompt: 'क्या जोड़ना है चुनें',
       image: 'इमेज',
       file: 'फ़ाइल',
+      imageTooLarge: 'इमेज 10MB सीमा से अधिक है। कृपया छोटी फ़ाइल चुनें।',
+      unsupportedImageType: 'असमर्थित इमेज प्रकार। JPG, PNG, WEBP या HEIC उपयोग करें।',
+      imageUnavailable: 'चुनी गई इमेज अब उपलब्ध नहीं है।',
+      fileTooLarge: 'फ़ाइल 10MB सीमा से अधिक है। कृपया छोटी फ़ाइल चुनें।',
+      unsupportedFileType: 'असमर्थित फ़ाइल प्रकार। PDF, TXT, CSV, JSON, XML या Markdown आज़माएँ।',
     },
     chat: {
       assistantSpeaking: 'सहायक बोल रहा है...',
@@ -1492,6 +1497,10 @@ export const hi = {
       toggleVoiceSpeedA11y: 'वॉइस गति बदलें',
       attachFileA11y: 'फ़ाइल जोड़ें',
       openVoiceModeA11y: 'वॉइस मोड खोलें',
+      close: 'बंद करें',
+      continuousOn: 'सतत चालू',
+      continuousOff: 'सतत बंद',
+      speak: 'बोलें',
     },
     conversationBootstrapFailed: 'नई बातचीत शुरू नहीं हो सकी। कृपया दोबारा प्रयास करें।',
     logging: {

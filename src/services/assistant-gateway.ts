@@ -14,6 +14,7 @@ import type {
   AssistantVoiceLogAction,
   ChatMessage,
 } from '@/types/ai';
+import type { VoiceLogDraft, VoiceLogFormPrefill } from '@/types/voice-log';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 
 const REQUEST_TIMEOUT_MS = 45_000;
@@ -211,6 +212,12 @@ function normalizeBase64Payload(value: string): string {
   return value.replace(/^data:[^;]+;base64,/i, '').trim();
 }
 
+function normalizeBase64Padding(value: string): string {
+  const normalized = value.trim();
+  const paddingLength = (4 - (normalized.length % 4)) % 4;
+  return normalized + '='.repeat(paddingLength);
+}
+
 function estimateBase64Bytes(base64Payload: string): number {
   const normalized = base64Payload.trim();
   const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
@@ -233,16 +240,40 @@ function validateAudioPayload(
     };
   }
 
-  if (normalized.length % 4 !== 0) {
-    return { valid: false, error: 'Invalid base64 length' };
-  }
-
+  const padded = normalizeBase64Padding(normalized);
   const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/;
-  if (!base64Regex.test(normalized)) {
+  if (!base64Regex.test(padded)) {
     return { valid: false, error: 'Invalid base64 format' };
   }
 
+  try {
+    Buffer.from(padded, 'base64');
+  } catch {
+    return { valid: false, error: 'Invalid base64 data' };
+  }
+
   return { valid: true, bytes: estimateBase64Bytes(normalized) };
+}
+
+function isVoiceLogDraft(value: unknown): value is VoiceLogDraft {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.type === 'string' &&
+    (v.farmId === null || typeof v.farmId === 'number') &&
+    typeof v.date === 'string' &&
+    typeof v.irrigation === 'object' &&
+    typeof v.spray === 'object' &&
+    typeof v.harvest === 'object' &&
+    typeof v.expense === 'object' &&
+    typeof v.fertigation === 'object'
+  );
+}
+
+function isVoiceLogFormPrefill(value: unknown): value is VoiceLogFormPrefill {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.type === 'string' && typeof v.date === 'string';
 }
 
 function parseInvokeError(
@@ -260,6 +291,16 @@ function parseInvokeError(
     rawMessage,
     ...(extras ?? {}),
   };
+
+  const errObj = error as Record<string, unknown>;
+  const status =
+    typeof errObj.status === 'number'
+      ? errObj.status
+      : typeof errObj.statusCode === 'number'
+        ? errObj.statusCode
+        : null;
+  const response = errObj.response as Record<string, unknown> | null;
+  const responseStatus = typeof response?.status === 'number' ? response.status : null;
 
   if (normalizedMessage.includes('abort')) {
     return new AssistantGatewayError(
@@ -294,7 +335,7 @@ function parseInvokeError(
     );
   }
 
-  if (normalizedMessage.includes('status=401') || normalizedMessage.includes('status=403')) {
+  if (status === 401 || status === 403 || responseStatus === 401 || responseStatus === 403) {
     return new AssistantGatewayError(
       AssistantGatewayErrorCode.AUTHENTICATION_FAILED,
       'Authentication failed',
@@ -303,10 +344,31 @@ function parseInvokeError(
     );
   }
 
-  if (normalizedMessage.includes('status=429') || normalizedMessage.includes('rate limit')) {
+  if (status === 429 || responseStatus === 429) {
     return new AssistantGatewayError(
       AssistantGatewayErrorCode.RATE_LIMITED,
       'Rate limited',
+      details,
+      baseError,
+    );
+  }
+
+  if (
+    (status !== null && status >= 500 && status < 600) ||
+    (responseStatus !== null && responseStatus >= 500 && responseStatus < 600)
+  ) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.SERVER_ERROR,
+      'Server error',
+      details,
+      baseError,
+    );
+  }
+
+  if ((status === 400 || responseStatus === 400) && normalizedMessage.includes('audio')) {
+    return new AssistantGatewayError(
+      AssistantGatewayErrorCode.AUDIO_VALIDATION_FAILED,
+      'Audio recording is too short or invalid. Please try again and speak longer.',
       details,
       baseError,
     );
@@ -438,8 +500,8 @@ function toVoiceLogAction(
 
   return {
     kind: input.kind,
-    draft: input.draft as AssistantVoiceLogAction['draft'],
-    prefill: input.prefill as AssistantVoiceLogAction['prefill'],
+    draft: isVoiceLogDraft(input.draft) ? input.draft : null,
+    prefill: isVoiceLogFormPrefill(input.prefill) ? input.prefill : null,
     missingFields,
     expectedField,
     clarifyAttempts:
@@ -596,8 +658,10 @@ export async function sendAssistantTurn(
       locale: input.language,
       input_mode: effectiveInputMode,
       input_text: normalizedInput || null,
-      input_audio_b64: hasAudioPayload ? (input.inputAudioBase64 ?? null) : null,
-      audio_format: hasAudioPayload ? (input.audioFormat ?? 'audio/mpeg') : null,
+      input_audio_b64: hasAudioPayload
+        ? (normalizeBase64Payload(input.inputAudioBase64 ?? '') ?? null)
+        : null,
+      audio_format: hasAudioPayload ? (input.audioFormat ?? null) : null,
       attachments: input.attachments ?? [],
       farm_context: input.farmContext
         ? {
@@ -611,7 +675,7 @@ export async function sendAssistantTurn(
           }
         : null,
       client_capabilities: {
-        can_play_audio: clientCanPlayAudio || effectiveInputMode === 'audio',
+        can_play_audio: clientCanPlayAudio,
         provider_fallback_enabled: assistantFeatureFlags.providerFallbackEnabled,
         rag_enabled: assistantFeatureFlags.ragEnabled,
         memory_enabled: assistantFeatureFlags.memoryEnabled,

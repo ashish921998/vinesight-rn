@@ -1480,6 +1480,11 @@ export const mr = {
       choosePrompt: 'काय जोडायचे ते निवडा',
       image: 'इमेज',
       file: 'फाइल',
+      imageTooLarge: 'इमेज 10MB मर्यादेपेक्षा मोठी आहे. कृपया लहान फाइल निवडा.',
+      unsupportedImageType: 'असमर्थित इमेज प्रकार. JPG, PNG, WEBP किंवा HEIC वापरा.',
+      imageUnavailable: 'निवडलेली इमेज आता उपलब्ध नाही.',
+      fileTooLarge: 'फाइल 10MB मर्यादेपेक्षा मोठी आहे. कृपया लहान फाइल निवडा.',
+      unsupportedFileType: 'असमर्थित फाइल प्रकार. PDF, TXT, CSV, JSON, XML किंवा Markdown वापरा.',
     },
     chat: {
       assistantSpeaking: 'सहाय्यक बोलत आहे...',
@@ -1500,6 +1505,10 @@ export const mr = {
       toggleVoiceSpeedA11y: 'व्हॉइस वेग बदला',
       attachFileA11y: 'फाइल जोडा',
       openVoiceModeA11y: 'व्हॉइस मोड उघडा',
+      close: 'बंद करा',
+      continuousOn: 'सतत चालू',
+      continuousOff: 'सतत बंद',
+      speak: 'बोला',
     },
     conversationBootstrapFailed: 'नवीन संवाद सुरू करता आला नाही. कृपया पुन्हा प्रयत्न करा.',
     logging: {

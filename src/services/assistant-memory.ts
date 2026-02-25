@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import type { ChatMessage } from '@/types/ai';
 import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import { ASSISTANT_MEMORY_RETENTION_DAYS } from '@/constants/assistant-memory';
+import { getUserId } from '@/lib/auth-utils';
 
 interface ConversationRow {
   id: string;
@@ -34,13 +35,6 @@ export interface AssistantConversationSummary {
   updatedAt: Date;
   lastMessage: string | null;
   lastMessageAt: Date | null;
-}
-
-async function getUserId(): Promise<string | null> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
 }
 
 function parseDate(value: string | null | undefined): Date {
@@ -177,7 +171,7 @@ class AssistantMemoryService {
         .select('id, conversation_id, role, content, citations, created_at')
         .eq('conversation_id', conversationId)
         .in('role', ['user', 'assistant'])
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(limit);
 
       if (error) {
@@ -185,7 +179,7 @@ class AssistantMemoryService {
         return [];
       }
 
-      return ((data ?? []) as TurnRow[]).map((row) => ({
+      const messages = ((data ?? []) as TurnRow[]).map((row) => ({
         id: row.id,
         role: row.role,
         content: row.content,
@@ -193,6 +187,7 @@ class AssistantMemoryService {
         conversationId: row.conversation_id,
         citations: Array.isArray(row.citations) ? row.citations : undefined,
       }));
+      return messages.reverse();
     } catch (error) {
       if (__DEV__) console.warn('Assistant message load failed:', error);
       return [];

@@ -2273,33 +2273,23 @@ export default function AIChatScreen() {
         });
       const fileSize = asset.fileSize ?? undefined;
       if (typeof fileSize === 'number' && fileSize > MAX_ATTACHMENT_SIZE_BYTES) {
-        Alert.alert(
-          t('common.error'),
-          'Image exceeds the 10MB limit. Please choose a smaller file.',
-          [{ text: t('common.ok') }],
-        );
+        Alert.alert(t('common.error'), t('ai.attach.imageTooLarge'), [{ text: t('common.ok') }]);
         return;
       }
       if (!ALLOWED_IMAGE_MIME_TYPES.has(mimeType.toLowerCase())) {
-        Alert.alert(t('common.error'), 'Unsupported image type. Use JPG, PNG, WEBP, or HEIC.', [
+        Alert.alert(t('common.error'), t('ai.attach.unsupportedImageType'), [
           { text: t('common.ok') },
         ]);
         return;
       }
       const fileInfo = await FileSystem.getInfoAsync(asset.uri);
       if (!fileInfo.exists) {
-        Alert.alert(t('common.error'), 'Selected image is no longer available.', [
-          { text: t('common.ok') },
-        ]);
+        Alert.alert(t('common.error'), t('ai.attach.imageUnavailable'), [{ text: t('common.ok') }]);
         return;
       }
       const resolvedFileSize = resolveAttachmentFileSizeBytes(fileSize, fileInfo);
       if (typeof resolvedFileSize === 'number' && resolvedFileSize > MAX_ATTACHMENT_SIZE_BYTES) {
-        Alert.alert(
-          t('common.error'),
-          'Image exceeds the 10MB limit. Please choose a smaller file.',
-          [{ text: t('common.ok') }],
-        );
+        Alert.alert(t('common.error'), t('ai.attach.imageTooLarge'), [{ text: t('common.ok') }]);
         return;
       }
       setAttachments((prev) => [
@@ -2333,19 +2323,13 @@ export default function AIChatScreen() {
       const mimeType = asset.mimeType ?? undefined;
       const fileSize = asset.size ?? undefined;
       if (typeof fileSize === 'number' && fileSize > MAX_ATTACHMENT_SIZE_BYTES) {
-        Alert.alert(
-          t('common.error'),
-          'File exceeds the 10MB limit. Please choose a smaller file.',
-          [{ text: t('common.ok') }],
-        );
+        Alert.alert(t('common.error'), t('ai.attach.fileTooLarge'), [{ text: t('common.ok') }]);
         return;
       }
       if (!isAllowedDocumentMimeType(mimeType, asset.name || '', asset.uri)) {
-        Alert.alert(
-          t('common.error'),
-          'Unsupported file type. Try PDF, TXT, CSV, JSON, XML, or Markdown.',
-          [{ text: t('common.ok') }],
-        );
+        Alert.alert(t('common.error'), t('ai.attach.unsupportedFileType'), [
+          { text: t('common.ok') },
+        ]);
         return;
       }
       const fileInfo = await FileSystem.getInfoAsync(asset.uri);
@@ -2355,11 +2339,7 @@ export default function AIChatScreen() {
       }
       const resolvedFileSize = resolveAttachmentFileSizeBytes(fileSize, fileInfo);
       if (typeof resolvedFileSize === 'number' && resolvedFileSize > MAX_ATTACHMENT_SIZE_BYTES) {
-        Alert.alert(
-          t('common.error'),
-          'File exceeds the 10MB limit. Please choose a smaller file.',
-          [{ text: t('common.ok') }],
-        );
+        Alert.alert(t('common.error'), t('ai.attach.fileTooLarge'), [{ text: t('common.ok') }]);
         return;
       }
       setAttachments((prev) => [
@@ -2401,7 +2381,7 @@ export default function AIChatScreen() {
   }, [failedRequest, handleSendMessage, isLoading]);
 
   const handleSuggestionPress = (suggestion: string) => {
-    handleSendMessage(suggestion, 'text');
+    void handleSendMessage(suggestion, 'text');
   };
 
   const formatMessageTime = (date: Date) => {
@@ -3550,7 +3530,7 @@ export default function AIChatScreen() {
                         fontWeight: fontWeight.semibold,
                       }}
                     >
-                      Close
+                      {t('ai.chat.close')}
                     </Text>
                   </Pressable>
                 </View>
@@ -3589,7 +3569,9 @@ export default function AIChatScreen() {
                     fontWeight: fontWeight.semibold,
                   }}
                 >
-                  {isVoiceModeContinuousEnabled ? 'Continuous On' : 'Continuous Off'}
+                  {isVoiceModeContinuousEnabled
+                    ? t('ai.chat.continuousOn')
+                    : t('ai.chat.continuousOff')}
                 </Text>
               </Pressable>
               <Pressable
@@ -3628,7 +3610,7 @@ export default function AIChatScreen() {
                     fontWeight: fontWeight.semibold,
                   }}
                 >
-                  {isVoiceListening ? 'Stop' : 'Speak'}
+                  {isVoiceListening ? t('ai.chat.stop') : t('ai.chat.speak')}
                 </Text>
               </Pressable>
               <Pressable

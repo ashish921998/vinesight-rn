@@ -1471,6 +1471,11 @@ export const en = {
       choosePrompt: 'Choose what to attach',
       image: 'Image',
       file: 'File',
+      imageTooLarge: 'Image exceeds the 10MB limit. Please choose a smaller file.',
+      unsupportedImageType: 'Unsupported image type. Use JPG, PNG, WEBP, or HEIC.',
+      imageUnavailable: 'Selected image is no longer available.',
+      fileTooLarge: 'File exceeds the 10MB limit. Please choose a smaller file.',
+      unsupportedFileType: 'Unsupported file type. Try PDF, TXT, CSV, JSON, XML, or Markdown.',
     },
     chat: {
       assistantSpeaking: 'Assistant is speaking...',
@@ -1491,6 +1496,10 @@ export const en = {
       toggleVoiceSpeedA11y: 'Toggle voice speed',
       attachFileA11y: 'Attach file',
       openVoiceModeA11y: 'Open voice mode',
+      close: 'Close',
+      continuousOn: 'Continuous On',
+      continuousOff: 'Continuous Off',
+      speak: 'Speak',
     },
     conversationBootstrapFailed: 'Could not start a new conversation. Please try again.',
     logging: {

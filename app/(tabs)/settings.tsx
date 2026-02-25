@@ -51,6 +51,7 @@ import { resolveAreaUnitPreference } from '@/utils/preferences';
 import { assistantMemoryService } from '@/services/assistant-memory';
 import { telemetry } from '@/services/telemetry';
 import { ASSISTANT_MEMORY_RETENTION_DAYS } from '@/constants/assistant-memory';
+import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import {
   buildE164PhoneNumber as buildNormalizedE164PhoneNumber,
   sanitizePhoneDigits,
@@ -465,6 +466,8 @@ export default function SettingsScreen() {
     if (isExportingAssistantData || isDeletingAssistantData) return;
     setIsExportingAssistantData(true);
 
+    let fileUri: string | null = null;
+
     try {
       const exportData = await assistantMemoryService.exportUserData();
       if (!exportData) {
@@ -480,16 +483,20 @@ export default function SettingsScreen() {
 
       const fileName = `vinesight-assistant-memory-${Date.now()}.json`;
       const directory = FileSystem.cacheDirectory;
-      const fileUri = directory ? `${directory}${fileName}` : null;
+      fileUri = directory ? `${directory}${fileName}` : null;
 
-      if (fileUri) {
-        await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(payload, null, 2));
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(fileUri, {
-            mimeType: 'application/json',
-            dialogTitle: t('settings.assistantMemory.exportShareTitle'),
-          });
-        }
+      if (!fileUri) {
+        Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
+        return;
+      }
+
+      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(payload, null, 2));
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/json',
+          dialogTitle: t('settings.assistantMemory.exportShareTitle'),
+        });
       }
 
       telemetry.capture('assistant_memory_exported', {
@@ -512,6 +519,15 @@ export default function SettingsScreen() {
       }
       Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
     } finally {
+      if (fileUri) {
+        try {
+          await FileSystem.deleteAsync(fileUri);
+        } catch (deleteError) {
+          if (__DEV__) {
+            console.warn('Failed to delete temp file:', deleteError);
+          }
+        }
+      }
       setIsExportingAssistantData(false);
     }
   };
@@ -942,26 +958,93 @@ export default function SettingsScreen() {
       </View>
 
       {/* Assistant Section */}
+      {assistantFeatureFlags.memoryEnabled && (
+        <View style={styles.section}>
+          <Text
+            style={styles.sectionHeader}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {t('settings.sectionAssistant')}
+          </Text>
+          <View style={styles.sectionContent}>
+            <Pressable
+              onPress={handleExportAssistantMemory}
+              disabled={isExportingAssistantData || isDeletingAssistantData}
+              style={[
+                styles.settingsItem,
+                styles.borderBottom,
+                (isExportingAssistantData || isDeletingAssistantData) && styles.disabledItem,
+              ]}
+            >
+              <View style={styles.settingsIcon}>
+                <UISymbol name="doc.text" size={20} color={m3.colorScheme.primary} />
+              </View>
+              <Text
+                style={styles.settingsTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.assistantMemory.exportAction')}
+              </Text>
+              {isExportingAssistantData ? (
+                <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+              ) : (
+                <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
+              )}
+            </Pressable>
+            <Pressable
+              onPress={handleDeleteAssistantMemory}
+              disabled={isDeletingAssistantData || isExportingAssistantData}
+              style={[
+                styles.settingsItem,
+                (isDeletingAssistantData || isExportingAssistantData) && styles.disabledItem,
+              ]}
+            >
+              <View style={styles.deleteIcon}>
+                <UISymbol name="trash" size={20} color={colors.error} />
+              </View>
+              <Text
+                style={styles.deleteText}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.assistantMemory.deleteAction')}
+              </Text>
+              {isDeletingAssistantData ? (
+                <ActivityIndicator size="small" color={colors.error} />
+              ) : (
+                <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
+              )}
+            </Pressable>
+          </View>
+          <Text
+            style={styles.notificationNote}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {t('settings.assistantMemory.retentionNote', {
+              days: ASSISTANT_MEMORY_RETENTION_DAYS,
+            })}
+          </Text>
+        </View>
+      )}
+      {/* Account Section */}
       <View style={styles.section}>
         <Text
           style={styles.sectionHeader}
           textBreakStrategy="highQuality"
           lineBreakStrategyIOS="standard"
         >
-          {t('settings.sectionAssistant')}
+          {t('settings.sectionAccount')}
         </Text>
         <View style={styles.sectionContent}>
           <Pressable
-            onPress={handleExportAssistantMemory}
-            disabled={isExportingAssistantData || isDeletingAssistantData}
-            style={[
-              styles.settingsItem,
-              styles.borderBottom,
-              (isExportingAssistantData || isDeletingAssistantData) && styles.disabledItem,
-            ]}
+            onPress={handleOpenLinkPhone}
+            style={[styles.settingsItem, styles.borderBottom]}
           >
             <View style={styles.settingsIcon}>
-              <UISymbol name="doc.text" size={20} color={m3.colorScheme.primary} />
+              <UISymbol name="phone.fill" size={20} color={m3.colorScheme.primary} />
             </View>
             <Text
               style={styles.settingsTitle}
