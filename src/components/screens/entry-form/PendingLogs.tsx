@@ -18,6 +18,8 @@ import { useTranslation } from 'react-i18next';
 export interface PendingLog {
   id: string;
   type: LogTypeId;
+  scope: 'single_farm' | 'all_farms';
+  farmId: number | null;
   data:
     | IrrigationFormData
     | SprayFormData

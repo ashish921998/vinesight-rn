@@ -903,9 +903,13 @@ export function EntryForm({
         return;
     }
 
+    const draftScope: PendingLog['scope'] =
+      isAllFarmsSelected && selectedLogType === 'expense' ? 'all_farms' : 'single_farm';
     const newLog: PendingLog = {
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       type: selectedLogType,
+      scope: draftScope,
+      farmId: draftScope === 'all_farms' ? null : (activeFarm?.id ?? null),
       data,
       displayDescription: getLogDescription(selectedLogType, data),
       isSourceTaskLog: false,
@@ -947,11 +951,12 @@ export function EntryForm({
 
   const saveAllLogs = async () => {
     if (pendingLogs.length === 0) return;
-    if (!activeFarm?.id && !isAllFarmsSelected) return;
 
     setIsSubmittingLogs(true);
     const dateStr = toSupabaseDateString(selectedDate);
     const createdFrom = entrySource === 'voice_ai' ? 'voice_ai' : 'manual';
+    const hasAllFarmsDrafts = pendingLogs.some((log) => log.scope === 'all_farms');
+    const hasSingleFarmDrafts = pendingLogs.some((log) => log.scope === 'single_farm');
 
     const submitters: EntryLogSubmitters = {
       createIrrigation: async (payload) => createIrrigation.mutateAsync(payload),
@@ -984,7 +989,18 @@ export function EntryForm({
       });
 
     try {
-      if (isAllFarmsSelected) {
+      if (hasAllFarmsDrafts && hasSingleFarmDrafts) {
+        Alert.alert(
+          t('common.error'),
+          t('entryForm.mixedDraftScopes', {
+            defaultValue:
+              'This draft session contains both all-farms and single-farm entries. Please save or remove one scope before continuing.',
+          }),
+        );
+        return;
+      }
+
+      if (hasAllFarmsDrafts) {
         const farmsToUse = (farms ?? []).filter((farmItem) => typeof farmItem.id === 'number');
         if (farmsToUse.length === 0) {
           Alert.alert(t('common.error'), t('entryForm.allFarmsNoFarms'));
@@ -1128,14 +1144,33 @@ export function EntryForm({
         return;
       }
 
-      const farmId = activeFarm?.id ?? null;
-      if (!farmId || !activeFarm) {
-        setIsSubmittingLogs(false);
+      const singleFarmIds = Array.from(
+        new Set(
+          pendingLogs
+            .filter((log) => log.scope === 'single_farm')
+            .map((log) => log.farmId)
+            .filter((farmId): farmId is number => typeof farmId === 'number'),
+        ),
+      );
+      if (singleFarmIds.length !== 1) {
+        Alert.alert(
+          t('common.error'),
+          t('entryForm.mixedDraftFarms', {
+            defaultValue:
+              'This draft session includes entries for multiple farms. Please save or remove entries so all drafts target one farm.',
+          }),
+        );
         return;
       }
+      const farmId = singleFarmIds[0] ?? null;
+      const singleFarmContext =
+        (farm && farm.id === farmId ? farm : null) ??
+        farms?.find((farmItem) => farmItem.id === farmId) ??
+        null;
+      if (!farmId || !singleFarmContext) return;
 
       const results = await Promise.allSettled(
-        pendingLogs.map((log) => saveLog(log, buildFarmContext(activeFarm))),
+        pendingLogs.map((log) => saveLog(log, buildFarmContext(singleFarmContext))),
       );
       const successfulIds = pendingLogs
         .filter((_, index) => results[index]?.status === 'fulfilled')
@@ -1821,7 +1856,12 @@ export function EntryForm({
             {t('entryForm.farmLabel')}
           </Text>
           <Pressable
-            onPress={() => setShowLogFarmPicker(!showLogFarmPicker)}
+            disabled={pendingLogs.length > 0}
+            accessibilityState={{ disabled: pendingLogs.length > 0 }}
+            onPress={() => {
+              if (pendingLogs.length > 0) return;
+              setShowLogFarmPicker(!showLogFarmPicker);
+            }}
             style={{
               backgroundColor: colors.surface[50],
               borderRadius: 12,
@@ -1832,6 +1872,7 @@ export function EntryForm({
               justifyContent: 'space-between',
               borderWidth: 1,
               borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+              opacity: pendingLogs.length > 0 ? 0.7 : 1,
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
