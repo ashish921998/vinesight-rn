@@ -882,7 +882,7 @@ export function EntryForm({
                 governingPhiDays: null,
                 safeHarvestDate: null,
                 phiBlockingComponent: null,
-                phiStatus: 'unknown',
+                phiStatus: sprayData.phiStatus ?? 'unknown',
               };
         setSprayData(createEmptySprayFormData());
         break;

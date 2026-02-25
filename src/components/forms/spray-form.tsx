@@ -307,7 +307,7 @@ export function SprayForm({
         governingPhiDays: null,
         safeHarvestDate: null,
         phiBlockingComponent: null,
-        phiStatus: 'verified',
+        phiStatus: null,
         chemicals,
       });
     },
