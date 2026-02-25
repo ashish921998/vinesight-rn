@@ -48,7 +48,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { ICON_REGISTRY } from '@/constants/icon-registry';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 
-interface Props {
+interface WarehouseItemFormProps {
   visible?: boolean;
   onClose: () => void;
   editingItem: WarehouseItem | null;
@@ -127,7 +127,7 @@ function getManufacturerBrandCandidates(manufacturer?: string | null): string[] 
 
 function formatCatalogueProductDisplayName(product: MasterCatalogProduct): string {
   const sourceName = product.name?.trim() || '';
-  if (!sourceName) return product.name;
+  if (!sourceName) return '';
   if (product.input_type !== 'fertilizer') return sourceName;
 
   let strippedName = sourceName;
@@ -137,7 +137,7 @@ function formatCatalogueProductDisplayName(product: MasterCatalogProduct): strin
 
     strippedName = strippedName
       .replace(prefixPattern, '')
-      .replace(/^[\s\-/:|]+/, '')
+      .replace(/^[\s\-/:|.,]+/, '')
       .trim();
     break;
   }
@@ -206,7 +206,7 @@ export default function WarehouseItemForm({
   onClose,
   editingItem,
   presentation = 'modal',
-}: Props) {
+}: WarehouseItemFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
   const { windowHeight } = useResponsiveHeight();
