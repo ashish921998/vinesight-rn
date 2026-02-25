@@ -987,14 +987,12 @@ export function EntryForm({
       if (isAllFarmsSelected) {
         const farmsToUse = (farms ?? []).filter((farmItem) => typeof farmItem.id === 'number');
         if (farmsToUse.length === 0) {
-          setIsSubmittingLogs(false);
           Alert.alert(t('common.error'), t('entryForm.allFarmsNoFarms'));
           return;
         }
 
         const hasNonExpenseLogs = pendingLogs.some((log) => log.type !== 'expense');
         if (hasNonExpenseLogs) {
-          setIsSubmittingLogs(false);
           Alert.alert(t('common.error'), t('entryForm.allFarmsExpenseOnly'));
           return;
         }
@@ -1682,7 +1680,6 @@ export function EntryForm({
               {selectedLogType === 'spray' ? (
                 <View
                   style={{
-                    marginHorizontal: 16,
                     marginTop: 16,
                     marginBottom: 4,
                     padding: 12,

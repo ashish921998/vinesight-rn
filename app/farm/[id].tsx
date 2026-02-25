@@ -225,10 +225,8 @@ export default function FarmDetailScreen() {
     if (!farmSeasons || farmSeasons.length === 0) return null;
     return farmSeasons.find((season) => season.end_date === null) ?? null;
   }, [farmSeasons]);
-  const { data: earliestSafeHarvest } = useEarliestSafeHarvestForSeason(
-    farmId,
-    activeSeasonRecord?.id ?? null,
-  );
+  const { data: earliestSafeHarvest, refetch: refetchEarliestSafeHarvest } =
+    useEarliestSafeHarvestForSeason(farmId, activeSeasonRecord?.id ?? null);
   const earliestSafeHarvestDateLabel = useMemo(() => {
     const raw = earliestSafeHarvest?.earliestDate;
     if (!raw) return null;
@@ -675,7 +673,13 @@ export default function FarmDetailScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetchFarm(), refetchRecords(), refetchTasks(), refetchSeasons()]);
+      await Promise.all([
+        refetchFarm(),
+        refetchRecords(),
+        refetchTasks(),
+        refetchSeasons(),
+        refetchEarliestSafeHarvest(),
+      ]);
     } finally {
       setRefreshing(false);
     }
@@ -1387,14 +1391,15 @@ export default function FarmDetailScreen() {
                         }}
                       >
                         {t('farmDetails.safeHarvest.inlineDate', {
-                          date: earliestSafeHarvestDateLabel ?? earliestSafeHarvest.earliestDate,
+                          date: earliestSafeHarvestDateLabel,
                           defaultValue: 'Safe harvest date: {{date}}',
                         })}
                       </Text>
                     </View>
                   ) : null}
 
-                  {!isGrapeFarm ? (
+                  {!isGrapeFarm &&
+                  ((sprayRecords?.length ?? 0) > 0 || activeSeasonRecord != null) ? (
                     <View
                       style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
                     >
