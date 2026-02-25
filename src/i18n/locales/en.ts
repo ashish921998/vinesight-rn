@@ -1456,7 +1456,23 @@ export const en = {
       noSpeechBody: 'I could not hear anything. Try speaking again.',
       unavailableTitle: 'Voice Input Unavailable',
       unavailableBody: 'Voice input is not available on this device right now.',
+      recordingTooShortTitle: 'Recording Too Short',
+      recordingTooShortBody: 'Please speak for at least 1 second and try again.',
+      recordingTooShortDetailBody:
+        'Audio was too short{{reason}}. Tap Speak, wait at least 1 second, then tap Stop.',
+      voiceMessage: 'Voice message',
+      sttNotReadyTitle: 'Server STT not ready',
+      sttNotReadyBody:
+        'Microphone recording could not be started, so server speech-to-text cannot be used.',
+      fileUnavailable: 'Selected file is no longer available.',
     },
+    attach: {
+      title: 'Attach',
+      choosePrompt: 'Choose what to attach',
+      image: 'Image',
+      file: 'File',
+    },
+    conversationBootstrapFailed: 'Could not start a new conversation. Please try again.',
     logging: {
       cancelled: 'Okay, I cancelled the logging flow.',
       noFarms: 'Please add a farm first, then I can open a logging form.',

@@ -1465,7 +1465,23 @@ export const mr = {
       noSpeechBody: 'मला काही ऐकू आले नाही. कृपया पुन्हा बोला.',
       unavailableTitle: 'व्हॉइस इनपुट उपलब्ध नाही',
       unavailableBody: 'या डिव्हाइसवर सध्या व्हॉइस इनपुट उपलब्ध नाही.',
+      recordingTooShortTitle: 'रेकॉर्डिंग खूप लहान',
+      recordingTooShortBody: 'कृपया किमान 1 सेकंद बोला आणि पुन्हा प्रयत्न करा.',
+      recordingTooShortDetailBody:
+        'ऑडिओ खूप लहान होता{{reason}}. बोला दाबा, किमान 1 सेकंद थांबा, मग थांबा दाबा.',
+      voiceMessage: 'व्हॉइस मेसेज',
+      sttNotReadyTitle: 'सर्व्हर STT तयार नाही',
+      sttNotReadyBody:
+        'मायक्रोफोन रेकॉर्डिंग सुरू होऊ शकले नाही, त्यामुळे सर्व्हर स्पीच-टू-टेक्स्ट वापरता येत नाही.',
+      fileUnavailable: 'निवडलेली फाइल आता उपलब्ध नाही.',
     },
+    attach: {
+      title: 'जोडा',
+      choosePrompt: 'काय जोडायचे ते निवडा',
+      image: 'इमेज',
+      file: 'फाइल',
+    },
+    conversationBootstrapFailed: 'नवीन संवाद सुरू करता आला नाही. कृपया पुन्हा प्रयत्न करा.',
     logging: {
       cancelled: 'ठीक आहे, नोंदणी प्रक्रिया रद्द केली.',
       noFarms: 'आधी एक $t(glossary.farm) जोडा, मग मी नोंदणी फॉर्म उघडतो.',

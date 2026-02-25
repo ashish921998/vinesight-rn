@@ -153,6 +153,27 @@ function toDebugString(value: unknown, maxLength = 1200): string {
   }
 }
 
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message || 'Unknown assistant gateway error';
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error && typeof error === 'object') {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message;
+    }
+    const serialized = toDebugString(error, 300);
+    if (serialized) return serialized;
+  }
+
+  return String(error);
+}
+
 async function extractInvokeErrorContext(error: unknown): Promise<string> {
   const context = (error as { context?: unknown } | null | undefined)?.context as
     | {
@@ -231,7 +252,7 @@ function parseInvokeError(
 ): AssistantGatewayError {
   if (error instanceof AssistantGatewayError) return error;
 
-  const baseError = error instanceof Error ? error : new Error(String(error));
+  const baseError = error instanceof Error ? error : new Error(toErrorMessage(error));
   const rawMessage = baseError.message || 'Unknown assistant gateway error';
   const normalizedMessage = rawMessage.toLowerCase();
   const details: Record<string, unknown> = {
@@ -306,7 +327,13 @@ function parseInvokeError(
     );
   }
 
-  if (normalizedMessage.includes('status=5')) {
+  if (
+    normalizedMessage.includes('status=5') ||
+    normalizedMessage.includes('function not found') ||
+    normalizedMessage.includes('edge function not found') ||
+    normalizedMessage.includes('failed to send a request to the edge function') ||
+    normalizedMessage.includes('failed to execute the function')
+  ) {
     return new AssistantGatewayError(
       AssistantGatewayErrorCode.SERVER_ERROR,
       'Server error',
@@ -614,7 +641,7 @@ export async function sendAssistantTurn(
     }
 
     if (error) {
-      const invokeErrorMessage = error instanceof Error ? error.message : String(error);
+      const invokeErrorMessage = toErrorMessage(error);
       const invokeContext = await extractInvokeErrorContext(error);
       const responsePayload = toDebugString(data);
       const responseContext = responsePayload ? `response=${responsePayload}` : '';

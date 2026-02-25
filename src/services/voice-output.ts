@@ -11,6 +11,12 @@ interface PlaybackOptions {
   onStateChange?: (isPlaying: boolean) => void;
 }
 
+interface PlaybackStatusUpdate {
+  didJustFinish?: boolean;
+  isLoaded?: boolean;
+  playing?: boolean;
+}
+
 function resolveLocale(language: SupportedLanguageCode): string {
   if (language === 'mr') return 'mr-IN';
   if (language === 'hi') return 'hi-IN';
@@ -46,11 +52,14 @@ class VoiceOutputService {
     this.lastAudioUri = fileUri;
 
     options.onStateChange?.(true);
-    this.activePlayerSubscription = player.addListener('playbackStatusUpdate', (status) => {
-      if (status.didJustFinish || status.isLoaded === false || !status.playing) {
-        options.onStateChange?.(false);
-      }
-    });
+    this.activePlayerSubscription = player.addListener(
+      'playbackStatusUpdate',
+      (status: PlaybackStatusUpdate) => {
+        if (status.didJustFinish || status.isLoaded === false || !status.playing) {
+          options.onStateChange?.(false);
+        }
+      },
+    );
     player.play();
 
     return true;

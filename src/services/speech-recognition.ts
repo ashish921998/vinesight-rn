@@ -104,10 +104,10 @@ const useNativeSpeechRecognitionEventAdapter: SpeechRecognitionEventHook = (
   eventName,
   listener,
 ) => {
-  if (useNativeSpeechRecognitionEvent) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useNativeSpeechRecognitionEvent(eventName as never, listener as never);
-  }
+  // useNativeSpeechRecognitionEvent is guaranteed non-null here because
+  // useSpeechRecognitionEventImpl is only set to this adapter when
+  // the native module was successfully loaded (module-level constant).
+  useNativeSpeechRecognitionEvent!(eventName as never, listener as never);
 };
 
 const useSpeechRecognitionEventImpl: SpeechRecognitionEventHook =

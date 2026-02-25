@@ -744,21 +744,48 @@ export default function AIChatScreen() {
     let isCancelled = false;
 
     const bootstrapConversation = async () => {
-      const summaries = await assistantMemoryService.listConversations({ limit: 30 });
-      if (!isCancelled) {
-        setConversationSummaries(summaries);
+      try {
+        const summaries = await assistantMemoryService.listConversations({ limit: 30 });
+        if (!isCancelled) {
+          setConversationSummaries(summaries);
+        }
+
+        const nextConversationId = await assistantMemoryService.createConversation({
+          farmId: contextFarm?.id ?? parsedFarmId ?? null,
+          locale: languageCode,
+        });
+
+        if (isCancelled) return;
+
+        if (!nextConversationId) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: t('ai.conversationBootstrapFailed'),
+              timestamp: new Date(),
+            } as ChatMessage,
+          ]);
+          return;
+        }
+
+        setConversationId(nextConversationId);
+        setMessages([]);
+        setSuggestions(DEFAULT_SUGGESTIONS);
+      } catch (error) {
+        if (isCancelled) return;
+        if (__DEV__) {
+          console.warn('Conversation bootstrap failed:', error);
+        }
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: t('ai.conversationBootstrapFailed'),
+            timestamp: new Date(),
+          } as ChatMessage,
+        ]);
       }
-
-      const nextConversationId = await assistantMemoryService.createConversation({
-        farmId: contextFarm?.id ?? parsedFarmId ?? null,
-        locale: languageCode,
-      });
-
-      if (isCancelled || !nextConversationId) return;
-
-      setConversationId(nextConversationId);
-      setMessages([]);
-      setSuggestions(DEFAULT_SUGGESTIONS);
     };
 
     void bootstrapConversation();
@@ -766,7 +793,7 @@ export default function AIChatScreen() {
     return () => {
       isCancelled = true;
     };
-  }, [DEFAULT_SUGGESTIONS, contextFarm?.id, languageCode, parsedFarmId]);
+  }, [DEFAULT_SUGGESTIONS, contextFarm?.id, languageCode, parsedFarmId, t]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -960,7 +987,7 @@ export default function AIChatScreen() {
           base64_length: voicePayload?.inputAudioBase64?.length ?? 0,
           estimated_bytes: voicePayloadValidation.estimatedBytes ?? null,
         });
-        Alert.alert('Recording Too Short', 'Please speak for at least 1 second and try again.', [
+        Alert.alert(t('ai.voice.recordingTooShortTitle'), t('ai.voice.recordingTooShortBody'), [
           { text: t('common.ok') },
         ]);
         return;
@@ -988,16 +1015,16 @@ export default function AIChatScreen() {
         ? ` (${lastVoiceCaptureErrorRef.current})`
         : '';
       Alert.alert(
-        'Recording Too Short',
-        `Audio was too short${reason}. Tap Speak, wait at least 1 second, then tap Stop.`,
+        t('ai.voice.recordingTooShortTitle'),
+        t('ai.voice.recordingTooShortDetailBody', { reason }),
         [{ text: t('common.ok') }],
       );
       return;
     }
 
-    const previewText = liveVoiceTranscript.trim() || 'Voice message';
+    const previewText = pendingVoiceTranscriptRef.current.trim() || t('ai.voice.voiceMessage');
     void sendMessageRef.current?.(previewText, 'voice', voicePayload);
-  }, [liveVoiceTranscript, stopVoiceRecording, t]);
+  }, [stopVoiceRecording, t]);
 
   const handleSendMessage = useCallback(
     async (
@@ -1086,12 +1113,14 @@ export default function AIChatScreen() {
         let llmFallbackInput = assistantInput;
 
         const deterministicIntent = classifyIntent(deterministicTranscript, candidateFarms);
+        let didAttemptRouting = false;
 
         if (
           !assistantFeatureFlags.routeOnServerEnabled &&
           currentAttachments.length === 0 &&
           messageText.trim()
         ) {
+          didAttemptRouting = true;
           let forcedRoute: 'voice_log' | 'farm_query' | null = null;
           let effectiveTranscript = messageText;
 
@@ -1499,6 +1528,7 @@ export default function AIChatScreen() {
         }
 
         if (
+          !didAttemptRouting &&
           !assistantFeatureFlags.routeOnServerEnabled &&
           currentAttachments.length === 0 &&
           shouldUseFarmDataEngine(messageText, deterministicIntent) &&
@@ -1809,14 +1839,14 @@ export default function AIChatScreen() {
           setVoiceInputState('idle');
           setVoiceModeError(
             invalidVoicePayload
-              ? 'Recording was too short. Please speak for at least 1 second.'
+              ? t('ai.voice.recordingTooShortBody')
               : error instanceof Error
                 ? error.message
-                : 'Voice request failed.',
+                : t('ai.errors.failedResponse'),
           );
         }
         if (invalidVoicePayload) {
-          Alert.alert('Recording Too Short', 'Please speak for at least 1 second and try again.', [
+          Alert.alert(t('ai.voice.recordingTooShortTitle'), t('ai.voice.recordingTooShortBody'), [
             { text: t('common.ok') },
           ]);
           return;
@@ -1926,7 +1956,9 @@ export default function AIChatScreen() {
         setVoiceInputState('idle');
         return;
       }
-      // Let manual stop continue to work even if speech recognition is unavailable.
+      void stopVoiceRecording({ discard: true });
+      setVoiceInputState('idle');
+      setIsVoiceModeContinuousEnabled(false);
       setVoiceModeError(t('ai.voice.unavailableBody'));
       return;
     }
@@ -2011,10 +2043,9 @@ export default function AIChatScreen() {
       if (!activeVoiceRecordingRef.current) {
         setVoiceInputState('idle');
         setIsVoiceModeContinuousEnabled(false);
-        const message =
-          'Microphone recording could not be started, so server speech-to-text cannot be used.';
+        const message = t('ai.voice.sttNotReadyBody');
         setVoiceModeError(message);
-        Alert.alert('Server STT not ready', message, [{ text: t('common.ok') }]);
+        Alert.alert(t('ai.voice.sttNotReadyTitle'), message, [{ text: t('common.ok') }]);
         return;
       }
 
@@ -2217,9 +2248,7 @@ export default function AIChatScreen() {
       }
       const fileInfo = await FileSystem.getInfoAsync(asset.uri);
       if (!fileInfo.exists) {
-        Alert.alert(t('common.error'), 'Selected file is no longer available.', [
-          { text: t('common.ok') },
-        ]);
+        Alert.alert(t('common.error'), t('ai.voice.fileUnavailable'), [{ text: t('common.ok') }]);
         return;
       }
       setAttachments((prev) => [
@@ -2242,9 +2271,9 @@ export default function AIChatScreen() {
   }, [t]);
 
   const openAttachmentPicker = useCallback(() => {
-    Alert.alert('Attach', 'Choose what to attach', [
-      { text: 'Image', onPress: () => void handlePickImage() },
-      { text: 'File', onPress: () => void handlePickDocument() },
+    Alert.alert(t('ai.attach.title'), t('ai.attach.choosePrompt'), [
+      { text: t('ai.attach.image'), onPress: () => void handlePickImage() },
+      { text: t('ai.attach.file'), onPress: () => void handlePickDocument() },
       { text: t('common.cancel'), style: 'cancel' },
     ]);
   }, [handlePickDocument, handlePickImage, t]);

@@ -226,12 +226,16 @@ export function useFarmAssistant() {
     submitQueryRef.current = submitQuery;
   }, [submitQuery]);
 
-  // Voice recognition event handlers (use ref to avoid circular dependency)
+  // Voice recognition event handlers (use ref to avoid circular dependency).
+  // Guard: only handle events when the farm assistant modal is visible,
+  // otherwise the AI chat screen's own handlers would conflict.
   useSpeechRecognitionEvent('start', () => {
+    if (!useFarmAssistantStore.getState().isModalVisible) return;
     storeSetStatus('listening');
   });
 
   useSpeechRecognitionEvent('end', () => {
+    if (!useFarmAssistantStore.getState().isModalVisible) return;
     const currentStatus = useFarmAssistantStore.getState().status;
     if (currentStatus !== 'listening') return;
 
@@ -246,6 +250,7 @@ export function useFarmAssistant() {
   });
 
   useSpeechRecognitionEvent('result', (event) => {
+    if (!useFarmAssistantStore.getState().isModalVisible) return;
     const resultTranscript = event.results[0]?.transcript ?? '';
     pendingTranscriptRef.current = resultTranscript;
     storeSetTranscript(resultTranscript);
@@ -257,6 +262,7 @@ export function useFarmAssistant() {
   });
 
   useSpeechRecognitionEvent('error', (event) => {
+    if (!useFarmAssistantStore.getState().isModalVisible) return;
     if (event.error === 'no-speech') {
       storeSetStatus('idle');
       return;

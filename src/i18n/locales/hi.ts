@@ -1457,7 +1457,23 @@ export const hi = {
       noSpeechBody: 'मुझे कोई आवाज़ नहीं सुनाई दी। कृपया फिर से बोलें।',
       unavailableTitle: 'वॉइस इनपुट उपलब्ध नहीं',
       unavailableBody: 'इस डिवाइस पर अभी वॉइस इनपुट उपलब्ध नहीं है।',
+      recordingTooShortTitle: 'रिकॉर्डिंग बहुत छोटी',
+      recordingTooShortBody: 'कृपया कम से कम 1 सेकंड बोलें और दोबारा प्रयास करें।',
+      recordingTooShortDetailBody:
+        'ऑडियो बहुत छोटा था{{reason}}। बोलें दबाएँ, कम से कम 1 सेकंड रुकें, फिर रोकें दबाएँ।',
+      voiceMessage: 'वॉइस मैसेज',
+      sttNotReadyTitle: 'सर्वर STT तैयार नहीं',
+      sttNotReadyBody:
+        'माइक्रोफ़ोन रिकॉर्डिंग शुरू नहीं हो सकी, इसलिए सर्वर स्पीच-टू-टेक्स्ट का उपयोग नहीं हो सकता।',
+      fileUnavailable: 'चुनी गई फ़ाइल अब उपलब्ध नहीं है।',
     },
+    attach: {
+      title: 'जोड़ें',
+      choosePrompt: 'क्या जोड़ना है चुनें',
+      image: 'इमेज',
+      file: 'फ़ाइल',
+    },
+    conversationBootstrapFailed: 'नई बातचीत शुरू नहीं हो सकी। कृपया दोबारा प्रयास करें।',
     logging: {
       cancelled: 'ठीक है, मैंने लॉगिंग फ्लो रद्द कर दिया।',
       noFarms: 'पहले एक खेत जोड़ें, फिर मैं लॉगिंग फ़ॉर्म खोल दूँगा।',
