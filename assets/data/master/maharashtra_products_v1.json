@@ -1,0 +1,263 @@
+{
+  "version": "v1",
+  "stateCode": "MH",
+  "sourceReference": "Curated Maharashtra master catalog (grape scope)",
+  "products": [
+    {
+      "key": "propineb_70_wp",
+      "name": "Antracol (Propineb 70 WP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Propineb 70%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "WP",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Antracol", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Propineb 70 WP", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "copper_oxychloride",
+      "name": "Topgun (Copper Oxychloride)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Copper Oxychloride",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "WP",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Topgun", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Copper Oxychloride", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "dimethomorph_50_wp",
+      "name": "Acrobat (Dimethomorph 50 WP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Dimethomorph 50%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "WP",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Acrobat", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Dimethomorph 50 WP", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "mancozeb_75_wp",
+      "name": "M45 (Mancozeb 75 WP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Mancozeb 75%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "WP",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "isActive": true,
+      "aliases": [
+        { "alias": "M45", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Mancozeb 75 WP", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "fosetyl_al_80_wp",
+      "name": "Aliette (Fosetyl-AL 80 WP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Fosetyl-AL 80%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "WP",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p2",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Aliette", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Fosetyl-AL 80 WP", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "methomyl_40_sp",
+      "name": "Lannate (Methomyl 40 SP)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Methomyl 40%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "SP",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p2",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Lannate", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Methomyl 40 SP", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "thiamethoxam_25_wg",
+      "name": "Actra (Thiamethoxam 25 WG)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Thiamethoxam 25%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "WG",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Actra", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Thiamethoxam 25 WG", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "lambda_cyhalothrin_5_ec",
+      "name": "Karate (Lambda-cyhalothrin 5 EC)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Lambda-cyhalothrin 5%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "EC",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Karate", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Lambda-cyhalothrin 5 EC", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "mandipropamide_23_4_sc",
+      "name": "Revus (Mandipropamide 23.4 SC)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Mandipropamide 23.4%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "SC",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p9",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Revus", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Mandipropamide 23.4 SC", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "imidacloprid_17_8_sl",
+      "name": "Confidor (Imidacloprid 17.8 SL)",
+      "manufacturer": "ChemiNova",
+      "activeIngredient": "Imidacloprid 17.8%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": "SL",
+      "stateCode": "MH",
+      "sourceReference": "औषधे मिक्स प्रमाण.pdf p9",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Confidor", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Imidacloprid 17.8 SL", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "mahadhan_19_19_19",
+      "name": "Mahadhan NutriTech 19:19:19",
+      "manufacturer": "Deepak Fertilisers (Mahadhan)",
+      "activeIngredient": null,
+      "inputType": "fertilizer",
+      "verificationTier": "provisional",
+      "formulation": "WSF",
+      "stateCode": "MH",
+      "sourceReference": "Warehouse fertilizer master",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Mahadhan 19:19:19", "locale": "en", "aliasKind": "trade" },
+        { "alias": "NPK 19-19-19", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "mahadhan_12_61_00",
+      "name": "Mahadhan 12:61:00 Fertiliser",
+      "manufacturer": "Deepak Fertilisers (Mahadhan)",
+      "activeIngredient": null,
+      "inputType": "fertilizer",
+      "verificationTier": "provisional",
+      "formulation": "WSF",
+      "stateCode": "MH",
+      "sourceReference": "Warehouse fertilizer master",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Mahadhan 12:61:00", "locale": "en", "aliasKind": "trade" },
+        { "alias": "MAP", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "mahadhan_00_52_34",
+      "name": "Mahadhan 00:52:34 Fertiliser",
+      "manufacturer": "Deepak Fertilisers (Mahadhan)",
+      "activeIngredient": null,
+      "inputType": "fertilizer",
+      "verificationTier": "provisional",
+      "formulation": "WSF",
+      "stateCode": "MH",
+      "sourceReference": "Warehouse fertilizer master",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Mahadhan 00:52:34", "locale": "en", "aliasKind": "trade" },
+        { "alias": "MKP", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "mahadhan_13_00_45",
+      "name": "Mahadhan 13:00:45 Fertiliser (KNO3)",
+      "manufacturer": "Deepak Fertilisers (Mahadhan)",
+      "activeIngredient": null,
+      "inputType": "fertilizer",
+      "verificationTier": "provisional",
+      "formulation": "WSF",
+      "stateCode": "MH",
+      "sourceReference": "Warehouse fertilizer master",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Mahadhan 13:00:45", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Potassium Nitrate", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "mahadhan_dap_18_46_00",
+      "name": "Mahadhan DAP Fertiliser",
+      "manufacturer": "Deepak Fertilisers (Mahadhan)",
+      "activeIngredient": null,
+      "inputType": "fertilizer",
+      "verificationTier": "provisional",
+      "formulation": "Granular",
+      "stateCode": "MH",
+      "sourceReference": "Warehouse fertilizer master",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Mahadhan DAP 18:46:00", "locale": "en", "aliasKind": "trade" },
+        { "alias": "DAP", "locale": "en", "aliasKind": "common" }
+      ]
+    },
+    {
+      "key": "mahadhan_ammonium_sulphate",
+      "name": "Mahadhan Ammonium Sulphate Fertiliser",
+      "manufacturer": "Deepak Fertilisers (Mahadhan)",
+      "activeIngredient": null,
+      "inputType": "fertilizer",
+      "verificationTier": "provisional",
+      "formulation": "Granular",
+      "stateCode": "MH",
+      "sourceReference": "Warehouse fertilizer master",
+      "isActive": true,
+      "aliases": [
+        { "alias": "Mahadhan Ammonium Sulphate", "locale": "en", "aliasKind": "trade" },
+        { "alias": "Ammonium Sulphate", "locale": "en", "aliasKind": "common" }
+      ]
+    }
+  ]
+}

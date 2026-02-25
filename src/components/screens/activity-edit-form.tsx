@@ -232,6 +232,12 @@ export function ActivityEditForm({
             return allowedUnitByLowercase.get(lowered) ?? null;
           };
 
+          data.catalogMixId = r.catalog_mix_id ?? null;
+          data.governingPhiDays = r.governing_phi_days ?? null;
+          data.safeHarvestDate = r.safe_harvest_date ?? null;
+          data.phiBlockingComponent = r.phi_blocking_component ?? null;
+          data.phiStatus = r.phi_status ?? null;
+
           if (r.chemical_items && r.chemical_items.length > 0) {
             data.chemicals = r.chemical_items.map((item) => ({
               ...(item.unit?.trim().toLowerCase().includes('/acre')
@@ -244,6 +250,7 @@ export function ActivityEditForm({
                 (item.unit ? normalizeLegacySprayUnit(item.unit) : null) ??
                 ('ml/L' as SprayFormData['chemicals'][number]['unit']),
               warehouseItemId: item.warehouse_item_id ?? null,
+              catalogProductId: item.catalog_product_id ?? null,
               compositionSnapshot: item.composition_snapshot ?? null,
               densityKgPerL: item.density_kg_per_l ?? null,
             }));
@@ -279,6 +286,7 @@ export function ActivityEditForm({
                   unit,
                   quantityBasis: 'total' as const,
                   warehouseItemId: null,
+                  catalogProductId: null,
                   compositionSnapshot: null,
                   densityKgPerL: null,
                 };
@@ -291,6 +299,7 @@ export function ActivityEditForm({
                 unit: 'ml/L' as const,
                 quantityBasis: 'total' as const,
                 warehouseItemId: null,
+                catalogProductId: null,
                 compositionSnapshot: null,
                 densityKgPerL: null,
               };
@@ -340,6 +349,7 @@ export function ActivityEditForm({
               unit: f.unit as FertigationFormData['fertilizers'][number]['unit'],
               quantityBasis: f.quantity_basis ?? 'total',
               warehouseItemId: f.warehouse_item_id ?? null,
+              catalogProductId: f.catalog_product_id ?? null,
               compositionSnapshot: f.composition_snapshot ?? null,
               densityKgPerL: f.density_kg_per_l ?? null,
             }));
@@ -392,6 +402,7 @@ export function ActivityEditForm({
               quantity: c.quantity!,
               quantity_basis: c.quantityBasis ?? 'total',
               warehouse_item_id: c.warehouseItemId ?? null,
+              catalog_product_id: c.catalogProductId ?? null,
               composition_snapshot: c.compositionSnapshot ?? null,
               density_kg_per_l: c.densityKgPerL ?? null,
             }));
@@ -458,6 +469,7 @@ export function ActivityEditForm({
             quantity: f.quantity ?? 0,
             quantity_basis: f.quantityBasis ?? 'total',
             warehouse_item_id: f.warehouseItemId ?? null,
+            catalog_product_id: f.catalogProductId ?? null,
             composition_snapshot: f.compositionSnapshot ?? null,
             density_kg_per_l: f.densityKgPerL ?? null,
           }));

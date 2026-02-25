@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-02-21T00:00:00.000Z",
+  "catalogVersion": "v1",
+  "crop": "grape",
+  "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+  "productCount": 10,
+  "mixCount": 8,
+  "warningCount": 0,
+  "errorCount": 0,
+  "warnings": [],
+  "errors": [],
+  "isValid": true
+}

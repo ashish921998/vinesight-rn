@@ -19,6 +19,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
+import * as Sentry from '@sentry/react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
 import { useProfile, useUpdateProfile, useCurrency, isIOS } from '@/hooks';
@@ -105,6 +106,52 @@ export default function SettingsScreen() {
   const appVersionLabel = appBuild
     ? `Vinesight v${appVersion} (${appBuild})`
     : `Vinesight v${appVersion}`;
+  const sentryDsnConfigured = Boolean(process.env.EXPO_PUBLIC_SENTRY_DSN?.trim());
+  const canSendSentryEvent = !__DEV__ && sentryDsnConfigured;
+
+  const handleSendSentryTestEvent = useCallback(() => {
+    if (!canSendSentryEvent) {
+      Alert.alert(
+        t('settings.sentry.transportDisabledTitle', {
+          defaultValue: 'Sentry transport is disabled',
+        }),
+        __DEV__
+          ? t('settings.sentry.transportDisabledDescriptionDev', {
+              defaultValue:
+                'This app disables Sentry in development. Test with a preview/production build, or temporarily enable Sentry in app/_layout.tsx for local verification.',
+            })
+          : t('settings.sentry.transportDisabledDescriptionProd', {
+              defaultValue: 'Sentry DSN is missing. Add EXPO_PUBLIC_SENTRY_DSN and rebuild.',
+            }),
+      );
+      return;
+    }
+
+    try {
+      const eventId = Sentry.captureException(new Error('Sentry setup verification error'));
+      Alert.alert(
+        t('settings.sentry.testSentTitle', { defaultValue: 'Sentry test event sent' }),
+        eventId
+          ? t('settings.sentry.testSentDescriptionWithId', {
+              defaultValue: 'Event ID: {{eventId}}',
+              eventId,
+            })
+          : t('settings.sentry.testSentDescription', {
+              defaultValue: 'Check your Sentry project in a few moments for the test issue.',
+            }),
+      );
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to send Sentry test event:', error);
+      }
+      Alert.alert(
+        t('settings.sentry.testFailedTitle', { defaultValue: 'Sentry test failed' }),
+        t('settings.sentry.testFailedDescription', {
+          defaultValue: 'Unable to send a test event. Check Sentry configuration.',
+        }),
+      );
+    }
+  }, [canSendSentryEvent, t]);
 
   const {
     user,
@@ -874,6 +921,24 @@ export default function SettingsScreen() {
         >
           {t('settings.madeForVineyardManagement')}
         </Text>
+        {canSendSentryEvent ? (
+          <Pressable
+            onPress={handleSendSentryTestEvent}
+            style={styles.sentryTestButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.sentry.testButtonA11y', {
+              defaultValue: 'Send Sentry test event',
+            })}
+          >
+            <Text
+              style={styles.sentryTestButtonText}
+              textBreakStrategy="highQuality"
+              lineBreakStrategyIOS="standard"
+            >
+              {t('settings.sentry.testButton', { defaultValue: 'Send Sentry test event' })}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {/* Edit Profile Modal */}
@@ -2030,6 +2095,18 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     fontSize: fontSize.xs,
     color: colors.surface[300],
     marginTop: spacing[1],
+  } as TextStyle,
+  sentryTestButton: {
+    marginTop: spacing[3],
+    backgroundColor: colorWithOpacity(colors.primary[600], 0.14),
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+  } as ViewStyle,
+  sentryTestButtonText: {
+    color: colors.primary[700],
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   } as TextStyle,
 
   modalHeader: {

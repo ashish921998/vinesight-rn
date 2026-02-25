@@ -354,6 +354,7 @@ export class ReportService {
     unit: string;
     quantityBasis?: QuantityBasis;
     warehouseItemId?: number | null;
+    catalogProductId?: number | null;
   }> {
     const chemicalItems = (record.chemical_items ?? []) as SprayChemicalItem[];
     if (chemicalItems.length > 0) {
@@ -364,6 +365,7 @@ export class ReportService {
           unit: item.unit?.trim() ?? '',
           quantityBasis: item.quantity_basis,
           warehouseItemId: item.warehouse_item_id ?? null,
+          catalogProductId: item.catalog_product_id ?? null,
         }))
         .filter(
           (item) => item.name && item.unit && Number.isFinite(item.quantity) && item.quantity > 0,
@@ -374,6 +376,7 @@ export class ReportService {
       ...item,
       quantityBasis: 'total' as const,
       warehouseItemId: null,
+      catalogProductId: null,
     }));
   }
 
@@ -383,6 +386,7 @@ export class ReportService {
     unit: string;
     quantityBasis?: QuantityBasis;
     warehouseItemId?: number | null;
+    catalogProductId?: number | null;
   }> {
     const fertilizerItems = (record.fertilizers ?? []) as FertilizerItem[];
     return fertilizerItems
@@ -392,6 +396,7 @@ export class ReportService {
         unit: item.unit?.trim() ?? '',
         quantityBasis: item.quantity_basis,
         warehouseItemId: item.warehouse_item_id ?? null,
+        catalogProductId: item.catalog_product_id ?? null,
       }))
       .filter(
         (item) => item.name && item.unit && Number.isFinite(item.quantity) && item.quantity > 0,
@@ -408,11 +413,13 @@ export class ReportService {
       ReportStockUsageRecord & {
         normalizedName: string;
         warehouseItemIds: Set<number>;
+        catalogProductIds: Set<number>;
       }
     >,
     warehouseItems: WarehouseItem[],
   ): ReportStockUsageRecord[] {
     const byId = new Map<number, WarehouseItem>();
+    const byCatalogProductId = new Map<string, WarehouseItem[]>();
     const byNameUnitType = new Map<string, WarehouseItem[]>();
 
     warehouseItems.forEach((item) => {
@@ -426,6 +433,12 @@ export class ReportService {
       const key = `${type}::${normalizedName}::${normalizedUnit}`;
       const existing = byNameUnitType.get(key) ?? [];
       byNameUnitType.set(key, [...existing, item]);
+
+      if (item.catalog_product_id != null) {
+        const catalogKey = `${type}::${item.catalog_product_id}`;
+        const existingCatalog = byCatalogProductId.get(catalogKey) ?? [];
+        byCatalogProductId.set(catalogKey, [...existingCatalog, item]);
+      }
     });
 
     return rows
@@ -440,6 +453,18 @@ export class ReportService {
             matchedWarehouse = found;
             matchStrategy = 'warehouse_item_id';
             break;
+          }
+        }
+
+        if (!matchedWarehouse && row.catalogProductIds.size > 0) {
+          const sortedCatalogProductIds = Array.from(row.catalogProductIds).sort((a, b) => a - b);
+          for (const catalogProductId of sortedCatalogProductIds) {
+            const candidates = byCatalogProductId.get(`${row.type}::${catalogProductId}`) ?? [];
+            if (candidates.length === 1) {
+              matchedWarehouse = candidates[0];
+              matchStrategy = 'catalog_product_id';
+              break;
+            }
           }
         }
 
@@ -461,6 +486,7 @@ export class ReportService {
             areaTreated: this.toRounded(row.areaTreated, 2),
             usageCount: row.usageCount,
             warehouseItemId: null,
+            catalogProductId: null,
             currentStockQuantity: null,
             estimatedOpeningStockQuantity: null,
             estimatedConsumedPercent: null,
@@ -491,6 +517,7 @@ export class ReportService {
           areaTreated: this.toRounded(row.areaTreated, 2),
           usageCount: row.usageCount,
           warehouseItemId: matchedWarehouse.id,
+          catalogProductId: matchedWarehouse.catalog_product_id ?? null,
           currentStockQuantity:
             currentStockQuantity != null ? this.toRounded(currentStockQuantity, 4) : null,
           estimatedOpeningStockQuantity:
@@ -523,6 +550,7 @@ export class ReportService {
       ReportStockUsageRecord & {
         normalizedName: string;
         warehouseItemIds: Set<number>;
+        catalogProductIds: Set<number>;
       }
     >();
     const unmatchedUsageMap = new Map<string, ReportStockUsageRecord>();
@@ -537,6 +565,7 @@ export class ReportService {
       quantityBasis: QuantityBasis | null | undefined,
       area: number,
       warehouseItemId?: number | null,
+      catalogProductId?: number | null,
       waterVolumeL?: number | null,
     ) => {
       const normalizedName = this.normalizeName(name);
@@ -566,6 +595,7 @@ export class ReportService {
               areaTreated: area,
               usageCount: 1,
               warehouseItemId: null,
+              catalogProductId: null,
               currentStockQuantity: null,
               estimatedOpeningStockQuantity: null,
               estimatedConsumedPercent: null,
@@ -600,6 +630,9 @@ export class ReportService {
         if (warehouseItemId != null) {
           existing.warehouseItemIds.add(warehouseItemId);
         }
+        if (catalogProductId != null) {
+          existing.catalogProductIds.add(catalogProductId);
+        }
         return;
       }
 
@@ -612,6 +645,8 @@ export class ReportService {
         usageCount: 1,
         normalizedName,
         warehouseItemIds: warehouseItemId != null ? new Set([warehouseItemId]) : new Set<number>(),
+        catalogProductIds:
+          catalogProductId != null ? new Set([catalogProductId]) : new Set<number>(),
       });
     };
 
@@ -626,6 +661,7 @@ export class ReportService {
           item.quantityBasis,
           record.area,
           item.warehouseItemId,
+          item.catalogProductId,
           waterVolumeL,
         );
       });
@@ -641,6 +677,7 @@ export class ReportService {
           item.quantityBasis,
           record.area,
           item.warehouseItemId,
+          item.catalogProductId,
         );
       });
     });

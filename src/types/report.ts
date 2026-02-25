@@ -114,10 +114,11 @@ export interface ReportStockUsageRecord {
   cost?: number; // Estimated cost
   usageCount: number; // Number of times used
   warehouseItemId?: number | null;
+  catalogProductId?: number | null;
   currentStockQuantity?: number | null;
   estimatedOpeningStockQuantity?: number | null;
   estimatedConsumedPercent?: number | null;
-  matchStrategy?: 'warehouse_item_id' | 'name_unit_fallback' | 'unmatched';
+  matchStrategy?: 'warehouse_item_id' | 'catalog_product_id' | 'name_unit_fallback' | 'unmatched';
 }
 
 export interface ReportIrrigationRecord {

@@ -92,11 +92,15 @@ if (Platform.OS === 'android' && !androidTextPatched) {
 
 // Initialize Sentry (avoid crashing startup if env/config is missing)
 try {
+  const tracesSampleRateEnv = Number.parseFloat(
+    process.env.EXPO_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? '',
+  );
+  const tracesSampleRate = Number.isFinite(tracesSampleRateEnv) ? tracesSampleRateEnv : 0.7;
   Sentry.init({
     dsn: sentryDsn,
     enabled: !__DEV__ && Boolean(sentryDsn), // Only track errors in production when configured
     debug: __DEV__, // Show debug info in development
-    tracesSampleRate: 0.2, // Sample 20% of transactions for performance monitoring
+    tracesSampleRate,
     integrations: [Sentry.reactNativeTracingIntegration()],
   });
 } catch (error) {

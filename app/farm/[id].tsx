@@ -21,6 +21,7 @@ import {
   useFarm,
   useFarmRecords,
   useWeather,
+  useProfile,
   useDeleteFarm,
   useDeleteIrrigationRecord,
   useDeleteSprayRecord,
@@ -32,6 +33,7 @@ import {
   useEndFarmSeason,
   useFarmSeasonStatus,
   useRecomputeFarmSeasonAssignments,
+  useEarliestSafeHarvestForSeason,
   isAndroid,
   isIOS,
 } from '@/hooks';
@@ -50,6 +52,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { formatDate } from '@/i18n/format';
 import { formatLocalDate, parseDbDateToLocalDate } from '@/utils/date';
+import { isGrapeCrop } from '@/utils/crop';
 
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -90,6 +93,7 @@ export default function FarmDetailScreen() {
 
   const { data: tasks, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
+  const { data: profile } = useProfile({ enabled: true });
   const { data: farmSeasons, refetch: refetchSeasons } = useFarmSeasons(farmId);
   const { needsReview: needsSeasonReview } = useFarmSeasonStatus(farmId);
   const completeMutation = useCompleteTask();
@@ -123,8 +127,8 @@ export default function FarmDetailScreen() {
   const seasonSuccessTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const showFab = isAndroid;
   const bottomBarHeight = showFab ? 0 : 72 + insets.bottom;
-  const workboardActions = useMemo<WorkboardAction[]>(
-    () => [
+  const workboardActions = useMemo<WorkboardAction[]>(() => {
+    const actions: WorkboardAction[] = [
       {
         id: 'ai',
         titleKey: 'farmDetails.workboard.actions.ai',
@@ -149,9 +153,17 @@ export default function FarmDetailScreen() {
         icon: 'square.stack.3d.up.fill',
         color: colors.task[500],
       },
-    ],
-    [colors.task, m3],
-  );
+    ];
+    if (profile?.consultant_organization_id) {
+      actions.push({
+        id: 'fertilizer-plans',
+        titleKey: 'farmDetails.fertilizerPlan.title',
+        icon: 'leaf.fill',
+        color: colors.fertigation[500],
+      });
+    }
+    return actions;
+  }, [colors.fertigation, colors.task, m3, profile?.consultant_organization_id]);
 
   // Calculate stats
   const totalRecords = useMemo(
@@ -213,6 +225,23 @@ export default function FarmDetailScreen() {
     if (!farmSeasons || farmSeasons.length === 0) return null;
     return farmSeasons.find((season) => season.end_date === null) ?? null;
   }, [farmSeasons]);
+  const { data: earliestSafeHarvest, refetch: refetchEarliestSafeHarvest } =
+    useEarliestSafeHarvestForSeason(farmId, activeSeasonRecord?.id ?? null);
+  const earliestSafeHarvestDateLabel = useMemo(() => {
+    const raw = earliestSafeHarvest?.earliestDate;
+    if (!raw) return null;
+    const parsed = parseDbDateToLocalDate(raw);
+    if (!parsed) return raw;
+    return formatDate(parsed, {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }, [earliestSafeHarvest?.earliestDate]);
+  const isGrapeFarm = useMemo(
+    () => isGrapeCrop(farm?.crop, farm?.crop_variety),
+    [farm?.crop, farm?.crop_variety],
+  );
   const lockedSeasonStartDate = useMemo(() => {
     if (!activeSeasonRecord) return null;
     return parseDbDateToLocalDate(activeSeasonRecord.start_date);
@@ -644,7 +673,13 @@ export default function FarmDetailScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetchFarm(), refetchRecords(), refetchTasks(), refetchSeasons()]);
+      await Promise.all([
+        refetchFarm(),
+        refetchRecords(),
+        refetchTasks(),
+        refetchSeasons(),
+        refetchEarliestSafeHarvest(),
+      ]);
     } finally {
       setRefreshing(false);
     }
@@ -893,6 +928,9 @@ export default function FarmDetailScreen() {
         break;
       case 'soil':
         router.push(`/soil-profiling?farmId=${id}`);
+        break;
+      case 'fertilizer-plans':
+        router.push({ pathname: '/fertilizer-plans', params: { farmId: id } });
         break;
     }
   };
@@ -1315,7 +1353,7 @@ export default function FarmDetailScreen() {
                     </View>
                   </View>
 
-                  {farm.region && (
+                  {farm.region ? (
                     <View
                       style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
                     >
@@ -1334,7 +1372,56 @@ export default function FarmDetailScreen() {
                         {farm.region}
                       </Text>
                     </View>
-                  )}
+                  ) : null}
+
+                  {isGrapeFarm && earliestSafeHarvest?.earliestDate ? (
+                    <View
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
+                    >
+                      <UiSymbol
+                        name="shield.checkered"
+                        size={16}
+                        color={colorWithOpacity(m3.colorScheme.primary, 0.8)}
+                      />
+                      <Text
+                        style={{
+                          color: m3.colorScheme.onSurfaceVariant,
+                          ...m3.typography.bodyMedium,
+                          marginLeft: spacing[1],
+                        }}
+                      >
+                        {t('farmDetails.safeHarvest.inlineDate', {
+                          date: earliestSafeHarvestDateLabel,
+                          defaultValue: 'Safe harvest date: {{date}}',
+                        })}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  {!isGrapeFarm &&
+                  ((sprayRecords?.length ?? 0) > 0 || activeSeasonRecord != null) ? (
+                    <View
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
+                    >
+                      <UiSymbol
+                        name="info.circle"
+                        size={14}
+                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+                      />
+                      <Text
+                        style={{
+                          color: m3.colorScheme.onSurfaceVariant,
+                          ...m3.typography.labelSmall,
+                          marginLeft: spacing[1],
+                        }}
+                      >
+                        {t('farmDetails.safeHarvest.grapeOnlyNote', {
+                          defaultValue:
+                            'PHI safe-harvest checks are currently available for grape farms only.',
+                        })}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
 

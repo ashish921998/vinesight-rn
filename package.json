@@ -10,11 +10,10 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "tsc": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "generate-widget": "node scripts/generate-widget.js",
-    "storybook": "cross-env EXPO_PUBLIC_STORYBOOK_ENABLED=true expo start",
+    "storybook:start": "cross-env EXPO_PUBLIC_STORYBOOK_ENABLED=true expo start",
     "web:smoke": "CI=1 expo export --platform web --output-dir /tmp/vinesight-web-smoke",
     "test:widgets": "jest --testPathPattern=components/widgets",
     "test:widgets:watch": "jest --watch --testPathPattern=components/widgets",
@@ -39,6 +38,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native-community/slider": "5.0.1",
     "@react-native-picker/picker": "2.11.1",
     "@sentry/react-native": "~7.2.0",
     "@supabase/supabase-js": "^2.90.1",
@@ -85,7 +85,7 @@
     "react-native-gesture-handler": "~2.28.0",
     "react-native-maps": "1.20.1",
     "react-native-markdown-display": "^7.0.2",
-    "react-native-pdf": "6.7.7",
+    "react-native-pdf": "7.0.3",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "^5.6.2",
     "react-native-screens": "~4.16.0",
@@ -130,6 +130,15 @@
   },
   "private": true,
   "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-shared-group-preferences",
+          "@bacons/apple-targets"
+        ],
+        "listUnknownPackages": false
+      }
+    },
     "install": {
       "exclude": [
         "react-native-webview"

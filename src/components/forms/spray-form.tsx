@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { NutrientCompositionItem, QuantityBasis } from '@/types';
+import type { ChemicalMix } from '@/types/phi';
+import { normalizeMixComponentToPerLiterDose } from '@/services/phi-service';
 
 export interface ChemicalEntry {
   id: string;
@@ -18,6 +20,7 @@ export interface ChemicalEntry {
   unit: ChemicalUnit;
   quantityBasis?: QuantityBasis;
   warehouseItemId?: number | null;
+  catalogProductId?: number | null;
   compositionSnapshot?: NutrientCompositionItem[] | null;
   densityKgPerL?: number | null;
 }
@@ -66,6 +69,12 @@ function clampChemicalRows(chemicals: ChemicalEntry[]): ChemicalEntry[] {
 export interface SprayFormData {
   waterVolume: number | undefined;
   chemicals: ChemicalEntry[];
+  catalogMixId?: number | null;
+  catalogMixName?: string | null;
+  governingPhiDays?: number | null;
+  safeHarvestDate?: string | null;
+  phiBlockingComponent?: string | null;
+  phiStatus?: 'verified' | 'legacy_unverified' | 'unknown' | null;
   notes?: string;
 }
 
@@ -75,6 +84,7 @@ export interface SprayQuickAddItem {
   quantity?: number | null;
   quantityBasis?: QuantityBasis;
   warehouseItemId?: number | null;
+  catalogProductId?: number | null;
   composition?: NutrientCompositionItem[] | null;
   densityKgPerL?: number | null;
 }
@@ -84,13 +94,23 @@ interface SprayFormProps {
   onChange: (data: SprayFormData) => void;
   onInputFocus?: TextInputProps['onFocus'];
   quickAddItems?: SprayQuickAddItem[];
+  catalogOnly?: boolean;
+  catalogMixes?: ChemicalMix[];
 }
 
-export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: SprayFormProps) {
+export function SprayForm({
+  data,
+  onChange,
+  onInputFocus,
+  quickAddItems = [],
+  catalogOnly = false,
+  catalogMixes = [],
+}: SprayFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
   const { t } = useTranslation();
   const onChangeRef = useRef(onChange);
+  const dataRef = useRef(data);
   const isValid =
     data.waterVolume !== undefined &&
     data.waterVolume > 0 &&
@@ -135,21 +155,28 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
   }, [data.chemicals]);
 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
+  const selectedCatalogMix = useMemo(
+    () => catalogMixes.find((mix) => mix.id === data.catalogMixId) ?? null,
+    [catalogMixes, data.catalogMixId],
+  );
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
   useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+
+  useEffect(() => {
     if (data.chemicals.length <= MAX_CHEMICAL_ROWS) return;
     const clamped = clampChemicalRows(data.chemicals);
     if (clamped.length === data.chemicals.length) return;
     onChangeRef.current({
-      waterVolume: data.waterVolume,
-      notes: data.notes,
+      ...data,
       chemicals: clamped,
     });
-  }, [data.chemicals, data.notes, data.waterVolume]);
+  }, [data]);
 
   const addChemical = () => {
     if (data.chemicals.length < MAX_CHEMICAL_ROWS) {
@@ -164,6 +191,7 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
             unit: 'gm/L',
             quantityBasis: 'total',
             warehouseItemId: null,
+            catalogProductId: null,
             compositionSnapshot: null,
             densityKgPerL: null,
           },
@@ -212,6 +240,7 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
           current.quantityBasis ??
           resolveQuantityBasis(item.unit?.trim() ?? validatedUnit, item.quantityBasis),
         warehouseItemId: item.warehouseItemId ?? null,
+        catalogProductId: item.catalogProductId ?? null,
         compositionSnapshot: item.composition ?? null,
         densityKgPerL: item.densityKgPerL ?? null,
       };
@@ -238,6 +267,7 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
             item.quantityBasis,
           ),
           warehouseItemId: item.warehouseItemId ?? null,
+          catalogProductId: item.catalogProductId ?? null,
           compositionSnapshot: item.composition ?? null,
           densityKgPerL: item.densityKgPerL ?? null,
         },
@@ -245,7 +275,47 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
     });
   };
 
+  const applyCatalogMix = useCallback(
+    (mix: ChemicalMix) => {
+      const chemicals = mix.components.flatMap((component) => {
+        const perLiter = normalizeMixComponentToPerLiterDose(component);
+        if (!perLiter) return [];
+        return {
+          id: generateId(),
+          name: component.product_name,
+          quantity: Number(perLiter.quantity.toFixed(4)),
+          unit: perLiter.unit,
+          quantityBasis: 'total' as const,
+          warehouseItemId: null,
+          catalogProductId: component.product_id,
+          compositionSnapshot: null,
+          densityKgPerL: null,
+        };
+      });
+
+      if (chemicals.length === 0) {
+        return;
+      }
+      if (chemicals.length > MAX_CHEMICAL_ROWS) {
+        return;
+      }
+
+      onChange({
+        ...dataRef.current,
+        catalogMixId: mix.id,
+        catalogMixName: mix.name,
+        governingPhiDays: null,
+        safeHarvestDate: null,
+        phiBlockingComponent: null,
+        phiStatus: null,
+        chemicals,
+      });
+    },
+    [onChange],
+  );
+
   const focusFirstChemicalName = () => {
+    if (catalogOnly) return;
     const ref = chemicalRefs[0]?.name.current;
     if (ref) {
       ref.focus();
@@ -318,7 +388,90 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
 
       {/* Chemicals Section */}
       <View style={{ marginTop: spacing[2] }}>
-        {quickAddItems.length > 0 ? (
+        {catalogMixes.length > 0 ? (
+          <View style={{ marginBottom: spacing[3] }}>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[500],
+                marginBottom: spacing[2],
+                textTransform: 'uppercase',
+                letterSpacing: 0.4,
+              }}
+            >
+              {catalogOnly
+                ? t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })
+                : t('sprayForm.catalogOptional.title', {
+                    defaultValue: 'Catalog mix (optional)',
+                  })}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {catalogMixes.map((mix) => {
+                const isSelected = selectedCatalogMix?.id === mix.id;
+                return (
+                  <Pressable
+                    key={mix.id}
+                    onPress={() => applyCatalogMix(mix)}
+                    style={{
+                      marginRight: spacing[2],
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[2],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: isSelected
+                        ? colorWithOpacity(m3.colorScheme.tertiary, 0.16)
+                        : colors.surface[100],
+                      borderWidth: 1,
+                      borderColor: isSelected ? m3.colorScheme.tertiary : colors.surface[200],
+                    }}
+                  >
+                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                      {mix.name}
+                    </Text>
+                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                      {mix.target_problem ??
+                        t('sprayForm.catalogOnly.fallbackLabel', {
+                          defaultValue: 'Catalog mix',
+                        })}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            {selectedCatalogMix ? (
+              <Text
+                style={{
+                  marginTop: spacing[2],
+                  fontSize: fontSize.xs,
+                  color: colors.surface[600],
+                }}
+              >
+                {t('sprayForm.catalogOnly.selectedMix', {
+                  defaultValue: 'Selected: {{name}}',
+                  name: selectedCatalogMix.name,
+                })}
+              </Text>
+            ) : (
+              <Text
+                style={{
+                  marginTop: spacing[2],
+                  fontSize: fontSize.xs,
+                  color: colors.surface[600],
+                }}
+              >
+                {catalogOnly
+                  ? t('sprayForm.catalogOnly.requiredHint', {
+                      defaultValue: 'Choose a catalog mix to continue',
+                    })
+                  : t('sprayForm.catalogOptional.hint', {
+                      defaultValue: 'Optional: choose a catalog mix to enable PHI checks',
+                    })}
+              </Text>
+            )}
+          </View>
+        ) : null}
+
+        {quickAddItems.length > 0 && !catalogOnly ? (
           <View style={{ marginBottom: spacing[3] }}>
             <Text
               style={{
@@ -390,11 +543,12 @@ export function SprayForm({ data, onChange, onInputFocus, quickAddItems = [] }: 
             quantityRef={chemicalRefs[index].quantity}
             onNextChemical={focusNextChemicalName}
             onInputFocus={onInputFocus}
+            readOnly={catalogOnly}
           />
         ))}
 
         {/* Add Chemical Button */}
-        {data.chemicals.length < 10 && (
+        {data.chemicals.length < 10 && !catalogOnly && (
           <Pressable
             onPress={addChemical}
             style={{
@@ -462,6 +616,7 @@ interface ChemicalRowProps {
   quantityRef: React.RefObject<TextInput | null>;
   onNextChemical: (index: number) => void;
   onInputFocus?: TextInputProps['onFocus'];
+  readOnly?: boolean;
 }
 
 function ChemicalRow({
@@ -476,6 +631,7 @@ function ChemicalRow({
   quantityRef,
   onNextChemical,
   onInputFocus,
+  readOnly = false,
 }: ChemicalRowProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -497,9 +653,9 @@ function ChemicalRow({
       .slice(0, 6);
   }, [chemical.name, quickAddItems]);
   const showNoMatchHint =
-    isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length === 0;
+    !readOnly && isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length === 0;
   const shouldShowSuggestions =
-    isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length > 0;
+    !readOnly && isNameFocused && chemical.name.trim().length >= 2 && nameSuggestions.length > 0;
 
   const handleQuantityChange = (text: string) => {
     const cleanText = text.replace(/[^0-9.]/g, '');
@@ -538,6 +694,7 @@ function ChemicalRow({
         chemical.quantityBasis ??
         resolveQuantityBasis(item.unit?.trim() ?? unit, item.quantityBasis),
       warehouseItemId: item.warehouseItemId ?? null,
+      catalogProductId: item.catalogProductId ?? null,
       compositionSnapshot: item.composition ?? null,
       densityKgPerL: item.densityKgPerL ?? null,
     });
@@ -579,7 +736,9 @@ function ChemicalRow({
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={chemical.name}
             onChangeText={(name) => onUpdate({ name })}
+            editable={!readOnly}
             onFocus={(event) => {
+              if (readOnly) return;
               setIsNameFocused(true);
               onInputFocus?.(event);
             }}
@@ -648,7 +807,7 @@ function ChemicalRow({
             </Text>
           ) : null}
         </View>
-        {showRemove && (
+        {showRemove && !readOnly && (
           <Pressable
             onPress={onRemove}
             style={{ marginLeft: spacing[2], padding: spacing[2] }}
@@ -684,7 +843,9 @@ function ChemicalRow({
           keyboardType="decimal-pad"
           value={quantityText}
           onChangeText={handleQuantityChange}
+          editable={!readOnly}
           onFocus={(event) => {
+            if (readOnly) return;
             setIsQuantityFocused(true);
             onInputFocus?.(event);
           }}
@@ -696,7 +857,9 @@ function ChemicalRow({
 
         {/* Unit Picker */}
         <Pressable
-          onPress={() => setShowUnitPicker(true)}
+          disabled={readOnly}
+          accessibilityState={{ disabled: readOnly }}
+          onPress={() => (!readOnly ? setShowUnitPicker(true) : null)}
           style={{
             flex: 1,
             flexDirection: 'row',
@@ -718,48 +881,50 @@ function ChemicalRow({
         </Pressable>
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2], gap: 8 }}>
-        <Pressable
-          onPress={() => onUpdate({ quantityBasis: 'total' })}
-          style={{
-            borderRadius: borderRadius.full,
-            paddingHorizontal: spacing[3],
-            paddingVertical: spacing[1],
-            backgroundColor:
-              (chemical.quantityBasis ?? 'total') === 'total'
-                ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
-                : colors.surface[100],
-            borderWidth: 1,
-            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
-          }}
-        >
-          <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
-            Total Qty
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => onUpdate({ quantityBasis: 'per_acre' })}
-          style={{
-            borderRadius: borderRadius.full,
-            paddingHorizontal: spacing[3],
-            paddingVertical: spacing[1],
-            backgroundColor:
-              chemical.quantityBasis === 'per_acre'
-                ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
-                : colors.surface[100],
-            borderWidth: 1,
-            borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
-          }}
-        >
-          <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
-            Per acre
-          </Text>
-        </Pressable>
-      </View>
+      {!readOnly ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2], gap: 8 }}>
+          <Pressable
+            onPress={() => onUpdate({ quantityBasis: 'total' })}
+            style={{
+              borderRadius: borderRadius.full,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[1],
+              backgroundColor:
+                (chemical.quantityBasis ?? 'total') === 'total'
+                  ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
+                  : colors.surface[100],
+              borderWidth: 1,
+              borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
+            }}
+          >
+            <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+              {t('sprayForm.chemicals.totalQty', { defaultValue: 'Total Qty' })}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => onUpdate({ quantityBasis: 'per_acre' })}
+            style={{
+              borderRadius: borderRadius.full,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[1],
+              backgroundColor:
+                chemical.quantityBasis === 'per_acre'
+                  ? colorWithOpacity(m3.colorScheme.tertiary, 0.2)
+                  : colors.surface[100],
+              borderWidth: 1,
+              borderColor: colorWithOpacity(m3.colorScheme.outline, 0.2),
+            }}
+          >
+            <Text style={{ fontSize: fontSize.xs, color: colors.surface[800], fontWeight: '600' }}>
+              {t('sprayForm.chemicals.perAcre', { defaultValue: 'Per acre' })}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {/* Unit Picker Modal */}
       <UnitPickerModal
-        visible={showUnitPicker}
+        visible={!readOnly && showUnitPicker}
         onClose={() => setShowUnitPicker(false)}
         onSelect={(unit) => onUpdate({ unit })}
         selectedValue={chemical.unit}
@@ -783,6 +948,12 @@ export function validateSprayForm(data: SprayFormData): boolean {
 export function createEmptySprayFormData(): SprayFormData {
   return {
     waterVolume: undefined,
+    catalogMixId: null,
+    catalogMixName: null,
+    governingPhiDays: null,
+    safeHarvestDate: null,
+    phiBlockingComponent: null,
+    phiStatus: null,
     chemicals: [
       {
         id: generateId(),
@@ -791,6 +962,7 @@ export function createEmptySprayFormData(): SprayFormData {
         unit: 'gm/L',
         quantityBasis: 'total',
         warehouseItemId: null,
+        catalogProductId: null,
         compositionSnapshot: null,
         densityKgPerL: null,
       },

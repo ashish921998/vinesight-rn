@@ -21,6 +21,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { View, Pressable, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { ChemicalMix } from '@/types/phi';
 
 interface LogFormProps {
   selectedLogType: LogTypeId | null;
@@ -40,6 +41,8 @@ interface LogFormProps {
   hasFarm: boolean;
   sprayQuickAddItems: SprayQuickAddItem[];
   fertigationQuickAddItems: FertigationQuickAddItem[];
+  sprayCatalogOnly?: boolean;
+  sprayCatalogMixes?: ChemicalMix[];
 }
 
 export function LogForm({
@@ -60,6 +63,8 @@ export function LogForm({
   hasFarm,
   sprayQuickAddItems,
   fertigationQuickAddItems,
+  sprayCatalogOnly = false,
+  sprayCatalogMixes = [],
 }: LogFormProps) {
   const m3 = useM3();
   const colors = useThemeColors();
@@ -82,6 +87,8 @@ export function LogForm({
           onChange={onSprayChange}
           onInputFocus={onInputFocus}
           quickAddItems={sprayQuickAddItems}
+          catalogOnly={sprayCatalogOnly}
+          catalogMixes={sprayCatalogMixes}
         />
       )}
       {selectedLogType === 'harvest' && (

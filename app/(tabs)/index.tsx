@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
 import { useThemeTokens } from '@/styles/use-theme';
 import { FloatingAssistantButton } from '@/components/ui/floating-assistant-button';
+import { ALL_FARMS_ID } from '@/constants/farm-selection';
 
 // ============================================================
 // MARK: - Greeting Helper
@@ -107,7 +108,7 @@ export default function DashboardScreen() {
       router.push({
         pathname: '/add-entry',
         params: {
-          farmId: farmId.toString(),
+          farmId: farmId === ALL_FARMS_ID ? 'all' : farmId.toString(),
           initialLogType: selectedQuickAction ?? undefined,
           initialTab: 'log',
           tabs: 'log',
@@ -340,10 +341,10 @@ export default function DashboardScreen() {
                   onPress={() => handleQuickAction('spray')}
                 />
                 <QuickActionButton
-                  title={t('dashboard.quickActions.harvest')}
-                  icon="basket"
-                  color={colors.harvest[500]}
-                  onPress={() => handleQuickAction('harvest')}
+                  title={t('dashboard.quickActions.expense')}
+                  icon="dollarsign.circle"
+                  color={colors.expense[500]}
+                  onPress={() => handleQuickAction('expense')}
                 />
                 <QuickActionButton
                   title={t('dashboard.quickActions.note')}
@@ -507,6 +508,43 @@ export default function DashboardScreen() {
                   nestedScrollEnabled={true}
                   style={{ maxHeight: 400 }}
                 >
+                  {farms && farms.length > 0 ? (
+                    selectedQuickAction === 'expense' ? (
+                      <Pressable
+                        key="all-farms"
+                        onPress={() => handleFarmSelection(ALL_FARMS_ID)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('dashboard.farmPicker.selectAllFarmsA11y')}
+                        style={({ pressed }) => ({
+                          padding: spacing[4],
+                          borderBottomWidth: 1,
+                          borderBottomColor: m3.colorScheme.outlineVariant,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          backgroundColor: pressed
+                            ? colorWithOpacity(
+                                m3.colorScheme.onSurface,
+                                m3.stateLayerOpacity.pressed,
+                              )
+                            : 'transparent',
+                        })}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={{
+                              ...m3.typography.bodyMedium,
+                              fontWeight: fontWeight.medium,
+                              color: m3.colorScheme.onSurface,
+                            }}
+                          >
+                            {t('dashboard.farmPicker.allFarms')}
+                          </Text>
+                        </View>
+                        <SymbolIcon name="chevron.right" size={20} color={colors.gray[300]} />
+                      </Pressable>
+                    ) : null
+                  ) : null}
                   {farms && farms.length > 0 ? (
                     farms.map((farm) => (
                       <Pressable

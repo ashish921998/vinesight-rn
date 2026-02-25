@@ -147,6 +147,22 @@ export default function ToolsScreen() {
         color: colors.observation[500],
         route: '/calculator/nutrients',
       },
+      {
+        id: 'tank-mix',
+        titleKey: 'tools.items.tankMixCalculator',
+        descriptionKey: 'tools.descriptions.tankMixCalculator',
+        icon: 'spraycan.fill',
+        color: colors.spray[500],
+        route: '/calculator/tank-mix' as Href,
+      },
+      {
+        id: 'safe-to-spray',
+        titleKey: 'tools.items.safeToSprayChecker',
+        descriptionKey: 'tools.descriptions.safeToSprayChecker',
+        icon: 'checkmark.shield.fill',
+        color: colors.warning,
+        route: '/spray-safe-checker' as Href,
+      },
     ],
     [colors],
   );

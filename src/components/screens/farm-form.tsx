@@ -743,13 +743,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     };
 
     try {
-      const result = await createFarm.mutateAsync(farmData);
+      const createdFarm = await createFarm.mutateAsync(farmData);
       telemetry.capture('farm_created', {
-        farm_id: result?.id ?? null,
+        farm_id: createdFarm?.id ?? null,
+        region: formState.region.trim(),
+        area_acres: areaValue,
         crop: finalCrop,
         variety: finalVariety,
-        region: formState.region,
-        area_acres: areaValue,
+        soil_texture: formState.soilTextureClass || null,
       });
       triggerHapticSuccess();
       onClose();
