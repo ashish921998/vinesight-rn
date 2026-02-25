@@ -68,17 +68,9 @@ async function fetchMasterProducts(args: {
     return query;
   };
 
-  let productsResult = await buildProductQuery(stateCode ? { stateCode } : undefined);
+  const productsResult = await buildProductQuery(stateCode ? { stateCode } : undefined);
   if (productsResult.error?.code === '42P01') return [];
   if (productsResult.error) throw productsResult.error;
-
-  // Fallback when catalog rows exist but are not tagged with the requested state.
-  if (stateCode && (productsResult.data?.length ?? 0) === 0) {
-    const fallbackResult = await buildProductQuery();
-    if (fallbackResult.error?.code === '42P01') return [];
-    if (fallbackResult.error) throw fallbackResult.error;
-    productsResult = fallbackResult;
-  }
 
   const products = (productsResult.data ?? []) as ProductRow[];
   if (products.length === 0) return [];

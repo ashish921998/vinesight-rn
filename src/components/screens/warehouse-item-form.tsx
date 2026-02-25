@@ -43,6 +43,7 @@ import {
 import { ModalBackdrop } from '../ui/modal-backdrop';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import theme from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { ICON_REGISTRY } from '@/constants/icon-registry';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
@@ -131,7 +132,7 @@ function formatCatalogueProductDisplayName(product: MasterCatalogProduct): strin
 
   let strippedName = sourceName;
   for (const candidate of getManufacturerBrandCandidates(product.manufacturer)) {
-    const prefixPattern = new RegExp(`^${escapeRegExp(candidate)}(?=\\b|\\s|[-/:|])`, 'i');
+    const prefixPattern = new RegExp(`^${escapeRegExp(candidate)}(?=\\b|\\s|[\\-/:|.,])`, 'i');
     if (!prefixPattern.test(strippedName)) continue;
 
     strippedName = strippedName
@@ -145,7 +146,7 @@ function formatCatalogueProductDisplayName(product: MasterCatalogProduct): strin
 }
 
 function formatCatalogueProductSubtitle(product: MasterCatalogProduct): string {
-  const parts = [product.active_ingredient, product.formulation]
+  const parts = [product.manufacturer, product.active_ingredient, product.formulation]
     .map((value) => value?.trim())
     .filter((value): value is string => Boolean(value));
 
@@ -397,7 +398,7 @@ export default function WarehouseItemForm({
     setName(product.name);
     setType(nextType);
     setUnit(resolveDefaultWarehouseUnitForProduct(product));
-    setManufacturer('');
+    setManufacturer(product.manufacturer ?? '');
     setCompositionRows(mapCatalogCompositionsToRows(product));
     setCompositionSource('preset');
     setSelectedCatalogProductId(product.id);
@@ -646,14 +647,14 @@ export default function WarehouseItemForm({
         <SectionHeader
           title="Item Type"
           subtitle="Choose fertilizer or spray before searching the catalogue."
-          style={{ marginBottom: 12 }}
+          style={{ marginBottom: theme.spacing[3] }}
         />
 
         <PillSelector
           options={ITEM_TYPES}
           selectedValue={type}
           onSelect={(value) => handleTypeSelect(value as WarehouseItemType)}
-          style={{ marginBottom: 20 }}
+          style={{ marginBottom: theme.spacing[5] }}
         />
 
         <SectionHeader
