@@ -56,6 +56,13 @@ class VoiceOutputService {
       'playbackStatusUpdate',
       (status: PlaybackStatusUpdate) => {
         if (status.didJustFinish || status.isLoaded === false || !status.playing) {
+          if (status.didJustFinish) {
+            this.activePlayerSubscription?.remove();
+            this.activePlayerSubscription = null;
+            void this.activePlayer?.pause();
+            void this.activePlayer?.remove();
+            this.activePlayer = null;
+          }
           options.onStateChange?.(false);
         }
       },
@@ -181,14 +188,6 @@ class VoiceOutputService {
       // no-op
     }
     this.activePlayer = null;
-
-    const audioUri = this.lastAudioUri;
-    this.lastAudioUri = null;
-    if (audioUri) {
-      FileSystem.deleteAsync(audioUri).catch((error) => {
-        if (__DEV__) console.warn('Failed to delete audio file:', error);
-      });
-    }
   }
 }
 

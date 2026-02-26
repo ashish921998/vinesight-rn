@@ -44,6 +44,7 @@ interface AssistantGatewayRequest {
   input_text?: string | null;
   input_audio_b64?: string | null;
   audio_format?: string | null;
+  audio_duration?: number | null;
   attachments?: Array<{
     kind: 'image' | 'document';
     name: string;
@@ -260,18 +261,23 @@ function generateTraceId(): string {
   return crypto.randomUUID();
 }
 
-async function withTimeout<T>(
-  promise: Promise<T>,
+async function withAbortTimeout<T>(
+  promiseFactory: (signal: AbortSignal) => Promise<T>,
   timeoutMs: number,
   errorMessage: string,
 ): Promise<T> {
+  const controller = new AbortController();
   let timeoutHandle: number | null = null;
+
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutHandle = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+    timeoutHandle = setTimeout(() => {
+      controller.abort();
+      reject(new Error(errorMessage));
+    }, timeoutMs);
   });
 
   try {
-    return await Promise.race([promise, timeoutPromise]);
+    return await Promise.race([promiseFactory(controller.signal), timeoutPromise]);
   } finally {
     if (timeoutHandle !== null) clearTimeout(timeoutHandle);
   }
@@ -454,6 +460,26 @@ function estimateTokens(text: string): number {
   return Math.ceil(normalized.length / 4);
 }
 
+async function computeContextHash(farmContext: Record<string, unknown> | null): Promise<string> {
+  if (!farmContext) return 'none';
+  const normalized = JSON.stringify(
+    Object.keys(farmContext)
+      .sort()
+      .reduce((acc: Record<string, unknown>, key) => {
+        acc[key] = farmContext[key];
+        return acc;
+      }, {}),
+  );
+  const encoder = new TextEncoder();
+  const data = encoder.encode(normalized);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 16);
+}
+
 function roundUsd(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.round(value * 1_000_000) / 1_000_000;
@@ -496,8 +522,15 @@ function calculateCost(input: {
   };
 }
 
-function getCacheKey(transcript: string, locale: string, farmId: number | null): string {
-  return `${locale}:${farmId ?? 'none'}:${transcript.toLowerCase().trim()}`;
+function getCacheKey(
+  transcript: string,
+  locale: string,
+  userId: string,
+  farmId: number | null,
+  contextHash?: string,
+): string {
+  const contextSuffix = contextHash ? `:${contextHash}` : '';
+  return `${userId}:${locale}:${farmId ?? 'none'}:${transcript.toLowerCase().trim()}${contextSuffix}`;
 }
 
 function checkCircuitBreaker(provider: string): boolean {
@@ -777,12 +810,15 @@ async function fetchUserFarms(userId: string | null): Promise<RouteFarm[]> {
     .filter((row): row is RouteFarm => Boolean(row));
 }
 
-async function extractActivityIntent(input: {
-  transcript: string;
-  locale: 'en' | 'hi' | 'mr';
-  farmNames: string[];
-  contextFarmName?: string | null;
-}): Promise<ActivityLogExtractionResult | null> {
+async function extractActivityIntent(
+  input: {
+    transcript: string;
+    locale: 'en' | 'hi' | 'mr';
+    farmNames: string[];
+    contextFarmName?: string | null;
+  },
+  signal?: AbortSignal,
+): Promise<ActivityLogExtractionResult | null> {
   if (!OPENAI_API_KEY) return null;
 
   const today = new Date();
@@ -817,6 +853,7 @@ async function extractActivityIntent(input: {
         },
       ],
     }),
+    signal,
   });
 
   const data = await response.json();
@@ -975,11 +1012,14 @@ function buildBlockedAdviceMessage(locale: 'en' | 'hi' | 'mr', strictGuardrails:
   return 'This recommendation appears risky. Please confirm with a local agronomy expert.';
 }
 
-async function callOpenAIChat(input: {
-  prompt: string;
-  locale: 'en' | 'hi' | 'mr';
-  contextBlocks: string[];
-}): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
+async function callOpenAIChat(
+  input: {
+    prompt: string;
+    locale: 'en' | 'hi' | 'mr';
+    contextBlocks: string[];
+  },
+  signal?: AbortSignal,
+): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
   if (!OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is not configured');
   }
@@ -1018,6 +1058,7 @@ async function callOpenAIChat(input: {
         },
       ],
     }),
+    signal,
   });
 
   const data = await response.json();
@@ -1066,6 +1107,7 @@ async function callSarvamStt(
   base64Audio: string,
   mimeType: string,
   locale: 'en' | 'hi' | 'mr',
+  signal?: AbortSignal,
 ): Promise<{ transcript: string; confidence: number | null }> {
   if (!SARVAM_API_KEY) throw new Error('SARVAM_API_KEY is not configured');
 
@@ -1112,6 +1154,7 @@ async function callSarvamStt(
         'api-subscription-key': SARVAM_API_KEY,
       },
       body: form,
+      signal,
     });
 
     const data = await response.json().catch(() => null);
@@ -1152,6 +1195,7 @@ async function callSarvamStt(
 async function callOpenAIStt(
   base64Audio: string,
   mimeType: string,
+  signal?: AbortSignal,
 ): Promise<{ transcript: string; confidence: number | null }> {
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured');
 
@@ -1179,6 +1223,7 @@ async function callOpenAIStt(
       Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
     body: form,
+    signal,
   });
 
   const data = await response.json();
@@ -1200,6 +1245,7 @@ async function callOpenAIStt(
 async function callSarvamTts(
   text: string,
   locale: 'en' | 'hi' | 'mr',
+  signal?: AbortSignal,
 ): Promise<{ base64: string; mimeType: string }> {
   if (!SARVAM_API_KEY) throw new Error('SARVAM_API_KEY is not configured');
 
@@ -1229,6 +1275,7 @@ async function callSarvamTts(
       pace,
       output_audio_codec: 'mp3',
     }),
+    signal,
   });
 
   const data = await response.json();
@@ -1248,7 +1295,10 @@ async function callSarvamTts(
   return { base64: audioBase64, mimeType: 'audio/mpeg' };
 }
 
-async function callOpenAITts(text: string): Promise<{ base64: string; mimeType: string }> {
+async function callOpenAITts(
+  text: string,
+  signal?: AbortSignal,
+): Promise<{ base64: string; mimeType: string }> {
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured');
 
   const response = await fetch('https://api.openai.com/v1/audio/speech', {
@@ -1263,28 +1313,23 @@ async function callOpenAITts(text: string): Promise<{ base64: string; mimeType: 
       input: text,
       format: 'mp3',
     }),
+    signal,
   });
 
   if (!response.ok) {
     let message = 'OpenAI TTS failed';
     try {
       const data = await response.json();
-      message = data?.error?.message ?? message;
+      message = stringifyUnknown(data);
     } catch {
-      // ignore parse errors
+      // ignore parse errors, use default message
     }
     throw new Error(message);
   }
 
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  const binary = Array.from(bytes)
-    .map((byte) => String.fromCharCode(byte))
-    .join('');
-
-  return {
-    base64: btoa(binary),
-    mimeType: 'audio/mpeg',
-  };
+  const binary = await response.arrayBuffer();
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(binary)));
+  return { base64, mimeType: 'audio/mpeg' };
 }
 
 async function resolveConversationId(
@@ -1572,14 +1617,19 @@ async function queryFarmRecords(input: {
     expense: 'expense_records',
   };
 
+  const selectByActivity: Record<string, string> = {
+    irrigation: 'id, farm_id, date, duration, farms!inner(user_id, name)',
+    spray: 'id, farm_id, date, chemical, dose, water_volume, farms!inner(user_id, name)',
+    fertigation: 'id, farm_id, date, fertilizers, water_volume, farms!inner(user_id, name)',
+    expense: 'id, farm_id, date, cost, type, farms!inner(user_id, name)',
+  };
+
   const table = tableByActivity[input.activity];
   const explicitDate = parseExplicitDate(input.transcript);
 
   let query = serviceSupabase
     .from(table)
-    .select(
-      'id, farm_id, date, duration, chemical, dose, fertilizers, water_volume, cost, type, farms!inner(user_id, name)',
-    )
+    .select(selectByActivity[input.activity] ?? 'id, farm_id, date, farms!inner(user_id, name)')
     .eq('farms.user_id', input.userId)
     .order('date', { ascending: false })
     .limit(50);
@@ -1672,12 +1722,28 @@ async function queryFarmRecords(input: {
   const latestDate = latest?.date ?? 'unknown date';
   const latestAnswer =
     input.activity === 'irrigation'
-      ? `Latest irrigation: ${latest?.duration ?? 0} hours on ${latestDate}.`
+      ? input.locale === 'hi'
+        ? `नवीनतम सिंचाई: ${latest?.duration ?? 0} घंटे ${latestDate} को।`
+        : input.locale === 'mr'
+          ? `अलीकडील सिंचन: ${latest?.duration ?? 0} तास ${latestDate} रोजी.`
+          : `Latest irrigation: ${latest?.duration ?? 0} hours on ${latestDate}.`
       : input.activity === 'spray'
-        ? `Latest spray: ${latest?.chemical ?? 'Unknown'} (${latest?.dose ?? '-'}) on ${latestDate}.`
+        ? input.locale === 'hi'
+          ? `नवीनतम स्प्रे: ${latest?.chemical ?? 'अज्ञात'} (${latest?.dose ?? '-'}) ${latestDate} को।`
+          : input.locale === 'mr'
+            ? `अलीकडील फवारणी: ${latest?.chemical ?? 'अज्ञात'} (${latest?.dose ?? '-'}) ${latestDate} रोजी.`
+            : `Latest spray: ${latest?.chemical ?? 'Unknown'} (${latest?.dose ?? '-'}) on ${latestDate}.`
         : input.activity === 'expense'
-          ? `Latest expense: ₹${Number(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'other'}) on ${latestDate}.`
-          : `Latest ${input.activity} record is from ${latestDate}.`;
+          ? input.locale === 'hi'
+            ? `नवीनतम खर्च: ₹${Number(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'अन्य'}) ${latestDate} को।`
+            : input.locale === 'mr'
+              ? `अलीकडील खर्च: ₹${Number(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'इतर'}) ${latestDate} रोजी.`
+              : `Latest expense: ₹${Number(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'other'}) on ${latestDate}.`
+          : input.locale === 'hi'
+            ? `नवीनतम ${input.activity} रिकॉर्ड ${latestDate} का है।`
+            : input.locale === 'mr'
+              ? `अलीकडील ${input.activity} नोंद ${latestDate} ची आहे.`
+              : `Latest ${input.activity} record is from ${latestDate}.`;
 
   return {
     answer: latestAnswer,
@@ -1777,11 +1843,11 @@ Deno.serve(async (req) => {
     const providerFallbackEnabled = body?.client_capabilities?.provider_fallback_enabled !== false;
     const clientPersistedUserTurn = body?.client_capabilities?.client_persisted_user_turn === true;
 
-    if (body?.user_id && !authenticatedUserId) {
-      return jsonResponse({ error: 'Authentication required for user-scoped requests' }, 401);
+    if (!authenticatedUserId) {
+      return jsonResponse({ error: 'Authentication required for gateway operations' }, 401);
     }
 
-    if (body?.user_id && authenticatedUserId && body.user_id !== authenticatedUserId) {
+    if (body?.user_id && body.user_id !== authenticatedUserId) {
       return jsonResponse({ error: 'user_id does not match authenticated user' }, 403);
     }
 
@@ -1894,8 +1960,8 @@ Deno.serve(async (req) => {
             if (canUseSarvam) {
               try {
                 sttStartedAt = Date.now();
-                sttResult = await withTimeout(
-                  callSarvamStt(audioBase64, audioMimeType, locale),
+                sttResult = await withAbortTimeout(
+                  (signal) => callSarvamStt(audioBase64, audioMimeType, locale, signal),
                   STT_TIMEOUT_MS,
                   `Sarvam STT timed out after ${STT_TIMEOUT_MS}ms`,
                 );
@@ -1908,8 +1974,8 @@ Deno.serve(async (req) => {
                 if (!providerFallbackEnabled) throw error;
                 console.warn('Sarvam STT failed, falling back to OpenAI:', stringifyUnknown(error));
                 sttStartedAt = Date.now();
-                sttResult = await withTimeout(
-                  callOpenAIStt(audioBase64, audioMimeType),
+                sttResult = await withAbortTimeout(
+                  (signal) => callOpenAIStt(audioBase64, audioMimeType, signal),
                   STT_TIMEOUT_MS,
                   `OpenAI STT fallback timed out after ${STT_TIMEOUT_MS}ms`,
                 );
@@ -1922,8 +1988,8 @@ Deno.serve(async (req) => {
             } else {
               console.warn('Sarvam STT circuit breaker open; using OpenAI directly');
               sttStartedAt = Date.now();
-              sttResult = await withTimeout(
-                callOpenAIStt(audioBase64, audioMimeType),
+              sttResult = await withAbortTimeout(
+                (signal) => callOpenAIStt(audioBase64, audioMimeType, signal),
                 STT_TIMEOUT_MS,
                 `OpenAI STT timed out after ${STT_TIMEOUT_MS}ms`,
               );
@@ -1934,8 +2000,8 @@ Deno.serve(async (req) => {
             }
           } else {
             sttStartedAt = Date.now();
-            sttResult = await withTimeout(
-              callOpenAIStt(audioBase64, audioMimeType),
+            sttResult = await withAbortTimeout(
+              (signal) => callOpenAIStt(audioBase64, audioMimeType, signal),
               STT_TIMEOUT_MS,
               `OpenAI STT timed out after ${STT_TIMEOUT_MS}ms`,
             );
@@ -2055,13 +2121,18 @@ Deno.serve(async (req) => {
           Boolean(nextRouteState.voice_log_draft),
         )
       ) {
-        llmExtraction = await withTimeout(
-          extractActivityIntent({
-            transcript: effectiveTranscript,
-            locale,
-            farmNames: farmsForRouting.map((farmRow) => farmRow.name),
-            contextFarmName: contextFarmForRouting?.name ?? body?.farm_context?.farm_name ?? null,
-          }),
+        llmExtraction = await withAbortTimeout(
+          (signal) =>
+            extractActivityIntent(
+              {
+                transcript: effectiveTranscript,
+                locale,
+                farmNames: farmsForRouting.map((farmRow) => farmRow.name),
+                contextFarmName:
+                  contextFarmForRouting?.name ?? body?.farm_context?.farm_name ?? null,
+              },
+              signal,
+            ),
           LLM_TIMEOUT_MS,
           `Intent extraction timed out after ${LLM_TIMEOUT_MS}ms`,
         );
@@ -2256,22 +2327,33 @@ Deno.serve(async (req) => {
         const farmContextBlock = body?.farm_context
           ? `Farm context: ${JSON.stringify(body.farm_context)}`
           : '';
-        const cacheKey = getCacheKey(effectiveTranscript, locale, farmId);
+        const contextHash = await computeContextHash(body?.farm_context ?? null);
+        const cacheKey = getCacheKey(
+          effectiveTranscript,
+          locale,
+          authenticatedUserId,
+          farmId,
+          contextHash,
+        );
         const cached = responseCache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
           cacheHit = true;
           assistantText = cached.text;
         } else {
-          const chatResult = await withTimeout(
-            callOpenAIChat({
-              prompt: effectiveTranscript,
-              locale,
-              contextBlocks: [
-                farmContextBlock,
-                ...memoryContext.contextBlocks,
-                ...ragContext.contextBlocks,
-              ].filter(Boolean),
-            }),
+          const chatResult = await withAbortTimeout(
+            (signal) =>
+              callOpenAIChat(
+                {
+                  prompt: effectiveTranscript,
+                  locale,
+                  contextBlocks: [
+                    farmContextBlock,
+                    ...memoryContext.contextBlocks,
+                    ...ragContext.contextBlocks,
+                  ].filter(Boolean),
+                },
+                signal,
+              ),
             LLM_TIMEOUT_MS,
             `Advisory generation timed out after ${LLM_TIMEOUT_MS}ms`,
           );
@@ -2321,8 +2403,8 @@ Deno.serve(async (req) => {
         if (USE_SARVAM_FOR_VOICE && checkCircuitBreaker('sarvam_tts')) {
           usedSarvamTts = true;
           const ttsStartedAt = Date.now();
-          const tts = await withTimeout(
-            callSarvamTts(assistantText, locale),
+          const tts = await withAbortTimeout(
+            (signal) => callSarvamTts(assistantText, locale, signal),
             TTS_TIMEOUT_MS,
             `Sarvam TTS timed out after ${TTS_TIMEOUT_MS}ms`,
           );
@@ -2333,8 +2415,8 @@ Deno.serve(async (req) => {
           recordProviderSuccess('sarvam_tts');
         } else {
           const ttsStartedAt = Date.now();
-          const tts = await withTimeout(
-            callOpenAITts(assistantText),
+          const tts = await withAbortTimeout(
+            (signal) => callOpenAITts(assistantText, signal),
             TTS_TIMEOUT_MS,
             `OpenAI TTS timed out after ${TTS_TIMEOUT_MS}ms`,
           );
@@ -2355,8 +2437,8 @@ Deno.serve(async (req) => {
         }
         try {
           const ttsStartedAt = Date.now();
-          const tts = await withTimeout(
-            callOpenAITts(assistantText),
+          const tts = await withAbortTimeout(
+            (signal) => callOpenAITts(assistantText, signal),
             TTS_TIMEOUT_MS,
             `OpenAI TTS fallback timed out after ${TTS_TIMEOUT_MS}ms`,
           );
@@ -2392,7 +2474,7 @@ Deno.serve(async (req) => {
     const latency = Date.now() - start;
     const costBreakdown = calculateCost({
       sttProviderUsed,
-      audioDurationSeconds: sttLatencyMs ? sttLatencyMs / 1000 : 0,
+      audioDurationSeconds: body?.audio_duration ?? (sttLatencyMs ? sttLatencyMs / 1000 : 0),
       inputTokens: llmInputTokens,
       outputTokens: llmOutputTokens,
       embeddingTokens: embeddingTokenCounter.value,

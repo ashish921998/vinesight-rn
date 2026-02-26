@@ -175,39 +175,6 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
-async function extractInvokeErrorContext(error: unknown): Promise<string> {
-  const context = (error as { context?: unknown } | null | undefined)?.context as
-    | {
-        status?: number;
-        statusText?: string;
-        json?: () => Promise<unknown>;
-        text?: () => Promise<string>;
-      }
-    | undefined;
-
-  if (!context) return '';
-
-  const status =
-    typeof context.status === 'number'
-      ? `status=${context.status}${context.statusText ? ` ${context.statusText}` : ''}`
-      : '';
-
-  let body = '';
-  try {
-    if (typeof context.json === 'function') {
-      body = toDebugString(await context.json());
-    } else if (typeof context.text === 'function') {
-      body = toDebugString(await context.text());
-    }
-  } catch {
-    // ignore parse/read failures
-  }
-
-  if (!status && !body) return '';
-  if (status && body) return `${status} body=${body}`;
-  return status || `body=${body}`;
-}
-
 function normalizeBase64Payload(value: string): string {
   return value.replace(/^data:[^;]+;base64,/i, '').trim();
 }
@@ -725,12 +692,7 @@ export async function sendAssistantTurn(
     }
 
     if (error) {
-      const invokeErrorMessage = toErrorMessage(error);
-      const invokeContext = await extractInvokeErrorContext(error);
-      const errorContext = invokeContext;
-      throw new Error(
-        `ai-gateway invoke failed: ${invokeErrorMessage}${errorContext ? ` | ${errorContext}` : ''}`,
-      );
+      throw new Error('ai-gateway invoke failed');
     }
 
     const response = data;
