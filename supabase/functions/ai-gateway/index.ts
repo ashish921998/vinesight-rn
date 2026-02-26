@@ -1718,6 +1718,100 @@ async function queryFarmRecords(input: {
     input.transcript,
   );
 
+  if (isTotalQuery && (input.activity === 'irrigation' || input.activity === 'expense')) {
+    const valueField = input.activity === 'irrigation' ? 'duration' : 'cost';
+    const pageSize = 1000;
+    let total = 0;
+    let totalRows = 0;
+
+    for (let start = 0; ; start += pageSize) {
+      let pageQuery = serviceSupabase
+        .from(table)
+        .select(`id, ${valueField}, farms!inner(user_id)`)
+        .eq('farms.user_id', input.userId)
+        .order('date', { ascending: false })
+        .range(start, start + pageSize - 1);
+
+      if (input.farmId) {
+        pageQuery = pageQuery.eq('farm_id', input.farmId);
+      }
+      if (explicitDate) {
+        pageQuery = pageQuery.eq('date', explicitDate);
+      }
+
+      const { data: pageData, error: pageError } = await pageQuery;
+      if (pageError) {
+        input.toolCalls.push({
+          tool: 'log_activity.query',
+          status: 'error',
+          error: pageError.message,
+        });
+        return { answer: null, citations: [] };
+      }
+
+      const pageRows = Array.isArray(pageData) ? pageData : [];
+      totalRows += pageRows.length;
+      for (const row of pageRows) {
+        const value = (row as Record<string, unknown>)[valueField];
+        total += safeNumber(value);
+      }
+
+      if (pageRows.length < pageSize) break;
+    }
+
+    input.toolCalls.push({
+      tool: 'log_activity.query',
+      status: 'ok',
+      output: { table, count: totalRows },
+    });
+
+    if (totalRows === 0) {
+      const message =
+        input.locale === 'hi'
+          ? 'कोई रिकॉर्ड नहीं मिला।'
+          : input.locale === 'mr'
+            ? 'कोणतीही नोंद आढळली नाही.'
+            : 'No records found.';
+      return { answer: message, citations: [] };
+    }
+
+    if (input.activity === 'irrigation') {
+      return {
+        answer:
+          input.locale === 'hi'
+            ? `कुल सिंचाई ${total.toFixed(2)} घंटे है।`
+            : input.locale === 'mr'
+              ? `एकूण सिंचन ${total.toFixed(2)} तास आहे.`
+              : `Total irrigation is ${total.toFixed(2)} hours.`,
+        citations: [
+          {
+            id: 'farm-total-1',
+            title: 'Farm operation logs',
+            sourceType: 'farm_record',
+            snippet: `Computed from ${totalRows} irrigation record(s).`,
+          },
+        ],
+      };
+    }
+
+    return {
+      answer:
+        input.locale === 'hi'
+          ? `कुल खर्च ₹${total.toFixed(2)} है।`
+          : input.locale === 'mr'
+            ? `एकूण खर्च ₹${total.toFixed(2)} आहे.`
+            : `Total expense is ₹${total.toFixed(2)}.`,
+      citations: [
+        {
+          id: 'farm-total-2',
+          title: 'Farm expense logs',
+          sourceType: 'farm_record',
+          snippet: `Computed from ${totalRows} expense record(s).`,
+        },
+      ],
+    };
+  }
+
   let query = serviceSupabase
     .from(table)
     .select(selectByActivity[input.activity] ?? 'id, farm_id, date, farms!inner(user_id, name)')
