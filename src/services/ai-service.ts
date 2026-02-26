@@ -450,7 +450,7 @@ class AIService {
     try {
       const response = await callOpenAIProxy({
         messages,
-        model: assistantModelConfig.extractionModel,
+        model: assistantModelConfig.advisoryModel,
         temperature: 0.8,
         max_tokens: 200,
       });

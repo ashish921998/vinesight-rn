@@ -1,5 +1,6 @@
 import { voiceOutputService } from '@/services/voice-output';
 import type { AssistantTurnResponse } from '@/types/ai';
+import type { SupportedLanguageCode } from '@/i18n/languages';
 
 type PlaybackStatusListener = (status: { didJustFinish?: boolean; isLoaded?: boolean }) => void;
 
@@ -39,7 +40,7 @@ function getServiceState() {
     } | null;
     activePlayerSubscription: { remove: () => void } | null;
     lastMessageText: string | null;
-    lastLanguage: 'en' | 'hi' | 'mr';
+    lastLanguage: SupportedLanguageCode;
     lastAudioUri: string | null;
   };
 }
@@ -183,6 +184,8 @@ describe('voice-output stale replay handling', () => {
       onDone,
       onStateChange,
     });
+
+    expect(mockCreateAudioPlayer).toHaveBeenCalledWith('/tmp/cached-replay.mp3');
 
     if (!playbackStatusListener) {
       throw new Error('Expected playback status listener to be registered');

@@ -199,6 +199,13 @@ const SARVAM_TTS_PACE = Number.parseFloat(Deno.env.get('ASSISTANT_SARVAM_TTS_PAC
 const USE_SARVAM_FOR_VOICE =
   (Deno.env.get('ASSISTANT_USE_SARVAM_VOICE') ?? 'true').toLowerCase() !== 'false';
 
+if (!OPENAI_API_KEY) {
+  throw new Error('OPENAI_API_KEY is required for ai-gateway');
+}
+if (USE_SARVAM_FOR_VOICE && !SARVAM_API_KEY) {
+  throw new Error('SARVAM_API_KEY is required when ASSISTANT_USE_SARVAM_VOICE is enabled');
+}
+
 const MAX_AUDIO_SIZE_MB = 10;
 const MAX_TEXT_LENGTH = 5000;
 const MAX_AUDIO_BASE64_LENGTH = Math.floor((MAX_AUDIO_SIZE_MB * 1024 * 1024 * 4) / 3);
@@ -213,25 +220,8 @@ const FAILURE_THRESHOLD = 5;
 const RESET_TIMEOUT_MS = 60000;
 const circuitBreakers = new Map<string, CircuitBreakerState>();
 
-const responseCache = new Map<string, { text: string; timestamp: number }>();
-const CACHE_TTL_MS = 5 * 60 * 1000;
-let lastCacheCleanup = Date.now();
-const CACHE_CLEANUP_INTERVAL_MS = 60 * 1000;
-
-function cleanExpiredCache(): void {
+function cleanExpiredCircuitBreakers(): void {
   const now = Date.now();
-  if (now - lastCacheCleanup < CACHE_CLEANUP_INTERVAL_MS) {
-    return;
-  }
-
-  let deleted = 0;
-  for (const [key, entry] of responseCache.entries()) {
-    if (now - entry.timestamp > CACHE_TTL_MS) {
-      responseCache.delete(key);
-      deleted++;
-    }
-  }
-
   let cleaned = 0;
   for (const [key, state] of circuitBreakers.entries()) {
     if (now - state.lastFailureTime > RESET_TIMEOUT_MS) {
@@ -240,13 +230,9 @@ function cleanExpiredCache(): void {
     }
   }
 
-  if (deleted > 0 || cleaned > 0) {
-    console.log(
-      `[Cache cleanup] deleted ${deleted} expired cache entries, ${cleaned} circuit breakers`,
-    );
+  if (cleaned > 0) {
+    console.log(`[Circuit cleanup] deleted ${cleaned} expired circuit breakers`);
   }
-
-  lastCacheCleanup = now;
 }
 
 function envNumber(name: string, fallback: number): number {
@@ -458,6 +444,20 @@ function toRoundedPositiveNumber(value: unknown): number | null {
   const parsed = toOptionalNumber(value);
   if (parsed === null || parsed <= 0) return null;
   return Math.round(parsed * 100) / 100;
+}
+
+function safeNumber(value: unknown): number {
+  const parsed = toOptionalNumber(value);
+  return parsed !== null && Number.isFinite(parsed) ? parsed : 0;
+}
+
+function decodeBase64ToBytes(base64Audio: string): Uint8Array {
+  const cleanBase64 = normalizeBase64Input(base64Audio);
+  try {
+    return Uint8Array.from(atob(cleanBase64), (ch) => ch.charCodeAt(0));
+  } catch {
+    throw new Error('invalid_audio_base64');
+  }
 }
 
 function toRecord(value: unknown): Record<string, unknown> | null {
@@ -764,35 +764,51 @@ async function writeConversationRouteState(
   nextState: AssistantRouteState,
 ): Promise<void> {
   if (!conversationId) return;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { data, error } = await serviceSupabase
+      .from('assistant_conversations')
+      .select('metadata, updated_at')
+      .eq('id', conversationId)
+      .single();
 
-  const { data, error } = await serviceSupabase
-    .from('assistant_conversations')
-    .select('metadata')
-    .eq('id', conversationId)
-    .single();
+    if (error) {
+      console.warn('Failed to reload conversation metadata for update', error.message);
+      return;
+    }
 
-  if (error) {
-    console.warn('Failed to reload conversation metadata for update', error.message);
-    return;
+    const row = (data ?? {}) as Record<string, unknown>;
+    const currentMetadata = toRecord(row.metadata) ?? {};
+    const mergedMetadata: Record<string, unknown> = {
+      ...currentMetadata,
+      assistant_route_state: nextState,
+    };
+    const originalUpdatedAt = toOptionalString(row.updated_at);
+    const nextUpdatedAt = new Date().toISOString();
+
+    let updateQuery = serviceSupabase
+      .from('assistant_conversations')
+      .update({
+        metadata: mergedMetadata,
+        updated_at: nextUpdatedAt,
+      })
+      .eq('id', conversationId)
+      .select('id');
+
+    if (originalUpdatedAt) {
+      updateQuery = updateQuery.eq('updated_at', originalUpdatedAt);
+    }
+
+    const { data: updatedRows, error: updateError } = await updateQuery;
+    if (updateError) {
+      console.warn('Failed to save assistant route state', updateError.message);
+      return;
+    }
+    if (Array.isArray(updatedRows) && updatedRows.length > 0) {
+      return;
+    }
   }
 
-  const currentMetadata = toRecord(data?.metadata) ?? {};
-  const mergedMetadata: Record<string, unknown> = {
-    ...currentMetadata,
-    assistant_route_state: nextState,
-  };
-
-  const { error: updateError } = await serviceSupabase
-    .from('assistant_conversations')
-    .update({
-      metadata: mergedMetadata,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', conversationId);
-
-  if (updateError) {
-    console.warn('Failed to save assistant route state', updateError.message);
-  }
+  console.warn('Failed to save assistant route state due to concurrent update');
 }
 
 async function fetchUserFarms(userId: string | null): Promise<RouteFarm[]> {
@@ -1149,8 +1165,7 @@ async function callSarvamStt(
 
   const languageCode = locale === 'mr' ? 'mr-IN' : locale === 'hi' ? 'hi-IN' : 'en-IN';
   const candidateModels = Array.from(new Set([SARVAM_STT_MODEL, 'saarika:v2.5']));
-  const cleanBase64 = normalizeBase64Input(base64Audio);
-  const audioBytes = Uint8Array.from(atob(cleanBase64), (ch) => ch.charCodeAt(0));
+  const audioBytes = decodeBase64ToBytes(base64Audio);
   const filename = normalizedMimeType.includes('wav')
     ? 'audio.wav'
     : normalizedMimeType.includes('m4a')
@@ -1220,8 +1235,7 @@ async function callOpenAIStt(
 ): Promise<{ transcript: string; confidence: number | null }> {
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured');
 
-  const cleanBase64 = normalizeBase64Input(base64Audio);
-  const binary = Uint8Array.from(atob(cleanBase64), (ch) => ch.charCodeAt(0));
+  const binary = decodeBase64ToBytes(base64Audio);
 
   const headerDetected = detectAudioFormatFromHeader(binary);
   const mimeBasedAudio = normalizeOpenAiAudioMime(mimeType);
@@ -1705,7 +1719,7 @@ async function queryFarmRecords(input: {
 
   if (/\btotal|how much|how many|कितना|कितने|किती|एकूण|कुल/i.test(input.transcript)) {
     if (input.activity === 'irrigation') {
-      const total = rows.reduce((sum: number, row) => sum + Number(row.duration ?? 0), 0);
+      const total = rows.reduce((sum: number, row) => sum + safeNumber(row.duration), 0);
       return {
         answer:
           input.locale === 'hi'
@@ -1725,7 +1739,7 @@ async function queryFarmRecords(input: {
     }
 
     if (input.activity === 'expense') {
-      const total = rows.reduce((sum: number, row) => sum + Number(row.cost ?? 0), 0);
+      const total = rows.reduce((sum: number, row) => sum + safeNumber(row.cost), 0);
       return {
         answer:
           input.locale === 'hi'
@@ -1890,7 +1904,7 @@ Deno.serve(async (req) => {
   const start = Date.now();
   const traceId = generateTraceId();
 
-  cleanExpiredCache();
+  cleanExpiredCircuitBreakers();
 
   try {
     const body = (await req.json()) as AssistantGatewayRequest;
@@ -1938,7 +1952,6 @@ Deno.serve(async (req) => {
     let llmInputTokens = 0;
     let llmOutputTokens = 0;
     let preflightSafetyFlags: SafetyFlags | null = null;
-    const cacheHit = false;
 
     const toolCalls: ToolCall[] = [];
     let sttProviderUsed: string | null = null;
@@ -2038,8 +2051,7 @@ Deno.serve(async (req) => {
                 sttLatencyMs = Date.now() - sttStartedAt;
                 sttProviderUsed = 'openai_fallback';
                 sttConfidence = sttResult.confidence;
-                providerFallbackReason =
-                  error instanceof Error ? error.message : 'sarvam_stt_failed';
+                providerFallbackReason = 'sarvam_stt_failed';
               }
             } else {
               console.warn('Sarvam STT circuit breaker open; using OpenAI directly');
@@ -2493,13 +2505,10 @@ Deno.serve(async (req) => {
             audioBase64 = tts.base64;
             audioMimeType = tts.mimeType;
             audioProviderUsed = 'openai_fallback';
-            providerFallbackReason = error instanceof Error ? error.message : 'sarvam_tts_failed';
+            providerFallbackReason = 'sarvam_tts_failed';
           } catch (fallbackError) {
             recordProviderFailure('openai_tts');
-            const primaryMsg = error instanceof Error ? error.message : 'sarvam_tts_failed';
-            const fallbackMsg =
-              fallbackError instanceof Error ? fallbackError.message : 'openai_tts_failed';
-            providerFallbackReason = `sarvam_tts_failed: ${primaryMsg}, openai_tts_failed: ${fallbackMsg}`;
+            providerFallbackReason = 'both_tts_failed';
             ttsSkippedReason = 'both_tts_failed';
             console.warn('Both TTS providers failed, skipping audio', error, fallbackError);
           }
@@ -2517,20 +2526,16 @@ Deno.serve(async (req) => {
               audioBase64 = tts.base64;
               audioMimeType = tts.mimeType;
               audioProviderUsed = 'sarvam_fallback';
-              providerFallbackReason = error instanceof Error ? error.message : 'openai_tts_failed';
+              providerFallbackReason = 'openai_tts_failed';
               recordProviderSuccess('sarvam_tts');
             } catch (fallbackError) {
               recordProviderFailure('sarvam_tts');
-              const primaryMsg = error instanceof Error ? error.message : 'openai_tts_failed';
-              const fallbackMsg =
-                fallbackError instanceof Error ? fallbackError.message : 'sarvam_tts_failed';
-              providerFallbackReason = `openai_tts_failed: ${primaryMsg}, sarvam_tts_failed: ${fallbackMsg}`;
+              providerFallbackReason = 'both_tts_failed';
               ttsSkippedReason = 'both_tts_failed';
               console.warn('Both TTS providers failed, skipping audio', error, fallbackError);
             }
           } else {
-            const errorMsg = error instanceof Error ? error.message : 'openai_tts_failed';
-            providerFallbackReason = `openai_tts_failed: ${errorMsg}, sarvam_unavailable`;
+            providerFallbackReason = 'openai_tts_failed_sarvam_unavailable';
             ttsSkippedReason = 'openai_tts_failed';
             console.warn('OpenAI TTS failed and Sarvam unavailable, skipping audio', error);
           }
@@ -2573,7 +2578,6 @@ Deno.serve(async (req) => {
         stt_provider: sttProviderUsed,
         tts_provider: audioProviderUsed,
         fallback_reason: providerFallbackReason ?? null,
-        cache_hit: cacheHit,
       },
       timestamp: new Date().toISOString(),
     });
@@ -2594,6 +2598,11 @@ Deno.serve(async (req) => {
       safetyFlags,
     });
 
+    const sanitizedToolCalls = toolCalls.map((item) => ({
+      tool: item.tool,
+      status: item.status,
+    }));
+
     return jsonResponse({
       assistant_text: assistantText,
       assistant_audio_b64: audioBase64,
@@ -2609,7 +2618,7 @@ Deno.serve(async (req) => {
       voice_log_action: voiceLogAction,
       provider_fallback_reason: providerFallbackReason,
       model_used: ADVISORY_MODEL,
-      tool_calls: toolCalls,
+      tool_calls: sanitizedToolCalls,
       tool_results: toolCalls.map((item) => ({
         tool: item.tool,
         status: item.status,

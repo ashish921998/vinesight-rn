@@ -110,6 +110,8 @@ class VoiceOutputService {
   ): Promise<void> {
     const text = response.message.content?.trim();
     const audio = response.message.audio;
+    let replacedAudioUri: string | null = null;
+    let replacedAudioUriDeleted = false;
     this.lastLanguage = options.language;
     this.lastMessageText = text || null;
 
@@ -124,6 +126,7 @@ class VoiceOutputService {
     try {
       if (audio?.base64 && FileSystem.cacheDirectory) {
         const oldAudioUri = this.lastAudioUri;
+        replacedAudioUri = oldAudioUri ?? null;
         this.lastAudioUri = null;
         const extension = (audio.mimeType ?? 'audio/mpeg').includes('wav') ? 'wav' : 'mp3';
         const fileUri = `${FileSystem.cacheDirectory}assistant-voice-${Date.now()}.${extension}`;
@@ -133,6 +136,7 @@ class VoiceOutputService {
         });
 
         if (oldAudioUri && oldAudioUri !== fileUri) {
+          replacedAudioUriDeleted = true;
           FileSystem.deleteAsync(oldAudioUri).catch((error) => {
             if (__DEV__) console.warn('Failed to delete old audio file:', error);
           });
@@ -162,6 +166,12 @@ class VoiceOutputService {
         });
       }
     } catch {
+      if (replacedAudioUri && !replacedAudioUriDeleted) {
+        FileSystem.deleteAsync(replacedAudioUri).catch((error) => {
+          if (__DEV__)
+            console.warn('Failed to delete replaced audio file after write failure:', error);
+        });
+      }
       if (text) {
         options.onStateChange?.(true);
         Speech.speak(text, {
