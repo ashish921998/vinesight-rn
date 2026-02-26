@@ -200,6 +200,9 @@ class VoiceOutputService {
         language: this.lastLanguage,
         rate,
         onStateChange: options?.onStateChange,
+        onDone: options?.onDone,
+        onStopped: options?.onStopped,
+        onError: options?.onError,
       }).catch(() => false);
       if (played) return;
     }

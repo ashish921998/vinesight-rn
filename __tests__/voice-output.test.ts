@@ -154,4 +154,44 @@ describe('voice-output stale replay handling', () => {
     expect(mockPlayer.pause).toHaveBeenCalledTimes(1);
     expect(mockPlayer.remove).toHaveBeenCalledTimes(1);
   });
+
+  it('replayLast forwards onDone when replaying cached audio', async () => {
+    let playbackStatusListener: PlaybackStatusListener | null = null;
+    const mockSubscription = { remove: jest.fn() };
+    const mockPlayer = {
+      playbackRate: 1,
+      addListener: jest.fn((eventName: string, listener: PlaybackStatusListener) => {
+        expect(eventName).toBe('playbackStatusUpdate');
+        playbackStatusListener = listener;
+        return mockSubscription;
+      }),
+      play: jest.fn(),
+      pause: jest.fn(),
+      remove: jest.fn(),
+    };
+    mockCreateAudioPlayer.mockReturnValue(mockPlayer);
+
+    const state = getServiceState();
+    state.lastAudioUri = '/tmp/cached-replay.mp3';
+    state.lastMessageText = 'Replay me';
+    state.lastLanguage = 'en';
+
+    const onDone = jest.fn();
+    const onStateChange = jest.fn();
+
+    await voiceOutputService.replayLast({
+      onDone,
+      onStateChange,
+    });
+
+    if (!playbackStatusListener) {
+      throw new Error('Expected playback status listener to be registered');
+    }
+    const listener = playbackStatusListener as PlaybackStatusListener;
+    listener({ didJustFinish: true, isLoaded: true });
+
+    expect(onStateChange).toHaveBeenCalledWith(true);
+    expect(onStateChange).toHaveBeenCalledWith(false);
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
 });

@@ -501,26 +501,6 @@ function estimateTokens(text: string): number {
   return Math.ceil(normalized.length / 4);
 }
 
-async function computeContextHash(farmContext: Record<string, unknown> | null): Promise<string> {
-  if (!farmContext) return 'none';
-  const normalized = JSON.stringify(
-    Object.keys(farmContext)
-      .sort()
-      .reduce((acc: Record<string, unknown>, key) => {
-        acc[key] = farmContext[key];
-        return acc;
-      }, {}),
-  );
-  const encoder = new TextEncoder();
-  const data = encoder.encode(normalized);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 16);
-}
-
 function roundUsd(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.round(value * 1_000_000) / 1_000_000;
@@ -561,17 +541,6 @@ function calculateCost(input: {
     embedding_cost_usd: roundUsd(embeddingCost),
     total_cost_usd: roundUsd(sttCost + llmInputCost + llmOutputCost + ttsCost + embeddingCost),
   };
-}
-
-function getCacheKey(
-  transcript: string,
-  locale: string,
-  userId: string,
-  farmId: number | null,
-  contextHash?: string,
-): string {
-  const contextSuffix = contextHash ? `:${contextHash}` : '';
-  return `${userId}:${locale}:${farmId ?? 'none'}:${transcript.toLowerCase().trim()}${contextSuffix}`;
 }
 
 function checkCircuitBreaker(provider: string): boolean {
@@ -1969,7 +1938,7 @@ Deno.serve(async (req) => {
     let llmInputTokens = 0;
     let llmOutputTokens = 0;
     let preflightSafetyFlags: SafetyFlags | null = null;
-    let cacheHit = false;
+    const cacheHit = false;
 
     const toolCalls: ToolCall[] = [];
     let sttProviderUsed: string | null = null;
@@ -2424,41 +2393,26 @@ Deno.serve(async (req) => {
         const farmContextBlock = body?.farm_context
           ? `Farm context: ${JSON.stringify(body.farm_context)}`
           : '';
-        const contextHash = await computeContextHash(body?.farm_context ?? null);
-        const cacheKey = getCacheKey(
-          effectiveTranscript,
-          locale,
-          authenticatedUserId,
-          farmId,
-          contextHash,
+        const chatResult = await withAbortTimeout(
+          (signal) =>
+            callOpenAIChat(
+              {
+                prompt: effectiveTranscript,
+                locale,
+                contextBlocks: [
+                  farmContextBlock,
+                  ...memoryContext.contextBlocks,
+                  ...ragContext.contextBlocks,
+                ].filter(Boolean),
+              },
+              signal,
+            ),
+          LLM_TIMEOUT_MS,
+          `Advisory generation timed out after ${LLM_TIMEOUT_MS}ms`,
         );
-        const cached = responseCache.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-          cacheHit = true;
-          assistantText = cached.text;
-        } else {
-          const chatResult = await withAbortTimeout(
-            (signal) =>
-              callOpenAIChat(
-                {
-                  prompt: effectiveTranscript,
-                  locale,
-                  contextBlocks: [
-                    farmContextBlock,
-                    ...memoryContext.contextBlocks,
-                    ...ragContext.contextBlocks,
-                  ].filter(Boolean),
-                },
-                signal,
-              ),
-            LLM_TIMEOUT_MS,
-            `Advisory generation timed out after ${LLM_TIMEOUT_MS}ms`,
-          );
-          assistantText = chatResult.text;
-          llmInputTokens = chatResult.inputTokens;
-          llmOutputTokens = chatResult.outputTokens;
-          responseCache.set(cacheKey, { text: assistantText, timestamp: Date.now() });
-        }
+        assistantText = chatResult.text;
+        llmInputTokens = chatResult.inputTokens;
+        llmOutputTokens = chatResult.outputTokens;
       }
     }
 
@@ -2546,7 +2500,8 @@ Deno.serve(async (req) => {
             const fallbackMsg =
               fallbackError instanceof Error ? fallbackError.message : 'openai_tts_failed';
             providerFallbackReason = `sarvam_tts_failed: ${primaryMsg}, openai_tts_failed: ${fallbackMsg}`;
-            throw new Error('Both Sarvam and OpenAI TTS failed');
+            ttsSkippedReason = 'both_tts_failed';
+            console.warn('Both TTS providers failed, skipping audio', error, fallbackError);
           }
         } else {
           recordProviderFailure('openai_tts');
