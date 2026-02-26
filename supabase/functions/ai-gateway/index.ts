@@ -887,7 +887,12 @@ async function extractActivityIntent(
     signal,
   });
 
-  const data = await response.json();
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch {
+    return null;
+  }
   if (!response.ok) return null;
 
   const content = data?.choices?.[0]?.message?.content;
@@ -1041,6 +1046,31 @@ function buildBlockedAdviceMessage(locale: 'en' | 'hi' | 'mr', strictGuardrails:
     return 'ही सूचना जोखमीची वाटते. कृपया स्थानिक कृषी तज्ञांची खात्री करा.';
   }
   return 'This recommendation appears risky. Please confirm with a local agronomy expert.';
+}
+
+function buildAttachmentContextBlocks(
+  attachments: AssistantGatewayRequest['attachments'] | undefined,
+): string[] {
+  if (!Array.isArray(attachments) || attachments.length === 0) return [];
+
+  return attachments
+    .map((attachment, index) => {
+      if (!attachment) return null;
+      const name =
+        typeof attachment.name === 'string' ? attachment.name : `attachment-${index + 1}`;
+      const mimeType = typeof attachment.mimeType === 'string' ? attachment.mimeType : 'unknown';
+
+      if (typeof attachment.textContent === 'string' && attachment.textContent.trim()) {
+        return `Attachment ${index + 1} (${name}, ${mimeType}) text:\n${attachment.textContent.trim()}`;
+      }
+
+      if (typeof attachment.dataUrl === 'string' && attachment.dataUrl.trim()) {
+        return `Attachment ${index + 1} (${name}, ${mimeType}) image attached by user.`;
+      }
+
+      return `Attachment ${index + 1} (${name}, ${mimeType}) attached by user.`;
+    })
+    .filter((block): block is string => Boolean(block));
 }
 
 async function callOpenAIChat(
@@ -1684,13 +1714,19 @@ async function queryFarmRecords(input: {
 
   const table = tableByActivity[input.activity];
   const explicitDate = parseExplicitDate(input.transcript);
+  const isTotalQuery = /\btotal|how much|how many|कितना|कितने|किती|एकूण|कुल/i.test(
+    input.transcript,
+  );
 
   let query = serviceSupabase
     .from(table)
     .select(selectByActivity[input.activity] ?? 'id, farm_id, date, farms!inner(user_id, name)')
     .eq('farms.user_id', input.userId)
-    .order('date', { ascending: false })
-    .limit(50);
+    .order('date', { ascending: false });
+
+  if (!isTotalQuery) {
+    query = query.limit(50);
+  }
 
   if (input.farmId) {
     query = query.eq('farm_id', input.farmId);
@@ -1734,7 +1770,7 @@ async function queryFarmRecords(input: {
     return { answer: message, citations: [] };
   }
 
-  if (/\btotal|how much|how many|कितना|कितने|किती|एकूण|कुल/i.test(input.transcript)) {
+  if (isTotalQuery) {
     if (input.activity === 'irrigation') {
       const total = rows.reduce((sum: number, row) => sum + safeNumber(row.duration), 0);
       return {
@@ -2437,6 +2473,7 @@ Deno.serve(async (req) => {
         const farmContextBlock = body?.farm_context
           ? `Farm context: ${JSON.stringify(body.farm_context)}`
           : '';
+        const attachmentContextBlocks = buildAttachmentContextBlocks(body?.attachments);
         const chatResult = await withAbortTimeout(
           (signal) =>
             callOpenAIChat(
@@ -2445,6 +2482,7 @@ Deno.serve(async (req) => {
                 locale,
                 contextBlocks: [
                   farmContextBlock,
+                  ...attachmentContextBlocks,
                   ...memoryContext.contextBlocks,
                   ...ragContext.contextBlocks,
                 ].filter(Boolean),

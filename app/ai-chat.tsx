@@ -1713,6 +1713,10 @@ export default function AIChatScreen() {
             clientCanPlayAudio: true,
             inputAudioBase64: source === 'voice' ? (voicePayload?.inputAudioBase64 ?? null) : null,
             audioFormat: source === 'voice' ? (voicePayload?.audioFormat ?? null) : null,
+            audioDuration:
+              source === 'voice' && typeof voicePayload?.durationMs === 'number'
+                ? voicePayload.durationMs / 1000
+                : null,
             attachments: aiAttachments,
             conversationHistory: messages,
             clientPersistedUserTurn: userTurnPersistedClient,

@@ -90,6 +90,7 @@ interface AssistantGatewayRequest {
   input_text?: string | null;
   input_audio_b64?: string | null;
   audio_format?: string | null;
+  audio_duration?: number | null;
   attachments?: AIMessageAttachmentInput[];
   client_capabilities?: {
     can_play_audio?: boolean;
@@ -502,6 +503,7 @@ export interface SendAssistantTurnInput {
   clientCanPlayAudio?: boolean;
   inputAudioBase64?: string | null;
   audioFormat?: string | null;
+  audioDuration?: number | null;
   attachments?: AIMessageAttachmentInput[];
   conversationHistory?: ChatMessage[];
   clientPersistedUserTurn?: boolean;
@@ -635,7 +637,7 @@ export async function sendAssistantTurn(
 
     if (!hasAudioPayload && !normalizedInput) {
       throw new AssistantGatewayError(
-        AssistantGatewayErrorCode.UNKNOWN,
+        AssistantGatewayErrorCode.INVALID_REQUEST,
         'Empty request: no audio or text input provided',
         {
           requestId,
@@ -659,6 +661,12 @@ export async function sendAssistantTurn(
         ? (normalizeBase64Payload(input.inputAudioBase64 ?? '') ?? null)
         : null,
       audio_format: hasAudioPayload ? (input.audioFormat ?? null) : null,
+      audio_duration:
+        hasAudioPayload &&
+        typeof input.audioDuration === 'number' &&
+        Number.isFinite(input.audioDuration)
+          ? input.audioDuration
+          : null,
       attachments: input.attachments ?? [],
       farm_context: input.farmContext
         ? {
