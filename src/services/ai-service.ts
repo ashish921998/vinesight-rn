@@ -300,11 +300,7 @@ async function callOpenAIProxy(params: {
   max_tokens?: number;
   response_format?: { type: string };
 }): Promise<OpenAICompletionResponse> {
-  const primary = await supabase.functions.invoke('dynamic-api', {
-    body: params,
-  });
-
-  if (primary.error) {
+  const invokeFallback = async (): Promise<OpenAICompletionResponse> => {
     const fallback = await supabase.functions.invoke('openai-proxy', {
       body: {
         ...params,
@@ -313,9 +309,7 @@ async function callOpenAIProxy(params: {
     });
 
     if (fallback.error) {
-      throw new Error(
-        `AI proxy request failed: ${primary.error.message ?? fallback.error.message}`,
-      );
+      throw new Error(`AI proxy request failed: ${fallback.error.message}`);
     }
 
     if (fallback.data?.error) {
@@ -323,10 +317,23 @@ async function callOpenAIProxy(params: {
     }
 
     return fallback.data as OpenAICompletionResponse;
+  };
+
+  const primary = await supabase.functions.invoke('dynamic-api', {
+    body: params,
+  });
+
+  if (primary.error) {
+    try {
+      return await invokeFallback();
+    } catch (error) {
+      const fallbackMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`AI proxy request failed: ${primary.error.message ?? fallbackMessage}`);
+    }
   }
 
   if (primary.data?.error) {
-    throw new Error(`Dynamic API error: ${primary.data.error.message ?? primary.data.error}`);
+    return await invokeFallback();
   }
 
   return primary.data as OpenAICompletionResponse;

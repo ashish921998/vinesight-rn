@@ -467,6 +467,7 @@ export default function SettingsScreen() {
     setIsExportingAssistantData(true);
 
     let fileUri: string | null = null;
+    let shouldDelayCleanup = false;
 
     try {
       const exportData = await assistantMemoryService.exportUserData();
@@ -502,6 +503,7 @@ export default function SettingsScreen() {
         mimeType: 'application/json',
         dialogTitle: t('settings.assistantMemory.exportShareTitle'),
       });
+      shouldDelayCleanup = true;
 
       telemetry.capture('assistant_memory_exported', {
         conversations_count: exportData.conversations.length,
@@ -524,11 +526,21 @@ export default function SettingsScreen() {
       Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
     } finally {
       if (fileUri) {
-        try {
-          await FileSystem.deleteAsync(fileUri);
-        } catch (deleteError) {
-          if (__DEV__) {
-            console.warn('Failed to delete temp file:', deleteError);
+        if (shouldDelayCleanup) {
+          setTimeout(() => {
+            FileSystem.deleteAsync(fileUri!).catch((deleteError) => {
+              if (__DEV__) {
+                console.warn('Failed to delete temp file:', deleteError);
+              }
+            });
+          }, 2000);
+        } else {
+          try {
+            await FileSystem.deleteAsync(fileUri);
+          } catch (deleteError) {
+            if (__DEV__) {
+              console.warn('Failed to delete temp file:', deleteError);
+            }
           }
         }
       }

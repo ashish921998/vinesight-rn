@@ -822,7 +822,10 @@ export async function sendAssistantTurn(
 
     throw parsedError;
   } finally {
-    pendingGatewayRequests.delete(requestId);
+    const currentPendingRequest = pendingGatewayRequests.get(requestId);
+    if (currentPendingRequest?.controller === controller) {
+      pendingGatewayRequests.delete(requestId);
+    }
     externalSignal?.removeEventListener('abort', abortFromExternal);
   }
 }

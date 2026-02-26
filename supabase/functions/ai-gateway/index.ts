@@ -337,6 +337,8 @@ function isLikelyInvalidAudioError(message: string): boolean {
   return (
     lowered.includes('audio data too small') ||
     lowered.includes('failed to read the file') ||
+    lowered.includes('invalid_audio_base64') ||
+    lowered.includes('invalid audio base64') ||
     lowered.includes('invalid audio') ||
     lowered.includes('decode') ||
     lowered.includes('unsupported') ||
@@ -1776,10 +1778,10 @@ async function queryFarmRecords(input: {
             : `Latest spray: ${latest?.chemical ?? 'Unknown'} (${latest?.dose ?? '-'}) on ${latestDate}.`
         : input.activity === 'expense'
           ? input.locale === 'hi'
-            ? `नवीनतम खर्च: ₹${Number(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'अन्य'}) ${latestDate} को।`
+            ? `नवीनतम खर्च: ₹${safeNumber(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'अन्य'}) ${latestDate} को।`
             : input.locale === 'mr'
-              ? `अलीकडील खर्च: ₹${Number(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'इतर'}) ${latestDate} रोजी.`
-              : `Latest expense: ₹${Number(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'other'}) on ${latestDate}.`
+              ? `अलीकडील खर्च: ₹${safeNumber(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'इतर'}) ${latestDate} रोजी.`
+              : `Latest expense: ₹${safeNumber(latest?.cost ?? 0).toFixed(2)} (${latest?.type ?? 'other'}) on ${latestDate}.`
           : input.locale === 'hi'
             ? `नवीनतम ${input.activity} रिकॉर्ड ${latestDate} का है।`
             : input.locale === 'mr'
