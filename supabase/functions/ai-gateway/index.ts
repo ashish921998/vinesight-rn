@@ -2521,10 +2521,17 @@ Deno.serve(async (req) => {
         }
       } catch (error) {
         if (!providerFallbackEnabled) {
-          throw error instanceof Error ? error : new Error('TTS failed');
-        }
-
-        if (usedSarvamTts) {
+          if (usedSarvamTts) {
+            recordProviderFailure('sarvam_tts');
+            providerFallbackReason = 'sarvam_tts_failed';
+            ttsSkippedReason = 'sarvam_tts_failed';
+          } else {
+            recordProviderFailure('openai_tts');
+            providerFallbackReason = 'openai_tts_failed';
+            ttsSkippedReason = 'openai_tts_failed';
+          }
+          console.warn('TTS failed with provider fallback disabled, skipping audio', error);
+        } else if (usedSarvamTts) {
           recordProviderFailure('sarvam_tts');
           try {
             const ttsStartedAt = Date.now();
