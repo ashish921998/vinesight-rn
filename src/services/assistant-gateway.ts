@@ -246,10 +246,13 @@ function validateAudioPayload(
     return { valid: false, error: 'Invalid base64 format' };
   }
 
-  try {
-    Buffer.from(padded, 'base64');
-  } catch {
-    return { valid: false, error: 'Invalid base64 data' };
+  const atobFn = typeof globalThis.atob === 'function' ? globalThis.atob.bind(globalThis) : null;
+  if (atobFn) {
+    try {
+      atobFn(padded);
+    } catch {
+      return { valid: false, error: 'Invalid base64 data' };
+    }
   }
 
   return { valid: true, bytes: estimateBase64Bytes(normalized) };
@@ -647,6 +650,17 @@ export async function sendAssistantTurn(
     const effectiveInputMode: AssistantInputMode = hasAudioPayload ? 'audio' : 'text';
     const normalizedInput = input.userMessage.trim();
 
+    if (!hasAudioPayload && !normalizedInput) {
+      throw new AssistantGatewayError(
+        AssistantGatewayErrorCode.UNKNOWN,
+        'Empty request: no audio or text input provided',
+        {
+          requestId,
+          inputMode: requestedInputMode,
+        },
+      );
+    }
+
     const clientCanPlayAudio =
       typeof input.clientCanPlayAudio === 'boolean'
         ? input.clientCanPlayAudio
@@ -713,9 +727,7 @@ export async function sendAssistantTurn(
     if (error) {
       const invokeErrorMessage = toErrorMessage(error);
       const invokeContext = await extractInvokeErrorContext(error);
-      const responsePayload = toDebugString(data);
-      const responseContext = responsePayload ? `response=${responsePayload}` : '';
-      const errorContext = [invokeContext, responseContext].filter(Boolean).join(' | ');
+      const errorContext = invokeContext;
       throw new Error(
         `ai-gateway invoke failed: ${invokeErrorMessage}${errorContext ? ` | ${errorContext}` : ''}`,
       );

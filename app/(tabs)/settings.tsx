@@ -492,12 +492,16 @@ export default function SettingsScreen() {
 
       await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(payload, null, 2));
 
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'application/json',
-          dialogTitle: t('settings.assistantMemory.exportShareTitle'),
-        });
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
+        return;
       }
+
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'application/json',
+        dialogTitle: t('settings.assistantMemory.exportShareTitle'),
+      });
 
       telemetry.capture('assistant_memory_exported', {
         conversations_count: exportData.conversations.length,
@@ -1029,73 +1033,6 @@ export default function SettingsScreen() {
           </Text>
         </View>
       )}
-      {/* Account Section */}
-      <View style={styles.section}>
-        <Text
-          style={styles.sectionHeader}
-          textBreakStrategy="highQuality"
-          lineBreakStrategyIOS="standard"
-        >
-          {t('settings.sectionAccount')}
-        </Text>
-        <View style={styles.sectionContent}>
-          <Pressable
-            onPress={handleOpenLinkPhone}
-            style={[styles.settingsItem, styles.borderBottom]}
-          >
-            <View style={styles.settingsIcon}>
-              <UISymbol name="phone.fill" size={20} color={m3.colorScheme.primary} />
-            </View>
-            <Text
-              style={styles.settingsTitle}
-              textBreakStrategy="highQuality"
-              lineBreakStrategyIOS="standard"
-            >
-              {t('settings.assistantMemory.exportAction')}
-            </Text>
-            {isExportingAssistantData ? (
-              <ActivityIndicator size="small" color={m3.colorScheme.primary} />
-            ) : (
-              <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
-            )}
-          </Pressable>
-
-          <Pressable
-            onPress={handleDeleteAssistantMemory}
-            disabled={isDeletingAssistantData || isExportingAssistantData}
-            style={[
-              styles.settingsItem,
-              (isDeletingAssistantData || isExportingAssistantData) && styles.disabledItem,
-            ]}
-          >
-            <View style={styles.deleteIcon}>
-              <UISymbol name="trash" size={20} color={colors.error} />
-            </View>
-            <Text
-              style={styles.deleteText}
-              textBreakStrategy="highQuality"
-              lineBreakStrategyIOS="standard"
-            >
-              {t('settings.assistantMemory.deleteAction')}
-            </Text>
-            {isDeletingAssistantData ? (
-              <ActivityIndicator size="small" color={colors.error} />
-            ) : (
-              <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
-            )}
-          </Pressable>
-        </View>
-        <Text
-          style={styles.notificationNote}
-          textBreakStrategy="highQuality"
-          lineBreakStrategyIOS="standard"
-        >
-          {t('settings.assistantMemory.retentionNote', {
-            days: ASSISTANT_MEMORY_RETENTION_DAYS,
-          })}
-        </Text>
-      </View>
-
       {/* Account Section */}
       <View style={styles.section}>
         <Text

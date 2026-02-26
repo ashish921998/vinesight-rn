@@ -70,18 +70,34 @@ class VoiceOutputService {
     options: PlaybackOptions,
   ): Promise<void> {
     const text = response.message.content?.trim();
+    const audio = response.message.audio;
     this.lastLanguage = options.language;
     this.lastMessageText = text || null;
 
+    if (!audio?.base64 && this.lastAudioUri) {
+      const staleAudioUri = this.lastAudioUri;
+      this.lastAudioUri = null;
+      FileSystem.deleteAsync(staleAudioUri).catch((error) => {
+        if (__DEV__) console.warn('Failed to delete stale audio file:', error);
+      });
+    }
+
     try {
-      const audio = response.message.audio;
       if (audio?.base64 && FileSystem.cacheDirectory) {
+        const oldAudioUri = this.lastAudioUri;
+        this.lastAudioUri = null;
         const extension = (audio.mimeType ?? 'audio/mpeg').includes('wav') ? 'wav' : 'mp3';
         const fileUri = `${FileSystem.cacheDirectory}assistant-voice-${Date.now()}.${extension}`;
 
         await FileSystem.writeAsStringAsync(fileUri, audio.base64, {
           encoding: FileSystem.EncodingType.Base64,
         });
+
+        if (oldAudioUri && oldAudioUri !== fileUri) {
+          FileSystem.deleteAsync(oldAudioUri).catch((error) => {
+            if (__DEV__) console.warn('Failed to delete old audio file:', error);
+          });
+        }
 
         const played = await this.playAudioUri(fileUri, options);
         if (played) return;
@@ -123,6 +139,14 @@ class VoiceOutputService {
       if (played) return;
     }
 
+    const audioUri = this.lastAudioUri;
+    this.lastAudioUri = null;
+    if (audioUri) {
+      FileSystem.deleteAsync(audioUri).catch((error) => {
+        if (__DEV__) console.warn('Failed to delete audio file:', error);
+      });
+    }
+
     if (this.lastMessageText) {
       options?.onStateChange?.(true);
       Speech.speak(this.lastMessageText, {
@@ -157,6 +181,14 @@ class VoiceOutputService {
       // no-op
     }
     this.activePlayer = null;
+
+    const audioUri = this.lastAudioUri;
+    this.lastAudioUri = null;
+    if (audioUri) {
+      FileSystem.deleteAsync(audioUri).catch((error) => {
+        if (__DEV__) console.warn('Failed to delete audio file:', error);
+      });
+    }
   }
 }
 

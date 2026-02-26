@@ -1888,11 +1888,12 @@ Deno.serve(async (req) => {
 
         try {
           let sttResult: { transcript: string; confidence: number | null };
+          let sttStartedAt: number;
           if (USE_SARVAM_FOR_VOICE && !sarvamUnsupportedContainer) {
             const canUseSarvam = checkCircuitBreaker('sarvam_stt');
             if (canUseSarvam) {
               try {
-                const sttStartedAt = Date.now();
+                sttStartedAt = Date.now();
                 sttResult = await withTimeout(
                   callSarvamStt(audioBase64, audioMimeType, locale),
                   STT_TIMEOUT_MS,
@@ -1906,7 +1907,7 @@ Deno.serve(async (req) => {
                 recordProviderFailure('sarvam_stt');
                 if (!providerFallbackEnabled) throw error;
                 console.warn('Sarvam STT failed, falling back to OpenAI:', stringifyUnknown(error));
-                const sttStartedAt = Date.now();
+                sttStartedAt = Date.now();
                 sttResult = await withTimeout(
                   callOpenAIStt(audioBase64, audioMimeType),
                   STT_TIMEOUT_MS,
@@ -1920,7 +1921,7 @@ Deno.serve(async (req) => {
               }
             } else {
               console.warn('Sarvam STT circuit breaker open; using OpenAI directly');
-              const sttStartedAt = Date.now();
+              sttStartedAt = Date.now();
               sttResult = await withTimeout(
                 callOpenAIStt(audioBase64, audioMimeType),
                 STT_TIMEOUT_MS,
@@ -1932,7 +1933,7 @@ Deno.serve(async (req) => {
               providerFallbackReason = 'sarvam_stt_circuit_open';
             }
           } else {
-            const sttStartedAt = Date.now();
+            sttStartedAt = Date.now();
             sttResult = await withTimeout(
               callOpenAIStt(audioBase64, audioMimeType),
               STT_TIMEOUT_MS,

@@ -1468,7 +1468,7 @@ export const mr = {
       recordingTooShortTitle: 'रेकॉर्डिंग खूप लहान',
       recordingTooShortBody: 'कृपया किमान 1 सेकंद बोला आणि पुन्हा प्रयत्न करा.',
       recordingTooShortDetailBody:
-        'ऑडिओ खूप लहान होता{{reason}}. बोला दाबा, किमान 1 सेकंद थांबा, मग थांबा दाबा.',
+        'ऑडिओ खूप लहान होता, {{reason}}. बोला दाबा, किमान 1 सेकंद थांबा, मग थांबा दाबा.',
       voiceMessage: 'व्हॉइस मेसेज',
       sttNotReadyTitle: 'सर्व्हर STT तयार नाही',
       sttNotReadyBody:
