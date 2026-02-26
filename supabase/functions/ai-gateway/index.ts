@@ -1382,7 +1382,7 @@ async function callOpenAITts(
       model: 'gpt-4o-mini-tts',
       voice: 'alloy',
       input: text,
-      format: 'mp3',
+      response_format: 'mp3',
     }),
     signal,
   });

@@ -672,6 +672,16 @@ export default function AIChatScreen() {
       setIsHistoryVisible(false);
       cancelInFlightAssistantRequest();
       setIsLoading(false);
+      setRouteClarificationPending(false);
+      setPendingAmbiguousTranscript(null);
+      setVoiceLogDraft(null);
+      setVoiceLogExpectedField(null);
+      setVoiceLogClarifyAttempts(0);
+      setClearedVoiceLogDraft(null);
+      if (clearDraftTimeoutRef.current) {
+        clearTimeout(clearDraftTimeoutRef.current);
+        clearDraftTimeoutRef.current = null;
+      }
       const requestToken = beginConversationAsyncAction();
       try {
         const history = await assistantMemoryService.loadRecentMessages(nextConversationId, 50);
@@ -700,6 +710,16 @@ export default function AIChatScreen() {
     if (!assistantFeatureFlags.memoryEnabled) return;
     cancelInFlightAssistantRequest();
     setIsLoading(false);
+    setRouteClarificationPending(false);
+    setPendingAmbiguousTranscript(null);
+    setVoiceLogDraft(null);
+    setVoiceLogExpectedField(null);
+    setVoiceLogClarifyAttempts(0);
+    setClearedVoiceLogDraft(null);
+    if (clearDraftTimeoutRef.current) {
+      clearTimeout(clearDraftTimeoutRef.current);
+      clearDraftTimeoutRef.current = null;
+    }
     const requestToken = beginConversationAsyncAction();
     try {
       const nextConversationId = await assistantMemoryService.createConversation({
@@ -817,28 +837,19 @@ export default function AIChatScreen() {
         if (!isCancelled && isConversationAsyncTokenCurrent(requestToken)) {
           setConversationSummaries(summaries);
         }
-
-        const nextConversationId = await assistantMemoryService.createConversation({
-          farmId: contextFarm?.id ?? parsedFarmId ?? null,
-          locale: languageCode,
-        });
-
         if (isCancelled || !isConversationAsyncTokenCurrent(requestToken)) return;
-
-        if (!nextConversationId) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: 'assistant',
-              content: t('ai.conversationBootstrapFailed'),
-              timestamp: new Date(),
-            } as ChatMessage,
-          ]);
-          return;
-        }
-
-        setConversationId(nextConversationId);
+        setConversationId(null);
         setMessages([]);
+        setRouteClarificationPending(false);
+        setPendingAmbiguousTranscript(null);
+        setVoiceLogDraft(null);
+        setVoiceLogExpectedField(null);
+        setVoiceLogClarifyAttempts(0);
+        setClearedVoiceLogDraft(null);
+        if (clearDraftTimeoutRef.current) {
+          clearTimeout(clearDraftTimeoutRef.current);
+          clearDraftTimeoutRef.current = null;
+        }
         setSuggestions(DEFAULT_SUGGESTIONS);
       } catch (error) {
         if (isCancelled || !isConversationAsyncTokenCurrent(requestToken)) return;
@@ -1196,6 +1207,18 @@ export default function AIChatScreen() {
 
         const deterministicIntent = classifyIntent(deterministicTranscript, candidateFarms);
         let didAttemptRouting = false;
+        const persistLocalRoutingAssistantReply = async (content: string) => {
+          if (!activeConversationId || !content.trim()) return;
+          await assistantMemoryService.persistTurn({
+            conversationId: activeConversationId,
+            farmId: contextFarm?.id ?? parsedFarmId ?? null,
+            role: 'assistant',
+            content,
+            inputMode: 'text',
+            provider: 'client_router',
+            model: 'local_route_handler',
+          });
+        };
 
         if (
           !assistantFeatureFlags.routeOnServerEnabled &&
@@ -1222,6 +1245,9 @@ export default function AIChatScreen() {
                   },
                 ]);
                 scrollToBottom();
+                await persistLocalRoutingAssistantReply(
+                  t('ai.logging.routeClarification.cancelled'),
+                );
                 return;
               }
 
@@ -1235,6 +1261,7 @@ export default function AIChatScreen() {
                 },
               ]);
               scrollToBottom();
+              await persistLocalRoutingAssistantReply(t('ai.logging.routeClarification.retry'));
               return;
             }
 
@@ -1296,6 +1323,7 @@ export default function AIChatScreen() {
               },
             ]);
             scrollToBottom();
+            await persistLocalRoutingAssistantReply(t('ai.logging.routeClarification.prompt'));
             return;
           }
 
@@ -1340,6 +1368,7 @@ export default function AIChatScreen() {
                 },
               ]);
               scrollToBottom();
+              await persistLocalRoutingAssistantReply(t('ai.logging.cancelled'));
               return;
             }
 
@@ -1363,6 +1392,7 @@ export default function AIChatScreen() {
                   },
                 ]);
                 scrollToBottom();
+                await persistLocalRoutingAssistantReply(t('ai.logging.noFarms'));
                 return;
               }
 
@@ -1397,6 +1427,7 @@ export default function AIChatScreen() {
                   },
                 ]);
                 scrollToBottom();
+                await persistLocalRoutingAssistantReply(t('ai.logging.clarifyExhausted'));
 
                 setAddEntry({
                   tabs: ['log'],
@@ -1454,6 +1485,9 @@ export default function AIChatScreen() {
                 },
               ]);
               scrollToBottom();
+              await persistLocalRoutingAssistantReply(
+                buildVoiceLogClarificationMessage(t, logTurn.missingFields),
+              );
               return;
             }
 
@@ -1495,6 +1529,13 @@ export default function AIChatScreen() {
                 },
               ]);
               scrollToBottom();
+              await persistLocalRoutingAssistantReply(
+                t('ai.logging.openingForm', {
+                  type: t(`logs.types.${logTurn.draft.type}`),
+                  farm: farmName,
+                  date: displayDate,
+                }),
+              );
 
               setAddEntry({
                 tabs: ['log'],
