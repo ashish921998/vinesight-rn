@@ -304,26 +304,32 @@ async function callOpenAIProxy(params: {
     body: params,
   });
 
-  if (!primary.error && !primary.data?.error) {
-    return primary.data as OpenAICompletionResponse;
+  if (primary.error) {
+    const fallback = await supabase.functions.invoke('openai-proxy', {
+      body: {
+        ...params,
+        model: params.model ?? PROXY_MODEL,
+      },
+    });
+
+    if (fallback.error) {
+      throw new Error(
+        `AI proxy request failed: ${primary.error.message ?? fallback.error.message}`,
+      );
+    }
+
+    if (fallback.data?.error) {
+      throw new Error(`AI proxy error: ${fallback.data.error.message ?? fallback.data.error}`);
+    }
+
+    return fallback.data as OpenAICompletionResponse;
   }
 
-  const fallback = await supabase.functions.invoke('openai-proxy', {
-    body: {
-      ...params,
-      model: params.model ?? PROXY_MODEL,
-    },
-  });
-
-  if (fallback.error) {
-    throw new Error(`AI proxy request failed: ${primary.error?.message ?? fallback.error.message}`);
+  if (primary.data?.error) {
+    throw new Error(`Dynamic API error: ${primary.data.error.message ?? primary.data.error}`);
   }
 
-  if (fallback.data?.error) {
-    throw new Error(`AI proxy error: ${fallback.data.error.message ?? fallback.data.error}`);
-  }
-
-  return fallback.data as OpenAICompletionResponse;
+  return primary.data as OpenAICompletionResponse;
 }
 
 class AIService {

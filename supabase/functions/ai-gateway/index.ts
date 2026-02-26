@@ -215,6 +215,39 @@ const circuitBreakers = new Map<string, CircuitBreakerState>();
 
 const responseCache = new Map<string, { text: string; timestamp: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
+let lastCacheCleanup = Date.now();
+const CACHE_CLEANUP_INTERVAL_MS = 60 * 1000;
+
+function cleanExpiredCache(): void {
+  const now = Date.now();
+  if (now - lastCacheCleanup < CACHE_CLEANUP_INTERVAL_MS) {
+    return;
+  }
+
+  let deleted = 0;
+  for (const [key, entry] of responseCache.entries()) {
+    if (now - entry.timestamp > CACHE_TTL_MS) {
+      responseCache.delete(key);
+      deleted++;
+    }
+  }
+
+  let cleaned = 0;
+  for (const [key, state] of circuitBreakers.entries()) {
+    if (now - state.lastFailureTime > RESET_TIMEOUT_MS) {
+      circuitBreakers.delete(key);
+      cleaned++;
+    }
+  }
+
+  if (deleted > 0 || cleaned > 0) {
+    console.log(
+      `[Cache cleanup] deleted ${deleted} expired cache entries, ${cleaned} circuit breakers`,
+    );
+  }
+
+  lastCacheCleanup = now;
+}
 
 const PRICING = {
   sarvam: {
@@ -365,8 +398,8 @@ function normalizeOpenAiAudioMime(mimeType: string): { mime: string; filename: s
   if (normalized.includes('ogg') || normalized.includes('oga'))
     return { mime: 'audio/ogg', filename: 'audio.ogg' };
   if (normalized.includes('x-m4a') || normalized.includes('m4a'))
-    return { mime: 'audio/mpeg', filename: 'audio.mp3' };
-  if (normalized.includes('mp4')) return { mime: 'audio/mpeg', filename: 'audio.mp3' };
+    return { mime: 'audio/mp4', filename: 'audio.m4a' };
+  if (normalized.includes('mp4')) return { mime: 'audio/mp4', filename: 'audio.m4a' };
   if (normalized.includes('mpeg') || normalized.includes('mp3'))
     return { mime: 'audio/mpeg', filename: 'audio.mp3' };
   if (normalized.includes('caf')) return { mime: 'audio/mpeg', filename: 'audio.mp3' };
@@ -1084,23 +1117,34 @@ async function callOpenAIChat(
 async function callOpenAIEmbedding(text: string): Promise<number[] | null> {
   if (!OPENAI_API_KEY || !text.trim()) return null;
 
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: EMBEDDING_MODEL,
-      input: text,
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-  const data = await response.json();
-  if (!response.ok) return null;
+  try {
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: EMBEDDING_MODEL,
+        input: text,
+      }),
+      signal: controller.signal,
+    });
 
-  const embedding = data?.data?.[0]?.embedding;
-  return Array.isArray(embedding) ? embedding : null;
+    clearTimeout(timeoutId);
+
+    const data = await response.json();
+    if (!response.ok) return null;
+
+    const embedding = data?.data?.[0]?.embedding;
+    return Array.isArray(embedding) ? embedding : null;
+  } catch {
+    clearTimeout(timeoutId);
+    return null;
+  }
 }
 
 async function callSarvamStt(
@@ -1328,7 +1372,13 @@ async function callOpenAITts(
   }
 
   const binary = await response.arrayBuffer();
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(binary)));
+  const bytes = new Uint8Array(binary);
+  let binaryString = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binaryString += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
+  }
+  const base64 = btoa(binaryString);
   return { base64, mimeType: 'audio/mpeg' };
 }
 
@@ -1809,15 +1859,33 @@ async function writeMemory(input: {
     return [];
   }
 
+  const memoryId = data?.id;
+  if (memoryId) {
+    const embedding = await callOpenAIEmbedding(summary);
+    if (embedding) {
+      const { error: embedError } = await serviceSupabase
+        .from('assistant_memory_embeddings')
+        .insert({
+          memory_id: memoryId,
+          embedding,
+          model: EMBEDDING_MODEL,
+          dimension: embedding.length,
+        });
+      if (embedError) {
+        console.error('Failed to insert embedding', { memoryId, error: embedError });
+      }
+    }
+  }
+
   input.toolCalls.push({
     tool: 'memory.write',
     status: 'ok',
-    output: { memory_id: data?.id ?? null },
+    output: { memory_id: memoryId ?? null },
   });
 
   return [
     {
-      memory_id: data?.id ?? null,
+      memory_id: memoryId ?? null,
       memory_type: 'summary',
       expires_at: expiresAt.toISOString(),
     },
@@ -1835,6 +1903,8 @@ Deno.serve(async (req) => {
 
   const start = Date.now();
   const traceId = generateTraceId();
+
+  cleanExpiredCache();
 
   try {
     const body = (await req.json()) as AssistantGatewayRequest;
@@ -2474,7 +2544,7 @@ Deno.serve(async (req) => {
     const latency = Date.now() - start;
     const costBreakdown = calculateCost({
       sttProviderUsed,
-      audioDurationSeconds: body?.audio_duration ?? (sttLatencyMs ? sttLatencyMs / 1000 : 0),
+      audioDurationSeconds: body?.audio_duration ?? 0,
       inputTokens: llmInputTokens,
       outputTokens: llmOutputTokens,
       embeddingTokens: embeddingTokenCounter.value,
@@ -2542,10 +2612,10 @@ Deno.serve(async (req) => {
       suggestions: [],
     });
   } catch (error) {
-    console.error('ai-gateway error', error);
+    console.error('ai-gateway error', { traceId, error });
     return jsonResponse(
       {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Internal server error',
         trace_id: traceId,
       },
       500,

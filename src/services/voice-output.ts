@@ -55,12 +55,20 @@ class VoiceOutputService {
     this.activePlayerSubscription = player.addListener(
       'playbackStatusUpdate',
       (status: PlaybackStatusUpdate) => {
-        if (status.didJustFinish || status.isLoaded === false || !status.playing) {
+        if (status.didJustFinish || status.isLoaded === false) {
           if (status.didJustFinish) {
             this.activePlayerSubscription?.remove();
             this.activePlayerSubscription = null;
-            void this.activePlayer?.pause();
-            void this.activePlayer?.remove();
+            try {
+              void this.activePlayer?.pause();
+            } catch {
+              // no-op
+            }
+            try {
+              void this.activePlayer?.remove();
+            } catch {
+              // no-op
+            }
             this.activePlayer = null;
           }
           options.onStateChange?.(false);
@@ -178,7 +186,12 @@ class VoiceOutputService {
 
     if (!this.activePlayer) return;
     try {
-      this.activePlayer.pause();
+      void this.activePlayer?.pause();
+    } catch {
+      // no-op
+    }
+    try {
+      void this.activePlayer?.remove();
     } catch {
       // no-op
     }

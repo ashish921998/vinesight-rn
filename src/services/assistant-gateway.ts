@@ -692,7 +692,7 @@ export async function sendAssistantTurn(
     }
 
     if (error) {
-      throw new Error('ai-gateway invoke failed');
+      throw error;
     }
 
     const response = data;
@@ -787,7 +787,11 @@ export async function sendAssistantTurn(
       duration_ms: Date.now() - requestStart,
     });
 
-    if (assistantFeatureFlags.providerFallbackEnabled && shouldFallbackToLegacy(parsedError)) {
+    if (
+      assistantFeatureFlags.providerFallbackEnabled &&
+      shouldFallbackToLegacy(parsedError) &&
+      input.userMessage?.trim()
+    ) {
       telemetry.capture('assistant_gateway_fallback_triggered', {
         request_id: requestId,
         reason: parsedError.code,
