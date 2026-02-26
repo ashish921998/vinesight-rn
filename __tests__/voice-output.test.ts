@@ -1,6 +1,8 @@
 import { voiceOutputService } from '@/services/voice-output';
 import type { AssistantTurnResponse } from '@/types/ai';
 
+type PlaybackStatusListener = (status: { didJustFinish?: boolean; isLoaded?: boolean }) => void;
+
 const mockDeleteAsync = jest.fn().mockResolvedValue(undefined);
 const mockWriteAsStringAsync = jest.fn().mockResolvedValue(undefined);
 const mockSetAudioModeAsync = jest.fn().mockResolvedValue(undefined);
@@ -95,5 +97,61 @@ describe('voice-output stale replay handling', () => {
         language: 'en-IN',
       }),
     );
+  });
+
+  it('forwards onDone when cached audio file playback finishes', async () => {
+    let playbackStatusListener: PlaybackStatusListener | null = null;
+    const mockSubscription = { remove: jest.fn() };
+    const mockPlayer = {
+      playbackRate: 1,
+      addListener: jest.fn((eventName: string, listener: PlaybackStatusListener) => {
+        expect(eventName).toBe('playbackStatusUpdate');
+        playbackStatusListener = listener;
+        return mockSubscription;
+      }),
+      play: jest.fn(),
+      pause: jest.fn(),
+      remove: jest.fn(),
+    };
+    mockCreateAudioPlayer.mockReturnValue(mockPlayer);
+
+    const onDone = jest.fn();
+    const onStateChange = jest.fn();
+
+    const response = {
+      message: {
+        id: 'turn-audio-1',
+        role: 'assistant',
+        content: 'Audio-backed reply',
+        timestamp: new Date('2026-02-26T00:00:00Z'),
+        audio: {
+          base64: 'ZmFrZQ==',
+          mimeType: 'audio/mpeg',
+        },
+      },
+    } as AssistantTurnResponse;
+
+    await voiceOutputService.playAssistantTurn(response, {
+      language: 'en',
+      onDone,
+      onStateChange,
+    });
+
+    expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
+    expect(playbackStatusListener).toBeTruthy();
+    expect(onDone).not.toHaveBeenCalled();
+
+    if (!playbackStatusListener) {
+      throw new Error('Expected playback status listener to be registered');
+    }
+    const listener = playbackStatusListener as PlaybackStatusListener;
+    listener({ didJustFinish: true, isLoaded: true });
+
+    expect(onStateChange).toHaveBeenCalledWith(true);
+    expect(onStateChange).toHaveBeenCalledWith(false);
+    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(mockSubscription.remove).toHaveBeenCalledTimes(1);
+    expect(mockPlayer.pause).toHaveBeenCalledTimes(1);
+    expect(mockPlayer.remove).toHaveBeenCalledTimes(1);
   });
 });

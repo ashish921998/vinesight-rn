@@ -564,6 +564,21 @@ export async function sendAssistantTurn(
   options?: SendAssistantTurnOptions,
 ): Promise<AssistantTurnResponse> {
   if (!assistantFeatureFlags.serverVoiceEnabled) {
+    const requestedInputMode = input.inputMode ?? 'text';
+    const hasAudioPayload =
+      requestedInputMode === 'audio' &&
+      typeof input.inputAudioBase64 === 'string' &&
+      input.inputAudioBase64.trim().length > 0;
+    const normalizedInput = input.userMessage.trim();
+    if (hasAudioPayload && !normalizedInput) {
+      throw new AssistantGatewayError(
+        AssistantGatewayErrorCode.UNKNOWN,
+        'Audio-only requests require the server voice gateway',
+        {
+          inputMode: requestedInputMode,
+        },
+      );
+    }
     return fallbackToLegacyAssistant(input);
   }
 
@@ -698,10 +713,16 @@ export async function sendAssistantTurn(
     const response = data;
     if (!response?.assistant_text?.trim()) {
       const responsePayload = toDebugString(response);
-      const errorContext = responsePayload ? ` | response=${responsePayload}` : '';
+      if (responsePayload) {
+        telemetry.capture('assistant_gateway_invalid_response', {
+          request_id: requestId,
+          reason: 'missing_assistant_text',
+          response_shape: responsePayload,
+        });
+      }
       throw new AssistantGatewayError(
         AssistantGatewayErrorCode.INVALID_RESPONSE,
-        `Missing assistant response text${errorContext}`,
+        'Missing assistant response text',
         {
           requestId,
         },

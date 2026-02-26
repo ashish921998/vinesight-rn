@@ -2110,12 +2110,17 @@ Deno.serve(async (req) => {
         } catch (error) {
           const errorMessage = stringifyUnknown(error);
           if (isLikelyInvalidAudioError(errorMessage)) {
+            console.error('STT invalid audio format', {
+              trace_id: traceId,
+              stt_provider_used: sttProviderUsed,
+              error: errorMessage,
+            });
             return jsonResponse(
               {
                 error: 'INVALID_AUDIO_FORMAT',
                 message:
                   'The audio recording could not be processed. Please try again and speak for at least 1 second.',
-                details: errorMessage,
+                details: null,
                 stt_provider_used: sttProviderUsed,
               },
               400,
@@ -2366,6 +2371,11 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (routeStateDirty) {
+      await writeConversationRouteState(conversationId, nextRouteState);
+      routeStateDirty = false;
+    }
+
     if (!assistantText && routeDecision === 'farm_query' && activity) {
       const queryResult = await queryFarmRecords({
         transcript: effectiveTranscript,
@@ -2450,10 +2460,6 @@ Deno.serve(async (req) => {
           responseCache.set(cacheKey, { text: assistantText, timestamp: Date.now() });
         }
       }
-    }
-
-    if (routeStateDirty) {
-      await writeConversationRouteState(conversationId, nextRouteState);
     }
 
     const strictGuardrailsRequired = isSprayOrFertigationTopic(
@@ -2575,7 +2581,7 @@ Deno.serve(async (req) => {
           }
         }
       }
-      if (!audioBase64) {
+      if (!audioBase64 && !ttsSkippedReason) {
         ttsSkippedReason = 'tts_returned_no_audio';
       }
     } else {
@@ -2588,7 +2594,7 @@ Deno.serve(async (req) => {
       farmId,
       transcript: effectiveTranscript,
       answer: assistantText,
-      enabled: body?.client_capabilities?.memory_enabled !== false,
+      enabled: body?.client_capabilities?.memory_enabled !== false && !safetyFlags.blocked,
       toolCalls,
     });
 

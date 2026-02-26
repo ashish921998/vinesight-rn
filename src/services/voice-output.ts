@@ -90,6 +90,11 @@ class VoiceOutputService {
         if (status.didJustFinish || status.isLoaded === false) {
           cleanupCapturedPlayback();
           options.onStateChange?.(false);
+          if (status.didJustFinish) {
+            options.onDone?.();
+          } else if (status.isLoaded === false) {
+            options.onStopped?.();
+          }
         }
       },
     );
