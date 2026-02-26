@@ -66,6 +66,7 @@ type ToolName =
   | 'log_activity.create'
   | 'log_activity.query'
   | 'farm_context.get'
+  | 'routing.decide'
   | 'memory.search'
   | 'memory.write'
   | 'agronomy_kb.search'
@@ -1717,8 +1718,9 @@ async function queryFarmRecords(input: {
   const isTotalQuery = /\btotal|how much|how many|कितना|कितने|किती|एकूण|कुल/i.test(
     input.transcript,
   );
+  const supportsTotalAggregation = input.activity === 'irrigation' || input.activity === 'expense';
 
-  if (isTotalQuery && (input.activity === 'irrigation' || input.activity === 'expense')) {
+  if (isTotalQuery && supportsTotalAggregation) {
     const valueField = input.activity === 'irrigation' ? 'duration' : 'cost';
     const pageSize = 1000;
     let total = 0;
@@ -1818,7 +1820,7 @@ async function queryFarmRecords(input: {
     .eq('farms.user_id', input.userId)
     .order('date', { ascending: false });
 
-  if (!isTotalQuery) {
+  if (!(isTotalQuery && supportsTotalAggregation)) {
     query = query.limit(50);
   }
 
@@ -2058,7 +2060,12 @@ Deno.serve(async (req) => {
   cleanExpiredCircuitBreakers();
 
   try {
-    const body = (await req.json()) as AssistantGatewayRequest;
+    let body: AssistantGatewayRequest;
+    try {
+      body = (await req.json()) as AssistantGatewayRequest;
+    } catch {
+      return jsonResponse({ error: 'Invalid JSON request body' }, 400);
+    }
     const authenticatedUserId = await resolveAuthenticatedUserId(req);
     const locale = resolveLocale(body?.locale);
     const providerFallbackEnabled = body?.client_capabilities?.provider_fallback_enabled !== false;
@@ -2386,7 +2393,7 @@ Deno.serve(async (req) => {
         });
 
       toolCalls.push({
-        tool: 'farm_context.get',
+        tool: 'routing.decide',
         status: 'ok',
         output: {
           route_decision: routeDecision,

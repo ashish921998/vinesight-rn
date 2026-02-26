@@ -6,6 +6,10 @@ language plpgsql
 stable
 as $$
 begin
+  if auth.uid() is null then
+    raise exception 'Unauthenticated request';
+  end if;
+
   if p_user_id is distinct from auth.uid() then
     raise exception 'Cannot export another user''s data';
   end if;
