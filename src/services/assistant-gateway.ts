@@ -783,7 +783,7 @@ export async function sendAssistantTurn(
     telemetry.capture('assistant_gateway_error', {
       request_id: requestId,
       error_code: parsedError.code,
-      error_message: parsedError.message,
+      error_message: `code:${parsedError.code}`,
       duration_ms: Date.now() - requestStart,
     });
 

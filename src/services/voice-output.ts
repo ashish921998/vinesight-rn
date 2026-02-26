@@ -9,6 +9,9 @@ interface PlaybackOptions {
   language: SupportedLanguageCode;
   rate?: number;
   onStateChange?: (isPlaying: boolean) => void;
+  onDone?: () => void;
+  onStopped?: () => void;
+  onError?: () => void;
 }
 
 interface PlaybackStatusUpdate {
@@ -47,34 +50,50 @@ class VoiceOutputService {
 
     await this.stop();
     const player = createAudioPlayer(fileUri);
+    const capturedPlayer = player;
     player.playbackRate = options.rate ?? 1;
     this.activePlayer = player;
     this.lastAudioUri = fileUri;
 
     options.onStateChange?.(true);
-    this.activePlayerSubscription = player.addListener(
+    let capturedSubscription: { remove: () => void } | null = null;
+    const cleanupCapturedPlayback = () => {
+      if (capturedSubscription) {
+        try {
+          capturedSubscription.remove();
+        } catch {
+          // no-op
+        }
+        if (this.activePlayerSubscription === capturedSubscription) {
+          this.activePlayerSubscription = null;
+        }
+      }
+
+      try {
+        void capturedPlayer.pause();
+      } catch {
+        // no-op
+      }
+      try {
+        void capturedPlayer.remove();
+      } catch {
+        // no-op
+      }
+      if (this.activePlayer === capturedPlayer) {
+        this.activePlayer = null;
+      }
+    };
+
+    capturedSubscription = player.addListener(
       'playbackStatusUpdate',
       (status: PlaybackStatusUpdate) => {
         if (status.didJustFinish || status.isLoaded === false) {
-          if (status.didJustFinish) {
-            this.activePlayerSubscription?.remove();
-            this.activePlayerSubscription = null;
-            try {
-              void this.activePlayer?.pause();
-            } catch {
-              // no-op
-            }
-            try {
-              void this.activePlayer?.remove();
-            } catch {
-              // no-op
-            }
-            this.activePlayer = null;
-          }
+          cleanupCapturedPlayback();
           options.onStateChange?.(false);
         }
       },
     );
+    this.activePlayerSubscription = capturedSubscription;
     player.play();
 
     return true;
@@ -123,18 +142,41 @@ class VoiceOutputService {
         Speech.speak(text, {
           language: resolveLocale(options.language),
           rate: options.rate ?? 0.9,
-          onDone: () => options.onStateChange?.(false),
-          onStopped: () => options.onStateChange?.(false),
-          onError: () => options.onStateChange?.(false),
+          onDone: () => {
+            options.onStateChange?.(false);
+            options.onDone?.();
+          },
+          onStopped: () => {
+            options.onStateChange?.(false);
+            options.onStopped?.();
+          },
+          onError: () => {
+            options.onStateChange?.(false);
+            options.onError?.();
+          },
         });
       }
     } catch {
-      options.onStateChange?.(false);
       if (text) {
+        options.onStateChange?.(true);
         Speech.speak(text, {
           language: resolveLocale(options.language),
           rate: options.rate ?? 0.9,
+          onDone: () => {
+            options.onStateChange?.(false);
+            options.onDone?.();
+          },
+          onStopped: () => {
+            options.onStateChange?.(false);
+            options.onStopped?.();
+          },
+          onError: () => {
+            options.onStateChange?.(false);
+            options.onError?.();
+          },
         });
+      } else {
+        options.onStateChange?.(false);
       }
     }
   }
@@ -142,6 +184,9 @@ class VoiceOutputService {
   async replayLast(options?: {
     rate?: number;
     onStateChange?: (isPlaying: boolean) => void;
+    onDone?: () => void;
+    onStopped?: () => void;
+    onError?: () => void;
   }): Promise<void> {
     const rate = options?.rate ?? 1;
 
@@ -167,9 +212,18 @@ class VoiceOutputService {
       Speech.speak(this.lastMessageText, {
         language: resolveLocale(this.lastLanguage),
         rate,
-        onDone: () => options?.onStateChange?.(false),
-        onStopped: () => options?.onStateChange?.(false),
-        onError: () => options?.onStateChange?.(false),
+        onDone: () => {
+          options?.onStateChange?.(false);
+          options?.onDone?.();
+        },
+        onStopped: () => {
+          options?.onStateChange?.(false);
+          options?.onStopped?.();
+        },
+        onError: () => {
+          options?.onStateChange?.(false);
+          options?.onError?.();
+        },
       });
     }
   }
@@ -192,11 +246,6 @@ class VoiceOutputService {
     }
     try {
       void this.activePlayer?.remove();
-    } catch {
-      // no-op
-    }
-    try {
-      this.activePlayer.remove();
     } catch {
       // no-op
     }

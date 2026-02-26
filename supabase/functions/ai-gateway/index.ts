@@ -249,17 +249,25 @@ function cleanExpiredCache(): void {
   lastCacheCleanup = now;
 }
 
+function envNumber(name: string, fallback: number): number {
+  const raw = Deno.env.get(name)?.trim();
+  if (!raw) return fallback;
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+// Prices verified 2026-02-26 (OpenAI pricing page); override via env vars when needed.
 const PRICING = {
   sarvam: {
-    stt_per_second: 0.00013,
-    tts_per_char: 0.00000001,
+    stt_per_second: envNumber('ASSISTANT_PRICE_SARVAM_STT_PER_SECOND', 0.00013),
+    tts_per_char: envNumber('ASSISTANT_PRICE_SARVAM_TTS_PER_CHAR', 0.00000001),
   },
   openai: {
-    stt_per_second: 0.0001,
-    tts_per_char: 0.000015,
-    gpt_4o_mini_input_per_1k: 0.00015,
-    gpt_4o_mini_output_per_1k: 0.0006,
-    embedding_3_small_per_1k: 0.00002,
+    stt_per_second: envNumber('ASSISTANT_PRICE_OPENAI_STT_PER_SECOND', 0.0001),
+    tts_per_char: envNumber('ASSISTANT_PRICE_OPENAI_TTS_PER_CHAR', 0.000015),
+    gpt_4o_mini_input_per_1k: envNumber('ASSISTANT_PRICE_GPT4O_MINI_INPUT_PER_1K', 0.00015),
+    gpt_4o_mini_output_per_1k: envNumber('ASSISTANT_PRICE_GPT4O_MINI_OUTPUT_PER_1K', 0.0006),
+    embedding_3_small_per_1k: envNumber('ASSISTANT_PRICE_EMBEDDING_3_SMALL_PER_1K', 0.00002),
   },
 };
 
@@ -1830,6 +1838,16 @@ async function writeMemory(input: {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 180);
 
+  const embedding = await callOpenAIEmbedding(summary);
+  if (!embedding) {
+    input.toolCalls.push({
+      tool: 'memory.write',
+      status: 'skipped',
+      output: { reason: 'embedding_generation_failed' },
+    });
+    return [];
+  }
+
   const payload = {
     conversation_id: input.conversationId,
     user_id: input.userId,
@@ -1861,19 +1879,18 @@ async function writeMemory(input: {
 
   const memoryId = data?.id;
   if (memoryId) {
-    const embedding = await callOpenAIEmbedding(summary);
-    if (embedding) {
-      const { error: embedError } = await serviceSupabase
-        .from('assistant_memory_embeddings')
-        .insert({
-          memory_id: memoryId,
-          embedding,
-          model: EMBEDDING_MODEL,
-          dimension: embedding.length,
-        });
-      if (embedError) {
-        console.error('Failed to insert embedding', { memoryId, error: embedError });
-      }
+    const { error: embedError } = await serviceSupabase.from('assistant_memory_embeddings').insert({
+      memory_id: memoryId,
+      embedding,
+    });
+    if (embedError) {
+      await serviceSupabase.from('assistant_memories').delete().eq('id', memoryId);
+      input.toolCalls.push({
+        tool: 'memory.write',
+        status: 'error',
+        error: `Failed to insert embedding, cleaned up orphaned memory: ${embedError.message}`,
+      });
+      return [];
     }
   }
 
@@ -2499,29 +2516,63 @@ Deno.serve(async (req) => {
           }
         }
       } catch (error) {
+        if (!providerFallbackEnabled) {
+          throw error instanceof Error ? error : new Error('TTS failed');
+        }
+
         if (usedSarvamTts) {
           recordProviderFailure('sarvam_tts');
-        }
-        if (!providerFallbackEnabled) {
-          throw error instanceof Error ? error : new Error('Sarvam TTS failed');
-        }
-        try {
-          const ttsStartedAt = Date.now();
-          const tts = await withAbortTimeout(
-            (signal) => callOpenAITts(assistantText, signal),
-            TTS_TIMEOUT_MS,
-            `OpenAI TTS fallback timed out after ${TTS_TIMEOUT_MS}ms`,
-          );
-          ttsGenerationMs = Date.now() - ttsStartedAt;
-          audioBase64 = tts.base64;
-          audioMimeType = tts.mimeType;
-          audioProviderUsed = 'openai_fallback';
-          providerFallbackReason = error instanceof Error ? error.message : 'sarvam_tts_failed';
-        } catch (fallbackError) {
-          console.warn('Both TTS providers failed', error, fallbackError);
-          throw fallbackError instanceof Error
-            ? fallbackError
-            : new Error('Both Sarvam and OpenAI TTS failed');
+          try {
+            const ttsStartedAt = Date.now();
+            const tts = await withAbortTimeout(
+              (signal) => callOpenAITts(assistantText, signal),
+              TTS_TIMEOUT_MS,
+              `OpenAI TTS fallback timed out after ${TTS_TIMEOUT_MS}ms`,
+            );
+            ttsGenerationMs = Date.now() - ttsStartedAt;
+            audioBase64 = tts.base64;
+            audioMimeType = tts.mimeType;
+            audioProviderUsed = 'openai_fallback';
+            providerFallbackReason = error instanceof Error ? error.message : 'sarvam_tts_failed';
+          } catch (fallbackError) {
+            recordProviderFailure('openai_tts');
+            const primaryMsg = error instanceof Error ? error.message : 'sarvam_tts_failed';
+            const fallbackMsg =
+              fallbackError instanceof Error ? fallbackError.message : 'openai_tts_failed';
+            providerFallbackReason = `sarvam_tts_failed: ${primaryMsg}, openai_tts_failed: ${fallbackMsg}`;
+            throw new Error('Both Sarvam and OpenAI TTS failed');
+          }
+        } else {
+          recordProviderFailure('openai_tts');
+          if (USE_SARVAM_FOR_VOICE && checkCircuitBreaker('sarvam_tts')) {
+            try {
+              const ttsStartedAt = Date.now();
+              const tts = await withAbortTimeout(
+                (signal) => callSarvamTts(assistantText, locale, signal),
+                TTS_TIMEOUT_MS,
+                `Sarvam TTS fallback timed out after ${TTS_TIMEOUT_MS}ms`,
+              );
+              ttsGenerationMs = Date.now() - ttsStartedAt;
+              audioBase64 = tts.base64;
+              audioMimeType = tts.mimeType;
+              audioProviderUsed = 'sarvam_fallback';
+              providerFallbackReason = error instanceof Error ? error.message : 'openai_tts_failed';
+              recordProviderSuccess('sarvam_tts');
+            } catch (fallbackError) {
+              recordProviderFailure('sarvam_tts');
+              const primaryMsg = error instanceof Error ? error.message : 'openai_tts_failed';
+              const fallbackMsg =
+                fallbackError instanceof Error ? fallbackError.message : 'sarvam_tts_failed';
+              providerFallbackReason = `openai_tts_failed: ${primaryMsg}, sarvam_tts_failed: ${fallbackMsg}`;
+              ttsSkippedReason = 'both_tts_failed';
+              console.warn('Both TTS providers failed, skipping audio', error, fallbackError);
+            }
+          } else {
+            const errorMsg = error instanceof Error ? error.message : 'openai_tts_failed';
+            providerFallbackReason = `openai_tts_failed: ${errorMsg}, sarvam_unavailable`;
+            ttsSkippedReason = 'openai_tts_failed';
+            console.warn('OpenAI TTS failed and Sarvam unavailable, skipping audio', error);
+          }
         }
       }
       if (!audioBase64) {
