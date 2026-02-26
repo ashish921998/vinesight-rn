@@ -7,6 +7,7 @@ import { AIMessageAttachmentInput, ChatMessage, SendMessageResponse } from '../t
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import { GLOSSARY_MR } from '@/i18n/glossary.mr';
 import { GLOSSARY_HI } from '@/i18n/glossary.hi';
+import { assistantModelConfig } from '@/constants/assistant-flags';
 import type {
   ActivityLogExtractionResult,
   VoiceLogActivityType,
@@ -290,6 +291,8 @@ interface OpenAICompletionResponse {
   }>;
 }
 
+const PROXY_MODEL = 'gpt-4o-mini';
+
 async function callOpenAIProxy(params: {
   messages: OpenAIMessage[];
   model?: string;
@@ -297,19 +300,43 @@ async function callOpenAIProxy(params: {
   max_tokens?: number;
   response_format?: { type: string };
 }): Promise<OpenAICompletionResponse> {
-  const { data, error } = await supabase.functions.invoke('dynamic-api', {
+  const invokeFallback = async (): Promise<OpenAICompletionResponse> => {
+    const fallback = await supabase.functions.invoke('openai-proxy', {
+      body: {
+        ...params,
+        model: params.model ?? assistantModelConfig.advisoryModel ?? PROXY_MODEL,
+      },
+    });
+
+    if (fallback.error) {
+      throw new Error(`AI proxy request failed: ${fallback.error.message}`);
+    }
+
+    if (fallback.data?.error) {
+      throw new Error(`AI proxy error: ${fallback.data.error.message ?? fallback.data.error}`);
+    }
+
+    return fallback.data as OpenAICompletionResponse;
+  };
+
+  const primary = await supabase.functions.invoke('dynamic-api', {
     body: params,
   });
 
-  if (error) {
-    throw new Error(`AI proxy request failed: ${error.message}`);
+  if (primary.error) {
+    try {
+      return await invokeFallback();
+    } catch (error) {
+      const fallbackMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`AI proxy request failed: ${primary.error.message ?? fallbackMessage}`);
+    }
   }
 
-  if (data?.error) {
-    throw new Error(`AI proxy error: ${data.error.message ?? data.error}`);
+  if (primary.data?.error) {
+    return await invokeFallback();
   }
 
-  return data as OpenAICompletionResponse;
+  return primary.data as OpenAICompletionResponse;
 }
 
 class AIService {
@@ -375,7 +402,7 @@ class AIService {
     try {
       const response = await callOpenAIProxy({
         messages,
-        model: 'gpt-4o-mini',
+        model: assistantModelConfig.advisoryModel,
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -430,7 +457,7 @@ class AIService {
     try {
       const response = await callOpenAIProxy({
         messages,
-        model: 'gpt-4o-mini',
+        model: assistantModelConfig.advisoryModel,
         temperature: 0.8,
         max_tokens: 200,
       });
@@ -504,7 +531,7 @@ Rules:
     try {
       const response = await callOpenAIProxy({
         messages,
-        model: 'gpt-4o-mini',
+        model: assistantModelConfig.extractionModel,
         temperature: 0,
         max_tokens: 250,
         response_format: { type: 'json_object' },

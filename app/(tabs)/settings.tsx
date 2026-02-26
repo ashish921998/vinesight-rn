@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import {
   View,
   Text,
@@ -46,6 +48,10 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getDefaultCurrency } from '@/i18n/currency';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
+import { assistantMemoryService } from '@/services/assistant-memory';
+import { telemetry } from '@/services/telemetry';
+import { ASSISTANT_MEMORY_RETENTION_DAYS } from '@/constants/assistant-memory';
+import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import {
   buildE164PhoneNumber as buildNormalizedE164PhoneNumber,
   sanitizePhoneDigits,
@@ -215,6 +221,8 @@ export default function SettingsScreen() {
   const [showAreaPicker, setShowAreaPicker] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [showLinkPhoneModal, setShowLinkPhoneModal] = useState(false);
+  const [isExportingAssistantData, setIsExportingAssistantData] = useState(false);
+  const [isDeletingAssistantData, setIsDeletingAssistantData] = useState(false);
 
   // Edit profile form state
   const [editName, setEditName] = useState('');
@@ -452,6 +460,130 @@ export default function SettingsScreen() {
   const handleDeleteAccount = () => {
     setDeleteEmail(userEmail);
     setShowDeleteAccount(true);
+  };
+
+  const handleExportAssistantMemory = async () => {
+    if (isExportingAssistantData || isDeletingAssistantData) return;
+    setIsExportingAssistantData(true);
+
+    let fileUri: string | null = null;
+    let shouldDelayCleanup = false;
+
+    try {
+      const exportData = await assistantMemoryService.exportUserData();
+      if (!exportData) {
+        Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
+        return;
+      }
+
+      const payload = {
+        exported_at: new Date().toISOString(),
+        retention_days: ASSISTANT_MEMORY_RETENTION_DAYS,
+        ...exportData,
+      };
+
+      const fileName = `vinesight-assistant-memory-${Date.now()}.json`;
+      const directory = FileSystem.cacheDirectory;
+      fileUri = directory ? `${directory}${fileName}` : null;
+
+      if (!fileUri) {
+        Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
+        return;
+      }
+
+      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(payload, null, 2));
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
+        return;
+      }
+
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'application/json',
+        dialogTitle: t('settings.assistantMemory.exportShareTitle'),
+      });
+      shouldDelayCleanup = true;
+
+      telemetry.capture('assistant_memory_exported', {
+        conversations_count: exportData.conversations.length,
+        turns_count: exportData.turns.length,
+        memories_count: exportData.memories.length,
+      });
+
+      Alert.alert(
+        t('settings.assistantMemory.exportedTitle'),
+        t('settings.assistantMemory.exportedBody', {
+          conversations: exportData.conversations.length,
+          turns: exportData.turns.length,
+          memories: exportData.memories.length,
+        }),
+      );
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Assistant memory export failed:', error);
+      }
+      Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
+    } finally {
+      if (fileUri) {
+        if (shouldDelayCleanup) {
+          setTimeout(() => {
+            FileSystem.deleteAsync(fileUri!).catch((deleteError) => {
+              if (__DEV__) {
+                console.warn('Failed to delete temp file:', deleteError);
+              }
+            });
+          }, 2000);
+        } else {
+          try {
+            await FileSystem.deleteAsync(fileUri);
+          } catch (deleteError) {
+            if (__DEV__) {
+              console.warn('Failed to delete temp file:', deleteError);
+            }
+          }
+        }
+      }
+      setIsExportingAssistantData(false);
+    }
+  };
+
+  const handleDeleteAssistantMemory = () => {
+    if (isDeletingAssistantData || isExportingAssistantData) return;
+
+    Alert.alert(
+      t('settings.assistantMemory.deleteConfirmTitle'),
+      t('settings.assistantMemory.deleteConfirmBody'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.assistantMemory.deleteAction'),
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeletingAssistantData(true);
+            try {
+              const success = await assistantMemoryService.deleteUserData();
+              if (!success) {
+                Alert.alert(t('common.error'), t('settings.errors.assistantMemoryDeleteFailed'));
+                return;
+              }
+              telemetry.capture('assistant_memory_deleted');
+              Alert.alert(
+                t('settings.assistantMemory.deletedTitle'),
+                t('settings.assistantMemory.deletedBody'),
+              );
+            } catch (error) {
+              if (__DEV__) {
+                console.error('Assistant memory delete failed:', error);
+              }
+              Alert.alert(t('common.error'), t('settings.errors.assistantMemoryDeleteFailed'));
+            } finally {
+              setIsDeletingAssistantData(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleOpenLinkPhone = () => {
@@ -841,6 +973,78 @@ export default function SettingsScreen() {
         </Text>
       </View>
 
+      {/* Assistant Section */}
+      {assistantFeatureFlags.memoryEnabled && (
+        <View style={styles.section}>
+          <Text
+            style={styles.sectionHeader}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {t('settings.sectionAssistant')}
+          </Text>
+          <View style={styles.sectionContent}>
+            <Pressable
+              onPress={handleExportAssistantMemory}
+              disabled={isExportingAssistantData || isDeletingAssistantData}
+              style={[
+                styles.settingsItem,
+                styles.borderBottom,
+                (isExportingAssistantData || isDeletingAssistantData) && styles.disabledItem,
+              ]}
+            >
+              <View style={styles.settingsIcon}>
+                <UISymbol name="doc.text" size={20} color={m3.colorScheme.primary} />
+              </View>
+              <Text
+                style={styles.settingsTitle}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.assistantMemory.exportAction')}
+              </Text>
+              {isExportingAssistantData ? (
+                <ActivityIndicator size="small" color={m3.colorScheme.primary} />
+              ) : (
+                <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
+              )}
+            </Pressable>
+            <Pressable
+              onPress={handleDeleteAssistantMemory}
+              disabled={isDeletingAssistantData || isExportingAssistantData}
+              style={[
+                styles.settingsItem,
+                (isDeletingAssistantData || isExportingAssistantData) && styles.disabledItem,
+              ]}
+            >
+              <View style={styles.deleteIcon}>
+                <UISymbol name="trash" size={20} color={colors.error} />
+              </View>
+              <Text
+                style={styles.deleteText}
+                textBreakStrategy="highQuality"
+                lineBreakStrategyIOS="standard"
+              >
+                {t('settings.assistantMemory.deleteAction')}
+              </Text>
+              {isDeletingAssistantData ? (
+                <ActivityIndicator size="small" color={colors.error} />
+              ) : (
+                <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
+              )}
+            </Pressable>
+          </View>
+          <Text
+            style={styles.notificationNote}
+            textBreakStrategy="highQuality"
+            lineBreakStrategyIOS="standard"
+          >
+            {t('settings.assistantMemory.retentionNote', {
+              days: ASSISTANT_MEMORY_RETENTION_DAYS,
+            })}
+          </Text>
+        </View>
+      )}
       {/* Account Section */}
       <View style={styles.section}>
         <Text
@@ -2068,6 +2272,9 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     marginRight: spacing[2],
   } as TextStyle,
   borderBottom: { borderBottomWidth: 1, borderBottomColor: colors.surface[200] } as ViewStyle,
+  disabledItem: {
+    opacity: 0.6,
+  } as ViewStyle,
 
   notificationItem: {
     flexDirection: 'row',

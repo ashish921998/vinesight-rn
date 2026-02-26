@@ -99,6 +99,7 @@ module.exports = {
     },
     plugins: [
       'expo-router',
+      'expo-audio',
       'expo-notifications',
       [
         '@sentry/react-native/expo',
