@@ -25,6 +25,7 @@ export enum AssistantGatewayErrorCode {
   NETWORK_ERROR = 'NETWORK_ERROR',
   TIMEOUT = 'TIMEOUT',
   SERVER_ERROR = 'SERVER_ERROR',
+  INVALID_REQUEST = 'INVALID_REQUEST',
   INVALID_RESPONSE = 'INVALID_RESPONSE',
   AUDIO_VALIDATION_FAILED = 'AUDIO_VALIDATION_FAILED',
   AUTHENTICATION_FAILED = 'AUTHENTICATION_FAILED',
@@ -572,7 +573,7 @@ export async function sendAssistantTurn(
     const normalizedInput = input.userMessage.trim();
     if (hasAudioPayload && !normalizedInput) {
       throw new AssistantGatewayError(
-        AssistantGatewayErrorCode.UNKNOWN,
+        AssistantGatewayErrorCode.INVALID_REQUEST,
         'Audio-only requests require the server voice gateway',
         {
           inputMode: requestedInputMode,
@@ -712,14 +713,18 @@ export async function sendAssistantTurn(
 
     const response = data;
     if (!response?.assistant_text?.trim()) {
-      const responsePayload = toDebugString(response);
-      if (responsePayload) {
-        telemetry.capture('assistant_gateway_invalid_response', {
-          request_id: requestId,
-          reason: 'missing_assistant_text',
-          response_shape: responsePayload,
-        });
-      }
+      telemetry.capture('assistant_gateway_invalid_response', {
+        request_id: requestId,
+        reason: 'missing_assistant_text',
+        has_text:
+          typeof response?.assistant_text === 'string' && response.assistant_text.length > 0,
+        text_length:
+          typeof response?.assistant_text === 'string' ? response.assistant_text.length : 0,
+        tool_count: Array.isArray(response?.tool_calls) ? response.tool_calls.length : 0,
+        has_memory_writes:
+          Array.isArray(response?.memory_writes) && response.memory_writes.length > 0,
+        citation_count: Array.isArray(response?.citations) ? response.citations.length : 0,
+      });
       throw new AssistantGatewayError(
         AssistantGatewayErrorCode.INVALID_RESPONSE,
         'Missing assistant response text',

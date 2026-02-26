@@ -304,7 +304,7 @@ async function callOpenAIProxy(params: {
     const fallback = await supabase.functions.invoke('openai-proxy', {
       body: {
         ...params,
-        model: params.model ?? PROXY_MODEL,
+        model: params.model ?? assistantModelConfig.advisoryModel ?? PROXY_MODEL,
       },
     });
 

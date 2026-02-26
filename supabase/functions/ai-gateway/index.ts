@@ -257,8 +257,11 @@ const PRICING = {
   },
 };
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.warn('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in ai-gateway');
+if (!SUPABASE_URL) {
+  throw new Error('ai-gateway missing required env var: SUPABASE_URL');
+}
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('ai-gateway missing required env var: SUPABASE_SERVICE_ROLE_KEY');
 }
 
 const serviceSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -1487,6 +1490,7 @@ async function searchMemoryContext(input: {
   userId: string | null;
   farmId: number | null;
   enabled: boolean;
+  embedding?: number[] | null;
   embeddingTokenCounter?: { value: number };
   toolCalls: ToolCall[];
 }): Promise<{ contextBlocks: string[]; citations: Citation[] }> {
@@ -1500,10 +1504,15 @@ async function searchMemoryContext(input: {
     return { contextBlocks: [], citations: [] };
   }
 
-  if (input.embeddingTokenCounter) {
-    input.embeddingTokenCounter.value += estimateTokens(input.query);
+  let embedding: number[] | null = null;
+  if (input.embedding !== undefined) {
+    embedding = input.embedding;
+  } else {
+    if (input.embeddingTokenCounter) {
+      input.embeddingTokenCounter.value += estimateTokens(input.query);
+    }
+    embedding = await callOpenAIEmbedding(input.query);
   }
-  const embedding = await callOpenAIEmbedding(input.query);
   if (!embedding) {
     input.toolCalls.push({
       tool: 'memory.search',
@@ -1562,6 +1571,7 @@ async function searchRagContext(input: {
   query: string;
   locale: 'en' | 'hi' | 'mr';
   enabled: boolean;
+  embedding?: number[] | null;
   embeddingTokenCounter?: { value: number };
   toolCalls: ToolCall[];
 }): Promise<{ contextBlocks: string[]; citations: Citation[] }> {
@@ -1575,10 +1585,15 @@ async function searchRagContext(input: {
     return { contextBlocks: [], citations: [] };
   }
 
-  if (input.embeddingTokenCounter) {
-    input.embeddingTokenCounter.value += estimateTokens(input.query);
+  let embedding: number[] | null = null;
+  if (input.embedding !== undefined) {
+    embedding = input.embedding;
+  } else {
+    if (input.embeddingTokenCounter) {
+      input.embeddingTokenCounter.value += estimateTokens(input.query);
+    }
+    embedding = await callOpenAIEmbedding(input.query);
   }
-  const embedding = await callOpenAIEmbedding(input.query);
   if (!embedding) {
     input.toolCalls.push({
       tool: 'agronomy_kb.search',
@@ -1808,6 +1823,7 @@ async function writeMemory(input: {
   transcript: string;
   answer: string;
   enabled: boolean;
+  embeddingTokenCounter?: { value: number };
   toolCalls: ToolCall[];
 }): Promise<Array<Record<string, unknown>>> {
   if (!input.enabled || !input.userId || !input.conversationId) {
@@ -1824,6 +1840,9 @@ async function writeMemory(input: {
   expiresAt.setDate(expiresAt.getDate() + 180);
 
   const embedding = await callOpenAIEmbedding(summary);
+  if (embedding && input.embeddingTokenCounter) {
+    input.embeddingTokenCounter.value += estimateTokens(summary);
+  }
   if (!embedding) {
     input.toolCalls.push({
       tool: 'memory.write',
@@ -2144,7 +2163,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const activity = detectActivity(transcript);
     const farmsForRouting = await fetchUserFarms(userId);
     const contextFarmForRouting =
       farmId !== null ? (farmsForRouting.find((farmRow) => farmRow.id === farmId) ?? null) : null;
@@ -2188,6 +2206,8 @@ Deno.serve(async (req) => {
         routeStateDirty = true;
       }
     }
+
+    const activity = detectActivity(effectiveTranscript);
 
     if (!assistantText) {
       if (
@@ -2374,19 +2394,29 @@ Deno.serve(async (req) => {
     }
 
     if (!assistantText) {
+      const memoryEnabled = body?.client_capabilities?.memory_enabled !== false;
+      const ragEnabled = body?.client_capabilities?.rag_enabled !== false;
+      let sharedQueryEmbedding: number[] | null | undefined = undefined;
+      if ((memoryEnabled || ragEnabled) && effectiveTranscript.trim()) {
+        embeddingTokenCounter.value += estimateTokens(effectiveTranscript);
+        sharedQueryEmbedding = await callOpenAIEmbedding(effectiveTranscript);
+      }
+
       const [memoryContext, ragContext] = await Promise.all([
         searchMemoryContext({
           query: effectiveTranscript,
           userId,
           farmId,
-          enabled: body?.client_capabilities?.memory_enabled !== false,
+          enabled: memoryEnabled,
+          embedding: sharedQueryEmbedding,
           embeddingTokenCounter,
           toolCalls,
         }),
         searchRagContext({
           query: effectiveTranscript,
           locale,
-          enabled: body?.client_capabilities?.rag_enabled !== false,
+          enabled: ragEnabled,
+          embedding: sharedQueryEmbedding,
           embeddingTokenCounter,
           toolCalls,
         }),
@@ -2557,6 +2587,7 @@ Deno.serve(async (req) => {
       transcript: effectiveTranscript,
       answer: assistantText,
       enabled: body?.client_capabilities?.memory_enabled !== false && !safetyFlags.blocked,
+      embeddingTokenCounter,
       toolCalls,
     });
 
