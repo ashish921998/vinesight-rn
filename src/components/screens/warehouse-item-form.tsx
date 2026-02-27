@@ -1081,7 +1081,7 @@ export default function WarehouseItemForm({
                         'Catalog products error: PHI catalog migration/seed data issue',
                       )}
                     <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                      <Text style={{ fontSize: fontSize.sm, color: colors.error[500] }}>
+                      <Text style={{ fontSize: fontSize.sm, color: colors.error }}>
                         Could not load catalogue items. Please try again later.
                       </Text>
                     </View>
