@@ -230,9 +230,12 @@ export default function SettingsScreen() {
 
   // Delete account form state
   const [deleteEmail, setDeleteEmail] = useState('');
-  const [deletePassword, setDeletePassword] = useState('');
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+  const [isDeleteOtpStep, setIsDeleteOtpStep] = useState(false);
+  const [deletePhoneOtpCode, setDeletePhoneOtpCode] = useState('');
+  const [deleteEmailOtpCode, setDeleteEmailOtpCode] = useState('');
+  const [isSendingDeleteOtp, setIsSendingDeleteOtp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [linkPhoneInput, setLinkPhoneInput] = useState('');
   const [linkPhoneCode, setLinkPhoneCode] = useState('');
@@ -459,6 +462,11 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = () => {
     setDeleteEmail(userEmail);
+    setDeleteReason('');
+    setDeleteConfirmed(false);
+    setIsDeleteOtpStep(false);
+    setDeletePhoneOtpCode('');
+    setDeleteEmailOtpCode('');
     setShowDeleteAccount(true);
   };
 
@@ -696,14 +704,42 @@ export default function SettingsScreen() {
     setCountrySearch('');
   };
 
-  const handleConfirmDeleteAccount = async () => {
+  const sendDeletePhoneOtp = useCallback(async () => {
+    const targetPhone = linkedAuthPhone ?? userPhone ?? '';
+    const normalizedTargetPhone = targetPhone.trim();
+    if (!normalizedTargetPhone) {
+      throw new Error(t('settings.deleteAccountModal.errors.phoneRequired'));
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: normalizedTargetPhone,
+      options: { shouldCreateUser: false },
+    });
+
+    if (error) {
+      throw error;
+    }
+  }, [linkedAuthPhone, userPhone, t]);
+
+  const sendDeleteEmailOtp = useCallback(async () => {
+    if (!userEmail.trim()) return;
+    const { error } = await supabase.auth.signInWithOtp({
+      email: userEmail.trim().toLowerCase(),
+      options: { shouldCreateUser: false },
+    });
+    if (error) {
+      throw error;
+    }
+  }, [userEmail]);
+
+  const handleSendDeleteOtp = async () => {
     if (deleteEmail !== userEmail) {
       Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.emailMismatch'));
       return;
     }
 
-    if (!deletePassword) {
-      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.missingPassword'));
+    if (!(linkedAuthPhone ?? userPhone ?? '').trim()) {
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.phoneRequired'));
       return;
     }
 
@@ -712,24 +748,75 @@ export default function SettingsScreen() {
       return;
     }
 
-    setIsDeleting(true);
-
+    setIsSendingDeleteOtp(true);
     try {
-      const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: deleteEmail.toLowerCase(),
-        password: deletePassword,
-      });
+      await sendDeletePhoneOtp();
+      if (userEmail.trim()) {
+        await sendDeleteEmailOtp();
+      }
+      setIsDeleteOtpStep(true);
+      Alert.alert(
+        t('settings.deleteAccountModal.otpSentTitle'),
+        userEmail.trim()
+          ? t('settings.deleteAccountModal.otpSentBodyBoth')
+          : t('settings.deleteAccountModal.otpSentBodyPhone'),
+      );
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Delete OTP send error:', error);
+      }
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.otpSendFailed'));
+    } finally {
+      setIsSendingDeleteOtp(false);
+    }
+  };
 
-      if (verifyError) {
-        setIsDeleting(false);
-        Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.invalidPassword'));
-        return;
+  const handleConfirmDeleteAccount = async () => {
+    const targetPhone = (linkedAuthPhone ?? userPhone ?? '').trim();
+    const normalizedEmail = userEmail.trim().toLowerCase();
+    const normalizedPhoneCode = deletePhoneOtpCode.trim();
+    const normalizedEmailCode = deleteEmailOtpCode.trim();
+
+    if (!targetPhone) {
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.phoneRequired'));
+      return;
+    }
+    if (normalizedPhoneCode.length !== 6) {
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.missingPhoneOtp'));
+      return;
+    }
+    if (normalizedEmail && normalizedEmailCode.length !== 6) {
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.missingEmailOtp'));
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const { error: phoneVerifyError } = await supabase.auth.verifyOtp({
+        phone: targetPhone,
+        token: normalizedPhoneCode,
+        type: 'sms',
+      });
+      if (phoneVerifyError) {
+        throw phoneVerifyError;
+      }
+
+      if (normalizedEmail) {
+        const { error: emailVerifyError } = await supabase.auth.verifyOtp({
+          email: normalizedEmail,
+          token: normalizedEmailCode,
+          type: 'email',
+        });
+        if (emailVerifyError) {
+          throw emailVerifyError;
+        }
       }
 
       await deleteAccount(deleteReason);
-      setIsDeleting(false);
-      setDeletePassword('');
       setShowDeleteAccount(false);
+      setIsDeleteOtpStep(false);
+      setDeletePhoneOtpCode('');
+      setDeleteEmailOtpCode('');
       Alert.alert(
         t('settings.deleteAccountModal.submittedTitle'),
         t('settings.deleteAccountModal.submittedBody'),
@@ -738,9 +825,40 @@ export default function SettingsScreen() {
       if (__DEV__) {
         console.error('Delete account error:', error);
       }
-      setIsDeleting(false);
-      setDeletePassword('');
       Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.submitFailed'));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleResendDeletePhoneOtp = async () => {
+    try {
+      setIsSendingDeleteOtp(true);
+      await sendDeletePhoneOtp();
+      Alert.alert(t('settings.deleteAccountModal.otpResentTitle'));
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Resend delete phone OTP error:', error);
+      }
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.otpSendFailed'));
+    } finally {
+      setIsSendingDeleteOtp(false);
+    }
+  };
+
+  const handleResendDeleteEmailOtp = async () => {
+    if (!userEmail.trim()) return;
+    try {
+      setIsSendingDeleteOtp(true);
+      await sendDeleteEmailOtp();
+      Alert.alert(t('settings.deleteAccountModal.otpResentTitle'));
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Resend delete email OTP error:', error);
+      }
+      Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.otpSendFailed'));
+    } finally {
+      setIsSendingDeleteOtp(false);
     }
   };
 
@@ -1956,6 +2074,7 @@ export default function SettingsScreen() {
                   autoCapitalize="none"
                   keyboardType="email-address"
                   style={styles.input}
+                  editable={!isDeleteOtpStep}
                 />
                 <Text
                   style={styles.inputHint}
@@ -1966,30 +2085,78 @@ export default function SettingsScreen() {
                 </Text>
               </View>
 
-              <View style={styles.mb4}>
-                <Text
-                  style={styles.inputLabel}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('settings.deleteAccountModal.confirmPassword.label')}
-                </Text>
-                <TextInput
-                  value={deletePassword}
-                  onChangeText={setDeletePassword}
-                  placeholder={t('settings.deleteAccountModal.confirmPassword.placeholder')}
-                  placeholderTextColor={colors.gray[400]}
-                  secureTextEntry
-                  style={styles.input}
-                />
-                <Text
-                  style={styles.inputHint}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('settings.deleteAccountModal.confirmPassword.hint')}
-                </Text>
-              </View>
+              {!isDeleteOtpStep ? (
+                <View style={styles.mb4}>
+                  <Text
+                    style={styles.inputHint}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.deleteAccountModal.phoneOtpHint', {
+                      phone: (linkedAuthPhone ?? userPhone ?? '').trim(),
+                    })}
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <View style={styles.mb4}>
+                    <Text
+                      style={styles.inputLabel}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {t('settings.deleteAccountModal.phoneOtp.label')}
+                    </Text>
+                    <TextInput
+                      value={deletePhoneOtpCode}
+                      onChangeText={setDeletePhoneOtpCode}
+                      placeholder={t('settings.deleteAccountModal.phoneOtp.placeholder')}
+                      placeholderTextColor={colors.gray[400]}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      style={styles.input}
+                    />
+                    <Pressable onPress={handleResendDeletePhoneOtp} disabled={isSendingDeleteOtp}>
+                      <Text
+                        style={styles.inputHint}
+                        textBreakStrategy="highQuality"
+                        lineBreakStrategyIOS="standard"
+                      >
+                        {t('settings.deleteAccountModal.phoneOtp.resend')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                  {userEmail.trim() ? (
+                    <View style={styles.mb4}>
+                      <Text
+                        style={styles.inputLabel}
+                        textBreakStrategy="highQuality"
+                        lineBreakStrategyIOS="standard"
+                      >
+                        {t('settings.deleteAccountModal.emailOtp.label')}
+                      </Text>
+                      <TextInput
+                        value={deleteEmailOtpCode}
+                        onChangeText={setDeleteEmailOtpCode}
+                        placeholder={t('settings.deleteAccountModal.emailOtp.placeholder')}
+                        placeholderTextColor={colors.gray[400]}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                        style={styles.input}
+                      />
+                      <Pressable onPress={handleResendDeleteEmailOtp} disabled={isSendingDeleteOtp}>
+                        <Text
+                          style={styles.inputHint}
+                          textBreakStrategy="highQuality"
+                          lineBreakStrategyIOS="standard"
+                        >
+                          {t('settings.deleteAccountModal.emailOtp.resend')}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
+                </>
+              )}
 
               <View style={styles.mb4}>
                 <Text
@@ -2047,11 +2214,11 @@ export default function SettingsScreen() {
 
           <View style={styles.modalFooter}>
             <Pressable
-              onPress={handleConfirmDeleteAccount}
-              disabled={isDeleting}
+              onPress={isDeleteOtpStep ? handleConfirmDeleteAccount : handleSendDeleteOtp}
+              disabled={isDeleting || isSendingDeleteOtp}
               style={[styles.deleteButton, { backgroundColor: colors.error }]}
             >
-              {isDeleting ? (
+              {isDeleting || isSendingDeleteOtp ? (
                 <ActivityIndicator color={m3.colorScheme.onPrimary} />
               ) : (
                 <Text
@@ -2059,7 +2226,9 @@ export default function SettingsScreen() {
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
-                  {t('settings.deleteAccountModal.submit')}
+                  {isDeleteOtpStep
+                    ? t('settings.deleteAccountModal.submit')
+                    : t('settings.deleteAccountModal.sendOtp')}
                 </Text>
               )}
             </Pressable>
