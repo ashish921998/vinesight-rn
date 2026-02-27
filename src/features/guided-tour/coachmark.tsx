@@ -95,9 +95,9 @@ export function GuidedTourCoachmark({
       ? Math.max(286, screenWidth - spacing[8])
       : Math.max(240, screenWidth - tooltipLeft - spacing[4]);
   const bubblePointsDown = tooltipTop < rect.y;
-  const accentColor = step === 'add_farm' ? '#2FA36D' : '#347BFF';
+  const accentColor = step === 'add_farm' ? '#2FA36D' : '#4A86E8';
   const gradientColors: [string, string] =
-    step === 'add_farm' ? ['#195A3A', '#2FA36D'] : ['#1754D6', '#2E86FF'];
+    step === 'add_farm' ? ['#195A3A', '#2FA36D'] : ['#2D5DB8', '#4A86E8'];
 
   const ringScale = pulse.interpolate({
     inputRange: [0, 1],
@@ -134,7 +134,13 @@ export function GuidedTourCoachmark({
   const showTapHint = step === 'add_farm' || step === 'add_log';
 
   const overlayPointerEvents: 'auto' | 'none' = blockOutsideTouches ? 'auto' : 'none';
-  const overlayOpacity = blockOutsideTouches ? 0.76 : 0.46;
+  const overlayOpacity = blockOutsideTouches
+    ? step === 'add_log'
+      ? 0.68
+      : 0.76
+    : step === 'add_log'
+      ? 0.4
+      : 0.46;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
