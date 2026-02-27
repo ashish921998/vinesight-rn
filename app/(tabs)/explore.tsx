@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
@@ -148,6 +149,15 @@ export default function ExploreScreen() {
   const handleSearchBlur = useCallback(() => {
     setIsSearchFocused(false);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setSearchQuery('');
+        setIsSearchFocused(false);
+      };
+    }, []),
+  );
 
   const filteredFarms = useMemo(() => {
     if (!farms) return [];

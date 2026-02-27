@@ -13,6 +13,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useFarms, useDeleteFarm, useFabBottomPosition, isAndroid } from '@/hooks';
 import { FarmCard } from '@/components/cards';
@@ -267,6 +268,15 @@ export default function FarmsScreen() {
   const handleSearchBlur = useCallback(() => {
     setIsSearchFocused(false);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setSearchQuery('');
+        setIsSearchFocused(false);
+      };
+    }, []),
+  );
 
   // Filter farms based on search query
   const filteredFarms = useMemo(() => {
