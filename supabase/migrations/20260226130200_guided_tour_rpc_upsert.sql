@@ -82,6 +82,9 @@ begin
     locale = coalesce(p_locale, public.user_guided_tour_state.locale),
     tour_version = coalesce(p_tour_version, public.user_guided_tour_state.tour_version),
     updated_at = now()
+  -- Note: The case-when pattern for nullable fields (skipped_at_step, timestamps, active_farm_id) allows
+  -- explicit NULL values to be set, but preserves existing values when the parameter is NULL (not provided).
+  -- This design ensures that only explicit updates change these fields while defaulting to no-change.
   returning * into v_row;
 
   return v_row;

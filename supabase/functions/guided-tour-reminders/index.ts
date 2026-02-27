@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      if (remindersSent === 2 && inactivityHours >= 72) {
+      if (remindersSent === 2 && inactivityHours >= 144) {
         await supabase
           .from('user_guided_tour_state')
           .update({
