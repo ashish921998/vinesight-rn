@@ -194,7 +194,6 @@ export const useGuidedTourStore = create<GuidedTourStore>()(
         lastActiveAt: state.lastActiveAt,
         stepShownAt: state.stepShownAt,
         activeFarmId: state.activeFarmId,
-        hasSeenWelcomeThisSession: state.hasSeenWelcomeThisSession,
         version: state.version,
       }),
       onRehydrateStorage: () => () => {

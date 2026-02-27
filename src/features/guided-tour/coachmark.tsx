@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -78,10 +86,7 @@ export function GuidedTourCoachmark({
   const isNonBlocking = !blockOutsideTouches;
   const hasCoachActions = Boolean(actionLabel || secondaryActionLabel);
   const TOOLTIP_HEIGHT_ESTIMATE = hasCoachActions ? 260 : 200;
-  const screenWidth =
-    typeof globalThis?.window?.innerWidth === 'number' ? globalThis.window.innerWidth : 390;
-  const screenHeight =
-    typeof globalThis?.window?.innerHeight === 'number' ? globalThis.window.innerHeight : 844;
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const belowTop = rect.y + rect.height + spacing[4];
   const aboveTop = rect.y - TOOLTIP_HEIGHT_ESTIMATE - spacing[4];
   const autoTooltipTop =
@@ -263,7 +268,7 @@ export function GuidedTourCoachmark({
               <Text
                 style={{ color: '#FFFFFF', fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}
               >
-                Guided tour
+                {t('coachmark.title', 'Guided tour')}
               </Text>
             </View>
             <Text
@@ -318,7 +323,7 @@ export function GuidedTourCoachmark({
                   fontWeight: fontWeight.medium,
                 }}
               >
-                Tap the highlighted area to continue
+                {t('coachmark.tapToContinue', 'Tap the highlighted area to continue')}
               </Text>
             </View>
           ) : null}

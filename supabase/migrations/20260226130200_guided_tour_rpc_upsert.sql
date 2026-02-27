@@ -63,7 +63,7 @@ begin
     p_tour_started_at,
     p_tour_completed_at,
     p_tour_expired_at,
-    p_last_active_at,
+    coalesce(p_last_active_at, now()),
     p_active_farm_id,
     coalesce(p_locale, 'en'),
     coalesce(p_tour_version, 1),

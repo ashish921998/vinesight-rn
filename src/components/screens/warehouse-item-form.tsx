@@ -629,9 +629,11 @@ export default function WarehouseItemForm({
   const totalValue =
     quantity && unitPrice ? (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2) : '0.00';
 
-  if (__DEV__ && !catalogProductsLoading && catalogProductsError) {
-    console.debug('Catalog products error: PHI catalog migration/seed data issue');
-  }
+  useEffect(() => {
+    if (__DEV__ && !catalogProductsLoading && catalogProductsError) {
+      console.debug('Catalog products error: PHI catalog migration/seed data issue');
+    }
+  }, [catalogProductsLoading, catalogProductsError]);
 
   return (
     <View style={{ flex: 1 }}>

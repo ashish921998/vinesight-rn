@@ -2459,7 +2459,7 @@ export const en = {
   },
   guidedTour: {
     welcome: {
-      title: 'Welcome to VineSight',
+      title: 'Welcome to Vinesight',
       body: "Let's set up your first $t(glossary.farm) in under a minute.",
       setupTime: '1 min setup',
     },
@@ -2468,7 +2468,7 @@ export const en = {
     },
     step2: {
       coach: 'Great! Now log your first observation.',
-      startSeasonCoach: 'First, start your season so VineSight can organize your records.',
+      startSeasonCoach: 'First, start your season so Vinesight can organize your records.',
       startSeasonHelper: 'Edit template or dates if needed, then tap Start season.',
       pickActivityCoach:
         'What is one thing you did on your farm this week? Tap an activity to record it.',
@@ -2477,11 +2477,15 @@ export const en = {
     },
     complete: {
       title: "You're all set!",
-      body: 'VineSight will keep your $t(glossary.farm) data safe and your insights growing.',
+      body: 'Vinesight will keep your $t(glossary.farm) data safe and your insights growing.',
     },
     reminderPush: {
       title: 'Your $t(glossary.farm) is waiting!',
       body: 'Tap to finish setting up.',
+    },
+    coachmark: {
+      title: 'Guided tour',
+      tapToContinue: 'Tap the highlighted area to continue',
     },
     cta: {
       letsGo: "Let's Go",

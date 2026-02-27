@@ -251,7 +251,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   useEffect(() => {
     const unsubFocus = guidedTourOn('guidedTour.addFarmFocusField', ({ field }) => {
       if (mode !== 'add') return;
-      const focus = (ref: React.RefObject<TextInput>) => {
+      const focus = (ref: React.RefObject<TextInput | null>) => {
         setTimeout(() => {
           ref.current?.focus();
         }, 0);
@@ -842,12 +842,12 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         variety: finalVariety,
         soil_texture: formState.soilTextureClass || null,
       });
-      if (typeof createdFarm?.id === 'number') {
-        guidedTourEmit('guidedTour.farmCreated', { farmId: createdFarm.id });
-      }
       triggerHapticSuccess();
       const guidedTourState = useGuidedTourStore.getState();
       if (guidedTourState.status === 'in_progress' && guidedTourState.currentStep === 'add_farm') {
+        if (typeof createdFarm?.id === 'number') {
+          guidedTourEmit('guidedTour.farmCreated', { farmId: createdFarm.id });
+        }
         return;
       }
       onClose();

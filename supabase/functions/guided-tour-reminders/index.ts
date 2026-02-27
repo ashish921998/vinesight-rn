@@ -30,7 +30,7 @@ function hoursSince(ts: string | null): number {
   return (Date.now() - time) / (1000 * 60 * 60);
 }
 
-async function sendExpoPush(token: string, locale: Locale, sequence: 1 | 2) {
+async function sendExpoPush(token: string, locale: Locale, sequence: 1 | 2): Promise<boolean> {
   const copy = reminderCopy[locale] ?? reminderCopy.en;
   const message = {
     to: token,
@@ -59,11 +59,37 @@ async function sendExpoPush(token: string, locale: Locale, sequence: 1 | 2) {
     const text = await response.text();
     throw new Error(`Expo push send failed (${response.status}): ${text}`);
   }
+
+  const data = (await response.json()) as { data?: Array<{ status: string; details?: string }> };
+  const tickets = data.data ?? [];
+  const hasError = tickets.some((ticket) => ticket.status === 'error');
+  if (hasError) {
+    const errorMessages = tickets
+      .filter((t) => t.status === 'error')
+      .map((t) => t.details ?? 'Unknown error')
+      .join(', ');
+    throw new Error(`Expo push ticket errors: ${errorMessages}`);
+  }
+
+  return tickets.some((ticket) => ticket.status === 'ok');
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  const authHeader = req.headers.get('authorization');
+  const REMINDER_JOB_SECRET = Deno.env.get('GUIDED_TOUR_REMINDERS_AUTH')?.trim() ?? '';
+  if (
+    !authHeader ||
+    !authHeader.startsWith('Bearer ') ||
+    authHeader.slice(7) !== REMINDER_JOB_SECRET
+  ) {
+    return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 401,
+    });
   }
 
   try {
@@ -86,19 +112,29 @@ Deno.serve(async (req) => {
       const userId = row.user_id as string;
 
       if (remindersSent === 0 && inactivityHours >= 24) {
-        const { data: devices } = await supabase
+        const { data: devices, error: devicesError } = await supabase
           .from('user_push_devices')
           .select('expo_push_token')
           .eq('user_id', userId)
           .eq('notifications_enabled', true);
+
+        if (devicesError) {
+          console.error('Failed to fetch devices for seq1 reminder', {
+            userId,
+            error: devicesError,
+          });
+          continue;
+        }
 
         let delivered = false;
         for (const device of devices ?? []) {
           const token = device.expo_push_token as string | undefined;
           if (!token) continue;
           try {
-            await sendExpoPush(token, locale, 1);
-            delivered = true;
+            const pushDelivered = await sendExpoPush(token, locale, 1);
+            if (pushDelivered) {
+              delivered = true;
+            }
           } catch (e) {
             console.error('tour_reminder_sent failed seq1', { userId, error: String(e) });
           }
@@ -107,29 +143,45 @@ Deno.serve(async (req) => {
         if (delivered) {
           sent += 1;
           console.log('tour_reminder_sent', { userId, sequence: 1 });
-          await supabase
+          const { error: updateError } = await supabase
             .from('user_guided_tour_state')
             .update({ reminders_sent: 1, updated_at: new Date().toISOString() })
             .eq('user_id', userId)
             .eq('tour_status', 'in_progress');
+          if (updateError) {
+            console.error('Failed to update reminders_sent for seq1', {
+              userId,
+              error: updateError,
+            });
+          }
         }
         continue;
       }
 
       if (remindersSent === 1 && inactivityHours >= 72) {
-        const { data: devices } = await supabase
+        const { data: devices, error: devicesError } = await supabase
           .from('user_push_devices')
           .select('expo_push_token')
           .eq('user_id', userId)
           .eq('notifications_enabled', true);
+
+        if (devicesError) {
+          console.error('Failed to fetch devices for seq2 reminder', {
+            userId,
+            error: devicesError,
+          });
+          continue;
+        }
 
         let delivered = false;
         for (const device of devices ?? []) {
           const token = device.expo_push_token as string | undefined;
           if (!token) continue;
           try {
-            await sendExpoPush(token, locale, 2);
-            delivered = true;
+            const pushDelivered = await sendExpoPush(token, locale, 2);
+            if (pushDelivered) {
+              delivered = true;
+            }
           } catch (e) {
             console.error('tour_reminder_sent failed seq2', { userId, error: String(e) });
           }
@@ -138,17 +190,23 @@ Deno.serve(async (req) => {
         if (delivered) {
           sent += 1;
           console.log('tour_reminder_sent', { userId, sequence: 2 });
-          await supabase
+          const { error: updateError } = await supabase
             .from('user_guided_tour_state')
             .update({ reminders_sent: 2, updated_at: new Date().toISOString() })
             .eq('user_id', userId)
             .eq('tour_status', 'in_progress');
+          if (updateError) {
+            console.error('Failed to update reminders_sent for seq2', {
+              userId,
+              error: updateError,
+            });
+          }
         }
         continue;
       }
 
       if (remindersSent === 2 && inactivityHours >= 144) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('user_guided_tour_state')
           .update({
             tour_status: 'expired',
@@ -157,7 +215,11 @@ Deno.serve(async (req) => {
           })
           .eq('user_id', userId)
           .eq('tour_status', 'in_progress');
-        expired += 1;
+        if (updateError) {
+          console.error('Failed to expire tour', { userId, error: updateError });
+        } else {
+          expired += 1;
+        }
       }
     }
 
@@ -167,7 +229,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error('[guided-tour-reminders] failed', error);
-    return new Response(JSON.stringify({ ok: false, error: String(error) }), {
+    return new Response(JSON.stringify({ ok: false, error: 'Internal server error' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });

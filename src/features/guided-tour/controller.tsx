@@ -10,6 +10,7 @@ import {
   GUIDED_TOUR_TARGET_IDS,
   GUIDED_TOUR_TARGET_RETRY_MS,
   GUIDED_TOUR_TARGET_TIMEOUT_MS,
+  MAX_GUIDED_TOUR_TARGET_RETRIES,
 } from './constants';
 import { guidedTourEmit, guidedTourOn } from './events';
 import { GuidedTourOverlay } from './overlay';
@@ -105,6 +106,7 @@ export function GuidedTourController() {
   const queuedLogCreatedRef = useRef<{ farmId: number; recordType: string } | null>(null);
   const hydrationSyncedRef = useRef(false);
   const mountedRef = useRef(false);
+  const addLogRetryCountRef = useRef(0);
 
   const guidedTourEnabled =
     (process.env.EXPO_PUBLIC_GUIDED_TOUR_ENABLED ?? 'false').toLowerCase() === 'true';
@@ -195,6 +197,15 @@ export function GuidedTourController() {
     });
     return () => subscription.remove();
   }, [eligible, resumeIfEligible, setLastActiveAt]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      queuedFarmCreatedRef.current = null;
+      queuedLogCreatedRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const unsubFarm = guidedTourOn('guidedTour.farmCreated', ({ farmId }) => {
@@ -542,10 +553,20 @@ export function GuidedTourController() {
 
       if (step === 'add_log' && addLogFlowRoute) {
         // Add-log UI can mount targets with delays (sheet animation, route transitions).
-        // Keep retrying instead of dropping guidance for this step.
-        setTimeout(() => {
-          void attempt();
-        }, GUIDED_TOUR_TARGET_RETRY_MS);
+        // Keep retrying instead of dropping guidance for this step, but cap retries.
+        if (addLogRetryCountRef.current < MAX_GUIDED_TOUR_TARGET_RETRIES) {
+          addLogRetryCountRef.current += 1;
+          setTimeout(() => {
+            void attempt();
+          }, GUIDED_TOUR_TARGET_RETRY_MS);
+        } else {
+          telemetry.capture('tour_target_missing', {
+            step,
+            targetId,
+            route: pathname,
+            reason: 'max_retries_exceeded',
+          });
+        }
         return;
       }
 
@@ -620,6 +641,10 @@ export function GuidedTourController() {
     }
   }, [currentStep, lastActiveAt, status]);
 
+  useEffect(() => {
+    addLogRetryCountRef.current = 0;
+  }, [currentStep]);
+
   if (overlayMode === 'none') return null;
 
   const handleSkip = () => {
@@ -628,6 +653,7 @@ export function GuidedTourController() {
     skipTour(step);
     queuedFarmCreatedRef.current = null;
     queuedLogCreatedRef.current = null;
+    addLogRetryCountRef.current = 0;
     setRect(null);
     setActiveCoachStep(null);
     setHasChosenActivityType(false);

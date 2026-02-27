@@ -10,21 +10,31 @@ export interface GuidedTourTargetRect {
 
 type MeasureFn = () => Promise<GuidedTourTargetRect | null>;
 
-const registry = new Map<string, MeasureFn>();
+const registry = new Map<string, MeasureFn[]>();
 
 export async function measureGuidedTourTarget(
   targetId: string,
 ): Promise<GuidedTourTargetRect | null> {
-  const fn = registry.get(targetId);
-  if (!fn) return null;
-  return fn();
+  const fns = registry.get(targetId);
+  if (!fns || fns.length === 0) return null;
+  const mostRecentFn = fns[fns.length - 1];
+  return mostRecentFn();
 }
 
 function registerGuidedTourTarget(targetId: string, measure: MeasureFn) {
-  registry.set(targetId, measure);
+  const fns = registry.get(targetId) ?? [];
+  fns.push(measure);
+  registry.set(targetId, fns);
   return () => {
-    if (registry.get(targetId) === measure) {
-      registry.delete(targetId);
+    const currentFns = registry.get(targetId);
+    if (currentFns) {
+      const index = currentFns.indexOf(measure);
+      if (index !== -1) {
+        currentFns.splice(index, 1);
+        if (currentFns.length === 0) {
+          registry.delete(targetId);
+        }
+      }
     }
   };
 }

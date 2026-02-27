@@ -67,6 +67,7 @@ type ToolName =
   | 'log_activity.query'
   | 'farm_context.get'
   | 'routing.decide'
+  | 'stt.transcribe'
   | 'memory.search'
   | 'memory.write'
   | 'agronomy_kb.search'

@@ -4,6 +4,7 @@ export const GUIDED_TOUR_STORAGE_KEY = 'vinesight-guided-tour-v1';
 export const GUIDED_TOUR_VERSION = 1 as const;
 export const GUIDED_TOUR_TARGET_TIMEOUT_MS = 5000;
 export const GUIDED_TOUR_TARGET_RETRY_MS = 250;
+export const MAX_GUIDED_TOUR_TARGET_RETRIES = 20;
 
 export const GUIDED_TOUR_TARGET_IDS = {
   ADD_FARM_PRIMARY: 'guided_tour:add_farm_primary',

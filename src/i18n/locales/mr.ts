@@ -2472,7 +2472,7 @@ export const mr = {
   },
   guidedTour: {
     welcome: {
-      title: 'VineSight मध्ये स्वागत आहे',
+      title: 'Vinesight मध्ये स्वागत आहे',
       body: 'चला एका मिनिटात तुमचे पहिले $t(glossary.farm) सेट करूया.',
       setupTime: '1 मिनिट सेटअप',
     },
@@ -2481,7 +2481,7 @@ export const mr = {
     },
     step2: {
       coach: 'छान! आता तुमची पहिली नोंद करा.',
-      startSeasonCoach: 'आधी सीझन सुरू करा, म्हणजे VineSight तुमच्या नोंदी व्यवस्थित ठेवू शकेल.',
+      startSeasonCoach: 'आधी सीझन सुरू करा, म्हणजे Vinesight तुमच्या नोंदी व्यवस्थित ठेवू शकेल.',
       startSeasonHelper: 'गरज असेल तर टेम्पलेट/तारखा बदला, मग Start season वर टॅप करा.',
       pickActivityCoach:
         'या आठवड्यात तुम्ही तुमच्या शेतात केलेली एक गोष्ट कोणती? नोंद करण्यासाठी क्रियाकलाप निवडा.',
@@ -2490,11 +2490,15 @@ export const mr = {
     },
     complete: {
       title: 'तुमची तयारी झाली!',
-      body: 'VineSight तुमचा $t(glossary.farm) डेटा सुरक्षित ठेवेल आणि उपयुक्त माहिती वाढवेल.',
+      body: 'Vinesight तुमचा $t(glossary.farm) डेटा सुरक्षित ठेवेल आणि उपयुक्त माहिती वाढवेल.',
     },
     reminderPush: {
       title: 'तुमचे $t(glossary.farm) तुमची वाट पाहत आहे!',
       body: 'सेटअप पूर्ण करण्यासाठी टॅप करा.',
+    },
+    coachmark: {
+      title: 'मार्गदर्शक टूर',
+      tapToContinue: 'सुरू ठेवण्यासाठी हायलाइट केलेल्या भागावर टॅप करा',
     },
     cta: {
       letsGo: 'चला सुरू करूया',

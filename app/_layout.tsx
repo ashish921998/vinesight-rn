@@ -137,8 +137,6 @@ export default Sentry.wrap(function RootLayout() {
     const normalizedPath = pathname?.trim() ? normalizePath(pathname) : '/';
     return normalizedSegments ? `${normalizedPath} (${normalizedSegments})` : normalizedPath;
   }, [pathname, segments]);
-  const suppressGlobalGuidedTourController =
-    pathname === '/add-entry' || pathname === '/log-entry/add';
 
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
@@ -414,7 +412,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
               </Stack>
-              {!suppressGlobalGuidedTourController ? <GuidedTourController /> : null}
+              <GuidedTourController />
             </I18nextProvider>
           </PersistQueryClientProvider>
         </SafeAreaProvider>

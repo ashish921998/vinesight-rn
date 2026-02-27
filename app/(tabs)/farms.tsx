@@ -375,7 +375,12 @@ export default function FarmsScreen() {
               maxWidth: 360,
             }}
           >
-            <Button title={t('farms.addFarm')} onPress={handleAddFarm} />
+            <Button
+              title={t('farms.addFarm')}
+              onPress={handleAddFarm}
+              pointerEvents="none"
+              importantForAccessibility="no-hide-descendants"
+            />
           </GuidedTourTarget>
         </View>
       );

@@ -29,14 +29,19 @@ export async function fetchGuidedTourServerState(): Promise<GuidedTourServerStat
 export async function upsertGuidedTourServerState(patch: GuidedTourPatchPayload): Promise<void> {
   const userId = await getUserId();
   if (!userId) return;
-  const payload = {
-    user_id: userId,
-    ...patch,
-    updated_at: new Date().toISOString(),
-  };
-  const { error } = await supabase
-    .from(GUIDED_TOUR_TABLE)
-    .upsert(payload, { onConflict: 'user_id' });
+  const { error } = await supabase.rpc('upsert_user_guided_tour_state', {
+    p_tour_status: patch.tour_status ?? null,
+    p_current_step: patch.current_step ?? null,
+    p_skipped_at_step: patch.skipped_at_step ?? null,
+    p_reminders_sent: patch.reminders_sent ?? null,
+    p_tour_started_at: patch.tour_started_at ?? null,
+    p_tour_completed_at: patch.tour_completed_at ?? null,
+    p_tour_expired_at: patch.tour_expired_at ?? null,
+    p_last_active_at: patch.last_active_at ?? null,
+    p_active_farm_id: patch.active_farm_id ?? null,
+    p_locale: patch.locale ?? null,
+    p_tour_version: patch.tour_version ?? null,
+  });
   if (error) throw error;
 }
 
@@ -72,7 +77,7 @@ export async function registerGuidedTourPushDevice(locale: 'en' | 'hi' | 'mr'): 
         last_seen_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
-      { onConflict: 'user_id,expo_push_token' },
+      { onConflict: 'expo_push_token' },
     );
     if (error) throw error;
   } catch (error) {

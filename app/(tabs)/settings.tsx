@@ -270,12 +270,12 @@ export default function SettingsScreen() {
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'User';
   const userEmail = profile?.email || user?.email || '';
-  const userPhone = profile?.phone || '';
   const linkedAuthPhone = user?.phone || null;
-  const deleteVerificationPhone = (linkedAuthPhone ?? userPhone ?? '').trim();
-  const requiresDeleteEmailVerification = Boolean(userEmail.trim());
+  const deleteVerificationPhone = linkedAuthPhone?.trim() ?? '';
+  const isEmailOtpEnforced = Boolean(userEmail.trim());
+  const requireEmailOtpForDelete = isEmailOtpEnforced;
   const canAttemptDeleteWithPhone = isValidE164PhoneNumber(deleteVerificationPhone);
-  const hasSavedPhoneToVerify = Boolean(userPhone) && !linkedAuthPhone;
+  const hasSavedPhoneToVerify = false;
   const isLinkPhoneModalVisible = showLinkPhoneModal || phoneLinkingPending;
   const isShowingPhoneCodeStep = isPhoneLinkCodeStep || phoneLinkingPending;
   const phoneActionTitle = linkedAuthPhone
@@ -283,7 +283,7 @@ export default function SettingsScreen() {
     : hasSavedPhoneToVerify
       ? t('settings.linkPhone.verifyTitle')
       : t('settings.linkPhone.title');
-  const phoneActionValue = linkedAuthPhone ?? (hasSavedPhoneToVerify ? userPhone : null);
+  const phoneActionValue = linkedAuthPhone;
   const filteredCountries = useMemo(() => {
     if (!countrySearch.trim()) return COUNTRIES;
     const query = countrySearch.toLowerCase();
@@ -351,10 +351,10 @@ export default function SettingsScreen() {
     setLinkPhoneCode('');
     setIsPhoneLinkCodeStep(false);
     setPhoneNumberEditCount(0);
-    const trimmedValue = (linkedAuthPhone ?? userPhone ?? '').trim();
+    const trimmedValue = (linkedAuthPhone ?? '').trim();
     setPhoneFormFromValue(trimmedValue);
     setShowLinkPhoneModal(true);
-  }, [linkPhoneValue, clearError, linkedAuthPhone, userPhone, setPhoneFormFromValue]);
+  }, [linkPhoneValue, clearError, linkedAuthPhone, setPhoneFormFromValue]);
 
   useEffect(() => {
     if (!phoneLinkingPending) return;
@@ -519,6 +519,8 @@ export default function SettingsScreen() {
     setDeleteEmailOtpSent(false);
     setDeletePhoneVerified(false);
     setDeleteEmailVerified(false);
+    setIsSendingDeleteOtp(false);
+    setIsVerifyingDeleteOtp(false);
     setShowDeleteAccount(true);
   };
 
@@ -557,6 +559,16 @@ export default function SettingsScreen() {
         t('settings.deleteAccountModal.phoneOtpSentTitle', { defaultValue: 'OTP sent' }),
         t('settings.deleteAccountModal.phoneOtpSentBody', {
           defaultValue: 'We sent an OTP to your mobile number.',
+        }),
+      );
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to send phone OTP:', error);
+      }
+      Alert.alert(
+        t('common.error'),
+        t('settings.deleteAccountModal.errors.otpSendFailed', {
+          defaultValue: 'Failed to send OTP. Please try again.',
         }),
       );
     } finally {
@@ -600,13 +612,23 @@ export default function SettingsScreen() {
           defaultValue: 'Mobile verification completed.',
         }),
       );
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to verify phone OTP:', error);
+      }
+      Alert.alert(
+        t('common.error'),
+        t('settings.deleteAccountModal.errors.otpVerifyFailed', {
+          defaultValue: 'OTP verification failed. Please try again.',
+        }),
+      );
     } finally {
       setIsVerifyingDeleteOtp(false);
     }
   };
 
   const handleSendDeleteEmailOtp = async () => {
-    if (!requiresDeleteEmailVerification) {
+    if (!requireEmailOtpForDelete) {
       return;
     }
 
@@ -635,13 +657,23 @@ export default function SettingsScreen() {
           defaultValue: 'We sent an OTP to your email.',
         }),
       );
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to send email OTP:', error);
+      }
+      Alert.alert(
+        t('common.error'),
+        t('settings.deleteAccountModal.errors.emailOtpSendFailed', {
+          defaultValue: 'Failed to send OTP to email. Please try again.',
+        }),
+      );
     } finally {
       setIsSendingDeleteOtp(false);
     }
   };
 
   const handleVerifyDeleteEmailOtp = async () => {
-    if (!requiresDeleteEmailVerification || deleteEmailOtp.trim().length < 4) {
+    if (!requireEmailOtpForDelete || deleteEmailOtp.trim().length < 4) {
       Alert.alert(
         t('common.error'),
         t('settings.deleteAccountModal.errors.invalidOtp', {
@@ -674,6 +706,16 @@ export default function SettingsScreen() {
         t('settings.deleteAccountModal.emailVerifiedTitle', { defaultValue: 'Email verified' }),
         t('settings.deleteAccountModal.emailVerifiedBody', {
           defaultValue: 'Email verification completed.',
+        }),
+      );
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Failed to verify email OTP:', error);
+      }
+      Alert.alert(
+        t('common.error'),
+        t('settings.deleteAccountModal.errors.otpVerifyFailed', {
+          defaultValue: 'OTP verification failed. Please try again.',
         }),
       );
     } finally {
@@ -813,7 +855,7 @@ export default function SettingsScreen() {
     setIsPhoneLinkCodeStep(false);
     setPhoneNumberEditCount(0);
     setCountrySearch('');
-    setPhoneFormFromValue(linkedAuthPhone ?? userPhone ?? '');
+    setPhoneFormFromValue(linkedAuthPhone ?? '');
     setShowLinkPhoneModal(true);
   };
 
@@ -937,7 +979,7 @@ export default function SettingsScreen() {
       return;
     }
 
-    if (requiresDeleteEmailVerification && !deleteEmailVerified) {
+    if (requireEmailOtpForDelete && !deleteEmailVerified) {
       Alert.alert(
         t('common.error'),
         t('settings.deleteAccountModal.errors.emailOtpRequired', {
@@ -1028,7 +1070,7 @@ export default function SettingsScreen() {
   const canSubmitDeleteAccount =
     deleteConfirmed &&
     deletePhoneVerified &&
-    (!requiresDeleteEmailVerification || deleteEmailVerified) &&
+    (!requireEmailOtpForDelete || deleteEmailVerified) &&
     !isDeleting &&
     !isSendingDeleteOtp &&
     !isVerifyingDeleteOtp;
@@ -1073,15 +1115,6 @@ export default function SettingsScreen() {
             >
               {userEmail}
             </Text>
-            {userPhone ? (
-              <Text
-                style={styles.profilePhone}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                {userPhone}
-              </Text>
-            ) : null}
           </View>
           <Pressable onPress={() => setShowEditProfile(true)}>
             <UISymbol name="pencil" size={24} color={m3.colorScheme.primary} />
@@ -2276,7 +2309,7 @@ export default function SettingsScreen() {
                 ) : null}
               </View>
 
-              {requiresDeleteEmailVerification ? (
+              {requireEmailOtpForDelete ? (
                 <View style={styles.mb4}>
                   <Text
                     style={styles.inputLabel}

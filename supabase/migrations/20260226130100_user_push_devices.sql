@@ -10,7 +10,7 @@ create table if not exists public.user_push_devices (
   last_seen_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (user_id, expo_push_token)
+  unique (expo_push_token)
 );
 
 create index if not exists idx_user_push_devices_user on public.user_push_devices (user_id);

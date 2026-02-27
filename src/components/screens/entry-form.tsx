@@ -43,7 +43,6 @@ import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit } from '@/features/guided-tour';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
-import { GuidedTourController } from '@/features/guided-tour/controller';
 
 import {
   IrrigationForm as _IrrigationForm,
@@ -3300,7 +3299,6 @@ export function EntryForm({
           )}
         </View>
       </KeyboardAvoidingView>
-      {presentation === 'screen' ? <GuidedTourController /> : null}
     </View>
   );
 

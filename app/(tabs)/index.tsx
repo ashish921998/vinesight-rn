@@ -134,7 +134,7 @@ export default function DashboardScreen() {
   };
 
   const dateStyle: TextStyle = {
-    ...m3.typography.bodySmall,
+    ...m3.typography.labelSmall,
     color: m3.colorScheme.onSurfaceVariant,
     marginTop: spacing[1],
   };
