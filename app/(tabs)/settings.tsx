@@ -50,6 +50,8 @@ import { getDefaultCurrency } from '@/i18n/currency';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import { assistantMemoryService } from '@/services/assistant-memory';
 import { telemetry } from '@/services/telemetry';
+import { upsertGuidedTourServerState } from '@/features/guided-tour/service';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { ASSISTANT_MEMORY_RETENTION_DAYS } from '@/constants/assistant-memory';
 import { assistantFeatureFlags } from '@/constants/assistant-flags';
 import {
@@ -223,6 +225,7 @@ export default function SettingsScreen() {
   const [showLinkPhoneModal, setShowLinkPhoneModal] = useState(false);
   const [isExportingAssistantData, setIsExportingAssistantData] = useState(false);
   const [isDeletingAssistantData, setIsDeletingAssistantData] = useState(false);
+  const [isResettingGuidedTour, setIsResettingGuidedTour] = useState(false);
 
   // Edit profile form state
   const [editName, setEditName] = useState('');
@@ -242,6 +245,7 @@ export default function SettingsScreen() {
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
+  const resetGuidedTour = useGuidedTourStore((s) => s.resetForReplay);
 
   // Local preferences state
   const [selectedCurrency, setSelectedCurrency] = useState(() => getDefaultCurrency());
@@ -368,6 +372,46 @@ export default function SettingsScreen() {
       },
     ]);
   };
+
+  const handleReplayGuidedTour = useCallback(async () => {
+    if (isResettingGuidedTour) return;
+    setIsResettingGuidedTour(true);
+    try {
+      // Always reset local state first — this is the critical step
+      resetGuidedTour();
+
+      // Fire-and-forget server sync — don't block the user on network failures.
+      // The controller's debounced effect will re-sync state on the next render anyway.
+      void upsertGuidedTourServerState({
+        tour_status: 'not_started',
+        current_step: 'welcome',
+        skipped_at_step: null,
+        reminders_sent: 0,
+        tour_started_at: null,
+        tour_completed_at: null,
+        tour_expired_at: null,
+        last_active_at: new Date().toISOString(),
+        active_farm_id: null,
+        locale: language === 'hi' || language === 'mr' ? language : 'en',
+        tour_version: 1,
+      }).catch((error) => {
+        if (__DEV__) {
+          console.warn('[guided-tour] server reset sync failed (will retry automatically):', error);
+        }
+      });
+
+      telemetry.capture('tour_restarted');
+      // Navigate to dashboard where the welcome card will appear
+      router.push('/(tabs)');
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Failed to reset guided tour:', error);
+      }
+      Alert.alert(t('common.error'), t('common.tryAgain'));
+    } finally {
+      setIsResettingGuidedTour(false);
+    }
+  }, [isResettingGuidedTour, language, resetGuidedTour, router, t]);
 
   const handleToggleDailyWaterReminder = async (enabled: boolean) => {
     if (enabled) {
@@ -899,6 +943,16 @@ export default function SettingsScreen() {
               icon="dollarsign.circle"
               title={t('settings.currency')}
               value={getCurrencyLabel(selectedCurrency)}
+              isLast={false}
+              styles={styles}
+              colors={colors}
+            />
+          </Pressable>
+          <Pressable onPress={handleReplayGuidedTour} disabled={isResettingGuidedTour}>
+            <SettingsItem
+              icon="sparkles"
+              title={t('guidedTour.settings.replay')}
+              value={isResettingGuidedTour ? t('common.loading') : undefined}
               isLast
               styles={styles}
               colors={colors}

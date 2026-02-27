@@ -2,6 +2,9 @@ import { ACTIVITY_TYPES, type LogTypeId, type LogType } from '@/constants/calcul
 import { colorWithOpacity } from '@/utils/color';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { AppIcon } from '@/components/ui/app-icon';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { guidedTourEmit } from '@/features/guided-tour/events';
 import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -16,7 +19,8 @@ export function LogTypeSelector({ selectedLogType, onSelect }: LogTypeSelectorPr
   const { t } = useTranslation();
 
   return (
-    <View
+    <GuidedTourTarget
+      targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR}
       style={{
         backgroundColor: colors.surface[100],
         borderRadius: 16,
@@ -41,7 +45,11 @@ export function LogTypeSelector({ selectedLogType, onSelect }: LogTypeSelectorPr
           return (
             <Pressable
               key={logType.id}
-              onPress={() => onSelect(logType.id as LogTypeId)}
+              onPress={() => {
+                const selectedType = logType.id as LogTypeId;
+                guidedTourEmit('guidedTour.logTypeSelected', { recordType: selectedType });
+                onSelect(selectedType);
+              }}
               style={{
                 width: '18%',
                 paddingVertical: 10,
@@ -83,6 +91,6 @@ export function LogTypeSelector({ selectedLogType, onSelect }: LogTypeSelectorPr
           );
         })}
       </View>
-    </View>
+    </GuidedTourTarget>
   );
 }

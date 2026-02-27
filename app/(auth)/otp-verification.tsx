@@ -128,7 +128,11 @@ export default function OTPVerificationScreen() {
     } else {
       cancelOTPFlow();
     }
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(auth)/login');
   };
 
   const containerStyle: ViewStyle = {

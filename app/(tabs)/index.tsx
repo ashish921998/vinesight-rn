@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -28,10 +28,11 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { colorWithOpacity } from '@/utils/color';
 import { useTranslation } from 'react-i18next';
-import { formatNumber } from '@/i18n/format';
+import { formatDate, formatNumber } from '@/i18n/format';
 import { useThemeTokens } from '@/styles/use-theme';
 import { FloatingAssistantButton } from '@/components/ui/floating-assistant-button';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
+import { guidedTourEmit } from '@/features/guided-tour';
 
 // ============================================================
 // MARK: - Greeting Helper
@@ -132,6 +133,12 @@ export default function DashboardScreen() {
     color: m3.colorScheme.onSurface,
   };
 
+  const dateStyle: TextStyle = {
+    ...m3.typography.bodySmall,
+    color: m3.colorScheme.onSurfaceVariant,
+    marginTop: spacing[1],
+  };
+
   const sectionTitleStyle: TextStyle = {
     ...m3.typography.titleMedium,
     marginBottom: spacing[3],
@@ -139,6 +146,11 @@ export default function DashboardScreen() {
   };
 
   const bottomPadding = Math.max(insets.bottom + spacing[12], spacing[16]);
+  const todayLabel = formatDate(new Date(), { weekday: 'short', month: 'short', day: 'numeric' });
+
+  useEffect(() => {
+    guidedTourEmit('guidedTour.appReadyHome', {});
+  }, []);
 
   return (
     <>
@@ -163,6 +175,7 @@ export default function DashboardScreen() {
                 ? t(`dashboard.greetingWithName.${greetingKey}`, { name: profile.full_name })
                 : t(`dashboard.greeting.${greetingKey}`)}
             </Text>
+            <Text style={dateStyle}>{todayLabel}</Text>
           </View>
 
           {/* Stats Grid */}
@@ -326,6 +339,8 @@ export default function DashboardScreen() {
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'space-around',
+                  flexWrap: 'wrap',
+                  rowGap: spacing[2],
                 }}
               >
                 <QuickActionButton

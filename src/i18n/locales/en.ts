@@ -2457,6 +2457,42 @@ export const en = {
       selectOption: 'Select option: {{option}}',
     },
   },
+  guidedTour: {
+    welcome: {
+      title: 'Welcome to VineSight',
+      body: "Let's set up your first $t(glossary.farm) in under a minute.",
+      setupTime: '1 min setup',
+    },
+    step1: {
+      coach: 'Tap here to add your first $t(glossary.farm).',
+    },
+    step2: {
+      coach: 'Great! Now log your first observation.',
+      startSeasonCoach: 'First, start your season so VineSight can organize your records.',
+      startSeasonHelper: 'Edit template or dates if needed, then tap Start season.',
+      pickActivityCoach:
+        'What is one thing you did on your farm this week? Tap an activity to record it.',
+      pickActivityHelper:
+        "It's okay if it wasn't today. You can log what you remember (Irrigation, Fertigation, Spraying, Expense).",
+    },
+    complete: {
+      title: "You're all set!",
+      body: 'VineSight will keep your $t(glossary.farm) data safe and your insights growing.',
+    },
+    reminderPush: {
+      title: 'Your $t(glossary.farm) is waiting!',
+      body: 'Tap to finish setting up.',
+    },
+    cta: {
+      letsGo: "Let's Go",
+      done: 'Done',
+      skip: 'Skip',
+      skipTour: 'Skip tour',
+    },
+    settings: {
+      replay: 'Replay Guided Tour',
+    },
+  },
 } as const;
 
 export type EnTranslations = typeof en;

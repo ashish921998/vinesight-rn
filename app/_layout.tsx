@@ -32,6 +32,7 @@ import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 import { queryClient, queryPersister, QUERY_CACHE_MAX_AGE_MS } from '@/lib/query-cache';
+import { GuidedTourController, guidedTourEmit, useGuidedTourStore } from '@/features/guided-tour';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -136,12 +137,15 @@ export default Sentry.wrap(function RootLayout() {
     const normalizedPath = pathname?.trim() ? normalizePath(pathname) : '/';
     return normalizedSegments ? `${normalizedPath} (${normalizedSegments})` : normalizedPath;
   }, [pathname, segments]);
+  const suppressGlobalGuidedTourController =
+    pathname === '/add-entry' || pathname === '/log-entry/add';
 
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
   const languageHydrated = useLanguageStore((s) => s.hasHydrated);
 
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
+  const setGuidedTourLastActiveAt = useGuidedTourStore((s) => s.setLastActiveAt);
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
 
@@ -320,6 +324,38 @@ export default Sentry.wrap(function RootLayout() {
   }, [language, languageHydrated, notificationsHydrated]);
 
   useEffect(() => {
+    setGuidedTourLastActiveAt();
+  }, [setGuidedTourLastActiveAt]);
+
+  useEffect(() => {
+    let cleanup: null | (() => void) = null;
+
+    const setup = async () => {
+      try {
+        const Notifications = await import('expo-notifications');
+        const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+          const data = response.notification.request.content.data as {
+            type?: string;
+            sequence?: number;
+          };
+          if (data?.type === 'guided_tour_reminder') {
+            const sequence = data.sequence === 2 ? 2 : 1;
+            guidedTourEmit('guidedTour.notificationOpened', { sequence });
+          }
+        });
+        cleanup = () => sub.remove();
+      } catch {
+        cleanup = null;
+      }
+    };
+
+    void setup();
+    return () => {
+      cleanup?.();
+    };
+  }, []);
+
+  useEffect(() => {
     // Hide splash screen when auth + language are loaded
     if (!isLoading && languageHydrated && themeHydrated) {
       SplashScreen.hideAsync().catch((error) => {
@@ -378,6 +414,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
               </Stack>
+              {!suppressGlobalGuidedTourController ? <GuidedTourController /> : null}
             </I18nextProvider>
           </PersistQueryClientProvider>
         </SafeAreaProvider>

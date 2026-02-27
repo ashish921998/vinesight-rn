@@ -2470,6 +2470,42 @@ export const mr = {
       selectOption: 'पर्याय निवडा: {{option}}',
     },
   },
+  guidedTour: {
+    welcome: {
+      title: 'VineSight मध्ये स्वागत आहे',
+      body: 'चला एका मिनिटात तुमचे पहिले $t(glossary.farm) सेट करूया.',
+      setupTime: '1 मिनिट सेटअप',
+    },
+    step1: {
+      coach: 'तुमचे पहिले $t(glossary.farm) जोडण्यासाठी येथे टॅप करा.',
+    },
+    step2: {
+      coach: 'छान! आता तुमची पहिली नोंद करा.',
+      startSeasonCoach: 'आधी सीझन सुरू करा, म्हणजे VineSight तुमच्या नोंदी व्यवस्थित ठेवू शकेल.',
+      startSeasonHelper: 'गरज असेल तर टेम्पलेट/तारखा बदला, मग Start season वर टॅप करा.',
+      pickActivityCoach:
+        'या आठवड्यात तुम्ही तुमच्या शेतात केलेली एक गोष्ट कोणती? नोंद करण्यासाठी क्रियाकलाप निवडा.',
+      pickActivityHelper:
+        'ती आजची नसली तरी चालेल. आठवणीतले लॉग करा ($t(glossary.irrigation), $t(glossary.fertigation), $t(glossary.spray), $t(glossary.expense)).',
+    },
+    complete: {
+      title: 'तुमची तयारी झाली!',
+      body: 'VineSight तुमचा $t(glossary.farm) डेटा सुरक्षित ठेवेल आणि उपयुक्त माहिती वाढवेल.',
+    },
+    reminderPush: {
+      title: 'तुमचे $t(glossary.farm) तुमची वाट पाहत आहे!',
+      body: 'सेटअप पूर्ण करण्यासाठी टॅप करा.',
+    },
+    cta: {
+      letsGo: 'चला सुरू करूया',
+      done: 'पूर्ण',
+      skip: 'वगळा',
+      skipTour: 'टूर वगळा',
+    },
+    settings: {
+      replay: 'गाइडेड टूर पुन्हा चालवा',
+    },
+  },
 } as const;
 
 export type MrTranslations = typeof mr;

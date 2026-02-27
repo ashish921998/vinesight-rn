@@ -40,6 +40,10 @@ import { PendingLogs, type PendingLog } from '@/components/screens/entry-form/Pe
 import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
 import { LogForm } from '@/components/screens/entry-form/LogForm';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
+import { guidedTourEmit } from '@/features/guided-tour';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { GuidedTourController } from '@/features/guided-tour/controller';
 
 import {
   IrrigationForm as _IrrigationForm,
@@ -1054,6 +1058,10 @@ export function EntryForm({
                 created_from: createdFrom,
                 farm_id: submission.farmId,
               });
+              guidedTourEmit('guidedTour.logCreated', {
+                farmId: submission.farmId,
+                recordType: submission.logType,
+              });
               telemetry.capture('meaningful_action', {
                 action_type: 'record_created',
                 feature_name: submission.logType,
@@ -1220,6 +1228,12 @@ export function EntryForm({
                 created_from: createdFrom,
                 farm_id: farmId,
               });
+              if (typeof farmId === 'number') {
+                guidedTourEmit('guidedTour.logCreated', {
+                  farmId,
+                  recordType: log.type,
+                });
+              }
               if (entrySource === 'voice_ai') {
                 telemetry.capture('voice_log_submitted', {
                   farm_id: farmId,
@@ -2034,28 +2048,38 @@ export function EntryForm({
         </View>
       </View>
 
-      <LogTypeSelector
-        selectedLogType={selectedLogType}
-        onSelect={(type) => {
-          setSelectedLogType(type);
-          setShowLogFormModal(true);
-        }}
-      />
-      {selectedLogType === null && (
-        <View
-          style={{
-            backgroundColor: colors.surface[100],
-            borderRadius: 16,
-            padding: 16,
-            marginBottom: 16,
-            borderWidth: 1,
-            borderColor: colors.surface[100],
+      {selectedLogType === null ? (
+        <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
+          <LogTypeSelector
+            selectedLogType={selectedLogType}
+            onSelect={(type) => {
+              setSelectedLogType(type);
+              setShowLogFormModal(true);
+            }}
+          />
+          <View
+            style={{
+              backgroundColor: colors.surface[100],
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: colors.surface[100],
+            }}
+          >
+            <Text selectable style={{ fontSize: 14, color: m3.colorScheme.onSurfaceVariant }}>
+              {t('entryForm.selectActivityTypeHint')}
+            </Text>
+          </View>
+        </GuidedTourTarget>
+      ) : (
+        <LogTypeSelector
+          selectedLogType={selectedLogType}
+          onSelect={(type) => {
+            setSelectedLogType(type);
+            setShowLogFormModal(true);
           }}
-        >
-          <Text selectable style={{ fontSize: 14, color: m3.colorScheme.onSurfaceVariant }}>
-            {t('entryForm.selectActivityTypeHint')}
-          </Text>
-        </View>
+        />
       )}
       <PendingLogs pendingLogs={pendingLogs} onRemove={removeLogFromSession} />
     </>
@@ -2734,6 +2758,15 @@ export function EntryForm({
     </>
   );
 
+  useEffect(() => {
+    if (presentation !== 'screen' || activeTab !== 'log') return;
+    guidedTourEmit('guidedTour.addLogSelectionState', {
+      hasSelection: selectedLogType !== null,
+      hasPendingDrafts: pendingLogs.length > 0,
+      ...(selectedLogType ? { recordType: selectedLogType } : {}),
+    });
+  }, [activeTab, pendingLogs.length, presentation, selectedLogType]);
+
   const content = (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <KeyboardAvoidingView
@@ -3143,54 +3176,56 @@ export function EntryForm({
                   {t('common.cancel')}
                 </Text>
               </Pressable>
-              <Pressable
-                onPress={saveAllLogs}
-                disabled={!canSaveLogs}
-                style={[
-                  {
-                    flex: 1,
-                    paddingVertical: 14,
-                    borderRadius: 12,
-                    alignItems: 'center',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                  },
-                  {
-                    backgroundColor: canSaveLogs
-                      ? m3.colorScheme.primary
-                      : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                  },
-                ]}
-              >
-                {isSubmittingLogs ? (
-                  <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
-                ) : (
-                  <>
-                    <AppIcon
-                      name="save"
-                      size={18}
-                      color={
-                        canSaveLogs
-                          ? m3.colorScheme.onPrimary
-                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-                      }
-                    />
-                    <Text
-                      selectable
-                      style={[
-                        { marginLeft: 8, fontWeight: '600', flexShrink: 1 },
-                        {
-                          color: canSaveLogs
+              <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE} style={{ flex: 1 }}>
+                <Pressable
+                  onPress={saveAllLogs}
+                  disabled={!canSaveLogs}
+                  style={[
+                    {
+                      flex: 1,
+                      paddingVertical: 14,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                    },
+                    {
+                      backgroundColor: canSaveLogs
+                        ? m3.colorScheme.primary
+                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                    },
+                  ]}
+                >
+                  {isSubmittingLogs ? (
+                    <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                  ) : (
+                    <>
+                      <AppIcon
+                        name="save"
+                        size={18}
+                        color={
+                          canSaveLogs
                             ? m3.colorScheme.onPrimary
-                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-                        },
-                      ]}
-                    >
-                      {t('common.save')}
-                    </Text>
-                  </>
-                )}
-              </Pressable>
+                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+                        }
+                      />
+                      <Text
+                        selectable
+                        style={[
+                          { marginLeft: 8, fontWeight: '600', flexShrink: 1 },
+                          {
+                            color: canSaveLogs
+                              ? m3.colorScheme.onPrimary
+                              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                          },
+                        ]}
+                      >
+                        {t('common.save')}
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+              </GuidedTourTarget>
             </View>
           ) : (
             <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -3265,6 +3300,7 @@ export function EntryForm({
           )}
         </View>
       </KeyboardAvoidingView>
+      {presentation === 'screen' ? <GuidedTourController /> : null}
     </View>
   );
 

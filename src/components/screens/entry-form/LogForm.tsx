@@ -19,6 +19,8 @@ import type { TextInputProps } from 'react-native';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { View, Pressable, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ChemicalMix } from '@/types/phi';
@@ -106,50 +108,52 @@ export function LogForm({
         />
       )}
 
-      <Pressable
-        onPress={onAdd}
-        disabled={!isValid || !hasFarm}
-        style={[
-          {
-            marginTop: 16,
-            paddingVertical: 12,
-            borderRadius: 12,
-            alignItems: 'center',
-            flexDirection: 'row',
-            justifyContent: 'center',
-          },
-          {
-            backgroundColor:
-              isValid && hasFarm
-                ? m3.colorScheme.primary
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-          },
-        ]}
-      >
-        <AppIcon
-          name="add-circle"
-          size={20}
-          color={
-            isValid && hasFarm
-              ? m3.colorScheme.onPrimary
-              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-          }
-        />
-        <Text
-          selectable
+      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY}>
+        <Pressable
+          onPress={onAdd}
+          disabled={!isValid || !hasFarm}
           style={[
-            { marginLeft: 8, fontWeight: '600' },
             {
-              color:
+              marginTop: 16,
+              paddingVertical: 12,
+              borderRadius: 12,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+            },
+            {
+              backgroundColor:
                 isValid && hasFarm
-                  ? m3.colorScheme.onPrimary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                  ? m3.colorScheme.primary
+                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
             },
           ]}
         >
-          {t('entryForm.addEntry')}
-        </Text>
-      </Pressable>
+          <AppIcon
+            name="add-circle"
+            size={20}
+            color={
+              isValid && hasFarm
+                ? m3.colorScheme.onPrimary
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+            }
+          />
+          <Text
+            selectable
+            style={[
+              { marginLeft: 8, fontWeight: '600' },
+              {
+                color:
+                  isValid && hasFarm
+                    ? m3.colorScheme.onPrimary
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+              },
+            ]}
+          >
+            {t('entryForm.addEntry')}
+          </Text>
+        </Pressable>
+      </GuidedTourTarget>
     </View>
   );
 }

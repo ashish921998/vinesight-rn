@@ -131,7 +131,11 @@ export default function PhoneLoginScreen() {
   };
 
   const handleBack = () => {
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(auth)/login');
   };
 
   const filteredCountries = useMemo(() => {
