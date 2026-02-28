@@ -121,13 +121,25 @@ alter table public.user_push_devices
   drop constraint if exists user_push_devices_expo_push_token_key;
 
 do $$
+declare
+  v_existing_def text;
+  v_expected_def constant text := 'UNIQUE (user_id, expo_push_token)';
 begin
-  if not exists (
-    select 1
-    from pg_constraint
-    where conname = 'user_push_devices_user_token_key'
-      and conrelid = 'public.user_push_devices'::regclass
-  ) then
+  select pg_get_constraintdef(con.oid)
+    into v_existing_def
+  from pg_constraint con
+  where con.conname = 'user_push_devices_user_token_key'
+    and con.conrelid = 'public.user_push_devices'::regclass
+    and con.contype = 'u';
+
+  if v_existing_def is null then
+    alter table public.user_push_devices
+      add constraint user_push_devices_user_token_key
+      unique (user_id, expo_push_token);
+  elsif lower(regexp_replace(v_existing_def, '\s+', ' ', 'g')) <>
+        lower(regexp_replace(v_expected_def, '\s+', ' ', 'g')) then
+    alter table public.user_push_devices
+      drop constraint user_push_devices_user_token_key;
     alter table public.user_push_devices
       add constraint user_push_devices_user_token_key
       unique (user_id, expo_push_token);

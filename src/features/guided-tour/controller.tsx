@@ -47,6 +47,11 @@ function isAddLogFlowRoute(pathname: string | null, segments: string[]): boolean
   return (segments[0] === 'log-entry' && segments[1] === 'add') || segments[0] === 'add-entry';
 }
 
+interface QueuedLogPayload {
+  farmId: number;
+  recordType: string;
+}
+
 export function GuidedTourController() {
   const pathname = usePathname();
   const segments = useSegments();
@@ -104,7 +109,7 @@ export function GuidedTourController() {
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shownRef = useRef<Set<string>>(new Set());
   const queuedFarmCreatedRef = useRef<number | null>(null);
-  const queuedLogCreatedRef = useRef<{ farmId: number; recordType: string } | null>(null);
+  const queuedLogCreatedRef = useRef<QueuedLogPayload | null>(null);
   const hydrationSyncedRef = useRef(false);
   const mountedRef = useRef(false);
   const addLogRetryCountRef = useRef(0);
@@ -142,6 +147,12 @@ export function GuidedTourController() {
   }, [currentStep, eligible, hasSeenWelcomeThisSession, isSuspended, segments, status]);
 
   useEffect(() => {
+    if (isAuthenticated && userId) {
+      hydrationSyncedRef.current = false;
+    }
+  }, [isAuthenticated, userId]);
+
+  useEffect(() => {
     if (!isAuthenticated || !hasHydrated || hydrationSyncedRef.current) return;
     hydrationSyncedRef.current = true;
     fetchGuidedTourServerState()
@@ -152,12 +163,6 @@ export function GuidedTourController() {
         if (__DEV__) console.warn('[guided-tour] fetch sync failed', error);
       });
   }, [applyServerState, hasHydrated, isAuthenticated, userId]);
-
-  useEffect(() => {
-    if (isAuthenticated && userId) {
-      hydrationSyncedRef.current = false;
-    }
-  }, [isAuthenticated, userId]);
 
   useEffect(() => {
     if (!isAuthenticated || !hasHydrated || !isSupportedLocale) return;
@@ -664,35 +669,37 @@ export function GuidedTourController() {
 
   if (overlayMode === 'none') return null;
 
+  const resetLocalTourState = ({
+    clearOverlay = false,
+  }: {
+    clearOverlay?: boolean;
+  } = {}) => {
+    queuedFarmCreatedRef.current = null;
+    queuedLogCreatedRef.current = null;
+    addLogRetryCountRef.current = 0;
+    setHasChosenActivityType(false);
+    setHasPendingLogDrafts(false);
+    setSelectedActivityType(null);
+    setIsAddFarmNameFilled(false);
+    setIsAddFarmRegionFilled(false);
+    setIsAddFarmAreaFilled(false);
+    setAddFarmPhase('cta');
+    if (clearOverlay) {
+      setRect(null);
+      setActiveCoachStep(null);
+    }
+  };
+
   const handleSkip = () => {
     const step = overlayMode === 'welcome' ? 'welcome' : currentStep;
     telemetry.capture('tour_skipped', { skippedAtStep: step });
     skipTour(step);
-    queuedFarmCreatedRef.current = null;
-    queuedLogCreatedRef.current = null;
-    addLogRetryCountRef.current = 0;
-    setRect(null);
-    setActiveCoachStep(null);
-    setHasChosenActivityType(false);
-    setHasPendingLogDrafts(false);
-    setSelectedActivityType(null);
-    setIsAddFarmNameFilled(false);
-    setIsAddFarmRegionFilled(false);
-    setIsAddFarmAreaFilled(false);
-    setAddFarmPhase('cta');
+    resetLocalTourState({ clearOverlay: true });
   };
 
   const handleStart = () => {
     telemetry.capture('tour_started');
-    queuedFarmCreatedRef.current = null;
-    queuedLogCreatedRef.current = null;
-    setHasChosenActivityType(false);
-    setHasPendingLogDrafts(false);
-    setSelectedActivityType(null);
-    setIsAddFarmNameFilled(false);
-    setIsAddFarmRegionFilled(false);
-    setIsAddFarmAreaFilled(false);
-    setAddFarmPhase('cta');
+    resetLocalTourState();
     startTour();
     showStep('add_farm');
     router.push('/explore');
@@ -700,18 +707,8 @@ export function GuidedTourController() {
 
   const handleDone = () => {
     telemetry.capture('tour_complete');
-    queuedFarmCreatedRef.current = null;
-    queuedLogCreatedRef.current = null;
-    setHasChosenActivityType(false);
-    setHasPendingLogDrafts(false);
-    setSelectedActivityType(null);
-    setIsAddFarmNameFilled(false);
-    setIsAddFarmRegionFilled(false);
-    setIsAddFarmAreaFilled(false);
-    setAddFarmPhase('cta');
+    resetLocalTourState({ clearOverlay: true });
     completeTour();
-    setRect(null);
-    setActiveCoachStep(null);
   };
 
   const isAddFarmFormCoach = activeCoachStep === 'add_farm' && isAddFarmFlowRoute(pathname);

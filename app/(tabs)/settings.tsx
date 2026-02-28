@@ -269,13 +269,19 @@ export default function SettingsScreen() {
   }, [profile, user, currency]);
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'User';
-  const displayEmail = profile?.email || user?.email || '';
-  const deleteEmail = user?.email || '';
+  const userEmail = profile?.email || user?.email || '';
   const linkedAuthPhone = user?.phone || null;
   const deleteVerificationPhone = linkedAuthPhone?.trim() ?? '';
-  const isEmailOtpEnforced = Boolean(deleteEmail.trim());
+  const isEmailOtpEnforced = Boolean(userEmail.trim());
   const requireEmailOtpForDelete = isEmailOtpEnforced;
   const canAttemptDeleteWithPhone = isValidE164PhoneNumber(deleteVerificationPhone);
+  const phoneVerificationLabel = canAttemptDeleteWithPhone
+    ? t('settings.deleteAccountModal.phoneVerificationLabel', {
+        defaultValue: 'Mobile verification (required)',
+      })
+    : t('settings.deleteAccountModal.phoneVerificationLabel', {
+        defaultValue: 'Mobile verification',
+      });
   const hasSavedPhoneToVerify = false;
   const isLinkPhoneModalVisible = showLinkPhoneModal || phoneLinkingPending;
   const isShowingPhoneCodeStep = isPhoneLinkCodeStep || phoneLinkingPending;
@@ -637,7 +643,7 @@ export default function SettingsScreen() {
     setIsSendingDeleteOtp(true);
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email: deleteEmail.trim().toLowerCase(),
+        email: userEmail.trim().toLowerCase(),
         options: { shouldCreateUser: false },
       });
 
@@ -688,7 +694,7 @@ export default function SettingsScreen() {
     setIsVerifyingDeleteOtp(true);
     try {
       const { error } = await supabase.auth.verifyOtp({
-        email: deleteEmail.trim().toLowerCase(),
+        email: userEmail.trim().toLowerCase(),
         token: deleteEmailOtp.trim(),
         type: 'email',
       });
@@ -1104,7 +1110,7 @@ export default function SettingsScreen() {
               textBreakStrategy="highQuality"
               lineBreakStrategyIOS="standard"
             >
-              {displayEmail}
+              {userEmail}
             </Text>
           </View>
           <Pressable onPress={() => setShowEditProfile(true)}>
@@ -1460,7 +1466,7 @@ export default function SettingsScreen() {
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
-                    {displayEmail}
+                    {userEmail}
                   </Text>
                 </View>
                 <Text
@@ -2215,9 +2221,7 @@ export default function SettingsScreen() {
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
-                  {t('settings.deleteAccountModal.phoneVerificationLabel', {
-                    defaultValue: 'Mobile verification (required)',
-                  })}
+                  {phoneVerificationLabel}
                 </Text>
                 <View style={styles.inputDisabled}>
                   <Text
@@ -2317,7 +2321,7 @@ export default function SettingsScreen() {
                       textBreakStrategy="highQuality"
                       lineBreakStrategyIOS="standard"
                     >
-                      {displayEmail}
+                      {userEmail}
                     </Text>
                   </View>
                   <Text

@@ -147,8 +147,7 @@ export default function FarmDetailScreen() {
 
   useEffect(() => {
     const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
-    const shouldSuspend = false;
-    setGuidedTourSuspended(shouldSuspend);
+    setGuidedTourSuspended(false);
     setGuidedTourSeasonFormVisible(isGuidedAddLog && showSeasonForm);
     return () => {
       setGuidedTourSuspended(false);
@@ -2811,7 +2810,7 @@ export default function FarmDetailScreen() {
           targetId={
             selectedTab === 'activities'
               ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY
-              : 'guided_tour:inactive_task_target'
+              : GUIDED_TOUR_TARGET_IDS.INACTIVE_TASK_TARGET
           }
           style={{
             position: 'absolute',
@@ -2876,7 +2875,7 @@ export default function FarmDetailScreen() {
             targetId={
               selectedTab === 'activities'
                 ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY
-                : 'guided_tour:inactive_task_target'
+                : GUIDED_TOUR_TARGET_IDS.INACTIVE_TASK_TARGET
             }
           >
             <Button

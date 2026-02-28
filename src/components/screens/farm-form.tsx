@@ -247,6 +247,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const sandInputRef = useRef<TextInput>(null);
   const siltInputRef = useRef<TextInput>(null);
   const clayInputRef = useRef<TextInput>(null);
+  const previousSelectedCropRef = useRef<CropType | null>(null);
 
   useEffect(() => {
     const unsubFocus = guidedTourOn('guidedTour.addFarmFocusField', ({ field }) => {
@@ -555,10 +556,27 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     ) {
       return;
     }
-    guidedTourEmit('guidedTour.addFarmCropSelected', {
-      crop: formState.selectedCrop === 'Other' ? formState.customCropName : formState.selectedCrop,
-      shouldAdvance: false,
-    });
+    const emitCropSelection = () => {
+      guidedTourEmit('guidedTour.addFarmCropSelected', {
+        crop:
+          formState.selectedCrop === 'Other' ? formState.customCropName : formState.selectedCrop,
+        shouldAdvance: false,
+      });
+    };
+
+    const selectedCropChanged = previousSelectedCropRef.current !== formState.selectedCrop;
+    previousSelectedCropRef.current = formState.selectedCrop;
+
+    if (selectedCropChanged || formState.selectedCrop !== 'Other') {
+      emitCropSelection();
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      emitCropSelection();
+    }, 300);
+
+    return () => clearTimeout(timeout);
   }, [formState.customCropName, formState.selectedCrop, mode]);
 
   const handleSelectVariety = (variety: string) => {
@@ -1765,8 +1783,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
             <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}>
-              <Pressable
-                onPress={() => {}}
+              <View
+                onStartShouldSetResponder={() => true}
                 style={{
                   backgroundColor: colors.surface[100],
                   borderTopLeftRadius: borderRadius['3xl'],
@@ -1911,7 +1929,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                     </View>
                   )}
                 </ScrollView>
-              </Pressable>
+              </View>
             </GuidedTourTarget>
           </KeyboardAvoidingView>
         </ModalBackdrop>
@@ -2149,8 +2167,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             keyboardVerticalOffset={0}
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
-            <Pressable
-              onPress={() => {}}
+            <View
+              onStartShouldSetResponder={() => true}
               style={{
                 backgroundColor: colors.surface[100],
                 borderTopLeftRadius: borderRadius['3xl'],
@@ -2245,7 +2263,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   </Pressable>
                 ))}
               </ScrollView>
-            </Pressable>
+            </View>
           </KeyboardAvoidingView>
         </ModalBackdrop>
       )}
