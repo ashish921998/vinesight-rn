@@ -385,7 +385,7 @@ export default Sentry.wrap(function RootLayout() {
         };
         if (__DEV__) {
           console.warn(
-            `[VineSight] App init timed out after ${INIT_TIMEOUT_MS}ms — ` +
+            `[Vinesight] App init timed out after ${INIT_TIMEOUT_MS}ms — ` +
               `auth loading: ${authStillLoading}, ` +
               `theme hydrated: ${!themeStillPending}, ` +
               `language hydrated: ${!langStillPending}. Forcing splash hide.`,

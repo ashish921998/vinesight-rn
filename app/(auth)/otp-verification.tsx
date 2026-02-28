@@ -132,7 +132,7 @@ export default function OTPVerificationScreen() {
       router.back();
       return;
     }
-    router.replace('/(auth)/phone-login');
+    router.replace(isPhoneOTP ? '/(auth)/phone-login' : '/(auth)/login');
   };
 
   const containerStyle: ViewStyle = {
@@ -274,9 +274,7 @@ export default function OTPVerificationScreen() {
 
       {/* Verify Button */}
       <Button
-        title={
-          isLoading ? t('authOtp.verifying', { defaultValue: 'Verifying...' }) : t('authOtp.verify')
-        }
+        title={isLoading ? t('authOtp.verifying') : t('authOtp.verify')}
         onPress={handleVerify}
         isLoading={isLoading}
         disabled={otpCode.length !== 6}

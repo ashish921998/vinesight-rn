@@ -9,9 +9,9 @@ import {
   FlatList,
   TextInput,
   Image,
-  ImageSourcePropType,
   Platform,
   StyleSheet,
+  type ImageSourcePropType,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -122,9 +122,7 @@ export default function PhoneLoginScreen() {
   const handleSendCode = async () => {
     const fullPhoneNumber = normalizedPhoneNumber;
     if (!fullPhoneNumber) {
-      setLocalPhoneError(
-        t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid phone number' }),
-      );
+      setLocalPhoneError(t('authPhone.invalidPhone'));
       return;
     }
     clearError();
@@ -437,11 +435,7 @@ export default function PhoneLoginScreen() {
 
               {/* Send Code Button */}
               <Button
-                title={
-                  isLoading
-                    ? t('authPhone.sendingCode', { defaultValue: 'Sending code...' })
-                    : t('authPhone.sendCode')
-                }
+                title={isLoading ? t('authPhone.sendingCode') : t('authPhone.sendCode')}
                 onPress={handleSendCode}
                 isLoading={isLoading}
                 disabled={!phoneNumber || !normalizedPhoneNumber}
@@ -483,23 +477,19 @@ export default function PhoneLoginScreen() {
             onPress={() =>
               router.push({
                 pathname: '/(auth)/login',
-                params: { redirect: redirectPath },
+                params: { redirect: redirectPath, mode: phoneAuthMode },
               })
             }
             style={emailLinkContainerStyle}
             disabled={isLoading}
             accessibilityRole="button"
-            accessibilityLabel={t('auth.continueWithEmail', {
-              defaultValue: 'Sign in with email',
-            })}
+            accessibilityLabel={t('auth.continueWithEmail')}
           >
             {({ pressed }) => (
               <View style={{ paddingVertical: spacing[2], paddingHorizontal: spacing[2] }}>
                 <Text style={emailLinkTextStyle}>
-                  {t('authPhone.preferEmail', { defaultValue: 'Prefer email?' })}{' '}
-                  <Text style={emailLinkHighlightStyle}>
-                    {t('authPhone.signInWithEmail', { defaultValue: 'Sign in with email' })}
-                  </Text>
+                  {t('authPhone.preferEmail')}{' '}
+                  <Text style={emailLinkHighlightStyle}>{t('authPhone.signInWithEmail')}</Text>
                 </Text>
                 <View
                   pointerEvents="none"

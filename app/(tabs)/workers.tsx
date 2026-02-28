@@ -77,8 +77,8 @@ export default function WorkersScreen() {
     router.push('/add-worker');
   };
 
-  const handleViewWorkerDetail = (_worker: Worker) => {
-    // Worker detail view not implemented yet
+  const handleViewWorkerDetail = (worker: Worker) => {
+    handleEditWorker(worker);
   };
 
   const handleOpenSettlement = () => {

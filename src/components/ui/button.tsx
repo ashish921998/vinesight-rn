@@ -126,6 +126,7 @@ export function Button({
       {...props}
       disabled={isInteractionDisabled}
       accessibilityRole={props.accessibilityRole ?? 'button'}
+      accessibilityState={{ disabled: isInteractionDisabled, busy: Boolean(isLoading) }}
       onPress={(event) => {
         try {
           telemetry.capture('ui_button_press', {

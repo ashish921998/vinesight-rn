@@ -6,9 +6,9 @@ import {
   ScrollView,
   Pressable,
   Image,
-  ImageSourcePropType,
   StyleSheet,
   Platform,
+  type ImageSourcePropType,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -33,11 +33,12 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const { redirect, mode } = useLocalSearchParams<{ redirect?: string; mode?: string }>();
   const redirectPath = useMemo(() => {
     if (typeof redirect === 'string' && redirect.startsWith('/')) return redirect;
     return '/';
   }, [redirect]);
+  const requestedMode = mode === 'signup' ? 'signup' : 'signin';
 
   const {
     isLoading,
@@ -60,6 +61,10 @@ export default function LoginScreen() {
       });
     }
   }, [pendingOTPEmail, redirectPath]);
+
+  useEffect(() => {
+    setIsSignUp(requestedMode === 'signup');
+  }, [requestedMode]);
 
   // Navigate to main app when authenticated
   useEffect(() => {

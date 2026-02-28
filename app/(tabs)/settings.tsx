@@ -326,10 +326,10 @@ export default function SettingsScreen() {
   const requireEmailOtpForDelete = isEmailOtpEnforced && !isPhoneAuthUser;
   const canAttemptDeleteWithPhone = isValidE164PhoneNumber(deleteVerificationPhone);
   const phoneVerificationLabel = canAttemptDeleteWithPhone
-    ? t('settings.deleteAccountModal.phoneVerificationLabel', {
+    ? t('settings.deleteAccountModal.phoneVerificationLabelRequired', {
         defaultValue: 'Mobile verification (required)',
       })
-    : t('settings.deleteAccountModal.phoneVerificationLabel', {
+    : t('settings.deleteAccountModal.phoneVerificationLabelOptional', {
         defaultValue: 'Mobile verification',
       });
   const hasSavedPhoneToVerify = false;

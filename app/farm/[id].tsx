@@ -154,10 +154,6 @@ export default function FarmDetailScreen() {
     const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
     setGuidedTourSuspended(false);
     setGuidedTourSeasonFormVisible(isGuidedAddLog && showSeasonForm);
-    return () => {
-      setGuidedTourSuspended(false);
-      setGuidedTourSeasonFormVisible(false);
-    };
   }, [
     guidedTourStatus,
     guidedTourStep,
@@ -165,6 +161,13 @@ export default function FarmDetailScreen() {
     setGuidedTourSuspended,
     showSeasonForm,
   ]);
+
+  useEffect(() => {
+    return () => {
+      setGuidedTourSuspended(false);
+      setGuidedTourSeasonFormVisible(false);
+    };
+  }, [setGuidedTourSeasonFormVisible, setGuidedTourSuspended]);
 
   const [selectedLogTypes, setSelectedLogTypes] = useState<LogTypeId[]>([]);
   const [showSeasonSuccessOverlay, setShowSeasonSuccessOverlay] = useState(false);
@@ -763,6 +766,7 @@ export default function FarmDetailScreen() {
     if (!farm?.id) return;
     if (!activeSeasonRecord) {
       if (guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log') {
+        if (isSeasonsLoading) return;
         openStartSeasonForm();
         return;
       }
@@ -986,9 +990,17 @@ export default function FarmDetailScreen() {
                 router.replace('/(tabs)/farms');
               },
               onError: (error: Error) => {
+                const normalized = `${error.name ?? ''} ${error.message ?? ''}`.toLowerCase();
+                const errorCategory = normalized.includes('not found')
+                  ? 'NOT_FOUND'
+                  : normalized.includes('invalid') || normalized.includes('validation')
+                    ? 'VALIDATION'
+                    : normalized.includes('network') || normalized.includes('timeout')
+                      ? 'NETWORK'
+                      : 'SERVER_ERROR';
                 telemetry.capture('farm_delete_failed', {
                   farm_id: farmId,
-                  message: error.message || t('farmDetails.errors.deleteFarmFailed'),
+                  error_category: errorCategory,
                 });
                 Alert.alert(
                   t('common.error'),

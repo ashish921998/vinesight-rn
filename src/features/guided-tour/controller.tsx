@@ -38,6 +38,8 @@ function parseFarmRouteId(pathname: string | null): number | null {
   return match ? Number.parseInt(match[1] ?? '', 10) : null;
 }
 
+const MAX_SEASON_START_RETRIES = 20;
+
 function isAddFarmFlowRoute(pathname: string | null): boolean {
   return pathname === '/farm/add';
 }
@@ -567,6 +569,8 @@ export function GuidedTourController() {
                 ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY
                 : GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY;
     let cancelled = false;
+    let seasonStartRetryCount = 0;
+    let seasonStartRetryTimer: ReturnType<typeof setTimeout> | null = null;
     const startedAt = Date.now();
 
     const showEventKey = `step-shown-${pathname}-${step}-${targetId}`;
@@ -599,8 +603,10 @@ export function GuidedTourController() {
           showStep(step);
           shownRef.current.add(showEventKey);
         }
-        if (isSeasonStartPhase) {
-          setTimeout(() => {
+        if (isSeasonStartPhase && seasonStartRetryCount < MAX_SEASON_START_RETRIES) {
+          seasonStartRetryCount += 1;
+          seasonStartRetryTimer = setTimeout(() => {
+            if (cancelled) return;
             void attempt();
           }, GUIDED_TOUR_TARGET_RETRY_MS);
         }
@@ -669,6 +675,9 @@ export function GuidedTourController() {
 
     return () => {
       cancelled = true;
+      if (seasonStartRetryTimer) {
+        clearTimeout(seasonStartRetryTimer);
+      }
     };
   }, [
     activeFarmId,

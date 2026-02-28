@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -14,6 +15,27 @@ interface ThemeActions {
   toggle: () => void;
   _setHasHydrated: (value: boolean) => void;
 }
+
+const THEME_STORAGE_KEY = 'vinesight-theme';
+
+const themeStorage = {
+  getItem: async (key: string) => {
+    const fromAsync = await AsyncStorage.getItem(key);
+    if (fromAsync !== null) return fromAsync;
+
+    // One-time migration: if preference exists in legacy SecureStore, move it to AsyncStorage.
+    const fromSecure = await SecureStore.getItemAsync(key);
+    if (fromSecure !== null) {
+      await AsyncStorage.setItem(key, fromSecure);
+      await SecureStore.deleteItemAsync(key);
+      return fromSecure;
+    }
+
+    return null;
+  },
+  setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
+  removeItem: (key: string) => AsyncStorage.removeItem(key),
+};
 
 export const useThemeStore = create<ThemeState & ThemeActions>()(
   persist(
@@ -30,8 +52,8 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
       _setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
-      name: 'vinesight-theme',
-      storage: createJSONStorage(() => AsyncStorage),
+      name: THEME_STORAGE_KEY,
+      storage: createJSONStorage(() => themeStorage),
       onRehydrateStorage: () => () => {
         useThemeStore.setState({ hasHydrated: true });
       },
