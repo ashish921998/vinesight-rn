@@ -27,6 +27,12 @@ export const useLanguageStore = create<LanguageState & LanguageActions>()(
     }),
     {
       name: 'vinesight-language',
+      version: 1,
+      migrate: (persistedState: unknown) => {
+        const state = persistedState as (LanguageState & LanguageActions) | null;
+        if (!state) return persistedState;
+        return state;
+      },
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => () => {
         useLanguageStore.setState({ hasHydrated: true });

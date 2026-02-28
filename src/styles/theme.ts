@@ -174,6 +174,18 @@ export const borderRadius = {
   full: 9999,
 } as const;
 
+export const size = {
+  0: 0,
+  xs: 64,
+  sm: 72,
+  md: 80,
+  lg: 88,
+  xl: 96,
+  '2xl': 104,
+  '3xl': 112,
+  '4xl': 128,
+} as const;
+
 export const fontSize = {
   xs: 12,
   sm: 14,

@@ -20,7 +20,7 @@ import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { spacing, borderRadius, fontSize, fontWeight, size } from '@/styles/theme';
 import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { buildE164PhoneNumber } from '@/utils/phone';
@@ -168,8 +168,8 @@ export default function PhoneLoginScreen() {
   };
 
   const logoBoxStyle: ViewStyle = {
-    width: 112,
-    height: 112,
+    width: size['3xl'],
+    height: size['3xl'],
     borderRadius: borderRadius['3xl'],
     alignItems: 'center',
     justifyContent: 'center',
@@ -375,7 +375,7 @@ export default function PhoneLoginScreen() {
             <View style={logoBoxStyle}>
               <Image
                 source={appLogo as ImageSourcePropType}
-                style={{ width: 88, height: 88 }}
+                style={{ width: size.lg, height: size.lg }}
                 resizeMode="contain"
               />
             </View>

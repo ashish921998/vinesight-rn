@@ -269,8 +269,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       } = await supabase.auth.getSession();
 
       clearTimeout(safetyTimeout);
-      if (settled) return; // timeout already handled
-      settled = true;
+      if (!settled) {
+        settled = true;
+      }
 
       if (error) throw error;
 
@@ -295,10 +296,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       }
     } catch (error) {
       clearTimeout(safetyTimeout);
-      if (settled) return;
-      settled = true;
-      console.error('Auth initialization error:', error);
-      set({ isLoading: false });
+      if (!settled) {
+        settled = true;
+        console.error('Auth initialization error:', error);
+        set({ isLoading: false });
+      }
     }
   },
 

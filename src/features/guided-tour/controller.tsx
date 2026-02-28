@@ -610,12 +610,6 @@ export function GuidedTourController() {
             route: pathname,
             reason: 'max_retries_exceeded',
           });
-          // Keep polling at a slower cadence to recover when dynamic UI mounts later
-          // (e.g. tab switches, delayed sheet content, route transition timing).
-          addLogRetryCountRef.current = 0;
-          setTimeout(() => {
-            void attempt();
-          }, GUIDED_TOUR_TARGET_RETRY_MS * 2);
         }
         return;
       }

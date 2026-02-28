@@ -144,6 +144,7 @@ export default Sentry.wrap(function RootLayout() {
 
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
   const setGuidedTourLastActiveAt = useGuidedTourStore((s) => s.setLastActiveAt);
+  const guidedTourHydrated = useGuidedTourStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
 
@@ -322,8 +323,9 @@ export default Sentry.wrap(function RootLayout() {
   }, [language, languageHydrated, notificationsHydrated]);
 
   useEffect(() => {
+    if (!guidedTourHydrated) return;
     setGuidedTourLastActiveAt();
-  }, [setGuidedTourLastActiveAt]);
+  }, [guidedTourHydrated, setGuidedTourLastActiveAt]);
 
   useEffect(() => {
     let cleanup: null | (() => void) = null;
