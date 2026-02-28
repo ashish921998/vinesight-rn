@@ -403,6 +403,7 @@ export default function SettingsScreen() {
         active_farm_id: null,
         locale: language === 'hi' || language === 'mr' ? language : 'en',
         tour_version: 1,
+        clear_nullable_fields: true,
       }).catch((error) => {
         if (__DEV__) {
           console.warn('[guided-tour] server reset sync failed (will retry automatically):', error);
@@ -958,18 +959,7 @@ export default function SettingsScreen() {
   };
 
   const handleConfirmDeleteAccount = async () => {
-    if (!canAttemptDeleteWithPhone) {
-      Alert.alert(
-        t('common.error'),
-        t('settings.deleteAccountModal.errors.phoneNotLinked', {
-          defaultValue:
-            'A verified phone number is required. Link your phone in Settings before deleting your account.',
-        }),
-      );
-      return;
-    }
-
-    if (!deletePhoneVerified) {
+    if (canAttemptDeleteWithPhone && !deletePhoneVerified) {
       Alert.alert(
         t('common.error'),
         t('settings.deleteAccountModal.errors.phoneOtpRequired', {
@@ -1069,7 +1059,7 @@ export default function SettingsScreen() {
 
   const canSubmitDeleteAccount =
     deleteConfirmed &&
-    deletePhoneVerified &&
+    (canAttemptDeleteWithPhone ? deletePhoneVerified : true) &&
     (!requireEmailOtpForDelete || deleteEmailVerified) &&
     !isDeleting &&
     !isSendingDeleteOtp &&

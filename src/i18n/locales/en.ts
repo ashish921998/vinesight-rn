@@ -2465,9 +2465,18 @@ export const en = {
     },
     step1: {
       coach: 'Tap here to add your first $t(glossary.farm).',
+      formNameCoach: 'Enter your farm name first.',
+      formRegionCoach: 'Add your farm location (region).',
+      formAreaCoach: 'Now enter your farm area in acres.',
+      formVarietyPickCoach: 'Pick one variety from the list.',
+      formVarietyCoach: 'Select your crop variety.',
+      formCustomVarietyCoach: 'Type your custom variety name.',
+      formCropCoach: 'Now choose your crop type.',
+      formSubmitCoach: 'Great. Tap Create farm to continue.',
     },
     step2: {
       coach: 'Great! Now log your first observation.',
+      addEntryCoach: 'Fill the {{activity}} details, then tap Add entry.',
       startSeasonCoach: 'First, start your season so Vinesight can organize your records.',
       startSeasonHelper: 'Edit template or dates if needed, then tap Start season.',
       pickActivityCoach:

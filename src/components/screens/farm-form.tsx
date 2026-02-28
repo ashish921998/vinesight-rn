@@ -159,9 +159,9 @@ const ensureValidDate = (value: Date | undefined | null): Date => {
 
 const sanitizeDecimalInput = (value: string): string => {
   const digitsAndDotOnly = value.replace(/[^0-9.]/g, '');
-  const [whole = '', ...fractionParts] = digitsAndDotOnly.split('.');
-  if (fractionParts.length === 0) return whole;
-  return `${whole}.${fractionParts.join('')}`;
+  const parts = digitsAndDotOnly.split('.');
+  if (parts.length <= 1) return parts[0] || '';
+  return `${parts[0]}.${parts.slice(1).join('')}`;
 };
 
 const getErrorMessage = (error: unknown, fallback: string): string => {

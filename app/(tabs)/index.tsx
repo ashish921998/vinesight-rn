@@ -92,7 +92,7 @@ export default function DashboardScreen() {
       setSelectedQuickAction(actionType);
       setShowFarmPicker(true);
     } else {
-      router.push('/(tabs)/farms');
+      router.push('/(tabs)/explore');
     }
   };
 
@@ -188,7 +188,7 @@ export default function DashboardScreen() {
                   icon="leaf"
                   color={m3.colorScheme.primary}
                   isLoading={isLoadingStats}
-                  onPress={() => router.navigate('/(tabs)/farms')}
+                  onPress={() => router.navigate('/(tabs)/explore')}
                 />
               </View>
               <View style={{ flex: 1, paddingLeft: spacing[2] }}>
@@ -441,7 +441,7 @@ export default function DashboardScreen() {
                         ? t('dashboard.cta.addEntry')
                         : t('dashboard.cta.addFirstFarm')
                     }
-                    onPress={() => router.push('/(tabs)/farms')}
+                    onPress={() => router.push('/(tabs)/explore')}
                   />
                 </View>
               </View>

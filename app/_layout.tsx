@@ -327,6 +327,7 @@ export default Sentry.wrap(function RootLayout() {
 
   useEffect(() => {
     let cleanup: null | (() => void) = null;
+    let disposed = false;
 
     const setup = async () => {
       try {
@@ -341,6 +342,10 @@ export default Sentry.wrap(function RootLayout() {
             guidedTourEmit('guidedTour.notificationOpened', { sequence });
           }
         });
+        if (disposed) {
+          sub.remove();
+          return;
+        }
         cleanup = () => sub.remove();
       } catch {
         cleanup = null;
@@ -349,6 +354,7 @@ export default Sentry.wrap(function RootLayout() {
 
     void setup();
     return () => {
+      disposed = true;
       cleanup?.();
     };
   }, []);

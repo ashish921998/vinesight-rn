@@ -47,6 +47,7 @@ export interface GuidedTourPatchPayload {
   active_farm_id?: number | null;
   locale?: 'en' | 'hi' | 'mr';
   tour_version?: number;
+  clear_nullable_fields?: boolean;
 }
 
 export interface GuidedTourStepMeta {

@@ -41,6 +41,7 @@ export async function upsertGuidedTourServerState(patch: GuidedTourPatchPayload)
     p_active_farm_id: patch.active_farm_id ?? null,
     p_locale: patch.locale ?? null,
     p_tour_version: patch.tour_version ?? null,
+    p_clear_nullable_fields: patch.clear_nullable_fields ?? false,
   });
   if (error) throw error;
 }

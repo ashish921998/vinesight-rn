@@ -107,6 +107,7 @@ export function GuidedTourController() {
   const hydrationSyncedRef = useRef(false);
   const mountedRef = useRef(false);
   const addLogRetryCountRef = useRef(0);
+  const previousShowEventKeyRef = useRef<string | null>(null);
 
   const guidedTourEnabled =
     (process.env.EXPO_PUBLIC_GUIDED_TOUR_ENABLED ?? 'false').toLowerCase() === 'true';
@@ -199,7 +200,10 @@ export function GuidedTourController() {
   }, [eligible, resumeIfEligible, setLastActiveAt]);
 
   useEffect(() => {
-    mountedRef.current = true;
+    mountedRef.current = false;
+    requestAnimationFrame(() => {
+      mountedRef.current = true;
+    });
     return () => {
       mountedRef.current = false;
       queuedFarmCreatedRef.current = null;
@@ -522,6 +526,12 @@ export function GuidedTourController() {
     const showEventKey = `step-shown-${step}-${targetId}`;
     const attempt = async () => {
       if (cancelled) return;
+
+      if (step === 'add_log' && previousShowEventKeyRef.current !== showEventKey) {
+        addLogRetryCountRef.current = 0;
+      }
+      previousShowEventKeyRef.current = showEventKey;
+
       const measured = await measureGuidedTourTarget(targetId);
       if (cancelled) return;
       if (measured) {

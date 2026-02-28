@@ -2478,9 +2478,18 @@ export const mr = {
     },
     step1: {
       coach: 'तुमचे पहिले $t(glossary.farm) जोडण्यासाठी येथे टॅप करा.',
+      formNameCoach: 'प्रथम तुमच्या फार्मचे नाव नोंदवा.',
+      formRegionCoach: 'तुमचे फार्म स्थान (प्रदेश) जोडा.',
+      formAreaCoach: 'आता तुमचे फार्म क्षेत्र एकरमध्ये नोंदवा.',
+      formVarietyPickCoach: 'यादीतून एक विविधता निवडा.',
+      formVarietyCoach: 'तुमची पिकाची विविधता निवडा.',
+      formCustomVarietyCoach: 'तुमची सानुकूल विविधतेचे नाव लिहा.',
+      formCropCoach: 'आता तुमचे पिक प्रकार निवडा.',
+      formSubmitCoach: 'छान. सुरू ठेवण्यासाठी फार्म तयार करा टॅप करा.',
     },
     step2: {
       coach: 'छान! आता तुमची पहिली नोंद करा.',
+      addEntryCoach: '{{activity}} तपशील भरा, मग एंट्री जोडा टॅप करा.',
       startSeasonCoach: 'आधी सीझन सुरू करा, म्हणजे Vinesight तुमच्या नोंदी व्यवस्थित ठेवू शकेल.',
       startSeasonHelper: 'गरज असेल तर टेम्पलेट/तारखा बदला, मग Start season वर टॅप करा.',
       pickActivityCoach:

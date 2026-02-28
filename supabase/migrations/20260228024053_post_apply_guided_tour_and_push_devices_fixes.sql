@@ -1,3 +1,49 @@
+-- Post-apply fixes for migrations that were already executed in some environments.
+-- This migration applies only the incremental delta.
+
+-- ---------------------------------------------------------------------------
+-- user_push_devices: updated_at trigger, composite index, delete policy
+-- ---------------------------------------------------------------------------
+create or replace function public.set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_user_push_devices_updated_at on public.user_push_devices;
+create trigger trg_user_push_devices_updated_at
+  before update on public.user_push_devices
+  for each row
+  execute function public.set_updated_at();
+
+drop index if exists public.idx_user_push_devices_enabled;
+create index if not exists idx_user_push_devices_enabled
+  on public.user_push_devices (user_id, notifications_enabled);
+
+drop policy if exists "push devices delete own" on public.user_push_devices;
+create policy "push devices delete own"
+  on public.user_push_devices for delete
+  using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------------------------
+-- guided_tour RPC: add p_clear_nullable_fields and nullable-field clear behavior
+-- ---------------------------------------------------------------------------
+drop function if exists public.upsert_user_guided_tour_state(
+  text,
+  text,
+  text,
+  integer,
+  timestamptz,
+  timestamptz,
+  timestamptz,
+  timestamptz,
+  bigint,
+  text,
+  integer
+);
+
 create or replace function public.upsert_user_guided_tour_state(
   p_tour_status text default null,
   p_current_step text default null,
@@ -89,4 +135,17 @@ begin
 end;
 $$;
 
-grant execute on function public.upsert_user_guided_tour_state(text,text,text,integer,timestamptz,timestamptz,timestamptz,timestamptz,bigint,text,integer,boolean) to authenticated;
+grant execute on function public.upsert_user_guided_tour_state(
+  text,
+  text,
+  text,
+  integer,
+  timestamptz,
+  timestamptz,
+  timestamptz,
+  timestamptz,
+  bigint,
+  text,
+  integer,
+  boolean
+) to authenticated;

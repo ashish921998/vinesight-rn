@@ -13,8 +13,21 @@ create table if not exists public.user_push_devices (
   unique (expo_push_token)
 );
 
+create or replace function public.set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger trg_user_push_devices_updated_at
+  before update on public.user_push_devices
+  for each row
+  execute function public.set_updated_at();
+
 create index if not exists idx_user_push_devices_user on public.user_push_devices (user_id);
-create index if not exists idx_user_push_devices_enabled on public.user_push_devices (notifications_enabled);
+create index if not exists idx_user_push_devices_enabled on public.user_push_devices (user_id, notifications_enabled);
 
 alter table public.user_push_devices enable row level security;
 
@@ -33,3 +46,8 @@ create policy "push devices update own"
   on public.user_push_devices for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+drop policy if exists "push devices delete own" on public.user_push_devices;
+create policy "push devices delete own"
+  on public.user_push_devices for delete
+  using (auth.uid() = user_id);
