@@ -60,6 +60,7 @@ import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from 
 import { getSeasonTemplatesForCrop } from '@/constants/season-templates';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
+import { telemetry } from '@/services/telemetry';
 import {
   GUIDED_TOUR_TARGET_IDS,
   GuidedTourTarget,
@@ -974,11 +975,21 @@ export default function FarmDetailScreen() {
           text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
+            telemetry.capture('farm_delete_confirmed', {
+              farm_id: farmId,
+            });
             deleteFarmMutation.mutate(farmId, {
               onSuccess: () => {
+                telemetry.capture('farm_deleted', {
+                  farm_id: farmId,
+                });
                 router.replace('/(tabs)/farms');
               },
               onError: (error: Error) => {
+                telemetry.capture('farm_delete_failed', {
+                  farm_id: farmId,
+                  message: error.message || t('farmDetails.errors.deleteFarmFailed'),
+                });
                 Alert.alert(
                   t('common.error'),
                   error.message || t('farmDetails.errors.deleteFarmFailed'),

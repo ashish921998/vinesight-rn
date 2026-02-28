@@ -252,10 +252,14 @@ export default function ProfileCompletionScreen() {
               )}
 
               <Button
-                title={t('profileCompletion.continue')}
+                title={
+                  isLoading
+                    ? t('profileCompletion.continuing', { defaultValue: 'Continuing...' })
+                    : t('profileCompletion.continue')
+                }
                 onPress={handleContinue}
                 isLoading={isLoading}
-                disabled={!firstNameValue.trim() || !lastNameValue.trim() || isLoading}
+                disabled={!firstNameValue.trim() || !lastNameValue.trim()}
                 style={{ marginTop: spacing[4] }}
               />
             </View>

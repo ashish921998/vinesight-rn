@@ -1805,6 +1805,58 @@ export const mr = {
       deleteWorkerTitle: '$t(glossary.worker) हटवा?',
       deleteWorkerBody:
         '{{name}} $t(glossary.worker) आणि त्यांच्याशी संबंधित सर्व नोंदी कायमच्या हटवल्या जातील.',
+      markInactiveTitle: 'निष्क्रिय म्हणून चिन्हांकित करायचे?',
+      markInactiveBody: 'यामुळे {{name}} सक्रिय $t(glossary.worker) यादीतून काढला जाईल.',
+      markActiveTitle: 'सक्रिय म्हणून चिन्हांकित करायचे?',
+      markActiveBody: 'यामुळे {{name}} सक्रिय $t(glossary.worker) यादीत परत जोडला जाईल.',
+    },
+    loading: '$t(glossary.worker) तपशील लोड होत आहे...',
+    notFound: {
+      title: '$t(glossary.worker) सापडले नाहीत',
+    },
+    status: {
+      active: 'सक्रिय',
+      inactive: 'निष्क्रिय',
+    },
+    fields: {
+      dailyRate: 'दैनिक दर',
+      advanceBalance: 'अग्रिम शिल्लक',
+      createdAt: 'तयार केले',
+      updatedAt: 'शेवटचे अपडेट',
+    },
+    attendance: {
+      title: 'उपस्थिती',
+      empty: 'अजून कोणतीही उपस्थिती नोंद नाही',
+      deleteConfirm: '{{date}} ची उपस्थिती हटवायची?',
+      status: {
+        full_day: 'पूर्ण दिवस',
+        half_day: 'अर्धा दिवस',
+        absent: 'अनुपस्थित',
+      },
+    },
+    transactions: {
+      title: 'व्यवहार',
+      empty: 'अजून कोणतेही व्यवहार नाहीत',
+      deleteConfirm: '{{date}} चा व्यवहार हटवायचा?',
+      type: {
+        advance_given: 'अग्रिम दिले',
+        advance_deducted: 'अग्रिम कपात',
+        payment: 'देयक',
+      },
+    },
+    settlements: {
+      title: 'निपटारे',
+      empty: 'अजून कोणतेही निपटारे नाहीत',
+      deleteConfirm: 'हा निपटारा हटवायचा?',
+      status: {
+        draft: 'मसुदा',
+        confirmed: 'पुष्टी',
+      },
+      days: 'दिवस',
+      gross: 'एकूण',
+      advance: 'अग्रिम',
+      net: 'शुद्ध देयक',
+      confirmedAt: 'पुष्टी तारीख',
     },
     form: {
       addTitle: '$t(glossary.worker) जोडा',

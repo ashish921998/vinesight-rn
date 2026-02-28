@@ -85,20 +85,28 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: colors.primary[500],
+          backgroundColor: colors.surface[50],
         }}
       >
         <Animated.View style={[logoContainerStyle, { alignItems: 'center' }]}>
           <Animated.View
             style={[
               logoStyle,
-              { marginBottom: spacing[8], alignItems: 'center', justifyContent: 'center' },
+              {
+                marginBottom: spacing[8],
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.surface[200],
+                borderRadius: 24,
+                width: 128,
+                height: 128,
+              },
             ]}
           >
             <Image
               // eslint-disable-next-line @typescript-eslint/no-require-imports
-              source={require('../../assets/splash-icon.png')}
-              style={{ width: 128, height: 128 }}
+              source={require('../../assets/icons/ios-light.png')}
+              style={{ width: 112, height: 112 }}
               resizeMode="contain"
             />
           </Animated.View>
@@ -109,7 +117,7 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
               {
                 fontSize: fontSize['4xl'],
                 fontWeight: fontWeight.bold,
-                color: colors.white,
+                color: colors.surface[900],
                 marginBottom: spacing[2],
               },
             ]}
@@ -120,7 +128,7 @@ export function AnimatedSplash({ onComplete, duration = 2500 }: SplashProps) {
           <Animated.Text
             style={[
               textOpacity,
-              { color: colorWithOpacity(colors.white, 0.8), fontSize: fontSize.lg },
+              { color: colorWithOpacity(colors.surface[700], 0.9), fontSize: fontSize.lg },
             ]}
           >
             Farm Management

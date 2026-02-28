@@ -1794,6 +1794,58 @@ export const en = {
     alerts: {
       deleteWorkerTitle: 'Delete worker?',
       deleteWorkerBody: 'This will permanently delete {{name}} and all their associated records.',
+      markInactiveTitle: 'Mark as inactive?',
+      markInactiveBody: 'This will remove {{name}} from active worker lists.',
+      markActiveTitle: 'Mark as active?',
+      markActiveBody: 'This will add {{name}} back to active worker lists.',
+    },
+    loading: 'Loading worker details...',
+    notFound: {
+      title: 'Worker not found',
+    },
+    status: {
+      active: 'Active',
+      inactive: 'Inactive',
+    },
+    fields: {
+      dailyRate: 'Daily Rate',
+      advanceBalance: 'Advance Balance',
+      createdAt: 'Created',
+      updatedAt: 'Last Updated',
+    },
+    attendance: {
+      title: 'Attendance',
+      empty: 'No attendance records yet',
+      deleteConfirm: 'Delete attendance for {{date}}?',
+      status: {
+        full_day: 'Full day',
+        half_day: 'Half day',
+        absent: 'Absent',
+      },
+    },
+    transactions: {
+      title: 'Transactions',
+      empty: 'No transactions yet',
+      deleteConfirm: 'Delete transaction on {{date}}?',
+      type: {
+        advance_given: 'Advance given',
+        advance_deducted: 'Advance deducted',
+        payment: 'Payment',
+      },
+    },
+    settlements: {
+      title: 'Settlements',
+      empty: 'No settlements yet',
+      deleteConfirm: 'Delete this settlement?',
+      status: {
+        draft: 'Draft',
+        confirmed: 'Confirmed',
+      },
+      days: 'Days',
+      gross: 'Gross',
+      advance: 'Advance',
+      net: 'Net Payment',
+      confirmedAt: 'Confirmed on',
     },
     form: {
       addTitle: 'Add worker',

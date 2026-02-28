@@ -95,6 +95,7 @@ export function GuidedTourController() {
   const [isAddFarmNameFilled, setIsAddFarmNameFilled] = useState(false);
   const [isAddFarmRegionFilled, setIsAddFarmRegionFilled] = useState(false);
   const [isAddFarmAreaFilled, setIsAddFarmAreaFilled] = useState(false);
+  const [initialServerHydrated, setInitialServerHydrated] = useState(false);
   const [addFarmPhase, setAddFarmPhase] = useState<
     | 'cta'
     | 'name'
@@ -156,6 +157,7 @@ export function GuidedTourController() {
         resetForReplay();
         hydrationSyncedRef.current = false;
       }
+      requestAnimationFrame(() => setInitialServerHydrated(false));
       previousUserIdRef.current = null;
       return;
     }
@@ -163,6 +165,7 @@ export function GuidedTourController() {
     if (previousUserIdRef.current && previousUserIdRef.current !== userId) {
       resetForReplay();
       hydrationSyncedRef.current = false;
+      requestAnimationFrame(() => setInitialServerHydrated(false));
     }
 
     previousUserIdRef.current = userId;
@@ -171,6 +174,7 @@ export function GuidedTourController() {
   useEffect(() => {
     if (isAuthenticated && userId) {
       hydrationSyncedRef.current = false;
+      requestAnimationFrame(() => setInitialServerHydrated(false));
     }
   }, [isAuthenticated, userId]);
 
@@ -183,11 +187,14 @@ export function GuidedTourController() {
       })
       .catch((error) => {
         if (__DEV__) console.warn('[guided-tour] fetch sync failed', error);
+      })
+      .finally(() => {
+        setInitialServerHydrated(true);
       });
   }, [applyServerState, hasHydrated, isAuthenticated, userId]);
 
   useEffect(() => {
-    if (!isAuthenticated || !hasHydrated || !isSupportedLocale) return;
+    if (!isAuthenticated || !hasHydrated || !isSupportedLocale || !initialServerHydrated) return;
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     syncTimeoutRef.current = setTimeout(() => {
       void upsertGuidedTourServerState(toServerPatch(language)).catch((error) => {
@@ -202,6 +209,7 @@ export function GuidedTourController() {
   }, [
     isAuthenticated,
     isSupportedLocale,
+    initialServerHydrated,
     language,
     hasHydrated,
     toServerPatch,
@@ -218,7 +226,11 @@ export function GuidedTourController() {
 
   useEffect(() => {
     if (!isAuthenticated || !isSupportedLocale) return;
-    void registerGuidedTourPushDevice(language);
+    void registerGuidedTourPushDevice(language).catch((error) => {
+      if (__DEV__) {
+        console.warn('[guided-tour] push registration failed in controller effect', error);
+      }
+    });
   }, [isAuthenticated, isSupportedLocale, language]);
 
   useEffect(() => {
@@ -610,6 +622,8 @@ export function GuidedTourController() {
             route: pathname,
             reason: 'max_retries_exceeded',
           });
+          setRect(null);
+          setActiveCoachStep(null);
         }
         return;
       }

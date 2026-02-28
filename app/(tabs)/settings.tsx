@@ -569,20 +569,30 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
+    telemetry.capture('account_delete_flow_opened', {
+      has_phone_verification: canAttemptDeleteWithPhone,
+      requires_email_otp: requireEmailOtpForDelete,
+    });
     setDeleteReason('');
     setDeleteConfirmed(false);
     setDeletePhoneOtp('');
+    setDeleteEmailOtp('');
     setDeletePhoneOtpSent(false);
     setDeleteEmailOtpSent(false);
     setDeletePhoneVerified(false);
     setDeleteEmailVerified(false);
+    setIsDeleting(false);
     setIsSendingDeleteOtp(false);
     setIsVerifyingDeleteOtp(false);
+    emailOtpRequestedAtRef.current = null;
     setShowDeleteAccount(true);
   };
 
   const handleSendDeletePhoneOtp = async () => {
     if (!canAttemptDeleteWithPhone) {
+      telemetry.capture('account_delete_phone_otp_blocked', {
+        reason: 'phone_not_linked',
+      });
       Alert.alert(
         t('common.error'),
         t('settings.deleteAccountModal.errors.phoneNotLinked', {
@@ -612,6 +622,7 @@ export default function SettingsScreen() {
 
       setDeletePhoneOtpSent(true);
       setDeletePhoneVerified(false);
+      telemetry.capture('account_delete_phone_otp_sent');
       Alert.alert(
         t('settings.deleteAccountModal.phoneOtpSentTitle', { defaultValue: 'OTP sent' }),
         t('settings.deleteAccountModal.phoneOtpSentBody', {
@@ -619,6 +630,7 @@ export default function SettingsScreen() {
         }),
       );
     } catch (error) {
+      telemetry.capture('account_delete_phone_otp_send_failed');
       if (__DEV__) {
         console.error('Failed to send phone OTP:', error);
       }
@@ -663,6 +675,7 @@ export default function SettingsScreen() {
       }
 
       setDeletePhoneVerified(true);
+      telemetry.capture('account_delete_phone_otp_verified');
       Alert.alert(
         t('settings.deleteAccountModal.phoneVerifiedTitle', { defaultValue: 'Phone verified' }),
         t('settings.deleteAccountModal.phoneVerifiedBody', {
@@ -670,6 +683,7 @@ export default function SettingsScreen() {
         }),
       );
     } catch (error) {
+      telemetry.capture('account_delete_phone_otp_verify_failed');
       if (__DEV__) {
         console.error('Failed to verify phone OTP:', error);
       }
@@ -713,16 +727,17 @@ export default function SettingsScreen() {
       setDeleteEmailOtpSent(true);
       setDeleteEmailOtp('');
       setDeleteEmailVerified(false);
+      telemetry.capture('account_delete_email_otp_sent');
       Alert.alert(
         t('settings.deleteAccountModal.emailOtpSentTitle', {
-          defaultValue: 'Email verification link sent',
+          defaultValue: 'Email OTP sent',
         }),
         t('settings.deleteAccountModal.emailOtpSentBody', {
-          defaultValue:
-            'We sent a verification link to your email. Click the link, then come back to continue.',
+          defaultValue: 'We sent an OTP to your email. Enter it below to continue.',
         }),
       );
     } catch (error) {
+      telemetry.capture('account_delete_email_otp_send_failed');
       if (__DEV__) {
         console.error('Failed to send email OTP:', error);
       }
@@ -784,6 +799,7 @@ export default function SettingsScreen() {
 
       setDeleteEmailVerified(true);
       setDeleteEmailOtp('');
+      telemetry.capture('account_delete_email_otp_verified');
       Alert.alert(
         t('settings.deleteAccountModal.emailVerifiedTitle', { defaultValue: 'Email verified' }),
         t('settings.deleteAccountModal.emailVerifiedBody', {
@@ -791,6 +807,7 @@ export default function SettingsScreen() {
         }),
       );
     } catch (error) {
+      telemetry.capture('account_delete_email_otp_verify_failed');
       if (__DEV__) {
         console.error('Failed to verify email OTP:', error);
       }
@@ -1041,7 +1058,26 @@ export default function SettingsScreen() {
   };
 
   const handleConfirmDeleteAccount = async () => {
+    telemetry.capture('account_delete_submit_attempted');
+
+    if (!canAttemptDeleteWithPhone && !requireEmailOtpForDelete) {
+      telemetry.capture('account_delete_submit_blocked', {
+        reason: 'no_verification_method',
+      });
+      Alert.alert(
+        t('common.error'),
+        t('settings.deleteAccountModal.errors.noVerificationMethod', {
+          defaultValue:
+            'No verification method available. Please link a phone number or ensure email is set up before deleting your account.',
+        }),
+      );
+      return;
+    }
+
     if (canAttemptDeleteWithPhone && !deletePhoneVerified) {
+      telemetry.capture('account_delete_submit_blocked', {
+        reason: 'phone_not_verified',
+      });
       Alert.alert(
         t('common.error'),
         t('settings.deleteAccountModal.errors.phoneOtpRequired', {
@@ -1052,6 +1088,9 @@ export default function SettingsScreen() {
     }
 
     if (requireEmailOtpForDelete && !deleteEmailVerified) {
+      telemetry.capture('account_delete_submit_blocked', {
+        reason: 'email_not_verified',
+      });
       Alert.alert(
         t('common.error'),
         t('settings.deleteAccountModal.errors.emailOtpRequired', {
@@ -1062,6 +1101,9 @@ export default function SettingsScreen() {
     }
 
     if (!deleteConfirmed) {
+      telemetry.capture('account_delete_submit_blocked', {
+        reason: 'confirmation_not_checked',
+      });
       Alert.alert(t('common.error'), t('settings.deleteAccountModal.errors.missingConfirmation'));
       return;
     }
@@ -1139,10 +1181,13 @@ export default function SettingsScreen() {
     return t('settings.themeSystem');
   };
 
+  const hasRequiredPhoneVerification = !canAttemptDeleteWithPhone || deletePhoneVerified;
+  const hasRequiredEmailVerification = !requireEmailOtpForDelete || deleteEmailVerified;
+
   const canSubmitDeleteAccount =
     deleteConfirmed &&
-    (canAttemptDeleteWithPhone ? deletePhoneVerified : true) &&
-    (!requireEmailOtpForDelete || deleteEmailVerified) &&
+    hasRequiredPhoneVerification &&
+    hasRequiredEmailVerification &&
     !isDeleting &&
     !isSendingDeleteOtp &&
     !isVerifyingDeleteOtp;

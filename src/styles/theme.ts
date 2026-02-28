@@ -432,6 +432,7 @@ export const theme = {
   getM3Theme,
   spacing,
   borderRadius,
+  size,
   fontSize,
   fontWeight,
   shadows,

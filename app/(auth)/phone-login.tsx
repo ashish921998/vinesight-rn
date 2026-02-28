@@ -437,10 +437,14 @@ export default function PhoneLoginScreen() {
 
               {/* Send Code Button */}
               <Button
-                title={t('authPhone.sendCode')}
+                title={
+                  isLoading
+                    ? t('authPhone.sendingCode', { defaultValue: 'Sending code...' })
+                    : t('authPhone.sendCode')
+                }
                 onPress={handleSendCode}
                 isLoading={isLoading}
-                disabled={!phoneNumber || !normalizedPhoneNumber || isLoading}
+                disabled={!phoneNumber || !normalizedPhoneNumber}
                 style={{ marginTop: spacing[4] }}
               />
             </View>

@@ -28,8 +28,8 @@ export const useLanguageStore = create<LanguageState & LanguageActions>()(
     {
       name: 'vinesight-language',
       version: 1,
-      migrate: (persistedState: unknown) => {
-        const state = persistedState as (LanguageState & LanguageActions) | null;
+      migrate: (persistedState: unknown, _version: number) => {
+        const state = persistedState as LanguageState | null;
         if (!state) return persistedState;
         return state;
       },

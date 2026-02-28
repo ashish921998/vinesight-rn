@@ -41,7 +41,8 @@ export function Button({
   ...props
 }: ButtonProps) {
   const m3 = useM3();
-  const isDisabled = disabled || isLoading;
+  const isInteractionDisabled = Boolean(disabled) || isLoading;
+  const isVisuallyDisabled = Boolean(disabled);
 
   // Base styles
   const baseStyle: ViewStyle = {
@@ -62,16 +63,16 @@ export function Button({
   // Variant styles
   const variantStyles: Record<string, ViewStyle> = {
     primary: {
-      backgroundColor: isDisabled ? m3.colorScheme.surfaceVariant : m3.colorScheme.primary,
+      backgroundColor: isVisuallyDisabled ? m3.colorScheme.surfaceVariant : m3.colorScheme.primary,
     },
     secondary: {
-      backgroundColor: isDisabled
+      backgroundColor: isVisuallyDisabled
         ? m3.surface.surfaceContainerHigh
         : m3.surface.surfaceContainerLow,
     },
     outline: {
       borderWidth: 1,
-      borderColor: isDisabled ? m3.colorScheme.outlineVariant : m3.colorScheme.outline,
+      borderColor: isVisuallyDisabled ? m3.colorScheme.outlineVariant : m3.colorScheme.outline,
       backgroundColor: 'transparent',
     },
     ghost: {
@@ -88,19 +89,19 @@ export function Button({
 
   const textVariantStyles: Record<string, TextStyle> = {
     primary: {
-      color: isDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onPrimary,
+      color: isVisuallyDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onPrimary,
       fontWeight: fontWeight.semibold,
     },
     secondary: {
-      color: isDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onSurface,
+      color: isVisuallyDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.onSurface,
       fontWeight: fontWeight.semibold,
     },
     outline: {
-      color: isDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.primary,
+      color: isVisuallyDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.primary,
       fontWeight: fontWeight.semibold,
     },
     ghost: {
-      color: isDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.primary,
+      color: isVisuallyDisabled ? m3.colorScheme.onSurfaceVariant : m3.colorScheme.primary,
       fontWeight: fontWeight.medium,
     },
   };
@@ -123,7 +124,7 @@ export function Button({
   return (
     <Pressable
       {...props}
-      disabled={isDisabled}
+      disabled={isInteractionDisabled}
       accessibilityRole={props.accessibilityRole ?? 'button'}
       onPress={(event) => {
         try {
@@ -144,10 +145,10 @@ export function Button({
       {(state) => (
         <>
           {isLoading ? (
-            <ActivityIndicator
-              color={variant === 'primary' ? m3.colorScheme.onPrimary : m3.colorScheme.primary}
-              size="small"
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <ActivityIndicator color={textStyle.color} size="small" />
+              <Text style={[textStyle, { marginLeft: spacing[2] }]}>{title}</Text>
+            </View>
           ) : (
             <>
               {leftIcon && <View style={{ marginRight: spacing[2] }}>{leftIcon}</View>}
@@ -161,7 +162,7 @@ export function Button({
               StyleSheet.absoluteFillObject,
               {
                 backgroundColor:
-                  state.pressed && !isDisabled
+                  state.pressed && !isInteractionDisabled
                     ? colorWithOpacity(stateLayerColor, m3.stateLayerOpacity.pressed)
                     : 'transparent',
               },

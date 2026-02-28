@@ -1796,6 +1796,58 @@ export const hi = {
     alerts: {
       deleteWorkerTitle: 'श्रमिक हटाएं?',
       deleteWorkerBody: 'यह {{name}} और उनके सभी संबंधित रिकॉर्ड को स्थायी रूप से हटा देगा।',
+      markInactiveTitle: 'निष्क्रिय के रूप में चिह्नित करें?',
+      markInactiveBody: 'यह {{name}} को सक्रिय श्रमिक सूची से हटा देगा।',
+      markActiveTitle: 'सक्रिय के रूप में चिह्नित करें?',
+      markActiveBody: 'यह {{name}} को सक्रिय श्रमिक सूची में वापस जोड़ देगा।',
+    },
+    loading: 'श्रमिक विवरण लोड हो रहा है...',
+    notFound: {
+      title: 'श्रमिक नहीं मिला',
+    },
+    status: {
+      active: 'सक्रिय',
+      inactive: 'निष्क्रिय',
+    },
+    fields: {
+      dailyRate: 'दैनिक दर',
+      advanceBalance: 'अग्रिम शेष',
+      createdAt: 'बनाया गया',
+      updatedAt: 'अंतिम अपडेट',
+    },
+    attendance: {
+      title: 'उपस्थिति',
+      empty: 'अभी तक कोई उपस्थिति रिकॉर्ड नहीं',
+      deleteConfirm: '{{date}} की उपस्थिति हटाएं?',
+      status: {
+        full_day: 'पूरा दिन',
+        half_day: 'आधा दिन',
+        absent: 'अनुपस्थित',
+      },
+    },
+    transactions: {
+      title: 'लेनदेन',
+      empty: 'अभी तक कोई लेनदेन नहीं',
+      deleteConfirm: '{{date}} का लेनदेन हटाएं?',
+      type: {
+        advance_given: 'अग्रिम दिया गया',
+        advance_deducted: 'अग्रिम कटौती',
+        payment: 'भुगतान',
+      },
+    },
+    settlements: {
+      title: 'निपटान',
+      empty: 'अभी तक कोई निपटान नहीं',
+      deleteConfirm: 'यह निपटान हटाएं?',
+      status: {
+        draft: 'मसौदा',
+        confirmed: 'पुष्टि',
+      },
+      days: 'दिन',
+      gross: 'कुल',
+      advance: 'अग्रिम',
+      net: 'शुद्ध भुगतान',
+      confirmedAt: 'पुष्टि की तारीख',
     },
     form: {
       addTitle: 'श्रमिक जोड़ें',

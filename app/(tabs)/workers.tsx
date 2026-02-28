@@ -77,6 +77,10 @@ export default function WorkersScreen() {
     router.push('/add-worker');
   };
 
+  const handleViewWorkerDetail = (_worker: Worker) => {
+    // Worker detail view not implemented yet
+  };
+
   const handleOpenSettlement = () => {
     setSettlementModalVisible(true);
   };
@@ -97,7 +101,7 @@ export default function WorkersScreen() {
     <View style={{ marginHorizontal: spacing[4], marginBottom: spacing[3] }}>
       <WorkerCard
         worker={item}
-        onPress={() => handleEditWorker(item)}
+        onPress={() => handleViewWorkerDetail(item)}
         onEdit={() => handleEditWorker(item)}
         onDelete={() => handleDeleteWorker(item)}
       />

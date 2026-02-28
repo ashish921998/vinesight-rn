@@ -267,10 +267,18 @@ export default function LoginScreen() {
 
               {/* Submit Button */}
               <Button
-                title={isSignUp ? t('auth.signUp') : t('auth.signIn')}
+                title={
+                  isLoading
+                    ? isSignUp
+                      ? t('auth.signingUp', { defaultValue: 'Signing up...' })
+                      : t('auth.signingIn', { defaultValue: 'Signing in...' })
+                    : isSignUp
+                      ? t('auth.signUp')
+                      : t('auth.signIn')
+                }
                 onPress={handleAuth}
                 isLoading={isLoading}
-                disabled={!isFormValid || isLoading}
+                disabled={!isFormValid}
                 style={{ marginTop: spacing[4] }}
               />
             </View>
