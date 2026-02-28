@@ -505,6 +505,15 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     formState.customVariety,
   ]);
 
+  const isGuidedAddFarm = () => {
+    const guidedTourState = useGuidedTourStore.getState();
+    return (
+      mode === 'add' &&
+      guidedTourState.status === 'in_progress' &&
+      guidedTourState.currentStep === 'add_farm'
+    );
+  };
+
   const handleSelectCrop = (crop: CropType, customCropName = '') => {
     setFormState((prev) => ({
       ...prev,
@@ -515,12 +524,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       showCropPicker: false,
       cropSearchQuery: '',
     }));
-    const guidedTourState = useGuidedTourStore.getState();
-    if (
-      mode === 'add' &&
-      guidedTourState.status === 'in_progress' &&
-      guidedTourState.currentStep === 'add_farm'
-    ) {
+    if (isGuidedAddFarm()) {
       guidedTourEmit('guidedTour.addFarmCropSelected', {
         crop: crop === 'Other' ? customCropName : crop,
         shouldAdvance: true,
@@ -530,24 +534,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
   const openCropPicker = () => {
     setFormState((prev) => ({ ...prev, showCropPicker: true }));
-    const guidedTourState = useGuidedTourStore.getState();
-    if (
-      mode === 'add' &&
-      guidedTourState.status === 'in_progress' &&
-      guidedTourState.currentStep === 'add_farm'
-    ) {
+    if (isGuidedAddFarm()) {
       guidedTourEmit('guidedTour.addFarmCropPickerToggled', { open: true });
     }
   };
 
   const closeCropPicker = () => {
     setFormState((prev) => ({ ...prev, showCropPicker: false, cropSearchQuery: '' }));
-    const guidedTourState = useGuidedTourStore.getState();
-    if (
-      mode === 'add' &&
-      guidedTourState.status === 'in_progress' &&
-      guidedTourState.currentStep === 'add_farm'
-    ) {
+    if (isGuidedAddFarm()) {
       guidedTourEmit('guidedTour.addFarmCropPickerToggled', { open: false });
     }
   };
@@ -575,12 +569,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       varietySearchQuery: '',
       customVariety: variety === 'Custom' ? '' : prev.customVariety,
     }));
-    const guidedTourState = useGuidedTourStore.getState();
-    if (
-      mode === 'add' &&
-      guidedTourState.status === 'in_progress' &&
-      guidedTourState.currentStep === 'add_farm'
-    ) {
+    if (isGuidedAddFarm()) {
       guidedTourEmit('guidedTour.addFarmVarietySelected', { isCustom: variety === 'Custom' });
     }
   };
@@ -847,8 +836,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       if (guidedTourState.status === 'in_progress' && guidedTourState.currentStep === 'add_farm') {
         if (typeof createdFarm?.id === 'number') {
           guidedTourEmit('guidedTour.farmCreated', { farmId: createdFarm.id });
+          return;
         }
-        return;
       }
       onClose();
     } catch (_error: unknown) {
@@ -893,6 +882,55 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     [t],
   );
 
+  const cropTrigger = (
+    <Pressable
+      style={{
+        backgroundColor: colors.surface[100],
+        borderWidth: 2,
+        borderColor: colors.surface[200],
+        borderRadius: borderRadius.xl,
+        paddingHorizontal: spacing[4],
+        paddingVertical: spacing[4],
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: spacing[3],
+      }}
+      onPress={openCropPicker}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        <View
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: borderRadius.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+          }}
+        >
+          {formState.selectedCrop === 'Other' ? (
+            <UISymbol name="leaf.fill" size={16} color={m3.colorScheme.primary} />
+          ) : (
+            renderCropVisual(formState.selectedCrop, 18)
+          )}
+        </View>
+        <Text
+          style={{
+            fontSize: fontSize.base,
+            color: colors.surface[900],
+            fontWeight: fontWeight.medium,
+            marginLeft: spacing[3],
+          }}
+          numberOfLines={1}
+        >
+          {selectedCropLabel}
+        </Text>
+      </View>
+      <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
+    </Pressable>
+  );
+
   if (isEdit && farmLoading) {
     return (
       <View
@@ -925,12 +963,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             value={formState.name}
             onChangeText={(v) => {
               setFormState((prev) => ({ ...prev, name: v }));
-              const guidedTourState = useGuidedTourStore.getState();
-              if (
-                mode === 'add' &&
-                guidedTourState.status === 'in_progress' &&
-                guidedTourState.currentStep === 'add_farm'
-              ) {
+              if (isGuidedAddFarm()) {
                 guidedTourEmit('guidedTour.addFarmNameEntered', { isFilled: v.trim().length > 0 });
               }
             }}
@@ -954,12 +987,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             value={formState.region}
             onChangeText={(v) => {
               setFormState((prev) => ({ ...prev, region: v }));
-              const guidedTourState = useGuidedTourStore.getState();
-              if (
-                mode === 'add' &&
-                guidedTourState.status === 'in_progress' &&
-                guidedTourState.currentStep === 'add_farm'
-              ) {
+              if (isGuidedAddFarm()) {
                 guidedTourEmit('guidedTour.addFarmRegionEntered', {
                   isFilled: v.trim().length > 0,
                 });
@@ -985,14 +1013,11 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             onChangeText={(v) => {
               const sanitizedArea = sanitizeDecimalInput(v);
               setFormState((prev) => ({ ...prev, area: sanitizedArea }));
-              const guidedTourState = useGuidedTourStore.getState();
-              if (
-                mode === 'add' &&
-                guidedTourState.status === 'in_progress' &&
-                guidedTourState.currentStep === 'add_farm'
-              ) {
+              if (isGuidedAddFarm()) {
+                const isValidNumber =
+                  sanitizedArea.trim() !== '' && Number.isFinite(Number(sanitizedArea.trim()));
                 guidedTourEmit('guidedTour.addFarmAreaEntered', {
-                  isFilled: sanitizedArea.trim().length > 0,
+                  isFilled: isValidNumber,
                 });
               }
             }}
@@ -1022,100 +1047,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
         {!formState.showCropPicker ? (
           <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP}>
-            <Pressable
-              style={{
-                backgroundColor: colors.surface[100],
-                borderWidth: 2,
-                borderColor: colors.surface[200],
-                borderRadius: borderRadius.xl,
-                paddingHorizontal: spacing[4],
-                paddingVertical: spacing[4],
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: spacing[3],
-              }}
-              onPress={openCropPicker}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <View
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: borderRadius.full,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                  }}
-                >
-                  {formState.selectedCrop === 'Other' ? (
-                    <UISymbol name="leaf.fill" size={16} color={m3.colorScheme.primary} />
-                  ) : (
-                    renderCropVisual(formState.selectedCrop, 18)
-                  )}
-                </View>
-                <Text
-                  style={{
-                    fontSize: fontSize.base,
-                    color: colors.surface[900],
-                    fontWeight: fontWeight.medium,
-                    marginLeft: spacing[3],
-                  }}
-                  numberOfLines={1}
-                >
-                  {selectedCropLabel}
-                </Text>
-              </View>
-              <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
-            </Pressable>
+            {cropTrigger}
           </GuidedTourTarget>
         ) : (
-          <Pressable
-            style={{
-              backgroundColor: colors.surface[100],
-              borderWidth: 2,
-              borderColor: colors.surface[200],
-              borderRadius: borderRadius.xl,
-              paddingHorizontal: spacing[4],
-              paddingVertical: spacing[4],
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: spacing[3],
-            }}
-            onPress={openCropPicker}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <View
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: borderRadius.full,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                }}
-              >
-                {formState.selectedCrop === 'Other' ? (
-                  <UISymbol name="leaf.fill" size={16} color={m3.colorScheme.primary} />
-                ) : (
-                  renderCropVisual(formState.selectedCrop, 18)
-                )}
-              </View>
-              <Text
-                style={{
-                  fontSize: fontSize.base,
-                  color: colors.surface[900],
-                  fontWeight: fontWeight.medium,
-                  marginLeft: spacing[3],
-                }}
-                numberOfLines={1}
-              >
-                {selectedCropLabel}
-              </Text>
-            </View>
-            <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
-          </Pressable>
+          cropTrigger
         )}
 
         <ScrollView
@@ -1221,12 +1156,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               setFormState((prev) => ({ ...prev, showVarietyPicker: true, varietySearchQuery: '' }))
             }
             onPressIn={() => {
-              const guidedTourState = useGuidedTourStore.getState();
-              if (
-                mode === 'add' &&
-                guidedTourState.status === 'in_progress' &&
-                guidedTourState.currentStep === 'add_farm'
-              ) {
+              if (isGuidedAddFarm()) {
                 guidedTourEmit('guidedTour.addFarmVarietyPickerOpened', {});
               }
             }}
@@ -1254,13 +1184,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               value={formState.customVariety}
               onChangeText={(v) => {
                 setFormState((prev) => ({ ...prev, customVariety: v }));
-                const guidedTourState = useGuidedTourStore.getState();
-                if (
-                  mode === 'add' &&
-                  v.trim().length > 0 &&
-                  guidedTourState.status === 'in_progress' &&
-                  guidedTourState.currentStep === 'add_farm'
-                ) {
+                if (isGuidedAddFarm() && v.trim().length > 0) {
                   guidedTourEmit('guidedTour.addFarmCustomVarietyEntered', {});
                 }
               }}

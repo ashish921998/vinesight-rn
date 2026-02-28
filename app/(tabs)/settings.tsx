@@ -269,10 +269,11 @@ export default function SettingsScreen() {
   }, [profile, user, currency]);
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'User';
-  const userEmail = profile?.email || user?.email || '';
+  const displayEmail = profile?.email || user?.email || '';
+  const deleteEmail = user?.email || '';
   const linkedAuthPhone = user?.phone || null;
   const deleteVerificationPhone = linkedAuthPhone?.trim() ?? '';
-  const isEmailOtpEnforced = Boolean(userEmail.trim());
+  const isEmailOtpEnforced = Boolean(deleteEmail.trim());
   const requireEmailOtpForDelete = isEmailOtpEnforced;
   const canAttemptDeleteWithPhone = isValidE164PhoneNumber(deleteVerificationPhone);
   const hasSavedPhoneToVerify = false;
@@ -636,7 +637,7 @@ export default function SettingsScreen() {
     setIsSendingDeleteOtp(true);
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email: userEmail.trim().toLowerCase(),
+        email: deleteEmail.trim().toLowerCase(),
         options: { shouldCreateUser: false },
       });
 
@@ -687,7 +688,7 @@ export default function SettingsScreen() {
     setIsVerifyingDeleteOtp(true);
     try {
       const { error } = await supabase.auth.verifyOtp({
-        email: userEmail.trim().toLowerCase(),
+        email: deleteEmail.trim().toLowerCase(),
         token: deleteEmailOtp.trim(),
         type: 'email',
       });
@@ -1103,7 +1104,7 @@ export default function SettingsScreen() {
               textBreakStrategy="highQuality"
               lineBreakStrategyIOS="standard"
             >
-              {userEmail}
+              {displayEmail}
             </Text>
           </View>
           <Pressable onPress={() => setShowEditProfile(true)}>
@@ -1459,7 +1460,7 @@ export default function SettingsScreen() {
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
-                    {userEmail}
+                    {displayEmail}
                   </Text>
                 </View>
                 <Text
@@ -2316,7 +2317,7 @@ export default function SettingsScreen() {
                       textBreakStrategy="highQuality"
                       lineBreakStrategyIOS="standard"
                     >
-                      {userEmail}
+                      {displayEmail}
                     </Text>
                   </View>
                   <Text

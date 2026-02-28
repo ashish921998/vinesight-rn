@@ -96,7 +96,8 @@ Deno.serve(async (req) => {
     const { data: rows, error } = await supabase
       .from('user_guided_tour_state')
       .select('user_id,tour_status,reminders_sent,last_active_at,locale')
-      .eq('tour_status', 'in_progress');
+      .eq('tour_status', 'in_progress')
+      .range(0, 4999);
 
     if (error) throw error;
 
@@ -143,16 +144,21 @@ Deno.serve(async (req) => {
         if (delivered) {
           sent += 1;
           console.log('tour_reminder_sent', { userId, sequence: 1 });
-          const { error: updateError } = await supabase
+          const { data: updatedRows, error: updateError } = await supabase
             .from('user_guided_tour_state')
             .update({ reminders_sent: 1, updated_at: new Date().toISOString() })
             .eq('user_id', userId)
-            .eq('tour_status', 'in_progress');
+            .eq('tour_status', 'in_progress')
+            .eq('reminders_sent', 0)
+            .select();
           if (updateError) {
             console.error('Failed to update reminders_sent for seq1', {
               userId,
               error: updateError,
             });
+          }
+          if (Array.isArray(updatedRows) && updatedRows.length === 0) {
+            console.warn('Seq-1 update lost race or already sent, skipping', { userId });
           }
         }
         continue;
@@ -190,16 +196,21 @@ Deno.serve(async (req) => {
         if (delivered) {
           sent += 1;
           console.log('tour_reminder_sent', { userId, sequence: 2 });
-          const { error: updateError } = await supabase
+          const { data: updatedRows, error: updateError } = await supabase
             .from('user_guided_tour_state')
             .update({ reminders_sent: 2, updated_at: new Date().toISOString() })
             .eq('user_id', userId)
-            .eq('tour_status', 'in_progress');
+            .eq('tour_status', 'in_progress')
+            .eq('reminders_sent', 1)
+            .select();
           if (updateError) {
             console.error('Failed to update reminders_sent for seq2', {
               userId,
               error: updateError,
             });
+          }
+          if (Array.isArray(updatedRows) && updatedRows.length === 0) {
+            console.warn('Seq-2 update lost race or already sent, skipping', { userId });
           }
         }
         continue;

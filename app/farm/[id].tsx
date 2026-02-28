@@ -147,8 +147,7 @@ export default function FarmDetailScreen() {
 
   useEffect(() => {
     const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
-    // Keep tour visible for the season-start popup so onboarding can guide the user through it.
-    const shouldSuspend = isGuidedAddLog ? false : false;
+    const shouldSuspend = false;
     setGuidedTourSuspended(shouldSuspend);
     setGuidedTourSeasonFormVisible(isGuidedAddLog && showSeasonForm);
     return () => {

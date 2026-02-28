@@ -54,6 +54,7 @@ export function GuidedTourController() {
   const { t } = useTranslation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
+  const userId = useAuthStore((s) => s.user?.id ?? null);
   const language = useLanguageStore((s) => s.language) ?? 'en';
 
   const status = useGuidedTourStore((s) => s.status);
@@ -150,7 +151,13 @@ export function GuidedTourController() {
       .catch((error) => {
         if (__DEV__) console.warn('[guided-tour] fetch sync failed', error);
       });
-  }, [applyServerState, hasHydrated, isAuthenticated]);
+  }, [applyServerState, hasHydrated, isAuthenticated, userId]);
+
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      hydrationSyncedRef.current = false;
+    }
+  }, [isAuthenticated, userId]);
 
   useEffect(() => {
     if (!isAuthenticated || !hasHydrated || !isSupportedLocale) return;
@@ -216,10 +223,10 @@ export function GuidedTourController() {
       setHasChosenActivityType(false);
       setSelectedActivityType(null);
       setAddFarmPhase('cta');
-      queuedFarmCreatedRef.current = farmId;
-      queuedLogCreatedRef.current = null;
       const current = useGuidedTourStore.getState();
       if (current.status !== 'in_progress' || current.currentStep !== 'add_farm') return;
+      queuedFarmCreatedRef.current = farmId;
+      queuedLogCreatedRef.current = null;
       telemetry.capture('tour_step_completed', { step: 'add_farm' });
       completeStep('add_farm', { farmId });
       showStep('add_log');
@@ -294,13 +301,13 @@ export function GuidedTourController() {
       setAddFarmPhase('submit');
     });
     const unsubLog = guidedTourOn('guidedTour.logCreated', ({ farmId, recordType }) => {
-      queuedLogCreatedRef.current = { farmId, recordType };
       setHasChosenActivityType(false);
       setHasPendingLogDrafts(false);
       setSelectedActivityType(null);
       const current = useGuidedTourStore.getState();
       if (current.status !== 'in_progress' || current.currentStep !== 'add_log') return;
       if (current.activeFarmId && current.activeFarmId !== farmId) return;
+      queuedLogCreatedRef.current = { farmId, recordType };
       telemetry.capture('tour_step_completed', { step: 'add_log', recordType });
       completeStep('add_log');
       showStep('complete_card');

@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { supabase } from '@/lib/supabase';
+import { telemetry } from '@/services/telemetry';
 import type { GuidedTourPatchPayload, GuidedTourServerState } from './types';
 
 const GUIDED_TOUR_TABLE = 'user_guided_tour_state';
@@ -78,10 +79,13 @@ export async function registerGuidedTourPushDevice(locale: 'en' | 'hi' | 'mr'): 
         last_seen_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
-      { onConflict: 'expo_push_token' },
+      { onConflict: 'user_id,expo_push_token' },
     );
     if (error) throw error;
   } catch (error) {
+    telemetry.capture('guided_tour_push_registration_failed', {
+      context: 'registerGuidedTourPushDevice',
+    });
     if (__DEV__) {
       console.warn('[guided-tour] push device registration failed', error);
     }
