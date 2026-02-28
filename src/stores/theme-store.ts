@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { ExpoSecureStoreAdapter } from '@/lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -31,7 +31,7 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
     }),
     {
       name: 'vinesight-theme',
-      storage: createJSONStorage(() => ExpoSecureStoreAdapter),
+      storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => () => {
         useThemeStore.setState({ hasHydrated: true });
       },

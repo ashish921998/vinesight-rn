@@ -163,6 +163,7 @@ export default function SettingsScreen() {
 
   const {
     user,
+    session,
     signOut,
     deleteAccount,
     updateUserAreaUnit,
@@ -236,7 +237,6 @@ export default function SettingsScreen() {
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletePhoneOtp, setDeletePhoneOtp] = useState('');
-  const [deleteEmailOtp, setDeleteEmailOtp] = useState('');
   const [deletePhoneOtpSent, setDeletePhoneOtpSent] = useState(false);
   const [deleteEmailOtpSent, setDeleteEmailOtpSent] = useState(false);
   const [deletePhoneVerified, setDeletePhoneVerified] = useState(false);
@@ -270,10 +270,63 @@ export default function SettingsScreen() {
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'User';
   const userEmail = profile?.email || user?.email || '';
-  const linkedAuthPhone = user?.phone || null;
-  const deleteVerificationPhone = linkedAuthPhone?.trim() ?? '';
+  const authIdentityProviders = useMemo(() => {
+    const identities = [
+      ...(((user as { identities?: Array<{ provider?: string }> } | null)?.identities ??
+        []) as Array<{ provider?: string }>),
+      ...(((session?.user as { identities?: Array<{ provider?: string }> } | null)?.identities ??
+        []) as Array<{ provider?: string }>),
+    ];
+    return new Set(
+      identities
+        .map((identity) => identity.provider?.trim().toLowerCase())
+        .filter((provider): provider is string => Boolean(provider)),
+    );
+  }, [session?.user, user]);
+  const isPhoneAuthUser = authIdentityProviders.has('phone');
+  const linkedAuthPhone = useMemo(() => {
+    const normalizeToE164 = (value: string | null | undefined): string | null => {
+      const trimmed = value?.trim();
+      if (!trimmed) return null;
+      if (isValidE164PhoneNumber(trimmed)) return trimmed;
+
+      if (trimmed.startsWith('+')) {
+        const digits = sanitizePhoneDigits(trimmed);
+        const normalized = digits ? `+${digits}` : '';
+        return isValidE164PhoneNumber(normalized) ? normalized : null;
+      }
+
+      const digits = sanitizePhoneDigits(trimmed);
+      const normalized = digits ? `+${digits}` : '';
+      return isValidE164PhoneNumber(normalized) ? normalized : null;
+    };
+
+    const identityPhones = [
+      ...(((user as { identities?: Array<{ identity_data?: { phone?: string } }> } | null)
+        ?.identities ?? []) as Array<{ identity_data?: { phone?: string } }>),
+      ...(((session?.user as { identities?: Array<{ identity_data?: { phone?: string } }> } | null)
+        ?.identities ?? []) as Array<{ identity_data?: { phone?: string } }>),
+    ]
+      .map((identity) => normalizeToE164(identity.identity_data?.phone))
+      .filter((value): value is string => Boolean(value));
+
+    const candidates = [
+      user?.phone,
+      session?.user?.phone,
+      profile?.phone,
+      typeof user?.user_metadata?.phone === 'string' ? user.user_metadata.phone : null,
+      ...identityPhones,
+    ];
+
+    for (const candidate of candidates) {
+      const normalized = normalizeToE164(candidate);
+      if (normalized) return normalized;
+    }
+    return null;
+  }, [profile?.phone, session?.user, user]);
+  const deleteVerificationPhone = linkedAuthPhone ?? '';
   const isEmailOtpEnforced = Boolean(userEmail.trim());
-  const requireEmailOtpForDelete = isEmailOtpEnforced;
+  const requireEmailOtpForDelete = isEmailOtpEnforced && !isPhoneAuthUser;
   const canAttemptDeleteWithPhone = isValidE164PhoneNumber(deleteVerificationPhone);
   const phoneVerificationLabel = canAttemptDeleteWithPhone
     ? t('settings.deleteAccountModal.phoneVerificationLabel', {
@@ -522,7 +575,6 @@ export default function SettingsScreen() {
     setDeleteReason('');
     setDeleteConfirmed(false);
     setDeletePhoneOtp('');
-    setDeleteEmailOtp('');
     setDeletePhoneOtpSent(false);
     setDeleteEmailOtpSent(false);
     setDeletePhoneVerified(false);
@@ -644,7 +696,10 @@ export default function SettingsScreen() {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: userEmail.trim().toLowerCase(),
-        options: { shouldCreateUser: false },
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: undefined,
+        },
       });
 
       if (error) {
@@ -660,9 +715,12 @@ export default function SettingsScreen() {
       setDeleteEmailOtpSent(true);
       setDeleteEmailVerified(false);
       Alert.alert(
-        t('settings.deleteAccountModal.emailOtpSentTitle', { defaultValue: 'Email OTP sent' }),
+        t('settings.deleteAccountModal.emailOtpSentTitle', {
+          defaultValue: 'Email verification link sent',
+        }),
         t('settings.deleteAccountModal.emailOtpSentBody', {
-          defaultValue: 'We sent an OTP to your email.',
+          defaultValue:
+            'We sent a verification link to your email. Click the link, then come back to continue.',
         }),
       );
     } catch (error) {
@@ -681,29 +739,22 @@ export default function SettingsScreen() {
   };
 
   const handleVerifyDeleteEmailOtp = async () => {
-    if (!requireEmailOtpForDelete || deleteEmailOtp.trim().length < 4) {
-      Alert.alert(
-        t('common.error'),
-        t('settings.deleteAccountModal.errors.invalidOtp', {
-          defaultValue: 'Enter a valid OTP.',
-        }),
-      );
+    if (!requireEmailOtpForDelete) {
       return;
     }
 
     setIsVerifyingDeleteOtp(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: userEmail.trim().toLowerCase(),
-        token: deleteEmailOtp.trim(),
-        type: 'email',
-      });
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-      if (error) {
+      if (sessionError || !session) {
         Alert.alert(
           t('common.error'),
           t('settings.deleteAccountModal.errors.otpVerifyFailed', {
-            defaultValue: 'OTP verification failed. Please try again.',
+            defaultValue: 'Email verification failed. Please click the link sent to your email.',
           }),
         );
         return;
@@ -2331,7 +2382,7 @@ export default function SettingsScreen() {
                   >
                     {t('settings.deleteAccountModal.emailVerificationHint', {
                       defaultValue:
-                        'For extra security, verify the OTP sent to your email as well.',
+                        'Click the verification link sent to your email, then tap the button below.',
                     })}
                   </Text>
                   <View style={styles.linkPhoneInputRow}>
@@ -2351,33 +2402,27 @@ export default function SettingsScreen() {
                         lineBreakStrategyIOS="standard"
                       >
                         {deleteEmailOtpSent
-                          ? t('settings.deleteAccountModal.resendOtp', {
-                              defaultValue: 'Resend OTP',
+                          ? t('settings.deleteAccountModal.resendLink', {
+                              defaultValue: 'Resend Link',
                             })
-                          : t('settings.deleteAccountModal.sendOtp', { defaultValue: 'Send OTP' })}
+                          : t('settings.deleteAccountModal.sendLink', {
+                              defaultValue: 'Send Link',
+                            })}
                       </Text>
                     </Pressable>
                   </View>
                   {deleteEmailOtpSent ? (
                     <View style={{ marginTop: spacing[3] }}>
-                      <TextInput
-                        value={deleteEmailOtp}
-                        onChangeText={(value) => {
-                          setDeleteEmailOtp(value);
-                          setDeleteEmailVerified(false);
-                        }}
-                        placeholder={t('settings.deleteAccountModal.enterOtp', {
-                          defaultValue: 'Enter OTP',
-                        })}
-                        placeholderTextColor={colors.gray[400]}
-                        keyboardType="number-pad"
-                        maxLength={6}
-                        style={styles.input}
-                      />
                       <Pressable
                         onPress={handleVerifyDeleteEmailOtp}
                         disabled={isVerifyingDeleteOtp}
-                        style={[styles.verifyPhoneCta, { marginTop: spacing[2] }]}
+                        style={[
+                          styles.verifyPhoneCta,
+                          {
+                            marginTop: spacing[2],
+                            backgroundColor: colorWithOpacity(colors.primary[600], 0.2),
+                          },
+                        ]}
                       >
                         <Text
                           style={styles.verifyPhoneCtaText}
@@ -2388,8 +2433,8 @@ export default function SettingsScreen() {
                             ? t('settings.deleteAccountModal.verified', {
                                 defaultValue: 'Verified',
                               })
-                            : t('settings.deleteAccountModal.verifyOtp', {
-                                defaultValue: 'Verify OTP',
+                            : t('settings.deleteAccountModal.verifyEmail', {
+                                defaultValue: 'I clicked the link',
                               })}
                         </Text>
                       </Pressable>

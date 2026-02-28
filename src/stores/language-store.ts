@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { ExpoSecureStoreAdapter } from '@/lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { SupportedLanguageCode } from '@/i18n/languages';
 
@@ -27,7 +27,7 @@ export const useLanguageStore = create<LanguageState & LanguageActions>()(
     }),
     {
       name: 'vinesight-language',
-      storage: createJSONStorage(() => ExpoSecureStoreAdapter),
+      storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => () => {
         useLanguageStore.setState({ hasHydrated: true });
       },

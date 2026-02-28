@@ -359,6 +359,42 @@ export default Sentry.wrap(function RootLayout() {
     };
   }, []);
 
+  // Safety timeout: if initialization hangs (e.g. SecureStore on Android),
+  // force-complete all conditions so the app doesn't stay on splash forever.
+  useEffect(() => {
+    const INIT_TIMEOUT_MS = 8_000;
+    const timeout = setTimeout(() => {
+      const authStillLoading = useAuthStore.getState().isLoading;
+      const themeStillPending = !useThemeStore.getState().hasHydrated;
+      const langStillPending = !useLanguageStore.getState().hasHydrated;
+
+      if (authStillLoading || themeStillPending || langStillPending) {
+        const context = {
+          authStillLoading,
+          themeHydrated: !themeStillPending,
+          languageHydrated: !langStillPending,
+        };
+        if (__DEV__) {
+          console.warn(
+            `[VineSight] App init timed out after ${INIT_TIMEOUT_MS}ms — ` +
+              `auth loading: ${authStillLoading}, ` +
+              `theme hydrated: ${!themeStillPending}, ` +
+              `language hydrated: ${!langStillPending}. Forcing splash hide.`,
+          );
+        }
+        Sentry.captureMessage('App init timed out — forcing splash hide', {
+          level: 'warning',
+          extra: { timeoutMs: INIT_TIMEOUT_MS, ...context },
+        });
+        if (authStillLoading) useAuthStore.setState({ isLoading: false });
+        if (themeStillPending) useThemeStore.setState({ hasHydrated: true });
+        if (langStillPending) useLanguageStore.setState({ hasHydrated: true });
+      }
+    }, INIT_TIMEOUT_MS);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
   useEffect(() => {
     // Hide splash screen when auth + language are loaded
     if (!isLoading && languageHydrated && themeHydrated) {

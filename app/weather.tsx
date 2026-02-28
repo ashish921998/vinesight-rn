@@ -88,7 +88,7 @@ export default function WeatherScreen() {
     if (isLoadingAuth) return;
     if (!isAuthenticated) {
       router.replace({
-        pathname: '/(auth)/login',
+        pathname: '/(auth)/phone-login',
         params: { redirect: authRedirectPath },
       });
     }

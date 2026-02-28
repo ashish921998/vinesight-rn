@@ -86,6 +86,7 @@ export function GuidedTourController() {
   const skipTour = useGuidedTourStore((s) => s.skipTour);
   const startTour = useGuidedTourStore((s) => s.startTour);
   const completeTour = useGuidedTourStore((s) => s.completeTour);
+  const resetForReplay = useGuidedTourStore((s) => s.resetForReplay);
   const [rect, setRect] = useState<GuidedTourTargetRect | null>(null);
   const [activeCoachStep, setActiveCoachStep] = useState<GuidedTourStep | null>(null);
   const [hasChosenActivityType, setHasChosenActivityType] = useState(false);
@@ -114,6 +115,7 @@ export function GuidedTourController() {
   const mountedRef = useRef(false);
   const addLogRetryCountRef = useRef(0);
   const previousShowEventKeyRef = useRef<string | null>(null);
+  const previousUserIdRef = useRef<string | null>(null);
 
   const guidedTourEnabled =
     (process.env.EXPO_PUBLIC_GUIDED_TOUR_ENABLED ?? 'false').toLowerCase() === 'true';
@@ -145,6 +147,26 @@ export function GuidedTourController() {
     }
     return 'none' as const;
   }, [currentStep, eligible, hasSeenWelcomeThisSession, isSuspended, segments, status]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    if (!isAuthenticated || !userId) {
+      if (previousUserIdRef.current !== null) {
+        resetForReplay();
+        hydrationSyncedRef.current = false;
+      }
+      previousUserIdRef.current = null;
+      return;
+    }
+
+    if (previousUserIdRef.current && previousUserIdRef.current !== userId) {
+      resetForReplay();
+      hydrationSyncedRef.current = false;
+    }
+
+    previousUserIdRef.current = userId;
+  }, [hasHydrated, isAuthenticated, resetForReplay, userId]);
 
   useEffect(() => {
     if (isAuthenticated && userId) {
@@ -535,7 +557,7 @@ export function GuidedTourController() {
     let cancelled = false;
     const startedAt = Date.now();
 
-    const showEventKey = `step-shown-${step}-${targetId}`;
+    const showEventKey = `step-shown-${pathname}-${step}-${targetId}`;
     const attempt = async () => {
       if (cancelled) return;
 
@@ -575,7 +597,7 @@ export function GuidedTourController() {
 
       if (step === 'add_log' && addLogFlowRoute) {
         // Add-log UI can mount targets with delays (sheet animation, route transitions).
-        // Keep retrying instead of dropping guidance for this step, but cap retries.
+        // Keep retrying instead of dropping guidance for this step.
         if (addLogRetryCountRef.current < MAX_GUIDED_TOUR_TARGET_RETRIES) {
           addLogRetryCountRef.current += 1;
           setTimeout(() => {
@@ -588,6 +610,12 @@ export function GuidedTourController() {
             route: pathname,
             reason: 'max_retries_exceeded',
           });
+          // Keep polling at a slower cadence to recover when dynamic UI mounts later
+          // (e.g. tab switches, delayed sheet content, route transition timing).
+          addLogRetryCountRef.current = 0;
+          setTimeout(() => {
+            void attempt();
+          }, GUIDED_TOUR_TARGET_RETRY_MS * 2);
         }
         return;
       }

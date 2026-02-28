@@ -99,7 +99,11 @@ export default function FarmDetailScreen() {
   const { data: tasks, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
   const { data: profile } = useProfile({ enabled: true });
-  const { data: farmSeasons, refetch: refetchSeasons } = useFarmSeasons(farmId);
+  const {
+    data: farmSeasons,
+    isLoading: isSeasonsLoading,
+    refetch: refetchSeasons,
+  } = useFarmSeasons(farmId);
   const { needsReview: needsSeasonReview } = useFarmSeasonStatus(farmId);
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
@@ -641,6 +645,7 @@ export default function FarmDetailScreen() {
       setGuidedTourHasActiveSeason(null);
       return;
     }
+    if (isSeasonsLoading) return;
     setGuidedTourHasActiveSeason(Boolean(activeSeasonRecord));
     if (activeSeasonRecord) {
       guidedTourSeasonAutoOpenedRef.current = false;
@@ -657,6 +662,7 @@ export default function FarmDetailScreen() {
     guidedTourStep,
     setGuidedTourHasActiveSeason,
     showSeasonForm,
+    isSeasonsLoading,
   ]);
 
   const confirmDeleteFarmFromSheet = () => {
@@ -970,7 +976,7 @@ export default function FarmDetailScreen() {
           onPress: () => {
             deleteFarmMutation.mutate(farmId, {
               onSuccess: () => {
-                router.back();
+                router.replace('/(tabs)/farms');
               },
               onError: (error: Error) => {
                 Alert.alert(

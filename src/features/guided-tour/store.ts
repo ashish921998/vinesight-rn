@@ -177,6 +177,7 @@ export const useGuidedTourStore = create<GuidedTourStore>()(
           active_farm_id: state.activeFarmId,
           locale: locale ?? 'en',
           tour_version: state.version,
+          clear_nullable_fields: false,
         };
       },
     }),

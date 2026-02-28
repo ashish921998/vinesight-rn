@@ -132,7 +132,7 @@ export default function OTPVerificationScreen() {
       router.back();
       return;
     }
-    router.replace('/(auth)/login');
+    router.replace('/(auth)/phone-login');
   };
 
   const containerStyle: ViewStyle = {

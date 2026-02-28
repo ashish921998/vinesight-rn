@@ -246,11 +246,31 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
   // Initialize - check existing session
   initialize: async () => {
+    let settled = false;
+    // Safety: if getSession() hangs (e.g. SecureStore on Android), don't block forever.
+    const safetyTimeout = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        if (__DEV__) {
+          console.warn('[VineSight] supabase.auth.getSession() timed out after 5 s');
+        }
+        Sentry.captureMessage('supabase.auth.getSession() timed out', {
+          level: 'warning',
+          extra: { timeoutMs: 5_000 },
+        });
+        set({ isLoading: false });
+      }
+    }, 5_000);
+
     try {
       const {
         data: { session },
         error,
       } = await supabase.auth.getSession();
+
+      clearTimeout(safetyTimeout);
+      if (settled) return; // timeout already handled
+      settled = true;
 
       if (error) throw error;
 
@@ -274,6 +294,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         set({ isLoading: false });
       }
     } catch (error) {
+      clearTimeout(safetyTimeout);
+      if (settled) return;
+      settled = true;
       console.error('Auth initialization error:', error);
       set({ isLoading: false });
     }
