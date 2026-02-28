@@ -7,6 +7,7 @@ import type { GuidedTourPatchPayload, GuidedTourServerState } from './types';
 
 const GUIDED_TOUR_TABLE = 'user_guided_tour_state';
 const PUSH_DEVICES_TABLE = 'user_push_devices';
+const FARMS_TABLE = 'farms';
 
 async function getUserId(): Promise<string | null> {
   const {
@@ -45,6 +46,18 @@ export async function upsertGuidedTourServerState(patch: GuidedTourPatchPayload)
     p_clear_nullable_fields: patch.clear_nullable_fields ?? false,
   });
   if (error) throw error;
+}
+
+export async function userHasAnyFarms(): Promise<boolean> {
+  const userId = await getUserId();
+  if (!userId) return false;
+  const { data, error } = await supabase
+    .from(FARMS_TABLE)
+    .select('id')
+    .eq('user_id', userId)
+    .limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
 }
 
 export async function registerGuidedTourPushDevice(locale: 'en' | 'hi' | 'mr'): Promise<void> {

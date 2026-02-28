@@ -53,6 +53,12 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
     }),
     {
       name: THEME_STORAGE_KEY,
+      version: 1,
+      migrate: (persistedState: unknown, _version: number) => {
+        const state = persistedState as ThemeState | null;
+        if (!state) return persistedState;
+        return state;
+      },
       storage: createJSONStorage(() => themeStorage),
       onRehydrateStorage: () => () => {
         useThemeStore.setState({ hasHydrated: true });

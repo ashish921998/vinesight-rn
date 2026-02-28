@@ -2530,7 +2530,7 @@ export const hi = {
       coach: 'अपना पहला खेत जोड़ने के लिए यहां टैप करें।',
       formNameCoach: 'पहले अपने खेत का नाम दर्ज करें।',
       formRegionCoach: 'अपने खेत का स्थान (क्षेत्र) जोड़ें।',
-      formAreaCoach: 'अब अपने खेत का क्षेत्रफल एकड़ में दर्ज करें।',
+      formAreaCoach: 'अब अपने खेत का क्षेत्रफल {{areaUnit}} में दर्ज करें।',
       formVarietyPickCoach: 'सूची से एक किस्म चुनें।',
       formVarietyCoach: 'अपनी फसल की किस्म चुनें।',
       formCustomVarietyCoach: 'अपनी कस्टम किस्म का नाम टाइप करें।',

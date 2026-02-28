@@ -255,6 +255,7 @@ export default function SettingsScreen() {
   const [countrySearch, setCountrySearch] = useState('');
   const emailOtpRequestedAtRef = useRef<number | null>(null);
   const resetGuidedTour = useGuidedTourStore((s) => s.resetForReplay);
+  const setReplayResetPending = useGuidedTourStore((s) => s.setReplayResetPending);
 
   // Local preferences state
   const [selectedCurrency, setSelectedCurrency] = useState(() => getDefaultCurrency());
@@ -446,6 +447,9 @@ export default function SettingsScreen() {
       // Always reset local state first — this is the critical step
       resetGuidedTour();
 
+      // Set marker for retry with clear_nullable_fields: true
+      setReplayResetPending(true);
+
       // Fire-and-forget server sync — don't block the user on network failures.
       // The controller's debounced effect will re-sync state on the next render anyway.
       void upsertGuidedTourServerState({
@@ -461,11 +465,18 @@ export default function SettingsScreen() {
         locale: language === 'hi' || language === 'mr' ? language : 'en',
         tour_version: GUIDED_TOUR_VERSION,
         clear_nullable_fields: true,
-      }).catch((error) => {
-        if (__DEV__) {
-          console.warn('[guided-tour] server reset sync failed (will retry automatically):', error);
-        }
-      });
+      })
+        .then(() => {
+          setReplayResetPending(false);
+        })
+        .catch((error) => {
+          if (__DEV__) {
+            console.warn(
+              '[guided-tour] server reset sync failed (will retry automatically):',
+              error,
+            );
+          }
+        });
 
       telemetry.capture('tour_restarted');
       // Navigate to dashboard where the welcome card will appear
@@ -478,7 +489,7 @@ export default function SettingsScreen() {
     } finally {
       setIsResettingGuidedTour(false);
     }
-  }, [isResettingGuidedTour, language, resetGuidedTour, router, t]);
+  }, [isResettingGuidedTour, language, resetGuidedTour, router, t, setReplayResetPending]);
 
   const handleToggleDailyWaterReminder = async (enabled: boolean) => {
     if (enabled) {

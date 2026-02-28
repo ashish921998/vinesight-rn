@@ -649,7 +649,7 @@ export default function FarmDetailScreen() {
       setGuidedTourHasActiveSeason(null);
       return;
     }
-    if (isSeasonsLoading) return;
+    if (isSeasonsLoading || farmSeasons === undefined) return;
     setGuidedTourHasActiveSeason(Boolean(activeSeasonRecord));
     if (activeSeasonRecord) {
       guidedTourSeasonAutoOpenedRef.current = false;
@@ -662,6 +662,7 @@ export default function FarmDetailScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeSeasonRecord,
+    farmSeasons,
     guidedTourStatus,
     guidedTourStep,
     setGuidedTourHasActiveSeason,

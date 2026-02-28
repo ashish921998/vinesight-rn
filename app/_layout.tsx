@@ -143,7 +143,6 @@ export default Sentry.wrap(function RootLayout() {
   const languageHydrated = useLanguageStore((s) => s.hasHydrated);
 
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
-  const setGuidedTourLastActiveAt = useGuidedTourStore((s) => s.setLastActiveAt);
   const guidedTourHydrated = useGuidedTourStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
   const prevGuidedTourHydratedRef = useRef(false);
@@ -324,15 +323,8 @@ export default Sentry.wrap(function RootLayout() {
   }, [language, languageHydrated, notificationsHydrated]);
 
   useEffect(() => {
-    if (!guidedTourHydrated) {
-      prevGuidedTourHydratedRef.current = false;
-      return;
-    }
-    if (!prevGuidedTourHydratedRef.current) {
-      setGuidedTourLastActiveAt();
-    }
-    prevGuidedTourHydratedRef.current = true;
-  }, [guidedTourHydrated, setGuidedTourLastActiveAt]);
+    prevGuidedTourHydratedRef.current = guidedTourHydrated;
+  }, [guidedTourHydrated]);
 
   useEffect(() => {
     let cleanup: null | (() => void) = null;

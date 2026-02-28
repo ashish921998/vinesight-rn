@@ -3,6 +3,7 @@ import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import { router, usePathname, useSegments } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useLanguageStore } from '@/stores';
+import { useProfile } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { GuidedTourCoachmark } from './coachmark';
 import { GuidedTourCompletionCard } from './completion-card';
@@ -11,6 +12,7 @@ import {
   GUIDED_TOUR_TARGET_RETRY_MS,
   GUIDED_TOUR_TARGET_TIMEOUT_MS,
   MAX_GUIDED_TOUR_TARGET_RETRIES,
+  GUIDED_TOUR_VERSION,
 } from './constants';
 import { guidedTourEmit, guidedTourOn } from './events';
 import { GuidedTourOverlay } from './overlay';
@@ -18,6 +20,7 @@ import {
   registerGuidedTourPushDevice,
   fetchGuidedTourServerState,
   upsertGuidedTourServerState,
+  userHasAnyFarms,
 } from './service';
 import { useGuidedTourStore } from './store';
 import { measureGuidedTourTarget, type GuidedTourTargetRect } from './targets';
@@ -63,6 +66,7 @@ export function GuidedTourController() {
   const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const language = useLanguageStore((s) => s.language) ?? 'en';
+  const { data: profile } = useProfile({ enabled: isAuthenticated });
 
   const status = useGuidedTourStore((s) => s.status);
   const currentStep = useGuidedTourStore((s) => s.currentStep);
@@ -72,6 +76,7 @@ export function GuidedTourController() {
   const isSuspended = useGuidedTourStore((s) => s.isSuspended);
   const isSeasonFormVisible = useGuidedTourStore((s) => s.isSeasonFormVisible);
   const hasActiveSeasonForCurrentFarm = useGuidedTourStore((s) => s.hasActiveSeasonForCurrentFarm);
+  const replayResetPending = useGuidedTourStore((s) => s.replayResetPending);
   const lastActiveAt = useGuidedTourStore((s) => s.lastActiveAt);
   const remindersSent = useGuidedTourStore((s) => s.remindersSent);
   const startedAt = useGuidedTourStore((s) => s.startedAt);
@@ -120,18 +125,13 @@ export function GuidedTourController() {
   const previousShowEventKeyRef = useRef<string | null>(null);
   const previousUserIdRef = useRef<string | null>(null);
 
-  const guidedTourEnabled =
-    (process.env.EXPO_PUBLIC_GUIDED_TOUR_ENABLED ?? 'false').toLowerCase() === 'true';
-  const forceEnable =
-    (process.env.EXPO_PUBLIC_GUIDED_TOUR_FORCE_ENABLE ?? 'false').toLowerCase() === 'true';
-
   const isSupportedLocale = language === 'en' || language === 'hi' || language === 'mr';
 
   const eligible =
-    (guidedTourEnabled || forceEnable) &&
     isAuthenticated &&
     !needsProfileCompletion &&
     hasHydrated &&
+    initialServerHydrated &&
     !['complete', 'skipped', 'expired'].includes(status);
 
   const addLogFlowRoute = isAddLogFlowRoute(pathname, segments);
@@ -184,8 +184,18 @@ export function GuidedTourController() {
     if (!isAuthenticated || !hasHydrated || hydrationSyncedRef.current) return;
     hydrationSyncedRef.current = true;
     fetchGuidedTourServerState()
-      .then((server) => {
-        if (server) applyServerState(server);
+      .then(async (server) => {
+        if (server) {
+          applyServerState(server);
+          return;
+        }
+
+        // No server state exists yet. Show tour only for genuinely new users.
+        // Existing users (already having farms) should not enter guided tour.
+        const hasAnyFarms = await userHasAnyFarms();
+        if (hasAnyFarms) {
+          completeTour();
+        }
       })
       .catch((error) => {
         if (__DEV__) console.warn('[guided-tour] fetch sync failed', error);
@@ -193,17 +203,38 @@ export function GuidedTourController() {
       .finally(() => {
         setInitialServerHydrated(true);
       });
-  }, [applyServerState, hasHydrated, isAuthenticated, userId]);
+  }, [applyServerState, completeTour, hasHydrated, isAuthenticated, userId]);
 
   useEffect(() => {
     if (!isAuthenticated || !hasHydrated || !isSupportedLocale || !initialServerHydrated) return;
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     syncTimeoutRef.current = setTimeout(() => {
-      void upsertGuidedTourServerState(toServerPatch(language)).catch((error) => {
-        if (__DEV__) {
-          console.warn('[guided-tour] state sync failed', error);
-        }
-      });
+      if (replayResetPending) {
+        void upsertGuidedTourServerState({
+          tour_status: 'not_started',
+          current_step: 'welcome',
+          skipped_at_step: null,
+          reminders_sent: 0,
+          tour_started_at: null,
+          tour_completed_at: null,
+          tour_expired_at: null,
+          last_active_at: new Date().toISOString(),
+          active_farm_id: null,
+          locale: language === 'hi' || language === 'mr' ? language : 'en',
+          tour_version: GUIDED_TOUR_VERSION,
+          clear_nullable_fields: true,
+        }).catch((error) => {
+          if (__DEV__) {
+            console.warn('[guided-tour] replay reset sync failed', error);
+          }
+        });
+      } else {
+        void upsertGuidedTourServerState(toServerPatch(language)).catch((error) => {
+          if (__DEV__) {
+            console.warn('[guided-tour] state sync failed', error);
+          }
+        });
+      }
     }, 350);
     return () => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
@@ -214,6 +245,7 @@ export function GuidedTourController() {
     initialServerHydrated,
     language,
     hasHydrated,
+    replayResetPending,
     toServerPatch,
     activeFarmId,
     completedAt,
@@ -236,7 +268,7 @@ export function GuidedTourController() {
   }, [isAuthenticated, isSupportedLocale, language]);
 
   useEffect(() => {
-    if (!eligible) return;
+    if (!eligible || !initialServerHydrated) return;
     setLastActiveAt();
     const subscription = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next === 'active') {
@@ -245,7 +277,7 @@ export function GuidedTourController() {
       }
     });
     return () => subscription.remove();
-  }, [eligible, resumeIfEligible, setLastActiveAt]);
+  }, [eligible, resumeIfEligible, setLastActiveAt, initialServerHydrated]);
 
   useEffect(() => {
     mountedRef.current = false;
@@ -888,6 +920,9 @@ export function GuidedTourController() {
                             : addFarmPhase === 'area'
                               ? t('guidedTour.step1.formAreaCoach', {
                                   defaultValue: 'Now enter your farm area in acres.',
+                                  areaUnit: t(
+                                    `units.${profile?.area_unit_preference === 'hectares' ? 'hectares' : 'acres'}`,
+                                  ),
                                 })
                               : addFarmPhase === 'variety_option'
                                 ? t('guidedTour.step1.formVarietyPickCoach', {

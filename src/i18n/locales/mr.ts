@@ -1819,7 +1819,7 @@ export const mr = {
     },
     loading: '$t(glossary.worker) तपशील लोड होत आहे...',
     notFound: {
-      title: '$t(glossary.worker) सापडले नाहीत',
+      title: '$t(glossary.worker) सापडला नाही',
     },
     status: {
       active: 'सक्रिय',
@@ -2539,10 +2539,10 @@ export const mr = {
       coach: 'तुमचे पहिले $t(glossary.farm) जोडण्यासाठी येथे टॅप करा.',
       formNameCoach: 'प्रथम तुमच्या $t(glossary.farm) चे नाव नोंदवा.',
       formRegionCoach: 'तुमच्या $t(glossary.farm) चे स्थान (प्रदेश) जोडा.',
-      formAreaCoach: 'आता तुमच्या $t(glossary.farm) चे क्षेत्रफळ नोंदवा.',
+      formAreaCoach: 'आता तुमच्या $t(glossary.farm) चे क्षेत्रफळ {{areaUnit}} मध्ये नोंदवा.',
       formVarietyPickCoach: 'यादीतून एक विविधता निवडा.',
       formVarietyCoach: 'तुमची पिकाची विविधता निवडा.',
-      formCustomVarietyCoach: 'तुमची सानुकूल विविधतेचे नाव लिहा.',
+      formCustomVarietyCoach: 'तुमच्या सानुकूल विविधतेचे नाव लिहा.',
       formCropCoach: 'आता तुमचे पिक प्रकार निवडा.',
       formSubmitCoach: 'छान. सुरू ठेवण्यासाठी $t(glossary.farm) तयार करा टॅप करा.',
     },

@@ -14,6 +14,7 @@ interface GuidedTourStore extends GuidedTourState {
   isSuspended: boolean;
   isSeasonFormVisible: boolean;
   hasActiveSeasonForCurrentFarm: boolean | null;
+  replayResetPending: boolean;
   hydrateComplete: () => void;
   startTour: () => void;
   showStep: (step: GuidedTourStep) => void;
@@ -29,6 +30,7 @@ interface GuidedTourStore extends GuidedTourState {
   setSuspended: (value: boolean) => void;
   setSeasonFormVisible: (value: boolean) => void;
   setHasActiveSeasonForCurrentFarm: (value: boolean | null) => void;
+  setReplayResetPending: (value: boolean) => void;
   applyServerState: (serverState: GuidedTourServerState) => void;
   toServerPatch: (locale?: 'en' | 'hi' | 'mr') => GuidedTourPatchPayload;
 }
@@ -80,11 +82,13 @@ export const useGuidedTourStore = create<GuidedTourStore>()(
       isSuspended: false,
       isSeasonFormVisible: false,
       hasActiveSeasonForCurrentFarm: null,
+      replayResetPending: false,
       hydrateComplete: () => set({ hasHydrated: true }),
       setHasSeenWelcomeThisSession: (value) => set({ hasSeenWelcomeThisSession: value }),
       setSuspended: (value) => set({ isSuspended: value }),
       setSeasonFormVisible: (value) => set({ isSeasonFormVisible: value }),
       setHasActiveSeasonForCurrentFarm: (value) => set({ hasActiveSeasonForCurrentFarm: value }),
+      setReplayResetPending: (value) => set({ replayResetPending: value }),
       startTour: () =>
         set((state) => ({
           status: 'in_progress',
@@ -140,6 +144,7 @@ export const useGuidedTourStore = create<GuidedTourStore>()(
           isSuspended: false,
           isSeasonFormVisible: false,
           hasActiveSeasonForCurrentFarm: null,
+          replayResetPending: false,
         }),
       applyServerState: (serverState) =>
         set((state) => {

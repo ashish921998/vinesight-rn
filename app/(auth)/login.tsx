@@ -57,10 +57,10 @@ export default function LoginScreen() {
     if (pendingOTPEmail) {
       router.push({
         pathname: '/(auth)/otp-verification',
-        params: { email: pendingOTPEmail, redirect: redirectPath },
+        params: { email: pendingOTPEmail, redirect: redirectPath, mode: requestedMode },
       });
     }
-  }, [pendingOTPEmail, redirectPath]);
+  }, [pendingOTPEmail, redirectPath, requestedMode]);
 
   useEffect(() => {
     setIsSignUp(requestedMode === 'signup');
