@@ -603,13 +603,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     try {
       const { openAuthSessionAsync } = await import('expo-web-browser');
 
-      // Use consistent scheme registered in Google OAuth and Supabase
       const redirectUri = 'vinesight://auth/callback';
-
-      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-      if (!supabaseUrl) {
-        throw new Error('Missing EXPO_PUBLIC_SUPABASE_URL');
-      }
 
       const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',

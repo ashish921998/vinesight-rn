@@ -76,12 +76,13 @@ export function useGuidedTourServerSync(): boolean {
         hydrationSyncedRef.current = true;
         if (server) {
           applyServerState(server);
-          return;
-        }
-
-        const hasAnyFarms = await userHasAnyFarms();
-        if (hasAnyFarms) {
-          completeTour();
+          // Fall through — must still mark hydration complete so the controller
+          // sets eligible = true and shows the welcome/coach overlay.
+        } else {
+          const hasAnyFarms = await userHasAnyFarms();
+          if (hasAnyFarms) {
+            completeTour();
+          }
         }
 
         setInitialServerHydrated(true);

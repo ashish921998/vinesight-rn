@@ -22,12 +22,17 @@ import { colorWithOpacity } from '@/utils/color';
 import { useIsDark, useM3 } from '@/styles/use-theme';
 import appLogoDark from '../../assets/icons/ios-dark.png';
 import appLogoLight from '../../assets/icons/ios-light.png';
+import * as WebBrowser from 'expo-web-browser';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
   const isDark = useIsDark();
   const appLogo = isDark ? appLogoDark : appLogoLight;
+
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+  }, []);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -26,6 +26,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { buildE164PhoneNumber } from '@/utils/phone';
 import appLogoDark from '../../assets/icons/ios-dark.png';
 import appLogoLight from '../../assets/icons/ios-light.png';
+import * as WebBrowser from 'expo-web-browser';
 
 interface Country {
   name: string;
@@ -69,6 +70,10 @@ export default function PhoneLoginScreen() {
     return '/';
   }, [redirect]);
   const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
+
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+  }, []);
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
@@ -122,6 +127,10 @@ export default function PhoneLoginScreen() {
   const handleSendCode = async () => {
     const fullPhoneNumber = normalizedPhoneNumber;
     if (!fullPhoneNumber) {
+      setLocalPhoneError(t('authPhone.invalidPhone'));
+      return;
+    }
+    if (phoneNumber.length !== 10) {
       setLocalPhoneError(t('authPhone.invalidPhone'));
       return;
     }
@@ -414,7 +423,7 @@ export default function PhoneLoginScreen() {
                 }}
                 leftIcon="phone.fill"
                 keyboardType="phone-pad"
-                maxLength={15}
+                maxLength={10}
                 autoCapitalize="none"
                 textContentType="telephoneNumber"
                 autoComplete="tel"
