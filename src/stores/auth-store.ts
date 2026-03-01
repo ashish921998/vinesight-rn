@@ -369,8 +369,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       clearTimeout(safetyTimeout);
       if (!settled) {
         settled = true;
-      } else {
-        return;
       }
 
       if (error) throw error;
@@ -912,7 +910,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       await clearQueryCache('delete account');
 
       telemetry.capture('account_deletion_succeeded');
-      await telemetry.flush();
+      try {
+        await telemetry.flush();
+      } catch (err) {
+        if (__DEV__) {
+          console.error('[Telemetry] Failed to flush account deletion event:', err);
+        }
+      }
       telemetry.reset();
 
       if (__DEV__) {

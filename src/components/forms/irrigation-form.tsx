@@ -122,7 +122,7 @@ export function IrrigationForm({
                 color: m3.colorScheme.primary,
               }}
             >
-              Enter irrigation hours to continue.
+              {t('irrigationForm.enterHoursGuidance')}
             </Text>
           ) : null}
         </View>
@@ -158,7 +158,7 @@ export function IrrigationForm({
                     marginLeft: spacing[1],
                   }}
                 >
-                  Area
+                  {t('irrigationForm.areaLabel')}
                 </Text>
               </View>
               <Text
@@ -194,7 +194,7 @@ export function IrrigationForm({
                     marginLeft: spacing[1],
                   }}
                 >
-                  Est. Water
+                  {t('irrigationForm.estimatedWaterLabel')}
                 </Text>
               </View>
               <Text
@@ -234,7 +234,9 @@ export function IrrigationForm({
             color: isValid ? colors.success : colors.surface[500],
           }}
         >
-          {isValid ? 'Ready to add' : 'Enter duration to continue'}
+          {isValid
+            ? t('irrigationForm.validation.ready')
+            : t('irrigationForm.validation.incomplete')}
         </Text>
       </View>
     </View>

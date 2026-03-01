@@ -33,7 +33,7 @@ import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 import { queryClient, queryPersister, QUERY_CACHE_MAX_AGE_MS } from '@/lib/query-cache';
-import { GuidedTourController, guidedTourEmit, useGuidedTourStore } from '@/features/guided-tour';
+import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -144,9 +144,7 @@ export default Sentry.wrap(function RootLayout() {
   const languageHydrated = useLanguageStore((s) => s.hasHydrated);
 
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
-  const guidedTourHydrated = useGuidedTourStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
-  const prevGuidedTourHydratedRef = useRef(false);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
@@ -322,10 +320,6 @@ export default Sentry.wrap(function RootLayout() {
       reschedulePromiseRef.current = null;
     };
   }, [language, languageHydrated, notificationsHydrated]);
-
-  useEffect(() => {
-    prevGuidedTourHydratedRef.current = guidedTourHydrated;
-  }, [guidedTourHydrated]);
 
   useEffect(() => {
     let cleanup: null | (() => void) = null;

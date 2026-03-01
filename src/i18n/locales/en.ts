@@ -670,6 +670,15 @@ export const en = {
     amount: 'Amount',
     amountPlaceholder: 'Enter amount',
     amountHint: 'Total expense amount',
+    types: {
+      Equipment: 'Equipment',
+      Fuel: 'Fuel',
+      'Seeds/Plants': 'Seeds/Plants',
+      Packaging: 'Packaging',
+      Transport: 'Transport',
+      Maintenance: 'Maintenance',
+      Other: 'Other',
+    },
   },
 
   harvestForm: {
@@ -679,6 +688,12 @@ export const en = {
     quantityPlaceholder: 'Enter quantity',
     unitKg: 'kg',
     quantityHint: 'Total harvested weight',
+    pricePerKgLabel: 'Price per kg',
+    pricePerKgPlaceholder: 'Enter price',
+    pricePerKgHint: 'Optional - price per kilogram',
+    buyerLabel: 'Buyer',
+    buyerPlaceholder: 'Enter buyer name (optional)',
+    buyerHint: 'Optional - who bought the harvest',
   },
 
   irrigationForm: {
@@ -687,6 +702,13 @@ export const en = {
     durationLabel: 'Duration',
     durationPlaceholder: 'Enter duration',
     durationHint: 'How long was the irrigation cycle?',
+    enterHoursGuidance: 'Enter irrigation hours to continue.',
+    validation: {
+      ready: 'Ready to add',
+      incomplete: 'Enter duration to continue',
+    },
+    areaLabel: 'Area',
+    estimatedWaterLabel: 'Est. Water',
   },
 
   analytics: {

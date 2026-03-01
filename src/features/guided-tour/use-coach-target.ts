@@ -361,11 +361,11 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
         });
         if (step === 'add_farm') {
           if (isAddFarmFlowRoute(pathname)) {
-            // eslint-disable-next-line no-empty
             if (addFarmPhase === 'crop_option') {
+              // intentionally empty - crop_option phase handled elsewhere
             }
-            // eslint-disable-next-line no-empty
             if (addFarmPhase === 'variety_option') {
+              // intentionally empty - variety_option phase handled elsewhere
             }
           } else {
             completeStep('add_farm');

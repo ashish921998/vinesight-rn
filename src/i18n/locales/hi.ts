@@ -664,6 +664,54 @@ export const hi = {
     },
   },
 
+  irrigationForm: {
+    title: 'सिंचाई',
+    subtitle: 'सिंचाई अवधि लॉग करें',
+    durationLabel: 'अवधि',
+    durationPlaceholder: 'अवधि दर्ज करें',
+    durationHint: 'सिंचाई चक्र कितने समय तक चला?',
+    enterHoursGuidance: 'जारी रखने के लिए सिंचाई घंटे दर्ज करें।',
+    validation: {
+      ready: 'जोड़ने के लिए तैयार',
+      incomplete: 'जारी रखने के लिए अवधि दर्ज करें',
+    },
+    areaLabel: 'क्षेत्र',
+    estimatedWaterLabel: 'अनुमानित पानी',
+  },
+
+  expenseForm: {
+    title: 'खर्च',
+    subtitle: 'खेत खर्च लॉग करें',
+    category: 'श्रेणी',
+    amount: 'राशि',
+    amountPlaceholder: 'राशि दर्ज करें',
+    amountHint: 'कुल खर्च की राशि',
+    types: {
+      Equipment: 'उपकरण',
+      Fuel: 'ईंधन',
+      'Seeds/Plants': 'बीज/पौधे',
+      Packaging: 'पैकेजिंग',
+      Transport: 'परिवहन',
+      Maintenance: 'रखरखाव',
+      Other: 'अन्य',
+    },
+  },
+
+  harvestForm: {
+    title: 'कटाई',
+    subtitle: 'कटाई की मात्रा और विवरण लॉग करें',
+    quantityLabel: 'मात्रा',
+    quantityPlaceholder: 'मात्रा दर्ज करें',
+    unitKg: 'किग्रा',
+    quantityHint: 'कुल कटाई का वजन',
+    pricePerKgLabel: 'प्रति किग्रा मूल्य',
+    pricePerKgPlaceholder: 'मूल्य दर्ज करें',
+    pricePerKgHint: 'वैकल्पिक - प्रति किलोग्राम मूल्य',
+    buyerLabel: 'खरीदार',
+    buyerPlaceholder: 'खरीदार का नाम दर्ज करें (वैकल्पिक)',
+    buyerHint: 'वैकल्पिक - किसने कटाई खरीदी',
+  },
+
   analytics: {
     title: 'विश्लेषण',
     labels: {
@@ -2543,7 +2591,7 @@ export const hi = {
       fillActivityDetailsCoach: 'विवरण भरें, फिर आगे बढ़ने के लिए अगला टैप करें।',
       fillSprayDetailsCoach: 'जारी रखने के लिए पानी की मात्रा और कम से कम एक रसायन दर्ज करें।',
       tapAddEntryCoach: 'अपनी गतिविधि लॉग करने के लिए प्रविष्टि जोड़ें टैप करें।',
-      tapSaveCoach: 'अपनी गतिविधि रिकॉर्ड करने के लिए सेव टैप करें।',
+      tapSaveCoach: 'अपनी गतिविधि रिकॉर्ड करने के लिए सहेजें टैप करें।',
       startSeasonCoach:
         'पहले सीज़न शुरू करें ताकि Vinesight आपके रिकॉर्ड्स को सही तरह से व्यवस्थित कर सके।',
       startSeasonHelper: 'ज़रूरत हो तो टेम्पलेट/तारीख बदलें, फिर सीज़न शुरू करें पर टैप करें।',

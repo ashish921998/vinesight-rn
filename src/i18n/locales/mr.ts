@@ -665,6 +665,54 @@ export const mr = {
     },
   },
 
+  irrigationForm: {
+    title: 'सिंचन',
+    subtitle: 'सिंचन कालावधी नोंदवा',
+    durationLabel: 'कालावधी',
+    durationPlaceholder: 'कालावधी नोंदवा',
+    durationHint: 'सिंचन चक्र किती वेळ चाललं?',
+    enterHoursGuidance: 'पुढे जाण्यासाठी सिंचन तास नोंदवा.',
+    validation: {
+      ready: 'जोडण्यासाठी तयार',
+      incomplete: 'पुढे जाण्यासाठी कालावधी नोंदवा',
+    },
+    areaLabel: 'क्षेत्र',
+    estimatedWaterLabel: 'अंदाजे पाणी',
+  },
+
+  expenseForm: {
+    title: 'खर्च',
+    subtitle: 'शेत खर्च नोंदवा',
+    category: 'श्रेणी',
+    amount: 'रक्कम',
+    amountPlaceholder: 'रक्कम नोंदवा',
+    amountHint: 'एकूण खर्चाची रक्कम',
+    types: {
+      Equipment: 'उपकरण',
+      Fuel: 'इंधन',
+      'Seeds/Plants': 'बिया/झाडे',
+      Packaging: 'पॅकेजिंग',
+      Transport: 'वाहतूक',
+      Maintenance: 'देखभाल',
+      Other: 'इतर',
+    },
+  },
+
+  harvestForm: {
+    title: 'कापणी',
+    subtitle: 'कापणीची प्रमाण आणि तपशील नोंदवा',
+    quantityLabel: 'प्रमाण',
+    quantityPlaceholder: 'प्रमाण नोंदवा',
+    unitKg: 'किग्रा',
+    quantityHint: 'एकूण कापणीचे वजन',
+    pricePerKgLabel: 'प्रति किग्रा किंमत',
+    pricePerKgPlaceholder: 'किंमत नोंदवा',
+    pricePerKgHint: 'पर्यायी - प्रति किलोग्राम किंमत',
+    buyerLabel: 'खरेदीदार',
+    buyerPlaceholder: 'खरेदीदाराचे नाव नोंदवा (पर्यायी)',
+    buyerHint: 'पर्यायी - कोणी कापणी विकत घेतली',
+  },
+
   analytics: {
     title: 'विश्लेषण',
     labels: {

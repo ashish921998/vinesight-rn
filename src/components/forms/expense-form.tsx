@@ -50,6 +50,14 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
   const currency = isValidCurrency(candidateCurrency)
     ? (candidateCurrency ?? resolvedCurrency)
     : resolvedCurrency;
+  const currencySymbol = (0)
+    .toLocaleString('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+    .replace(/[\d.,\s]/g, '');
   const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
   const showDetailsGuidance =
     guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
@@ -109,7 +117,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
           {/* Category Selection */}
           <View style={{ marginBottom: spacing[4] }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-              <View style={{ marginRight: 6 }}>
+              <View style={{ marginRight: spacing[2] }}>
                 <SymbolIcon name="list.bullet" size={16} color={colors.primary[600]} />
               </View>
               <Text
@@ -132,7 +140,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
                     flexDirection: 'row',
                     alignItems: 'center',
                     paddingHorizontal: spacing[3],
-                    paddingVertical: 10,
+                    paddingVertical: spacing[3],
                     borderRadius: borderRadius.xl,
                     borderWidth: 1,
                     backgroundColor:
@@ -155,7 +163,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
                       color: data.type === type ? m3.colorScheme.error : colors.surface[700],
                     }}
                   >
-                    {type}
+                    {t(`expenseForm.types.${type}`)}
                   </Text>
                 </Pressable>
               ))}
@@ -170,7 +178,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             placeholder={t('expenseForm.amountPlaceholder')}
             value={data.cost}
             onValueChange={(cost) => onChange({ ...data, cost })}
-            unit="₹"
+            unit={currencySymbol}
             required
             decimals={0}
             hint={t('expenseForm.amountHint')}

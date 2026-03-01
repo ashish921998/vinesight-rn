@@ -34,7 +34,7 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
-import { androidTextPadding } from '@/styles/theme';
+import { androidTextPadding, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
 import { PendingLogs, type PendingLog } from '@/components/screens/entry-form/PendingLogs';
 import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
@@ -1069,8 +1069,17 @@ export function EntryForm({
                 action_type: 'record_created',
                 feature_name: submission.logType,
               });
-              // eslint-disable-next-line no-empty
-            } catch {}
+              if (typeof submission.farmId === 'number') {
+                guidedTourEmit('guidedTour.logCreated', {
+                  farmId: submission.farmId,
+                  recordType: submission.logType,
+                });
+              }
+            } catch (err) {
+              if (process.env.NODE_ENV === 'development') {
+                console.error('[Telemetry] failed to send:', err);
+              }
+            }
             successfulFarmIdsByLog.get(submission.logId)?.add(submission.farmId);
             return;
           }
@@ -1245,8 +1254,11 @@ export function EntryForm({
                 action_type: 'record_created',
                 feature_name: log.type,
               });
-              // eslint-disable-next-line no-empty
-            } catch {}
+            } catch (err) {
+              if (process.env.NODE_ENV === 'development') {
+                console.error('[Telemetry] failed to send:', err);
+              }
+            }
             if (typeof farmId === 'number') {
               guidedTourEmit('guidedTour.logCreated', {
                 farmId,
@@ -2049,7 +2061,7 @@ export function EntryForm({
         </View>
       </View>
 
-      {selectedLogType === null ? (
+      {selectedLogType === null && guidedTourStatus === 'in_progress' ? (
         <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
           <LogTypeSelector
             selectedLogType={selectedLogType}
@@ -3153,9 +3165,9 @@ export function EntryForm({
           style={{
             flexShrink: 0,
             backgroundColor: colors.surface[100],
-            paddingHorizontal: 16,
-            paddingTop: 16,
-            paddingBottom: Platform.OS === 'ios' ? Math.max(16, insets.bottom) : 16,
+            paddingHorizontal: spacing[4],
+            paddingTop: spacing[4],
+            paddingBottom: Platform.OS === 'ios' ? Math.max(spacing[4], insets.bottom) : spacing[4],
             borderTopWidth: 1,
             borderColor: colors.surface[100],
           }}
@@ -3163,22 +3175,22 @@ export function EntryForm({
           {activeTab === 'log' ? (
             <>
               {showSaveGuidance ? (
-                <View style={{ alignItems: 'center', marginBottom: 8 }}>
+                <View style={{ alignItems: 'center', marginBottom: spacing[2] }}>
                   <View
                     style={{
                       backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
                       borderWidth: 1,
                       borderColor: colorWithOpacity(m3.colorScheme.primary, 0.3),
-                      borderRadius: 999,
-                      paddingHorizontal: 12,
-                      paddingVertical: 4,
+                      borderRadius: borderRadius.full,
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[1],
                     }}
                   >
                     <Text
                       style={{
                         color: m3.colorScheme.primary,
-                        fontSize: 12,
-                        fontWeight: '600',
+                        fontSize: fontSize.xs,
+                        fontWeight: fontWeight.semibold,
                       }}
                     >
                       {t('guidedTour.step2.tapSaveCoach', {
@@ -3188,13 +3200,13 @@ export function EntryForm({
                   </View>
                 </View>
               ) : null}
-              <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flexDirection: 'row', gap: spacing[3] }}>
                 <Pressable
                   onPress={handleClose}
                   style={{
                     flex: 1,
                     paddingVertical: 14,
-                    borderRadius: 12,
+                    borderRadius: borderRadius.lg,
                     borderWidth: 1,
                     borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                     alignItems: 'center',
@@ -3202,7 +3214,10 @@ export function EntryForm({
                 >
                   <Text
                     selectable
-                    style={{ fontWeight: '600', color: m3.colorScheme.onSurfaceVariant }}
+                    style={{
+                      fontWeight: fontWeight.semibold,
+                      color: m3.colorScheme.onSurfaceVariant,
+                    }}
                   >
                     {t('common.cancel')}
                   </Text>
@@ -3218,7 +3233,7 @@ export function EntryForm({
                       {
                         flex: 1,
                         paddingVertical: 14,
-                        borderRadius: 12,
+                        borderRadius: borderRadius.lg,
                         alignItems: 'center',
                         flexDirection: 'row',
                         justifyContent: 'center',
@@ -3233,7 +3248,7 @@ export function EntryForm({
                             shadowColor: m3.colorScheme.primary,
                             shadowOpacity: 0.45,
                             shadowRadius: 14,
-                            shadowOffset: { width: 0, height: 4 },
+                            shadowOffset: { width: 0, height: spacing[1] },
                             elevation: 8,
                           }
                         : null,

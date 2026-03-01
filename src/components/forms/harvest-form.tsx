@@ -161,15 +161,15 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
 
       {/* Price Input (Optional) */}
       <NumericInput
-        label="Price per kg"
+        label={t('harvestForm.pricePerKgLabel')}
         icon="cash-outline"
         iconColor={colors.success}
-        placeholder="Enter price"
+        placeholder={t('harvestForm.pricePerKgPlaceholder')}
         value={data.price}
         onValueChange={(price) => onChange({ ...data, price })}
         unit="₹"
         decimals={0}
-        hint="Optional - price per kilogram"
+        hint={t('harvestForm.pricePerKgHint')}
         onFocus={onInputFocus}
       />
 
@@ -186,7 +186,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
               color: colors.surface[800],
             }}
           >
-            Buyer
+            {t('harvestForm.buyerLabel')}
           </Text>
         </View>
 
@@ -207,7 +207,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
           </View>
           <TextInput
             style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
-            placeholder="Enter buyer name (optional)"
+            placeholder={t('harvestForm.buyerPlaceholder')}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={data.buyer || ''}
             onChangeText={(buyer) => onChange({ ...data, buyer: buyer || undefined })}
@@ -215,7 +215,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
           />
         </View>
         <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
-          Optional - who bought the harvest
+          {t('harvestForm.buyerHint')}
         </Text>
       </View>
 
