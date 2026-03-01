@@ -16,7 +16,7 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       if (error) {
-        router.replace('/(auth)/login');
+        router.replace('/(auth)/phone-login');
         return;
       }
 
@@ -38,14 +38,14 @@ export default function AuthCallback() {
           }
         } catch (err) {
           console.error('Auth callback exchange error:', err);
-          router.replace('/(auth)/login');
+          router.replace('/(auth)/phone-login');
         }
         return;
       }
 
       if (resolvedAccessToken) {
         if (!resolvedRefreshToken) {
-          router.replace('/(auth)/login');
+          router.replace('/(auth)/phone-login');
           return;
         }
 
@@ -60,17 +60,17 @@ export default function AuthCallback() {
           if (data.session) {
             router.replace('/');
           } else {
-            router.replace('/(auth)/login');
+            router.replace('/(auth)/phone-login');
           }
         } catch (err) {
           console.error('Auth callback error:', err);
-          router.replace('/(auth)/login');
+          router.replace('/(auth)/phone-login');
         }
       } else {
         if (error_description && __DEV__) {
           console.warn('Auth callback error:', error_description);
         }
-        router.replace('/(auth)/login');
+        router.replace('/(auth)/phone-login');
       }
     };
 

@@ -49,6 +49,9 @@ export const mr = {
       avg: 'सरासरी',
       min: 'किमान',
       max: 'कमाल',
+      readyToAdd: 'जोडण्यासाठी तयार',
+      enterQuantityAndSelectGrade: 'प्रमाण नोंदवा आणि दर्जा निवडा',
+      summary: 'सारांश',
     },
     noResultsFound: 'निकाल आढळले नाहीत',
     tryDifferentSearchTerm: 'वेगळा शोध शब्द वापरा',
@@ -665,6 +668,69 @@ export const mr = {
     },
   },
 
+  irrigationForm: {
+    title: 'सिंचन',
+    subtitle: 'सिंचन कालावधी नोंदवा',
+    durationLabel: 'कालावधी',
+    durationPlaceholder: 'कालावधी नोंदवा',
+    durationUnit: 'तास',
+    durationHint: 'सिंचन चक्र किती वेळ चाललं?',
+    enterHoursGuidance: 'पुढे जाण्यासाठी सिंचन तास नोंदवा.',
+    validation: {
+      ready: 'जोडण्यासाठी तयार',
+      incomplete: 'पुढे जाण्यासाठी कालावधी नोंदवा',
+    },
+    areaLabel: 'क्षेत्र',
+    estimatedWaterLabel: 'अंदाजे पाणी',
+  },
+
+  expenseForm: {
+    title: 'खर्च',
+    subtitle: 'शेत खर्च नोंदवा',
+    category: 'श्रेणी',
+    amount: 'रक्कम',
+    amountPlaceholder: 'रक्कम नोंदवा',
+    amountHint: 'एकूण खर्चाची रक्कम',
+    types: {
+      Equipment: 'उपकरण',
+      Fuel: 'इंधन',
+      'Seeds/Plants': 'बिया/झाडे',
+      Packaging: 'पॅकेजिंग',
+      Transport: 'वाहतूक',
+      Maintenance: 'देखभाल',
+      Other: 'इतर',
+    },
+    remarks: {
+      label: 'टिप्पण्या',
+      placeholder: 'या खर्चाबद्दल टिप्पण्या जोडा (पर्यायी)',
+      hint: 'पर्यायी - खर्च वर्णन करा',
+    },
+    validation: {
+      selectCategoryAndEnterAmount: 'श्रेणी निवडा आणि रक्कम नोंदवा',
+    },
+  },
+
+  harvestForm: {
+    title: 'कापणी',
+    subtitle: 'कापणीची प्रमाण आणि तपशील नोंदवा',
+    quantityLabel: 'प्रमाण',
+    quantityPlaceholder: 'प्रमाण नोंदवा',
+    unitKg: 'किग्रा',
+    quantityHint: 'एकूण कापणीचे वजन',
+    pricePerKgLabel: 'प्रति किग्रा किंमत',
+    pricePerKgPlaceholder: 'किंमत नोंदवा',
+    pricePerKgHint: 'पर्यायी - प्रति किलोग्राम किंमत',
+    buyerLabel: 'खरेदीदार',
+    buyerPlaceholder: 'खरेदीदाराचे नाव नोंदवा (पर्यायी)',
+    buyerHint: 'पर्यायी - कोणी कापणी विकत घेतली',
+    grades: {
+      exportQuality: 'निर्यात दर्जा',
+      premium: 'प्रीमियम',
+      standard: 'मानक',
+      reject: 'अस्वीकार',
+    },
+  },
+
   analytics: {
     title: 'विश्लेषण',
     labels: {
@@ -1214,6 +1280,7 @@ export const mr = {
     continueWithApple: 'Apple सह पुढे जा',
     continueWithGoogle: 'Google सह पुढे जा',
     continueWithPhone: 'फोनने पुढे जा',
+    continueWithEmail: 'ईमेलने साइन इन करा',
     alreadyHaveAccount: 'आधीच खाते आहे?',
     dontHaveAccount: 'खाते नाही?',
     a11y: {
@@ -1235,6 +1302,7 @@ export const mr = {
     useDifferentEmail: 'वेगळा ईमेल वापरा',
     useDifferentEmailA11y: 'वेगळा ईमेल वापरा',
     subtitlePhone: 'आम्ही 6-अंकी कोड पाठवला',
+    verifying: 'पडताळणी सुरू आहे...',
     useDifferentPhone: 'वेगळा फोन नंबर वापरा',
     useDifferentPhoneA11y: 'वेगळा फोन नंबर वापरा',
   },
@@ -1246,6 +1314,9 @@ export const mr = {
     phoneLabel: 'फोन नंबर',
     phonePlaceholder: 'फोन नंबर प्रविष्ट करा',
     sendCode: 'सत्यापन कोड पाठवा',
+    sendingCode: 'कोड पाठवला जात आहे...',
+    preferEmail: 'ईमेल पसंत आहे?',
+    signInWithEmail: 'ईमेलने साइन इन करा',
     selectCountry: 'देश निवडा',
     selectCountryA11y: 'देश निवडक उघडा',
     closeA11y: 'देश निवडक बंद करा',
@@ -1387,6 +1458,8 @@ export const mr = {
         placeholder: 'आपला पासवर्ड टाका',
         hint: 'आपली ओळख पडताळण्यासाठी पासवर्ड टाका',
       },
+      phoneVerificationLabelRequired: 'मोबाईल पडताळणी (आवश्यक)',
+      phoneVerificationLabelOptional: 'मोबाईल पडताळणी',
       reason: {
         label: 'खाते हटवण्याचे कारण (ऐच्छिक)',
         placeholder: 'आपण का जात आहात ते लिहा…',
@@ -1805,6 +1878,58 @@ export const mr = {
       deleteWorkerTitle: '$t(glossary.worker) हटवा?',
       deleteWorkerBody:
         '{{name}} $t(glossary.worker) आणि त्यांच्याशी संबंधित सर्व नोंदी कायमच्या हटवल्या जातील.',
+      markInactiveTitle: 'निष्क्रिय म्हणून चिन्हांकित करायचे?',
+      markInactiveBody: 'यामुळे {{name}} सक्रिय $t(glossary.worker) यादीतून काढला जाईल.',
+      markActiveTitle: 'सक्रिय म्हणून चिन्हांकित करायचे?',
+      markActiveBody: 'यामुळे {{name}} सक्रिय $t(glossary.worker) यादीत परत जोडला जाईल.',
+    },
+    loading: '$t(glossary.worker) तपशील लोड होत आहे...',
+    notFound: {
+      title: '$t(glossary.worker) सापडला नाही',
+    },
+    status: {
+      active: 'सक्रिय',
+      inactive: 'निष्क्रिय',
+    },
+    fields: {
+      dailyRate: 'दैनिक दर',
+      advanceBalance: 'अग्रिम शिल्लक',
+      createdAt: 'तयार केले',
+      updatedAt: 'शेवटचे अपडेट',
+    },
+    attendance: {
+      title: 'उपस्थिती',
+      empty: 'अजून कोणतीही उपस्थिती नोंद नाही',
+      deleteConfirm: '{{date}} ची उपस्थिती हटवायची?',
+      status: {
+        full_day: 'पूर्ण दिवस',
+        half_day: 'अर्धा दिवस',
+        absent: 'अनुपस्थित',
+      },
+    },
+    transactions: {
+      title: 'व्यवहार',
+      empty: 'अजून कोणतेही व्यवहार नाहीत',
+      deleteConfirm: '{{date}} चा व्यवहार हटवायचा?',
+      type: {
+        advance_given: 'अग्रिम दिले',
+        advance_deducted: 'अग्रिम कपात',
+        payment: 'देयक',
+      },
+    },
+    settlements: {
+      title: 'निपटारे',
+      empty: 'अजून कोणतेही निपटारे नाहीत',
+      deleteConfirm: 'हा निपटारा हटवायचा?',
+      status: {
+        draft: 'मसुदा',
+        confirmed: 'पुष्टी',
+      },
+      days: 'दिवस',
+      gross: 'एकूण',
+      advance: 'अग्रिम',
+      net: 'शुद्ध देयक',
+      confirmedAt: 'पुष्टी तारीख',
     },
     form: {
       addTitle: '$t(glossary.worker) जोडा',
@@ -2468,6 +2593,59 @@ export const mr = {
       stopListening: 'ऐकणे थांबवा',
       submitQuery: 'प्रश्न पाठवा',
       selectOption: 'पर्याय निवडा: {{option}}',
+    },
+  },
+  guidedTour: {
+    welcome: {
+      title: 'Vinesight मध्ये स्वागत आहे',
+      body: 'चला एका मिनिटात तुमचे पहिले $t(glossary.farm) सेट करूया.',
+      setupTime: '1 मिनिट सेटअप',
+    },
+    step1: {
+      coach: 'तुमचे पहिले $t(glossary.farm) जोडण्यासाठी येथे टॅप करा.',
+      formNameCoach: 'प्रथम तुमच्या $t(glossary.farm) चे नाव नोंदवा.',
+      formRegionCoach: 'तुमच्या $t(glossary.farm) चे स्थान (प्रदेश) जोडा.',
+      formAreaCoach: 'आता तुमच्या $t(glossary.farm) चे क्षेत्रफळ {{areaUnit}} मध्ये नोंदवा.',
+      formVarietyPickCoach: 'यादीतून एक विविधता निवडा.',
+      formVarietyCoach: 'तुमची पिकाची विविधता निवडा.',
+      formCustomVarietyCoach: 'तुमच्या सानुकूल विविधतेचे नाव लिहा.',
+      formCropCoach: 'आता तुमचे पिक प्रकार निवडा.',
+      formSubmitCoach: 'छान. सुरू ठेवण्यासाठी $t(glossary.farm) तयार करा टॅप करा.',
+    },
+    step2: {
+      coach: 'छान! आता तुमची पहिली नोंद करा.',
+      addEntryCoach: '{{activity}} तपशील भरा, मग नोंद जोडा टॅप करा.',
+      fillActivityDetailsCoach: 'तपशील भरा, मग पुढे जाण्यासाठी पुढे टॅप करा.',
+      fillSprayDetailsCoach: 'पुढे जाण्यासाठी पाण्याचे प्रमाण आणि किमान एक रसायन नोंदवा.',
+      tapAddEntryCoach: 'तुमची कृती नोंदवण्यासाठी नोंद जोडा टॅप करा.',
+      tapSaveCoach: 'तुमची कृती जतन करण्यासाठी जतन करा टॅप करा.',
+      startSeasonCoach: 'आधी हंगाम सुरू करा, म्हणजे Vinesight तुमच्या नोंदी व्यवस्थित ठेवू शकेल.',
+      startSeasonHelper: 'गरज असेल तर टेम्पलेट/तारखा बदला, मग हंगाम सुरू करा वर टॅप करा.',
+      pickActivityCoach:
+        'या आठवड्यात तुम्ही तुमच्या $t(glossary.farm) वर केलेली एक गोष्ट कोणती? नोंद करण्यासाठी क्रियाकलाप निवडा.',
+      pickActivityHelper:
+        'ती आजची नसली तरी चालेल. आठवणीतले लॉग करा ($t(glossary.irrigation), $t(glossary.fertigation), $t(glossary.spray), $t(glossary.expense)).',
+    },
+    complete: {
+      title: 'तुमची तयारी झाली!',
+      body: 'Vinesight तुमचा $t(glossary.farm) डेटा सुरक्षित ठेवेल आणि उपयुक्त माहिती वाढवेल.',
+    },
+    reminderPush: {
+      title: 'तुमचे $t(glossary.farm) तुमची वाट पाहत आहे!',
+      body: 'सेटअप पूर्ण करण्यासाठी टॅप करा.',
+    },
+    coachmark: {
+      title: 'मार्गदर्शक टूर',
+      tapToContinue: 'सुरू ठेवण्यासाठी हायलाइट केलेल्या भागावर टॅप करा',
+    },
+    cta: {
+      letsGo: 'चला सुरू करूया',
+      done: 'पूर्ण',
+      skip: 'वगळा',
+      skipTour: 'टूर वगळा',
+    },
+    settings: {
+      replay: 'गाइडेड टूर पुन्हा चालवा',
     },
   },
 } as const;

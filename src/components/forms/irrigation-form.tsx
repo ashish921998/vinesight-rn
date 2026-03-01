@@ -6,6 +6,10 @@ import { NumericInput } from './form-field';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { useTranslation } from 'react-i18next';
 
 export interface IrrigationFormData {
   duration: number | undefined;
@@ -27,9 +31,14 @@ export function IrrigationForm({
   systemDischarge,
   onInputFocus,
 }: IrrigationFormProps) {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
   const isValid = data.duration !== undefined && data.duration > 0;
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const showDurationGuidance =
+    guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
   // Calculate estimated water applied
   const estimatedWater =
@@ -66,28 +75,58 @@ export function IrrigationForm({
               color: colors.surface[900],
             }}
           >
-            Irrigation
+            {t('irrigationForm.title')}
           </Text>
           <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            Log irrigation duration
+            {t('irrigationForm.subtitle')}
           </Text>
         </View>
       </View>
 
       {/* Duration Input */}
-      <NumericInput
-        label="Duration"
-        icon="time-outline"
-        iconColor={m3.colorScheme.primary}
-        placeholder="Enter duration"
-        value={data.duration}
-        onValueChange={(duration) => onChange({ ...data, duration })}
-        unit="hours"
-        required
-        decimals={1}
-        hint="How long was the irrigation cycle?"
-        onFocus={onInputFocus}
-      />
+      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_IRRIGATION_DURATION}>
+        <View
+          style={{
+            borderRadius: borderRadius.xl,
+            borderWidth: showDurationGuidance ? 2 : 0,
+            borderColor: showDurationGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+              : 'transparent',
+            backgroundColor: showDurationGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.03)
+              : 'transparent',
+            paddingHorizontal: showDurationGuidance ? spacing[2] : 0,
+            paddingTop: showDurationGuidance ? spacing[2] : 0,
+          }}
+        >
+          <NumericInput
+            label={t('irrigationForm.durationLabel')}
+            icon="time-outline"
+            iconColor={m3.colorScheme.primary}
+            placeholder={t('irrigationForm.durationPlaceholder')}
+            value={data.duration}
+            onValueChange={(duration) => onChange({ ...data, duration })}
+            unit={t('irrigationForm.durationUnit')}
+            required
+            decimals={1}
+            hint={t('irrigationForm.durationHint')}
+            onFocus={onInputFocus}
+          />
+          {showDurationGuidance ? (
+            <Text
+              style={{
+                marginBottom: spacing[2],
+                marginTop: -spacing[1],
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                color: m3.colorScheme.primary,
+              }}
+            >
+              {t('irrigationForm.enterHoursGuidance')}
+            </Text>
+          ) : null}
+        </View>
+      </GuidedTourTarget>
 
       {/* Info cards */}
       {(farmArea || estimatedWater) && (
@@ -119,7 +158,7 @@ export function IrrigationForm({
                     marginLeft: spacing[1],
                   }}
                 >
-                  Area
+                  {t('irrigationForm.areaLabel')}
                 </Text>
               </View>
               <Text
@@ -129,7 +168,7 @@ export function IrrigationForm({
                   color: colors.surface[900],
                 }}
               >
-                {farmArea.toFixed(2)} acres
+                {farmArea.toFixed(2)} {t('units.acres')}
               </Text>
             </View>
           )}
@@ -155,7 +194,7 @@ export function IrrigationForm({
                     marginLeft: spacing[1],
                   }}
                 >
-                  Est. Water
+                  {t('irrigationForm.estimatedWaterLabel')}
                 </Text>
               </View>
               <Text
@@ -165,7 +204,7 @@ export function IrrigationForm({
                   color: m3.colorScheme.onSurface,
                 }}
               >
-                {estimatedWater} mm
+                {estimatedWater} {t('units.millimeter')}
               </Text>
             </View>
           )}
@@ -195,7 +234,9 @@ export function IrrigationForm({
             color: isValid ? colors.success : colors.surface[500],
           }}
         >
-          {isValid ? 'Ready to add' : 'Enter duration to continue'}
+          {isValid
+            ? t('irrigationForm.validation.ready')
+            : t('irrigationForm.validation.incomplete')}
         </Text>
       </View>
     </View>

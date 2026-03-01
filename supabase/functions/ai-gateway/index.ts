@@ -67,6 +67,7 @@ type ToolName =
   | 'log_activity.query'
   | 'farm_context.get'
   | 'routing.decide'
+  | 'stt.transcribe'
   | 'memory.search'
   | 'memory.write'
   | 'agronomy_kb.search'
@@ -768,8 +769,8 @@ async function readConversationRouteState(
 async function writeConversationRouteState(
   conversationId: string | null,
   nextState: AssistantRouteState,
-): Promise<void> {
-  if (!conversationId) return;
+): Promise<boolean> {
+  if (!conversationId) return true;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const { data, error } = await serviceSupabase
       .from('assistant_conversations')
@@ -779,7 +780,7 @@ async function writeConversationRouteState(
 
     if (error) {
       console.warn('Failed to reload conversation metadata for update', error.message);
-      return;
+      return false;
     }
 
     const row = (data ?? {}) as Record<string, unknown>;
@@ -807,14 +808,15 @@ async function writeConversationRouteState(
     const { data: updatedRows, error: updateError } = await updateQuery;
     if (updateError) {
       console.warn('Failed to save assistant route state', updateError.message);
-      return;
+      return false;
     }
     if (Array.isArray(updatedRows) && updatedRows.length > 0) {
-      return;
+      return true;
     }
   }
 
   console.warn('Failed to save assistant route state due to concurrent update');
+  return false;
 }
 
 async function fetchUserFarms(userId: string | null): Promise<RouteFarm[]> {
@@ -1866,48 +1868,6 @@ async function queryFarmRecords(input: {
     return { answer: message, citations: [] };
   }
 
-  if (isTotalQuery) {
-    if (input.activity === 'irrigation') {
-      const total = rows.reduce((sum: number, row) => sum + safeNumber(row.duration), 0);
-      return {
-        answer:
-          input.locale === 'hi'
-            ? `कुल सिंचाई ${total.toFixed(2)} घंटे है।`
-            : input.locale === 'mr'
-              ? `एकूण सिंचन ${total.toFixed(2)} तास आहे.`
-              : `Total irrigation is ${total.toFixed(2)} hours.`,
-        citations: [
-          {
-            id: 'farm-total-1',
-            title: 'Farm operation logs',
-            sourceType: 'farm_record',
-            snippet: `Computed from ${rows.length} irrigation record(s).`,
-          },
-        ],
-      };
-    }
-
-    if (input.activity === 'expense') {
-      const total = rows.reduce((sum: number, row) => sum + safeNumber(row.cost), 0);
-      return {
-        answer:
-          input.locale === 'hi'
-            ? `कुल खर्च ₹${total.toFixed(2)} है।`
-            : input.locale === 'mr'
-              ? `एकूण खर्च ₹${total.toFixed(2)} आहे.`
-              : `Total expense is ₹${total.toFixed(2)}.`,
-        citations: [
-          {
-            id: 'farm-total-2',
-            title: 'Farm expense logs',
-            sourceType: 'farm_record',
-            snippet: `Computed from ${rows.length} expense record(s).`,
-          },
-        ],
-      };
-    }
-  }
-
   const latest = rows[0];
   const latestDate = latest?.date ?? 'unknown date';
   const latestAnswer =
@@ -2146,9 +2106,12 @@ Deno.serve(async (req) => {
         effectiveInputMode = 'text';
         sttProviderUsed = 'client_transcript';
         toolCalls.push({
-          tool: 'farm_context.get',
+          tool: 'stt.transcribe',
           status: 'skipped',
-          output: { stt_provider: 'client_transcript' },
+          output: {
+            stt_provider: 'client_transcript',
+            legacy_tool_name: 'farm_context.get',
+          },
         });
       } else {
         const normalizedAudioBase64 = normalizeBase64Input(audioBase64);
@@ -2237,13 +2200,14 @@ Deno.serve(async (req) => {
           }
           transcript = sttResult.transcript;
           toolCalls.push({
-            tool: 'farm_context.get',
+            tool: 'stt.transcribe',
             status: 'ok',
             output: {
               stt_provider: sttProviderUsed,
               stt_confidence: sttConfidence,
               stt_latency_ms: sttLatencyMs,
               provider_fallback_reason: providerFallbackReason,
+              legacy_tool_name: 'farm_context.get',
             },
           });
         } catch (error) {
@@ -2512,7 +2476,15 @@ Deno.serve(async (req) => {
     }
 
     if (routeStateDirty) {
-      await writeConversationRouteState(conversationId, nextRouteState);
+      const routeStateSaved = await writeConversationRouteState(conversationId, nextRouteState);
+      if (!routeStateSaved) {
+        console.warn('Failed to persist assistant route state; continuing without hard failure');
+        toolCalls.push({
+          tool: 'routing.decide',
+          status: 'error',
+          error: 'route_state_persist_failed',
+        });
+      }
       routeStateDirty = false;
     }
 

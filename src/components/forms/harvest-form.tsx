@@ -7,6 +7,10 @@ import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculator-mo
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { useTranslation } from 'react-i18next';
 
 export interface HarvestFormData {
   quantity: number | undefined;
@@ -23,15 +27,31 @@ interface HarvestFormProps {
 }
 
 export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
   const isValid = data.quantity !== undefined && data.quantity > 0 && data.grade !== '';
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const showDetailsGuidance =
+    guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
   // Calculate total value if price is set
   const totalValue =
     data.price && data.quantity !== undefined && data.quantity > 0
       ? (data.quantity * data.price).toFixed(0)
       : null;
+
+  // Helper to localize grade values
+  const localizeHarvestGrade = (grade: string): string => {
+    const gradeTranslations: Record<string, string> = {
+      'Export Quality': t('harvestForm.grades.exportQuality'),
+      Premium: t('harvestForm.grades.premium'),
+      Standard: t('harvestForm.grades.standard'),
+      Reject: t('harvestForm.grades.reject'),
+    };
+    return gradeTranslations[grade] || grade;
+  };
 
   return (
     <View>
@@ -62,88 +82,105 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
               color: colors.surface[900],
             }}
           >
-            Harvest
+            {t('harvestForm.title')}
           </Text>
           <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            Log harvest quantity and details
+            {t('harvestForm.subtitle')}
           </Text>
         </View>
       </View>
 
-      {/* Quantity Input */}
-      <NumericInput
-        label="Quantity"
-        icon="scale-outline"
-        iconColor={colors.warning}
-        placeholder="Enter quantity"
-        value={data.quantity}
-        onValueChange={(quantity) => onChange({ ...data, quantity })}
-        unit="kg"
-        required
-        decimals={1}
-        hint="Total harvested weight"
-        onFocus={onInputFocus}
-      />
+      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_HARVEST_DETAILS}>
+        <View
+          style={{
+            borderRadius: borderRadius.xl,
+            borderWidth: showDetailsGuidance ? 2 : 0,
+            borderColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+              : 'transparent',
+            backgroundColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.03)
+              : 'transparent',
+            paddingHorizontal: showDetailsGuidance ? spacing[2] : 0,
+            paddingTop: showDetailsGuidance ? spacing[2] : 0,
+          }}
+        >
+          {/* Quantity Input */}
+          <NumericInput
+            label={t('harvestForm.quantityLabel')}
+            icon="scale-outline"
+            iconColor={colors.warning}
+            placeholder={t('harvestForm.quantityPlaceholder')}
+            value={data.quantity}
+            onValueChange={(quantity) => onChange({ ...data, quantity })}
+            unit={t('harvestForm.unitKg')}
+            required
+            decimals={1}
+            hint={t('harvestForm.quantityHint')}
+            onFocus={onInputFocus}
+          />
 
-      {/* Grade Selection */}
-      <View style={{ marginBottom: spacing[4] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-          <View style={{ marginRight: 6 }}>
-            <Icon name="star" size={16} color={colors.primary[600]} />
-          </View>
-          <Text
-            style={{
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[800],
-            }}
-          >
-            Grade <Text style={{ color: colors.error }}>*</Text>
-          </Text>
-        </View>
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-          {HARVEST_GRADES.map((grade) => (
-            <Pressable
-              key={grade}
-              onPress={() => onChange({ ...data, grade })}
-              style={{
-                paddingHorizontal: spacing[4],
-                paddingVertical: 10,
-                borderRadius: borderRadius.xl,
-                borderWidth: 1,
-                backgroundColor:
-                  data.grade === grade
-                    ? colorWithOpacity(colors.warning, 0.9)
-                    : colors.surface[100],
-                borderColor: data.grade === grade ? colors.warning : colors.surface[200],
-              }}
-            >
+          {/* Grade Selection */}
+          <View style={{ marginBottom: spacing[4] }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
+              <View style={{ marginRight: 6 }}>
+                <Icon name="star" size={16} color={colors.primary[600]} />
+              </View>
               <Text
                 style={{
                   fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: data.grade === grade ? m3.colorScheme.onWarning : colors.surface[700],
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[800],
                 }}
               >
-                {grade}
+                {t('common.labels.grade')} <Text style={{ color: colors.error }}>*</Text>
               </Text>
-            </Pressable>
-          ))}
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+              {HARVEST_GRADES.map((grade) => (
+                <Pressable
+                  key={grade}
+                  onPress={() => onChange({ ...data, grade })}
+                  style={{
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: 10,
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 1,
+                    backgroundColor:
+                      data.grade === grade
+                        ? colorWithOpacity(colors.warning, 0.9)
+                        : colors.surface[100],
+                    borderColor: data.grade === grade ? colors.warning : colors.surface[200],
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.medium,
+                      color: data.grade === grade ? m3.colorScheme.onWarning : colors.surface[700],
+                    }}
+                  >
+                    {localizeHarvestGrade(grade)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
         </View>
-      </View>
+      </GuidedTourTarget>
 
       {/* Price Input (Optional) */}
       <NumericInput
-        label="Price per kg"
+        label={t('harvestForm.pricePerKgLabel')}
         icon="cash-outline"
         iconColor={colors.success}
-        placeholder="Enter price"
+        placeholder={t('harvestForm.pricePerKgPlaceholder')}
         value={data.price}
         onValueChange={(price) => onChange({ ...data, price })}
         unit="₹"
         decimals={0}
-        hint="Optional - price per kilogram"
+        hint={t('harvestForm.pricePerKgHint')}
         onFocus={onInputFocus}
       />
 
@@ -160,7 +197,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
               color: colors.surface[800],
             }}
           >
-            Buyer
+            {t('harvestForm.buyerLabel')}
           </Text>
         </View>
 
@@ -181,7 +218,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
           </View>
           <TextInput
             style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
-            placeholder="Enter buyer name (optional)"
+            placeholder={t('harvestForm.buyerPlaceholder')}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={data.buyer || ''}
             onChangeText={(buyer) => onChange({ ...data, buyer: buyer || undefined })}
@@ -189,7 +226,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
           />
         </View>
         <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
-          Optional - who bought the harvest
+          {t('harvestForm.buyerHint')}
         </Text>
       </View>
 
@@ -211,7 +248,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
               marginBottom: spacing[2],
             }}
           >
-            Summary
+            {t('common.labels.summary')}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[4] }}>
             {data.quantity !== undefined && data.quantity > 0 && (
@@ -222,7 +259,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                     color: colorWithOpacity(colors.warning, 0.9),
                   }}
                 >
-                  Quantity
+                  {t('common.labels.quantity')}
                 </Text>
                 <Text
                   style={{
@@ -243,7 +280,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                     color: colorWithOpacity(colors.warning, 0.9),
                   }}
                 >
-                  Grade
+                  {t('common.labels.grade')}
                 </Text>
                 <Text
                   style={{
@@ -252,7 +289,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                     color: m3.colorScheme.onSurface,
                   }}
                 >
-                  {data.grade}
+                  {localizeHarvestGrade(data.grade)}
                 </Text>
               </View>
             )}
@@ -264,7 +301,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                     color: colorWithOpacity(colors.warning, 0.9),
                   }}
                 >
-                  Total Value
+                  {t('common.labels.totalValue')}
                 </Text>
                 <Text
                   style={{
@@ -303,7 +340,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             color: isValid ? colors.success : colors.surface[500],
           }}
         >
-          {isValid ? 'Ready to add' : 'Enter quantity and select grade'}
+          {isValid ? t('common.labels.readyToAdd') : t('common.labels.enterQuantityAndSelectGrade')}
         </Text>
       </View>
     </View>

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { ExpoSecureStoreAdapter } from '@/lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 import type { SupportedLanguageCode } from '@/i18n/languages';
 
@@ -15,6 +16,31 @@ interface LanguageActions {
   _setHasHydrated: (value: boolean) => void;
 }
 
+const LANGUAGE_STORAGE_KEY = 'vinesight-language';
+
+const languageStorage = {
+  getItem: async (key: string) => {
+    try {
+      const fromAsync = await AsyncStorage.getItem(key);
+      if (fromAsync !== null) return fromAsync;
+
+      // One-time migration: if preference exists in legacy SecureStore, move it to AsyncStorage.
+      const fromSecure = await SecureStore.getItemAsync(key);
+      if (fromSecure !== null) {
+        await AsyncStorage.setItem(key, fromSecure);
+        await SecureStore.deleteItemAsync(key);
+        return fromSecure;
+      }
+    } catch (error) {
+      if (__DEV__) console.error('[language-store] migration failed', error);
+    }
+
+    return null;
+  },
+  setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
+  removeItem: (key: string) => AsyncStorage.removeItem(key),
+};
+
 export const useLanguageStore = create<LanguageState & LanguageActions>()(
   persist(
     (set) => ({
@@ -26,8 +52,9 @@ export const useLanguageStore = create<LanguageState & LanguageActions>()(
       _setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
-      name: 'vinesight-language',
-      storage: createJSONStorage(() => ExpoSecureStoreAdapter),
+      name: LANGUAGE_STORAGE_KEY,
+      version: 1,
+      storage: createJSONStorage(() => languageStorage),
       onRehydrateStorage: () => () => {
         useLanguageStore.setState({ hasHydrated: true });
       },

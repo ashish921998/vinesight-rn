@@ -22,6 +22,7 @@ import type { Farm } from '@/types';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
+import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -362,6 +363,25 @@ export default function FarmsScreen() {
           >
             {t('common.loading')}
           </Text>
+          {/* Keep GuidedTourTarget mounted during loading so the controller can measure
+              it as soon as layout is available. The target registers on first onLayout. */}
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+            style={{
+              position: 'absolute',
+              opacity: 0,
+              bottom: spacing[8],
+              width: '100%',
+              maxWidth: 360,
+            }}
+          >
+            <Button
+              title={t('farms.addFarm')}
+              onPress={handleAddFarm}
+              pointerEvents="none"
+              importantForAccessibility="no-hide-descendants"
+            />
+          </GuidedTourTarget>
         </View>
       );
     }
@@ -475,7 +495,9 @@ export default function FarmsScreen() {
           {t('farms.empty.subtitle')}
         </Text>
         <View style={{ marginTop: spacing[6], width: '100%', maxWidth: 360 }}>
-          <Button title={t('farms.addFarm')} onPress={handleAddFarm} />
+          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}>
+            <Button title={t('farms.addFarm')} onPress={handleAddFarm} />
+          </GuidedTourTarget>
         </View>
       </View>
     );
@@ -529,40 +551,48 @@ export default function FarmsScreen() {
 
       {/* FAB */}
       {showFab && (
-        <Pressable
+        <GuidedTourTarget
+          targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
           style={{
             position: 'absolute',
             bottom: fabBottom,
             right: spacing[6],
             width: 56,
             height: 56,
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: m3.colorScheme.primary,
-            overflow: 'hidden',
           }}
-          onPress={handleAddFarm}
-          accessibilityRole="button"
-          accessibilityLabel={t('farms.addFarm')}
         >
-          {({ pressed }) => (
-            <>
-              <SymbolIcon name="plus" size={28} color={m3.colorScheme.onPrimary} />
-              <View
-                pointerEvents="none"
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  {
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
-                      : 'transparent',
-                  },
-                ]}
-              />
-            </>
-          )}
-        </Pressable>
+          <Pressable
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: m3.colorScheme.primary,
+              overflow: 'hidden',
+            }}
+            onPress={handleAddFarm}
+            accessibilityRole="button"
+            accessibilityLabel={t('farms.addFarm')}
+          >
+            {({ pressed }) => (
+              <>
+                <SymbolIcon name="plus" size={28} color={m3.colorScheme.onPrimary} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </>
+            )}
+          </Pressable>
+        </GuidedTourTarget>
       )}
     </View>
   );

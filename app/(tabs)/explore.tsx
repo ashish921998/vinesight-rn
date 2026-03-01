@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,8 @@ import { useModalStore } from '@/stores';
 import type { Farm, WarehouseItem } from '@/types';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { GUIDED_TOUR_TARGET_IDS, GuidedTourTarget } from '@/features/guided-tour';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
 
 type ExploreTab = 'farms' | 'warehouse';
 type WarehouseFilter = 'all' | 'fertilizer' | 'spray';
@@ -51,6 +53,8 @@ export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const fabBottom = useFabBottomPosition();
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
 
   const tabSwitchAnim = useMemo(() => new Animated.Value(1), []);
   const tabScaleAnims = useMemo(
@@ -64,6 +68,18 @@ export default function ExploreScreen() {
   // Global search state
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  useEffect(() => {
+    if (
+      guidedTourStatus === 'in_progress' &&
+      guidedTourStep === 'add_farm' &&
+      selectedTab !== 'farms'
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedTab('farms');
+      setSearchQuery('');
+    }
+  }, [guidedTourStatus, guidedTourStep, selectedTab]);
 
   // Farms state & hooks
   const { data: farms, isLoading: farmsLoading, refetch: refetchFarms } = useFarms();
@@ -417,20 +433,22 @@ export default function ExploreScreen() {
           >
             {t('farms.empty.subtitle')}
           </Text>
-          <Pressable
-            style={{
-              paddingHorizontal: spacing[6],
-              paddingVertical: spacing[3],
-              borderRadius: borderRadius.xl,
-              marginTop: spacing[6],
-              backgroundColor: colors.primary[500],
-            }}
-            onPress={handleAddFarm}
-          >
-            <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
-              {t('farms.addFarm')}
-            </Text>
-          </Pressable>
+          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}>
+            <Pressable
+              style={{
+                paddingHorizontal: spacing[6],
+                paddingVertical: spacing[3],
+                borderRadius: borderRadius.xl,
+                marginTop: spacing[6],
+                backgroundColor: colors.primary[500],
+              }}
+              onPress={handleAddFarm}
+            >
+              <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
+                {t('farms.addFarm')}
+              </Text>
+            </Pressable>
+          </GuidedTourTarget>
         </View>
       );
     };
@@ -593,22 +611,30 @@ export default function ExploreScreen() {
 
         {/* FAB */}
         {(farms?.length || 0) > 0 && (
-          <Pressable
-            onPress={handleAddFarm}
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
             style={{
               position: 'absolute',
               bottom: fabBottom,
               right: spacing[6],
               width: 56,
               height: 56,
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: colors.primary[500],
             }}
           >
-            <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
-          </Pressable>
+            <Pressable
+              onPress={handleAddFarm}
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.primary[500],
+              }}
+            >
+              <Icon name="plus" size={28} color={m3.colorScheme.onPrimary} />
+            </Pressable>
+          </GuidedTourTarget>
         )}
       </>
     );

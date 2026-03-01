@@ -1,12 +1,6 @@
-export interface AssistantCitation {
-  id?: string;
-  title: string;
-  sourceType: 'farm_record' | 'kb_doc' | 'memory' | 'external' | string;
-  url?: string | null;
-  snippet?: string | null;
-  confidence?: number | null;
-  metadata?: Record<string, unknown> | null;
-}
+import type { AssistantCitation } from '../types/ai';
+
+export type { AssistantCitation };
 
 function normalizeConfidence(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;

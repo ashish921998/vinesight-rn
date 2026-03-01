@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, usePathname, useSegments } from 'expo-router';
 import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -32,6 +33,7 @@ import { posthogClient, telemetry, telemetryEnabled } from '@/services/telemetry
 import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 import { queryClient, queryPersister, QUERY_CACHE_MAX_AGE_MS } from '@/lib/query-cache';
+import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -320,6 +322,100 @@ export default Sentry.wrap(function RootLayout() {
   }, [language, languageHydrated, notificationsHydrated]);
 
   useEffect(() => {
+    let cleanup: null | (() => void) = null;
+    let disposed = false;
+
+    const setup = async () => {
+      try {
+        const Notifications = await import('expo-notifications');
+        const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+          const data = response.notification.request.content.data as {
+            type?: string;
+            sequence?: number;
+          };
+          if (data?.type === 'guided_tour_reminder') {
+            const sequence = data.sequence === 2 ? 2 : 1;
+            guidedTourEmit('guidedTour.notificationOpened', { sequence });
+          }
+        });
+        if (disposed) {
+          sub.remove();
+          return;
+        }
+        cleanup = () => sub.remove();
+      } catch {
+        cleanup = null;
+      }
+    };
+
+    void setup();
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
+  }, []);
+
+  // Safety timeout: if initialization hangs (e.g. SecureStore on Android),
+  // force-complete all conditions so the app doesn't stay on splash forever.
+  useEffect(() => {
+    const INIT_TIMEOUT_MS = 8_000;
+    const timeout = setTimeout(() => {
+      const authStillLoading = useAuthStore.getState().isLoading;
+      const themeStillPending = !useThemeStore.getState().hasHydrated;
+      const langStillPending = !useLanguageStore.getState().hasHydrated;
+
+      if (authStillLoading || themeStillPending || langStillPending) {
+        const context = {
+          authStillLoading,
+          themeHydrated: !themeStillPending,
+          languageHydrated: !langStillPending,
+        };
+        if (__DEV__) {
+          console.warn(
+            `[Vinesight] App init timed out after ${INIT_TIMEOUT_MS}ms — ` +
+              `auth loading: ${authStillLoading}, ` +
+              `theme hydrated: ${!themeStillPending}, ` +
+              `language hydrated: ${!langStillPending}. Forcing splash hide.`,
+          );
+        }
+        Sentry.captureMessage('App init timed out — forcing splash hide', {
+          level: 'warning',
+          extra: { timeoutMs: INIT_TIMEOUT_MS, ...context },
+        });
+        if (authStillLoading) {
+          useAuthStore.setState({ isLoading: false });
+        }
+        if (themeStillPending) {
+          AsyncStorage.getItem('vinesight-theme')
+            .then((data) => {
+              if (data) {
+                const parsed = JSON.parse(data);
+                const state = parsed.state ?? parsed;
+                useThemeStore.setState(state);
+              }
+            })
+            .catch(() => {})
+            .finally(() => useThemeStore.setState({ hasHydrated: true }));
+        }
+        if (langStillPending) {
+          AsyncStorage.getItem('vinesight-language')
+            .then((data) => {
+              if (data) {
+                const parsed = JSON.parse(data);
+                const state = parsed.state ?? parsed;
+                useLanguageStore.setState(state);
+              }
+            })
+            .catch(() => {})
+            .finally(() => useLanguageStore.setState({ hasHydrated: true }));
+        }
+      }
+    }, INIT_TIMEOUT_MS);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
     // Hide splash screen when auth + language are loaded
     if (!isLoading && languageHydrated && themeHydrated) {
       SplashScreen.hideAsync().catch((error) => {
@@ -362,9 +458,9 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="add-activity" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-entry" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="add-activity" />
+                <Stack.Screen name="add-entry" />
+                <Stack.Screen name="add-task" />
                 <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
@@ -378,6 +474,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
               </Stack>
+              <GuidedTourController />
             </I18nextProvider>
           </PersistQueryClientProvider>
         </SafeAreaProvider>

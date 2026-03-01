@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -60,6 +60,12 @@ import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from 
 import { getSeasonTemplatesForCrop } from '@/constants/season-templates';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
+import { telemetry } from '@/services/telemetry';
+import {
+  GUIDED_TOUR_TARGET_IDS,
+  GuidedTourTarget,
+  useGuidedTourStore,
+} from '@/features/guided-tour';
 
 // Workboard action type
 interface WorkboardAction {
@@ -94,7 +100,11 @@ export default function FarmDetailScreen() {
   const { data: tasks, refetch: refetchTasks } = useTasks(farmId);
   const { data: weather } = useWeather(farm?.latitude ?? undefined, farm?.longitude ?? undefined);
   const { data: profile } = useProfile({ enabled: true });
-  const { data: farmSeasons, refetch: refetchSeasons } = useFarmSeasons(farmId);
+  const {
+    data: farmSeasons,
+    isLoading: isSeasonsLoading,
+    refetch: refetchSeasons,
+  } = useFarmSeasons(farmId);
   const { needsReview: needsSeasonReview } = useFarmSeasonStatus(farmId);
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
@@ -119,6 +129,46 @@ export default function FarmDetailScreen() {
   const [selectedSeasonTemplateKey, setSelectedSeasonTemplateKey] =
     useState<string>('default_annual');
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const setGuidedTourSuspended = useGuidedTourStore((s) => s.setSuspended);
+  const setGuidedTourSeasonFormVisible = useGuidedTourStore((s) => s.setSeasonFormVisible);
+  const setGuidedTourHasActiveSeason = useGuidedTourStore(
+    (s) => s.setHasActiveSeasonForCurrentFarm,
+  );
+  const guidedTourSeasonAutoOpenedRef = React.useRef(false);
+  const isGuidedSeasonStep =
+    guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && showSeasonForm;
+
+  useEffect(() => {
+    if (
+      guidedTourStatus === 'in_progress' &&
+      guidedTourStep === 'add_log' &&
+      selectedTab !== 'activities'
+    ) {
+      setSelectedTab('activities');
+    }
+  }, [guidedTourStatus, guidedTourStep, selectedTab]);
+
+  useEffect(() => {
+    const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
+    setGuidedTourSuspended(false);
+    setGuidedTourSeasonFormVisible(isGuidedAddLog && showSeasonForm);
+  }, [
+    guidedTourStatus,
+    guidedTourStep,
+    setGuidedTourSeasonFormVisible,
+    setGuidedTourSuspended,
+    showSeasonForm,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      setGuidedTourSuspended(false);
+      setGuidedTourSeasonFormVisible(false);
+    };
+  }, [setGuidedTourSeasonFormVisible, setGuidedTourSuspended]);
+
   const [selectedLogTypes, setSelectedLogTypes] = useState<LogTypeId[]>([]);
   const [showSeasonSuccessOverlay, setShowSeasonSuccessOverlay] = useState(false);
   const [seasonSuccessType, setSeasonSuccessType] = useState<'start' | 'end'>('end');
@@ -592,6 +642,34 @@ export default function FarmDetailScreen() {
     openSeasonForm('end');
   };
 
+  useEffect(() => {
+    const isGuidedAddLog = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
+    if (!isGuidedAddLog) {
+      guidedTourSeasonAutoOpenedRef.current = false;
+      setGuidedTourHasActiveSeason(null);
+      return;
+    }
+    if (isSeasonsLoading || farmSeasons === undefined) return;
+    setGuidedTourHasActiveSeason(Boolean(activeSeasonRecord));
+    if (activeSeasonRecord) {
+      guidedTourSeasonAutoOpenedRef.current = false;
+    }
+    if (!activeSeasonRecord && !showSeasonForm && !guidedTourSeasonAutoOpenedRef.current) {
+      guidedTourSeasonAutoOpenedRef.current = true;
+      openStartSeasonForm();
+    }
+    // `openStartSeasonForm` is intentionally omitted; we only need the latest implementation when this branch fires.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activeSeasonRecord,
+    farmSeasons,
+    guidedTourStatus,
+    guidedTourStep,
+    setGuidedTourHasActiveSeason,
+    showSeasonForm,
+    isSeasonsLoading,
+  ]);
+
   const confirmDeleteFarmFromSheet = () => {
     setShowFarmActionsSheet(false);
     handleDeleteFarm();
@@ -688,6 +766,11 @@ export default function FarmDetailScreen() {
   const handleAddActivity = () => {
     if (!farm?.id) return;
     if (!activeSeasonRecord) {
+      if (guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log') {
+        if (isSeasonsLoading) return;
+        openStartSeasonForm();
+        return;
+      }
       Alert.alert(
         t('farmDetails.seasons.errors.noActiveSeason'),
         t('farmDetails.seasons.actions.startSeasonToContinue'),
@@ -897,11 +980,29 @@ export default function FarmDetailScreen() {
           text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
+            telemetry.capture('farm_delete_confirmed', {
+              farm_id: farmId,
+            });
             deleteFarmMutation.mutate(farmId, {
               onSuccess: () => {
-                router.back();
+                telemetry.capture('farm_deleted', {
+                  farm_id: farmId,
+                });
+                router.replace('/(tabs)/farms');
               },
               onError: (error: Error) => {
+                const normalized = `${error.name ?? ''} ${error.message ?? ''}`.toLowerCase();
+                const errorCategory = normalized.includes('not found')
+                  ? 'NOT_FOUND'
+                  : normalized.includes('invalid') || normalized.includes('validation')
+                    ? 'VALIDATION'
+                    : normalized.includes('network') || normalized.includes('timeout')
+                      ? 'NETWORK'
+                      : 'SERVER_ERROR';
+                telemetry.capture('farm_delete_failed', {
+                  farm_id: farmId,
+                  error_category: errorCategory,
+                });
                 Alert.alert(
                   t('common.error'),
                   error.message || t('farmDetails.errors.deleteFarmFailed'),
@@ -2382,7 +2483,7 @@ export default function FarmDetailScreen() {
 
       {showSeasonForm && (
         <Pressable
-          onPress={closeSeasonForm}
+          onPress={isGuidedSeasonStep ? undefined : closeSeasonForm}
           style={{
             position: 'absolute',
             top: 0,
@@ -2393,7 +2494,8 @@ export default function FarmDetailScreen() {
             zIndex: 40,
           }}
         >
-          <View
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.START_SEASON_SHEET}
             style={{
               position: 'absolute',
               bottom: 0,
@@ -2412,7 +2514,7 @@ export default function FarmDetailScreen() {
             <View
               style={{
                 flexDirection: 'row',
-                justifyContent: 'space-between',
+                justifyContent: isGuidedSeasonStep ? 'flex-start' : 'space-between',
                 marginBottom: spacing[1],
               }}
             >
@@ -2421,17 +2523,19 @@ export default function FarmDetailScreen() {
                   ? t('farmDetails.seasons.startFormTitle')
                   : t('farmDetails.seasons.formTitle')}
               </Text>
-              <Pressable
-                onPress={closeSeasonForm}
-                accessibilityLabel={t('common.close')}
-                accessibilityRole="button"
-              >
-                <UiSymbol
-                  name="xmark.circle.fill"
-                  size={24}
-                  color={m3.colorScheme.onSurfaceVariant}
-                />
-              </Pressable>
+              {!isGuidedSeasonStep ? (
+                <Pressable
+                  onPress={closeSeasonForm}
+                  accessibilityLabel={t('common.close')}
+                  accessibilityRole="button"
+                >
+                  <UiSymbol
+                    name="xmark.circle.fill"
+                    size={24}
+                    color={m3.colorScheme.onSurfaceVariant}
+                  />
+                </Pressable>
+              ) : null}
             </View>
             <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
               {seasonFormMode === 'start'
@@ -2611,16 +2715,21 @@ export default function FarmDetailScreen() {
                 )}
               </>
             )}
-            <Button
-              title={
-                seasonFormMode === 'start'
-                  ? t('farmDetails.seasons.startSeasonButton')
-                  : t('farmDetails.seasons.endSeasonButton')
-              }
-              onPress={seasonFormMode === 'start' ? handleStartSeason : handleEndSeason}
-              isLoading={startFarmSeason.isPending || endFarmSeason.isPending}
-            />
-          </View>
+            <GuidedTourTarget
+              targetId={GUIDED_TOUR_TARGET_IDS.START_SEASON_PRIMARY}
+              pointerEvents="box-none"
+            >
+              <Button
+                title={
+                  seasonFormMode === 'start'
+                    ? t('farmDetails.seasons.startSeasonButton')
+                    : t('farmDetails.seasons.endSeasonButton')
+                }
+                onPress={seasonFormMode === 'start' ? handleStartSeason : handleEndSeason}
+                isLoading={startFarmSeason.isPending || endFarmSeason.isPending}
+              />
+            </GuidedTourTarget>
+          </GuidedTourTarget>
         </Pressable>
       )}
 
@@ -2727,13 +2836,11 @@ export default function FarmDetailScreen() {
 
       {/* Primary action */}
       {showFab ? (
-        <Pressable
-          onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
-          accessibilityRole="button"
-          accessibilityLabel={
+        <GuidedTourTarget
+          targetId={
             selectedTab === 'activities'
-              ? t('farmDetails.actions.addActivity')
-              : t('tasks.cta.addTask')
+              ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY
+              : GUIDED_TOUR_TARGET_IDS.INACTIVE_TASK_TARGET
           }
           style={{
             position: 'absolute',
@@ -2741,30 +2848,44 @@ export default function FarmDetailScreen() {
             right: spacing[6],
             width: 56,
             height: 56,
-            backgroundColor: m3.colorScheme.primary,
-            borderRadius: borderRadius.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
           }}
         >
-          {({ pressed }) => (
-            <>
-              <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
-              <View
-                pointerEvents="none"
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  {
-                    backgroundColor: pressed
-                      ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
-                      : 'transparent',
-                  },
-                ]}
-              />
-            </>
-          )}
-        </Pressable>
+          <Pressable
+            onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
+            accessibilityRole="button"
+            accessibilityLabel={
+              selectedTab === 'activities'
+                ? t('farmDetails.actions.addActivity')
+                : t('tasks.cta.addTask')
+            }
+            style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: m3.colorScheme.primary,
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            {({ pressed }) => (
+              <>
+                <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </>
+            )}
+          </Pressable>
+        </GuidedTourTarget>
       ) : (
         <View
           style={{
@@ -2780,14 +2901,22 @@ export default function FarmDetailScreen() {
             borderTopColor: m3.colorScheme.outlineVariant,
           }}
         >
-          <Button
-            title={
+          <GuidedTourTarget
+            targetId={
               selectedTab === 'activities'
-                ? t('farmDetails.actions.addActivity')
-                : t('tasks.cta.addTask')
+                ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY
+                : GUIDED_TOUR_TARGET_IDS.INACTIVE_TASK_TARGET
             }
-            onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
-          />
+          >
+            <Button
+              title={
+                selectedTab === 'activities'
+                  ? t('farmDetails.actions.addActivity')
+                  : t('tasks.cta.addTask')
+              }
+              onPress={selectedTab === 'activities' ? handleAddActivity : handleAddTask}
+            />
+          </GuidedTourTarget>
         </View>
       )}
 

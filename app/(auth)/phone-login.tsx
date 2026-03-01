@@ -8,8 +8,10 @@ import {
   Modal,
   FlatList,
   TextInput,
+  Image,
   Platform,
   StyleSheet,
+  type ImageSourcePropType,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -18,10 +20,12 @@ import { useAuthStore } from '@/stores';
 import { Button, Input } from '@/components/ui';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useTranslation } from 'react-i18next';
-import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3 } from '@/styles/use-theme';
+import { spacing, borderRadius, fontSize, fontWeight, size } from '@/styles/theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { buildE164PhoneNumber } from '@/utils/phone';
+import appLogoDark from '../../assets/icons/ios-dark.png';
+import appLogoLight from '../../assets/icons/ios-light.png';
 
 interface Country {
   name: string;
@@ -57,6 +61,8 @@ const DEFAULT_COUNTRY = COUNTRIES[0]; // India
 export default function PhoneLoginScreen() {
   const { t } = useTranslation();
   const m3 = useM3();
+  const isDark = useIsDark();
+  const appLogo = isDark ? appLogoDark : appLogoLight;
   const { mode, redirect } = useLocalSearchParams<{ mode?: string; redirect?: string }>();
   const redirectPath = useMemo(() => {
     if (typeof redirect === 'string' && redirect.startsWith('/')) return redirect;
@@ -78,6 +84,8 @@ export default function PhoneLoginScreen() {
     isAuthenticated,
     needsProfileCompletion,
     signInWithPhone,
+    signInWithApple,
+    signInWithGoogle,
     clearError,
   } = useAuthStore();
 
@@ -114,9 +122,7 @@ export default function PhoneLoginScreen() {
   const handleSendCode = async () => {
     const fullPhoneNumber = normalizedPhoneNumber;
     if (!fullPhoneNumber) {
-      setLocalPhoneError(
-        t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid phone number' }),
-      );
+      setLocalPhoneError(t('authPhone.invalidPhone'));
       return;
     }
     clearError();
@@ -128,10 +134,6 @@ export default function PhoneLoginScreen() {
     setSelectedCountry(country);
     setShowCountryPicker(false);
     setCountrySearch('');
-  };
-
-  const handleBack = () => {
-    router.back();
   };
 
   const filteredCountries = useMemo(() => {
@@ -157,34 +159,32 @@ export default function PhoneLoginScreen() {
     paddingBottom: spacing[8],
   };
 
-  const headerContainerStyle: ViewStyle = {
+  const logoContainerStyle: ViewStyle = {
     alignItems: 'center',
     marginTop: spacing[8],
     marginBottom: spacing[12],
   };
 
-  const iconBoxStyle: ViewStyle = {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.full,
-    backgroundColor: m3.colorScheme.primaryContainer,
+  const logoBoxStyle: ViewStyle = {
+    width: size['3xl'],
+    height: size['3xl'],
+    borderRadius: borderRadius['3xl'],
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing[6],
+    marginBottom: spacing[4],
+    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
   };
 
   const titleTextStyle: TextStyle = {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize['3xl'],
     fontWeight: fontWeight.bold,
     color: m3.colorScheme.onSurface,
-    textAlign: 'center',
   };
 
   const subtitleTextStyle: TextStyle = {
     fontSize: fontSize.base,
+    marginTop: spacing[1],
     color: m3.colorScheme.onSurfaceVariant,
-    textAlign: 'center',
-    marginTop: spacing[3],
   };
 
   const formContainerStyle: ViewStyle = {
@@ -228,9 +228,9 @@ export default function PhoneLoginScreen() {
     paddingVertical: spacing[3],
     borderRadius: borderRadius.xl,
     marginBottom: spacing[2],
-    backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+    backgroundColor: colorWithOpacity(m3.colorScheme.error, isDark ? 0.2 : 0.12),
     borderWidth: 1,
-    borderColor: colorWithOpacity(m3.colorScheme.error, 0.25),
+    borderColor: colorWithOpacity(m3.colorScheme.error, isDark ? 0.42 : 0.25),
   };
 
   const errorTextStyle: TextStyle = {
@@ -240,18 +240,36 @@ export default function PhoneLoginScreen() {
     color: m3.colorScheme.error,
   };
 
-  const backContainerStyle: ViewStyle = {
+  const dividerContainerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing[8],
+  };
+
+  const dividerLineStyle: ViewStyle = {
+    flex: 1,
+    height: 1,
+    backgroundColor: m3.colorScheme.outlineVariant,
+  };
+
+  const dividerTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    marginHorizontal: spacing[4],
+    color: m3.colorScheme.onSurfaceVariant,
+  };
+
+  const emailLinkContainerStyle: ViewStyle = {
     alignItems: 'center',
     paddingVertical: spacing[4],
     marginTop: spacing[4],
   };
 
-  const backTextStyle: TextStyle = {
+  const emailLinkTextStyle: TextStyle = {
     fontSize: fontSize.sm,
     color: m3.colorScheme.onSurfaceVariant,
   };
 
-  const backLinkStyle: TextStyle = {
+  const emailLinkHighlightStyle: TextStyle = {
     fontWeight: fontWeight.semibold,
     color: m3.colorScheme.primary,
   };
@@ -350,13 +368,17 @@ export default function PhoneLoginScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={contentContainerStyle}>
-          {/* Header */}
-          <View style={headerContainerStyle}>
-            <View style={iconBoxStyle}>
-              <UiSymbol name="phone.fill" size={40} color={m3.colorScheme.primary} />
+          {/* Logo & Title */}
+          <View style={logoContainerStyle}>
+            <View style={logoBoxStyle}>
+              <Image
+                source={appLogo as ImageSourcePropType}
+                style={{ width: size.lg, height: size.lg }}
+                resizeMode="contain"
+              />
             </View>
-            <Text style={titleTextStyle}>{t('authPhone.title')}</Text>
-            <Text style={subtitleTextStyle}>{t('authPhone.subtitle')}</Text>
+            <Text style={titleTextStyle}>Vinesight</Text>
+            <Text style={subtitleTextStyle}>{t('auth.subtitle')}</Text>
           </View>
 
           {/* Form */}
@@ -413,28 +435,61 @@ export default function PhoneLoginScreen() {
 
               {/* Send Code Button */}
               <Button
-                title={t('authPhone.sendCode')}
+                title={isLoading ? t('authPhone.sendingCode') : t('authPhone.sendCode')}
                 onPress={handleSendCode}
                 isLoading={isLoading}
-                disabled={!phoneNumber || !normalizedPhoneNumber || isLoading}
+                disabled={!phoneNumber || !normalizedPhoneNumber}
                 style={{ marginTop: spacing[4] }}
               />
             </View>
+
+            {/* Divider */}
+            <View style={dividerContainerStyle}>
+              <View style={dividerLineStyle} />
+              <Text style={dividerTextStyle}>{t('auth.or')}</Text>
+              <View style={dividerLineStyle} />
+            </View>
+
+            {/* Apple Sign In (required on iOS if Google is offered) */}
+            {Platform.OS === 'ios' && (
+              <Button
+                title={t('auth.continueWithApple')}
+                variant="outline"
+                leftIcon={<UiSymbol name="apple.logo" size={20} color={m3.colorScheme.primary} />}
+                onPress={signInWithApple}
+                disabled={isLoading}
+                style={{ marginBottom: spacing[3] }}
+              />
+            )}
+
+            {/* Google Sign In */}
+            <Button
+              title={t('auth.continueWithGoogle')}
+              variant="outline"
+              leftIcon={<UiSymbol name="g.circle.fill" size={20} color={m3.colorScheme.primary} />}
+              onPress={signInWithGoogle}
+              disabled={isLoading}
+            />
           </View>
 
-          {/* Back to Login */}
+          {/* Sign in with email link */}
           <Pressable
-            onPress={handleBack}
-            style={backContainerStyle}
+            onPress={() =>
+              router.push({
+                pathname: '/(auth)/login',
+                params: { redirect: redirectPath, mode: phoneAuthMode },
+              })
+            }
+            style={emailLinkContainerStyle}
             disabled={isLoading}
             accessibilityRole="button"
-            accessibilityLabel={t('authPhone.backToLoginA11y')}
+            accessibilityLabel={t('auth.continueWithEmail')}
           >
             {({ pressed }) => (
               <View style={{ paddingVertical: spacing[2], paddingHorizontal: spacing[2] }}>
-                <Text style={backTextStyle}>
-                  {t('authPhone.backToLoginPrefix')}{' '}
-                  <Text style={backLinkStyle}>{t('authPhone.backToLoginLink')}</Text>
+                <Text style={emailLinkTextStyle}>
+                  {t('authPhone.preferEmail')}{' '}
+                  <Text style={emailLinkHighlightStyle}>{t('authPhone.signInWithEmail')}</Text>
                 </Text>
                 <View
                   pointerEvents="none"

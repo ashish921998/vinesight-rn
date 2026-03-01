@@ -629,6 +629,12 @@ export default function WarehouseItemForm({
   const totalValue =
     quantity && unitPrice ? (parseFloat(quantity) * parseFloat(unitPrice)).toFixed(2) : '0.00';
 
+  useEffect(() => {
+    if (__DEV__ && !catalogProductsLoading && catalogProductsError) {
+      console.debug('Catalog products error: PHI catalog migration/seed data issue');
+    }
+  }, [catalogProductsLoading, catalogProductsError]);
+
   return (
     <View style={{ flex: 1 }}>
       <FormModal
@@ -1075,17 +1081,11 @@ export default function WarehouseItemForm({
                 )}
 
                 {!catalogProductsLoading && catalogProductsError && (
-                  <>
-                    {__DEV__ &&
-                      console.debug(
-                        'Catalog products error: PHI catalog migration/seed data issue',
-                      )}
-                    <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                      <Text style={{ fontSize: fontSize.sm, color: colors.error[500] }}>
-                        Could not load catalogue items. Please try again later.
-                      </Text>
-                    </View>
-                  </>
+                  <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                    <Text style={{ fontSize: fontSize.sm, color: colors.error[500] }}>
+                      Could not load catalogue items. Please try again later.
+                    </Text>
+                  </View>
                 )}
 
                 {!catalogProductsLoading &&

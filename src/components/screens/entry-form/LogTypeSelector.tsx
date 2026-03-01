@@ -2,26 +2,49 @@ import { ACTIVITY_TYPES, type LogTypeId, type LogType } from '@/constants/calcul
 import { colorWithOpacity } from '@/utils/color';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { AppIcon } from '@/components/ui/app-icon';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { guidedTourEmit } from '@/features/guided-tour/events';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 interface LogTypeSelectorProps {
   selectedLogType: LogTypeId | null;
   onSelect: (type: LogTypeId) => void;
+  hasPendingDrafts?: boolean;
 }
 
-export function LogTypeSelector({ selectedLogType, onSelect }: LogTypeSelectorProps) {
+export function LogTypeSelector({
+  selectedLogType,
+  onSelect,
+  hasPendingDrafts = false,
+}: LogTypeSelectorProps) {
   const m3 = useM3();
   const colors = useThemeColors();
   const { t } = useTranslation();
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const isGuidedAddLogStep = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
+  const showInlineGuidance = isGuidedAddLogStep && selectedLogType === null && !hasPendingDrafts;
 
   return (
-    <View
+    <GuidedTourTarget
+      targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR}
       style={{
         backgroundColor: colors.surface[100],
         borderRadius: 16,
         padding: 16,
         marginBottom: 16,
+        borderWidth: showInlineGuidance ? 2 : 0,
+        borderColor: showInlineGuidance
+          ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+          : 'transparent',
+        shadowColor: showInlineGuidance ? m3.colorScheme.primary : 'transparent',
+        shadowOpacity: showInlineGuidance ? 0.24 : 0,
+        shadowRadius: showInlineGuidance ? 12 : 0,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: showInlineGuidance ? 4 : 0,
       }}
     >
       <Text
@@ -35,25 +58,67 @@ export function LogTypeSelector({ selectedLogType, onSelect }: LogTypeSelectorPr
       >
         {t('entryForm.activityType')}
       </Text>
+      {showInlineGuidance ? (
+        <View
+          style={{
+            alignSelf: 'flex-start',
+            marginBottom: 10,
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+            borderWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.primary, 0.3),
+            borderRadius: 999,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+          }}
+        >
+          <Text
+            style={{
+              color: m3.colorScheme.primary,
+              fontSize: 12,
+              fontWeight: '600',
+            }}
+          >
+            {t('guidedTour.step2.pickActivityCoach', {
+              defaultValue: 'Tap an activity to continue.',
+            })}
+          </Text>
+        </View>
+      ) : null}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {ACTIVITY_TYPES.map((logType: LogType) => {
           const isSelected = selectedLogType === logType.id;
+          const emphasizeSelectedGuidedCard = isGuidedAddLogStep && isSelected;
+          const emphasizeAllGuidedCards = showInlineGuidance;
           return (
             <Pressable
               key={logType.id}
-              onPress={() => onSelect(logType.id as LogTypeId)}
+              onPress={() => {
+                const selectedType = logType.id as LogTypeId;
+                guidedTourEmit('guidedTour.logTypeSelected', { recordType: selectedType });
+                onSelect(selectedType);
+              }}
               style={{
                 width: '18%',
                 paddingVertical: 10,
                 alignItems: 'center',
                 borderRadius: 12,
-                borderWidth: 1,
+                borderWidth: emphasizeSelectedGuidedCard ? 2 : 1,
                 backgroundColor: isSelected
                   ? colorWithOpacity(m3.colorScheme.primary, 0.08)
-                  : colors.surface[50],
+                  : emphasizeAllGuidedCards
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.03)
+                    : colors.surface[50],
                 borderColor: isSelected
                   ? colorWithOpacity(m3.colorScheme.primary, 0.25)
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                  : emphasizeAllGuidedCards
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.25)
+                    : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                opacity: emphasizeAllGuidedCards ? 1 : undefined,
+                shadowColor: emphasizeSelectedGuidedCard ? m3.colorScheme.primary : 'transparent',
+                shadowOpacity: emphasizeSelectedGuidedCard ? 0.3 : 0,
+                shadowRadius: emphasizeSelectedGuidedCard ? 10 : 0,
+                shadowOffset: { width: 0, height: 3 },
+                elevation: emphasizeSelectedGuidedCard ? 5 : 0,
               }}
             >
               <View
@@ -83,6 +148,6 @@ export function LogTypeSelector({ selectedLogType, onSelect }: LogTypeSelectorPr
           );
         })}
       </View>
-    </View>
+    </GuidedTourTarget>
   );
 }

@@ -664,6 +664,55 @@ export const hi = {
     },
   },
 
+  irrigationForm: {
+    title: 'सिंचाई',
+    subtitle: 'सिंचाई अवधि लॉग करें',
+    durationLabel: 'अवधि',
+    durationPlaceholder: 'अवधि दर्ज करें',
+    durationUnit: 'घंटे',
+    durationHint: 'सिंचाई चक्र कितने समय तक चला?',
+    enterHoursGuidance: 'जारी रखने के लिए सिंचाई घंटे दर्ज करें।',
+    validation: {
+      ready: 'जोड़ने के लिए तैयार',
+      incomplete: 'जारी रखने के लिए अवधि दर्ज करें',
+    },
+    areaLabel: 'क्षेत्र',
+    estimatedWaterLabel: 'अनुमानित पानी',
+  },
+
+  expenseForm: {
+    title: 'खर्च',
+    subtitle: 'खेत खर्च लॉग करें',
+    category: 'श्रेणी',
+    amount: 'राशि',
+    amountPlaceholder: 'राशि दर्ज करें',
+    amountHint: 'कुल खर्च की राशि',
+    types: {
+      Equipment: 'उपकरण',
+      Fuel: 'ईंधन',
+      'Seeds/Plants': 'बीज/पौधे',
+      Packaging: 'पैकेजिंग',
+      Transport: 'परिवहन',
+      Maintenance: 'रखरखाव',
+      Other: 'अन्य',
+    },
+  },
+
+  harvestForm: {
+    title: 'कटाई',
+    subtitle: 'कटाई की मात्रा और विवरण लॉग करें',
+    quantityLabel: 'मात्रा',
+    quantityPlaceholder: 'मात्रा दर्ज करें',
+    unitKg: 'किग्रा',
+    quantityHint: 'कुल कटाई का वजन',
+    pricePerKgLabel: 'प्रति किग्रा मूल्य',
+    pricePerKgPlaceholder: 'मूल्य दर्ज करें',
+    pricePerKgHint: 'वैकल्पिक - प्रति किलोग्राम मूल्य',
+    buyerLabel: 'खरीदार',
+    buyerPlaceholder: 'खरीदार का नाम दर्ज करें (वैकल्पिक)',
+    buyerHint: 'वैकल्पिक - किसने कटाई खरीदी',
+  },
+
   analytics: {
     title: 'विश्लेषण',
     labels: {
@@ -1210,6 +1259,7 @@ export const hi = {
     continueWithApple: 'Apple के साथ जारी रखें',
     continueWithGoogle: 'Google के साथ जारी रखें',
     continueWithPhone: 'फ़ोन से जारी रखें',
+    continueWithEmail: 'ईमेल से साइन इन करें',
     alreadyHaveAccount: 'पहले से खाता है?',
     dontHaveAccount: 'खाता नहीं है?',
     a11y: {
@@ -1231,6 +1281,7 @@ export const hi = {
     useDifferentEmail: 'अलग ईमेल उपयोग करें',
     useDifferentEmailA11y: 'अलग ईमेल उपयोग करें',
     subtitlePhone: 'हमने 6-अंकीय कोड भेजा है',
+    verifying: 'सत्यापित किया जा रहा है...',
     useDifferentPhone: 'दूसरा फ़ोन नंबर उपयोग करें',
     useDifferentPhoneA11y: 'दूसरा फ़ोन नंबर उपयोग करें',
   },
@@ -1242,6 +1293,9 @@ export const hi = {
     phoneLabel: 'फ़ोन नंबर',
     phonePlaceholder: 'फ़ोन नंबर दर्ज करें',
     sendCode: 'सत्यापन कोड भेजें',
+    sendingCode: 'कोड भेजा जा रहा है...',
+    preferEmail: 'ईमेल पसंद है?',
+    signInWithEmail: 'ईमेल से साइन इन करें',
     selectCountry: 'देश चुनें',
     selectCountryA11y: 'देश चयनकर्ता खोलें',
     closeA11y: 'देश चयनकर्ता बंद करें',
@@ -1379,6 +1433,8 @@ export const hi = {
         placeholder: 'अपना पासवर्ड दर्ज करें',
         hint: 'अपनी पहचान सत्यापित करने के लिए अपना पासवर्ड दर्ज करें',
       },
+      phoneVerificationLabelRequired: 'मोबाइल सत्यापन (आवश्यक)',
+      phoneVerificationLabelOptional: 'मोबाइल सत्यापन',
       reason: {
         label: 'हटाने का कारण (वैकल्पिक)',
         placeholder: 'हमें बताएं कि आप क्यों जा रहे हैं...',
@@ -1796,6 +1852,58 @@ export const hi = {
     alerts: {
       deleteWorkerTitle: 'श्रमिक हटाएं?',
       deleteWorkerBody: 'यह {{name}} और उनके सभी संबंधित रिकॉर्ड को स्थायी रूप से हटा देगा।',
+      markInactiveTitle: 'निष्क्रिय के रूप में चिह्नित करें?',
+      markInactiveBody: 'यह {{name}} को सक्रिय श्रमिक सूची से हटा देगा।',
+      markActiveTitle: 'सक्रिय के रूप में चिह्नित करें?',
+      markActiveBody: 'यह {{name}} को सक्रिय श्रमिक सूची में वापस जोड़ देगा।',
+    },
+    loading: 'श्रमिक विवरण लोड हो रहा है...',
+    notFound: {
+      title: 'श्रमिक नहीं मिला',
+    },
+    status: {
+      active: 'सक्रिय',
+      inactive: 'निष्क्रिय',
+    },
+    fields: {
+      dailyRate: 'दैनिक दर',
+      advanceBalance: 'अग्रिम शेष',
+      createdAt: 'बनाया गया',
+      updatedAt: 'अंतिम अपडेट',
+    },
+    attendance: {
+      title: 'उपस्थिति',
+      empty: 'अभी तक कोई उपस्थिति रिकॉर्ड नहीं',
+      deleteConfirm: '{{date}} की उपस्थिति हटाएं?',
+      status: {
+        full_day: 'पूरा दिन',
+        half_day: 'आधा दिन',
+        absent: 'अनुपस्थित',
+      },
+    },
+    transactions: {
+      title: 'लेनदेन',
+      empty: 'अभी तक कोई लेनदेन नहीं',
+      deleteConfirm: '{{date}} का लेनदेन हटाएं?',
+      type: {
+        advance_given: 'अग्रिम दिया गया',
+        advance_deducted: 'अग्रिम कटौती',
+        payment: 'भुगतान',
+      },
+    },
+    settlements: {
+      title: 'निपटान',
+      empty: 'अभी तक कोई निपटान नहीं',
+      deleteConfirm: 'यह निपटान हटाएं?',
+      status: {
+        draft: 'मसौदा',
+        confirmed: 'पुष्टि',
+      },
+      days: 'दिन',
+      gross: 'कुल',
+      advance: 'अग्रिम',
+      net: 'शुद्ध भुगतान',
+      confirmedAt: 'पुष्टि की तारीख',
     },
     form: {
       addTitle: 'श्रमिक जोड़ें',
@@ -2459,6 +2567,60 @@ export const hi = {
       stopListening: 'सुनना बंद करें',
       submitQuery: 'प्रश्न भेजें',
       selectOption: 'विकल्प चुनें: {{option}}',
+    },
+  },
+  guidedTour: {
+    welcome: {
+      title: 'Vinesight में आपका स्वागत है',
+      body: 'आइए एक मिनट में आपका पहला खेत सेट करें।',
+      setupTime: '1 मिनट सेटअप',
+    },
+    step1: {
+      coach: 'अपना पहला खेत जोड़ने के लिए यहां टैप करें।',
+      formNameCoach: 'पहले अपने खेत का नाम दर्ज करें।',
+      formRegionCoach: 'अपने खेत का स्थान (क्षेत्र) जोड़ें।',
+      formAreaCoach: 'अब अपने खेत का क्षेत्रफल {{areaUnit}} में दर्ज करें।',
+      formVarietyPickCoach: 'सूची से एक किस्म चुनें।',
+      formVarietyCoach: 'अपनी फसल की किस्म चुनें।',
+      formCustomVarietyCoach: 'अपनी कस्टम किस्म का नाम टाइप करें।',
+      formCropCoach: 'अब अपनी फसल का प्रकार चुनें।',
+      formSubmitCoach: 'बहुत अच्छा। जारी रखने के लिए खेत बनाएं टैप करें।',
+    },
+    step2: {
+      coach: 'बहुत बढ़िया! अब अपनी पहली ऑब्ज़र्वेशन लॉग करें।',
+      addEntryCoach: '{{activity}} विवरण भरें, फिर प्रविष्टि जोड़ें टैप करें।',
+      fillActivityDetailsCoach: 'विवरण भरें, फिर आगे बढ़ने के लिए अगला टैप करें।',
+      fillSprayDetailsCoach: 'जारी रखने के लिए पानी की मात्रा और कम से कम एक रसायन दर्ज करें।',
+      tapAddEntryCoach: 'अपनी गतिविधि लॉग करने के लिए प्रविष्टि जोड़ें टैप करें।',
+      tapSaveCoach: 'अपनी गतिविधि रिकॉर्ड करने के लिए सहेजें टैप करें।',
+      startSeasonCoach:
+        'पहले सीज़न शुरू करें ताकि Vinesight आपके रिकॉर्ड्स को सही तरह से व्यवस्थित कर सके।',
+      startSeasonHelper: 'ज़रूरत हो तो टेम्पलेट/तारीख बदलें, फिर सीज़न शुरू करें पर टैप करें।',
+      pickActivityCoach:
+        'इस हफ्ते आपने अपने खेत पर कौन-सा काम किया? रिकॉर्ड करने के लिए एक गतिविधि चुनें।',
+      pickActivityHelper:
+        'अगर वह आज का नहीं है तो भी ठीक है। जो याद हो उसे लॉग करें (सिंचाई, फर्टिगेशन, छिड़काव, खर्च)।',
+    },
+    complete: {
+      title: 'आप पूरी तरह तैयार हैं!',
+      body: 'Vinesight आपका खेत डेटा सुरक्षित रखेगा और इनसाइट्स बढ़ाएगा।',
+    },
+    reminderPush: {
+      title: 'आपका खेत आपका इंतज़ार कर रहा है!',
+      body: 'सेटअप पूरा करने के लिए टैप करें।',
+    },
+    coachmark: {
+      title: 'गाइडेड टूर',
+      tapToContinue: 'जारी रखने के लिए हाइलाइट किए गए क्षेत्र पर टैप करें',
+    },
+    cta: {
+      letsGo: 'चलिए शुरू करें',
+      done: 'हो गया',
+      skip: 'छोड़ें',
+      skipTour: 'टूर छोड़ें',
+    },
+    settings: {
+      replay: 'गाइडेड टूर फिर से चलाएँ',
     },
   },
 } as const;

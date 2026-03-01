@@ -15,6 +15,98 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
+const isNetworkTimeoutError = (error: unknown): boolean => {
+  const message = getErrorMessage(error, '').toLowerCase();
+  return (
+    message.includes('network request timed out') ||
+    message.includes('network request failed') ||
+    message.includes('failed to fetch') ||
+    message.includes('network error') ||
+    message.includes('timed out')
+  );
+};
+
+type AuthErrorContext =
+  | 'sign_in'
+  | 'sign_up'
+  | 'send_email_otp'
+  | 'verify_email_otp'
+  | 'resend_email_otp'
+  | 'send_phone_otp'
+  | 'verify_phone_otp'
+  | 'link_phone_otp'
+  | 'verify_phone_link_otp'
+  | 'profile_update'
+  | 'delete_account'
+  | 'generic';
+
+const getAuthErrorMessage = (
+  error: unknown,
+  fallback: string,
+  context: AuthErrorContext = 'generic',
+): string => {
+  const rawMessage = getErrorMessage(error, fallback);
+  const message = rawMessage.toLowerCase();
+
+  if (isNetworkTimeoutError(error)) {
+    return 'Unable to reach server right now. Please check your internet connection and try again.';
+  }
+
+  if (message.includes('invalid login credentials') || message.includes('invalid credentials')) {
+    return 'Incorrect email or password. Please try again.';
+  }
+
+  if (message.includes('email not confirmed') || message.includes('not confirmed')) {
+    return 'Please verify your email first, then try signing in.';
+  }
+
+  if (message.includes('already registered') || message.includes('already exists')) {
+    if (context === 'sign_up') {
+      return 'An account with this email already exists. Please sign in instead.';
+    }
+  }
+
+  if (
+    message.includes('rate limit') ||
+    message.includes('too many requests') ||
+    message.includes('over request rate limit')
+  ) {
+    return 'Too many attempts right now. Please wait a minute and try again.';
+  }
+
+  if (context === 'verify_email_otp' || context === 'verify_phone_otp') {
+    return 'The verification code is invalid or expired. Please request a new code.';
+  }
+
+  if (context === 'send_email_otp' || context === 'resend_email_otp') {
+    return 'Could not send verification code to your email. Please try again.';
+  }
+
+  if (context === 'send_phone_otp') {
+    return 'Could not send verification code to your phone. Please try again.';
+  }
+
+  if (context === 'link_phone_otp') {
+    return 'Could not send verification code to link this phone number. Please try again.';
+  }
+
+  if (context === 'verify_phone_link_otp') {
+    return 'The verification code is invalid or expired. Please request a new code.';
+  }
+
+  if (context === 'profile_update') {
+    return 'We could not save your profile changes right now. Please try again.';
+  }
+
+  if (context === 'delete_account') {
+    return 'We could not process your delete request right now. Please try again.';
+  }
+
+  return rawMessage;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const isDuplicateEmailError = (error: unknown): boolean => {
   const message = getErrorMessage(error, '').toLowerCase();
   return (
@@ -246,11 +338,32 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
   // Initialize - check existing session
   initialize: async () => {
+    let settled = false;
+    // Safety: if getSession() hangs (e.g. SecureStore on Android), don't block forever.
+    const safetyTimeout = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        if (__DEV__) {
+          console.warn('[VineSight] supabase.auth.getSession() timed out after 5 s');
+        }
+        Sentry.captureMessage('supabase.auth.getSession() timed out', {
+          level: 'warning',
+          extra: { timeoutMs: 5_000 },
+        });
+        set({ isLoading: false });
+      }
+    }, 5_000);
+
     try {
       const {
         data: { session },
         error,
       } = await supabase.auth.getSession();
+
+      clearTimeout(safetyTimeout);
+      if (!settled) {
+        settled = true;
+      }
 
       if (error) throw error;
 
@@ -274,8 +387,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         set({ isLoading: false });
       }
     } catch (error) {
-      console.error('Auth initialization error:', error);
-      set({ isLoading: false });
+      clearTimeout(safetyTimeout);
+      if (!settled) {
+        settled = true;
+        console.error('Auth initialization error:', error);
+        set({ isLoading: false });
+      }
     }
   },
 
@@ -316,12 +433,26 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     telemetry.capture('auth_sign_in_started', { method: 'password' });
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      const signInRequest = () =>
+        supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+
+      let { data, error } = await signInRequest();
+
+      if (error && isNetworkTimeoutError(error)) {
+        telemetry.capture('auth_sign_in_retry', { method: 'password', reason: 'network_timeout' });
+        await sleep(800);
+        const retryResult = await signInRequest();
+        data = retryResult.data;
+        error = retryResult.error;
+      }
 
       if (error) throw error;
+      if (!data.user || !data.session) {
+        throw new Error('Sign in failed: missing authenticated session');
+      }
 
       setSentryUser(data.user);
       telemetry.identify(data.user.id, { email_domain: getEmailDomain(data.user.email) });
@@ -334,9 +465,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         isLoading: false,
       });
     } catch (error: unknown) {
-      telemetry.capture('auth_sign_in_failed', { method: 'password' });
+      telemetry.capture('auth_sign_in_failed', {
+        method: 'password',
+        is_network_timeout: isNetworkTimeoutError(error),
+      });
       set({
-        errorMessage: getErrorMessage(error, 'Sign in failed'),
+        errorMessage: getAuthErrorMessage(error, 'Sign in failed', 'sign_in'),
         isAuthenticated: false,
         isLoading: false,
       });
@@ -385,7 +519,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     } catch (error: unknown) {
       telemetry.capture('auth_sign_up_failed', { method: 'password' });
       set({
-        errorMessage: (error as { message?: string }).message || 'Sign up failed',
+        errorMessage: getAuthErrorMessage(error, 'Sign up failed', 'sign_up'),
         isAuthenticated: false,
         isLoading: false,
       });
@@ -454,7 +588,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     } catch (error: unknown) {
       telemetry.capture('auth_sign_up_failed', { method: 'otp' });
       set({
-        errorMessage: (error as { message?: string }).message || 'Sign up failed',
+        errorMessage: getAuthErrorMessage(error, 'Sign up failed', 'sign_up'),
         isAuthenticated: false,
         isLoading: false,
       });
@@ -566,7 +700,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     } catch (error: unknown) {
       telemetry.capture('auth_sign_in_failed', { method: 'google' });
       set({
-        errorMessage: getErrorMessage(error, 'Google sign-in failed'),
+        errorMessage: getAuthErrorMessage(error, 'Google sign-in failed', 'sign_in'),
         isAuthenticated: false,
         isLoading: false,
       });
@@ -635,7 +769,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
       telemetry.capture('auth_sign_in_failed', { method: 'apple' });
       set({
-        errorMessage: getErrorMessage(error, 'Apple sign-in failed'),
+        errorMessage: getAuthErrorMessage(error, 'Apple sign-in failed', 'sign_in'),
         isAuthenticated: false,
         isLoading: false,
       });
@@ -719,6 +853,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     set({ errorMessage: null, isLoading: true });
 
     try {
+      telemetry.capture('account_deletion_requested', {
+        has_reason: Boolean(deleteReason?.trim()),
+      });
+
       if (__DEV__) {
         console.log('Logging deletion request...');
       }
@@ -763,13 +901,25 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
         phoneLinkingLoading: false,
       });
-      telemetry.reset();
       await clearQueryCache('delete account');
+
+      telemetry.capture('account_deletion_succeeded');
+      try {
+        await telemetry.flush();
+      } catch (err) {
+        if (__DEV__) {
+          console.error('[Telemetry] Failed to flush account deletion event:', err);
+        }
+      }
+      telemetry.reset();
 
       if (__DEV__) {
         console.log('Account deletion request logged successfully');
       }
     } catch (error: unknown) {
+      telemetry.capture('account_deletion_failed', {
+        message: getAuthErrorMessage(error, 'Failed to delete account', 'delete_account'),
+      });
       if (__DEV__) {
         console.error('Delete account error:', error);
       }
@@ -777,7 +927,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       // Preserve user state on error so they can retry
       set({
         isLoading: false,
-        errorMessage: getErrorMessage(error, 'Failed to delete account'),
+        errorMessage: getAuthErrorMessage(error, 'Failed to delete account', 'delete_account'),
       });
 
       throw error;
@@ -814,7 +964,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     } catch (error: unknown) {
       telemetry.capture('auth_otp_send_failed');
       set({
-        errorMessage: getErrorMessage(error, 'Failed to send OTP'),
+        errorMessage: getAuthErrorMessage(error, 'Failed to send OTP', 'send_email_otp'),
         otpSentSuccessfully: false,
         isLoading: false,
       });
@@ -866,10 +1016,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         otpSentSuccessfully: false,
         isLoading: false,
       });
-    } catch (_error: unknown) {
+    } catch (error: unknown) {
       telemetry.capture('auth_otp_verify_failed', { type: pendingOTPType });
       set({
-        errorMessage: 'Invalid or expired code. Please try again.',
+        errorMessage: getAuthErrorMessage(
+          error,
+          'Invalid or expired code. Please try again.',
+          'verify_email_otp',
+        ),
         isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
@@ -895,7 +1049,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         set({ isLoading: false, otpSentSuccessfully: true });
       } catch (error: unknown) {
         set({
-          errorMessage: getErrorMessage(error, 'Failed to resend code'),
+          errorMessage: getAuthErrorMessage(error, 'Failed to resend code', 'resend_email_otp'),
           otpSentSuccessfully: false,
           isLoading: false,
         });
@@ -952,7 +1106,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           ? 'No account found for this phone number. If you already use email login, sign in with email and link phone from Settings.'
           : 'Failed to send verification code';
       set({
-        errorMessage: getErrorMessage(error, fallbackMessage),
+        errorMessage: getAuthErrorMessage(error, fallbackMessage, 'send_phone_otp'),
         otpSentSuccessfully: false,
         isLoading: false,
       });
@@ -1019,10 +1173,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           isLoading: false,
         });
       }
-    } catch (_error: unknown) {
+    } catch (error: unknown) {
       telemetry.capture('auth_phone_otp_verify_failed');
       set({
-        errorMessage: 'Invalid or expired code. Please try again.',
+        errorMessage: getAuthErrorMessage(
+          error,
+          'Invalid or expired code. Please try again.',
+          'verify_phone_otp',
+        ),
         isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
@@ -1173,7 +1331,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       set({
         errorMessage: isDuplicateEmailError(error)
           ? duplicateEmailMessage
-          : getErrorMessage(error, 'Failed to update profile'),
+          : getAuthErrorMessage(error, 'Failed to update profile', 'profile_update'),
         isLoading: false,
       });
     }
@@ -1203,7 +1361,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     } catch (error: unknown) {
       telemetry.capture('phone_linking_failed');
       set({
-        errorMessage: getErrorMessage(error, 'Failed to send verification code'),
+        errorMessage: getAuthErrorMessage(
+          error,
+          'Failed to send verification code',
+          'link_phone_otp',
+        ),
         phoneLinkingLoading: false,
       });
     }
@@ -1237,10 +1399,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phoneLinkingNumber: null,
         phoneLinkingLoading: false,
       });
-    } catch (_error: unknown) {
+    } catch (error: unknown) {
       telemetry.capture('phone_linking_verify_failed');
       set({
-        errorMessage: 'Invalid or expired code. Please try again.',
+        errorMessage: getAuthErrorMessage(
+          error,
+          'Invalid or expired code. Please try again.',
+          'verify_phone_link_otp',
+        ),
         phoneLinkingLoading: false,
       });
     }
@@ -1284,7 +1450,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       } = await supabase.auth.getUser();
       set({ user });
     } catch (error: unknown) {
-      set({ errorMessage: getErrorMessage(error, 'Failed to update country') });
+      set({
+        errorMessage: getAuthErrorMessage(error, 'Failed to update country', 'profile_update'),
+      });
     }
   },
 
@@ -1303,7 +1471,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       set({ user });
     } catch (error: unknown) {
       set({
-        errorMessage: getErrorMessage(error, 'Failed to update area unit'),
+        errorMessage: getAuthErrorMessage(error, 'Failed to update area unit', 'profile_update'),
       });
     }
   },

@@ -1,7 +1,6 @@
 import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/stores';
-import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useProfile } from '@/hooks';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
@@ -16,8 +15,6 @@ import { colorWithOpacity } from '@/utils/color';
  */
 export default function Index() {
   const { isAuthenticated, isLoading, needsProfileCompletion } = useAuthStore();
-  const onboardingComplete = useOnboardingStore((s) => s.isComplete);
-  const hasHydrated = useOnboardingStore((s) => s.hasHydrated);
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
   const configStatus = getConfigurationStatus();
   const colors = useThemeColors();
@@ -98,29 +95,19 @@ export default function Index() {
     );
   }
 
-  // Wait for onboarding store to hydrate before redirecting
-  if (!hasHydrated) {
-    return <AnimatedSplash duration={2500} />;
-  }
-
   if (isAuthenticated && profileLoading) {
     return <AnimatedSplash duration={2500} />;
   }
 
   const hasProfileName = Boolean(profile?.full_name && profile.full_name.trim().length > 0);
-  const hasProfileAreaUnit =
-    profile?.area_unit_preference === 'acres' || profile?.area_unit_preference === 'hectares';
 
   // Redirect based on auth state
   if (isAuthenticated) {
     if (needsProfileCompletion || !hasProfileName) {
       return <Redirect href="/(auth)/profile-completion" />;
     }
-    if (!hasProfileAreaUnit || !onboardingComplete) {
-      return <Redirect href="/onboarding" />;
-    }
     return <Redirect href="/(tabs)" />;
   }
 
-  return <Redirect href="/(auth)/login" />;
+  return <Redirect href="/(auth)/phone-login" />;
 }

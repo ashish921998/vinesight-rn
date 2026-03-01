@@ -10,6 +10,10 @@ import { useCurrency } from '@/hooks/use-currency';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { EXPENSE_TYPE_ICONS } from '@/utils/expense-icons';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { useTranslation } from 'react-i18next';
 
 export interface ExpenseFormData {
   type: ExpenseTypeId | '';
@@ -26,8 +30,11 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
   const resolvedCurrency = useCurrency();
   const isValidCurrency = (code: string | null | undefined): boolean => {
     if (!code || typeof code !== 'string') return false;
@@ -43,7 +50,17 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
   const currency = isValidCurrency(candidateCurrency)
     ? (candidateCurrency ?? resolvedCurrency)
     : resolvedCurrency;
+  const currencySymbol = (0)
+    .toLocaleString('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+    .replace(/[\d.,\s]/g, '');
   const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
+  const showDetailsGuidance =
+    guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
   return (
     <View>
@@ -74,84 +91,101 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
               color: colors.surface[900],
             }}
           >
-            Expense
+            {t('expenseForm.title')}
           </Text>
           <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            Log farm expense
+            {t('expenseForm.subtitle')}
           </Text>
         </View>
       </View>
 
-      {/* Category Selection */}
-      <View style={{ marginBottom: spacing[4] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-          <View style={{ marginRight: 6 }}>
-            <SymbolIcon name="list.bullet" size={16} color={colors.primary[600]} />
-          </View>
-          <Text
-            style={{
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[800],
-            }}
-          >
-            Category <Text style={{ color: colors.error }}>*</Text>
-          </Text>
-        </View>
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-          {EXPENSE_TYPES.map((type) => (
-            <Pressable
-              key={type}
-              onPress={() => onChange({ ...data, type })}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: spacing[3],
-                paddingVertical: 10,
-                borderRadius: borderRadius.xl,
-                borderWidth: 1,
-                backgroundColor:
-                  data.type === type
-                    ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                    : colors.surface[100],
-                borderColor: data.type === type ? m3.colorScheme.error : colors.surface[200],
-              }}
-            >
-              <SymbolIcon
-                name={EXPENSE_TYPE_ICONS[type]}
-                size={16}
-                color={data.type === type ? m3.colorScheme.error : colors.surface[500]}
-                style={{ marginRight: 6 }}
-              />
+      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_EXPENSE_DETAILS}>
+        <View
+          style={{
+            borderRadius: borderRadius.xl,
+            borderWidth: showDetailsGuidance ? 2 : 0,
+            borderColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+              : 'transparent',
+            backgroundColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.03)
+              : 'transparent',
+            paddingHorizontal: showDetailsGuidance ? spacing[2] : 0,
+            paddingTop: showDetailsGuidance ? spacing[2] : 0,
+          }}
+        >
+          {/* Category Selection */}
+          <View style={{ marginBottom: spacing[4] }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
+              <View style={{ marginRight: spacing[2] }}>
+                <SymbolIcon name="list.bullet" size={16} color={colors.primary[600]} />
+              </View>
               <Text
                 style={{
                   fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: data.type === type ? m3.colorScheme.error : colors.surface[700],
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[800],
                 }}
               >
-                {type}
+                {t('expenseForm.category')} <Text style={{ color: colors.error }}>*</Text>
               </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
+            </View>
 
-      {/* Amount Input */}
-      <NumericInput
-        label="Amount"
-        icon="cash-outline"
-        iconColor={m3.colorScheme.error}
-        placeholder="Enter amount"
-        value={data.cost}
-        onValueChange={(cost) => onChange({ ...data, cost })}
-        unit="₹"
-        required
-        decimals={0}
-        hint="Total expense amount"
-        onFocus={onInputFocus}
-      />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+              {EXPENSE_TYPES.map((type) => (
+                <Pressable
+                  key={type}
+                  onPress={() => onChange({ ...data, type })}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[3],
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 1,
+                    backgroundColor:
+                      data.type === type
+                        ? colorWithOpacity(m3.colorScheme.error, 0.12)
+                        : colors.surface[100],
+                    borderColor: data.type === type ? m3.colorScheme.error : colors.surface[200],
+                  }}
+                >
+                  <SymbolIcon
+                    name={EXPENSE_TYPE_ICONS[type]}
+                    size={16}
+                    color={data.type === type ? m3.colorScheme.error : colors.surface[500]}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.medium,
+                      color: data.type === type ? m3.colorScheme.error : colors.surface[700],
+                    }}
+                  >
+                    {t(`expenseForm.types.${type}`)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Amount Input */}
+          <NumericInput
+            label={t('expenseForm.amount')}
+            icon="cash-outline"
+            iconColor={m3.colorScheme.error}
+            placeholder={t('expenseForm.amountPlaceholder')}
+            value={data.cost}
+            onValueChange={(cost) => onChange({ ...data, cost })}
+            unit={currencySymbol}
+            required
+            decimals={0}
+            hint={t('expenseForm.amountHint')}
+            onFocus={onInputFocus}
+          />
+        </View>
+      </GuidedTourTarget>
 
       {/* Remarks Input (Optional) */}
       <View style={{ marginBottom: spacing[4] }}>
@@ -166,7 +200,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
               color: colors.surface[800],
             }}
           >
-            Remarks
+            {t('expenseForm.remarks.label')}
           </Text>
         </View>
 
@@ -182,7 +216,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
         >
           <TextInput
             style={{ fontSize: fontSize.base, color: colors.surface[900] }}
-            placeholder="Add notes about this expense (optional)"
+            placeholder={t('expenseForm.remarks.placeholder')}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={data.remarks || ''}
             onChangeText={(remarks) => onChange({ ...data, remarks: remarks || undefined })}
@@ -193,7 +227,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
           />
         </View>
         <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
-          Optional - describe the expense
+          {t('expenseForm.remarks.hint')}
         </Text>
       </View>
 
@@ -224,7 +258,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
                   marginLeft: spacing[2],
                 }}
               >
-                {data.type}
+                {t(`expenseForm.types.${data.type}`)}
               </Text>
             </View>
             <Text
@@ -262,7 +296,9 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             color: isValid ? colors.success : colors.surface[500],
           }}
         >
-          {isValid ? 'Ready to add' : 'Select category and enter amount'}
+          {isValid
+            ? t('common.labels.readyToAdd')
+            : t('expenseForm.validation.selectCategoryAndEnterAmount')}
         </Text>
       </View>
     </View>

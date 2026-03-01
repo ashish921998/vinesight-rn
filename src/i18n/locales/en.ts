@@ -49,6 +49,9 @@ export const en = {
       avg: 'Avg',
       min: 'Min',
       max: 'Max',
+      readyToAdd: 'Ready to add',
+      enterQuantityAndSelectGrade: 'Enter quantity and select grade',
+      summary: 'Summary',
     },
     noResultsFound: 'No results found',
     tryDifferentSearchTerm: 'Try a different search term',
@@ -640,7 +643,7 @@ export const en = {
   },
 
   fertigationForm: {
-    title: 'Fertilizer',
+    title: 'Fertigation',
     subtitle: 'Log fertilizer application',
     waterVolume: {
       label: 'Water volume',
@@ -661,6 +664,69 @@ export const en = {
       ready: 'Ready to add',
       incomplete: 'Add at least one fertilizer with quantity',
     },
+  },
+
+  expenseForm: {
+    title: 'Expense',
+    subtitle: 'Log farm expense',
+    category: 'Category',
+    amount: 'Amount',
+    amountPlaceholder: 'Enter amount',
+    amountHint: 'Total expense amount',
+    types: {
+      Equipment: 'Equipment',
+      Fuel: 'Fuel',
+      'Seeds/Plants': 'Seeds/Plants',
+      Packaging: 'Packaging',
+      Transport: 'Transport',
+      Maintenance: 'Maintenance',
+      Other: 'Other',
+    },
+    remarks: {
+      label: 'Remarks',
+      placeholder: 'Add notes about this expense (optional)',
+      hint: 'Optional - describe the expense',
+    },
+    validation: {
+      selectCategoryAndEnterAmount: 'Select category and enter amount',
+    },
+  },
+
+  harvestForm: {
+    title: 'Harvest',
+    subtitle: 'Log harvest quantity and details',
+    quantityLabel: 'Quantity',
+    quantityPlaceholder: 'Enter quantity',
+    unitKg: 'kg',
+    quantityHint: 'Total harvested weight',
+    pricePerKgLabel: 'Price per kg',
+    pricePerKgPlaceholder: 'Enter price',
+    pricePerKgHint: 'Optional - price per kilogram',
+    buyerLabel: 'Buyer',
+    buyerPlaceholder: 'Enter buyer name (optional)',
+    buyerHint: 'Optional - who bought the harvest',
+    grades: {
+      exportQuality: 'Export Quality',
+      premium: 'Premium',
+      standard: 'Standard',
+      reject: 'Reject',
+    },
+  },
+
+  irrigationForm: {
+    title: 'Irrigation',
+    subtitle: 'Log irrigation duration',
+    durationLabel: 'Duration',
+    durationPlaceholder: 'Enter duration',
+    durationUnit: 'hours',
+    durationHint: 'How long was the irrigation cycle?',
+    enterHoursGuidance: 'Enter irrigation hours to continue.',
+    validation: {
+      ready: 'Ready to add',
+      incomplete: 'Enter duration to continue',
+    },
+    areaLabel: 'Area',
+    estimatedWaterLabel: 'Est. Water',
   },
 
   analytics: {
@@ -1208,6 +1274,7 @@ export const en = {
     continueWithApple: 'Continue with Apple',
     continueWithGoogle: 'Continue with Google',
     continueWithPhone: 'Continue with Phone',
+    continueWithEmail: 'Sign in with email',
     alreadyHaveAccount: 'Already have an account?',
     dontHaveAccount: "Don't have an account?",
     a11y: {
@@ -1229,6 +1296,7 @@ export const en = {
     useDifferentEmail: 'Use different email',
     useDifferentEmailA11y: 'Use different email',
     subtitlePhone: 'We sent a 6-digit code to',
+    verifying: 'Verifying...',
     useDifferentPhone: 'Use different phone number',
     useDifferentPhoneA11y: 'Use different phone number',
   },
@@ -1240,6 +1308,9 @@ export const en = {
     phoneLabel: 'Phone Number',
     phonePlaceholder: 'Enter phone number',
     sendCode: 'Send Verification Code',
+    sendingCode: 'Sending code...',
+    preferEmail: 'Prefer email?',
+    signInWithEmail: 'Sign in with email',
     selectCountry: 'Select country',
     selectCountryA11y: 'Open country picker',
     closeA11y: 'Close country picker',
@@ -1377,6 +1448,8 @@ export const en = {
         placeholder: 'Enter your password',
         hint: 'Enter your password to verify your identity',
       },
+      phoneVerificationLabelRequired: 'Mobile verification (required)',
+      phoneVerificationLabelOptional: 'Mobile verification',
       reason: {
         label: 'Reason for deletion (optional)',
         placeholder: "Tell us why you're leaving...",
@@ -1794,6 +1867,58 @@ export const en = {
     alerts: {
       deleteWorkerTitle: 'Delete worker?',
       deleteWorkerBody: 'This will permanently delete {{name}} and all their associated records.',
+      markInactiveTitle: 'Mark as inactive?',
+      markInactiveBody: 'This will remove {{name}} from active worker lists.',
+      markActiveTitle: 'Mark as active?',
+      markActiveBody: 'This will add {{name}} back to active worker lists.',
+    },
+    loading: 'Loading worker details...',
+    notFound: {
+      title: 'Worker not found',
+    },
+    status: {
+      active: 'Active',
+      inactive: 'Inactive',
+    },
+    fields: {
+      dailyRate: 'Daily Rate',
+      advanceBalance: 'Advance Balance',
+      createdAt: 'Created',
+      updatedAt: 'Last Updated',
+    },
+    attendance: {
+      title: 'Attendance',
+      empty: 'No attendance records yet',
+      deleteConfirm: 'Delete attendance for {{date}}?',
+      status: {
+        full_day: 'Full day',
+        half_day: 'Half day',
+        absent: 'Absent',
+      },
+    },
+    transactions: {
+      title: 'Transactions',
+      empty: 'No transactions yet',
+      deleteConfirm: 'Delete transaction on {{date}}?',
+      type: {
+        advance_given: 'Advance given',
+        advance_deducted: 'Advance deducted',
+        payment: 'Payment',
+      },
+    },
+    settlements: {
+      title: 'Settlements',
+      empty: 'No settlements yet',
+      deleteConfirm: 'Delete this settlement?',
+      status: {
+        draft: 'Draft',
+        confirmed: 'Confirmed',
+      },
+      days: 'Days',
+      gross: 'Gross',
+      advance: 'Advance',
+      net: 'Net Payment',
+      confirmedAt: 'Confirmed on',
     },
     form: {
       addTitle: 'Add worker',
@@ -2455,6 +2580,59 @@ export const en = {
       stopListening: 'Stop listening',
       submitQuery: 'Submit query',
       selectOption: 'Select option: {{option}}',
+    },
+  },
+  guidedTour: {
+    welcome: {
+      title: 'Welcome to Vinesight',
+      body: "Let's set up your first $t(glossary.farm) in under a minute.",
+      setupTime: '1 min setup',
+    },
+    step1: {
+      coach: 'Tap here to add your first $t(glossary.farm).',
+      formNameCoach: 'Enter your farm name first.',
+      formRegionCoach: 'Add your farm location (region).',
+      formAreaCoach: 'Now enter your farm area.',
+      formVarietyPickCoach: 'Pick one variety from the list.',
+      formVarietyCoach: 'Select your crop variety.',
+      formCustomVarietyCoach: 'Type your custom variety name.',
+      formCropCoach: 'Now choose your crop type.',
+      formSubmitCoach: 'Great. Tap Create farm to continue.',
+    },
+    step2: {
+      coach: 'Great! Now log your first observation.',
+      addEntryCoach: 'Fill the {{activity}} details, then tap Add entry.',
+      fillActivityDetailsCoach: 'Fill the details, then tap Next.',
+      fillSprayDetailsCoach: 'Enter water volume and at least one chemical to continue.',
+      tapAddEntryCoach: 'Tap Add entry to log your activity.',
+      tapSaveCoach: 'Tap Save to record your activity.',
+      startSeasonCoach: 'First, start your season so Vinesight can organize your records.',
+      startSeasonHelper: 'Edit template or dates if needed, then tap Start season.',
+      pickActivityCoach:
+        'What is one thing you did on your farm this week? Tap an activity to record it.',
+      pickActivityHelper:
+        "It's okay if it wasn't today. You can log what you remember (Irrigation, Fertigation, Spraying, Expense).",
+    },
+    complete: {
+      title: "You're all set!",
+      body: 'Vinesight will keep your $t(glossary.farm) data safe and your insights growing.',
+    },
+    reminderPush: {
+      title: 'Your $t(glossary.farm) is waiting!',
+      body: 'Tap to finish setting up.',
+    },
+    coachmark: {
+      title: 'Guided tour',
+      tapToContinue: 'Tap the highlighted area to continue',
+    },
+    cta: {
+      letsGo: "Let's Go",
+      done: 'Done',
+      skip: 'Skip',
+      skipTour: 'Skip tour',
+    },
+    settings: {
+      replay: 'Replay Guided Tour',
     },
   },
 } as const;

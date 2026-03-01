@@ -24,6 +24,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHaptic } from '@/utils/haptics';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
 
 interface FormModalProps {
   visible?: boolean;
@@ -41,6 +42,7 @@ interface FormModalProps {
   scrollViewProps?: ScrollViewProps;
   scrollViewStyle?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  saveButtonTargetId?: string;
 }
 
 export function FormModal({
@@ -59,6 +61,7 @@ export function FormModal({
   scrollViewProps,
   scrollViewStyle,
   contentContainerStyle,
+  saveButtonTargetId,
 }: FormModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -183,15 +186,30 @@ export function FormModal({
           <View />
         )}
 
-        {onSave && (
-          <Pressable
-            onPress={onSave}
-            disabled={isSaveDisabled || isLoading}
-            style={saveButtonStyle}
-          >
-            <Text style={saveTextStyle}>{isLoading ? t('common.saving') : resolvedSaveLabel}</Text>
-          </Pressable>
-        )}
+        {onSave &&
+          (saveButtonTargetId ? (
+            <GuidedTourTarget targetId={saveButtonTargetId}>
+              <Pressable
+                onPress={onSave}
+                disabled={isSaveDisabled || isLoading}
+                style={saveButtonStyle}
+              >
+                <Text style={saveTextStyle}>
+                  {isLoading ? t('common.saving') : resolvedSaveLabel}
+                </Text>
+              </Pressable>
+            </GuidedTourTarget>
+          ) : (
+            <Pressable
+              onPress={onSave}
+              disabled={isSaveDisabled || isLoading}
+              style={saveButtonStyle}
+            >
+              <Text style={saveTextStyle}>
+                {isLoading ? t('common.saving') : resolvedSaveLabel}
+              </Text>
+            </Pressable>
+          ))}
       </View>
     </KeyboardAvoidingView>
   );
@@ -222,6 +240,7 @@ interface FullScreenFormProps {
   children: React.ReactNode;
   showResetButton?: boolean;
   onReset?: () => void;
+  saveButtonTargetId?: string;
 }
 
 export function FullScreenForm({
@@ -234,6 +253,7 @@ export function FullScreenForm({
   children,
   showResetButton = false,
   onReset,
+  saveButtonTargetId,
 }: FullScreenFormProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -348,17 +368,30 @@ export function FullScreenForm({
             <View />
           )}
 
-          {onSave && (
-            <Pressable
-              onPress={onSave}
-              disabled={isSaveDisabled || isLoading}
-              style={saveButtonStyle}
-            >
-              <Text style={saveTextStyle}>
-                {isLoading ? t('common.saving') : resolvedSaveLabel}
-              </Text>
-            </Pressable>
-          )}
+          {onSave &&
+            (saveButtonTargetId ? (
+              <GuidedTourTarget targetId={saveButtonTargetId}>
+                <Pressable
+                  onPress={onSave}
+                  disabled={isSaveDisabled || isLoading}
+                  style={saveButtonStyle}
+                >
+                  <Text style={saveTextStyle}>
+                    {isLoading ? t('common.saving') : resolvedSaveLabel}
+                  </Text>
+                </Pressable>
+              </GuidedTourTarget>
+            ) : (
+              <Pressable
+                onPress={onSave}
+                disabled={isSaveDisabled || isLoading}
+                style={saveButtonStyle}
+              >
+                <Text style={saveTextStyle}>
+                  {isLoading ? t('common.saving') : resolvedSaveLabel}
+                </Text>
+              </Pressable>
+            ))}
         </View>
       </KeyboardAvoidingView>
     </View>
