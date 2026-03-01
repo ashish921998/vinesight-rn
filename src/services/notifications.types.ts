@@ -76,8 +76,15 @@ export function createDateTrigger(date: Date): NotificationTrigger {
 
 /**
  * Helper to create a daily trigger.
+ * @throws {Error} If hour is not 0-23 or minute is not 0-59
  */
 export function createDailyTrigger(hour: number, minute: number): NotificationTrigger {
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+    throw new Error(`Invalid hour: ${hour}. Must be an integer between 0 and 23.`);
+  }
+  if (!Number.isInteger(minute) || minute < 0 || minute > 59) {
+    throw new Error(`Invalid minute: ${minute}. Must be an integer between 0 and 59.`);
+  }
   return { type: 'DAILY', hour, minute };
 }
 

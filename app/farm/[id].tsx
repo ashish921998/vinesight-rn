@@ -112,6 +112,17 @@ export default function FarmDetailScreen() {
   const deleteMutation = useDeleteTask();
   const taskSchedules = useNotificationStore((s) => s.taskSchedules);
   const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
+
+  const cleanupTaskNotifications = async (taskId: number): Promise<void> => {
+    const schedule = taskSchedules[String(taskId)];
+    if (!schedule) return;
+
+    if (schedule.notificationIds?.length) {
+      await Promise.allSettled(schedule.notificationIds.map(cancelNotification));
+    }
+    removeTaskSchedule(String(taskId));
+  };
+
   const deleteFarmMutation = useDeleteFarm();
   const deleteIrrigation = useDeleteIrrigationRecord();
   const deleteSpray = useDeleteSprayRecord();
@@ -902,18 +913,9 @@ export default function FarmDetailScreen() {
       {
         text: t('common.complete'),
         onPress: () => {
-          const schedule = taskSchedules[String(taskId)];
           completeMutation.mutate(taskId, {
             onSuccess: () => {
-              if (schedule) {
-                if (schedule.notificationIds?.length) {
-                  void Promise.allSettled(schedule.notificationIds.map(cancelNotification)).then(
-                    () => removeTaskSchedule(String(taskId)),
-                  );
-                } else {
-                  removeTaskSchedule(String(taskId));
-                }
-              }
+              void cleanupTaskNotifications(taskId);
               refetchTasks();
             },
             onError: (error: Error) => {
@@ -936,18 +938,9 @@ export default function FarmDetailScreen() {
         text: t('common.delete'),
         style: 'destructive',
         onPress: () => {
-          const schedule = taskSchedules[String(taskId)];
           deleteMutation.mutate(taskId, {
             onSuccess: () => {
-              if (schedule) {
-                if (schedule.notificationIds?.length) {
-                  void Promise.allSettled(schedule.notificationIds.map(cancelNotification)).then(
-                    () => removeTaskSchedule(String(taskId)),
-                  );
-                } else {
-                  removeTaskSchedule(String(taskId));
-                }
-              }
+              void cleanupTaskNotifications(taskId);
               refetchTasks();
             },
             onError: (error: Error) => {

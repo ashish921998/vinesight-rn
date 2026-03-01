@@ -1,18 +1,10 @@
 import { Platform } from 'react-native';
 import i18n from '@/i18n';
+import type { NotificationTrigger } from './notifications.types';
 
 const ANDROID_CHANNEL_ID = 'vinesight-reminders' as const;
 
 type ExpoNotifications = typeof import('expo-notifications');
-
-/**
- * Valid trigger types for scheduling notifications.
- * This bridges the gap between our usage and expo-notifications' internal types.
- */
-type NotificationTrigger =
-  | { type: 'DAILY'; hour: number; minute: number }
-  | { type: 'DATE'; date: Date }
-  | null; // Immediate notification
 
 async function getNotifications(): Promise<ExpoNotifications | null> {
   try {
@@ -359,4 +351,60 @@ export async function sendCustomNotification(
     },
     null, // immediate
   );
+}
+
+/**
+ * Schedules a guided tour reminder notification.
+ * @param sequence - The tour sequence number (1 or 2)
+ * @param targetDate - The date to send the reminder (YYYY-MM-DD)
+ * @param time - The time of day to send the reminder (format: 'HH:MM', defaults to '10:00')
+ * @returns The notification ID, or null if scheduling failed
+ */
+export async function scheduleGuidedTourReminder(
+  sequence: 1 | 2,
+  targetDate: string,
+  time?: string,
+): Promise<string | null> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  const [hour, minute] = (time ?? '10:00').split(':').map(Number);
+
+  const m = /^\d{4}-\d{2}-\d{2}$/.exec(targetDate);
+  if (!m) return null;
+
+  const [y, mo, d] = targetDate.split('-').map((n) => Number(n));
+
+  const reminderDate = new Date(y, mo - 1, d);
+  reminderDate.setHours(hour, minute, 0, 0);
+
+  if (
+    Number.isNaN(reminderDate.getTime()) ||
+    reminderDate.getFullYear() !== y ||
+    reminderDate.getMonth() !== mo - 1 ||
+    reminderDate.getDate() !== d
+  ) {
+    return null;
+  }
+
+  const now = Date.now();
+
+  if (reminderDate.getTime() > now) {
+    try {
+      return scheduleNotificationSafe(
+        Notifications,
+        {
+          title: i18n.t('notifications.guidedTour.title'),
+          body: i18n.t('notifications.guidedTour.body'),
+          sound: true,
+          data: { type: 'guided_tour_reminder', sequence },
+        },
+        { type: 'DATE', date: reminderDate },
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
