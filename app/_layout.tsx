@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, usePathname, useSegments } from 'expo-router';
 import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -387,9 +388,19 @@ export default Sentry.wrap(function RootLayout() {
           level: 'warning',
           extra: { timeoutMs: INIT_TIMEOUT_MS, ...context },
         });
-        if (authStillLoading) useAuthStore.setState({ isLoading: false });
-        if (themeStillPending) useThemeStore.setState({ hasHydrated: true });
-        if (langStillPending) useLanguageStore.setState({ hasHydrated: true });
+        if (authStillLoading) {
+          useAuthStore.setState({ isLoading: false });
+        }
+        if (themeStillPending) {
+          AsyncStorage.getItem('theme-store')
+            .then((data) => data && useThemeStore.setState(JSON.parse(data)))
+            .catch(() => useThemeStore.setState({ hasHydrated: true }));
+        }
+        if (langStillPending) {
+          AsyncStorage.getItem('language-store')
+            .then((data) => data && useLanguageStore.setState(JSON.parse(data)))
+            .catch(() => useLanguageStore.setState({ hasHydrated: true }));
+        }
       }
     }, INIT_TIMEOUT_MS);
 

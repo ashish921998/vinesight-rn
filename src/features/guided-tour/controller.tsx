@@ -78,7 +78,6 @@ export function GuidedTourController() {
   const hasActiveSeasonForCurrentFarm = useGuidedTourStore((s) => s.hasActiveSeasonForCurrentFarm);
   const replayResetPending = useGuidedTourStore((s) => s.replayResetPending);
   const lastActiveAt = useGuidedTourStore((s) => s.lastActiveAt);
-  const remindersSent = useGuidedTourStore((s) => s.remindersSent);
   const startedAt = useGuidedTourStore((s) => s.startedAt);
   const completedAt = useGuidedTourStore((s) => s.completedAt);
   const expiredAt = useGuidedTourStore((s) => s.expiredAt);
@@ -124,6 +123,7 @@ export function GuidedTourController() {
   const addLogRetryCountRef = useRef(0);
   const previousShowEventKeyRef = useRef<string | null>(null);
   const previousUserIdRef = useRef<string | null>(null);
+  const upsertPromiseRef = useRef<Promise<void> | null>(null);
 
   const isSupportedLocale = language === 'en' || language === 'hi' || language === 'mr';
 
@@ -154,31 +154,17 @@ export function GuidedTourController() {
   useEffect(() => {
     if (!hasHydrated) return;
 
-    if (!isAuthenticated || !userId) {
-      if (previousUserIdRef.current !== null) {
-        resetForReplay();
-        hydrationSyncedRef.current = false;
-      }
-      requestAnimationFrame(() => setInitialServerHydrated(false));
-      previousUserIdRef.current = null;
-      return;
-    }
+    const userIdChanged = userId && userId !== previousUserIdRef.current;
+    const authStateChanged = isAuthenticated !== !!previousUserIdRef.current;
 
-    if (previousUserIdRef.current && previousUserIdRef.current !== userId) {
-      resetForReplay();
+    if (userIdChanged || authStateChanged) {
+      resetForReplay?.();
       hydrationSyncedRef.current = false;
       requestAnimationFrame(() => setInitialServerHydrated(false));
     }
 
-    previousUserIdRef.current = userId;
+    previousUserIdRef.current = userId ?? null;
   }, [hasHydrated, isAuthenticated, resetForReplay, userId]);
-
-  useEffect(() => {
-    if (isAuthenticated && userId) {
-      hydrationSyncedRef.current = false;
-      requestAnimationFrame(() => setInitialServerHydrated(false));
-    }
-  }, [isAuthenticated, userId]);
 
   useEffect(() => {
     if (!isAuthenticated || !hasHydrated || hydrationSyncedRef.current) return;
@@ -209,35 +195,39 @@ export function GuidedTourController() {
     if (!isAuthenticated || !hasHydrated || !isSupportedLocale || !initialServerHydrated) return;
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     syncTimeoutRef.current = setTimeout(() => {
-      if (replayResetPending) {
-        void upsertGuidedTourServerState({
-          tour_status: 'not_started',
-          current_step: 'welcome',
-          skipped_at_step: null,
-          reminders_sent: 0,
-          tour_started_at: null,
-          tour_completed_at: null,
-          tour_expired_at: null,
-          last_active_at: new Date().toISOString(),
-          active_farm_id: null,
-          locale: language === 'hi' || language === 'mr' ? language : 'en',
-          tour_version: GUIDED_TOUR_VERSION,
-          clear_nullable_fields: true,
-        }).catch((error) => {
-          if (__DEV__) {
-            console.warn('[guided-tour] replay reset sync failed', error);
-          }
-        });
-      } else {
-        void upsertGuidedTourServerState(toServerPatch(language)).catch((error) => {
+      const promise = replayResetPending
+        ? upsertGuidedTourServerState({
+            tour_status: 'not_started',
+            current_step: 'welcome',
+            skipped_at_step: null,
+            reminders_sent: 0,
+            tour_started_at: null,
+            tour_completed_at: null,
+            tour_expired_at: null,
+            last_active_at: new Date().toISOString(),
+            active_farm_id: null,
+            locale: language === 'hi' || language === 'mr' ? language : 'en',
+            tour_version: GUIDED_TOUR_VERSION,
+            clear_nullable_fields: true,
+          })
+        : upsertGuidedTourServerState(toServerPatch(language));
+
+      upsertPromiseRef.current = promise;
+      promise
+        .catch((error) => {
           if (__DEV__) {
             console.warn('[guided-tour] state sync failed', error);
           }
+        })
+        .finally(() => {
+          if (upsertPromiseRef.current === promise) {
+            upsertPromiseRef.current = null;
+          }
         });
-      }
     }, 350);
     return () => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      upsertPromiseRef.current = null;
     };
   }, [
     isAuthenticated,
@@ -250,12 +240,11 @@ export function GuidedTourController() {
     activeFarmId,
     completedAt,
     currentStep,
+    skippedAtStep,
+    status,
+    startedAt,
     expiredAt,
     lastActiveAt,
-    remindersSent,
-    skippedAtStep,
-    startedAt,
-    status,
   ]);
 
   useEffect(() => {

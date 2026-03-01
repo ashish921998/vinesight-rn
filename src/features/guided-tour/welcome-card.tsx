@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
@@ -29,6 +29,7 @@ export function GuidedTourWelcomeCard({ onStart, onSkip }: Props) {
   const isDark = useIsDark();
   const appLogo = isDark ? appLogoDark : appLogoLight;
   const reveal = useMemo(() => new Animated.Value(0), []);
+  const deferRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     Animated.timing(reveal, {
@@ -39,7 +40,18 @@ export function GuidedTourWelcomeCard({ onStart, onSkip }: Props) {
     }).start();
   }, [reveal]);
 
-  const defer = (fn: () => void) => setTimeout(fn, 0);
+  useEffect(() => {
+    return () => {
+      if (deferRef.current) clearTimeout(deferRef.current);
+    };
+  }, []);
+
+  const defer = (fn: () => void) => {
+    deferRef.current = setTimeout(() => {
+      deferRef.current = null;
+      fn();
+    }, 0);
+  };
   const cardOpacity = reveal.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
   const cardTranslateY = reveal.interpolate({ inputRange: [0, 1], outputRange: [16, 0] });
 

@@ -96,7 +96,7 @@ export const useGuidedTourStore = create<GuidedTourStore>()(
           startedAt: state.startedAt ?? nowIso(),
           stepShownAt: null,
           skippedAtStep: null,
-          activeFarmId: null,
+          activeFarmId: state.activeFarmId ?? null,
           hasSeenWelcomeThisSession: true,
           expiredAt: null,
           completedAt: null,

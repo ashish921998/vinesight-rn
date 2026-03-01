@@ -93,19 +93,36 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { data: rows, error } = await supabase
-      .from('user_guided_tour_state')
-      .select('user_id,tour_status,reminders_sent,last_active_at,locale')
-      .eq('tour_status', 'in_progress')
-      .range(0, 4999);
+    let offset = 0;
+    const batchSize = 500;
+    const allRows: {
+      user_id: string;
+      tour_status: string;
+      reminders_sent: number;
+      last_active_at: string | null;
+      locale: string | null;
+    }[] = [];
 
-    if (error) throw error;
+    while (true) {
+      const { data, error } = await supabase
+        .from('user_guided_tour_state')
+        .select('user_id,tour_status,reminders_sent,last_active_at,locale')
+        .eq('tour_status', 'in_progress')
+        .range(offset, offset + batchSize - 1);
+
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+
+      allRows.push(...data);
+      if (data.length < batchSize) break;
+      offset += batchSize;
+    }
 
     let processed = 0;
     let sent = 0;
     let expired = 0;
 
-    for (const row of rows ?? []) {
+    for (const row of allRows) {
       processed += 1;
       const inactivityHours = hoursSince(row.last_active_at ?? null);
       const remindersSent = Number(row.reminders_sent ?? 0) as 0 | 1 | 2;
