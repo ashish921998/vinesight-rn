@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack, usePathname, useSegments } from 'expo-router';
+import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
 import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -146,6 +146,11 @@ export default Sentry.wrap(function RootLayout() {
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
+  const router = useRouter();
+  const routerRef = useRef(router);
+  useEffect(() => {
+    routerRef.current = router;
+  });
 
   useEffect(() => {
     // Initialize auth state
@@ -321,6 +326,41 @@ export default Sentry.wrap(function RootLayout() {
     };
   }, [language, languageHydrated, notificationsHydrated]);
 
+  // Configure foreground notification display + Android channel
+  useEffect(() => {
+    let disposed = false;
+    const setup = async () => {
+      try {
+        const Notifications = await import('expo-notifications');
+        if (disposed) return;
+        Notifications.setNotificationHandler({
+          handleNotification: async () => ({
+            shouldShowAlert: true,
+            shouldShowBanner: true,
+            shouldShowList: true,
+            shouldPlaySound: true,
+            shouldSetBadge: false,
+          }),
+        });
+        if (Platform.OS === 'android') {
+          await Notifications.setNotificationChannelAsync('vinesight-reminders', {
+            name: 'Farm Reminders',
+            importance: Notifications.AndroidImportance.HIGH,
+            vibrationPattern: [0, 250, 250, 250],
+            sound: 'default',
+          });
+        }
+      } catch {
+        // ignore
+      }
+    };
+    void setup();
+    return () => {
+      disposed = true;
+    };
+  }, []);
+
+  // Handle notification taps → deep-link to the appropriate screen
   useEffect(() => {
     let cleanup: null | (() => void) = null;
     let disposed = false;
@@ -336,6 +376,18 @@ export default Sentry.wrap(function RootLayout() {
           if (data?.type === 'guided_tour_reminder') {
             const sequence = data.sequence === 2 ? 2 : 1;
             guidedTourEmit('guidedTour.notificationOpened', { sequence });
+          } else if (
+            data?.type === 'task_due' ||
+            data?.type === 'task_due_tomorrow' ||
+            data?.type === 'task_overdue'
+          ) {
+            routerRef.current.push('/tasks');
+          } else if (data?.type === 'low_water') {
+            routerRef.current.push('/(tabs)');
+          } else if (data?.type === 'warehouse_reorder') {
+            routerRef.current.push('/warehouse');
+          } else if (data?.type === 'petiole_test') {
+            routerRef.current.push('/(tabs)');
           }
         });
         if (disposed) {

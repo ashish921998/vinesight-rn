@@ -15,11 +15,12 @@ import { Symbol as SFSymbol } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-tasks';
 import { TaskReminder } from '../src/types/task';
-import { useModalStore } from '@/stores';
+import { useModalStore, useNotificationStore } from '@/stores';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
+import { cancelNotification } from '@/services/notifications';
 import { TaskRow } from '@/components/cards';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -45,6 +46,8 @@ export default function TasksScreen() {
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
+  const taskSchedules = useNotificationStore((s) => s.taskSchedules);
+  const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
 
   const [filter, setFilter] = useState<FilterType>('all');
   const farmIdValue = farmId ? parseInt(farmId, 10) : undefined;
@@ -106,6 +109,14 @@ export default function TasksScreen() {
         {
           text: t('common.complete'),
           onPress: () => {
+            // Cancel any pending notifications for this task
+            const schedule = taskSchedules[task.id!];
+            if (schedule?.notificationIds?.length) {
+              void Promise.allSettled(schedule.notificationIds.map(cancelNotification)).then(() =>
+                removeTaskSchedule(String(task.id!)),
+              );
+            }
+
             // Calculate due_offset_days using calendar days
             let dueOffsetDays: number | null = null;
             if (task.due_date) {
@@ -146,7 +157,16 @@ export default function TasksScreen() {
         {
           text: t('common.delete'),
           style: 'destructive',
-          onPress: () => deleteMutation.mutate(task.id!),
+          onPress: () => {
+            // Cancel any pending notifications for this task
+            const schedule = taskSchedules[task.id!];
+            if (schedule?.notificationIds?.length) {
+              void Promise.allSettled(schedule.notificationIds.map(cancelNotification)).then(() =>
+                removeTaskSchedule(String(task.id!)),
+              );
+            }
+            deleteMutation.mutate(task.id!);
+          },
         },
       ],
     );

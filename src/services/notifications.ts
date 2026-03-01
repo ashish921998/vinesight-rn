@@ -141,6 +141,24 @@ export async function scheduleTaskDueReminder(
     // If the due date is fully in the past (not today), skip silently
   }
 
+  // --- Notification 3: Day after due date at 08:00 (overdue reminder) ---
+  const overdueDate = new Date(y, mo - 1, d);
+  overdueDate.setDate(overdueDate.getDate() + 1);
+  overdueDate.setHours(8, 0, 0, 0);
+  if (overdueDate.getTime() > now) {
+    const title = i18n.t('notifications.taskOverdue.title');
+    const body = i18n.t('notifications.taskOverdue.body');
+    try {
+      const id = await Notifications.scheduleNotificationAsync({
+        content: { title, body, sound: true, data: { type: 'task_overdue', taskId } },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: overdueDate },
+      });
+      scheduledIds.push(id);
+    } catch {
+      // continue
+    }
+  }
+
   return scheduledIds;
 }
 
@@ -261,4 +279,30 @@ export async function schedulePetioleTestReminder(
   }
 
   return null;
+}
+
+/**
+ * Sends an immediate notification with any title, body, and optional data payload.
+ * Use this to trigger ad-hoc or custom notifications from anywhere in the app.
+ *
+ * @example
+ *   await sendCustomNotification('Harvest reminder', 'Time to check your grapes!', { farmId: '123' });
+ */
+export async function sendCustomNotification(
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+): Promise<string | null> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      sound: true,
+      data: { type: 'custom', ...data },
+    },
+    trigger: null, // fires immediately
+  });
 }

@@ -1678,6 +1678,10 @@ export const mr = {
       title: '$t(glossary.petiole) चाचणी आठवण',
       body: '{{farmName}}: {{day}}व्या दिवसाची $t(glossary.petiole) चाचणी उद्या आहे',
     },
+    taskOverdue: {
+      title: '$t(glossary.task) मुदत संपली',
+      body: 'तुमचे एक $t(glossary.task) मुदत संपलेले आहे. कृपया ते पूर्ण करा किंवा पुन्हा नियोजित करा.',
+    },
   },
 
   dashboard: {
