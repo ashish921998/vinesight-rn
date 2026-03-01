@@ -297,7 +297,7 @@ export default function SystemDischargeScreen() {
       />
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
         <KeyboardAvoidingView
-          behavior="padding"
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={
             Platform.OS === 'ios' ? insets.top + IOS_NAV_BAR_HEIGHT : insets.top
           }
