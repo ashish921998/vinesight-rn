@@ -42,6 +42,17 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       ? (data.quantity * data.price).toFixed(0)
       : null;
 
+  // Helper to localize grade values
+  const localizeHarvestGrade = (grade: string): string => {
+    const gradeTranslations: Record<string, string> = {
+      'Export Quality': t('harvestForm.grades.exportQuality'),
+      Premium: t('harvestForm.grades.premium'),
+      Standard: t('harvestForm.grades.standard'),
+      Reject: t('harvestForm.grades.reject'),
+    };
+    return gradeTranslations[grade] || grade;
+  };
+
   return (
     <View>
       {/* Header with icon */}
@@ -122,7 +133,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                   color: colors.surface[800],
                 }}
               >
-                Grade <Text style={{ color: colors.error }}>*</Text>
+                {t('common.labels.grade')} <Text style={{ color: colors.error }}>*</Text>
               </Text>
             </View>
 
@@ -150,7 +161,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                       color: data.grade === grade ? m3.colorScheme.onWarning : colors.surface[700],
                     }}
                   >
-                    {grade}
+                    {localizeHarvestGrade(grade)}
                   </Text>
                 </Pressable>
               ))}
@@ -237,7 +248,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
               marginBottom: spacing[2],
             }}
           >
-            Summary
+            {t('common.labels.summary')}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[4] }}>
             {data.quantity !== undefined && data.quantity > 0 && (
@@ -248,7 +259,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                     color: colorWithOpacity(colors.warning, 0.9),
                   }}
                 >
-                  Quantity
+                  {t('common.labels.quantity')}
                 </Text>
                 <Text
                   style={{
@@ -269,7 +280,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                     color: colorWithOpacity(colors.warning, 0.9),
                   }}
                 >
-                  Grade
+                  {t('common.labels.grade')}
                 </Text>
                 <Text
                   style={{
@@ -278,7 +289,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                     color: m3.colorScheme.onSurface,
                   }}
                 >
-                  {data.grade}
+                  {localizeHarvestGrade(data.grade)}
                 </Text>
               </View>
             )}
@@ -290,7 +301,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
                     color: colorWithOpacity(colors.warning, 0.9),
                   }}
                 >
-                  Total Value
+                  {t('common.labels.totalValue')}
                 </Text>
                 <Text
                   style={{
@@ -329,7 +340,7 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             color: isValid ? colors.success : colors.surface[500],
           }}
         >
-          {isValid ? 'Ready to add' : 'Enter quantity and select grade'}
+          {isValid ? t('common.labels.readyToAdd') : t('common.labels.enterQuantityAndSelectGrade')}
         </Text>
       </View>
     </View>

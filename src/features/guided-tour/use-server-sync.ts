@@ -108,6 +108,11 @@ export function useGuidedTourServerSync(): boolean {
 
       upsertPromiseRef.current = promise;
       promise
+        .then(() => {
+          if (replayResetPending) {
+            useGuidedTourStore.getState().setReplayResetPending(false);
+          }
+        })
         .catch((error) => {
           if (__DEV__) {
             console.warn('[guided-tour] state sync failed', error);

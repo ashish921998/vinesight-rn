@@ -49,6 +49,9 @@ export const mr = {
       avg: 'सरासरी',
       min: 'किमान',
       max: 'कमाल',
+      readyToAdd: 'जोडण्यासाठी तयार',
+      enterQuantityAndSelectGrade: 'प्रमाण नोंदवा आणि दर्जा निवडा',
+      summary: 'सारांश',
     },
     noResultsFound: 'निकाल आढळले नाहीत',
     tryDifferentSearchTerm: 'वेगळा शोध शब्द वापरा',
@@ -696,6 +699,14 @@ export const mr = {
       Maintenance: 'देखभाल',
       Other: 'इतर',
     },
+    remarks: {
+      label: 'टिप्पण्या',
+      placeholder: 'या खर्चाबद्दल टिप्पण्या जोडा (पर्यायी)',
+      hint: 'पर्यायी - खर्च वर्णन करा',
+    },
+    validation: {
+      selectCategoryAndEnterAmount: 'श्रेणी निवडा आणि रक्कम नोंदवा',
+    },
   },
 
   harvestForm: {
@@ -711,6 +722,12 @@ export const mr = {
     buyerLabel: 'खरेदीदार',
     buyerPlaceholder: 'खरेदीदाराचे नाव नोंदवा (पर्यायी)',
     buyerHint: 'पर्यायी - कोणी कापणी विकत घेतली',
+    grades: {
+      exportQuality: 'निर्यात दर्जा',
+      premium: 'प्रीमियम',
+      standard: 'मानक',
+      reject: 'अस्वीकार',
+    },
   },
 
   analytics: {
@@ -2600,7 +2617,7 @@ export const mr = {
       fillActivityDetailsCoach: 'तपशील भरा, मग पुढे जाण्यासाठी पुढे टॅप करा.',
       fillSprayDetailsCoach: 'पुढे जाण्यासाठी पाण्याचे प्रमाण आणि किमान एक रसायन नोंदवा.',
       tapAddEntryCoach: 'तुमची कृती नोंदवण्यासाठी नोंद जोडा टॅप करा.',
-      tapSaveCoach: 'तुमची कृती जतन करण्यासाठी सेव टॅप करा.',
+      tapSaveCoach: 'तुमची कृती जतन करण्यासाठी जतन करा टॅप करा.',
       startSeasonCoach: 'आधी हंगाम सुरू करा, म्हणजे Vinesight तुमच्या नोंदी व्यवस्थित ठेवू शकेल.',
       startSeasonHelper: 'गरज असेल तर टेम्पलेट/तारखा बदला, मग हंगाम सुरू करा वर टॅप करा.',
       pickActivityCoach:

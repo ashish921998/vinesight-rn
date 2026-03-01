@@ -168,7 +168,7 @@ export function IrrigationForm({
                   color: colors.surface[900],
                 }}
               >
-                {farmArea.toFixed(2)} acres
+                {farmArea.toFixed(2)} {t('units.acres')}
               </Text>
             </View>
           )}
@@ -204,7 +204,7 @@ export function IrrigationForm({
                   color: m3.colorScheme.onSurface,
                 }}
               >
-                {estimatedWater} mm
+                {estimatedWater} {t('units.millimeter')}
               </Text>
             </View>
           )}

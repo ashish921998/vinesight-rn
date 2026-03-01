@@ -49,6 +49,9 @@ export const en = {
       avg: 'Avg',
       min: 'Min',
       max: 'Max',
+      readyToAdd: 'Ready to add',
+      enterQuantityAndSelectGrade: 'Enter quantity and select grade',
+      summary: 'Summary',
     },
     noResultsFound: 'No results found',
     tryDifferentSearchTerm: 'Try a different search term',
@@ -679,6 +682,14 @@ export const en = {
       Maintenance: 'Maintenance',
       Other: 'Other',
     },
+    remarks: {
+      label: 'Remarks',
+      placeholder: 'Add notes about this expense (optional)',
+      hint: 'Optional - describe the expense',
+    },
+    validation: {
+      selectCategoryAndEnterAmount: 'Select category and enter amount',
+    },
   },
 
   harvestForm: {
@@ -694,6 +705,12 @@ export const en = {
     buyerLabel: 'Buyer',
     buyerPlaceholder: 'Enter buyer name (optional)',
     buyerHint: 'Optional - who bought the harvest',
+    grades: {
+      exportQuality: 'Export Quality',
+      premium: 'Premium',
+      standard: 'Standard',
+      reject: 'Reject',
+    },
   },
 
   irrigationForm: {

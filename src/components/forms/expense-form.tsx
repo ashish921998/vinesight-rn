@@ -200,7 +200,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
               color: colors.surface[800],
             }}
           >
-            Remarks
+            {t('expenseForm.remarks.label')}
           </Text>
         </View>
 
@@ -216,7 +216,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
         >
           <TextInput
             style={{ fontSize: fontSize.base, color: colors.surface[900] }}
-            placeholder="Add notes about this expense (optional)"
+            placeholder={t('expenseForm.remarks.placeholder')}
             placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
             value={data.remarks || ''}
             onChangeText={(remarks) => onChange({ ...data, remarks: remarks || undefined })}
@@ -227,7 +227,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
           />
         </View>
         <Text style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: spacing[1] }}>
-          Optional - describe the expense
+          {t('expenseForm.remarks.hint')}
         </Text>
       </View>
 
@@ -258,7 +258,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
                   marginLeft: spacing[2],
                 }}
               >
-                {data.type}
+                {t(`expenseForm.types.${data.type}`)}
               </Text>
             </View>
             <Text
@@ -296,7 +296,9 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
             color: isValid ? colors.success : colors.surface[500],
           }}
         >
-          {isValid ? 'Ready to add' : 'Select category and enter amount'}
+          {isValid
+            ? t('common.labels.readyToAdd')
+            : t('expenseForm.validation.selectCategoryAndEnterAmount')}
         </Text>
       </View>
     </View>

@@ -74,13 +74,7 @@ const getAuthErrorMessage = (
     return 'Too many attempts right now. Please wait a minute and try again.';
   }
 
-  if (
-    context === 'verify_email_otp' ||
-    context === 'verify_phone_otp' ||
-    message.includes('otp') ||
-    message.includes('token') ||
-    message.includes('expired')
-  ) {
+  if (context === 'verify_email_otp' || context === 'verify_phone_otp') {
     return 'The verification code is invalid or expired. Please request a new code.';
   }
 
@@ -1025,13 +1019,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     } catch (error: unknown) {
       telemetry.capture('auth_otp_verify_failed', { type: pendingOTPType });
       set({
-        errorMessage: isNetworkTimeoutError(error)
-          ? getAuthErrorMessage(error, 'Failed to verify code', 'verify_email_otp')
-          : getAuthErrorMessage(
-              error,
-              'Invalid or expired code. Please try again.',
-              'verify_email_otp',
-            ),
+        errorMessage: getAuthErrorMessage(
+          error,
+          'Invalid or expired code. Please try again.',
+          'verify_email_otp',
+        ),
         isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
@@ -1184,13 +1176,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     } catch (error: unknown) {
       telemetry.capture('auth_phone_otp_verify_failed');
       set({
-        errorMessage: isNetworkTimeoutError(error)
-          ? getAuthErrorMessage(error, 'Failed to verify code', 'verify_phone_otp')
-          : getAuthErrorMessage(
-              error,
-              'Invalid or expired code. Please try again.',
-              'verify_phone_otp',
-            ),
+        errorMessage: getAuthErrorMessage(
+          error,
+          'Invalid or expired code. Please try again.',
+          'verify_phone_otp',
+        ),
         isAuthenticated: wasAuthenticated,
         isLoading: false,
       });
