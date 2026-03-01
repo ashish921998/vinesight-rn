@@ -19,7 +19,6 @@ import {
   useNotificationStore,
   useThemeStore,
 } from '@/stores';
-import { useAndroidBackHandler } from '@/hooks/useAndroidBackHandler';
 import { ErrorBoundary } from '@/components/error-boundary';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
@@ -150,7 +149,6 @@ export default Sentry.wrap(function RootLayout() {
   const router = useRouter();
   const routerRef = useRef(router);
 
-  useAndroidBackHandler();
   useEffect(() => {
     routerRef.current = router;
   });
@@ -382,6 +380,9 @@ export default Sentry.wrap(function RootLayout() {
         type?: string;
         sequence?: number;
       };
+      const currentRouter = routerRef.current;
+      if (!currentRouter) return;
+
       if (data?.type === 'guided_tour_reminder') {
         const sequence = data.sequence === 2 ? 2 : 1;
         guidedTourEmit('guidedTour.notificationOpened', { sequence });
@@ -390,13 +391,13 @@ export default Sentry.wrap(function RootLayout() {
         data?.type === 'task_due_tomorrow' ||
         data?.type === 'task_overdue'
       ) {
-        routerRef.current.push('/tasks');
+        currentRouter.push('/tasks');
       } else if (data?.type === 'low_water') {
-        routerRef.current.push('/(tabs)');
+        currentRouter.push('/(tabs)');
       } else if (data?.type === 'warehouse_reorder') {
-        routerRef.current.push('/warehouse');
+        currentRouter.push('/warehouse');
       } else if (data?.type === 'petiole_test') {
-        routerRef.current.push('/(tabs)');
+        currentRouter.push('/(tabs)');
       } else if (data?.type === 'custom') {
         // Custom notifications have no navigation target
       }

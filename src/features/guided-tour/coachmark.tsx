@@ -115,8 +115,8 @@ export function GuidedTourCoachmark({
   // If the target is roughly square (e.g. a circular FAB) use a full circle ring;
   // otherwise fall back to the themed rounded-rect radii.
   const isCircularTarget = Math.abs(rect.width - rect.height) < 8;
-  const innerRingRadius = isCircularTarget ? 9999 : borderRadius.xl;
-  const outerRingRadius = isCircularTarget ? 9999 : borderRadius['2xl'];
+  const innerRingRadius = isCircularTarget ? borderRadius.full : borderRadius.xl;
+  const outerRingRadius = isCircularTarget ? borderRadius.full : borderRadius['2xl'];
   const accentColor = step === 'add_farm' ? '#2FA36D' : '#4A86E8';
   const gradientColors: [string, string] =
     step === 'add_farm' ? ['#195A3A', '#2FA36D'] : ['#2D5DB8', '#4A86E8'];

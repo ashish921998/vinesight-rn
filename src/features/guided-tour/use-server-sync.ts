@@ -79,7 +79,12 @@ export function useGuidedTourServerSync(): boolean {
           // Fall through — must still mark hydration complete so the controller
           // sets eligible = true and shows the welcome/coach overlay.
         } else {
-          const hasAnyFarms = await userHasAnyFarms();
+          let hasAnyFarms = false;
+          try {
+            hasAnyFarms = await userHasAnyFarms();
+          } catch (error) {
+            if (__DEV__) console.warn('[guided-tour] userHasAnyFarms check failed', error);
+          }
           if (hasAnyFarms) {
             completeTour();
           }

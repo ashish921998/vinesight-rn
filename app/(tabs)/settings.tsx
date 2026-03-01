@@ -394,8 +394,7 @@ export default function SettingsScreen() {
   }, [linkPhoneInput, selectedCountry.dialCode]);
   const linkPhoneDisplayNumber =
     (phoneLinkingNumber ?? normalizedE164PhoneNumber) || linkPhoneInput;
-  const isLocalPhoneValid =
-    Boolean(linkPhoneInput) && Boolean(normalizedE164PhoneNumber) && linkPhoneInput.length === 10;
+  const isLocalPhoneValid = Boolean(linkPhoneInput) && Boolean(normalizedE164PhoneNumber);
 
   useEffect(() => {
     if (!linkPhoneLocalError) return;
@@ -998,7 +997,7 @@ export default function SettingsScreen() {
 
   const handleSendPhoneLinkCode = async () => {
     const phone = normalizedE164PhoneNumber;
-    if (!phone || linkPhoneInput.length !== 10) {
+    if (!phone) {
       setLinkPhoneLocalError(
         t('authPhone.invalidPhone', { defaultValue: 'Please enter a valid phone number' }),
       );
@@ -1793,7 +1792,7 @@ export default function SettingsScreen() {
                         placeholder={t('settings.linkPhone.phonePlaceholder')}
                         placeholderTextColor={colors.gray[400]}
                         keyboardType="phone-pad"
-                        maxLength={10}
+                        maxLength={15}
                         autoCapitalize="none"
                         autoCorrect={false}
                         style={styles.linkPhoneInputField}

@@ -130,10 +130,6 @@ export default function PhoneLoginScreen() {
       setLocalPhoneError(t('authPhone.invalidPhone'));
       return;
     }
-    if (phoneNumber.length !== 10) {
-      setLocalPhoneError(t('authPhone.invalidPhone'));
-      return;
-    }
     clearError();
     setLocalPhoneError(null);
     await signInWithPhone(fullPhoneNumber, phoneAuthMode);
@@ -423,7 +419,7 @@ export default function PhoneLoginScreen() {
                 }}
                 leftIcon="phone.fill"
                 keyboardType="phone-pad"
-                maxLength={10}
+                maxLength={15}
                 autoCapitalize="none"
                 textContentType="telephoneNumber"
                 autoComplete="tel"
