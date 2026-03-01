@@ -397,6 +397,8 @@ export default Sentry.wrap(function RootLayout() {
         routerRef.current.push('/warehouse');
       } else if (data?.type === 'petiole_test') {
         routerRef.current.push('/(tabs)');
+      } else if (data?.type === 'custom') {
+        // Custom notifications have no navigation target
       }
     };
 

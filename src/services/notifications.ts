@@ -329,6 +329,9 @@ export async function schedulePetioleTestReminder(
  * Sends an immediate notification with any title, body, and optional data payload.
  * Use this to trigger ad-hoc or custom notifications from anywhere in the app.
  *
+ * @param title - Notification title
+ * @param body - Notification body text
+ * @param data - Optional payload data. Note: Any `type` field in this object will be removed and overridden to 'custom'.
  * @example
  *   await sendCustomNotification('Harvest reminder', 'Time to check your grapes!', { farmId: '123' });
  */
@@ -368,7 +371,10 @@ export async function scheduleGuidedTourReminder(
   const Notifications = await getNotifications();
   if (!Notifications) return null;
 
-  const [hour, minute] = (time ?? '10:00').split(':').map(Number);
+  const parts = (time ?? '10:00').split(':');
+  if (parts.length !== 2) return null;
+  const [hour, minute] = parts.map(Number);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return null;
 
   const m = /^\d{4}-\d{2}-\d{2}$/.exec(targetDate);
   if (!m) return null;
