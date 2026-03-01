@@ -470,7 +470,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         is_network_timeout: isNetworkTimeoutError(error),
       });
       set({
-        errorMessage: getAuthErrorMessage(error, 'Sign in failed'),
+        errorMessage: getAuthErrorMessage(error, 'Sign in failed', 'sign_in'),
         isAuthenticated: false,
         isLoading: false,
       });

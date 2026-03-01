@@ -63,8 +63,16 @@ export function useGuidedTourServerSync(): boolean {
   // Fetch server state on auth
   useEffect(() => {
     if (!isAuthenticated || !hasHydrated || hydrationSyncedRef.current) return;
+
+    const capturedUserId = userId;
+    const capturedIsAuthenticated = isAuthenticated;
+
     fetchGuidedTourServerState()
       .then(async (server) => {
+        if (capturedUserId !== userId || capturedIsAuthenticated !== isAuthenticated) {
+          return;
+        }
+
         hydrationSyncedRef.current = true;
         if (server) {
           applyServerState(server);
@@ -75,12 +83,11 @@ export function useGuidedTourServerSync(): boolean {
         if (hasAnyFarms) {
           completeTour();
         }
+
+        setInitialServerHydrated(true);
       })
       .catch((error) => {
         if (__DEV__) console.warn('[guided-tour] fetch sync failed', error);
-      })
-      .finally(() => {
-        setInitialServerHydrated(true);
       });
   }, [applyServerState, completeTour, hasHydrated, isAuthenticated, userId]);
 
@@ -89,40 +96,47 @@ export function useGuidedTourServerSync(): boolean {
     if (!isAuthenticated || !hasHydrated || !isSupportedLocale || !initialServerHydrated) return;
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     syncTimeoutRef.current = setTimeout(() => {
-      const promise = replayResetPending
-        ? upsertGuidedTourServerState({
-            tour_status: 'not_started',
-            current_step: 'welcome',
-            skipped_at_step: null,
-            reminders_sent: 0,
-            tour_started_at: null,
-            tour_completed_at: null,
-            tour_expired_at: null,
-            last_active_at: new Date().toISOString(),
-            active_farm_id: null,
-            locale: language === 'hi' || language === 'mr' ? language : 'en',
-            tour_version: GUIDED_TOUR_VERSION,
-            clear_nullable_fields: true,
-          })
-        : upsertGuidedTourServerState(toServerPatch(language));
+      const performUpsert = () => {
+        const promise = replayResetPending
+          ? upsertGuidedTourServerState({
+              tour_status: 'not_started',
+              current_step: 'welcome',
+              skipped_at_step: null,
+              reminders_sent: 0,
+              tour_started_at: null,
+              tour_completed_at: null,
+              tour_expired_at: null,
+              last_active_at: new Date().toISOString(),
+              active_farm_id: null,
+              locale: language === 'hi' || language === 'mr' ? language : 'en',
+              tour_version: GUIDED_TOUR_VERSION,
+              clear_nullable_fields: true,
+            })
+          : upsertGuidedTourServerState(toServerPatch(language));
 
-      upsertPromiseRef.current = promise;
-      promise
-        .then(() => {
-          if (replayResetPending) {
-            useGuidedTourStore.getState().setReplayResetPending(false);
-          }
-        })
-        .catch((error) => {
-          if (__DEV__) {
-            console.warn('[guided-tour] state sync failed', error);
-          }
-        })
-        .finally(() => {
-          if (upsertPromiseRef.current === promise) {
-            upsertPromiseRef.current = null;
-          }
-        });
+        return promise
+          .then(() => {
+            if (replayResetPending) {
+              useGuidedTourStore.getState().setReplayResetPending(false);
+            }
+          })
+          .catch((error) => {
+            if (__DEV__) {
+              console.warn('[guided-tour] state sync failed', error);
+            }
+          })
+          .finally(() => {
+            if (upsertPromiseRef.current === promise) {
+              upsertPromiseRef.current = null;
+            }
+          });
+      };
+
+      if (upsertPromiseRef.current) {
+        upsertPromiseRef.current = upsertPromiseRef.current.finally(() => performUpsert());
+      } else {
+        upsertPromiseRef.current = performUpsert();
+      }
     }, 350);
     return () => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);

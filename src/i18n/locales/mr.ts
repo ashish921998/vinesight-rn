@@ -673,6 +673,7 @@ export const mr = {
     subtitle: 'सिंचन कालावधी नोंदवा',
     durationLabel: 'कालावधी',
     durationPlaceholder: 'कालावधी नोंदवा',
+    durationUnit: 'तास',
     durationHint: 'सिंचन चक्र किती वेळ चाललं?',
     enterHoursGuidance: 'पुढे जाण्यासाठी सिंचन तास नोंदवा.',
     validation: {

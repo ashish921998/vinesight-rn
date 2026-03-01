@@ -669,6 +669,7 @@ export const hi = {
     subtitle: 'सिंचाई अवधि लॉग करें',
     durationLabel: 'अवधि',
     durationPlaceholder: 'अवधि दर्ज करें',
+    durationUnit: 'घंटे',
     durationHint: 'सिंचाई चक्र कितने समय तक चला?',
     enterHoursGuidance: 'जारी रखने के लिए सिंचाई घंटे दर्ज करें।',
     validation: {

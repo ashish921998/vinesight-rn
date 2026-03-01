@@ -718,6 +718,7 @@ export const en = {
     subtitle: 'Log irrigation duration',
     durationLabel: 'Duration',
     durationPlaceholder: 'Enter duration',
+    durationUnit: 'hours',
     durationHint: 'How long was the irrigation cycle?',
     enterHoursGuidance: 'Enter irrigation hours to continue.',
     validation: {

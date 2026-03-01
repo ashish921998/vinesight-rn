@@ -106,7 +106,7 @@ export function IrrigationForm({
             placeholder={t('irrigationForm.durationPlaceholder')}
             value={data.duration}
             onValueChange={(duration) => onChange({ ...data, duration })}
-            unit="hours"
+            unit={t('irrigationForm.durationUnit')}
             required
             decimals={1}
             hint={t('irrigationForm.durationHint')}

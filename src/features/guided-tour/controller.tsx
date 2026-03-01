@@ -203,7 +203,8 @@ export function GuidedTourController() {
       }
       if (
         queuedLogCreatedRef.current &&
-        (!activeFarmId || queuedLogCreatedRef.current.farmId === activeFarmId)
+        activeFarmId &&
+        queuedLogCreatedRef.current.farmId === activeFarmId
       ) {
         telemetry.capture('tour_step_completed', {
           step: 'add_log',
