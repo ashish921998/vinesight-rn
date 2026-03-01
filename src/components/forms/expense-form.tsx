@@ -13,6 +13,7 @@ import { EXPENSE_TYPE_ICONS } from '@/utils/expense-icons';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { useTranslation } from 'react-i18next';
 
 export interface ExpenseFormData {
   type: ExpenseTypeId | '';
@@ -29,6 +30,7 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
@@ -81,10 +83,10 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
               color: colors.surface[900],
             }}
           >
-            Expense
+            {t('expenseForm.title')}
           </Text>
           <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            Log farm expense
+            {t('expenseForm.subtitle')}
           </Text>
         </View>
       </View>
@@ -117,7 +119,7 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
                   color: colors.surface[800],
                 }}
               >
-                Category <Text style={{ color: colors.error }}>*</Text>
+                {t('expenseForm.category')} <Text style={{ color: colors.error }}>*</Text>
               </Text>
             </View>
 
@@ -162,16 +164,16 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
 
           {/* Amount Input */}
           <NumericInput
-            label="Amount"
+            label={t('expenseForm.amount')}
             icon="cash-outline"
             iconColor={m3.colorScheme.error}
-            placeholder="Enter amount"
+            placeholder={t('expenseForm.amountPlaceholder')}
             value={data.cost}
             onValueChange={(cost) => onChange({ ...data, cost })}
             unit="₹"
             required
             decimals={0}
-            hint="Total expense amount"
+            hint={t('expenseForm.amountHint')}
             onFocus={onInputFocus}
           />
         </View>

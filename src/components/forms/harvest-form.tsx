@@ -10,6 +10,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { useTranslation } from 'react-i18next';
 
 export interface HarvestFormData {
   quantity: number | undefined;
@@ -26,6 +27,7 @@ interface HarvestFormProps {
 }
 
 export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
   const isValid = data.quantity !== undefined && data.quantity > 0 && data.grade !== '';
@@ -69,10 +71,10 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
               color: colors.surface[900],
             }}
           >
-            Harvest
+            {t('harvestForm.title')}
           </Text>
           <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            Log harvest quantity and details
+            {t('harvestForm.subtitle')}
           </Text>
         </View>
       </View>
@@ -94,16 +96,16 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
         >
           {/* Quantity Input */}
           <NumericInput
-            label="Quantity"
+            label={t('harvestForm.quantityLabel')}
             icon="scale-outline"
             iconColor={colors.warning}
-            placeholder="Enter quantity"
+            placeholder={t('harvestForm.quantityPlaceholder')}
             value={data.quantity}
             onValueChange={(quantity) => onChange({ ...data, quantity })}
-            unit="kg"
+            unit={t('harvestForm.unitKg')}
             required
             decimals={1}
-            hint="Total harvested weight"
+            hint={t('harvestForm.quantityHint')}
             onFocus={onInputFocus}
           />
 

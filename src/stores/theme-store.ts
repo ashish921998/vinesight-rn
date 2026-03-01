@@ -20,15 +20,19 @@ const THEME_STORAGE_KEY = 'vinesight-theme';
 
 const themeStorage = {
   getItem: async (key: string) => {
-    const fromAsync = await AsyncStorage.getItem(key);
-    if (fromAsync !== null) return fromAsync;
+    try {
+      const fromAsync = await AsyncStorage.getItem(key);
+      if (fromAsync !== null) return fromAsync;
 
-    // One-time migration: if preference exists in legacy SecureStore, move it to AsyncStorage.
-    const fromSecure = await SecureStore.getItemAsync(key);
-    if (fromSecure !== null) {
-      await AsyncStorage.setItem(key, fromSecure);
-      await SecureStore.deleteItemAsync(key);
-      return fromSecure;
+      // One-time migration: if preference exists in legacy SecureStore, move it to AsyncStorage.
+      const fromSecure = await SecureStore.getItemAsync(key);
+      if (fromSecure !== null) {
+        await AsyncStorage.setItem(key, fromSecure);
+        await SecureStore.deleteItemAsync(key);
+        return fromSecure;
+      }
+    } catch (error) {
+      if (__DEV__) console.error('[theme-store] migration failed', error);
     }
 
     return null;

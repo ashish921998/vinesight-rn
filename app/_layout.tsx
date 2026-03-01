@@ -393,13 +393,25 @@ export default Sentry.wrap(function RootLayout() {
         }
         if (themeStillPending) {
           AsyncStorage.getItem('vinesight-theme')
-            .then((data) => data && useThemeStore.setState(JSON.parse(data)))
+            .then((data) => {
+              if (data) {
+                const parsed = JSON.parse(data);
+                const state = parsed.state ?? parsed;
+                useThemeStore.setState(state);
+              }
+            })
             .catch(() => {})
             .finally(() => useThemeStore.setState({ hasHydrated: true }));
         }
         if (langStillPending) {
           AsyncStorage.getItem('vinesight-language')
-            .then((data) => data && useLanguageStore.setState(JSON.parse(data)))
+            .then((data) => {
+              if (data) {
+                const parsed = JSON.parse(data);
+                const state = parsed.state ?? parsed;
+                useLanguageStore.setState(state);
+              }
+            })
             .catch(() => {})
             .finally(() => useLanguageStore.setState({ hasHydrated: true }));
         }

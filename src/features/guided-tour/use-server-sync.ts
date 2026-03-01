@@ -39,7 +39,7 @@ export function useGuidedTourServerSync(): boolean {
   const [initialServerHydrated, setInitialServerHydrated] = useState(false);
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hydrationSyncedRef = useRef(false);
-  const previousUserIdRef = useRef<string | null>(null);
+  const previousUserIdRef = useRef<string | null>(userId ?? null);
   const upsertPromiseRef = useRef<Promise<void> | null>(null);
 
   const isSupportedLocale = language === 'en' || language === 'hi' || language === 'mr';

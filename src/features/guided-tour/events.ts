@@ -1,4 +1,4 @@
-export type GuidedTourEventMap = {
+export interface GuidedTourEventMap {
   'guidedTour.addFarmFocusField': { field: 'name' | 'region' | 'area' };
   'guidedTour.farmCreated': { farmId: number };
   'guidedTour.addFarmNameEntered': { isFilled: boolean };
@@ -19,7 +19,7 @@ export type GuidedTourEventMap = {
   'guidedTour.logCreated': { farmId: number; recordType: string };
   'guidedTour.notificationOpened': { sequence: 1 | 2 };
   'guidedTour.appReadyHome': Record<string, never>;
-};
+}
 
 type EventKey = keyof GuidedTourEventMap;
 type Listener<K extends EventKey> = (payload: GuidedTourEventMap[K]) => void;

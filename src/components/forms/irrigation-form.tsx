@@ -9,6 +9,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { useTranslation } from 'react-i18next';
 
 export interface IrrigationFormData {
   duration: number | undefined;
@@ -30,6 +31,7 @@ export function IrrigationForm({
   systemDischarge,
   onInputFocus,
 }: IrrigationFormProps) {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const m3 = useM3();
   const isValid = data.duration !== undefined && data.duration > 0;
@@ -73,10 +75,10 @@ export function IrrigationForm({
               color: colors.surface[900],
             }}
           >
-            Irrigation
+            {t('irrigationForm.title')}
           </Text>
           <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            Log irrigation duration
+            {t('irrigationForm.subtitle')}
           </Text>
         </View>
       </View>
@@ -98,16 +100,16 @@ export function IrrigationForm({
           }}
         >
           <NumericInput
-            label="Duration"
+            label={t('irrigationForm.durationLabel')}
             icon="time-outline"
             iconColor={m3.colorScheme.primary}
-            placeholder="Enter duration"
+            placeholder={t('irrigationForm.durationPlaceholder')}
             value={data.duration}
             onValueChange={(duration) => onChange({ ...data, duration })}
             unit="hours"
             required
             decimals={1}
-            hint="How long was the irrigation cycle?"
+            hint={t('irrigationForm.durationHint')}
             onFocus={onInputFocus}
           />
           {showDurationGuidance ? (

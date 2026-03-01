@@ -369,6 +369,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       clearTimeout(safetyTimeout);
       if (!settled) {
         settled = true;
+      } else {
+        return;
       }
 
       if (error) throw error;

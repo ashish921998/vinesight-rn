@@ -640,7 +640,7 @@ export const en = {
   },
 
   fertigationForm: {
-    title: 'Fertilizer',
+    title: 'Fertigation',
     subtitle: 'Log fertilizer application',
     waterVolume: {
       label: 'Water volume',
@@ -661,6 +661,32 @@ export const en = {
       ready: 'Ready to add',
       incomplete: 'Add at least one fertilizer with quantity',
     },
+  },
+
+  expenseForm: {
+    title: 'Expense',
+    subtitle: 'Log farm expense',
+    category: 'Category',
+    amount: 'Amount',
+    amountPlaceholder: 'Enter amount',
+    amountHint: 'Total expense amount',
+  },
+
+  harvestForm: {
+    title: 'Harvest',
+    subtitle: 'Log harvest quantity and details',
+    quantityLabel: 'Quantity',
+    quantityPlaceholder: 'Enter quantity',
+    unitKg: 'kg',
+    quantityHint: 'Total harvested weight',
+  },
+
+  irrigationForm: {
+    title: 'Irrigation',
+    subtitle: 'Log irrigation duration',
+    durationLabel: 'Duration',
+    durationPlaceholder: 'Enter duration',
+    durationHint: 'How long was the irrigation cycle?',
   },
 
   analytics: {

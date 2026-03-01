@@ -287,6 +287,8 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       }
       previousShowEventKeyRef.current = showEventKey;
 
+      if (targetCandidates.length === 0) return;
+
       let measured: GuidedTourTargetRect | null = null;
       let measuredTargetId: GuidedTourTargetId = targetCandidates[0];
       for (const candidate of targetCandidates) {
@@ -359,11 +361,11 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
         });
         if (step === 'add_farm') {
           if (isAddFarmFlowRoute(pathname)) {
+            // eslint-disable-next-line no-empty
             if (addFarmPhase === 'crop_option') {
-              // setAddFarmPhase handled by caller — we just hide overlay
             }
+            // eslint-disable-next-line no-empty
             if (addFarmPhase === 'variety_option') {
-              // same
             }
           } else {
             completeStep('add_farm');

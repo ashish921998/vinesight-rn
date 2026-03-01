@@ -231,10 +231,10 @@ export function FertigationForm({
               color: colors.surface[900],
             }}
           >
-            Fertigation
+            {t('fertigationForm.title')}
           </Text>
           <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            Log fertilizer application
+            {t('fertigationForm.subtitle')}
           </Text>
         </View>
       </View>

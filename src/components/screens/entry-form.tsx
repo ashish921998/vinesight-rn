@@ -1065,17 +1065,12 @@ export function EntryForm({
                 created_from: createdFrom,
                 farm_id: submission.farmId,
               });
-              guidedTourEmit('guidedTour.logCreated', {
-                farmId: submission.farmId,
-                recordType: submission.logType,
-              });
               telemetry.capture('meaningful_action', {
                 action_type: 'record_created',
                 feature_name: submission.logType,
               });
-            } catch {
-              // Ignore telemetry errors
-            }
+              // eslint-disable-next-line no-empty
+            } catch {}
             successfulFarmIdsByLog.get(submission.logId)?.add(submission.farmId);
             return;
           }
@@ -1235,12 +1230,6 @@ export function EntryForm({
                 created_from: createdFrom,
                 farm_id: farmId,
               });
-              if (typeof farmId === 'number') {
-                guidedTourEmit('guidedTour.logCreated', {
-                  farmId,
-                  recordType: log.type,
-                });
-              }
               if (entrySource === 'voice_ai') {
                 telemetry.capture('voice_log_submitted', {
                   farm_id: farmId,
@@ -1256,8 +1245,13 @@ export function EntryForm({
                 action_type: 'record_created',
                 feature_name: log.type,
               });
-            } catch {
-              // Ignore telemetry errors
+              // eslint-disable-next-line no-empty
+            } catch {}
+            if (typeof farmId === 'number') {
+              guidedTourEmit('guidedTour.logCreated', {
+                farmId,
+                recordType: log.type,
+              });
             }
           });
         setPendingLogs((prev) => prev.filter((log) => !successfulIds.includes(log.id)));
