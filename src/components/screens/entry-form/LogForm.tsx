@@ -21,6 +21,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { View, Pressable, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ChemicalMix } from '@/types/phi';
@@ -71,6 +72,14 @@ export function LogForm({
   const m3 = useM3();
   const colors = useThemeColors();
   const { t } = useTranslation();
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const showAddEntryGuidance =
+    guidedTourStatus === 'in_progress' &&
+    guidedTourStep === 'add_log' &&
+    isValid &&
+    hasFarm &&
+    selectedLogType !== null;
 
   if (!selectedLogType) return null;
 
@@ -108,6 +117,39 @@ export function LogForm({
         />
       )}
 
+      {showAddEntryGuidance ? (
+        <View
+          style={{
+            alignItems: 'center',
+            marginTop: 12,
+            marginBottom: 4,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+              borderWidth: 1,
+              borderColor: colorWithOpacity(m3.colorScheme.primary, 0.3),
+              borderRadius: 999,
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+            }}
+          >
+            <Text
+              style={{
+                color: m3.colorScheme.primary,
+                fontSize: 12,
+                fontWeight: '600',
+              }}
+            >
+              {t('guidedTour.step2.tapAddEntryCoach', {
+                defaultValue: 'Tap Add entry to log your activity.',
+              })}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY}>
         <Pressable
           onPress={onAdd}
@@ -120,6 +162,15 @@ export function LogForm({
               alignItems: 'center',
               flexDirection: 'row',
               justifyContent: 'center',
+              borderWidth: showAddEntryGuidance ? 2 : 0,
+              borderColor: showAddEntryGuidance
+                ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+                : 'transparent',
+              shadowColor: showAddEntryGuidance ? m3.colorScheme.primary : 'transparent',
+              shadowOpacity: showAddEntryGuidance ? 0.25 : 0,
+              shadowRadius: showAddEntryGuidance ? 10 : 0,
+              shadowOffset: { width: 0, height: 4 },
+              elevation: showAddEntryGuidance ? 5 : 0,
             },
             {
               backgroundColor:

@@ -6,6 +6,9 @@ import { NumericInput } from './form-field';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
 
 export interface IrrigationFormData {
   duration: number | undefined;
@@ -30,6 +33,10 @@ export function IrrigationForm({
   const colors = useThemeColors();
   const m3 = useM3();
   const isValid = data.duration !== undefined && data.duration > 0;
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const showDurationGuidance =
+    guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
   // Calculate estimated water applied
   const estimatedWater =
@@ -75,19 +82,49 @@ export function IrrigationForm({
       </View>
 
       {/* Duration Input */}
-      <NumericInput
-        label="Duration"
-        icon="time-outline"
-        iconColor={m3.colorScheme.primary}
-        placeholder="Enter duration"
-        value={data.duration}
-        onValueChange={(duration) => onChange({ ...data, duration })}
-        unit="hours"
-        required
-        decimals={1}
-        hint="How long was the irrigation cycle?"
-        onFocus={onInputFocus}
-      />
+      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_IRRIGATION_DURATION}>
+        <View
+          style={{
+            borderRadius: borderRadius.xl,
+            borderWidth: showDurationGuidance ? 2 : 0,
+            borderColor: showDurationGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+              : 'transparent',
+            backgroundColor: showDurationGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.03)
+              : 'transparent',
+            paddingHorizontal: showDurationGuidance ? spacing[2] : 0,
+            paddingTop: showDurationGuidance ? spacing[2] : 0,
+          }}
+        >
+          <NumericInput
+            label="Duration"
+            icon="time-outline"
+            iconColor={m3.colorScheme.primary}
+            placeholder="Enter duration"
+            value={data.duration}
+            onValueChange={(duration) => onChange({ ...data, duration })}
+            unit="hours"
+            required
+            decimals={1}
+            hint="How long was the irrigation cycle?"
+            onFocus={onInputFocus}
+          />
+          {showDurationGuidance ? (
+            <Text
+              style={{
+                marginBottom: spacing[2],
+                marginTop: -spacing[1],
+                fontSize: fontSize.xs,
+                fontWeight: fontWeight.semibold,
+                color: m3.colorScheme.primary,
+              }}
+            >
+              Enter irrigation hours to continue.
+            </Text>
+          ) : null}
+        </View>
+      </GuidedTourTarget>
 
       {/* Info cards */}
       {(farmArea || estimatedWater) && (

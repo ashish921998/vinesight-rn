@@ -2549,6 +2549,10 @@ export const mr = {
     step2: {
       coach: 'छान! आता तुमची पहिली नोंद करा.',
       addEntryCoach: '{{activity}} तपशील भरा, मग नोंद जोडा टॅप करा.',
+      fillActivityDetailsCoach: 'तपशील भरा, मग पुढे जाण्यासाठी पुढे टॅप करा.',
+      fillSprayDetailsCoach: 'पुढे जाण्यासाठी पाण्याचे प्रमाण आणि किमान एक रसायन नोंदवा.',
+      tapAddEntryCoach: 'तुमची कृती नोंदवण्यासाठी नोंद जोडा टॅप करा.',
+      tapSaveCoach: 'तुमची कृती जतन करण्यासाठी सेव टॅप करा.',
       startSeasonCoach: 'आधी हंगाम सुरू करा, म्हणजे Vinesight तुमच्या नोंदी व्यवस्थित ठेवू शकेल.',
       startSeasonHelper: 'गरज असेल तर टेम्पलेट/तारखा बदला, मग हंगाम सुरू करा वर टॅप करा.',
       pickActivityCoach:

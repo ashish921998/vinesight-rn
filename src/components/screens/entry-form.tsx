@@ -40,7 +40,7 @@ import { PendingLogs, type PendingLog } from '@/components/screens/entry-form/Pe
 import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
 import { LogForm } from '@/components/screens/entry-form/LogForm';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
-import { guidedTourEmit } from '@/features/guided-tour';
+import { guidedTourEmit, useGuidedTourStore } from '@/features/guided-tour';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 
@@ -789,6 +789,14 @@ export function EntryForm({
   const canSaveLogs = Boolean(
     pendingLogs.length > 0 && !isSubmittingLogs && hasFarmForPendingSession,
   );
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const showSaveGuidance =
+    guidedTourStatus === 'in_progress' &&
+    guidedTourStep === 'add_log' &&
+    pendingLogs.length > 0 &&
+    activeTab === 'log' &&
+    presentation === 'screen';
 
   const getLogDescription = useCallback((type: LogTypeId, data: unknown): string => {
     switch (type) {
@@ -2051,6 +2059,7 @@ export function EntryForm({
         <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
           <LogTypeSelector
             selectedLogType={selectedLogType}
+            hasPendingDrafts={pendingLogs.length > 0}
             onSelect={(type) => {
               setSelectedLogType(type);
               setShowLogFormModal(true);
@@ -2074,6 +2083,7 @@ export function EntryForm({
       ) : (
         <LogTypeSelector
           selectedLogType={selectedLogType}
+          hasPendingDrafts={pendingLogs.length > 0}
           onSelect={(type) => {
             setSelectedLogType(type);
             setShowLogFormModal(true);
@@ -2762,9 +2772,10 @@ export function EntryForm({
     guidedTourEmit('guidedTour.addLogSelectionState', {
       hasSelection: selectedLogType !== null,
       hasPendingDrafts: pendingLogs.length > 0,
+      isCurrentLogValid: selectedLogType !== null ? isLogFormValid : false,
       ...(selectedLogType ? { recordType: selectedLogType } : {}),
     });
-  }, [activeTab, pendingLogs.length, presentation, selectedLogType]);
+  }, [activeTab, isLogFormValid, pendingLogs.length, presentation, selectedLogType]);
 
   const content = (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
@@ -3156,76 +3167,116 @@ export function EntryForm({
           }}
         >
           {activeTab === 'log' ? (
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Pressable
-                onPress={handleClose}
-                style={{
-                  flex: 1,
-                  paddingVertical: 14,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                  alignItems: 'center',
-                }}
-              >
-                <Text
-                  selectable
-                  style={{ fontWeight: '600', color: m3.colorScheme.onSurfaceVariant }}
-                >
-                  {t('common.cancel')}
-                </Text>
-              </Pressable>
-              <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE} style={{ flex: 1 }}>
+            <>
+              {showSaveGuidance ? (
+                <View style={{ alignItems: 'center', marginBottom: 8 }}>
+                  <View
+                    style={{
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+                      borderWidth: 1,
+                      borderColor: colorWithOpacity(m3.colorScheme.primary, 0.3),
+                      borderRadius: 999,
+                      paddingHorizontal: 12,
+                      paddingVertical: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: m3.colorScheme.primary,
+                        fontSize: 12,
+                        fontWeight: '600',
+                      }}
+                    >
+                      {t('guidedTour.step2.tapSaveCoach', {
+                        defaultValue: 'Tap Save to record your activity.',
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+              <View style={{ flexDirection: 'row', gap: 12 }}>
                 <Pressable
-                  onPress={saveAllLogs}
-                  disabled={!canSaveLogs}
-                  style={[
-                    {
-                      flex: 1,
-                      paddingVertical: 14,
-                      borderRadius: 12,
-                      alignItems: 'center',
-                      flexDirection: 'row',
-                      justifyContent: 'center',
-                    },
-                    {
-                      backgroundColor: canSaveLogs
-                        ? m3.colorScheme.primary
-                        : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
-                    },
-                  ]}
+                  onPress={handleClose}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                    alignItems: 'center',
+                  }}
                 >
-                  {isSubmittingLogs ? (
-                    <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
-                  ) : (
-                    <>
-                      <AppIcon
-                        name="save"
-                        size={18}
-                        color={
-                          canSaveLogs
-                            ? m3.colorScheme.onPrimary
-                            : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
-                        }
-                      />
-                      <Text
-                        selectable
-                        style={[
-                          { marginLeft: 8, fontWeight: '600', flexShrink: 1 },
-                          {
-                            color: canSaveLogs
-                              ? m3.colorScheme.onPrimary
-                              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-                          },
-                        ]}
-                      >
-                        {t('common.save')}
-                      </Text>
-                    </>
-                  )}
+                  <Text
+                    selectable
+                    style={{ fontWeight: '600', color: m3.colorScheme.onSurfaceVariant }}
+                  >
+                    {t('common.cancel')}
+                  </Text>
                 </Pressable>
-              </GuidedTourTarget>
-            </View>
+                <GuidedTourTarget
+                  targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE}
+                  style={{ flex: 1 }}
+                >
+                  <Pressable
+                    onPress={saveAllLogs}
+                    disabled={!canSaveLogs}
+                    style={[
+                      {
+                        flex: 1,
+                        paddingVertical: 14,
+                        borderRadius: 12,
+                        alignItems: 'center',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                      },
+                      {
+                        backgroundColor: canSaveLogs
+                          ? m3.colorScheme.primary
+                          : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
+                      },
+                      showSaveGuidance
+                        ? {
+                            shadowColor: m3.colorScheme.primary,
+                            shadowOpacity: 0.45,
+                            shadowRadius: 14,
+                            shadowOffset: { width: 0, height: 4 },
+                            elevation: 8,
+                          }
+                        : null,
+                    ]}
+                  >
+                    {isSubmittingLogs ? (
+                      <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                    ) : (
+                      <>
+                        <AppIcon
+                          name="save"
+                          size={18}
+                          color={
+                            canSaveLogs
+                              ? m3.colorScheme.onPrimary
+                              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)
+                          }
+                        />
+                        <Text
+                          selectable
+                          style={[
+                            { marginLeft: 8, fontWeight: '600', flexShrink: 1 },
+                            {
+                              color: canSaveLogs
+                                ? m3.colorScheme.onPrimary
+                                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                            },
+                          ]}
+                        >
+                          {t('common.save')}
+                        </Text>
+                      </>
+                    )}
+                  </Pressable>
+                </GuidedTourTarget>
+              </View>
+            </>
           ) : (
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Pressable

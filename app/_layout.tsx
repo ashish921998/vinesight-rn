@@ -392,14 +392,16 @@ export default Sentry.wrap(function RootLayout() {
           useAuthStore.setState({ isLoading: false });
         }
         if (themeStillPending) {
-          AsyncStorage.getItem('theme-store')
+          AsyncStorage.getItem('vinesight-theme')
             .then((data) => data && useThemeStore.setState(JSON.parse(data)))
-            .catch(() => useThemeStore.setState({ hasHydrated: true }));
+            .catch(() => {})
+            .finally(() => useThemeStore.setState({ hasHydrated: true }));
         }
         if (langStillPending) {
-          AsyncStorage.getItem('language-store')
+          AsyncStorage.getItem('vinesight-language')
             .then((data) => data && useLanguageStore.setState(JSON.parse(data)))
-            .catch(() => useLanguageStore.setState({ hasHydrated: true }));
+            .catch(() => {})
+            .finally(() => useLanguageStore.setState({ hasHydrated: true }));
         }
       }
     }, INIT_TIMEOUT_MS);
@@ -450,9 +452,9 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="add-activity" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-entry" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="add-activity" />
+                <Stack.Screen name="add-entry" />
+                <Stack.Screen name="add-task" />
                 <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />

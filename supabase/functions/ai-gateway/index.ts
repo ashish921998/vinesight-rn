@@ -2108,7 +2108,10 @@ Deno.serve(async (req) => {
         toolCalls.push({
           tool: 'stt.transcribe',
           status: 'skipped',
-          output: { stt_provider: 'client_transcript' },
+          output: {
+            stt_provider: 'client_transcript',
+            legacy_tool_name: 'farm_context.get',
+          },
         });
       } else {
         const normalizedAudioBase64 = normalizeBase64Input(audioBase64);
@@ -2204,6 +2207,7 @@ Deno.serve(async (req) => {
               stt_confidence: sttConfidence,
               stt_latency_ms: sttLatencyMs,
               provider_fallback_reason: providerFallbackReason,
+              legacy_tool_name: 'farm_context.get',
             },
           });
         } catch (error) {
@@ -2474,7 +2478,12 @@ Deno.serve(async (req) => {
     if (routeStateDirty) {
       const routeStateSaved = await writeConversationRouteState(conversationId, nextRouteState);
       if (!routeStateSaved) {
-        throw new Error('Failed to persist assistant route state');
+        console.warn('Failed to persist assistant route state; continuing without hard failure');
+        toolCalls.push({
+          tool: 'routing.decide',
+          status: 'error',
+          error: 'route_state_persist_failed',
+        });
       }
       routeStateDirty = false;
     }

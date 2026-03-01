@@ -10,6 +10,9 @@ import { useCurrency } from '@/hooks/use-currency';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { EXPENSE_TYPE_ICONS } from '@/utils/expense-icons';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
 
 export interface ExpenseFormData {
   type: ExpenseTypeId | '';
@@ -28,6 +31,8 @@ interface ExpenseFormProps {
 export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }: ExpenseFormProps) {
   const colors = useThemeColors();
   const m3 = useM3();
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
   const resolvedCurrency = useCurrency();
   const isValidCurrency = (code: string | null | undefined): boolean => {
     if (!code || typeof code !== 'string') return false;
@@ -44,6 +49,8 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
     ? (candidateCurrency ?? resolvedCurrency)
     : resolvedCurrency;
   const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
+  const showDetailsGuidance =
+    guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
   return (
     <View>
@@ -82,76 +89,93 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
         </View>
       </View>
 
-      {/* Category Selection */}
-      <View style={{ marginBottom: spacing[4] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-          <View style={{ marginRight: 6 }}>
-            <SymbolIcon name="list.bullet" size={16} color={colors.primary[600]} />
-          </View>
-          <Text
-            style={{
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[800],
-            }}
-          >
-            Category <Text style={{ color: colors.error }}>*</Text>
-          </Text>
-        </View>
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-          {EXPENSE_TYPES.map((type) => (
-            <Pressable
-              key={type}
-              onPress={() => onChange({ ...data, type })}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: spacing[3],
-                paddingVertical: 10,
-                borderRadius: borderRadius.xl,
-                borderWidth: 1,
-                backgroundColor:
-                  data.type === type
-                    ? colorWithOpacity(m3.colorScheme.error, 0.12)
-                    : colors.surface[100],
-                borderColor: data.type === type ? m3.colorScheme.error : colors.surface[200],
-              }}
-            >
-              <SymbolIcon
-                name={EXPENSE_TYPE_ICONS[type]}
-                size={16}
-                color={data.type === type ? m3.colorScheme.error : colors.surface[500]}
-                style={{ marginRight: 6 }}
-              />
+      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_EXPENSE_DETAILS}>
+        <View
+          style={{
+            borderRadius: borderRadius.xl,
+            borderWidth: showDetailsGuidance ? 2 : 0,
+            borderColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+              : 'transparent',
+            backgroundColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.03)
+              : 'transparent',
+            paddingHorizontal: showDetailsGuidance ? spacing[2] : 0,
+            paddingTop: showDetailsGuidance ? spacing[2] : 0,
+          }}
+        >
+          {/* Category Selection */}
+          <View style={{ marginBottom: spacing[4] }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
+              <View style={{ marginRight: 6 }}>
+                <SymbolIcon name="list.bullet" size={16} color={colors.primary[600]} />
+              </View>
               <Text
                 style={{
                   fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                  color: data.type === type ? m3.colorScheme.error : colors.surface[700],
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[800],
                 }}
               >
-                {type}
+                Category <Text style={{ color: colors.error }}>*</Text>
               </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
+            </View>
 
-      {/* Amount Input */}
-      <NumericInput
-        label="Amount"
-        icon="cash-outline"
-        iconColor={m3.colorScheme.error}
-        placeholder="Enter amount"
-        value={data.cost}
-        onValueChange={(cost) => onChange({ ...data, cost })}
-        unit="₹"
-        required
-        decimals={0}
-        hint="Total expense amount"
-        onFocus={onInputFocus}
-      />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+              {EXPENSE_TYPES.map((type) => (
+                <Pressable
+                  key={type}
+                  onPress={() => onChange({ ...data, type })}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: 10,
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 1,
+                    backgroundColor:
+                      data.type === type
+                        ? colorWithOpacity(m3.colorScheme.error, 0.12)
+                        : colors.surface[100],
+                    borderColor: data.type === type ? m3.colorScheme.error : colors.surface[200],
+                  }}
+                >
+                  <SymbolIcon
+                    name={EXPENSE_TYPE_ICONS[type]}
+                    size={16}
+                    color={data.type === type ? m3.colorScheme.error : colors.surface[500]}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: fontSize.sm,
+                      fontWeight: fontWeight.medium,
+                      color: data.type === type ? m3.colorScheme.error : colors.surface[700],
+                    }}
+                  >
+                    {type}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Amount Input */}
+          <NumericInput
+            label="Amount"
+            icon="cash-outline"
+            iconColor={m3.colorScheme.error}
+            placeholder="Enter amount"
+            value={data.cost}
+            onValueChange={(cost) => onChange({ ...data, cost })}
+            unit="₹"
+            required
+            decimals={0}
+            hint="Total expense amount"
+            onFocus={onInputFocus}
+          />
+        </View>
+      </GuidedTourTarget>
 
       {/* Remarks Input (Optional) */}
       <View style={{ marginBottom: spacing[4] }}>

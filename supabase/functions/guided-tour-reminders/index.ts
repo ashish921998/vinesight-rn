@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get('authorization');
   const REMINDER_JOB_SECRET = Deno.env.get('GUIDED_TOUR_REMINDERS_AUTH')?.trim() ?? '';
   if (
+    !REMINDER_JOB_SECRET ||
     !authHeader ||
     !authHeader.startsWith('Bearer ') ||
     authHeader.slice(7) !== REMINDER_JOB_SECRET
@@ -104,18 +105,23 @@ Deno.serve(async (req) => {
     }[] = [];
 
     while (true) {
-      const { data, error } = await supabase
-        .from('user_guided_tour_state')
-        .select('user_id,tour_status,reminders_sent,last_active_at,locale')
-        .eq('tour_status', 'in_progress')
-        .range(offset, offset + batchSize - 1);
+      try {
+        const { data, error } = await supabase
+          .from('user_guided_tour_state')
+          .select('user_id,tour_status,reminders_sent,last_active_at,locale')
+          .eq('tour_status', 'in_progress')
+          .range(offset, offset + batchSize - 1);
 
-      if (error) throw error;
-      if (!data || data.length === 0) break;
+        if (error) throw error;
+        if (!data || data.length === 0) break;
 
-      allRows.push(...data);
-      if (data.length < batchSize) break;
-      offset += batchSize;
+        allRows.push(...data);
+        if (data.length < batchSize) break;
+        offset += batchSize;
+      } catch (err) {
+        console.error('Pagination batch failed at offset', offset, err);
+        throw err;
+      }
     }
 
     let processed = 0;

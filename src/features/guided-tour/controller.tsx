@@ -1,30 +1,20 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import { router, usePathname, useSegments } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore, useLanguageStore } from '@/stores';
+import { useAuthStore } from '@/stores';
 import { useProfile } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { GuidedTourCoachmark } from './coachmark';
 import { GuidedTourCompletionCard } from './completion-card';
-import {
-  GUIDED_TOUR_TARGET_IDS,
-  GUIDED_TOUR_TARGET_RETRY_MS,
-  GUIDED_TOUR_TARGET_TIMEOUT_MS,
-  MAX_GUIDED_TOUR_TARGET_RETRIES,
-  GUIDED_TOUR_VERSION,
-} from './constants';
-import { guidedTourEmit, guidedTourOn } from './events';
+import { GUIDED_TOUR_TARGET_IDS } from './constants';
+import type { GuidedTourTargetId } from './constants';
+import { guidedTourEmit } from './events';
 import { GuidedTourOverlay } from './overlay';
-import {
-  registerGuidedTourPushDevice,
-  fetchGuidedTourServerState,
-  upsertGuidedTourServerState,
-  userHasAnyFarms,
-} from './service';
 import { useGuidedTourStore } from './store';
-import { measureGuidedTourTarget, type GuidedTourTargetRect } from './targets';
-import type { GuidedTourStep } from './types';
+import { useCoachTargetMeasurement } from './use-coach-target';
+import { useGuidedTourServerSync } from './use-server-sync';
+import { useGuidedTourFormState } from './use-tour-events';
 import { GuidedTourWelcomeCard } from './welcome-card';
 
 function isDashboardRoute(segments: string[]) {
@@ -41,31 +31,27 @@ function parseFarmRouteId(pathname: string | null): number | null {
   return match ? Number.parseInt(match[1] ?? '', 10) : null;
 }
 
-const MAX_SEASON_START_RETRIES = 20;
-
 function isAddFarmFlowRoute(pathname: string | null): boolean {
   return pathname === '/farm/add';
 }
 
 function isAddLogFlowRoute(pathname: string | null, segments: string[]): boolean {
-  if (pathname === '/log-entry/add' || pathname === '/add-entry') return true;
-  return (segments[0] === 'log-entry' && segments[1] === 'add') || segments[0] === 'add-entry';
-}
-
-interface QueuedLogPayload {
-  farmId: number;
-  recordType: string;
+  if (pathname === '/log-entry/add' || pathname === '/add-entry' || pathname === '/add-activity') {
+    return true;
+  }
+  return (
+    (segments[0] === 'log-entry' && segments[1] === 'add') ||
+    segments[0] === 'add-entry' ||
+    segments[0] === 'add-activity'
+  );
 }
 
 export function GuidedTourController() {
   const pathname = usePathname();
   const segments = useSegments();
-  // router singleton is used directly for all navigation (stable across deferred callbacks)
   const { t } = useTranslation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const needsProfileCompletion = useAuthStore((s) => s.needsProfileCompletion);
-  const userId = useAuthStore((s) => s.user?.id ?? null);
-  const language = useLanguageStore((s) => s.language) ?? 'en';
   const { data: profile } = useProfile({ enabled: isAuthenticated });
 
   const status = useGuidedTourStore((s) => s.status);
@@ -76,15 +62,8 @@ export function GuidedTourController() {
   const isSuspended = useGuidedTourStore((s) => s.isSuspended);
   const isSeasonFormVisible = useGuidedTourStore((s) => s.isSeasonFormVisible);
   const hasActiveSeasonForCurrentFarm = useGuidedTourStore((s) => s.hasActiveSeasonForCurrentFarm);
-  const replayResetPending = useGuidedTourStore((s) => s.replayResetPending);
   const lastActiveAt = useGuidedTourStore((s) => s.lastActiveAt);
-  const startedAt = useGuidedTourStore((s) => s.startedAt);
-  const completedAt = useGuidedTourStore((s) => s.completedAt);
-  const expiredAt = useGuidedTourStore((s) => s.expiredAt);
-  const skippedAtStep = useGuidedTourStore((s) => s.skippedAtStep);
 
-  const applyServerState = useGuidedTourStore((s) => s.applyServerState);
-  const toServerPatch = useGuidedTourStore((s) => s.toServerPatch);
   const setLastActiveAt = useGuidedTourStore((s) => s.setLastActiveAt);
   const resumeIfEligible = useGuidedTourStore((s) => s.resumeIfEligible);
   const showStep = useGuidedTourStore((s) => s.showStep);
@@ -92,40 +71,28 @@ export function GuidedTourController() {
   const skipTour = useGuidedTourStore((s) => s.skipTour);
   const startTour = useGuidedTourStore((s) => s.startTour);
   const completeTour = useGuidedTourStore((s) => s.completeTour);
-  const resetForReplay = useGuidedTourStore((s) => s.resetForReplay);
-  const [rect, setRect] = useState<GuidedTourTargetRect | null>(null);
-  const [activeCoachStep, setActiveCoachStep] = useState<GuidedTourStep | null>(null);
-  const [hasChosenActivityType, setHasChosenActivityType] = useState(false);
-  const [hasPendingLogDrafts, setHasPendingLogDrafts] = useState(false);
-  const [selectedActivityType, setSelectedActivityType] = useState<string | null>(null);
-  const [isAddFarmNameFilled, setIsAddFarmNameFilled] = useState(false);
-  const [isAddFarmRegionFilled, setIsAddFarmRegionFilled] = useState(false);
-  const [isAddFarmAreaFilled, setIsAddFarmAreaFilled] = useState(false);
-  const [initialServerHydrated, setInitialServerHydrated] = useState(false);
-  const [addFarmPhase, setAddFarmPhase] = useState<
-    | 'cta'
-    | 'name'
-    | 'region'
-    | 'area'
-    | 'crop'
-    | 'crop_option'
-    | 'variety'
-    | 'variety_option'
-    | 'custom_variety'
-    | 'submit'
-  >('cta');
-  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const shownRef = useRef<Set<string>>(new Set());
-  const queuedFarmCreatedRef = useRef<number | null>(null);
-  const queuedLogCreatedRef = useRef<QueuedLogPayload | null>(null);
-  const hydrationSyncedRef = useRef(false);
-  const mountedRef = useRef(false);
-  const addLogRetryCountRef = useRef(0);
-  const previousShowEventKeyRef = useRef<string | null>(null);
-  const previousUserIdRef = useRef<string | null>(null);
-  const upsertPromiseRef = useRef<Promise<void> | null>(null);
 
-  const isSupportedLocale = language === 'en' || language === 'hi' || language === 'mr';
+  // --- Extracted hooks ---
+  const initialServerHydrated = useGuidedTourServerSync();
+
+  const clearOverlayRef = useRef<() => void>(() => {});
+  const formState = useGuidedTourFormState(clearOverlayRef);
+  const {
+    addFarmPhase,
+    setAddFarmPhase,
+    isAddFarmNameFilled,
+    isAddFarmRegionFilled,
+    isAddFarmAreaFilled,
+    hasChosenActivityType,
+    hasPendingLogDrafts,
+    selectedActivityType,
+    isCurrentLogValid,
+    hasConfirmedLogInput,
+    setHasConfirmedLogInput,
+    queuedFarmCreatedRef,
+    queuedLogCreatedRef,
+    resetFormState,
+  } = formState;
 
   const eligible =
     isAuthenticated &&
@@ -151,111 +118,25 @@ export function GuidedTourController() {
     return 'none' as const;
   }, [currentStep, eligible, hasSeenWelcomeThisSession, isSuspended, segments, status]);
 
-  useEffect(() => {
-    if (!hasHydrated) return;
-
-    const userIdChanged = userId && userId !== previousUserIdRef.current;
-    const authStateChanged = isAuthenticated !== !!previousUserIdRef.current;
-
-    if (userIdChanged || authStateChanged) {
-      resetForReplay?.();
-      hydrationSyncedRef.current = false;
-      requestAnimationFrame(() => setInitialServerHydrated(false));
-    }
-
-    previousUserIdRef.current = userId ?? null;
-  }, [hasHydrated, isAuthenticated, resetForReplay, userId]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !hasHydrated || hydrationSyncedRef.current) return;
-    hydrationSyncedRef.current = true;
-    fetchGuidedTourServerState()
-      .then(async (server) => {
-        if (server) {
-          applyServerState(server);
-          return;
-        }
-
-        // No server state exists yet. Show tour only for genuinely new users.
-        // Existing users (already having farms) should not enter guided tour.
-        const hasAnyFarms = await userHasAnyFarms();
-        if (hasAnyFarms) {
-          completeTour();
-        }
-      })
-      .catch((error) => {
-        if (__DEV__) console.warn('[guided-tour] fetch sync failed', error);
-      })
-      .finally(() => {
-        setInitialServerHydrated(true);
-      });
-  }, [applyServerState, completeTour, hasHydrated, isAuthenticated, userId]);
+  const { rect, activeCoachStep, activeTargetId, clearOverlay } = useCoachTargetMeasurement({
+    overlayMode,
+    eligible,
+    pathname,
+    segments,
+    addLogFlowRoute,
+    addFarmPhase,
+    hasChosenActivityType,
+    hasPendingLogDrafts,
+    hasConfirmedLogInput,
+    isCurrentLogValid,
+    selectedActivityType,
+  });
 
   useEffect(() => {
-    if (!isAuthenticated || !hasHydrated || !isSupportedLocale || !initialServerHydrated) return;
-    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-    syncTimeoutRef.current = setTimeout(() => {
-      const promise = replayResetPending
-        ? upsertGuidedTourServerState({
-            tour_status: 'not_started',
-            current_step: 'welcome',
-            skipped_at_step: null,
-            reminders_sent: 0,
-            tour_started_at: null,
-            tour_completed_at: null,
-            tour_expired_at: null,
-            last_active_at: new Date().toISOString(),
-            active_farm_id: null,
-            locale: language === 'hi' || language === 'mr' ? language : 'en',
-            tour_version: GUIDED_TOUR_VERSION,
-            clear_nullable_fields: true,
-          })
-        : upsertGuidedTourServerState(toServerPatch(language));
+    clearOverlayRef.current = clearOverlay;
+  }, [clearOverlay]);
 
-      upsertPromiseRef.current = promise;
-      promise
-        .catch((error) => {
-          if (__DEV__) {
-            console.warn('[guided-tour] state sync failed', error);
-          }
-        })
-        .finally(() => {
-          if (upsertPromiseRef.current === promise) {
-            upsertPromiseRef.current = null;
-          }
-        });
-    }, 350);
-    return () => {
-      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-      upsertPromiseRef.current = null;
-    };
-  }, [
-    isAuthenticated,
-    isSupportedLocale,
-    initialServerHydrated,
-    language,
-    hasHydrated,
-    replayResetPending,
-    toServerPatch,
-    activeFarmId,
-    completedAt,
-    currentStep,
-    skippedAtStep,
-    status,
-    startedAt,
-    expiredAt,
-    lastActiveAt,
-  ]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !isSupportedLocale) return;
-    void registerGuidedTourPushDevice(language).catch((error) => {
-      if (__DEV__) {
-        console.warn('[guided-tour] push registration failed in controller effect', error);
-      }
-    });
-  }, [isAuthenticated, isSupportedLocale, language]);
-
+  // AppState listener
   useEffect(() => {
     if (!eligible || !initialServerHydrated) return;
     setLastActiveAt();
@@ -268,155 +149,21 @@ export function GuidedTourController() {
     return () => subscription.remove();
   }, [eligible, resumeIfEligible, setLastActiveAt, initialServerHydrated]);
 
+  // Mount / unmount cleanup
+  const mountedRef = useRef(false);
   useEffect(() => {
-    mountedRef.current = false;
-    requestAnimationFrame(() => {
-      mountedRef.current = true;
-    });
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       queuedFarmCreatedRef.current = null;
       queuedLogCreatedRef.current = null;
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Route guard: ensure user is on the correct route for the current step
   useEffect(() => {
-    const unsubFarm = guidedTourOn('guidedTour.farmCreated', ({ farmId }) => {
-      setHasChosenActivityType(false);
-      setSelectedActivityType(null);
-      setAddFarmPhase('cta');
-      const current = useGuidedTourStore.getState();
-      if (current.status !== 'in_progress' || current.currentStep !== 'add_farm') return;
-      queuedFarmCreatedRef.current = farmId;
-      queuedLogCreatedRef.current = null;
-      telemetry.capture('tour_step_completed', { step: 'add_farm' });
-      completeStep('add_farm', { farmId });
-      showStep('add_log');
-      router.replace(`/farm/${farmId}`);
-      queuedFarmCreatedRef.current = null;
-    });
-    const unsubLogType = guidedTourOn('guidedTour.logTypeSelected', ({ recordType }) => {
-      setHasChosenActivityType(true);
-      setSelectedActivityType(recordType);
-      setRect(null);
-      setActiveCoachStep(null);
-    });
-    const unsubAddLogSelectionState = guidedTourOn(
-      'guidedTour.addLogSelectionState',
-      ({ hasSelection, hasPendingDrafts, recordType }) => {
-        const current = useGuidedTourStore.getState();
-        if (current.status !== 'in_progress' || current.currentStep !== 'add_log') return;
-        setHasChosenActivityType(hasSelection);
-        setHasPendingLogDrafts(hasPendingDrafts);
-        setSelectedActivityType(hasSelection ? (recordType ?? null) : null);
-        setRect(null);
-        setActiveCoachStep(null);
-      },
-    );
-    const unsubAddFarmName = guidedTourOn('guidedTour.addFarmNameEntered', ({ isFilled }) => {
-      setIsAddFarmNameFilled(isFilled);
-    });
-    const unsubAddFarmRegion = guidedTourOn('guidedTour.addFarmRegionEntered', ({ isFilled }) => {
-      setIsAddFarmRegionFilled(isFilled);
-    });
-    const unsubAddFarmArea = guidedTourOn('guidedTour.addFarmAreaEntered', ({ isFilled }) => {
-      setIsAddFarmAreaFilled(isFilled);
-    });
-    const unsubAddFarmCrop = guidedTourOn('guidedTour.addFarmCropSelected', ({ shouldAdvance }) => {
-      const current = useGuidedTourStore.getState();
-      if (current.status !== 'in_progress' || current.currentStep !== 'add_farm') return;
-      if (shouldAdvance !== false) {
-        setAddFarmPhase((prev) => (prev === 'crop' || prev === 'crop_option' ? 'variety' : prev));
-      }
-    });
-    const unsubAddFarmCropPickerToggled = guidedTourOn(
-      'guidedTour.addFarmCropPickerToggled',
-      ({ open }) => {
-        const current = useGuidedTourStore.getState();
-        if (current.status !== 'in_progress' || current.currentStep !== 'add_farm') return;
-        setAddFarmPhase((prev) => {
-          if (open && prev === 'crop') return 'crop_option';
-          if (!open && prev === 'crop_option') return 'crop';
-          return prev;
-        });
-      },
-    );
-    const unsubAddFarmVarietyPickerOpened = guidedTourOn(
-      'guidedTour.addFarmVarietyPickerOpened',
-      () => {
-        const current = useGuidedTourStore.getState();
-        if (current.status !== 'in_progress' || current.currentStep !== 'add_farm') return;
-        setAddFarmPhase((prev) => (prev === 'variety' ? 'variety_option' : prev));
-      },
-    );
-    const unsubAddFarmVariety = guidedTourOn(
-      'guidedTour.addFarmVarietySelected',
-      ({ isCustom }) => {
-        const current = useGuidedTourStore.getState();
-        if (current.status !== 'in_progress' || current.currentStep !== 'add_farm') return;
-        setAddFarmPhase(isCustom ? 'custom_variety' : 'submit');
-      },
-    );
-    const unsubAddFarmCustomVariety = guidedTourOn('guidedTour.addFarmCustomVarietyEntered', () => {
-      const current = useGuidedTourStore.getState();
-      if (current.status !== 'in_progress' || current.currentStep !== 'add_farm') return;
-      setAddFarmPhase('submit');
-    });
-    const unsubLog = guidedTourOn('guidedTour.logCreated', ({ farmId, recordType }) => {
-      setHasChosenActivityType(false);
-      setHasPendingLogDrafts(false);
-      setSelectedActivityType(null);
-      const current = useGuidedTourStore.getState();
-      if (current.status !== 'in_progress' || current.currentStep !== 'add_log') return;
-      if (current.activeFarmId && current.activeFarmId !== farmId) return;
-      queuedLogCreatedRef.current = { farmId, recordType };
-      telemetry.capture('tour_step_completed', { step: 'add_log', recordType });
-      completeStep('add_log');
-      showStep('complete_card');
-      setActiveCoachStep(null);
-      setRect(null);
-      queuedLogCreatedRef.current = null;
-    });
-    const unsubNotif = guidedTourOn('guidedTour.notificationOpened', ({ sequence }) => {
-      const current = useGuidedTourStore.getState();
-      telemetry.capture('tour_reminder_opened', { sequence });
-      if (current.status === 'in_progress') {
-        telemetry.capture('tour_resume', { step: current.currentStep });
-      }
-    });
-    return () => {
-      unsubFarm();
-      unsubLogType();
-      unsubAddLogSelectionState();
-      unsubAddFarmName();
-      unsubAddFarmRegion();
-      unsubAddFarmArea();
-      unsubAddFarmCrop();
-      unsubAddFarmCropPickerToggled();
-      unsubAddFarmVarietyPickerOpened();
-      unsubAddFarmVariety();
-      unsubAddFarmCustomVariety();
-      unsubLog();
-      unsubNotif();
-    };
-  }, [completeStep, showStep]);
-
-  useEffect(() => {
-    if (!eligible) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveCoachStep(null);
-      setRect(null);
-      return;
-    }
-
-    if (overlayMode === 'welcome') {
-      if (!shownRef.current.has('welcome')) {
-        telemetry.capture('tour_welcome_shown');
-        shownRef.current.add('welcome');
-      }
-      return;
-    }
-
+    if (!eligible) return;
+    if (overlayMode === 'welcome') return;
     if (status !== 'in_progress') return;
 
     if (currentStep === 'add_farm') {
@@ -444,8 +191,6 @@ export function GuidedTourController() {
 
     if (currentStep === 'add_log') {
       if (hasActiveSeasonForCurrentFarm === false && !isSeasonFormVisible && !addLogFlowRoute) {
-        setRect(null);
-        setActiveCoachStep(null);
         return;
       }
       if (addLogFlowRoute || isSeasonFormVisible) {
@@ -485,237 +230,12 @@ export function GuidedTourController() {
     showStep,
     status,
     addFarmPhase,
+    setAddFarmPhase,
+    queuedFarmCreatedRef,
+    queuedLogCreatedRef,
   ]);
 
-  useEffect(() => {
-    if (overlayMode !== 'coach') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setRect(null);
-      setActiveCoachStep(null);
-      return;
-    }
-
-    const step = currentStep;
-    const routeFarmId = parseFarmRouteId(pathname);
-    if (step === 'add_farm' && !isAddFarmHostRoute(pathname, segments)) {
-      if (!isAddFarmFlowRoute(pathname)) {
-        setRect(null);
-        setActiveCoachStep(null);
-        return;
-      }
-    }
-    if (
-      step === 'add_farm' &&
-      isAddFarmFlowRoute(pathname) &&
-      addFarmPhase !== 'name' &&
-      addFarmPhase !== 'region' &&
-      addFarmPhase !== 'area' &&
-      addFarmPhase !== 'crop' &&
-      addFarmPhase !== 'crop_option' &&
-      addFarmPhase !== 'variety' &&
-      addFarmPhase !== 'variety_option' &&
-      addFarmPhase !== 'custom_variety' &&
-      addFarmPhase !== 'submit'
-    ) {
-      setRect(null);
-      setActiveCoachStep(null);
-      return;
-    }
-    if (
-      step === 'add_log' &&
-      hasActiveSeasonForCurrentFarm === false &&
-      !isSeasonFormVisible &&
-      !addLogFlowRoute
-    ) {
-      setRect(null);
-      setActiveCoachStep(null);
-      return;
-    }
-    if (
-      step === 'add_log' &&
-      !isSeasonFormVisible &&
-      !addLogFlowRoute &&
-      (!routeFarmId || (activeFarmId && routeFarmId !== activeFarmId))
-    ) {
-      if (!addLogFlowRoute) {
-        setRect(null);
-        setActiveCoachStep(null);
-        return;
-      }
-    }
-    const isSeasonStartPhase = step === 'add_log' && isSeasonFormVisible;
-    const isAddLogSavePhase =
-      step === 'add_log' && addLogFlowRoute && hasPendingLogDrafts && !isSeasonStartPhase;
-    const isAddLogTypeSelectorPhase =
-      step === 'add_log' &&
-      addLogFlowRoute &&
-      !hasPendingLogDrafts &&
-      !hasChosenActivityType &&
-      !isSeasonStartPhase;
-    const isAddLogAddEntryPhase =
-      step === 'add_log' &&
-      addLogFlowRoute &&
-      !hasPendingLogDrafts &&
-      hasChosenActivityType &&
-      !isSeasonStartPhase;
-    const addFarmTargetId = isAddFarmFlowRoute(pathname)
-      ? addFarmPhase === 'name'
-        ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_NAME
-        : addFarmPhase === 'region'
-          ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_REGION
-          : addFarmPhase === 'area'
-            ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_AREA
-            : addFarmPhase === 'crop_option'
-              ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET
-              : addFarmPhase === 'variety_option'
-                ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET
-                : addFarmPhase === 'variety'
-                  ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY
-                  : addFarmPhase === 'custom_variety'
-                    ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_CUSTOM_VARIETY
-                    : addFarmPhase === 'crop'
-                      ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP
-                      : GUIDED_TOUR_TARGET_IDS.ADD_FARM_SUBMIT
-      : GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY;
-    const targetId =
-      step === 'add_farm'
-        ? addFarmTargetId
-        : isSeasonStartPhase
-          ? GUIDED_TOUR_TARGET_IDS.START_SEASON_SHEET
-          : isAddLogSavePhase
-            ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE
-            : isAddLogTypeSelectorPhase
-              ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR
-              : isAddLogAddEntryPhase
-                ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY
-                : GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY;
-    let cancelled = false;
-    let seasonStartRetryCount = 0;
-    let seasonStartRetryTimer: ReturnType<typeof setTimeout> | null = null;
-    const startedAt = Date.now();
-
-    const showEventKey = `step-shown-${pathname}-${step}-${targetId}`;
-    const attempt = async () => {
-      if (cancelled) return;
-
-      if (step === 'add_log' && previousShowEventKeyRef.current !== showEventKey) {
-        addLogRetryCountRef.current = 0;
-      }
-      previousShowEventKeyRef.current = showEventKey;
-
-      const measured = await measureGuidedTourTarget(targetId);
-      if (cancelled) return;
-      if (measured) {
-        setRect(measured);
-        setActiveCoachStep(step);
-        if (!shownRef.current.has(showEventKey)) {
-          telemetry.capture('tour_step_shown', {
-            step,
-            ...(isSeasonStartPhase
-              ? { phase: 'season_start' }
-              : isAddLogSavePhase
-                ? { phase: 'save' }
-                : isAddLogTypeSelectorPhase
-                  ? { phase: 'activity_type' }
-                  : isAddLogAddEntryPhase
-                    ? { phase: 'add_entry' }
-                    : { phase: 'entrypoint' }),
-          });
-          showStep(step);
-          shownRef.current.add(showEventKey);
-        }
-        if (isSeasonStartPhase && seasonStartRetryCount < MAX_SEASON_START_RETRIES) {
-          seasonStartRetryCount += 1;
-          seasonStartRetryTimer = setTimeout(() => {
-            if (cancelled) return;
-            void attempt();
-          }, GUIDED_TOUR_TARGET_RETRY_MS);
-        }
-        return;
-      }
-
-      if (step === 'add_log' && addLogFlowRoute) {
-        // Add-log UI can mount targets with delays (sheet animation, route transitions).
-        // Keep retrying instead of dropping guidance for this step.
-        if (addLogRetryCountRef.current < MAX_GUIDED_TOUR_TARGET_RETRIES) {
-          addLogRetryCountRef.current += 1;
-          setTimeout(() => {
-            void attempt();
-          }, GUIDED_TOUR_TARGET_RETRY_MS);
-        } else {
-          telemetry.capture('tour_target_missing', {
-            step,
-            targetId,
-            route: pathname,
-            reason: 'max_retries_exceeded',
-          });
-          setRect(null);
-          setActiveCoachStep(null);
-        }
-        return;
-      }
-
-      if (Date.now() - startedAt >= GUIDED_TOUR_TARGET_TIMEOUT_MS) {
-        telemetry.capture('tour_target_missing', { step, targetId, route: pathname });
-        if (step === 'add_farm') {
-          if (isAddFarmFlowRoute(pathname)) {
-            // In add-farm form phases, never auto-complete the whole step because a target
-            // may temporarily be off-screen or filtered out (e.g., variety list search).
-            if (addFarmPhase === 'crop_option') {
-              setAddFarmPhase('crop');
-            }
-            if (addFarmPhase === 'variety_option') {
-              setAddFarmPhase('variety');
-            }
-          } else {
-            completeStep('add_farm');
-            showStep('add_log');
-          }
-        } else if (step === 'add_log' && isSeasonStartPhase) {
-          // If the season form CTA cannot be measured, hide the coach-mark and let the user proceed manually.
-        } else if (step === 'add_log' && isAddLogTypeSelectorPhase) {
-          // Keep add-log step active; target retries are handled above.
-        } else if (step === 'add_log' && addLogFlowRoute) {
-          // In add-log flow, targets can be dynamic while filling fields.
-          // Keep the step active instead of auto-completing.
-        } else if (step === 'add_log') {
-          completeStep('add_log');
-          showStep('complete_card');
-        }
-        setRect(null);
-        setActiveCoachStep(null);
-        return;
-      }
-
-      setTimeout(() => {
-        void attempt();
-      }, GUIDED_TOUR_TARGET_RETRY_MS);
-    };
-
-    void attempt();
-
-    return () => {
-      cancelled = true;
-      if (seasonStartRetryTimer) {
-        clearTimeout(seasonStartRetryTimer);
-      }
-    };
-  }, [
-    activeFarmId,
-    addLogFlowRoute,
-    completeStep,
-    currentStep,
-    hasActiveSeasonForCurrentFarm,
-    hasChosenActivityType,
-    hasPendingLogDrafts,
-    isSeasonFormVisible,
-    overlayMode,
-    pathname,
-    segments,
-    showStep,
-    addFarmPhase,
-  ]);
-
+  // Abandoned tour detection
   useEffect(() => {
     if (!mountedRef.current) {
       mountedRef.current = true;
@@ -729,43 +249,18 @@ export function GuidedTourController() {
     }
   }, [currentStep, lastActiveAt, status]);
 
-  useEffect(() => {
-    addLogRetryCountRef.current = 0;
-  }, [currentStep]);
-
   if (overlayMode === 'none') return null;
-
-  const resetLocalTourState = ({
-    clearOverlay = false,
-  }: {
-    clearOverlay?: boolean;
-  } = {}) => {
-    queuedFarmCreatedRef.current = null;
-    queuedLogCreatedRef.current = null;
-    addLogRetryCountRef.current = 0;
-    setHasChosenActivityType(false);
-    setHasPendingLogDrafts(false);
-    setSelectedActivityType(null);
-    setIsAddFarmNameFilled(false);
-    setIsAddFarmRegionFilled(false);
-    setIsAddFarmAreaFilled(false);
-    setAddFarmPhase('cta');
-    if (clearOverlay) {
-      setRect(null);
-      setActiveCoachStep(null);
-    }
-  };
 
   const handleSkip = () => {
     const step = overlayMode === 'welcome' ? 'welcome' : currentStep;
     telemetry.capture('tour_skipped', { skippedAtStep: step });
     skipTour(step);
-    resetLocalTourState({ clearOverlay: true });
+    resetFormState({ clearOverlay: true });
   };
 
   const handleStart = () => {
     telemetry.capture('tour_started');
-    resetLocalTourState();
+    resetFormState();
     startTour();
     showStep('add_farm');
     router.push('/explore');
@@ -773,15 +268,41 @@ export function GuidedTourController() {
 
   const handleDone = () => {
     telemetry.capture('tour_complete');
-    resetLocalTourState({ clearOverlay: true });
+    resetFormState({ clearOverlay: true });
     completeTour();
   };
 
   const isAddFarmFormCoach = activeCoachStep === 'add_farm' && isAddFarmFlowRoute(pathname);
+  const addLogDetailsTargetId: GuidedTourTargetId = (() => {
+    if (selectedActivityType === 'irrigation') {
+      return GUIDED_TOUR_TARGET_IDS.ADD_LOG_IRRIGATION_DURATION;
+    }
+    if (selectedActivityType === 'spray') {
+      return GUIDED_TOUR_TARGET_IDS.ADD_LOG_SPRAY_DETAILS;
+    }
+    if (selectedActivityType === 'harvest') {
+      return GUIDED_TOUR_TARGET_IDS.ADD_LOG_HARVEST_DETAILS;
+    }
+    if (selectedActivityType === 'expense') {
+      return GUIDED_TOUR_TARGET_IDS.ADD_LOG_EXPENSE_DETAILS;
+    }
+    if (selectedActivityType === 'fertigation') {
+      return GUIDED_TOUR_TARGET_IDS.ADD_LOG_FERTIGATION_DETAILS;
+    }
+    return GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY;
+  })();
   const showAddFarmNextAction =
     isAddFarmFormCoach &&
     (addFarmPhase === 'name' || addFarmPhase === 'region' || addFarmPhase === 'area');
   const showAddFarmCropNextAction = isAddFarmFormCoach && addFarmPhase === 'crop';
+  const showAddLogDetailsNextAction =
+    activeCoachStep === 'add_log' &&
+    addLogFlowRoute &&
+    (activeTargetId === addLogDetailsTargetId ||
+      activeTargetId === GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY) &&
+    !hasPendingLogDrafts &&
+    hasChosenActivityType &&
+    !hasConfirmedLogInput;
   const canAdvanceAddFarmField =
     (addFarmPhase === 'name' && isAddFarmNameFilled) ||
     (addFarmPhase === 'region' && isAddFarmRegionFilled) ||
@@ -791,11 +312,21 @@ export function GuidedTourController() {
     addFarmPhase !== 'name' &&
     addFarmPhase !== 'cta' &&
     addFarmPhase !== 'crop_option';
-  const coachSecondaryActionLabel = showAddFarmBackAction
-    ? t('common.back', { defaultValue: 'Back' })
-    : undefined;
+  const showAddLogBackAction =
+    activeCoachStep === 'add_log' &&
+    addLogFlowRoute &&
+    activeTargetId === GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY &&
+    !hasPendingLogDrafts &&
+    hasChosenActivityType &&
+    hasConfirmedLogInput;
+  const coachSecondaryActionLabel =
+    showAddFarmBackAction || showAddLogBackAction
+      ? t('common.back', { defaultValue: 'Back' })
+      : undefined;
   const coachActionLabel =
-    (showAddFarmNextAction && canAdvanceAddFarmField) || showAddFarmCropNextAction
+    (showAddFarmNextAction && canAdvanceAddFarmField) ||
+    showAddFarmCropNextAction ||
+    (showAddLogDetailsNextAction && isCurrentLogValid)
       ? t('common.next', { defaultValue: 'Next' })
       : undefined;
   const coachSecondaryAction = showAddFarmBackAction
@@ -825,7 +356,9 @@ export function GuidedTourController() {
           }
           return prev;
         })
-    : undefined;
+    : showAddLogBackAction
+      ? () => setHasConfirmedLogInput(false)
+      : undefined;
   const coachAction = showAddFarmNextAction
     ? () =>
         setAddFarmPhase((prev) => {
@@ -856,7 +389,9 @@ export function GuidedTourController() {
         })
     : showAddFarmCropNextAction
       ? () => setAddFarmPhase('variety')
-      : undefined;
+      : showAddLogDetailsNextAction && isCurrentLogValid
+        ? () => setHasConfirmedLogInput(true)
+        : undefined;
 
   return (
     <GuidedTourOverlay>
@@ -873,28 +408,45 @@ export function GuidedTourController() {
             blockOutsideTouches={
               !(
                 (activeCoachStep === 'add_log' && isSeasonFormVisible) ||
-                (activeCoachStep === 'add_farm' && isAddFarmFlowRoute(pathname))
+                (activeCoachStep === 'add_farm' && isAddFarmFlowRoute(pathname)) ||
+                (activeCoachStep === 'add_log' && addLogFlowRoute)
               )
             }
             tooltipPlacement={
               (activeCoachStep === 'add_log' && isSeasonFormVisible) ||
               (activeCoachStep === 'add_farm' &&
-                (addFarmPhase === 'crop_option' || addFarmPhase === 'variety_option'))
+                (addFarmPhase === 'crop_option' || addFarmPhase === 'variety_option')) ||
+              (activeCoachStep === 'add_log' &&
+                addLogFlowRoute &&
+                hasChosenActivityType &&
+                !hasPendingLogDrafts)
                 ? 'top'
                 : 'auto'
             }
             tooltipOffsetY={activeCoachStep === 'add_farm' && addFarmPhase === 'crop' ? 16 : 0}
             message={
-              activeCoachStep === 'add_log' && addLogFlowRoute && hasPendingLogDrafts
+              activeCoachStep === 'add_log' &&
+              addLogFlowRoute &&
+              activeTargetId === GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE
                 ? t('guidedTour.step2.addEntryCoach', {
                     defaultValue: 'Great. Tap Save to continue.',
                   })
-                : activeCoachStep === 'add_log' && addLogFlowRoute && !hasChosenActivityType
+                : activeCoachStep === 'add_log' &&
+                    addLogFlowRoute &&
+                    activeTargetId === GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR
                   ? `${t('guidedTour.step2.pickActivityCoach')}\n${t('guidedTour.step2.pickActivityHelper')}`
-                  : activeCoachStep === 'add_log' && addLogFlowRoute && hasChosenActivityType
-                    ? t('guidedTour.step2.addEntryCoach', {
-                        defaultValue: `Fill the ${String(selectedActivityType ?? 'activity').replace('_', ' ')} details, then tap Add entry.`,
-                      })
+                  : activeCoachStep === 'add_log' &&
+                      addLogFlowRoute &&
+                      activeTargetId !== GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR &&
+                      activeTargetId !== GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE &&
+                      activeTargetId !== GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY
+                    ? hasConfirmedLogInput
+                      ? t('guidedTour.step2.addEntryCoach', {
+                          defaultValue: `Great. Tap Add entry to continue.`,
+                        })
+                      : t('guidedTour.step2.fillActivityDetailsCoach', {
+                          defaultValue: `Fill the ${String(selectedActivityType ?? 'activity').replace('_', ' ')} details, then tap Next.`,
+                        })
                     : activeCoachStep === 'add_log' && isSeasonFormVisible
                       ? t('guidedTour.step2.startSeasonCoach')
                       : activeCoachStep === 'add_farm' && isAddFarmFlowRoute(pathname)

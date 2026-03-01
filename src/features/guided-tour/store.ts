@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { GUIDED_TOUR_STORAGE_KEY, GUIDED_TOUR_VERSION } from './constants';
 import type {
@@ -51,26 +52,23 @@ const initialState: GuidedTourState = {
   version: GUIDED_TOUR_VERSION,
 };
 
-const isWeb = process.env.EXPO_OS === 'web';
-const storage = {
+const guidedTourStorage = {
   getItem: async (key: string) => {
-    if (isWeb) return typeof localStorage === 'undefined' ? null : localStorage.getItem(key);
-    return SecureStore.getItemAsync(key);
-  },
-  setItem: async (key: string, value: string) => {
-    if (isWeb) {
-      if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
-      return;
+    const fromAsync = await AsyncStorage.getItem(key);
+    if (fromAsync !== null) return fromAsync;
+
+    // One-time migration: if state exists in legacy SecureStore, move it to AsyncStorage.
+    const fromSecure = await SecureStore.getItemAsync(key);
+    if (fromSecure !== null) {
+      await AsyncStorage.setItem(key, fromSecure);
+      await SecureStore.deleteItemAsync(key);
+      return fromSecure;
     }
-    await SecureStore.setItemAsync(key, value);
+
+    return null;
   },
-  removeItem: async (key: string) => {
-    if (isWeb) {
-      if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
-      return;
-    }
-    await SecureStore.deleteItemAsync(key);
-  },
+  setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
+  removeItem: (key: string) => AsyncStorage.removeItem(key),
 };
 
 const nowIso = () => new Date().toISOString();
@@ -188,7 +186,7 @@ export const useGuidedTourStore = create<GuidedTourStore>()(
     }),
     {
       name: GUIDED_TOUR_STORAGE_KEY,
-      storage: createJSONStorage(() => storage),
+      storage: createJSONStorage(() => guidedTourStorage),
       partialize: (state) => ({
         status: state.status,
         currentStep: state.currentStep,
@@ -201,6 +199,7 @@ export const useGuidedTourStore = create<GuidedTourStore>()(
         stepShownAt: state.stepShownAt,
         activeFarmId: state.activeFarmId,
         version: state.version,
+        replayResetPending: state.replayResetPending,
       }),
       onRehydrateStorage: () => () => {
         useGuidedTourStore.setState({ hasHydrated: true });

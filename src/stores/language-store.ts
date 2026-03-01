@@ -50,11 +50,6 @@ export const useLanguageStore = create<LanguageState & LanguageActions>()(
     {
       name: LANGUAGE_STORAGE_KEY,
       version: 1,
-      migrate: (persistedState: unknown, _version: number) => {
-        const state = persistedState as LanguageState | null;
-        if (!state) return persistedState;
-        return state;
-      },
       storage: createJSONStorage(() => languageStorage),
       onRehydrateStorage: () => () => {
         useLanguageStore.setState({ hasHydrated: true });

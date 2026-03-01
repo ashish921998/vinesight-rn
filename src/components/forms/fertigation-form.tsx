@@ -10,6 +10,9 @@ import { useTranslation } from 'react-i18next';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import type { NutrientCompositionItem, QuantityBasis } from '@/types';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
 
 export interface FertilizerEntry {
   id?: string;
@@ -95,6 +98,10 @@ export function FertigationForm({
   const isValid =
     data.fertilizers.length > 0 &&
     data.fertilizers.every((f) => f.name.trim() && (f.quantity ?? 0) > 0);
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const showDetailsGuidance =
+    guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
 
@@ -247,133 +254,148 @@ export function FertigationForm({
         onFocus={onInputFocus}
       />
 
-      {/* Fertilizers Section */}
-      <View style={{ marginTop: spacing[2] }}>
-        {quickAddItems.length > 0 ? (
-          <View style={{ marginBottom: spacing[3] }}>
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.semibold,
-                color: colors.surface[500],
-                marginBottom: spacing[2],
-                textTransform: 'uppercase',
-                letterSpacing: 0.4,
-              }}
-            >
-              {t('fertigationForm.quickAdd')}
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {quickAddItems.map((item, index) => (
-                <Pressable
-                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
-                  onPress={() => addQuickFertilizer(item)}
-                  style={{
-                    marginRight: spacing[2],
-                    paddingHorizontal: spacing[3],
-                    paddingVertical: spacing[2],
-                    borderRadius: borderRadius.full,
-                    backgroundColor: colors.surface[100],
-                    borderWidth: 1,
-                    borderColor: colors.surface[200],
-                  }}
-                >
-                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
-                    {item.name}
-                  </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                    {item.quantity ? `${item.quantity} ` : ''}
-                    {item.unit ?? 'kg'}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        ) : null}
-
+      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_FERTIGATION_DETAILS}>
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: spacing[3],
+            marginTop: spacing[2],
+            borderRadius: borderRadius.xl,
+            borderWidth: showDetailsGuidance ? 2 : 0,
+            borderColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+              : 'transparent',
+            backgroundColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.03)
+              : 'transparent',
+            paddingHorizontal: showDetailsGuidance ? spacing[2] : 0,
+            paddingTop: showDetailsGuidance ? spacing[2] : 0,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ marginRight: 6 }}>
-              <IconSymbol name="flask" size={16} color={colors.primary[600]} />
-            </View>
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.semibold,
-                color: colors.surface[800],
-              }}
-            >
-              Fertilizers <Text style={{ color: colors.error }}>*</Text>
-            </Text>
-          </View>
-          {totalInputs > 0 && (
-            <View
-              style={{
-                backgroundColor: colorWithOpacity(colors.success, 0.16),
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: borderRadius.full,
-              }}
-            >
+          {quickAddItems.length > 0 ? (
+            <View style={{ marginBottom: spacing[3] }}>
               <Text
                 style={{
                   fontSize: fontSize.xs,
-                  fontWeight: fontWeight.medium,
-                  color: colors.success,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[500],
+                  marginBottom: spacing[2],
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.4,
                 }}
               >
-                {totalInputs} input{totalInputs !== 1 ? 's' : ''}
+                {t('fertigationForm.quickAdd')}
               </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {quickAddItems.map((item, index) => (
+                  <Pressable
+                    key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                    onPress={() => addQuickFertilizer(item)}
+                    style={{
+                      marginRight: spacing[2],
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[2],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: colors.surface[100],
+                      borderWidth: 1,
+                      borderColor: colors.surface[200],
+                    }}
+                  >
+                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                      {item.name}
+                    </Text>
+                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                      {item.quantity ? `${item.quantity} ` : ''}
+                      {item.unit ?? 'kg'}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
             </View>
-          )}
-        </View>
+          ) : null}
 
-        {/* Fertilizers List */}
-        {data.fertilizers.map((fertilizer, index) => (
-          <FertilizerRow
-            key={fertilizer.id ?? index}
-            fertilizer={fertilizer}
-            quickAddItems={quickAddItems}
-            onUpdate={(updates) => updateFertilizer(index, updates)}
-            onRemove={() => removeFertilizer(index)}
-            showRemove={data.fertilizers.length > 1}
-            onInputFocus={onInputFocus}
-            perAreaLabel={perAreaLabel}
-          />
-        ))}
-
-        {/* Add Fertilizer Button */}
-        {data.fertilizers.length < 10 && (
-          <Pressable
-            onPress={addFertilizer}
+          <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              paddingVertical: spacing[3],
-              marginTop: spacing[2],
+              justifyContent: 'space-between',
+              marginBottom: spacing[3],
             }}
           >
-            <IconSymbol name="plus.circle.fill" size={20} color={colors.success} />
-            <Text
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ marginRight: 6 }}>
+                <IconSymbol name="flask" size={16} color={colors.primary[600]} />
+              </View>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[800],
+                }}
+              >
+                Fertilizers <Text style={{ color: colors.error }}>*</Text>
+              </Text>
+            </View>
+            {totalInputs > 0 && (
+              <View
+                style={{
+                  backgroundColor: colorWithOpacity(colors.success, 0.16),
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: borderRadius.full,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.medium,
+                    color: colors.success,
+                  }}
+                >
+                  {totalInputs} input{totalInputs !== 1 ? 's' : ''}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Fertilizers List */}
+          {data.fertilizers.map((fertilizer, index) => (
+            <FertilizerRow
+              key={fertilizer.id ?? index}
+              fertilizer={fertilizer}
+              quickAddItems={quickAddItems}
+              onUpdate={(updates) => updateFertilizer(index, updates)}
+              onRemove={() => removeFertilizer(index)}
+              showRemove={data.fertilizers.length > 1}
+              onInputFocus={onInputFocus}
+              perAreaLabel={perAreaLabel}
+            />
+          ))}
+
+          {/* Add Fertilizer Button */}
+          {data.fertilizers.length < 10 && (
+            <Pressable
+              onPress={addFertilizer}
               style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.medium,
-                color: colors.success,
-                marginLeft: spacing[2],
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: spacing[3],
+                marginTop: spacing[2],
               }}
             >
-              Add Fertilizer
-            </Text>
-          </Pressable>
-        )}
-      </View>
+              <IconSymbol name="plus.circle.fill" size={20} color={colors.success} />
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.medium,
+                  color: colors.success,
+                  marginLeft: spacing[2],
+                }}
+              >
+                Add Fertilizer
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      </GuidedTourTarget>
 
       {/* Summary */}
       {totalInputs > 0 && (

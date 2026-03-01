@@ -14,6 +14,7 @@ export type GuidedTourEventMap = {
     hasSelection: boolean;
     hasPendingDrafts: boolean;
     recordType?: string;
+    isCurrentLogValid?: boolean;
   };
   'guidedTour.logCreated': { farmId: number; recordType: string };
   'guidedTour.notificationOpened': { sequence: 1 | 2 };

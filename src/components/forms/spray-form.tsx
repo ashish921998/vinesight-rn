@@ -12,6 +12,9 @@ import { colorWithOpacity } from '@/utils/color';
 import type { NutrientCompositionItem, QuantityBasis } from '@/types';
 import type { ChemicalMix } from '@/types/phi';
 import { normalizeMixComponentToPerLiterDose } from '@/services/phi-service';
+import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
 
 export interface ChemicalEntry {
   id: string;
@@ -116,6 +119,10 @@ export function SprayForm({
     data.waterVolume > 0 &&
     data.chemicals.length > 0 &&
     data.chemicals.every((c) => c.name.trim() && c.quantity !== undefined && c.quantity > 0);
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const showDetailsGuidance =
+    guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
   const chemicalRefsMapRef = useRef<
     Map<
@@ -367,211 +374,244 @@ export function SprayForm({
         </View>
       </View>
 
-      {/* Water Volume Input */}
-      <NumericInput
-        label={t('sprayForm.waterVolume.label')}
-        icon="water-outline"
-        iconColor={m3.colorScheme.tertiary}
-        placeholder={t('sprayForm.waterVolume.placeholder')}
-        value={data.waterVolume}
-        onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}
-        unit={t('sprayForm.waterVolume.unitLiters')}
-        required
-        decimals={2}
-        hint={t('sprayForm.waterVolume.hint')}
-        ref={waterVolumeRef}
-        onSubmitEditing={focusFirstChemicalName}
-        blurOnSubmit={false}
-        returnKeyType="next"
-        onFocus={onInputFocus}
-      />
+      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_SPRAY_DETAILS}>
+        <View
+          style={{
+            borderRadius: borderRadius.xl,
+            borderWidth: showDetailsGuidance ? 2 : 0,
+            borderColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+              : 'transparent',
+            backgroundColor: showDetailsGuidance
+              ? colorWithOpacity(m3.colorScheme.primary, 0.03)
+              : 'transparent',
+            paddingHorizontal: showDetailsGuidance ? spacing[2] : 0,
+            paddingTop: showDetailsGuidance ? spacing[2] : 0,
+          }}
+        >
+          {/* Water Volume Input */}
+          <NumericInput
+            label={t('sprayForm.waterVolume.label')}
+            icon="water-outline"
+            iconColor={m3.colorScheme.tertiary}
+            placeholder={t('sprayForm.waterVolume.placeholder')}
+            value={data.waterVolume}
+            onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}
+            unit={t('sprayForm.waterVolume.unitLiters')}
+            required
+            decimals={2}
+            hint={t('sprayForm.waterVolume.hint')}
+            ref={waterVolumeRef}
+            onSubmitEditing={focusFirstChemicalName}
+            blurOnSubmit={false}
+            returnKeyType="next"
+            onFocus={onInputFocus}
+          />
 
-      {/* Chemicals Section */}
-      <View style={{ marginTop: spacing[2] }}>
-        {catalogMixes.length > 0 ? (
-          <View style={{ marginBottom: spacing[3] }}>
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.semibold,
-                color: colors.surface[500],
-                marginBottom: spacing[2],
-                textTransform: 'uppercase',
-                letterSpacing: 0.4,
-              }}
-            >
-              {catalogOnly
-                ? t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })
-                : t('sprayForm.catalogOptional.title', {
-                    defaultValue: 'Catalog mix (optional)',
-                  })}
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {catalogMixes.map((mix) => {
-                const isSelected = selectedCatalogMix?.id === mix.id;
-                return (
-                  <Pressable
-                    key={mix.id}
-                    onPress={() => applyCatalogMix(mix)}
-                    style={{
-                      marginRight: spacing[2],
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[2],
-                      borderRadius: borderRadius.full,
-                      backgroundColor: isSelected
-                        ? colorWithOpacity(m3.colorScheme.tertiary, 0.16)
-                        : colors.surface[100],
-                      borderWidth: 1,
-                      borderColor: isSelected ? m3.colorScheme.tertiary : colors.surface[200],
-                    }}
-                  >
-                    <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
-                      {mix.name}
-                    </Text>
-                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                      {mix.target_problem ??
-                        t('sprayForm.catalogOnly.fallbackLabel', {
-                          defaultValue: 'Catalog mix',
-                        })}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-            {selectedCatalogMix ? (
-              <Text
-                style={{
-                  marginTop: spacing[2],
-                  fontSize: fontSize.xs,
-                  color: colors.surface[600],
-                }}
-              >
-                {t('sprayForm.catalogOnly.selectedMix', {
-                  defaultValue: 'Selected: {{name}}',
-                  name: selectedCatalogMix.name,
-                })}
-              </Text>
-            ) : (
-              <Text
-                style={{
-                  marginTop: spacing[2],
-                  fontSize: fontSize.xs,
-                  color: colors.surface[600],
-                }}
-              >
-                {catalogOnly
-                  ? t('sprayForm.catalogOnly.requiredHint', {
-                      defaultValue: 'Choose a catalog mix to continue',
-                    })
-                  : t('sprayForm.catalogOptional.hint', {
-                      defaultValue: 'Optional: choose a catalog mix to enable PHI checks',
-                    })}
-              </Text>
-            )}
-          </View>
-        ) : null}
-
-        {quickAddItems.length > 0 && !catalogOnly ? (
-          <View style={{ marginBottom: spacing[3] }}>
-            <Text
-              style={{
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.semibold,
-                color: colors.surface[500],
-                marginBottom: spacing[2],
-                textTransform: 'uppercase',
-                letterSpacing: 0.4,
-              }}
-            >
-              {t('sprayForm.quickAdd')}
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {quickAddItems.map((item, index) => (
-                <Pressable
-                  key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
-                  onPress={() => addQuickChemical(item)}
+          {/* Chemicals Section */}
+          <View style={{ marginTop: spacing[2] }}>
+            {catalogMixes.length > 0 ? (
+              <View style={{ marginBottom: spacing[3] }}>
+                <Text
                   style={{
-                    marginRight: spacing[2],
-                    paddingHorizontal: spacing[3],
-                    paddingVertical: spacing[2],
-                    borderRadius: borderRadius.full,
-                    backgroundColor: colors.surface[100],
-                    borderWidth: 1,
-                    borderColor: colors.surface[200],
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[500],
+                    marginBottom: spacing[2],
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.4,
                   }}
                 >
-                  <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
-                    {item.name}
+                  {catalogOnly
+                    ? t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })
+                    : t('sprayForm.catalogOptional.title', {
+                        defaultValue: 'Catalog mix (optional)',
+                      })}
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {catalogMixes.map((mix) => {
+                    const isSelected = selectedCatalogMix?.id === mix.id;
+                    return (
+                      <Pressable
+                        key={mix.id}
+                        onPress={() => applyCatalogMix(mix)}
+                        style={{
+                          marginRight: spacing[2],
+                          paddingHorizontal: spacing[3],
+                          paddingVertical: spacing[2],
+                          borderRadius: borderRadius.full,
+                          backgroundColor: isSelected
+                            ? colorWithOpacity(m3.colorScheme.tertiary, 0.16)
+                            : colors.surface[100],
+                          borderWidth: 1,
+                          borderColor: isSelected ? m3.colorScheme.tertiary : colors.surface[200],
+                        }}
+                      >
+                        <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                          {mix.name}
+                        </Text>
+                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                          {mix.target_problem ??
+                            t('sprayForm.catalogOnly.fallbackLabel', {
+                              defaultValue: 'Catalog mix',
+                            })}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+                {selectedCatalogMix ? (
+                  <Text
+                    style={{
+                      marginTop: spacing[2],
+                      fontSize: fontSize.xs,
+                      color: colors.surface[600],
+                    }}
+                  >
+                    {t('sprayForm.catalogOnly.selectedMix', {
+                      defaultValue: 'Selected: {{name}}',
+                      name: selectedCatalogMix.name,
+                    })}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                    {item.quantity ? `${item.quantity} ` : ''}
-                    {item.unit ?? 'gm/L'}
+                ) : (
+                  <Text
+                    style={{
+                      marginTop: spacing[2],
+                      fontSize: fontSize.xs,
+                      color: colors.surface[600],
+                    }}
+                  >
+                    {catalogOnly
+                      ? t('sprayForm.catalogOnly.requiredHint', {
+                          defaultValue: 'Choose a catalog mix to continue',
+                        })
+                      : t('sprayForm.catalogOptional.hint', {
+                          defaultValue: 'Optional: choose a catalog mix to enable PHI checks',
+                        })}
                   </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        ) : null}
+                )}
+              </View>
+            ) : null}
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
-          <View style={{ marginRight: 6 }}>
-            <Symbol name="flask" size={16} color={colors.primary[600]} />
+            {quickAddItems.length > 0 && !catalogOnly ? (
+              <View style={{ marginBottom: spacing[3] }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[500],
+                    marginBottom: spacing[2],
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.4,
+                  }}
+                >
+                  {t('sprayForm.quickAdd')}
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {quickAddItems.map((item, index) => (
+                    <Pressable
+                      key={`${item.name}-${item.unit ?? 'unit'}-${index}`}
+                      onPress={() => addQuickChemical(item)}
+                      style={{
+                        marginRight: spacing[2],
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: spacing[2],
+                        borderRadius: borderRadius.full,
+                        backgroundColor: colors.surface[100],
+                        borderWidth: 1,
+                        borderColor: colors.surface[200],
+                      }}
+                    >
+                      <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
+                        {item.name}
+                      </Text>
+                      <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                        {item.quantity ? `${item.quantity} ` : ''}
+                        {item.unit ?? 'gm/L'}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[3] }}>
+              <View style={{ marginRight: 6 }}>
+                <Symbol name="flask" size={16} color={colors.primary[600]} />
+              </View>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[800],
+                }}
+              >
+                {t('sprayForm.chemicals.label')} <Text style={{ color: colors.error }}>*</Text>
+              </Text>
+            </View>
+
+            {/* Chemicals List */}
+            {data.chemicals.map((chemical, index) => (
+              <ChemicalRow
+                key={chemical.id}
+                chemical={chemical}
+                index={index}
+                chemicalCount={data.chemicals.length}
+                quickAddItems={quickAddItems}
+                onUpdate={(updates) => updateChemical(chemical.id, updates)}
+                onRemove={() => removeChemical(chemical.id)}
+                showRemove={data.chemicals.length > 1}
+                nameRef={chemicalRefs[index].name}
+                quantityRef={chemicalRefs[index].quantity}
+                onNextChemical={focusNextChemicalName}
+                onInputFocus={onInputFocus}
+                readOnly={catalogOnly}
+              />
+            ))}
+
+            {/* Add Chemical Button */}
+            {data.chemicals.length < 10 && !catalogOnly && (
+              <Pressable
+                onPress={addChemical}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: spacing[3],
+                  marginTop: spacing[2],
+                }}
+              >
+                <Symbol name="plus.circle.fill" size={20} color={m3.colorScheme.tertiary} />
+                <Text
+                  style={{
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                    color: m3.colorScheme.tertiary,
+                    marginLeft: spacing[2],
+                  }}
+                >
+                  {t('sprayForm.chemicals.addChemical')}
+                </Text>
+              </Pressable>
+            )}
           </View>
-          <Text
-            style={{
-              fontSize: fontSize.sm,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[800],
-            }}
-          >
-            {t('sprayForm.chemicals.label')} <Text style={{ color: colors.error }}>*</Text>
-          </Text>
         </View>
+      </GuidedTourTarget>
 
-        {/* Chemicals List */}
-        {data.chemicals.map((chemical, index) => (
-          <ChemicalRow
-            key={chemical.id}
-            chemical={chemical}
-            index={index}
-            chemicalCount={data.chemicals.length}
-            quickAddItems={quickAddItems}
-            onUpdate={(updates) => updateChemical(chemical.id, updates)}
-            onRemove={() => removeChemical(chemical.id)}
-            showRemove={data.chemicals.length > 1}
-            nameRef={chemicalRefs[index].name}
-            quantityRef={chemicalRefs[index].quantity}
-            onNextChemical={focusNextChemicalName}
-            onInputFocus={onInputFocus}
-            readOnly={catalogOnly}
-          />
-        ))}
-
-        {/* Add Chemical Button */}
-        {data.chemicals.length < 10 && !catalogOnly && (
-          <Pressable
-            onPress={addChemical}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: spacing[3],
-              marginTop: spacing[2],
-            }}
-          >
-            <Symbol name="plus.circle.fill" size={20} color={m3.colorScheme.tertiary} />
-            <Text
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: fontWeight.medium,
-                color: m3.colorScheme.tertiary,
-                marginLeft: spacing[2],
-              }}
-            >
-              {t('sprayForm.chemicals.addChemical')}
-            </Text>
-          </Pressable>
-        )}
-      </View>
+      {/* Guided tour hint when not yet valid */}
+      {showDetailsGuidance ? (
+        <Text
+          style={{
+            marginTop: spacing[3],
+            fontSize: fontSize.xs,
+            fontWeight: fontWeight.semibold,
+            color: m3.colorScheme.primary,
+          }}
+        >
+          {t('guidedTour.step2.fillSprayDetailsCoach', {
+            defaultValue: 'Enter water volume and at least one chemical to continue.',
+          })}
+        </Text>
+      ) : null}
 
       {/* Validation indicator */}
       <View

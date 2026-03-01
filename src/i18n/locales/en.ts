@@ -2536,6 +2536,10 @@ export const en = {
     step2: {
       coach: 'Great! Now log your first observation.',
       addEntryCoach: 'Fill the {{activity}} details, then tap Add entry.',
+      fillActivityDetailsCoach: 'Fill the details, then tap Next.',
+      fillSprayDetailsCoach: 'Enter water volume and at least one chemical to continue.',
+      tapAddEntryCoach: 'Tap Add entry to log your activity.',
+      tapSaveCoach: 'Tap Save to record your activity.',
       startSeasonCoach: 'First, start your season so Vinesight can organize your records.',
       startSeasonHelper: 'Edit template or dates if needed, then tap Start season.',
       pickActivityCoach:
