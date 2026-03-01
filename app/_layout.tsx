@@ -19,6 +19,7 @@ import {
   useNotificationStore,
   useThemeStore,
 } from '@/stores';
+import { useAndroidBackHandler } from '@/hooks/useAndroidBackHandler';
 import { ErrorBoundary } from '@/components/error-boundary';
 import i18n, { getDeviceLanguage, setAppLanguage } from '@/i18n';
 import {
@@ -148,6 +149,8 @@ export default Sentry.wrap(function RootLayout() {
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
   const router = useRouter();
   const routerRef = useRef(router);
+
+  useAndroidBackHandler();
   useEffect(() => {
     routerRef.current = router;
   });
@@ -343,12 +346,19 @@ export default Sentry.wrap(function RootLayout() {
           }),
         });
         if (Platform.OS === 'android') {
-          await Notifications.setNotificationChannelAsync('vinesight-reminders', {
+          // The expo-notifications types expect `sound` to be a string path, but `true`
+          // is valid at runtime to enable the default notification sound.
+          type AndroidChannelInput = Parameters<
+            typeof Notifications.setNotificationChannelAsync
+          >[1];
+          const channelConfig: AndroidChannelInput = {
             name: 'Farm Reminders',
             importance: Notifications.AndroidImportance.HIGH,
             vibrationPattern: [0, 250, 250, 250],
-            sound: 'default',
-          });
+          };
+          // Cast to allow boolean `true` for default sound
+          (channelConfig as { sound?: boolean }).sound = true;
+          await Notifications.setNotificationChannelAsync('vinesight-reminders', channelConfig);
         }
       } catch {
         // ignore
@@ -365,30 +375,43 @@ export default Sentry.wrap(function RootLayout() {
     let cleanup: null | (() => void) = null;
     let disposed = false;
 
+    const handleNotificationResponse = (response: {
+      notification: { request: { content: { data: unknown } } };
+    }) => {
+      const data = response.notification.request.content.data as {
+        type?: string;
+        sequence?: number;
+      };
+      if (data?.type === 'guided_tour_reminder') {
+        const sequence = data.sequence === 2 ? 2 : 1;
+        guidedTourEmit('guidedTour.notificationOpened', { sequence });
+      } else if (
+        data?.type === 'task_due' ||
+        data?.type === 'task_due_tomorrow' ||
+        data?.type === 'task_overdue'
+      ) {
+        routerRef.current.push('/tasks');
+      } else if (data?.type === 'low_water') {
+        routerRef.current.push('/(tabs)');
+      } else if (data?.type === 'warehouse_reorder') {
+        routerRef.current.push('/warehouse');
+      } else if (data?.type === 'petiole_test') {
+        routerRef.current.push('/(tabs)');
+      }
+    };
+
     const setup = async () => {
       try {
         const Notifications = await import('expo-notifications');
+
+        // Handle cold-start notification tap
+        const lastResponse = await Notifications.getLastNotificationResponseAsync();
+        if (lastResponse) {
+          handleNotificationResponse(lastResponse);
+        }
+
         const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-          const data = response.notification.request.content.data as {
-            type?: string;
-            sequence?: number;
-          };
-          if (data?.type === 'guided_tour_reminder') {
-            const sequence = data.sequence === 2 ? 2 : 1;
-            guidedTourEmit('guidedTour.notificationOpened', { sequence });
-          } else if (
-            data?.type === 'task_due' ||
-            data?.type === 'task_due_tomorrow' ||
-            data?.type === 'task_overdue'
-          ) {
-            routerRef.current.push('/tasks');
-          } else if (data?.type === 'low_water') {
-            routerRef.current.push('/(tabs)');
-          } else if (data?.type === 'warehouse_reorder') {
-            routerRef.current.push('/warehouse');
-          } else if (data?.type === 'petiole_test') {
-            routerRef.current.push('/(tabs)');
-          }
+          handleNotificationResponse(response);
         });
         if (disposed) {
           sub.remove();
@@ -510,6 +533,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="ai-chat" />
                 <Stack.Screen name="add-activity" />
                 <Stack.Screen name="add-entry" />
                 <Stack.Screen name="add-task" />
@@ -525,6 +549,28 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="add-note" />
+                <Stack.Screen name="analytics" />
+                <Stack.Screen name="auth/callback" />
+                <Stack.Screen name="calculator" />
+                <Stack.Screen name="farm/add" />
+                <Stack.Screen name="farm/[id]" />
+                <Stack.Screen name="farm/[id]/edit" />
+                <Stack.Screen name="fertilizer-plans" />
+                <Stack.Screen name="lab-tests" />
+                <Stack.Screen name="logs" />
+                <Stack.Screen name="onboarding" />
+                <Stack.Screen name="petiole-trends" />
+                <Stack.Screen name="reports" />
+                <Stack.Screen name="soil-profiling" />
+                <Stack.Screen name="soil-trends" />
+                <Stack.Screen name="spray-safe-checker" />
+                <Stack.Screen name="tasks" />
+                <Stack.Screen name="warehouse" />
+                <Stack.Screen name="weather" />
+                <Stack.Screen name="widget-configuration" />
+                <Stack.Screen name="widgets-showcase" />
+                <Stack.Screen name="worker-analytics/[id]" />
               </Stack>
               <GuidedTourController />
             </I18nextProvider>

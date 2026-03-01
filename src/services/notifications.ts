@@ -1,6 +1,18 @@
+import { Platform } from 'react-native';
 import i18n from '@/i18n';
 
+const ANDROID_CHANNEL_ID = 'vinesight-reminders' as const;
+
 type ExpoNotifications = typeof import('expo-notifications');
+
+/**
+ * Valid trigger types for scheduling notifications.
+ * This bridges the gap between our usage and expo-notifications' internal types.
+ */
+type NotificationTrigger =
+  | { type: 'DAILY'; hour: number; minute: number }
+  | { type: 'DATE'; date: Date }
+  | null; // Immediate notification
 
 async function getNotifications(): Promise<ExpoNotifications | null> {
   try {
@@ -11,6 +23,53 @@ async function getNotifications(): Promise<ExpoNotifications | null> {
     }
     return null;
   }
+}
+
+/**
+ * Type-safe wrapper for scheduling notifications.
+ *
+ * This function handles the impedance mismatch between our usage patterns and
+ * expo-notifications' TypeScript definitions by properly casting the trigger types.
+ *
+ * @param Notifications - The expo-notifications module
+ * @param content - The notification content (title, body, sound, data, channelId)
+ * @param trigger - When to fire the notification
+ * @returns Promise resolving to the notification ID
+ */
+function scheduleNotificationSafe(
+  Notifications: ExpoNotifications,
+  content: {
+    title: string;
+    body: string;
+    sound: boolean;
+    data?: Record<string, unknown>;
+    channelId?: string;
+  },
+  trigger: NotificationTrigger,
+): Promise<string> {
+  // Add channelId for Android
+  const platformContent =
+    Platform.OS === 'android'
+      ? { ...content, channelId: content.channelId ?? ANDROID_CHANNEL_ID }
+      : content;
+
+  // Map our trigger types to expo's internal SchedulableTriggerInputTypes
+  const TriggerTypes = Notifications.SchedulableTriggerInputTypes as unknown as {
+    DAILY: string;
+    DATE: string;
+  };
+
+  const expoTrigger =
+    trigger === null
+      ? null
+      : trigger.type === 'DAILY'
+        ? { type: TriggerTypes.DAILY, hour: trigger.hour, minute: trigger.minute }
+        : { type: TriggerTypes.DATE, date: trigger.date };
+
+  return Notifications.scheduleNotificationAsync({
+    content: platformContent,
+    trigger: expoTrigger,
+  } as Parameters<typeof Notifications.scheduleNotificationAsync>[0]);
 }
 
 export async function ensureNotificationPermissions(): Promise<boolean> {
@@ -37,15 +96,11 @@ export async function scheduleDailyWaterReminder(): Promise<string | null> {
   const title = i18n.t('notifications.dailyWater.title');
   const body = i18n.t('notifications.dailyWater.body');
 
-  return Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-    },
-    // 07:00 local time daily
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 7, minute: 0 },
-  });
+  return scheduleNotificationSafe(
+    Notifications,
+    { title, body, sound: true },
+    { type: 'DAILY', hour: 7, minute: 0 },
+  );
 }
 
 /**
@@ -93,10 +148,11 @@ export async function scheduleTaskDueReminder(
     const title = i18n.t('notifications.taskDue.title');
     const body = i18n.t('notifications.taskDueTomorrow.body');
     try {
-      const id = await Notifications.scheduleNotificationAsync({
-        content: { title, body, sound: true, data: { type: 'task_due_tomorrow', taskId } },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dayBeforeDate },
-      });
+      const id = await scheduleNotificationSafe(
+        Notifications,
+        { title, body, sound: true, data: { type: 'task_due_tomorrow', taskId } },
+        { type: 'DATE', date: dayBeforeDate },
+      );
       scheduledIds.push(id);
     } catch {
       // If scheduling fails, continue to due-date notification
@@ -111,10 +167,11 @@ export async function scheduleTaskDueReminder(
     const title = i18n.t('notifications.taskDue.title');
     const body = i18n.t('notifications.taskDue.body');
     try {
-      const id = await Notifications.scheduleNotificationAsync({
-        content: { title, body, sound: true, data: { type: 'task_due', taskId } },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueDateAt7 },
-      });
+      const id = await scheduleNotificationSafe(
+        Notifications,
+        { title, body, sound: true, data: { type: 'task_due', taskId } },
+        { type: 'DATE', date: dueDateAt7 },
+      );
       scheduledIds.push(id);
     } catch {
       // continue
@@ -129,10 +186,11 @@ export async function scheduleTaskDueReminder(
       const title = i18n.t('notifications.taskDue.title');
       const body = i18n.t('notifications.taskDue.body');
       try {
-        const id = await Notifications.scheduleNotificationAsync({
-          content: { title, body, sound: true, data: { type: 'task_due', taskId } },
-          trigger: null, // immediate
-        });
+        const id = await scheduleNotificationSafe(
+          Notifications,
+          { title, body, sound: true, data: { type: 'task_due', taskId } },
+          null, // immediate
+        );
         scheduledIds.push(id);
       } catch {
         // continue
@@ -149,10 +207,11 @@ export async function scheduleTaskDueReminder(
     const title = i18n.t('notifications.taskOverdue.title');
     const body = i18n.t('notifications.taskOverdue.body');
     try {
-      const id = await Notifications.scheduleNotificationAsync({
-        content: { title, body, sound: true, data: { type: 'task_overdue', taskId } },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: overdueDate },
-      });
+      const id = await scheduleNotificationSafe(
+        Notifications,
+        { title, body, sound: true, data: { type: 'task_overdue', taskId } },
+        { type: 'DATE', date: overdueDate },
+      );
       scheduledIds.push(id);
     } catch {
       // continue
@@ -170,15 +229,11 @@ export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
   const baseBody = i18n.t('notifications.lowWater.body');
   const body = farmName ? `${farmName}: ${baseBody}` : baseBody;
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      data: { type: 'low_water' },
-    },
-    trigger: null,
-  });
+  await scheduleNotificationSafe(
+    Notifications,
+    { title, body, sound: true, data: { type: 'low_water' } },
+    null, // immediate
+  );
 }
 
 /**
@@ -201,15 +256,11 @@ export async function notifyWarehouseReorder(
     reorderQty,
   });
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      data: { type: 'warehouse_reorder', itemName },
-    },
-    trigger: null, // immediate
-  });
+  await scheduleNotificationSafe(
+    Notifications,
+    { title, body, sound: true, data: { type: 'warehouse_reorder', itemName } },
+    null, // immediate
+  );
 }
 
 /**
@@ -256,15 +307,12 @@ export async function schedulePetioleTestReminder(
   const content = {
     title,
     body,
-    sound: true as const,
-    data: { type: 'petiole_test', farmId, day },
+    sound: true,
+    data: { type: 'petiole_test' as const, farmId, day },
   };
 
   if (reminderDate.getTime() > now) {
-    return Notifications.scheduleNotificationAsync({
-      content,
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderDate },
-    });
+    return scheduleNotificationSafe(Notifications, content, { type: 'DATE', date: reminderDate });
   }
 
   // Reminder time already passed — fire immediately if it was today
@@ -275,7 +323,11 @@ export async function schedulePetioleTestReminder(
     nowDate.getDate() === reminderDate.getDate();
 
   if (isToday) {
-    return Notifications.scheduleNotificationAsync({ content, trigger: null });
+    return scheduleNotificationSafe(
+      Notifications,
+      content,
+      null, // immediate
+    );
   }
 
   return null;
@@ -296,13 +348,15 @@ export async function sendCustomNotification(
   const Notifications = await getNotifications();
   if (!Notifications) return null;
 
-  return Notifications.scheduleNotificationAsync({
-    content: {
+  const { type: _type, ...rest } = data ?? {};
+  return scheduleNotificationSafe(
+    Notifications,
+    {
       title,
       body,
       sound: true,
-      data: { type: 'custom', ...data },
+      data: { ...rest, type: 'custom' },
     },
-    trigger: null, // fires immediately
-  });
+    null, // immediate
+  );
 }

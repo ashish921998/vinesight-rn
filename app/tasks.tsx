@@ -28,6 +28,23 @@ import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
 
+const cleanupTaskNotifications = (
+  taskId: string,
+  taskSchedules: Record<string, { notificationIds?: string[] }>,
+  removeTaskSchedule: (taskId: string) => void,
+) => {
+  const schedule = taskSchedules[taskId];
+  if (schedule) {
+    if (schedule.notificationIds?.length) {
+      void Promise.allSettled(schedule.notificationIds.map(cancelNotification)).then(() =>
+        removeTaskSchedule(taskId),
+      );
+    } else {
+      removeTaskSchedule(taskId);
+    }
+  }
+};
+
 const startOfDay = (date: Date) => {
   const result = new Date(date);
   result.setHours(0, 0, 0, 0);
@@ -109,13 +126,7 @@ export default function TasksScreen() {
         {
           text: t('common.complete'),
           onPress: () => {
-            // Cancel any pending notifications for this task
-            const schedule = taskSchedules[task.id!];
-            if (schedule?.notificationIds?.length) {
-              void Promise.allSettled(schedule.notificationIds.map(cancelNotification)).then(() =>
-                removeTaskSchedule(String(task.id!)),
-              );
-            }
+            const schedule = taskSchedules[String(task.id!)];
 
             // Calculate due_offset_days using calendar days
             let dueOffsetDays: number | null = null;
@@ -129,6 +140,9 @@ export default function TasksScreen() {
 
             completeMutation.mutate(task.id!, {
               onSuccess: () => {
+                if (schedule) {
+                  cleanupTaskNotifications(String(task.id!), taskSchedules, removeTaskSchedule);
+                }
                 telemetry.capture('task_completed', {
                   task_type: task.type,
                   priority: task.priority,
@@ -158,14 +172,14 @@ export default function TasksScreen() {
           text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
-            // Cancel any pending notifications for this task
-            const schedule = taskSchedules[task.id!];
-            if (schedule?.notificationIds?.length) {
-              void Promise.allSettled(schedule.notificationIds.map(cancelNotification)).then(() =>
-                removeTaskSchedule(String(task.id!)),
-              );
-            }
-            deleteMutation.mutate(task.id!);
+            const schedule = taskSchedules[String(task.id!)];
+            deleteMutation.mutate(task.id!, {
+              onSuccess: () => {
+                if (schedule) {
+                  cleanupTaskNotifications(String(task.id!), taskSchedules, removeTaskSchedule);
+                }
+              },
+            });
           },
         },
       ],
