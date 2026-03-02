@@ -397,9 +397,6 @@ export default Sentry.wrap(function RootLayout() {
       } else if (data?.type === 'custom') {
         // Custom notifications have no navigation target
       }
-
-      const Notifications = import('expo-notifications');
-      Notifications.then((mod) => mod.clearLastNotificationResponseAsync());
     };
 
     const setup = async () => {
