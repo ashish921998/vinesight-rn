@@ -44,7 +44,7 @@ export function ProductDetailSheet({
             gap: spacing[2],
           }}
         >
-          <Text style={{ ...m3.typography.titleLarge, color: m3.colorScheme.onSurface }}>
+          <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
             {component?.product_name ??
               t('productDetail.titleFallback', { defaultValue: 'Product details' })}
           </Text>

@@ -101,37 +101,37 @@ export function computeTankMixQuantities(
   digits = 3,
 ): TankMixQuantityRow[] {
   if (!Number.isFinite(tankLiters) || tankLiters <= 0) return [];
-  return mix.components
-    .map((component) => {
-      let total = 0;
-      if (component.dose_basis === 'per_liter') {
-        total = component.dose_value * tankLiters;
-      } else if (component.dose_basis === 'per_100_liter') {
-        total = component.dose_value * (tankLiters / 100);
-      } else {
-        if (component.base_tank_liters == null || component.base_tank_liters <= 0) {
-          console.warn(
-            `[phi-service] Skipping fixed_per_tank component ${component.id} (${component.product_name}) due to invalid base_tank_liters`,
-          );
-          return null;
-        }
-        total = component.dose_value * (tankLiters / component.base_tank_liters);
+  const rows: TankMixQuantityRow[] = [];
+  for (const component of mix.components) {
+    let total = 0;
+    if (component.dose_basis === 'per_liter') {
+      total = component.dose_value * tankLiters;
+    } else if (component.dose_basis === 'per_100_liter') {
+      total = component.dose_value * (tankLiters / 100);
+    } else {
+      if (component.base_tank_liters == null || component.base_tank_liters <= 0) {
+        console.warn(
+          `[phi-service] Skipping fixed_per_tank component ${component.id} (${component.product_name}) due to invalid base_tank_liters`,
+        );
+        continue;
       }
-      return {
-        componentId: component.id,
-        productName: component.product_name,
-        activeIngredient: component.active_ingredient ?? null,
-        doseValue: component.dose_value,
-        doseUnit: component.dose_unit,
-        doseBasis: component.dose_basis,
-        totalQuantity: round(total, digits),
-        packagingSize: component.packaging_size ?? null,
-        packageCount: null,
-        componentCost: null,
-        currency: component.price_currency ?? null,
-      };
-    })
-    .filter((row): row is TankMixQuantityRow => row !== null);
+      total = component.dose_value * (tankLiters / component.base_tank_liters);
+    }
+    rows.push({
+      componentId: component.id,
+      productName: component.product_name,
+      activeIngredient: component.active_ingredient ?? null,
+      doseValue: component.dose_value,
+      doseUnit: component.dose_unit,
+      doseBasis: component.dose_basis,
+      totalQuantity: round(total, digits),
+      packagingSize: component.packaging_size ?? null,
+      packageCount: null,
+      componentCost: null,
+      currency: component.price_currency ?? null,
+    });
+  }
+  return rows;
 }
 
 export function computeTankMixCostSummary(

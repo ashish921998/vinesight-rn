@@ -205,8 +205,8 @@ export default function TankMixCalculatorScreen() {
                   {t('tankMix.packaging', {
                     defaultValue: 'Packaging: {{size}} · Required packs: {{count}}',
                     size: row.packagingSize,
-                    count: row.packageCount ?? '—',
-                  })}
+                    count: row.packageCount != null ? String(row.packageCount) : '—',
+                  } as Record<string, string>)}
                 </Text>
               ) : null}
               {row.componentCost != null ? (
