@@ -15,17 +15,35 @@ import { Symbol as SFSymbol } from '@/components/ui/symbol';
 import { useFarms } from '../src/hooks';
 import { useAllTasks, useCompleteTask, useDeleteTask } from '../src/hooks/use-tasks';
 import { TaskReminder } from '../src/types/task';
-import { useModalStore } from '@/stores';
+import { useModalStore, useNotificationStore } from '@/stores';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '@/i18n/format';
 import { telemetry } from '@/services/telemetry';
+import { cancelNotification } from '@/services/notifications';
 import { TaskRow } from '@/components/cards';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 
 type FilterType = 'all' | 'pending' | 'overdue' | 'completed';
+
+const cleanupTaskNotifications = (
+  taskId: string,
+  taskSchedules: Record<string, { notificationIds?: string[] }>,
+  removeTaskSchedule: (taskId: string) => void,
+) => {
+  const schedule = taskSchedules[taskId];
+  if (schedule) {
+    if (schedule.notificationIds?.length) {
+      void Promise.allSettled(schedule.notificationIds.map(cancelNotification)).then(() =>
+        removeTaskSchedule(taskId),
+      );
+    } else {
+      removeTaskSchedule(taskId);
+    }
+  }
+};
 
 const startOfDay = (date: Date) => {
   const result = new Date(date);
@@ -45,6 +63,8 @@ export default function TasksScreen() {
   const { data: tasks, isLoading, refetch, isRefetching } = useAllTasks();
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
+  const taskSchedules = useNotificationStore((s) => s.taskSchedules);
+  const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
 
   const [filter, setFilter] = useState<FilterType>('all');
   const farmIdValue = farmId ? parseInt(farmId, 10) : undefined;
@@ -106,6 +126,8 @@ export default function TasksScreen() {
         {
           text: t('common.complete'),
           onPress: () => {
+            const schedule = taskSchedules[String(task.id!)];
+
             // Calculate due_offset_days using calendar days
             let dueOffsetDays: number | null = null;
             if (task.due_date) {
@@ -118,6 +140,9 @@ export default function TasksScreen() {
 
             completeMutation.mutate(task.id!, {
               onSuccess: () => {
+                if (schedule) {
+                  cleanupTaskNotifications(String(task.id!), taskSchedules, removeTaskSchedule);
+                }
                 telemetry.capture('task_completed', {
                   task_type: task.type,
                   priority: task.priority,
@@ -146,7 +171,16 @@ export default function TasksScreen() {
         {
           text: t('common.delete'),
           style: 'destructive',
-          onPress: () => deleteMutation.mutate(task.id!),
+          onPress: () => {
+            const schedule = taskSchedules[String(task.id!)];
+            deleteMutation.mutate(task.id!, {
+              onSuccess: () => {
+                if (schedule) {
+                  cleanupTaskNotifications(String(task.id!), taskSchedules, removeTaskSchedule);
+                }
+              },
+            });
+          },
         },
       ],
     );

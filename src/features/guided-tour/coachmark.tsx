@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -50,6 +50,20 @@ export function GuidedTourCoachmark({
   const insets = useSafeAreaInsets();
   const pulse = useMemo(() => new Animated.Value(0), []);
   const reveal = useMemo(() => new Animated.Value(0), []);
+  const [measuredTooltipHeight, setMeasuredTooltipHeight] = useState<number | null>(null);
+  const [measuredContentKey, setMeasuredContentKey] = useState<string>('');
+
+  const currentContentKey = useMemo(
+    () =>
+      JSON.stringify({
+        message,
+        step,
+        actionLabel,
+        secondaryActionLabel,
+        tooltipPlacement,
+      }),
+    [message, step, actionLabel, secondaryActionLabel, tooltipPlacement],
+  );
 
   useEffect(() => {
     Animated.timing(reveal, {
@@ -85,7 +99,25 @@ export function GuidedTourCoachmark({
   const progressLabel = step === 'add_farm' ? '1 / 2' : '2 / 2';
   const isNonBlocking = !blockOutsideTouches;
   const hasCoachActions = Boolean(actionLabel || secondaryActionLabel);
-  const TOOLTIP_HEIGHT_ESTIMATE = hasCoachActions ? 260 : 200;
+  const copyLines = label
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const primaryLine = copyLines[0] ?? label;
+  const secondaryLine = copyLines.slice(1).join(' ');
+  const hasMultiLineMessage = copyLines.length > 1;
+  // Fall back to a conservative estimate until onLayout gives us the real height.
+  // The reveal animation (260ms fade-in) ensures the tooltip is invisible while
+  // the first layout fires, so there is no visible jump on either platform.
+  // Only use cached height if content hasn't changed since measurement.
+  const TOOLTIP_HEIGHT_ESTIMATE =
+    currentContentKey === measuredContentKey
+      ? (measuredTooltipHeight ?? (hasCoachActions ? 260 : hasMultiLineMessage ? 170 : 130))
+      : hasCoachActions
+        ? 260
+        : hasMultiLineMessage
+          ? 170
+          : 130;
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const belowTop = rect.y + rect.height + spacing[4];
   const aboveTop = rect.y - TOOLTIP_HEIGHT_ESTIMATE - spacing[4];
@@ -100,6 +132,11 @@ export function GuidedTourCoachmark({
       ? Math.max(286, screenWidth - spacing[8])
       : Math.max(240, screenWidth - tooltipLeft - spacing[4]);
   const bubblePointsDown = tooltipTop < rect.y;
+  // If the target is roughly square (e.g. a circular FAB) use a full circle ring;
+  // otherwise fall back to the themed rounded-rect radii.
+  const isCircularTarget = Math.abs(rect.width - rect.height) < 8;
+  const innerRingRadius = isCircularTarget ? borderRadius.full : borderRadius.xl;
+  const outerRingRadius = isCircularTarget ? borderRadius.full : borderRadius['2xl'];
   const accentColor = step === 'add_farm' ? '#2FA36D' : '#4A86E8';
   const gradientColors: [string, string] =
     step === 'add_farm' ? ['#195A3A', '#2FA36D'] : ['#2D5DB8', '#4A86E8'];
@@ -130,12 +167,6 @@ export function GuidedTourCoachmark({
   const bubbleWidth = Math.min(tooltipMaxWidth, screenWidth - bubbleLeft - bubbleRight);
   const targetCenterX = rect.x + rect.width / 2;
   const pointerLeft = Math.max(18, Math.min(bubbleWidth - 30, targetCenterX - bubbleLeft - 10));
-  const copyLines = label
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const primaryLine = copyLines[0] ?? label;
-  const secondaryLine = copyLines.slice(1).join(' ');
   const showTapHint = step === 'add_farm' || step === 'add_log';
 
   const overlayPointerEvents: 'auto' | 'none' = blockOutsideTouches ? 'auto' : 'none';
@@ -204,7 +235,7 @@ export function GuidedTourCoachmark({
           top: rect.y - (focusPadding + 8),
           width: rect.width + (focusPadding + 8) * 2,
           height: rect.height + (focusPadding + 8) * 2,
-          borderRadius: borderRadius['2xl'],
+          borderRadius: outerRingRadius,
           borderWidth: 2,
           borderColor: colorWithOpacity(accentColor, 0.55),
           transform: [{ scale: ringScale }],
@@ -219,7 +250,7 @@ export function GuidedTourCoachmark({
           top: rect.y - focusPadding,
           width: rect.width + focusPadding * 2,
           height: rect.height + focusPadding * 2,
-          borderRadius: borderRadius.xl,
+          borderRadius: innerRingRadius,
           borderWidth: 2.5,
           borderColor: accentColor,
           backgroundColor: 'transparent',
@@ -250,6 +281,13 @@ export function GuidedTourCoachmark({
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 0) {
+              setMeasuredContentKey(currentContentKey);
+              setMeasuredTooltipHeight(h);
+            }
+          }}
           style={{
             borderRadius: borderRadius.xl,
             borderWidth: 1,

@@ -1,4 +1,8 @@
+import { Platform } from 'react-native';
 import i18n from '@/i18n';
+import type { NotificationTrigger } from './notifications.types';
+
+const ANDROID_CHANNEL_ID = 'vinesight-reminders' as const;
 
 type ExpoNotifications = typeof import('expo-notifications');
 
@@ -11,6 +15,53 @@ async function getNotifications(): Promise<ExpoNotifications | null> {
     }
     return null;
   }
+}
+
+/**
+ * Type-safe wrapper for scheduling notifications.
+ *
+ * This function handles the impedance mismatch between our usage patterns and
+ * expo-notifications' TypeScript definitions by properly casting the trigger types.
+ *
+ * @param Notifications - The expo-notifications module
+ * @param content - The notification content (title, body, sound, data, channelId)
+ * @param trigger - When to fire the notification
+ * @returns Promise resolving to the notification ID
+ */
+function scheduleNotificationSafe(
+  Notifications: ExpoNotifications,
+  content: {
+    title: string;
+    body: string;
+    sound: boolean;
+    data?: Record<string, unknown>;
+    channelId?: string;
+  },
+  trigger: NotificationTrigger,
+): Promise<string> {
+  // Add channelId for Android
+  const platformContent =
+    Platform.OS === 'android'
+      ? { ...content, channelId: content.channelId ?? ANDROID_CHANNEL_ID }
+      : content;
+
+  // Map our trigger types to expo's internal SchedulableTriggerInputTypes
+  const TriggerTypes = Notifications.SchedulableTriggerInputTypes as unknown as {
+    DAILY: string;
+    DATE: string;
+  };
+
+  const expoTrigger =
+    trigger === null
+      ? null
+      : trigger.type === 'DAILY'
+        ? { type: TriggerTypes.DAILY, hour: trigger.hour, minute: trigger.minute }
+        : { type: TriggerTypes.DATE, date: trigger.date };
+
+  return Notifications.scheduleNotificationAsync({
+    content: platformContent,
+    trigger: expoTrigger,
+  } as Parameters<typeof Notifications.scheduleNotificationAsync>[0]);
 }
 
 export async function ensureNotificationPermissions(): Promise<boolean> {
@@ -37,15 +88,11 @@ export async function scheduleDailyWaterReminder(): Promise<string | null> {
   const title = i18n.t('notifications.dailyWater.title');
   const body = i18n.t('notifications.dailyWater.body');
 
-  return Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-    },
-    // 07:00 local time daily
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 7, minute: 0 },
-  });
+  return scheduleNotificationSafe(
+    Notifications,
+    { title, body, sound: true },
+    { type: 'DAILY', hour: 7, minute: 0 },
+  );
 }
 
 /**
@@ -93,10 +140,11 @@ export async function scheduleTaskDueReminder(
     const title = i18n.t('notifications.taskDue.title');
     const body = i18n.t('notifications.taskDueTomorrow.body');
     try {
-      const id = await Notifications.scheduleNotificationAsync({
-        content: { title, body, sound: true, data: { type: 'task_due_tomorrow', taskId } },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dayBeforeDate },
-      });
+      const id = await scheduleNotificationSafe(
+        Notifications,
+        { title, body, sound: true, data: { type: 'task_due_tomorrow', taskId } },
+        { type: 'DATE', date: dayBeforeDate },
+      );
       scheduledIds.push(id);
     } catch {
       // If scheduling fails, continue to due-date notification
@@ -111,10 +159,11 @@ export async function scheduleTaskDueReminder(
     const title = i18n.t('notifications.taskDue.title');
     const body = i18n.t('notifications.taskDue.body');
     try {
-      const id = await Notifications.scheduleNotificationAsync({
-        content: { title, body, sound: true, data: { type: 'task_due', taskId } },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueDateAt7 },
-      });
+      const id = await scheduleNotificationSafe(
+        Notifications,
+        { title, body, sound: true, data: { type: 'task_due', taskId } },
+        { type: 'DATE', date: dueDateAt7 },
+      );
       scheduledIds.push(id);
     } catch {
       // continue
@@ -129,16 +178,36 @@ export async function scheduleTaskDueReminder(
       const title = i18n.t('notifications.taskDue.title');
       const body = i18n.t('notifications.taskDue.body');
       try {
-        const id = await Notifications.scheduleNotificationAsync({
-          content: { title, body, sound: true, data: { type: 'task_due', taskId } },
-          trigger: null, // immediate
-        });
+        const id = await scheduleNotificationSafe(
+          Notifications,
+          { title, body, sound: true, data: { type: 'task_due', taskId } },
+          null, // immediate
+        );
         scheduledIds.push(id);
       } catch {
         // continue
       }
     }
     // If the due date is fully in the past (not today), skip silently
+  }
+
+  // --- Notification 3: Day after due date at 08:00 (overdue reminder) ---
+  const overdueDate = new Date(y, mo - 1, d);
+  overdueDate.setDate(overdueDate.getDate() + 1);
+  overdueDate.setHours(8, 0, 0, 0);
+  if (overdueDate.getTime() > now) {
+    const title = i18n.t('notifications.taskOverdue.title');
+    const body = i18n.t('notifications.taskOverdue.body');
+    try {
+      const id = await scheduleNotificationSafe(
+        Notifications,
+        { title, body, sound: true, data: { type: 'task_overdue', taskId } },
+        { type: 'DATE', date: overdueDate },
+      );
+      scheduledIds.push(id);
+    } catch {
+      // continue
+    }
   }
 
   return scheduledIds;
@@ -152,15 +221,11 @@ export async function notifyLowWaterAlert(farmName?: string): Promise<void> {
   const baseBody = i18n.t('notifications.lowWater.body');
   const body = farmName ? `${farmName}: ${baseBody}` : baseBody;
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      data: { type: 'low_water' },
-    },
-    trigger: null,
-  });
+  await scheduleNotificationSafe(
+    Notifications,
+    { title, body, sound: true, data: { type: 'low_water' } },
+    null, // immediate
+  );
 }
 
 /**
@@ -183,15 +248,11 @@ export async function notifyWarehouseReorder(
     reorderQty,
   });
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      data: { type: 'warehouse_reorder', itemName },
-    },
-    trigger: null, // immediate
-  });
+  await scheduleNotificationSafe(
+    Notifications,
+    { title, body, sound: true, data: { type: 'warehouse_reorder', itemName } },
+    null, // immediate
+  );
 }
 
 /**
@@ -238,15 +299,12 @@ export async function schedulePetioleTestReminder(
   const content = {
     title,
     body,
-    sound: true as const,
-    data: { type: 'petiole_test', farmId, day },
+    sound: true,
+    data: { type: 'petiole_test' as const, farmId, day },
   };
 
   if (reminderDate.getTime() > now) {
-    return Notifications.scheduleNotificationAsync({
-      content,
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderDate },
-    });
+    return scheduleNotificationSafe(Notifications, content, { type: 'DATE', date: reminderDate });
   }
 
   // Reminder time already passed — fire immediately if it was today
@@ -257,7 +315,101 @@ export async function schedulePetioleTestReminder(
     nowDate.getDate() === reminderDate.getDate();
 
   if (isToday) {
-    return Notifications.scheduleNotificationAsync({ content, trigger: null });
+    return scheduleNotificationSafe(
+      Notifications,
+      content,
+      null, // immediate
+    );
+  }
+
+  return null;
+}
+
+/**
+ * Sends an immediate notification with any title, body, and optional data payload.
+ * Use this to trigger ad-hoc or custom notifications from anywhere in the app.
+ *
+ * @param title - Notification title
+ * @param body - Notification body text
+ * @param data - Optional payload data. Note: Any `type` field in this object will be removed and overridden to 'custom'.
+ * @example
+ *   await sendCustomNotification('Harvest reminder', 'Time to check your grapes!', { farmId: '123' });
+ */
+export async function sendCustomNotification(
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+): Promise<string | null> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  const { type: _type, ...rest } = data ?? {};
+  return scheduleNotificationSafe(
+    Notifications,
+    {
+      title,
+      body,
+      sound: true,
+      data: { ...rest, type: 'custom' },
+    },
+    null, // immediate
+  );
+}
+
+/**
+ * Schedules a guided tour reminder notification.
+ * @param sequence - The tour sequence number (1 or 2)
+ * @param targetDate - The date to send the reminder (YYYY-MM-DD)
+ * @param time - The time of day to send the reminder (format: 'HH:MM', defaults to '10:00')
+ * @returns The notification ID, or null if scheduling failed
+ */
+export async function scheduleGuidedTourReminder(
+  sequence: 1 | 2,
+  targetDate: string,
+  time?: string,
+): Promise<string | null> {
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
+
+  const parts = (time ?? '10:00').split(':');
+  if (parts.length !== 2) return null;
+  const [hour, minute] = parts.map(Number);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return null;
+
+  const m = /^\d{4}-\d{2}-\d{2}$/.exec(targetDate);
+  if (!m) return null;
+
+  const [y, mo, d] = targetDate.split('-').map((n) => Number(n));
+
+  const reminderDate = new Date(y, mo - 1, d);
+  reminderDate.setHours(hour, minute, 0, 0);
+
+  if (
+    Number.isNaN(reminderDate.getTime()) ||
+    reminderDate.getFullYear() !== y ||
+    reminderDate.getMonth() !== mo - 1 ||
+    reminderDate.getDate() !== d
+  ) {
+    return null;
+  }
+
+  const now = Date.now();
+
+  if (reminderDate.getTime() > now) {
+    try {
+      return scheduleNotificationSafe(
+        Notifications,
+        {
+          title: i18n.t('notifications.guidedTour.title'),
+          body: i18n.t('notifications.guidedTour.body'),
+          sound: true,
+          data: { type: 'guided_tour_reminder', sequence },
+        },
+        { type: 'DATE', date: reminderDate },
+      );
+    } catch {
+      return null;
+    }
   }
 
   return null;

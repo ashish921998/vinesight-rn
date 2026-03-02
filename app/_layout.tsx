@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack, usePathname, useSegments } from 'expo-router';
+import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
 import { Platform, Text, TextInput, type StyleProp, type TextStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -146,6 +146,12 @@ export default Sentry.wrap(function RootLayout() {
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
+  const router = useRouter();
+  const routerRef = useRef(router);
+
+  useEffect(() => {
+    routerRef.current = router;
+  });
 
   useEffect(() => {
     // Initialize auth state
@@ -321,22 +327,91 @@ export default Sentry.wrap(function RootLayout() {
     };
   }, [language, languageHydrated, notificationsHydrated]);
 
+  // Configure foreground notification display + Android channel
+  useEffect(() => {
+    let disposed = false;
+    const setup = async () => {
+      try {
+        const Notifications = await import('expo-notifications');
+        if (disposed) return;
+        Notifications.setNotificationHandler({
+          handleNotification: async () => ({
+            shouldShowAlert: true,
+            shouldShowBanner: true,
+            shouldShowList: true,
+            shouldPlaySound: true,
+            shouldSetBadge: false,
+          }),
+        });
+        if (Platform.OS === 'android') {
+          type AndroidChannelInput = Parameters<
+            typeof Notifications.setNotificationChannelAsync
+          >[1];
+          const channelConfig: AndroidChannelInput = {
+            name: 'Farm Reminders',
+            importance: Notifications.AndroidImportance.HIGH,
+            vibrationPattern: [0, 250, 250, 250],
+          };
+          await Notifications.setNotificationChannelAsync('vinesight-reminders', channelConfig);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    void setup();
+    return () => {
+      disposed = true;
+    };
+  }, []);
+
+  // Handle notification taps → deep-link to the appropriate screen
   useEffect(() => {
     let cleanup: null | (() => void) = null;
     let disposed = false;
 
+    const handleNotificationResponse = (response: {
+      notification: { request: { content: { data: unknown } } };
+    }) => {
+      const data = response.notification.request.content.data as {
+        type?: string;
+        sequence?: number;
+      };
+      const currentRouter = routerRef.current;
+      if (!currentRouter) return;
+
+      if (data?.type === 'guided_tour_reminder') {
+        const sequence = data.sequence === 2 ? 2 : 1;
+        guidedTourEmit('guidedTour.notificationOpened', { sequence });
+      } else if (
+        data?.type === 'task_due' ||
+        data?.type === 'task_due_tomorrow' ||
+        data?.type === 'task_overdue'
+      ) {
+        currentRouter.push('/tasks');
+      } else if (data?.type === 'low_water') {
+        currentRouter.push('/(tabs)');
+      } else if (data?.type === 'warehouse_reorder') {
+        currentRouter.push('/warehouse');
+      } else if (data?.type === 'petiole_test') {
+        currentRouter.push('/(tabs)');
+      } else if (data?.type === 'custom') {
+        // Custom notifications have no navigation target
+      }
+    };
+
     const setup = async () => {
       try {
         const Notifications = await import('expo-notifications');
+
+        // Handle cold-start notification tap
+        const lastResponse = await Notifications.getLastNotificationResponseAsync();
+        if (lastResponse) {
+          handleNotificationResponse(lastResponse);
+          await Notifications.clearLastNotificationResponseAsync();
+        }
+
         const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-          const data = response.notification.request.content.data as {
-            type?: string;
-            sequence?: number;
-          };
-          if (data?.type === 'guided_tour_reminder') {
-            const sequence = data.sequence === 2 ? 2 : 1;
-            guidedTourEmit('guidedTour.notificationOpened', { sequence });
-          }
+          handleNotificationResponse(response);
         });
         if (disposed) {
           sub.remove();
@@ -458,6 +533,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="ai-chat" />
                 <Stack.Screen name="add-activity" />
                 <Stack.Screen name="add-entry" />
                 <Stack.Screen name="add-task" />
@@ -473,6 +549,28 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="add-note" />
+                <Stack.Screen name="analytics" />
+                <Stack.Screen name="auth/callback" />
+                <Stack.Screen name="calculator" />
+                <Stack.Screen name="farm/add" />
+                <Stack.Screen name="farm/[id]" />
+                <Stack.Screen name="farm/[id]/edit" />
+                <Stack.Screen name="fertilizer-plans" />
+                <Stack.Screen name="lab-tests" />
+                <Stack.Screen name="logs" />
+                <Stack.Screen name="onboarding" />
+                <Stack.Screen name="petiole-trends" />
+                <Stack.Screen name="reports" />
+                <Stack.Screen name="soil-profiling" />
+                <Stack.Screen name="soil-trends" />
+                <Stack.Screen name="spray-safe-checker" />
+                <Stack.Screen name="tasks" />
+                <Stack.Screen name="warehouse" />
+                <Stack.Screen name="weather" />
+                <Stack.Screen name="widget-configuration" />
+                <Stack.Screen name="widgets-showcase" />
+                <Stack.Screen name="worker-analytics/[id]" />
               </Stack>
               <GuidedTourController />
             </I18nextProvider>
