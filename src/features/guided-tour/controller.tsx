@@ -404,6 +404,7 @@ export function GuidedTourController() {
           <GuidedTourCoachmark
             step={activeCoachStep}
             rect={rect}
+            targetId={activeTargetId}
             onSkip={handleSkip}
             focusPadding={activeCoachStep === 'add_farm' && addFarmPhase === 'variety' ? 10 : 4}
             blockOutsideTouches={

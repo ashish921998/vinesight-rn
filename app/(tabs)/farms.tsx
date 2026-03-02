@@ -374,6 +374,26 @@ export default function FarmsScreen() {
           >
             {t('common.loading')}
           </Text>
+          {/* Keep GuidedTourTarget mounted during loading so the controller can
+              resolve the add-farm target before farms data finishes loading. */}
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+            enabled={isScreenFocused}
+            style={{
+              position: 'absolute',
+              opacity: 0,
+              bottom: spacing[8],
+              width: '100%',
+              maxWidth: 360,
+            }}
+          >
+            <Button
+              title={t('farms.addFarm')}
+              onPress={handleAddFarm}
+              pointerEvents="none"
+              importantForAccessibility="no-hide-descendants"
+            />
+          </GuidedTourTarget>
         </View>
       );
     }

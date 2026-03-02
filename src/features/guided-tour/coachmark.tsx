@@ -18,11 +18,13 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { telemetry } from '@/services/telemetry';
 import { colorWithOpacity } from '@/utils/color';
 import type { GuidedTourTargetRect } from './targets';
+import { GUIDED_TOUR_TARGET_IDS, type GuidedTourTargetId } from './constants';
 import type { GuidedTourStep } from './types';
 
 interface Props {
   step: GuidedTourStep;
   rect: GuidedTourTargetRect;
+  targetId?: GuidedTourTargetId | null;
   onSkip: () => void;
   message?: string;
   secondaryActionLabel?: string;
@@ -38,6 +40,7 @@ interface Props {
 export function GuidedTourCoachmark({
   step,
   rect,
+  targetId,
   onSkip,
   message,
   secondaryActionLabel,
@@ -51,6 +54,8 @@ export function GuidedTourCoachmark({
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const overlayRef = React.useRef<View | null>(null);
+  const [overlayOrigin, setOverlayOrigin] = React.useState({ x: 0, y: 0 });
   const [keyboardHeight, setKeyboardHeight] = React.useState(0);
   const pulse = useMemo(() => new Animated.Value(0), []);
   const reveal = useMemo(() => new Animated.Value(0), []);
@@ -114,6 +119,16 @@ export function GuidedTourCoachmark({
     };
   }, []);
 
+  const handleOverlayLayout = React.useCallback(() => {
+    requestAnimationFrame(() => {
+      overlayRef.current?.measureInWindow((x, y) => {
+        if (Number.isFinite(x) && Number.isFinite(y)) {
+          setOverlayOrigin({ x, y });
+        }
+      });
+    });
+  }, []);
+
   const defer = (fn: () => void) => setTimeout(fn, 0);
   const label =
     message ?? (step === 'add_farm' ? t('guidedTour.step1.coach') : t('guidedTour.step2.coach'));
@@ -141,8 +156,8 @@ export function GuidedTourCoachmark({
           : 130;
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const keyboardBottomInset = Math.max(0, keyboardHeight - insets.bottom);
-  const rectY = Platform.OS === 'android' ? rect.y + insets.top : rect.y;
-  const rectX = Platform.OS === 'android' ? rect.x + insets.left : rect.x;
+  const rectY = rect.y - overlayOrigin.y;
+  const rectX = rect.x - overlayOrigin.x;
   const isLowerScreenTarget = rectY > screenHeight * 0.55;
   const preferAboveTarget = keyboardBottomInset > 0 && isLowerScreenTarget;
   const belowTop = rectY + rect.height + spacing[4];
@@ -161,7 +176,10 @@ export function GuidedTourCoachmark({
       : Math.max(240, screenWidth - tooltipLeft - spacing[4]);
   // If the target is roughly square (e.g. a circular FAB) use a full circle ring;
   // otherwise fall back to the themed rounded-rect radii.
-  const isCircularTarget = Math.abs(rect.width - rect.height) < 8;
+  const forceRectTarget =
+    targetId === GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY ||
+    targetId === GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE;
+  const isCircularTarget = !forceRectTarget && Math.abs(rect.width - rect.height) < 8;
   const innerRingRadius = isCircularTarget ? borderRadius.full : borderRadius.xl;
   const outerRingRadius = isCircularTarget ? borderRadius.full : borderRadius['2xl'];
   const accentColor = step === 'add_farm' ? '#2FA36D' : '#4A86E8';
@@ -229,7 +247,12 @@ export function GuidedTourCoachmark({
   const focusInsetY = focusPadding;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <View
+      ref={overlayRef}
+      onLayout={handleOverlayLayout}
+      style={StyleSheet.absoluteFill}
+      pointerEvents="box-none"
+    >
       <>
         <View
           pointerEvents={overlayPointerEvents}
