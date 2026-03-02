@@ -28,6 +28,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { useTabBarInset, isAndroid, isIOS } from '@/hooks';
 import { WorkerSelectSheet, FarmSelectSheet } from './index';
 import { formatDate as formatDateLocalized } from '@/i18n/format';
+import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
 import { normalizeDate, addDays } from '@/utils/worker-analytics';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
@@ -117,6 +118,7 @@ interface MarkAttendanceTabProps {
   selectedWorkerIndex: number;
   onWorkerIndexChange: (index: number) => void;
   onSaveSuccess: () => void;
+  isTourActive?: boolean;
 }
 
 export function MarkAttendanceTab({
@@ -125,6 +127,7 @@ export function MarkAttendanceTab({
   selectedWorkerIndex,
   onWorkerIndexChange,
   onSaveSuccess,
+  isTourActive = false,
 }: MarkAttendanceTabProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -966,7 +969,9 @@ export function MarkAttendanceTab({
                     const hasStatus = cell?.status !== null;
                     const isIdleToday = isTodayDate && !hasStatus;
 
-                    return (
+                    const isFirst = dateRange.indexOf(date) === 0;
+
+                    const cellPressable = (
                       <Pressable
                         key={dateStr}
                         onPress={() => handleDayCellClick(date)}
@@ -1081,11 +1086,42 @@ export function MarkAttendanceTab({
                         </View>
                       </Pressable>
                     );
+
+                    return isFirst ? (
+                      <GuidedTourTarget
+                        key={dateStr}
+                        targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_MARK_DAY_CELL}
+                        enabled={isTourActive}
+                        style={{ flex: 1 }}
+                      >
+                        {cellPressable}
+                      </GuidedTourTarget>
+                    ) : (
+                      cellPressable
+                    );
                   });
                 })()
               : null}
           </View>
         </View>
+
+        {/* ── Tap hint (only show during tour mode) ── */}
+        {isTourActive && (
+          <Animated.View
+            entering={FadeIn.duration(400)}
+            style={{ alignItems: 'center', marginTop: spacing[2] }}
+          >
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                textAlign: 'center',
+              }}
+            >
+              {t('attendance.tapHint')}
+            </Text>
+          </Animated.View>
+        )}
 
         {/* ── Quick Actions ── */}
         <View style={{ paddingHorizontal: spacing[4] }}>
@@ -1217,23 +1253,24 @@ export function MarkAttendanceTab({
         </View>
       </ScrollView>
 
-      {/* ── Bottom Action Bar ── */}
-      <Animated.View
-        entering={FadeInUp.duration(250)}
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          paddingHorizontal: spacing[4],
-          paddingTop: spacing[3],
-          paddingBottom: actionBarBottom + spacing[3],
-          backgroundColor: m3.surface.surfaceContainerLow,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: m3.colorScheme.outlineVariant,
-        }}
-      >
-        {hasModifications && (
+      {/* ── Bottom Action Bar — only visible when there are unsaved changes ── */}
+      {hasModifications && (
+        <Animated.View
+          entering={FadeInUp.duration(250)}
+          exiting={FadeOut.duration(200)}
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            paddingHorizontal: spacing[4],
+            paddingTop: spacing[3],
+            paddingBottom: actionBarBottom + spacing[3],
+            backgroundColor: m3.surface.surfaceContainerLow,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: m3.colorScheme.outlineVariant,
+          }}
+        >
           <Animated.View
             entering={FadeInDown.duration(200)}
             exiting={FadeOutUp.duration(150)}
@@ -1263,74 +1300,78 @@ export function MarkAttendanceTab({
               {t('attendance.week.unsavedChanges')}
             </Text>
           </Animated.View>
-        )}
-        <Pressable
-          onPress={handleSave}
-          disabled={saving || !hasModifications}
-          accessibilityRole="button"
-          accessibilityLabel={
-            saving ? t('attendance.a11y.savingAttendance') : t('attendance.a11y.saveAttendance')
-          }
-          style={({ pressed }) => ({
-            borderRadius: m3.shape.cornerLarge,
-            borderCurve: 'continuous',
-            paddingVertical: 16,
-            backgroundColor: hasModifications
-              ? m3.colorScheme.primary
-              : m3.colorScheme.surfaceVariant,
-            overflow: 'hidden',
-            transform: [{ scale: pressed && hasModifications ? 0.97 : 1 }],
-            ...(hasModifications ? shadows : {}),
-            opacity: saving ? 0.8 : hasModifications ? 1 : 0.5,
-          })}
-        >
-          {saving ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: spacing[2],
-              }}
-            >
-              <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
-              <Text
+          <Pressable
+            onPress={handleSave}
+            disabled={saving || !hasModifications}
+            accessibilityRole="button"
+            accessibilityLabel={
+              saving ? t('attendance.a11y.savingAttendance') : t('attendance.a11y.saveAttendance')
+            }
+            style={({ pressed }) => ({
+              borderRadius: m3.shape.cornerLarge,
+              borderCurve: 'continuous',
+              paddingVertical: 16,
+              backgroundColor: hasModifications
+                ? m3.colorScheme.primary
+                : m3.colorScheme.surfaceVariant,
+              overflow: 'hidden',
+              transform: [{ scale: pressed && hasModifications ? 0.97 : 1 }],
+              ...(hasModifications ? shadows.lg : {}),
+              opacity: saving ? 0.8 : hasModifications ? 1 : 0.5,
+            })}
+          >
+            {saving ? (
+              <View
                 style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.bold,
-                  color: m3.colorScheme.onPrimary,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: spacing[2],
                 }}
               >
-                {t('attendance.buttons.saving')}
-              </Text>
-            </View>
-          ) : (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: spacing[2],
-              }}
-            >
-              {hasModifications && (
-                <UiSymbol name="checkmark.circle.fill" size={20} color={m3.colorScheme.onPrimary} />
-              )}
-              <Text
+                <ActivityIndicator size="small" color={m3.colorScheme.onPrimary} />
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.bold,
+                    color: m3.colorScheme.onPrimary,
+                  }}
+                >
+                  {t('attendance.buttons.saving')}
+                </Text>
+              </View>
+            ) : (
+              <View
                 style={{
-                  fontSize: fontSize.base,
-                  fontWeight: fontWeight.bold,
-                  color: hasModifications
-                    ? m3.colorScheme.onPrimary
-                    : m3.colorScheme.onSurfaceVariant,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: spacing[2],
                 }}
               >
-                {t('common.save')}
-              </Text>
-            </View>
-          )}
-        </Pressable>
-      </Animated.View>
+                {hasModifications && (
+                  <UiSymbol
+                    name="checkmark.circle.fill"
+                    size={20}
+                    color={m3.colorScheme.onPrimary}
+                  />
+                )}
+                <Text
+                  style={{
+                    fontSize: fontSize.base,
+                    fontWeight: fontWeight.bold,
+                    color: hasModifications
+                      ? m3.colorScheme.onPrimary
+                      : m3.colorScheme.onSurfaceVariant,
+                  }}
+                >
+                  {t('common.save')}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        </Animated.View>
+      )}
 
       <WorkerSelectSheet
         visible={workerSheetVisible}

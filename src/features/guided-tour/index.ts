@@ -4,3 +4,7 @@ export * from './events';
 export * from './store';
 export * from './targets';
 export * from './types';
+export * from './workers-tour-store';
+export * from './workers-tour-coachmark';
+export * from './worker-form-tour-coachmark';
+export * from './settlement-tour-coachmark';

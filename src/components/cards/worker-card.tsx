@@ -106,16 +106,20 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
   };
 
   const actionsContainerStyle: ViewStyle = {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
     marginLeft: spacing[3],
     gap: spacing[2],
   };
 
-  const actionButtonStyle: ViewStyle = {
-    padding: spacing[2],
-    borderRadius: m3.shape.cornerMedium,
+  const actionChipStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.full,
     overflow: 'hidden',
+    gap: spacing[1],
   };
 
   const renderCardContent = (pressed: boolean) => (
@@ -153,43 +157,55 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
           {onEdit && (
             <Pressable
               onPress={onEdit}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
               accessibilityRole="button"
               accessibilityLabel={t('workers.workerCard.editA11y', { name: worker.name })}
               style={({ pressed: actionPressed }) => [
-                actionButtonStyle,
-                actionPressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null,
+                actionChipStyle,
+                {
+                  backgroundColor: actionPressed
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.18)
+                    : colorWithOpacity(m3.colorScheme.primary, 0.1),
+                },
               ]}
             >
-              <CardSymbol name="pencil" size={18} color={m3.colorScheme.primary} />
+              <CardSymbol name="pencil" size={13} color={m3.colorScheme.primary} />
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.semibold,
+                  color: m3.colorScheme.primary,
+                }}
+              >
+                {t('workers.edit')}
+              </Text>
             </Pressable>
           )}
           {onDelete && (
             <Pressable
               onPress={onDelete}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
               accessibilityRole="button"
               accessibilityLabel={t('workers.workerCard.deleteA11y', { name: worker.name })}
               style={({ pressed: actionPressed }) => [
-                actionButtonStyle,
-                actionPressed
-                  ? {
-                      backgroundColor: colorWithOpacity(
-                        m3.colorScheme.onSurface,
-                        m3.stateLayerOpacity.pressed,
-                      ),
-                    }
-                  : null,
+                actionChipStyle,
+                {
+                  backgroundColor: actionPressed
+                    ? colorWithOpacity(m3.colorScheme.error, 0.18)
+                    : colorWithOpacity(m3.colorScheme.error, 0.1),
+                },
               ]}
             >
-              <CardSymbol name="trash" size={18} color={m3.colorScheme.error} />
+              <CardSymbol name="trash" size={13} color={m3.colorScheme.error} />
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.semibold,
+                  color: m3.colorScheme.error,
+                }}
+              >
+                {t('workers.delete')}
+              </Text>
             </Pressable>
           )}
         </View>

@@ -30,6 +30,19 @@ export const GUIDED_TOUR_TARGET_IDS = {
   INACTIVE_TASK_TARGET: 'guided_tour:inactive_task_target',
   START_SEASON_SHEET: 'guided_tour:start_season_sheet',
   START_SEASON_PRIMARY: 'guided_tour:start_season_primary',
+  // Workers module mini-tour (overview)
+  WORKERS_TAB_SELECTOR: 'workers_tour:tab_selector',
+  WORKERS_FAB: 'workers_tour:fab',
+  WORKERS_ATTENDANCE_TAB: 'workers_tour:attendance_tab',
+  WORKERS_MARK_DAY_CELL: 'workers_tour:mark_day_cell',
+  // Add Worker form sub-tour
+  WORKER_FORM_NAME: 'workers_tour:form_name',
+  WORKER_FORM_DAILY_RATE: 'workers_tour:form_daily_rate',
+  WORKER_FORM_SAVE: 'workers_tour:form_save',
+  // Settlement sub-tour
+  SETTLEMENT_WORKER_PICKER: 'workers_tour:settlement_worker_picker',
+  SETTLEMENT_PERIOD_SELECTOR: 'workers_tour:settlement_period_selector',
+  SETTLEMENT_CALCULATE_BTN: 'workers_tour:settlement_calculate_btn',
 } as const;
 
 export type GuidedTourTargetId =

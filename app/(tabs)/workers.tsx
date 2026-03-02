@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, FlatList, Pressable, RefreshControl, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,10 @@ import { WorkerCard } from '@/components/cards';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
+import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
+import { WorkersTourCoachmark } from '@/features/guided-tour/workers-tour-coachmark';
+import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
+import { WorkersFabSheet } from '@/components/modals/workers-fab-sheet';
 
 type WorkersTab = 'workers' | 'attendance' | 'analytics';
 
@@ -42,6 +46,20 @@ export default function WorkersScreen() {
   const [selectedTab, setSelectedTab] = useState<WorkersTab>('workers');
   const [settlementModalVisible, setSettlementModalVisible] = useState(false);
   const [tempWorkerFormVisible, setTempWorkerFormVisible] = useState(false);
+  const [fabSheetVisible, setFabSheetVisible] = useState(false);
+
+  // Workers guided mini-tour
+  const { _hydrated, hasSeenTour, isActive: isTourActive, startTour } = useWorkersTourStore();
+  useEffect(() => {
+    // Wait for AsyncStorage rehydration before deciding whether to start the tour.
+    // Without this guard, the tour would fire on every app launch during the
+    // brief window where hasSeenTour is still the in-memory default (false).
+    if (!_hydrated) return;
+    if (!hasSeenTour && !isTourActive) {
+      const timer = setTimeout(() => startTour(), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [_hydrated, hasSeenTour, isTourActive, startTour]);
 
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
 
@@ -81,10 +99,6 @@ export default function WorkersScreen() {
     handleEditWorker(worker);
   };
 
-  const handleOpenSettlement = () => {
-    setSettlementModalVisible(true);
-  };
-
   const handleCloseSettlement = () => {
     setSettlementModalVisible(false);
   };
@@ -93,8 +107,8 @@ export default function WorkersScreen() {
     refetch();
   };
 
-  const handleOpenTempWorkerForm = () => {
-    setTempWorkerFormVisible(true);
+  const handleFabPress = () => {
+    setFabSheetVisible(true);
   };
 
   const renderWorker = ({ item }: { item: Worker }) => (
@@ -246,19 +260,26 @@ export default function WorkersScreen() {
             paddingBottom: spacing[2],
           }}
         >
-          <View
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_TAB_SELECTOR}
+            enabled={isTourActive}
             style={{
               backgroundColor: m3.surface.surfaceContainerLow,
               borderRadius: borderRadius.full,
               padding: spacing[1],
             }}
           >
-            <SegmentedControl
-              options={TAB_DATA.map((tab) => ({ value: tab.id, label: t(tab.labelKey) }))}
-              selectedValue={selectedTab}
-              onSelect={(value) => setSelectedTab(value as WorkersTab)}
-            />
-          </View>
+            <GuidedTourTarget
+              targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_ATTENDANCE_TAB}
+              enabled={isTourActive}
+            >
+              <SegmentedControl
+                options={TAB_DATA.map((tab) => ({ value: tab.id, label: t(tab.labelKey) }))}
+                selectedValue={selectedTab}
+                onSelect={(value) => setSelectedTab(value as WorkersTab)}
+              />
+            </GuidedTourTarget>
+          </GuidedTourTarget>
         </View>
         <View
           style={{
@@ -273,128 +294,64 @@ export default function WorkersScreen() {
         {selectedTab === 'attendance' && renderAttendanceTab()}
         {selectedTab === 'analytics' && renderAnalyticsTab()}
 
-        {/* Primary actions */}
-        {selectedTab === 'workers' && (workers?.length || 0) > 0 && (
-          <>
-            <Pressable
-              onPress={handleOpenTempWorkerForm}
-              style={{
-                position: 'absolute',
-                bottom: fabBottom + (64 + spacing[3]) * 2,
-                right: spacing[6],
-                width: 56,
-                height: 56,
-                backgroundColor: m3.colorScheme.warning,
-                borderRadius: borderRadius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('workers.tempWorkers.addTitle')}
-            >
-              {({ pressed }) => (
-                <>
-                  <UiSymbol name="person.badge.clock" size={28} color={m3.colorScheme.onWarning} />
-                  <View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFillObject,
-                      {
-                        backgroundColor: pressed
-                          ? colorWithOpacity(m3.colorScheme.onWarning, m3.stateLayerOpacity.pressed)
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                </>
-              )}
-            </Pressable>
-
-            <Pressable
-              onPress={handleOpenSettlement}
-              style={{
-                position: 'absolute',
-                bottom: fabBottom + 64 + spacing[3],
-                right: spacing[6],
-                width: 56,
-                height: 56,
-                backgroundColor: m3.colorScheme.secondary || m3.colorScheme.primary,
-                borderRadius: borderRadius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('settlePayment')}
-            >
-              {({ pressed }) => (
-                <>
-                  <UiSymbol
-                    name="banknote"
-                    size={28}
-                    color={m3.colorScheme.onSecondary || m3.colorScheme.onPrimary}
-                  />
-                  <View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFillObject,
-                      {
-                        backgroundColor: pressed
-                          ? colorWithOpacity(
-                              m3.colorScheme.onSecondary || m3.colorScheme.onPrimary,
-                              m3.stateLayerOpacity.pressed,
-                            )
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                </>
-              )}
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                setAddWorker({ worker: null });
-                router.push('/add-worker');
-              }}
-              style={{
-                position: 'absolute',
-                bottom: fabBottom,
-                right: spacing[6],
-                width: 56,
-                height: 56,
-                backgroundColor: m3.colorScheme.primary,
-                borderRadius: borderRadius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('workers.form.saveAdd')}
-            >
-              {({ pressed }) => (
-                <>
-                  <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
-                  <View
-                    pointerEvents="none"
-                    style={[
-                      StyleSheet.absoluteFillObject,
-                      {
-                        backgroundColor: pressed
-                          ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                </>
-              )}
-            </Pressable>
-          </>
-        )}
+        {/* Primary action — single FAB that opens labeled action sheet */}
+        <GuidedTourTarget
+          targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_FAB}
+          enabled={isTourActive}
+          style={{
+            position: 'absolute',
+            bottom: fabBottom,
+            right: spacing[6],
+          }}
+        >
+          <Pressable
+            onPress={handleFabPress}
+            style={{
+              width: 56,
+              height: 56,
+              backgroundColor: m3.colorScheme.primary,
+              borderRadius: borderRadius.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t('workers.actions.title')}
+          >
+            {({ pressed }) => (
+              <>
+                <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </>
+            )}
+          </Pressable>
+        </GuidedTourTarget>
       </View>
 
-      {/* Add/Edit Worker handled via route */}
+      {/* Workers guided tour overlay */}
+      <WorkersTourCoachmark onNavigateToAttendance={() => setSelectedTab('attendance')} />
+
+      {/* FAB Action Sheet */}
+      <WorkersFabSheet
+        visible={fabSheetVisible}
+        onClose={() => setFabSheetVisible(false)}
+        onAddWorker={() => {
+          setAddWorker({ worker: null });
+          router.push('/add-worker');
+        }}
+        onSettlePayment={() => setSettlementModalVisible(true)}
+        onAddTempWorker={() => setTempWorkerFormVisible(true)}
+      />
 
       {/* Settlement Modal */}
       <WorkerSettlementModal

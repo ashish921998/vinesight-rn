@@ -27,6 +27,8 @@ interface Props {
   targetId?: GuidedTourTargetId | null;
   onSkip: () => void;
   message?: string;
+  /** Optional rich JSX rendered below the message text. */
+  messageNode?: React.ReactNode;
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
   actionLabel?: string;
@@ -35,6 +37,15 @@ interface Props {
   tooltipPlacement?: 'auto' | 'top';
   tooltipOffsetY?: number;
   focusPadding?: number;
+  /** Extra pixels to shift the skip chip downward. */
+  skipTopOffset?: number;
+  /** Hides the "Tap the highlighted area to continue" instruction. */
+  hideTapHint?: boolean;
+  /** Renders the Skip button inside the tooltip bubble (bottom-left)
+   *  instead of the floating top-right chip. */
+  inlineSkip?: boolean;
+  /** Custom progress label (e.g., "2 / 4"). Defaults to "1 / 2" or "2 / 2" based on step. */
+  progressLabel?: string;
 }
 
 export function GuidedTourCoachmark({
@@ -43,6 +54,7 @@ export function GuidedTourCoachmark({
   targetId,
   onSkip,
   message,
+  messageNode,
   secondaryActionLabel,
   onSecondaryAction,
   actionLabel,
@@ -51,6 +63,10 @@ export function GuidedTourCoachmark({
   tooltipPlacement = 'auto',
   tooltipOffsetY = 0,
   focusPadding = 4,
+  skipTopOffset = 0,
+  hideTapHint = false,
+  inlineSkip = false,
+  progressLabel: customProgressLabel,
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -132,7 +148,7 @@ export function GuidedTourCoachmark({
   const defer = (fn: () => void) => setTimeout(fn, 0);
   const label =
     message ?? (step === 'add_farm' ? t('guidedTour.step1.coach') : t('guidedTour.step2.coach'));
-  const progressLabel = step === 'add_farm' ? '1 / 2' : '2 / 2';
+  const progressLabel = customProgressLabel ?? (step === 'add_farm' ? '1 / 2' : '2 / 2');
   const isNonBlocking = !blockOutsideTouches;
   const hasCoachActions = Boolean(actionLabel || secondaryActionLabel);
   const copyLines = label
@@ -417,7 +433,10 @@ export function GuidedTourCoachmark({
             </Text>
           ) : null}
 
-          {showTapHint ? (
+          {/* Optional rich JSX content below message */}
+          {messageNode ?? null}
+
+          {showTapHint && !hideTapHint ? (
             <View
               style={{
                 flexDirection: 'row',
@@ -439,59 +458,88 @@ export function GuidedTourCoachmark({
             </View>
           ) : null}
 
-          {(secondaryActionLabel && onSecondaryAction) || (actionLabel && onAction) ? (
+          {(secondaryActionLabel && onSecondaryAction) ||
+          (actionLabel && onAction) ||
+          inlineSkip ? (
             <View
               style={{
                 marginTop: spacing[3],
                 flexDirection: 'row',
-                justifyContent: 'flex-end',
+                justifyContent: inlineSkip ? 'space-between' : 'flex-end',
+                alignItems: 'center',
                 gap: spacing[2],
               }}
             >
-              {secondaryActionLabel && onSecondaryAction ? (
+              {/* Inline skip — bottom-left of tooltip */}
+              {inlineSkip ? (
                 <Pressable
-                  onPress={() => defer(onSecondaryAction)}
+                  onPress={() => defer(onSkip)}
                   style={{
-                    paddingHorizontal: spacing[4],
+                    paddingHorizontal: spacing[3],
                     paddingVertical: spacing[2],
                     borderRadius: borderRadius.full,
                     borderWidth: 1,
-                    borderColor: colorWithOpacity('#FFFFFF', 0.42),
-                    backgroundColor: colorWithOpacity('#FFFFFF', 0.14),
+                    borderColor: colorWithOpacity('#FFFFFF', 0.35),
                   }}
                 >
                   <Text
                     style={{
-                      color: '#FFFFFF',
+                      color: colorWithOpacity('#FFFFFF', 0.8),
                       fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
+                      fontWeight: fontWeight.medium,
                     }}
                   >
-                    {secondaryActionLabel}
+                    {t('guidedTour.cta.skipTour', 'Skip tour')}
                   </Text>
                 </Pressable>
               ) : null}
-              {actionLabel && onAction ? (
-                <Pressable
-                  onPress={() => defer(onAction)}
-                  style={{
-                    paddingHorizontal: spacing[4],
-                    paddingVertical: spacing[2],
-                    borderRadius: borderRadius.full,
-                    backgroundColor: '#FFFFFF',
-                  }}
-                >
-                  <Text
+
+              <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                {secondaryActionLabel && onSecondaryAction ? (
+                  <Pressable
+                    onPress={() => defer(onSecondaryAction)}
                     style={{
-                      color: accentColor,
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.semibold,
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: spacing[2],
+                      borderRadius: borderRadius.full,
+                      borderWidth: 1,
+                      borderColor: colorWithOpacity('#FFFFFF', 0.42),
+                      backgroundColor: colorWithOpacity('#FFFFFF', 0.14),
                     }}
                   >
-                    {actionLabel}
-                  </Text>
-                </Pressable>
-              ) : null}
+                    <Text
+                      style={{
+                        color: '#FFFFFF',
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {secondaryActionLabel}
+                    </Text>
+                  </Pressable>
+                ) : null}
+                {actionLabel && onAction ? (
+                  <Pressable
+                    onPress={() => defer(onAction)}
+                    style={{
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: spacing[2],
+                      borderRadius: borderRadius.full,
+                      backgroundColor: '#FFFFFF',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: accentColor,
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {actionLabel}
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
             </View>
           ) : null}
         </LinearGradient>
@@ -529,36 +577,38 @@ export function GuidedTourCoachmark({
         ) : null}
       </Animated.View>
 
-      <View
-        pointerEvents="box-none"
-        style={{
-          position: 'absolute',
-          right: spacing[4],
-          zIndex: 2,
-          top: SKIP_TOP,
-        }}
-      >
-        <Pressable
-          onPress={() => defer(onSkip)}
+      {!inlineSkip ? (
+        <View
+          pointerEvents="box-none"
           style={{
-            paddingHorizontal: spacing[4],
-            paddingVertical: spacing[2],
-            borderRadius: borderRadius.full,
-            backgroundColor: colorWithOpacity('#111', isNonBlocking ? 0.66 : 0.82),
-            borderWidth: 1,
-            borderColor: colorWithOpacity('#FFF', 0.24),
-            shadowColor: '#000',
-            shadowOpacity: 0.26,
-            shadowRadius: 10,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 3,
+            position: 'absolute',
+            right: spacing[4],
+            zIndex: 2,
+            top: SKIP_TOP + skipTopOffset,
           }}
         >
-          <Text style={{ color: '#FFF', fontWeight: fontWeight.semibold }}>
-            {t('guidedTour.cta.skipTour')}
-          </Text>
-        </Pressable>
-      </View>
+          <Pressable
+            onPress={() => defer(onSkip)}
+            style={{
+              paddingHorizontal: spacing[4],
+              paddingVertical: spacing[2],
+              borderRadius: borderRadius.full,
+              backgroundColor: colorWithOpacity('#111', isNonBlocking ? 0.66 : 0.82),
+              borderWidth: 1,
+              borderColor: colorWithOpacity('#FFF', 0.24),
+              shadowColor: '#000',
+              shadowOpacity: 0.26,
+              shadowRadius: 10,
+              shadowOffset: { width: 0, height: 6 },
+              elevation: 3,
+            }}
+          >
+            <Text style={{ color: '#FFF', fontWeight: fontWeight.semibold }}>
+              {t('guidedTour.cta.skipTour')}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
