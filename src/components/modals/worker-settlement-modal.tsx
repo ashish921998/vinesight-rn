@@ -21,6 +21,9 @@ import type { Worker } from '@/types';
 import { calculateWorkerSettlement, createWorkerSettlement } from '@/services/worker-service';
 import { Picker } from '@react-native-picker/picker';
 import { supabase } from '@/lib/supabase';
+import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
+import { SettlementTourCoachmark } from '@/features/guided-tour/settlement-tour-coachmark';
+import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
 
 type SettlementPeriod = 'this_week' | 'last_week' | 'custom';
 
@@ -101,6 +104,16 @@ export function WorkerSettlementModal({
       setSelectedWorker(initialWorker ?? workers[0]);
     }
   }, [visible, workers, initialWorkerId]);
+
+  // Fire settlement tour once on first open
+  const { _hydrated, hasSeenSettlementTour, startSettlementTour } = useWorkersTourStore();
+  useEffect(() => {
+    if (!_hydrated) return;
+    if (visible && !hasSeenSettlementTour) {
+      const timer = setTimeout(startSettlementTour, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [_hydrated, visible, hasSeenSettlementTour, startSettlementTour]);
 
   // Period dates
   const periodDates = useMemo(() => {
@@ -320,35 +333,39 @@ export function WorkerSettlementModal({
           >
             {t('selectWorkerAndPeriod')}
           </Text>
-          <View
-            style={{
-              marginBottom: spacing[4],
-              backgroundColor: m3.surface.surfaceContainerLow,
-              borderRadius: borderRadius.lg,
-              overflow: 'hidden',
-            }}
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.SETTLEMENT_WORKER_PICKER}
+            style={{ marginBottom: spacing[4] }}
           >
-            <Picker
-              selectedValue={selectedWorker.id?.toString()}
-              onValueChange={(itemValue) => {
-                const worker = workers.find((w) => w.id?.toString() === itemValue);
-                if (worker) setSelectedWorker(worker);
-              }}
+            <View
               style={{
                 backgroundColor: m3.surface.surfaceContainerLow,
-                color: m3.colorScheme.onSurface,
+                borderRadius: borderRadius.lg,
+                overflow: 'hidden',
               }}
             >
-              {workers.map((worker, index) => (
-                <Picker.Item
-                  key={worker.id ?? `worker-${index}`}
-                  label={worker.name}
-                  value={worker.id?.toString() ?? `worker-${index}`}
-                  style={{ backgroundColor: m3.surface.surfaceContainerLow }}
-                />
-              ))}
-            </Picker>
-          </View>
+              <Picker
+                selectedValue={selectedWorker.id?.toString()}
+                onValueChange={(itemValue) => {
+                  const worker = workers.find((w) => w.id?.toString() === itemValue);
+                  if (worker) setSelectedWorker(worker);
+                }}
+                style={{
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  color: m3.colorScheme.onSurface,
+                }}
+              >
+                {workers.map((worker, index) => (
+                  <Picker.Item
+                    key={worker.id ?? `worker-${index}`}
+                    label={worker.name}
+                    value={worker.id?.toString() ?? `worker-${index}`}
+                    style={{ backgroundColor: m3.surface.surfaceContainerLow }}
+                  />
+                ))}
+              </Picker>
+            </View>
+          </GuidedTourTarget>
 
           {/* Selected Worker Info */}
           <View
@@ -377,87 +394,94 @@ export function WorkerSettlementModal({
           </View>
 
           {/* Period Selection */}
-          <View style={{ marginBottom: spacing[4] }}>
-            <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[2] }}>{t('period')}</Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                backgroundColor: m3.surface.surfaceContainerLow,
-                borderRadius: borderRadius.full,
-                padding: spacing[1],
-                marginBottom: spacing[3],
-              }}
-            >
-              {(['this_week', 'last_week', 'custom'] as SettlementPeriod[]).map((period) => (
-                <Pressable
-                  key={period}
-                  onPress={() => setSelectedPeriod(period)}
-                  style={{
-                    flex: 1,
-                    paddingVertical: spacing[2],
-                    paddingHorizontal: spacing[3],
-                    borderRadius: borderRadius.full,
-                    alignItems: 'center',
-                    backgroundColor:
-                      selectedPeriod === period ? m3.colorScheme.surface : 'transparent',
-                  }}
-                >
-                  <Text
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.SETTLEMENT_PERIOD_SELECTOR}
+            style={{ marginBottom: spacing[4] }}
+          >
+            <View>
+              <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[2] }}>{t('period')}</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  backgroundColor: m3.surface.surfaceContainerLow,
+                  borderRadius: borderRadius.full,
+                  padding: spacing[1],
+                  marginBottom: spacing[3],
+                }}
+              >
+                {(['this_week', 'last_week', 'custom'] as SettlementPeriod[]).map((period) => (
+                  <Pressable
+                    key={period}
+                    onPress={() => setSelectedPeriod(period)}
                     style={{
-                      fontSize: fontSize.xs,
-                      fontWeight:
-                        selectedPeriod === period ? fontWeight.semibold : fontWeight.normal,
-                      color:
-                        selectedPeriod === period
-                          ? m3.colorScheme.primary
-                          : m3.colorScheme.onSurfaceVariant,
+                      flex: 1,
+                      paddingVertical: spacing[2],
+                      paddingHorizontal: spacing[3],
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      backgroundColor:
+                        selectedPeriod === period ? m3.colorScheme.surface : 'transparent',
                     }}
                   >
-                    {t(`settlement.${period}`)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-
-            {selectedPeriod === 'custom' && (
-              <View style={{ gap: spacing[3] }}>
-                <View>
-                  <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
-                    {t('startDate')}
-                  </Text>
-                  <Input
-                    value={customStartDate}
-                    onChangeText={setCustomStartDate}
-                    placeholder="YYYY-MM-DD"
-                  />
-                </View>
-                <View>
-                  <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
-                    {t('endDate')}
-                  </Text>
-                  <Input
-                    value={customEndDate}
-                    onChangeText={setCustomEndDate}
-                    placeholder="YYYY-MM-DD"
-                  />
-                </View>
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        fontWeight:
+                          selectedPeriod === period ? fontWeight.semibold : fontWeight.normal,
+                        color:
+                          selectedPeriod === period
+                            ? m3.colorScheme.primary
+                            : m3.colorScheme.onSurfaceVariant,
+                      }}
+                    >
+                      {t(`settlement.${period}`)}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
-            )}
-          </View>
+            </View>
+          </GuidedTourTarget>
+
+          {selectedPeriod === 'custom' && (
+            <View style={{ gap: spacing[3] }}>
+              <View>
+                <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
+                  {t('startDate')}
+                </Text>
+                <Input
+                  value={customStartDate}
+                  onChangeText={setCustomStartDate}
+                  placeholder="YYYY-MM-DD"
+                />
+              </View>
+              <View>
+                <Text style={{ fontSize: fontSize.sm, marginBottom: spacing[1] }}>
+                  {t('endDate')}
+                </Text>
+                <Input
+                  value={customEndDate}
+                  onChangeText={setCustomEndDate}
+                  placeholder="YYYY-MM-DD"
+                />
+              </View>
+            </View>
+          )}
 
           {/* Calculate Button */}
           {!isCalculated && (
-            <Button
-              title={t('calculate')}
-              onPress={handleCalculate}
-              isLoading={isCalculating}
-              disabled={
-                selectedPeriod === 'custom' &&
-                (!customStartDate ||
-                  !customEndDate ||
-                  new Date(customStartDate) > new Date(customEndDate))
-              }
-            />
+            <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.SETTLEMENT_CALCULATE_BTN}>
+              <Button
+                title={t('calculate')}
+                onPress={handleCalculate}
+                isLoading={isCalculating}
+                disabled={
+                  selectedPeriod === 'custom' &&
+                  (!customStartDate ||
+                    !customEndDate ||
+                    new Date(customStartDate) > new Date(customEndDate))
+                }
+              />
+            </GuidedTourTarget>
           )}
 
           {/* Settlement Summary */}
@@ -621,6 +645,9 @@ export function WorkerSettlementModal({
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Settlement guided tour overlay */}
+      <SettlementTourCoachmark />
     </Modal>
   );
 }

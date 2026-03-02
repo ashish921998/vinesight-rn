@@ -49,6 +49,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'arrow.up.left.and.arrow.down.right': 'resize',
   'arrow.up.circle.fill': 'arrow-up-circle',
   'arrow.down.circle.fill': 'arrow-down-circle',
+  'arrow.uturn.backward': 'return-up-back',
   'envelope.fill': 'mail',
   'lock.fill': 'lock-closed',
 
@@ -92,6 +93,8 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'person.fill': 'person',
   'person.2': 'people-outline',
   'person.2.fill': 'people',
+  'person.badge.plus': 'person-add',
+  'person.badge.plus.fill': 'person-add',
   'person.badge.clock': 'person-add-outline',
   'person.badge.clock.fill': 'person-add',
 

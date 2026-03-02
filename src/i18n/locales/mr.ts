@@ -2652,6 +2652,49 @@ export const mr = {
       replay: 'गाइडेड टूर पुन्हा चालवा',
     },
   },
+
+  guided_tour: {
+    workers: {
+      tabs_overview: {
+        message: 'Switch between Workers, Attendance, and Analytics using these tabs.',
+      },
+      add_worker: {
+        message: 'Tap here to add a worker, settle payments, or log a temp worker.',
+      },
+      attendance_tab: {
+        message: 'Tap Attendance to mark daily attendance for your workers.',
+      },
+      mark_day: {
+        message: 'Tap any day cell to mark attendance.',
+      },
+    },
+    worker_form: {
+      name_field: {
+        message:
+          "Enter the worker's full name — this is how they'll appear in attendance and reports.",
+      },
+      daily_rate_field: {
+        message:
+          'Set their daily wage (₹). This is used to automatically calculate payment at settlement.',
+      },
+      save_button: {
+        message:
+          'Tap Save to add them to your roster. You can edit their details anytime from the Workers list.',
+      },
+    },
+    settlement: {
+      worker_picker: {
+        message: 'Choose the worker you want to settle payment for.',
+      },
+      period_selector: {
+        message: 'Select the pay period — This Week, Last Week, or a custom date range.',
+      },
+      calculate_btn: {
+        message:
+          'Tap Calculate to automatically compute wages based on attendance. Then confirm to record the payment.',
+      },
+    },
+  },
 } as const;
 
 export type MrTranslations = typeof mr;

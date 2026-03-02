@@ -13,6 +13,9 @@ import { FormModal, SectionHeader, FormInput, Toggle, InfoCard } from '@/compone
 import { useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
+import { GuidedTourTarget, GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour';
+import { WorkerFormTourCoachmark } from '@/features/guided-tour/worker-form-tour-coachmark';
+import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
 
 interface WorkerFormProps {
   visible?: boolean;
@@ -42,6 +45,16 @@ export function WorkerForm({
   const createWorker = useCreateWorker();
   const updateWorker = useUpdateWorker();
   const isEditMode = !!worker;
+
+  // Fire the Add Worker tour once on first add (not on edit)
+  const { _hydrated, hasSeenAddWorkerTour, startAddWorkerTour } = useWorkersTourStore();
+  useEffect(() => {
+    if (!_hydrated) return;
+    if (!isEditMode && !hasSeenAddWorkerTour) {
+      const timer = setTimeout(startAddWorkerTour, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [_hydrated, isEditMode, hasSeenAddWorkerTour, startAddWorkerTour]);
 
   useEffect(() => {
     if (worker) {
@@ -116,71 +129,87 @@ export function WorkerForm({
   };
 
   return (
-    <FormModal
-      visible={isVisible}
-      onClose={onClose}
-      title={isEditMode ? t('workers.form.editTitle') : t('workers.form.addTitle')}
-      onSave={handleSave}
-      saveLabel={isEditMode ? t('common.saveChanges') : t('workers.form.saveAdd')}
-      isLoading={isSubmitting}
-      isSaveDisabled={!isValid}
-      showResetButton={!isEditMode}
-      onReset={handleReset}
-      presentation={presentation}
-    >
-      {/* Worker Details */}
-      <SectionHeader title={t('workers.form.sections.details')} style={{ marginBottom: 16 }} />
+    <>
+      <FormModal
+        visible={isVisible}
+        onClose={onClose}
+        title={isEditMode ? t('workers.form.editTitle') : t('workers.form.addTitle')}
+        onSave={handleSave}
+        saveLabel={isEditMode ? t('common.saveChanges') : t('workers.form.saveAdd')}
+        isLoading={isSubmitting}
+        isSaveDisabled={!isValid}
+        showResetButton={!isEditMode}
+        onReset={handleReset}
+        presentation={presentation}
+        saveButtonTargetId={!isEditMode ? GUIDED_TOUR_TARGET_IDS.WORKER_FORM_SAVE : undefined}
+      >
+        {/* Worker Details */}
+        <SectionHeader title={t('workers.form.sections.details')} style={{ marginBottom: 16 }} />
 
-      <FormInput
-        label={t('workers.form.fields.name.label')}
-        value={name}
-        onChangeText={setName}
-        placeholder={t('workers.form.fields.name.placeholder')}
-        required
-        autoFocus
-        style={{ marginBottom: 12 }}
-      />
+        <GuidedTourTarget
+          targetId={GUIDED_TOUR_TARGET_IDS.WORKER_FORM_NAME}
+          enabled={!isEditMode}
+          style={{ marginBottom: 12 }}
+        >
+          <FormInput
+            label={t('workers.form.fields.name.label')}
+            value={name}
+            onChangeText={setName}
+            placeholder={t('workers.form.fields.name.placeholder')}
+            required
+            autoFocus
+          />
+        </GuidedTourTarget>
 
-      <FormInput
-        label={t('workers.form.fields.dailyRate.label')}
-        value={dailyRate}
-        onChangeText={setDailyRate}
-        placeholder="400"
-        keyboardType="decimal-pad"
-        prefix="₹"
-        suffix={t('workers.form.fields.dailyRate.perDayShort')}
-        required
-        style={{ marginBottom: 12 }}
-      />
+        <GuidedTourTarget
+          targetId={GUIDED_TOUR_TARGET_IDS.WORKER_FORM_DAILY_RATE}
+          enabled={!isEditMode}
+          style={{ marginBottom: 12 }}
+        >
+          <FormInput
+            label={t('workers.form.fields.dailyRate.label')}
+            value={dailyRate}
+            onChangeText={setDailyRate}
+            placeholder="400"
+            keyboardType="decimal-pad"
+            prefix="₹"
+            suffix={t('workers.form.fields.dailyRate.perDayShort')}
+            required
+          />
+        </GuidedTourTarget>
 
-      <FormInput
-        label={t('workers.form.fields.advanceAmountOptional.label')}
-        value={advanceBalance}
-        onChangeText={setAdvanceBalance}
-        placeholder="0"
-        keyboardType="decimal-pad"
-        prefix="₹"
-        style={{ marginBottom: 20 }}
-      />
+        <FormInput
+          label={t('workers.form.fields.advanceAmountOptional.label')}
+          value={advanceBalance}
+          onChangeText={setAdvanceBalance}
+          placeholder="0"
+          keyboardType="decimal-pad"
+          prefix="₹"
+          style={{ marginBottom: 20 }}
+        />
 
-      {/* Active Status */}
-      <SectionHeader title={t('workers.form.sections.status')} style={{ marginBottom: 16 }} />
+        {/* Active Status */}
+        <SectionHeader title={t('workers.form.sections.status')} style={{ marginBottom: 16 }} />
 
-      <Toggle
-        label={t('workers.form.toggles.activeWorker')}
-        description={t('workers.form.toggles.activeWorkerDescription')}
-        value={isActive}
-        onValueChange={setIsActive}
-        style={{ marginBottom: 16 }}
-      />
+        <Toggle
+          label={t('workers.form.toggles.activeWorker')}
+          description={t('workers.form.toggles.activeWorkerDescription')}
+          value={isActive}
+          onValueChange={setIsActive}
+          style={{ marginBottom: 16 }}
+        />
 
-      {/* Info Card */}
-      <InfoCard
-        icon="information-circle"
-        iconColor={m3.colorScheme.primary}
-        backgroundColor={colorWithOpacity(m3.colorScheme.primary, 0.12)}
-        message={t('workers.form.infoCardMessage')}
-      />
-    </FormModal>
+        {/* Info Card */}
+        <InfoCard
+          icon="information-circle"
+          iconColor={m3.colorScheme.primary}
+          backgroundColor={colorWithOpacity(m3.colorScheme.primary, 0.12)}
+          message={t('workers.form.infoCardMessage')}
+        />
+      </FormModal>
+
+      {/* Add Worker guided tour overlay */}
+      {!isEditMode && <WorkerFormTourCoachmark />}
+    </>
   );
 }

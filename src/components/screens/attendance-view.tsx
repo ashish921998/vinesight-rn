@@ -7,6 +7,7 @@ import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { MarkAttendanceTab, CalendarAttendanceTab } from './attendance-subcomponents';
+import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
 
 interface AttendanceViewProps {
   workers: Worker[];
@@ -35,6 +36,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
   );
   const [activeTab, setActiveTab] = useState<AttendanceTab>('mark');
   const [selectedWorkerIndex, setSelectedWorkerIndex] = useState(0);
+  const isTourActive = useWorkersTourStore((s) => s.isActive);
 
   const activeWorkers = useMemo(() => workers.filter((w) => w.is_active), [workers]);
 
@@ -175,6 +177,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
             selectedWorkerIndex={selectedWorkerIndex}
             onWorkerIndexChange={setSelectedWorkerIndex}
             onSaveSuccess={onSaveSuccess}
+            isTourActive={isTourActive}
           />
         )}
         {activeTab === 'calendar' && <CalendarAttendanceTab workers={activeWorkers} />}
