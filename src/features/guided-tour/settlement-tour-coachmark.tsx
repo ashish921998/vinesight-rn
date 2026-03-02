@@ -62,8 +62,10 @@ export function SettlementTourCoachmark() {
   const { height: screenHeight } = useWindowDimensions();
 
   const [rect, setRect] = useState<GuidedTourTargetRect | null>(null);
+  const [measureNonce, setMeasureNonce] = useState(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelledRef = useRef(false);
+  const measureTriggerRef = useRef(0);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const meta = STEP_META[currentStep];
@@ -72,7 +74,10 @@ export function SettlementTourCoachmark() {
 
   const triggerRemeasure = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => setRect(null), 80);
+    debounceTimerRef.current = setTimeout(() => {
+      measureTriggerRef.current += 1;
+      setMeasureNonce((n) => n + 1);
+    }, 80);
   }, []);
 
   useEffect(() => {
@@ -106,7 +111,7 @@ export function SettlementTourCoachmark() {
       unsubscribe();
       setRect(null);
     };
-  }, [isActive, currentStep, meta.targetId, triggerRemeasure]);
+  }, [isActive, currentStep, meta.targetId, triggerRemeasure, measureNonce]);
 
   if (!isActive || !rect) return null;
 

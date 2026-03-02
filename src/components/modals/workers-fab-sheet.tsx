@@ -105,8 +105,8 @@ export function WorkersFabSheet({
       label: t('workers.actions.settlePayment'),
       description: t('workers.actions.settlePaymentDesc'),
       icon: 'banknote',
-      color: '#16A34A',
-      bgColor: colorWithOpacity('#16A34A', 0.1),
+      color: m3.colorScheme.secondary || m3.colorScheme.primary,
+      bgColor: colorWithOpacity(m3.colorScheme.secondary || m3.colorScheme.primary, 0.1),
       onPress: () => {
         onClose();
         setTimeout(onSettlePayment, 180);
@@ -117,8 +117,8 @@ export function WorkersFabSheet({
       label: t('workers.actions.addTempWorker'),
       description: t('workers.actions.addTempWorkerDesc'),
       icon: 'person.badge.clock',
-      color: '#D97706',
-      bgColor: colorWithOpacity('#D97706', 0.1),
+      color: m3.colorScheme.warning,
+      bgColor: colorWithOpacity(m3.colorScheme.warning, 0.1),
       onPress: () => {
         onClose();
         setTimeout(onAddTempWorker, 180);

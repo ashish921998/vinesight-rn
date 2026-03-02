@@ -316,7 +316,7 @@ export default function WorkersScreen() {
               overflow: 'hidden',
             }}
             accessibilityRole="button"
-            accessibilityLabel="Actions"
+            accessibilityLabel={t('workers.actions.title')}
           >
             {({ pressed }) => (
               <>

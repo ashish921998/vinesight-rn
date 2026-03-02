@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View, Text, useWindowDimensions } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { GuidedTourCoachmark } from './coachmark';
-import { GUIDED_TOUR_TARGET_IDS } from './constants';
+import { GUIDED_TOUR_TARGET_IDS, MAX_GUIDED_TOUR_TARGET_RETRIES } from './constants';
 import {
   measureGuidedTourTarget,
   subscribeGuidedTourTarget,
@@ -211,7 +211,7 @@ export function WorkersTourCoachmark({ onNavigateToAttendance }: WorkersTourCoac
     cancelledRef.current = false;
 
     const targetId = meta.targetId;
-    const MAX_RETRIES = 20;
+    const MAX_RETRIES = MAX_GUIDED_TOUR_TARGET_RETRIES;
     let retryCount = 0;
 
     const attempt = async () => {

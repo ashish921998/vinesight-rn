@@ -9,7 +9,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { GuidedTourCoachmark } from './coachmark';
-import { GUIDED_TOUR_TARGET_IDS } from './constants';
+import { GUIDED_TOUR_TARGET_IDS, MAX_GUIDED_TOUR_TARGET_RETRIES } from './constants';
 import {
   measureGuidedTourTarget,
   subscribeGuidedTourTarget,
@@ -61,8 +61,10 @@ export function WorkerFormTourCoachmark() {
   const { height: screenHeight } = useWindowDimensions();
 
   const [rect, setRect] = useState<GuidedTourTargetRect | null>(null);
+  const [measureNonce, setMeasureNonce] = useState(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelledRef = useRef(false);
+  const measureTriggerRef = useRef(0);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const meta = STEP_META[currentStep];
@@ -71,7 +73,10 @@ export function WorkerFormTourCoachmark() {
 
   const triggerRemeasure = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => setRect(null), 80);
+    debounceTimerRef.current = setTimeout(() => {
+      measureTriggerRef.current += 1;
+      setMeasureNonce((n) => n + 1);
+    }, 80);
   }, []);
 
   useEffect(() => {
@@ -82,7 +87,7 @@ export function WorkerFormTourCoachmark() {
     cancelledRef.current = false;
     const targetId = meta.targetId;
     let retryCount = 0;
-    const MAX_RETRIES = 20;
+    const MAX_RETRIES = MAX_GUIDED_TOUR_TARGET_RETRIES;
 
     const attempt = async () => {
       if (cancelledRef.current) return;
@@ -106,7 +111,7 @@ export function WorkerFormTourCoachmark() {
       unsubscribe();
       setRect(null);
     };
-  }, [isActive, currentStep, meta.targetId, triggerRemeasure]);
+  }, [isActive, currentStep, meta.targetId, triggerRemeasure, measureNonce]);
 
   if (!isActive) return null;
   if (!rect) return null;
