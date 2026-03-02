@@ -152,27 +152,6 @@ export function GuidedTourCompletionCard({ onDone }: { onDone: () => void }) {
             {t('guidedTour.complete.body')}
           </Text>
 
-          <View
-            style={{
-              marginTop: spacing[4],
-              alignSelf: 'center',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: spacing[2],
-              paddingHorizontal: spacing[3],
-              paddingVertical: spacing[1],
-              borderRadius: borderRadius.full,
-              borderWidth: 1,
-              borderColor: colorWithOpacity(m3.colorScheme.outline, 0.36),
-              backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.72),
-            }}
-          >
-            <UiSymbol name="checkmark.seal.fill" size={14} color={m3.colorScheme.primary} />
-            <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
-              {t('guidedTour.cta.done')}
-            </Text>
-          </View>
-
           <Pressable
             onPress={() => defer(onDone)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

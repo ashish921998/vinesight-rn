@@ -34,7 +34,7 @@ import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
-import { androidTextPadding, spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { androidTextPadding, spacing, borderRadius, fontWeight } from '@/styles/theme';
 import { LogTypeSelector } from '@/components/screens/entry-form/LogTypeSelector';
 import { PendingLogs, type PendingLog } from '@/components/screens/entry-form/PendingLogs';
 import { Tabs, type EntryTab } from '@/components/screens/entry-form/Tabs';
@@ -3174,32 +3174,6 @@ export function EntryForm({
         >
           {activeTab === 'log' ? (
             <>
-              {showSaveGuidance ? (
-                <View style={{ alignItems: 'center', marginBottom: spacing[2] }}>
-                  <View
-                    style={{
-                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-                      borderWidth: 1,
-                      borderColor: colorWithOpacity(m3.colorScheme.primary, 0.3),
-                      borderRadius: borderRadius.full,
-                      paddingHorizontal: spacing[3],
-                      paddingVertical: spacing[1],
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: m3.colorScheme.primary,
-                        fontSize: fontSize.xs,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {t('guidedTour.step2.tapSaveCoach', {
-                        defaultValue: 'Tap Save to record your activity.',
-                      })}
-                    </Text>
-                  </View>
-                </View>
-              ) : null}
               <View style={{ flexDirection: 'row', gap: spacing[3] }}>
                 <Pressable
                   onPress={handleClose}

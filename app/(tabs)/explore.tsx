@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Symbol as Icon } from '@/components/ui/symbol';
@@ -42,6 +42,7 @@ export default function ExploreScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
+  const isScreenFocused = useIsFocused();
   const exploreTabs = useMemo(
     () =>
       [
@@ -56,6 +57,7 @@ export default function ExploreScreen() {
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const isAddFarmTargetEnabled = isScreenFocused && selectedTab === 'farms';
 
   const tabSwitchAnim = useMemo(() => new Animated.Value(1), []);
   const tabScaleAnims = useMemo(
@@ -443,7 +445,10 @@ export default function ExploreScreen() {
           >
             {t('farms.empty.subtitle')}
           </Text>
-          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}>
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+            enabled={isAddFarmTargetEnabled}
+          >
             <Pressable
               style={{
                 paddingHorizontal: spacing[6],
@@ -623,6 +628,7 @@ export default function ExploreScreen() {
         {(farms?.length || 0) > 0 && (
           <GuidedTourTarget
             targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+            enabled={isAddFarmTargetEnabled}
             style={{
               position: 'absolute',
               bottom: fabBottom,

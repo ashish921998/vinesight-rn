@@ -685,8 +685,8 @@ export const mr = {
   },
 
   expenseForm: {
-    title: 'खर्च',
-    subtitle: 'शेत खर्च नोंदवा',
+    title: '$t(glossary.expense)',
+    subtitle: '$t(glossary.farm) $t(glossary.expense) नोंदवा',
     category: 'श्रेणी',
     amount: 'रक्कम',
     amountPlaceholder: 'रक्कम नोंदवा',
@@ -703,7 +703,7 @@ export const mr = {
     remarks: {
       label: 'टिप्पण्या',
       placeholder: 'या खर्चाबद्दल टिप्पण्या जोडा (पर्यायी)',
-      hint: 'पर्यायी - खर्च वर्णन करा',
+      hint: 'पर्यायी - $t(glossary.expense) वर्णन करा',
     },
     validation: {
       selectCategoryAndEnterAmount: 'श्रेणी निवडा आणि रक्कम नोंदवा',
@@ -711,7 +711,7 @@ export const mr = {
   },
 
   harvestForm: {
-    title: 'कापणी',
+    title: '$t(glossary.harvest)',
     subtitle: 'कापणीची प्रमाण आणि तपशील नोंदवा',
     quantityLabel: 'प्रमाण',
     quantityPlaceholder: 'प्रमाण नोंदवा',

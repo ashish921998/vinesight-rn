@@ -716,15 +716,40 @@ export default function SettingsScreen() {
 
     setIsSendingDeleteOtp(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: userEmail.trim().toLowerCase(),
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: undefined,
-        },
-      });
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      const accessToken = currentSession?.access_token;
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+      if (!accessToken) {
+        Alert.alert(
+          t('common.error'),
+          t('settings.deleteAccountModal.errors.sessionExpired', {
+            defaultValue: 'Your session has expired. Please sign in again and try.',
+          }),
+        );
+        return;
+      }
 
-      if (error) {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account-email-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            apikey: anonKey,
+          },
+          body: JSON.stringify({
+            action: 'send',
+            email: userEmail.trim().toLowerCase(),
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
         Alert.alert(
           t('common.error'),
           t('settings.deleteAccountModal.errors.emailOtpSendFailed', {
@@ -792,13 +817,41 @@ export default function SettingsScreen() {
         return;
       }
 
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: userEmail.trim().toLowerCase(),
-        token: normalizedOtp,
-        type: 'email',
-      });
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      const accessToken = currentSession?.access_token;
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+      if (!accessToken) {
+        Alert.alert(
+          t('common.error'),
+          t('settings.deleteAccountModal.errors.sessionExpired', {
+            defaultValue: 'Your session has expired. Please sign in again and try.',
+          }),
+        );
+        return;
+      }
 
-      if (error || !data.session) {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account-email-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            apikey: anonKey,
+          },
+          body: JSON.stringify({
+            action: 'verify',
+            email: userEmail.trim().toLowerCase(),
+            otp: normalizedOtp,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
         Alert.alert(
           t('common.error'),
           t('settings.deleteAccountModal.errors.otpVerifyFailed', {
@@ -825,10 +878,9 @@ export default function SettingsScreen() {
       Alert.alert(
         t('common.error'),
         t('settings.deleteAccountModal.errors.otpVerifyFailed', {
-          defaultValue: 'OTP verification failed. Please try again.',
+          defaultValue: 'Email verification failed. Please try again.',
         }),
       );
-      return;
     } finally {
       setIsVerifyingDeleteOtp(false);
     }
@@ -2258,193 +2310,102 @@ export default function SettingsScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowDeleteAccount(false)}
       >
-        <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
-          <View style={styles.modalHeader}>
-            <View style={styles.modalHeaderInner}>
-              <Text
-                style={styles.modalTitle}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                {t('settings.deleteAccountModal.title')}
-              </Text>
-              <Pressable onPress={() => setShowDeleteAccount(false)}>
-                <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
-              </Pressable>
-            </View>
-          </View>
-
-          <ScrollView
-            style={styles.flex1}
-            contentContainerStyle={{ padding: spacing[4] }}
-            contentInsetAdjustmentBehavior="automatic"
-            automaticallyAdjustKeyboardInsets={isIOS}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-          >
-            <View style={[styles.alertBox, styles.dangerAlert]}>
-              <UISymbol name="exclamationmark.triangle.fill" size={20} color={colors.error} />
-              <Text
-                style={styles.alertTitle}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                {t('settings.deleteAccountModal.warningTitle')}
-              </Text>
-              <Text
-                style={styles.alertText}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                {t('settings.deleteAccountModal.warningBody')}
-              </Text>
-            </View>
-
-            <View style={styles.deleteWarnings}>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.farms')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.records')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.workers')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.org')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.uploads')}
-              </Text>
-              <Text
-                style={styles.deleteWarningItem}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                • {t('settings.deleteAccountModal.dataList.profile')}
-              </Text>
-            </View>
-
-            <View style={styles.formCard}>
-              <View style={styles.mb4}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+          <KeyboardAvoidingView behavior={isIOS ? 'padding' : 'height'} style={styles.container}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderInner}>
                 <Text
-                  style={styles.inputLabel}
+                  style={styles.modalTitle}
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
-                  {phoneVerificationLabel}
+                  {t('settings.deleteAccountModal.title')}
                 </Text>
-                <View style={styles.inputDisabled}>
-                  <Text
-                    style={styles.inputDisabledText}
-                    textBreakStrategy="highQuality"
-                    lineBreakStrategyIOS="standard"
-                  >
-                    {canAttemptDeleteWithPhone
-                      ? deleteVerificationPhone
-                      : t('settings.deleteAccountModal.phoneNotAvailable', {
-                          defaultValue: 'No verified phone linked',
-                        })}
-                  </Text>
-                </View>
+                <Pressable onPress={() => setShowDeleteAccount(false)}>
+                  <UISymbol name="xmark.circle.fill" size={28} color={colors.gray[400]} />
+                </Pressable>
+              </View>
+            </View>
+
+            <ScrollView
+              style={styles.flex1}
+              contentContainerStyle={{ padding: spacing[4] }}
+              contentInsetAdjustmentBehavior="automatic"
+              automaticallyAdjustKeyboardInsets={isIOS}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
+              <View style={[styles.alertBox, styles.dangerAlert]}>
+                <UISymbol name="exclamationmark.triangle.fill" size={20} color={colors.error} />
                 <Text
-                  style={styles.inputHint}
+                  style={styles.alertTitle}
                   textBreakStrategy="highQuality"
                   lineBreakStrategyIOS="standard"
                 >
-                  {t('settings.deleteAccountModal.phoneVerificationHint', {
-                    defaultValue: 'Send OTP to your mobile number and verify it to continue.',
-                  })}
+                  {t('settings.deleteAccountModal.warningTitle')}
                 </Text>
-                <View style={styles.linkPhoneInputRow}>
-                  <Pressable
-                    onPress={handleSendDeletePhoneOtp}
-                    disabled={isSendingDeleteOtp || !canAttemptDeleteWithPhone}
-                    style={[
-                      styles.verifyPhoneCta,
-                      {
-                        opacity: isSendingDeleteOtp || !canAttemptDeleteWithPhone ? 0.5 : 1,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={styles.verifyPhoneCtaText}
-                      textBreakStrategy="highQuality"
-                      lineBreakStrategyIOS="standard"
-                    >
-                      {deletePhoneOtpSent
-                        ? t('settings.deleteAccountModal.resendOtp', { defaultValue: 'Resend OTP' })
-                        : t('settings.deleteAccountModal.sendOtp', { defaultValue: 'Send OTP' })}
-                    </Text>
-                  </Pressable>
-                </View>
-                {deletePhoneOtpSent ? (
-                  <View style={{ marginTop: spacing[3] }}>
-                    <TextInput
-                      value={deletePhoneOtp}
-                      onChangeText={(value) => {
-                        setDeletePhoneOtp(value);
-                        setDeletePhoneVerified(false);
-                      }}
-                      placeholder={t('settings.deleteAccountModal.enterOtp', {
-                        defaultValue: 'Enter OTP',
-                      })}
-                      placeholderTextColor={colors.gray[400]}
-                      keyboardType="number-pad"
-                      maxLength={6}
-                      style={styles.input}
-                    />
-                    <Pressable
-                      onPress={handleVerifyDeletePhoneOtp}
-                      disabled={isVerifyingDeleteOtp}
-                      style={[styles.verifyPhoneCta, { marginTop: spacing[2] }]}
-                    >
-                      <Text
-                        style={styles.verifyPhoneCtaText}
-                        textBreakStrategy="highQuality"
-                        lineBreakStrategyIOS="standard"
-                      >
-                        {deletePhoneVerified
-                          ? t('settings.deleteAccountModal.verified', { defaultValue: 'Verified' })
-                          : t('settings.deleteAccountModal.verifyOtp', {
-                              defaultValue: 'Verify OTP',
-                            })}
-                      </Text>
-                    </Pressable>
-                  </View>
-                ) : null}
+                <Text
+                  style={styles.alertText}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  {t('settings.deleteAccountModal.warningBody')}
+                </Text>
               </View>
 
-              {requireEmailOtpForDelete ? (
+              <View style={styles.deleteWarnings}>
+                <Text
+                  style={styles.deleteWarningItem}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  • {t('settings.deleteAccountModal.dataList.farms')}
+                </Text>
+                <Text
+                  style={styles.deleteWarningItem}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  • {t('settings.deleteAccountModal.dataList.records')}
+                </Text>
+                <Text
+                  style={styles.deleteWarningItem}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  • {t('settings.deleteAccountModal.dataList.workers')}
+                </Text>
+                <Text
+                  style={styles.deleteWarningItem}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  • {t('settings.deleteAccountModal.dataList.org')}
+                </Text>
+                <Text
+                  style={styles.deleteWarningItem}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  • {t('settings.deleteAccountModal.dataList.uploads')}
+                </Text>
+                <Text
+                  style={styles.deleteWarningItem}
+                  textBreakStrategy="highQuality"
+                  lineBreakStrategyIOS="standard"
+                >
+                  • {t('settings.deleteAccountModal.dataList.profile')}
+                </Text>
+              </View>
+
+              <View style={styles.formCard}>
                 <View style={styles.mb4}>
                   <Text
                     style={styles.inputLabel}
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
-                    {t('settings.deleteAccountModal.emailVerificationLabel', {
-                      defaultValue: 'Email verification (required)',
-                    })}
+                    {phoneVerificationLabel}
                   </Text>
                   <View style={styles.inputDisabled}>
                     <Text
@@ -2452,7 +2413,11 @@ export default function SettingsScreen() {
                       textBreakStrategy="highQuality"
                       lineBreakStrategyIOS="standard"
                     >
-                      {userEmail}
+                      {canAttemptDeleteWithPhone
+                        ? deleteVerificationPhone
+                        : t('settings.deleteAccountModal.phoneNotAvailable', {
+                            defaultValue: 'No verified phone linked',
+                          })}
                     </Text>
                   </View>
                   <Text
@@ -2460,18 +2425,18 @@ export default function SettingsScreen() {
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
-                    {t('settings.deleteAccountModal.emailVerificationHint', {
-                      defaultValue: 'Send OTP to your email and verify it to continue.',
+                    {t('settings.deleteAccountModal.phoneVerificationHint', {
+                      defaultValue: 'Send OTP to your mobile number and verify it to continue.',
                     })}
                   </Text>
                   <View style={styles.linkPhoneInputRow}>
                     <Pressable
-                      onPress={handleSendDeleteEmailOtp}
-                      disabled={isSendingDeleteOtp}
+                      onPress={handleSendDeletePhoneOtp}
+                      disabled={isSendingDeleteOtp || !canAttemptDeleteWithPhone}
                       style={[
                         styles.verifyPhoneCta,
                         {
-                          opacity: isSendingDeleteOtp ? 0.5 : 1,
+                          opacity: isSendingDeleteOtp || !canAttemptDeleteWithPhone ? 0.5 : 1,
                         },
                       ]}
                     >
@@ -2480,23 +2445,21 @@ export default function SettingsScreen() {
                         textBreakStrategy="highQuality"
                         lineBreakStrategyIOS="standard"
                       >
-                        {deleteEmailOtpSent
-                          ? t('settings.deleteAccountModal.resendLink', {
+                        {deletePhoneOtpSent
+                          ? t('settings.deleteAccountModal.resendOtp', {
                               defaultValue: 'Resend OTP',
                             })
-                          : t('settings.deleteAccountModal.sendLink', {
-                              defaultValue: 'Send OTP',
-                            })}
+                          : t('settings.deleteAccountModal.sendOtp', { defaultValue: 'Send OTP' })}
                       </Text>
                     </Pressable>
                   </View>
-                  {deleteEmailOtpSent ? (
+                  {deletePhoneOtpSent ? (
                     <View style={{ marginTop: spacing[3] }}>
                       <TextInput
-                        value={deleteEmailOtp}
+                        value={deletePhoneOtp}
                         onChangeText={(value) => {
-                          setDeleteEmailOtp(value);
-                          setDeleteEmailVerified(false);
+                          setDeletePhoneOtp(value);
+                          setDeletePhoneVerified(false);
                         }}
                         placeholder={t('settings.deleteAccountModal.enterOtp', {
                           defaultValue: 'Enter OTP',
@@ -2507,13 +2470,65 @@ export default function SettingsScreen() {
                         style={styles.input}
                       />
                       <Pressable
-                        onPress={handleVerifyDeleteEmailOtp}
+                        onPress={handleVerifyDeletePhoneOtp}
                         disabled={isVerifyingDeleteOtp}
+                        style={[styles.verifyPhoneCta, { marginTop: spacing[2] }]}
+                      >
+                        <Text
+                          style={styles.verifyPhoneCtaText}
+                          textBreakStrategy="highQuality"
+                          lineBreakStrategyIOS="standard"
+                        >
+                          {deletePhoneVerified
+                            ? t('settings.deleteAccountModal.verified', {
+                                defaultValue: 'Verified',
+                              })
+                            : t('settings.deleteAccountModal.verifyOtp', {
+                                defaultValue: 'Verify OTP',
+                              })}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
+                </View>
+
+                {requireEmailOtpForDelete ? (
+                  <View style={styles.mb4}>
+                    <Text
+                      style={styles.inputLabel}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {t('settings.deleteAccountModal.emailVerificationLabel', {
+                        defaultValue: 'Email verification (required)',
+                      })}
+                    </Text>
+                    <View style={styles.inputDisabled}>
+                      <Text
+                        style={styles.inputDisabledText}
+                        textBreakStrategy="highQuality"
+                        lineBreakStrategyIOS="standard"
+                      >
+                        {userEmail}
+                      </Text>
+                    </View>
+                    <Text
+                      style={styles.inputHint}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {t('settings.deleteAccountModal.emailVerificationHint', {
+                        defaultValue: 'Send OTP to your email and verify it to continue.',
+                      })}
+                    </Text>
+                    <View style={styles.linkPhoneInputRow}>
+                      <Pressable
+                        onPress={handleSendDeleteEmailOtp}
+                        disabled={isSendingDeleteOtp}
                         style={[
                           styles.verifyPhoneCta,
                           {
-                            marginTop: spacing[2],
-                            backgroundColor: colorWithOpacity(colors.primary[600], 0.2),
+                            opacity: isSendingDeleteOtp ? 0.5 : 1,
                           },
                         ]}
                       >
@@ -2522,97 +2537,144 @@ export default function SettingsScreen() {
                           textBreakStrategy="highQuality"
                           lineBreakStrategyIOS="standard"
                         >
-                          {deleteEmailVerified
-                            ? t('settings.deleteAccountModal.verified', {
-                                defaultValue: 'Verified',
+                          {deleteEmailOtpSent
+                            ? t('settings.deleteAccountModal.resendLink', {
+                                defaultValue: 'Resend OTP',
                               })
-                            : t('settings.deleteAccountModal.verifyEmail', {
-                                defaultValue: 'Verify OTP',
+                            : t('settings.deleteAccountModal.sendLink', {
+                                defaultValue: 'Send OTP',
                               })}
                         </Text>
                       </Pressable>
                     </View>
-                  ) : null}
-                </View>
-              ) : null}
+                    {deleteEmailOtpSent ? (
+                      <View style={{ marginTop: spacing[3] }}>
+                        <TextInput
+                          value={deleteEmailOtp}
+                          onChangeText={(value) => {
+                            setDeleteEmailOtp(value);
+                            setDeleteEmailVerified(false);
+                          }}
+                          placeholder={t('settings.deleteAccountModal.enterOtp', {
+                            defaultValue: 'Enter OTP',
+                          })}
+                          placeholderTextColor={colors.gray[400]}
+                          keyboardType="number-pad"
+                          maxLength={6}
+                          style={styles.input}
+                        />
+                        <Pressable
+                          onPress={handleVerifyDeleteEmailOtp}
+                          disabled={isVerifyingDeleteOtp}
+                          style={[
+                            styles.verifyPhoneCta,
+                            {
+                              marginTop: spacing[2],
+                              backgroundColor: colorWithOpacity(colors.primary[600], 0.2),
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={styles.verifyPhoneCtaText}
+                            textBreakStrategy="highQuality"
+                            lineBreakStrategyIOS="standard"
+                          >
+                            {deleteEmailVerified
+                              ? t('settings.deleteAccountModal.verified', {
+                                  defaultValue: 'Verified',
+                                })
+                              : t('settings.deleteAccountModal.verifyEmail', {
+                                  defaultValue: 'Verify OTP',
+                                })}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    ) : null}
+                  </View>
+                ) : null}
 
-              <View style={styles.mb4}>
-                <Text
-                  style={styles.inputLabel}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('settings.deleteAccountModal.reason.label')}
-                </Text>
-                <TextInput
-                  value={deleteReason}
-                  onChangeText={setDeleteReason}
-                  placeholder={t('settings.deleteAccountModal.reason.placeholder')}
-                  placeholderTextColor={colors.gray[400]}
-                  multiline
-                  numberOfLines={3}
-                  style={[styles.input, { height: 80 }]}
-                />
-                <Text
-                  style={styles.inputHint}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('settings.deleteAccountModal.reason.hint')}
-                </Text>
-              </View>
-
-              <Pressable
-                onPress={() => setDeleteConfirmed(!deleteConfirmed)}
-                style={styles.checkboxContainer}
-              >
-                <View style={[styles.checkbox, deleteConfirmed && styles.checkboxChecked]}>
-                  {deleteConfirmed && (
-                    <UISymbol name="checkmark" size={14} color={m3.colorScheme.onError} />
-                  )}
-                </View>
-                <Text
-                  style={styles.checkboxText}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('settings.deleteAccountModal.checkbox.prefix')}{' '}
+                <View style={styles.mb4}>
                   <Text
-                    style={styles.checkboxBold}
+                    style={styles.inputLabel}
                     textBreakStrategy="highQuality"
                     lineBreakStrategyIOS="standard"
                   >
-                    {t('settings.deleteAccountModal.checkbox.bold')}
-                  </Text>{' '}
-                  {t('settings.deleteAccountModal.checkbox.suffix')}
-                </Text>
+                    {t('settings.deleteAccountModal.reason.label')}
+                  </Text>
+                  <TextInput
+                    value={deleteReason}
+                    onChangeText={setDeleteReason}
+                    placeholder={t('settings.deleteAccountModal.reason.placeholder')}
+                    placeholderTextColor={colors.gray[400]}
+                    multiline
+                    numberOfLines={3}
+                    style={[styles.input, { height: 80 }]}
+                  />
+                  <Text
+                    style={styles.inputHint}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.deleteAccountModal.reason.hint')}
+                  </Text>
+                </View>
+
+                <Pressable
+                  onPress={() => setDeleteConfirmed(!deleteConfirmed)}
+                  style={styles.checkboxContainer}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: deleteConfirmed }}
+                  accessibilityLabel={t('settings.deleteAccountModal.checkbox.bold')}
+                  accessibilityHint={t('settings.deleteAccountModal.checkbox.suffix')}
+                >
+                  <View style={[styles.checkbox, deleteConfirmed && styles.checkboxChecked]}>
+                    {deleteConfirmed && (
+                      <UISymbol name="checkmark" size={14} color={m3.colorScheme.onError} />
+                    )}
+                  </View>
+                  <Text
+                    style={styles.checkboxText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.deleteAccountModal.checkbox.prefix')}{' '}
+                    <Text
+                      style={styles.checkboxBold}
+                      textBreakStrategy="highQuality"
+                      lineBreakStrategyIOS="standard"
+                    >
+                      {t('settings.deleteAccountModal.checkbox.bold')}
+                    </Text>{' '}
+                    {t('settings.deleteAccountModal.checkbox.suffix')}
+                  </Text>
+                </Pressable>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <Pressable
+                onPress={handleConfirmDeleteAccount}
+                disabled={!canSubmitDeleteAccount}
+                style={[
+                  styles.deleteButton,
+                  { backgroundColor: colors.error, opacity: canSubmitDeleteAccount ? 1 : 0.5 },
+                ]}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator color={m3.colorScheme.onPrimary} />
+                ) : (
+                  <Text
+                    style={styles.deleteButtonText}
+                    textBreakStrategy="highQuality"
+                    lineBreakStrategyIOS="standard"
+                  >
+                    {t('settings.deleteAccountModal.submit')}
+                  </Text>
+                )}
               </Pressable>
             </View>
-          </ScrollView>
-
-          <View style={styles.modalFooter}>
-            <Pressable
-              onPress={handleConfirmDeleteAccount}
-              disabled={!canSubmitDeleteAccount}
-              style={[
-                styles.deleteButton,
-                { backgroundColor: colors.error, opacity: canSubmitDeleteAccount ? 1 : 0.5 },
-              ]}
-            >
-              {isDeleting ? (
-                <ActivityIndicator color={m3.colorScheme.onPrimary} />
-              ) : (
-                <Text
-                  style={styles.deleteButtonText}
-                  textBreakStrategy="highQuality"
-                  lineBreakStrategyIOS="standard"
-                >
-                  {t('settings.deleteAccountModal.submit')}
-                </Text>
-              )}
-            </Pressable>
-          </View>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </Modal>
     </ScrollView>
   );

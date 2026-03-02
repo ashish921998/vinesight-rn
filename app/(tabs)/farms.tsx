@@ -13,7 +13,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useFarms, useDeleteFarm, useFabBottomPosition, isAndroid } from '@/hooks';
 import { FarmCard } from '@/components/cards';
@@ -252,6 +252,7 @@ export default function FarmsScreen() {
   const { t } = useTranslation();
 
   const router = useRouter();
+  const isScreenFocused = useIsFocused();
   const fabBottom = useFabBottomPosition();
   const { data: farms, isLoading, refetch } = useFarms();
   const deleteFarm = useDeleteFarm();
@@ -373,10 +374,11 @@ export default function FarmsScreen() {
           >
             {t('common.loading')}
           </Text>
-          {/* Keep GuidedTourTarget mounted during loading so the controller can measure
-              it as soon as layout is available. The target registers on first onLayout. */}
+          {/* Keep GuidedTourTarget mounted during loading so the controller can
+              resolve the add-farm target before farms data finishes loading. */}
           <GuidedTourTarget
             targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+            enabled={isScreenFocused}
             style={{
               position: 'absolute',
               opacity: 0,
@@ -505,7 +507,10 @@ export default function FarmsScreen() {
           {t('farms.empty.subtitle')}
         </Text>
         <View style={{ marginTop: spacing[6], width: '100%', maxWidth: 360 }}>
-          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}>
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+            enabled={isScreenFocused}
+          >
             <Button title={t('farms.addFarm')} onPress={handleAddFarm} />
           </GuidedTourTarget>
         </View>
@@ -563,6 +568,7 @@ export default function FarmsScreen() {
       {showFab && (
         <GuidedTourTarget
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+          enabled={isScreenFocused}
           style={{
             position: 'absolute',
             bottom: fabBottom,
