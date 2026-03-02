@@ -40,6 +40,8 @@ import {
 import { useTasks, useCompleteTask, useDeleteTask } from '@/hooks/use-tasks';
 import { StatsCard, TaskRow, TimelineLogCard } from '@/components/cards';
 import { useTranslation } from 'react-i18next';
+import { useNotificationStore } from '@/stores';
+import { cancelNotification } from '@/services/notifications';
 import type {
   IrrigationRecord,
   SprayRecord,
@@ -108,6 +110,19 @@ export default function FarmDetailScreen() {
   const { needsReview: needsSeasonReview } = useFarmSeasonStatus(farmId);
   const completeMutation = useCompleteTask();
   const deleteMutation = useDeleteTask();
+  const taskSchedules = useNotificationStore((s) => s.taskSchedules);
+  const removeTaskSchedule = useNotificationStore((s) => s.removeTaskSchedule);
+
+  const cleanupTaskNotifications = async (taskId: number): Promise<void> => {
+    const schedule = taskSchedules[String(taskId)];
+    if (!schedule) return;
+
+    if (schedule.notificationIds?.length) {
+      await Promise.allSettled(schedule.notificationIds.map(cancelNotification));
+    }
+    removeTaskSchedule(String(taskId));
+  };
+
   const deleteFarmMutation = useDeleteFarm();
   const deleteIrrigation = useDeleteIrrigationRecord();
   const deleteSpray = useDeleteSprayRecord();
@@ -900,6 +915,7 @@ export default function FarmDetailScreen() {
         onPress: () => {
           completeMutation.mutate(taskId, {
             onSuccess: () => {
+              void cleanupTaskNotifications(taskId);
               refetchTasks();
             },
             onError: (error: Error) => {
@@ -924,6 +940,7 @@ export default function FarmDetailScreen() {
         onPress: () => {
           deleteMutation.mutate(taskId, {
             onSuccess: () => {
+              void cleanupTaskNotifications(taskId);
               refetchTasks();
             },
             onError: (error: Error) => {

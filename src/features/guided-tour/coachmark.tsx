@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -52,8 +52,23 @@ export function GuidedTourCoachmark({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [keyboardHeight, setKeyboardHeight] = React.useState(0);
+  const pulse = useMemo(() => new Animated.Value(0), []);
   const reveal = useMemo(() => new Animated.Value(0), []);
   const lastClampKeyRef = React.useRef<string | null>(null);
+  const [measuredTooltipHeight, setMeasuredTooltipHeight] = useState<number | null>(null);
+  const [measuredContentKey, setMeasuredContentKey] = useState<string>('');
+
+  const currentContentKey = useMemo(
+    () =>
+      JSON.stringify({
+        message,
+        step,
+        actionLabel,
+        secondaryActionLabel,
+        tooltipPlacement,
+      }),
+    [message, step, actionLabel, secondaryActionLabel, tooltipPlacement],
+  );
 
   useEffect(() => {
     Animated.timing(reveal, {
@@ -62,7 +77,26 @@ export function GuidedTourCoachmark({
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [reveal]);
+
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 1100,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 1100,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse, reveal]);
 
   useEffect(() => {
     const onShow = (event: { endCoordinates?: { height?: number } }) =>
@@ -86,9 +120,25 @@ export function GuidedTourCoachmark({
   const progressLabel = step === 'add_farm' ? '1 / 2' : '2 / 2';
   const isNonBlocking = !blockOutsideTouches;
   const hasCoachActions = Boolean(actionLabel || secondaryActionLabel);
-  const baseTooltipHeight = hasCoachActions ? 260 : 200;
+  const copyLines = label
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const primaryLine = copyLines[0] ?? label;
+  const secondaryLine = copyLines.slice(1).join(' ');
+  const hasMultiLineMessage = copyLines.length > 1;
+  // Fall back to a conservative estimate until onLayout gives us the real height.
+  // The reveal animation (260ms fade-in) ensures the tooltip is invisible while
+  // the first layout fires, so there is no visible jump on either platform.
+  // Only use cached height if content hasn't changed since measurement.
   const TOOLTIP_HEIGHT_ESTIMATE =
-    Platform.OS === 'android' ? baseTooltipHeight + 80 : baseTooltipHeight;
+    currentContentKey === measuredContentKey
+      ? (measuredTooltipHeight ?? (hasCoachActions ? 260 : hasMultiLineMessage ? 170 : 130))
+      : hasCoachActions
+        ? 260
+        : hasMultiLineMessage
+          ? 170
+          : 130;
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const keyboardBottomInset = Math.max(0, keyboardHeight - insets.bottom);
   const rectY = Platform.OS === 'android' ? rect.y + insets.top : rect.y;
@@ -109,6 +159,11 @@ export function GuidedTourCoachmark({
     tooltipPlacement === 'top'
       ? Math.max(286, screenWidth - spacing[8])
       : Math.max(240, screenWidth - tooltipLeft - spacing[4]);
+  // If the target is roughly square (e.g. a circular FAB) use a full circle ring;
+  // otherwise fall back to the themed rounded-rect radii.
+  const isCircularTarget = Math.abs(rect.width - rect.height) < 8;
+  const innerRingRadius = isCircularTarget ? borderRadius.full : borderRadius.xl;
+  const outerRingRadius = isCircularTarget ? borderRadius.full : borderRadius['2xl'];
   const accentColor = step === 'add_farm' ? '#2FA36D' : '#4A86E8';
   const gradientColors: [string, string] =
     step === 'add_farm' ? ['#195A3A', '#2FA36D'] : ['#2D5DB8', '#4A86E8'];
@@ -120,6 +175,14 @@ export function GuidedTourCoachmark({
   const bubbleTranslateY = reveal.interpolate({
     inputRange: [0, 1],
     outputRange: [10, 0],
+  });
+  const ringScale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.1],
+  });
+  const ringOpacity = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.35, 0.16],
   });
 
   const SKIP_CHIP_HEIGHT = 44;
@@ -139,12 +202,6 @@ export function GuidedTourCoachmark({
   const pointerLeft = Math.max(18, Math.min(bubbleWidth - 30, targetCenterX - bubbleLeft - 10));
   const showPointer =
     targetCenterX >= bubbleLeft + 8 && targetCenterX <= bubbleLeft + bubbleWidth - 8;
-  const copyLines = label
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const primaryLine = copyLines[0] ?? label;
-  const secondaryLine = copyLines.slice(1).join(' ');
   const showTapHint = step === 'add_farm' || step === 'add_log';
 
   useEffect(() => {
@@ -220,6 +277,21 @@ export function GuidedTourCoachmark({
         />
       </>
 
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: rectX - (focusInsetX + 8),
+          top: rectY - (focusInsetY + 8),
+          width: rect.width + (focusInsetX + 8) * 2,
+          height: rect.height + (focusInsetY + 8) * 2,
+          borderRadius: outerRingRadius,
+          borderWidth: 2,
+          borderColor: colorWithOpacity(accentColor, 0.55),
+          transform: [{ scale: ringScale }],
+          opacity: ringOpacity,
+        }}
+      />
       <View
         pointerEvents="none"
         style={{
@@ -228,7 +300,7 @@ export function GuidedTourCoachmark({
           top: rectY - focusInsetY,
           width: rect.width + focusInsetX * 2,
           height: rect.height + focusInsetY * 2,
-          borderRadius: borderRadius.xl,
+          borderRadius: innerRingRadius,
           borderWidth: 2.5,
           borderColor: accentColor,
           backgroundColor: 'transparent',
@@ -259,6 +331,13 @@ export function GuidedTourCoachmark({
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 0) {
+              setMeasuredContentKey(currentContentKey);
+              setMeasuredTooltipHeight(h);
+            }
+          }}
           style={{
             borderRadius: borderRadius.xl,
             borderWidth: 1,

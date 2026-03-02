@@ -1668,6 +1668,10 @@ export const en = {
       title: 'Petiole Test Reminder',
       body: '{{farmName}}: Day {{day}} petiole test is tomorrow',
     },
+    taskOverdue: {
+      title: '$t(glossary.task) overdue',
+      body: 'You have an overdue task. Please complete or reschedule it.',
+    },
   },
 
   dashboard: {
