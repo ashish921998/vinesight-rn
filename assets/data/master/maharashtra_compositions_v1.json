@@ -1,210 +1,600 @@
 {
-  "version": "v1",
+  "version": "v2",
   "stateCode": "MH",
   "rows": [
     {
-      "productKey": "propineb_70_wp",
-      "componentCode": "PROPINEB",
+      "productKey": "00_52_34",
+      "componentCode": "00_52_34",
       "componentType": "active_ingredient",
-      "percent": 70,
+      "percent": 0.0,
       "basis": "declared",
       "verified": true,
-      "sourceNote": "Product label"
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "dimethomorph_50_wp",
-      "componentCode": "DIMETHOMORPH",
+      "productKey": "0_52_34",
+      "componentCode": "0_52_34",
       "componentType": "active_ingredient",
-      "percent": 50,
+      "percent": 0.0,
       "basis": "declared",
       "verified": true,
-      "sourceNote": "Product label"
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "mancozeb_75_wp",
-      "componentCode": "MANCOZEB",
+      "productKey": "acrobat",
+      "componentCode": "DIMITHOMORPH",
       "componentType": "active_ingredient",
-      "percent": 75,
+      "percent": 50.0,
       "basis": "declared",
       "verified": true,
-      "sourceNote": "Product label"
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "fosetyl_al_80_wp",
-      "componentCode": "FOSETYL_AL",
+      "productKey": "acrobat_antracol",
+      "componentCode": "DIMITHOMORPH",
       "componentType": "active_ingredient",
-      "percent": 80,
+      "percent": 50.0,
       "basis": "declared",
       "verified": true,
-      "sourceNote": "Product label"
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "methomyl_40_sp",
-      "componentCode": "METHOMYL",
-      "componentType": "active_ingredient",
-      "percent": 40,
-      "basis": "declared",
-      "verified": true,
-      "sourceNote": "Product label"
-    },
-    {
-      "productKey": "thiamethoxam_25_wg",
+      "productKey": "actra",
       "componentCode": "THIAMETHOXAM",
       "componentType": "active_ingredient",
-      "percent": 25,
+      "percent": 25.0,
       "basis": "declared",
       "verified": true,
-      "sourceNote": "Product label"
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "lambda_cyhalothrin_5_ec",
-      "componentCode": "LAMBDA_CYHALOTHRIN",
+      "productKey": "admire",
+      "componentCode": "IMIDACHLOPRIDE",
       "componentType": "active_ingredient",
-      "percent": 5,
+      "percent": 70.0,
       "basis": "declared",
       "verified": true,
-      "sourceNote": "Product label"
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "mandipropamide_23_4_sc",
+      "productKey": "aliette",
+      "componentCode": "FOSETYL",
+      "componentType": "active_ingredient",
+      "percent": 80.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "amistar",
+      "componentCode": "AZOXYSTROBIN",
+      "componentType": "active_ingredient",
+      "percent": 23.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "antracol",
+      "componentCode": "PROPINEB",
+      "componentType": "active_ingredient",
+      "percent": 70.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "antracol_sutlex",
+      "componentCode": "PROPINEB",
+      "componentType": "active_ingredient",
+      "percent": 70.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "applaud",
+      "componentCode": "BUPROFEZIN",
+      "componentType": "active_ingredient",
+      "percent": 25.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "bavistin",
+      "componentCode": "CARBENDAZIM",
+      "componentType": "active_ingredient",
+      "percent": 50.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "bavistin_nuvan",
+      "componentCode": "CARBENDAZIM",
+      "componentType": "active_ingredient",
+      "percent": 50.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "bayleton",
+      "componentCode": "TRIADIMEFON",
+      "componentType": "active_ingredient",
+      "percent": 25.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "cabrio_top",
+      "componentCode": "PYRACLOSTROBIN",
+      "componentType": "active_ingredient",
+      "percent": 5.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "cabrio_top_proclaim",
+      "componentCode": "PYRACLOSTROBIN5",
+      "componentType": "active_ingredient",
+      "percent": 5.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "chloro",
+      "componentCode": "CHLOROPYRIPHOS",
+      "componentType": "active_ingredient",
+      "percent": 50.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "confidor",
+      "componentCode": "IMIDACHLOPRIDE",
+      "componentType": "active_ingredient",
+      "percent": 17.8,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "confidor_super",
+      "componentCode": "IMIDACLOPRID",
+      "componentType": "active_ingredient",
+      "percent": 30.5,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "confidor_super_tilt",
+      "componentCode": "IMIDACHLOPRIDE",
+      "componentType": "active_ingredient",
+      "percent": 30.5,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "confidor_super_karate",
+      "componentCode": "IMIDACLOPRID",
+      "componentType": "active_ingredient",
+      "percent": 30.5,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "contaf",
+      "componentCode": "HEXACONAZOLE",
+      "componentType": "active_ingredient",
+      "percent": 5.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "copper",
+      "componentCode": "COPPER",
+      "componentType": "active_ingredient",
+      "percent": 77.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "cppu",
+      "componentCode": "FORCHLORFENURON",
+      "componentType": "active_ingredient",
+      "percent": 0.1,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "cuman_l",
+      "componentCode": "ZIRUM",
+      "componentType": "active_ingredient",
+      "percent": 27.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "cuman_l_regent",
+      "componentCode": "ZIRUM",
+      "componentType": "active_ingredient",
+      "percent": 27.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "curacron",
+      "componentCode": "PROFENOPHOS50",
+      "componentType": "active_ingredient",
+      "percent": 50.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "dentastu",
+      "componentCode": "CLOTHIANIDIN",
+      "componentType": "active_ingredient",
+      "percent": 50.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "diamore_cppu_calcium",
+      "componentCode": "BRASSINOLIDES_FORCHLORFENURON",
+      "componentType": "active_ingredient",
+      "percent": 0.1,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "domark",
+      "componentCode": "TETRACONAZOLE",
+      "componentType": "active_ingredient",
+      "percent": 3.8,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "equation_pro",
+      "componentCode": "FAMOXADONE",
+      "componentType": "active_ingredient",
+      "percent": 16.6,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "ergon",
+      "componentCode": "KRESOXIM",
+      "componentType": "active_ingredient",
+      "percent": 44.3,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "ethrel",
+      "componentCode": "ETHEPON",
+      "componentType": "active_ingredient",
+      "percent": 39.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "flotis",
+      "componentCode": "BUPROFENZIN",
+      "componentType": "active_ingredient",
+      "percent": 25.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "folicur",
+      "componentCode": "TEBUCONAZOLE",
+      "componentType": "active_ingredient",
+      "percent": 25.9,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "jump",
+      "componentCode": "FIPRONIL",
+      "componentType": "active_ingredient",
+      "percent": 80.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "karate",
+      "componentCode": "LAMBDA",
+      "componentType": "active_ingredient",
+      "percent": 5.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "karate_proclaim",
+      "componentCode": "LAMBDA",
+      "componentType": "active_ingredient",
+      "percent": 5.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "karathane",
+      "componentCode": "DINOCAP",
+      "componentType": "active_ingredient",
+      "percent": 48.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "kocide",
+      "componentCode": "COPPER",
+      "componentType": "active_ingredient",
+      "percent": 77.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "lannate",
+      "componentCode": "METHOMYL",
+      "componentType": "active_ingredient",
+      "percent": 40.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "m_45",
+      "componentCode": "MANCOZEB",
+      "componentType": "active_ingredient",
+      "percent": 75.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "m45",
+      "componentCode": "MANCOZEB",
+      "componentType": "active_ingredient",
+      "percent": 75.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "melody_duo",
+      "componentCode": "IPROVALICARB",
+      "componentType": "active_ingredient",
+      "percent": 5.5,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "melody_duo_confidor_super",
+      "componentCode": "IPROVALICARB",
+      "componentType": "active_ingredient",
+      "percent": 5.5,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "nativo",
+      "componentCode": "TEBUCONAZOLE",
+      "componentType": "active_ingredient",
+      "percent": 50.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "nustar",
+      "componentCode": "FLUSILAZOLE",
+      "componentType": "active_ingredient",
+      "percent": 40.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "nuvan",
+      "componentCode": "DICHLORVOS",
+      "componentType": "active_ingredient",
+      "percent": 76.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "planofix",
+      "componentCode": "ALPHA",
+      "componentType": "active_ingredient",
+      "percent": 4.5,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "pottasium_bicarbonate",
+      "componentCode": "KHCO3",
+      "componentType": "active_ingredient",
+      "percent": 3.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "proclaim",
+      "componentCode": "EMAMECTIN",
+      "componentType": "active_ingredient",
+      "percent": 5.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "proclaim_antracol",
+      "componentCode": "EMAMECTIN",
+      "componentType": "active_ingredient",
+      "percent": 5.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "regent",
+      "componentCode": "FIPRONIL",
+      "componentType": "active_ingredient",
+      "percent": 5.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "revus",
       "componentCode": "MANDIPROPAMIDE",
       "componentType": "active_ingredient",
       "percent": 23.4,
       "basis": "declared",
       "verified": true,
-      "sourceNote": "Product label"
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "imidacloprid_17_8_sl",
-      "componentCode": "IMIDACLOPRID",
+      "productKey": "ridomil_gold",
+      "componentCode": "METALAXYL_M",
       "componentType": "active_ingredient",
-      "percent": 17.8,
+      "percent": 4.0,
       "basis": "declared",
       "verified": true,
-      "sourceNote": "Product label"
-    },
-
-    {
-      "productKey": "mahadhan_19_19_19",
-      "componentCode": "N",
-      "componentType": "nutrient",
-      "percent": 19,
-      "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "mahadhan_19_19_19",
-      "componentCode": "P2O5",
-      "componentType": "nutrient",
-      "percent": 19,
+      "productKey": "rogar",
+      "componentCode": "DIAMETHOATE",
+      "componentType": "active_ingredient",
+      "percent": 30.0,
       "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "mahadhan_19_19_19",
-      "componentCode": "K2O",
-      "componentType": "nutrient",
-      "percent": 19,
+      "productKey": "roko",
+      "componentCode": "THIOPHANATE",
+      "componentType": "active_ingredient",
+      "percent": 70.0,
       "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
-    },
-
-    {
-      "productKey": "mahadhan_12_61_00",
-      "componentCode": "N",
-      "componentType": "nutrient",
-      "percent": 12,
-      "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "mahadhan_12_61_00",
-      "componentCode": "P2O5",
-      "componentType": "nutrient",
-      "percent": 61,
+      "productKey": "score",
+      "componentCode": "DIFENCONAZOL",
+      "componentType": "active_ingredient",
+      "percent": 25.0,
       "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
-    },
-
-    {
-      "productKey": "mahadhan_00_52_34",
-      "componentCode": "P2O5",
-      "componentType": "nutrient",
-      "percent": 52,
-      "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "mahadhan_00_52_34",
-      "componentCode": "K2O",
-      "componentType": "nutrient",
-      "percent": 34,
+      "productKey": "sectin",
+      "componentCode": "FENAMIDONE",
+      "componentType": "active_ingredient",
+      "percent": 10.0,
       "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
-    },
-
-    {
-      "productKey": "mahadhan_13_00_45",
-      "componentCode": "N",
-      "componentType": "nutrient",
-      "percent": 13,
-      "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "mahadhan_13_00_45",
-      "componentCode": "K2O",
-      "componentType": "nutrient",
-      "percent": 45,
+      "productKey": "sinamac",
+      "componentCode": "PROPINEB",
+      "componentType": "active_ingredient",
+      "percent": 61.25,
       "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
-    },
-
-    {
-      "productKey": "mahadhan_dap_18_46_00",
-      "componentCode": "N",
-      "componentType": "nutrient",
-      "percent": 18,
-      "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "mahadhan_dap_18_46_00",
-      "componentCode": "P2O5",
-      "componentType": "nutrient",
-      "percent": 46,
+      "productKey": "spintor",
+      "componentCode": "SPINOSAD",
+      "componentType": "active_ingredient",
+      "percent": 45.0,
       "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
-    },
-
-    {
-      "productKey": "mahadhan_ammonium_sulphate",
-      "componentCode": "N",
-      "componentType": "nutrient",
-      "percent": 20.5,
-      "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
     },
     {
-      "productKey": "mahadhan_ammonium_sulphate",
-      "componentCode": "S",
-      "componentType": "nutrient",
-      "percent": 23,
+      "productKey": "sulphur",
+      "componentCode": "SULPHUR",
+      "componentType": "active_ingredient",
+      "percent": 80.0,
       "basis": "declared",
-      "verified": false,
-      "sourceNote": "Manufacturer literature"
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "systhane",
+      "componentCode": "SULPHUR",
+      "componentType": "active_ingredient",
+      "percent": 80.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "tilt",
+      "componentCode": "PROPICONAZOLE",
+      "componentType": "active_ingredient",
+      "percent": 25.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "topaz",
+      "componentCode": "PROPINEB",
+      "componentType": "active_ingredient",
+      "percent": 61.25,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
+    },
+    {
+      "productKey": "zampro",
+      "componentCode": "AMETOCTRADIN",
+      "componentType": "active_ingredient",
+      "percent": 27.0,
+      "basis": "declared",
+      "verified": true,
+      "sourceNote": "Spray calculator.pdf"
     }
   ]
 }

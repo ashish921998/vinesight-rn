@@ -1,15 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, View, Text, Pressable, TextInput } from 'react-native';
+import { ScrollView, View, Text, Pressable, TextInput, Share } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useLocalSearchParams } from 'expo-router';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useChemicalMixSearch } from '@/hooks';
-import { computeTankMixQuantities } from '@/services/phi-service';
+import { computeTankMixCostSummary } from '@/services/phi-service';
 import type { ChemicalMix } from '@/types/phi';
 
 export default function TankMixCalculatorScreen() {
   const { t } = useTranslation();
+  const params = useLocalSearchParams<{ mixId?: string }>();
   const m3 = useM3();
   const colors = useThemeColors();
   const [query, setQuery] = useState('');
@@ -18,11 +20,18 @@ export default function TankMixCalculatorScreen() {
 
   const tankLiters = Number.parseFloat(tankLitersText);
   const { data: mixes = [], isLoading } = useChemicalMixSearch(query);
-  const rows = useMemo(
+  const preselectedMixId = Number.parseInt(params.mixId ?? '', 10);
+
+  React.useEffect(() => {
+    if (!Number.isFinite(preselectedMixId)) return;
+    const mix = mixes.find((entry) => entry.id === preselectedMixId);
+    if (mix) setSelectedMix(mix);
+  }, [preselectedMixId, mixes]);
+  const summary = useMemo(
     () =>
       selectedMix && Number.isFinite(tankLiters)
-        ? computeTankMixQuantities(selectedMix, tankLiters)
-        : [],
+        ? computeTankMixCostSummary(selectedMix, tankLiters)
+        : { rows: [], totalCost: null, currency: null },
     [selectedMix, tankLiters],
   );
 
@@ -157,7 +166,7 @@ export default function TankMixCalculatorScreen() {
               liters: tankLiters.toFixed(0),
             })}
           </Text>
-          {rows.map((row) => (
+          {summary.rows.map((row) => (
             <View
               key={row.componentId}
               style={{
@@ -191,8 +200,78 @@ export default function TankMixCalculatorScreen() {
                   unit: row.doseUnit,
                 })}
               </Text>
+              {row.packagingSize ? (
+                <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
+                  {t('tankMix.packaging', {
+                    defaultValue: 'Packaging: {{size}} · Required packs: {{count}}',
+                    size: row.packagingSize,
+                    count: row.packageCount ?? '—',
+                  })}
+                </Text>
+              ) : null}
+              {row.componentCost != null ? (
+                <Text
+                  style={{
+                    color: m3.colorScheme.primary,
+                    marginTop: spacing[1],
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  {t('tankMix.componentCost', {
+                    defaultValue: 'Component cost: {{currency}} {{cost}}',
+                    currency: row.currency ?? summary.currency ?? 'INR',
+                    cost: row.componentCost,
+                  })}
+                </Text>
+              ) : null}
             </View>
           ))}
+          {summary.totalCost != null ? (
+            <Text
+              style={{
+                color: m3.colorScheme.primary,
+                marginTop: spacing[2],
+                fontWeight: fontWeight.bold,
+              }}
+            >
+              {t('tankMix.totalCost', {
+                defaultValue: 'Estimated total cost: {{currency}} {{cost}}',
+                currency: summary.currency ?? 'INR',
+                cost: summary.totalCost,
+              })}
+            </Text>
+          ) : null}
+          <Pressable
+            onPress={async () => {
+              if (!selectedMix) return;
+              const lines = summary.rows.map(
+                (row) =>
+                  `${row.productName}: ${row.totalQuantity}${row.doseUnit}${row.componentCost != null ? ` (${row.currency ?? 'INR'} ${row.componentCost})` : ''}`,
+              );
+              const text = [
+                `${selectedMix.name} - ${tankLiters.toFixed(0)}L`,
+                ...lines,
+                summary.totalCost != null
+                  ? `Total: ${summary.currency ?? 'INR'} ${summary.totalCost}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join('\n');
+              await Share.share({ message: text });
+            }}
+            style={{
+              marginTop: spacing[3],
+              borderRadius: borderRadius.full,
+              alignSelf: 'flex-start',
+              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2],
+            }}
+          >
+            <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
+              {t('tankMix.shareSummary', { defaultValue: 'Share mix summary' })}
+            </Text>
+          </Pressable>
         </View>
       ) : null}
     </ScrollView>

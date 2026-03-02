@@ -113,6 +113,45 @@ export const hi = {
     },
   },
 
+  sprayCatalog: {
+    title: 'स्प्रे कैटलॉग',
+    subtitle: 'कीट, मोड और लागत के आधार पर मिक्स देखें।',
+    searchPlaceholder: 'मिक्स, कीट या उत्पाद खोजें',
+    modeFilter: 'आवेदन मोड',
+    modeAll: 'सभी',
+    modePreventive: 'निवारक',
+    modeCurative: 'उपचारात्मक',
+    modeBoth: 'दोनों',
+    pestFilter: 'लक्ष्य कीट/समस्या',
+    genericProblem: 'सामान्य सुरक्षा',
+    modeLabel: 'मोड: {{mode}}',
+    cost200l: 'अनुमानित 200L लागत: {{value}}',
+    openTankMix: 'टैंक मिक्स कैलकुलेटर में खोलें',
+  },
+
+  sprayCost: {
+    title: 'स्प्रे लागत कैलकुलेटर',
+    subtitle: 'टैंक, क्षेत्र और प्रति एकड़ मात्रा के आधार पर लागत का अनुमान लगाएं।',
+    searchPlaceholder: 'कैटलॉग मिक्स खोजें',
+    tankLiters: 'टैंक लीटर',
+    areaAcres: 'क्षेत्र (एकड़)',
+    volumePerAcre: 'प्रति एकड़ स्प्रे मात्रा (L)',
+    catalogMixes: 'कैटलॉग मिक्स',
+    perTank: 'प्रति टैंक लागत: {{currency}} {{value}}',
+    totalLiters: 'कुल स्प्रे मात्रा: {{value}} L',
+    tankCount: 'आवश्यक टैंक संख्या: {{value}}',
+    totalCost: 'अनुमानित कुल लागत: {{currency}} {{value}}',
+  },
+
+  productDetail: {
+    titleFallback: 'उत्पाद विवरण',
+    activeIngredient: 'सक्रिय घटक: {{value}}',
+    phiDays: 'PHI: {{days}} दिन',
+    price: 'मूल्य: {{currency}} {{price}}',
+    packaging: 'पैकिंग: {{value}}',
+    usageCount: '{{count}} कैटलॉग मिक्स में उपयोग',
+  },
+
   farmDetails: {
     loadingFarm: 'खेत लोड हो रहा है…',
     notFound: {
@@ -764,6 +803,8 @@ export const hi = {
       nutrientCalculator: 'पोषक तत्व कैलकुलेटर',
       tankMixCalculator: 'टैंक मिक्स कैलकुलेटर',
       safeToSprayChecker: 'Safe-to-spray चेकर',
+      sprayCatalog: 'स्प्रे कैटलॉग',
+      sprayCostCalculator: 'स्प्रे लागत कैलकुलेटर',
     },
     descriptions: {
       weatherIrrigation: 'मौसम पूर्वानुमान जांचें और ET0 के आधार पर सिंचाई आवश्यकताओं की गणना करें',
@@ -773,6 +814,8 @@ export const hi = {
       nutrientCalculator: 'लैब परीक्षणों के आधार पर उर्वरक और पोषक तत्वों की आवश्यकता की गणना करें',
       tankMixCalculator: 'टैंक लीटर के आधार पर प्रत्येक घटक की सटीक gm/ml मात्रा निकालें',
       safeToSprayChecker: 'लक्ष्य कटाई तिथि के लिए सुरक्षित स्प्रे विंडो जांचें',
+      sprayCatalog: 'कीट, मोड, PHI और लागत के साथ कैटलॉग स्प्रे/मिक्स ब्राउज़ करें',
+      sprayCostCalculator: 'टैंक और पूरे क्षेत्र के लिए स्प्रे लागत का अनुमान लगाएं',
     },
   },
 
@@ -787,6 +830,10 @@ export const hi = {
     resultTitle: '{{liters}}L के लिए आवश्यक मात्रा',
     resultDose: 'डोज: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'कुल: {{value}} {{unit}}',
+    packaging: 'पैकिंग: {{size}} · आवश्यक पैक: {{count}}',
+    componentCost: 'घटक लागत: {{currency}} {{cost}}',
+    totalCost: 'अनुमानित कुल लागत: {{currency}} {{cost}}',
+    shareSummary: 'मिक्स सारांश साझा करें',
   },
 
   safeToSpray: {

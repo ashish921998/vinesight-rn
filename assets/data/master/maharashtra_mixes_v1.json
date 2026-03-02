@@ -1,20 +1,49 @@
 {
-  "version": "v1",
+  "version": "v2",
   "crop": "grape",
-  "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+  "sourceDocument": "Spray calculator.pdf",
   "mixes": [
     {
       "name": "Antracol",
       "targetProblem": "Downy mildew",
       "applicationMode": "preventive",
       "sourcePage": 1,
-      "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+      "sourceDocument": "Spray calculator.pdf",
       "crop": "grape",
       "isActive": true,
+      "estimatedCostPer200L": 550.0,
       "components": [
         {
-          "productKey": "propineb_70_wp",
-          "doseValue": 3,
+          "productKey": "antracol",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Antracol +Sutlex",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "antracol_sutlex",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "antracol_sutlex",
+          "doseValue": 1.0,
           "doseUnit": "gm",
           "doseBasis": "per_liter",
           "baseTankLiters": null,
@@ -27,21 +56,126 @@
       "targetProblem": "Downy mildew",
       "applicationMode": "preventive",
       "sourcePage": 1,
-      "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+      "sourceDocument": "Spray calculator.pdf",
       "crop": "grape",
       "isActive": true,
+      "estimatedCostPer200L": 550.0,
       "components": [
         {
-          "productKey": "propineb_70_wp",
-          "doseValue": 3,
+          "productKey": "antracol",
+          "doseValue": 3.0,
           "doseUnit": "gm",
           "doseBasis": "per_liter",
           "baseTankLiters": null,
           "notes": null
         },
         {
-          "productKey": "copper_oxychloride",
+          "productKey": "topgun",
           "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "00:52:34 + Micro Nutrients",
+      "targetProblem": "Nutrients",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "00_52_34",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "micro_nutrients",
+          "doseValue": 2.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1020.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + GA",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1020.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "ga",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + Kocide",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1240.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
           "doseUnit": "gm",
           "doseBasis": "per_liter",
           "baseTankLiters": null,
@@ -54,21 +188,22 @@
       "targetProblem": "Downy mildew",
       "applicationMode": "preventive",
       "sourcePage": 1,
-      "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+      "sourceDocument": "Spray calculator.pdf",
       "crop": "grape",
       "isActive": true,
+      "estimatedCostPer200L": 1020.0,
       "components": [
         {
-          "productKey": "dimethomorph_50_wp",
-          "doseValue": 1,
+          "productKey": "acrobat",
+          "doseValue": 1.0,
           "doseUnit": "gm",
           "doseBasis": "per_liter",
           "baseTankLiters": null,
           "notes": null
         },
         {
-          "productKey": "mancozeb_75_wp",
-          "doseValue": 2.5,
+          "productKey": "m45",
+          "doseValue": 1.0,
           "doseUnit": "gm",
           "doseBasis": "per_liter",
           "baseTankLiters": null,
@@ -77,52 +212,366 @@
       ]
     },
     {
-      "name": "Aliette + Lannate",
-      "targetProblem": "Downy mildew + sucking pests",
-      "applicationMode": "preventive",
-      "sourcePage": 2,
-      "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
-      "crop": "grape",
-      "isActive": true,
-      "components": [
-        {
-          "productKey": "fosetyl_al_80_wp",
-          "doseValue": 3,
-          "doseUnit": "gm",
-          "doseBasis": "per_liter",
-          "baseTankLiters": null,
-          "notes": null
-        },
-        {
-          "productKey": "methomyl_40_sp",
-          "doseValue": 1,
-          "doseUnit": "gm",
-          "doseBasis": "per_liter",
-          "baseTankLiters": null,
-          "notes": null
-        }
-      ]
-    },
-    {
-      "name": "Aliette + M45",
+      "name": "Acrobat +Antracol",
       "targetProblem": "Downy mildew",
       "applicationMode": "preventive",
-      "sourcePage": 2,
-      "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
       "crop": "grape",
       "isActive": true,
+      "estimatedCostPer200L": null,
       "components": [
         {
-          "productKey": "fosetyl_al_80_wp",
-          "doseValue": 2.5,
+          "productKey": "acrobat_antracol",
+          "doseValue": 1.0,
           "doseUnit": "gm",
           "doseBasis": "per_liter",
           "baseTankLiters": null,
           "notes": null
         },
         {
-          "productKey": "mancozeb_75_wp",
-          "doseValue": 2.5,
+          "productKey": "acrobat_antracol",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + Nuvan",
+      "targetProblem": "Downy mildew + Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1112.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + Abacin",
+      "targetProblem": "DM/Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1020.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "abacin",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + Confidor",
+      "targetProblem": "Downy mildew + Flea beetles",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1124.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + M45 + Confidor",
+      "targetProblem": "Downy mildew + Flea beetles",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1124.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m45",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + Calnova",
+      "targetProblem": "Downy mildew + Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1640.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "calnova",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + M45 + Actra",
+      "targetProblem": "Downy mildew + Thrips, Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1400.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m45",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + M45 + Rogar",
+      "targetProblem": "Downy mildew + Thrips,Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1020.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m45",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "rogar",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + M45 + karate",
+      "targetProblem": "Downy mildew + Thrips,Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1080.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m45",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Actra",
+      "targetProblem": "Thrips, Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 380.0,
+      "components": [
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Actra + 0:52:34",
+      "targetProblem": "Thrips, Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 380.0,
+      "components": [
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "0_52_34",
+          "doseValue": 500.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Actra + Curzate",
+      "targetProblem": "DM + Thrips + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1620.0,
+      "components": [
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
           "doseUnit": "gm",
           "doseBasis": "per_liter",
           "baseTankLiters": null,
@@ -135,12 +584,13 @@
       "targetProblem": "Thrips + Jassids",
       "applicationMode": "preventive",
       "sourcePage": 1,
-      "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+      "sourceDocument": "Spray calculator.pdf",
       "crop": "grape",
       "isActive": true,
+      "estimatedCostPer200L": 440.0,
       "components": [
         {
-          "productKey": "thiamethoxam_25_wg",
+          "productKey": "actra",
           "doseValue": 0.25,
           "doseUnit": "gm",
           "doseBasis": "per_liter",
@@ -148,7 +598,7 @@
           "notes": null
         },
         {
-          "productKey": "lambda_cyhalothrin_5_ec",
+          "productKey": "karate",
           "doseValue": 0.5,
           "doseUnit": "ml",
           "doseBasis": "per_liter",
@@ -158,25 +608,4982 @@
       ]
     },
     {
-      "name": "Revus + Confidor",
-      "targetProblem": "Downy mildew + flea beetles",
+      "name": "Admire",
+      "targetProblem": "Mealy bug",
       "applicationMode": "preventive",
-      "sourcePage": 9,
-      "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
       "crop": "grape",
       "isActive": true,
+      "estimatedCostPer200L": 880.0,
       "components": [
         {
-          "productKey": "mandipropamide_23_4_sc",
-          "doseValue": 0.8,
+          "productKey": "admire",
+          "doseValue": 0.6,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Aliette",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1900.0,
+      "components": [
+        {
+          "productKey": "aliette",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Aliette + Antracol",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 1,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2041.67,
+      "components": [
+        {
+          "productKey": "aliette",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "antracol",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Aliette + Lannate",
+      "targetProblem": "Downy mildew + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2220.0,
+      "components": [
+        {
+          "productKey": "aliette",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "lannate",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Aliette + Proclaim",
+      "targetProblem": "Downy mildew + Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2230.0,
+      "components": [
+        {
+          "productKey": "aliette",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Aliette + Nustar",
+      "targetProblem": "DM / PM",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1900.0,
+      "components": [
+        {
+          "productKey": "aliette",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nustar",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Aliette + Spintor",
+      "targetProblem": "Downy mildew + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2450.0,
+      "components": [
+        {
+          "productKey": "aliette",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Aliette + calcium",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1583.33,
+      "components": [
+        {
+          "productKey": "aliette",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "calcium",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Aliette + M 45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1728.33,
+      "components": [
+        {
+          "productKey": "aliette",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Aliette + M 45 + Nuvan",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1820.33,
+      "components": [
+        {
+          "productKey": "aliette",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Amistar",
+      "targetProblem": "DM / PM",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 920.0,
+      "components": [
+        {
+          "productKey": "amistar",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Amistar + Neem",
+      "targetProblem": "DM / PM + Jassids,Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1170.0,
+      "components": [
+        {
+          "productKey": "amistar",
+          "doseValue": 1.0,
           "doseUnit": "ml",
           "doseBasis": "per_liter",
           "baseTankLiters": null,
           "notes": null
         },
         {
-          "productKey": "imidacloprid_17_8_sl",
+          "productKey": "neem",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Amistar + Score",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1230.0,
+      "components": [
+        {
+          "productKey": "amistar",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "score",
           "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Amistar + Proclaim",
+      "targetProblem": "DM / PM/Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1295.0,
+      "components": [
+        {
+          "productKey": "amistar",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Amistar + Sinamac",
+      "targetProblem": "DM / PM + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 920.0,
+      "components": [
+        {
+          "productKey": "amistar",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sinamac",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Amistar + Nuvan",
+      "targetProblem": "DM / PM + Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1012.0,
+      "components": [
+        {
+          "productKey": "amistar",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Amistar + Lannate",
+      "targetProblem": "DM / PM + Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 920.0,
+      "components": [
+        {
+          "productKey": "amistar",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "lannate",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Applaud + Nuvan",
+      "targetProblem": "Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "applaud",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Applaud",
+      "targetProblem": "Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 275.0,
+      "components": [
+        {
+          "productKey": "applaud",
+          "doseValue": 1.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bacillus + Tricho",
+      "targetProblem": "PM/DM",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "bacillus",
+          "doseValue": 2.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "tricho",
+          "doseValue": 2.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bacillus Subtilis",
+      "targetProblem": "PM/DM",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 325.0,
+      "components": [
+        {
+          "productKey": "bacillus_subtilis",
+          "doseValue": 2.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Beaveria",
+      "targetProblem": "Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 192.0,
+      "components": [
+        {
+          "productKey": "beaveria",
+          "doseValue": 3.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bavistin",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 152.0,
+      "components": [
+        {
+          "productKey": "bavistin",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Benevia",
+      "targetProblem": "Thrips, Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "benevia",
+          "doseValue": 1.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bavistin + M45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 304.0,
+      "components": [
+        {
+          "productKey": "bavistin",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bavistin + Confidor",
+      "targetProblem": "Downy mildew + Flea beetles",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 256.0,
+      "components": [
+        {
+          "productKey": "bavistin",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bavistin + Cuman L +Regent",
+      "targetProblem": "Downy mildew + Thrips &Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 152.0,
+      "components": [
+        {
+          "productKey": "bavistin",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cuman_l_regent",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cuman_l_regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bavistin + Cuman L",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 272.0,
+      "components": [
+        {
+          "productKey": "bavistin",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bavistin + Karate",
+      "targetProblem": "Downy mildew + Flea beetles",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 212.0,
+      "components": [
+        {
+          "productKey": "bavistin",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bavistin+ Nuvan",
+      "targetProblem": "Downy mildew + Mealy bugs",
+      "applicationMode": "preventive",
+      "sourcePage": 2,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "bavistin_nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "bavistin_nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bayleton",
+      "targetProblem": "Powdery Mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 340.0,
+      "components": [
+        {
+          "productKey": "bayleton",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bayleton + Proclaim",
+      "targetProblem": "Powdery Mildew + Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 670.0,
+      "components": [
+        {
+          "productKey": "bayleton",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bordo",
+      "targetProblem": "#REF!",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "bordo",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Bordo 1% + sulpher",
+      "targetProblem": "#REF!",
+      "applicationMode": "unspecified",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "bordo_1",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sulpher",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cabrio top",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1400.0,
+      "components": [
+        {
+          "productKey": "cabrio_top",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cabrio_top",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cabrio top+ Proclaim",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "cabrio_top_proclaim",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cabrio_top_proclaim",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cabrio top + Spintor",
+      "targetProblem": "Downy mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1800.0,
+      "components": [
+        {
+          "productKey": "cabrio_top",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cabrio top + Nuvan",
+      "targetProblem": "Downy mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1068.0,
+      "components": [
+        {
+          "productKey": "cabrio_top",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cabrio top + Confidor",
+      "targetProblem": "Downy mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 908.0,
+      "components": [
+        {
+          "productKey": "cabrio_top",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Calnova",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 620.0,
+      "components": [
+        {
+          "productKey": "calnova",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cal MB + Nuvan",
+      "targetProblem": "Mealy bug",
+      "applicationMode": "unspecified",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "cal_mb",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Calnova + Neem",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 870.0,
+      "components": [
+        {
+          "productKey": "calnova",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "neem",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Calnova + Bacillus Subtilis",
+      "targetProblem": "Thrips & Jassids + PM",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 945.0,
+      "components": [
+        {
+          "productKey": "calnova",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "bacillus_subtilis",
+          "doseValue": 2.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Chloro + Nuvan",
+      "targetProblem": "Mealy bugs",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "chloro",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Combi + Mg",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "combi",
+          "doseValue": 350.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "mg",
+          "doseValue": 800.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Confidor",
+      "targetProblem": "Flea beetles",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 104.0,
+      "components": [
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Confidor + Nuvan",
+      "targetProblem": "Flea beetles/MB",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 196.0,
+      "components": [
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "confidor super",
+      "targetProblem": "Flea beetles/MB",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 210.0,
+      "components": [
+        {
+          "productKey": "confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "confidor super + Neem",
+      "targetProblem": "Flea beetles/MB",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 460.0,
+      "components": [
+        {
+          "productKey": "confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "neem",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "confidor super+Karate",
+      "targetProblem": "Flea beetles+Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "confidor_super_karate",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor_super_karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Contaf",
+      "targetProblem": "Powdery Mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 90.0,
+      "components": [
+        {
+          "productKey": "contaf",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Contaf + Sulphur",
+      "targetProblem": "Powdery Mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 140.0,
+      "components": [
+        {
+          "productKey": "contaf",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sulphur",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Contaf + Copper",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 205.0,
+      "components": [
+        {
+          "productKey": "contaf",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "copper",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Contaf + Regent",
+      "targetProblem": "Powdery Mildew + Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 440.0,
+      "components": [
+        {
+          "productKey": "contaf",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Copper",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 115.0,
+      "components": [
+        {
+          "productKey": "copper",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Copper + Confidor super",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 3,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 325.0,
+      "components": [
+        {
+          "productKey": "copper",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Copper + Confidor super +Tilt",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 115.0,
+      "components": [
+        {
+          "productKey": "copper",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor_super_tilt",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor_super_tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Copper + Tilt",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 145.0,
+      "components": [
+        {
+          "productKey": "copper",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "CPPU",
+      "targetProblem": "Berry elongation",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 600.0,
+      "components": [
+        {
+          "productKey": "cppu",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cuman L",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 120.0,
+      "components": [
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cuman L + 0:52:34",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 120.0,
+      "components": [
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "0_52_34",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cuman L + 0:52:34 + Karate",
+      "targetProblem": "DM/Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 180.0,
+      "components": [
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "0_52_34",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cuman L + Nuvan",
+      "targetProblem": "DM/ Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 212.0,
+      "components": [
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cuman L + karate",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 180.0,
+      "components": [
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cuman L + Tilt",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 150.0,
+      "components": [
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Cuman L + Dentastu",
+      "targetProblem": "DM/ Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 228.0,
+      "components": [
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "dentastu",
+          "doseValue": 0.12,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Curacron",
+      "targetProblem": "Flea Beetle",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 252.0,
+      "components": [
+        {
+          "productKey": "curacron",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Curzate",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1240.0,
+      "components": [
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Curzate + Proclaim",
+      "targetProblem": "DM + Thrips + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1280.0,
+      "components": [
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Curzate +Confidor super",
+      "targetProblem": "DM + Thrips + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "curzate_confidor_super",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate_confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate_confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Curzate + Nuvan",
+      "targetProblem": "Downy mildew + Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 804.0,
+      "components": [
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Curzate +Karate",
+      "targetProblem": "DM + Thrips + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "curzate_karate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate_karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate_karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Curzate + Spintor",
+      "targetProblem": "DM + Thrips + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1170.0,
+      "components": [
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Curzate + Dentastu",
+      "targetProblem": "DM + Thrips + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 836.0,
+      "components": [
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "dentastu",
+          "doseValue": 0.12,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "dentastu",
+          "doseValue": 0.12,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Curzate+ Kocide",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "curzate_kocide",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate_kocide",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate_kocide",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Custodia",
+      "targetProblem": "DM / PM",
+      "applicationMode": "unspecified",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "custodia",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "custodia",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Dentastu",
+      "targetProblem": "Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 108.0,
+      "components": [
+        {
+          "productKey": "dentastu",
+          "doseValue": 0.12,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Domark",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 252.0,
+      "components": [
+        {
+          "productKey": "domark",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Domark + PBC",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 36252.0,
+      "components": [
+        {
+          "productKey": "domark",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "pbc",
+          "doseValue": 500.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Domark + Sulphur",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 302.0,
+      "components": [
+        {
+          "productKey": "domark",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sulphur",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Dormex",
+      "targetProblem": "#REF!",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 3360.0,
+      "components": [
+        {
+          "productKey": "dormex",
+          "doseValue": 40.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Dormex + M 45",
+      "targetProblem": "#REF!",
+      "applicationMode": "unspecified",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 3505.0,
+      "components": [
+        {
+          "productKey": "dormex",
+          "doseValue": 40.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Equation Pro",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 4,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1650.0,
+      "components": [
+        {
+          "productKey": "equation_pro",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "equation_pro",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Equation Pro + M 45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1115.0,
+      "components": [
+        {
+          "productKey": "equation_pro",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Equation Pro + Spintor",
+      "targetProblem": "Downy mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1925.0,
+      "components": [
+        {
+          "productKey": "equation_pro",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Equation Pro + Karate",
+      "targetProblem": "Downy mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 945.0,
+      "components": [
+        {
+          "productKey": "equation_pro",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Equation Pro + Proclaim",
+      "targetProblem": "Downy mildew + Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1485.0,
+      "components": [
+        {
+          "productKey": "equation_pro",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Equation Pro + Dentastu",
+      "targetProblem": "Downy mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1041.0,
+      "components": [
+        {
+          "productKey": "equation_pro",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "dentastu",
+          "doseValue": 0.12,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "dentastu",
+          "doseValue": 0.12,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Equation Pro + Sulphur",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 825.0,
+      "components": [
+        {
+          "productKey": "equation_pro",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sulphur",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sulphur",
+          "doseValue": 0.75,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Ergon",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "ergon",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Ergon + Proclaim",
+      "targetProblem": "Powdery mildew + Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 330.0,
+      "components": [
+        {
+          "productKey": "ergon",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Ergon + Karate",
+      "targetProblem": "Powdery mildew + Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 60.0,
+      "components": [
+        {
+          "productKey": "ergon",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Ethrel",
+      "targetProblem": "Defoliation",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 12800.0,
+      "components": [
+        {
+          "productKey": "ethrel",
+          "doseValue": 40.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Flotis",
+      "targetProblem": "Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 275.0,
+      "components": [
+        {
+          "productKey": "flotis",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Flotis + Nuvan",
+      "targetProblem": "Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 367.0,
+      "components": [
+        {
+          "productKey": "flotis",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Folicur",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 425.0,
+      "components": [
+        {
+          "productKey": "folicur",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Folicur + Antracol",
+      "targetProblem": "DM / PM + Bunch necrosis",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 975.0,
+      "components": [
+        {
+          "productKey": "folicur",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "antracol",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Filamin AQ",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "filamin_aq",
+          "doseValue": 5.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "GA + Agroking",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "ga",
+          "doseValue": 15.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "agroking",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "GA+Vinin+Cabrio top",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "ga_vinin_cabrio_top",
+          "doseValue": 20.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "ga_vinin_cabrio_top",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "ga_vinin_cabrio_top",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "ga_vinin_cabrio_top",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "GA3",
+      "targetProblem": "Berry elongation",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "ga3",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "GA3 + CPPU",
+      "targetProblem": "Berry elongation",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "ga3",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cppu",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Jump",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "jump",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Karate",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 60.0,
+      "components": [
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Karate + Jump",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 60.0,
+      "components": [
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "jump",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Karate + M45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Karate + Neem 10000 ppm",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 60.0,
+      "components": [
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "neem_10000_ppm",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Karate + Nuvan + Neem",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 5,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 352.0,
+      "components": [
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "neem",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Karate + Nuvan",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 152.0,
+      "components": [
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Karate+ Proclaim",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "karate_proclaim",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate_proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Karate + Dentastu",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 168.0,
+      "components": [
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "dentastu",
+          "doseValue": 0.12,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "karathane",
+      "targetProblem": "Powdery Mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "karathane",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kavach + Cuman L",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 120.0,
+      "components": [
+        {
+          "productKey": "kavach",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kavach + Actra",
+      "targetProblem": "Downy mildew + Thrips, Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 380.0,
+      "components": [
+        {
+          "productKey": "kavach",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kitosan",
+      "targetProblem": "Other",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "kitosan",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 220.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Neem",
+      "targetProblem": "DM / Sucking pests",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 470.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "neem",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Karate",
+      "targetProblem": "Jassids + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 280.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Tilt",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 250.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + M45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 220.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Regent",
+      "targetProblem": "DM / Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 570.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Confidor",
+      "targetProblem": "DM / Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 324.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Nuvan",
+      "targetProblem": "DM / Sucking pests",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 312.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Sulphur",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 270.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sulphur",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Actra",
+      "targetProblem": "DM / Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 600.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Curzate",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1460.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "curzate",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + zinc",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 220.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "zinc",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Kocide + Spintor",
+      "targetProblem": "DM / Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 770.0,
+      "components": [
+        {
+          "productKey": "kocide",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Lannate",
+      "targetProblem": "Mealy bugs",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "lannate",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Lannate + Nuvan",
+      "targetProblem": "Mealy bugs",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "lannate",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 145.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + confidor super",
+      "targetProblem": "DM / Sucking pests",
+      "applicationMode": "preventive",
+      "sourcePage": 6,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 355.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + confidor",
+      "targetProblem": "DM / Sucking pests",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 249.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + Proclaim",
+      "targetProblem": "Downy mildew + Jassids,Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 475.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + Regent",
+      "targetProblem": "DM / Sucking pests",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 495.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + Macimine",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 145.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "macimine",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + Ridomil Gold",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2305.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "ridomil_gold",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "ridomil_gold",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + Nuvan + Equation Pro",
+      "targetProblem": "DM / Sucking pests",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1337.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "equation_pro",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + Nuvan",
+      "targetProblem": "DM / Sucking pests",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 237.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Tilt",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 60.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Tilt + confidor super",
+      "targetProblem": "DM/PM + Flea beetles/MB",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 450.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + CPPU",
+      "targetProblem": "Downy mildew + Berryelongation",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1200.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cppu",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cppu",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo +confidor super",
+      "targetProblem": "DM/PM + Flea beetles/MB",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "melody_duo_confidor_super",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "melody_duo_confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Confidor",
+      "targetProblem": "Downy mildew + Flea beetles",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 208.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Spintor",
+      "targetProblem": "Downy mildew + Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1100.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Regent",
+      "targetProblem": "DM / Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 700.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Sinamac",
+      "targetProblem": "Downy mildew + Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sinamac",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sinamac",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Topaz",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "topaz",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "topaz",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Bavistin",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 456.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "bavistin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Dentastu",
+      "targetProblem": "DM/Mraly bug",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 225.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "dentastu",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Actra",
+      "targetProblem": "Downy mildew Thrips, Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 760.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Nuvan",
+      "targetProblem": "DM/Mraly bug",
+      "applicationMode": "preventive",
+      "sourcePage": 7,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Karate + Nuvan",
+      "targetProblem": "Downy mildew + Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 244.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Melody Duo + Proclaim",
+      "targetProblem": "Downy mildew + Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 660.0,
+      "components": [
+        {
+          "productKey": "melody_duo",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Micro Nutrients",
+      "targetProblem": "Micro Nutrients",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "micro_nutrients",
+          "doseValue": 2.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Mix Nutrients",
+      "targetProblem": "Mix Nutrients",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "mix_nutrients",
+          "doseValue": 2.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Neem",
+      "targetProblem": "Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 250.0,
+      "components": [
+        {
+          "productKey": "neem",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Nativo",
+      "targetProblem": "Powdery Mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1200.0,
+      "components": [
+        {
+          "productKey": "nativo",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nativo",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Nativo + Spintor",
+      "targetProblem": "Powdery Mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1700.0,
+      "components": [
+        {
+          "productKey": "nativo",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Nustar",
+      "targetProblem": "Powdery Mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "nustar",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Nustar + Karate",
+      "targetProblem": "Powdery Mildew + Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 60.0,
+      "components": [
+        {
+          "productKey": "nustar",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Nutrifight",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "nutrifight",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Nuvan",
+      "targetProblem": "Mealy bug",
+      "applicationMode": "unspecified",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Nuvan + Applaud",
+      "targetProblem": "Mealy bug",
+      "applicationMode": "unspecified",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "applaud",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Orbit",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "orbit",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "PBC",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 216.0,
+      "components": [
+        {
+          "productKey": "pbc",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Planofix",
+      "targetProblem": "Flower setting",
+      "applicationMode": "unspecified",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "planofix",
+          "doseValue": 0.15,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Pottasium Bicarbonate",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "pottasium_bicarbonate",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Proclaim",
+      "targetProblem": "Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 330.0,
+      "components": [
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Proclaim + Neem",
+      "targetProblem": "Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 580.0,
+      "components": [
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "neem",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Proclaim + Neem + Karate",
+      "targetProblem": "Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 640.0,
+      "components": [
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "neem",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Proclaim + Nuvan",
+      "targetProblem": "Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 422.0,
+      "components": [
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Proclaim + Score",
+      "targetProblem": "Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 640.0,
+      "components": [
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Proclaim +Antracol",
+      "targetProblem": "Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "proclaim_antracol",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim_antracol",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Pseudo + Bacillus",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "pseudo",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "bacillus",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Pseudo + Tricho",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "pseudo",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "tricho",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Pseudomonas",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 8,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "pseudomonas",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Regent",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 350.0,
+      "components": [
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Regent + Neem",
+      "targetProblem": "Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 600.0,
+      "components": [
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "neem",
+          "doseValue": 1.25,
           "doseUnit": "ml",
           "doseBasis": "per_liter",
           "baseTankLiters": null,
@@ -189,13 +5596,1674 @@
       "targetProblem": "Downy mildew",
       "applicationMode": "preventive",
       "sourcePage": 9,
-      "sourceDocument": "औषधे मिक्स प्रमाण.pdf",
+      "sourceDocument": "Spray calculator.pdf",
       "crop": "grape",
       "isActive": true,
+      "estimatedCostPer200L": 736.0,
       "components": [
         {
-          "productKey": "mandipropamide_23_4_sc",
+          "productKey": "revus",
           "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Revus + M45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 736.0,
+      "components": [
+        {
+          "productKey": "revus",
+          "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Revus + Confidor",
+      "targetProblem": "Downy mildew + Flea beetles",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 840.0,
+      "components": [
+        {
+          "productKey": "revus",
+          "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Revus + Score",
+      "targetProblem": "DM/PM/ Anthracnose",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1046.0,
+      "components": [
+        {
+          "productKey": "revus",
+          "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Revus + Sutlex",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 736.0,
+      "components": [
+        {
+          "productKey": "revus",
+          "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sutlex",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Revus + Karate",
+      "targetProblem": "Downy mildew Thrips + Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 796.0,
+      "components": [
+        {
+          "productKey": "revus",
+          "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Revus + Lannate",
+      "targetProblem": "Downy mildew + Thrips, Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 736.0,
+      "components": [
+        {
+          "productKey": "revus",
+          "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "lannate",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Revus + Proclaim",
+      "targetProblem": "Downy mildew + Jassids, Caterpillars",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1066.0,
+      "components": [
+        {
+          "productKey": "revus",
+          "doseValue": 0.8,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "proclaim",
+          "doseValue": 0.22,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Ridomil Gold",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2160.0,
+      "components": [
+        {
+          "productKey": "ridomil_gold",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "ridomil_gold",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Ridomil Gold + M 45",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1370.0,
+      "components": [
+        {
+          "productKey": "ridomil_gold",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Roko",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "roko",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Roko + Cuman L",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 120.0,
+      "components": [
+        {
+          "productKey": "roko",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "cuman_l",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Score",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 310.0,
+      "components": [
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Score + Lannate",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 310.0,
+      "components": [
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "lannate",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + Regent + Score",
+      "targetProblem": "DM / PM + Sucking pests",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 805.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "M 45 + Score",
+      "targetProblem": "DM / PM",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 455.0,
+      "components": [
+        {
+          "productKey": "m_45",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Score + TRM",
+      "targetProblem": "PM/ thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 310.0,
+      "components": [
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "trm",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Score + Sulphur",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 335.0,
+      "components": [
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sulphur",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Score+ Copper",
+      "targetProblem": "powdery Mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "score_copper",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "score_copper",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Score + Abacin",
+      "targetProblem": "PM/Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 310.0,
+      "components": [
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "abacin",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Score + Karate",
+      "targetProblem": "Powdery Mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 370.0,
+      "components": [
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Score + Karate + Actra",
+      "targetProblem": "Powdery Mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 750.0,
+      "components": [
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Seaweed",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 9,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "seaweed",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sinamac + Nuvan",
+      "targetProblem": "Thrips+Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "sinamac",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sectin",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "both",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2940.0,
+      "components": [
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sectin + Sulphur",
+      "targetProblem": "DM/PM",
+      "applicationMode": "both",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1570.0,
+      "components": [
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sulphur",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sulphur",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sectin + Score",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1780.0,
+      "components": [
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "score",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sectin + Lannate",
+      "targetProblem": "DM/Mraly bug",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2110.0,
+      "components": [
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "lannate",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "lannate",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sectin + Regent",
+      "targetProblem": "Downy mildew + Thrips & Jassids",
+      "applicationMode": "both",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2170.0,
+      "components": [
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "regent",
+          "doseValue": 1.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sectin + confidor super",
+      "targetProblem": "DM / Thrips",
+      "applicationMode": "both",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1890.0,
+      "components": [
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor_super",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sectin + Nuvan",
+      "targetProblem": "Downy mildew + Thrips",
+      "applicationMode": "both",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1654.0,
+      "components": [
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sectin + Actra",
+      "targetProblem": "DM / Thrips",
+      "applicationMode": "both",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2230.0,
+      "components": [
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "actra",
+          "doseValue": 0.25,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sectin + Karate",
+      "targetProblem": "DM / Thrips",
+      "applicationMode": "both",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1590.0,
+      "components": [
+        {
+          "productKey": "sectin",
+          "doseValue": 3.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Shootack",
+      "targetProblem": "Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "shootack",
+          "doseValue": 2.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Spintor",
+      "targetProblem": "Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 550.0,
+      "components": [
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Spintor + Nuvan",
+      "targetProblem": "Thrips+Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 642.0,
+      "components": [
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sulphur",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "sulphur",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sulphur + Nuvan",
+      "targetProblem": "Powdery mildew/ Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "sulphur",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sulphur + PBC",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 180.0,
+      "components": [
+        {
+          "productKey": "sulphur",
+          "doseValue": 2.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "pbc",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sulphur + Systhane",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 210.0,
+      "components": [
+        {
+          "productKey": "sulphur",
+          "doseValue": 2.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "systhane",
+          "doseValue": 0.4,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Sutlex",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "sutlex",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Systhane",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 160.0,
+      "components": [
+        {
+          "productKey": "systhane",
+          "doseValue": 0.4,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Systhane + PBC",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 340.0,
+      "components": [
+        {
+          "productKey": "systhane",
+          "doseValue": 0.4,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "pbc",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Tilt",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 30.0,
+      "components": [
+        {
+          "productKey": "tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Tilt + 0:52:34",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 30.0,
+      "components": [
+        {
+          "productKey": "tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "0_52_34",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Tilt + SOP",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 30.0,
+      "components": [
+        {
+          "productKey": "tilt",
+          "doseValue": 0.12,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sop",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Topaz",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "topaz",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Topgun",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "topgun",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Topgun + Nuvan",
+      "targetProblem": "Downy mildew + mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 92.0,
+      "components": [
+        {
+          "productKey": "topgun",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "nuvan",
+          "doseValue": 1.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Topgun + Karate",
+      "targetProblem": "Downy mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 60.0,
+      "components": [
+        {
+          "productKey": "topgun",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "karate",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Topgun + Spintor",
+      "targetProblem": "Downy mildew + Thrips & Jassids",
+      "applicationMode": "preventive",
+      "sourcePage": 10,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 550.0,
+      "components": [
+        {
+          "productKey": "topgun",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "spintor",
+          "doseValue": 0.25,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Topgun + Confidor",
+      "targetProblem": "Downy mildew + Thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 104.0,
+      "components": [
+        {
+          "productKey": "topgun",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "confidor",
+          "doseValue": 0.5,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Trichoderma",
+      "targetProblem": "Powdery mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "trichoderma",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Tricowin",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "tricowin",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Tricowin + Sutlex",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "tricowin",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "sutlex",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "TRM",
+      "targetProblem": "thrips",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "trm",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Verticilium",
+      "targetProblem": "Powdery mildew & Mealy bug",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "verticilium",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Zampro",
+      "targetProblem": "DM/PM",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 2720.0,
+      "components": [
+        {
+          "productKey": "zampro",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "zampro",
+          "doseValue": 2.0,
+          "doseUnit": "ml",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Zinc + Boron",
+      "targetProblem": "Micro Nutrients",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "zinc",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "boron",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Zinc + Copper",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 115.0,
+      "components": [
+        {
+          "productKey": "zinc",
+          "doseValue": 0.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "copper",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Acrobat + 0:52:34",
+      "targetProblem": "Downy mildew",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": 1020.0,
+      "components": [
+        {
+          "productKey": "acrobat",
+          "doseValue": 1.0,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        },
+        {
+          "productKey": "0_52_34",
+          "doseValue": 2.5,
+          "doseUnit": "gm",
+          "doseBasis": "per_liter",
+          "baseTankLiters": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "name": "Diamore +Cppu+Calcium",
+      "targetProblem": "Berry elongation",
+      "applicationMode": "preventive",
+      "sourcePage": 11,
+      "sourceDocument": "Spray calculator.pdf",
+      "crop": "grape",
+      "isActive": true,
+      "estimatedCostPer200L": null,
+      "components": [
+        {
+          "productKey": "diamore_cppu_calcium",
+          "doseValue": 2.0,
           "doseUnit": "ml",
           "doseBasis": "per_liter",
           "baseTankLiters": null,

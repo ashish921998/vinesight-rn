@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
 type InputType = 'spray' | 'fertilizer' | 'biostimulant' | 'adjuvant' | 'other';
@@ -28,6 +29,9 @@ interface ProductInput {
   stateCode?: string;
   sourceReference?: string | null;
   isActive?: boolean;
+  packagingSize?: string | null;
+  pricePerPackage?: number | null;
+  priceCurrency?: string | null;
   aliases?: ProductAliasInput[];
 }
 
@@ -88,6 +92,7 @@ interface MixRow {
   sourceDocument?: string | null;
   crop?: string;
   isActive?: boolean;
+  estimatedCostPer200L?: number | null;
   components: MixComponent[];
 }
 
@@ -158,6 +163,8 @@ async function main() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const rootDir = path.resolve(__dirname, '..');
   const baseDir = path.join(rootDir, 'assets', 'data', 'master');
 
@@ -201,6 +208,9 @@ async function main() {
       state_code: stateCode,
       source_reference: product.sourceReference ?? null,
       is_active: product.isActive ?? true,
+      packaging_size: product.packagingSize ?? null,
+      price_per_package: product.pricePerPackage ?? null,
+      price_currency: product.priceCurrency ?? 'INR',
       updated_at: new Date().toISOString(),
     };
 
@@ -411,6 +421,7 @@ async function main() {
       source_document: mix.sourceDocument ?? mixesFile.sourceDocument ?? null,
       crop,
       is_active: mix.isActive ?? true,
+      estimated_cost_per_200l: mix.estimatedCostPer200L ?? null,
       updated_at: new Date().toISOString(),
     };
 

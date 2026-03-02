@@ -117,6 +117,45 @@ export const mr = {
     },
   },
 
+  sprayCatalog: {
+    title: 'स्प्रे कॅटलॉग',
+    subtitle: 'कीड, मोड आणि खर्चानुसार मिक्स पाहा.',
+    searchPlaceholder: 'मिक्स, कीड किंवा उत्पादन शोधा',
+    modeFilter: 'अर्ज मोड',
+    modeAll: 'सर्व',
+    modePreventive: 'प्रतिबंधक',
+    modeCurative: 'उपचारात्मक',
+    modeBoth: 'दोन्ही',
+    pestFilter: 'लक्ष्य कीड/समस्या',
+    genericProblem: 'सामान्य संरक्षण',
+    modeLabel: 'मोड: {{mode}}',
+    cost200l: 'अंदाजे 200L खर्च: {{value}}',
+    openTankMix: 'टँक मिक्स कॅल्क्युलेटरमध्ये उघडा',
+  },
+
+  sprayCost: {
+    title: 'स्प्रे खर्च कॅल्क्युलेटर',
+    subtitle: 'टँक, क्षेत्र आणि प्रति एकर प्रमाणावर आधारित खर्चाचा अंदाज काढा.',
+    searchPlaceholder: 'कॅटलॉग मिक्स शोधा',
+    tankLiters: 'टँक लिटर',
+    areaAcres: 'क्षेत्र (एकर)',
+    volumePerAcre: 'प्रति एकर स्प्रे प्रमाण (L)',
+    catalogMixes: 'कॅटलॉग मिक्स',
+    perTank: 'प्रति टँक खर्च: {{currency}} {{value}}',
+    totalLiters: 'एकूण स्प्रे प्रमाण: {{value}} L',
+    tankCount: 'आवश्यक टँक संख्या: {{value}}',
+    totalCost: 'अंदाजे एकूण खर्च: {{currency}} {{value}}',
+  },
+
+  productDetail: {
+    titleFallback: 'उत्पादन तपशील',
+    activeIngredient: 'सक्रिय घटक: {{value}}',
+    phiDays: 'PHI: {{days}} दिवस',
+    price: 'किंमत: {{currency}} {{price}}',
+    packaging: 'पॅकेजिंग: {{value}}',
+    usageCount: '{{count}} कॅटलॉग मिक्समध्ये वापरलेले',
+  },
+
   farmDetails: {
     loadingFarm: '$t(glossary.farm) लोड होत आहे…',
     notFound: {
@@ -782,6 +821,8 @@ export const mr = {
       nutrientCalculator: 'पोषक कॅल्क्युलेटर',
       tankMixCalculator: 'टँक मिक्स कॅल्क्युलेटर',
       safeToSprayChecker: 'Safe-to-spray तपासणी',
+      sprayCatalog: 'स्प्रे कॅटलॉग',
+      sprayCostCalculator: 'स्प्रे खर्च कॅल्क्युलेटर',
     },
     descriptions: {
       weatherIrrigation:
@@ -793,6 +834,8 @@ export const mr = {
         '$t(glossary.labTest) वरून $t(glossary.fertigation) आणि पोषक आवश्यकता गणा',
       tankMixCalculator: 'टँक क्षमतेनुसार प्रत्येक घटकाचे अचूक gm/ml प्रमाण काढा',
       safeToSprayChecker: 'लक्ष्य $t(glossary.harvest) दिनांकासाठी सुरक्षित स्प्रे विंडो तपासा',
+      sprayCatalog: 'कीड, मोड, PHI आणि खर्चासह कॅटलॉग स्प्रे/मिक्स ब्राउझ करा',
+      sprayCostCalculator: 'टँक आणि पूर्ण क्षेत्रासाठी स्प्रे खर्चाचा अंदाज काढा',
     },
   },
 
@@ -807,6 +850,10 @@ export const mr = {
     resultTitle: '{{liters}}L साठी आवश्यक प्रमाण',
     resultDose: 'डोस: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'एकूण: {{value}} {{unit}}',
+    packaging: 'पॅकेजिंग: {{size}} · आवश्यक पॅक: {{count}}',
+    componentCost: 'घटक खर्च: {{currency}} {{cost}}',
+    totalCost: 'अंदाजे एकूण खर्च: {{currency}} {{cost}}',
+    shareSummary: 'मिक्स सारांश शेअर करा',
   },
 
   safeToSpray: {

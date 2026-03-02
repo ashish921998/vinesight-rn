@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 type InputType = 'spray' | 'fertilizer' | 'biostimulant' | 'adjuvant' | 'other';
 type VerificationTier = 'verified' | 'provisional';
@@ -28,6 +29,9 @@ interface ProductInput {
   stateCode?: string;
   sourceReference?: string | null;
   isActive?: boolean;
+  packagingSize?: string | null;
+  pricePerPackage?: number | null;
+  priceCurrency?: string | null;
   aliases?: ProductAliasInput[];
 }
 
@@ -89,6 +93,7 @@ interface MixRow {
   sourceDocument?: string | null;
   crop?: string;
   isActive?: boolean;
+  estimatedCostPer200L?: number | null;
   components: MixComponent[];
 }
 
@@ -213,6 +218,18 @@ function validateMasterCatalog(files: {
       }
       aliasSet.add(aliasKey);
     }
+
+    if (product.pricePerPackage != null) {
+      if (!Number.isFinite(product.pricePerPackage) || product.pricePerPackage < 0) {
+        errors.push(`${prefix}.pricePerPackage must be a non-negative number when provided`);
+      }
+    }
+    if (
+      product.priceCurrency != null &&
+      !['INR', 'USD', 'EUR', 'GBP'].includes(product.priceCurrency)
+    ) {
+      errors.push(`${prefix}.priceCurrency invalid: ${product.priceCurrency}`);
+    }
   });
 
   const sprayVerifiedProducts = new Set<string>(
@@ -322,6 +339,12 @@ function validateMasterCatalog(files: {
         }
       }
     });
+
+    if (mix.estimatedCostPer200L != null) {
+      if (!Number.isFinite(mix.estimatedCostPer200L) || mix.estimatedCostPer200L < 0) {
+        errors.push(`${prefix}.estimatedCostPer200L must be a non-negative number when provided`);
+      }
+    }
   });
 
   if (files.products.products.length === 0) {
@@ -336,6 +359,8 @@ function validateMasterCatalog(files: {
 }
 
 function main() {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const rootDir = path.resolve(__dirname, '..');
   const baseDir = path.join(rootDir, 'assets', 'data', 'master');
   const reportPath = path.join(rootDir, 'targets', 'master-catalog-validation.json');

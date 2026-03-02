@@ -22,6 +22,9 @@ export interface ChemicalMixComponent {
   dose_unit: DoseUnit;
   dose_basis: DoseBasis;
   base_tank_liters?: number | null;
+  packaging_size?: string | null;
+  price_per_package?: number | null;
+  price_currency?: string | null;
   phi_days: number;
   phi_source: string;
 }
@@ -32,6 +35,7 @@ export interface ChemicalMix {
   target_problem?: string | null;
   application_mode?: 'preventive' | 'curative' | 'both' | 'unspecified' | null;
   source_page?: number | null;
+  estimated_cost_per_200l?: number | null;
   is_active: boolean;
   components: ChemicalMixComponent[];
 }

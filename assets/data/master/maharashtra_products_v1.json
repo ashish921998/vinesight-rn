@@ -1,262 +1,3046 @@
 {
-  "version": "v1",
+  "version": "v2",
   "stateCode": "MH",
-  "sourceReference": "Curated Maharashtra master catalog (grape scope)",
+  "sourceReference": "Spray calculator.pdf",
   "products": [
     {
-      "key": "propineb_70_wp",
-      "name": "Antracol (Propineb 70 WP)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Propineb 70%",
+      "key": "00_52_34",
+      "name": "00:52:34",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "00:52:34",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "WP",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "500gm+500g m",
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Antracol", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Propineb 70 WP", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "00:52:34",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
       ]
     },
     {
-      "key": "copper_oxychloride",
-      "name": "Topgun (Copper Oxychloride)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Copper Oxychloride",
+      "key": "0_52_34",
+      "name": "0:52:34",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "0:52:34",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "WP",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Topgun", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Copper Oxychloride", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "0:52:34",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
       ]
     },
     {
-      "key": "dimethomorph_50_wp",
-      "name": "Acrobat (Dimethomorph 50 WP)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Dimethomorph 50%",
+      "key": "abacin",
+      "name": "Abacin",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Abamectin",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "WP",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Acrobat", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Dimethomorph 50 WP", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Abacin",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Abamectin",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "mancozeb_75_wp",
-      "name": "M45 (Mancozeb 75 WP)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Mancozeb 75%",
+      "key": "acrobat",
+      "name": "Acrobat",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Dimithomorph 50 WP",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "WP",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "200gm+500gm+10 0ml",
+      "pricePerPackage": 1020.0,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "M45", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Mancozeb 75 WP", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Acrobat",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Dimithomorph 50 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "fosetyl_al_80_wp",
-      "name": "Aliette (Fosetyl-AL 80 WP)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Fosetyl-AL 80%",
+      "key": "acrobat_antracol",
+      "name": "Acrobat +Antracol",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Dimithomorph 50WP",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "WP",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p2",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "200gm+600gm",
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Aliette", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Fosetyl-AL 80 WP", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Acrobat +Antracol",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Dimithomorph 50WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "methomyl_40_sp",
-      "name": "Lannate (Methomyl 40 SP)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Methomyl 40%",
+      "key": "actra",
+      "name": "Actra",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Thiamethoxam 25 WG",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "SP",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p2",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "50gm+50ml",
+      "pricePerPackage": 380.0,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Lannate", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Methomyl 40 SP", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Actra",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Thiamethoxam 25 WG",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "thiamethoxam_25_wg",
-      "name": "Actra (Thiamethoxam 25 WG)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Thiamethoxam 25%",
+      "key": "admire",
+      "name": "Admire",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Imidachlopride 70 WG",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "WG",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "150gm",
+      "pricePerPackage": 1100.0,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Actra", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Thiamethoxam 25 WG", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Admire",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Imidachlopride 70 WG",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "lambda_cyhalothrin_5_ec",
-      "name": "Karate (Lambda-cyhalothrin 5 EC)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Lambda-cyhalothrin 5%",
+      "key": "agroking",
+      "name": "Agroking",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "EC",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p1",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Karate", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Lambda-cyhalothrin 5 EC", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Agroking",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "mandipropamide_23_4_sc",
-      "name": "Revus (Mandipropamide 23.4 SC)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Mandipropamide 23.4%",
+      "key": "aliette",
+      "name": "Aliette",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Fosetyl AL 80 WP",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "SC",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p9",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "600gm+",
+      "pricePerPackage": 1900.0,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Revus", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Mandipropamide 23.4 SC", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Aliette",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Fosetyl AL 80 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "imidacloprid_17_8_sl",
-      "name": "Confidor (Imidacloprid 17.8 SL)",
-      "manufacturer": "ChemiNova",
-      "activeIngredient": "Imidacloprid 17.8%",
+      "key": "amistar",
+      "name": "Amistar",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Azoxystrobin 23 SC",
       "inputType": "spray",
       "verificationTier": "verified",
-      "formulation": "SL",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "औषधे मिक्स प्रमाण.pdf p9",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 4600.0,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Confidor", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Imidacloprid 17.8 SL", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Amistar",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Azoxystrobin 23 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "mahadhan_19_19_19",
-      "name": "Mahadhan NutriTech 19:19:19",
-      "manufacturer": "Deepak Fertilisers (Mahadhan)",
-      "activeIngredient": null,
-      "inputType": "fertilizer",
-      "verificationTier": "provisional",
-      "formulation": "WSF",
+      "key": "antracol",
+      "name": "Antracol",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Propineb 70 WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "Warehouse fertilizer master",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "600gm+500gm",
+      "pricePerPackage": 550.0,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Mahadhan 19:19:19", "locale": "en", "aliasKind": "trade" },
-        { "alias": "NPK 19-19-19", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Antracol",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Propineb 70 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "mahadhan_12_61_00",
-      "name": "Mahadhan 12:61:00 Fertiliser",
-      "manufacturer": "Deepak Fertilisers (Mahadhan)",
-      "activeIngredient": null,
-      "inputType": "fertilizer",
-      "verificationTier": "provisional",
-      "formulation": "WSF",
+      "key": "antracol_sutlex",
+      "name": "Antracol +Sutlex",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Propineb 70 WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "Warehouse fertilizer master",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "600gm5200gm",
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Mahadhan 12:61:00", "locale": "en", "aliasKind": "trade" },
-        { "alias": "MAP", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Antracol +Sutlex",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Propineb 70 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "mahadhan_00_52_34",
-      "name": "Mahadhan 00:52:34 Fertiliser",
-      "manufacturer": "Deepak Fertilisers (Mahadhan)",
-      "activeIngredient": null,
-      "inputType": "fertilizer",
-      "verificationTier": "provisional",
-      "formulation": "WSF",
+      "key": "applaud",
+      "name": "Applaud",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Buprofezin 25 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "Warehouse fertilizer master",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 1100.0,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Mahadhan 00:52:34", "locale": "en", "aliasKind": "trade" },
-        { "alias": "MKP", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Applaud",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Buprofezin 25 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "mahadhan_13_00_45",
-      "name": "Mahadhan 13:00:45 Fertiliser (KNO3)",
-      "manufacturer": "Deepak Fertilisers (Mahadhan)",
-      "activeIngredient": null,
-      "inputType": "fertilizer",
-      "verificationTier": "provisional",
-      "formulation": "WSF",
+      "key": "bacillus",
+      "name": "Bacillus",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Bacillus Subtilis",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "Warehouse fertilizer master",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Mahadhan 13:00:45", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Potassium Nitrate", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Bacillus",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Bacillus Subtilis",
+          "locale": "en",
+          "aliasKind": "common"
+        }
       ]
     },
     {
-      "key": "mahadhan_dap_18_46_00",
-      "name": "Mahadhan DAP Fertiliser",
-      "manufacturer": "Deepak Fertilisers (Mahadhan)",
-      "activeIngredient": null,
-      "inputType": "fertilizer",
-      "verificationTier": "provisional",
-      "formulation": "Granular",
+      "key": "bacillus_subtilis",
+      "name": "Bacillus Subtilis",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Bacillus Subtilis",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "Warehouse fertilizer master",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 650.0,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Mahadhan DAP 18:46:00", "locale": "en", "aliasKind": "trade" },
-        { "alias": "DAP", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Bacillus Subtilis",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
       ]
     },
     {
-      "key": "mahadhan_ammonium_sulphate",
-      "name": "Mahadhan Ammonium Sulphate Fertiliser",
-      "manufacturer": "Deepak Fertilisers (Mahadhan)",
-      "activeIngredient": null,
-      "inputType": "fertilizer",
-      "verificationTier": "provisional",
-      "formulation": "Granular",
+      "key": "bavistin",
+      "name": "Bavistin",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Carbendazim 50 WP,",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
       "stateCode": "MH",
-      "sourceReference": "Warehouse fertilizer master",
+      "sourceReference": "Spray calculator.pdf",
       "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 760.0,
+      "priceCurrency": "INR",
       "aliases": [
-        { "alias": "Mahadhan Ammonium Sulphate", "locale": "en", "aliasKind": "trade" },
-        { "alias": "Ammonium Sulphate", "locale": "en", "aliasKind": "common" }
+        {
+          "alias": "Bavistin",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Carbendazim 50 WP,",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "bavistin_nuvan",
+      "name": "Bavistin+ Nuvan",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Carbendazim 50 WP,+ Dichlorvos 76 EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Bavistin+ Nuvan",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Carbendazim 50 WP,+ Dichlorvos 76 EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "bayleton",
+      "name": "Bayleton",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Triadimefon 25 WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 3400.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Bayleton",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Triadimefon 25 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "beaveria",
+      "name": "Beaveria",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Beauveria baciana",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 320.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Beaveria",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Beauveria baciana",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "benevia",
+      "name": "Benevia",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Cynantriniprole",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Benevia",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Cynantriniprole",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "bordo",
+      "name": "Bordo",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "#REF!",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1%",
+      "pricePerPackage": 200.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Bordo",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "#REF!",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "bordo_1",
+      "name": "Bordo 1%",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "#REF!",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Bordo 1%",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "#REF!",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "boron",
+      "name": "Boron",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Boron",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Boron",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
+      ]
+    },
+    {
+      "key": "cabrio_top",
+      "name": "Cabrio top",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Pyraclostrobin 5%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "600gm",
+      "pricePerPackage": 1050.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Cabrio top",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Pyraclostrobin 5%",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "cabrio_top_proclaim",
+      "name": "Cabrio top+ Proclaim",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Pyraclostrobin5%+ Metiram 55% 60 WG",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Cabrio top+ Proclaim",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Pyraclostrobin5%+ Metiram 55% 60 WG",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "cal_mb",
+      "name": "Cal MB",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Cal MB",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "calcium",
+      "name": "calcium",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "calcium",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "calcium",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
+      ]
+    },
+    {
+      "key": "calnova",
+      "name": "Calnova",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 3100.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Calnova",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "chloro",
+      "name": "Chloro",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Chloropyriphos 50 EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Chloro",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Chloropyriphos 50 EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "combi",
+      "name": "Combi",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Combi",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Combi",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
+      ]
+    },
+    {
+      "key": "confidor",
+      "name": "Confidor",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Imidachlopride 17.8 SL",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "250ml",
+      "pricePerPackage": 260.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Confidor",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Imidachlopride 17.8 SL",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "confidor_super",
+      "name": "confidor super",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Imidacloprid 30.5 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "100ml",
+      "pricePerPackage": 420.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "confidor super",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Imidacloprid 30.5 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "confidor_super_tilt",
+      "name": "Confidor super +Tilt",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Imidachlopride 30.5 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Confidor super +Tilt",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Imidachlopride 30.5 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "confidor_super_karate",
+      "name": "confidor super+Karate",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Imidacloprid 30.5 SC+ Lambda cyhalothrin 5ec",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "confidor super+Karate",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Imidacloprid 30.5 SC+ Lambda cyhalothrin 5ec",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "contaf",
+      "name": "Contaf",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Hexaconazole 5 EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 450.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Contaf",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Hexaconazole 5 EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "copper",
+      "name": "Copper",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Copper Hydroxide 77 WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "400gm",
+      "pricePerPackage": 230.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Copper",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Copper Hydroxide 77 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "cppu",
+      "name": "CPPU",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Forchlorfenuron 0.1 % L",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "500ml",
+      "pricePerPackage": 1500.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "CPPU",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Forchlorfenuron 0.1 % L",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "cuman_l",
+      "name": "Cuman L",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Zirum 27 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 300.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Cuman L",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Zirum 27 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "cuman_l_regent",
+      "name": "Cuman L +Regent",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Zirum 27 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Cuman L +Regent",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Zirum 27 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "curacron",
+      "name": "Curacron",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Profenophos50",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 1260.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Curacron",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Profenophos50",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "curzate",
+      "name": "Curzate",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Cymoxanil",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 1550.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Curzate",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Cymoxanil",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "curzate_confidor_super",
+      "name": "Curzate +Confidor super",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Cymoxanil",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Curzate +Confidor super",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Cymoxanil",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "curzate_karate",
+      "name": "Curzate +Karate",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Cymoxanil",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Curzate +Karate",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Cymoxanil",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "curzate_kocide",
+      "name": "Curzate+ Kocide",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Cymoxanil",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Curzate+ Kocide",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Cymoxanil",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "custodia",
+      "name": "Custodia",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Azoxystrobin",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Custodia",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Azoxystrobin",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "dentastu",
+      "name": "Dentastu",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Clothianidin 50 WDG",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "100gm",
+      "pricePerPackage": 450.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Dentastu",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Clothianidin 50 WDG",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "diamore_cppu_calcium",
+      "name": "Diamore +Cppu+Calcium",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Brassinolides+Forchlorfenuron 0.1 % L+Calcium",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Diamore +Cppu+Calcium",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Brassinolides+Forchlorfenuron 0.1 % L+Calcium",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "domark",
+      "name": "Domark",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Tetraconazole 3.8 EW",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 1680.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Domark",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Tetraconazole 3.8 EW",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "dormex",
+      "name": "Dormex",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Hydrogen cynamide",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 420.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Dormex",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Hydrogen cynamide",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "equation_pro",
+      "name": "Equation Pro",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Famoxadone 16.6%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 5500.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Equation Pro",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Famoxadone 16.6%",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "ergon",
+      "name": "Ergon",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Kresoxim methyl 44.3 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Ergon",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Kresoxim methyl 44.3 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "ethrel",
+      "name": "Ethrel",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Ethepon 39 SL",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 1600.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Ethrel",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Ethepon 39 SL",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "filamin_aq",
+      "name": "Filamin AQ",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Amphelomysis",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Filamin AQ",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Amphelomysis",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "flotis",
+      "name": "Flotis",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Buprofenzin 25 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 1100.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Flotis",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Buprofenzin 25 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "folicur",
+      "name": "Folicur",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Tebuconazole 25.9 EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 1700.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Folicur",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Tebuconazole 25.9 EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "ga",
+      "name": "GA",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Gibberellic acid",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "GA",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Gibberellic acid",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "ga_vinin_cabrio_top",
+      "name": "GA+Vinin+Cabrio top",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "GA",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "GA+Vinin+Cabrio top",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "GA",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "ga3",
+      "name": "GA3",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Gibberellic acid",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "GA3",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Gibberellic acid",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "jump",
+      "name": "Jump",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Fipronil 80WD",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Jump",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Fipronil 80WD",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "karate",
+      "name": "karate",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Lambda cyhalothrin 5EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 600.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "karate",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Lambda cyhalothrin 5EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "karate_proclaim",
+      "name": "Karate+ Proclaim",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Lambda cyhalothrin 5 EC +Emamectin benzoate 5 SG",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Karate+ Proclaim",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Lambda cyhalothrin 5 EC +Emamectin benzoate 5 SG",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "karathane",
+      "name": "karathane",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Dinocap 48 EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "karathane",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Dinocap 48 EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "kavach",
+      "name": "Kavach",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Clorothanonil+Ziram",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Kavach",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Clorothanonil+Ziram",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "kitosan",
+      "name": "Kitosan",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Kitocynine",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Kitosan",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Kitocynine",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "kocide",
+      "name": "Kocide",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Copper Hydroxide 77 WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 1100.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Kocide",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Copper Hydroxide 77 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "lannate",
+      "name": "Lannate",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Methomyl 40 SP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 1600.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Lannate",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Methomyl 40 SP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "m_45",
+      "name": "M 45",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Mancozeb 75 WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 290.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "M 45",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Mancozeb 75 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "m45",
+      "name": "M45",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Mancozeb 75 WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "M45",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Mancozeb 75 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "macimine",
+      "name": "Macimine",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Macimine",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "melody_duo",
+      "name": "Melody Duo",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Iprovalicarb 5.5",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "800gm",
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Melody Duo",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Iprovalicarb 5.5",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "melody_duo_confidor_super",
+      "name": "Melody Duo +confidor super",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Iprovalicarb 5.5",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Melody Duo +confidor super",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Iprovalicarb 5.5",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "mg",
+      "name": "Mg",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Mg",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Mg",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
+      ]
+    },
+    {
+      "key": "micro_nutrients",
+      "name": "Micro Nutrients",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Micro Nutrients",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Micro Nutrients",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
+      ]
+    },
+    {
+      "key": "mix_nutrients",
+      "name": "Mix Nutrients",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Mix Nutrients",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Mix Nutrients",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
+      ]
+    },
+    {
+      "key": "nativo",
+      "name": "Nativo",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Tebuconazole 50%",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 6000.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Nativo",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Tebuconazole 50%",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "neem",
+      "name": "Neem",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Azadirectin 10000 ppm",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 1000.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Neem",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Azadirectin 10000 ppm",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "neem_10000_ppm",
+      "name": "Neem 10000 ppm",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Azadirectin 10000 ppm",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Neem 10000 ppm",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Azadirectin 10000 ppm",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "nustar",
+      "name": "Nustar",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Flusilazole 40SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Nustar",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Flusilazole 40SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "nutrifight",
+      "name": "Nutrifight",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Pottacium salt of phospheric acid",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Nutrifight",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Pottacium salt of phospheric acid",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "nuvan",
+      "name": "Nuvan",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Dichlorvos 76 EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 460.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Nuvan",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Dichlorvos 76 EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "orbit",
+      "name": "Orbit",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Orbit",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "pbc",
+      "name": "PBC",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "PBC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "500gm",
+      "pricePerPackage": 180.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "PBC",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
+      ]
+    },
+    {
+      "key": "planofix",
+      "name": "Planofix",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Alpha naphthyl acetic acid 4.5 SL",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Planofix",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Alpha naphthyl acetic acid 4.5 SL",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "pottasium_bicarbonate",
+      "name": "Pottasium Bicarbonate",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "KHCO3",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Pottasium Bicarbonate",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "KHCO3",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "proclaim",
+      "name": "Proclaim",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Emamectin benzoate 5 SG",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "100gm",
+      "pricePerPackage": 750.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Proclaim",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Emamectin benzoate 5 SG",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "proclaim_antracol",
+      "name": "Proclaim +Antracol",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Emamectin benzoate 5 SG",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Proclaim +Antracol",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Emamectin benzoate 5 SG",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "pseudo",
+      "name": "Pseudo",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Pseudomonas aeruginosa",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Pseudo",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Pseudomonas aeruginosa",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "pseudomonas",
+      "name": "Pseudomonas",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Pseudomonas",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 350.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Pseudomonas",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
+      ]
+    },
+    {
+      "key": "regent",
+      "name": "Regent",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Fipronil 5 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "100ml",
+      "pricePerPackage": 140.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Regent",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Fipronil 5 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "revus",
+      "name": "Revus",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Mandipropamide 23.4 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 4600.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Revus",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Mandipropamide 23.4 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "ridomil_gold",
+      "name": "Ridomil Gold",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Metalaxyl-M 4",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 1800.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Ridomil Gold",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Metalaxyl-M 4",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "rogar",
+      "name": "Rogar",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Diamethoate 30 EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Rogar",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Diamethoate 30 EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "roko",
+      "name": "Roko",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Thiophanate Methyl 70% WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Roko",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Thiophanate Methyl 70% WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "score",
+      "name": "Score",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Difenconazol 25 EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 3100.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Score",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Difenconazol 25 EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "score_copper",
+      "name": "Score+ Copper",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Difenoconazole",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Score+ Copper",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Difenoconazole",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "seaweed",
+      "name": "Seaweed",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Seaweed",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "sectin",
+      "name": "Sectin",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Fenamidone 10",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 2450.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Sectin",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Fenamidone 10",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "shootack",
+      "name": "Shootack",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Shootack",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "sinamac",
+      "name": "Sinamac",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Propineb 61.25 WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Sinamac",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Propineb 61.25 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "sop",
+      "name": "SOP",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "SOP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "SOP",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
+      ]
+    },
+    {
+      "key": "spintor",
+      "name": "Spintor",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Spinosad 45 SC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "100ml",
+      "pricePerPackage": 1100.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Spintor",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Spinosad 45 SC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "sulpher",
+      "name": "sulpher",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "#REF!",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "sulpher",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "#REF!",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "sulphur",
+      "name": "Sulphur",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Sulphur 80 WDG",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1kg",
+      "pricePerPackage": 125.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Sulphur",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Sulphur 80 WDG",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "sutlex",
+      "name": "Sutlex",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Sutlex",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "systhane",
+      "name": "Systhane",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Sulphur 80wdg +Myclobutanil 10WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "100gm",
+      "pricePerPackage": 200.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Systhane",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Sulphur 80wdg +Myclobutanil 10WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "tilt",
+      "name": "Tilt",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Propiconazole 25 EC",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "100ml",
+      "pricePerPackage": 125.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Tilt",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Propiconazole 25 EC",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "topaz",
+      "name": "Topaz",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Propineb 61.25 WP",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Topaz",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Propineb 61.25 WP",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "topgun",
+      "name": "Topgun",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Copper oxychloride",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Topgun",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Copper oxychloride",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "tricho",
+      "name": "Tricho",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Tricoderma viride",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Tricho",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Tricoderma viride",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "trichoderma",
+      "name": "Trichoderma",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Tricoderma viride",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Trichoderma",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Tricoderma viride",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "tricowin",
+      "name": "Tricowin",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Tricowin",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "trm",
+      "name": "TRM",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Biological",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "TRM",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Biological",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "verticilium",
+      "name": "Verticilium",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Verticilium leccani",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Verticilium",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Verticilium leccani",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "zampro",
+      "name": "Zampro",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "Ametoctradin 27",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": "1li",
+      "pricePerPackage": 3400.0,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "Zampro",
+          "locale": "en",
+          "aliasKind": "trade"
+        },
+        {
+          "alias": "Ametoctradin 27",
+          "locale": "en",
+          "aliasKind": "common"
+        }
+      ]
+    },
+    {
+      "key": "zinc",
+      "name": "zinc",
+      "manufacturer": "ChemiNova Agro Tech",
+      "activeIngredient": "zinc",
+      "inputType": "spray",
+      "verificationTier": "verified",
+      "formulation": null,
+      "stateCode": "MH",
+      "sourceReference": "Spray calculator.pdf",
+      "isActive": true,
+      "packagingSize": null,
+      "pricePerPackage": null,
+      "priceCurrency": "INR",
+      "aliases": [
+        {
+          "alias": "zinc",
+          "locale": "en",
+          "aliasKind": "trade"
+        }
       ]
     }
   ]

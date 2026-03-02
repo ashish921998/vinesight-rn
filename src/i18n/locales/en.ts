@@ -116,6 +116,45 @@ export const en = {
     },
   },
 
+  sprayCatalog: {
+    title: 'Spray Catalog',
+    subtitle: 'Browse catalog mixes by pest, mode, and cost.',
+    searchPlaceholder: 'Search mix, pest, or product',
+    modeFilter: 'Application mode',
+    modeAll: 'All',
+    modePreventive: 'Preventive',
+    modeCurative: 'Curative',
+    modeBoth: 'Both',
+    pestFilter: 'Target pest/problem',
+    genericProblem: 'General protection',
+    modeLabel: 'Mode: {{mode}}',
+    cost200l: 'Estimated 200L cost: {{value}}',
+    openTankMix: 'Open in Tank Mix Calculator',
+  },
+
+  sprayCost: {
+    title: 'Spray Cost Calculator',
+    subtitle: 'Estimate spray cost by tank, area, and application volume.',
+    searchPlaceholder: 'Search catalog mix',
+    tankLiters: 'Tank liters',
+    areaAcres: 'Area (acres)',
+    volumePerAcre: 'Spray volume per acre (L)',
+    catalogMixes: 'Catalog mixes',
+    perTank: 'Per tank cost: {{currency}} {{value}}',
+    totalLiters: 'Total spray volume: {{value}} L',
+    tankCount: 'Tank count needed: {{value}}',
+    totalCost: 'Estimated total cost: {{currency}} {{value}}',
+  },
+
+  productDetail: {
+    titleFallback: 'Product details',
+    activeIngredient: 'Active ingredient: {{value}}',
+    phiDays: 'PHI: {{days}} day(s)',
+    price: 'Price: {{currency}} {{price}}',
+    packaging: 'Packaging: {{value}}',
+    usageCount: 'Used in {{count}} catalog mix(es)',
+  },
+
   farmDetails: {
     loadingFarm: 'Loading farm…',
     notFound: {
@@ -780,6 +819,8 @@ export const en = {
       nutrientCalculator: 'Nutrient Calculator',
       tankMixCalculator: 'Tank Mix Calculator',
       safeToSprayChecker: 'Safe-to-Spray Checker',
+      sprayCatalog: 'Spray Catalog',
+      sprayCostCalculator: 'Spray Cost Calculator',
     },
     descriptions: {
       weatherIrrigation:
@@ -790,6 +831,8 @@ export const en = {
       nutrientCalculator: 'Calculate fertilizer and nutrient requirements based on lab tests',
       tankMixCalculator: 'Calculate exact gm/ml quantity for each component based on tank liters',
       safeToSprayChecker: 'Check which sprays are safe to apply for your target harvest date',
+      sprayCatalog: 'Browse catalog sprays and mixes with pest, mode, PHI, and cost metadata',
+      sprayCostCalculator: 'Estimate per-tank and full-area spray cost with packaging requirements',
     },
   },
 
@@ -804,6 +847,10 @@ export const en = {
     resultTitle: 'Required quantities for {{liters}}L',
     resultDose: 'Dose: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'Total: {{value}} {{unit}}',
+    packaging: 'Packaging: {{size}} · Required packs: {{count}}',
+    componentCost: 'Component cost: {{currency}} {{cost}}',
+    totalCost: 'Estimated total cost: {{currency}} {{cost}}',
+    shareSummary: 'Share mix summary',
   },
 
   safeToSpray: {

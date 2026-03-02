@@ -11,6 +11,7 @@ interface ChemicalMixRow {
   target_problem: string | null;
   application_mode: 'preventive' | 'curative' | 'both' | 'unspecified' | null;
   source_page: number | null;
+  estimated_cost_per_200l: number | null;
   is_active: boolean;
 }
 
@@ -35,16 +36,29 @@ interface ChemicalPhiRuleRow {
   source_note: string | null;
 }
 
+interface ChemicalProductMetaRow {
+  id: number;
+  packaging_size: string | null;
+  price_per_package: number | null;
+  price_currency: string | null;
+}
+
 function mapCatalogData(
   mixes: ChemicalMixRow[],
   components: ChemicalMixComponentRow[],
   phiRules: ChemicalPhiRuleRow[],
+  products: ChemicalProductMetaRow[],
 ): ChemicalMix[] {
   const componentByMix = new Map<number, ChemicalMixComponentRow[]>();
   components.forEach((component) => {
     const current = componentByMix.get(component.mix_id) ?? [];
     current.push(component);
     componentByMix.set(component.mix_id, current);
+  });
+
+  const productMetaById = new Map<number, ChemicalProductMetaRow>();
+  products.forEach((product) => {
+    productMetaById.set(product.id, product);
   });
 
   const phiRuleByProduct = new Map<number, ChemicalPhiRuleRow>();
@@ -64,6 +78,7 @@ function mapCatalogData(
       .sort((a, b) => (a.sequence_no ?? 0) - (b.sequence_no ?? 0))
       .map((component) => {
         const phiRule = phiRuleByProduct.get(component.product_id);
+        const productMeta = productMetaById.get(component.product_id);
         return {
           id: component.id,
           mix_id: component.mix_id,
@@ -74,6 +89,9 @@ function mapCatalogData(
           dose_unit: component.dose_unit,
           dose_basis: component.dose_basis,
           base_tank_liters: component.base_tank_liters,
+          packaging_size: productMeta?.packaging_size ?? null,
+          price_per_package: productMeta?.price_per_package ?? null,
+          price_currency: productMeta?.price_currency ?? null,
           phi_days: phiRule?.phi_days ?? 0,
           phi_source: phiRule?.source_note ?? 'Unknown source',
         } satisfies ChemicalMixComponent;
@@ -85,6 +103,7 @@ function mapCatalogData(
       target_problem: mix.target_problem,
       application_mode: mix.application_mode,
       source_page: mix.source_page,
+      estimated_cost_per_200l: mix.estimated_cost_per_200l,
       is_active: mix.is_active,
       components: mappedComponents,
     } satisfies ChemicalMix;
@@ -92,10 +111,12 @@ function mapCatalogData(
 }
 
 async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
-  const [mixesResult, componentsResult, phiResult] = await Promise.all([
+  const [mixesResult, componentsResult, phiResult, productsResult] = await Promise.all([
     supabase
       .from(TABLES.CHEMICAL_MIXES)
-      .select('id,name,target_problem,application_mode,source_page,is_active')
+      .select(
+        'id,name,target_problem,application_mode,source_page,estimated_cost_per_200l,is_active',
+      )
       .eq('is_active', true)
       .eq('crop', 'grape')
       .order('name', { ascending: true }),
@@ -110,20 +131,27 @@ async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
       .select('product_id,crop,phi_days,verified,source_note')
       .eq('crop', 'grape')
       .eq('verified', true),
+    supabase
+      .from(TABLES.CHEMICAL_PRODUCTS)
+      .select('id,packaging_size,price_per_package,price_currency')
+      .eq('is_active', true),
   ]);
 
   const possibleMissingCode = '42P01';
   if (mixesResult.error?.code === possibleMissingCode) return [];
   if (componentsResult.error?.code === possibleMissingCode) return [];
   if (phiResult.error?.code === possibleMissingCode) return [];
+  if (productsResult.error?.code === possibleMissingCode) return [];
   if (mixesResult.error) throw mixesResult.error;
   if (componentsResult.error) throw componentsResult.error;
   if (phiResult.error) throw phiResult.error;
+  if (productsResult.error) throw productsResult.error;
 
   return mapCatalogData(
     (mixesResult.data ?? []) as ChemicalMixRow[],
     (componentsResult.data ?? []) as ChemicalMixComponentRow[],
     (phiResult.data ?? []) as ChemicalPhiRuleRow[],
+    (productsResult.data ?? []) as ChemicalProductMetaRow[],
   );
 }
 
