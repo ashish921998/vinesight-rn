@@ -166,6 +166,14 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'mic.fill': 'mic',
   'stop.fill': 'stop-circle',
 
+  // Voice mode & sidebar
+  waveform: 'pulse',
+  'waveform.slash': 'pulse-outline',
+  'waveform.and.mic': 'mic',
+  'speaker.wave.2.fill': 'volume-high',
+  'sidebar.left': 'menu',
+  photo: 'image-outline',
+
   // Eye icons for password visibility toggle
   eye: 'eye-outline',
   'eye.slash': 'eye-off-outline',

@@ -1557,6 +1557,10 @@ export const hi = {
       continuousOn: 'सतत चालू',
       continuousOff: 'सतत बंद',
       speak: 'बोलें',
+      historyToday: 'आज',
+      historyYesterday: 'कल',
+      historyPrevious7Days: 'पिछले 7 दिन',
+      historyOlder: 'पुराने',
     },
     conversationBootstrapFailed: 'नई बातचीत शुरू नहीं हो सकी। कृपया दोबारा प्रयास करें।',
     logging: {

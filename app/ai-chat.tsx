@@ -21,7 +21,11 @@ import {
   setAudioModeAsync,
   useAudioRecorder,
 } from 'expo-audio';
-import { SpeechRecognitionModule, useSpeechRecognitionEvent } from '@/services/speech-recognition';
+import {
+  isSpeechRecognitionAvailable,
+  SpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from '@/services/speech-recognition';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,6 +61,7 @@ import { telemetry } from '@/services/telemetry';
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
+import { VoiceModeIndicator } from '@/components/ui/voice-mode-indicator';
 import type { AssistantAnswer, QueryIntent } from '@/types/voice-assistant';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import type { VoiceLogDraft, VoiceLogMissingField } from '@/types/voice-log';
@@ -2094,10 +2099,26 @@ export default function AIChatScreen() {
         setVoiceInputState('idle');
         return;
       }
-      void stopVoiceRecording({ discard: true });
+      // On Android, native speech recognition may be unavailable but we don't need it —
+      // audio recording is handled by expo-audio and transcription by server-side Sarvam STT.
+      // Only treat 'not-allowed' (mic permission denied) as a real error.
+      if (event.error === 'not-allowed') {
+        void stopVoiceRecording({ discard: true });
+        setVoiceInputState('idle');
+        setIsVoiceModeContinuousEnabled(false);
+        setVoiceModeError(t('ai.voice.permissionBody'));
+        promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
+        return;
+      }
+      // For all other errors (e.g. 'not-available', 'network', 'service-not-allowed'),
+      // keep recording — server STT will handle transcription.
+      if (activeVoiceRecordingRef.current) {
+        if (voiceInputState !== 'listening') {
+          setVoiceInputState('listening');
+        }
+        return;
+      }
       setVoiceInputState('idle');
-      setIsVoiceModeContinuousEnabled(false);
-      setVoiceModeError(t('ai.voice.unavailableBody'));
       return;
     }
     void stopVoiceRecording({ discard: true });
@@ -2170,11 +2191,24 @@ export default function AIChatScreen() {
     try {
       const permission = await SpeechRecognitionModule.requestPermissionsAsync();
       if (!permission.granted) {
-        setVoiceInputState('idle');
-        setIsVoiceModeContinuousEnabled(false);
-        setVoiceModeError(t('ai.voice.permissionBody'));
-        promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
-        return;
+        // If native speech recognition denied permissions but serverVoiceEnabled is on,
+        // we still need mic access for audio recording — check that separately.
+        if (assistantFeatureFlags.serverVoiceEnabled) {
+          const recordingPermission = await requestRecordingPermissionsAsync();
+          if (!recordingPermission.granted) {
+            setVoiceInputState('idle');
+            setIsVoiceModeContinuousEnabled(false);
+            setVoiceModeError(t('ai.voice.permissionBody'));
+            promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
+            return;
+          }
+        } else {
+          setVoiceInputState('idle');
+          setIsVoiceModeContinuousEnabled(false);
+          setVoiceModeError(t('ai.voice.permissionBody'));
+          promptOpenSettings(t('ai.voice.permissionTitle'), t('ai.voice.permissionBody'), t);
+          return;
+        }
       }
 
       await startVoiceRecording();
@@ -2187,13 +2221,34 @@ export default function AIChatScreen() {
         return;
       }
 
-      await Promise.resolve(
-        SpeechRecognitionModule.start({
-          lang: speechLocale,
-          interimResults: true,
-          continuous: false,
-        }),
-      );
+      // Start native speech recognition for live transcript preview.
+      // When serverVoiceEnabled is on, this is optional — server-side Sarvam STT
+      // handles the real transcription. On Android devices where native speech
+      // recognition is unavailable, we silently skip it.
+      if (isSpeechRecognitionAvailable || !assistantFeatureFlags.serverVoiceEnabled) {
+        try {
+          await Promise.resolve(
+            SpeechRecognitionModule.start({
+              lang: speechLocale,
+              interimResults: true,
+              continuous: false,
+            }),
+          );
+        } catch (speechError) {
+          if (assistantFeatureFlags.serverVoiceEnabled) {
+            // Non-fatal: audio recording is active, server STT will transcribe.
+            if (__DEV__) {
+              console.warn('Native speech recognition unavailable, using server STT:', speechError);
+            }
+            setVoiceInputState('listening');
+          } else {
+            throw speechError;
+          }
+        }
+      } else {
+        // No native speech recognition but serverVoiceEnabled — go straight to listening.
+        setVoiceInputState('listening');
+      }
     } catch (error) {
       if (__DEV__) {
         console.warn('Voice input start failed:', error);
@@ -3375,63 +3430,153 @@ export default function AIChatScreen() {
                 ) : (
                   <ScrollView
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ gap: spacing[2] }}
+                    contentContainerStyle={{ paddingBottom: spacing[4] }}
                   >
-                    {conversationSummaries.map((summary) => {
-                      const isActive = summary.id === conversationId;
-                      const preview = (summary.lastMessage ?? '').trim();
-                      return (
-                        <Pressable
-                          key={summary.id}
-                          onPress={() => void openConversation(summary.id)}
-                          style={{
-                            borderRadius: borderRadius.xl,
-                            borderWidth: 1,
-                            borderColor: isActive
-                              ? colorWithOpacity(m3.colorScheme.primary, 0.45)
-                              : colors.surface[300],
-                            backgroundColor: isActive
-                              ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-                              : colors.surface[50],
-                            paddingHorizontal: spacing[3],
-                            paddingVertical: spacing[3],
-                            gap: spacing[1],
-                          }}
-                        >
+                    {(() => {
+                      const now = new Date();
+                      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                      const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+                      const weekStart = new Date(todayStart.getTime() - 7 * 86400000);
+
+                      type DateGroup = { label: string; items: typeof conversationSummaries };
+                      const groups: DateGroup[] = [
+                        { label: t('ai.chat.historyToday'), items: [] },
+                        { label: t('ai.chat.historyYesterday'), items: [] },
+                        { label: t('ai.chat.historyPrevious7Days'), items: [] },
+                        { label: t('ai.chat.historyOlder'), items: [] },
+                      ];
+
+                      for (const summary of conversationSummaries) {
+                        const ts = (summary.lastMessageAt ?? summary.updatedAt).getTime();
+                        if (ts >= todayStart.getTime()) groups[0].items.push(summary);
+                        else if (ts >= yesterdayStart.getTime()) groups[1].items.push(summary);
+                        else if (ts >= weekStart.getTime()) groups[2].items.push(summary);
+                        else groups[3].items.push(summary);
+                      }
+
+                      const nonEmptyGroups = groups.filter((g) => g.items.length > 0);
+                      if (nonEmptyGroups.length === 0) {
+                        return (
                           <Text
-                            numberOfLines={1}
-                            style={{
-                              color: colors.surface[900],
-                              fontSize: fontSize.sm,
-                              fontWeight: fontWeight.semibold,
-                            }}
-                          >
-                            {preview || t('ai.chat.newConversation')}
-                          </Text>
-                          <Text
-                            numberOfLines={2}
                             style={{
                               color: colors.surface[600],
-                              fontSize: fontSize.xs,
+                              fontSize: fontSize.sm,
+                              textAlign: 'center',
+                              paddingVertical: spacing[6],
                             }}
                           >
-                            {formatDate(summary.lastMessageAt ?? summary.updatedAt)}
+                            {t('ai.chat.noPreviousChats')}
                           </Text>
-                        </Pressable>
-                      );
-                    })}
-                    {conversationSummaries.length === 0 && (
-                      <Text
-                        style={{
-                          color: colors.surface[600],
-                          fontSize: fontSize.sm,
-                          textAlign: 'center',
-                          paddingVertical: spacing[6],
-                        }}
-                      >
-                        {t('ai.chat.noPreviousChats')}
-                      </Text>
-                    )}
+                        );
+                      }
+
+                      const matchingFarm = (fId: number | null | undefined) =>
+                        fId != null ? farms.find((f) => f.id === fId) : null;
+
+                      return nonEmptyGroups.map((group) => (
+                        <View key={group.label} style={{ marginBottom: spacing[3] }}>
+                          <Text
+                            style={{
+                              color: colors.surface[500],
+                              fontSize: fontSize.xs,
+                              fontWeight: fontWeight.semibold,
+                              paddingHorizontal: spacing[1],
+                              marginBottom: spacing[2],
+                              marginTop: spacing[1],
+                            }}
+                          >
+                            {group.label}
+                          </Text>
+                          <View style={{ gap: spacing[1] }}>
+                            {group.items.map((summary) => {
+                              const isActive = summary.id === conversationId;
+                              const preview = (summary.lastMessage ?? '').trim();
+                              const farmMatch = matchingFarm(summary.farmId);
+                              return (
+                                <Pressable
+                                  key={summary.id}
+                                  onPress={() => void openConversation(summary.id)}
+                                  style={{
+                                    borderRadius: borderRadius.xl,
+                                    paddingHorizontal: spacing[3],
+                                    paddingVertical: spacing[3],
+                                    gap: spacing[1],
+                                    backgroundColor: isActive
+                                      ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+                                      : 'transparent',
+                                    ...(isActive
+                                      ? {
+                                          borderWidth: 1,
+                                          borderColor: colorWithOpacity(
+                                            m3.colorScheme.primary,
+                                            0.35,
+                                          ),
+                                        }
+                                      : {}),
+                                  }}
+                                >
+                                  <Text
+                                    numberOfLines={1}
+                                    style={{
+                                      color: isActive
+                                        ? m3.colorScheme.primary
+                                        : colors.surface[900],
+                                      fontSize: fontSize.sm,
+                                      fontWeight: isActive
+                                        ? fontWeight.semibold
+                                        : fontWeight.medium,
+                                    }}
+                                  >
+                                    {preview || t('ai.chat.newConversation')}
+                                  </Text>
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: spacing[2],
+                                    }}
+                                  >
+                                    <Text
+                                      style={{
+                                        color: colors.surface[500],
+                                        fontSize: fontSize.xs,
+                                      }}
+                                    >
+                                      {formatDate(summary.lastMessageAt ?? summary.updatedAt)}
+                                    </Text>
+                                    {farmMatch && (
+                                      <View
+                                        style={{
+                                          paddingHorizontal: spacing[2],
+                                          paddingVertical: 1,
+                                          borderRadius: borderRadius.full,
+                                          backgroundColor: colorWithOpacity(
+                                            m3.colorScheme.primary,
+                                            0.1,
+                                          ),
+                                        }}
+                                      >
+                                        <Text
+                                          numberOfLines={1}
+                                          style={{
+                                            color: m3.colorScheme.primary,
+                                            fontSize: 10,
+                                            fontWeight: fontWeight.medium,
+                                            maxWidth: 100,
+                                          }}
+                                        >
+                                          {farmMatch.name}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  </View>
+                                </Pressable>
+                              );
+                            })}
+                          </View>
+                        </View>
+                      ));
+                    })()}
                   </ScrollView>
                 )}
               </Pressable>
@@ -3483,28 +3628,23 @@ export default function AIChatScreen() {
                 gap: spacing[4],
               }}
             >
-              <View
-                style={{
-                  width: 160,
-                  height: 160,
-                  borderRadius: borderRadius.full,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: isVoiceListening
-                    ? colorWithOpacity(m3.colorScheme.primary, 0.2)
-                    : colorWithOpacity(colors.surface[300], 0.7),
-                  borderWidth: 2,
-                  borderColor: isVoiceListening
-                    ? colorWithOpacity(m3.colorScheme.primary, 0.45)
-                    : colorWithOpacity(colors.surface[400], 0.5),
-                }}
-              >
-                <UiSymbol
-                  name={isVoiceListening ? 'waveform.and.mic' : 'mic.fill'}
-                  size={42}
-                  color={isVoiceListening ? m3.colorScheme.primary : colors.surface[700]}
-                />
-              </View>
+              <VoiceModeIndicator
+                state={
+                  isVoiceListening
+                    ? 'listening'
+                    : isAssistantSpeaking
+                      ? 'speaking'
+                      : isLoading
+                        ? 'processing'
+                        : voiceInputState === 'starting'
+                          ? 'starting'
+                          : 'idle'
+                }
+                size={140}
+                primaryColor={m3.colorScheme.primary}
+                surfaceColor={colors.surface[300]}
+                onSurfaceColor={colors.surface[700]}
+              />
 
               <Text
                 style={{
@@ -3515,9 +3655,11 @@ export default function AIChatScreen() {
               >
                 {isVoiceListening
                   ? t('ai.voice.listening')
-                  : isLoading
-                    ? t('ai.chat.thinking')
-                    : t('ai.chat.tapToSpeak')}
+                  : isAssistantSpeaking
+                    ? t('ai.chat.assistantSpeaking')
+                    : isLoading
+                      ? t('ai.chat.thinking')
+                      : t('ai.chat.tapToSpeak')}
               </Text>
 
               <View

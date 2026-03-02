@@ -1582,6 +1582,10 @@ export const mr = {
       continuousOn: 'सतत चालू',
       continuousOff: 'सतत बंद',
       speak: 'बोला',
+      historyToday: 'आज',
+      historyYesterday: 'काल',
+      historyPrevious7Days: 'मागील ७ दिवस',
+      historyOlder: 'जुने',
     },
     conversationBootstrapFailed: 'नवीन संवाद सुरू करता आला नाही. कृपया पुन्हा प्रयत्न करा.',
     logging: {

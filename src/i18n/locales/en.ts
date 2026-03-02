@@ -1573,6 +1573,10 @@ export const en = {
       continuousOn: 'Continuous On',
       continuousOff: 'Continuous Off',
       speak: 'Speak',
+      historyToday: 'Today',
+      historyYesterday: 'Yesterday',
+      historyPrevious7Days: 'Previous 7 Days',
+      historyOlder: 'Older',
     },
     conversationBootstrapFailed: 'Could not start a new conversation. Please try again.',
     logging: {

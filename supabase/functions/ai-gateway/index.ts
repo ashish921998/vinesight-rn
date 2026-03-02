@@ -1220,6 +1220,8 @@ async function callSarvamStt(
     form.append('model', model);
     form.append('language_code', languageCode);
     form.append('with_timestamps', 'false');
+    form.append('with_disfluency_removal', 'true');
+    form.append('with_itn', 'true');
     form.append('file', new Blob([audioBytes], { type: normalizedMimeType }), filename);
 
     const response = await fetch('https://api.sarvam.ai/speech-to-text', {
