@@ -72,7 +72,6 @@ module.exports = {
         foregroundImage: './assets/icons/adaptive-icon.png',
         backgroundColor: '#ffffff',
       },
-      edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: true,
       intentFilters: [
         {

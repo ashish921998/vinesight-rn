@@ -63,6 +63,7 @@ export async function userHasAnyFarms(): Promise<boolean> {
 export async function registerGuidedTourPushDevice(locale: 'en' | 'hi' | 'mr'): Promise<void> {
   if (Platform.OS === 'web') return;
   if (!Device.isDevice) return;
+  if (Constants.executionEnvironment === 'storeClient') return;
 
   const userId = await getUserId();
   if (!userId) return;
