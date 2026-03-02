@@ -58,32 +58,6 @@ export function LogTypeSelector({
       >
         {t('entryForm.activityType')}
       </Text>
-      {showInlineGuidance ? (
-        <View
-          style={{
-            alignSelf: 'flex-start',
-            marginBottom: 10,
-            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
-            borderWidth: 1,
-            borderColor: colorWithOpacity(m3.colorScheme.primary, 0.3),
-            borderRadius: 999,
-            paddingHorizontal: 10,
-            paddingVertical: 4,
-          }}
-        >
-          <Text
-            style={{
-              color: m3.colorScheme.primary,
-              fontSize: 12,
-              fontWeight: '600',
-            }}
-          >
-            {t('guidedTour.step2.pickActivityCoach', {
-              defaultValue: 'Tap an activity to continue.',
-            })}
-          </Text>
-        </View>
-      ) : null}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {ACTIVITY_TYPES.map((logType: LogType) => {
           const isSelected = selectedLogType === logType.id;

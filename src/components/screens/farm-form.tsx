@@ -974,92 +974,100 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       >
         <SectionHeader title={t('farmForm.sections.details')} style={{ marginBottom: 16 }} />
 
-        <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_NAME}>
-          <FormInput
-            label={t('farmForm.fields.name.label')}
-            inputRef={nameInputRef}
-            value={formState.name}
-            onChangeText={(v) => {
-              setFormState((prev) => ({ ...prev, name: v }));
-              if (isGuidedAddFarm()) {
-                guidedTourEmit('guidedTour.addFarmNameEntered', { isFilled: v.trim().length > 0 });
-              }
-            }}
-            placeholder={t('farmForm.fields.name.placeholder')}
-            required
-            autoFocus={!isEdit}
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => {
-              if (formState.name.trim().length === 0) return;
-              regionInputRef.current?.focus();
-            }}
-            style={{ marginBottom: 12 }}
-          />
-        </GuidedTourTarget>
+        <View style={{ marginBottom: 12 }}>
+          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_NAME}>
+            <FormInput
+              label={t('farmForm.fields.name.label')}
+              inputRef={nameInputRef}
+              value={formState.name}
+              onChangeText={(v) => {
+                setFormState((prev) => ({ ...prev, name: v }));
+                if (isGuidedAddFarm()) {
+                  guidedTourEmit('guidedTour.addFarmNameEntered', {
+                    isFilled: v.trim().length > 0,
+                  });
+                }
+              }}
+              placeholder={t('farmForm.fields.name.placeholder')}
+              required
+              autoFocus={!isEdit}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => {
+                if (formState.name.trim().length === 0) return;
+                regionInputRef.current?.focus();
+              }}
+              style={{ marginBottom: 0 }}
+            />
+          </GuidedTourTarget>
+        </View>
 
-        <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_REGION}>
-          <FormInput
-            label={t('farmForm.fields.region.label')}
-            inputRef={regionInputRef}
-            value={formState.region}
-            onChangeText={(v) => {
-              setFormState((prev) => ({ ...prev, region: v }));
-              if (isGuidedAddFarm()) {
-                guidedTourEmit('guidedTour.addFarmRegionEntered', {
-                  isFilled: v.trim().length > 0,
-                });
-              }
-            }}
-            placeholder={t('farmForm.fields.region.placeholder')}
-            required
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => {
-              if (formState.region.trim().length === 0) return;
-              areaInputRef.current?.focus();
-            }}
-            style={{ marginBottom: 12 }}
-          />
-        </GuidedTourTarget>
+        <View style={{ marginBottom: 12 }}>
+          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_REGION}>
+            <FormInput
+              label={t('farmForm.fields.region.label')}
+              inputRef={regionInputRef}
+              value={formState.region}
+              onChangeText={(v) => {
+                setFormState((prev) => ({ ...prev, region: v }));
+                if (isGuidedAddFarm()) {
+                  guidedTourEmit('guidedTour.addFarmRegionEntered', {
+                    isFilled: v.trim().length > 0,
+                  });
+                }
+              }}
+              placeholder={t('farmForm.fields.region.placeholder')}
+              required
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => {
+                if (formState.region.trim().length === 0) return;
+                areaInputRef.current?.focus();
+              }}
+              style={{ marginBottom: 0 }}
+            />
+          </GuidedTourTarget>
+        </View>
 
-        <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_AREA}>
-          <FormInput
-            label={t('farmForm.fields.area.label')}
-            inputRef={areaInputRef}
-            value={formState.area}
-            onChangeText={(v) => {
-              const sanitizedArea = sanitizeDecimalInput(v);
-              setFormState((prev) => ({ ...prev, area: sanitizedArea }));
-              if (isGuidedAddFarm()) {
-                const isValidNumber =
-                  sanitizedArea.trim() !== '' && Number.isFinite(Number(sanitizedArea.trim()));
-                guidedTourEmit('guidedTour.addFarmAreaEntered', {
-                  isFilled: isValidNumber,
-                });
-              }
-            }}
-            placeholder={t('farmForm.fields.area.placeholder')}
-            keyboardType="decimal-pad"
-            suffix={t('units.acres')}
-            required
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => {
-              if (formState.area.trim().length === 0) return;
-              if (formState.selectedCrop === 'Other') {
-                customCropInputRef.current?.focus();
-                return;
-              }
-              if (formState.cropVariety === 'Custom') {
-                customVarietyInputRef.current?.focus();
-                return;
-              }
-              vineSpacingInputRef.current?.focus();
-            }}
-            style={{ marginBottom: 20 }}
-          />
-        </GuidedTourTarget>
+        <View style={{ marginBottom: 20 }}>
+          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_AREA}>
+            <FormInput
+              label={t('farmForm.fields.area.label')}
+              inputRef={areaInputRef}
+              value={formState.area}
+              onChangeText={(v) => {
+                const sanitizedArea = sanitizeDecimalInput(v);
+                setFormState((prev) => ({ ...prev, area: sanitizedArea }));
+                if (isGuidedAddFarm()) {
+                  const isValidNumber =
+                    sanitizedArea.trim() !== '' && Number.isFinite(Number(sanitizedArea.trim()));
+                  guidedTourEmit('guidedTour.addFarmAreaEntered', {
+                    isFilled: isValidNumber,
+                  });
+                }
+              }}
+              placeholder={t('farmForm.fields.area.placeholder')}
+              keyboardType="decimal-pad"
+              suffix={t('units.acres')}
+              required
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => {
+                if (formState.area.trim().length === 0) return;
+                if (formState.selectedCrop === 'Other') {
+                  customCropInputRef.current?.focus();
+                  return;
+                }
+                if (formState.cropVariety === 'Custom') {
+                  customVarietyInputRef.current?.focus();
+                  return;
+                }
+                vineSpacingInputRef.current?.focus();
+              }}
+              style={{ marginBottom: 0 }}
+            />
+          </GuidedTourTarget>
+        </View>
 
         <SectionHeader title={t('farmForm.sections.cropType')} style={{ marginBottom: 16 }} />
 
@@ -1782,155 +1790,160 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             keyboardVerticalOffset={0}
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
-            <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}>
+            <View
+              onStartShouldSetResponder={() => true}
+              style={{
+                backgroundColor: colors.surface[100],
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                height: varietySheetHeight,
+              }}
+            >
               <View
-                onStartShouldSetResponder={() => true}
                 style={{
-                  backgroundColor: colors.surface[100],
-                  borderTopLeftRadius: borderRadius['3xl'],
-                  borderTopRightRadius: borderRadius['3xl'],
-                  height: varietySheetHeight,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.surface[100],
                 }}
               >
-                <View
+                <View style={{ width: 40 }} />
+                <Text
                   style={{
-                    flexDirection: 'row',
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  {t('farmForm.variety.modalTitle')}
+                </Text>
+                <Pressable
+                  onPress={() =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      showVarietyPicker: false,
+                      varietySearchQuery: '',
+                    }))
+                  }
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colors.surface[100],
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingHorizontal: spacing[6],
-                    paddingVertical: spacing[4],
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
+                    justifyContent: 'center',
                   }}
                 >
-                  <View style={{ width: 40 }} />
-                  <Text
-                    style={{
-                      fontSize: fontSize.lg,
-                      fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
-                    }}
-                  >
-                    {t('farmForm.variety.modalTitle')}
-                  </Text>
-                  <Pressable
-                    onPress={() =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        showVarietyPicker: false,
-                        varietySearchQuery: '',
-                      }))
-                    }
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: borderRadius.full,
-                      backgroundColor: colors.surface[100],
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-                  </Pressable>
-                </View>
+                  <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+                </Pressable>
+              </View>
 
-                <View
-                  style={{
-                    paddingHorizontal: spacing[6],
-                    paddingTop: spacing[4],
-                    paddingBottom: spacing[2],
-                  }}
-                >
+              <GuidedTourTarget
+                targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
+                style={{ flex: 1 }}
+              >
+                <View style={{ flex: 1 }}>
                   <View
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      borderWidth: 1,
-                      borderColor: colors.surface[200],
-                      borderRadius: borderRadius.xl,
-                      backgroundColor: colors.surface[50],
-                      paddingHorizontal: spacing[3],
-                      minHeight: 48,
+                      paddingHorizontal: spacing[6],
+                      paddingTop: spacing[4],
+                      paddingBottom: spacing[2],
                     }}
                   >
-                    <UISymbol
-                      name="magnifyingglass"
-                      size={18}
-                      color={m3.colorScheme.onSurfaceVariant}
-                    />
-                    <TextInput
-                      value={formState.varietySearchQuery}
-                      onChangeText={(v) =>
-                        setFormState((prev) => ({ ...prev, varietySearchQuery: v }))
-                      }
-                      placeholder={t('farmForm.variety.searchPlaceholder')}
-                      placeholderTextColor={colors.surface[400]}
+                    <View
                       style={{
-                        flex: 1,
-                        marginLeft: spacing[2],
-                        color: colors.surface[900],
-                        fontSize: fontSize.base,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        borderWidth: 1,
+                        borderColor: colors.surface[200],
+                        borderRadius: borderRadius.xl,
+                        backgroundColor: colors.surface[50],
+                        paddingHorizontal: spacing[3],
+                        minHeight: 48,
                       }}
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                    />
-                  </View>
-                </View>
-
-                <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-                  {filteredVarieties.map((variety) => (
-                    <Pressable
-                      key={variety}
-                      style={{
-                        paddingHorizontal: spacing[6],
-                        paddingVertical: spacing[4],
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.surface[100],
-                        backgroundColor:
-                          formState.cropVariety === variety
-                            ? colors.surface[50]
-                            : colors.surface[100],
-                      }}
-                      onPress={() => handleSelectVariety(variety)}
                     >
-                      <View
+                      <UISymbol
+                        name="magnifyingglass"
+                        size={18}
+                        color={m3.colorScheme.onSurfaceVariant}
+                      />
+                      <TextInput
+                        value={formState.varietySearchQuery}
+                        onChangeText={(v) =>
+                          setFormState((prev) => ({ ...prev, varietySearchQuery: v }))
+                        }
+                        placeholder={t('farmForm.variety.searchPlaceholder')}
+                        placeholderTextColor={colors.surface[400]}
                         style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
+                          flex: 1,
+                          marginLeft: spacing[2],
+                          color: colors.surface[900],
+                          fontSize: fontSize.base,
                         }}
+                        autoCapitalize="words"
+                        autoCorrect={false}
+                      />
+                    </View>
+                  </View>
+
+                  <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+                    {filteredVarieties.map((variety) => (
+                      <Pressable
+                        key={variety}
+                        style={{
+                          paddingHorizontal: spacing[6],
+                          paddingVertical: spacing[4],
+                          borderBottomWidth: 1,
+                          borderBottomColor: colors.surface[100],
+                          backgroundColor:
+                            formState.cropVariety === variety
+                              ? colors.surface[50]
+                              : colors.surface[100],
+                        }}
+                        onPress={() => handleSelectVariety(variety)}
                       >
-                        <Text
+                        <View
                           style={{
-                            fontSize: fontSize.base,
-                            color:
-                              formState.cropVariety === variety
-                                ? colors.surface[900]
-                                : colors.surface[700],
-                            fontWeight:
-                              formState.cropVariety === variety
-                                ? fontWeight.semibold
-                                : fontWeight.normal,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
                           }}
                         >
-                          {getVarietyLabel(variety)}
+                          <Text
+                            style={{
+                              fontSize: fontSize.base,
+                              color:
+                                formState.cropVariety === variety
+                                  ? colors.surface[900]
+                                  : colors.surface[700],
+                              fontWeight:
+                                formState.cropVariety === variety
+                                  ? fontWeight.semibold
+                                  : fontWeight.normal,
+                            }}
+                          >
+                            {getVarietyLabel(variety)}
+                          </Text>
+                          {formState.cropVariety === variety && (
+                            <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                          )}
+                        </View>
+                      </Pressable>
+                    ))}
+                    {filteredVarieties.length === 0 && (
+                      <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                        <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                          {t('common.noResultsFound')}
                         </Text>
-                        {formState.cropVariety === variety && (
-                          <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
-                        )}
                       </View>
-                    </Pressable>
-                  ))}
-                  {filteredVarieties.length === 0 && (
-                    <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                      <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-                        {t('common.noResultsFound')}
-                      </Text>
-                    </View>
-                  )}
-                </ScrollView>
-              </View>
-            </GuidedTourTarget>
+                    )}
+                  </ScrollView>
+                </View>
+              </GuidedTourTarget>
+            </View>
           </KeyboardAvoidingView>
         </ModalBackdrop>
       )}
@@ -1942,111 +1955,182 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             keyboardVerticalOffset={0}
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
-            <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET}>
+            <View
+              onStartShouldSetResponder={() => true}
+              style={{
+                backgroundColor: colors.surface[100],
+                borderTopLeftRadius: borderRadius['3xl'],
+                borderTopRightRadius: borderRadius['3xl'],
+                height: cropSheetHeight,
+              }}
+            >
               <View
-                onStartShouldSetResponder={() => true}
                 style={{
-                  backgroundColor: colors.surface[100],
-                  borderTopLeftRadius: borderRadius['3xl'],
-                  borderTopRightRadius: borderRadius['3xl'],
-                  height: cropSheetHeight,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[4],
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.surface[100],
                 }}
               >
-                <View
+                <View style={{ width: 40 }} />
+                <Text
                   style={{
-                    flexDirection: 'row',
+                    fontSize: fontSize.lg,
+                    fontWeight: fontWeight.semibold,
+                    color: colors.surface[900],
+                  }}
+                >
+                  {t('farmForm.cropPicker.modalTitle')}
+                </Text>
+                <Pressable
+                  onPress={closeCropPicker}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: borderRadius.full,
+                    backgroundColor: colors.surface[100],
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingHorizontal: spacing[6],
-                    paddingVertical: spacing[4],
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.surface[100],
+                    justifyContent: 'center',
                   }}
                 >
-                  <View style={{ width: 40 }} />
-                  <Text
-                    style={{
-                      fontSize: fontSize.lg,
-                      fontWeight: fontWeight.semibold,
-                      color: colors.surface[900],
-                    }}
-                  >
-                    {t('farmForm.cropPicker.modalTitle')}
-                  </Text>
-                  <Pressable
-                    onPress={closeCropPicker}
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: borderRadius.full,
-                      backgroundColor: colors.surface[100],
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
-                  </Pressable>
-                </View>
+                  <UISymbol name="xmark" size={20} color={m3.colorScheme.onSurface} />
+                </Pressable>
+              </View>
 
-                <View
-                  style={{
-                    paddingHorizontal: spacing[6],
-                    paddingTop: spacing[4],
-                    paddingBottom: spacing[2],
-                  }}
-                >
+              <GuidedTourTarget
+                targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET}
+                style={{ flex: 1 }}
+              >
+                <View style={{ flex: 1 }}>
                   <View
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      borderWidth: 1,
-                      borderColor: colors.surface[200],
-                      borderRadius: borderRadius.xl,
-                      backgroundColor: colors.surface[50],
-                      paddingHorizontal: spacing[3],
-                      minHeight: 48,
+                      paddingHorizontal: spacing[6],
+                      paddingTop: spacing[4],
+                      paddingBottom: spacing[2],
                     }}
                   >
-                    <UISymbol
-                      name="magnifyingglass"
-                      size={18}
-                      color={m3.colorScheme.onSurfaceVariant}
-                    />
-                    <TextInput
-                      value={formState.cropSearchQuery}
-                      onChangeText={(v) =>
-                        setFormState((prev) => ({ ...prev, cropSearchQuery: v }))
-                      }
-                      placeholder={t('farmForm.cropPicker.searchPlaceholder')}
-                      placeholderTextColor={colors.surface[400]}
+                    <View
                       style={{
-                        flex: 1,
-                        marginLeft: spacing[2],
-                        color: colors.surface[900],
-                        fontSize: fontSize.base,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        borderWidth: 1,
+                        borderColor: colors.surface[200],
+                        borderRadius: borderRadius.xl,
+                        backgroundColor: colors.surface[50],
+                        paddingHorizontal: spacing[3],
+                        minHeight: 48,
                       }}
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                    />
+                    >
+                      <UISymbol
+                        name="magnifyingglass"
+                        size={18}
+                        color={m3.colorScheme.onSurfaceVariant}
+                      />
+                      <TextInput
+                        value={formState.cropSearchQuery}
+                        onChangeText={(v) =>
+                          setFormState((prev) => ({ ...prev, cropSearchQuery: v }))
+                        }
+                        placeholder={t('farmForm.cropPicker.searchPlaceholder')}
+                        placeholderTextColor={colors.surface[400]}
+                        style={{
+                          flex: 1,
+                          marginLeft: spacing[2],
+                          color: colors.surface[900],
+                          fontSize: fontSize.base,
+                        }}
+                        autoCapitalize="words"
+                        autoCorrect={false}
+                      />
+                    </View>
                   </View>
-                </View>
 
-                <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-                  {filteredCropOptions.map((cropOption) => {
-                    const selected =
-                      formState.selectedCrop !== 'Other' &&
-                      formState.selectedCrop === cropOption.value;
-                    return (
+                  <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+                    {filteredCropOptions.map((cropOption) => {
+                      const selected =
+                        formState.selectedCrop !== 'Other' &&
+                        formState.selectedCrop === cropOption.value;
+                      return (
+                        <Pressable
+                          key={cropOption.value}
+                          style={{
+                            paddingHorizontal: spacing[6],
+                            paddingVertical: spacing[4],
+                            borderBottomWidth: 1,
+                            borderBottomColor: colors.surface[100],
+                            backgroundColor: selected ? colors.surface[50] : colors.surface[100],
+                          }}
+                          onPress={() => handleSelectCrop(cropOption.value)}
+                        >
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                              <View
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: borderRadius.lg,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  marginRight: spacing[3],
+                                  backgroundColor: selected
+                                    ? colorWithOpacity(colors.primary[500], 0.16)
+                                    : colorWithOpacity(colors.surface[600], 0.1),
+                                }}
+                              >
+                                {renderCropVisual(cropOption.value, 22, selected)}
+                              </View>
+                              <View style={{ flex: 1 }}>
+                                <Text
+                                  style={{
+                                    fontSize: fontSize.base,
+                                    color: selected ? colors.surface[900] : colors.surface[700],
+                                    fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
+                                  }}
+                                >
+                                  {cropOption.label}
+                                </Text>
+                                <Text
+                                  style={{
+                                    marginTop: 2,
+                                    fontSize: fontSize.sm,
+                                    color: colors.surface[500],
+                                  }}
+                                >
+                                  {cropOption.sublabel}
+                                </Text>
+                              </View>
+                            </View>
+                            {selected && (
+                              <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                            )}
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+
+                    {canCreateCustomCrop && (
                       <Pressable
-                        key={cropOption.value}
+                        onPress={() => handleSelectCrop('Other', cropSearchQueryTrimmed)}
                         style={{
                           paddingHorizontal: spacing[6],
                           paddingVertical: spacing[4],
                           borderBottomWidth: 1,
                           borderBottomColor: colors.surface[100],
-                          backgroundColor: selected ? colors.surface[50] : colors.surface[100],
+                          backgroundColor:
+                            formState.selectedCrop === 'Other' &&
+                            formState.customCropName.trim().toLowerCase() === cropSearchQueryLower
+                              ? colors.surface[50]
+                              : colors.surface[100],
                         }}
-                        onPress={() => handleSelectCrop(cropOption.value)}
                       >
                         <View
                           style={{
@@ -2056,101 +2140,39 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                            <View
+                            <UISymbol
+                              name="plus.circle.fill"
+                              size={20}
+                              color={colors.primary[500]}
+                            />
+                            <Text
                               style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: borderRadius.lg,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginRight: spacing[3],
-                                backgroundColor: selected
-                                  ? colorWithOpacity(colors.primary[500], 0.16)
-                                  : colorWithOpacity(colors.surface[600], 0.1),
+                                marginLeft: spacing[2],
+                                fontSize: fontSize.base,
+                                color: colors.surface[900],
+                                fontWeight: fontWeight.semibold,
                               }}
                             >
-                              {renderCropVisual(cropOption.value, 22, selected)}
-                            </View>
-                            <View style={{ flex: 1 }}>
-                              <Text
-                                style={{
-                                  fontSize: fontSize.base,
-                                  color: selected ? colors.surface[900] : colors.surface[700],
-                                  fontWeight: selected ? fontWeight.semibold : fontWeight.medium,
-                                }}
-                              >
-                                {cropOption.label}
-                              </Text>
-                              <Text
-                                style={{
-                                  marginTop: 2,
-                                  fontSize: fontSize.sm,
-                                  color: colors.surface[500],
-                                }}
-                              >
-                                {cropOption.sublabel}
-                              </Text>
-                            </View>
+                              {t('farmForm.cropPicker.useCustomCrop', {
+                                crop: cropSearchQueryTrimmed,
+                              })}
+                            </Text>
                           </View>
-                          {selected && (
-                            <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
-                          )}
                         </View>
                       </Pressable>
-                    );
-                  })}
+                    )}
 
-                  {canCreateCustomCrop && (
-                    <Pressable
-                      onPress={() => handleSelectCrop('Other', cropSearchQueryTrimmed)}
-                      style={{
-                        paddingHorizontal: spacing[6],
-                        paddingVertical: spacing[4],
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.surface[100],
-                        backgroundColor:
-                          formState.selectedCrop === 'Other' &&
-                          formState.customCropName.trim().toLowerCase() === cropSearchQueryLower
-                            ? colors.surface[50]
-                            : colors.surface[100],
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                          <UISymbol name="plus.circle.fill" size={20} color={colors.primary[500]} />
-                          <Text
-                            style={{
-                              marginLeft: spacing[2],
-                              fontSize: fontSize.base,
-                              color: colors.surface[900],
-                              fontWeight: fontWeight.semibold,
-                            }}
-                          >
-                            {t('farmForm.cropPicker.useCustomCrop', {
-                              crop: cropSearchQueryTrimmed,
-                            })}
-                          </Text>
-                        </View>
+                    {filteredCropOptions.length === 0 && !canCreateCustomCrop && (
+                      <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                        <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                          {t('farmForm.cropPicker.noResults')}
+                        </Text>
                       </View>
-                    </Pressable>
-                  )}
-
-                  {filteredCropOptions.length === 0 && !canCreateCustomCrop && (
-                    <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                      <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-                        {t('farmForm.cropPicker.noResults')}
-                      </Text>
-                    </View>
-                  )}
-                </ScrollView>
-              </View>
-            </GuidedTourTarget>
+                    )}
+                  </ScrollView>
+                </View>
+              </GuidedTourTarget>
+            </View>
           </KeyboardAvoidingView>
         </ModalBackdrop>
       )}

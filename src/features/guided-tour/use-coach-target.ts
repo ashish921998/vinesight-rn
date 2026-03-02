@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Dimensions, Keyboard } from 'react-native';
 import { telemetry } from '@/services/telemetry';
 import {
   GUIDED_TOUR_TARGET_IDS,
@@ -8,12 +9,16 @@ import {
 } from './constants';
 import type { GuidedTourTargetId } from './constants';
 import { useGuidedTourStore } from './store';
-import { measureGuidedTourTarget, type GuidedTourTargetRect } from './targets';
+import {
+  measureGuidedTourTarget,
+  subscribeGuidedTourTarget,
+  type GuidedTourTargetRect,
+} from './targets';
 import type { GuidedTourStep } from './types';
 import type { AddFarmPhase } from './use-tour-events';
 
 const MAX_SEASON_START_RETRIES = 20;
-
+const REACTIVE_REMEASURE_DEBOUNCE_MS = 70;
 function isAddFarmFlowRoute(pathname: string | null): boolean {
   return pathname === '/farm/add';
 }
@@ -73,10 +78,21 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
   const [rect, setRect] = useState<GuidedTourTargetRect | null>(null);
   const [activeCoachStep, setActiveCoachStep] = useState<GuidedTourStep | null>(null);
   const [activeTargetId, setActiveTargetId] = useState<GuidedTourTargetId | null>(null);
+  const [measureTrigger, setMeasureTrigger] = useState(0);
 
   const shownRef = useRef<Set<string>>(new Set());
   const addLogRetryCountRef = useRef(0);
   const previousShowEventKeyRef = useRef<string | null>(null);
+  const measureRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const queueMeasureRefresh = useCallback(() => {
+    if (measureRefreshTimerRef.current) {
+      clearTimeout(measureRefreshTimerRef.current);
+    }
+    measureRefreshTimerRef.current = setTimeout(() => {
+      setMeasureTrigger((prev) => prev + 1);
+    }, REACTIVE_REMEASURE_DEBOUNCE_MS);
+  }, []);
 
   const clearOverlay = useCallback(() => {
     setRect(null);
@@ -107,6 +123,29 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
   useEffect(() => {
     addLogRetryCountRef.current = 0;
   }, [currentStep]);
+
+  useEffect(() => {
+    return () => {
+      if (measureRefreshTimerRef.current) {
+        clearTimeout(measureRefreshTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (overlayMode !== 'coach') return;
+    const handleViewportChange = () => queueMeasureRefresh();
+    const keyboardShowSub = Keyboard.addListener('keyboardDidShow', handleViewportChange);
+    const keyboardHideSub = Keyboard.addListener('keyboardDidHide', handleViewportChange);
+    const keyboardFrameSub = Keyboard.addListener('keyboardDidChangeFrame', handleViewportChange);
+    const dimensionsSub = Dimensions.addEventListener('change', handleViewportChange);
+    return () => {
+      keyboardShowSub.remove();
+      keyboardHideSub.remove();
+      keyboardFrameSub.remove();
+      dimensionsSub.remove();
+    };
+  }, [overlayMode, queueMeasureRefresh]);
 
   // Main measurement loop
   useEffect(() => {
@@ -256,8 +295,9 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
                   ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY
                   : GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY;
 
-    const targetCandidates: GuidedTourTargetId[] =
-      step === 'add_log' && addLogFlowRoute && !isSeasonStartPhase
+    const targetCandidates: GuidedTourTargetId[] = isSeasonStartPhase
+      ? [GUIDED_TOUR_TARGET_IDS.START_SEASON_SHEET, GUIDED_TOUR_TARGET_IDS.START_SEASON_PRIMARY]
+      : step === 'add_log' && addLogFlowRoute && !isSeasonStartPhase
         ? hasPendingLogDrafts
           ? [GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE]
           : isAddLogDetailsPhase
@@ -272,6 +312,15 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
                 GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY,
               ]
         : [targetId];
+
+    const unsubscribeTargets = targetCandidates.map((candidate) =>
+      subscribeGuidedTourTarget(candidate, queueMeasureRefresh),
+    );
+
+    if (activeTargetId && activeTargetId !== targetId) {
+      setRect(null);
+      setActiveTargetId(null);
+    }
 
     let cancelled = false;
     let seasonStartRetryCount = 0;
@@ -300,9 +349,36 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       }
       if (cancelled) return;
       if (measured) {
+        const { width: viewportWidth, height: viewportHeight } = Dimensions.get('window');
+        const isInViewport =
+          measured.x < viewportWidth &&
+          measured.y < viewportHeight &&
+          measured.x + measured.width > 0 &&
+          measured.y + measured.height > 0;
+        if (!isInViewport) {
+          telemetry.capture('tour_target_rect_invalid', {
+            step,
+            targetId: measuredTargetId,
+            route: pathname,
+          });
+        }
+        if (measuredTargetId !== targetId) {
+          telemetry.capture('tour_target_candidate_switched', {
+            step,
+            route: pathname,
+            expectedTargetId: targetId,
+            measuredTargetId,
+          });
+        }
         setRect(measured);
         setActiveCoachStep(step);
         setActiveTargetId(measuredTargetId);
+        telemetry.capture('tour_target_remeasured', {
+          step,
+          route: pathname,
+          targetId: measuredTargetId,
+          trigger: measureTrigger,
+        });
         if (!shownRef.current.has(showEventKey)) {
           telemetry.capture('tour_step_shown', {
             step,
@@ -399,8 +475,10 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       if (seasonStartRetryTimer) {
         clearTimeout(seasonStartRetryTimer);
       }
+      unsubscribeTargets.forEach((unsubscribe) => unsubscribe());
     };
   }, [
+    activeTargetId,
     activeFarmId,
     addLogFlowRoute,
     completeStep,
@@ -413,10 +491,12 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     isSeasonFormVisible,
     overlayMode,
     pathname,
+    queueMeasureRefresh,
     selectedActivityType,
     segments,
     showStep,
     addFarmPhase,
+    measureTrigger,
   ]);
 
   return { rect, activeCoachStep, activeTargetId, clearOverlay };

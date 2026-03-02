@@ -46,7 +46,7 @@ export function FloatingAssistantButton({
         pressed && { opacity: 0.85, transform: [{ scale: 0.95 }] },
       ]}
     >
-      <AssistantSymbol name="assistant" size={24} color={m3.colorScheme.onPrimary} />
+      <AssistantSymbol name="lightbulb.fill" size={24} color={m3.colorScheme.onPrimary} />
     </Pressable>
   );
 }

@@ -57,3 +57,8 @@ lint-results.json
 # Storybook
 *storybook.log
 storybook-static
+
+# local IDE/agent files
+.idea/
+.claude/
+agent-orchestrator.yaml

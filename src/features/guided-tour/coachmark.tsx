@@ -2,6 +2,8 @@ import React, { useEffect, useMemo } from 'react';
 import {
   Animated,
   Easing,
+  Keyboard,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -13,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { telemetry } from '@/services/telemetry';
 import { colorWithOpacity } from '@/utils/color';
 import type { GuidedTourTargetRect } from './targets';
 import type { GuidedTourStep } from './types';
@@ -48,8 +51,9 @@ export function GuidedTourCoachmark({
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const pulse = useMemo(() => new Animated.Value(0), []);
+  const [keyboardHeight, setKeyboardHeight] = React.useState(0);
   const reveal = useMemo(() => new Animated.Value(0), []);
+  const lastClampKeyRef = React.useRef<string | null>(null);
 
   useEffect(() => {
     Animated.timing(reveal, {
@@ -58,26 +62,23 @@ export function GuidedTourCoachmark({
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
+  }, [reveal]);
 
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 1100,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0,
-          duration: 1100,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse, reveal]);
+  useEffect(() => {
+    const onShow = (event: { endCoordinates?: { height?: number } }) =>
+      setKeyboardHeight(event.endCoordinates?.height ?? 0);
+    const onChange = (event: { endCoordinates?: { height?: number } }) =>
+      setKeyboardHeight(event.endCoordinates?.height ?? 0);
+    const onHide = () => setKeyboardHeight(0);
+    const showSub = Keyboard.addListener('keyboardDidShow', onShow);
+    const hideSub = Keyboard.addListener('keyboardDidHide', onHide);
+    const frameSub = Keyboard.addListener('keyboardDidChangeFrame', onChange);
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+      frameSub.remove();
+    };
+  }, []);
 
   const defer = (fn: () => void) => setTimeout(fn, 0);
   const label =
@@ -85,33 +86,33 @@ export function GuidedTourCoachmark({
   const progressLabel = step === 'add_farm' ? '1 / 2' : '2 / 2';
   const isNonBlocking = !blockOutsideTouches;
   const hasCoachActions = Boolean(actionLabel || secondaryActionLabel);
-  const TOOLTIP_HEIGHT_ESTIMATE = hasCoachActions ? 260 : 200;
+  const baseTooltipHeight = hasCoachActions ? 260 : 200;
+  const TOOLTIP_HEIGHT_ESTIMATE =
+    Platform.OS === 'android' ? baseTooltipHeight + 80 : baseTooltipHeight;
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const belowTop = rect.y + rect.height + spacing[4];
-  const aboveTop = rect.y - TOOLTIP_HEIGHT_ESTIMATE - spacing[4];
-  const autoTooltipTop =
-    belowTop + TOOLTIP_HEIGHT_ESTIMATE + spacing[16] <= screenHeight
+  const keyboardBottomInset = Math.max(0, keyboardHeight - insets.bottom);
+  const rectY = Platform.OS === 'android' ? rect.y + insets.top : rect.y;
+  const rectX = Platform.OS === 'android' ? rect.x + insets.left : rect.x;
+  const isLowerScreenTarget = rectY > screenHeight * 0.55;
+  const preferAboveTarget = keyboardBottomInset > 0 && isLowerScreenTarget;
+  const belowTop = rectY + rect.height + spacing[4];
+  const aboveTop = rectY - TOOLTIP_HEIGHT_ESTIMATE - spacing[4];
+  const autoTooltipTop = preferAboveTarget
+    ? Math.max(spacing[4], aboveTop)
+    : belowTop + TOOLTIP_HEIGHT_ESTIMATE + spacing[16] <= screenHeight - keyboardBottomInset
       ? belowTop
       : Math.max(spacing[4], aboveTop);
-  const tooltipTop = (tooltipPlacement === 'top' ? spacing[20] : autoTooltipTop) + tooltipOffsetY;
-  const tooltipLeft = Math.max(spacing[4], Math.min(rect.x, screenWidth - 286));
+  const desiredTooltipTop =
+    (tooltipPlacement === 'top' ? spacing[20] : autoTooltipTop) + tooltipOffsetY;
+  const tooltipLeft = Math.max(spacing[4], Math.min(rectX, screenWidth - 286));
   const tooltipMaxWidth =
     tooltipPlacement === 'top'
       ? Math.max(286, screenWidth - spacing[8])
       : Math.max(240, screenWidth - tooltipLeft - spacing[4]);
-  const bubblePointsDown = tooltipTop < rect.y;
   const accentColor = step === 'add_farm' ? '#2FA36D' : '#4A86E8';
   const gradientColors: [string, string] =
     step === 'add_farm' ? ['#195A3A', '#2FA36D'] : ['#2D5DB8', '#4A86E8'];
 
-  const ringScale = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.1],
-  });
-  const ringOpacity = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.35, 0.16],
-  });
   const bubbleOpacity = reveal.interpolate({
     inputRange: [0, 1],
     outputRange: [0, 1],
@@ -124,12 +125,20 @@ export function GuidedTourCoachmark({
   const SKIP_CHIP_HEIGHT = 44;
   const SKIP_TOP = insets.top + spacing[2];
   const TOOLTIP_TOP_CLEARANCE = SKIP_TOP + SKIP_CHIP_HEIGHT + spacing[3];
-  const bubbleTop = Math.max(tooltipTop, TOOLTIP_TOP_CLEARANCE);
+  const TOOLTIP_BOTTOM_CLEARANCE = Math.max(insets.bottom, spacing[3]) + keyboardBottomInset + 4;
+  const MAX_BUBBLE_TOP = Math.max(
+    TOOLTIP_TOP_CLEARANCE,
+    screenHeight - TOOLTIP_HEIGHT_ESTIMATE - TOOLTIP_BOTTOM_CLEARANCE,
+  );
+  const bubbleTop = Math.max(TOOLTIP_TOP_CLEARANCE, Math.min(desiredTooltipTop, MAX_BUBBLE_TOP));
   const bubbleLeft = tooltipPlacement === 'top' ? spacing[4] : tooltipLeft;
   const bubbleRight = spacing[4];
   const bubbleWidth = Math.min(tooltipMaxWidth, screenWidth - bubbleLeft - bubbleRight);
-  const targetCenterX = rect.x + rect.width / 2;
+  const bubblePointsDown = bubbleTop < rectY;
+  const targetCenterX = rectX + rect.width / 2;
   const pointerLeft = Math.max(18, Math.min(bubbleWidth - 30, targetCenterX - bubbleLeft - 10));
+  const showPointer =
+    targetCenterX >= bubbleLeft + 8 && targetCenterX <= bubbleLeft + bubbleWidth - 8;
   const copyLines = label
     .split('\n')
     .map((line) => line.trim())
@@ -137,6 +146,19 @@ export function GuidedTourCoachmark({
   const primaryLine = copyLines[0] ?? label;
   const secondaryLine = copyLines.slice(1).join(' ');
   const showTapHint = step === 'add_farm' || step === 'add_log';
+
+  useEffect(() => {
+    if (Math.abs(bubbleTop - desiredTooltipTop) < 1) return;
+    const clampKey = `${step}:${Math.round(rect.x)}:${Math.round(rect.y)}:${Math.round(desiredTooltipTop)}:${Math.round(bubbleTop)}:${Math.round(keyboardBottomInset)}`;
+    if (lastClampKeyRef.current === clampKey) return;
+    lastClampKeyRef.current = clampKey;
+    telemetry.capture('tour_bubble_clamped', {
+      step,
+      desiredTop: Math.round(desiredTooltipTop),
+      clampedTop: Math.round(bubbleTop),
+      keyboardInset: Math.round(keyboardBottomInset),
+    });
+  }, [bubbleTop, desiredTooltipTop, keyboardBottomInset, rect.x, rect.y, step]);
 
   const overlayPointerEvents: 'auto' | 'none' = blockOutsideTouches ? 'auto' : 'none';
   const overlayOpacity = blockOutsideTouches
@@ -146,6 +168,8 @@ export function GuidedTourCoachmark({
     : step === 'add_log'
       ? 0.4
       : 0.46;
+  const focusInsetX = focusPadding;
+  const focusInsetY = focusPadding;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -157,7 +181,7 @@ export function GuidedTourCoachmark({
             top: 0,
             left: 0,
             right: 0,
-            height: Math.max(0, rect.y - 8),
+            height: Math.max(0, rectY - focusInsetY),
             backgroundColor: colorWithOpacity('#000', overlayOpacity),
           }}
         />
@@ -165,10 +189,10 @@ export function GuidedTourCoachmark({
           pointerEvents={overlayPointerEvents}
           style={{
             position: 'absolute',
-            top: Math.max(0, rect.y - 8),
+            top: Math.max(0, rectY - focusInsetY),
             left: 0,
-            width: Math.max(0, rect.x - 8),
-            height: rect.height + 16,
+            width: Math.max(0, rectX - focusInsetX),
+            height: rect.height + focusInsetY * 2,
             backgroundColor: colorWithOpacity('#000', overlayOpacity),
           }}
         />
@@ -176,10 +200,10 @@ export function GuidedTourCoachmark({
           pointerEvents={overlayPointerEvents}
           style={{
             position: 'absolute',
-            top: Math.max(0, rect.y - 8),
-            left: rect.x + rect.width + 8,
+            top: Math.max(0, rectY - focusInsetY),
+            left: rectX + rect.width + focusInsetX,
             right: 0,
-            height: rect.height + 16,
+            height: rect.height + focusInsetY * 2,
             backgroundColor: colorWithOpacity('#000', overlayOpacity),
           }}
         />
@@ -187,7 +211,7 @@ export function GuidedTourCoachmark({
           pointerEvents={overlayPointerEvents}
           style={{
             position: 'absolute',
-            top: rect.y + rect.height + 8,
+            top: rectY + rect.height + focusInsetY,
             left: 0,
             right: 0,
             bottom: 0,
@@ -196,38 +220,23 @@ export function GuidedTourCoachmark({
         />
       </>
 
-      <Animated.View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          left: rect.x - (focusPadding + 8),
-          top: rect.y - (focusPadding + 8),
-          width: rect.width + (focusPadding + 8) * 2,
-          height: rect.height + (focusPadding + 8) * 2,
-          borderRadius: borderRadius['2xl'],
-          borderWidth: 2,
-          borderColor: colorWithOpacity(accentColor, 0.55),
-          transform: [{ scale: ringScale }],
-          opacity: ringOpacity,
-        }}
-      />
       <View
         pointerEvents="none"
         style={{
           position: 'absolute',
-          left: rect.x - focusPadding,
-          top: rect.y - focusPadding,
-          width: rect.width + focusPadding * 2,
-          height: rect.height + focusPadding * 2,
+          left: rectX - focusInsetX,
+          top: rectY - focusInsetY,
+          width: rect.width + focusInsetX * 2,
+          height: rect.height + focusInsetY * 2,
           borderRadius: borderRadius.xl,
           borderWidth: 2.5,
           borderColor: accentColor,
           backgroundColor: 'transparent',
           shadowColor: accentColor,
-          shadowOpacity: 0.36,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: 8 },
-          elevation: 5,
+          shadowOpacity: Platform.OS === 'android' ? 0 : 0.36,
+          shadowRadius: Platform.OS === 'android' ? 0 : 16,
+          shadowOffset: { width: 0, height: Platform.OS === 'android' ? 0 : 8 },
+          elevation: Platform.OS === 'android' ? 0 : 5,
         }}
       />
 
@@ -385,35 +394,37 @@ export function GuidedTourCoachmark({
           ) : null}
         </LinearGradient>
 
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: pointerLeft,
-            ...(bubblePointsDown ? { bottom: -12 } : { top: -12 }),
-            width: 0,
-            height: 0,
-            borderLeftWidth: 10,
-            borderRightWidth: 10,
-            ...(bubblePointsDown
-              ? {
-                  borderTopWidth: 12,
-                  borderTopColor: gradientColors[1],
-                  borderLeftColor: 'transparent',
-                  borderRightColor: 'transparent',
-                  borderBottomWidth: 0,
-                  borderBottomColor: 'transparent',
-                }
-              : {
-                  borderBottomWidth: 12,
-                  borderBottomColor: gradientColors[0],
-                  borderLeftColor: 'transparent',
-                  borderRightColor: 'transparent',
-                  borderTopWidth: 0,
-                  borderTopColor: 'transparent',
-                }),
-          }}
-        />
+        {showPointer ? (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: pointerLeft,
+              ...(bubblePointsDown ? { bottom: -12 } : { top: -12 }),
+              width: 0,
+              height: 0,
+              borderLeftWidth: 10,
+              borderRightWidth: 10,
+              ...(bubblePointsDown
+                ? {
+                    borderTopWidth: 12,
+                    borderTopColor: gradientColors[1],
+                    borderLeftColor: 'transparent',
+                    borderRightColor: 'transparent',
+                    borderBottomWidth: 0,
+                    borderBottomColor: 'transparent',
+                  }
+                : {
+                    borderBottomWidth: 12,
+                    borderBottomColor: gradientColors[0],
+                    borderLeftColor: 'transparent',
+                    borderRightColor: 'transparent',
+                    borderTopWidth: 0,
+                    borderTopColor: 'transparent',
+                  }),
+            }}
+          />
+        ) : null}
       </Animated.View>
 
       <View

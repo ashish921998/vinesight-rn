@@ -76,6 +76,7 @@ export function useGuidedTourServerSync(): boolean {
         hydrationSyncedRef.current = true;
         if (server) {
           applyServerState(server);
+          setInitialServerHydrated(true);
           return;
         }
 

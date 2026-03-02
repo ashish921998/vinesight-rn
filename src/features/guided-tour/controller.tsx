@@ -429,7 +429,7 @@ export function GuidedTourController() {
               activeCoachStep === 'add_log' &&
               addLogFlowRoute &&
               activeTargetId === GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE
-                ? t('guidedTour.step2.addEntryCoach', {
+                ? t('guidedTour.step2.tapSaveCoach', {
                     defaultValue: 'Great. Tap Save to continue.',
                   })
                 : activeCoachStep === 'add_log' &&
@@ -443,6 +443,7 @@ export function GuidedTourController() {
                       activeTargetId !== GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY
                     ? hasConfirmedLogInput
                       ? t('guidedTour.step2.addEntryCoach', {
+                          activity: String(selectedActivityType ?? 'activity').replace('_', ' '),
                           defaultValue: `Great. Tap Add entry to continue.`,
                         })
                       : t('guidedTour.step2.fillActivityDetailsCoach', {
