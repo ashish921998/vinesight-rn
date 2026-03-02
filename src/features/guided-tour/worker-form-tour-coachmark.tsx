@@ -17,25 +17,36 @@ import {
 } from './targets';
 import { useWorkersTourStore, type AddWorkerTourStep } from './workers-tour-store';
 import type { GuidedTourTargetId } from './constants';
+import type { GuidedTourStep } from './types';
+
+const ADD_WORKER_STEP_ORDER: AddWorkerTourStep[] = [
+  'name_field',
+  'daily_rate_field',
+  'save_button',
+];
+const TOTAL_ADD_WORKER_STEPS = ADD_WORKER_STEP_ORDER.length;
 
 const STEP_META: Record<
   AddWorkerTourStep,
-  { targetId: GuidedTourTargetId; messageKey: string; actionLabel: string }
+  { targetId: GuidedTourTargetId; messageKey: string; actionLabelKey: string; step: string }
 > = {
   name_field: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKER_FORM_NAME,
     messageKey: 'guided_tour.worker_form.name_field.message',
-    actionLabel: 'Next',
+    actionLabelKey: 'guided_tour.workersTour.next',
+    step: 'worker_form',
   },
   daily_rate_field: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKER_FORM_DAILY_RATE,
     messageKey: 'guided_tour.worker_form.daily_rate_field.message',
-    actionLabel: 'Next',
+    actionLabelKey: 'guided_tour.workersTour.next',
+    step: 'worker_form',
   },
   save_button: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKER_FORM_SAVE,
     messageKey: 'guided_tour.worker_form.save_button.message',
-    actionLabel: 'Got it!',
+    actionLabelKey: 'guided_tour.workersTour.gotIt',
+    step: 'worker_form',
   },
 };
 
@@ -55,6 +66,8 @@ export function WorkerFormTourCoachmark() {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const meta = STEP_META[currentStep];
+  const currentStepIndex = ADD_WORKER_STEP_ORDER.indexOf(currentStep) + 1;
+  const progressLabel = `${currentStepIndex} / ${TOTAL_ADD_WORKER_STEPS}`;
 
   const triggerRemeasure = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -108,11 +121,11 @@ export function WorkerFormTourCoachmark() {
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
       <GuidedTourCoachmark
-        step="add_farm"
+        step={meta.step as GuidedTourStep}
         rect={rect}
         targetId={meta.targetId}
         message={t(meta.messageKey)}
-        actionLabel={meta.actionLabel}
+        actionLabel={t(meta.actionLabelKey)}
         onAction={advanceStep}
         onSkip={skipTour}
         blockOutsideTouches={false}
@@ -120,6 +133,7 @@ export function WorkerFormTourCoachmark() {
         skipTopOffset={skipTopOffset}
         hideTapHint
         inlineSkip
+        progressLabel={progressLabel}
       />
     </View>
   );

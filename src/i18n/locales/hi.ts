@@ -1849,6 +1849,17 @@ export const hi = {
       comingSoon: 'जल्द आ रहा है',
     },
     ratePerDayShort: ' /दिन',
+    edit: 'संपादित करें',
+    delete: 'हटाएं',
+    actions: {
+      title: 'एक्शन्स',
+      addWorker: 'वर्कर जोड़ें',
+      addWorkerDesc: 'एक नया स्थायी वर्कर दर्ज करें',
+      settlePayment: 'भुगतान सettle करें',
+      settlePaymentDesc: 'वर्कर की मजदूरी की गणना और पुष्टि करें',
+      addTempWorker: 'टेम्प वर्कर जोड़ें',
+      addTempWorkerDesc: 'एक-बार दिन की श्रम दर्ज करें',
+    },
     workerCard: {
       editA11y: '{{name}} संपादित करें',
       deleteA11y: '{{name}} हटाएं',
@@ -2631,43 +2642,56 @@ export const hi = {
   guided_tour: {
     workers: {
       tabs_overview: {
-        message: 'Switch between Workers, Attendance, and Analytics using these tabs.',
+        message: 'इन टैब्स का उपयोग करके वर्कर्स, अटेंडेंस और एनालिटिक्स के बीच स्विच करें।',
       },
       add_worker: {
-        message: 'Tap here to add a worker, settle payments, or log a temp worker.',
+        message: 'वर्कर जोड़ने, भुगतान सettle करने या टेम्प वर्कर लॉग करने के लिए यहाँ टैप करें।',
       },
       attendance_tab: {
-        message: 'Tap Attendance to mark daily attendance for your workers.',
+        message: 'अपने वर्कर्स की दैनिक अटेंडेंस मार्क करने के लिए अटेंडेंस टैब पर टैप करें।',
       },
       mark_day: {
-        message: 'Tap any day cell to mark attendance.',
+        message: 'अटेंडेंस मार्क करने के लिए किसी भी दिन के सेल पर टैप करें।',
       },
     },
     worker_form: {
       name_field: {
-        message:
-          "Enter the worker's full name — this is how they'll appear in attendance and reports.",
+        message: 'वर्कर का पूरा नाम दर्ज करें — यही उनकी अटेंडेंस और रिपोर्ट में दिखाई देगा।',
       },
       daily_rate_field: {
         message:
-          'Set their daily wage (₹). This is used to automatically calculate payment at settlement.',
+          'उनकी दैनिक मजदूरी (₹) सेट करें। इसका उपयोग सettlement पर भुगतान की स्वचालित गणना के लिए किया जाता है।',
       },
       save_button: {
         message:
-          'Tap Save to add them to your roster. You can edit their details anytime from the Workers list.',
+          'उन्हें अपनी सूची में जोड़ने के लिए सेव पर टैप करें। आप वर्कर्स सूची से कभी भी उनकी जानकारी संपादित कर सकते हैं।',
       },
     },
     settlement: {
       worker_picker: {
-        message: 'Choose the worker you want to settle payment for.',
+        message: 'जिस वर्कर का भुगतान सettle करना है उसे चुनें।',
       },
       period_selector: {
-        message: 'Select the pay period — This Week, Last Week, or a custom date range.',
+        message: 'वेतन अवधि चुनें — इस सप्ताह, पिछला सप्ताह, या कस्टम तिथि सीमा।',
       },
       calculate_btn: {
         message:
-          'Tap Calculate to automatically compute wages based on attendance. Then confirm to record the payment.',
+          'अटेंडेंस के आधार पर वेतन की स्वचालित गणना के लिए कैलकुलेट पर टैप करें। फिर भुगतान दर्ज करने की पुष्टि करें।',
       },
+    },
+    workersTour: {
+      legend: {
+        fullDay: 'पूरा दिन',
+        halfDay: 'आधा दिन',
+        absent: 'अनुपस्थित',
+        tap1: 'पहला टैप',
+        tap2: 'दूसरा टैप',
+        tap3: 'तीसरा टैप',
+        tap4: 'चौथा टैप दिन को अनमार्क कर देता है।',
+      },
+      cyclesThrough: 'हर टैप इसमें से गुजरता है:',
+      next: 'अगला',
+      gotIt: 'समझ गया!',
     },
   },
 } as const;

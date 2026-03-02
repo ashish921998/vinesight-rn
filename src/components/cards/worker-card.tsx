@@ -177,7 +177,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
                   color: m3.colorScheme.primary,
                 }}
               >
-                Edit
+                {t('workers.edit')}
               </Text>
             </Pressable>
           )}
@@ -204,7 +204,7 @@ export function WorkerCard({ worker, onPress, onEdit, onDelete }: WorkerCardProp
                   color: m3.colorScheme.error,
                 }}
               >
-                Delete
+                {t('workers.delete')}
               </Text>
             </Pressable>
           )}

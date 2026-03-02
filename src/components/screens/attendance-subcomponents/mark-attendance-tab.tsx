@@ -1105,21 +1105,23 @@ export function MarkAttendanceTab({
           </View>
         </View>
 
-        {/* ── Tap hint ── */}
-        <Animated.View
-          entering={FadeIn.duration(400)}
-          style={{ alignItems: 'center', marginTop: spacing[2] }}
-        >
-          <Text
-            style={{
-              fontSize: fontSize.xs,
-              color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-              textAlign: 'center',
-            }}
+        {/* ── Tap hint (only show during tour mode) ── */}
+        {isTourActive && (
+          <Animated.View
+            entering={FadeIn.duration(400)}
+            style={{ alignItems: 'center', marginTop: spacing[2] }}
           >
-            💡 Tap a day to cycle: Full → Half → Absent → Clear
-          </Text>
-        </Animated.View>
+            <Text
+              style={{
+                fontSize: fontSize.xs,
+                color: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+                textAlign: 'center',
+              }}
+            >
+              {t('attendance.tapHint')}
+            </Text>
+          </Animated.View>
+        )}
 
         {/* ── Quick Actions ── */}
         <View style={{ paddingHorizontal: spacing[4] }}>
@@ -1314,7 +1316,7 @@ export function MarkAttendanceTab({
                 : m3.colorScheme.surfaceVariant,
               overflow: 'hidden',
               transform: [{ scale: pressed && hasModifications ? 0.97 : 1 }],
-              ...(hasModifications ? shadows : {}),
+              ...(hasModifications ? shadows.lg : {}),
               opacity: saving ? 0.8 : hasModifications ? 1 : 0.5,
             })}
           >

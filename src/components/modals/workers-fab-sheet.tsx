@@ -1,10 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { useM3 } from '@/styles/use-theme';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
+import { useTranslation } from 'react-i18next';
+
+const SHEET_INITIAL_OFFSET = 400;
 
 interface Action {
   id: string;
@@ -31,14 +34,23 @@ export function WorkersFabSheet({
   onSettlePayment,
   onAddTempWorker,
 }: WorkersFabSheetProps) {
+  const { t } = useTranslation();
   const m3 = useM3();
   const insets = useSafeAreaInsets();
 
-  const slideAnimRef = useRef(new Animated.Value(400));
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const slideAnimRef = useRef(new Animated.Value(SHEET_INITIAL_OFFSET));
   const backdropAnimRef = useRef(new Animated.Value(0));
+  const visibleRef = useRef(visible);
+  const animationRunIdRef = useRef(0);
 
   useEffect(() => {
+    visibleRef.current = visible;
+    const runId = ++animationRunIdRef.current;
+
     if (visible) {
+      setModalVisible(true);
       Animated.parallel([
         Animated.spring(slideAnimRef.current, {
           toValue: 0,
@@ -56,7 +68,7 @@ export function WorkersFabSheet({
     } else {
       Animated.parallel([
         Animated.timing(slideAnimRef.current, {
-          toValue: 400,
+          toValue: SHEET_INITIAL_OFFSET,
           duration: 220,
           easing: Easing.in(Easing.quad),
           useNativeDriver: true,
@@ -67,15 +79,19 @@ export function WorkersFabSheet({
           easing: Easing.in(Easing.quad),
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(() => {
+        if (runId === animationRunIdRef.current && !visibleRef.current) {
+          setModalVisible(false);
+        }
+      });
     }
   }, [visible]);
 
   const actions: Action[] = [
     {
       id: 'add_worker',
-      label: 'Add Worker',
-      description: 'Register a new permanent worker',
+      label: t('workers.actions.addWorker'),
+      description: t('workers.actions.addWorkerDesc'),
       icon: 'person.badge.plus',
       color: m3.colorScheme.primary,
       bgColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
@@ -86,8 +102,8 @@ export function WorkersFabSheet({
     },
     {
       id: 'settle_payment',
-      label: 'Settle Payment',
-      description: 'Calculate and confirm worker wages',
+      label: t('workers.actions.settlePayment'),
+      description: t('workers.actions.settlePaymentDesc'),
       icon: 'banknote',
       color: '#16A34A',
       bgColor: colorWithOpacity('#16A34A', 0.1),
@@ -98,8 +114,8 @@ export function WorkersFabSheet({
     },
     {
       id: 'add_temp_worker',
-      label: 'Add Temp Worker',
-      description: 'Log a one-time day labour entry',
+      label: t('workers.actions.addTempWorker'),
+      description: t('workers.actions.addTempWorkerDesc'),
       icon: 'person.badge.clock',
       color: '#D97706',
       bgColor: colorWithOpacity('#D97706', 0.1),
@@ -112,7 +128,7 @@ export function WorkersFabSheet({
 
   return (
     <Modal
-      visible={visible}
+      visible={modalVisible}
       transparent
       animationType="none"
       onRequestClose={onClose}
@@ -177,7 +193,7 @@ export function WorkersFabSheet({
               marginBottom: spacing[3],
             }}
           >
-            Actions
+            {t('workers.actions.title')}
           </Text>
 
           {/* Action rows */}
@@ -277,7 +293,7 @@ export function WorkersFabSheet({
                 color: m3.colorScheme.onSurfaceVariant,
               }}
             >
-              Cancel
+              {t('common.cancel')}
             </Text>
           </Pressable>
         </View>

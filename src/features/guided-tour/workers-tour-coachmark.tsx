@@ -14,14 +14,29 @@ import type { GuidedTourTargetId } from './constants';
 import { colorWithOpacity } from '@/utils/color';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 
-// ─── Attendance legend rendered inside the mark_day tooltip ──────────────────
-const ATTENDANCE_STATES = [
-  { label: 'Full Day', dot: '#4ADE80', bg: 'rgba(74,222,128,0.18)', tap: '1st tap' },
-  { label: 'Half Day', dot: '#FBBF24', bg: 'rgba(251,191,36,0.18)', tap: '2nd tap' },
-  { label: 'Absent', dot: '#F87171', bg: 'rgba(248,113,113,0.18)', tap: '3rd tap' },
-];
-
 function AttendanceLegend() {
+  const { t } = useTranslation();
+  const attendanceStates = [
+    {
+      label: t('guided_tour.workersTour.legend.fullDay'),
+      dot: '#4ADE80',
+      bg: 'rgba(74,222,128,0.18)',
+      tap: t('guided_tour.workersTour.legend.tap1'),
+    },
+    {
+      label: t('guided_tour.workersTour.legend.halfDay'),
+      dot: '#FBBF24',
+      bg: 'rgba(251,191,36,0.18)',
+      tap: t('guided_tour.workersTour.legend.tap2'),
+    },
+    {
+      label: t('guided_tour.workersTour.legend.absent'),
+      dot: '#F87171',
+      bg: 'rgba(248,113,113,0.18)',
+      tap: t('guided_tour.workersTour.legend.tap3'),
+    },
+  ];
+
   return (
     <View style={{ marginTop: spacing[3], gap: spacing[2] }}>
       {/* Tap instruction row */}
@@ -33,11 +48,11 @@ function AttendanceLegend() {
           marginBottom: spacing[1],
         }}
       >
-        Each tap cycles through:
+        {t('guided_tour.workersTour.cyclesThrough')}
       </Text>
 
       {/* State badges */}
-      {ATTENDANCE_STATES.map((s) => (
+      {attendanceStates.map((s) => (
         <View
           key={s.label}
           style={{
@@ -109,41 +124,44 @@ function AttendanceLegend() {
           marginTop: spacing[1],
         }}
       >
-        4th tap clears the day back to unmarked.
+        {t('guided_tour.workersTour.legend.tap4')}
       </Text>
     </View>
   );
 }
 
 // ─── Step metadata ────────────────────────────────────────────────────────────
+const STEP_ORDER: WorkersTourStep[] = ['tabs_overview', 'add_worker', 'attendance_tab', 'mark_day'];
+const TOTAL_STEPS = STEP_ORDER.length;
+
 const STEP_META: Record<
   WorkersTourStep,
   {
     targetId: GuidedTourTargetId;
     messageKey: string;
-    actionLabel: string;
+    actionLabelKey: string;
     messageNode?: React.ReactNode;
   }
 > = {
   tabs_overview: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKERS_TAB_SELECTOR,
     messageKey: 'guided_tour.workers.tabs_overview.message',
-    actionLabel: 'Next',
+    actionLabelKey: 'guided_tour.workersTour.next',
   },
   add_worker: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKERS_FAB,
     messageKey: 'guided_tour.workers.add_worker.message',
-    actionLabel: 'Next',
+    actionLabelKey: 'guided_tour.workersTour.next',
   },
   attendance_tab: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKERS_ATTENDANCE_TAB,
     messageKey: 'guided_tour.workers.attendance_tab.message',
-    actionLabel: 'Next',
+    actionLabelKey: 'guided_tour.workersTour.next',
   },
   mark_day: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKERS_MARK_DAY_CELL,
     messageKey: 'guided_tour.workers.mark_day.message',
-    actionLabel: 'Got it!',
+    actionLabelKey: 'guided_tour.workersTour.gotIt',
     messageNode: <AttendanceLegend />,
   },
 };
@@ -166,18 +184,21 @@ export function WorkersTourCoachmark({ onNavigateToAttendance }: WorkersTourCoac
   const { height: screenHeight } = useWindowDimensions();
 
   const [rect, setRect] = useState<GuidedTourTargetRect | null>(null);
+  const [measureNonce, setMeasureNonce] = useState(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelledRef = useRef(false);
   const measureTriggerRef = useRef(0);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const meta = STEP_META[currentStep];
+  const currentStepIndex = STEP_ORDER.indexOf(currentStep) + 1;
+  const progressLabel = `${currentStepIndex} / ${TOTAL_STEPS}`;
 
   const triggerRemeasure = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
       measureTriggerRef.current += 1;
-      setRect(null); // force re-measure
+      setMeasureNonce((n) => n + 1);
     }, REMEASURE_DEBOUNCE_MS);
   }, []);
 
@@ -216,7 +237,7 @@ export function WorkersTourCoachmark({ onNavigateToAttendance }: WorkersTourCoac
       unsubscribe();
       setRect(null);
     };
-  }, [isActive, currentStep, meta.targetId, triggerRemeasure]);
+  }, [isActive, currentStep, meta.targetId, triggerRemeasure, measureNonce]);
 
   const handleAction = useCallback(() => {
     // Before advancing attendance_tab → mark_day, navigate to Attendance tab first.
@@ -247,12 +268,12 @@ export function WorkersTourCoachmark({ onNavigateToAttendance }: WorkersTourCoac
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
       <GuidedTourCoachmark
-        step="add_farm" // reuse add_farm style (green gradient)
+        step="add_farm"
         rect={rect}
         targetId={meta.targetId}
         message={t(meta.messageKey)}
         messageNode={meta.messageNode}
-        actionLabel={meta.actionLabel}
+        actionLabel={t(meta.actionLabelKey)}
         onAction={handleAction}
         onSkip={skipTour}
         blockOutsideTouches
@@ -260,6 +281,7 @@ export function WorkersTourCoachmark({ onNavigateToAttendance }: WorkersTourCoac
         skipTopOffset={skipTopOffset}
         hideTapHint
         inlineSkip
+        progressLabel={progressLabel}
       />
     </View>
   );

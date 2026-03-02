@@ -50,11 +50,11 @@ export function WorkerForm({
   const { _hydrated, hasSeenAddWorkerTour, startAddWorkerTour } = useWorkersTourStore();
   useEffect(() => {
     if (!_hydrated) return;
-    if (!isEditMode && !hasSeenAddWorkerTour) {
+    if (isVisible && !isEditMode && !hasSeenAddWorkerTour) {
       const timer = setTimeout(startAddWorkerTour, 500);
       return () => clearTimeout(timer);
     }
-  }, [_hydrated, isEditMode, hasSeenAddWorkerTour, startAddWorkerTour]);
+  }, [_hydrated, isVisible, isEditMode, hasSeenAddWorkerTour, startAddWorkerTour]);
 
   useEffect(() => {
     if (worker) {

@@ -44,6 +44,8 @@ interface Props {
   /** Renders the Skip button inside the tooltip bubble (bottom-left)
    *  instead of the floating top-right chip. */
   inlineSkip?: boolean;
+  /** Custom progress label (e.g., "2 / 4"). Defaults to "1 / 2" or "2 / 2" based on step. */
+  progressLabel?: string;
 }
 
 export function GuidedTourCoachmark({
@@ -64,6 +66,7 @@ export function GuidedTourCoachmark({
   skipTopOffset = 0,
   hideTapHint = false,
   inlineSkip = false,
+  progressLabel: customProgressLabel,
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -145,7 +148,7 @@ export function GuidedTourCoachmark({
   const defer = (fn: () => void) => setTimeout(fn, 0);
   const label =
     message ?? (step === 'add_farm' ? t('guidedTour.step1.coach') : t('guidedTour.step2.coach'));
-  const progressLabel = step === 'add_farm' ? '1 / 2' : '2 / 2';
+  const progressLabel = customProgressLabel ?? (step === 'add_farm' ? '1 / 2' : '2 / 2');
   const isNonBlocking = !blockOutsideTouches;
   const hasCoachActions = Boolean(actionLabel || secondaryActionLabel);
   const copyLines = label

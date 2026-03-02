@@ -1864,6 +1864,17 @@ export const en = {
       comingSoon: 'Coming soon',
     },
     ratePerDayShort: ' /day',
+    edit: 'Edit',
+    delete: 'Delete',
+    actions: {
+      title: 'Actions',
+      addWorker: 'Add Worker',
+      addWorkerDesc: 'Register a new permanent worker',
+      settlePayment: 'Settle Payment',
+      settlePaymentDesc: 'Calculate and confirm worker wages',
+      addTempWorker: 'Add Temp Worker',
+      addTempWorkerDesc: 'Log a one-time day labour entry',
+    },
     workerCard: {
       editA11y: 'Edit {{name}}',
       deleteA11y: 'Delete {{name}}',
@@ -2366,6 +2377,7 @@ export const en = {
       completeTitle: 'Complete',
       completeBody: 'All workers completed!',
     },
+    tapHint: '💡 Tap a day to cycle: Full → Half → Absent → Clear',
   },
 
   workerAnalyticsDetail: {
@@ -2680,6 +2692,20 @@ export const en = {
         message:
           'Tap Calculate to automatically compute wages based on attendance. Then confirm to record the payment.',
       },
+    },
+    workersTour: {
+      legend: {
+        fullDay: 'Full Day',
+        halfDay: 'Half Day',
+        absent: 'Absent',
+        tap1: '1st tap',
+        tap2: '2nd tap',
+        tap3: '3rd tap',
+        tap4: '4th tap clears the day back to unmarked.',
+      },
+      cyclesThrough: 'Each tap cycles through:',
+      next: 'Next',
+      gotIt: 'Got it!',
     },
   },
 } as const;

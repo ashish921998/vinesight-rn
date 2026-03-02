@@ -192,9 +192,10 @@ export const useWorkersTourStore = create<WorkersTourStore>()(
       // All tour trigger useEffects check this flag so they never fire on the
       // brief in-memory defaults pass (where every hasSeenX is still false).
       onRehydrateStorage: () => (_state, error) => {
-        if (!error) {
-          useWorkersTourStore.setState({ _hydrated: true });
+        if (error) {
+          console.error('Failed to rehydrate workers tour store:', error);
         }
+        useWorkersTourStore.setState({ _hydrated: true });
       },
     },
   ),
