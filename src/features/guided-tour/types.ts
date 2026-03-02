@@ -1,6 +1,15 @@
 export type GuidedTourStatus = 'not_started' | 'in_progress' | 'complete' | 'skipped' | 'expired';
 
-export type GuidedTourStep = 'welcome' | 'add_farm' | 'add_log' | 'complete_card';
+export type GuidedTourStep =
+  | 'welcome'
+  | 'add_farm'
+  | 'add_log'
+  | 'complete_card'
+  | 'worker_form'
+  | 'tabs_overview'
+  | 'add_worker'
+  | 'attendance_tab'
+  | 'mark_day';
 
 export type GuidedTourRenderableStep = 'welcome' | 'add_farm' | 'add_log' | 'complete_card' | null;
 

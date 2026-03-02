@@ -10,6 +10,7 @@ import {
   type GuidedTourTargetRect,
 } from './targets';
 import { useWorkersTourStore, type WorkersTourStep } from './workers-tour-store';
+import type { GuidedTourStep } from './types';
 import type { GuidedTourTargetId } from './constants';
 import { colorWithOpacity } from '@/utils/color';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -140,6 +141,7 @@ const STEP_META: Record<
     targetId: GuidedTourTargetId;
     messageKey: string;
     actionLabelKey: string;
+    step: GuidedTourStep;
     messageNode?: React.ReactNode;
   }
 > = {
@@ -147,21 +149,25 @@ const STEP_META: Record<
     targetId: GUIDED_TOUR_TARGET_IDS.WORKERS_TAB_SELECTOR,
     messageKey: 'guided_tour.workers.tabs_overview.message',
     actionLabelKey: 'guided_tour.workersTour.next',
+    step: 'tabs_overview',
   },
   add_worker: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKERS_FAB,
     messageKey: 'guided_tour.workers.add_worker.message',
     actionLabelKey: 'guided_tour.workersTour.next',
+    step: 'add_worker',
   },
   attendance_tab: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKERS_ATTENDANCE_TAB,
     messageKey: 'guided_tour.workers.attendance_tab.message',
     actionLabelKey: 'guided_tour.workersTour.next',
+    step: 'attendance_tab',
   },
   mark_day: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKERS_MARK_DAY_CELL,
     messageKey: 'guided_tour.workers.mark_day.message',
     actionLabelKey: 'guided_tour.workersTour.gotIt',
+    step: 'mark_day',
     messageNode: <AttendanceLegend />,
   },
 };
@@ -187,7 +193,6 @@ export function WorkersTourCoachmark({ onNavigateToAttendance }: WorkersTourCoac
   const [measureNonce, setMeasureNonce] = useState(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelledRef = useRef(false);
-  const measureTriggerRef = useRef(0);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const meta = STEP_META[currentStep];
@@ -197,7 +202,6 @@ export function WorkersTourCoachmark({ onNavigateToAttendance }: WorkersTourCoac
   const triggerRemeasure = useCallback(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
-      measureTriggerRef.current += 1;
       setMeasureNonce((n) => n + 1);
     }, REMEASURE_DEBOUNCE_MS);
   }, []);
@@ -268,7 +272,7 @@ export function WorkersTourCoachmark({ onNavigateToAttendance }: WorkersTourCoac
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
       <GuidedTourCoachmark
-        step="add_farm"
+        step={meta.step}
         rect={rect}
         targetId={meta.targetId}
         message={t(meta.messageKey)}

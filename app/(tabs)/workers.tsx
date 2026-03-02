@@ -55,11 +55,11 @@ export default function WorkersScreen() {
     // Without this guard, the tour would fire on every app launch during the
     // brief window where hasSeenTour is still the in-memory default (false).
     if (!_hydrated) return;
-    if (!hasSeenTour) {
+    if (!hasSeenTour && !isTourActive) {
       const timer = setTimeout(() => startTour(), 600);
       return () => clearTimeout(timer);
     }
-  }, [_hydrated, hasSeenTour, startTour]);
+  }, [_hydrated, hasSeenTour, isTourActive, startTour]);
 
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
 

@@ -28,7 +28,7 @@ const TOTAL_ADD_WORKER_STEPS = ADD_WORKER_STEP_ORDER.length;
 
 const STEP_META: Record<
   AddWorkerTourStep,
-  { targetId: GuidedTourTargetId; messageKey: string; actionLabelKey: string; step: string }
+  { targetId: GuidedTourTargetId; messageKey: string; actionLabelKey: string; step: GuidedTourStep }
 > = {
   name_field: {
     targetId: GUIDED_TOUR_TARGET_IDS.WORKER_FORM_NAME,
@@ -109,9 +109,14 @@ export function WorkerFormTourCoachmark() {
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       unsubscribe();
-      setRect(null);
     };
   }, [isActive, currentStep, meta.targetId, triggerRemeasure, measureNonce]);
+
+  useEffect(() => {
+    return () => {
+      setRect(null);
+    };
+  }, []);
 
   if (!isActive) return null;
   if (!rect) return null;
@@ -126,7 +131,7 @@ export function WorkerFormTourCoachmark() {
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
       <GuidedTourCoachmark
-        step={meta.step as GuidedTourStep}
+        step={meta.step}
         rect={rect}
         targetId={meta.targetId}
         message={t(meta.messageKey)}

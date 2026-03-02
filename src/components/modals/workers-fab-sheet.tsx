@@ -97,7 +97,7 @@ export function WorkersFabSheet({
       bgColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
       onPress: () => {
         onClose();
-        setTimeout(onAddWorker, 180);
+        setTimeout(onAddWorker, 240);
       },
     },
     {
@@ -109,7 +109,7 @@ export function WorkersFabSheet({
       bgColor: colorWithOpacity(m3.colorScheme.secondary || m3.colorScheme.primary, 0.1),
       onPress: () => {
         onClose();
-        setTimeout(onSettlePayment, 180);
+        setTimeout(onSettlePayment, 240);
       },
     },
     {
@@ -121,7 +121,7 @@ export function WorkersFabSheet({
       bgColor: colorWithOpacity(m3.colorScheme.warning, 0.1),
       onPress: () => {
         onClose();
-        setTimeout(onAddTempWorker, 180);
+        setTimeout(onAddTempWorker, 240);
       },
     },
   ];

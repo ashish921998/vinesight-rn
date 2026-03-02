@@ -1853,12 +1853,12 @@ export const hi = {
     delete: 'हटाएं',
     actions: {
       title: 'एक्शन्स',
-      addWorker: 'वर्कर जोड़ें',
-      addWorkerDesc: 'एक नया स्थायी वर्कर दर्ज करें',
-      settlePayment: 'भुगतान सेटल करें',
-      settlePaymentDesc: 'वर्कर की मजदूरी की गणना और पुष्टि करें',
-      addTempWorker: 'टेम्प वर्कर जोड़ें',
-      addTempWorkerDesc: 'एक-बार दिन की श्रम दर्ज करें',
+      addWorker: 'श्रमिक जोड़ें',
+      addWorkerDesc: 'एक नया स्थायी श्रमिक दर्ज करें',
+      settlePayment: 'निपटान करें',
+      settlePaymentDesc: 'श्रमिक की मजदूरी की गणना और पुष्टि करें',
+      addTempWorker: 'अस्थायी श्रमिक जोड़ें',
+      addTempWorkerDesc: 'एक दिन की श्रम दर्ज करें',
     },
     workerCard: {
       editA11y: '{{name}} संपादित करें',
