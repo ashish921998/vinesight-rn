@@ -1,124 +1,133 @@
 /**
  * VineSight Design System - Native Styles
- * Ported from tailwind.config.js for inline style usage
+ * Pi-Inspired Warm & Minimal Design Language
  */
 
 import { colorWithOpacity } from '@/utils/color';
 
+// ============================================================
+// MARK: - Warm Earthy Gray Scale
+// ============================================================
+
 const lightGray = {
-  50: '#f9fafb',
-  100: '#f3f4f6',
-  200: '#e5e7eb',
-  300: '#d1d5db',
-  400: '#9ca3af',
-  500: '#6b7280',
-  600: '#4b5563',
-  700: '#374151',
-  800: '#1f2937',
-  900: '#111827',
+  50: '#FAF8F5',
+  100: '#F5F0EB',
+  200: '#E8E2DB',
+  300: '#D4CBC1',
+  400: '#A8A099',
+  500: '#7A756F',
+  600: '#5C5751',
+  700: '#3D3A36',
+  800: '#2D2D2A',
+  900: '#1C1C1A',
 } as const;
 
 const darkGray = {
-  50: '#111827',
-  100: '#1f2937',
-  200: '#374151',
-  300: '#4b5563',
-  400: '#6b7280',
-  500: '#9ca3af',
-  600: '#d1d5db',
-  700: '#e5e7eb',
-  800: '#f3f4f6',
-  900: '#f9fafb',
+  50: '#1C1C1A',
+  100: '#2D2D2A',
+  200: '#3D3A36',
+  300: '#5C5751',
+  400: '#7A756F',
+  500: '#A8A099',
+  600: '#D4CBC1',
+  700: '#E8E2DB',
+  800: '#F5F0EB',
+  900: '#FAF8F5',
 } as const;
 
 const lightSurface = {
-  50: '#f2f2f7',
-  100: '#ffffff',
-  200: '#f2f2f7',
-  300: '#e5e5ea',
-  400: '#d1d1d6',
-  500: '#8e8e93',
-  600: '#636366',
-  700: '#48484a',
-  800: '#3a3a3c',
-  900: '#2c2c2e',
+  50: '#FAF8F5',
+  100: '#FFFEFA',
+  200: '#F5F0EB',
+  300: '#E8E2DB',
+  400: '#D4CBC1',
+  500: '#A8A099',
+  600: '#7A756F',
+  700: '#5C5751',
+  800: '#3D3A36',
+  900: '#2D2D2A',
 } as const;
 
 const darkSurface = {
-  50: '#0b0f14',
-  100: '#11161d',
-  200: '#1a2029',
-  300: '#232b36',
-  400: '#2c3542',
-  500: '#3a4453',
-  600: '#4b5666',
-  700: '#667180',
-  800: '#8a94a3',
-  900: '#b8c0cc',
+  50: '#1A1A18',
+  100: '#242420',
+  200: '#2E2E28',
+  300: '#3A3A34',
+  400: '#4A4A42',
+  500: '#5E5E54',
+  600: '#7A756F',
+  700: '#A8A099',
+  800: '#D4CBC1',
+  900: '#F5F0EB',
 } as const;
 
+// ============================================================
+// MARK: - Base Colors — Warm Earthy Palette
+// ============================================================
+
 const baseColors = {
-  white: '#ffffff',
-  black: '#000000',
-  // Primary - Monochromatic Green Palette
+  white: '#FFFEFA',
+  black: '#1C1C1A',
+  // Primary - Warm Sage Green Palette
   primary: {
-    50: '#f0f5f2',
-    100: '#e1ebe5',
-    200: '#c3d6cc',
-    300: '#9cc5b1',
-    400: '#75b397',
-    500: '#408059',
-    600: '#346a4a',
-    700: '#2d5c3f',
-    800: '#264d35',
-    900: '#1f412b',
-    950: '#0f2116',
+    50: '#F2F7F3',
+    100: '#E0EDE3',
+    200: '#C2DBC8',
+    300: '#99C4A4',
+    400: '#7FB48D',
+    500: '#6B8F71',
+    600: '#5A7A60',
+    700: '#4C6652',
+    800: '#3F5444',
+    900: '#344538',
+    950: '#1A2B1E',
   },
+  // Accent - Terracotta for CTAs and highlights
   secondary: {
-    500: '#598d6b',
+    500: '#C27B5A',
   },
   accent: {
-    500: '#33734d',
+    500: '#C27B5A',
   },
-  // Activity Colors
+  // Activity Colors — Warmer, earthier tones
   irrigation: {
-    500: '#4d8573',
+    500: '#5B9EA6',
   },
   spray: {
-    500: '#598d6b',
+    500: '#7A9E6B',
   },
   fertigation: {
-    500: '#408059',
+    500: '#6B8F71',
   },
   harvest: {
-    500: '#669475',
+    500: '#C2955A',
   },
   observation: {
-    500: '#738c7a',
+    500: '#8E9B7A',
   },
   task: {
-    500: '#4d8573',
+    500: '#5B9EA6',
   },
   expense: {
-    500: '#598066',
+    500: '#B07D5B',
   },
   labTest: {
-    soil: '#597A61',
-    petiole: '#4C806B',
+    soil: '#8E7B5A',
+    petiole: '#6B8F71',
   },
-  // Status Colors
-  warning: '#ff9500',
-  error: '#ff3b30',
+  // Status Colors — Softened
+  warning: '#E89B3E',
+  error: '#D9534F',
   errorRed: {
-    500: '#ef4444',
+    500: '#D9534F',
   },
-  success: '#34c759',
-  // Water Status
+  success: '#5CB85C',
+  // Water Status — Softened
   water: {
-    critical: '#db4437',
-    low: '#ea8600',
-    medium: '#f9a825',
-    good: '#0b8d32',
+    critical: '#D9534F',
+    low: '#E89B3E',
+    medium: '#E8C44A',
+    good: '#5CB85C',
   },
 } as const;
 
@@ -189,12 +198,13 @@ export const size = {
 export const fontSize = {
   xs: 12,
   sm: 14,
-  base: 16,
-  lg: 18,
-  xl: 20,
-  '2xl': 24,
-  '3xl': 30,
-  '4xl': 36,
+  base: 17,
+  lg: 19,
+  xl: 22,
+  '2xl': 28,
+  '3xl': 34,
+  '4xl': 40,
+  display: 48,
 } as const;
 
 export const fontWeight = {
@@ -239,42 +249,59 @@ export const shadows = {
 
 const m3Base = {
   stateLayerOpacity: {
-    pressed: 0.12,
-    focus: 0.12,
-    hover: 0.08,
-    dragged: 0.16,
+    pressed: 0.1,
+    focus: 0.1,
+    hover: 0.06,
+    dragged: 0.14,
   },
   typography: {
+    // Pi-style large welcoming display text
+    display: {
+      fontSize: fontSize.display,
+      lineHeight: 56,
+      fontWeight: fontWeight.bold,
+    },
+    headlineLarge: {
+      fontSize: fontSize['3xl'],
+      lineHeight: 42,
+      fontWeight: fontWeight.bold,
+    },
     headlineSmall: {
       fontSize: fontSize['2xl'],
-      lineHeight: 32,
+      lineHeight: 36,
       fontWeight: fontWeight.bold,
     },
     titleMedium: {
       fontSize: fontSize.base,
-      lineHeight: 24,
+      lineHeight: 26,
       fontWeight: fontWeight.semibold,
+    },
+    bodyLarge: {
+      fontSize: fontSize.base,
+      lineHeight: 26,
+      fontWeight: fontWeight.normal,
     },
     bodyMedium: {
       fontSize: fontSize.sm,
-      lineHeight: 20,
+      lineHeight: 22,
       fontWeight: fontWeight.normal,
     },
     labelLarge: {
       fontSize: fontSize.sm,
-      lineHeight: 20,
+      lineHeight: 22,
       fontWeight: fontWeight.medium,
     },
     labelSmall: {
       fontSize: fontSize.xs,
-      lineHeight: 16,
+      lineHeight: 18,
       fontWeight: fontWeight.medium,
     },
   },
   shape: {
     cornerSmall: borderRadius.md,
     cornerMedium: borderRadius.xl,
-    cornerLarge: borderRadius['2xl'],
+    cornerLarge: borderRadius['3xl'],
+    cornerFull: borderRadius.full,
   },
 } as const;
 
@@ -351,42 +378,66 @@ export const m3Dark = createM3Theme(true);
 
 export const getM3Theme = (isDark: boolean) => (isDark ? m3Dark : m3);
 
-// Common component styles
+// Common component styles — Pi-inspired warm minimal
 export const commonStyles = {
+  // Warm soft-shadow cards (no hard borders)
+  warmCard: {
+    backgroundColor: colors.surface[100],
+    borderRadius: borderRadius['3xl'],
+    ...shadows.md,
+  },
+  warmCardDark: {
+    backgroundColor: darkColors.surface[100],
+    borderRadius: borderRadius['3xl'],
+    ...shadows.md,
+  },
   // Glass effect cards
   glassCard: {
     backgroundColor: colorWithOpacity(colors.surface[100], 0.85),
-    borderRadius: borderRadius['2xl'],
+    borderRadius: borderRadius['3xl'],
     ...shadows.glass,
   },
   glassCardDark: {
     backgroundColor: colorWithOpacity(darkColors.surface[100], 0.8),
-    borderRadius: borderRadius['2xl'],
+    borderRadius: borderRadius['3xl'],
     ...shadows.glass,
   },
-  // Buttons
+  // Buttons — Pill-shaped, warm
   primaryButton: {
-    backgroundColor: colors.primary[600],
-    borderRadius: borderRadius.xl,
+    backgroundColor: colors.primary[500],
+    borderRadius: borderRadius.full,
     paddingVertical: spacing[4],
-    paddingHorizontal: spacing[6],
+    paddingHorizontal: spacing[8],
   },
   primaryButtonText: {
-    color: colors.surface[100],
+    color: '#FFFEFA',
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    textAlign: 'center' as const,
+  },
+  // Terracotta accent button for prominent CTAs
+  accentButton: {
+    backgroundColor: baseColors.accent[500],
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[8],
+  },
+  accentButtonText: {
+    color: '#FFFEFA',
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
     textAlign: 'center' as const,
   },
   secondaryButton: {
     backgroundColor: colors.surface[100],
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.full,
     paddingVertical: spacing[4],
-    paddingHorizontal: spacing[6],
+    paddingHorizontal: spacing[8],
     borderWidth: 1,
     borderColor: colors.surface[300],
   },
   secondaryButtonText: {
-    color: colors.primary[600],
+    color: colors.primary[500],
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
     textAlign: 'center' as const,
@@ -396,9 +447,9 @@ export const commonStyles = {
     backgroundColor: colors.surface[50],
     borderWidth: 1,
     borderColor: colors.surface[300],
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius['2xl'],
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3] + 2, // 14px
+    paddingVertical: spacing[4],
     fontSize: fontSize.base,
     color: colors.surface[900],
   },

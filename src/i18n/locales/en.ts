@@ -1195,6 +1195,10 @@ export const en = {
     tools: 'Tools',
     settings: 'Settings',
     farms: 'Farms',
+    home: 'Home',
+    assistant: 'Assistant',
+    activity: 'Activity',
+    profile: 'Profile',
   },
 
   onboarding: {

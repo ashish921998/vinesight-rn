@@ -1177,6 +1177,10 @@ export const hi = {
     tools: 'उपकरण',
     settings: 'सेटिंग्स',
     farms: 'खेत',
+    home: 'होम',
+    assistant: 'सहायक',
+    activity: 'गतिविधि',
+    profile: 'प्रोफ़ाइल',
   },
 
   onboarding: {

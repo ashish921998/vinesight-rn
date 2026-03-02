@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { useEffect, useMemo, useRef, type ComponentProps } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -12,15 +11,17 @@ import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { isAndroid } from '@/hooks';
+import { tapLight } from '@/lib/haptics';
 
 export default function TabLayout() {
   const { t } = useTranslation();
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
-  const [hasRedirected, setHasRedirected] = useState(false);
+  const hasRedirectedRef = useRef(false);
   const insets = useSafeAreaInsets();
   const { m3, isDark } = useThemeTokens();
+
   const defaultHeaderOptions = useMemo(
     () => ({
       headerStyle: {
@@ -58,51 +59,23 @@ export default function TabLayout() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (__DEV__) {
-      console.log(
-        'TabLayout: isAuthenticated =',
-        isAuthenticated,
-        'hasRedirected =',
-        hasRedirected,
-      );
-    }
-    if (!isAuthenticated && !hasRedirected) {
-      if (__DEV__) {
-        console.log('TabLayout: Redirecting to login');
-      }
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setHasRedirected(true);
+    if (!isAuthenticated && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
       router.replace('/(auth)/phone-login');
     }
-    // Reset redirect flag when authenticated (regardless of previous hasRedirected state)
-    if (isAuthenticated) {
-      setHasRedirected(false);
-    }
-  }, [isAuthenticated, isLoading, router, hasRedirected]);
+    if (isAuthenticated) hasRedirectedRef.current = false;
+  }, [isAuthenticated, isLoading, router]);
 
-  if (isLoading || !isAuthenticated) {
-    return null;
-  }
+  if (isLoading || !isAuthenticated) return null;
 
   if (isAndroid) {
-    const renderAndroidTabIcon = (name: string, focused: boolean) => {
-      const scaleMap: Record<string, number> = {
-        house: 1.1,
-        'house.fill': 1.1,
-        'wrench.and.screwdriver': 0.9,
-        'wrench.and.screwdriver.fill': 0.9,
-      };
-      const iconName = focused ? name + '.fill' : name;
-      const scale = scaleMap[iconName] ?? 1;
-      return (
-        <SymbolIcon
-          name={iconName}
-          size={24}
-          color={focused ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
-          style={{ transform: [{ scale }] }}
-        />
-      );
-    };
+    const renderAndroidTabIcon = (name: string, focused: boolean) => (
+      <SymbolIcon
+        name={focused ? `${name}.fill` : name}
+        size={24}
+        color={focused ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
+      />
+    );
 
     return (
       <>
@@ -134,45 +107,42 @@ export default function TabLayout() {
           <Tabs.Screen
             name="index"
             options={{
-              title: t('tabs.dashboard'),
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('square.grid.2x2', focused),
-            }}
-          />
-          <Tabs.Screen
-            name="explore"
-            options={{
-              title: t('tabs.explore'),
-              headerShown: false,
+              title: t('tabs.home'),
               tabBarIcon: ({ focused }) => renderAndroidTabIcon('house', focused),
             }}
+            listeners={{ tabPress: () => tapLight() }}
           />
           <Tabs.Screen
-            name="workers"
+            name="assistant"
             options={{
-              title: t('tabs.workers'),
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('person.2', focused),
+              title: t('tabs.assistant'),
+              tabBarIcon: ({ focused }) => renderAndroidTabIcon('message', focused),
             }}
+            listeners={{ tabPress: () => tapLight() }}
           />
           <Tabs.Screen
-            name="tools"
+            name="activity"
             options={{
-              title: t('tabs.tools'),
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('wrench.and.screwdriver', focused),
+              title: t('tabs.activity'),
+              tabBarIcon: ({ focused }) => renderAndroidTabIcon('plus.circle', focused),
             }}
+            listeners={{ tabPress: () => tapLight() }}
           />
           <Tabs.Screen
-            name="settings"
+            name="profile"
             options={{
-              title: t('tabs.settings'),
-              tabBarIcon: ({ focused }) => renderAndroidTabIcon('gearshape', focused),
+              title: t('tabs.profile'),
+              tabBarIcon: ({ focused }) => renderAndroidTabIcon('person', focused),
             }}
+            listeners={{ tabPress: () => tapLight() }}
           />
-          <Tabs.Screen
-            name="farms"
-            options={{
-              href: null,
-            }}
-          />
+
+          {/* Legacy tabs hidden but still routable */}
+          <Tabs.Screen name="explore" options={{ href: null }} />
+          <Tabs.Screen name="workers" options={{ href: null }} />
+          <Tabs.Screen name="tools" options={{ href: null }} />
+          <Tabs.Screen name="settings" options={{ href: null }} />
+          <Tabs.Screen name="farms" options={{ href: null }} />
         </Tabs>
       </>
     );
@@ -200,38 +170,42 @@ export default function TabLayout() {
         backgroundColor={m3.surface.surfaceContainer}
         shadowColor={colorWithOpacity(m3.colorScheme.shadow, isDark ? 0.6 : 0.05)}
       >
-        <NativeTabs.Trigger
-          name="index"
-          options={{ ...defaultHeaderOptions, title: t('tabs.dashboard') }}
-        >
-          {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
-          <Label>{t('tabs.dashboard')}</Label>
+        <NativeTabs.Trigger name="index" options={{ title: t('tabs.home') }}>
+          {renderTabIcon(sf('house'), sf('house.fill'), 'home-outline', 'home')}
+          <Label>{t('tabs.home')}</Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="explore"
-          options={{ ...defaultHeaderOptions, title: t('tabs.explore') }}
-        >
-          <Icon
-            sf={{ default: sf('house'), selected: sf('house.fill') }}
-            selectedColor={m3.colorScheme.primary}
-            androidSrc={{
-              default: <VectorIcon family={MaterialCommunityIcons} name="barn" />,
-              selected: <VectorIcon family={MaterialCommunityIcons} name="barn" />,
-            }}
-          />
-          <Label>{t('tabs.explore')}</Label>
+        <NativeTabs.Trigger name="assistant" options={{ title: t('tabs.assistant') }}>
+          {renderTabIcon(
+            sf('bubble.left.and.bubble.right'),
+            sf('bubble.left.and.bubble.right.fill'),
+            'chatbubble-ellipses-outline',
+            'chatbubble-ellipses',
+          )}
+          <Label>{t('tabs.assistant')}</Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="workers"
-          options={{ ...defaultHeaderOptions, title: t('tabs.workers') }}
-        >
+        <NativeTabs.Trigger name="activity" options={{ title: t('tabs.activity') }}>
+          {renderTabIcon(
+            sf('plus.circle'),
+            sf('plus.circle.fill'),
+            'add-circle-outline',
+            'add-circle',
+          )}
+          <Label>{t('tabs.activity')}</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="profile" options={{ title: t('tabs.profile') }}>
+          {renderTabIcon(sf('person'), sf('person.fill'), 'person-outline', 'person')}
+          <Label>{t('tabs.profile')}</Label>
+        </NativeTabs.Trigger>
+
+        <NativeTabs.Trigger name="explore" hidden options={{ title: t('tabs.farms') }}>
+          {renderTabIcon(sf('leaf'), sf('leaf.fill'), 'leaf-outline', 'leaf')}
+          <Label>{t('tabs.farms')}</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="workers" hidden options={{ title: t('tabs.workers') }}>
           {renderTabIcon(sf('person.2'), sf('person.2.fill'), 'people-outline', 'people')}
           <Label>{t('tabs.workers')}</Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="tools"
-          options={{ ...defaultHeaderOptions, title: t('tabs.tools') }}
-        >
+        <NativeTabs.Trigger name="tools" hidden options={{ title: t('tabs.tools') }}>
           {renderTabIcon(
             sf('wrench.and.screwdriver'),
             sf('wrench.and.screwdriver.fill'),
@@ -240,20 +214,9 @@ export default function TabLayout() {
           )}
           <Label>{t('tabs.tools')}</Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="settings"
-          options={{ ...defaultHeaderOptions, title: t('tabs.settings') }}
-        >
+        <NativeTabs.Trigger name="settings" hidden options={{ title: t('tabs.settings') }}>
           {renderTabIcon(sf('gearshape'), sf('gearshape.fill'), 'settings-outline', 'settings')}
           <Label>{t('tabs.settings')}</Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="farms"
-          hidden
-          options={{ ...defaultHeaderOptions, title: t('tabs.farms') }}
-        >
-          {renderTabIcon(sf('leaf'), sf('leaf.fill'), 'leaf-outline', 'leaf')}
-          <Label>{t('tabs.farms')}</Label>
         </NativeTabs.Trigger>
       </NativeTabs>
     </>

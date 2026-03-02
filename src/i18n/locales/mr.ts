@@ -1198,6 +1198,10 @@ export const mr = {
     tools: 'साधने',
     settings: 'सेटिंग्ज',
     farms: '$t(glossary.farm)',
+    home: 'मुख्यपृष्ठ',
+    assistant: 'सहायक',
+    activity: 'नोंदी',
+    profile: 'प्रोफाइल',
   },
 
   onboarding: {
