@@ -1,10 +1,10 @@
 # Vinesight-RN
 
-React Native mobile application built with Expo SDK 54 for vineyard management. This is an Android port of the existing iOS Vinesight app.
+React Native mobile application for vineyard management.
 
 ## Tech Stack
 
-- **Framework**: [Expo 54](https://expo.dev/) + [React Native 0.81.5](https://reactnative.dev/)
+- **Framework**: [Expo SDK 55](https://expo.dev/) + [React Native 0.83.2](https://reactnative.dev/)
 - **Navigation**: [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routing)
 - **Backend**: [Supabase](https://supabase.com/)
 - **Data Fetching**: [TanStack React Query](https://tanstack.com/query/latest)
@@ -16,18 +16,23 @@ React Native mobile application built with Expo SDK 54 for vineyard management. 
 
 ### Prerequisites
 
-- Node.js (Latest LTS)
-- npm or yarn
-- Expo Go app on your mobile device or an emulator
+- Node.js (latest LTS)
+- npm
+- Xcode (for iOS work)
+- Android Studio (for Android work)
 
 ### Installation
 
-1. Clone the repository
+1. Clone the repository.
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Create a `.env` file based on `.env.example` and fill in your Supabase credentials.
+3. Create `.env` from `.env.example` and fill in required values.
+4. For iOS widget target signing, set `EXPO_APPLE_TEAM_ID` in your shell (or CI secret):
+   ```bash
+   export EXPO_APPLE_TEAM_ID=YOUR_TEAM_ID
+   ```
 
 ### Running the App
 
@@ -41,13 +46,33 @@ npm run android
 npm run web
 ```
 
+## Push Notifications and Expo Go
+
+- Remote push notification testing must be done in a development build, not Expo Go.
+- Use:
+  ```bash
+  npx expo run:ios
+  npx expo run:android
+  ```
+  or build with EAS development profile and install the app on device.
+
+## iOS Widgets and Signing
+
+This app uses iOS widget targets via `@bacons/apple-targets`.
+
+- Keep `EXPO_APPLE_TEAM_ID` configured for local and CI builds.
+- Ensure your Apple team has access to:
+  - app identifier `com.vinesight.ios`
+  - app group `group.com.vinesight.app`
+- If iOS build/signing fails, first verify team ID, signing profiles, and app group entitlements.
+
 ## Project Structure
 
 ```text
 vinesight-rn/
-├── app/                    # Expo Router pages (Navigation)
+├── app/                    # Expo Router pages (navigation)
 │   ├── (auth)/             # Auth screens
-│   ├── (tabs)/             # Main tab screens (Dashboard, Farms, etc.)
+│   ├── (tabs)/             # Main tab screens (dashboard, farms, etc.)
 │   └── _layout.tsx         # Root layout
 ├── src/
 │   ├── components/         # Reusable UI components
@@ -63,7 +88,7 @@ vinesight-rn/
 
 ## Features
 
-- **AI Chat Assistant**: Farming advice powered by OpenAI GPT-4o.
+- **AI Chat Assistant**: Farming advice powered by OpenAI GPT models.
 - **Weather Tracking**: Agricultural weather data per farm.
 - **Activity Logs**: Comprehensive view of farming activities.
 - **Attendance Tracking**: Worker attendance management.
@@ -72,6 +97,8 @@ vinesight-rn/
 
 ## Development
 
-- **Linting**: `npm run lint`
-- **Type Checking**: `npm run typecheck`
-- **Testing**: `npm run test`
+Run before pushing:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm test`
