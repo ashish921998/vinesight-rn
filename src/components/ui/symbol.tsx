@@ -162,6 +162,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   mic: 'mic-outline',
   'mic.fill': 'mic',
   'stop.fill': 'stop-circle',
+  sparkles: 'sparkles',
 
   // Eye icons for password visibility toggle
   eye: 'eye-outline',
@@ -191,10 +192,12 @@ export function SymbolComponent({
   const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[name];
   const isSprayIcon = resolvedName === 'spraycan' || resolvedName === 'spraycan.fill';
   const isFertigationIcon = resolvedName === 'fertigation' || name === 'fertigation';
+  const isAssistantIcon = resolvedName === 'assistant' || name === 'assistant';
 
   // Keep spray icon identical to AppIcon across all platforms.
   if (isSprayIcon) return <AppIcon name="spraycan" size={size} color={resolvedColor} />;
   if (isFertigationIcon) return <AppIcon name="fertigation" size={size} color={resolvedColor} />;
+  if (isAssistantIcon) return <AppIcon name="assistant" size={size} color={resolvedColor} />;
 
   // On iOS 17+, use SF Symbols
   if (Platform.OS === 'ios') {

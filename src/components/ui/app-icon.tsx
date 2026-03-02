@@ -28,7 +28,8 @@ type BaseIconName =
   | 'trending-up'
   | 'trending-down'
   | 'remove'
-  | 'pencil';
+  | 'pencil'
+  | 'assistant';
 
 type AppIconName = BaseIconName | string;
 
@@ -73,6 +74,7 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   'doc.text.fill': 'document',
   'lightbulb.fill': 'flash',
   'checkmark.circle.fill': 'check-circle',
+  assistant: 'assistant',
 };
 
 export function AppIcon({ name, size = 20, color }: AppIconProps) {
@@ -503,6 +505,35 @@ export function AppIcon({ name, size = 20, color }: AppIconProps) {
             stroke={resolvedColor}
             strokeWidth={strokeWidth}
             fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'assistant':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M3 8c2-2.2 4.5-2.2 6.5 0s4.5 2.2 6.5 0 4.5-2.2 6.5 0"
+            fill="none"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M3 12c2.2 2.2 4.8 2.2 7 0s4.8-2.2 7 0 4.8 2.2 7 0"
+            fill="none"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M3 16c2-2.2 4.5-2.2 6.5 0s4.5 2.2 6.5 0 4.5-2.2 6.5 0"
+            fill="none"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeLinejoin="round"
           />

@@ -159,7 +159,7 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
                 justifyContent: 'center',
               }}
             >
-              <SymbolIcon name="mic.fill" size={28} color={m3.colorScheme.onPrimary} />
+              <SymbolIcon name="assistant" size={28} color={m3.colorScheme.onPrimary} />
             </Pressable>
             <Text style={{ color: ui.muted, fontSize: fontSize.sm }}>
               {t('farmAssistant.listening')}
@@ -352,7 +352,7 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                <SymbolIcon name="mic.fill" size={18} color={ui.primary} />
+                <SymbolIcon name="assistant" size={18} color={ui.primary} />
                 <Text
                   style={{
                     color: ui.text,
@@ -450,7 +450,7 @@ export function FarmAssistantModal({ visible, onClose, controller }: FarmAssista
                       justifyContent: 'center',
                     }}
                   >
-                    <SymbolIcon name="mic.fill" size={16} color={ui.primary} />
+                    <SymbolIcon name="assistant" size={16} color={ui.primary} />
                   </Pressable>
                 )}
                 <Pressable
