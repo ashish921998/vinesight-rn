@@ -79,6 +79,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
   const [activeCoachStep, setActiveCoachStep] = useState<GuidedTourStep | null>(null);
   const [activeTargetId, setActiveTargetId] = useState<GuidedTourTargetId | null>(null);
   const [measureTrigger, setMeasureTrigger] = useState(0);
+  const activeTargetIdRef = useRef<GuidedTourTargetId | null>(null);
 
   const shownRef = useRef<Set<string>>(new Set());
   const addLogRetryCountRef = useRef(0);
@@ -94,12 +95,17 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     }, REACTIVE_REMEASURE_DEBOUNCE_MS);
   }, []);
 
+  const updateActiveTargetId = useCallback((nextTargetId: GuidedTourTargetId | null) => {
+    activeTargetIdRef.current = nextTargetId;
+    setActiveTargetId(nextTargetId);
+  }, []);
+
   const clearOverlay = useCallback(() => {
     setRect(null);
     setActiveCoachStep(null);
-    setActiveTargetId(null);
+    updateActiveTargetId(null);
     addLogRetryCountRef.current = 0;
-  }, []);
+  }, [updateActiveTargetId]);
 
   // Reset when eligibility changes
   useEffect(() => {
@@ -107,9 +113,9 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setRect(null);
       setActiveCoachStep(null);
-      setActiveTargetId(null);
+      updateActiveTargetId(null);
     }
-  }, [eligible]);
+  }, [eligible, updateActiveTargetId]);
 
   // Welcome telemetry (fired once per session)
   useEffect(() => {
@@ -153,7 +159,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setRect(null);
       setActiveCoachStep(null);
-      setActiveTargetId(null);
+      updateActiveTargetId(null);
       return;
     }
 
@@ -164,7 +170,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       if (!isAddFarmFlowRoute(pathname)) {
         setRect(null);
         setActiveCoachStep(null);
-        setActiveTargetId(null);
+        updateActiveTargetId(null);
         return;
       }
     }
@@ -185,7 +191,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     ) {
       setRect(null);
       setActiveCoachStep(null);
-      setActiveTargetId(null);
+      updateActiveTargetId(null);
       return;
     }
 
@@ -198,7 +204,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     ) {
       setRect(null);
       setActiveCoachStep(null);
-      setActiveTargetId(null);
+      updateActiveTargetId(null);
       return;
     }
 
@@ -218,7 +224,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       if (!addLogFlowRoute) {
         setRect(null);
         setActiveCoachStep(null);
-        setActiveTargetId(null);
+        updateActiveTargetId(null);
         return;
       }
     }
@@ -317,9 +323,9 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       subscribeGuidedTourTarget(candidate, queueMeasureRefresh),
     );
 
-    if (activeTargetId && activeTargetId !== targetId) {
+    if (activeTargetIdRef.current && activeTargetIdRef.current !== targetId) {
       setRect(null);
-      setActiveTargetId(null);
+      updateActiveTargetId(null);
     }
 
     let cancelled = false;
@@ -372,7 +378,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
         }
         setRect(measured);
         setActiveCoachStep(step);
-        setActiveTargetId(measuredTargetId);
+        updateActiveTargetId(measuredTargetId);
         telemetry.capture('tour_target_remeasured', {
           step,
           route: pathname,
@@ -423,7 +429,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
           });
           setRect(null);
           setActiveCoachStep(null);
-          setActiveTargetId(null);
+          updateActiveTargetId(null);
         }
         return;
       }
@@ -459,7 +465,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
         }
         setRect(null);
         setActiveCoachStep(null);
-        setActiveTargetId(null);
+        updateActiveTargetId(null);
         return;
       }
 
@@ -475,10 +481,11 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       if (seasonStartRetryTimer) {
         clearTimeout(seasonStartRetryTimer);
       }
-      unsubscribeTargets.forEach((unsubscribe) => unsubscribe());
+      for (const unsubscribe of unsubscribeTargets) {
+        unsubscribe();
+      }
     };
   }, [
-    activeTargetId,
     activeFarmId,
     addLogFlowRoute,
     completeStep,
@@ -497,6 +504,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     showStep,
     addFarmPhase,
     measureTrigger,
+    updateActiveTargetId,
   ]);
 
   return { rect, activeCoachStep, activeTargetId, clearOverlay };

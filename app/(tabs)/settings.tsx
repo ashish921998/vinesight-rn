@@ -716,12 +716,29 @@ export default function SettingsScreen() {
 
     setIsSendingDeleteOtp(true);
     try {
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      const accessToken = currentSession?.access_token;
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+      if (!accessToken) {
+        Alert.alert(
+          t('common.error'),
+          t('settings.deleteAccountModal.errors.sessionExpired', {
+            defaultValue: 'Your session has expired. Please sign in again and try.',
+          }),
+        );
+        return;
+      }
+
       const response = await fetch(
         `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account-email-otp`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            apikey: anonKey,
           },
           body: JSON.stringify({
             action: 'send',
@@ -800,12 +817,29 @@ export default function SettingsScreen() {
         return;
       }
 
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      const accessToken = currentSession?.access_token;
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+      if (!accessToken) {
+        Alert.alert(
+          t('common.error'),
+          t('settings.deleteAccountModal.errors.sessionExpired', {
+            defaultValue: 'Your session has expired. Please sign in again and try.',
+          }),
+        );
+        return;
+      }
+
       const response = await fetch(
         `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account-email-otp`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            apikey: anonKey,
           },
           body: JSON.stringify({
             action: 'verify',
@@ -2588,6 +2622,10 @@ export default function SettingsScreen() {
                 <Pressable
                   onPress={() => setDeleteConfirmed(!deleteConfirmed)}
                   style={styles.checkboxContainer}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: deleteConfirmed }}
+                  accessibilityLabel={t('settings.deleteAccountModal.checkbox.bold')}
+                  accessibilityHint={t('settings.deleteAccountModal.checkbox.suffix')}
                 >
                   <View style={[styles.checkbox, deleteConfirmed && styles.checkboxChecked]}>
                     {deleteConfirmed && (
