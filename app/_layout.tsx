@@ -344,8 +344,6 @@ export default Sentry.wrap(function RootLayout() {
           }),
         });
         if (Platform.OS === 'android') {
-          // The expo-notifications types expect `sound` to be a string path, but `true`
-          // is valid at runtime to enable the default notification sound.
           type AndroidChannelInput = Parameters<
             typeof Notifications.setNotificationChannelAsync
           >[1];
@@ -354,8 +352,6 @@ export default Sentry.wrap(function RootLayout() {
             importance: Notifications.AndroidImportance.HIGH,
             vibrationPattern: [0, 250, 250, 250],
           };
-          // Cast to allow boolean `true` for default sound
-          (channelConfig as { sound?: boolean }).sound = true;
           await Notifications.setNotificationChannelAsync('vinesight-reminders', channelConfig);
         }
       } catch {
@@ -401,6 +397,9 @@ export default Sentry.wrap(function RootLayout() {
       } else if (data?.type === 'custom') {
         // Custom notifications have no navigation target
       }
+
+      const Notifications = import('expo-notifications');
+      Notifications.then((mod) => mod.clearLastNotificationResponseAsync());
     };
 
     const setup = async () => {
@@ -411,6 +410,7 @@ export default Sentry.wrap(function RootLayout() {
         const lastResponse = await Notifications.getLastNotificationResponseAsync();
         if (lastResponse) {
           handleNotificationResponse(lastResponse);
+          await Notifications.clearLastNotificationResponseAsync();
         }
 
         const sub = Notifications.addNotificationResponseReceivedListener((response) => {

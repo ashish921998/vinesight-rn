@@ -51,6 +51,19 @@ export function GuidedTourCoachmark({
   const pulse = useMemo(() => new Animated.Value(0), []);
   const reveal = useMemo(() => new Animated.Value(0), []);
   const [measuredTooltipHeight, setMeasuredTooltipHeight] = useState<number | null>(null);
+  const [measuredContentKey, setMeasuredContentKey] = useState<string>('');
+
+  const currentContentKey = useMemo(
+    () =>
+      JSON.stringify({
+        message,
+        step,
+        actionLabel,
+        secondaryActionLabel,
+        tooltipPlacement,
+      }),
+    [message, step, actionLabel, secondaryActionLabel, tooltipPlacement],
+  );
 
   useEffect(() => {
     Animated.timing(reveal, {
@@ -96,8 +109,15 @@ export function GuidedTourCoachmark({
   // Fall back to a conservative estimate until onLayout gives us the real height.
   // The reveal animation (260ms fade-in) ensures the tooltip is invisible while
   // the first layout fires, so there is no visible jump on either platform.
+  // Only use cached height if content hasn't changed since measurement.
   const TOOLTIP_HEIGHT_ESTIMATE =
-    measuredTooltipHeight ?? (hasCoachActions ? 260 : hasMultiLineMessage ? 170 : 130);
+    currentContentKey === measuredContentKey
+      ? (measuredTooltipHeight ?? (hasCoachActions ? 260 : hasMultiLineMessage ? 170 : 130))
+      : hasCoachActions
+        ? 260
+        : hasMultiLineMessage
+          ? 170
+          : 130;
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const belowTop = rect.y + rect.height + spacing[4];
   const aboveTop = rect.y - TOOLTIP_HEIGHT_ESTIMATE - spacing[4];
@@ -263,7 +283,10 @@ export function GuidedTourCoachmark({
           end={{ x: 1, y: 1 }}
           onLayout={(e) => {
             const h = e.nativeEvent.layout.height;
-            if (h > 0) setMeasuredTooltipHeight(h);
+            if (h > 0) {
+              setMeasuredContentKey(currentContentKey);
+              setMeasuredTooltipHeight(h);
+            }
           }}
           style={{
             borderRadius: borderRadius.xl,
