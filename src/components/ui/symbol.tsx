@@ -187,15 +187,19 @@ export function SymbolComponent({
 }: SymbolProps) {
   const m3 = useM3();
   const resolvedColor = color ?? m3.colorScheme.onSurface;
-  const resolvedName = ICON_MAPPING[name] ?? name;
-  const directIonicon = Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, name)
-    ? (name as keyof typeof Ionicons.glyphMap)
+  const rawName =
+    typeof name === 'string'
+      ? name
+      : (name.ios ?? name.android ?? name.web ?? 'questionmark.circle');
+  const resolvedName = ICON_MAPPING[rawName] ?? rawName;
+  const directIonicon = Object.prototype.hasOwnProperty.call(Ionicons.glyphMap, rawName)
+    ? (rawName as keyof typeof Ionicons.glyphMap)
     : undefined;
-  const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[name];
+  const materialIcon = SYMBOL_TO_MATERIAL_ICON[resolvedName] || SYMBOL_TO_MATERIAL_ICON[rawName];
   const isSprayIcon = resolvedName === 'spraycan' || resolvedName === 'spraycan.fill';
-  const isFertigationIcon = resolvedName === 'fertigation' || name === 'fertigation';
-  const isAssistantIcon = resolvedName === 'assistant' || name === 'assistant';
-  const isGrapeSparkleIcon = resolvedName === 'grape-sparkle' || name === 'grape-sparkle';
+  const isFertigationIcon = resolvedName === 'fertigation' || rawName === 'fertigation';
+  const isAssistantIcon = resolvedName === 'assistant' || rawName === 'assistant';
+  const isGrapeSparkleIcon = resolvedName === 'grape-sparkle' || rawName === 'grape-sparkle';
 
   // Keep spray icon identical to AppIcon across all platforms.
   if (isSprayIcon) return <AppIcon name="spraycan" size={size} color={resolvedColor} />;
@@ -207,12 +211,12 @@ export function SymbolComponent({
   if (Platform.OS === 'ios') {
     const fallbackIcon =
       SYMBOL_TO_IONICON[resolvedName] ||
-      SYMBOL_TO_IONICON[name] ||
+      SYMBOL_TO_IONICON[rawName] ||
       directIonicon ||
       'ellipse-outline';
     return (
       <SymbolView
-        name={resolvedName as SymbolViewProps['name']}
+        name={typeof name === 'string' ? (resolvedName as SymbolViewProps['name']) : name}
         size={size}
         tintColor={resolvedColor}
         weight={weight}
@@ -242,7 +246,7 @@ export function SymbolComponent({
     );
   }
 
-  const ionicon = SYMBOL_TO_IONICON[resolvedName] || SYMBOL_TO_IONICON[name] || directIonicon;
+  const ionicon = SYMBOL_TO_IONICON[resolvedName] || SYMBOL_TO_IONICON[rawName] || directIonicon;
   if (ionicon) {
     return (
       <Ionicons
