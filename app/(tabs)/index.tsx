@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -112,74 +113,230 @@ export default function HomeScreen() {
           </Text>
         </TransitionView>
 
+        {/* Hero: weather + key stats */}
         <TransitionView style={{ marginTop: spacing[5] }}>
-          <Card>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Icon name="sun.max.fill" size={18} color={m3.colorScheme.secondary} />
-              <Text
+          <Card padded={false}>
+            <LinearGradient
+              colors={[
+                colorWithOpacity(m3.colorScheme.primary, 0.18),
+                colorWithOpacity(m3.colorScheme.secondary, 0.1),
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ padding: spacing[4] }}
+            >
+              <View
                 style={{
-                  ...m3.typography.labelLarge,
-                  marginLeft: spacing[2],
-                  color: m3.colorScheme.onSurface,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
-                {weatherSummary}
-              </Text>
-            </View>
-          </Card>
-        </TransitionView>
-
-        <TransitionView style={{ marginTop: spacing[5] }}>
-          <Text
-            style={{
-              ...m3.typography.titleMedium,
-              color: m3.colorScheme.onSurface,
-              marginBottom: spacing[3],
-            }}
-          >
-            {t('dashboard.stats.farms')}
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={{ flexDirection: 'row', gap: spacing[3] }}>
-              {(farms ?? []).slice(0, 8).map((farm) => (
-                <Pressable
-                  key={farm.id}
-                  onPress={() => {
-                    tapLight();
-                    if (farm.id) router.push(`/farm/${farm.id}`);
-                  }}
-                  style={({ pressed }) => ({
-                    width: 220,
-                    borderRadius: borderRadius['3xl'],
-                    padding: spacing[4],
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                    opacity: pressed ? 0.92 : 1,
-                  })}
-                >
-                  <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
-                    {farm.name}
-                  </Text>
+                <View style={{ flex: 1, paddingRight: spacing[4] }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Icon name="sun.max.fill" size={18} color={m3.colorScheme.secondary} />
+                    <Text
+                      style={{
+                        ...m3.typography.labelLarge,
+                        marginLeft: spacing[2],
+                        color: m3.colorScheme.onSurface,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {weatherSummary}
+                    </Text>
+                  </View>
                   <Text
                     style={{
                       ...m3.typography.bodyMedium,
+                      marginTop: spacing[2],
                       color: m3.colorScheme.onSurfaceVariant,
                     }}
                   >
-                    {farm.region || t('common.na')}
+                    {t('dashboard.quickActions.title')}
                   </Text>
-                  <Text
-                    style={{
-                      ...m3.typography.labelLarge,
-                      marginTop: spacing[2],
-                      color: m3.colorScheme.primary,
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: spacing[4] }}>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text
+                      style={{
+                        ...m3.typography.labelSmall,
+                        color: m3.colorScheme.onSurfaceVariant,
+                      }}
+                    >
+                      {t('dashboard.stats.farms')}
+                    </Text>
+                    <Text
+                      style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}
+                    >
+                      {formatNumber(stats?.farmsCount ?? 0, { maximumFractionDigits: 0 })}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text
+                      style={{
+                        ...m3.typography.labelSmall,
+                        color: m3.colorScheme.onSurfaceVariant,
+                      }}
+                    >
+                      {t('dashboard.stats.tasks')}
+                    </Text>
+                    <Text
+                      style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}
+                    >
+                      {formatNumber(stats?.pendingTasksCount ?? 0, { maximumFractionDigits: 0 })}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: spacing[2],
+                  marginTop: spacing[4],
+                }}
+              >
+                {quickActions.map((action) => (
+                  <Pressable
+                    key={action.key}
+                    onPress={() => {
+                      tapLight();
+                      action.onPress();
                     }}
+                    style={({ pressed }) => ({
+                      flexGrow: 1,
+                      flexBasis: '48%',
+                      borderRadius: borderRadius['2xl'],
+                      paddingVertical: spacing[3],
+                      paddingHorizontal: spacing[3],
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, 0.06)
+                        : colorWithOpacity(m3.colorScheme.onSurface, 0.04),
+                      borderWidth: 1,
+                      borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
+                    })}
                   >
-                    {formatNumber(farm.area ?? 0, { maximumFractionDigits: 1 })} ac
-                  </Text>
-                </Pressable>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: borderRadius.full,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
+                          marginRight: spacing[3],
+                        }}
+                      >
+                        <Icon name={action.icon} size={18} color={m3.colorScheme.primary} />
+                      </View>
+                      <Text
+                        style={{
+                          ...m3.typography.labelLarge,
+                          color: m3.colorScheme.onSurface,
+                          flex: 1,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {action.label}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            </LinearGradient>
+          </Card>
+        </TransitionView>
+
+        <TransitionView style={{ marginTop: spacing[6] }}>
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+              {t('dashboard.stats.farms')}
+            </Text>
+            <Pressable
+              onPress={() => {
+                tapLight();
+                router.push('/farm/add');
+              }}
+              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+            >
+              <Text style={{ ...m3.typography.labelLarge, color: m3.colorScheme.primary }}>
+                + {t('farms.addFarm')}
+              </Text>
+            </Pressable>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: spacing[3] }}
+          >
+            <View style={{ flexDirection: 'row', gap: spacing[3] }}>
+              {(farms ?? []).slice(0, 8).map((farm) => (
+                <Card
+                  key={farm.id}
+                  interactive
+                  padded={false}
+                  onPress={() => {
+                    if (farm.id) router.push(`/farm/${farm.id}`);
+                  }}
+                  style={{ width: 240 }}
+                >
+                  <LinearGradient
+                    colors={[
+                      colorWithOpacity(m3.colorScheme.primary, 0.22),
+                      colorWithOpacity(m3.colorScheme.primary, 0.1),
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{ padding: spacing[4] }}
+                  >
+                    <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+                      {farm.name}
+                    </Text>
+                    <Text
+                      style={{
+                        ...m3.typography.bodyMedium,
+                        color: m3.colorScheme.onSurfaceVariant,
+                        marginTop: spacing[1],
+                      }}
+                      numberOfLines={1}
+                    >
+                      {farm.region || t('common.na')}
+                    </Text>
+
+                    <View
+                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[4] }}
+                    >
+                      <View
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: borderRadius.full,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: colorWithOpacity(m3.colorScheme.secondary, 0.18),
+                          marginRight: spacing[2],
+                        }}
+                      >
+                        <Icon name="leaf.fill" size={14} color={m3.colorScheme.secondary} />
+                      </View>
+                      <Text
+                        style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurface }}
+                      >
+                        {formatNumber(farm.area ?? 0, { maximumFractionDigits: 1 })} ac
+                      </Text>
+                    </View>
+                  </LinearGradient>
+                </Card>
               ))}
               {farms && farms.length === 0 ? (
-                <Card interactive onPress={() => router.push('/farm/add')} style={{ width: 220 }}>
+                <Card interactive onPress={() => router.push('/farm/add')} style={{ width: 240 }}>
                   <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
                     {t('farms.empty.title')}
                   </Text>
@@ -206,57 +363,6 @@ export default function HomeScreen() {
               marginBottom: spacing[3],
             }}
           >
-            {t('dashboard.quickActions.title')}
-          </Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            {quickActions.map((action) => (
-              <Pressable
-                key={action.key}
-                onPress={() => {
-                  tapLight();
-                  action.onPress();
-                }}
-                style={({ pressed }) => ({
-                  width: 74,
-                  alignItems: 'center',
-                  opacity: pressed ? 0.85 : 1,
-                })}
-              >
-                <View
-                  style={{
-                    width: 62,
-                    height: 62,
-                    borderRadius: borderRadius.full,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
-                  }}
-                >
-                  <Icon name={action.icon} size={24} color={m3.colorScheme.primary} />
-                </View>
-                <Text
-                  style={{
-                    ...m3.typography.labelSmall,
-                    marginTop: spacing[2],
-                    textAlign: 'center',
-                    color: m3.colorScheme.onSurfaceVariant,
-                  }}
-                >
-                  {action.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </TransitionView>
-
-        <TransitionView style={{ marginTop: spacing[6] }}>
-          <Text
-            style={{
-              ...m3.typography.titleMedium,
-              color: m3.colorScheme.onSurface,
-              marginBottom: spacing[3],
-            }}
-          >
             {t('dashboard.recentActivity.title')}
           </Text>
           {activitiesLoading || farmsLoading ? (
@@ -271,17 +377,32 @@ export default function HomeScreen() {
                 <Pressable
                   key={item.id}
                   onPress={() => router.push(`/farm/${item.farmId}`)}
-                  style={{
+                  style={({ pressed }) => ({
                     flexDirection: 'row',
                     alignItems: 'center',
                     paddingHorizontal: spacing[4],
                     paddingVertical: spacing[3],
                     borderBottomWidth: index === activities.length - 1 ? 0 : 1,
                     borderBottomColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
-                  }}
+                    backgroundColor: pressed
+                      ? colorWithOpacity(m3.colorScheme.onSurface, 0.04)
+                      : 'transparent',
+                  })}
                 >
-                  <Icon name="clock" size={16} color={m3.colorScheme.onSurfaceVariant} />
-                  <View style={{ flex: 1, marginLeft: spacing[2] }}>
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: borderRadius.full,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                      marginRight: spacing[3],
+                    }}
+                  >
+                    <Icon name="clock" size={14} color={m3.colorScheme.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
                     <Text style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurface }}>
                       {item.farmName}
                     </Text>
@@ -290,6 +411,7 @@ export default function HomeScreen() {
                         ...m3.typography.labelSmall,
                         color: m3.colorScheme.onSurfaceVariant,
                       }}
+                      numberOfLines={1}
                     >
                       {item.description}
                     </Text>
@@ -312,33 +434,6 @@ export default function HomeScreen() {
               </Text>
             </Card>
           )}
-        </TransitionView>
-
-        <TransitionView style={{ marginTop: spacing[6] }}>
-          <Card>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <View>
-                <Text
-                  style={{ ...m3.typography.labelSmall, color: m3.colorScheme.onSurfaceVariant }}
-                >
-                  {t('dashboard.stats.farms')}
-                </Text>
-                <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
-                  {formatNumber(stats?.farmsCount ?? 0, { maximumFractionDigits: 0 })}
-                </Text>
-              </View>
-              <View>
-                <Text
-                  style={{ ...m3.typography.labelSmall, color: m3.colorScheme.onSurfaceVariant }}
-                >
-                  {t('dashboard.stats.tasks')}
-                </Text>
-                <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
-                  {formatNumber(stats?.pendingTasksCount ?? 0, { maximumFractionDigits: 0 })}
-                </Text>
-              </View>
-            </View>
-          </Card>
         </TransitionView>
       </View>
     </ScrollView>

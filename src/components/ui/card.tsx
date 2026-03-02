@@ -3,6 +3,7 @@ import {
   Pressable,
   StyleSheet,
   View,
+  type GestureResponderEvent,
   type PressableProps,
   type StyleProp,
   type ViewStyle,
@@ -23,6 +24,11 @@ interface CardProps extends Omit<PressableProps, 'style'> {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/**
+ * Card
+ * - Uses an outer container for shadow (so shadows don't get clipped)
+ * - Uses an inner container to clip pressed state layer / rounded corners
+ */
 export function Card({
   children,
   style,
@@ -33,37 +39,33 @@ export function Card({
 }: CardProps) {
   const m3 = useM3();
 
+  const innerStyle: StyleProp<ViewStyle> = [
+    styles.inner,
+    {
+      backgroundColor: m3.surface.surfaceContainerLowest,
+      borderRadius: borderRadius['3xl'],
+      padding: padded ? spacing[4] : 0,
+    },
+  ];
+
   if (!interactive || !onPress) {
     return (
-      <View
-        style={[
-          styles.base,
-          {
-            backgroundColor: m3.surface.surfaceContainerLowest,
-            borderRadius: borderRadius['3xl'],
-            padding: padded ? spacing[4] : 0,
-            ...shadows.md,
-          },
-          style,
-        ]}
-      >
-        {children}
+      <View style={[styles.outer, { borderRadius: borderRadius['3xl'], ...shadows.md }, style]}>
+        <View style={innerStyle}>{children}</View>
       </View>
     );
   }
 
   return (
     <AnimatedPressable
-      onPress={(event) => {
+      onPress={(event: GestureResponderEvent) => {
         tapLight();
         onPress(event);
       }}
-      style={({ pressed }) => [
-        styles.base,
+      style={({ pressed }: { pressed: boolean }) => [
+        styles.outer,
         {
-          backgroundColor: m3.surface.surfaceContainerLowest,
           borderRadius: borderRadius['3xl'],
-          padding: padded ? spacing[4] : 0,
           ...shadows.md,
           transform: [{ scale: springPress(pressed ? PRESS_SCALE : 1) }],
         },
@@ -71,8 +73,8 @@ export function Card({
       ]}
       {...props}
     >
-      {({ pressed }) => (
-        <>
+      {({ pressed }: { pressed: boolean }) => (
+        <View style={innerStyle}>
           {children}
           <View
             pointerEvents="none"
@@ -86,14 +88,17 @@ export function Card({
               },
             ]}
           />
-        </>
+        </View>
       )}
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
-  base: {
+  outer: {
+    // IMPORTANT: no overflow hidden here (keeps shadow visible)
+  },
+  inner: {
     overflow: 'hidden',
   },
 });

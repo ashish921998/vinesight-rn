@@ -56,9 +56,16 @@ export default function ActivityTabScreen() {
           {ACTIVITY_TYPES.map((item) => {
             const colorToken =
               item.colorKey === 'primary' ? colors.primary[500] : colors[item.colorKey][500];
+            const title =
+              item.id === 'note'
+                ? t('dashboard.quickActions.note')
+                : t(`dashboard.quickActions.${item.id}` as never);
+
             return (
-              <Pressable
+              <Card
                 key={item.id}
+                interactive
+                padded={false}
                 onPress={() => {
                   tapLight();
                   if (item.id === 'note') {
@@ -70,28 +77,47 @@ export default function ActivityTabScreen() {
                     });
                   }
                 }}
-                style={({ pressed }) => ({
-                  width: '47%',
-                  borderRadius: borderRadius['3xl'],
-                  paddingVertical: spacing[4],
-                  paddingHorizontal: spacing[3],
-                  alignItems: 'center',
-                  backgroundColor: colorWithOpacity(colorToken, pressed ? 0.2 : 0.14),
-                })}
+                style={{ width: '47%' }}
               >
-                <Icon name={item.icon} size={26} color={colorToken} />
-                <Text
+                <View
                   style={{
-                    ...m3.typography.labelLarge,
-                    marginTop: spacing[2],
-                    color: m3.colorScheme.onSurface,
+                    paddingVertical: spacing[4],
+                    paddingHorizontal: spacing[4],
+                    backgroundColor: colorWithOpacity(colorToken, 0.1),
                   }}
                 >
-                  {item.id === 'note'
-                    ? t('dashboard.quickActions.note')
-                    : t(`dashboard.quickActions.${item.id}` as never)}
-                </Text>
-              </Pressable>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View
+                      style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: borderRadius.full,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: colorWithOpacity(colorToken, 0.18),
+                        marginRight: spacing[3],
+                      }}
+                    >
+                      <Icon name={item.icon} size={18} color={colorToken} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{ ...m3.typography.labelLarge, color: m3.colorScheme.onSurface }}
+                      >
+                        {title}
+                      </Text>
+                      <Text
+                        style={{
+                          ...m3.typography.labelSmall,
+                          color: m3.colorScheme.onSurfaceVariant,
+                        }}
+                      >
+                        {t('entryForm.addLog')}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </Card>
             );
           })}
         </View>

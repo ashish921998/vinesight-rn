@@ -60,15 +60,15 @@ export default function ProfileTabScreen() {
         </Card>
       </TransitionView>
 
-      <TransitionView style={{ marginTop: spacing[5] }}>
+      <TransitionView style={{ marginTop: spacing[6] }}>
         <Text
           style={{
-            ...m3.typography.labelSmall,
+            ...m3.typography.labelLarge,
             color: m3.colorScheme.onSurfaceVariant,
             marginBottom: spacing[2],
           }}
         >
-          MY FARM
+          {t('tabs.farms')}
         </Text>
         <Card padded={false}>
           <ListRow
@@ -89,15 +89,15 @@ export default function ProfileTabScreen() {
         </Card>
       </TransitionView>
 
-      <TransitionView style={{ marginTop: spacing[5] }}>
+      <TransitionView style={{ marginTop: spacing[6] }}>
         <Text
           style={{
-            ...m3.typography.labelSmall,
+            ...m3.typography.labelLarge,
             color: m3.colorScheme.onSurfaceVariant,
             marginBottom: spacing[2],
           }}
         >
-          TOOLS
+          {t('tabs.tools')}
         </Text>
         <Card padded={false}>
           <ListRow
@@ -123,15 +123,15 @@ export default function ProfileTabScreen() {
         </Card>
       </TransitionView>
 
-      <TransitionView style={{ marginTop: spacing[5] }}>
+      <TransitionView style={{ marginTop: spacing[6] }}>
         <Text
           style={{
-            ...m3.typography.labelSmall,
+            ...m3.typography.labelLarge,
             color: m3.colorScheme.onSurfaceVariant,
             marginBottom: spacing[2],
           }}
         >
-          SETTINGS
+          {t('tabs.settings')}
         </Text>
         <Card padded={false}>
           <ListRow
