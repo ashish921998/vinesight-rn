@@ -54,6 +54,11 @@ export const useLanguageStore = create<LanguageState & LanguageActions>()(
     {
       name: LANGUAGE_STORAGE_KEY,
       version: 1,
+      migrate: (persistedState: unknown, _version: number) => {
+        // Version 0 → 1: storage backend changed from SecureStore to AsyncStorage.
+        // The state shape is unchanged, so we can return it as-is.
+        return persistedState as LanguageState & LanguageActions;
+      },
       storage: createJSONStorage(() => languageStorage),
       onRehydrateStorage: () => () => {
         useLanguageStore.setState({ hasHydrated: true });

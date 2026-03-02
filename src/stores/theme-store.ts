@@ -58,6 +58,11 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
     {
       name: THEME_STORAGE_KEY,
       version: 1,
+      migrate: (persistedState: unknown, _version: number) => {
+        // Version 0 → 1: storage backend changed from SecureStore to AsyncStorage.
+        // The state shape is unchanged, so we can return it as-is.
+        return persistedState as ThemeState & ThemeActions;
+      },
       storage: createJSONStorage(() => themeStorage),
       onRehydrateStorage: () => () => {
         useThemeStore.setState({ hasHydrated: true });
