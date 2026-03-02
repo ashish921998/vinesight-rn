@@ -1,6 +1,7 @@
+import { BlurView } from 'expo-blur';
 import React, { type ReactNode } from 'react';
-import { Pressable } from 'react-native';
-import { useM3 } from '@/styles/use-theme';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 export interface ModalBackdropProps {
@@ -10,6 +11,8 @@ export interface ModalBackdropProps {
   alignment?: 'center' | 'flex-end';
   opacity?: number;
   zIndex?: number;
+  enableBlur?: boolean;
+  blurIntensity?: number;
 }
 
 /**
@@ -23,8 +26,11 @@ export function ModalBackdrop({
   alignment = 'flex-end',
   opacity = 0.5,
   zIndex,
+  enableBlur = true,
+  blurIntensity = 20,
 }: ModalBackdropProps) {
   const m3 = useM3();
+  const isDark = useIsDark();
 
   if (!visible) return null;
 
@@ -35,13 +41,27 @@ export function ModalBackdrop({
     bottom: 0,
     left: 0,
     backgroundColor: colorWithOpacity(m3.colorScheme.shadow, opacity),
-    justifyContent: alignment,
     ...(zIndex !== undefined && { zIndex }),
   };
 
+  const shouldBlur = enableBlur && Platform.OS !== 'web';
+
   return (
     <Pressable onPress={onDismiss} style={overlayStyle}>
-      {children}
+      {shouldBlur ? (
+        <BlurView
+          pointerEvents="none"
+          style={StyleSheet.absoluteFill}
+          intensity={blurIntensity}
+          tint={isDark ? 'dark' : 'light'}
+          {...(Platform.OS === 'android'
+            ? { experimentalBlurMethod: 'dimezisBlurView' as const }
+            : {})}
+        />
+      ) : null}
+      <View style={{ flex: 1, justifyContent: alignment }} pointerEvents="box-none">
+        {children}
+      </View>
     </Pressable>
   );
 }
