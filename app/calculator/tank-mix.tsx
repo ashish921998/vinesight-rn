@@ -226,7 +226,11 @@ export default function TankMixCalculatorScreen() {
                 (row) => `${row.productName}: ${row.totalQuantity}${row.doseUnit}`,
               );
               const text = [`${selectedMix.name} - ${tankLiters.toFixed(0)}L`, ...lines].join('\n');
-              await Share.share({ message: text });
+              try {
+                await Share.share({ message: text });
+              } catch {
+                // Ignore OS-level share failures and keep the screen usable.
+              }
             }}
             style={{
               marginTop: spacing[3],

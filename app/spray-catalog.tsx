@@ -82,71 +82,74 @@ export default function SprayCatalogScreen() {
     [m3],
   );
 
-  const renderMixCard = ({ item: mix }: { item: ChemicalMix }) => (
-    <View
-      style={{
-        borderRadius: borderRadius.xl,
-        borderWidth: 1,
-        borderColor: m3.colorScheme.outlineVariant,
-        backgroundColor: m3.surface.surfaceContainerLow,
-        padding: spacing[4],
-        marginBottom: spacing[3],
-      }}
-    >
-      <Text style={{ color: m3.colorScheme.onSurface, fontWeight: fontWeight.semibold }}>
-        {mix.name}
-      </Text>
-      <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
-        {mix.target_problem ??
-          t('sprayCatalog.genericProblem', { defaultValue: 'General protection' })}
-      </Text>
-      <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
-        {t('sprayCatalog.modeLabel', {
-          defaultValue: 'Mode: {{mode}}',
-          mode: mix.application_mode ?? 'unspecified',
-        })}
-      </Text>
-
-      <View style={{ marginTop: spacing[2], gap: spacing[1] }}>
-        {mix.components.map((component: ChemicalMixComponent) => (
-          <Pressable
-            key={component.id}
-            onPress={() => {
-              setSelectedComponent(component);
-              setShowSheet(true);
-            }}
-          >
-            <Text style={{ color: m3.colorScheme.primary }}>
-              • {component.product_name} ({component.dose_value} {component.dose_unit}
-              {component.dose_basis === 'per_100_liter'
-                ? '/100L'
-                : component.dose_basis === 'fixed_per_tank'
-                  ? '/tank'
-                  : '/L'}
-              )
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <Pressable
-        onPress={() =>
-          router.push({ pathname: '/calculator/tank-mix', params: { mixId: String(mix.id) } })
-        }
+  const renderMixCard = useCallback(
+    ({ item: mix }: { item: ChemicalMix }) => (
+      <View
         style={{
-          marginTop: spacing[3],
-          borderRadius: borderRadius.full,
-          alignSelf: 'flex-start',
-          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-          paddingHorizontal: spacing[3],
-          paddingVertical: spacing[2],
+          borderRadius: borderRadius.xl,
+          borderWidth: 1,
+          borderColor: m3.colorScheme.outlineVariant,
+          backgroundColor: m3.surface.surfaceContainerLow,
+          padding: spacing[4],
+          marginBottom: spacing[3],
         }}
       >
-        <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
-          {t('sprayCatalog.openTankMix', { defaultValue: 'Open in Tank Mix Calculator' })}
+        <Text style={{ color: m3.colorScheme.onSurface, fontWeight: fontWeight.semibold }}>
+          {mix.name}
         </Text>
-      </Pressable>
-    </View>
+        <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
+          {mix.target_problem ??
+            t('sprayCatalog.genericProblem', { defaultValue: 'General protection' })}
+        </Text>
+        <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
+          {t('sprayCatalog.modeLabel', {
+            defaultValue: 'Mode: {{mode}}',
+            mode: mix.application_mode ?? 'unspecified',
+          })}
+        </Text>
+
+        <View style={{ marginTop: spacing[2], gap: spacing[1] }}>
+          {mix.components.map((component: ChemicalMixComponent) => (
+            <Pressable
+              key={component.id}
+              onPress={() => {
+                setSelectedComponent(component);
+                setShowSheet(true);
+              }}
+            >
+              <Text style={{ color: m3.colorScheme.primary }}>
+                • {component.product_name} ({component.dose_value} {component.dose_unit}
+                {component.dose_basis === 'per_100_liter'
+                  ? '/100L'
+                  : component.dose_basis === 'fixed_per_tank'
+                    ? '/tank'
+                    : '/L'}
+                )
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: '/calculator/tank-mix', params: { mixId: String(mix.id) } })
+          }
+          style={{
+            marginTop: spacing[3],
+            borderRadius: borderRadius.full,
+            alignSelf: 'flex-start',
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[2],
+          }}
+        >
+          <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
+            {t('sprayCatalog.openTankMix', { defaultValue: 'Open in Tank Mix Calculator' })}
+          </Text>
+        </Pressable>
+      </View>
+    ),
+    [m3, router, t],
   );
 
   const listHeader = useMemo(

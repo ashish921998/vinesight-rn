@@ -14,7 +14,6 @@ import {
   ScrollView,
   Keyboard,
   KeyboardAvoidingView,
-  findNodeHandle,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -256,26 +255,25 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const clayInputRef = useRef<TextInput>(null);
   const previousSelectedCropRef = useRef<CropType | null>(null);
   const guidedTourScrollLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formScrollYRef = useRef(0);
 
   const scrollInputIntoView = useCallback((ref: React.RefObject<TextInput | null>) => {
     const input = ref.current;
-    const scrollResponder =
-      (
-        formScrollViewRef.current as unknown as {
-          getScrollResponder?: () => {
-            scrollResponderScrollNativeHandleToKeyboard?: (
-              nodeHandle: number,
-              additionalOffset?: number,
-              preventNegativeScrollOffset?: boolean,
-            ) => void;
-          };
-        }
-      )?.getScrollResponder?.() ?? null;
-    const scrollToKeyboard = scrollResponder?.scrollResponderScrollNativeHandleToKeyboard;
-    if (!input || !scrollToKeyboard) return;
-    const nodeHandle = findNodeHandle(input);
-    if (!nodeHandle) return;
-    scrollToKeyboard(nodeHandle, 72, true);
+    const scrollView = formScrollViewRef.current;
+    if (!input || !scrollView) return;
+    const measurableScrollView = scrollView as unknown as {
+      measureInWindow?: (
+        callback: (x: number, y: number, width: number, height: number) => void,
+      ) => void;
+      scrollTo: (options: { y: number; animated: boolean }) => void;
+    };
+    if (!measurableScrollView.measureInWindow) return;
+    input.measureInWindow((_, inputY) => {
+      measurableScrollView.measureInWindow?.((_x, scrollY) => {
+        const targetY = Math.max(0, formScrollYRef.current + (inputY - scrollY) - 72);
+        measurableScrollView.scrollTo({ y: targetY, animated: true });
+      });
+    });
   }, []);
 
   const focusGuidedField = useCallback(
@@ -1049,6 +1047,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         scrollViewProps={{
           scrollEnabled: !isGuidedTourScrollLocked,
           keyboardDismissMode: isGuidedTourScrollLocked ? 'none' : 'on-drag',
+          onScroll: (event) => {
+            formScrollYRef.current = event.nativeEvent.contentOffset.y;
+          },
+          scrollEventThrottle: 16,
         }}
       >
         <SectionHeader title={t('farmForm.sections.details')} style={{ marginBottom: 16 }} />
