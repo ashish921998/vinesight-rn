@@ -15,7 +15,7 @@ import {
   type GuidedTourTargetRect,
 } from './targets';
 import type { GuidedTourStep } from './types';
-import type { AddFarmPhase } from './use-tour-events';
+import type { AddFarmPhase, SeasonFormPhase } from './use-tour-events';
 
 const MAX_SEASON_START_RETRIES = 20;
 const REACTIVE_REMEASURE_DEBOUNCE_MS = 70;
@@ -39,6 +39,7 @@ interface CoachTargetParams {
   hasConfirmedLogInput: boolean;
   isCurrentLogValid: boolean;
   selectedActivityType: string | null;
+  seasonFormPhase: SeasonFormPhase;
 }
 
 interface CoachTargetResult {
@@ -66,6 +67,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     hasConfirmedLogInput,
     isCurrentLogValid,
     selectedActivityType,
+    seasonFormPhase,
   } = params;
 
   const currentStep = useGuidedTourStore((s) => s.currentStep);
@@ -280,7 +282,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       step === 'add_farm'
         ? addFarmTargetId
         : isSeasonStartPhase
-          ? GUIDED_TOUR_TARGET_IDS.START_SEASON_SHEET
+          ? GUIDED_TOUR_TARGET_IDS.START_SEASON_PRIMARY
           : isAddLogSavePhase
             ? GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE
             : isAddLogTypeSelectorPhase
@@ -302,7 +304,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
                   : GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY;
 
     const targetCandidates: GuidedTourTargetId[] = isSeasonStartPhase
-      ? [GUIDED_TOUR_TARGET_IDS.START_SEASON_SHEET, GUIDED_TOUR_TARGET_IDS.START_SEASON_PRIMARY]
+      ? [GUIDED_TOUR_TARGET_IDS.START_SEASON_PRIMARY]
       : step === 'add_log' && addLogFlowRoute && !isSeasonStartPhase
         ? hasPendingLogDrafts
           ? [GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE]
@@ -333,7 +335,18 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     let seasonStartRetryTimer: ReturnType<typeof setTimeout> | null = null;
     const measureStartedAt = Date.now();
 
-    const showEventKey = `step-shown-${pathname}-${step}-${targetId}`;
+    const showPhaseKey = isSeasonStartPhase
+      ? `season_${seasonFormPhase}`
+      : isAddLogSavePhase
+        ? 'save'
+        : isAddLogTypeSelectorPhase
+          ? 'activity_type'
+          : isAddLogDetailsPhase
+            ? 'details'
+            : isAddLogAddEntryPhase
+              ? 'add_entry'
+              : 'entrypoint';
+    const showEventKey = `step-shown-${pathname}-${step}-${targetId}-${showPhaseKey}`;
     const attempt = async () => {
       if (cancelled) return;
 
@@ -389,7 +402,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
           telemetry.capture('tour_step_shown', {
             step,
             ...(isSeasonStartPhase
-              ? { phase: 'season_start' }
+              ? { phase: `season_${seasonFormPhase}` }
               : isAddLogSavePhase
                 ? { phase: 'save' }
                 : isAddLogTypeSelectorPhase
@@ -500,6 +513,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     pathname,
     queueMeasureRefresh,
     selectedActivityType,
+    seasonFormPhase,
     segments,
     showStep,
     addFarmPhase,

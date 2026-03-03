@@ -116,6 +116,28 @@ export const en = {
     },
   },
 
+  sprayCatalog: {
+    title: 'Spray Catalog',
+    subtitle: 'Browse catalog mixes by pest and mode.',
+    searchPlaceholder: 'Search mix, pest, or product',
+    modeFilter: 'Application mode',
+    modeAll: 'All',
+    modePreventive: 'Preventive',
+    modeCurative: 'Curative',
+    modeBoth: 'Both',
+    pestFilter: 'Target pest/problem',
+    genericProblem: 'General protection',
+    modeLabel: 'Mode: {{mode}}',
+    openTankMix: 'Open in Tank Mix Calculator',
+  },
+
+  productDetail: {
+    titleFallback: 'Product details',
+    activeIngredient: 'Active ingredient: {{value}}',
+    phiDays: 'PHI: {{days}} day(s)',
+    usageCount: 'Used in {{count}} catalog mix(es)',
+  },
+
   farmDetails: {
     loadingFarm: 'Loading farm…',
     notFound: {
@@ -780,6 +802,7 @@ export const en = {
       nutrientCalculator: 'Nutrient Calculator',
       tankMixCalculator: 'Tank Mix Calculator',
       safeToSprayChecker: 'Safe-to-Spray Checker',
+      sprayCatalog: 'Spray Catalog',
     },
     descriptions: {
       weatherIrrigation:
@@ -790,6 +813,7 @@ export const en = {
       nutrientCalculator: 'Calculate fertilizer and nutrient requirements based on lab tests',
       tankMixCalculator: 'Calculate exact gm/ml quantity for each component based on tank liters',
       safeToSprayChecker: 'Check which sprays are safe to apply for your target harvest date',
+      sprayCatalog: 'Browse catalog sprays and mixes with pest, mode, and PHI metadata',
     },
   },
 
@@ -804,6 +828,7 @@ export const en = {
     resultTitle: 'Required quantities for {{liters}}L',
     resultDose: 'Dose: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'Total: {{value}} {{unit}}',
+    shareSummary: 'Share mix summary',
   },
 
   safeToSpray: {

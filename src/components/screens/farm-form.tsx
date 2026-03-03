@@ -172,6 +172,8 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return fallback;
 };
 
+type AddFarmFocusField = 'name' | 'region' | 'area';
+
 const buildFormStateFromFarm = (farm?: Farm | null) => ({
   ...resolveCropSelection(farm?.crop),
   name: farm?.name ?? '',
@@ -215,6 +217,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const { windowHeight } = useResponsiveHeight();
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
 
   const isEdit = mode === 'edit';
   const createFarm = useCreateFarm();
@@ -226,8 +230,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     isEdit && farm ? buildFormStateFromFarm(farm) : buildFormStateFromFarm(undefined),
   );
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isGuidedTourScrollLocked, setIsGuidedTourScrollLocked] = useState(false);
   const [iosPlantingDateDraft, setIosPlantingDateDraft] = useState<Date>(() => new Date());
   const [iosPruningDateDraft, setIosPruningDateDraft] = useState<Date>(() => new Date());
+  const formScrollViewRef = useRef<ScrollView>(null);
   const nameInputRef = useRef<TextInput>(null);
   const regionInputRef = useRef<TextInput>(null);
   const areaInputRef = useRef<TextInput>(null);
@@ -248,27 +254,123 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const siltInputRef = useRef<TextInput>(null);
   const clayInputRef = useRef<TextInput>(null);
   const previousSelectedCropRef = useRef<CropType | null>(null);
+  const guidedTourScrollLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formScrollYRef = useRef(0);
+  const guidedTourLastFocusFieldRef = useRef<AddFarmFocusField | null>(null);
+  const pendingGuidedScrollRef = useRef<React.RefObject<TextInput | null> | null>(null);
+
+  const scrollInputIntoView = useCallback(
+    (ref: React.RefObject<TextInput | null>) => {
+      // Only auto-scroll when keyboard is visible; otherwise it can shift the form unexpectedly.
+      if (keyboardHeight <= 0) {
+        pendingGuidedScrollRef.current = ref;
+        return;
+      }
+      pendingGuidedScrollRef.current = null;
+      const input = ref.current;
+      const scrollView = formScrollViewRef.current;
+      if (!input || !scrollView) return;
+      const measurableScrollView = scrollView as unknown as {
+        measureInWindow?: (
+          callback: (x: number, y: number, width: number, height: number) => void,
+        ) => void;
+        scrollTo: (options: { y: number; animated: boolean }) => void;
+      };
+      if (!measurableScrollView.measureInWindow) return;
+      input.measureInWindow((_, inputY) => {
+        measurableScrollView.measureInWindow?.((_x, scrollY) => {
+          const targetY = Math.max(0, formScrollYRef.current + (inputY - scrollY) - 72);
+          measurableScrollView.scrollTo({ y: targetY, animated: true });
+        });
+      });
+    },
+    [keyboardHeight],
+  );
+
+  useEffect(() => {
+    if (keyboardHeight <= 0) return;
+    const pendingRef = pendingGuidedScrollRef.current;
+    if (!pendingRef) return;
+    pendingGuidedScrollRef.current = null;
+    const id = setTimeout(() => {
+      scrollInputIntoView(pendingRef);
+    }, 0);
+    return () => clearTimeout(id);
+  }, [keyboardHeight, scrollInputIntoView]);
+
+  const focusGuidedField = useCallback(
+    (field: AddFarmFocusField) => {
+      const ref =
+        field === 'name' ? nameInputRef : field === 'region' ? regionInputRef : areaInputRef;
+      setTimeout(() => {
+        scrollInputIntoView(ref);
+        ref.current?.focus();
+      }, 0);
+    },
+    [scrollInputIntoView],
+  );
 
   useEffect(() => {
     const unsubFocus = guidedTourOn('guidedTour.addFarmFocusField', ({ field }) => {
       if (mode !== 'add') return;
-      const focus = (ref: React.RefObject<TextInput | null>) => {
-        setTimeout(() => {
-          ref.current?.focus();
-        }, 0);
-      };
-      if (field === 'name') {
-        focus(nameInputRef);
-      } else if (field === 'region') {
-        focus(regionInputRef);
-      } else if (field === 'area') {
-        focus(areaInputRef);
-      }
+      focusGuidedField(field);
     });
+
+    const unsubPhaseChanged = guidedTourOn('guidedTour.addFarmPhaseChanged', (payload) => {
+      if (mode !== 'add') return;
+      if (guidedTourScrollLockTimeoutRef.current) {
+        clearTimeout(guidedTourScrollLockTimeoutRef.current);
+        guidedTourScrollLockTimeoutRef.current = null;
+      }
+      if (payload.focusField) {
+        guidedTourLastFocusFieldRef.current = payload.focusField;
+        setIsGuidedTourScrollLocked(false);
+        focusGuidedField(payload.focusField);
+      }
+      if (!payload.lockScroll) {
+        setIsGuidedTourScrollLocked(false);
+        return;
+      }
+      guidedTourScrollLockTimeoutRef.current = setTimeout(() => {
+        setIsGuidedTourScrollLocked(true);
+        if (guidedTourLastFocusFieldRef.current) {
+          focusGuidedField(guidedTourLastFocusFieldRef.current);
+        }
+        guidedTourScrollLockTimeoutRef.current = null;
+      }, 120);
+    });
+
     return () => {
+      if (guidedTourScrollLockTimeoutRef.current) {
+        clearTimeout(guidedTourScrollLockTimeoutRef.current);
+        guidedTourScrollLockTimeoutRef.current = null;
+      }
       unsubFocus();
+      unsubPhaseChanged();
     };
-  }, [mode]);
+  }, [focusGuidedField, mode]);
+
+  useEffect(() => {
+    if (mode !== 'add') return;
+    if (
+      guidedTourStatus !== 'in_progress' ||
+      guidedTourStep !== 'add_farm' ||
+      formState.showCropPicker ||
+      formState.showVarietyPicker
+    ) {
+      if (guidedTourScrollLockTimeoutRef.current) {
+        clearTimeout(guidedTourScrollLockTimeoutRef.current);
+        guidedTourScrollLockTimeoutRef.current = null;
+      }
+      setIsGuidedTourScrollLocked(false);
+    }
+  }, [
+    formState.showCropPicker,
+    formState.showVarietyPicker,
+    guidedTourStatus,
+    guidedTourStep,
+    mode,
+  ]);
 
   useEffect(() => {
     if (!isEdit) {
@@ -971,6 +1073,15 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         showResetButton={!isEdit}
         onReset={handleReset}
         saveButtonTargetId={!isEdit ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_SUBMIT : undefined}
+        scrollViewRef={formScrollViewRef}
+        scrollViewProps={{
+          scrollEnabled: !isGuidedTourScrollLocked,
+          keyboardDismissMode: isGuidedTourScrollLocked ? 'none' : 'on-drag',
+          onScroll: (event) => {
+            formScrollYRef.current = event.nativeEvent.contentOffset.y;
+          },
+          scrollEventThrottle: 16,
+        }}
       >
         <SectionHeader title={t('farmForm.sections.details')} style={{ marginBottom: 16 }} />
 

@@ -113,6 +113,28 @@ export const hi = {
     },
   },
 
+  sprayCatalog: {
+    title: 'स्प्रे कैटलॉग',
+    subtitle: 'कीट और मोड के आधार पर मिक्स देखें।',
+    searchPlaceholder: 'मिक्स, कीट या उत्पाद खोजें',
+    modeFilter: 'आवेदन मोड',
+    modeAll: 'सभी',
+    modePreventive: 'निवारक',
+    modeCurative: 'उपचारात्मक',
+    modeBoth: 'दोनों',
+    pestFilter: 'लक्ष्य कीट/समस्या',
+    genericProblem: 'सामान्य सुरक्षा',
+    modeLabel: 'मोड: {{mode}}',
+    openTankMix: 'टैंक मिक्स कैलकुलेटर में खोलें',
+  },
+
+  productDetail: {
+    titleFallback: 'उत्पाद विवरण',
+    activeIngredient: 'सक्रिय घटक: {{value}}',
+    phiDays: 'PHI: {{days}} दिन',
+    usageCount: '{{count}} कैटलॉग मिक्स में उपयोग',
+  },
+
   farmDetails: {
     loadingFarm: 'खेत लोड हो रहा है…',
     notFound: {
@@ -764,6 +786,7 @@ export const hi = {
       nutrientCalculator: 'पोषक तत्व कैलकुलेटर',
       tankMixCalculator: 'टैंक मिक्स कैलकुलेटर',
       safeToSprayChecker: 'Safe-to-spray चेकर',
+      sprayCatalog: 'स्प्रे कैटलॉग',
     },
     descriptions: {
       weatherIrrigation: 'मौसम पूर्वानुमान जांचें और ET0 के आधार पर सिंचाई आवश्यकताओं की गणना करें',
@@ -773,6 +796,7 @@ export const hi = {
       nutrientCalculator: 'लैब परीक्षणों के आधार पर उर्वरक और पोषक तत्वों की आवश्यकता की गणना करें',
       tankMixCalculator: 'टैंक लीटर के आधार पर प्रत्येक घटक की सटीक gm/ml मात्रा निकालें',
       safeToSprayChecker: 'लक्ष्य कटाई तिथि के लिए सुरक्षित स्प्रे विंडो जांचें',
+      sprayCatalog: 'कीट, मोड और PHI के साथ कैटलॉग स्प्रे/मिक्स ब्राउज़ करें',
     },
   },
 
@@ -787,6 +811,7 @@ export const hi = {
     resultTitle: '{{liters}}L के लिए आवश्यक मात्रा',
     resultDose: 'डोज: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'कुल: {{value}} {{unit}}',
+    shareSummary: 'मिक्स सारांश साझा करें',
   },
 
   safeToSpray: {

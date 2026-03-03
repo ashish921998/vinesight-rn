@@ -1,5 +1,20 @@
 export interface GuidedTourEventMap {
   'guidedTour.addFarmFocusField': { field: 'name' | 'region' | 'area' };
+  'guidedTour.addFarmPhaseChanged': {
+    phase:
+      | 'cta'
+      | 'name'
+      | 'region'
+      | 'area'
+      | 'crop'
+      | 'crop_option'
+      | 'variety'
+      | 'variety_option'
+      | 'custom_variety'
+      | 'submit';
+    lockScroll: boolean;
+    focusField?: 'name' | 'region' | 'area';
+  };
   'guidedTour.farmCreated': { farmId: number };
   'guidedTour.addFarmNameEntered': { isFilled: boolean };
   'guidedTour.addFarmRegionEntered': { isFilled: boolean };
@@ -19,6 +34,9 @@ export interface GuidedTourEventMap {
   'guidedTour.logCreated': { farmId: number; recordType: string };
   'guidedTour.notificationOpened': { sequence: 1 | 2 };
   'guidedTour.appReadyHome': Record<string, never>;
+  'guidedTour.seasonFormPhaseChanged': {
+    phase: 'start_date' | 'target_date' | 'submit';
+  };
 }
 
 type EventKey = keyof GuidedTourEventMap;

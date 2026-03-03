@@ -75,3 +75,10 @@ vinesight-rn/
 - **Linting**: `npm run lint`
 - **Type Checking**: `npm run typecheck`
 - **Testing**: `npm run test`
+
+## Chemical Catalog Data
+
+- Source of truth is now Supabase tables (`chemical_mixes`, `chemical_mix_components`, `chemical_phi_rules`, `chemical_products`).
+- Local JSON master files and seed/validation scripts were removed from this repo.
+- For fresh local/CI/staging environments, load a catalog snapshot into Supabase before running the app.
+- If you do not have a snapshot, request one from the team owning the production catalog data.
