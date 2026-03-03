@@ -1,27 +1,27 @@
 import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
-import { useAuthStore } from '@/stores';
-import { useProfile } from '@/hooks';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { useNativeBootstrapDecision } from '@/native/contracts';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 /**
- * Entry point of the app
- * Redirects to auth or main tabs based on authentication state
+ * Entry point of the app.
+ *
+ * Phase 0 native migration note:
+ * We now resolve startup routing through the shared native bootstrap contract
+ * so SwiftUI/Compose shells and Expo Router stay in sync.
  */
 export default function Index() {
-  const { isAuthenticated, isLoading, needsProfileCompletion } = useAuthStore();
-  const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
+  const { authState, initialExpoPath } = useNativeBootstrapDecision();
   const configStatus = getConfigurationStatus();
   const colors = useThemeColors();
   const m3 = useM3();
 
-  // Show animated splash screen while checking auth
-  if (isLoading) {
+  if (authState === 'loading') {
     return <AnimatedSplash duration={2500} />;
   }
 
@@ -95,19 +95,5 @@ export default function Index() {
     );
   }
 
-  if (isAuthenticated && profileLoading) {
-    return <AnimatedSplash duration={2500} />;
-  }
-
-  const hasProfileName = Boolean(profile?.full_name && profile.full_name.trim().length > 0);
-
-  // Redirect based on auth state
-  if (isAuthenticated) {
-    if (needsProfileCompletion || !hasProfileName) {
-      return <Redirect href="/(auth)/profile-completion" />;
-    }
-    return <Redirect href="/(tabs)" />;
-  }
-
-  return <Redirect href="/(auth)/phone-login" />;
+  return <Redirect href={initialExpoPath} />;
 }
