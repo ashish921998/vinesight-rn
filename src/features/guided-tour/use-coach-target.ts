@@ -335,7 +335,18 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     let seasonStartRetryTimer: ReturnType<typeof setTimeout> | null = null;
     const measureStartedAt = Date.now();
 
-    const showEventKey = `step-shown-${pathname}-${step}-${targetId}`;
+    const showPhaseKey = isSeasonStartPhase
+      ? `season_${seasonFormPhase}`
+      : isAddLogSavePhase
+        ? 'save'
+        : isAddLogTypeSelectorPhase
+          ? 'activity_type'
+          : isAddLogDetailsPhase
+            ? 'details'
+            : isAddLogAddEntryPhase
+              ? 'add_entry'
+              : 'entrypoint';
+    const showEventKey = `step-shown-${pathname}-${step}-${targetId}-${showPhaseKey}`;
     const attempt = async () => {
       if (cancelled) return;
 

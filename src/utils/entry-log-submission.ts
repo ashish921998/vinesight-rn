@@ -149,13 +149,11 @@ export async function submitEntryPendingLog(params: {
         ? data.phiStatus && data.phiStatus !== 'unknown'
           ? data.phiStatus
           : 'verified'
-        : data.phiStatus && data.phiStatus !== 'unknown'
-          ? data.phiStatus
-          : 'legacy_unverified';
+        : 'legacy_unverified';
       const created = await submitters.createSpray({
         farm_id: farmId,
         date: dateStr,
-        catalog_mix_id: hasResolvedPhi ? (data.catalogMixId ?? null) : null,
+        catalog_mix_id: data.catalogMixId ?? null,
         chemical: chemicalStr,
         chemical_items: chemicalItems,
         dose: `Water: ${data.waterVolume}L`,

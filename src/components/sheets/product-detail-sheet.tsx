@@ -60,7 +60,7 @@ export function ProductDetailSheet({
           <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
             {t('productDetail.phiDays', {
               defaultValue: 'PHI: {{days}} day(s)',
-              days: component?.phi_days ?? 0,
+              days: component?.phi_days ?? '—',
             })}
           </Text>
           <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>

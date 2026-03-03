@@ -160,6 +160,7 @@ export default function FarmDetailScreen() {
   const [showSeasonTargetPicker, setShowSeasonTargetPicker] = useState(false);
   const [showActiveSeasonTargetPicker, setShowActiveSeasonTargetPicker] = useState(false);
   const [isStartingSeasonFlow, setIsStartingSeasonFlow] = useState(false);
+  const [isSavingActiveSeasonTargetDate, setIsSavingActiveSeasonTargetDate] = useState(false);
   const [isEditingActiveSeasonTargetIOS, setIsEditingActiveSeasonTargetIOS] = useState(false);
   const [seasonTargetHarvestDate, setSeasonTargetHarvestDate] = useState<Date | null>(null);
   const [seasonTargetHarvestDraft, setSeasonTargetHarvestDraft] = useState<Date>(new Date());
@@ -715,13 +716,34 @@ export default function FarmDetailScreen() {
     openSeasonForm('end');
   };
 
+  const normalizeActiveSeasonTargetDate = React.useCallback(
+    (value: Date | null): Date | null => {
+      if (!value) return null;
+      const seasonStartDate = parseDbDateToLocalDate(activeSeasonRecord?.start_date ?? '') ?? null;
+      if (!seasonStartDate) return value;
+      return value.getTime() < seasonStartDate.getTime() ? seasonStartDate : value;
+    },
+    [activeSeasonRecord?.start_date],
+  );
+
   const saveActiveSeasonTargetHarvestDate = async (value: Date | null) => {
     if (!farm?.id || !activeSeasonRecord?.id) return;
+    if (isSavingActiveSeasonTargetDate) return;
+    const finalValue = normalizeActiveSeasonTargetDate(value);
+    if (value && finalValue && value.getTime() !== finalValue.getTime()) {
+      Alert.alert(
+        t('common.error'),
+        t('farmDetails.seasons.errors.targetBeforeSeasonStart', {
+          defaultValue: 'Target harvest date cannot be before season start date.',
+        }),
+      );
+    }
+    setIsSavingActiveSeasonTargetDate(true);
     try {
       await updateSeasonTargetHarvestDate.mutateAsync({
         id: activeSeasonRecord.id,
         farmId: farm.id,
-        targetHarvestDate: value ? formatLocalDate(value) : null,
+        targetHarvestDate: finalValue ? formatLocalDate(finalValue) : null,
       });
     } catch (error) {
       const message =
@@ -731,10 +753,13 @@ export default function FarmDetailScreen() {
               defaultValue: 'Unable to save target harvest date. Please try again.',
             });
       Alert.alert(t('common.error'), message);
+    } finally {
+      setIsSavingActiveSeasonTargetDate(false);
     }
   };
 
   const openActiveSeasonTargetEditor = () => {
+    if (isSavingActiveSeasonTargetDate) return;
     const parsed = activeSeasonRecord?.target_harvest_date
       ? parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date)
       : null;
@@ -748,6 +773,7 @@ export default function FarmDetailScreen() {
   };
 
   const clearActiveSeasonTargetHarvestDate = () => {
+    if (isSavingActiveSeasonTargetDate) return;
     void saveActiveSeasonTargetHarvestDate(null);
   };
 
@@ -1578,6 +1604,7 @@ export default function FarmDetailScreen() {
                               backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
                             }}
                             accessibilityRole="button"
+                            disabled={isSavingActiveSeasonTargetDate}
                           >
                             <Text
                               style={{
@@ -1601,7 +1628,7 @@ export default function FarmDetailScreen() {
                                 borderColor: m3.colorScheme.outlineVariant,
                               }}
                               accessibilityRole="button"
-                              disabled={updateSeasonTargetHarvestDate.isPending}
+                              disabled={isSavingActiveSeasonTargetDate}
                             >
                               <Text
                                 style={{
@@ -3061,6 +3088,7 @@ export default function FarmDetailScreen() {
           minimumDate={parseDbDateToLocalDate(activeSeasonRecord?.start_date ?? '') ?? undefined}
           onChange={(_, date) => {
             setShowActiveSeasonTargetPicker(false);
+            if (isSavingActiveSeasonTargetDate) return;
             if (!date) return;
             setActiveSeasonTargetHarvestDraft(date);
             void saveActiveSeasonTargetHarvestDate(date);
@@ -3111,6 +3139,7 @@ export default function FarmDetailScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: spacing[2] }}>
               <Pressable
                 onPress={() => {
+                  if (isSavingActiveSeasonTargetDate) return;
                   setIsEditingActiveSeasonTargetIOS(false);
                   void saveActiveSeasonTargetHarvestDate(null);
                 }}
@@ -3121,6 +3150,7 @@ export default function FarmDetailScreen() {
                   borderWidth: 1,
                   borderColor: m3.colorScheme.outlineVariant,
                 }}
+                disabled={isSavingActiveSeasonTargetDate}
               >
                 <Text
                   style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}
@@ -3146,6 +3176,7 @@ export default function FarmDetailScreen() {
               </Pressable>
               <Pressable
                 onPress={() => {
+                  if (isSavingActiveSeasonTargetDate) return;
                   setIsEditingActiveSeasonTargetIOS(false);
                   void saveActiveSeasonTargetHarvestDate(activeSeasonTargetHarvestDraft);
                 }}
@@ -3155,6 +3186,7 @@ export default function FarmDetailScreen() {
                   paddingVertical: spacing[1],
                   backgroundColor: m3.colorScheme.primary,
                 }}
+                disabled={isSavingActiveSeasonTargetDate}
               >
                 <Text style={{ color: m3.colorScheme.onPrimary, ...m3.typography.labelSmall }}>
                   {t('common.save')}

@@ -102,9 +102,17 @@ export function computeTankMixQuantities(
   return rows;
 }
 
-export function computeGoverningPhiComponent(mix: ChemicalMix): ChemicalMixComponent | null {
-  if (mix.components.length === 0) return null;
-  return mix.components.reduce((max, current) => (current.phi_days > max.phi_days ? current : max));
+export function computeGoverningPhiComponent(
+  mix: ChemicalMix,
+): (ChemicalMixComponent & { phi_days: number }) | null {
+  const componentsWithPhi = mix.components.filter(
+    (component): component is ChemicalMixComponent & { phi_days: number } =>
+      typeof component.phi_days === 'number' && Number.isFinite(component.phi_days),
+  );
+  if (componentsWithPhi.length === 0) return null;
+  return componentsWithPhi.reduce((max, current) =>
+    current.phi_days > max.phi_days ? current : max,
+  );
 }
 
 export function computePhiForMix(mix: ChemicalMix, sprayDate: string): PhiComputationResult | null {
@@ -119,7 +127,7 @@ export function computePhiForMix(mix: ChemicalMix, sprayDate: string): PhiComput
     governingPhiDays: governing.phi_days,
     safeHarvestDate,
     blockingComponentName: governing.product_name,
-    phiStatus: 'verified',
+    phiStatus: governing.phi_verified ? 'verified' : 'legacy_unverified',
   };
 }
 

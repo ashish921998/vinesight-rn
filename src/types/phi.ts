@@ -22,7 +22,8 @@ export interface ChemicalMixComponent {
   dose_unit: DoseUnit;
   dose_basis: DoseBasis;
   base_tank_liters?: number | null;
-  phi_days: number;
+  phi_days: number | null;
+  phi_verified?: boolean;
   phi_source: string;
 }
 

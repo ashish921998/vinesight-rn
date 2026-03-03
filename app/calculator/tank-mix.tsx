@@ -20,7 +20,9 @@ export default function TankMixCalculatorScreen() {
   const bottomPadding = Math.max(insets.bottom + spacing[8], spacing[12]);
   const [query, setQuery] = useState('');
   const [tankLitersText, setTankLitersText] = useState('200');
-  const preselectedMixId = Number.parseInt(params.mixId ?? '', 10);
+  const rawMixId = Array.isArray(params.mixId) ? params.mixId[0] : params.mixId;
+  const preselectedMixId =
+    typeof rawMixId === 'string' && /^\d+$/.test(rawMixId) ? Number.parseInt(rawMixId, 10) : NaN;
 
   const tankLiters = Number.parseFloat(tankLitersText);
   const { data: catalogMixes = [], isLoading } = useChemicalCatalog();
@@ -163,7 +165,7 @@ export default function TankMixCalculatorScreen() {
 
       {selectedMix ? (
         <Pressable
-          onPress={() => router.setParams({ mixId: undefined })}
+          onPress={() => router.setParams({ mixId: '' })}
           style={{
             marginBottom: spacing[4],
             alignSelf: 'flex-start',

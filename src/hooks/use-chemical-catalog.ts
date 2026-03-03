@@ -74,7 +74,8 @@ function mapCatalogData(
           dose_unit: component.dose_unit,
           dose_basis: component.dose_basis,
           base_tank_liters: component.base_tank_liters,
-          phi_days: phiRule?.phi_days ?? 0,
+          phi_days: phiRule?.verified ? phiRule.phi_days : null,
+          phi_verified: Boolean(phiRule?.verified),
           phi_source: phiRule
             ? phiRule.verified
               ? (phiRule.source_note ?? 'Unknown source')
@@ -122,14 +123,18 @@ async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
           data: [] as ChemicalMixComponentRow[],
           error: null,
         });
+  const phiPromise =
+    mixIds.length > 0
+      ? supabase
+          .from(TABLES.CHEMICAL_PHI_RULES)
+          .select('product_id,crop,phi_days,verified,source_note')
+          .eq('crop', 'grape')
+      : Promise.resolve({
+          data: [] as ChemicalPhiRuleRow[],
+          error: null,
+        });
 
-  const [componentsResult, phiResult] = await Promise.all([
-    componentsPromise,
-    supabase
-      .from(TABLES.CHEMICAL_PHI_RULES)
-      .select('product_id,crop,phi_days,verified,source_note')
-      .eq('crop', 'grape'),
-  ]);
+  const [componentsResult, phiResult] = await Promise.all([componentsPromise, phiPromise]);
 
   if (componentsResult.error?.code === possibleMissingCode) return [];
   if (phiResult.error?.code === possibleMissingCode) return [];

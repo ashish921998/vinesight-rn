@@ -102,8 +102,20 @@ export function GuidedTourCoachmark({
         actionLabel,
         secondaryActionLabel,
         tooltipPlacement,
+        compact,
+        hideTapHint,
+        inlineSkip,
       }),
-    [message, step, actionLabel, secondaryActionLabel, tooltipPlacement],
+    [
+      message,
+      step,
+      actionLabel,
+      secondaryActionLabel,
+      tooltipPlacement,
+      compact,
+      hideTapHint,
+      inlineSkip,
+    ],
   );
 
   useEffect(() => {
