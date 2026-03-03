@@ -131,6 +131,13 @@ export async function submitEntryPendingLog(params: {
         areaAcre: farmArea,
         waterVolumeL: data.waterVolume ?? null,
       });
+      const noteParts: string[] = [];
+      if (data.phiOverride) {
+        noteParts.push('[PHI_OVERRIDE] Harvest safety conflict override acknowledged in app.');
+      }
+      const trimmedNotes = data.notes?.trim();
+      if (trimmedNotes) noteParts.push(trimmedNotes);
+      const notes = noteParts.join(' ').trim();
       const created = await submitters.createSpray({
         farm_id: farmId,
         date: dateStr,
@@ -150,6 +157,7 @@ export async function submitEntryPendingLog(params: {
         weather: '',
         operator: '',
         date_of_pruning: farm.date_of_pruning,
+        notes: notes || undefined,
       });
       return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
     }

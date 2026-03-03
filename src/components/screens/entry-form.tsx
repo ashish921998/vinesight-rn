@@ -915,9 +915,33 @@ export function EntryForm({
                 text: t('entryForm.phiErrors.overrideAction', { defaultValue: 'Add anyway' }),
                 style: 'destructive',
                 onPress: () => {
-                  const payload = buildSprayPendingData(sprayData);
-                  enqueuePendingLog('spray', payload);
-                  setSprayData(createEmptySprayFormData());
+                  Alert.alert(
+                    t('entryForm.phiErrors.conflictTitle', {
+                      defaultValue: 'Harvest safety conflict',
+                    }),
+                    t('entryForm.phiErrors.overrideConfirmBody', {
+                      defaultValue:
+                        'Are you sure? This spray violates harvest safety guidance and will be marked as an override.',
+                    }),
+                    [
+                      {
+                        text: t('common.cancel', { defaultValue: 'Cancel' }),
+                        style: 'cancel',
+                      },
+                      {
+                        text: t('common.confirm', { defaultValue: 'Confirm' }),
+                        style: 'destructive',
+                        onPress: () => {
+                          const payload = buildSprayPendingData({
+                            ...sprayData,
+                            phiOverride: true,
+                          });
+                          enqueuePendingLog('spray', payload);
+                          setSprayData(createEmptySprayFormData());
+                        },
+                      },
+                    ],
+                  );
                 },
               },
             ],

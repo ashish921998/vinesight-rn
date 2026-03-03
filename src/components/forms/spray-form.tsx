@@ -86,6 +86,7 @@ export interface SprayFormData {
   safeHarvestDate?: string | null;
   phiBlockingComponent?: string | null;
   phiStatus?: 'verified' | 'legacy_unverified' | 'unknown' | null;
+  phiOverride?: boolean;
   notes?: string;
 }
 
@@ -181,7 +182,12 @@ export function SprayForm({
     if (!normalized) return catalogMixes;
     return catalogMixes.filter((mix) => {
       if (mix.name.toLowerCase().includes(normalized)) return true;
-      return (mix.target_problem ?? '').toLowerCase().includes(normalized);
+      if ((mix.target_problem ?? '').toLowerCase().includes(normalized)) return true;
+      return mix.components.some(
+        (component) =>
+          component.product_name.toLowerCase().includes(normalized) ||
+          (component.active_ingredient ?? '').toLowerCase().includes(normalized),
+      );
     });
   }, [catalogMixes, catalogMixQuery]);
 
@@ -346,6 +352,7 @@ export function SprayForm({
         safeHarvestDate: null,
         phiBlockingComponent: null,
         phiStatus: null,
+        phiOverride: false,
         chemicals,
       });
       setShowCatalogMixPicker(false);
@@ -1178,6 +1185,7 @@ export function createEmptySprayFormData(): SprayFormData {
     safeHarvestDate: null,
     phiBlockingComponent: null,
     phiStatus: null,
+    phiOverride: false,
     chemicals: [
       {
         id: generateId(),

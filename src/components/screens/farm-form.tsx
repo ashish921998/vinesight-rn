@@ -332,6 +332,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       formState.showCropPicker ||
       formState.showVarietyPicker
     ) {
+      if (guidedTourScrollLockTimeoutRef.current) {
+        clearTimeout(guidedTourScrollLockTimeoutRef.current);
+        guidedTourScrollLockTimeoutRef.current = null;
+      }
       setIsGuidedTourScrollLocked(false);
     }
   }, [
