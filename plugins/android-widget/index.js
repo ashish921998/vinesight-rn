@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-const { withAndroidManifest, withDangerousMod, AndroidConfig } = require('@expo/config-plugins');
+const {
+  withAndroidManifest,
+  withAppBuildGradle,
+  withDangerousMod,
+  AndroidConfig,
+} = require('@expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
@@ -441,11 +446,58 @@ const withWidgetResources = (config) => {
 };
 
 /**
+ * Adds Compose/Glance dependencies and Compose compiler config for the app module.
+ */
+const withComposeBuildConfig = (config) => {
+  return withAppBuildGradle(config, (config) => {
+    let contents = config.modResults.contents;
+
+    const ensureDependency = (dependencyLine) => {
+      if (contents.includes(dependencyLine)) return;
+      if (/dependencies\s*\{/.test(contents)) {
+        contents = contents.replace(
+          /dependencies\s*\{/,
+          (match) => `${match}\n    ${dependencyLine}`,
+        );
+      }
+    };
+
+    ensureDependency('implementation("androidx.glance:glance-appwidget:1.1.1")');
+    ensureDependency('implementation("androidx.glance:glance-material3:1.1.1")');
+
+    if (!/compose\s+true/.test(contents)) {
+      if (/buildFeatures\s*\{/.test(contents)) {
+        contents = contents.replace(
+          /buildFeatures\s*\{/,
+          (match) => `${match}\n        compose true`,
+        );
+      } else if (/android\s*\{/.test(contents)) {
+        contents = contents.replace(
+          /android\s*\{/,
+          (match) => `${match}\n    buildFeatures {\n        compose true\n    }`,
+        );
+      }
+    }
+
+    if (!/kotlinCompilerExtensionVersion/.test(contents) && /android\s*\{/.test(contents)) {
+      contents = contents.replace(
+        /android\s*\{/,
+        (match) =>
+          `${match}\n    composeOptions {\n        kotlinCompilerExtensionVersion = "1.5.15"\n    }`,
+      );
+    }
+
+    config.modResults.contents = contents;
+    return config;
+  });
+};
+/**
  * Main plugin function
  */
 const withAndroidWidget = (config) => {
   config = withWidgetResources(config);
   config = withKotlinSources(config);
+  config = withComposeBuildConfig(config);
   config = withMainApplicationKotlin(config);
   config = withWidgetReceiver(config);
   return config;

@@ -1,42 +1,31 @@
 package com.vinesight
 
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
-import android.widget.RemoteViews
-import com.vinesight.app.R
-import kotlin.math.roundToInt
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.update
+import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
- * Weather Widget Provider for Home Screen Widgets
- * 
- * This class handles widget lifecycle events:
- * - onUpdate: Called when widget needs to be updated
- * - onEnabled: Called when first widget instance is added
- * - onDisabled: Called when last widget instance is removed
+ * Weather Widget Provider for Home Screen Widgets.
+ *
+ * This receiver delegates rendering to Jetpack Compose (Glance).
  */
-class WeatherWidgetProvider : AppWidgetProvider() {
-    
+class WeatherWidgetProvider : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget = WeatherGlanceWidget()
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        // Update each widget instance
-        for (appWidgetId in appWidgetIds) {
-            updateWidget(context, appWidgetManager, appWidgetId)
-        }
-    }
-    
-    override fun onEnabled(context: Context) {
-        // Called when the first widget instance is created
-        super.onEnabled(context)
-    }
-    
-    override fun onDisabled(context: Context) {
-        // Called when the last widget instance is removed
-        super.onDisabled(context)
+        super.onUpdate(context, appWidgetManager, appWidgetIds)
+        requestUpdate(context)
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
@@ -45,11 +34,10 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             WeatherWidgetManager.clearWidgetData(context, widgetId)
         }
     }
-    
+
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        
-        // Handle custom actions for widget updates
+
         when (intent.action) {
             ACTION_UPDATE_WIDGET -> {
                 val appWidgetId = intent.getIntExtra(
@@ -57,78 +45,39 @@ class WeatherWidgetProvider : AppWidgetProvider() {
                     AppWidgetManager.INVALID_APPWIDGET_ID
                 )
                 if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    val appWidgetManager = AppWidgetManager.getInstance(context)
-                    updateWidget(context, appWidgetManager, appWidgetId)
+                    requestUpdate(context, appWidgetId)
                 } else {
-                    android.util.Log.w("WeatherWidgetProvider", "Received UPDATE_WIDGET action without valid appWidgetId")
+                    android.util.Log.w(
+                        "WeatherWidgetProvider",
+                        "Received UPDATE_WIDGET action without valid appWidgetId"
+                    )
                 }
             }
         }
     }
-    
+
     companion object {
         const val ACTION_UPDATE_WIDGET = "com.vinesight.UPDATE_WIDGET"
-        
-        fun updateWidget(
-            context: Context,
-            appWidgetManager: AppWidgetManager,
-            appWidgetId: Int
-        ) {
-            // Get stored widget data
-            val widgetData = WeatherWidgetManager.getWidgetData(context, appWidgetId)
-            
-            // Create remote views for the widget layout
-            val views = RemoteViews(context.packageName, R.layout.widget_weather)
-            
-            // Update widget text with weather data
-            if (widgetData != null) {
-                when (widgetData.status) {
-                    WeatherWidgetManager.WeatherWidgetStatus.LOADING -> {
-                        views.setTextViewText(
-                            R.id.widget_text,
-                            context.getString(R.string.widget_loading)
-                        )
-                    }
-                    WeatherWidgetManager.WeatherWidgetStatus.ERROR -> {
-                        views.setTextViewText(
-                            R.id.widget_text,
-                            context.getString(R.string.widget_error)
-                        )
-                    }
-                    WeatherWidgetManager.WeatherWidgetStatus.READY -> {
-                        val lines = mutableListOf<String>()
-                        lines.add(
-                            context.getString(
-                                R.string.widget_temp_condition,
-                                widgetData.temperature.roundToInt(),
-                                widgetData.condition
-                            )
-                        )
-                        if (widgetData.location.isNotEmpty()) {
-                            lines.add(widgetData.location)
-                        }
-                        lines.add(
-                            context.getString(
-                                R.string.widget_humidity,
-                                widgetData.humidity.roundToInt()
-                            )
-                        )
-                        val displayText = lines.joinToString("\n")
-                        views.setTextViewText(
-                            R.id.widget_text,
-                            displayText
-                        )
-                    }
+
+        fun requestUpdate(context: Context, appWidgetId: Int? = null) {
+            CoroutineScope(Dispatchers.Default).launch {
+                val glanceWidget = WeatherGlanceWidget()
+                if (appWidgetId == null) {
+                    glanceWidget.updateAll(context)
+                    return@launch
                 }
-            } else {
-                views.setTextViewText(
-                    R.id.widget_text,
-                    context.getString(R.string.widget_no_weather_data)
-                )
+
+                val glanceManager = GlanceAppWidgetManager(context)
+                val matchingGlanceId = glanceManager
+                    .getGlanceIds(WeatherWidgetProvider::class.java)
+                    .firstOrNull { glanceManager.getAppWidgetId(it) == appWidgetId }
+
+                if (matchingGlanceId != null) {
+                    glanceWidget.update(context, matchingGlanceId)
+                } else {
+                    glanceWidget.updateAll(context)
+                }
             }
-            
-            // Update the widget
-            appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 }

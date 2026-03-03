@@ -42,13 +42,12 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
   @ReactMethod
   fun updateWidget(payloadJson: String, promise: Promise) {
     val context = reactApplicationContext
-    val appWidgetManager = AppWidgetManager.getInstance(context)
     val widgetIds = getWidgetIds(context)
 
     try {
       widgetIds.forEach { widgetId ->
         WeatherWidgetManager.saveWidgetStatus(context, widgetId, WeatherWidgetManager.WeatherWidgetStatus.LOADING)
-        WeatherWidgetProvider.updateWidget(context, appWidgetManager, widgetId)
+        WeatherWidgetProvider.requestUpdate(context, widgetId)
       }
 
       val payload = JSONObject(payloadJson)
@@ -70,7 +69,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
 
       widgetIds.forEach { widgetId ->
         WeatherWidgetManager.saveWidgetData(context, widgetId, widgetData)
-        WeatherWidgetProvider.updateWidget(context, appWidgetManager, widgetId)
+        WeatherWidgetProvider.requestUpdate(context, widgetId)
       }
 
       val response = Arguments.createMap().apply {
@@ -81,7 +80,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
     } catch (e: Exception) {
       widgetIds.forEach { widgetId ->
         WeatherWidgetManager.saveWidgetStatus(context, widgetId, WeatherWidgetManager.WeatherWidgetStatus.ERROR)
-        WeatherWidgetProvider.updateWidget(context, appWidgetManager, widgetId)
+        WeatherWidgetProvider.requestUpdate(context, widgetId)
       }
       promise.reject("UPDATE_ERROR", e.message, e)
     }
@@ -110,14 +109,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) : ReactContextBa
   @ReactMethod
   fun reloadAllWidgets(promise: Promise) {
     try {
-      val context = reactApplicationContext
-      val appWidgetManager = AppWidgetManager.getInstance(context)
-      val widgetIds = getWidgetIds(context)
-
-      widgetIds.forEach { widgetId ->
-        WeatherWidgetProvider.updateWidget(context, appWidgetManager, widgetId)
-      }
-
+      WeatherWidgetProvider.requestUpdate(reactApplicationContext)
       promise.resolve(null)
     } catch (e: Exception) {
       promise.reject("RELOAD_ERROR", e.message, e)
