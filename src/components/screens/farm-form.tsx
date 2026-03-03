@@ -255,6 +255,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const siltInputRef = useRef<TextInput>(null);
   const clayInputRef = useRef<TextInput>(null);
   const previousSelectedCropRef = useRef<CropType | null>(null);
+  const guidedTourScrollLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scrollInputIntoView = useCallback((ref: React.RefObject<TextInput | null>) => {
     const input = ref.current;
@@ -297,6 +298,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
 
     const unsubPhaseChanged = guidedTourOn('guidedTour.addFarmPhaseChanged', (payload) => {
       if (mode !== 'add') return;
+      if (guidedTourScrollLockTimeoutRef.current) {
+        clearTimeout(guidedTourScrollLockTimeoutRef.current);
+        guidedTourScrollLockTimeoutRef.current = null;
+      }
       if (payload.focusField) {
         setIsGuidedTourScrollLocked(false);
         focusGuidedField(payload.focusField);
@@ -305,12 +310,17 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         setIsGuidedTourScrollLocked(false);
         return;
       }
-      setTimeout(() => {
+      guidedTourScrollLockTimeoutRef.current = setTimeout(() => {
         setIsGuidedTourScrollLocked(true);
+        guidedTourScrollLockTimeoutRef.current = null;
       }, 120);
     });
 
     return () => {
+      if (guidedTourScrollLockTimeoutRef.current) {
+        clearTimeout(guidedTourScrollLockTimeoutRef.current);
+        guidedTourScrollLockTimeoutRef.current = null;
+      }
       unsubFocus();
       unsubPhaseChanged();
     };

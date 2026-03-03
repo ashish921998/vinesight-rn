@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, Share } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { spacing, fontSize, fontWeight, borderRadius } from '@/styles/theme';
@@ -12,6 +12,7 @@ import type { ChemicalMix } from '@/types/phi';
 
 export default function TankMixCalculatorScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const params = useLocalSearchParams<{ mixId?: string }>();
   const m3 = useM3();
   const colors = useThemeColors();
@@ -20,9 +21,6 @@ export default function TankMixCalculatorScreen() {
   const [query, setQuery] = useState('');
   const [tankLitersText, setTankLitersText] = useState('200');
   const preselectedMixId = Number.parseInt(params.mixId ?? '', 10);
-  const [selectedMixId, setSelectedMixId] = useState<number | null>(
-    Number.isFinite(preselectedMixId) ? preselectedMixId : null,
-  );
 
   const tankLiters = Number.parseFloat(tankLitersText);
   const { data: catalogMixes = [], isLoading } = useChemicalCatalog();
@@ -40,8 +38,11 @@ export default function TankMixCalculatorScreen() {
     });
   }, [catalogMixes, query]);
   const selectedMix: ChemicalMix | null = useMemo(
-    () => catalogMixes.find((entry) => entry.id === selectedMixId) ?? null,
-    [catalogMixes, selectedMixId],
+    () =>
+      Number.isFinite(preselectedMixId)
+        ? (catalogMixes.find((entry) => entry.id === preselectedMixId) ?? null)
+        : null,
+    [catalogMixes, preselectedMixId],
   );
   const rows = useMemo(
     () =>
@@ -135,7 +136,7 @@ export default function TankMixCalculatorScreen() {
             return (
               <Pressable
                 key={mix.id}
-                onPress={() => setSelectedMixId(mix.id)}
+                onPress={() => router.setParams({ mixId: String(mix.id) })}
                 style={{
                   borderRadius: borderRadius.lg,
                   borderWidth: 1,

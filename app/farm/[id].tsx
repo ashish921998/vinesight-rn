@@ -79,17 +79,25 @@ interface WorkboardAction {
   route?: string;
 }
 
-function formatDdMmmYyyy(date: Date): string {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = date.toLocaleString('en-US', { month: 'short' });
-  const year = date.getFullYear();
+function formatDdMmmYyyy(date: Date, locale?: string): string {
+  const parts = new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).formatToParts(date);
+  const day =
+    parts.find((part) => part.type === 'day')?.value ?? String(date.getDate()).padStart(2, '0');
+  const month =
+    parts.find((part) => part.type === 'month')?.value ??
+    new Intl.DateTimeFormat(locale, { month: 'short' }).format(date);
+  const year = parts.find((part) => part.type === 'year')?.value ?? String(date.getFullYear());
   return `${day} ${month} ${year}`;
 }
 
 export default function FarmDetailScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const router = useRouter();
   const { setEditActivity, setAddEntry } = useModalStore();
@@ -1524,7 +1532,7 @@ export default function FarmDetailScreen() {
                               const raw = activeSeasonRecord.target_harvest_date;
                               if (!raw) return '—';
                               const parsed = parseDbDateToLocalDate(raw);
-                              return parsed ? formatDdMmmYyyy(parsed) : raw;
+                              return parsed ? formatDdMmmYyyy(parsed, i18n.language) : raw;
                             })()}
                           </Text>
                           <Pressable
@@ -2850,11 +2858,7 @@ export default function FarmDetailScreen() {
                     : t('farmDetails.seasons.endSeasonButton')
                 }
                 onPress={seasonFormMode === 'start' ? handleStartSeason : handleEndSeason}
-                isLoading={
-                  startFarmSeason.isPending ||
-                  endFarmSeason.isPending ||
-                  updateSeasonTargetHarvestDate.isPending
-                }
+                isLoading={startFarmSeason.isPending || endFarmSeason.isPending}
               />
             </GuidedTourTarget>
           </GuidedTourTarget>

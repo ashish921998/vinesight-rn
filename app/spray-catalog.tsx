@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -57,26 +57,29 @@ export default function SprayCatalogScreen() {
     ).length;
   }, [mixes, selectedComponent]);
 
-  const renderChip = (key: string, label: string, selected: boolean, onPress: () => void) => (
-    <Pressable
-      key={key}
-      onPress={onPress}
-      style={{
-        borderRadius: borderRadius.full,
-        borderWidth: 1,
-        borderColor: selected ? m3.colorScheme.primary : m3.colorScheme.outlineVariant,
-        backgroundColor: selected
-          ? colorWithOpacity(m3.colorScheme.primary, 0.12)
-          : m3.surface.surfaceContainerLow,
-        paddingHorizontal: spacing[3],
-        paddingVertical: spacing[2],
-        marginRight: spacing[2],
-      }}
-    >
-      <Text style={{ color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurface }}>
-        {label}
-      </Text>
-    </Pressable>
+  const renderChip = useCallback(
+    (key: string, label: string, selected: boolean, onPress: () => void) => (
+      <Pressable
+        key={key}
+        onPress={onPress}
+        style={{
+          borderRadius: borderRadius.full,
+          borderWidth: 1,
+          borderColor: selected ? m3.colorScheme.primary : m3.colorScheme.outlineVariant,
+          backgroundColor: selected
+            ? colorWithOpacity(m3.colorScheme.primary, 0.12)
+            : m3.surface.surfaceContainerLow,
+          paddingHorizontal: spacing[3],
+          paddingVertical: spacing[2],
+          marginRight: spacing[2],
+        }}
+      >
+        <Text style={{ color: selected ? m3.colorScheme.primary : m3.colorScheme.onSurface }}>
+          {label}
+        </Text>
+      </Pressable>
+    ),
+    [m3],
   );
 
   const renderMixCard = ({ item: mix }: { item: ChemicalMix }) => (
@@ -146,107 +149,110 @@ export default function SprayCatalogScreen() {
     </View>
   );
 
-  const listHeader = (
-    <>
-      <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
-        {t('sprayCatalog.title', { defaultValue: 'Spray Catalog' })}
-      </Text>
-      <Text style={{ ...m3.typography.bodyMedium, color: m3.colorScheme.onSurfaceVariant }}>
-        {t('sprayCatalog.subtitle', {
-          defaultValue: 'Browse catalog mixes by pest and mode with direct tank-mix actions.',
-        })}
-      </Text>
-
-      <View style={{ marginTop: spacing[3] }}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={t('sprayCatalog.searchPlaceholder', {
-            defaultValue: 'Search mix, pest, or product',
-          })}
-          placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-          style={{
-            borderRadius: borderRadius.lg,
-            borderWidth: 1,
-            borderColor: m3.colorScheme.outlineVariant,
-            backgroundColor: m3.surface.surfaceContainerLow,
-            color: m3.colorScheme.onSurface,
-            paddingHorizontal: spacing[3],
-            paddingVertical: spacing[3],
-          }}
-        />
-      </View>
-
-      <Text
-        style={{
-          color: m3.colorScheme.onSurfaceVariant,
-          marginTop: spacing[3],
-          marginBottom: spacing[2],
-        }}
-      >
-        {t('sprayCatalog.modeFilter', { defaultValue: 'Application mode' })}
-      </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginBottom: spacing[2] }}
-      >
-        {renderChip(
-          'all',
-          t('sprayCatalog.modeAll', { defaultValue: 'All' }),
-          modeFilter === 'all',
-          () => setModeFilter('all'),
-        )}
-        {renderChip(
-          'preventive',
-          t('sprayCatalog.modePreventive', { defaultValue: 'Preventive' }),
-          modeFilter === 'preventive',
-          () => setModeFilter('preventive'),
-        )}
-        {renderChip(
-          'curative',
-          t('sprayCatalog.modeCurative', { defaultValue: 'Curative' }),
-          modeFilter === 'curative',
-          () => setModeFilter('curative'),
-        )}
-        {renderChip(
-          'both',
-          t('sprayCatalog.modeBoth', { defaultValue: 'Both' }),
-          modeFilter === 'both',
-          () => setModeFilter('both'),
-        )}
-      </ScrollView>
-
-      <Text
-        style={{
-          color: m3.colorScheme.onSurfaceVariant,
-          marginTop: spacing[1],
-          marginBottom: spacing[2],
-        }}
-      >
-        {t('sprayCatalog.pestFilter', { defaultValue: 'Target pest/problem' })}
-      </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginBottom: spacing[3] }}
-      >
-        {pestOptions.map((pest) =>
-          renderChip(
-            pest,
-            pest === 'all' ? t('sprayCatalog.modeAll', { defaultValue: 'All' }) : pest,
-            selectedPest === pest,
-            () => setSelectedPest(pest),
-          ),
-        )}
-      </ScrollView>
-
-      {isLoading ? (
-        <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginBottom: spacing[3] }}>
-          {t('common.loading', { defaultValue: 'Loading…' })}
+  const listHeader = useMemo(
+    () => (
+      <>
+        <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
+          {t('sprayCatalog.title', { defaultValue: 'Spray Catalog' })}
         </Text>
-      ) : null}
-    </>
+        <Text style={{ ...m3.typography.bodyMedium, color: m3.colorScheme.onSurfaceVariant }}>
+          {t('sprayCatalog.subtitle', {
+            defaultValue: 'Browse catalog mixes by pest and mode with direct tank-mix actions.',
+          })}
+        </Text>
+
+        <View style={{ marginTop: spacing[3] }}>
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={t('sprayCatalog.searchPlaceholder', {
+              defaultValue: 'Search mix, pest, or product',
+            })}
+            placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
+            style={{
+              borderRadius: borderRadius.lg,
+              borderWidth: 1,
+              borderColor: m3.colorScheme.outlineVariant,
+              backgroundColor: m3.surface.surfaceContainerLow,
+              color: m3.colorScheme.onSurface,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[3],
+            }}
+          />
+        </View>
+
+        <Text
+          style={{
+            color: m3.colorScheme.onSurfaceVariant,
+            marginTop: spacing[3],
+            marginBottom: spacing[2],
+          }}
+        >
+          {t('sprayCatalog.modeFilter', { defaultValue: 'Application mode' })}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: spacing[2] }}
+        >
+          {renderChip(
+            'all',
+            t('sprayCatalog.modeAll', { defaultValue: 'All' }),
+            modeFilter === 'all',
+            () => setModeFilter('all'),
+          )}
+          {renderChip(
+            'preventive',
+            t('sprayCatalog.modePreventive', { defaultValue: 'Preventive' }),
+            modeFilter === 'preventive',
+            () => setModeFilter('preventive'),
+          )}
+          {renderChip(
+            'curative',
+            t('sprayCatalog.modeCurative', { defaultValue: 'Curative' }),
+            modeFilter === 'curative',
+            () => setModeFilter('curative'),
+          )}
+          {renderChip(
+            'both',
+            t('sprayCatalog.modeBoth', { defaultValue: 'Both' }),
+            modeFilter === 'both',
+            () => setModeFilter('both'),
+          )}
+        </ScrollView>
+
+        <Text
+          style={{
+            color: m3.colorScheme.onSurfaceVariant,
+            marginTop: spacing[1],
+            marginBottom: spacing[2],
+          }}
+        >
+          {t('sprayCatalog.pestFilter', { defaultValue: 'Target pest/problem' })}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: spacing[3] }}
+        >
+          {pestOptions.map((pest) =>
+            renderChip(
+              pest,
+              pest === 'all' ? t('sprayCatalog.modeAll', { defaultValue: 'All' }) : pest,
+              selectedPest === pest,
+              () => setSelectedPest(pest),
+            ),
+          )}
+        </ScrollView>
+
+        {isLoading ? (
+          <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginBottom: spacing[3] }}>
+            {t('common.loading', { defaultValue: 'Loading…' })}
+          </Text>
+        ) : null}
+      </>
+    ),
+    [isLoading, m3, modeFilter, pestOptions, query, renderChip, selectedPest, t],
   );
 
   return (

@@ -463,6 +463,12 @@ export function SprayForm({
                 </Text>
                 <Pressable
                   onPress={() => setShowCatalogMixPicker(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    selectedCatalogMix?.name ??
+                    t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })
+                  }
+                  accessibilityState={{ expanded: showCatalogMixPicker }}
                   style={{
                     borderRadius: borderRadius.lg,
                     backgroundColor: colors.surface[100],
@@ -683,7 +689,7 @@ export function SprayForm({
         <View
           style={{
             flex: 1,
-            backgroundColor: colorWithOpacity('#000000', 0.25),
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.25),
             justifyContent: 'center',
             padding: spacing[4],
           }}
@@ -716,6 +722,9 @@ export function SprayForm({
               <TextInput
                 value={catalogMixQuery}
                 onChangeText={setCatalogMixQuery}
+                accessibilityLabel={t('sprayForm.searchCatalogMix', {
+                  defaultValue: 'Search catalog mix',
+                })}
                 placeholder={t('sprayForm.searchCatalogMix', {
                   defaultValue: 'Search catalog mix',
                 })}
@@ -794,6 +803,11 @@ export function SprayForm({
             >
               <Pressable
                 onPress={() => setShowCatalogMixPicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close', { defaultValue: 'Close' })}
+                accessibilityHint={t('sprayForm.catalogOnly.closePickerHint', {
+                  defaultValue: 'Closes the catalog mix picker',
+                })}
                 style={{
                   borderRadius: borderRadius.full,
                   paddingHorizontal: spacing[3],

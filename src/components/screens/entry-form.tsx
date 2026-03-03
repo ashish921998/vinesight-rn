@@ -870,7 +870,7 @@ export function EntryForm({
             governingPhiDays: null,
             safeHarvestDate: null,
             phiBlockingComponent: null,
-            phiStatus: input.phiStatus ?? 'unknown',
+            phiStatus: 'unknown',
           },
     [isGrapeFarm],
   );
