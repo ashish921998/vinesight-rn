@@ -1,18 +1,21 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borderRadius, fontWeight, spacing } from '@/styles/theme';
 import { colorWithOpacity } from '@/utils/color';
 import { useM3 } from '@/styles/use-theme';
 import { ProductDetailSheet } from '@/components/sheets/product-detail-sheet';
 import { useChemicalCatalog } from '@/hooks';
-import type { ChemicalMixComponent } from '@/types/phi';
+import type { ChemicalMix, ChemicalMixComponent } from '@/types/phi';
 
 export default function SprayCatalogScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const m3 = useM3();
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom + spacing[8], spacing[12]);
   const [query, setQuery] = useState('');
   const [modeFilter, setModeFilter] = useState<'all' | 'preventive' | 'curative' | 'both'>('all');
   const [selectedPest, setSelectedPest] = useState<string>('all');
@@ -38,7 +41,7 @@ export default function SprayCatalogScreen() {
       if (mix.name.toLowerCase().includes(normalized)) return true;
       if ((mix.target_problem ?? '').toLowerCase().includes(normalized)) return true;
       return mix.components.some(
-        (component) =>
+        (component: ChemicalMixComponent) =>
           component.product_name.toLowerCase().includes(normalized) ||
           (component.active_ingredient ?? '').toLowerCase().includes(normalized),
       );
@@ -48,7 +51,9 @@ export default function SprayCatalogScreen() {
   const mixesUsingSelectedProductCount = useMemo(() => {
     if (!selectedComponent) return 0;
     return mixes.filter((mix) =>
-      mix.components.some((c) => c.product_id === selectedComponent.product_id),
+      mix.components.some(
+        (c: ChemicalMixComponent) => c.product_id === selectedComponent.product_id,
+      ),
     ).length;
   }, [mixes, selectedComponent]);
 
@@ -74,18 +79,81 @@ export default function SprayCatalogScreen() {
     </Pressable>
   );
 
-  return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
-      contentContainerStyle={{ padding: spacing[4], paddingBottom: spacing[10] }}
+  const renderMixCard = ({ item: mix }: { item: ChemicalMix }) => (
+    <View
+      style={{
+        borderRadius: borderRadius.xl,
+        borderWidth: 1,
+        borderColor: m3.colorScheme.outlineVariant,
+        backgroundColor: m3.surface.surfaceContainerLow,
+        padding: spacing[4],
+        marginBottom: spacing[3],
+      }}
     >
+      <Text style={{ color: m3.colorScheme.onSurface, fontWeight: fontWeight.semibold }}>
+        {mix.name}
+      </Text>
+      <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
+        {mix.target_problem ??
+          t('sprayCatalog.genericProblem', { defaultValue: 'General protection' })}
+      </Text>
+      <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
+        {t('sprayCatalog.modeLabel', {
+          defaultValue: 'Mode: {{mode}}',
+          mode: mix.application_mode ?? 'unspecified',
+        })}
+      </Text>
+
+      <View style={{ marginTop: spacing[2], gap: spacing[1] }}>
+        {mix.components.map((component: ChemicalMixComponent) => (
+          <Pressable
+            key={component.id}
+            onPress={() => {
+              setSelectedComponent(component);
+              setShowSheet(true);
+            }}
+          >
+            <Text style={{ color: m3.colorScheme.primary }}>
+              • {component.product_name} ({component.dose_value} {component.dose_unit}
+              {component.dose_basis === 'per_100_liter'
+                ? '/100L'
+                : component.dose_basis === 'fixed_per_tank'
+                  ? '/tank'
+                  : '/L'}
+              )
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Pressable
+        onPress={() =>
+          router.push({ pathname: '/calculator/tank-mix', params: { mixId: String(mix.id) } })
+        }
+        style={{
+          marginTop: spacing[3],
+          borderRadius: borderRadius.full,
+          alignSelf: 'flex-start',
+          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+          paddingHorizontal: spacing[3],
+          paddingVertical: spacing[2],
+        }}
+      >
+        <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
+          {t('sprayCatalog.openTankMix', { defaultValue: 'Open in Tank Mix Calculator' })}
+        </Text>
+      </Pressable>
+    </View>
+  );
+
+  const listHeader = (
+    <>
       <Text style={{ ...m3.typography.headlineSmall, color: m3.colorScheme.onSurface }}>
         {t('sprayCatalog.title', { defaultValue: 'Spray Catalog' })}
       </Text>
       <Text style={{ ...m3.typography.bodyMedium, color: m3.colorScheme.onSurfaceVariant }}>
         {t('sprayCatalog.subtitle', {
-          defaultValue:
-            'Browse catalog mixes by pest, mode, and cost with direct tank-mix actions.',
+          defaultValue: 'Browse catalog mixes by pest and mode with direct tank-mix actions.',
         })}
       </Text>
 
@@ -174,79 +242,34 @@ export default function SprayCatalogScreen() {
       </ScrollView>
 
       {isLoading ? (
-        <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
+        <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginBottom: spacing[3] }}>
           {t('common.loading', { defaultValue: 'Loading…' })}
         </Text>
-      ) : (
-        filteredMixes.map((mix) => (
-          <View
-            key={mix.id}
-            style={{
-              borderRadius: borderRadius.xl,
-              borderWidth: 1,
-              borderColor: m3.colorScheme.outlineVariant,
-              backgroundColor: m3.surface.surfaceContainerLow,
-              padding: spacing[4],
-              marginBottom: spacing[3],
-            }}
-          >
-            <Text style={{ color: m3.colorScheme.onSurface, fontWeight: fontWeight.semibold }}>
-              {mix.name}
-            </Text>
-            <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
-              {mix.target_problem ??
-                t('sprayCatalog.genericProblem', { defaultValue: 'General protection' })}
-            </Text>
-            <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
-              {t('sprayCatalog.modeLabel', {
-                defaultValue: 'Mode: {{mode}}',
-                mode: mix.application_mode ?? 'unspecified',
-              })}
-            </Text>
-            <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
-              {t('sprayCatalog.cost200l', {
-                defaultValue: 'Estimated 200L cost: {{value}}',
-                value:
-                  mix.estimated_cost_per_200l != null ? `INR ${mix.estimated_cost_per_200l}` : '—',
-              })}
-            </Text>
+      ) : null}
+    </>
+  );
 
-            <View style={{ marginTop: spacing[2], gap: spacing[1] }}>
-              {mix.components.map((component) => (
-                <Pressable
-                  key={component.id}
-                  onPress={() => {
-                    setSelectedComponent(component);
-                    setShowSheet(true);
-                  }}
-                >
-                  <Text style={{ color: m3.colorScheme.primary }}>
-                    • {component.product_name} ({component.dose_value} {component.dose_unit}/L)
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <Pressable
-              onPress={() =>
-                router.push({ pathname: '/calculator/tank-mix', params: { mixId: String(mix.id) } })
-              }
-              style={{
-                marginTop: spacing[3],
-                borderRadius: borderRadius.full,
-                alignSelf: 'flex-start',
-                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[2],
-              }}
-            >
-              <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
-                {t('sprayCatalog.openTankMix', { defaultValue: 'Open in Tank Mix Calculator' })}
-              </Text>
-            </Pressable>
-          </View>
-        ))
-      )}
+  return (
+    <View style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
+      <FlatList
+        data={isLoading ? [] : filteredMixes}
+        keyExtractor={(mix) => String(mix.id)}
+        renderItem={renderMixCard}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={8}
+        removeClippedSubviews
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ padding: spacing[4], paddingBottom: bottomPadding }}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={
+          !isLoading ? (
+            <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
+              {t('common.noResultsFound', { defaultValue: 'No results found' })}
+            </Text>
+          ) : null
+        }
+      />
 
       <ProductDetailSheet
         visible={showSheet}
@@ -254,6 +277,6 @@ export default function SprayCatalogScreen() {
         mixesUsingProductCount={mixesUsingSelectedProductCount}
         onClose={() => setShowSheet(false)}
       />
-    </ScrollView>
+    </View>
   );
 }

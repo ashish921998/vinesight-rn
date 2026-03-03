@@ -14,6 +14,7 @@ import {
   ScrollView,
   Keyboard,
   KeyboardAvoidingView,
+  findNodeHandle,
 } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -172,6 +173,8 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return fallback;
 };
 
+type AddFarmFocusField = 'name' | 'region' | 'area';
+
 const buildFormStateFromFarm = (farm?: Farm | null) => ({
   ...resolveCropSelection(farm?.crop),
   name: farm?.name ?? '',
@@ -215,6 +218,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const m3 = useM3();
   const insets = useSafeAreaInsets();
   const { windowHeight } = useResponsiveHeight();
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
 
   const isEdit = mode === 'edit';
   const createFarm = useCreateFarm();
@@ -226,8 +231,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     isEdit && farm ? buildFormStateFromFarm(farm) : buildFormStateFromFarm(undefined),
   );
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isGuidedTourScrollLocked, setIsGuidedTourScrollLocked] = useState(false);
   const [iosPlantingDateDraft, setIosPlantingDateDraft] = useState<Date>(() => new Date());
   const [iosPruningDateDraft, setIosPruningDateDraft] = useState<Date>(() => new Date());
+  const formScrollViewRef = useRef<ScrollView>(null);
   const nameInputRef = useRef<TextInput>(null);
   const regionInputRef = useRef<TextInput>(null);
   const areaInputRef = useRef<TextInput>(null);
@@ -249,26 +256,83 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const clayInputRef = useRef<TextInput>(null);
   const previousSelectedCropRef = useRef<CropType | null>(null);
 
+  const scrollInputIntoView = useCallback((ref: React.RefObject<TextInput | null>) => {
+    const input = ref.current;
+    const scrollResponder =
+      (
+        formScrollViewRef.current as unknown as {
+          getScrollResponder?: () => {
+            scrollResponderScrollNativeHandleToKeyboard?: (
+              nodeHandle: number,
+              additionalOffset?: number,
+              preventNegativeScrollOffset?: boolean,
+            ) => void;
+          };
+        }
+      )?.getScrollResponder?.() ?? null;
+    const scrollToKeyboard = scrollResponder?.scrollResponderScrollNativeHandleToKeyboard;
+    if (!input || !scrollToKeyboard) return;
+    const nodeHandle = findNodeHandle(input);
+    if (!nodeHandle) return;
+    scrollToKeyboard(nodeHandle, 72, true);
+  }, []);
+
+  const focusGuidedField = useCallback(
+    (field: AddFarmFocusField) => {
+      const ref =
+        field === 'name' ? nameInputRef : field === 'region' ? regionInputRef : areaInputRef;
+      setTimeout(() => {
+        scrollInputIntoView(ref);
+        ref.current?.focus();
+      }, 0);
+    },
+    [scrollInputIntoView],
+  );
+
   useEffect(() => {
     const unsubFocus = guidedTourOn('guidedTour.addFarmFocusField', ({ field }) => {
       if (mode !== 'add') return;
-      const focus = (ref: React.RefObject<TextInput | null>) => {
-        setTimeout(() => {
-          ref.current?.focus();
-        }, 0);
-      };
-      if (field === 'name') {
-        focus(nameInputRef);
-      } else if (field === 'region') {
-        focus(regionInputRef);
-      } else if (field === 'area') {
-        focus(areaInputRef);
-      }
+      focusGuidedField(field);
     });
+
+    const unsubPhaseChanged = guidedTourOn('guidedTour.addFarmPhaseChanged', (payload) => {
+      if (mode !== 'add') return;
+      if (payload.focusField) {
+        setIsGuidedTourScrollLocked(false);
+        focusGuidedField(payload.focusField);
+      }
+      if (!payload.lockScroll) {
+        setIsGuidedTourScrollLocked(false);
+        return;
+      }
+      setTimeout(() => {
+        setIsGuidedTourScrollLocked(true);
+      }, 120);
+    });
+
     return () => {
       unsubFocus();
+      unsubPhaseChanged();
     };
-  }, [mode]);
+  }, [focusGuidedField, mode]);
+
+  useEffect(() => {
+    if (mode !== 'add') return;
+    if (
+      guidedTourStatus !== 'in_progress' ||
+      guidedTourStep !== 'add_farm' ||
+      formState.showCropPicker ||
+      formState.showVarietyPicker
+    ) {
+      setIsGuidedTourScrollLocked(false);
+    }
+  }, [
+    formState.showCropPicker,
+    formState.showVarietyPicker,
+    guidedTourStatus,
+    guidedTourStep,
+    mode,
+  ]);
 
   useEffect(() => {
     if (!isEdit) {
@@ -971,6 +1035,11 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         showResetButton={!isEdit}
         onReset={handleReset}
         saveButtonTargetId={!isEdit ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_SUBMIT : undefined}
+        scrollViewRef={formScrollViewRef}
+        scrollViewProps={{
+          scrollEnabled: !isGuidedTourScrollLocked,
+          keyboardDismissMode: isGuidedTourScrollLocked ? 'none' : 'on-drag',
+        }}
       >
         <SectionHeader title={t('farmForm.sections.details')} style={{ marginBottom: 16 }} />
 

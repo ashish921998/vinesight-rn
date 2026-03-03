@@ -1,5 +1,13 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, type TextInputProps } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  TextInput,
+  ScrollView,
+  Modal,
+  type TextInputProps,
+} from 'react-native';
 import { Symbol } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
 import { NumericInput, type NumericInputHandle } from './form-field';
@@ -162,10 +170,20 @@ export function SprayForm({
   }, [data.chemicals]);
 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
+  const [showCatalogMixPicker, setShowCatalogMixPicker] = useState(false);
+  const [catalogMixQuery, setCatalogMixQuery] = useState('');
   const selectedCatalogMix = useMemo(
     () => catalogMixes.find((mix) => mix.id === data.catalogMixId) ?? null,
     [catalogMixes, data.catalogMixId],
   );
+  const filteredCatalogMixes = useMemo(() => {
+    const normalized = catalogMixQuery.trim().toLowerCase();
+    if (!normalized) return catalogMixes;
+    return catalogMixes.filter((mix) => {
+      if (mix.name.toLowerCase().includes(normalized)) return true;
+      return (mix.target_problem ?? '').toLowerCase().includes(normalized);
+    });
+  }, [catalogMixes, catalogMixQuery]);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -284,9 +302,22 @@ export function SprayForm({
 
   const applyCatalogMix = useCallback(
     (mix: ChemicalMix) => {
+      const dedupeKeySet = new Set<string>();
       const chemicals = mix.components.flatMap((component) => {
         const perLiter = normalizeMixComponentToPerLiterDose(component);
         if (!perLiter) return [];
+        const key = [
+          component.product_id,
+          component.product_name.trim().toLowerCase(),
+          component.dose_value,
+          component.dose_unit,
+          component.dose_basis,
+          component.base_tank_liters ?? 'na',
+          perLiter.unit,
+          Number(perLiter.quantity.toFixed(6)),
+        ].join('::');
+        if (dedupeKeySet.has(key)) return [];
+        dedupeKeySet.add(key);
         return {
           id: generateId(),
           name: component.product_name,
@@ -317,6 +348,8 @@ export function SprayForm({
         phiStatus: null,
         chemicals,
       });
+      setShowCatalogMixPicker(false);
+      setCatalogMixQuery('');
     },
     [onChange],
   );
@@ -428,38 +461,39 @@ export function SprayForm({
                         defaultValue: 'Catalog mix (optional)',
                       })}
                 </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {catalogMixes.map((mix) => {
-                    const isSelected = selectedCatalogMix?.id === mix.id;
-                    return (
-                      <Pressable
-                        key={mix.id}
-                        onPress={() => applyCatalogMix(mix)}
-                        style={{
-                          marginRight: spacing[2],
-                          paddingHorizontal: spacing[3],
-                          paddingVertical: spacing[2],
-                          borderRadius: borderRadius.full,
-                          backgroundColor: isSelected
-                            ? colorWithOpacity(m3.colorScheme.tertiary, 0.16)
-                            : colors.surface[100],
-                          borderWidth: 1,
-                          borderColor: isSelected ? m3.colorScheme.tertiary : colors.surface[200],
-                        }}
-                      >
-                        <Text style={{ fontSize: fontSize.sm, color: colors.surface[900] }}>
-                          {mix.name}
-                        </Text>
-                        <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
-                          {mix.target_problem ??
-                            t('sprayForm.catalogOnly.fallbackLabel', {
-                              defaultValue: 'Catalog mix',
-                            })}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
+                <Pressable
+                  onPress={() => setShowCatalogMixPicker(true)}
+                  style={{
+                    borderRadius: borderRadius.lg,
+                    backgroundColor: colors.surface[100],
+                    borderWidth: 1,
+                    borderColor: selectedCatalogMix ? m3.colorScheme.tertiary : colors.surface[200],
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[3],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View style={{ flex: 1, paddingRight: spacing[2] }}>
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        color: selectedCatalogMix ? colors.surface[900] : colors.surface[500],
+                      }}
+                    >
+                      {selectedCatalogMix?.name ??
+                        t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })}
+                    </Text>
+                    <Text style={{ fontSize: fontSize.xs, color: colors.surface[500] }}>
+                      {selectedCatalogMix?.target_problem ??
+                        t('sprayForm.catalogOnly.fallbackLabel', {
+                          defaultValue: 'Catalog mix',
+                        })}
+                    </Text>
+                  </View>
+                  <Symbol name="chevron.right" size={18} color={colors.surface[600]} />
+                </Pressable>
                 {selectedCatalogMix ? (
                   <Text
                     style={{
@@ -639,6 +673,142 @@ export function SprayForm({
           {isValid ? t('sprayForm.validation.ready') : t('sprayForm.validation.incomplete')}
         </Text>
       </View>
+
+      <Modal
+        visible={showCatalogMixPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCatalogMixPicker(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: colorWithOpacity('#000000', 0.25),
+            justifyContent: 'center',
+            padding: spacing[4],
+          }}
+        >
+          <View
+            style={{
+              borderRadius: borderRadius.xl,
+              backgroundColor: m3.colorScheme.surface,
+              borderWidth: 1,
+              borderColor: m3.colorScheme.outlineVariant,
+              maxHeight: '80%',
+            }}
+          >
+            <View
+              style={{
+                padding: spacing[4],
+                borderBottomWidth: 1,
+                borderBottomColor: colors.surface[100],
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.semibold,
+                  color: colors.surface[900],
+                }}
+              >
+                {t('sprayForm.catalogOnly.title', { defaultValue: 'Select catalog mix' })}
+              </Text>
+              <TextInput
+                value={catalogMixQuery}
+                onChangeText={setCatalogMixQuery}
+                placeholder={t('sprayForm.searchCatalogMix', {
+                  defaultValue: 'Search catalog mix',
+                })}
+                placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                style={{
+                  marginTop: spacing[3],
+                  borderRadius: borderRadius.lg,
+                  borderWidth: 1,
+                  borderColor: colors.surface[200],
+                  backgroundColor: colors.surface[100],
+                  color: colors.surface[900],
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[3],
+                }}
+              />
+            </View>
+
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {filteredCatalogMixes.map((mix) => {
+                const isSelected = selectedCatalogMix?.id === mix.id;
+                return (
+                  <Pressable
+                    key={mix.id}
+                    onPress={() => applyCatalogMix(mix)}
+                    style={{
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: spacing[3],
+                      borderTopWidth: 1,
+                      borderTopColor: colors.surface[100],
+                      backgroundColor: isSelected
+                        ? colorWithOpacity(m3.colorScheme.tertiary, 0.08)
+                        : 'transparent',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        color: colors.surface[900],
+                        fontWeight: fontWeight.semibold,
+                      }}
+                    >
+                      {mix.name}
+                    </Text>
+                    <Text
+                      style={{ fontSize: fontSize.xs, color: colors.surface[500], marginTop: 2 }}
+                    >
+                      {mix.target_problem ??
+                        t('sprayForm.catalogOnly.fallbackLabel', {
+                          defaultValue: 'Catalog mix',
+                        })}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+              {filteredCatalogMixes.length === 0 ? (
+                <Text
+                  style={{
+                    paddingHorizontal: spacing[4],
+                    paddingVertical: spacing[4],
+                    fontSize: fontSize.sm,
+                    color: colors.surface[500],
+                  }}
+                >
+                  {t('common.noResultsFound', { defaultValue: 'No results found' })}
+                </Text>
+              ) : null}
+            </ScrollView>
+
+            <View
+              style={{
+                padding: spacing[3],
+                borderTopWidth: 1,
+                borderTopColor: colors.surface[100],
+                alignItems: 'flex-end',
+              }}
+            >
+              <Pressable
+                onPress={() => setShowCatalogMixPicker(false)}
+                style={{
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+                }}
+              >
+                <Text style={{ color: m3.colorScheme.primary, fontWeight: fontWeight.semibold }}>
+                  {t('common.close', { defaultValue: 'Close' })}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

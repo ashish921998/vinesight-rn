@@ -830,6 +830,51 @@ export function EntryForm({
     }
   }, []);
 
+  const enqueuePendingLog = useCallback(
+    (type: LogTypeId, data: PendingLog['data']) => {
+      const draftScope: PendingLog['scope'] =
+        isAllFarmsSelected && type === 'expense' ? 'all_farms' : 'single_farm';
+      const newLog: PendingLog = {
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        type,
+        scope: draftScope,
+        farmId: draftScope === 'all_farms' ? null : (activeFarm?.id ?? null),
+        data,
+        displayDescription: getLogDescription(type, data),
+        isSourceTaskLog: false,
+      };
+
+      setPendingLogs((prev) => {
+        const shouldMarkSourceTaskLog = Boolean(
+          sourceTaskId &&
+          sourceTaskType &&
+          type === sourceTaskType &&
+          !prev.some((log) => log.isSourceTaskLog),
+        );
+        return [...prev, { ...newLog, isSourceTaskLog: shouldMarkSourceTaskLog }];
+      });
+      setSelectedLogType(null);
+      setShowLogFormModal(false);
+    },
+    [activeFarm?.id, getLogDescription, isAllFarmsSelected, sourceTaskId, sourceTaskType],
+  );
+
+  const buildSprayPendingData = useCallback(
+    (input: SprayFormData): SprayFormData =>
+      isGrapeFarm && input.catalogMixId && input.safeHarvestDate && input.governingPhiDays != null
+        ? {
+            ...input,
+          }
+        : {
+            ...input,
+            governingPhiDays: null,
+            safeHarvestDate: null,
+            phiBlockingComponent: null,
+            phiStatus: input.phiStatus ?? 'unknown',
+          },
+    [isGrapeFarm],
+  );
+
   const addLogToSession = useCallback(() => {
     if (!selectedLogType || !isLogFormValid) return;
     if (!activeFarm && !isAllFarmsSelected) return;
@@ -861,6 +906,21 @@ export function EntryForm({
               component: sprayData.phiBlockingComponent ?? 'a component',
               targetDate: activeSeason?.target_harvest_date ?? '-',
             }),
+            [
+              {
+                text: t('common.cancel', { defaultValue: 'Cancel' }),
+                style: 'cancel',
+              },
+              {
+                text: t('entryForm.phiErrors.overrideAction', { defaultValue: 'Add anyway' }),
+                style: 'destructive',
+                onPress: () => {
+                  const payload = buildSprayPendingData(sprayData);
+                  enqueuePendingLog('spray', payload);
+                  setSprayData(createEmptySprayFormData());
+                },
+              },
+            ],
           );
           return;
         }
@@ -881,21 +941,7 @@ export function EntryForm({
           );
         }
 
-        data =
-          isGrapeFarm &&
-          sprayData.catalogMixId &&
-          sprayData.safeHarvestDate &&
-          sprayData.governingPhiDays != null
-            ? {
-                ...sprayData,
-              }
-            : {
-                ...sprayData,
-                governingPhiDays: null,
-                safeHarvestDate: null,
-                phiBlockingComponent: null,
-                phiStatus: sprayData.phiStatus ?? 'unknown',
-              };
+        data = buildSprayPendingData(sprayData);
         setSprayData(createEmptySprayFormData());
         break;
       case 'harvest':
@@ -914,44 +960,21 @@ export function EntryForm({
         return;
     }
 
-    const draftScope: PendingLog['scope'] =
-      isAllFarmsSelected && selectedLogType === 'expense' ? 'all_farms' : 'single_farm';
-    const newLog: PendingLog = {
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-      type: selectedLogType,
-      scope: draftScope,
-      farmId: draftScope === 'all_farms' ? null : (activeFarm?.id ?? null),
-      data,
-      displayDescription: getLogDescription(selectedLogType, data),
-      isSourceTaskLog: false,
-    };
-
-    setPendingLogs((prev) => {
-      const shouldMarkSourceTaskLog = Boolean(
-        sourceTaskId &&
-        sourceTaskType &&
-        selectedLogType === sourceTaskType &&
-        !prev.some((log) => log.isSourceTaskLog),
-      );
-      return [...prev, { ...newLog, isSourceTaskLog: shouldMarkSourceTaskLog }];
-    });
-    setSelectedLogType(null);
-    setShowLogFormModal(false);
+    enqueuePendingLog(selectedLogType, data);
   }, [
     selectedLogType,
     isLogFormValid,
+    activeFarm,
+    isAllFarmsSelected,
     irrigationData,
     sprayData,
     harvestData,
     expenseData,
     fertigationData,
-    sourceTaskId,
-    sourceTaskType,
-    getLogDescription,
-    activeFarm,
     isGrapeFarm,
-    isAllFarmsSelected,
     activeSeason?.target_harvest_date,
+    buildSprayPendingData,
+    enqueuePendingLog,
     t,
   ]);
 
@@ -2950,7 +2973,6 @@ export function EntryForm({
             </View>
           </Pressable>
         )}
-
         {showTypePicker && (
           <ModalBackdrop
             visible

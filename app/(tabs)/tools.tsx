@@ -171,14 +171,6 @@ export default function ToolsScreen() {
         color: colors.observation[500],
         route: '/spray-catalog' as Href,
       },
-      {
-        id: 'spray-cost',
-        titleKey: 'tools.items.sprayCostCalculator',
-        descriptionKey: 'tools.descriptions.sprayCostCalculator',
-        icon: 'indianrupeesign.circle.fill',
-        color: colors.primary[500],
-        route: '/calculator/spray-cost' as Href,
-      },
     ],
     [colors],
   );
