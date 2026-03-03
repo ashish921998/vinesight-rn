@@ -53,6 +53,7 @@ export default function SpraySafeCheckerScreen() {
       green: { bg: colorWithOpacity('#2E7D32', 0.12), fg: '#2E7D32' },
       yellow: { bg: colorWithOpacity('#F9A825', 0.18), fg: '#8A6A00' },
       red: { bg: colorWithOpacity('#D32F2F', 0.12), fg: '#B3261E' },
+      unverified: { bg: colorWithOpacity('#546E7A', 0.12), fg: '#455A64' },
     }),
     [],
   );
@@ -246,29 +247,49 @@ export default function SpraySafeCheckerScreen() {
               <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
                 {t('safeToSpray.blocking', {
                   defaultValue: 'Governing PHI: {{days}} days ({{component}})',
-                  days: item.governingPhiDays,
-                  component: item.blockingComponentName,
+                  days: item.governingPhiDays ?? '—',
+                  component: item.blockingComponentName ?? '—',
                 })}
               </Text>
-              <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
-                {t('safeToSpray.latestDate', {
-                  defaultValue: 'Latest safe spray date: {{date}}',
-                  date: item.latestSafeSprayDate,
-                })}
-              </Text>
-              <Text
-                style={{ color: style.fg, marginTop: spacing[1], fontWeight: fontWeight.semibold }}
-              >
-                {item.daysUntilWindowEnds >= 0
-                  ? t('safeToSpray.daysLeft', {
-                      defaultValue: '{{count}} day(s) left',
-                      count: item.daysUntilWindowEnds,
-                    })
-                  : t('safeToSpray.windowPassed', {
-                      defaultValue: 'Window passed by {{count}} day(s)',
-                      count: Math.abs(item.daysUntilWindowEnds),
+              {item.status === 'unverified' ? (
+                <Text
+                  style={{
+                    color: style.fg,
+                    marginTop: spacing[1],
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  {t('safeToSpray.unverifiedNotice', {
+                    defaultValue: 'No verified PHI data available for this mix.',
+                  })}
+                </Text>
+              ) : (
+                <>
+                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
+                    {t('safeToSpray.latestDate', {
+                      defaultValue: 'Latest safe spray date: {{date}}',
+                      date: item.latestSafeSprayDate ?? '—',
                     })}
-              </Text>
+                  </Text>
+                  <Text
+                    style={{
+                      color: style.fg,
+                      marginTop: spacing[1],
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {(item.daysUntilWindowEnds ?? -1) >= 0
+                      ? t('safeToSpray.daysLeft', {
+                          defaultValue: '{{count}} day(s) left',
+                          count: item.daysUntilWindowEnds ?? 0,
+                        })
+                      : t('safeToSpray.windowPassed', {
+                          defaultValue: 'Window passed by {{count}} day(s)',
+                          count: Math.abs(item.daysUntilWindowEnds ?? 0),
+                        })}
+                  </Text>
+                </>
+              )}
             </View>
           );
         })

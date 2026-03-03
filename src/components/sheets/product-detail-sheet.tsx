@@ -71,6 +71,12 @@ export function ProductDetailSheet({
           </Text>
           <Pressable
             onPress={onClose}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', { defaultValue: 'Close' })}
+            accessibilityHint={t('productDetail.closeHint', {
+              defaultValue: 'Closes the product details.',
+            })}
             style={{
               marginTop: spacing[2],
               alignSelf: 'flex-start',

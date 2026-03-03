@@ -737,6 +737,7 @@ export default function FarmDetailScreen() {
           defaultValue: 'Target harvest date cannot be before season start date.',
         }),
       );
+      return;
     }
     setIsSavingActiveSeasonTargetDate(true);
     try {

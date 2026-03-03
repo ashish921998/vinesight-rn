@@ -293,6 +293,9 @@ export function GuidedTourCoachmark({
     : step === 'add_log'
       ? 0.4
       : 0.46;
+  const overlayBackgroundColor = hideDimming
+    ? 'transparent'
+    : colorWithOpacity('#000', overlayOpacity);
   const focusInsetX = focusPadding;
   const focusInsetY = focusPadding;
 
@@ -303,54 +306,52 @@ export function GuidedTourCoachmark({
       style={StyleSheet.absoluteFill}
       pointerEvents="box-none"
     >
-      {!hideDimming ? (
-        <>
-          <View
-            pointerEvents={overlayPointerEvents}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: Math.max(0, rectY - focusInsetY),
-              backgroundColor: colorWithOpacity('#000', overlayOpacity),
-            }}
-          />
-          <View
-            pointerEvents={overlayPointerEvents}
-            style={{
-              position: 'absolute',
-              top: Math.max(0, rectY - focusInsetY),
-              left: 0,
-              width: Math.max(0, rectX - focusInsetX),
-              height: rect.height + focusInsetY * 2,
-              backgroundColor: colorWithOpacity('#000', overlayOpacity),
-            }}
-          />
-          <View
-            pointerEvents={overlayPointerEvents}
-            style={{
-              position: 'absolute',
-              top: Math.max(0, rectY - focusInsetY),
-              left: rectX + rect.width + focusInsetX,
-              right: 0,
-              height: rect.height + focusInsetY * 2,
-              backgroundColor: colorWithOpacity('#000', overlayOpacity),
-            }}
-          />
-          <View
-            pointerEvents={overlayPointerEvents}
-            style={{
-              position: 'absolute',
-              top: rectY + rect.height + focusInsetY,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: colorWithOpacity('#000', overlayOpacity),
-            }}
-          />
-        </>
-      ) : null}
+      <>
+        <View
+          pointerEvents={overlayPointerEvents}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: Math.max(0, rectY - focusInsetY),
+            backgroundColor: overlayBackgroundColor,
+          }}
+        />
+        <View
+          pointerEvents={overlayPointerEvents}
+          style={{
+            position: 'absolute',
+            top: Math.max(0, rectY - focusInsetY),
+            left: 0,
+            width: Math.max(0, rectX - focusInsetX),
+            height: rect.height + focusInsetY * 2,
+            backgroundColor: overlayBackgroundColor,
+          }}
+        />
+        <View
+          pointerEvents={overlayPointerEvents}
+          style={{
+            position: 'absolute',
+            top: Math.max(0, rectY - focusInsetY),
+            left: rectX + rect.width + focusInsetX,
+            right: 0,
+            height: rect.height + focusInsetY * 2,
+            backgroundColor: overlayBackgroundColor,
+          }}
+        />
+        <View
+          pointerEvents={overlayPointerEvents}
+          style={{
+            position: 'absolute',
+            top: rectY + rect.height + focusInsetY,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: overlayBackgroundColor,
+          }}
+        />
+      </>
 
       {!hideFocus ? (
         <>
@@ -632,7 +633,7 @@ export function GuidedTourCoachmark({
         </Animated.View>
       ) : null}
 
-      {!inlineSkip ? (
+      {!inlineSkip || hideBubble ? (
         <View
           pointerEvents="box-none"
           style={{

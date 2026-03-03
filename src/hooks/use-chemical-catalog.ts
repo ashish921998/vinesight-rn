@@ -64,6 +64,11 @@ function mapCatalogData(
       .sort((a, b) => (a.sequence_no ?? 0) - (b.sequence_no ?? 0))
       .map((component) => {
         const phiRule = phiRuleByProduct.get(component.product_id);
+        const rawPhiDays = phiRule?.phi_days;
+        const parsedPhiDays = typeof rawPhiDays === 'number' ? rawPhiDays : Number(rawPhiDays);
+        const hasValidPhiDays =
+          Number.isFinite(parsedPhiDays) && Number.isInteger(parsedPhiDays) && parsedPhiDays >= 0;
+        const isVerifiedPhi = Boolean(phiRule?.verified) && hasValidPhiDays;
         return {
           id: component.id,
           mix_id: component.mix_id,
@@ -74,12 +79,14 @@ function mapCatalogData(
           dose_unit: component.dose_unit,
           dose_basis: component.dose_basis,
           base_tank_liters: component.base_tank_liters,
-          phi_days: phiRule?.verified ? phiRule.phi_days : null,
-          phi_verified: Boolean(phiRule?.verified),
+          phi_days: isVerifiedPhi ? parsedPhiDays : null,
+          phi_verified: isVerifiedPhi,
           phi_source: phiRule
-            ? phiRule.verified
+            ? isVerifiedPhi
               ? (phiRule.source_note ?? 'Unknown source')
-              : `Unverified: ${phiRule.source_note ?? 'Unknown source'}`
+              : phiRule.verified && !hasValidPhiDays
+                ? `Invalid phi_days: ${String(rawPhiDays ?? 'unknown')}`
+                : `Unverified: ${phiRule.source_note ?? 'Unknown source'}`
             : 'Unknown source',
         } satisfies ChemicalMixComponent;
       });

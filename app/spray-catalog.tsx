@@ -26,17 +26,22 @@ export default function SprayCatalogScreen() {
 
   const pestOptions = useMemo(() => {
     const set = new Set<string>();
-    mixes.forEach((mix) => {
+    const modeMixes =
+      modeFilter === 'all' ? mixes : mixes.filter((mix) => mix.application_mode === modeFilter);
+    modeMixes.forEach((mix) => {
       if (mix.target_problem) set.add(mix.target_problem);
     });
     return ['all', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [mixes]);
+  }, [mixes, modeFilter]);
+
+  const effectiveSelectedPest = pestOptions.includes(selectedPest) ? selectedPest : 'all';
 
   const filteredMixes = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return mixes.filter((mix) => {
       if (modeFilter !== 'all' && mix.application_mode !== modeFilter) return false;
-      if (selectedPest !== 'all' && mix.target_problem !== selectedPest) return false;
+      if (effectiveSelectedPest !== 'all' && mix.target_problem !== effectiveSelectedPest)
+        return false;
       if (!normalized) return true;
       if (mix.name.toLowerCase().includes(normalized)) return true;
       if ((mix.target_problem ?? '').toLowerCase().includes(normalized)) return true;
@@ -46,7 +51,7 @@ export default function SprayCatalogScreen() {
           (component.active_ingredient ?? '').toLowerCase().includes(normalized),
       );
     });
-  }, [mixes, modeFilter, selectedPest, query]);
+  }, [mixes, modeFilter, effectiveSelectedPest, query]);
 
   const mixesUsingSelectedProductCount = useMemo(() => {
     if (!selectedComponent) return 0;
@@ -242,7 +247,7 @@ export default function SprayCatalogScreen() {
             renderChip(
               pest,
               pest === 'all' ? t('sprayCatalog.modeAll', { defaultValue: 'All' }) : pest,
-              selectedPest === pest,
+              effectiveSelectedPest === pest,
               () => setSelectedPest(pest),
             ),
           )}
@@ -255,7 +260,7 @@ export default function SprayCatalogScreen() {
         ) : null}
       </>
     ),
-    [isLoading, m3, modeFilter, pestOptions, query, renderChip, selectedPest, t],
+    [effectiveSelectedPest, isLoading, m3, modeFilter, pestOptions, query, renderChip, t],
   );
 
   return (

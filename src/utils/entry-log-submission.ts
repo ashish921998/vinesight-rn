@@ -149,7 +149,9 @@ export async function submitEntryPendingLog(params: {
         ? data.phiStatus && data.phiStatus !== 'unknown'
           ? data.phiStatus
           : 'verified'
-        : 'legacy_unverified';
+        : hasCatalogMix
+          ? 'legacy_unverified'
+          : (data.phiStatus ?? 'unknown');
       const created = await submitters.createSpray({
         farm_id: farmId,
         date: dateStr,

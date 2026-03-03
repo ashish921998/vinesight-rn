@@ -107,7 +107,9 @@ export function computeGoverningPhiComponent(
 ): (ChemicalMixComponent & { phi_days: number }) | null {
   const componentsWithPhi = mix.components.filter(
     (component): component is ChemicalMixComponent & { phi_days: number } =>
-      typeof component.phi_days === 'number' && Number.isFinite(component.phi_days),
+      typeof component.phi_days === 'number' &&
+      Number.isFinite(component.phi_days) &&
+      component.phi_days >= 0,
   );
   if (componentsWithPhi.length === 0) return null;
   return componentsWithPhi.reduce((max, current) =>
@@ -177,7 +179,17 @@ export function buildSafeToSprayStatus(args: BuildSafeToSprayArgs): SafeToSprayS
   return mixes
     .map((mix) => {
       const governing = computeGoverningPhiComponent(mix);
-      if (!governing) return null;
+      if (!governing) {
+        return {
+          mixId: mix.id,
+          mixName: mix.name,
+          status: 'unverified',
+          latestSafeSprayDate: null,
+          daysUntilWindowEnds: null,
+          governingPhiDays: null,
+          blockingComponentName: null,
+        } as SafeToSprayStatus;
+      }
       const latestSafeSprayDate = addDays(targetHarvestDate, -governing.phi_days);
       if (!latestSafeSprayDate) return null;
       const daysUntilWindowEnds = dayDiff(latestSafeSprayDate, today);
@@ -200,7 +212,7 @@ export function buildSafeToSprayStatus(args: BuildSafeToSprayArgs): SafeToSprayS
     .filter((item): item is SafeToSprayStatus => item !== null)
     .sort((a, b) => {
       if (a.status === b.status) return a.mixName.localeCompare(b.mixName);
-      const order = { red: 0, yellow: 1, green: 2 };
+      const order = { red: 0, yellow: 1, green: 2, unverified: 3 };
       return order[a.status] - order[b.status];
     });
 }

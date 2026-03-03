@@ -59,9 +59,9 @@ export interface PhiComputationResult {
 export interface SafeToSprayStatus {
   mixId: number;
   mixName: string;
-  status: 'green' | 'yellow' | 'red';
-  latestSafeSprayDate: string;
-  daysUntilWindowEnds: number;
-  governingPhiDays: number;
-  blockingComponentName: string;
+  status: 'green' | 'yellow' | 'red' | 'unverified';
+  latestSafeSprayDate: string | null;
+  daysUntilWindowEnds: number | null;
+  governingPhiDays: number | null;
+  blockingComponentName: string | null;
 }
