@@ -69,6 +69,17 @@ function resolveQuantityBasis(
   return unit?.trim().toLowerCase().includes('/acre') ? 'per_acre' : 'total';
 }
 
+function normalizeDedupeText(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase();
+}
+
+function normalizeDedupeNumber(value: number | string | null | undefined): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return Number(parsed.toFixed(6));
+}
+
 function generateId(): string {
   return `chem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
@@ -312,15 +323,20 @@ export function SprayForm({
       const chemicals = mix.components.flatMap((component) => {
         const perLiter = normalizeMixComponentToPerLiterDose(component);
         if (!perLiter) return [];
+        const normalizedDoseValue = normalizeDedupeNumber(component.dose_value);
+        const normalizedDoseBasis = normalizeDedupeText(component.dose_basis);
+        const normalizedProductName = normalizeDedupeText(component.product_name);
+        const normalizedDoseUnit = normalizeDedupeText(component.dose_unit);
+        const normalizedPerLiterUnit = normalizeDedupeText(perLiter.unit);
         const key = [
           component.product_id,
-          component.product_name.trim().toLowerCase(),
-          component.dose_value,
-          component.dose_unit,
-          component.dose_basis,
-          component.base_tank_liters ?? 'na',
-          perLiter.unit,
-          Number(perLiter.quantity.toFixed(6)),
+          normalizedProductName,
+          normalizedDoseValue ?? 'na',
+          normalizedDoseUnit,
+          normalizedDoseBasis,
+          normalizeDedupeNumber(component.base_tank_liters) ?? 'na',
+          normalizedPerLiterUnit,
+          normalizeDedupeNumber(perLiter.quantity) ?? 'na',
         ].join('::');
         if (dedupeKeySet.has(key)) return [];
         dedupeKeySet.add(key);
@@ -691,7 +707,10 @@ export function SprayForm({
         visible={showCatalogMixPicker}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowCatalogMixPicker(false)}
+        onRequestClose={() => {
+          setShowCatalogMixPicker(false);
+          setCatalogMixQuery('');
+        }}
       >
         <View
           style={{

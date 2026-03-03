@@ -65,7 +65,10 @@ function mapCatalogData(
       .map((component) => {
         const phiRule = phiRuleByProduct.get(component.product_id);
         const rawPhiDays = phiRule?.phi_days;
-        const parsedPhiDays = typeof rawPhiDays === 'number' ? rawPhiDays : Number(rawPhiDays);
+        const shouldParsePhiDays =
+          typeof rawPhiDays === 'number' ||
+          (rawPhiDays != null && String(rawPhiDays).trim().length > 0);
+        const parsedPhiDays = shouldParsePhiDays ? Number(rawPhiDays) : Number.NaN;
         const hasValidPhiDays =
           Number.isFinite(parsedPhiDays) && Number.isInteger(parsedPhiDays) && parsedPhiDays >= 0;
         const isVerifiedPhi = Boolean(phiRule?.verified) && hasValidPhiDays;
@@ -153,14 +156,13 @@ async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
           error: null,
         });
   const phiResult = await phiPromise;
-
-  if (phiResult.error?.code === possibleMissingCode) return [];
-  if (phiResult.error) throw phiResult.error;
+  if (phiResult.error && phiResult.error.code !== possibleMissingCode) throw phiResult.error;
+  const phiRows = (phiResult.data ?? []) as ChemicalPhiRuleRow[];
 
   return mapCatalogData(
     mixRows,
     (componentsResult.data ?? []) as ChemicalMixComponentRow[],
-    (phiResult.data ?? []) as ChemicalPhiRuleRow[],
+    phiRows,
   );
 }
 

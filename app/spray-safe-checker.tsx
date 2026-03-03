@@ -244,13 +244,6 @@ export default function SpraySafeCheckerScreen() {
                   {item.status.toUpperCase()}
                 </Text>
               </View>
-              <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
-                {t('safeToSpray.blocking', {
-                  defaultValue: 'Governing PHI: {{days}} days ({{component}})',
-                  days: item.governingPhiDays ?? '—',
-                  component: item.blockingComponentName ?? '—',
-                })}
-              </Text>
               {item.status === 'unverified' ? (
                 <Text
                   style={{
@@ -265,6 +258,13 @@ export default function SpraySafeCheckerScreen() {
                 </Text>
               ) : (
                 <>
+                  <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
+                    {t('safeToSpray.blocking', {
+                      defaultValue: 'Governing PHI: {{days}} days ({{component}})',
+                      days: item.governingPhiDays ?? '—',
+                      component: item.blockingComponentName ?? '—',
+                    })}
+                  </Text>
                   <Text style={{ color: m3.colorScheme.onSurfaceVariant, marginTop: spacing[1] }}>
                     {t('safeToSpray.latestDate', {
                       defaultValue: 'Latest safe spray date: {{date}}',

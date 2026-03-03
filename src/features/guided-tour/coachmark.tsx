@@ -182,6 +182,7 @@ export function GuidedTourCoachmark({
   const progressLabel = customProgressLabel ?? (step === 'add_farm' ? '1 / 2' : '2 / 2');
   const isNonBlocking = !blockOutsideTouches;
   const hasCoachActions = Boolean(actionLabel || secondaryActionLabel);
+  const hasActionRow = hasCoachActions || inlineSkip;
   const copyLines = label
     .split('\n')
     .map((line) => line.trim())
@@ -196,8 +197,8 @@ export function GuidedTourCoachmark({
   const TOOLTIP_HEIGHT_ESTIMATE =
     currentContentKey === measuredContentKey
       ? (measuredTooltipHeight ??
-        (compact ? 116 : hasCoachActions ? 260 : hasMultiLineMessage ? 170 : 130))
-      : hasCoachActions
+        (compact ? 116 : hasActionRow ? 260 : hasMultiLineMessage ? 170 : 130))
+      : hasActionRow
         ? compact
           ? 116
           : 260
