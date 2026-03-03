@@ -123,13 +123,19 @@ export function computePhiForMix(mix: ChemicalMix, sprayDate: string): PhiComput
   if (!governing) return null;
   const safeHarvestDate = addDays(sprayDate, governing.phi_days);
   if (!safeHarvestDate) return null;
+  let phiStatus: PhiComputationResult['phiStatus'] = 'unknown';
+  if (governing.phi_verified === true) {
+    phiStatus = 'verified';
+  } else if (governing.phi_verified === false) {
+    phiStatus = 'legacy_unverified';
+  }
   return {
     catalogMixId: mix.id,
     sprayDate,
     governingPhiDays: governing.phi_days,
     safeHarvestDate,
     blockingComponentName: governing.product_name,
-    phiStatus: governing.phi_verified ? 'verified' : 'legacy_unverified',
+    phiStatus,
   };
 }
 
@@ -178,6 +184,20 @@ export function buildSafeToSprayStatus(args: BuildSafeToSprayArgs): SafeToSprayS
     args.today && isValidDateString(args.today) ? args.today : formatLocalDate(new Date());
   return mixes
     .map((mix) => {
+      const hasUnverifiedComponent = mix.components.some(
+        (component) => component.phi_verified !== true,
+      );
+      if (hasUnverifiedComponent) {
+        return {
+          mixId: mix.id,
+          mixName: mix.name,
+          status: 'unverified',
+          latestSafeSprayDate: null,
+          daysUntilWindowEnds: null,
+          governingPhiDays: null,
+          blockingComponentName: null,
+        } as SafeToSprayStatus;
+      }
       const governing = computeGoverningPhiComponent(mix);
       if (!governing) {
         return {

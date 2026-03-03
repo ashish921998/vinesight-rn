@@ -83,7 +83,7 @@ export function GuidedTourCoachmark({
   hideFocus = false,
   hideDimming = false,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const overlayRef = React.useRef<View | null>(null);
   const [overlayOrigin, setOverlayOrigin] = React.useState({ x: 0, y: 0 });
@@ -102,6 +102,8 @@ export function GuidedTourCoachmark({
         actionLabel,
         secondaryActionLabel,
         tooltipPlacement,
+        progressLabel: customProgressLabel ?? null,
+        locale: i18n.language,
         compact,
         hideTapHint,
         inlineSkip,
@@ -112,6 +114,8 @@ export function GuidedTourCoachmark({
       actionLabel,
       secondaryActionLabel,
       tooltipPlacement,
+      customProgressLabel,
+      i18n.language,
       compact,
       hideTapHint,
       inlineSkip,
@@ -273,6 +277,7 @@ export function GuidedTourCoachmark({
   const showTapHint = step === 'add_farm' || step === 'add_log';
 
   useEffect(() => {
+    if (hideBubble) return;
     if (Math.abs(bubbleTop - desiredTooltipTop) < 1) return;
     const clampKey = `${step}:${Math.round(rect.x)}:${Math.round(rect.y)}:${Math.round(desiredTooltipTop)}:${Math.round(bubbleTop)}:${Math.round(keyboardBottomInset)}`;
     if (lastClampKeyRef.current === clampKey) return;
@@ -283,7 +288,7 @@ export function GuidedTourCoachmark({
       clampedTop: Math.round(bubbleTop),
       keyboardInset: Math.round(keyboardBottomInset),
     });
-  }, [bubbleTop, desiredTooltipTop, keyboardBottomInset, rect.x, rect.y, step]);
+  }, [bubbleTop, desiredTooltipTop, hideBubble, keyboardBottomInset, rect.x, rect.y, step]);
 
   const overlayPointerEvents: 'auto' | 'none' = blockOutsideTouches ? 'auto' : 'none';
   const overlayOpacity = blockOutsideTouches

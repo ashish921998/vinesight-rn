@@ -809,7 +809,10 @@ export function SprayForm({
               }}
             >
               <Pressable
-                onPress={() => setShowCatalogMixPicker(false)}
+                onPress={() => {
+                  setShowCatalogMixPicker(false);
+                  setCatalogMixQuery('');
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close', { defaultValue: 'Close' })}
                 accessibilityHint={t('sprayForm.catalogOnly.closePickerHint', {

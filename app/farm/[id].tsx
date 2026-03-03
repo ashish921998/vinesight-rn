@@ -526,20 +526,31 @@ export default function FarmDetailScreen() {
           mode: 'manual',
         },
       });
-      if (seasonTargetHarvestDate && typeof createdSeason?.id === 'number') {
-        try {
-          await updateSeasonTargetHarvestDate.mutateAsync({
-            id: createdSeason.id,
-            farmId: farm.id,
-            targetHarvestDate: formatLocalDate(seasonTargetHarvestDate),
-          });
-        } catch {
+      if (seasonTargetHarvestDate) {
+        if (typeof createdSeason?.id !== 'number') {
           Alert.alert(
-            t('common.error'),
-            t('entryForm.phiErrors.targetDateSaveFailed', {
-              defaultValue: 'Unable to save target harvest date. Please try again.',
+            t('common.warning', { defaultValue: 'Warning' }),
+            t('entryForm.phiErrors.targetDateSavePartial', {
+              defaultValue:
+                'Season started successfully, but target harvest date was not saved. You can edit the season to set it now.',
             }),
           );
+        } else {
+          try {
+            await updateSeasonTargetHarvestDate.mutateAsync({
+              id: createdSeason.id,
+              farmId: farm.id,
+              targetHarvestDate: formatLocalDate(seasonTargetHarvestDate),
+            });
+          } catch {
+            Alert.alert(
+              t('common.warning', { defaultValue: 'Warning' }),
+              t('entryForm.phiErrors.targetDateSavePartial', {
+                defaultValue:
+                  'Season started successfully, but target harvest date was not saved. You can edit the season to set it now.',
+              }),
+            );
+          }
         }
       }
       await refetchSeasons();
@@ -726,9 +737,9 @@ export default function FarmDetailScreen() {
     [activeSeasonRecord?.start_date],
   );
 
-  const saveActiveSeasonTargetHarvestDate = async (value: Date | null) => {
-    if (!farm?.id || !activeSeasonRecord?.id) return;
-    if (isSavingActiveSeasonTargetDate) return;
+  const saveActiveSeasonTargetHarvestDate = async (value: Date | null): Promise<boolean> => {
+    if (!farm?.id || !activeSeasonRecord?.id) return false;
+    if (isSavingActiveSeasonTargetDate) return false;
     const finalValue = normalizeActiveSeasonTargetDate(value);
     if (value && finalValue && value.getTime() !== finalValue.getTime()) {
       Alert.alert(
@@ -737,7 +748,7 @@ export default function FarmDetailScreen() {
           defaultValue: 'Target harvest date cannot be before season start date.',
         }),
       );
-      return;
+      return false;
     }
     setIsSavingActiveSeasonTargetDate(true);
     try {
@@ -746,6 +757,7 @@ export default function FarmDetailScreen() {
         farmId: farm.id,
         targetHarvestDate: finalValue ? formatLocalDate(finalValue) : null,
       });
+      return true;
     } catch (error) {
       const message =
         error instanceof Error
@@ -754,6 +766,7 @@ export default function FarmDetailScreen() {
               defaultValue: 'Unable to save target harvest date. Please try again.',
             });
       Alert.alert(t('common.error'), message);
+      return false;
     } finally {
       setIsSavingActiveSeasonTargetDate(false);
     }
@@ -3139,10 +3152,12 @@ export default function FarmDetailScreen() {
             />
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: spacing[2] }}>
               <Pressable
-                onPress={() => {
+                onPress={async () => {
                   if (isSavingActiveSeasonTargetDate) return;
-                  setIsEditingActiveSeasonTargetIOS(false);
-                  void saveActiveSeasonTargetHarvestDate(null);
+                  const didSave = await saveActiveSeasonTargetHarvestDate(null);
+                  if (didSave) {
+                    setIsEditingActiveSeasonTargetIOS(false);
+                  }
                 }}
                 style={{
                   borderRadius: borderRadius.full,
@@ -3176,10 +3191,14 @@ export default function FarmDetailScreen() {
                 </Text>
               </Pressable>
               <Pressable
-                onPress={() => {
+                onPress={async () => {
                   if (isSavingActiveSeasonTargetDate) return;
-                  setIsEditingActiveSeasonTargetIOS(false);
-                  void saveActiveSeasonTargetHarvestDate(activeSeasonTargetHarvestDraft);
+                  const didSave = await saveActiveSeasonTargetHarvestDate(
+                    activeSeasonTargetHarvestDraft,
+                  );
+                  if (didSave) {
+                    setIsEditingActiveSeasonTargetIOS(false);
+                  }
                 }}
                 style={{
                   borderRadius: borderRadius.full,

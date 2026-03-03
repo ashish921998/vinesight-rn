@@ -130,22 +130,31 @@ async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
           data: [] as ChemicalMixComponentRow[],
           error: null,
         });
+  const componentsResult = await componentsPromise;
+  if (componentsResult.error?.code === possibleMissingCode) return [];
+  if (componentsResult.error) throw componentsResult.error;
+
+  const productIds = Array.from(
+    new Set(
+      ((componentsResult.data ?? []) as ChemicalMixComponentRow[])
+        .map((component) => component.product_id)
+        .filter((productId): productId is number => typeof productId === 'number'),
+    ),
+  );
   const phiPromise =
-    mixIds.length > 0
+    productIds.length > 0
       ? supabase
           .from(TABLES.CHEMICAL_PHI_RULES)
           .select('product_id,crop,phi_days,verified,source_note')
+          .in('product_id', productIds)
           .eq('crop', 'grape')
       : Promise.resolve({
           data: [] as ChemicalPhiRuleRow[],
           error: null,
         });
+  const phiResult = await phiPromise;
 
-  const [componentsResult, phiResult] = await Promise.all([componentsPromise, phiPromise]);
-
-  if (componentsResult.error?.code === possibleMissingCode) return [];
   if (phiResult.error?.code === possibleMissingCode) return [];
-  if (componentsResult.error) throw componentsResult.error;
   if (phiResult.error) throw phiResult.error;
 
   return mapCatalogData(
