@@ -30,4 +30,5 @@ When `src/native/shell/auth-flow.ts` changes:
 - authenticated + profile complete -> home tab
 
 ## Phase 1 handoff
-See `NATIVE_UI_PHASE1_AUTH_SHELLS.md` for auth route transition contracts.
+- See `NATIVE_UI_PHASE1_AUTH_SHELLS.md` for auth route transition contracts.
+- See `NATIVE_UI_PHASE1C_ONBOARDING_SHELLS.md` for onboarding flow transition contracts.
