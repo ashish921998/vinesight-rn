@@ -34,6 +34,9 @@ export interface GuidedTourEventMap {
   'guidedTour.logCreated': { farmId: number; recordType: string };
   'guidedTour.notificationOpened': { sequence: 1 | 2 };
   'guidedTour.appReadyHome': Record<string, never>;
+  'guidedTour.seasonFormPhaseChanged': {
+    phase: 'start_date' | 'target_date' | 'submit';
+  };
 }
 
 type EventKey = keyof GuidedTourEventMap;

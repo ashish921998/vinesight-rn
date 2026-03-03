@@ -870,7 +870,7 @@ export function EntryForm({
             governingPhiDays: null,
             safeHarvestDate: null,
             phiBlockingComponent: null,
-            phiStatus: 'unknown',
+            phiStatus: input.phiStatus ?? (input.catalogMixId ? 'legacy_unverified' : 'unknown'),
           },
     [isGrapeFarm],
   );
@@ -1146,6 +1146,7 @@ export function EntryForm({
             farmId: submission.farmId,
             errorName,
             errorCode: errorMeta.code ?? null,
+            errorMessage: errorMeta.message ?? (error instanceof Error ? error.message : null),
             ...(__DEV__ ? { errorHint: errorMeta.hint ?? null } : {}),
           });
         });
@@ -1253,6 +1254,7 @@ export function EntryForm({
             logType: failedLog?.type ?? null,
             errorName,
             errorCode: errorMeta.code ?? null,
+            errorMessage: errorMeta.message ?? (error instanceof Error ? error.message : null),
             ...(__DEV__ ? { errorHint: errorMeta.hint ?? null } : {}),
           });
         }
@@ -1339,6 +1341,9 @@ export function EntryForm({
             console.error('Task completion update failed after log save', {
               errorName: taskUpdateErrorName,
               errorCode: taskUpdateErrorMeta.code ?? null,
+              errorMessage:
+                taskUpdateErrorMeta.message ??
+                (taskUpdateError instanceof Error ? taskUpdateError.message : null),
               ...(__DEV__ ? { errorHint: taskUpdateErrorMeta.hint ?? null } : {}),
             });
 

@@ -161,6 +161,24 @@ export default function TankMixCalculatorScreen() {
         )}
       </View>
 
+      {selectedMix ? (
+        <Pressable
+          onPress={() => router.setParams({ mixId: undefined })}
+          style={{
+            marginBottom: spacing[4],
+            alignSelf: 'flex-start',
+            borderRadius: borderRadius.full,
+            paddingHorizontal: spacing[3],
+            paddingVertical: spacing[2],
+            backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.12),
+          }}
+        >
+          <Text style={{ color: m3.colorScheme.error, fontWeight: fontWeight.semibold }}>
+            {t('tankMix.clearSelection', { defaultValue: 'Clear selection' })}
+          </Text>
+        </Pressable>
+      ) : null}
+
       {selectedMix && Number.isFinite(tankLiters) && tankLiters > 0 ? (
         <View
           style={{

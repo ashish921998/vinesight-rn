@@ -256,25 +256,47 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const previousSelectedCropRef = useRef<CropType | null>(null);
   const guidedTourScrollLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formScrollYRef = useRef(0);
+  const guidedTourLastFocusFieldRef = useRef<AddFarmFocusField | null>(null);
+  const pendingGuidedScrollRef = useRef<React.RefObject<TextInput | null> | null>(null);
 
-  const scrollInputIntoView = useCallback((ref: React.RefObject<TextInput | null>) => {
-    const input = ref.current;
-    const scrollView = formScrollViewRef.current;
-    if (!input || !scrollView) return;
-    const measurableScrollView = scrollView as unknown as {
-      measureInWindow?: (
-        callback: (x: number, y: number, width: number, height: number) => void,
-      ) => void;
-      scrollTo: (options: { y: number; animated: boolean }) => void;
-    };
-    if (!measurableScrollView.measureInWindow) return;
-    input.measureInWindow((_, inputY) => {
-      measurableScrollView.measureInWindow?.((_x, scrollY) => {
-        const targetY = Math.max(0, formScrollYRef.current + (inputY - scrollY) - 72);
-        measurableScrollView.scrollTo({ y: targetY, animated: true });
+  const scrollInputIntoView = useCallback(
+    (ref: React.RefObject<TextInput | null>) => {
+      // Only auto-scroll when keyboard is visible; otherwise it can shift the form unexpectedly.
+      if (keyboardHeight <= 0) {
+        pendingGuidedScrollRef.current = ref;
+        return;
+      }
+      pendingGuidedScrollRef.current = null;
+      const input = ref.current;
+      const scrollView = formScrollViewRef.current;
+      if (!input || !scrollView) return;
+      const measurableScrollView = scrollView as unknown as {
+        measureInWindow?: (
+          callback: (x: number, y: number, width: number, height: number) => void,
+        ) => void;
+        scrollTo: (options: { y: number; animated: boolean }) => void;
+      };
+      if (!measurableScrollView.measureInWindow) return;
+      input.measureInWindow((_, inputY) => {
+        measurableScrollView.measureInWindow?.((_x, scrollY) => {
+          const targetY = Math.max(0, formScrollYRef.current + (inputY - scrollY) - 72);
+          measurableScrollView.scrollTo({ y: targetY, animated: true });
+        });
       });
-    });
-  }, []);
+    },
+    [keyboardHeight],
+  );
+
+  useEffect(() => {
+    if (keyboardHeight <= 0) return;
+    const pendingRef = pendingGuidedScrollRef.current;
+    if (!pendingRef) return;
+    pendingGuidedScrollRef.current = null;
+    const id = setTimeout(() => {
+      scrollInputIntoView(pendingRef);
+    }, 0);
+    return () => clearTimeout(id);
+  }, [keyboardHeight, scrollInputIntoView]);
 
   const focusGuidedField = useCallback(
     (field: AddFarmFocusField) => {
@@ -301,6 +323,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         guidedTourScrollLockTimeoutRef.current = null;
       }
       if (payload.focusField) {
+        guidedTourLastFocusFieldRef.current = payload.focusField;
         setIsGuidedTourScrollLocked(false);
         focusGuidedField(payload.focusField);
       }
@@ -310,6 +333,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       }
       guidedTourScrollLockTimeoutRef.current = setTimeout(() => {
         setIsGuidedTourScrollLocked(true);
+        if (guidedTourLastFocusFieldRef.current) {
+          focusGuidedField(guidedTourLastFocusFieldRef.current);
+        }
         guidedTourScrollLockTimeoutRef.current = null;
       }, 120);
     });

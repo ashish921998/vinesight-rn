@@ -75,7 +75,11 @@ function mapCatalogData(
           dose_basis: component.dose_basis,
           base_tank_liters: component.base_tank_liters,
           phi_days: phiRule?.phi_days ?? 0,
-          phi_source: phiRule?.source_note ?? 'Unknown source',
+          phi_source: phiRule
+            ? phiRule.verified
+              ? (phiRule.source_note ?? 'Unknown source')
+              : `Unverified: ${phiRule.source_note ?? 'Unknown source'}`
+            : 'Unknown source',
         } satisfies ChemicalMixComponent;
       });
 
@@ -124,8 +128,7 @@ async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
     supabase
       .from(TABLES.CHEMICAL_PHI_RULES)
       .select('product_id,crop,phi_days,verified,source_note')
-      .eq('crop', 'grape')
-      .eq('verified', true),
+      .eq('crop', 'grape'),
   ]);
 
   if (componentsResult.error?.code === possibleMissingCode) return [];

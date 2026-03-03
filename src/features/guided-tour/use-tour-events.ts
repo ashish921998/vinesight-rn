@@ -22,6 +22,7 @@ export type AddFarmPhase =
   | 'variety_option'
   | 'custom_variety'
   | 'submit';
+export type SeasonFormPhase = 'start_date' | 'target_date' | 'submit';
 
 interface QueuedLogPayload {
   farmId: number;
@@ -41,6 +42,8 @@ export interface GuidedTourFormState {
   isCurrentLogValid: boolean;
   hasConfirmedLogInput: boolean;
   setHasConfirmedLogInput: Dispatch<SetStateAction<boolean>>;
+  seasonFormPhase: SeasonFormPhase;
+  setSeasonFormPhase: Dispatch<SetStateAction<SeasonFormPhase>>;
   queuedFarmCreatedRef: MutableRefObject<number | null>;
   queuedLogCreatedRef: MutableRefObject<QueuedLogPayload | null>;
   resetFormState: (opts?: { clearOverlay?: boolean }) => void;
@@ -68,6 +71,7 @@ export function useGuidedTourFormState(
   const [selectedActivityType, setSelectedActivityType] = useState<string | null>(null);
   const [isCurrentLogValid, setIsCurrentLogValid] = useState(false);
   const [hasConfirmedLogInput, setHasConfirmedLogInput] = useState(false);
+  const [seasonFormPhase, setSeasonFormPhase] = useState<SeasonFormPhase>('start_date');
 
   const queuedFarmCreatedRef = useRef<number | null>(null);
   const queuedLogCreatedRef = useRef<QueuedLogPayload | null>(null);
@@ -80,6 +84,7 @@ export function useGuidedTourFormState(
     setSelectedActivityType(null);
     setIsCurrentLogValid(false);
     setHasConfirmedLogInput(false);
+    setSeasonFormPhase('start_date');
     setIsAddFarmNameFilled(false);
     setIsAddFarmRegionFilled(false);
     setIsAddFarmAreaFilled(false);
@@ -208,6 +213,15 @@ export function useGuidedTourFormState(
       }
     });
 
+    const unsubSeasonFormPhaseChanged = guidedTourOn(
+      'guidedTour.seasonFormPhaseChanged',
+      ({ phase }) => {
+        const current = useGuidedTourStore.getState();
+        if (current.status !== 'in_progress' || current.currentStep !== 'add_log') return;
+        setSeasonFormPhase(phase);
+      },
+    );
+
     return () => {
       unsubFarm();
       unsubLogType();
@@ -222,6 +236,7 @@ export function useGuidedTourFormState(
       unsubAddFarmCustomVariety();
       unsubLog();
       unsubNotif();
+      unsubSeasonFormPhaseChanged();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completeStep, showStep]);
@@ -239,6 +254,8 @@ export function useGuidedTourFormState(
     isCurrentLogValid,
     hasConfirmedLogInput,
     setHasConfirmedLogInput,
+    seasonFormPhase,
+    setSeasonFormPhase,
     queuedFarmCreatedRef,
     queuedLogCreatedRef,
     resetFormState,

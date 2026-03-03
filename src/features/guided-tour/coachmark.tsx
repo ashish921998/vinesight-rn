@@ -46,6 +46,16 @@ interface Props {
   inlineSkip?: boolean;
   /** Custom progress label (e.g., "2 / 4"). Defaults to "1 / 2" or "2 / 2" based on step. */
   progressLabel?: string;
+  /** Compact bubble layout for constrained flows. */
+  compact?: boolean;
+  /** Hides bubble pointer triangle. */
+  hidePointer?: boolean;
+  /** Hides bubble entirely (skip chip can still remain visible). */
+  hideBubble?: boolean;
+  /** Hides focus ring around highlighted target. */
+  hideFocus?: boolean;
+  /** Hides dimmed scrim around target. */
+  hideDimming?: boolean;
 }
 
 export function GuidedTourCoachmark({
@@ -67,6 +77,11 @@ export function GuidedTourCoachmark({
   hideTapHint = false,
   inlineSkip = false,
   progressLabel: customProgressLabel,
+  compact = false,
+  hidePointer = false,
+  hideBubble = false,
+  hideFocus = false,
+  hideDimming = false,
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -164,12 +179,17 @@ export function GuidedTourCoachmark({
   // Only use cached height if content hasn't changed since measurement.
   const TOOLTIP_HEIGHT_ESTIMATE =
     currentContentKey === measuredContentKey
-      ? (measuredTooltipHeight ?? (hasCoachActions ? 260 : hasMultiLineMessage ? 170 : 130))
+      ? (measuredTooltipHeight ??
+        (compact ? 116 : hasCoachActions ? 260 : hasMultiLineMessage ? 170 : 130))
       : hasCoachActions
-        ? 260
-        : hasMultiLineMessage
-          ? 170
-          : 130;
+        ? compact
+          ? 116
+          : 260
+        : compact
+          ? 116
+          : hasMultiLineMessage
+            ? 170
+            : 130;
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const keyboardBottomInset = Math.max(0, keyboardHeight - insets.bottom);
   const rectY = rect.y - overlayOrigin.y;
@@ -235,7 +255,9 @@ export function GuidedTourCoachmark({
   const targetCenterX = rectX + rect.width / 2;
   const pointerLeft = Math.max(18, Math.min(bubbleWidth - 30, targetCenterX - bubbleLeft - 10));
   const showPointer =
-    targetCenterX >= bubbleLeft + 8 && targetCenterX <= bubbleLeft + bubbleWidth - 8;
+    !hidePointer &&
+    targetCenterX >= bubbleLeft + 8 &&
+    targetCenterX <= bubbleLeft + bubbleWidth - 8;
   const showTapHint = step === 'add_farm' || step === 'add_log';
 
   useEffect(() => {
@@ -269,313 +291,334 @@ export function GuidedTourCoachmark({
       style={StyleSheet.absoluteFill}
       pointerEvents="box-none"
     >
-      <>
-        <View
-          pointerEvents={overlayPointerEvents}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: Math.max(0, rectY - focusInsetY),
-            backgroundColor: colorWithOpacity('#000', overlayOpacity),
-          }}
-        />
-        <View
-          pointerEvents={overlayPointerEvents}
-          style={{
-            position: 'absolute',
-            top: Math.max(0, rectY - focusInsetY),
-            left: 0,
-            width: Math.max(0, rectX - focusInsetX),
-            height: rect.height + focusInsetY * 2,
-            backgroundColor: colorWithOpacity('#000', overlayOpacity),
-          }}
-        />
-        <View
-          pointerEvents={overlayPointerEvents}
-          style={{
-            position: 'absolute',
-            top: Math.max(0, rectY - focusInsetY),
-            left: rectX + rect.width + focusInsetX,
-            right: 0,
-            height: rect.height + focusInsetY * 2,
-            backgroundColor: colorWithOpacity('#000', overlayOpacity),
-          }}
-        />
-        <View
-          pointerEvents={overlayPointerEvents}
-          style={{
-            position: 'absolute',
-            top: rectY + rect.height + focusInsetY,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: colorWithOpacity('#000', overlayOpacity),
-          }}
-        />
-      </>
-
-      <Animated.View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          left: rectX - (focusInsetX + 8),
-          top: rectY - (focusInsetY + 8),
-          width: rect.width + (focusInsetX + 8) * 2,
-          height: rect.height + (focusInsetY + 8) * 2,
-          borderRadius: outerRingRadius,
-          borderWidth: 2,
-          borderColor: colorWithOpacity(accentColor, 0.55),
-          transform: [{ scale: ringScale }],
-          opacity: ringOpacity,
-        }}
-      />
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          left: rectX - focusInsetX,
-          top: rectY - focusInsetY,
-          width: rect.width + focusInsetX * 2,
-          height: rect.height + focusInsetY * 2,
-          borderRadius: innerRingRadius,
-          borderWidth: 2.5,
-          borderColor: accentColor,
-          backgroundColor: 'transparent',
-          shadowColor: accentColor,
-          shadowOpacity: Platform.OS === 'android' ? 0 : 0.36,
-          shadowRadius: Platform.OS === 'android' ? 0 : 16,
-          shadowOffset: { width: 0, height: Platform.OS === 'android' ? 0 : 8 },
-          elevation: Platform.OS === 'android' ? 0 : 5,
-        }}
-      />
-
-      <Animated.View
-        pointerEvents="auto"
-        style={{
-          position: 'absolute',
-          top: bubbleTop,
-          left: bubbleLeft,
-          right: bubbleRight,
-          width: bubbleWidth,
-          maxWidth: tooltipMaxWidth,
-          borderRadius: borderRadius.xl,
-          overflow: 'visible',
-          opacity: bubbleOpacity,
-          transform: [{ translateY: bubbleTranslateY }],
-        }}
-      >
-        <LinearGradient
-          colors={gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          onLayout={(e) => {
-            const h = e.nativeEvent.layout.height;
-            if (h > 0) {
-              setMeasuredContentKey(currentContentKey);
-              setMeasuredTooltipHeight(h);
-            }
-          }}
-          style={{
-            borderRadius: borderRadius.xl,
-            borderWidth: 1,
-            borderColor: colorWithOpacity('#FFFFFF', 0.16),
-            padding: spacing[4],
-            shadowColor: '#000',
-            shadowOpacity: 0.3,
-            shadowRadius: 16,
-            shadowOffset: { width: 0, height: 8 },
-            elevation: 6,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2], flex: 1 }}>
-              <UiSymbol name="sparkles" size={14} color="#FFFFFF" />
-              <Text
-                style={{ color: '#FFFFFF', fontSize: fontSize.sm, fontWeight: fontWeight.semibold }}
-              >
-                {t('coachmark.title', 'Guided tour')}
-              </Text>
-            </View>
-            <Text
-              style={{
-                color: colorWithOpacity('#FFFFFF', 0.9),
-                fontSize: fontSize.xs,
-                fontWeight: fontWeight.semibold,
-              }}
-            >
-              {progressLabel}
-            </Text>
-          </View>
-
-          <Text
+      {!hideDimming ? (
+        <>
+          <View
+            pointerEvents={overlayPointerEvents}
             style={{
-              color: '#FFFFFF',
-              fontSize: fontSize.base,
-              fontWeight: fontWeight.semibold,
-              lineHeight: 24,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: Math.max(0, rectY - focusInsetY),
+              backgroundColor: colorWithOpacity('#000', overlayOpacity),
             }}
-          >
-            {primaryLine}
-          </Text>
-          {secondaryLine ? (
-            <Text
-              style={{
-                color: colorWithOpacity('#FFFFFF', 0.9),
-                fontSize: fontSize.base,
-                fontWeight: fontWeight.medium,
-                lineHeight: 24,
-                marginTop: spacing[1],
-              }}
-            >
-              {secondaryLine}
-            </Text>
-          ) : null}
+          />
+          <View
+            pointerEvents={overlayPointerEvents}
+            style={{
+              position: 'absolute',
+              top: Math.max(0, rectY - focusInsetY),
+              left: 0,
+              width: Math.max(0, rectX - focusInsetX),
+              height: rect.height + focusInsetY * 2,
+              backgroundColor: colorWithOpacity('#000', overlayOpacity),
+            }}
+          />
+          <View
+            pointerEvents={overlayPointerEvents}
+            style={{
+              position: 'absolute',
+              top: Math.max(0, rectY - focusInsetY),
+              left: rectX + rect.width + focusInsetX,
+              right: 0,
+              height: rect.height + focusInsetY * 2,
+              backgroundColor: colorWithOpacity('#000', overlayOpacity),
+            }}
+          />
+          <View
+            pointerEvents={overlayPointerEvents}
+            style={{
+              position: 'absolute',
+              top: rectY + rect.height + focusInsetY,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: colorWithOpacity('#000', overlayOpacity),
+            }}
+          />
+        </>
+      ) : null}
 
-          {/* Optional rich JSX content below message */}
-          {messageNode ?? null}
-
-          {showTapHint && !hideTapHint ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: spacing[2],
-                marginTop: spacing[3],
-              }}
-            >
-              <UiSymbol name="hand.tap.fill" size={13} color={colorWithOpacity('#FFFFFF', 0.9)} />
-              <Text
-                style={{
-                  color: colorWithOpacity('#FFFFFF', 0.86),
-                  fontSize: fontSize.sm,
-                  fontWeight: fontWeight.medium,
-                }}
-              >
-                {t('coachmark.tapToContinue', 'Tap the highlighted area to continue')}
-              </Text>
-            </View>
-          ) : null}
-
-          {(secondaryActionLabel && onSecondaryAction) ||
-          (actionLabel && onAction) ||
-          inlineSkip ? (
-            <View
-              style={{
-                marginTop: spacing[3],
-                flexDirection: 'row',
-                justifyContent: inlineSkip ? 'space-between' : 'flex-end',
-                alignItems: 'center',
-                gap: spacing[2],
-              }}
-            >
-              {/* Inline skip — bottom-left of tooltip */}
-              {inlineSkip ? (
-                <Pressable
-                  onPress={() => defer(onSkip)}
-                  style={{
-                    paddingHorizontal: spacing[3],
-                    paddingVertical: spacing[2],
-                    borderRadius: borderRadius.full,
-                    borderWidth: 1,
-                    borderColor: colorWithOpacity('#FFFFFF', 0.35),
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: colorWithOpacity('#FFFFFF', 0.8),
-                      fontSize: fontSize.sm,
-                      fontWeight: fontWeight.medium,
-                    }}
-                  >
-                    {t('guidedTour.cta.skipTour', 'Skip tour')}
-                  </Text>
-                </Pressable>
-              ) : null}
-
-              <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-                {secondaryActionLabel && onSecondaryAction ? (
-                  <Pressable
-                    onPress={() => defer(onSecondaryAction)}
-                    style={{
-                      paddingHorizontal: spacing[4],
-                      paddingVertical: spacing[2],
-                      borderRadius: borderRadius.full,
-                      borderWidth: 1,
-                      borderColor: colorWithOpacity('#FFFFFF', 0.42),
-                      backgroundColor: colorWithOpacity('#FFFFFF', 0.14),
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {secondaryActionLabel}
-                    </Text>
-                  </Pressable>
-                ) : null}
-                {actionLabel && onAction ? (
-                  <Pressable
-                    onPress={() => defer(onAction)}
-                    style={{
-                      paddingHorizontal: spacing[4],
-                      paddingVertical: spacing[2],
-                      borderRadius: borderRadius.full,
-                      backgroundColor: '#FFFFFF',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: accentColor,
-                        fontSize: fontSize.sm,
-                        fontWeight: fontWeight.semibold,
-                      }}
-                    >
-                      {actionLabel}
-                    </Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            </View>
-          ) : null}
-        </LinearGradient>
-
-        {showPointer ? (
+      {!hideFocus ? (
+        <>
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: rectX - (focusInsetX + 8),
+              top: rectY - (focusInsetY + 8),
+              width: rect.width + (focusInsetX + 8) * 2,
+              height: rect.height + (focusInsetY + 8) * 2,
+              borderRadius: outerRingRadius,
+              borderWidth: 2,
+              borderColor: colorWithOpacity(accentColor, 0.55),
+              transform: [{ scale: ringScale }],
+              opacity: ringOpacity,
+            }}
+          />
           <View
             pointerEvents="none"
             style={{
               position: 'absolute',
-              left: pointerLeft,
-              ...(bubblePointsDown ? { bottom: -12 } : { top: -12 }),
-              width: 0,
-              height: 0,
-              borderLeftWidth: 10,
-              borderRightWidth: 10,
-              ...(bubblePointsDown
-                ? {
-                    borderTopWidth: 12,
-                    borderTopColor: gradientColors[1],
-                    borderLeftColor: 'transparent',
-                    borderRightColor: 'transparent',
-                    borderBottomWidth: 0,
-                    borderBottomColor: 'transparent',
-                  }
-                : {
-                    borderBottomWidth: 12,
-                    borderBottomColor: gradientColors[0],
-                    borderLeftColor: 'transparent',
-                    borderRightColor: 'transparent',
-                    borderTopWidth: 0,
-                    borderTopColor: 'transparent',
-                  }),
+              left: rectX - focusInsetX,
+              top: rectY - focusInsetY,
+              width: rect.width + focusInsetX * 2,
+              height: rect.height + focusInsetY * 2,
+              borderRadius: innerRingRadius,
+              borderWidth: 2.5,
+              borderColor: accentColor,
+              backgroundColor: 'transparent',
+              shadowColor: accentColor,
+              shadowOpacity: Platform.OS === 'android' ? 0 : 0.36,
+              shadowRadius: Platform.OS === 'android' ? 0 : 16,
+              shadowOffset: { width: 0, height: Platform.OS === 'android' ? 0 : 8 },
+              elevation: Platform.OS === 'android' ? 0 : 5,
             }}
           />
-        ) : null}
-      </Animated.View>
+        </>
+      ) : null}
+
+      {!hideBubble ? (
+        <Animated.View
+          pointerEvents="auto"
+          style={{
+            position: 'absolute',
+            top: bubbleTop,
+            left: bubbleLeft,
+            right: bubbleRight,
+            width: bubbleWidth,
+            maxWidth: tooltipMaxWidth,
+            borderRadius: borderRadius.xl,
+            overflow: 'visible',
+            opacity: bubbleOpacity,
+            transform: [{ translateY: bubbleTranslateY }],
+          }}
+        >
+          <LinearGradient
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            onLayout={(e) => {
+              const h = e.nativeEvent.layout.height;
+              if (h > 0) {
+                setMeasuredContentKey(currentContentKey);
+                setMeasuredTooltipHeight(h);
+              }
+            }}
+            style={{
+              borderRadius: borderRadius.xl,
+              borderWidth: 1,
+              borderColor: colorWithOpacity('#FFFFFF', 0.16),
+              paddingHorizontal: compact ? spacing[3] : spacing[4],
+              paddingVertical: compact ? spacing[3] : spacing[4],
+              shadowColor: '#000',
+              shadowOpacity: 0.3,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: 8 },
+              elevation: 6,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: compact ? spacing[1] : spacing[2],
+              }}
+            >
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2], flex: 1 }}
+              >
+                <UiSymbol name="sparkles" size={14} color="#FFFFFF" />
+                <Text
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.semibold,
+                  }}
+                >
+                  {t('coachmark.title', 'Guided tour')}
+                </Text>
+              </View>
+              <Text
+                style={{
+                  color: colorWithOpacity('#FFFFFF', 0.9),
+                  fontSize: fontSize.xs,
+                  fontWeight: fontWeight.semibold,
+                }}
+              >
+                {progressLabel}
+              </Text>
+            </View>
+
+            <Text
+              style={{
+                color: '#FFFFFF',
+                fontSize: compact ? fontSize.lg : fontSize.base,
+                fontWeight: fontWeight.semibold,
+                lineHeight: compact ? 30 : 24,
+              }}
+            >
+              {primaryLine}
+            </Text>
+            {secondaryLine ? (
+              <Text
+                style={{
+                  color: colorWithOpacity('#FFFFFF', 0.9),
+                  fontSize: fontSize.base,
+                  fontWeight: fontWeight.medium,
+                  lineHeight: 24,
+                  marginTop: spacing[1],
+                }}
+              >
+                {secondaryLine}
+              </Text>
+            ) : null}
+
+            {/* Optional rich JSX content below message */}
+            {messageNode ?? null}
+
+            {showTapHint && !hideTapHint ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                  marginTop: spacing[3],
+                }}
+              >
+                <UiSymbol name="hand.tap.fill" size={13} color={colorWithOpacity('#FFFFFF', 0.9)} />
+                <Text
+                  style={{
+                    color: colorWithOpacity('#FFFFFF', 0.86),
+                    fontSize: fontSize.sm,
+                    fontWeight: fontWeight.medium,
+                  }}
+                >
+                  {t('coachmark.tapToContinue', 'Tap the highlighted area to continue')}
+                </Text>
+              </View>
+            ) : null}
+
+            {(secondaryActionLabel && onSecondaryAction) ||
+            (actionLabel && onAction) ||
+            inlineSkip ? (
+              <View
+                style={{
+                  marginTop: spacing[3],
+                  flexDirection: 'row',
+                  justifyContent: inlineSkip ? 'space-between' : 'flex-end',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                }}
+              >
+                {/* Inline skip — bottom-left of tooltip */}
+                {inlineSkip ? (
+                  <Pressable
+                    onPress={() => defer(onSkip)}
+                    style={{
+                      paddingHorizontal: spacing[3],
+                      paddingVertical: spacing[2],
+                      borderRadius: borderRadius.full,
+                      borderWidth: 1,
+                      borderColor: colorWithOpacity('#FFFFFF', 0.35),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: colorWithOpacity('#FFFFFF', 0.8),
+                        fontSize: fontSize.sm,
+                        fontWeight: fontWeight.medium,
+                      }}
+                    >
+                      {t('guidedTour.cta.skipTour', 'Skip tour')}
+                    </Text>
+                  </Pressable>
+                ) : null}
+
+                <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                  {secondaryActionLabel && onSecondaryAction ? (
+                    <Pressable
+                      onPress={() => defer(onSecondaryAction)}
+                      style={{
+                        paddingHorizontal: spacing[4],
+                        paddingVertical: spacing[2],
+                        borderRadius: borderRadius.full,
+                        borderWidth: 1,
+                        borderColor: colorWithOpacity('#FFFFFF', 0.42),
+                        backgroundColor: colorWithOpacity('#FFFFFF', 0.14),
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: '#FFFFFF',
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
+                        {secondaryActionLabel}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                  {actionLabel && onAction ? (
+                    <Pressable
+                      onPress={() => defer(onAction)}
+                      style={{
+                        paddingHorizontal: spacing[4],
+                        paddingVertical: spacing[2],
+                        borderRadius: borderRadius.full,
+                        backgroundColor: '#FFFFFF',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: accentColor,
+                          fontSize: fontSize.sm,
+                          fontWeight: fontWeight.semibold,
+                        }}
+                      >
+                        {actionLabel}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </View>
+            ) : null}
+          </LinearGradient>
+
+          {showPointer ? (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: pointerLeft,
+                ...(bubblePointsDown ? { bottom: -12 } : { top: -12 }),
+                width: 0,
+                height: 0,
+                borderLeftWidth: 10,
+                borderRightWidth: 10,
+                ...(bubblePointsDown
+                  ? {
+                      borderTopWidth: 12,
+                      borderTopColor: gradientColors[1],
+                      borderLeftColor: 'transparent',
+                      borderRightColor: 'transparent',
+                      borderBottomWidth: 0,
+                      borderBottomColor: 'transparent',
+                    }
+                  : {
+                      borderBottomWidth: 12,
+                      borderBottomColor: gradientColors[0],
+                      borderLeftColor: 'transparent',
+                      borderRightColor: 'transparent',
+                      borderTopWidth: 0,
+                      borderTopColor: 'transparent',
+                    }),
+              }}
+            />
+          ) : null}
+        </Animated.View>
+      ) : null}
 
       {!inlineSkip ? (
         <View

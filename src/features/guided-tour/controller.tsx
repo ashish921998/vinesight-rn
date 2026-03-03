@@ -105,6 +105,7 @@ export function GuidedTourController() {
     isCurrentLogValid,
     hasConfirmedLogInput,
     setHasConfirmedLogInput,
+    seasonFormPhase,
     queuedFarmCreatedRef,
     queuedLogCreatedRef,
     resetFormState,
@@ -146,6 +147,7 @@ export function GuidedTourController() {
     hasConfirmedLogInput,
     isCurrentLogValid,
     selectedActivityType,
+    seasonFormPhase,
   });
 
   useEffect(() => {
@@ -459,7 +461,13 @@ export function GuidedTourController() {
                 ? 'top'
                 : 'auto'
             }
-            tooltipOffsetY={activeCoachStep === 'add_farm' && addFarmPhase === 'crop' ? 16 : 0}
+            tooltipOffsetY={
+              activeCoachStep === 'add_log' && isSeasonFormVisible
+                ? 92
+                : activeCoachStep === 'add_farm' && addFarmPhase === 'crop'
+                  ? 16
+                  : 0
+            }
             message={
               activeCoachStep === 'add_log' &&
               addLogFlowRoute &&
@@ -485,7 +493,9 @@ export function GuidedTourController() {
                           defaultValue: `Fill the ${String(selectedActivityType ?? 'activity').replace('_', ' ')} details, then tap Next.`,
                         })
                     : activeCoachStep === 'add_log' && isSeasonFormVisible
-                      ? t('guidedTour.step2.startSeasonCoach')
+                      ? t('guidedTour.step2.startSeasonSimpleCoach', {
+                          defaultValue: 'Select both dates, then tap Start season to continue.',
+                        })
                       : activeCoachStep === 'add_farm' && isAddFarmFlowRoute(pathname)
                         ? addFarmPhase === 'name'
                           ? t('guidedTour.step1.formNameCoach', {
@@ -527,6 +537,12 @@ export function GuidedTourController() {
             onAction={coachAction}
             secondaryActionLabel={coachSecondaryActionLabel}
             onSecondaryAction={coachSecondaryAction}
+            hideTapHint={activeCoachStep === 'add_log' && isSeasonFormVisible}
+            compact={activeCoachStep === 'add_log' && isSeasonFormVisible}
+            hidePointer={activeCoachStep === 'add_log' && isSeasonFormVisible}
+            hideBubble={activeCoachStep === 'add_log' && isSeasonFormVisible}
+            hideFocus={activeCoachStep === 'add_log' && isSeasonFormVisible}
+            hideDimming={activeCoachStep === 'add_log' && isSeasonFormVisible}
           />
         ) : null}
         {overlayMode === 'complete' ? <GuidedTourCompletionCard onDone={handleDone} /> : null}
