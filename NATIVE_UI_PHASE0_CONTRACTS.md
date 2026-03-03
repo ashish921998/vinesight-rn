@@ -30,5 +30,9 @@ navigation, and analytics interfaces before full screen migration starts.
 ## Validation
 - `__tests__/native-ui-contracts.test.ts`
 - `__tests__/native-ui-bootstrap-adapter.test.ts`
+- `__tests__/native-shell-parity.test.ts`
+
+## Shell scaffolds
+See `NATIVE_UI_PHASE0_NATIVE_SHELLS.md` for iOS/Android native starter files that track this contract.
 
 Update the manifest in small, versioned increments. Breaking changes require version bump and migration notes.
