@@ -323,20 +323,15 @@ export function SprayForm({
       const chemicals = mix.components.flatMap((component) => {
         const perLiter = normalizeMixComponentToPerLiterDose(component);
         if (!perLiter) return [];
-        const normalizedDoseValue = normalizeDedupeNumber(component.dose_value);
-        const normalizedDoseBasis = normalizeDedupeText(component.dose_basis);
         const normalizedProductName = normalizeDedupeText(component.product_name);
-        const normalizedDoseUnit = normalizeDedupeText(component.dose_unit);
-        const normalizedPerLiterUnit = normalizeDedupeText(perLiter.unit);
+        const canonicalDoseValue = normalizeDedupeNumber(perLiter.quantity);
+        const canonicalDoseUnit = normalizeDedupeText(perLiter.unit);
         const key = [
           component.product_id,
           normalizedProductName,
-          normalizedDoseValue ?? 'na',
-          normalizedDoseUnit,
-          normalizedDoseBasis,
-          normalizeDedupeNumber(component.base_tank_liters) ?? 'na',
-          normalizedPerLiterUnit,
-          normalizeDedupeNumber(perLiter.quantity) ?? 'na',
+          canonicalDoseValue ?? 'na',
+          canonicalDoseUnit,
+          'per_liter',
         ].join('::');
         if (dedupeKeySet.has(key)) return [];
         dedupeKeySet.add(key);

@@ -50,9 +50,9 @@ export interface PhiRule {
 export interface PhiComputationResult {
   catalogMixId: number;
   sprayDate: string;
-  governingPhiDays: number;
-  safeHarvestDate: string;
-  blockingComponentName: string;
+  governingPhiDays: number | null;
+  safeHarvestDate: string | null;
+  blockingComponentName: string | null;
   phiStatus: PhiStatus;
 }
 

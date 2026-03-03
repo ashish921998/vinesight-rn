@@ -119,17 +119,38 @@ export function computeGoverningPhiComponent(
 
 export function computePhiForMix(mix: ChemicalMix, sprayDate: string): PhiComputationResult | null {
   if (!isValidDateString(sprayDate)) return null;
+  const hasLegacyUnverifiedComponent = mix.components.some(
+    (component) => component.phi_verified === false,
+  );
+  if (hasLegacyUnverifiedComponent) {
+    return {
+      catalogMixId: mix.id,
+      sprayDate,
+      governingPhiDays: null,
+      safeHarvestDate: null,
+      blockingComponentName: null,
+      phiStatus: 'legacy_unverified',
+    };
+  }
+  const hasUnknownVerificationComponent = mix.components.some(
+    (component) => component.phi_verified === undefined,
+  );
+  if (hasUnknownVerificationComponent) {
+    return {
+      catalogMixId: mix.id,
+      sprayDate,
+      governingPhiDays: null,
+      safeHarvestDate: null,
+      blockingComponentName: null,
+      phiStatus: 'unknown',
+    };
+  }
   const governing = computeGoverningPhiComponent(mix);
   if (!governing) return null;
   const safeHarvestDate = addDays(sprayDate, governing.phi_days);
   if (!safeHarvestDate) return null;
   let phiStatus: PhiComputationResult['phiStatus'] = 'unknown';
-  const hasUnverifiedComponent = mix.components.some(
-    (component) => component.phi_verified !== true,
-  );
-  if (hasUnverifiedComponent) {
-    phiStatus = 'legacy_unverified';
-  } else if (governing.phi_verified === true) {
+  if (governing.phi_verified === true) {
     phiStatus = 'verified';
   } else if (governing.phi_verified === false) {
     phiStatus = 'legacy_unverified';

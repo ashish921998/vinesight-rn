@@ -53,9 +53,12 @@ export default function SpraySafeCheckerScreen() {
       green: { bg: colorWithOpacity('#2E7D32', 0.12), fg: '#2E7D32' },
       yellow: { bg: colorWithOpacity('#F9A825', 0.18), fg: '#8A6A00' },
       red: { bg: colorWithOpacity('#D32F2F', 0.12), fg: '#B3261E' },
-      unverified: { bg: colorWithOpacity('#546E7A', 0.12), fg: '#455A64' },
+      unverified: {
+        bg: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+        fg: m3.colorScheme.onSurfaceVariant,
+      },
     }),
-    [],
+    [m3.colorScheme.onSurfaceVariant],
   );
 
   return (
