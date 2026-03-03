@@ -133,7 +133,12 @@ export function computePhiForMix(mix: ChemicalMix, sprayDate: string): PhiComput
     };
   }
   const hasUnknownVerificationComponent = mix.components.some(
-    (component) => component.phi_verified === undefined,
+    (component) =>
+      component.phi_verified === undefined ||
+      (component.phi_verified === true &&
+        (typeof component.phi_days !== 'number' ||
+          !Number.isFinite(component.phi_days) ||
+          component.phi_days <= 0)),
   );
   if (hasUnknownVerificationComponent) {
     return {
@@ -211,7 +216,12 @@ export function buildSafeToSprayStatus(args: BuildSafeToSprayArgs): SafeToSprayS
   return mixes
     .map((mix) => {
       const hasUnverifiedComponent = mix.components.some(
-        (component) => component.phi_verified !== true,
+        (component) =>
+          component.phi_verified !== true ||
+          (component.phi_verified === true &&
+            (typeof component.phi_days !== 'number' ||
+              !Number.isFinite(component.phi_days) ||
+              component.phi_days <= 0)),
       );
       if (hasUnverifiedComponent) {
         return {
