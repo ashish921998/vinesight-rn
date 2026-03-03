@@ -14,6 +14,20 @@ export type {
 } from './auth-flow';
 
 export {
+  assertNativeTabsFlowParity,
+  listContractTabIds,
+  nativeTabsDefaultTabId,
+  resolveNextTabsRouteId,
+  resolveTabFromRouteId,
+  resolveTabsRouteId,
+} from './tabs-flow';
+export type {
+  NativeTabId,
+  NativeTabRouteId,
+  NativeTabsFlowEvent,
+} from './tabs-flow';
+
+export {
   androidComposeRegistry,
   assertAllShellRegistriesParity,
   assertRegistryParityWithContract,
