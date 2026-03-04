@@ -92,6 +92,7 @@ describe('phi-service', () => {
           product_id: 3,
           product_name: 'Zero Day Product',
           phi_days: 0,
+          phi_verified: true,
         },
       ],
     };

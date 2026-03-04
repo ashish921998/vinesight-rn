@@ -8,8 +8,12 @@ export type TelemetryProperties = PostHogEventProperties;
 const apiKey = process.env.EXPO_PUBLIC_POSTHOG_KEY?.trim() || null;
 const hostRaw = process.env.EXPO_PUBLIC_POSTHOG_HOST?.trim() || 'https://us.i.posthog.com';
 const host = hostRaw.replace(/\/+$/, '');
+
 const allowSimulator =
   (process.env.EXPO_PUBLIC_POSTHOG_ALLOW_SIMULATOR?.trim().toLowerCase() ?? '') === 'true';
+
+// WARNING: EXPO_PUBLIC_POSTHOG_ALLOW_SIMULATOR should only be set in non-production PostHog projects.
+// Setting this in production will emit real events from simulators/CI, polluting production data.
 
 const options: PostHogOptions = {
   host,
@@ -18,8 +22,7 @@ const options: PostHogOptions = {
 
 const isPhysicalDevice = Device.isDevice ?? false;
 const executionEnvironment = Constants.executionEnvironment;
-const isStandaloneOrBare =
-  executionEnvironment === 'standalone' || executionEnvironment === 'bare';
+const isStandaloneOrBare = executionEnvironment === 'standalone' || executionEnvironment === 'bare';
 const runtimeDisabled = (!isPhysicalDevice && !allowSimulator) || !isStandaloneOrBare;
 
 export const telemetryEnabled = Boolean(apiKey) && !runtimeDisabled;
