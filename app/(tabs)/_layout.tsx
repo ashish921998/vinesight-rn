@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
@@ -6,6 +6,7 @@ import type { SFSymbol } from 'sf-symbols-typescript';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
+import { resolveTabsRouteGuard } from '@/features/tabs/route-guard';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { useThemeTokens } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -16,7 +17,6 @@ export default function TabLayout() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
-  const [hasRedirected, setHasRedirected] = useState(false);
   const insets = useSafeAreaInsets();
   const { m3, isDark } = useThemeTokens();
   const defaultHeaderOptions = useMemo(
@@ -45,31 +45,22 @@ export default function TabLayout() {
     />
   );
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (__DEV__) {
-      console.log(
-        'TabLayout: isAuthenticated =',
+  const routeGuard = useMemo(
+    () =>
+      resolveTabsRouteGuard({
+        authLoading: isLoading,
         isAuthenticated,
-        'hasRedirected =',
-        hasRedirected,
-      );
-    }
-    if (!isAuthenticated && !hasRedirected) {
-      if (__DEV__) {
-        console.log('TabLayout: Redirecting to login');
-      }
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setHasRedirected(true);
-      router.replace('/(auth)/phone-login');
-    }
-    // Reset redirect flag when authenticated (regardless of previous hasRedirected state)
-    if (isAuthenticated) {
-      setHasRedirected(false);
-    }
-  }, [isAuthenticated, isLoading, router, hasRedirected]);
+      }),
+    [isAuthenticated, isLoading],
+  );
 
-  if (isLoading || !isAuthenticated) {
+  useEffect(() => {
+    if (routeGuard.mode === 'redirect_auth') {
+      router.replace(routeGuard.href);
+    }
+  }, [routeGuard, router]);
+
+  if (routeGuard.mode !== 'render') {
     return null;
   }
 
