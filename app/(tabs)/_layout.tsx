@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -40,19 +38,10 @@ export default function TabLayout() {
 
   const sf = (name: string) => name as SFSymbol;
 
-  const renderTabIcon = (
-    sfDefault: SFSymbol,
-    sfSelected: SFSymbol,
-    ionDefault: ComponentProps<typeof Ionicons>['name'],
-    ionSelected: ComponentProps<typeof Ionicons>['name'],
-  ) => (
-    <Icon
+  const renderTabIcon = (sfDefault: SFSymbol, sfSelected: SFSymbol) => (
+    <NativeTabs.Trigger.Icon
       sf={{ default: sfDefault, selected: sfSelected }}
       selectedColor={m3.colorScheme.primary}
-      androidSrc={{
-        default: <VectorIcon family={Ionicons} name={ionDefault} />,
-        selected: <VectorIcon family={Ionicons} name={ionSelected} />,
-      }}
     />
   );
 
@@ -200,60 +189,29 @@ export default function TabLayout() {
         backgroundColor={m3.surface.surfaceContainer}
         shadowColor={colorWithOpacity(m3.colorScheme.shadow, isDark ? 0.6 : 0.05)}
       >
-        <NativeTabs.Trigger
-          name="index"
-          options={{ ...defaultHeaderOptions, title: t('tabs.dashboard') }}
-        >
-          {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'), 'grid-outline', 'grid')}
-          <Label>{t('tabs.dashboard')}</Label>
+        <NativeTabs.Trigger name="index">
+          {renderTabIcon(sf('square.grid.2x2'), sf('square.grid.2x2.fill'))}
+          <NativeTabs.Trigger.Label>{t('tabs.dashboard')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="explore"
-          options={{ ...defaultHeaderOptions, title: t('tabs.explore') }}
-        >
-          <Icon
-            sf={{ default: sf('house'), selected: sf('house.fill') }}
-            selectedColor={m3.colorScheme.primary}
-            androidSrc={{
-              default: <VectorIcon family={MaterialCommunityIcons} name="barn" />,
-              selected: <VectorIcon family={MaterialCommunityIcons} name="barn" />,
-            }}
-          />
-          <Label>{t('tabs.explore')}</Label>
+        <NativeTabs.Trigger name="explore">
+          {renderTabIcon(sf('house'), sf('house.fill'))}
+          <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="workers"
-          options={{ ...defaultHeaderOptions, title: t('tabs.workers') }}
-        >
-          {renderTabIcon(sf('person.2'), sf('person.2.fill'), 'people-outline', 'people')}
-          <Label>{t('tabs.workers')}</Label>
+        <NativeTabs.Trigger name="workers">
+          {renderTabIcon(sf('person.2'), sf('person.2.fill'))}
+          <NativeTabs.Trigger.Label>{t('tabs.workers')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="tools"
-          options={{ ...defaultHeaderOptions, title: t('tabs.tools') }}
-        >
-          {renderTabIcon(
-            sf('wrench.and.screwdriver'),
-            sf('wrench.and.screwdriver.fill'),
-            'build-outline',
-            'build',
-          )}
-          <Label>{t('tabs.tools')}</Label>
+        <NativeTabs.Trigger name="tools">
+          {renderTabIcon(sf('wrench.and.screwdriver'), sf('wrench.and.screwdriver.fill'))}
+          <NativeTabs.Trigger.Label>{t('tabs.tools')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="settings"
-          options={{ ...defaultHeaderOptions, title: t('tabs.settings') }}
-        >
-          {renderTabIcon(sf('gearshape'), sf('gearshape.fill'), 'settings-outline', 'settings')}
-          <Label>{t('tabs.settings')}</Label>
+        <NativeTabs.Trigger name="settings">
+          {renderTabIcon(sf('gearshape'), sf('gearshape.fill'))}
+          <NativeTabs.Trigger.Label>{t('tabs.settings')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger
-          name="farms"
-          hidden
-          options={{ ...defaultHeaderOptions, title: t('tabs.farms') }}
-        >
-          {renderTabIcon(sf('leaf'), sf('leaf.fill'), 'leaf-outline', 'leaf')}
-          <Label>{t('tabs.farms')}</Label>
+        <NativeTabs.Trigger name="farms" hidden>
+          {renderTabIcon(sf('leaf'), sf('leaf.fill'))}
+          <NativeTabs.Trigger.Label>{t('tabs.farms')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
       </NativeTabs>
     </>

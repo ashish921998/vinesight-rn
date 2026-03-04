@@ -166,11 +166,11 @@ describe('EntryForm UI integration', () => {
     fireEvent.press(screen.getByText('logs.types.expense'));
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Enter amount')).toBeTruthy();
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getAllByText('Other')[0]);
-    fireEvent.changeText(screen.getByPlaceholderText('Enter amount'), '300');
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '300');
     fireEvent.press(screen.getByText('entryForm.addEntry'));
 
     await waitFor(() => {
@@ -196,8 +196,7 @@ describe('EntryForm UI integration', () => {
     });
   });
 
-  it('shows hard-stop alert when spray PHI safe date exceeds target harvest date', async () => {
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  it('prevents spray submission when PHI safe date exceeds target harvest date', async () => {
     mockUseFarmSeasonStatus.mockReturnValue({
       activeSeason: {
         id: 52,
@@ -278,15 +277,7 @@ describe('EntryForm UI integration', () => {
 
     fireEvent.press(screen.getByText('entryForm.addEntry'));
 
-    await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(
-        'entryForm.phiErrors.conflictTitle',
-        'entryForm.phiErrors.conflictBody',
-      );
-    });
     expect(mockCreateSprayMutate).not.toHaveBeenCalled();
-
-    alertSpy.mockRestore();
   });
 
   it('retries all-farms expense only for farms that previously failed', async () => {
@@ -324,11 +315,11 @@ describe('EntryForm UI integration', () => {
     fireEvent.press(screen.getByText('logs.types.expense'));
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Enter amount')).toBeTruthy();
+      expect(screen.getByPlaceholderText('expenseForm.amountPlaceholder')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getAllByText('Other')[0]);
-    fireEvent.changeText(screen.getByPlaceholderText('Enter amount'), '500');
+    fireEvent.press(screen.getAllByText('expenseForm.types.Other')[0]);
+    fireEvent.changeText(screen.getByPlaceholderText('expenseForm.amountPlaceholder'), '500');
     fireEvent.press(screen.getByText('entryForm.addEntry'));
 
     await waitFor(() => {

@@ -1,26 +1,26 @@
 import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
-import { useAuthStore } from '@/stores';
-import { useProfile } from '@/hooks';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
+import { useNativeRuntimeRoutingDecision } from '@/native/contracts';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 
 /**
- * Entry point of the app
- * Redirects to auth or main tabs based on authentication state
+ * Entry point of the app.
+ *
+ * Native migration note:
+ * Startup routing now resolves via shared native bootstrap state plus
+ * feature-flagged onboarding/native-shell runtime decisions.
  */
 export default function Index() {
-  const { isAuthenticated, isLoading, needsProfileCompletion } = useAuthStore();
-  const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
+  const { isLoading, targetExpoPath } = useNativeRuntimeRoutingDecision();
   const configStatus = getConfigurationStatus();
   const colors = useThemeColors();
   const m3 = useM3();
 
-  // Show animated splash screen while checking auth
   if (isLoading) {
     return <AnimatedSplash duration={2500} />;
   }
@@ -95,19 +95,5 @@ export default function Index() {
     );
   }
 
-  if (isAuthenticated && profileLoading) {
-    return <AnimatedSplash duration={2500} />;
-  }
-
-  const hasProfileName = Boolean(profile?.full_name && profile.full_name.trim().length > 0);
-
-  // Redirect based on auth state
-  if (isAuthenticated) {
-    if (needsProfileCompletion || !hasProfileName) {
-      return <Redirect href="/(auth)/profile-completion" />;
-    }
-    return <Redirect href="/(tabs)" />;
-  }
-
-  return <Redirect href="/(auth)/phone-login" />;
+  return <Redirect href={targetExpoPath} />;
 }
