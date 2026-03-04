@@ -8,6 +8,8 @@ This file documents the Phase 1 auth migration boundary for SwiftUI and Jetpack 
 
 ## Native scaffolds
 - `ios-native-shell-scaffold/VineSightShell/AuthFlowCoordinator.swift`
+- `ios-native-shell-scaffold/VineSightShell/AuthFlowViewModel.swift`
+- `ios-native-shell-scaffold/VineSightShell/AuthFlowRootView.swift`
 - `android-native-shell-scaffold/app/src/main/java/com/vinesight/shell/AuthFlowCoordinator.kt`
 
 ## Supported transitions
@@ -20,3 +22,4 @@ This file documents the Phase 1 auth migration boundary for SwiftUI and Jetpack 
 
 ## Validation
 - `__tests__/native-auth-flow-parity.test.ts`
+- `NATIVE_UI_PHASE1A_SWIFTUI_AUTH.md`
