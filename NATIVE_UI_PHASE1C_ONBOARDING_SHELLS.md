@@ -8,7 +8,11 @@ This file documents onboarding flow contracts and shell scaffolds for SwiftUI an
 
 ## Native scaffolds
 - `ios-native-shell-scaffold/VineSightShell/OnboardingFlowCoordinator.swift`
+- `ios-native-shell-scaffold/VineSightShell/OnboardingFlowViewModel.swift`
+- `ios-native-shell-scaffold/VineSightShell/OnboardingFlowRootView.swift`
 - `android-native-shell-scaffold/app/src/main/java/com/vinesight/shell/OnboardingFlowCoordinator.kt`
+- `android-native-shell-scaffold/app/src/main/java/com/vinesight/shell/OnboardingFlowViewModel.kt`
+- `android-native-shell-scaffold/app/src/main/java/com/vinesight/shell/OnboardingFlowScreen.kt`
 
 ## Route outcomes
 - `onboarding`
@@ -24,3 +28,4 @@ This file documents onboarding flow contracts and shell scaffolds for SwiftUI an
 
 ## Validation
 - `__tests__/native-onboarding-flow-parity.test.ts`
+- `NATIVE_UI_PHASE3A_ONBOARDING_UI_PARITY.md`
