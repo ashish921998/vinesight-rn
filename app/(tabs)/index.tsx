@@ -33,6 +33,7 @@ import { useThemeTokens } from '@/styles/use-theme';
 import { FloatingAssistantButton } from '@/components/ui/floating-assistant-button';
 import { ALL_FARMS_ID } from '@/constants/farm-selection';
 import { guidedTourEmit } from '@/features/guided-tour';
+import { useGuidedTourStore } from '@/features/guided-tour/store';
 
 // ============================================================
 // MARK: - Greeting Helper
@@ -61,6 +62,9 @@ export default function DashboardScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showFarmPicker, setShowFarmPicker] = useState(false);
   const [selectedQuickAction, setSelectedQuickAction] = useState<LogTypeId | null>(null);
+  const guidedTourStatus = useGuidedTourStore((s) => s.status);
+  const hasSeenWelcomeThisSession = useGuidedTourStore((s) => s.hasSeenWelcomeThisSession);
+  const hasHydrated = useGuidedTourStore((s) => s.hasHydrated);
 
   // Data hooks
   const { data: stats, refetch: refetchStats, isLoading: isLoadingStats } = useDashboardStats();
@@ -147,6 +151,10 @@ export default function DashboardScreen() {
 
   const bottomPadding = Math.max(insets.bottom + spacing[12], spacing[16]);
   const todayLabel = formatDate(new Date(), { weekday: 'short', month: 'short', day: 'numeric' });
+  const isTourScrollLocked =
+    hasHydrated &&
+    (guidedTourStatus === 'in_progress' ||
+      (guidedTourStatus === 'not_started' && !hasSeenWelcomeThisSession));
 
   useEffect(() => {
     guidedTourEmit('guidedTour.appReadyHome', {});
@@ -158,6 +166,7 @@ export default function DashboardScreen() {
         style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ paddingBottom: bottomPadding }}
+        scrollEnabled={!isTourScrollLocked}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}

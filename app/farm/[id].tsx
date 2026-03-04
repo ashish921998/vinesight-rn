@@ -178,6 +178,7 @@ export default function FarmDetailScreen() {
   const setGuidedTourHasActiveSeason = useGuidedTourStore(
     (s) => s.setHasActiveSeasonForCurrentFarm,
   );
+  const isGuidedAddLogStep = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log';
   const guidedTourSeasonAutoOpenedRef = React.useRef(false);
   const isGuidedSeasonStep =
     guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && showSeasonForm;
@@ -1373,6 +1374,7 @@ export default function FarmDetailScreen() {
       <View style={{ flex: 1, backgroundColor: m3.colorScheme.surface }}>
         <ScrollView
           style={{ flex: 1 }}
+          scrollEnabled={!isGuidedAddLogStep}
           contentContainerStyle={{
             paddingTop: insets.top + (isIOS ? spacing[2] : spacing[1]),
             paddingBottom: bottomBarHeight + spacing[6],

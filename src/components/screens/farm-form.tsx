@@ -315,6 +315,15 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       if (mode !== 'add') return;
       focusGuidedField(field);
     });
+    const unsubDismissKeyboard = guidedTourOn('guidedTour.addFarmDismissKeyboard', () => {
+      if (mode !== 'add') return;
+      nameInputRef.current?.blur();
+      regionInputRef.current?.blur();
+      areaInputRef.current?.blur();
+      customCropInputRef.current?.blur();
+      customVarietyInputRef.current?.blur();
+      Keyboard.dismiss();
+    });
 
     const unsubPhaseChanged = guidedTourOn('guidedTour.addFarmPhaseChanged', (payload) => {
       if (mode !== 'add') return;
@@ -339,13 +348,13 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         guidedTourScrollLockTimeoutRef.current = null;
       }, 120);
     });
-
     return () => {
       if (guidedTourScrollLockTimeoutRef.current) {
         clearTimeout(guidedTourScrollLockTimeoutRef.current);
         guidedTourScrollLockTimeoutRef.current = null;
       }
       unsubFocus();
+      unsubDismissKeyboard();
       unsubPhaseChanged();
     };
   }, [focusGuidedField, mode]);

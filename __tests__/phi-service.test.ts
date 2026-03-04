@@ -78,4 +78,35 @@ describe('phi-service', () => {
     });
     expect(red[0]?.status).toBe('red');
   });
+
+  it('treats 0-day PHI as valid in safe-to-spray status', () => {
+    const zeroPhiMix: ChemicalMix = {
+      ...sampleMix,
+      id: 8,
+      name: 'Zero PHI Mix',
+      components: [
+        {
+          ...sampleMix.components[0],
+          id: 3,
+          mix_id: 8,
+          product_id: 3,
+          product_name: 'Zero Day Product',
+          phi_days: 0,
+          phi_verified: true,
+        },
+      ],
+    };
+
+    const statuses = buildSafeToSprayStatus({
+      mixes: [zeroPhiMix],
+      targetHarvestDate: '2026-03-01',
+      today: '2026-03-01',
+      yellowBufferDays: 3,
+    });
+
+    expect(statuses).toHaveLength(1);
+    expect(statuses[0]?.status).toBe('yellow');
+    expect(statuses[0]?.governingPhiDays).toBe(0);
+    expect(statuses[0]?.latestSafeSprayDate).toBe('2026-03-01');
+  });
 });

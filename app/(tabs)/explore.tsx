@@ -57,6 +57,7 @@ export default function ExploreScreen() {
   const [selectedTab, setSelectedTab] = useState<ExploreTab>('farms');
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
+  const isTourScrollLocked = guidedTourStatus === 'in_progress' && guidedTourStep === 'add_farm';
   const isAddFarmTargetEnabled = isScreenFocused && selectedTab === 'farms';
 
   const tabSwitchAnim = useMemo(() => new Animated.Value(1), []);
@@ -605,6 +606,7 @@ export default function ExploreScreen() {
           data={filteredFarms}
           renderItem={renderFarm}
           keyExtractor={(item) => String(item.id)}
+          scrollEnabled={!isTourScrollLocked}
           contentContainerStyle={{
             paddingTop: 16,
             paddingBottom: 100,
@@ -671,6 +673,7 @@ export default function ExploreScreen() {
     return (
       <>
         <Animated.ScrollView
+          scrollEnabled={!isTourScrollLocked}
           contentContainerStyle={{
             paddingTop: spacing[4],
             paddingHorizontal: spacing[4],

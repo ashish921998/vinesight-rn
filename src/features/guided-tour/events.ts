@@ -1,5 +1,6 @@
 export interface GuidedTourEventMap {
   'guidedTour.addFarmFocusField': { field: 'name' | 'region' | 'area' };
+  'guidedTour.addFarmDismissKeyboard': Record<string, never>;
   'guidedTour.addFarmPhaseChanged': {
     phase:
       | 'cta'

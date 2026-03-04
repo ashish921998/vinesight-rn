@@ -138,7 +138,7 @@ export function computePhiForMix(mix: ChemicalMix, sprayDate: string): PhiComput
       (component.phi_verified === true &&
         (typeof component.phi_days !== 'number' ||
           !Number.isFinite(component.phi_days) ||
-          component.phi_days <= 0)),
+          component.phi_days < 0)),
   );
   if (hasUnknownVerificationComponent) {
     return {
@@ -221,7 +221,7 @@ export function buildSafeToSprayStatus(args: BuildSafeToSprayArgs): SafeToSprayS
           (component.phi_verified === true &&
             (typeof component.phi_days !== 'number' ||
               !Number.isFinite(component.phi_days) ||
-              component.phi_days <= 0)),
+              component.phi_days < 0)),
       );
       if (hasUnverifiedComponent) {
         return {
