@@ -8,6 +8,8 @@ export type TelemetryProperties = PostHogEventProperties;
 const apiKey = process.env.EXPO_PUBLIC_POSTHOG_KEY?.trim() || null;
 const hostRaw = process.env.EXPO_PUBLIC_POSTHOG_HOST?.trim() || 'https://us.i.posthog.com';
 const host = hostRaw.replace(/\/+$/, '');
+const allowSimulator =
+  (process.env.EXPO_PUBLIC_POSTHOG_ALLOW_SIMULATOR?.trim().toLowerCase() ?? '') === 'true';
 
 const options: PostHogOptions = {
   host,
@@ -16,8 +18,9 @@ const options: PostHogOptions = {
 
 const isPhysicalDevice = Device.isDevice ?? false;
 const executionEnvironment = Constants.executionEnvironment;
-const isStandalone = executionEnvironment === 'standalone';
-const runtimeDisabled = !isPhysicalDevice || !isStandalone;
+const isStandaloneOrBare =
+  executionEnvironment === 'standalone' || executionEnvironment === 'bare';
+const runtimeDisabled = (!isPhysicalDevice && !allowSimulator) || !isStandaloneOrBare;
 
 export const telemetryEnabled = Boolean(apiKey) && !runtimeDisabled;
 
@@ -53,7 +56,9 @@ export const telemetryConfig = {
   apiKey,
   host,
   options,
+  allowSimulator,
   isPhysicalDevice,
   executionEnvironment,
+  isStandaloneOrBare,
   runtimeDisabled,
 };
