@@ -166,6 +166,16 @@ export function SprayForm({
     () => catalogMixes.find((mix) => mix.id === data.catalogMixId) ?? null,
     [catalogMixes, data.catalogMixId],
   );
+  const [catalogMixSearchQuery, setCatalogMixSearchQuery] = useState('');
+  const filteredCatalogMixes = useMemo(() => {
+    const query = catalogMixSearchQuery.trim().toLowerCase();
+    if (!query) return catalogMixes;
+    return catalogMixes.filter((mix) => {
+      const name = mix.name.toLowerCase();
+      const target = mix.target_problem?.toLowerCase() ?? '';
+      return name.includes(query) || target.includes(query);
+    });
+  }, [catalogMixes, catalogMixSearchQuery]);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -428,18 +438,41 @@ export function SprayForm({
                         defaultValue: 'Catalog mix (optional)',
                       })}
                 </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {catalogMixes.map((mix) => {
+                <TextInput
+                  value={catalogMixSearchQuery}
+                  onChangeText={setCatalogMixSearchQuery}
+                  placeholder={t('sprayForm.catalogOnly.searchPlaceholder', {
+                    defaultValue: 'Search catalog mix',
+                  })}
+                  placeholderTextColor={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
+                  style={{
+                    borderRadius: borderRadius.lg,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    fontSize: fontSize.base,
+                    color: colors.surface[900],
+                    backgroundColor: colors.surface[100],
+                    borderWidth: 1,
+                    borderColor: colors.surface[200],
+                    marginBottom: spacing[2],
+                  }}
+                />
+                <ScrollView
+                  style={{ maxHeight: 220 }}
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
+                >
+                  {filteredCatalogMixes.map((mix) => {
                     const isSelected = selectedCatalogMix?.id === mix.id;
                     return (
                       <Pressable
                         key={mix.id}
                         onPress={() => applyCatalogMix(mix)}
                         style={{
-                          marginRight: spacing[2],
                           paddingHorizontal: spacing[3],
                           paddingVertical: spacing[2],
-                          borderRadius: borderRadius.full,
+                          borderRadius: borderRadius.lg,
+                          marginBottom: spacing[2],
                           backgroundColor: isSelected
                             ? colorWithOpacity(m3.colorScheme.tertiary, 0.16)
                             : colors.surface[100],
@@ -459,6 +492,18 @@ export function SprayForm({
                       </Pressable>
                     );
                   })}
+                  {filteredCatalogMixes.length === 0 ? (
+                    <Text
+                      style={{
+                        fontSize: fontSize.sm,
+                        color: colors.surface[500],
+                        paddingHorizontal: spacing[2],
+                        paddingVertical: spacing[2],
+                      }}
+                    >
+                      {t('common.noResultsFound')}
+                    </Text>
+                  ) : null}
                 </ScrollView>
                 {selectedCatalogMix ? (
                   <Text

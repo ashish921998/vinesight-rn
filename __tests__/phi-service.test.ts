@@ -104,6 +104,7 @@ describe('phi-service', () => {
     });
 
     expect(statuses).toHaveLength(1);
+    expect(statuses[0]?.status).toBe('yellow');
     expect(statuses[0]?.governingPhiDays).toBe(0);
     expect(statuses[0]?.latestSafeSprayDate).toBe('2026-03-01');
   });
