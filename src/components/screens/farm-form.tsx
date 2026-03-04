@@ -265,8 +265,18 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         focus(areaInputRef);
       }
     });
+    const unsubDismissKeyboard = guidedTourOn('guidedTour.addFarmDismissKeyboard', () => {
+      if (mode !== 'add') return;
+      nameInputRef.current?.blur();
+      regionInputRef.current?.blur();
+      areaInputRef.current?.blur();
+      customCropInputRef.current?.blur();
+      customVarietyInputRef.current?.blur();
+      Keyboard.dismiss();
+    });
     return () => {
       unsubFocus();
+      unsubDismissKeyboard();
     };
   }, [mode]);
 

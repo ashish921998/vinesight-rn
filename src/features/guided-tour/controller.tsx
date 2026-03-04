@@ -384,6 +384,7 @@ export function GuidedTourController() {
               guidedTourEmit('guidedTour.addFarmFocusField', { field: 'area' });
               return prev;
             }
+            guidedTourEmit('guidedTour.addFarmDismissKeyboard', {});
             return 'crop';
           }
           return prev;
