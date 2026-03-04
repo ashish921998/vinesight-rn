@@ -12,6 +12,13 @@ export type {
   NativeRouteBinding,
 } from './adapter';
 export { useNativeBootstrapDecision } from './hook';
+export {
+  resolveNativeRuntimeRoutingDecision,
+  type NativeOnboardingSnapshot,
+  type NativeRuntimeRoutingDecision,
+  type NativeRuntimeRoutingFlags,
+} from './runtime';
+export { useNativeRuntimeRoutingDecision } from './runtime-hook';
 export { nativeUiContractManifest } from './manifest';
 export type {
   AnalyticsContract,

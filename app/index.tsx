@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
-import { useNativeBootstrapDecision } from '@/native/contracts';
+import { useNativeRuntimeRoutingDecision } from '@/native/contracts';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
@@ -11,17 +11,17 @@ import { colorWithOpacity } from '@/utils/color';
 /**
  * Entry point of the app.
  *
- * Phase 0 native migration note:
- * We now resolve startup routing through the shared native bootstrap contract
- * so SwiftUI/Compose shells and Expo Router stay in sync.
+ * Native migration note:
+ * Startup routing now resolves via shared native bootstrap state plus
+ * feature-flagged onboarding/native-shell runtime decisions.
  */
 export default function Index() {
-  const { authState, initialExpoPath } = useNativeBootstrapDecision();
+  const { isLoading, targetExpoPath } = useNativeRuntimeRoutingDecision();
   const configStatus = getConfigurationStatus();
   const colors = useThemeColors();
   const m3 = useM3();
 
-  if (authState === 'loading') {
+  if (isLoading) {
     return <AnimatedSplash duration={2500} />;
   }
 
@@ -95,5 +95,5 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={initialExpoPath} />;
+  return <Redirect href={targetExpoPath} />;
 }
