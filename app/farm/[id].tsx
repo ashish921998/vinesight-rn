@@ -10,7 +10,6 @@ import {
   StyleSheet,
   Animated,
   Easing,
-  TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -31,6 +30,7 @@ import {
   useFarmSeasons,
   useStartFarmSeason,
   useEndFarmSeason,
+  useUpdateFarmSeasonTargetHarvestDate,
   useFarmSeasonStatus,
   useRecomputeFarmSeasonAssignments,
   useEarliestSafeHarvestForSeason,
@@ -59,13 +59,14 @@ import { isGrapeCrop } from '@/utils/crop';
 import { useModalStore } from '@/stores';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { triggerHapticWarning, triggerHapticSuccess, triggerHapticMedium } from '@/utils/haptics';
-import { getSeasonTemplatesForCrop } from '@/constants/season-templates';
 import { decodeTaskPlanFromDescription } from '@/utils/task-plan';
 import { LOG_TYPES, type LogTypeId } from '@/constants/calculator-models';
 import { telemetry } from '@/services/telemetry';
 import {
   GUIDED_TOUR_TARGET_IDS,
   GuidedTourTarget,
+  guidedTourEmit,
+  guidedTourOn,
   useGuidedTourStore,
 } from '@/features/guided-tour';
 
@@ -78,10 +79,25 @@ interface WorkboardAction {
   route?: string;
 }
 
+function formatDdMmmYyyy(date: Date, locale?: string): string {
+  const parts = new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).formatToParts(date);
+  const day =
+    parts.find((part) => part.type === 'day')?.value ?? String(date.getDate()).padStart(2, '0');
+  const month =
+    parts.find((part) => part.type === 'month')?.value ??
+    new Intl.DateTimeFormat(locale, { month: 'short' }).format(date);
+  const year = parts.find((part) => part.type === 'year')?.value ?? String(date.getFullYear());
+  return `${day} ${month} ${year}`;
+}
+
 export default function FarmDetailScreen() {
   const colors = useThemeColors();
   const m3 = useM3();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const router = useRouter();
   const { setEditActivity, setAddEntry } = useModalStore();
@@ -131,6 +147,7 @@ export default function FarmDetailScreen() {
   const deleteFertigation = useDeleteFertigationRecord();
   const startFarmSeason = useStartFarmSeason();
   const endFarmSeason = useEndFarmSeason();
+  const updateSeasonTargetHarvestDate = useUpdateFarmSeasonTargetHarvestDate();
   const recomputeSeasonAssignments = useRecomputeFarmSeasonAssignments();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -140,9 +157,19 @@ export default function FarmDetailScreen() {
   const [showFarmActionsSheet, setShowFarmActionsSheet] = useState(false);
   const [showSeasonStartPicker, setShowSeasonStartPicker] = useState(false);
   const [showSeasonEndPicker, setShowSeasonEndPicker] = useState(false);
-  const [seasonNameDraft, setSeasonNameDraft] = useState('');
-  const [selectedSeasonTemplateKey, setSelectedSeasonTemplateKey] =
-    useState<string>('default_annual');
+  const [showSeasonTargetPicker, setShowSeasonTargetPicker] = useState(false);
+  const [showActiveSeasonTargetPicker, setShowActiveSeasonTargetPicker] = useState(false);
+  const [isStartingSeasonFlow, setIsStartingSeasonFlow] = useState(false);
+  const [isSavingActiveSeasonTargetDate, setIsSavingActiveSeasonTargetDate] = useState(false);
+  const [isEditingActiveSeasonTargetIOS, setIsEditingActiveSeasonTargetIOS] = useState(false);
+  const [seasonTargetHarvestDate, setSeasonTargetHarvestDate] = useState<Date | null>(null);
+  const [seasonTargetHarvestDraft, setSeasonTargetHarvestDraft] = useState<Date>(new Date());
+  const [guidedSeasonPhase, setGuidedSeasonPhase] = useState<
+    'start_date' | 'target_date' | 'submit'
+  >('start_date');
+  const [activeSeasonTargetHarvestDraft, setActiveSeasonTargetHarvestDraft] = useState<Date>(
+    new Date(),
+  );
   const [selectedTab, setSelectedTab] = useState<'activities' | 'tasks'>('activities');
   const guidedTourStatus = useGuidedTourStore((s) => s.status);
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
@@ -184,6 +211,19 @@ export default function FarmDetailScreen() {
       setGuidedTourSeasonFormVisible(false);
     };
   }, [setGuidedTourSeasonFormVisible, setGuidedTourSuspended]);
+
+  useEffect(() => {
+    const unsub = guidedTourOn('guidedTour.seasonFormPhaseChanged', ({ phase }) => {
+      setGuidedSeasonPhase(phase);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (!isGuidedSeasonStep) {
+      setGuidedSeasonPhase('start_date');
+    }
+  }, [isGuidedSeasonStep]);
 
   const [selectedLogTypes, setSelectedLogTypes] = useState<LogTypeId[]>([]);
   const [showSeasonSuccessOverlay, setShowSeasonSuccessOverlay] = useState(false);
@@ -282,11 +322,6 @@ export default function FarmDetailScreen() {
   const defaultSeasonStartDate = useMemo(() => {
     return minimumSeasonStartDate ?? initialSeasonStartDate ?? new Date();
   }, [initialSeasonStartDate, minimumSeasonStartDate]);
-  const seasonTemplateOptions = useMemo(
-    () => getSeasonTemplatesForCrop(farm?.crop ?? farm?.crop_variety ?? null),
-    [farm?.crop, farm?.crop_variety],
-  );
-
   const activeSeasonRecord = useMemo(() => {
     if (!farmSeasons || farmSeasons.length === 0) return null;
     return farmSeasons.find((season) => season.end_date === null) ?? null;
@@ -406,10 +441,11 @@ export default function FarmDetailScreen() {
   }, [defaultSeasonStartDate, getInitialSeasonEndDate]);
 
   React.useEffect(() => {
-    if (!seasonTemplateOptions.length) return;
-    if (seasonTemplateOptions.some((option) => option.key === selectedSeasonTemplateKey)) return;
-    setSelectedSeasonTemplateKey(seasonTemplateOptions[0].key);
-  }, [seasonTemplateOptions, selectedSeasonTemplateKey]);
+    if (!seasonTargetHarvestDate) return;
+    if (seasonTargetHarvestDate.getTime() >= seasonStartDate.getTime()) return;
+    setSeasonTargetHarvestDate(seasonStartDate);
+    setSeasonTargetHarvestDraft(seasonStartDate);
+  }, [seasonStartDate, seasonTargetHarvestDate]);
 
   const formattedSeasonStart = formatDate(seasonStartDate, {
     year: 'numeric',
@@ -427,10 +463,6 @@ export default function FarmDetailScreen() {
     month: 'short',
     day: 'numeric',
   });
-  const selectedSeasonTemplate =
-    seasonTemplateOptions.find((option) => option.key === selectedSeasonTemplateKey) ??
-    seasonTemplateOptions[0];
-
   const showSeasonSuccess = React.useCallback(
     (type: 'start' | 'end') => {
       setSeasonSuccessType(type);
@@ -470,6 +502,7 @@ export default function FarmDetailScreen() {
 
   const handleStartSeason = async () => {
     if (!farm?.id) return;
+    if (isStartingSeasonFlow) return;
     if (activeSeasonRecord) {
       Alert.alert(t('common.error'), t('farmDetails.seasons.errors.activeSeasonExists'));
       return;
@@ -482,29 +515,58 @@ export default function FarmDetailScreen() {
       return;
     }
 
+    setIsStartingSeasonFlow(true);
     try {
-      await startFarmSeason.mutateAsync({
+      const createdSeason = await startFarmSeason.mutateAsync({
         farmId: farm.id,
         startDate: formatLocalDate(seasonStartDate),
-        seasonName: seasonNameDraft.trim() || null,
+        seasonName: null,
         cropTypeSnapshot: farm.crop_variety || farm.crop || null,
-        templateKey: selectedSeasonTemplateKey || null,
-        templateVersion: 1,
         configJson: {
           source: 'mobile',
-          mode: 'crop_template_with_override',
+          mode: 'manual',
         },
       });
+      if (seasonTargetHarvestDate) {
+        if (typeof createdSeason?.id !== 'number') {
+          Alert.alert(
+            t('common.warning', { defaultValue: 'Warning' }),
+            t('entryForm.phiErrors.targetDateSavePartial', {
+              defaultValue:
+                'Season started successfully, but target harvest date was not saved. You can edit the season to set it now.',
+            }),
+          );
+        } else {
+          try {
+            await updateSeasonTargetHarvestDate.mutateAsync({
+              id: createdSeason.id,
+              farmId: farm.id,
+              targetHarvestDate: formatLocalDate(seasonTargetHarvestDate),
+            });
+          } catch {
+            Alert.alert(
+              t('common.warning', { defaultValue: 'Warning' }),
+              t('entryForm.phiErrors.targetDateSavePartial', {
+                defaultValue:
+                  'Season started successfully, but target harvest date was not saved. You can edit the season to set it now.',
+              }),
+            );
+          }
+        }
+      }
       await refetchSeasons();
       triggerHapticSuccess();
       setShowSeasonForm(false);
       setShowSeasonStartPicker(false);
       setShowSeasonEndPicker(false);
+      setShowSeasonTargetPicker(false);
       showSeasonSuccess('start');
     } catch (error) {
       const message =
         error instanceof Error ? error.message : t('farmDetails.seasons.errors.startFailed');
       Alert.alert(t('common.error'), message);
+    } finally {
+      setIsStartingSeasonFlow(false);
     }
   };
 
@@ -617,7 +679,10 @@ export default function FarmDetailScreen() {
     setShowSeasonForm(false);
     setShowSeasonStartPicker(false);
     setShowSeasonEndPicker(false);
-    setSeasonNameDraft('');
+    setShowSeasonTargetPicker(false);
+    setSeasonTargetHarvestDate(null);
+    setSeasonTargetHarvestDraft(new Date());
+    guidedTourEmit('guidedTour.seasonFormPhaseChanged', { phase: 'start_date' });
   };
 
   const dismissSeasonSuccessOverlay = React.useCallback(() => {
@@ -645,9 +710,14 @@ export default function FarmDetailScreen() {
 
   const openSeasonForm = (mode: 'start' | 'end') => {
     setShowFarmActionsSheet(false);
+    setIsEditingActiveSeasonTargetIOS(false);
+    setShowActiveSeasonTargetPicker(false);
     closeSeasonForm();
     setSeasonFormMode(mode);
     setShowSeasonForm(true);
+    if (mode === 'start') {
+      guidedTourEmit('guidedTour.seasonFormPhaseChanged', { phase: 'start_date' });
+    }
   };
 
   const openStartSeasonForm = () => {
@@ -656,6 +726,70 @@ export default function FarmDetailScreen() {
 
   const openEndSeasonForm = () => {
     openSeasonForm('end');
+  };
+
+  const normalizeActiveSeasonTargetDate = React.useCallback(
+    (value: Date | null): Date | null => {
+      if (!value) return null;
+      const seasonStartDate = parseDbDateToLocalDate(activeSeasonRecord?.start_date ?? '') ?? null;
+      if (!seasonStartDate) return value;
+      return value.getTime() < seasonStartDate.getTime() ? seasonStartDate : value;
+    },
+    [activeSeasonRecord?.start_date],
+  );
+
+  const saveActiveSeasonTargetHarvestDate = async (value: Date | null): Promise<boolean> => {
+    if (!farm?.id || !activeSeasonRecord?.id) return false;
+    if (isSavingActiveSeasonTargetDate) return false;
+    const finalValue = normalizeActiveSeasonTargetDate(value);
+    if (value && finalValue && value.getTime() !== finalValue.getTime()) {
+      Alert.alert(
+        t('common.error'),
+        t('farmDetails.seasons.errors.targetBeforeSeasonStart', {
+          defaultValue: 'Target harvest date cannot be before season start date.',
+        }),
+      );
+      return false;
+    }
+    setIsSavingActiveSeasonTargetDate(true);
+    try {
+      await updateSeasonTargetHarvestDate.mutateAsync({
+        id: activeSeasonRecord.id,
+        farmId: farm.id,
+        targetHarvestDate: finalValue ? formatLocalDate(finalValue) : null,
+      });
+      return true;
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : t('entryForm.phiErrors.targetDateSaveFailed', {
+              defaultValue: 'Unable to save target harvest date. Please try again.',
+            });
+      Alert.alert(t('common.error'), message);
+      return false;
+    } finally {
+      setIsSavingActiveSeasonTargetDate(false);
+    }
+  };
+
+  const openActiveSeasonTargetEditor = () => {
+    if (isSavingActiveSeasonTargetDate) return;
+    const parsed = activeSeasonRecord?.target_harvest_date
+      ? parseDbDateToLocalDate(activeSeasonRecord.target_harvest_date)
+      : null;
+    const draft = parsed ?? new Date();
+    setActiveSeasonTargetHarvestDraft(draft);
+    if (isIOS) {
+      setIsEditingActiveSeasonTargetIOS(true);
+      return;
+    }
+    setShowActiveSeasonTargetPicker(true);
+  };
+
+  const clearActiveSeasonTargetHarvestDate = () => {
+    if (isSavingActiveSeasonTargetDate) return;
+    void saveActiveSeasonTargetHarvestDate(null);
   };
 
   useEffect(() => {
@@ -1448,6 +1582,83 @@ export default function FarmDetailScreen() {
                             : t('farmDetails.seasons.statusNone')}
                         </Text>
                       </View>
+                      {isGrapeFarm && activeSeasonRecord ? (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginTop: spacing[1],
+                          }}
+                        >
+                          <UiSymbol
+                            name="calendar"
+                            size={12}
+                            color={m3.colorScheme.onSurfaceVariant}
+                          />
+                          <Text
+                            style={{
+                              marginLeft: spacing[1],
+                              color: m3.colorScheme.onSurfaceVariant,
+                              ...m3.typography.labelSmall,
+                              flex: 1,
+                            }}
+                          >
+                            {t('safeToSpray.targetDate', { defaultValue: 'Target harvest date' })}:{' '}
+                            {(() => {
+                              const raw = activeSeasonRecord.target_harvest_date;
+                              if (!raw) return '—';
+                              const parsed = parseDbDateToLocalDate(raw);
+                              return parsed ? formatDdMmmYyyy(parsed, i18n.language) : raw;
+                            })()}
+                          </Text>
+                          <Pressable
+                            onPress={openActiveSeasonTargetEditor}
+                            style={{
+                              borderRadius: borderRadius.full,
+                              paddingHorizontal: spacing[2],
+                              paddingVertical: 2,
+                              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
+                            }}
+                            accessibilityRole="button"
+                            disabled={isSavingActiveSeasonTargetDate}
+                          >
+                            <Text
+                              style={{
+                                color: m3.colorScheme.primary,
+                                ...m3.typography.labelSmall,
+                                fontWeight: fontWeight.semibold,
+                              }}
+                            >
+                              {t('common.edit', { defaultValue: 'Edit' })}
+                            </Text>
+                          </Pressable>
+                          {activeSeasonRecord.target_harvest_date ? (
+                            <Pressable
+                              onPress={clearActiveSeasonTargetHarvestDate}
+                              style={{
+                                marginLeft: spacing[1],
+                                borderRadius: borderRadius.full,
+                                paddingHorizontal: spacing[2],
+                                paddingVertical: 2,
+                                borderWidth: 1,
+                                borderColor: m3.colorScheme.outlineVariant,
+                              }}
+                              accessibilityRole="button"
+                              disabled={isSavingActiveSeasonTargetDate}
+                            >
+                              <Text
+                                style={{
+                                  color: m3.colorScheme.onSurfaceVariant,
+                                  ...m3.typography.labelSmall,
+                                  fontWeight: fontWeight.semibold,
+                                }}
+                              >
+                                {t('common.clear', { defaultValue: 'Clear' })}
+                              </Text>
+                            </Pressable>
+                          ) : null}
+                        </View>
+                      ) : null}
                       {needsSeasonReview ? (
                         <View
                           style={{
@@ -1472,27 +1683,6 @@ export default function FarmDetailScreen() {
                       ) : null}
                     </View>
                   </View>
-
-                  {farm.region ? (
-                    <View
-                      style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing[2] }}
-                    >
-                      <UiSymbol
-                        name="location-outline"
-                        size={16}
-                        color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.7)}
-                      />
-                      <Text
-                        style={{
-                          color: m3.colorScheme.onSurfaceVariant,
-                          ...m3.typography.bodyMedium,
-                          marginLeft: spacing[1],
-                        }}
-                      >
-                        {farm.region}
-                      </Text>
-                    </View>
-                  ) : null}
 
                   {isGrapeFarm && earliestSafeHarvest?.earliestDate ? (
                     <View
@@ -2523,203 +2713,145 @@ export default function FarmDetailScreen() {
               backgroundColor: m3.surface.surfaceContainerLow,
               borderTopLeftRadius: m3.shape.cornerLarge,
               borderTopRightRadius: m3.shape.cornerLarge,
-              paddingTop: spacing[4],
-              paddingHorizontal: spacing[4],
-              paddingBottom: Math.max(insets.bottom, spacing[4]),
-              gap: spacing[2],
+              maxHeight: '82%',
+              overflow: 'hidden',
             }}
             onStartShouldSetResponder={() => true}
           >
             <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: isGuidedSeasonStep ? 'flex-start' : 'space-between',
-                marginBottom: spacing[1],
-              }}
+              style={{ alignItems: 'center', paddingTop: spacing[2], paddingBottom: spacing[1] }}
             >
-              <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
-                {seasonFormMode === 'start'
-                  ? t('farmDetails.seasons.startFormTitle')
-                  : t('farmDetails.seasons.formTitle')}
-              </Text>
-              {!isGuidedSeasonStep ? (
-                <Pressable
-                  onPress={closeSeasonForm}
-                  accessibilityLabel={t('common.close')}
-                  accessibilityRole="button"
-                >
-                  <UiSymbol
-                    name="xmark.circle.fill"
-                    size={24}
-                    color={m3.colorScheme.onSurfaceVariant}
-                  />
-                </Pressable>
-              ) : null}
-            </View>
-            <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
-              {seasonFormMode === 'start'
-                ? t('farmDetails.seasons.startHint')
-                : lastSeasonEndDate
-                  ? t('farmDetails.seasons.lastEndDate', {
-                      date: (() => {
-                        const parsed = parseDbDateToLocalDate(lastSeasonEndDate);
-                        return parsed
-                          ? formatDate(parsed, { year: 'numeric', month: 'short', day: 'numeric' })
-                          : lastSeasonEndDate;
-                      })(),
-                    })
-                  : t('farmDetails.seasons.firstTimeHint')}
-            </Text>
-            {seasonFormMode === 'start' && seasonTemplateOptions.length > 0 && (
-              <>
-                <Text
-                  style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}
-                >
-                  {t('farmDetails.seasons.templateLabel')}
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
-                  {seasonTemplateOptions.map((template) => {
-                    const selected = selectedSeasonTemplateKey === template.key;
-                    return (
-                      <Pressable
-                        key={template.key}
-                        onPress={() => setSelectedSeasonTemplateKey(template.key)}
-                        style={({ pressed }) => ({
-                          borderRadius: m3.shape.cornerMedium,
-                          borderWidth: 1,
-                          borderColor: selected
-                            ? m3.colorScheme.primary
-                            : m3.colorScheme.outlineVariant,
-                          backgroundColor: selected
-                            ? colorWithOpacity(m3.colorScheme.primary, 0.1)
-                            : pressed
-                              ? colorWithOpacity(
-                                  m3.colorScheme.onSurface,
-                                  m3.stateLayerOpacity.pressed,
-                                )
-                              : m3.surface.surfaceContainer,
-                          paddingVertical: spacing[2],
-                          paddingHorizontal: spacing[3],
-                        })}
-                      >
-                        <Text
-                          style={{ color: m3.colorScheme.onSurface, ...m3.typography.labelLarge }}
-                        >
-                          {template.label}
-                        </Text>
-                        <Text
-                          style={{
-                            color: m3.colorScheme.onSurfaceVariant,
-                            ...m3.typography.labelSmall,
-                            marginTop: spacing[1],
-                          }}
-                        >
-                          {template.description}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                <Text
-                  style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}
-                >
-                  {t('farmDetails.seasons.seasonNameLabel')}
-                </Text>
-                <TextInput
-                  value={seasonNameDraft}
-                  onChangeText={setSeasonNameDraft}
-                  placeholder={t('farmDetails.seasons.seasonNamePlaceholder')}
-                  placeholderTextColor={m3.colorScheme.onSurfaceVariant}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: m3.colorScheme.outlineVariant,
-                    borderRadius: m3.shape.cornerMedium,
-                    color: m3.colorScheme.onSurface,
-                    ...m3.typography.bodyMedium,
-                    paddingHorizontal: spacing[3],
-                    paddingVertical: spacing[3],
-                  }}
-                />
-                {selectedSeasonTemplate ? (
-                  <Text
-                    style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}
-                  >
-                    {t('farmDetails.seasons.templateHint', {
-                      template: selectedSeasonTemplate.label,
-                    })}
-                  </Text>
-                ) : null}
-              </>
-            )}
-            <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}>
-              {t('farmDetails.seasons.startDateLabel')}
-            </Text>
-            {isSeasonStartLocked ? (
               <View
                 style={{
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                  borderRadius: m3.shape.cornerMedium,
-                  padding: spacing[3],
-                }}
-              >
-                <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
-                  {formattedEffectiveSeasonStart}
-                </Text>
-              </View>
-            ) : isIOS ? (
-              <DateTimePicker
-                value={seasonStartDate}
-                mode="date"
-                display="spinner"
-                minimumDate={minimumSeasonStartDate ?? undefined}
-                maximumDate={seasonFormMode === 'end' ? seasonEndDate : undefined}
-                onChange={(_, date) => {
-                  if (!date) return;
-                  setSeasonStartDate(date);
-                  if (
-                    seasonFormMode === 'end' &&
-                    formatLocalDate(seasonEndDate) < formatLocalDate(date)
-                  ) {
-                    setSeasonEndDate(date);
-                  }
+                  width: 44,
+                  height: 4,
+                  borderRadius: borderRadius.full,
+                  backgroundColor: m3.colorScheme.outlineVariant,
                 }}
               />
-            ) : (
-              <Pressable
-                onPress={() => setShowSeasonStartPicker(true)}
+            </View>
+
+            <View
+              style={{
+                paddingHorizontal: spacing[4],
+                paddingTop: spacing[2],
+                paddingBottom: spacing[3],
+                borderBottomWidth: 1,
+                borderBottomColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.45),
+                gap: spacing[1],
+              }}
+            >
+              <View
                 style={{
-                  borderWidth: 1,
-                  borderColor: m3.colorScheme.outlineVariant,
-                  borderRadius: m3.shape.cornerMedium,
-                  padding: spacing[3],
+                  flexDirection: 'row',
+                  justifyContent: isGuidedSeasonStep ? 'flex-start' : 'space-between',
+                  alignItems: 'center',
                 }}
               >
-                <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
-                  {formattedSeasonStart}
+                <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+                  {seasonFormMode === 'start'
+                    ? t('farmDetails.seasons.startFormTitle')
+                    : t('farmDetails.seasons.formTitle')}
                 </Text>
-              </Pressable>
-            )}
-            {seasonFormMode === 'end' && (
-              <>
-                <Text
-                  style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}
-                >
-                  {t('farmDetails.seasons.endDateLabel')}
-                </Text>
-                {isIOS ? (
-                  <DateTimePicker
-                    value={seasonEndDate}
-                    mode="date"
-                    display="spinner"
-                    minimumDate={effectiveSeasonStartDate}
-                    onChange={(_, date) => {
-                      if (date) setSeasonEndDate(date);
-                    }}
-                  />
-                ) : (
+                {!isGuidedSeasonStep ? (
                   <Pressable
-                    onPress={() => setShowSeasonEndPicker(true)}
+                    onPress={closeSeasonForm}
+                    accessibilityLabel={t('common.close')}
+                    accessibilityRole="button"
+                  >
+                    <UiSymbol
+                      name="xmark.circle.fill"
+                      size={24}
+                      color={m3.colorScheme.onSurfaceVariant}
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+              <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.bodyMedium }}>
+                {seasonFormMode === 'start'
+                  ? t('farmDetails.seasons.startHint')
+                  : lastSeasonEndDate
+                    ? t('farmDetails.seasons.lastEndDate', {
+                        date: (() => {
+                          const parsed = parseDbDateToLocalDate(lastSeasonEndDate);
+                          return parsed
+                            ? formatDate(parsed, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })
+                            : lastSeasonEndDate;
+                        })(),
+                      })
+                    : t('farmDetails.seasons.firstTimeHint')}
+              </Text>
+              {seasonFormMode === 'start' && isGuidedSeasonStep ? (
+                <View
+                  style={{
+                    marginTop: spacing[1],
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.08),
+                    borderWidth: 1,
+                    borderColor: colorWithOpacity(m3.colorScheme.primary, 0.28),
+                    borderRadius: m3.shape.cornerMedium,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
+                    gap: spacing[1],
+                  }}
+                >
+                  <Text style={{ color: m3.colorScheme.primary, ...m3.typography.labelSmall }}>
+                    {t('guidedTour.coachmark.progress', {
+                      defaultValue: 'Step {{current}} of {{total}}',
+                      current:
+                        guidedSeasonPhase === 'start_date'
+                          ? 1
+                          : guidedSeasonPhase === 'target_date'
+                            ? 2
+                            : 3,
+                      total: 3,
+                    })}
+                  </Text>
+                  <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
+                    {guidedSeasonPhase === 'start_date'
+                      ? t('farmDetails.seasons.guidedStartStep1', {
+                          defaultValue: 'Set season start date (or keep today).',
+                        })
+                      : guidedSeasonPhase === 'target_date'
+                        ? t('farmDetails.seasons.guidedStartStep2', {
+                            defaultValue: 'Set your target harvest date.',
+                          })
+                        : t('farmDetails.seasons.guidedStartStep3', {
+                            defaultValue: 'Tap Start season to finish.',
+                          })}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            <ScrollView
+              style={{ flexGrow: 0 }}
+              contentContainerStyle={{
+                paddingHorizontal: spacing[4],
+                paddingTop: spacing[2],
+                paddingBottom: spacing[3],
+                gap: spacing[2],
+              }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}>
+                {t('farmDetails.seasons.startDateLabel')}
+              </Text>
+              <Text style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}>
+                {t('farmDetails.seasons.startDateHelp', {
+                  defaultValue: 'The day this season starts.',
+                })}
+              </Text>
+              <GuidedTourTarget
+                targetId={GUIDED_TOUR_TARGET_IDS.START_SEASON_START_DATE}
+                enabled={isGuidedSeasonStep && seasonFormMode === 'start'}
+              >
+                {isSeasonStartLocked ? (
+                  <View
                     style={{
                       borderWidth: 1,
                       borderColor: m3.colorScheme.outlineVariant,
@@ -2728,26 +2860,186 @@ export default function FarmDetailScreen() {
                     }}
                   >
                     <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
-                      {formattedSeasonEnd}
+                      {formattedEffectiveSeasonStart}
+                    </Text>
+                  </View>
+                ) : isIOS ? (
+                  <DateTimePicker
+                    value={seasonStartDate}
+                    mode="date"
+                    display="spinner"
+                    minimumDate={minimumSeasonStartDate ?? undefined}
+                    maximumDate={seasonFormMode === 'end' ? seasonEndDate : undefined}
+                    onChange={(_, date) => {
+                      if (!date) return;
+                      setSeasonStartDate(date);
+                      if (
+                        seasonFormMode === 'end' &&
+                        formatLocalDate(seasonEndDate) < formatLocalDate(date)
+                      ) {
+                        setSeasonEndDate(date);
+                      }
+                      if (seasonFormMode === 'start' && isGuidedSeasonStep) {
+                        guidedTourEmit('guidedTour.seasonFormPhaseChanged', {
+                          phase: 'target_date',
+                        });
+                      }
+                    }}
+                  />
+                ) : (
+                  <Pressable
+                    onPress={() => setShowSeasonStartPicker(true)}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: m3.colorScheme.outlineVariant,
+                      borderRadius: m3.shape.cornerMedium,
+                      padding: spacing[3],
+                    }}
+                  >
+                    <Text style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}>
+                      {formattedSeasonStart}
                     </Text>
                   </Pressable>
                 )}
-              </>
-            )}
-            <GuidedTourTarget
-              targetId={GUIDED_TOUR_TARGET_IDS.START_SEASON_PRIMARY}
-              pointerEvents="box-none"
+              </GuidedTourTarget>
+              {seasonFormMode === 'end' && (
+                <>
+                  <Text
+                    style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}
+                  >
+                    {t('farmDetails.seasons.endDateLabel')}
+                  </Text>
+                  <Text
+                    style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}
+                  >
+                    {t('farmDetails.seasons.endDateHelp', {
+                      defaultValue: 'The day this season ends.',
+                    })}
+                  </Text>
+                  {isIOS ? (
+                    <DateTimePicker
+                      value={seasonEndDate}
+                      mode="date"
+                      display="spinner"
+                      minimumDate={effectiveSeasonStartDate}
+                      onChange={(_, date) => {
+                        if (date) setSeasonEndDate(date);
+                      }}
+                    />
+                  ) : (
+                    <Pressable
+                      onPress={() => setShowSeasonEndPicker(true)}
+                      style={{
+                        borderWidth: 1,
+                        borderColor: m3.colorScheme.outlineVariant,
+                        borderRadius: m3.shape.cornerMedium,
+                        padding: spacing[3],
+                      }}
+                    >
+                      <Text
+                        style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}
+                      >
+                        {formattedSeasonEnd}
+                      </Text>
+                    </Pressable>
+                  )}
+                </>
+              )}
+              {seasonFormMode === 'start' && (
+                <>
+                  <Text
+                    style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelLarge }}
+                  >
+                    {t('safeToSpray.targetDate', { defaultValue: 'Target harvest date' })}
+                  </Text>
+                  <Text
+                    style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}
+                  >
+                    {t('farmDetails.seasons.targetHarvestDateHelp', {
+                      defaultValue: 'Planned day you want to harvest.',
+                    })}
+                  </Text>
+                  <GuidedTourTarget
+                    targetId={GUIDED_TOUR_TARGET_IDS.START_SEASON_TARGET_DATE}
+                    enabled={isGuidedSeasonStep && seasonFormMode === 'start'}
+                  >
+                    {isIOS ? (
+                      <DateTimePicker
+                        value={seasonTargetHarvestDate ?? seasonTargetHarvestDraft}
+                        mode="date"
+                        display="spinner"
+                        minimumDate={seasonStartDate}
+                        onChange={(_, date) => {
+                          if (!date) return;
+                          setSeasonTargetHarvestDraft(date);
+                          setSeasonTargetHarvestDate(date);
+                          if (isGuidedSeasonStep) {
+                            guidedTourEmit('guidedTour.seasonFormPhaseChanged', {
+                              phase: 'submit',
+                            });
+                          }
+                        }}
+                      />
+                    ) : (
+                      <Pressable
+                        onPress={() => {
+                          setSeasonTargetHarvestDraft(seasonTargetHarvestDate ?? seasonStartDate);
+                          setShowSeasonTargetPicker(true);
+                        }}
+                        style={{
+                          borderWidth: 1,
+                          borderColor: m3.colorScheme.outlineVariant,
+                          borderRadius: m3.shape.cornerMedium,
+                          padding: spacing[3],
+                        }}
+                      >
+                        <Text
+                          style={{ color: m3.colorScheme.onSurface, ...m3.typography.bodyMedium }}
+                        >
+                          {seasonTargetHarvestDate
+                            ? formatDate(seasonTargetHarvestDate, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })
+                            : '—'}
+                        </Text>
+                      </Pressable>
+                    )}
+                  </GuidedTourTarget>
+                </>
+              )}
+            </ScrollView>
+
+            <View
+              style={{
+                borderTopWidth: 1,
+                borderTopColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.45),
+                paddingHorizontal: spacing[4],
+                paddingTop: spacing[3],
+                paddingBottom: Math.max(insets.bottom, spacing[4]),
+              }}
             >
-              <Button
-                title={
-                  seasonFormMode === 'start'
-                    ? t('farmDetails.seasons.startSeasonButton')
-                    : t('farmDetails.seasons.endSeasonButton')
-                }
-                onPress={seasonFormMode === 'start' ? handleStartSeason : handleEndSeason}
-                isLoading={startFarmSeason.isPending || endFarmSeason.isPending}
-              />
-            </GuidedTourTarget>
+              <GuidedTourTarget
+                targetId={GUIDED_TOUR_TARGET_IDS.START_SEASON_PRIMARY}
+                pointerEvents="box-none"
+              >
+                <Button
+                  title={
+                    seasonFormMode === 'start'
+                      ? t('farmDetails.seasons.startSeasonButton')
+                      : t('farmDetails.seasons.endSeasonButton')
+                  }
+                  onPress={seasonFormMode === 'start' ? handleStartSeason : handleEndSeason}
+                  isLoading={
+                    isStartingSeasonFlow ||
+                    startFarmSeason.isPending ||
+                    updateSeasonTargetHarvestDate.isPending ||
+                    endFarmSeason.isPending
+                  }
+                />
+              </GuidedTourTarget>
+            </View>
           </GuidedTourTarget>
         </Pressable>
       )}
@@ -2766,6 +3058,11 @@ export default function FarmDetailScreen() {
             if (seasonFormMode === 'end' && seasonEndDate.getTime() < date.getTime()) {
               setSeasonEndDate(date);
             }
+            if (seasonFormMode === 'start' && isGuidedSeasonStep) {
+              guidedTourEmit('guidedTour.seasonFormPhaseChanged', {
+                phase: 'target_date',
+              });
+            }
           }}
         />
       )}
@@ -2781,6 +3078,145 @@ export default function FarmDetailScreen() {
             if (date) setSeasonEndDate(date);
           }}
         />
+      )}
+      {showSeasonTargetPicker && seasonFormMode === 'start' && !isIOS && (
+        <DateTimePicker
+          value={seasonTargetHarvestDraft}
+          mode="date"
+          display="default"
+          minimumDate={seasonStartDate}
+          onChange={(_, date) => {
+            setShowSeasonTargetPicker(false);
+            if (!date) return;
+            setSeasonTargetHarvestDraft(date);
+            setSeasonTargetHarvestDate(date);
+            if (isGuidedSeasonStep) {
+              guidedTourEmit('guidedTour.seasonFormPhaseChanged', { phase: 'submit' });
+            }
+          }}
+        />
+      )}
+      {showActiveSeasonTargetPicker && !isIOS && (
+        <DateTimePicker
+          value={activeSeasonTargetHarvestDraft}
+          mode="date"
+          display="default"
+          minimumDate={parseDbDateToLocalDate(activeSeasonRecord?.start_date ?? '') ?? undefined}
+          onChange={(_, date) => {
+            setShowActiveSeasonTargetPicker(false);
+            if (isSavingActiveSeasonTargetDate) return;
+            if (!date) return;
+            setActiveSeasonTargetHarvestDraft(date);
+            void saveActiveSeasonTargetHarvestDate(date);
+          }}
+        />
+      )}
+      {isEditingActiveSeasonTargetIOS && isIOS && (
+        <Pressable
+          onPress={() => setIsEditingActiveSeasonTargetIOS(false)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: colorWithOpacity(m3.colorScheme.shadow, 0.5),
+            zIndex: 45,
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: m3.surface.surfaceContainerLow,
+              borderTopLeftRadius: m3.shape.cornerLarge,
+              borderTopRightRadius: m3.shape.cornerLarge,
+              padding: spacing[4],
+              gap: spacing[3],
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <Text style={{ ...m3.typography.titleMedium, color: m3.colorScheme.onSurface }}>
+              {t('safeToSpray.targetDate', { defaultValue: 'Target harvest date' })}
+            </Text>
+            <DateTimePicker
+              value={activeSeasonTargetHarvestDraft}
+              mode="date"
+              display="spinner"
+              minimumDate={
+                parseDbDateToLocalDate(activeSeasonRecord?.start_date ?? '') ?? undefined
+              }
+              onChange={(_, date) => {
+                if (date) setActiveSeasonTargetHarvestDraft(date);
+              }}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: spacing[2] }}>
+              <Pressable
+                onPress={async () => {
+                  if (isSavingActiveSeasonTargetDate) return;
+                  const didSave = await saveActiveSeasonTargetHarvestDate(null);
+                  if (didSave) {
+                    setIsEditingActiveSeasonTargetIOS(false);
+                  }
+                }}
+                style={{
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                }}
+                disabled={isSavingActiveSeasonTargetDate}
+              >
+                <Text
+                  style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}
+                >
+                  {t('common.clear', { defaultValue: 'Clear' })}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setIsEditingActiveSeasonTargetIOS(false)}
+                style={{
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  borderWidth: 1,
+                  borderColor: m3.colorScheme.outlineVariant,
+                }}
+              >
+                <Text
+                  style={{ color: m3.colorScheme.onSurfaceVariant, ...m3.typography.labelSmall }}
+                >
+                  {t('common.cancel')}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={async () => {
+                  if (isSavingActiveSeasonTargetDate) return;
+                  const didSave = await saveActiveSeasonTargetHarvestDate(
+                    activeSeasonTargetHarvestDraft,
+                  );
+                  if (didSave) {
+                    setIsEditingActiveSeasonTargetIOS(false);
+                  }
+                }}
+                style={{
+                  borderRadius: borderRadius.full,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[1],
+                  backgroundColor: m3.colorScheme.primary,
+                }}
+                disabled={isSavingActiveSeasonTargetDate}
+              >
+                <Text style={{ color: m3.colorScheme.onPrimary, ...m3.typography.labelSmall }}>
+                  {t('common.save')}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
       )}
 
       {showSeasonSuccessOverlay && (

@@ -241,6 +241,10 @@ interface FullScreenFormProps {
   showResetButton?: boolean;
   onReset?: () => void;
   saveButtonTargetId?: string;
+  scrollViewRef?: React.Ref<ScrollView>;
+  scrollViewProps?: ScrollViewProps;
+  scrollViewStyle?: StyleProp<ViewStyle>;
+  contentContainerStyle?: StyleProp<ViewStyle>;
 }
 
 export function FullScreenForm({
@@ -254,11 +258,20 @@ export function FullScreenForm({
   showResetButton = false,
   onReset,
   saveButtonTargetId,
+  scrollViewRef,
+  scrollViewProps,
+  scrollViewStyle,
+  contentContainerStyle,
 }: FullScreenFormProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const colors = useThemeColors();
   const resolvedSaveLabel = saveLabel ?? t('common.next');
+  const {
+    style: scrollStyle,
+    contentContainerStyle: scrollContentStyle,
+    ...restScrollProps
+  } = scrollViewProps ?? {};
 
   const headerStyle: ViewStyle = {
     borderBottomWidth: 1,
@@ -344,17 +357,23 @@ export function FullScreenForm({
         style={{ flex: 1 }}
       >
         <ScrollView
-          style={{ flex: 1 }}
+          ref={scrollViewRef}
+          style={[{ flex: 1 }, scrollViewStyle, scrollStyle]}
           contentInsetAdjustmentBehavior="automatic"
           automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-          contentContainerStyle={{
-            paddingHorizontal: spacing[6],
-            paddingTop: spacing[6],
-            paddingBottom: spacing[6],
-          }}
+          contentContainerStyle={[
+            {
+              paddingHorizontal: spacing[6],
+              paddingTop: spacing[6],
+              paddingBottom: spacing[6],
+            },
+            contentContainerStyle,
+            scrollContentStyle,
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
+          {...restScrollProps}
         >
           {children}
         </ScrollView>

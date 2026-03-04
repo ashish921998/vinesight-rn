@@ -64,6 +64,14 @@ function mapCatalogData(
       .sort((a, b) => (a.sequence_no ?? 0) - (b.sequence_no ?? 0))
       .map((component) => {
         const phiRule = phiRuleByProduct.get(component.product_id);
+        const rawPhiDays = phiRule?.phi_days;
+        const shouldParsePhiDays =
+          typeof rawPhiDays === 'number' ||
+          (rawPhiDays != null && String(rawPhiDays).trim().length > 0);
+        const parsedPhiDays = shouldParsePhiDays ? Number(rawPhiDays) : Number.NaN;
+        const hasValidPhiDays =
+          Number.isFinite(parsedPhiDays) && Number.isInteger(parsedPhiDays) && parsedPhiDays >= 0;
+        const isVerifiedPhi = Boolean(phiRule?.verified) && hasValidPhiDays;
         return {
           id: component.id,
           mix_id: component.mix_id,
@@ -74,8 +82,15 @@ function mapCatalogData(
           dose_unit: component.dose_unit,
           dose_basis: component.dose_basis,
           base_tank_liters: component.base_tank_liters,
-          phi_days: phiRule?.phi_days ?? 0,
-          phi_source: phiRule?.source_note ?? 'Unknown source',
+          phi_days: isVerifiedPhi ? parsedPhiDays : null,
+          phi_verified: isVerifiedPhi,
+          phi_source: phiRule
+            ? isVerifiedPhi
+              ? (phiRule.source_note ?? 'Unknown source')
+              : phiRule.verified && !hasValidPhiDays
+                ? `Invalid phi_days: ${String(rawPhiDays ?? 'unknown')}`
+                : `Unverified: ${phiRule.source_note ?? 'Unknown source'}`
+            : 'Unknown source',
         } satisfies ChemicalMixComponent;
       });
 
@@ -92,38 +107,62 @@ function mapCatalogData(
 }
 
 async function fetchChemicalCatalog(): Promise<ChemicalMix[]> {
-  const [mixesResult, componentsResult, phiResult] = await Promise.all([
-    supabase
-      .from(TABLES.CHEMICAL_MIXES)
-      .select('id,name,target_problem,application_mode,source_page,is_active')
-      .eq('is_active', true)
-      .eq('crop', 'grape')
-      .order('name', { ascending: true }),
-    supabase
-      .from(TABLES.CHEMICAL_MIX_COMPONENTS)
-      .select(
-        'id,mix_id,product_id,product_name_snapshot,active_ingredient_snapshot,dose_value,dose_unit,dose_basis,base_tank_liters,sequence_no',
-      )
-      .order('sequence_no', { ascending: true }),
-    supabase
-      .from(TABLES.CHEMICAL_PHI_RULES)
-      .select('product_id,crop,phi_days,verified,source_note')
-      .eq('crop', 'grape')
-      .eq('verified', true),
-  ]);
-
+  const mixesResult = await supabase
+    .from(TABLES.CHEMICAL_MIXES)
+    .select('id,name,target_problem,application_mode,source_page,is_active')
+    .eq('is_active', true)
+    .eq('crop', 'grape')
+    .order('name', { ascending: true });
   const possibleMissingCode = '42P01';
   if (mixesResult.error?.code === possibleMissingCode) return [];
-  if (componentsResult.error?.code === possibleMissingCode) return [];
-  if (phiResult.error?.code === possibleMissingCode) return [];
   if (mixesResult.error) throw mixesResult.error;
+
+  const mixRows = (mixesResult.data ?? []) as ChemicalMixRow[];
+  const mixIds = mixRows.map((mix) => mix.id);
+
+  const componentsPromise =
+    mixIds.length > 0
+      ? supabase
+          .from(TABLES.CHEMICAL_MIX_COMPONENTS)
+          .select(
+            'id,mix_id,product_id,product_name_snapshot,active_ingredient_snapshot,dose_value,dose_unit,dose_basis,base_tank_liters,sequence_no',
+          )
+          .in('mix_id', mixIds)
+          .order('sequence_no', { ascending: true })
+      : Promise.resolve({
+          data: [] as ChemicalMixComponentRow[],
+          error: null,
+        });
+  const componentsResult = await componentsPromise;
+  if (componentsResult.error?.code === possibleMissingCode) return [];
   if (componentsResult.error) throw componentsResult.error;
-  if (phiResult.error) throw phiResult.error;
+
+  const productIds = Array.from(
+    new Set(
+      ((componentsResult.data ?? []) as ChemicalMixComponentRow[])
+        .map((component) => component.product_id)
+        .filter((productId): productId is number => typeof productId === 'number'),
+    ),
+  );
+  const phiPromise =
+    productIds.length > 0
+      ? supabase
+          .from(TABLES.CHEMICAL_PHI_RULES)
+          .select('product_id,crop,phi_days,verified,source_note')
+          .in('product_id', productIds)
+          .eq('crop', 'grape')
+      : Promise.resolve({
+          data: [] as ChemicalPhiRuleRow[],
+          error: null,
+        });
+  const phiResult = await phiPromise;
+  if (phiResult.error && phiResult.error.code !== possibleMissingCode) throw phiResult.error;
+  const phiRows = (phiResult.data ?? []) as ChemicalPhiRuleRow[];
 
   return mapCatalogData(
-    (mixesResult.data ?? []) as ChemicalMixRow[],
+    mixRows,
     (componentsResult.data ?? []) as ChemicalMixComponentRow[],
-    (phiResult.data ?? []) as ChemicalPhiRuleRow[],
+    phiRows,
   );
 }
 

@@ -22,7 +22,8 @@ export interface ChemicalMixComponent {
   dose_unit: DoseUnit;
   dose_basis: DoseBasis;
   base_tank_liters?: number | null;
-  phi_days: number;
+  phi_days: number | null;
+  phi_verified?: boolean;
   phi_source: string;
 }
 
@@ -49,18 +50,18 @@ export interface PhiRule {
 export interface PhiComputationResult {
   catalogMixId: number;
   sprayDate: string;
-  governingPhiDays: number;
-  safeHarvestDate: string;
-  blockingComponentName: string;
+  governingPhiDays: number | null;
+  safeHarvestDate: string | null;
+  blockingComponentName: string | null;
   phiStatus: PhiStatus;
 }
 
 export interface SafeToSprayStatus {
   mixId: number;
   mixName: string;
-  status: 'green' | 'yellow' | 'red';
-  latestSafeSprayDate: string;
-  daysUntilWindowEnds: number;
-  governingPhiDays: number;
-  blockingComponentName: string;
+  status: 'green' | 'yellow' | 'red' | 'unverified';
+  latestSafeSprayDate: string | null;
+  daysUntilWindowEnds: number | null;
+  governingPhiDays: number | null;
+  blockingComponentName: string | null;
 }

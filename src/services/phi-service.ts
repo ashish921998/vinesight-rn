@@ -73,53 +73,100 @@ export function computeTankMixQuantities(
   digits = 3,
 ): TankMixQuantityRow[] {
   if (!Number.isFinite(tankLiters) || tankLiters <= 0) return [];
-  return mix.components
-    .map((component) => {
-      let total = 0;
-      if (component.dose_basis === 'per_liter') {
-        total = component.dose_value * tankLiters;
-      } else if (component.dose_basis === 'per_100_liter') {
-        total = component.dose_value * (tankLiters / 100);
-      } else {
-        if (component.base_tank_liters == null || component.base_tank_liters <= 0) {
-          console.warn(
-            `[phi-service] Skipping fixed_per_tank component ${component.id} (${component.product_name}) due to invalid base_tank_liters`,
-          );
-          return null;
-        }
-        total = component.dose_value * (tankLiters / component.base_tank_liters);
+  const rows: TankMixQuantityRow[] = [];
+  for (const component of mix.components) {
+    let total = 0;
+    if (component.dose_basis === 'per_liter') {
+      total = component.dose_value * tankLiters;
+    } else if (component.dose_basis === 'per_100_liter') {
+      total = component.dose_value * (tankLiters / 100);
+    } else {
+      if (component.base_tank_liters == null || component.base_tank_liters <= 0) {
+        console.warn(
+          `[phi-service] Skipping fixed_per_tank component ${component.id} (${component.product_name}) due to invalid base_tank_liters`,
+        );
+        continue;
       }
-      return {
-        componentId: component.id,
-        productName: component.product_name,
-        activeIngredient: component.active_ingredient ?? null,
-        doseValue: component.dose_value,
-        doseUnit: component.dose_unit,
-        doseBasis: component.dose_basis,
-        totalQuantity: round(total, digits),
-      };
-    })
-    .filter((row): row is TankMixQuantityRow => row !== null);
+      total = component.dose_value * (tankLiters / component.base_tank_liters);
+    }
+    rows.push({
+      componentId: component.id,
+      productName: component.product_name,
+      activeIngredient: component.active_ingredient ?? null,
+      doseValue: component.dose_value,
+      doseUnit: component.dose_unit,
+      doseBasis: component.dose_basis,
+      totalQuantity: round(total, digits),
+    });
+  }
+  return rows;
 }
 
-export function computeGoverningPhiComponent(mix: ChemicalMix): ChemicalMixComponent | null {
-  if (mix.components.length === 0) return null;
-  return mix.components.reduce((max, current) => (current.phi_days > max.phi_days ? current : max));
+export function computeGoverningPhiComponent(
+  mix: ChemicalMix,
+): (ChemicalMixComponent & { phi_days: number }) | null {
+  const componentsWithPhi = mix.components.filter(
+    (component): component is ChemicalMixComponent & { phi_days: number } =>
+      typeof component.phi_days === 'number' &&
+      Number.isFinite(component.phi_days) &&
+      component.phi_days >= 0,
+  );
+  if (componentsWithPhi.length === 0) return null;
+  return componentsWithPhi.reduce((max, current) =>
+    current.phi_days > max.phi_days ? current : max,
+  );
 }
 
 export function computePhiForMix(mix: ChemicalMix, sprayDate: string): PhiComputationResult | null {
   if (!isValidDateString(sprayDate)) return null;
+  const hasLegacyUnverifiedComponent = mix.components.some(
+    (component) => component.phi_verified === false,
+  );
+  if (hasLegacyUnverifiedComponent) {
+    return {
+      catalogMixId: mix.id,
+      sprayDate,
+      governingPhiDays: null,
+      safeHarvestDate: null,
+      blockingComponentName: null,
+      phiStatus: 'legacy_unverified',
+    };
+  }
+  const hasUnknownVerificationComponent = mix.components.some(
+    (component) =>
+      component.phi_verified === undefined ||
+      (component.phi_verified === true &&
+        (typeof component.phi_days !== 'number' ||
+          !Number.isFinite(component.phi_days) ||
+          component.phi_days <= 0)),
+  );
+  if (hasUnknownVerificationComponent) {
+    return {
+      catalogMixId: mix.id,
+      sprayDate,
+      governingPhiDays: null,
+      safeHarvestDate: null,
+      blockingComponentName: null,
+      phiStatus: 'unknown',
+    };
+  }
   const governing = computeGoverningPhiComponent(mix);
   if (!governing) return null;
   const safeHarvestDate = addDays(sprayDate, governing.phi_days);
   if (!safeHarvestDate) return null;
+  let phiStatus: PhiComputationResult['phiStatus'] = 'unknown';
+  if (governing.phi_verified === true) {
+    phiStatus = 'verified';
+  } else if (governing.phi_verified === false) {
+    phiStatus = 'legacy_unverified';
+  }
   return {
     catalogMixId: mix.id,
     sprayDate,
     governingPhiDays: governing.phi_days,
     safeHarvestDate,
     blockingComponentName: governing.product_name,
-    phiStatus: 'verified',
+    phiStatus,
   };
 }
 
@@ -168,8 +215,37 @@ export function buildSafeToSprayStatus(args: BuildSafeToSprayArgs): SafeToSprayS
     args.today && isValidDateString(args.today) ? args.today : formatLocalDate(new Date());
   return mixes
     .map((mix) => {
+      const hasUnverifiedComponent = mix.components.some(
+        (component) =>
+          component.phi_verified !== true ||
+          (component.phi_verified === true &&
+            (typeof component.phi_days !== 'number' ||
+              !Number.isFinite(component.phi_days) ||
+              component.phi_days <= 0)),
+      );
+      if (hasUnverifiedComponent) {
+        return {
+          mixId: mix.id,
+          mixName: mix.name,
+          status: 'unverified',
+          latestSafeSprayDate: null,
+          daysUntilWindowEnds: null,
+          governingPhiDays: null,
+          blockingComponentName: null,
+        } as SafeToSprayStatus;
+      }
       const governing = computeGoverningPhiComponent(mix);
-      if (!governing) return null;
+      if (!governing) {
+        return {
+          mixId: mix.id,
+          mixName: mix.name,
+          status: 'unverified',
+          latestSafeSprayDate: null,
+          daysUntilWindowEnds: null,
+          governingPhiDays: null,
+          blockingComponentName: null,
+        } as SafeToSprayStatus;
+      }
       const latestSafeSprayDate = addDays(targetHarvestDate, -governing.phi_days);
       if (!latestSafeSprayDate) return null;
       const daysUntilWindowEnds = dayDiff(latestSafeSprayDate, today);
@@ -192,7 +268,7 @@ export function buildSafeToSprayStatus(args: BuildSafeToSprayArgs): SafeToSprayS
     .filter((item): item is SafeToSprayStatus => item !== null)
     .sort((a, b) => {
       if (a.status === b.status) return a.mixName.localeCompare(b.mixName);
-      const order = { red: 0, yellow: 1, green: 2 };
+      const order = { red: 0, yellow: 1, green: 2, unverified: 3 };
       return order[a.status] - order[b.status];
     });
 }

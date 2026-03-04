@@ -117,6 +117,28 @@ export const mr = {
     },
   },
 
+  sprayCatalog: {
+    title: 'स्प्रे कॅटलॉग',
+    subtitle: 'कीड आणि मोडनुसार मिक्स पाहा.',
+    searchPlaceholder: 'मिक्स, $t(glossary.pest) किंवा उत्पादन शोधा',
+    modeFilter: 'अर्ज मोड',
+    modeAll: 'सर्व',
+    modePreventive: 'प्रतिबंधक',
+    modeCurative: 'उपचारात्मक',
+    modeBoth: 'दोन्ही',
+    pestFilter: 'लक्ष्य $t(glossary.pest)/समस्या',
+    genericProblem: 'सामान्य संरक्षण',
+    modeLabel: 'मोड: {{mode}}',
+    openTankMix: 'टँक मिक्स कॅल्क्युलेटरमध्ये उघडा',
+  },
+
+  productDetail: {
+    titleFallback: 'उत्पादन तपशील',
+    activeIngredient: 'सक्रिय घटक: {{value}}',
+    phiDays: 'PHI: {{days}} दिवस',
+    usageCount: '{{count}} कॅटलॉग मिक्समध्ये वापरलेले',
+  },
+
   farmDetails: {
     loadingFarm: '$t(glossary.farm) लोड होत आहे…',
     notFound: {
@@ -669,13 +691,13 @@ export const mr = {
   },
 
   irrigationForm: {
-    title: 'सिंचन',
-    subtitle: 'सिंचन कालावधी नोंदवा',
+    title: '$t(glossary.irrigation)',
+    subtitle: '$t(glossary.irrigation) कालावधी नोंदवा',
     durationLabel: 'कालावधी',
     durationPlaceholder: 'कालावधी नोंदवा',
     durationUnit: 'तास',
-    durationHint: 'सिंचन चक्र किती वेळ चाललं?',
-    enterHoursGuidance: 'पुढे जाण्यासाठी सिंचन तास नोंदवा.',
+    durationHint: '$t(glossary.irrigation) चक्र किती वेळ चाललं?',
+    enterHoursGuidance: 'पुढे जाण्यासाठी $t(glossary.irrigation) तास नोंदवा.',
     validation: {
       ready: 'जोडण्यासाठी तयार',
       incomplete: 'पुढे जाण्यासाठी कालावधी नोंदवा',
@@ -722,7 +744,7 @@ export const mr = {
     pricePerKgHint: 'पर्यायी - प्रति किलोग्राम किंमत',
     buyerLabel: 'खरेदीदार',
     buyerPlaceholder: 'खरेदीदाराचे नाव नोंदवा (पर्यायी)',
-    buyerHint: 'पर्यायी - कोणी कापणी विकत घेतली',
+    buyerHint: 'पर्यायी - कोणी $t(glossary.harvest) विकत घेतली',
     grades: {
       exportQuality: 'निर्यात दर्जा',
       premium: 'प्रीमियम',
@@ -782,6 +804,7 @@ export const mr = {
       nutrientCalculator: 'पोषक कॅल्क्युलेटर',
       tankMixCalculator: 'टँक मिक्स कॅल्क्युलेटर',
       safeToSprayChecker: 'Safe-to-spray तपासणी',
+      sprayCatalog: 'स्प्रे कॅटलॉग',
     },
     descriptions: {
       weatherIrrigation:
@@ -793,6 +816,7 @@ export const mr = {
         '$t(glossary.labTest) वरून $t(glossary.fertigation) आणि पोषक आवश्यकता गणा',
       tankMixCalculator: 'टँक क्षमतेनुसार प्रत्येक घटकाचे अचूक gm/ml प्रमाण काढा',
       safeToSprayChecker: 'लक्ष्य $t(glossary.harvest) दिनांकासाठी सुरक्षित स्प्रे विंडो तपासा',
+      sprayCatalog: '$t(glossary.pest), मोड आणि PHI सह कॅटलॉग स्प्रे/मिक्स ब्राउझ करा',
     },
   },
 
@@ -807,6 +831,7 @@ export const mr = {
     resultTitle: '{{liters}}L साठी आवश्यक प्रमाण',
     resultDose: 'डोस: {{value}} {{unit}} ({{basis}})',
     resultTotal: 'एकूण: {{value}} {{unit}}',
+    shareSummary: 'मिक्स सारांश शेअर करा',
   },
 
   safeToSpray: {

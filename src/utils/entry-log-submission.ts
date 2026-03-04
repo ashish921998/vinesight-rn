@@ -106,6 +106,9 @@ export async function submitEntryPendingLog(params: {
 
     case 'spray': {
       const data = log.data as SprayFormData;
+      const hasCatalogMix = typeof data.catalogMixId === 'number';
+      const hasResolvedPhi =
+        hasCatalogMix && data.safeHarvestDate != null && data.governingPhiDays != null;
       const chemicalStr = data.chemicals
         .map((c) => `${c.name} (${c.quantity} ${c.unit})`)
         .join(', ');
@@ -131,6 +134,24 @@ export async function submitEntryPendingLog(params: {
         areaAcre: farmArea,
         waterVolumeL: data.waterVolume ?? null,
       });
+      const noteParts: string[] = [];
+      if (data.phiOverride) {
+        noteParts.push('[PHI_OVERRIDE] Harvest safety conflict override acknowledged in app.');
+      }
+      if (hasCatalogMix && !hasResolvedPhi) {
+        noteParts.push('[PHI_UNAVAILABLE] Saved without resolved PHI metadata.');
+      }
+      const trimmedNotes = data.notes?.trim();
+      if (trimmedNotes) noteParts.push(trimmedNotes);
+      const notes = noteParts.join(' ').trim();
+
+      const normalizedPhiStatus = hasResolvedPhi
+        ? data.phiStatus && data.phiStatus !== 'unknown'
+          ? data.phiStatus
+          : 'verified'
+        : hasCatalogMix
+          ? 'legacy_unverified'
+          : (data.phiStatus ?? 'unknown');
       const created = await submitters.createSpray({
         farm_id: farmId,
         date: dateStr,
@@ -138,11 +159,11 @@ export async function submitEntryPendingLog(params: {
         chemical: chemicalStr,
         chemical_items: chemicalItems,
         dose: `Water: ${data.waterVolume}L`,
-        governing_phi_days: data.governingPhiDays ?? null,
-        safe_harvest_date: data.safeHarvestDate ?? null,
-        phi_calc_version: data.catalogMixId ? PHI_CALC_VERSION : null,
-        phi_blocking_component: data.phiBlockingComponent ?? null,
-        phi_status: data.phiStatus ?? (data.catalogMixId ? 'verified' : 'legacy_unverified'),
+        governing_phi_days: hasResolvedPhi ? (data.governingPhiDays ?? null) : null,
+        safe_harvest_date: hasResolvedPhi ? (data.safeHarvestDate ?? null) : null,
+        phi_calc_version: hasResolvedPhi ? PHI_CALC_VERSION : null,
+        phi_blocking_component: hasResolvedPhi ? (data.phiBlockingComponent ?? null) : null,
+        phi_status: normalizedPhiStatus,
         nutrient_totals_elemental: nutrientTotals.nutrientTotalsElemental,
         nutrient_totals_elemental_per_acre: nutrientTotals.nutrientTotalsElementalPerAcre,
         nutrient_calc_coverage: nutrientTotals.coveragePercent,
@@ -150,6 +171,7 @@ export async function submitEntryPendingLog(params: {
         weather: '',
         operator: '',
         date_of_pruning: farm.date_of_pruning,
+        notes: notes || undefined,
       });
       return { pendingLogId: log.id, type: log.type, recordId: created.id ?? null };
     }
