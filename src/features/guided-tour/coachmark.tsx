@@ -135,6 +135,11 @@ export function GuidedTourCoachmark({
       useNativeDriver: true,
     }).start();
 
+    if (Platform.OS === 'android') {
+      pulse.setValue(0);
+      return;
+    }
+
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
@@ -267,8 +272,21 @@ export function GuidedTourCoachmark({
   const targetTopEdge = rectY - focusPadding - 8;
   const bubbleBottom = clampedTop + TOOLTIP_HEIGHT_ESTIMATE;
   const overlapsTarget = clampedTop < targetBottom && bubbleBottom > targetTopEdge;
+  const preferredAboveTop = targetTopEdge - TOOLTIP_HEIGHT_ESTIMATE - spacing[2];
+  const preferredBelowTop = targetBottom + spacing[2];
+  const maxAllowedTop = screenHeight - TOOLTIP_HEIGHT_ESTIMATE - TOOLTIP_BOTTOM_CLEARANCE;
+  const canFitAbove = preferredAboveTop >= TOOLTIP_TOP_CLEARANCE;
+  const canFitBelow = preferredBelowTop <= maxAllowedTop;
   const bubbleTop = overlapsTarget
-    ? Math.max(TOOLTIP_TOP_CLEARANCE, targetTopEdge - TOOLTIP_HEIGHT_ESTIMATE - spacing[2])
+    ? canFitAbove
+      ? preferredAboveTop
+      : canFitBelow
+        ? preferredBelowTop
+        : // If neither side can fully fit, choose the side with more available room.
+          targetTopEdge - TOOLTIP_TOP_CLEARANCE >=
+            screenHeight - targetBottom - TOOLTIP_BOTTOM_CLEARANCE
+          ? TOOLTIP_TOP_CLEARANCE
+          : maxAllowedTop
     : clampedTop;
   const bubbleLeft = tooltipPlacement === 'top' ? spacing[4] : tooltipLeft;
   const bubbleRight = spacing[4];
@@ -451,8 +469,12 @@ export function GuidedTourCoachmark({
             onLayout={(e) => {
               const h = e.nativeEvent.layout.height;
               if (h > 0) {
-                setMeasuredContentKey(currentContentKey);
-                setMeasuredTooltipHeight(h);
+                setMeasuredContentKey((prev) =>
+                  prev === currentContentKey ? prev : currentContentKey,
+                );
+                setMeasuredTooltipHeight((prev) =>
+                  prev !== null && Math.abs(prev - h) < 1 ? prev : h,
+                );
               }
             }}
             style={{

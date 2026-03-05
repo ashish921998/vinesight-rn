@@ -1081,10 +1081,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     telemetry.capture('auth_phone_otp_send_started', { mode });
 
     try {
+      // Always allow user creation: Supabase handles both new and existing
+      // phone users correctly when shouldCreateUser is true — existing users
+      // simply receive a sign-in OTP. This avoids a "Signups not allowed for otp"
+      // 422 error that occurs when shouldCreateUser is false and the user doesn't exist.
       const { error } = await supabase.auth.signInWithOtp({
         phone: trimmedPhone,
-        options: { shouldCreateUser: mode === 'signup' },
+        options: { shouldCreateUser: true },
       });
+
       if (error) throw error;
 
       telemetry.capture('auth_phone_otp_send_succeeded', { mode });

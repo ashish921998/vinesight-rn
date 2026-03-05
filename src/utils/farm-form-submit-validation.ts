@@ -1,5 +1,5 @@
 const MAX_OPTIONAL_NUMERIC_VALUE = 1_000_000;
-export const NUMERIC_6_4_MAX_ABS = 99.9999;
+export const NUMERIC_6_4_MAX_ABS = 10_000;
 
 export interface OptionalFarmNumberRawValues {
   vineSpacing: string;

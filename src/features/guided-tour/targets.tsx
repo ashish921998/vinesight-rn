@@ -126,6 +126,9 @@ export function GuidedTourTarget({
 }: GuidedTourTargetProps) {
   const ref = useRef<View | null>(null);
   const unregisterRef = useRef<null | (() => void)>(null);
+  const lastLayoutRef = useRef<{ x: number; y: number; width: number; height: number } | null>(
+    null,
+  );
 
   const measure = useCallback(async (): Promise<GuidedTourTargetRect | null> => {
     const node = ref.current;
@@ -172,6 +175,16 @@ export function GuidedTourTarget({
     (event: LayoutChangeEvent) => {
       onLayout?.(event);
       if (!enabled) return;
+      const nextLayout = event.nativeEvent.layout;
+      const prevLayout = lastLayoutRef.current;
+      const changed =
+        !prevLayout ||
+        Math.abs(prevLayout.x - nextLayout.x) >= 1 ||
+        Math.abs(prevLayout.y - nextLayout.y) >= 1 ||
+        Math.abs(prevLayout.width - nextLayout.width) >= 1 ||
+        Math.abs(prevLayout.height - nextLayout.height) >= 1;
+      if (!changed) return;
+      lastLayoutRef.current = nextLayout;
       unregisterRef.current?.();
       unregisterRef.current = registerGuidedTourTarget(targetId, measure);
       notifyTargetChanged(targetId);

@@ -1,10 +1,22 @@
-import { InteractionManager } from 'react-native';
+import { InteractionManager, Platform } from 'react-native';
 
 /**
  * Wait for all pending interactions (animations, layout) to finish,
  * then wait two animation frames for layout to commit.
  */
 function waitForSettledLayout(): Promise<void> {
+  // On Android, runAfterInteractions can delay too long when tour animations
+  // are active. Use frame-based settling to keep overlay tracking responsive.
+  if (Platform.OS === 'android') {
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolve();
+        });
+      });
+    });
+  }
+
   return new Promise((resolve) => {
     InteractionManager.runAfterInteractions(() => {
       requestAnimationFrame(() => {

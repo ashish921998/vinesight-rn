@@ -24,8 +24,8 @@ describe('validateAndParseOptionalFarmNumbers', () => {
     const result = validateAndParseOptionalFarmNumbers(
       {
         ...baseRawValues,
-        bulkDensity: '223',
-        cationExchangeCapacity: '323',
+        bulkDensity: '10000.1',
+        cationExchangeCapacity: '12000',
         soilWaterRetention: '23',
       },
       labels,
@@ -37,7 +37,7 @@ describe('validateAndParseOptionalFarmNumbers', () => {
     });
   });
 
-  it('accepts values at NUMERIC(6,4) boundary', () => {
+  it('accepts values at the configured precision boundary', () => {
     const result = validateAndParseOptionalFarmNumbers(
       {
         ...baseRawValues,
