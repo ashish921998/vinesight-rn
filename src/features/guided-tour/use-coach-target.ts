@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Dimensions, Keyboard } from 'react-native';
+import { Dimensions, Keyboard, Platform } from 'react-native';
 import { telemetry } from '@/services/telemetry';
 import {
   GUIDED_TOUR_TARGET_IDS,
@@ -8,6 +8,7 @@ import {
   MAX_GUIDED_TOUR_TARGET_RETRIES,
 } from './constants';
 import type { GuidedTourTargetId } from './constants';
+import { measureStable } from './measure-stable';
 import { useGuidedTourStore } from './store';
 import {
   measureGuidedTourTarget,
@@ -330,10 +331,17 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       updateActiveTargetId(null);
     }
 
-    let cancelled = false;
+    const abortController = new AbortController();
     let seasonStartRetryCount = 0;
     let seasonStartRetryTimer: ReturnType<typeof setTimeout> | null = null;
     const measureStartedAt = Date.now();
+
+    // Reset the add_log retry counter at the start of each effect run.
+    // The inner `attempt()` guard only resets when showEventKey changes; but
+    // when the effect re-runs due to measureTrigger (e.g. keyboard show/hide)
+    // with the same key, the counter would otherwise accumulate across runs and
+    // exhaust the retry budget prematurely.
+    addLogRetryCountRef.current = 0;
 
     const showPhaseKey = isSeasonStartPhase
       ? `season_${seasonFormPhase}`
@@ -347,8 +355,9 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
               ? 'add_entry'
               : 'entrypoint';
     const showEventKey = `step-shown-${pathname}-${step}-${targetId}-${showPhaseKey}`;
+
     const attempt = async () => {
-      if (cancelled) return;
+      if (abortController.signal.aborted) return;
 
       if (step === 'add_log' && previousShowEventKeyRef.current !== showEventKey) {
         addLogRetryCountRef.current = 0;
@@ -357,16 +366,20 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
 
       if (targetCandidates.length === 0) return;
 
+      // Use measureStable to wait for interactions/animations to settle
+      // and get a converged rect — replaces fixed delays and remeasure loops.
       let measured: GuidedTourTargetRect | null = null;
       let measuredTargetId: GuidedTourTargetId = targetCandidates[0];
       for (const candidate of targetCandidates) {
-        measured = await measureGuidedTourTarget(candidate);
+        measured = await measureStable(() => measureGuidedTourTarget(candidate), {
+          signal: abortController.signal,
+        });
         if (measured) {
           measuredTargetId = candidate;
           break;
         }
       }
-      if (cancelled) return;
+      if (abortController.signal.aborted) return;
       if (measured) {
         const { width: viewportWidth, height: viewportHeight } = Dimensions.get('window');
         const isInViewport =
@@ -389,7 +402,22 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
             measuredTargetId,
           });
         }
-        setRect(measured);
+        // iOS: View.measure() can omit sibling label Text nodes above the input
+        // container. Shift the rect up by 20px so the ring covers both the
+        // "Area *" label and the input field.
+        const AREA_LABEL_OFFSET = Platform.OS === 'ios' ? 20 : 0;
+        const finalRect =
+          step === 'add_farm' &&
+          addFarmPhase === 'area' &&
+          AREA_LABEL_OFFSET > 0 &&
+          measuredTargetId === GUIDED_TOUR_TARGET_IDS.ADD_FARM_AREA
+            ? {
+                ...measured,
+                y: measured.y - AREA_LABEL_OFFSET,
+                height: measured.height + AREA_LABEL_OFFSET,
+              }
+            : measured;
+        setRect(finalRect);
         setActiveCoachStep(step);
         updateActiveTargetId(measuredTargetId);
         telemetry.capture('tour_target_remeasured', {
@@ -419,7 +447,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
         if (isSeasonStartPhase && seasonStartRetryCount < MAX_SEASON_START_RETRIES) {
           seasonStartRetryCount += 1;
           seasonStartRetryTimer = setTimeout(() => {
-            if (cancelled) return;
+            if (abortController.signal.aborted) return;
             void attempt();
           }, GUIDED_TOUR_TARGET_RETRY_MS);
         }
@@ -490,7 +518,7 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     void attempt();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
       if (seasonStartRetryTimer) {
         clearTimeout(seasonStartRetryTimer);
       }

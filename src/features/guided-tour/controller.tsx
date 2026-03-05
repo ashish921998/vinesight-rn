@@ -452,7 +452,6 @@ export function GuidedTourController() {
             }
             tooltipPlacement={
               (activeCoachStep === 'add_log' && isSeasonFormVisible) ||
-              (activeCoachStep === 'add_farm' && addFarmPhase === 'area') ||
               (activeCoachStep === 'add_farm' &&
                 (addFarmPhase === 'crop_option' || addFarmPhase === 'variety_option')) ||
               (activeCoachStep === 'add_log' &&
@@ -538,7 +537,11 @@ export function GuidedTourController() {
             onAction={coachAction}
             secondaryActionLabel={coachSecondaryActionLabel}
             onSecondaryAction={coachSecondaryAction}
-            hideTapHint={activeCoachStep === 'add_log' && isSeasonFormVisible}
+            hideTapHint={
+              (activeCoachStep === 'add_log' && isSeasonFormVisible) ||
+              (activeCoachStep === 'add_farm' &&
+                (addFarmPhase === 'name' || addFarmPhase === 'region' || addFarmPhase === 'area'))
+            }
             compact={activeCoachStep === 'add_log' && isSeasonFormVisible}
             hidePointer={activeCoachStep === 'add_log' && isSeasonFormVisible}
             hideBubble={activeCoachStep === 'add_log' && isSeasonFormVisible}

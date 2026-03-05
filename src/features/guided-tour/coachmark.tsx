@@ -10,8 +10,15 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import Svg, { Defs, Mask, Rect as SvgRect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
+
+// react-native-svg web typings for Defs/Mask omit children; cast to fix.
+const SvgDefs = Defs as React.ComponentType<React.PropsWithChildren>;
+const SvgMask = Mask as React.ComponentType<
+  React.PropsWithChildren<{ id: string; maskUnits?: string }>
+>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
@@ -85,8 +92,6 @@ export function GuidedTourCoachmark({
 }: Props) {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
-  const overlayRef = React.useRef<View | null>(null);
-  const [overlayOrigin, setOverlayOrigin] = React.useState({ x: 0, y: 0 });
   const [keyboardHeight, setKeyboardHeight] = React.useState(0);
   const pulse = useMemo(() => new Animated.Value(0), []);
   const reveal = useMemo(() => new Animated.Value(0), []);
@@ -166,16 +171,6 @@ export function GuidedTourCoachmark({
     };
   }, []);
 
-  const handleOverlayLayout = React.useCallback(() => {
-    requestAnimationFrame(() => {
-      overlayRef.current?.measureInWindow((x, y) => {
-        if (Number.isFinite(x) && Number.isFinite(y)) {
-          setOverlayOrigin({ x, y });
-        }
-      });
-    });
-  }, []);
-
   const defer = (fn: () => void) => setTimeout(fn, 0);
   const label =
     message ?? (step === 'add_farm' ? t('guidedTour.step1.coach') : t('guidedTour.step2.coach'));
@@ -209,8 +204,8 @@ export function GuidedTourCoachmark({
             : 130;
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const keyboardBottomInset = Math.max(0, keyboardHeight - insets.bottom);
-  const rectY = rect.y - overlayOrigin.y;
-  const rectX = rect.x - overlayOrigin.x;
+  const rectY = rect.y;
+  const rectX = rect.x;
   const isLowerScreenTarget = rectY > screenHeight * 0.55;
   const preferAboveTarget = keyboardBottomInset > 0 && isLowerScreenTarget;
   const belowTop = rectY + rect.height + spacing[4];
@@ -264,7 +259,17 @@ export function GuidedTourCoachmark({
     TOOLTIP_TOP_CLEARANCE,
     screenHeight - TOOLTIP_HEIGHT_ESTIMATE - TOOLTIP_BOTTOM_CLEARANCE,
   );
-  const bubbleTop = Math.max(TOOLTIP_TOP_CLEARANCE, Math.min(desiredTooltipTop, MAX_BUBBLE_TOP));
+  const clampedTop = Math.max(TOOLTIP_TOP_CLEARANCE, Math.min(desiredTooltipTop, MAX_BUBBLE_TOP));
+  // Prevent the tooltip from overlapping the highlighted target rect.
+  // If the clamped bubble position causes the bubble to cover the target,
+  // force it above the target instead.
+  const targetBottom = rectY + rect.height + focusPadding + 8; // include focus ring
+  const targetTopEdge = rectY - focusPadding - 8;
+  const bubbleBottom = clampedTop + TOOLTIP_HEIGHT_ESTIMATE;
+  const overlapsTarget = clampedTop < targetBottom && bubbleBottom > targetTopEdge;
+  const bubbleTop = overlapsTarget
+    ? Math.max(TOOLTIP_TOP_CLEARANCE, targetTopEdge - TOOLTIP_HEIGHT_ESTIMATE - spacing[2])
+    : clampedTop;
   const bubbleLeft = tooltipPlacement === 'top' ? spacing[4] : tooltipLeft;
   const bubbleRight = spacing[4];
   const bubbleWidth = Math.min(tooltipMaxWidth, screenWidth - bubbleLeft - bubbleRight);
@@ -291,7 +296,6 @@ export function GuidedTourCoachmark({
     });
   }, [bubbleTop, desiredTooltipTop, hideBubble, keyboardBottomInset, rect.x, rect.y, step]);
 
-  const overlayPointerEvents: 'auto' | 'none' = blockOutsideTouches ? 'auto' : 'none';
   const overlayOpacity = blockOutsideTouches
     ? step === 'add_log'
       ? 0.68
@@ -299,65 +303,91 @@ export function GuidedTourCoachmark({
     : step === 'add_log'
       ? 0.4
       : 0.46;
-  const overlayBackgroundColor = hideDimming
-    ? 'transparent'
-    : colorWithOpacity('#000', overlayOpacity);
   const focusInsetX = focusPadding;
   const focusInsetY = focusPadding;
 
   return (
-    <View
-      ref={overlayRef}
-      onLayout={handleOverlayLayout}
-      style={StyleSheet.absoluteFill}
-      pointerEvents="box-none"
-    >
-      <>
-        <View
-          pointerEvents={overlayPointerEvents}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: Math.max(0, rectY - focusInsetY),
-            backgroundColor: overlayBackgroundColor,
-          }}
-        />
-        <View
-          pointerEvents={overlayPointerEvents}
-          style={{
-            position: 'absolute',
-            top: Math.max(0, rectY - focusInsetY),
-            left: 0,
-            width: Math.max(0, rectX - focusInsetX),
-            height: rect.height + focusInsetY * 2,
-            backgroundColor: overlayBackgroundColor,
-          }}
-        />
-        <View
-          pointerEvents={overlayPointerEvents}
-          style={{
-            position: 'absolute',
-            top: Math.max(0, rectY - focusInsetY),
-            left: rectX + rect.width + focusInsetX,
-            right: 0,
-            height: rect.height + focusInsetY * 2,
-            backgroundColor: overlayBackgroundColor,
-          }}
-        />
-        <View
-          pointerEvents={overlayPointerEvents}
-          style={{
-            position: 'absolute',
-            top: rectY + rect.height + focusInsetY,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: overlayBackgroundColor,
-          }}
-        />
-      </>
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+      {/* SVG mask overlay — visual only, no touch handling */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <Svg width={screenWidth} height={screenHeight}>
+          <SvgDefs>
+            <SvgMask id="cutout" maskUnits="userSpaceOnUse">
+              <SvgRect x={0} y={0} width={screenWidth} height={screenHeight} fill="white" />
+              {!hideDimming && (
+                <SvgRect
+                  x={rectX - focusInsetX}
+                  y={rectY - focusInsetY}
+                  width={rect.width + focusInsetX * 2}
+                  height={rect.height + focusInsetY * 2}
+                  rx={
+                    isCircularTarget
+                      ? Math.max(rect.width, rect.height) / 2 + focusInsetX
+                      : borderRadius.xl
+                  }
+                  ry={
+                    isCircularTarget
+                      ? Math.max(rect.width, rect.height) / 2 + focusInsetY
+                      : borderRadius.xl
+                  }
+                  fill="black"
+                />
+              )}
+            </SvgMask>
+          </SvgDefs>
+          {!hideDimming && (
+            <SvgRect
+              x={0}
+              y={0}
+              width={screenWidth}
+              height={screenHeight}
+              fill={`rgba(0,0,0,${overlayOpacity})`}
+              mask="url(#cutout)"
+            />
+          )}
+        </Svg>
+      </View>
+
+      {/* Touch-blocking panels — 4 Views around the cutout gap so taps on
+          the highlighted target pass through to the underlying UI. */}
+      {blockOutsideTouches &&
+        (() => {
+          const cutL = rectX - focusInsetX;
+          const cutT = rectY - focusInsetY;
+          const cutR = rectX + rect.width + focusInsetX;
+          const cutB = rectY + rect.height + focusInsetY;
+          const panelStyle = { position: 'absolute' as const, backgroundColor: 'transparent' };
+          return (
+            <>
+              {/* top */}
+              <View
+                pointerEvents="auto"
+                style={{ ...panelStyle, top: 0, left: 0, right: 0, height: Math.max(0, cutT) }}
+              />
+              {/* bottom */}
+              <View
+                pointerEvents="auto"
+                style={{ ...panelStyle, top: cutB, left: 0, right: 0, bottom: 0 }}
+              />
+              {/* left */}
+              <View
+                pointerEvents="auto"
+                style={{
+                  ...panelStyle,
+                  top: cutT,
+                  left: 0,
+                  width: Math.max(0, cutL),
+                  height: cutB - cutT,
+                }}
+              />
+              {/* right */}
+              <View
+                pointerEvents="auto"
+                style={{ ...panelStyle, top: cutT, left: cutR, right: 0, height: cutB - cutT }}
+              />
+            </>
+          );
+        })()}
 
       {!hideFocus ? (
         <>

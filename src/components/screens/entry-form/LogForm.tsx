@@ -117,7 +117,10 @@ export function LogForm({
         />
       )}
 
-      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY}>
+      <GuidedTourTarget
+        targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_ADD_ENTRY}
+        style={{ alignSelf: 'stretch' }}
+      >
         <Pressable
           onPress={onAdd}
           disabled={!isValid || !hasFarm}
@@ -157,7 +160,6 @@ export function LogForm({
             }
           />
           <Text
-            selectable
             style={[
               { marginLeft: 8, fontWeight: '600' },
               {
