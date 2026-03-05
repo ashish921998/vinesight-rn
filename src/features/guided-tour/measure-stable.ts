@@ -6,13 +6,25 @@ import { InteractionManager, Platform } from 'react-native';
  */
 function waitForSettledLayout(): Promise<void> {
   // On Android, runAfterInteractions can delay too long when tour animations
-  // are active. Use frame-based settling to keep overlay tracking responsive.
+  // are active. Use a bounded InteractionManager that falls back to a timeout
+  // so we don't stall indefinitely but still wait long enough for keyboard and
+  // navigation transitions to settle (~150ms max).
   if (Platform.OS === 'android') {
     return new Promise((resolve) => {
-      requestAnimationFrame(() => {
+      let resolved = false;
+      const done = () => {
+        if (resolved) return;
+        resolved = true;
         requestAnimationFrame(() => {
-          resolve();
+          requestAnimationFrame(() => {
+            resolve();
+          });
         });
+      };
+      const timeout = setTimeout(done, 150);
+      InteractionManager.runAfterInteractions(() => {
+        clearTimeout(timeout);
+        done();
       });
     });
   }

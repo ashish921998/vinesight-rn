@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Dimensions, Keyboard, Platform } from 'react-native';
+import { Dimensions, Keyboard } from 'react-native';
 import { telemetry } from '@/services/telemetry';
 import {
   GUIDED_TOUR_TARGET_IDS,
@@ -326,11 +326,6 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
       subscribeGuidedTourTarget(candidate, queueMeasureRefresh),
     );
 
-    if (activeTargetIdRef.current && activeTargetIdRef.current !== targetId) {
-      setRect(null);
-      updateActiveTargetId(null);
-    }
-
     const abortController = new AbortController();
     let seasonStartRetryCount = 0;
     let seasonStartRetryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -402,22 +397,9 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
             measuredTargetId,
           });
         }
-        // iOS: View.measure() can omit sibling label Text nodes above the input
-        // container. Shift the rect up by 20px so the ring covers both the
-        // "Area *" label and the input field.
-        const AREA_LABEL_OFFSET = Platform.OS === 'ios' ? 20 : 0;
-        const finalRect =
-          step === 'add_farm' &&
-          addFarmPhase === 'area' &&
-          AREA_LABEL_OFFSET > 0 &&
-          measuredTargetId === GUIDED_TOUR_TARGET_IDS.ADD_FARM_AREA
-            ? {
-                ...measured,
-                y: measured.y - AREA_LABEL_OFFSET,
-                height: measured.height + AREA_LABEL_OFFSET,
-              }
-            : measured;
-        setRect(finalRect);
+        // The GuidedTourTarget wrapper covers label+input regions; root-relative
+        // measurements align with the in-tree overlay across platforms.
+        setRect(measured);
         setActiveCoachStep(step);
         updateActiveTargetId(measuredTargetId);
         telemetry.capture('tour_target_remeasured', {

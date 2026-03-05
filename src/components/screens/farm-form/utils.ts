@@ -68,9 +68,11 @@ export const ensureValidDate = (value: Date | undefined | null): Date => {
 
 export const sanitizeDecimalInput = (value: string): string => {
   const digitsAndDotOnly = value.replace(/[^0-9.]/g, '');
-  const parts = digitsAndDotOnly.split('.');
-  if (parts.length <= 1) return parts[0] || '';
-  return `${parts[0]}.${parts.slice(1).join('')}`;
+  const firstDotIndex = digitsAndDotOnly.indexOf('.');
+  if (firstDotIndex === -1) return digitsAndDotOnly;
+  const whole = digitsAndDotOnly.substring(0, firstDotIndex);
+  const decimal = digitsAndDotOnly.substring(firstDotIndex + 1).replace(/\./g, '');
+  return `${whole}.${decimal}`;
 };
 
 export const getErrorMessage = (error: unknown, fallback: string): string => {
@@ -93,7 +95,7 @@ export const buildFormStateFromFarm = (farm?: Farm | null) => {
 
   return {
     selectedCrop,
-    customCropName: farm?.crop && selectedCrop === 'Other' ? farm.crop : '',
+    customCropName: resolveCropSelection(farm?.crop).customCropName,
     name: farm?.name ?? '',
     region: farm?.region ?? '',
     area: farm?.area?.toString() ?? '',

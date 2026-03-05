@@ -135,11 +135,8 @@ export function GuidedTourTarget({
     if (!node) return null;
     return new Promise((resolve) => {
       try {
-        // Use measure() instead of measureInWindow() so that coordinates
-        // (pageX, pageY) are relative to the React Native root view — the
-        // same origin that the coachmark overlay (StyleSheet.absoluteFill)
-        // uses. measureInWindow returns screen-absolute coords which on
-        // Android include the status bar offset, causing a mismatch.
+        // Use root-relative page coordinates so measurements align with the
+        // in-tree absolute overlay coordinate space.
         node.measure((_x, _y, width, height, pageX, pageY) => {
           if (
             !Number.isFinite(width) ||

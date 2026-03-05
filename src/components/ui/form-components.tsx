@@ -241,6 +241,7 @@ interface FullScreenFormProps {
   showResetButton?: boolean;
   onReset?: () => void;
   saveButtonTargetId?: string;
+  keyboardAvoidingEnabled?: boolean;
   scrollViewRef?: React.Ref<ScrollView>;
   scrollViewProps?: ScrollViewProps;
   scrollViewStyle?: StyleProp<ViewStyle>;
@@ -258,6 +259,7 @@ export function FullScreenForm({
   showResetButton = false,
   onReset,
   saveButtonTargetId,
+  keyboardAvoidingEnabled = true,
   scrollViewRef,
   scrollViewProps,
   scrollViewStyle,
@@ -354,6 +356,7 @@ export function FullScreenForm({
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        enabled={keyboardAvoidingEnabled}
         style={{ flex: 1 }}
       >
         <ScrollView

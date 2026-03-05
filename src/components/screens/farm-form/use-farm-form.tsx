@@ -101,27 +101,59 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   const guidedTourScrollLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const guidedFocusPrimaryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const guidedFocusSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const guidedAreaAnchorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formScrollYRef = useRef(0);
   const setFormScrollY = useCallback((y: number) => {
     formScrollYRef.current = y;
   }, []);
   const guidedTourLastFocusFieldRef = useRef<AddFarmFocusField | null>(null);
   const pendingGuidedScrollRef = useRef<React.RefObject<TextInput | null> | null>(null);
+  const guidedTopLockFrameRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
+  const guidedLockedScrollYRef = useRef(0);
 
   // ---------------------------------------------------------------------------
   // Scroll helpers
   // ---------------------------------------------------------------------------
 
-  const scrollInputIntoView = useCallback(
-    (ref: React.RefObject<TextInput | null>) => {
-      if (keyboardHeight <= 0) {
-        pendingGuidedScrollRef.current = ref;
-        return;
-      }
-      pendingGuidedScrollRef.current = null;
+  const getGuidedFieldRef = useCallback(
+    (field: AddFarmFocusField) =>
+      field === 'name' ? nameInputRef : field === 'region' ? regionInputRef : areaInputRef,
+    [],
+  );
+
+  const forceGuidedScrollLock = useCallback((targetY: number) => {
+    if (guidedTopLockFrameRef.current !== null) {
+      cancelAnimationFrame(guidedTopLockFrameRef.current);
+    }
+    guidedTopLockFrameRef.current = requestAnimationFrame(() => {
+      guidedTopLockFrameRef.current = null;
+      const nextY = Math.max(0, targetY);
+      formScrollViewRef.current?.scrollTo({ y: nextY, animated: false });
+      formScrollYRef.current = nextY;
+      guidedLockedScrollYRef.current = nextY;
+    });
+  }, []);
+
+  const handleFormScrollY = useCallback(
+    (y: number) => {
+      setFormScrollY(y);
+      if (!isGuidedTourScrollLocked) return;
+      if (Math.abs(y - guidedLockedScrollYRef.current) < 1) return;
+      forceGuidedScrollLock(guidedLockedScrollYRef.current);
+    },
+    [forceGuidedScrollLock, isGuidedTourScrollLocked, setFormScrollY],
+  );
+
+  const scrollGuidedFieldToAnchor = useCallback(
+    (ref: React.RefObject<TextInput | null>, animated: boolean) => {
       const input = ref.current;
       const scrollView = formScrollViewRef.current;
       if (!input || !scrollView) return;
+      if (keyboardHeight <= 0) {
+        pendingGuidedScrollRef.current = ref;
+      } else {
+        pendingGuidedScrollRef.current = null;
+      }
       const measurableScrollView = scrollView as unknown as {
         measureInWindow?: (
           callback: (x: number, y: number, width: number, height: number) => void,
@@ -131,8 +163,14 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       if (!measurableScrollView.measureInWindow) return;
       input.measureInWindow((_, inputY) => {
         measurableScrollView.measureInWindow?.((_x, scrollY) => {
-          const targetY = Math.max(0, formScrollYRef.current + (inputY - scrollY) - 72);
-          measurableScrollView.scrollTo({ y: targetY, animated: true });
+          const GUIDED_FIELD_TOP_OFFSET = 132;
+          const targetY = Math.max(
+            0,
+            formScrollYRef.current + (inputY - scrollY) - GUIDED_FIELD_TOP_OFFSET,
+          );
+          measurableScrollView.scrollTo({ y: targetY, animated });
+          formScrollYRef.current = targetY;
+          guidedLockedScrollYRef.current = targetY;
         });
       });
     },
@@ -145,16 +183,15 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     if (!pendingRef) return;
     pendingGuidedScrollRef.current = null;
     const id = setTimeout(() => {
-      scrollInputIntoView(pendingRef);
+      scrollGuidedFieldToAnchor(pendingRef, false);
     }, 0);
     return () => clearTimeout(id);
-  }, [keyboardHeight, scrollInputIntoView]);
+  }, [keyboardHeight, scrollGuidedFieldToAnchor]);
 
   const focusGuidedField = useCallback(
     (field: AddFarmFocusField) => {
-      const ref =
-        field === 'name' ? nameInputRef : field === 'region' ? regionInputRef : areaInputRef;
-      formScrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      const ref = getGuidedFieldRef(field);
+      const waitForKeyboardSettle = field === 'area' && keyboardHeight > 0;
       const targetId =
         field === 'name'
           ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_NAME
@@ -167,20 +204,43 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       if (guidedFocusSettleTimerRef.current) {
         clearTimeout(guidedFocusSettleTimerRef.current);
       }
+      if (guidedAreaAnchorTimerRef.current) {
+        clearTimeout(guidedAreaAnchorTimerRef.current);
+        guidedAreaAnchorTimerRef.current = null;
+      }
       guidedFocusPrimaryTimerRef.current = setTimeout(() => {
         guidedFocusPrimaryTimerRef.current = null;
         notifyGuidedTourTargetChanged(targetId);
-        scrollInputIntoView(ref);
         ref.current?.focus();
+        if (waitForKeyboardSettle) {
+          pendingGuidedScrollRef.current = ref;
+          guidedFocusSettleTimerRef.current = setTimeout(
+            () => {
+              guidedFocusSettleTimerRef.current = null;
+              scrollGuidedFieldToAnchor(ref, false);
+            },
+            isIOS ? 160 : 120,
+          );
+          guidedAreaAnchorTimerRef.current = setTimeout(
+            () => {
+              guidedAreaAnchorTimerRef.current = null;
+              notifyGuidedTourTargetChanged(targetId);
+              scrollGuidedFieldToAnchor(ref, false);
+            },
+            isIOS ? 320 : 280,
+          );
+          return;
+        }
+        scrollGuidedFieldToAnchor(ref, false);
       }, 80);
-      if (!isIOS) {
+      if (!isIOS && !waitForKeyboardSettle) {
         guidedFocusSettleTimerRef.current = setTimeout(() => {
           guidedFocusSettleTimerRef.current = null;
           notifyGuidedTourTargetChanged(targetId);
         }, 400);
       }
     },
-    [scrollInputIntoView],
+    [getGuidedFieldRef, keyboardHeight, scrollGuidedFieldToAnchor],
   );
 
   // ---------------------------------------------------------------------------
@@ -210,15 +270,18 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       }
       if (payload.focusField) {
         guidedTourLastFocusFieldRef.current = payload.focusField;
-        setIsGuidedTourScrollLocked(false);
         focusGuidedField(payload.focusField);
       }
       if (!payload.lockScroll) {
         setIsGuidedTourScrollLocked(false);
         return;
       }
+      // Lock scroll immediately to prevent user from scrolling during tour
+      setIsGuidedTourScrollLocked(true);
+      if (payload.focusField) {
+        return;
+      }
       guidedTourScrollLockTimeoutRef.current = setTimeout(() => {
-        setIsGuidedTourScrollLocked(true);
         if (guidedTourLastFocusFieldRef.current) {
           focusGuidedField(guidedTourLastFocusFieldRef.current);
         }
@@ -238,12 +301,17 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
         clearTimeout(guidedFocusSettleTimerRef.current);
         guidedFocusSettleTimerRef.current = null;
       }
+      if (guidedAreaAnchorTimerRef.current) {
+        clearTimeout(guidedAreaAnchorTimerRef.current);
+        guidedAreaAnchorTimerRef.current = null;
+      }
       unsubFocus();
       unsubDismissKeyboard();
       unsubPhaseChanged();
     };
   }, [focusGuidedField, mode]);
 
+  const prevScrollLockedRef = useRef(false);
   useEffect(() => {
     if (mode !== 'add') return;
     if (
@@ -256,15 +324,42 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
         clearTimeout(guidedTourScrollLockTimeoutRef.current);
         guidedTourScrollLockTimeoutRef.current = null;
       }
+      prevScrollLockedRef.current = false;
+      guidedLockedScrollYRef.current = 0;
       setIsGuidedTourScrollLocked(false);
+    } else {
+      // Tour is active on add_farm step — lock scroll
+      setIsGuidedTourScrollLocked(true);
+      if (!prevScrollLockedRef.current) {
+        prevScrollLockedRef.current = true;
+        const activeField = guidedTourLastFocusFieldRef.current;
+        if (activeField) {
+          scrollGuidedFieldToAnchor(getGuidedFieldRef(activeField), false);
+        }
+      }
     }
   }, [
     formState.showCropPicker,
     formState.showVarietyPicker,
+    getGuidedFieldRef,
     guidedTourStatus,
     guidedTourStep,
     mode,
+    scrollGuidedFieldToAnchor,
   ]);
+
+  useEffect(() => {
+    if (!isGuidedTourScrollLocked) return;
+    const activeField = guidedTourLastFocusFieldRef.current;
+    if (!activeField) return;
+    const id = setTimeout(
+      () => {
+        scrollGuidedFieldToAnchor(getGuidedFieldRef(activeField), false);
+      },
+      keyboardHeight > 0 ? 40 : 0,
+    );
+    return () => clearTimeout(id);
+  }, [getGuidedFieldRef, isGuidedTourScrollLocked, keyboardHeight, scrollGuidedFieldToAnchor]);
 
   // ---------------------------------------------------------------------------
   // Load farm data into form when editing
@@ -288,6 +383,15 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   // ---------------------------------------------------------------------------
   // Keyboard height tracking
   // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    return () => {
+      if (guidedTopLockFrameRef.current !== null) {
+        cancelAnimationFrame(guidedTopLockFrameRef.current);
+        guidedTopLockFrameRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const showEvent = isIOS ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -486,7 +590,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     [t],
   );
 
-  const isGuidedAddFarm = () => {
+  const getIsGuidedAddFarm = () => {
     const guidedTourState = useGuidedTourStore.getState();
     return (
       mode === 'add' &&
@@ -553,7 +657,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       showCropPicker: false,
       cropSearchQuery: '',
     }));
-    if (isGuidedAddFarm()) {
+    if (getIsGuidedAddFarm()) {
       guidedTourEmit('guidedTour.addFarmCropSelected', {
         crop: crop === 'Other' ? customCropName : crop,
         shouldAdvance: true,
@@ -563,14 +667,14 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
 
   const openCropPicker = () => {
     setFormState((prev) => ({ ...prev, showCropPicker: true }));
-    if (isGuidedAddFarm()) {
+    if (getIsGuidedAddFarm()) {
       guidedTourEmit('guidedTour.addFarmCropPickerToggled', { open: true });
     }
   };
 
   const closeCropPicker = () => {
     setFormState((prev) => ({ ...prev, showCropPicker: false, cropSearchQuery: '' }));
-    if (isGuidedAddFarm()) {
+    if (getIsGuidedAddFarm()) {
       guidedTourEmit('guidedTour.addFarmCropPickerToggled', { open: false });
     }
   };
@@ -616,7 +720,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       varietySearchQuery: '',
       customVariety: variety === 'Custom' ? '' : prev.customVariety,
     }));
-    if (isGuidedAddFarm()) {
+    if (getIsGuidedAddFarm()) {
       guidedTourEmit('guidedTour.addFarmVarietySelected', { isCustom: variety === 'Custom' });
     }
   };
@@ -898,7 +1002,16 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     } catch (_error: unknown) {
       const errorMessage = getErrorMessage(_error, t('common.errors.failedToCreateFarm'));
       const errorMeta = getFarmErrorMeta(_error);
-      console.error('Failed to create farm:', _error, { farmData, errorMeta });
+      const sanitizedFarmData = {
+        fields: Object.keys(farmData),
+        fieldCount: Object.keys(farmData).length,
+        hasLocation: 'location' in farmData,
+        hasAddress: 'address' in farmData,
+      };
+      console.error('Failed to create farm:', _error, {
+        farmData: sanitizedFarmData,
+        errorMeta,
+      });
       telemetry.capture('farm_create_failed', {
         code: errorMeta.code ?? null,
         message: errorMeta.message ?? errorMessage,
@@ -910,7 +1023,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
           scope.setTag('domain', 'farm');
           scope.setTag('operation', 'create');
           if (errorMeta.code) scope.setTag('db_code', errorMeta.code);
-          scope.setExtra('payload', farmData);
+          scope.setExtra('payload', sanitizedFarmData);
           scope.setExtra('db_error', errorMeta);
           Sentry.captureException(_error instanceof Error ? _error : new Error(errorMessage));
         });
@@ -996,7 +1109,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
 
     // Guided tour
     isGuidedTourScrollLocked,
-    isGuidedAddFarm,
+    getIsGuidedAddFarm,
 
     // Derived values
     popularCropOptions,
@@ -1023,6 +1136,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     formScrollViewRef,
     formScrollYRef,
     setFormScrollY,
+    handleFormScrollY,
     nameInputRef,
     regionInputRef,
     areaInputRef,

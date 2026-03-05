@@ -108,9 +108,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         scrollViewRef={form.formScrollViewRef}
         scrollViewProps={{
           scrollEnabled: !form.isGuidedTourScrollLocked,
+          bounces: !form.isGuidedTourScrollLocked,
+          alwaysBounceVertical: !form.isGuidedTourScrollLocked,
+          nestedScrollEnabled: !form.isGuidedTourScrollLocked,
+          automaticallyAdjustKeyboardInsets: !form.isGuidedTourScrollLocked,
+          overScrollMode: form.isGuidedTourScrollLocked ? 'never' : 'always',
           keyboardDismissMode: form.isGuidedTourScrollLocked ? 'none' : 'on-drag',
           onScroll: (event) => {
-            form.setFormScrollY(event.nativeEvent.contentOffset.y);
+            form.handleFormScrollY(event.nativeEvent.contentOffset.y);
           },
           scrollEventThrottle: 16,
         }}
@@ -126,7 +131,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               value={form.formState.name}
               onChangeText={(v) => {
                 form.setName(v);
-                if (form.isGuidedAddFarm()) {
+                if (form.getIsGuidedAddFarm()) {
                   guidedTourEmit('guidedTour.addFarmNameEntered', {
                     isFilled: v.trim().length > 0,
                   });
@@ -154,7 +159,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               value={form.formState.region}
               onChangeText={(v) => {
                 form.setRegion(v);
-                if (form.isGuidedAddFarm()) {
+                if (form.getIsGuidedAddFarm()) {
                   guidedTourEmit('guidedTour.addFarmRegionEntered', {
                     isFilled: v.trim().length > 0,
                   });
@@ -181,7 +186,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               value={form.formState.area}
               onChangeText={(v) => {
                 const sanitized = form.setArea(v);
-                if (form.isGuidedAddFarm()) {
+                if (form.getIsGuidedAddFarm()) {
                   const isValidNumber =
                     sanitized.trim() !== '' && Number.isFinite(Number(sanitized.trim()));
                   guidedTourEmit('guidedTour.addFarmAreaEntered', { isFilled: isValidNumber });
@@ -325,7 +330,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             }}
             onPress={() => form.setShowVarietyPicker(true)}
             onPressIn={() => {
-              if (form.isGuidedAddFarm()) {
+              if (form.getIsGuidedAddFarm()) {
                 guidedTourEmit('guidedTour.addFarmVarietyPickerOpened', {});
               }
             }}
@@ -353,7 +358,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
               value={form.formState.customVariety}
               onChangeText={(v) => {
                 form.setCustomVariety(v);
-                if (form.isGuidedAddFarm() && v.trim().length > 0) {
+                if (form.getIsGuidedAddFarm() && v.trim().length > 0) {
                   guidedTourEmit('guidedTour.addFarmCustomVarietyEntered', {});
                 }
               }}
