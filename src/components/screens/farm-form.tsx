@@ -2187,7 +2187,10 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   </View>
                 </View>
 
-                <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET}>
+                <GuidedTourTarget
+                  targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET}
+                  style={{ flex: 1 }}
+                >
                   <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
                     {filteredCropOptions.map((cropOption) => {
                       const selected =

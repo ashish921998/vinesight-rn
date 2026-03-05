@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import Svg, { Defs, Mask, Rect as SvgRect } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 
 // react-native-svg web typings for Defs/Mask omit children; cast to fix.
@@ -18,7 +19,6 @@ const SvgDefs = Defs as React.ComponentType<React.PropsWithChildren>;
 const SvgMask = Mask as React.ComponentType<
   React.PropsWithChildren<{ id: string; maskUnits?: string }>
 >;
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
