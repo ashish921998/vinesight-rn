@@ -55,7 +55,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { guidedTourEmit, guidedTourOn } from '@/features/guided-tour';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
-import { GuidedTourTarget } from '@/features/guided-tour/targets';
+import { GuidedTourTarget, notifyGuidedTourTargetChanged } from '@/features/guided-tour/targets';
 
 const SOIL_TEXTURE_OPTIONS = [
   { value: 'Sand', labelKey: 'farmForm.soilTexture.options.sand' },
@@ -83,12 +83,12 @@ interface FarmFormProps {
 const KNOWN_CROPS = CROPS.filter((crop): crop is KnownCrop => crop !== 'Other');
 const POPULAR_CROPS: KnownCrop[] = [
   'Grapes',
+  'Pomegranate',
   'Mango',
   'Banana',
   'Tomato',
   'Sugarcane',
   'Guava',
-  'Pomegranate',
   'Citrus',
 ];
 
@@ -302,10 +302,33 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
     (field: AddFarmFocusField) => {
       const ref =
         field === 'name' ? nameInputRef : field === 'region' ? regionInputRef : areaInputRef;
+      // 1. Snap to top immediately so the target is in the viewport.
+      formScrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      // 2. After the scroll settles, notify the coachmark registry so it re-measures
+      //    the target from its real post-scroll screen position (not a stale cached rect
+      //    from when the form was scrolled to the crop / tags section).
+      const targetId =
+        field === 'name'
+          ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_NAME
+          : field === 'region'
+            ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_REGION
+            : GUIDED_TOUR_TARGET_IDS.ADD_FARM_AREA;
       setTimeout(() => {
+        notifyGuidedTourTargetChanged(targetId);
         scrollInputIntoView(ref);
         ref.current?.focus();
-      }, 0);
+      }, 80);
+      if (!isIOS) {
+        // On Android, windowSoftInputMode=adjustResize + KeyboardAvoidingView(height)
+        // causes an async layout pass after keyboardDidShow that can shift element
+        // positions. The 80ms measurement above may capture a pre-settle position.
+        // Fire a second notification at 400ms so the ring corrects itself once
+        // the keyboard, window resize, and any implicit ScrollView scroll have
+        // all fully settled.
+        setTimeout(() => {
+          notifyGuidedTourTargetChanged(targetId);
+        }, 400);
+      }
     },
     [scrollInputIntoView],
   );
@@ -1961,54 +1984,54 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                 </Pressable>
               </View>
 
-              <GuidedTourTarget
-                targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
-                style={{ flex: 1 }}
-              >
-                <View style={{ flex: 1 }}>
+              <View style={{ flex: 1 }}>
+                <View
+                  style={{
+                    paddingHorizontal: spacing[6],
+                    paddingTop: spacing[4],
+                    paddingBottom: spacing[2],
+                  }}
+                >
                   <View
                     style={{
-                      paddingHorizontal: spacing[6],
-                      paddingTop: spacing[4],
-                      paddingBottom: spacing[2],
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: colors.surface[200],
+                      borderRadius: borderRadius.xl,
+                      backgroundColor: colors.surface[50],
+                      paddingHorizontal: spacing[3],
+                      minHeight: 48,
                     }}
                   >
-                    <View
+                    <UISymbol
+                      name="magnifyingglass"
+                      size={18}
+                      color={m3.colorScheme.onSurfaceVariant}
+                    />
+                    <TextInput
+                      value={formState.varietySearchQuery}
+                      onChangeText={(v) =>
+                        setFormState((prev) => ({ ...prev, varietySearchQuery: v }))
+                      }
+                      placeholder={t('farmForm.variety.searchPlaceholder')}
+                      placeholderTextColor={colors.surface[400]}
                       style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        borderWidth: 1,
-                        borderColor: colors.surface[200],
-                        borderRadius: borderRadius.xl,
-                        backgroundColor: colors.surface[50],
-                        paddingHorizontal: spacing[3],
-                        minHeight: 48,
+                        flex: 1,
+                        marginLeft: spacing[2],
+                        color: colors.surface[900],
+                        fontSize: fontSize.base,
                       }}
-                    >
-                      <UISymbol
-                        name="magnifyingglass"
-                        size={18}
-                        color={m3.colorScheme.onSurfaceVariant}
-                      />
-                      <TextInput
-                        value={formState.varietySearchQuery}
-                        onChangeText={(v) =>
-                          setFormState((prev) => ({ ...prev, varietySearchQuery: v }))
-                        }
-                        placeholder={t('farmForm.variety.searchPlaceholder')}
-                        placeholderTextColor={colors.surface[400]}
-                        style={{
-                          flex: 1,
-                          marginLeft: spacing[2],
-                          color: colors.surface[900],
-                          fontSize: fontSize.base,
-                        }}
-                        autoCapitalize="words"
-                        autoCorrect={false}
-                      />
-                    </View>
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                    />
                   </View>
+                </View>
 
+                <GuidedTourTarget
+                  targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
+                  style={{ flex: 1 }}
+                >
                   <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
                     {filteredVarieties.map((variety) => (
                       <Pressable
@@ -2061,8 +2084,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                       </View>
                     )}
                   </ScrollView>
-                </View>
-              </GuidedTourTarget>
+                </GuidedTourTarget>
+              </View>
             </View>
           </KeyboardAvoidingView>
         </ModalBackdrop>
@@ -2120,54 +2143,51 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                 </Pressable>
               </View>
 
-              <GuidedTourTarget
-                targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET}
-                style={{ flex: 1 }}
-              >
-                <View style={{ flex: 1 }}>
+              <View style={{ flex: 1 }}>
+                <View
+                  style={{
+                    paddingHorizontal: spacing[6],
+                    paddingTop: spacing[4],
+                    paddingBottom: spacing[2],
+                  }}
+                >
                   <View
                     style={{
-                      paddingHorizontal: spacing[6],
-                      paddingTop: spacing[4],
-                      paddingBottom: spacing[2],
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: colors.surface[200],
+                      borderRadius: borderRadius.xl,
+                      backgroundColor: colors.surface[50],
+                      paddingHorizontal: spacing[3],
+                      minHeight: 48,
                     }}
                   >
-                    <View
+                    <UISymbol
+                      name="magnifyingglass"
+                      size={18}
+                      color={m3.colorScheme.onSurfaceVariant}
+                    />
+                    <TextInput
+                      value={formState.cropSearchQuery}
+                      onChangeText={(v) =>
+                        setFormState((prev) => ({ ...prev, cropSearchQuery: v }))
+                      }
+                      placeholder={t('farmForm.cropPicker.searchPlaceholder')}
+                      placeholderTextColor={colors.surface[400]}
                       style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        borderWidth: 1,
-                        borderColor: colors.surface[200],
-                        borderRadius: borderRadius.xl,
-                        backgroundColor: colors.surface[50],
-                        paddingHorizontal: spacing[3],
-                        minHeight: 48,
+                        flex: 1,
+                        marginLeft: spacing[2],
+                        color: colors.surface[900],
+                        fontSize: fontSize.base,
                       }}
-                    >
-                      <UISymbol
-                        name="magnifyingglass"
-                        size={18}
-                        color={m3.colorScheme.onSurfaceVariant}
-                      />
-                      <TextInput
-                        value={formState.cropSearchQuery}
-                        onChangeText={(v) =>
-                          setFormState((prev) => ({ ...prev, cropSearchQuery: v }))
-                        }
-                        placeholder={t('farmForm.cropPicker.searchPlaceholder')}
-                        placeholderTextColor={colors.surface[400]}
-                        style={{
-                          flex: 1,
-                          marginLeft: spacing[2],
-                          color: colors.surface[900],
-                          fontSize: fontSize.base,
-                        }}
-                        autoCapitalize="words"
-                        autoCorrect={false}
-                      />
-                    </View>
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                    />
                   </View>
+                </View>
 
+                <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP_SHEET}>
                   <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
                     {filteredCropOptions.map((cropOption) => {
                       const selected =
@@ -2290,8 +2310,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                       </View>
                     )}
                   </ScrollView>
-                </View>
-              </GuidedTourTarget>
+                </GuidedTourTarget>
+              </View>
             </View>
           </KeyboardAvoidingView>
         </ModalBackdrop>

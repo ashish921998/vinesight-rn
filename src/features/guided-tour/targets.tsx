@@ -38,6 +38,10 @@ function notifyTargetChanged(targetId: string) {
   }
 }
 
+export function notifyGuidedTourTargetChanged(targetId: string) {
+  notifyTargetChanged(targetId);
+}
+
 export function subscribeGuidedTourTarget(targetId: string, listener: TargetListener): () => void {
   const targetListeners = listeners.get(targetId) ?? new Set<TargetListener>();
   targetListeners.add(listener);
@@ -128,12 +132,24 @@ export function GuidedTourTarget({
     if (!node) return null;
     return new Promise((resolve) => {
       try {
-        node.measureInWindow((x, y, width, height) => {
-          if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+        // Use measure() instead of measureInWindow() so that coordinates
+        // (pageX, pageY) are relative to the React Native root view — the
+        // same origin that the coachmark overlay (StyleSheet.absoluteFill)
+        // uses. measureInWindow returns screen-absolute coords which on
+        // Android include the status bar offset, causing a mismatch.
+        node.measure((_x, _y, width, height, pageX, pageY) => {
+          if (
+            !Number.isFinite(width) ||
+            !Number.isFinite(height) ||
+            !Number.isFinite(pageX) ||
+            !Number.isFinite(pageY) ||
+            width <= 0 ||
+            height <= 0
+          ) {
             resolve(null);
             return;
           }
-          resolve({ x, y, width, height });
+          resolve({ x: pageX, y: pageY, width, height });
         });
       } catch {
         resolve(null);
