@@ -6,7 +6,7 @@
  * All state, effects and handlers live in `use-farm-form.ts`.
  */
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -31,7 +31,6 @@ import { guidedTourEmit } from '@/features/guided-tour';
 export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const form = useFarmForm(mode, farmId, onClose);
   const { t, colors, m3 } = form;
-  const scrollYRef = useRef(0);
 
   if (form.isEdit && form.farmLoading) {
     return (
@@ -111,7 +110,7 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           scrollEnabled: !form.isGuidedTourScrollLocked,
           keyboardDismissMode: form.isGuidedTourScrollLocked ? 'none' : 'on-drag',
           onScroll: (event) => {
-            scrollYRef.current = event.nativeEvent.contentOffset.y;
+            form.setFormScrollY(event.nativeEvent.contentOffset.y);
           },
           scrollEventThrottle: 16,
         }}

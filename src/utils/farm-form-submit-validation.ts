@@ -1,5 +1,5 @@
 const MAX_OPTIONAL_NUMERIC_VALUE = 1_000_000;
-export const NUMERIC_6_4_MAX_ABS = 10_000;
+export const MAX_SOIL_FIELD_ABS = 10_000;
 
 export interface OptionalFarmNumberRawValues {
   vineSpacing: string;
@@ -56,7 +56,7 @@ const getPrecisionOverflowFieldLabels = (
       (item) =>
         item.value !== undefined &&
         Number.isFinite(item.value) &&
-        Math.abs(item.value) > NUMERIC_6_4_MAX_ABS,
+        Math.abs(item.value) > MAX_SOIL_FIELD_ABS,
     )
     .map((item) => item.label);
 };

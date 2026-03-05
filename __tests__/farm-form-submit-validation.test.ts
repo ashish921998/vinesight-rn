@@ -1,5 +1,5 @@
 import {
-  NUMERIC_6_4_MAX_ABS,
+  MAX_SOIL_FIELD_ABS,
   validateAndParseOptionalFarmNumbers,
 } from '@/utils/farm-form-submit-validation';
 
@@ -41,17 +41,17 @@ describe('validateAndParseOptionalFarmNumbers', () => {
     const result = validateAndParseOptionalFarmNumbers(
       {
         ...baseRawValues,
-        bulkDensity: String(NUMERIC_6_4_MAX_ABS),
-        cationExchangeCapacity: String(NUMERIC_6_4_MAX_ABS),
-        soilWaterRetention: String(NUMERIC_6_4_MAX_ABS),
+        bulkDensity: String(MAX_SOIL_FIELD_ABS),
+        cationExchangeCapacity: String(MAX_SOIL_FIELD_ABS),
+        soilWaterRetention: String(MAX_SOIL_FIELD_ABS),
       },
       labels,
     );
 
     expect(result.error).toBeUndefined();
-    expect(result.parsed.bulkDensity).toBe(NUMERIC_6_4_MAX_ABS);
-    expect(result.parsed.cationExchangeCapacity).toBe(NUMERIC_6_4_MAX_ABS);
-    expect(result.parsed.soilWaterRetention).toBe(NUMERIC_6_4_MAX_ABS);
+    expect(result.parsed.bulkDensity).toBe(MAX_SOIL_FIELD_ABS);
+    expect(result.parsed.cationExchangeCapacity).toBe(MAX_SOIL_FIELD_ABS);
+    expect(result.parsed.soilWaterRetention).toBe(MAX_SOIL_FIELD_ABS);
   });
 
   it('returns invalid numeric when a non-number is provided', () => {

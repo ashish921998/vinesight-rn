@@ -286,7 +286,7 @@ export function GuidedTourCoachmark({
           targetTopEdge - TOOLTIP_TOP_CLEARANCE >=
             screenHeight - targetBottom - TOOLTIP_BOTTOM_CLEARANCE
           ? TOOLTIP_TOP_CLEARANCE
-          : maxAllowedTop
+          : Math.min(maxAllowedTop, Math.max(TOOLTIP_TOP_CLEARANCE, maxAllowedTop))
     : clampedTop;
   const bubbleLeft = tooltipPlacement === 'top' ? spacing[4] : tooltipLeft;
   const bubbleRight = spacing[4];

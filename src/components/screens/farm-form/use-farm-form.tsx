@@ -25,7 +25,7 @@ import * as Sentry from '@sentry/react-native';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import {
-  NUMERIC_6_4_MAX_ABS,
+  MAX_SOIL_FIELD_ABS,
   validateAndParseOptionalFarmNumbers,
 } from '@/utils/farm-form-submit-validation';
 import { getCropVisual, type KnownCrop } from '@/utils/farm-crop-visuals';
@@ -102,6 +102,9 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   const guidedFocusPrimaryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const guidedFocusSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formScrollYRef = useRef(0);
+  const setFormScrollY = useCallback((y: number) => {
+    formScrollYRef.current = y;
+  }, []);
   const guidedTourLastFocusFieldRef = useRef<AddFarmFocusField | null>(null);
   const pendingGuidedScrollRef = useRef<React.RefObject<TextInput | null> | null>(null);
 
@@ -743,8 +746,8 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
         t('common.error'),
         t('farmForm.overflowError', {
           fields: overflowFields,
-          max: NUMERIC_6_4_MAX_ABS,
-          defaultValue: `${overflowFields} must be less than or equal to ${NUMERIC_6_4_MAX_ABS}.`,
+          max: MAX_SOIL_FIELD_ABS,
+          defaultValue: `${overflowFields} must be less than or equal to ${MAX_SOIL_FIELD_ABS}.`,
         }),
       );
       return;
@@ -811,13 +814,24 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       } catch (_error: unknown) {
         const errorMessage = getErrorMessage(_error, t('common.errors.failedToUpdateFarm'));
         const errorMeta = getFarmErrorMeta(_error);
-        console.error('Failed to update farm:', _error, { farmId, updates, errorMeta });
+        const sanitizedUpdates = {
+          fields: Object.keys(updates),
+          fieldCount: Object.keys(updates).length,
+          hasLocation: 'location' in updates,
+          hasAddress: 'address' in updates,
+        };
+        console.error('Failed to update farm:', _error, {
+          farmId,
+          updates: sanitizedUpdates,
+          errorMeta,
+        });
         telemetry.capture('farm_update_failed', {
           farm_id: farmId,
           code: errorMeta.code ?? null,
           message: errorMeta.message ?? errorMessage,
           details: errorMeta.details ?? null,
           hint: errorMeta.hint ?? null,
+          update_field_count: sanitizedUpdates.fieldCount,
         });
         if (shouldCaptureFarmErrorInSentry(errorMeta)) {
           Sentry.withScope((scope) => {
@@ -825,7 +839,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
             scope.setTag('operation', 'update');
             if (errorMeta.code) scope.setTag('db_code', errorMeta.code);
             scope.setExtra('farm_id', farmId);
-            scope.setExtra('payload', updates);
+            scope.setExtra('payload', sanitizedUpdates);
             scope.setExtra('db_error', errorMeta);
             Sentry.captureException(_error instanceof Error ? _error : new Error(errorMessage));
           });
@@ -1008,6 +1022,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     // Refs
     formScrollViewRef,
     formScrollYRef,
+    setFormScrollY,
     nameInputRef,
     regionInputRef,
     areaInputRef,
