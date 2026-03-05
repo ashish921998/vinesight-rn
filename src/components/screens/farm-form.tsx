@@ -255,6 +255,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
   const clayInputRef = useRef<TextInput>(null);
   const previousSelectedCropRef = useRef<CropType | null>(null);
   const guidedTourScrollLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const guidedFocusPrimaryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const guidedFocusSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formScrollYRef = useRef(0);
   const guidedTourLastFocusFieldRef = useRef<AddFarmFocusField | null>(null);
   const pendingGuidedScrollRef = useRef<React.RefObject<TextInput | null> | null>(null);
@@ -313,7 +315,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
           : field === 'region'
             ? GUIDED_TOUR_TARGET_IDS.ADD_FARM_REGION
             : GUIDED_TOUR_TARGET_IDS.ADD_FARM_AREA;
-      setTimeout(() => {
+      if (guidedFocusPrimaryTimerRef.current) {
+        clearTimeout(guidedFocusPrimaryTimerRef.current);
+      }
+      if (guidedFocusSettleTimerRef.current) {
+        clearTimeout(guidedFocusSettleTimerRef.current);
+      }
+      guidedFocusPrimaryTimerRef.current = setTimeout(() => {
+        guidedFocusPrimaryTimerRef.current = null;
         notifyGuidedTourTargetChanged(targetId);
         scrollInputIntoView(ref);
         ref.current?.focus();
@@ -325,7 +334,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         // Fire a second notification at 400ms so the ring corrects itself once
         // the keyboard, window resize, and any implicit ScrollView scroll have
         // all fully settled.
-        setTimeout(() => {
+        guidedFocusSettleTimerRef.current = setTimeout(() => {
+          guidedFocusSettleTimerRef.current = null;
           notifyGuidedTourTargetChanged(targetId);
         }, 400);
       }
@@ -375,6 +385,14 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
       if (guidedTourScrollLockTimeoutRef.current) {
         clearTimeout(guidedTourScrollLockTimeoutRef.current);
         guidedTourScrollLockTimeoutRef.current = null;
+      }
+      if (guidedFocusPrimaryTimerRef.current) {
+        clearTimeout(guidedFocusPrimaryTimerRef.current);
+        guidedFocusPrimaryTimerRef.current = null;
+      }
+      if (guidedFocusSettleTimerRef.current) {
+        clearTimeout(guidedFocusSettleTimerRef.current);
+        guidedFocusSettleTimerRef.current = null;
       }
       unsubFocus();
       unsubDismissKeyboard();
@@ -1933,7 +1951,8 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
             keyboardVerticalOffset={0}
             style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
           >
-            <View
+            <GuidedTourTarget
+              targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
               onStartShouldSetResponder={() => true}
               style={{
                 backgroundColor: colors.surface[100],
@@ -2028,65 +2047,60 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
                   </View>
                 </View>
 
-                <GuidedTourTarget
-                  targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}
-                  style={{ flex: 1 }}
-                >
-                  <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-                    {filteredVarieties.map((variety) => (
-                      <Pressable
-                        key={variety}
+                <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+                  {filteredVarieties.map((variety) => (
+                    <Pressable
+                      key={variety}
+                      style={{
+                        paddingHorizontal: spacing[6],
+                        paddingVertical: spacing[4],
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.surface[100],
+                        backgroundColor:
+                          formState.cropVariety === variety
+                            ? colors.surface[50]
+                            : colors.surface[100],
+                      }}
+                      onPress={() => handleSelectVariety(variety)}
+                    >
+                      <View
                         style={{
-                          paddingHorizontal: spacing[6],
-                          paddingVertical: spacing[4],
-                          borderBottomWidth: 1,
-                          borderBottomColor: colors.surface[100],
-                          backgroundColor:
-                            formState.cropVariety === variety
-                              ? colors.surface[50]
-                              : colors.surface[100],
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                         }}
-                        onPress={() => handleSelectVariety(variety)}
                       >
-                        <View
+                        <Text
                           style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
+                            fontSize: fontSize.base,
+                            color:
+                              formState.cropVariety === variety
+                                ? colors.surface[900]
+                                : colors.surface[700],
+                            fontWeight:
+                              formState.cropVariety === variety
+                                ? fontWeight.semibold
+                                : fontWeight.normal,
                           }}
                         >
-                          <Text
-                            style={{
-                              fontSize: fontSize.base,
-                              color:
-                                formState.cropVariety === variety
-                                  ? colors.surface[900]
-                                  : colors.surface[700],
-                              fontWeight:
-                                formState.cropVariety === variety
-                                  ? fontWeight.semibold
-                                  : fontWeight.normal,
-                            }}
-                          >
-                            {getVarietyLabel(variety)}
-                          </Text>
-                          {formState.cropVariety === variety && (
-                            <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
-                          )}
-                        </View>
-                      </Pressable>
-                    ))}
-                    {filteredVarieties.length === 0 && (
-                      <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
-                        <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-                          {t('common.noResultsFound')}
+                          {getVarietyLabel(variety)}
                         </Text>
+                        {formState.cropVariety === variety && (
+                          <UISymbol name="checkmark" size={20} color={colors.primary[500]} />
+                        )}
                       </View>
-                    )}
-                  </ScrollView>
-                </GuidedTourTarget>
+                    </Pressable>
+                  ))}
+                  {filteredVarieties.length === 0 && (
+                    <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
+                      <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+                        {t('common.noResultsFound')}
+                      </Text>
+                    </View>
+                  )}
+                </ScrollView>
               </View>
-            </View>
+            </GuidedTourTarget>
           </KeyboardAvoidingView>
         </ModalBackdrop>
       )}

@@ -336,6 +336,13 @@ export function useCoachTargetMeasurement(params: CoachTargetParams): CoachTarge
     let seasonStartRetryTimer: ReturnType<typeof setTimeout> | null = null;
     const measureStartedAt = Date.now();
 
+    // Reset the add_log retry counter at the start of each effect run.
+    // The inner `attempt()` guard only resets when showEventKey changes; but
+    // when the effect re-runs due to measureTrigger (e.g. keyboard show/hide)
+    // with the same key, the counter would otherwise accumulate across runs and
+    // exhaust the retry budget prematurely.
+    addLogRetryCountRef.current = 0;
+
     const showPhaseKey = isSeasonStartPhase
       ? `season_${seasonFormPhase}`
       : isAddLogSavePhase
