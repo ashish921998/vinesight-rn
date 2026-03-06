@@ -137,7 +137,7 @@ export default function OTPVerificationScreen() {
       router.back();
       return;
     }
-    router.replace(isPhoneOTP ? '/(auth)/phone-login' : '/(auth)/login');
+    router.replace('/(auth)/login');
   };
 
   const containerStyle: ViewStyle = {

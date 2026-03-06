@@ -156,10 +156,14 @@ export default function PhoneLoginScreen() {
   };
 
   const toggleMode = () => {
+    switchToMode(phoneAuthMode === 'signup' ? 'signin' : 'signup');
+  };
+
+  const switchToMode = (nextMode: PhoneAuthMode) => {
     if (isLoading) return;
     clearError();
     setLocalPhoneError(null);
-    setPhoneAuthMode((prev) => (prev === 'signup' ? 'signin' : 'signup'));
+    setPhoneAuthMode(nextMode);
   };
 
   const isSignUp = phoneAuthMode === 'signup';
@@ -455,12 +459,7 @@ export default function PhoneLoginScreen() {
                     <Pressable
                       key={nextMode}
                       disabled={isLoading}
-                      onPress={() => {
-                        if (isLoading) return;
-                        clearError();
-                        setLocalPhoneError(null);
-                        setPhoneAuthMode(nextMode);
-                      }}
+                      onPress={() => switchToMode(nextMode)}
                       style={({ pressed }) => [
                         modeToggleButtonStyle,
                         {
