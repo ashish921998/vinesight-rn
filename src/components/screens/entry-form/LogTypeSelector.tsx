@@ -13,12 +13,14 @@ interface LogTypeSelectorProps {
   selectedLogType: LogTypeId | null;
   onSelect: (type: LogTypeId) => void;
   hasPendingDrafts?: boolean;
+  hintText?: string;
 }
 
 export function LogTypeSelector({
   selectedLogType,
   onSelect,
   hasPendingDrafts = false,
+  hintText,
 }: LogTypeSelectorProps) {
   const m3 = useM3();
   const colors = useThemeColors();
@@ -33,8 +35,8 @@ export function LogTypeSelector({
       targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_TYPE_SELECTOR}
       style={{
         backgroundColor: colors.surface[100],
-        borderRadius: 16,
-        padding: 16,
+        borderRadius: 20,
+        padding: 18,
         marginBottom: 16,
         borderWidth: showInlineGuidance ? 2 : 0,
         borderColor: showInlineGuidance
@@ -47,18 +49,37 @@ export function LogTypeSelector({
         elevation: showInlineGuidance ? 4 : 0,
       }}
     >
-      <Text
-        selectable
+      <View style={{ marginBottom: 14 }}>
+        <Text
+          selectable
+          style={{
+            fontSize: 20,
+            fontWeight: '700',
+            color: m3.colorScheme.onSurface,
+          }}
+        >
+          {t('entryForm.activityType')}
+        </Text>
+        <Text
+          selectable
+          style={{
+            marginTop: 6,
+            fontSize: 14,
+            lineHeight: 20,
+            color: m3.colorScheme.onSurfaceVariant,
+          }}
+        >
+          {hintText ?? t('entryForm.selectActivityTypeHint')}
+        </Text>
+      </View>
+      <View
         style={{
-          fontSize: 16,
-          fontWeight: '600',
-          color: m3.colorScheme.onSurface,
-          marginBottom: 12,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          rowGap: 10,
         }}
       >
-        {t('entryForm.activityType')}
-      </Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {ACTIVITY_TYPES.map((logType: LogType) => {
           const isSelected = selectedLogType === logType.id;
           const emphasizeSelectedGuidedCard = isGuidedAddLogStep && isSelected;
@@ -72,18 +93,21 @@ export function LogTypeSelector({
                 onSelect(selectedType);
               }}
               style={{
-                width: '18%',
-                paddingVertical: 10,
+                width: '31.5%',
+                minHeight: 108,
+                paddingHorizontal: 10,
+                paddingVertical: 12,
                 alignItems: 'center',
-                borderRadius: 12,
+                justifyContent: 'center',
+                borderRadius: 16,
                 borderWidth: emphasizeSelectedGuidedCard ? 2 : 1,
                 backgroundColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.08)
+                  ? colorWithOpacity(m3.colorScheme.primary, 0.1)
                   : emphasizeAllGuidedCards
                     ? colorWithOpacity(m3.colorScheme.primary, 0.03)
                     : colors.surface[50],
                 borderColor: isSelected
-                  ? colorWithOpacity(m3.colorScheme.primary, 0.25)
+                  ? colorWithOpacity(m3.colorScheme.primary, 0.28)
                   : emphasizeAllGuidedCards
                     ? colorWithOpacity(m3.colorScheme.primary, 0.25)
                     : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
@@ -95,23 +119,40 @@ export function LogTypeSelector({
                 elevation: emphasizeSelectedGuidedCard ? 5 : 0,
               }}
             >
+              {isSelected ? (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    width: 22,
+                    height: 22,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.14),
+                  }}
+                >
+                  <AppIcon name="checkmark-circle" size={14} color={m3.colorScheme.primary} />
+                </View>
+              ) : null}
               <View
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 42,
+                  height: 42,
                   borderRadius: 999,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 6,
+                  marginBottom: 10,
                   backgroundColor: isSelected ? `${logType.color}20` : `${logType.color}12`,
                 }}
               >
-                <AppIcon name={logType.icon} size={16} color={logType.color} />
+                <AppIcon name={logType.icon} size={20} color={logType.color} />
               </View>
               <Text
                 selectable
                 style={[
-                  { fontSize: 10, fontWeight: '600', textAlign: 'center', lineHeight: 12 },
+                  { fontSize: 12, fontWeight: '700', textAlign: 'center', lineHeight: 16 },
                   { color: isSelected ? m3.colorScheme.primary : m3.colorScheme.onSurface },
                 ]}
                 numberOfLines={2}

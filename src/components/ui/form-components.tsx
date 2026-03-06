@@ -21,7 +21,7 @@ import {
 import { Symbol as IconSymbol } from '@/components/ui/symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
-import { useM3, useThemeColors } from '@/styles/use-theme';
+import { useIsDark, useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { triggerHaptic } from '@/utils/haptics';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
@@ -45,6 +45,14 @@ interface FormModalProps {
   saveButtonTargetId?: string;
 }
 
+function useCloseIconColor() {
+  const colors = useThemeColors();
+  const isDark = useIsDark();
+  const m3 = useM3();
+
+  return isDark ? colorWithOpacity(m3.colorScheme.onSurface, 0.92) : colors.surface[300];
+}
+
 export function FormModal({
   visible = true,
   onClose,
@@ -66,6 +74,7 @@ export function FormModal({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const closeIconColor = useCloseIconColor();
   const resolvedSaveLabel = saveLabel ?? t('common.next');
   const {
     style: scrollStyle,
@@ -150,7 +159,7 @@ export function FormModal({
             accessibilityLabel={t('common.close')}
             style={{ width: 40, alignItems: 'flex-end' }}
           >
-            <IconSymbol name="xmark.circle.fill" size={26} color={colors.surface[300]} />
+            <IconSymbol name="xmark.circle.fill" size={26} color={closeIconColor} />
           </Pressable>
         </View>
       </View>
@@ -241,6 +250,7 @@ interface FullScreenFormProps {
   showResetButton?: boolean;
   onReset?: () => void;
   saveButtonTargetId?: string;
+  keyboardAvoidingEnabled?: boolean;
   scrollViewRef?: React.Ref<ScrollView>;
   scrollViewProps?: ScrollViewProps;
   scrollViewStyle?: StyleProp<ViewStyle>;
@@ -258,6 +268,7 @@ export function FullScreenForm({
   showResetButton = false,
   onReset,
   saveButtonTargetId,
+  keyboardAvoidingEnabled = true,
   scrollViewRef,
   scrollViewProps,
   scrollViewStyle,
@@ -266,6 +277,7 @@ export function FullScreenForm({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const closeIconColor = useCloseIconColor();
   const resolvedSaveLabel = saveLabel ?? t('common.next');
   const {
     style: scrollStyle,
@@ -347,13 +359,14 @@ export function FullScreenForm({
             accessibilityLabel={t('common.close')}
             style={{ width: 40, alignItems: 'flex-end' }}
           >
-            <IconSymbol name="xmark.circle.fill" size={26} color={colors.surface[300]} />
+            <IconSymbol name="xmark.circle.fill" size={26} color={closeIconColor} />
           </Pressable>
         </View>
       </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        enabled={keyboardAvoidingEnabled}
         style={{ flex: 1 }}
       >
         <ScrollView

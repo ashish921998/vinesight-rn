@@ -534,9 +534,9 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="ai-chat" />
-                <Stack.Screen name="add-activity" />
-                <Stack.Screen name="add-entry" />
-                <Stack.Screen name="add-task" />
+                <Stack.Screen name="add-activity" options={{ presentation: 'fullScreenModal' }} />
+                <Stack.Screen name="add-entry" options={{ presentation: 'fullScreenModal' }} />
+                <Stack.Screen name="add-task" options={{ presentation: 'fullScreenModal' }} />
                 <Stack.Screen name="add-worker" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="add-soil-profile" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="add-stock" options={{ presentation: 'modal' }} />
@@ -546,9 +546,15 @@ export default Sentry.wrap(function RootLayout() {
                 />
                 <Stack.Screen name="add-lab-test" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="water-level" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="log-entry/add" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="log-entry/edit/[id]" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="edit-activity/[id]" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="log-entry/add" options={{ presentation: 'fullScreenModal' }} />
+                <Stack.Screen
+                  name="log-entry/edit/[id]"
+                  options={{ presentation: 'fullScreenModal' }}
+                />
+                <Stack.Screen
+                  name="edit-activity/[id]"
+                  options={{ presentation: 'fullScreenModal' }}
+                />
                 <Stack.Screen name="add-note" />
                 <Stack.Screen name="analytics" />
                 <Stack.Screen name="auth/callback" />

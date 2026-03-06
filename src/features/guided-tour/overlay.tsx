@@ -1,7 +1,14 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 
-export function GuidedTourOverlay({ children }: { children: React.ReactNode }) {
+interface GuidedTourOverlayProps {
+  children: React.ReactNode;
+  visible?: boolean;
+}
+
+export function GuidedTourOverlay({ children, visible = true }: GuidedTourOverlayProps) {
+  if (!visible) return null;
+
   return (
     <View
       pointerEvents="box-none"

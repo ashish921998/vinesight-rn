@@ -526,6 +526,7 @@ export default function WarehouseScreen() {
               const isLowStock = item.reorder_quantity && item.quantity <= item.reorder_quantity;
               const itemValue = item.quantity * item.unit_price;
               const itemColor = item.type === 'fertilizer' ? fertilizerColor : sprayColor;
+              const itemAccessibilityName = item.name || item.id?.toString() || 'item';
 
               return (
                 <View
@@ -537,128 +538,236 @@ export default function WarehouseScreen() {
                     backgroundColor: isLowStock
                       ? colorWithOpacity(lowStockColor, 0.08)
                       : glassSurface,
-                    borderColor: isLowStock ? colorWithOpacity(lowStockColor, 0.3) : 'transparent',
-                    borderWidth: isLowStock ? 1 : 0,
+                    borderColor: isLowStock
+                      ? colorWithOpacity(lowStockColor, 0.3)
+                      : colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
+                    borderWidth: 1,
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <View
-                          style={{
-                            paddingHorizontal: 10,
-                            paddingVertical: spacing[1],
-                            borderRadius: borderRadius.full,
-                            backgroundColor:
-                              item.type === 'fertilizer'
-                                ? colorWithOpacity(fertilizerColor, 0.2)
-                                : colorWithOpacity(sprayColor, 0.2),
-                          }}
-                        >
-                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Icon
-                              name={resolveSymbolIconName(
-                                item.type === 'fertilizer'
-                                  ? ICON_REGISTRY.fertigation
-                                  : ICON_REGISTRY.spray,
-                              )}
-                              size={12}
-                              color={itemColor}
-                            />
-                            <Text
-                              style={{
-                                color: itemColor,
-                                fontSize: fontSize.xs,
-                                fontWeight: fontWeight.medium,
-                                marginLeft: spacing[1],
-                              }}
-                            >
-                              {item.type === 'fertilizer'
-                                ? t('warehouse.itemTypes.fertilizer')
-                                : t('warehouse.itemTypes.spray')}
-                            </Text>
-                          </View>
-                        </View>
-                        {isLowStock && (
-                          <View
-                            style={{
-                              marginLeft: spacing[2],
-                              paddingHorizontal: spacing[2],
-                              paddingVertical: 2,
-                              borderRadius: borderRadius.full,
-                              backgroundColor: colorWithOpacity(lowStockColor, 0.2),
-                            }}
-                          >
-                            <Text style={{ color: lowStockColor }}>{t('common.labels.low')}</Text>
-                          </View>
-                        )}
-                        <View style={{ flexDirection: 'row', gap: spacing[2], marginLeft: 'auto' }}>
-                          <Pressable
-                            onPress={() => handleEditItem(item)}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          >
-                            <Icon name="pencil" size={20} color={m3.colorScheme.primary} />
-                          </Pressable>
-                          <Pressable
-                            onPress={() => handleDeleteItem(item)}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          >
-                            <Icon name="trash" size={20} color={m3.colorScheme.error} />
-                          </Pressable>
-                        </View>
-                      </View>
-                      <Text
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: spacing[3],
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: spacing[2],
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      <View
                         style={{
-                          color: colors.surface[900],
-                          fontSize: fontSize.base,
-                          fontWeight: fontWeight.semibold,
-                          marginTop: spacing[2],
+                          paddingHorizontal: 12,
+                          paddingVertical: spacing[1],
+                          borderRadius: borderRadius.full,
+                          backgroundColor:
+                            item.type === 'fertilizer'
+                              ? colorWithOpacity(fertilizerColor, 0.16)
+                              : colorWithOpacity(sprayColor, 0.16),
+                          borderWidth: 1,
+                          borderColor: colorWithOpacity(itemColor, 0.18),
+                          flexShrink: 1,
+                          minWidth: 0,
                         }}
                       >
-                        {item.name}
-                      </Text>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            flexShrink: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <Icon
+                            name={resolveSymbolIconName(
+                              item.type === 'fertilizer'
+                                ? ICON_REGISTRY.fertigation
+                                : ICON_REGISTRY.spray,
+                            )}
+                            size={12}
+                            color={itemColor}
+                          />
+                          <Text
+                            style={{
+                              color: itemColor,
+                              fontSize: fontSize.xs,
+                              fontWeight: fontWeight.semibold,
+                              marginLeft: spacing[1],
+                              flexShrink: 1,
+                            }}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {item.type === 'fertilizer'
+                              ? t('warehouse.itemTypes.fertilizer')
+                              : t('warehouse.itemTypes.spray')}
+                          </Text>
+                        </View>
+                      </View>
+                      {isLowStock && (
+                        <View
+                          style={{
+                            paddingHorizontal: spacing[2],
+                            paddingVertical: 3,
+                            borderRadius: borderRadius.full,
+                            backgroundColor: colorWithOpacity(lowStockColor, 0.16),
+                            borderWidth: 1,
+                            borderColor: colorWithOpacity(lowStockColor, 0.24),
+                            flexShrink: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: lowStockColor,
+                              fontSize: fontSize.xs,
+                              fontWeight: fontWeight.semibold,
+                              flexShrink: 1,
+                            }}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {t('common.labels.low')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                      <Pressable
+                        onPress={() => handleEditItem(item)}
+                        accessible
+                        accessibilityRole="button"
+                        accessibilityLabel={t('common.a11y.editWithName', {
+                          name: itemAccessibilityName,
+                        })}
+                        accessibilityHint={t('common.a11y.opensEditForm')}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: borderRadius.full,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.1),
+                        }}
+                      >
+                        <Icon name="pencil" size={17} color={m3.colorScheme.primary} />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => handleDeleteItem(item)}
+                        accessible
+                        accessibilityRole="button"
+                        accessibilityLabel={t('common.a11y.deleteWithName', {
+                          name: itemAccessibilityName,
+                        })}
+                        accessibilityHint={t('common.a11y.deletesThisItem')}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: borderRadius.full,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
+                        }}
+                      >
+                        <Icon name="trash" size={17} color={m3.colorScheme.error} />
+                      </Pressable>
                     </View>
                   </View>
 
-                  <View style={{ flexDirection: 'row', marginTop: spacing[3] }}>
-                    <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: colors.surface[900],
+                      fontSize: fontSize.lg,
+                      fontWeight: fontWeight.semibold,
+                      marginTop: spacing[3],
+                    }}
+                    numberOfLines={2}
+                  >
+                    {item.name}
+                  </Text>
+
+                  <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[3] }}>
+                    <View
+                      style={{
+                        flex: 1,
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: spacing[3],
+                        borderRadius: borderRadius.xl,
+                        backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
+                        borderWidth: 1,
+                        borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
+                      }}
+                    >
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
                         {t('warehouse.labels.quantity')}
                       </Text>
                       <Text
                         style={{
                           color: colors.surface[900],
-                          fontSize: fontSize.sm,
+                          fontSize: fontSize.base,
                           fontWeight: fontWeight.semibold,
+                          marginTop: 2,
                         }}
                       >
                         {item.quantity} {item.unit}
                       </Text>
                     </View>
-                    <View style={{ flex: 1, alignItems: 'center' }}>
+                    <View
+                      style={{
+                        flex: 1,
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: spacing[3],
+                        borderRadius: borderRadius.xl,
+                        backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
+                        borderWidth: 1,
+                        borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
+                      }}
+                    >
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
                         {t('warehouse.labels.unitPrice')}
                       </Text>
                       <Text
                         style={{
                           color: colors.surface[900],
-                          fontSize: fontSize.sm,
+                          fontSize: fontSize.base,
                           fontWeight: fontWeight.medium,
+                          marginTop: 2,
                         }}
+                        numberOfLines={1}
                       >
                         {formatCurrency(item.unit_price, currency)}/{item.unit}
                       </Text>
                     </View>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                    <View
+                      style={{
+                        flex: 1,
+                        paddingHorizontal: spacing[3],
+                        paddingVertical: spacing[3],
+                        borderRadius: borderRadius.xl,
+                        backgroundColor: colorWithOpacity(itemColor, 0.08),
+                        borderWidth: 1,
+                        borderColor: colorWithOpacity(itemColor, 0.16),
+                      }}
+                    >
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
                         {t('warehouse.labels.totalValue')}
                       </Text>
                       <Text
                         style={{
-                          color: m3.colorScheme.primary,
-                          fontSize: fontSize.sm,
+                          color: itemColor,
+                          fontSize: fontSize.base,
                           fontWeight: fontWeight.semibold,
+                          marginTop: 2,
                         }}
+                        numberOfLines={1}
                       >
                         {formatCurrency(itemValue, currency)}
                       </Text>

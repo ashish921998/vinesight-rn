@@ -56,6 +56,8 @@ export const hi = {
     a11y: {
       editWithName: '{{name}} संपादित करें',
       deleteWithName: '{{name}} हटाएं',
+      opensEditForm: 'संपादन फ़ॉर्म खोलता है',
+      deletesThisItem: 'इस आइटम को हटाता है',
     },
     actions: {
       takePhoto: 'फोटो लें',
@@ -422,6 +424,18 @@ export const hi = {
       banana: {
         label: 'केला',
         sublabel: 'पौधे',
+      },
+      tomato: {
+        label: 'टमाटर',
+        sublabel: 'पौधे',
+      },
+      sugarcane: {
+        label: 'गन्ना',
+        sublabel: 'फसल',
+      },
+      guava: {
+        label: 'अमरूद',
+        sublabel: 'पेड़',
       },
       other: {
         label: 'अन्य',

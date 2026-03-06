@@ -1,5 +1,6 @@
 const MAX_OPTIONAL_NUMERIC_VALUE = 1_000_000;
-export const NUMERIC_6_4_MAX_ABS = 99.9999;
+export const MAX_STANDARD_SOIL_FIELD_ABS = 99.9999;
+export const MAX_SOIL_WATER_RETENTION_ABS = 10_000;
 
 export interface OptionalFarmNumberRawValues {
   vineSpacing: string;
@@ -30,7 +31,11 @@ export interface ParsedOptionalFarmNumbers {
 export type OptionalFarmNumberValidationError =
   | { code: 'invalid_numeric' }
   | { code: 'out_of_bounds' }
-  | { code: 'precision_overflow'; fields: string[] };
+  | {
+      code: 'precision_overflow';
+      fields: string[];
+      limits: Array<{ label: string; max: number }>;
+    };
 
 export interface OptionalFarmNumberValidationResult {
   parsed: ParsedOptionalFarmNumbers;
@@ -48,17 +53,15 @@ const parseOptionalNumber = (raw: string): number | undefined | null => {
   return parsed;
 };
 
-const getPrecisionOverflowFieldLabels = (
-  values: Array<{ label: string; value: number | undefined }>,
-): string[] => {
+const getPrecisionOverflowFields = (
+  values: Array<{ label: string; value: number | undefined; max: number }>,
+): Array<{ label: string; max: number }> => {
   return values
     .filter(
       (item) =>
-        item.value !== undefined &&
-        Number.isFinite(item.value) &&
-        Math.abs(item.value) > NUMERIC_6_4_MAX_ABS,
+        item.value !== undefined && Number.isFinite(item.value) && Math.abs(item.value) > item.max,
     )
-    .map((item) => item.label);
+    .map((item) => ({ label: item.label, max: item.max }));
 };
 
 export const validateAndParseOptionalFarmNumbers = (
@@ -102,16 +105,32 @@ export const validateAndParseOptionalFarmNumbers = (
     return { parsed, error: { code: 'out_of_bounds' } };
   }
 
-  const overflowFieldLabels = getPrecisionOverflowFieldLabels([
-    { label: labels.bulkDensity, value: parsed.bulkDensity },
-    { label: labels.cationExchangeCapacity, value: parsed.cationExchangeCapacity },
-    { label: labels.soilWaterRetention, value: parsed.soilWaterRetention },
+  const overflowFields = getPrecisionOverflowFields([
+    {
+      label: labels.bulkDensity,
+      value: parsed.bulkDensity,
+      max: MAX_STANDARD_SOIL_FIELD_ABS,
+    },
+    {
+      label: labels.cationExchangeCapacity,
+      value: parsed.cationExchangeCapacity,
+      max: MAX_STANDARD_SOIL_FIELD_ABS,
+    },
+    {
+      label: labels.soilWaterRetention,
+      value: parsed.soilWaterRetention,
+      max: MAX_SOIL_WATER_RETENTION_ABS,
+    },
   ]);
 
-  if (overflowFieldLabels.length > 0) {
+  if (overflowFields.length > 0) {
     return {
       parsed,
-      error: { code: 'precision_overflow', fields: overflowFieldLabels },
+      error: {
+        code: 'precision_overflow',
+        fields: overflowFields.map((field) => field.label),
+        limits: overflowFields,
+      },
     };
   }
 

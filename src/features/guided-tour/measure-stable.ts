@@ -1,10 +1,34 @@
-import { InteractionManager } from 'react-native';
+import { InteractionManager, Platform } from 'react-native';
 
 /**
  * Wait for all pending interactions (animations, layout) to finish,
  * then wait two animation frames for layout to commit.
  */
 function waitForSettledLayout(): Promise<void> {
+  // On Android, runAfterInteractions can delay too long when tour animations
+  // are active. Use a bounded InteractionManager that falls back to a timeout
+  // so we don't stall indefinitely but still wait long enough for keyboard and
+  // navigation transitions to settle (~150ms max).
+  if (Platform.OS === 'android') {
+    return new Promise((resolve) => {
+      let resolved = false;
+      const done = () => {
+        if (resolved) return;
+        resolved = true;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            resolve();
+          });
+        });
+      };
+      const timeout = setTimeout(done, 150);
+      InteractionManager.runAfterInteractions(() => {
+        clearTimeout(timeout);
+        done();
+      });
+    });
+  }
+
   return new Promise((resolve) => {
     InteractionManager.runAfterInteractions(() => {
       requestAnimationFrame(() => {

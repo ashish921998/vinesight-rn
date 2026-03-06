@@ -22,6 +22,7 @@ interface IrrigationFormProps {
   farmArea?: number;
   systemDischarge?: number;
   onInputFocus?: TextInputProps['onFocus'];
+  showHeader?: boolean;
 }
 
 export function IrrigationForm({
@@ -30,6 +31,7 @@ export function IrrigationForm({
   farmArea,
   systemDischarge,
   onInputFocus,
+  showHeader = true,
 }: IrrigationFormProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -48,57 +50,44 @@ export function IrrigationForm({
 
   return (
     <View>
-      {/* Header with icon */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: borderRadius.full,
-            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.16),
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: spacing[3],
-          }}
-        >
-          <SymbolIcon
-            name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
-            size={20}
-            color={m3.colorScheme.primary}
-          />
-        </View>
-        <View>
-          <Text
+      {showHeader ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[4] }}>
+          <View
             style={{
-              fontSize: fontSize.lg,
-              fontWeight: fontWeight.semibold,
-              color: colors.surface[900],
+              width: 40,
+              height: 40,
+              borderRadius: borderRadius.full,
+              backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.16),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: spacing[3],
             }}
           >
-            {t('irrigationForm.title')}
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
-            {t('irrigationForm.subtitle')}
-          </Text>
+            <SymbolIcon
+              name={resolveSymbolIconName(ICON_REGISTRY.irrigation)}
+              size={20}
+              color={m3.colorScheme.primary}
+            />
+          </View>
+          <View>
+            <Text
+              style={{
+                fontSize: fontSize.lg,
+                fontWeight: fontWeight.semibold,
+                color: colors.surface[900],
+              }}
+            >
+              {t('irrigationForm.title')}
+            </Text>
+            <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
+              {t('irrigationForm.subtitle')}
+            </Text>
+          </View>
         </View>
-      </View>
+      ) : null}
 
-      {/* Duration Input */}
       <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_IRRIGATION_DURATION}>
-        <View
-          style={{
-            borderRadius: borderRadius.xl,
-            borderWidth: showDurationGuidance ? 2 : 0,
-            borderColor: showDurationGuidance
-              ? colorWithOpacity(m3.colorScheme.primary, 0.7)
-              : 'transparent',
-            backgroundColor: showDurationGuidance
-              ? colorWithOpacity(m3.colorScheme.primary, 0.03)
-              : 'transparent',
-            paddingHorizontal: showDurationGuidance ? spacing[2] : 0,
-            paddingTop: showDurationGuidance ? spacing[2] : 0,
-          }}
-        >
+        <View>
           <NumericInput
             label={t('irrigationForm.durationLabel')}
             icon="time-outline"
@@ -112,14 +101,14 @@ export function IrrigationForm({
             hint={t('irrigationForm.durationHint')}
             onFocus={onInputFocus}
           />
-          {showDurationGuidance ? (
+          {showDurationGuidance && !isValid ? (
             <Text
               style={{
-                marginBottom: spacing[2],
-                marginTop: -spacing[1],
                 fontSize: fontSize.xs,
                 fontWeight: fontWeight.semibold,
                 color: m3.colorScheme.primary,
+                marginTop: -spacing[2],
+                marginBottom: spacing[3],
               }}
             >
               {t('irrigationForm.enterHoursGuidance')}
@@ -128,10 +117,9 @@ export function IrrigationForm({
         </View>
       </GuidedTourTarget>
 
-      {/* Info cards */}
       {(farmArea || estimatedWater) && (
         <View
-          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3], marginTop: spacing[2] }}
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3], marginTop: spacing[1] }}
         >
           {farmArea && (
             <View
@@ -210,35 +198,6 @@ export function IrrigationForm({
           )}
         </View>
       )}
-
-      {/* Validation indicator */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginTop: spacing[4],
-          paddingTop: spacing[4],
-          borderTopWidth: 1,
-          borderTopColor: colors.surface[100],
-        }}
-      >
-        <SymbolIcon
-          name={isValid ? 'checkmark.circle.fill' : 'exclamationmark.circle'}
-          size={16}
-          color={isValid ? colors.success : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6)}
-        />
-        <Text
-          style={{
-            fontSize: fontSize.sm,
-            marginLeft: spacing[2],
-            color: isValid ? colors.success : colors.surface[500],
-          }}
-        >
-          {isValid
-            ? t('irrigationForm.validation.ready')
-            : t('irrigationForm.validation.incomplete')}
-        </Text>
-      </View>
     </View>
   );
 }

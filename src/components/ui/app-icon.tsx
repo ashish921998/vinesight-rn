@@ -20,6 +20,7 @@ type BaseIconName =
   | 'flask'
   | 'basket'
   | 'cash'
+  | 'receipt'
   | 'flash'
   | 'time'
   | 'layers'
@@ -59,6 +60,7 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   flask: 'flask',
   basket: 'basket',
   cash: 'cash',
+  receipt: 'receipt',
   leaf: 'leaf',
   flash: 'flash',
   'time-outline': 'time',
@@ -71,6 +73,7 @@ const ICON_ALIASES: Record<string, BaseIconName> = {
   'flask.fill': 'flask',
   'basket.fill': 'basket',
   'dollarsign.circle.fill': 'cash',
+  'receipt.fill': 'receipt',
   'chart.bar.fill': 'chart',
   'doc.text.fill': 'document',
   'lightbulb.fill': 'flash',
@@ -408,6 +411,46 @@ export function AppIcon({ name, size = 20, color }: AppIconProps) {
             stroke={resolvedColor}
             strokeWidth={strokeWidth}
             fill="none"
+          />
+        </Svg>
+      );
+    case 'receipt':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path
+            d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5V3z"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Line
+            x1="9"
+            y1="8"
+            x2="15"
+            y2="8"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+          />
+          <Line
+            x1="9"
+            y1="12"
+            x2="15"
+            y2="12"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+          />
+          <Line
+            x1="9"
+            y1="16"
+            x2="13"
+            y2="16"
+            stroke={resolvedColor}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
           />
         </Svg>
       );

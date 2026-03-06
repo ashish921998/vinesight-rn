@@ -336,6 +336,7 @@ export function EntryForm({
     () => (tabs && tabs.length > 0 ? tabs : ['log', 'task']),
     [tabs],
   );
+  const isScreenPresentation = presentation === 'screen';
   const defaultTab = resolvedTabs.includes(initialTab || 'log')
     ? initialTab || resolvedTabs[0]
     : resolvedTabs[0];
@@ -1916,11 +1917,11 @@ export function EntryForm({
         <View
           style={{
             backgroundColor: colors.surface[100],
-            borderRadius: 16,
+            borderRadius: 18,
             padding: 16,
             marginBottom: 16,
             borderWidth: 1,
-            borderColor: colors.surface[100],
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
           }}
         >
           <Text
@@ -2050,49 +2051,53 @@ export function EntryForm({
       <View
         style={{
           backgroundColor: colors.surface[100],
-          borderRadius: 16,
+          borderRadius: 18,
           padding: 16,
           marginBottom: 16,
           borderWidth: 1,
-          borderColor: colors.surface[100],
+          borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
         }}
       >
         <View
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+          }}
         >
-          <Pressable
-            onPress={() => setShowDatePicker(true)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: colors.surface[100],
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              borderRadius: 10,
-            }}
-          >
-            <AppIcon name="calendar" size={18} color={m3.colorScheme.primary} />
+          <View style={{ flex: 1, paddingRight: 12 }}>
             <Text
               selectable
               style={{
-                marginLeft: 8,
-                fontSize: 14,
-                fontWeight: '500',
+                fontSize: 13,
+                fontWeight: '600',
+                color: m3.colorScheme.onSurfaceVariant,
+                marginBottom: 6,
+              }}
+            >
+              {t('entryForm.selectDate')}
+            </Text>
+            <Text
+              selectable
+              style={{
+                fontSize: 20,
+                fontWeight: '700',
                 color: m3.colorScheme.onSurface,
               }}
             >
               {formatDate(selectedDate, { weekday: 'short', month: 'short', day: 'numeric' })}
             </Text>
-          </Pressable>
+          </View>
 
           {pendingLogs.length > 0 && (
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.2),
+                backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
                 paddingHorizontal: 12,
-                paddingVertical: 6,
+                paddingVertical: 8,
                 borderRadius: 999,
               }}
             >
@@ -2100,9 +2105,9 @@ export function EntryForm({
               <Text
                 selectable
                 style={{
-                  marginLeft: 4,
+                  marginLeft: 6,
                   fontSize: 12,
-                  fontWeight: '600',
+                  fontWeight: '700',
                   color: m3.colorScheme.primary,
                 }}
               >
@@ -2111,43 +2116,63 @@ export function EntryForm({
             </View>
           )}
         </View>
-      </View>
-
-      {selectedLogType === null && guidedTourStatus === 'in_progress' ? (
-        <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
-          <LogTypeSelector
-            selectedLogType={selectedLogType}
-            hasPendingDrafts={pendingLogs.length > 0}
-            onSelect={(type) => {
-              setSelectedLogType(type);
-              setShowLogFormModal(true);
-            }}
-          />
-          <View
-            style={{
-              backgroundColor: colors.surface[100],
-              borderRadius: 16,
-              padding: 16,
-              marginBottom: 16,
-              borderWidth: 1,
-              borderColor: colors.surface[100],
-            }}
-          >
-            <Text selectable style={{ fontSize: 14, color: m3.colorScheme.onSurfaceVariant }}>
-              {t('entryForm.selectActivityTypeHint')}
+        <Pressable
+          onPress={() => setShowDatePicker(true)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: colors.surface[50],
+            paddingHorizontal: 16,
+            paddingVertical: 14,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            <AppIcon name="calendar" size={18} color={m3.colorScheme.primary} />
+            <Text
+              selectable
+              style={{
+                marginLeft: 8,
+                fontSize: 15,
+                fontWeight: '600',
+                color: m3.colorScheme.onSurface,
+              }}
+            >
+              {formatDate(selectedDate, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
             </Text>
           </View>
-        </GuidedTourTarget>
-      ) : (
+          <AppIcon
+            name="chevron-forward"
+            size={16}
+            color={colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.65)}
+          />
+        </Pressable>
+      </View>
+
+      <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_LOG_PRIMARY}>
         <LogTypeSelector
           selectedLogType={selectedLogType}
           hasPendingDrafts={pendingLogs.length > 0}
+          hintText={t('entryForm.logTypeHelper', {
+            defaultValue:
+              pendingLogs.length > 0
+                ? 'Add more drafts or review the queue below before saving.'
+                : 'Choose a log type to open the full-screen form.',
+          })}
           onSelect={(type) => {
             setSelectedLogType(type);
             setShowLogFormModal(true);
           }}
         />
-      )}
+      </GuidedTourTarget>
       <PendingLogs pendingLogs={pendingLogs} onRemove={removeLogFromSession} />
     </>
   );
@@ -2835,6 +2860,23 @@ export function EntryForm({
     });
   }, [activeTab, isLogFormValid, pendingLogs.length, presentation, selectedLogType]);
 
+  useEffect(() => {
+    if (
+      guidedTourStatus !== 'in_progress' ||
+      guidedTourStep !== 'add_log' ||
+      !showLogFormModal ||
+      !selectedLogType
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      guidedTourEmit('guidedTour.focusLogActivityInput', { recordType: selectedLogType });
+    }, 180);
+
+    return () => clearTimeout(timer);
+  }, [guidedTourStatus, guidedTourStep, showLogFormModal, selectedLogType]);
+
   const content = (
     <View style={{ flex: 1, backgroundColor: m3.colorScheme.background }}>
       <KeyboardAvoidingView
@@ -2846,30 +2888,32 @@ export function EntryForm({
           style={{
             backgroundColor: colors.surface[100],
             borderBottomWidth: 1,
-            borderColor: colors.surface[100],
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
             paddingHorizontal: 16,
-            paddingBottom: 12,
-            paddingTop: 8 + insets.top,
+            paddingBottom: 10,
+            paddingTop: (isScreenPresentation ? 2 : 6) + insets.top,
           }}
         >
-          <View style={{ alignItems: 'center', marginBottom: 8 }}>
-            <View
-              style={{
-                width: 48,
-                height: 6,
-                borderRadius: 999,
-                backgroundColor: colors.surface[50],
-              }}
-            />
-          </View>
-          <View style={{ minHeight: 44, justifyContent: 'center', position: 'relative' }}>
+          {!isScreenPresentation ? (
+            <View style={{ alignItems: 'center', marginBottom: 6 }}>
+              <View
+                style={{
+                  width: 42,
+                  height: 5,
+                  borderRadius: 999,
+                  backgroundColor: colors.surface[50],
+                }}
+              />
+            </View>
+          ) : null}
+          <View style={{ minHeight: 40, justifyContent: 'center', position: 'relative' }}>
             <View style={{ paddingHorizontal: 52, alignItems: 'center', justifyContent: 'center' }}>
               <Text
                 selectable
                 style={{
-                  fontSize: 18,
-                  lineHeight: 24,
-                  fontWeight: '600',
+                  fontSize: 22,
+                  lineHeight: 28,
+                  fontWeight: '700',
                   color: m3.colorScheme.onSurface,
                   textAlign: 'center',
                   ...(Platform.OS === 'android'
@@ -2909,13 +2953,25 @@ export function EntryForm({
               />
             </Pressable>
           </View>
-          <View style={{ marginTop: 2, alignItems: 'center', minHeight: 16 }}>
+          <View style={{ marginTop: 4, alignItems: 'center', minHeight: 20 }}>
             <Text
               selectable
-              style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}
-              numberOfLines={1}
+              style={{
+                fontSize: 13,
+                lineHeight: 18,
+                color: m3.colorScheme.onSurfaceVariant,
+                textAlign: 'center',
+              }}
+              numberOfLines={2}
             >
-              {activeFarm?.name}
+              {activeFarm?.name ||
+                (activeTab === 'log'
+                  ? t('entryForm.logSubtitle', {
+                      defaultValue: 'Choose a log type, then save your drafts together.',
+                    })
+                  : t('entryForm.taskSubtitle', {
+                      defaultValue: 'Plan a task with due date, priority, and farm details.',
+                    }))}
             </Text>
           </View>
         </View>
@@ -3220,7 +3276,7 @@ export function EntryForm({
             paddingTop: spacing[4],
             paddingBottom: Platform.OS === 'ios' ? Math.max(spacing[4], insets.bottom) : spacing[4],
             borderTopWidth: 1,
-            borderColor: colors.surface[100],
+            borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.08),
           }}
         >
           {activeTab === 'log' ? (
@@ -3231,10 +3287,11 @@ export function EntryForm({
                   style={{
                     flex: 1,
                     paddingVertical: 14,
-                    borderRadius: borderRadius.lg,
+                    borderRadius: borderRadius.xl,
                     borderWidth: 1,
                     borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.2),
                     alignItems: 'center',
+                    backgroundColor: colors.surface[50],
                   }}
                 >
                   <Text
@@ -3258,7 +3315,7 @@ export function EntryForm({
                       {
                         flex: 1,
                         paddingVertical: 14,
-                        borderRadius: borderRadius.lg,
+                        borderRadius: borderRadius.xl,
                         alignItems: 'center',
                         flexDirection: 'row',
                         justifyContent: 'center',
@@ -3303,7 +3360,12 @@ export function EntryForm({
                             },
                           ]}
                         >
-                          {t('common.save')}
+                          {pendingLogs.length > 0
+                            ? t('entryForm.saveLogs', {
+                                count: pendingLogs.length,
+                                defaultValue: `Save ${pendingLogs.length} log${pendingLogs.length === 1 ? '' : 's'}`,
+                              })
+                            : t('common.save')}
                         </Text>
                       </>
                     )}

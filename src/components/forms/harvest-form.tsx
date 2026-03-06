@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as Icon } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
-import { NumericInput } from './form-field';
+import { NumericInput, type NumericInputHandle } from './form-field';
 import { HARVEST_GRADES, type HarvestGrade } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { useM3, useThemeColors } from '@/styles/use-theme';
@@ -10,6 +10,7 @@ import { colorWithOpacity } from '@/utils/color';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { guidedTourOn } from '@/features/guided-tour/events';
 import { useTranslation } from 'react-i18next';
 
 export interface HarvestFormData {
@@ -35,6 +36,15 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
   const guidedTourStep = useGuidedTourStore((s) => s.currentStep);
   const showDetailsGuidance =
     guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
+  const quantityRef = useRef<NumericInputHandle>(null);
+
+  useEffect(() => {
+    const unsubscribe = guidedTourOn('guidedTour.focusLogActivityInput', ({ recordType }) => {
+      if (recordType !== 'harvest') return;
+      quantityRef.current?.focus();
+    });
+    return unsubscribe;
+  }, []);
 
   // Calculate total value if price is set
   const totalValue =
@@ -107,9 +117,8 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
         >
           {/* Quantity Input */}
           <NumericInput
+            ref={quantityRef}
             label={t('harvestForm.quantityLabel')}
-            icon="scale-outline"
-            iconColor={colors.warning}
             placeholder={t('harvestForm.quantityPlaceholder')}
             value={data.quantity}
             onValueChange={(quantity) => onChange({ ...data, quantity })}
@@ -173,8 +182,6 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
       {/* Price Input (Optional) */}
       <NumericInput
         label={t('harvestForm.pricePerKgLabel')}
-        icon="cash-outline"
-        iconColor={colors.success}
         placeholder={t('harvestForm.pricePerKgPlaceholder')}
         value={data.price}
         onValueChange={(price) => onChange({ ...data, price })}
@@ -213,9 +220,6 @@ export function HarvestForm({ data, onChange, onInputFocus }: HarvestFormProps) 
             backgroundColor: colors.surface[100],
           }}
         >
-          <View style={{ marginRight: 10 }}>
-            <Icon name="person" size={20} color={colors.surface[600]} />
-          </View>
           <TextInput
             style={{ flex: 1, fontSize: fontSize.base, color: colors.surface[900] }}
             placeholder={t('harvestForm.buyerPlaceholder')}

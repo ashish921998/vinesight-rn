@@ -119,6 +119,7 @@ interface MarkAttendanceTabProps {
   onWorkerIndexChange: (index: number) => void;
   onSaveSuccess: () => void;
   isTourActive?: boolean;
+  onBottomActionBarVisibilityChange?: (visible: boolean) => void;
 }
 
 export function MarkAttendanceTab({
@@ -128,6 +129,7 @@ export function MarkAttendanceTab({
   onWorkerIndexChange,
   onSaveSuccess,
   isTourActive = false,
+  onBottomActionBarVisibilityChange,
 }: MarkAttendanceTabProps) {
   const { t } = useTranslation();
   const m3 = useM3();
@@ -411,6 +413,11 @@ export function MarkAttendanceTab({
   const hasModifications = useMemo(() => {
     return Array.from(cellData.values()).some((cell) => cell.isModified);
   }, [cellData]);
+
+  React.useEffect(() => {
+    onBottomActionBarVisibilityChange?.(hasModifications);
+    return () => onBottomActionBarVisibilityChange?.(false);
+  }, [hasModifications, onBottomActionBarVisibilityChange]);
 
   const handleSave = async () => {
     if (!hasModifications) {

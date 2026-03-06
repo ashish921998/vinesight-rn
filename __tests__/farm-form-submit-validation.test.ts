@@ -1,5 +1,6 @@
 import {
-  NUMERIC_6_4_MAX_ABS,
+  MAX_SOIL_WATER_RETENTION_ABS,
+  MAX_STANDARD_SOIL_FIELD_ABS,
   validateAndParseOptionalFarmNumbers,
 } from '@/utils/farm-form-submit-validation';
 
@@ -24,34 +25,39 @@ describe('validateAndParseOptionalFarmNumbers', () => {
     const result = validateAndParseOptionalFarmNumbers(
       {
         ...baseRawValues,
-        bulkDensity: '223',
-        cationExchangeCapacity: '323',
-        soilWaterRetention: '23',
+        bulkDensity: String(MAX_STANDARD_SOIL_FIELD_ABS + 0.0001),
+        cationExchangeCapacity: '12000',
+        soilWaterRetention: String(MAX_SOIL_WATER_RETENTION_ABS + 0.1),
       },
       labels,
     );
 
     expect(result.error).toEqual({
       code: 'precision_overflow',
-      fields: ['Bulk Density', 'Cation Exchange Capacity'],
+      fields: ['Bulk Density', 'Cation Exchange Capacity', 'Soil Water Retention'],
+      limits: [
+        { label: 'Bulk Density', max: MAX_STANDARD_SOIL_FIELD_ABS },
+        { label: 'Cation Exchange Capacity', max: MAX_STANDARD_SOIL_FIELD_ABS },
+        { label: 'Soil Water Retention', max: MAX_SOIL_WATER_RETENTION_ABS },
+      ],
     });
   });
 
-  it('accepts values at NUMERIC(6,4) boundary', () => {
+  it('accepts values at their configured precision boundaries', () => {
     const result = validateAndParseOptionalFarmNumbers(
       {
         ...baseRawValues,
-        bulkDensity: String(NUMERIC_6_4_MAX_ABS),
-        cationExchangeCapacity: String(NUMERIC_6_4_MAX_ABS),
-        soilWaterRetention: String(NUMERIC_6_4_MAX_ABS),
+        bulkDensity: String(MAX_STANDARD_SOIL_FIELD_ABS),
+        cationExchangeCapacity: String(MAX_STANDARD_SOIL_FIELD_ABS),
+        soilWaterRetention: String(MAX_SOIL_WATER_RETENTION_ABS),
       },
       labels,
     );
 
     expect(result.error).toBeUndefined();
-    expect(result.parsed.bulkDensity).toBe(NUMERIC_6_4_MAX_ABS);
-    expect(result.parsed.cationExchangeCapacity).toBe(NUMERIC_6_4_MAX_ABS);
-    expect(result.parsed.soilWaterRetention).toBe(NUMERIC_6_4_MAX_ABS);
+    expect(result.parsed.bulkDensity).toBe(MAX_STANDARD_SOIL_FIELD_ABS);
+    expect(result.parsed.cationExchangeCapacity).toBe(MAX_STANDARD_SOIL_FIELD_ABS);
+    expect(result.parsed.soilWaterRetention).toBe(MAX_SOIL_WATER_RETENTION_ABS);
   });
 
   it('returns invalid numeric when a non-number is provided', () => {

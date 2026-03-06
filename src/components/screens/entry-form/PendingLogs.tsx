@@ -46,26 +46,70 @@ export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
     <View
       style={{
         backgroundColor: colors.surface[100],
-        borderRadius: 16,
-        padding: 16,
+        borderRadius: 20,
+        padding: 18,
         marginBottom: 16,
+        borderWidth: 1,
+        borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
       }}
     >
-      <Text
-        selectable
+      <View
         style={{
-          fontSize: 16,
-          fontWeight: '600',
-          color: m3.colorScheme.onSurface,
-          marginBottom: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 14,
         }}
       >
-        {t('entryForm.pendingLogs', { count: pendingLogs.length })}
-      </Text>
+        <View style={{ flex: 1, paddingRight: 12 }}>
+          <Text
+            selectable
+            style={{
+              fontSize: 20,
+              fontWeight: '700',
+              color: m3.colorScheme.onSurface,
+            }}
+          >
+            {t('entryForm.pendingLogs', { count: pendingLogs.length })}
+          </Text>
+          <Text
+            selectable
+            style={{
+              marginTop: 4,
+              fontSize: 13,
+              lineHeight: 18,
+              color: m3.colorScheme.onSurfaceVariant,
+            }}
+          >
+            {t('entryForm.pendingLogsHint', {
+              defaultValue: 'Review drafts here before saving them together.',
+            })}
+          </Text>
+        </View>
+        <View
+          style={{
+            backgroundColor: colorWithOpacity(m3.colorScheme.primary, 0.12),
+            borderRadius: 999,
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+          }}
+        >
+          <Text
+            selectable
+            style={{
+              fontSize: 12,
+              fontWeight: '700',
+              color: m3.colorScheme.primary,
+            }}
+          >
+            {t('entryForm.drafts', { count: pendingLogs.length })}
+          </Text>
+        </View>
+      </View>
       <ScrollView
         nestedScrollEnabled
         style={{ maxHeight: 280 }}
-        contentContainerStyle={{ paddingBottom: 4 }}
+        contentContainerStyle={{ paddingBottom: 2 }}
         showsVerticalScrollIndicator={pendingLogs.length > 3}
       >
         {pendingLogs.map((log) => {
@@ -84,17 +128,19 @@ export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
                 {
                   flexDirection: 'row',
                   alignItems: 'center',
-                  padding: 12,
-                  borderRadius: 12,
-                  marginBottom: 8,
+                  padding: 14,
+                  borderRadius: 16,
+                  marginBottom: 10,
+                  borderWidth: 1,
+                  borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1),
                 },
-                { backgroundColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.1) },
+                { backgroundColor: colors.surface[50] },
               ]}
             >
               <View
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 46,
+                  height: 46,
                   borderRadius: 999,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -110,16 +156,41 @@ export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text
                   selectable
-                  style={{ fontSize: 14, fontWeight: '600', color: m3.colorScheme.onSurface }}
+                  style={{ fontSize: 16, fontWeight: '700', color: m3.colorScheme.onSurface }}
                 >
                   {logType ? t(logType.labelKey) : t('entryForm.addLog')}
                 </Text>
-                <Text selectable style={{ fontSize: 12, color: m3.colorScheme.onSurfaceVariant }}>
+                <Text
+                  selectable
+                  style={{
+                    marginTop: 2,
+                    fontSize: 13,
+                    lineHeight: 18,
+                    color: m3.colorScheme.onSurfaceVariant,
+                  }}
+                >
                   {log.displayDescription}
                 </Text>
               </View>
-              <Pressable onPress={() => onRemove(log.id)}>
-                <AppIcon name="trash-outline" size={20} color={m3.colorScheme.error} />
+              <Pressable
+                onPress={() => onRemove(log.id)}
+                accessibilityRole="button"
+                accessibilityLabel={t('entryForm.removeDraftAccessibilityLabel', {
+                  defaultValue: `Remove ${logType ? t(logType.labelKey) : t('entryForm.addLog')} draft`,
+                })}
+                accessibilityHint={t('entryForm.removeDraftAccessibilityHint', {
+                  defaultValue: 'Removes this draft from the pending logs list.',
+                })}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 999,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: colorWithOpacity(m3.colorScheme.error, 0.1),
+                }}
+              >
+                <AppIcon name="trash-outline" size={18} color={m3.colorScheme.error} />
               </Pressable>
             </View>
           );

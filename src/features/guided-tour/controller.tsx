@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
+import { AppState, AppStateStatus, Keyboard, StyleSheet, View } from 'react-native';
 import { router, usePathname, useSegments } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores';
@@ -9,6 +9,7 @@ import { GuidedTourCoachmark } from './coachmark';
 import { GuidedTourCompletionCard } from './completion-card';
 import { GUIDED_TOUR_TARGET_IDS } from './constants';
 import type { GuidedTourTargetId } from './constants';
+import type { GuidedTourStep } from './types';
 import { guidedTourEmit } from './events';
 import { GuidedTourOverlay } from './overlay';
 import { useGuidedTourStore } from './store';
@@ -48,7 +49,15 @@ function isAddFarmScrollLockedPhase(
     | 'custom_variety'
     | 'submit',
 ): boolean {
-  return phase === 'name' || phase === 'region' || phase === 'area' || phase === 'custom_variety';
+  return (
+    phase === 'name' ||
+    phase === 'region' ||
+    phase === 'area' ||
+    phase === 'crop' ||
+    phase === 'variety' ||
+    phase === 'custom_variety' ||
+    phase === 'submit'
+  );
 }
 
 function isAddLogFlowRoute(pathname: string | null, segments: string[]): boolean {
@@ -135,6 +144,31 @@ export function GuidedTourController() {
     return 'none' as const;
   }, [currentStep, eligible, hasSeenWelcomeThisSession, isSuspended, segments, status]);
 
+  const previousOverlayModeRef = useRef<typeof overlayMode>('none');
+  useEffect(() => {
+    const prevMode = previousOverlayModeRef.current;
+    if (
+      (prevMode === 'none' && overlayMode === 'coach') ||
+      (prevMode === 'coach' && overlayMode !== 'coach')
+    ) {
+      Keyboard.dismiss();
+    }
+    previousOverlayModeRef.current = overlayMode;
+  }, [overlayMode]);
+
+  const previousCurrentStepRef = useRef<GuidedTourStep | undefined>(undefined);
+  useEffect(() => {
+    if (status === 'in_progress' && overlayMode === 'coach') {
+      if (
+        previousCurrentStepRef.current !== undefined &&
+        previousCurrentStepRef.current !== currentStep
+      ) {
+        Keyboard.dismiss();
+      }
+    }
+    previousCurrentStepRef.current = currentStep;
+  }, [currentStep, status, overlayMode]);
+
   const { rect, activeCoachStep, activeTargetId, clearOverlay } = useCoachTargetMeasurement({
     overlayMode,
     eligible,
@@ -216,7 +250,10 @@ export function GuidedTourController() {
       }
       const routeFarmId = parseFarmRouteId(pathname);
       if (!routeFarmId || (activeFarmId && routeFarmId !== activeFarmId)) {
-        if (activeFarmId) router.push(`/farm/${activeFarmId}`);
+        // This is a route correction, not a user-initiated navigation.
+        // `replace` prevents stacking duplicate farm detail screens that can
+        // reappear when the iOS back gesture reveals older entries.
+        if (activeFarmId) router.replace(`/farm/${activeFarmId}`);
         return;
       }
       if (
@@ -296,6 +333,7 @@ export function GuidedTourController() {
   };
 
   const handleStart = () => {
+    Keyboard.dismiss();
     telemetry.capture('tour_started');
     resetFormState();
     startTour();
@@ -447,7 +485,12 @@ export function GuidedTourController() {
             blockOutsideTouches={
               !(
                 (activeCoachStep === 'add_log' && isSeasonFormVisible) ||
-                (activeCoachStep === 'add_log' && addLogFlowRoute)
+                (activeCoachStep === 'add_log' && addLogFlowRoute) ||
+                (activeCoachStep === 'add_farm' &&
+                  (addFarmPhase === 'crop' ||
+                    addFarmPhase === 'crop_option' ||
+                    addFarmPhase === 'variety' ||
+                    addFarmPhase === 'variety_option'))
               )
             }
             tooltipPlacement={
@@ -537,11 +580,7 @@ export function GuidedTourController() {
             onAction={coachAction}
             secondaryActionLabel={coachSecondaryActionLabel}
             onSecondaryAction={coachSecondaryAction}
-            hideTapHint={
-              (activeCoachStep === 'add_log' && isSeasonFormVisible) ||
-              (activeCoachStep === 'add_farm' &&
-                (addFarmPhase === 'name' || addFarmPhase === 'region' || addFarmPhase === 'area'))
-            }
+            hideTapHint
             compact={activeCoachStep === 'add_log' && isSeasonFormVisible}
             hidePointer={activeCoachStep === 'add_log' && isSeasonFormVisible}
             hideBubble={activeCoachStep === 'add_log' && isSeasonFormVisible}
