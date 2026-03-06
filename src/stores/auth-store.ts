@@ -1072,6 +1072,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Sign in with phone (send OTP via SMS)
   signInWithPhone: async (phone: string, mode: PhoneAuthMode = 'signin') => {
     const trimmedPhone = phone.trim();
+    const maskedPhone = trimmedPhone.replace(/\d(?=\d{4})/g, '*');
 
     if (!isValidPhone(trimmedPhone)) {
       set({ errorMessage: 'Please enter a valid phone number with country code' });
@@ -1086,7 +1087,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     telemetry.capture('auth_phone_otp_send_started', { mode });
     if (__DEV__) {
       console.log('[auth] signInWithPhone', {
-        phone: trimmedPhone,
+        phone: maskedPhone,
         mode,
         shouldCreateUser: mode === 'signup',
       });
@@ -1115,7 +1116,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         errorMessage:
           mode === 'signup' && isOtpSignupDisabledError(error)
             ? 'Phone sign-up is currently disabled for this project. Enable OTP signups in Supabase Auth settings, or sign up with email and link your phone from Settings.'
-            : getAuthErrorMessage(error, fallbackMessage, 'send_phone_otp'),
+            : getAuthErrorMessage(
+                error,
+                fallbackMessage,
+                mode === 'signup' ? 'send_phone_otp' : 'generic',
+              ),
         otpSentSuccessfully: false,
         isLoading: false,
       });

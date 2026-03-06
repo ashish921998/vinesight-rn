@@ -82,6 +82,7 @@ export default function PhoneLoginScreen() {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const lastNavigatedPhoneRef = useRef<string | null>(null);
+  const lastRequestedOtpModeRef = useRef<PhoneAuthMode>(requestedMode);
   const [localPhoneError, setLocalPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -108,7 +109,7 @@ export default function PhoneLoginScreen() {
         params: {
           phone: pendingOTPPhone,
           channel: 'phone',
-          mode: phoneAuthMode,
+          mode: lastRequestedOtpModeRef.current,
           redirect: redirectPath,
         },
       });
@@ -136,9 +137,11 @@ export default function PhoneLoginScreen() {
       setLocalPhoneError(t('authPhone.invalidPhone'));
       return;
     }
+    const submitMode = phoneAuthMode;
+    lastRequestedOtpModeRef.current = submitMode;
     clearError();
     setLocalPhoneError(null);
-    await signInWithPhone(fullPhoneNumber, phoneAuthMode);
+    await signInWithPhone(fullPhoneNumber, submitMode);
   };
 
   const handleSelectCountry = (country: Country) => {
@@ -148,6 +151,7 @@ export default function PhoneLoginScreen() {
   };
 
   const toggleMode = () => {
+    if (isLoading) return;
     clearError();
     setLocalPhoneError(null);
     setPhoneAuthMode((prev) => (prev === 'signup' ? 'signin' : 'signup'));
@@ -445,7 +449,9 @@ export default function PhoneLoginScreen() {
                   return (
                     <Pressable
                       key={nextMode}
+                      disabled={isLoading}
                       onPress={() => {
+                        if (isLoading) return;
                         clearError();
                         setLocalPhoneError(null);
                         setPhoneAuthMode(nextMode);
@@ -464,7 +470,7 @@ export default function PhoneLoginScreen() {
                         },
                       ]}
                       accessibilityRole="button"
-                      accessibilityState={{ selected }}
+                      accessibilityState={{ selected, disabled: isLoading }}
                       accessibilityLabel={
                         nextMode === 'signup'
                           ? t('auth.a11y.switchToSignUp')

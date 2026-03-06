@@ -30,7 +30,7 @@ export default function OTPVerificationScreen() {
     if (typeof redirect === 'string' && redirect.startsWith('/')) return redirect;
     return '/';
   }, [redirect]);
-  const phoneAuthMode = mode === 'signin' ? 'signin' : 'signup';
+  const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
   const isPhoneOTP = channel === 'phone' && !!phone;
   const identifier = isPhoneOTP ? phone : email;
   const [otpCode, setOtpCode] = useState('');
@@ -125,6 +125,11 @@ export default function OTPVerificationScreen() {
   const handleBack = () => {
     if (isPhoneOTP) {
       cancelPhoneOTPFlow();
+      router.replace({
+        pathname: '/(auth)/phone-login',
+        params: { mode: phoneAuthMode, redirect: redirectPath },
+      });
+      return;
     } else {
       cancelOTPFlow();
     }
