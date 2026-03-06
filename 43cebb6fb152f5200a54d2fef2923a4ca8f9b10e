@@ -1,0 +1,31 @@
+src/components/screens/farm-form/variety-picker-sheet.tsx
+  bf445183e1f28be8 20,22,35,37,159-183,221
+app/warehouse.tsx
+  bf445183e1f28be8 646-649,666-669
+src/components/screens/farm-form/use-farm-form.tsx
+  bf445183e1f28be8 438,442-450,503-505
+src/components/screens/entry-form.tsx
+  bf445183e1f28be8 3365-3366
+src/components/screens/farm-form/index.tsx
+  bf445183e1f28be8 824,826
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "43cebb6fb152f5200a54d2fef2923a4ca8f9b10e",
+  "prompts": {
+    "bf445183e1f28be8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cc17e-f341-7f32-9b69-ea0c174cf55f",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Ashish Huddar <ashish.hudar@gmail.com>",
+      "messages": [],
+      "total_additions": 67,
+      "total_deletions": 11,
+      "accepted_lines": 63,
+      "overriden_lines": 0
+    }
+  }
+}
