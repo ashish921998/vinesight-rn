@@ -250,7 +250,10 @@ export function GuidedTourController() {
       }
       const routeFarmId = parseFarmRouteId(pathname);
       if (!routeFarmId || (activeFarmId && routeFarmId !== activeFarmId)) {
-        if (activeFarmId) router.push(`/farm/${activeFarmId}`);
+        // This is a route correction, not a user-initiated navigation.
+        // `replace` prevents stacking duplicate farm detail screens that can
+        // reappear when the iOS back gesture reveals older entries.
+        if (activeFarmId) router.replace(`/farm/${activeFarmId}`);
         return;
       }
       if (

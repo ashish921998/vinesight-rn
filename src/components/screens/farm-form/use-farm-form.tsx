@@ -24,10 +24,7 @@ import { telemetry } from '@/services/telemetry';
 import * as Sentry from '@sentry/react-native';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
 import { triggerHapticSuccess } from '@/utils/haptics';
-import {
-  MAX_SOIL_FIELD_ABS,
-  validateAndParseOptionalFarmNumbers,
-} from '@/utils/farm-form-submit-validation';
+import { validateAndParseOptionalFarmNumbers } from '@/utils/farm-form-submit-validation';
 import { getCropVisual, type KnownCrop } from '@/utils/farm-crop-visuals';
 import { colorWithOpacity } from '@/utils/color';
 import { CropIcon } from '@/components/ui';
@@ -845,15 +842,10 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
         return;
       }
 
-      const overflowFields = optionalNumberValidation.error.fields.join(', ');
-      Alert.alert(
-        t('common.error'),
-        t('farmForm.overflowError', {
-          fields: overflowFields,
-          max: MAX_SOIL_FIELD_ABS,
-          defaultValue: `${overflowFields} must be less than or equal to ${MAX_SOIL_FIELD_ABS}.`,
-        }),
-      );
+      const overflowMessage = optionalNumberValidation.error.limits
+        .map(({ label, max }) => `${label} must be less than or equal to ${max}.`)
+        .join(' ');
+      Alert.alert(t('common.error'), overflowMessage);
       return;
     }
 

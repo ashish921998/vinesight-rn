@@ -13,6 +13,7 @@ import type { NutrientCompositionItem, QuantityBasis } from '@/types';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { guidedTourOn } from '@/features/guided-tour/events';
 
 export interface FertilizerEntry {
   id?: string;
@@ -104,6 +105,14 @@ export function FertigationForm({
     guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
 
   const waterVolumeRef = useRef<NumericInputHandle>(null);
+
+  useEffect(() => {
+    const unsubscribe = guidedTourOn('guidedTour.focusLogActivityInput', ({ recordType }) => {
+      if (recordType !== 'fertigation') return;
+      waterVolumeRef.current?.focus();
+    });
+    return unsubscribe;
+  }, []);
 
   const addFertilizer = () => {
     if (data.fertilizers.length < 10) {
@@ -242,8 +251,6 @@ export function FertigationForm({
       {/* Water Volume Input */}
       <NumericInput
         label={t('fertigationForm.waterVolume.label')}
-        icon="water-outline"
-        iconColor={m3.colorScheme.tertiary}
         placeholder={t('fertigationForm.waterVolume.placeholder')}
         value={data.waterVolume}
         onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}

@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps } from 'react-native';
 import { Symbol as SymbolIcon } from '@/components/ui/symbol';
 import { ICON_REGISTRY, resolveSymbolIconName } from '@/constants/icon-registry';
-import { NumericInput } from './form-field';
+import { NumericInput, type NumericInputHandle } from './form-field';
 import { EXPENSE_TYPES, type ExpenseTypeId } from '../../constants/calculator-models';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
 import { formatCurrency } from '@/i18n/format';
@@ -13,6 +13,7 @@ import { EXPENSE_TYPE_ICONS } from '@/utils/expense-icons';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { guidedTourOn } from '@/features/guided-tour/events';
 import { useTranslation } from 'react-i18next';
 
 export interface ExpenseFormData {
@@ -61,6 +62,15 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
   const isValid = data.cost !== undefined && data.cost > 0 && data.type !== '';
   const showDetailsGuidance =
     guidedTourStatus === 'in_progress' && guidedTourStep === 'add_log' && !isValid;
+  const amountRef = useRef<NumericInputHandle>(null);
+
+  useEffect(() => {
+    const unsubscribe = guidedTourOn('guidedTour.focusLogActivityInput', ({ recordType }) => {
+      if (recordType !== 'expense') return;
+      amountRef.current?.focus();
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <View>
@@ -172,9 +182,8 @@ export function ExpenseForm({ data, onChange, onInputFocus, preferredCurrency }:
 
           {/* Amount Input */}
           <NumericInput
+            ref={amountRef}
             label={t('expenseForm.amount')}
-            icon="cash-outline"
-            iconColor={m3.colorScheme.error}
             placeholder={t('expenseForm.amountPlaceholder')}
             value={data.cost}
             onValueChange={(cost) => onChange({ ...data, cost })}

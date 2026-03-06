@@ -23,6 +23,7 @@ import { normalizeMixComponentToPerLiterDose } from '@/services/phi-service';
 import { GuidedTourTarget } from '@/features/guided-tour/targets';
 import { GUIDED_TOUR_TARGET_IDS } from '@/features/guided-tour/constants';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
+import { guidedTourOn } from '@/features/guided-tour/events';
 
 export interface ChemicalEntry {
   id: string;
@@ -205,6 +206,14 @@ export function SprayForm({
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    const unsubscribe = guidedTourOn('guidedTour.focusLogActivityInput', ({ recordType }) => {
+      if (recordType !== 'spray') return;
+      waterVolumeRef.current?.focus();
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     dataRef.current = data;
@@ -443,8 +452,6 @@ export function SprayForm({
           {/* Water Volume Input */}
           <NumericInput
             label={t('sprayForm.waterVolume.label')}
-            icon="water-outline"
-            iconColor={m3.colorScheme.tertiary}
             placeholder={t('sprayForm.waterVolume.placeholder')}
             value={data.waterVolume}
             onValueChange={(waterVolume) => onChange({ ...data, waterVolume })}

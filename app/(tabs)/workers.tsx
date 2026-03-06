@@ -47,6 +47,7 @@ export default function WorkersScreen() {
   const [settlementModalVisible, setSettlementModalVisible] = useState(false);
   const [tempWorkerFormVisible, setTempWorkerFormVisible] = useState(false);
   const [fabSheetVisible, setFabSheetVisible] = useState(false);
+  const [attendanceActionBarVisible, setAttendanceActionBarVisible] = useState(false);
 
   // Workers guided mini-tour
   const { _hydrated, hasSeenTour, isActive: isTourActive, startTour } = useWorkersTourStore();
@@ -64,6 +65,7 @@ export default function WorkersScreen() {
   const activeWorkers = useMemo(() => workers?.filter((w) => w.is_active) || [], [workers]);
 
   const inactiveWorkers = useMemo(() => workers?.filter((w) => !w.is_active) || [], [workers]);
+  const showPrimaryFab = selectedTab !== 'attendance' || !attendanceActionBarVisible;
 
   const handleDeleteWorker = (worker: Worker) => {
     Alert.alert(
@@ -237,7 +239,11 @@ export default function WorkersScreen() {
   );
 
   const renderAttendanceTab = () => (
-    <AttendanceView workers={activeWorkers} onSaveSuccess={refetch} />
+    <AttendanceView
+      workers={activeWorkers}
+      onSaveSuccess={refetch}
+      onBottomActionBarVisibilityChange={setAttendanceActionBarVisible}
+    />
   );
 
   const renderAnalyticsTab = () => <WorkerAnalyticsView />;
@@ -295,47 +301,49 @@ export default function WorkersScreen() {
         {selectedTab === 'analytics' && renderAnalyticsTab()}
 
         {/* Primary action — single FAB that opens labeled action sheet */}
-        <GuidedTourTarget
-          targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_FAB}
-          enabled={isTourActive}
-          style={{
-            position: 'absolute',
-            bottom: fabBottom,
-            right: spacing[6],
-          }}
-        >
-          <Pressable
-            onPress={handleFabPress}
+        {showPrimaryFab && (
+          <GuidedTourTarget
+            targetId={GUIDED_TOUR_TARGET_IDS.WORKERS_FAB}
+            enabled={isTourActive}
             style={{
-              width: 56,
-              height: 56,
-              backgroundColor: m3.colorScheme.primary,
-              borderRadius: borderRadius.full,
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
+              position: 'absolute',
+              bottom: fabBottom,
+              right: spacing[6],
             }}
-            accessibilityRole="button"
-            accessibilityLabel={t('workers.actions.title')}
           >
-            {({ pressed }) => (
-              <>
-                <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
-                <View
-                  pointerEvents="none"
-                  style={[
-                    StyleSheet.absoluteFillObject,
-                    {
-                      backgroundColor: pressed
-                        ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
-                        : 'transparent',
-                    },
-                  ]}
-                />
-              </>
-            )}
-          </Pressable>
-        </GuidedTourTarget>
+            <Pressable
+              onPress={handleFabPress}
+              style={{
+                width: 56,
+                height: 56,
+                backgroundColor: m3.colorScheme.primary,
+                borderRadius: borderRadius.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('workers.actions.title')}
+            >
+              {({ pressed }) => (
+                <>
+                  <UiSymbol name="plus" size={28} color={m3.colorScheme.onPrimary} />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: pressed
+                          ? colorWithOpacity(m3.colorScheme.onPrimary, m3.stateLayerOpacity.pressed)
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+                </>
+              )}
+            </Pressable>
+          </GuidedTourTarget>
+        )}
       </View>
 
       {/* Workers guided tour overlay */}

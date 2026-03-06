@@ -737,11 +737,11 @@ export const en = {
 
   irrigationForm: {
     title: 'Irrigation',
-    subtitle: 'Log irrigation duration',
+    subtitle: 'Enter irrigation duration',
     durationLabel: 'Duration',
     durationPlaceholder: 'Enter duration',
     durationUnit: 'hours',
-    durationHint: 'How long was the irrigation cycle?',
+    durationHint: 'How many hours did this cycle run?',
     enterHoursGuidance: 'Enter irrigation hours to continue.',
     validation: {
       ready: 'Ready to add',

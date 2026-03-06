@@ -12,11 +12,16 @@ import { useWorkersTourStore } from '@/features/guided-tour/workers-tour-store';
 interface AttendanceViewProps {
   workers: Worker[];
   onSaveSuccess: () => void;
+  onBottomActionBarVisibilityChange?: (visible: boolean) => void;
 }
 
 type AttendanceTab = 'mark' | 'calendar';
 
-export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) {
+export function AttendanceView({
+  workers,
+  onSaveSuccess,
+  onBottomActionBarVisibilityChange,
+}: AttendanceViewProps) {
   const { data: farms } = useFarms();
   const colors = useThemeColors();
   const m3 = useM3();
@@ -178,6 +183,7 @@ export function AttendanceView({ workers, onSaveSuccess }: AttendanceViewProps) 
             onWorkerIndexChange={setSelectedWorkerIndex}
             onSaveSuccess={onSaveSuccess}
             isTourActive={isTourActive}
+            onBottomActionBarVisibilityChange={onBottomActionBarVisibilityChange}
           />
         )}
         {activeTab === 'calendar' && <CalendarAttendanceTab workers={activeWorkers} />}

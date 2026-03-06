@@ -12,6 +12,7 @@ import {
   Easing,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
@@ -100,6 +101,7 @@ export default function FarmDetailScreen() {
   const { t, i18n } = useTranslation();
 
   const router = useRouter();
+  const isFocused = useIsFocused();
   const { setEditActivity, setAddEntry } = useModalStore();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
@@ -684,6 +686,18 @@ export default function FarmDetailScreen() {
     setSeasonTargetHarvestDraft(new Date());
     guidedTourEmit('guidedTour.seasonFormPhaseChanged', { phase: 'start_date' });
   };
+
+  useEffect(() => {
+    if (!isFocused && showSeasonForm) {
+      closeSeasonForm();
+    }
+  }, [isFocused, showSeasonForm]);
+
+  useEffect(() => {
+    if (activeSeasonRecord && seasonFormMode === 'start' && showSeasonForm) {
+      closeSeasonForm();
+    }
+  }, [activeSeasonRecord, seasonFormMode, showSeasonForm]);
 
   const dismissSeasonSuccessOverlay = React.useCallback(() => {
     if (seasonSuccessTimerRef.current) {

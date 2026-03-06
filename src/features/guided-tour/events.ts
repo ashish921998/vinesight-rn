@@ -26,6 +26,7 @@ export interface GuidedTourEventMap {
   'guidedTour.addFarmVarietySelected': { isCustom: boolean };
   'guidedTour.addFarmCustomVarietyEntered': Record<string, never>;
   'guidedTour.logTypeSelected': { recordType: string };
+  'guidedTour.focusLogActivityInput': { recordType: string };
   'guidedTour.addLogSelectionState': {
     hasSelection: boolean;
     hasPendingDrafts: boolean;

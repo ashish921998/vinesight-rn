@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { AppIcon } from '@/components/ui/app-icon';
@@ -21,13 +20,15 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
   if (tabs.length < 2) return null;
 
   return (
-    <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}>
+    <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 }}>
       <View
         style={{
-          backgroundColor: colors.surface[100],
+          backgroundColor: colors.surface[50],
           borderRadius: 999,
-          padding: 4,
+          padding: 5,
           flexDirection: 'row',
+          borderWidth: 1,
+          borderColor: colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.12),
         }}
       >
         {tabs.map((tab) => {
@@ -38,61 +39,46 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
             <Pressable
               key={tab}
               onPress={() => onTabChange(tab)}
-              style={[{ flex: 1, borderRadius: 999, overflow: 'hidden' }, { marginHorizontal: 2 }]}
+              style={[
+                { flex: 1, borderRadius: 999, overflow: 'hidden' },
+                { marginHorizontal: 1.5 },
+              ]}
             >
-              {isActive ? (
-                <LinearGradient
-                  colors={[
-                    colorWithOpacity(m3.colorScheme.primary, 0.95),
-                    colorWithOpacity(m3.colorScheme.primary, 0.7),
+              <View
+                style={{
+                  width: '100%',
+                  borderRadius: 999,
+                  paddingVertical: 12,
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isActive
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.14)
+                    : 'transparent',
+                  borderWidth: isActive ? 1 : 0,
+                  borderColor: isActive
+                    ? colorWithOpacity(m3.colorScheme.primary, 0.24)
+                    : 'transparent',
+                }}
+              >
+                <AppIcon
+                  name={iconName}
+                  size={16}
+                  color={isActive ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
+                />
+                <Text
+                  selectable
+                  style={[
+                    { marginLeft: 8, fontSize: 14, fontWeight: '700' },
+                    {
+                      color: isActive ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant,
+                    },
                   ]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    width: '100%',
-                    borderRadius: 999,
-                    paddingVertical: 10,
-                    paddingHorizontal: 12,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
                 >
-                  <AppIcon name={iconName} size={16} color={m3.colorScheme.onPrimary} />
-                  <Text
-                    selectable
-                    style={[
-                      { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                      { color: m3.colorScheme.onPrimary },
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <View
-                  style={{
-                    width: '100%',
-                    borderRadius: 999,
-                    paddingVertical: 10,
-                    paddingHorizontal: 12,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <AppIcon name={iconName} size={16} color={m3.colorScheme.onSurfaceVariant} />
-                  <Text
-                    selectable
-                    style={[
-                      { marginLeft: 8, fontSize: 14, fontWeight: '600' },
-                      { color: m3.colorScheme.onSurfaceVariant },
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </View>
-              )}
+                  {label}
+                </Text>
+              </View>
             </Pressable>
           );
         })}
