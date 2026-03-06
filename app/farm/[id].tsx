@@ -677,7 +677,7 @@ export default function FarmDetailScreen() {
     router.push(`/farm/${id}/edit`);
   };
 
-  const closeSeasonForm = () => {
+  const closeSeasonForm = React.useCallback(() => {
     setShowSeasonForm(false);
     setShowSeasonStartPicker(false);
     setShowSeasonEndPicker(false);
@@ -685,19 +685,19 @@ export default function FarmDetailScreen() {
     setSeasonTargetHarvestDate(null);
     setSeasonTargetHarvestDraft(new Date());
     guidedTourEmit('guidedTour.seasonFormPhaseChanged', { phase: 'start_date' });
-  };
+  }, []);
 
   useEffect(() => {
     if (!isFocused && showSeasonForm) {
       closeSeasonForm();
     }
-  }, [isFocused, showSeasonForm]);
+  }, [isFocused, showSeasonForm, closeSeasonForm]);
 
   useEffect(() => {
     if (activeSeasonRecord && seasonFormMode === 'start' && showSeasonForm) {
       closeSeasonForm();
     }
-  }, [activeSeasonRecord, seasonFormMode, showSeasonForm]);
+  }, [activeSeasonRecord, seasonFormMode, showSeasonForm, closeSeasonForm]);
 
   const dismissSeasonSuccessOverlay = React.useCallback(() => {
     if (seasonSuccessTimerRef.current) {

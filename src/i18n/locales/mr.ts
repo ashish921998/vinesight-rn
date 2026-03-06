@@ -426,6 +426,18 @@ export const mr = {
         label: 'केळी',
         sublabel: 'झाडे',
       },
+      tomato: {
+        label: 'टोमॅटो',
+        sublabel: 'झाडे',
+      },
+      sugarcane: {
+        label: 'ऊस',
+        sublabel: 'पीक',
+      },
+      guava: {
+        label: 'पेरू',
+        sublabel: 'झाडे',
+      },
       other: {
         label: 'इतर',
         sublabel: 'कस्टम',

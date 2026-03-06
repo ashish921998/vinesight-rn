@@ -426,6 +426,18 @@ export const en = {
         label: 'Banana',
         sublabel: 'Plants',
       },
+      tomato: {
+        label: 'Tomato',
+        sublabel: 'Plants',
+      },
+      sugarcane: {
+        label: 'Sugarcane',
+        sublabel: 'Crops',
+      },
+      guava: {
+        label: 'Guava',
+        sublabel: 'Trees',
+      },
       other: {
         label: 'Other',
         sublabel: 'Custom',

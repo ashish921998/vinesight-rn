@@ -423,6 +423,18 @@ export const hi = {
         label: 'केला',
         sublabel: 'पौधे',
       },
+      tomato: {
+        label: 'टमाटर',
+        sublabel: 'पौधे',
+      },
+      sugarcane: {
+        label: 'गन्ना',
+        sublabel: 'फसल',
+      },
+      guava: {
+        label: 'अमरूद',
+        sublabel: 'पेड़',
+      },
       other: {
         label: 'अन्य',
         sublabel: 'कस्टम',

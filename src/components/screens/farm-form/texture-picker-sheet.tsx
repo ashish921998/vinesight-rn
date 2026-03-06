@@ -40,7 +40,12 @@ export function TexturePickerSheet({
       <KeyboardAvoidingView
         behavior={isIOS ? 'padding' : undefined}
         keyboardVerticalOffset={0}
-        style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
+        style={{
+          flex: 1,
+          width: '100%',
+          justifyContent: 'flex-end',
+          paddingBottom: androidKeyboardLift,
+        }}
       >
         <View
           onStartShouldSetResponder={() => true}

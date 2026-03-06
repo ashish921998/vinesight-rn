@@ -436,7 +436,10 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   );
 
   const popularCropOptions = useMemo(
-    () => knownCropOptions.filter((option) => POPULAR_CROPS.includes(option.value)),
+    () =>
+      POPULAR_CROPS.map((crop) => knownCropOptions.find((option) => option.value === crop)).filter(
+        (option): option is KnownCropOption => Boolean(option),
+      ),
     [knownCropOptions],
   );
 
@@ -843,7 +846,13 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       }
 
       const overflowMessage = optionalNumberValidation.error.limits
-        .map(({ label, max }) => `${label} must be less than or equal to ${max}.`)
+        .map(({ label, max }) =>
+          t('farmForm.overflowError', {
+            fields: label,
+            max,
+            defaultValue: `${label} must be less than or equal to ${max}.`,
+          }),
+        )
         .join(' ');
       Alert.alert(t('common.error'), overflowMessage);
       return;
@@ -913,8 +922,11 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
         const sanitizedUpdates = {
           fields: Object.keys(updates),
           fieldCount: Object.keys(updates).length,
-          hasLocation: 'location' in updates,
-          hasAddress: 'address' in updates,
+          hasLocation:
+            'location_name' in updates || 'latitude' in updates || 'longitude' in updates,
+          hasAddress:
+            'address' in updates ||
+            Object.keys(updates).some((key) => key === 'address' || key.startsWith('address_')),
         };
         console.error('Failed to update farm:', _error, {
           farmId,
@@ -997,8 +1009,11 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       const sanitizedFarmData = {
         fields: Object.keys(farmData),
         fieldCount: Object.keys(farmData).length,
-        hasLocation: 'location' in farmData,
-        hasAddress: 'address' in farmData,
+        hasLocation:
+          'location_name' in farmData || 'latitude' in farmData || 'longitude' in farmData,
+        hasAddress:
+          'address' in farmData ||
+          Object.keys(farmData).some((key) => key === 'address' || key.startsWith('address_')),
       };
       console.error('Failed to create farm:', _error, {
         farmData: sanitizedFarmData,

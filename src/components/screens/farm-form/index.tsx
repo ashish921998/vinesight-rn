@@ -55,7 +55,6 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: spacing[3],
       }}
       onPress={form.openCropPicker}
     >
@@ -218,13 +217,15 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         {/* — Crop type section — */}
         <SectionHeader title={t('farmForm.sections.cropType')} style={{ marginBottom: 16 }} />
 
-        {!form.formState.showCropPicker ? (
-          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP}>
-            {cropTrigger}
-          </GuidedTourTarget>
-        ) : (
-          cropTrigger
-        )}
+        <View style={{ marginBottom: spacing[3] }}>
+          {!form.formState.showCropPicker ? (
+            <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CROP}>
+              {cropTrigger}
+            </GuidedTourTarget>
+          ) : (
+            cropTrigger
+          )}
+        </View>
 
         {/* Popular crops horizontal scroll */}
         <ScrollView
@@ -314,41 +315,42 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         {/* — Variety section — */}
         <SectionHeader title={t('farmForm.sections.variety')} style={{ marginBottom: 16 }} />
 
-        <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY}>
-          <Pressable
-            style={{
-              backgroundColor: colors.surface[100],
-              borderWidth: 2,
-              borderColor: colors.surface[200],
-              borderRadius: borderRadius.xl,
-              paddingHorizontal: spacing[4],
-              paddingVertical: spacing[4],
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: spacing[5],
-            }}
-            onPress={() => form.setShowVarietyPicker(true)}
-            onPressIn={() => {
-              if (form.getIsGuidedAddFarm()) {
-                guidedTourEmit('guidedTour.addFarmVarietyPickerOpened', {});
-              }
-            }}
-          >
-            <Text
+        <View style={{ marginBottom: spacing[5] }}>
+          <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY}>
+            <Pressable
               style={{
-                fontSize: fontSize.base,
-                color: form.formState.cropVariety ? colors.surface[900] : colors.surface[400],
-                fontWeight: form.formState.cropVariety ? fontWeight.medium : fontWeight.normal,
+                backgroundColor: colors.surface[100],
+                borderWidth: 2,
+                borderColor: colors.surface[200],
+                borderRadius: borderRadius.xl,
+                paddingHorizontal: spacing[4],
+                paddingVertical: spacing[4],
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+              onPress={() => form.setShowVarietyPicker(true)}
+              onPressIn={() => {
+                if (form.getIsGuidedAddFarm()) {
+                  guidedTourEmit('guidedTour.addFarmVarietyPickerOpened', {});
+                }
               }}
             >
-              {form.formState.cropVariety
-                ? form.getVarietyLabel(form.formState.cropVariety)
-                : t('farmForm.variety.selectPlaceholder')}
-            </Text>
-            <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
-          </Pressable>
-        </GuidedTourTarget>
+              <Text
+                style={{
+                  fontSize: fontSize.base,
+                  color: form.formState.cropVariety ? colors.surface[900] : colors.surface[400],
+                  fontWeight: form.formState.cropVariety ? fontWeight.medium : fontWeight.normal,
+                }}
+              >
+                {form.formState.cropVariety
+                  ? form.getVarietyLabel(form.formState.cropVariety)
+                  : t('farmForm.variety.selectPlaceholder')}
+              </Text>
+              <UISymbol name="chevron.down" size={20} color={m3.colorScheme.onSurfaceVariant} />
+            </Pressable>
+          </GuidedTourTarget>
+        </View>
 
         {form.formState.cropVariety === 'Custom' && (
           <GuidedTourTarget targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_CUSTOM_VARIETY}>

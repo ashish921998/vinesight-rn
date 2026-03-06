@@ -98,33 +98,26 @@ export function LogForm({
       <Pressable
         onPress={onAdd}
         disabled={!isValid || !hasFarm}
-        style={[
-          {
-            marginTop: isIrrigationEntry ? 0 : 20,
-            paddingVertical: 14,
-            borderRadius: 16,
-            alignItems: 'center',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            borderWidth: showAddEntryGuidance ? 2 : 0,
-            borderColor: showAddEntryGuidance
-              ? colorWithOpacity(m3.colorScheme.primary, 0.7)
-              : 'transparent',
-            shadowColor: showAddEntryGuidance ? m3.colorScheme.primary : 'transparent',
-            shadowOpacity: showAddEntryGuidance ? 0.25 : 0,
-            shadowRadius: showAddEntryGuidance ? 10 : 0,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: showAddEntryGuidance ? 5 : 0,
-          },
-          {
-            backgroundColor: isValid && hasFarm ? m3.colorScheme.primary : colors.surface[50],
-            borderWidth: isValid && hasFarm ? 0 : 1,
-            borderColor:
-              isValid && hasFarm
-                ? 'transparent'
-                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.16),
-          },
-        ]}
+        style={{
+          marginTop: isIrrigationEntry ? 0 : 20,
+          paddingVertical: 14,
+          borderRadius: 16,
+          alignItems: 'center',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          shadowColor: showAddEntryGuidance ? m3.colorScheme.primary : 'transparent',
+          shadowOpacity: showAddEntryGuidance ? 0.25 : 0,
+          shadowRadius: showAddEntryGuidance ? 10 : 0,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: showAddEntryGuidance ? 5 : 0,
+          backgroundColor: isValid && hasFarm ? m3.colorScheme.primary : colors.surface[50],
+          borderColor: showAddEntryGuidance
+            ? colorWithOpacity(m3.colorScheme.primary, 0.7)
+            : isValid && hasFarm
+              ? 'transparent'
+              : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.16),
+          borderWidth: showAddEntryGuidance ? 2 : isValid && hasFarm ? 0 : 1,
+        }}
       >
         <AppIcon
           name="add-circle"
@@ -136,15 +129,14 @@ export function LogForm({
           }
         />
         <Text
-          style={[
-            { marginLeft: 8, fontWeight: '600' },
-            {
-              color:
-                isValid && hasFarm
-                  ? m3.colorScheme.onPrimary
-                  : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
-            },
-          ]}
+          style={{
+            marginLeft: 8,
+            fontWeight: '600',
+            color:
+              isValid && hasFarm
+                ? m3.colorScheme.onPrimary
+                : colorWithOpacity(m3.colorScheme.onSurfaceVariant, 0.6),
+          }}
         >
           {t('entryForm.addEntry')}
         </Text>

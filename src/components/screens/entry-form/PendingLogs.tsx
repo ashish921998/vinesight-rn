@@ -174,6 +174,13 @@ export function PendingLogs({ pendingLogs, onRemove }: PendingLogsProps) {
               </View>
               <Pressable
                 onPress={() => onRemove(log.id)}
+                accessibilityRole="button"
+                accessibilityLabel={t('entryForm.removeDraftAccessibilityLabel', {
+                  defaultValue: `Remove ${logType ? t(logType.labelKey) : t('entryForm.addLog')} draft`,
+                })}
+                accessibilityHint={t('entryForm.removeDraftAccessibilityHint', {
+                  defaultValue: 'Removes this draft from the pending logs list.',
+                })}
                 style={{
                   width: 36,
                   height: 36,

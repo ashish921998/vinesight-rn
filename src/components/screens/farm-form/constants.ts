@@ -56,4 +56,16 @@ export const CROP_I18N_KEY_MAP: Partial<
     labelKey: 'farmForm.cropOptions.banana.label',
     sublabelKey: 'farmForm.cropOptions.banana.sublabel',
   },
+  Tomato: {
+    labelKey: 'farmForm.cropOptions.tomato.label',
+    sublabelKey: 'farmForm.cropOptions.tomato.sublabel',
+  },
+  Sugarcane: {
+    labelKey: 'farmForm.cropOptions.sugarcane.label',
+    sublabelKey: 'farmForm.cropOptions.sugarcane.sublabel',
+  },
+  Guava: {
+    labelKey: 'farmForm.cropOptions.guava.label',
+    sublabelKey: 'farmForm.cropOptions.guava.sublabel',
+  },
 };

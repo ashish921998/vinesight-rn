@@ -49,7 +49,12 @@ export function VarietyPickerSheet({
       <KeyboardAvoidingView
         behavior={isIOS ? 'padding' : undefined}
         keyboardVerticalOffset={0}
-        style={{ justifyContent: 'flex-end', paddingBottom: androidKeyboardLift }}
+        style={{
+          flex: 1,
+          width: '100%',
+          justifyContent: 'flex-end',
+          paddingBottom: androidKeyboardLift,
+        }}
       >
         <GuidedTourTarget
           targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_VARIETY_SHEET}

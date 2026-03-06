@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Symbol as UiSymbol } from '@/components/ui/symbol';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/styles/theme';
+import { useIsDark, useM3 } from '@/styles/use-theme';
 import { telemetry } from '@/services/telemetry';
 import { colorWithOpacity } from '@/utils/color';
 import type { GuidedTourTargetRect } from './targets';
@@ -213,12 +214,14 @@ function PointerDiamond({
   pointerLeft,
   bubblePointsDown,
   bubbleWidth,
-  accentColor,
+  fillColor,
+  borderColor,
 }: {
   pointerLeft: number;
   bubblePointsDown: boolean;
   bubbleWidth: number;
-  accentColor: string;
+  fillColor: string;
+  borderColor: string;
 }) {
   return (
     <View
@@ -229,10 +232,10 @@ function PointerDiamond({
         ...(bubblePointsDown ? { bottom: -7 } : { top: -7 }),
         width: 14,
         height: 14,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: fillColor,
         borderLeftWidth: 1,
         borderTopWidth: 1,
-        borderColor: colorWithOpacity(accentColor, 0.16),
+        borderColor,
         transform: [{ rotate: '45deg' }],
       }}
     />
@@ -268,6 +271,8 @@ export function GuidedTourCoachmark({
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const m3 = useM3();
+  const isDark = useIsDark();
   const [keyboardHeight, setKeyboardHeight] = React.useState(0);
   const pulse = useMemo(() => new Animated.Value(0), []);
   const reveal = useMemo(() => new Animated.Value(0), []);
@@ -376,6 +381,16 @@ export function GuidedTourCoachmark({
     targetId === GUIDED_TOUR_TARGET_IDS.ADD_LOG_SAVE;
   const isCircularTarget = !forceRectTarget && Math.abs(rect.width - rect.height) < 8;
   const accentColor = step === 'add_farm' ? '#2FA36D' : '#4A86E8';
+  const bubbleGradientColors: [string, string] = isDark
+    ? [m3.surface.surfaceContainerHigh, m3.surface.surfaceContainer]
+    : ['#FFFFFF', '#F5FAF7'];
+  const bubbleFillColor = isDark ? m3.surface.surfaceContainer : '#FFFFFF';
+  const bubbleBorderColor = isDark
+    ? colorWithOpacity(m3.colorScheme.outline, 0.4)
+    : colorWithOpacity(accentColor, 0.18);
+  const primaryTextColor = m3.colorScheme.onSurface;
+  const secondaryTextColor = colorWithOpacity(m3.colorScheme.onSurfaceVariant, isDark ? 0.9 : 0.7);
+  const tertiaryTextColor = colorWithOpacity(m3.colorScheme.onSurfaceVariant, isDark ? 0.82 : 0.58);
 
   const bubbleOpacity = reveal.interpolate({
     inputRange: [0, 1],
@@ -402,7 +417,7 @@ export function GuidedTourCoachmark({
     TOOLTIP_TOP_CLEARANCE,
     screenHeight - tooltipHeight - TOOLTIP_BOTTOM_CLEARANCE,
   );
-  const clampedTop = Math.max(TOOLTIP_TOP_CLEARANCE, Math.min(desiredTooltipTop, MAX_BUBBLE_TOP));
+  const clampedTop = Math.min(desiredTooltipTop, MAX_BUBBLE_TOP);
 
   const targetBottom = rectY + rect.height + focusPadding + 8;
   const targetTopEdge = rectY - focusPadding - 8;
@@ -499,7 +514,7 @@ export function GuidedTourCoachmark({
           }}
         >
           <LinearGradient
-            colors={['#FFFFFF', '#F5FAF7']}
+            colors={bubbleGradientColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             onLayout={(e) => {
@@ -513,7 +528,7 @@ export function GuidedTourCoachmark({
             style={{
               borderRadius: borderRadius['2xl'],
               borderWidth: 1,
-              borderColor: colorWithOpacity(accentColor, 0.18),
+              borderColor: bubbleBorderColor,
               paddingHorizontal: compact ? spacing[3] : spacing[4],
               paddingTop: compact ? spacing[3] : spacing[4],
               paddingBottom: compact ? spacing[3] : spacing[4],
@@ -550,7 +565,7 @@ export function GuidedTourCoachmark({
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      color: '#142018',
+                      color: primaryTextColor,
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
                     }}
@@ -559,7 +574,7 @@ export function GuidedTourCoachmark({
                   </Text>
                   <Text
                     style={{
-                      color: colorWithOpacity('#142018', 0.58),
+                      color: tertiaryTextColor,
                       fontSize: fontSize.xs,
                       fontWeight: fontWeight.semibold,
                       marginTop: 2,
@@ -581,7 +596,7 @@ export function GuidedTourCoachmark({
                 >
                   <Text
                     style={{
-                      color: colorWithOpacity('#142018', 0.58),
+                      color: tertiaryTextColor,
                       fontSize: fontSize.sm,
                       fontWeight: fontWeight.semibold,
                     }}
@@ -594,7 +609,7 @@ export function GuidedTourCoachmark({
 
             <Text
               style={{
-                color: '#142018',
+                color: primaryTextColor,
                 fontSize: compact ? fontSize.lg : fontSize.xl,
                 fontWeight: fontWeight.semibold,
                 lineHeight: compact ? 26 : 30,
@@ -605,7 +620,7 @@ export function GuidedTourCoachmark({
             {secondaryLine ? (
               <Text
                 style={{
-                  color: colorWithOpacity('#142018', 0.7),
+                  color: secondaryTextColor,
                   fontSize: fontSize.sm,
                   fontWeight: fontWeight.medium,
                   lineHeight: 20,
@@ -636,7 +651,7 @@ export function GuidedTourCoachmark({
                 />
                 <Text
                   style={{
-                    color: colorWithOpacity('#142018', 0.6),
+                    color: tertiaryTextColor,
                     fontSize: fontSize.xs,
                     fontWeight: fontWeight.medium,
                   }}
@@ -668,7 +683,7 @@ export function GuidedTourCoachmark({
                   >
                     <Text
                       style={{
-                        color: colorWithOpacity('#142018', 0.58),
+                        color: tertiaryTextColor,
                         fontSize: fontSize.sm,
                         fontWeight: fontWeight.semibold,
                       }}
@@ -692,7 +707,7 @@ export function GuidedTourCoachmark({
                     >
                       <Text
                         style={{
-                          color: colorWithOpacity('#142018', 0.68),
+                          color: secondaryTextColor,
                           fontSize: fontSize.sm,
                           fontWeight: fontWeight.semibold,
                         }}
@@ -710,9 +725,9 @@ export function GuidedTourCoachmark({
                         borderRadius: borderRadius.full,
                         minHeight: 40,
                         justifyContent: 'center',
-                        backgroundColor: colorWithOpacity(accentColor, 0.12),
+                        backgroundColor: colorWithOpacity(accentColor, isDark ? 0.18 : 0.12),
                         borderWidth: 1,
-                        borderColor: colorWithOpacity(accentColor, 0.16),
+                        borderColor: colorWithOpacity(accentColor, isDark ? 0.3 : 0.16),
                       }}
                     >
                       <Text
@@ -736,7 +751,8 @@ export function GuidedTourCoachmark({
               pointerLeft={pointerLeft}
               bubblePointsDown={bubblePointsDown}
               bubbleWidth={bubbleWidth}
-              accentColor={accentColor}
+              fillColor={bubbleFillColor}
+              borderColor={bubbleBorderColor}
             />
           ) : null}
         </Animated.View>
@@ -758,9 +774,15 @@ export function GuidedTourCoachmark({
               paddingHorizontal: spacing[4],
               paddingVertical: spacing[2],
               borderRadius: borderRadius.full,
-              backgroundColor: colorWithOpacity('#111', isNonBlocking ? 0.54 : 0.72),
+              backgroundColor: colorWithOpacity(
+                isDark ? m3.surface.surfaceContainerHighest : '#111',
+                isDark ? (isNonBlocking ? 0.9 : 0.96) : isNonBlocking ? 0.54 : 0.72,
+              ),
               borderWidth: 1,
-              borderColor: colorWithOpacity('#FFF', 0.18),
+              borderColor: colorWithOpacity(
+                isDark ? m3.colorScheme.outline : '#FFF',
+                isDark ? 0.34 : 0.18,
+              ),
               shadowColor: '#000',
               shadowOpacity: 0.18,
               shadowRadius: 14,
@@ -768,7 +790,9 @@ export function GuidedTourCoachmark({
               elevation: 4,
             }}
           >
-            <Text style={{ color: '#FFF', fontWeight: fontWeight.semibold }}>
+            <Text
+              style={{ color: isDark ? primaryTextColor : '#FFF', fontWeight: fontWeight.semibold }}
+            >
               {t('guidedTour.cta.skipTour')}
             </Text>
           </Pressable>

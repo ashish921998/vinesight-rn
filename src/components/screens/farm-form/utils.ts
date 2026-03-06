@@ -88,14 +88,14 @@ export const getErrorMessage = (error: unknown, fallback: string): string => {
 // ---------------------------------------------------------------------------
 
 export const buildFormStateFromFarm = (farm?: Farm | null) => {
-  const { selectedCrop } = resolveCropSelection(farm?.crop);
+  const { selectedCrop, customCropName } = resolveCropSelection(farm?.crop);
   const predefinedVarieties = CROP_VARIETIES[selectedCrop] ?? [];
   const farmVariety = farm?.crop_variety;
   const isCustomVariety = farmVariety && !predefinedVarieties.includes(farmVariety);
 
   return {
     selectedCrop,
-    customCropName: resolveCropSelection(farm?.crop).customCropName,
+    customCropName,
     name: farm?.name ?? '',
     region: farm?.region ?? '',
     area: farm?.area?.toString() ?? '',

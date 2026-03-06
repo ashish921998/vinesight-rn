@@ -39,6 +39,9 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
             <Pressable
               key={tab}
               onPress={() => onTabChange(tab)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={`${label} tab${isActive ? ', selected' : ''}`}
               style={[
                 { flex: 1, borderRadius: 999, overflow: 'hidden' },
                 { marginHorizontal: 1.5 },
@@ -68,7 +71,6 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
                   color={isActive ? m3.colorScheme.primary : m3.colorScheme.onSurfaceVariant}
                 />
                 <Text
-                  selectable
                   style={[
                     { marginLeft: 8, fontSize: 14, fontWeight: '700' },
                     {
