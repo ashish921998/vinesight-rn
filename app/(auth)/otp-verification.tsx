@@ -125,6 +125,11 @@ export default function OTPVerificationScreen() {
   const handleBack = () => {
     if (isPhoneOTP) {
       cancelPhoneOTPFlow();
+      router.replace({
+        pathname: '/(auth)/phone-login',
+        params: { mode: phoneAuthMode, redirect: redirectPath },
+      });
+      return;
     } else {
       cancelOTPFlow();
     }
@@ -132,7 +137,7 @@ export default function OTPVerificationScreen() {
       router.back();
       return;
     }
-    router.replace(isPhoneOTP ? '/(auth)/phone-login' : '/(auth)/login');
+    router.replace('/(auth)/login');
   };
 
   const containerStyle: ViewStyle = {

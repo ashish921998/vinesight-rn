@@ -506,12 +506,12 @@ export default function FarmsScreen() {
         >
           {t('farms.empty.subtitle')}
         </Text>
-        <View style={{ marginTop: spacing[6], width: '100%', maxWidth: 360 }}>
+        <View style={{ marginTop: spacing[6], alignSelf: 'center' }}>
           <GuidedTourTarget
             targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
             enabled={isScreenFocused}
           >
-            <Button title={t('farms.addFarm')} onPress={handleAddFarm} />
+            <Button title={t('farms.addFarm')} onPress={handleAddFarm} fullWidth={false} />
           </GuidedTourTarget>
         </View>
       </View>

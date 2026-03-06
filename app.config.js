@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.2.0',
+    version: '3.2.1',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
@@ -59,7 +59,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 26,
+      versionCode: 27,
       permissions: ['android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS'],
       config: {
         googleMaps: {

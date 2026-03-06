@@ -24,6 +24,7 @@ import { spacing, borderRadius, fontSize, fontWeight, size } from '@/styles/them
 import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { buildE164PhoneNumber } from '@/utils/phone';
+import type { PhoneAuthMode } from '@/types/auth';
 import appLogoDark from '../../assets/icons/ios-dark.png';
 import appLogoLight from '../../assets/icons/ios-light.png';
 import * as WebBrowser from 'expo-web-browser';
@@ -69,18 +70,29 @@ export default function PhoneLoginScreen() {
     if (typeof redirect === 'string' && redirect.startsWith('/')) return redirect;
     return '/';
   }, [redirect]);
-  const phoneAuthMode = mode === 'signup' ? 'signup' : 'signin';
+  const requestedMode: PhoneAuthMode = mode === 'signin' ? 'signin' : 'signup';
 
   useEffect(() => {
     WebBrowser.maybeCompleteAuthSession();
   }, []);
 
+  const [phoneAuthMode, setPhoneAuthMode] = useState<PhoneAuthMode>(requestedMode);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const lastNavigatedPhoneRef = useRef<string | null>(null);
+  const lastRequestedOtpModeRef = useRef<PhoneAuthMode>(requestedMode);
   const [localPhoneError, setLocalPhoneError] = useState<string | null>(null);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    // Keep local auth mode and the OTP routing ref aligned when Expo Router
+    // reuses this screen instance with different query params.
+    lastRequestedOtpModeRef.current = requestedMode;
+    setPhoneAuthMode(requestedMode);
+  }, [requestedMode]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const {
     isLoading,
@@ -102,7 +114,7 @@ export default function PhoneLoginScreen() {
         params: {
           phone: pendingOTPPhone,
           channel: 'phone',
-          mode: phoneAuthMode,
+          mode: lastRequestedOtpModeRef.current,
           redirect: redirectPath,
         },
       });
@@ -130,9 +142,11 @@ export default function PhoneLoginScreen() {
       setLocalPhoneError(t('authPhone.invalidPhone'));
       return;
     }
+    const submitMode = phoneAuthMode;
+    lastRequestedOtpModeRef.current = submitMode;
     clearError();
     setLocalPhoneError(null);
-    await signInWithPhone(fullPhoneNumber, phoneAuthMode);
+    await signInWithPhone(fullPhoneNumber, submitMode);
   };
 
   const handleSelectCountry = (country: Country) => {
@@ -140,6 +154,19 @@ export default function PhoneLoginScreen() {
     setShowCountryPicker(false);
     setCountrySearch('');
   };
+
+  const toggleMode = () => {
+    switchToMode(phoneAuthMode === 'signup' ? 'signin' : 'signup');
+  };
+
+  const switchToMode = (nextMode: PhoneAuthMode) => {
+    if (isLoading) return;
+    clearError();
+    setLocalPhoneError(null);
+    setPhoneAuthMode(nextMode);
+  };
+
+  const isSignUp = phoneAuthMode === 'signup';
 
   const filteredCountries = useMemo(() => {
     if (!countrySearch.trim()) return COUNTRIES;
@@ -263,6 +290,27 @@ export default function PhoneLoginScreen() {
     color: m3.colorScheme.onSurfaceVariant,
   };
 
+  const modeToggleRowStyle: ViewStyle = {
+    flexDirection: 'row',
+    padding: spacing[1],
+    borderRadius: borderRadius.xl,
+    backgroundColor: m3.surface.surfaceContainerHigh,
+    marginBottom: spacing[4],
+  };
+
+  const modeToggleButtonStyle: ViewStyle = {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.lg,
+  };
+
+  const modeToggleTextStyle: TextStyle = {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+  };
+
   const emailLinkContainerStyle: ViewStyle = {
     alignItems: 'center',
     paddingVertical: spacing[4],
@@ -383,12 +431,73 @@ export default function PhoneLoginScreen() {
               />
             </View>
             <Text style={titleTextStyle}>Vinesight</Text>
-            <Text style={subtitleTextStyle}>{t('auth.subtitle')}</Text>
+            <Text style={[titleTextStyle, { fontSize: fontSize.xl, marginTop: spacing[3] }]}>
+              {isSignUp
+                ? t('authPhone.signupTitle', { defaultValue: 'Phone Sign Up' })
+                : t('authPhone.signinTitle', { defaultValue: 'Phone Sign In' })}
+            </Text>
+            <Text style={subtitleTextStyle}>
+              {isSignUp
+                ? t('authPhone.signupSubtitle', {
+                    defaultValue:
+                      'Create your account with your mobile number and we will send a verification code.',
+                  })
+                : t('authPhone.signinSubtitle', {
+                    defaultValue:
+                      'Sign in with your mobile number and we will send a verification code.',
+                  })}
+            </Text>
           </View>
 
           {/* Form */}
           <View style={formContainerStyle}>
             <View style={formInnerStyle}>
+              <View style={modeToggleRowStyle}>
+                {(['signin', 'signup'] as const).map((nextMode) => {
+                  const selected = phoneAuthMode === nextMode;
+                  return (
+                    <Pressable
+                      key={nextMode}
+                      disabled={isLoading}
+                      onPress={() => switchToMode(nextMode)}
+                      style={({ pressed }) => [
+                        modeToggleButtonStyle,
+                        {
+                          backgroundColor: selected
+                            ? m3.colorScheme.primary
+                            : pressed
+                              ? colorWithOpacity(
+                                  m3.colorScheme.onSurface,
+                                  m3.stateLayerOpacity.pressed,
+                                )
+                              : 'transparent',
+                        },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected, disabled: isLoading }}
+                      accessibilityLabel={
+                        nextMode === 'signup'
+                          ? t('auth.a11y.switchToSignUp')
+                          : t('auth.a11y.switchToSignIn')
+                      }
+                    >
+                      <Text
+                        style={[
+                          modeToggleTextStyle,
+                          {
+                            color: selected
+                              ? m3.colorScheme.onPrimary
+                              : m3.colorScheme.onSurfaceVariant,
+                          },
+                        ]}
+                      >
+                        {nextMode === 'signup' ? t('auth.signUp') : t('auth.signIn')}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
               {/* Country Code Picker */}
               <Pressable
                 onPress={() => setShowCountryPicker(true)}
@@ -440,7 +549,13 @@ export default function PhoneLoginScreen() {
 
               {/* Send Code Button */}
               <Button
-                title={isLoading ? t('authPhone.sendingCode') : t('authPhone.sendCode')}
+                title={
+                  isLoading
+                    ? t('authPhone.sendingCode')
+                    : isSignUp
+                      ? t('authPhone.sendSignupCode', { defaultValue: 'Send Sign Up Code' })
+                      : t('authPhone.sendSigninCode', { defaultValue: 'Send Sign In Code' })
+                }
                 onPress={handleSendCode}
                 isLoading={isLoading}
                 disabled={!phoneNumber || !normalizedPhoneNumber}
@@ -495,6 +610,39 @@ export default function PhoneLoginScreen() {
                 <Text style={emailLinkTextStyle}>
                   {t('authPhone.preferEmail')}{' '}
                   <Text style={emailLinkHighlightStyle}>{t('authPhone.signInWithEmail')}</Text>
+                </Text>
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      backgroundColor: pressed
+                        ? colorWithOpacity(m3.colorScheme.onSurface, m3.stateLayerOpacity.pressed)
+                        : 'transparent',
+                      borderRadius: m3.shape.cornerMedium,
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+
+          <Pressable
+            onPress={toggleMode}
+            style={emailLinkContainerStyle}
+            disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isSignUp ? t('auth.a11y.switchToSignIn') : t('auth.a11y.switchToSignUp')
+            }
+          >
+            {({ pressed }) => (
+              <View style={{ paddingVertical: spacing[2], paddingHorizontal: spacing[2] }}>
+                <Text style={emailLinkTextStyle}>
+                  {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}{' '}
+                  <Text style={emailLinkHighlightStyle}>
+                    {isSignUp ? t('auth.signIn') : t('auth.signUp')}
+                  </Text>
                 </Text>
                 <View
                   pointerEvents="none"

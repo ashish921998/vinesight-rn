@@ -26,6 +26,11 @@ const isNetworkTimeoutError = (error: unknown): boolean => {
   );
 };
 
+const isOtpSignupDisabledError = (error: unknown): boolean => {
+  const message = getErrorMessage(error, '').toLowerCase();
+  return message.includes('signups not allowed for otp');
+};
+
 type AuthErrorContext =
   | 'sign_in'
   | 'sign_up'
@@ -33,6 +38,7 @@ type AuthErrorContext =
   | 'verify_email_otp'
   | 'resend_email_otp'
   | 'send_phone_otp'
+  | 'send_phone_signin_otp'
   | 'verify_phone_otp'
   | 'link_phone_otp'
   | 'verify_phone_link_otp'
@@ -84,6 +90,10 @@ const getAuthErrorMessage = (
 
   if (context === 'send_phone_otp') {
     return 'Could not send verification code to your phone. Please try again.';
+  }
+
+  if (context === 'send_phone_signin_otp') {
+    return fallback;
   }
 
   if (context === 'link_phone_otp') {
@@ -1067,6 +1077,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // Sign in with phone (send OTP via SMS)
   signInWithPhone: async (phone: string, mode: PhoneAuthMode = 'signin') => {
     const trimmedPhone = phone.trim();
+    const maskedPhone = trimmedPhone.replace(/\d(?=\d{4})/g, '*');
 
     if (!isValidPhone(trimmedPhone)) {
       set({ errorMessage: 'Please enter a valid phone number with country code' });
@@ -1079,6 +1090,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       otpSentSuccessfully: false,
     });
     telemetry.capture('auth_phone_otp_send_started', { mode });
+    if (__DEV__) {
+      console.log('[auth] signInWithPhone', {
+        phone: maskedPhone,
+        mode,
+        shouldCreateUser: mode === 'signup',
+      });
+    }
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -1100,7 +1118,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           ? 'No account found for this phone number. If you already use email login, sign in with email and link phone from Settings.'
           : 'Failed to send verification code';
       set({
-        errorMessage: getAuthErrorMessage(error, fallbackMessage, 'send_phone_otp'),
+        errorMessage:
+          mode === 'signup' && isOtpSignupDisabledError(error)
+            ? 'Phone sign-up is currently disabled for this project. Enable OTP signups in Supabase Auth settings, or sign up with email and link your phone from Settings.'
+            : getAuthErrorMessage(
+                error,
+                fallbackMessage,
+                mode === 'signup' ? 'send_phone_otp' : 'send_phone_signin_otp',
+              ),
         otpSentSuccessfully: false,
         isLoading: false,
       });

@@ -93,6 +93,7 @@ const SYMBOL_TO_IONICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'person.fill': 'person',
   'person.2': 'people-outline',
   'person.2.fill': 'people',
+  'person.crop.circle.fill.badge.plus': 'person-add',
   'person.badge.plus': 'person-add',
   'person.badge.plus.fill': 'person-add',
   'person.badge.clock': 'person-add-outline',

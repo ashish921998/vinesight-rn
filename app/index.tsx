@@ -109,5 +109,5 @@ export default function Index() {
     return <Redirect href="/(tabs)" />;
   }
 
-  return <Redirect href="/(auth)/phone-login" />;
+  return <Redirect href={{ pathname: '/(auth)/phone-login', params: { mode: 'signup' } }} />;
 }

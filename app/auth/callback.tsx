@@ -16,7 +16,7 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       if (error) {
-        router.replace('/(auth)/phone-login');
+        router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
         return;
       }
 
@@ -38,14 +38,14 @@ export default function AuthCallback() {
           }
         } catch (err) {
           console.error('Auth callback exchange error:', err);
-          router.replace('/(auth)/phone-login');
+          router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
         }
         return;
       }
 
       if (resolvedAccessToken) {
         if (!resolvedRefreshToken) {
-          router.replace('/(auth)/phone-login');
+          router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
           return;
         }
 
@@ -60,17 +60,17 @@ export default function AuthCallback() {
           if (data.session) {
             router.replace('/');
           } else {
-            router.replace('/(auth)/phone-login');
+            router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
           }
         } catch (err) {
           console.error('Auth callback error:', err);
-          router.replace('/(auth)/phone-login');
+          router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
         }
       } else {
         if (error_description && __DEV__) {
           console.warn('Auth callback error:', error_description);
         }
-        router.replace('/(auth)/phone-login');
+        router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
       }
     };
 
