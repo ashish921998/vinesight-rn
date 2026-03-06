@@ -89,7 +89,7 @@ export default function WeatherScreen() {
     if (!isAuthenticated) {
       router.replace({
         pathname: '/(auth)/phone-login',
-        params: { redirect: authRedirectPath },
+        params: { redirect: authRedirectPath, mode: 'signin' },
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- router from useRouter() is stable across renders

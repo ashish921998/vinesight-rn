@@ -72,7 +72,7 @@ export default function TabLayout() {
       }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasRedirected(true);
-      router.replace('/(auth)/phone-login');
+      router.replace({ pathname: '/(auth)/phone-login', params: { mode: 'signin' } });
     }
     // Reset redirect flag when authenticated (regardless of previous hasRedirected state)
     if (isAuthenticated) {

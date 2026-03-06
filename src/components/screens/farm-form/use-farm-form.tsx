@@ -127,6 +127,14 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   const pendingGuidedScrollRef = useRef<React.RefObject<TextInput | null> | null>(null);
   const guidedTopLockFrameRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
   const guidedLockedScrollYRef = useRef(0);
+  const dismissFarmKeyboard = useCallback(() => {
+    nameInputRef.current?.blur();
+    regionInputRef.current?.blur();
+    areaInputRef.current?.blur();
+    customCropInputRef.current?.blur();
+    customVarietyInputRef.current?.blur();
+    Keyboard.dismiss();
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Scroll helpers
@@ -271,12 +279,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     });
     const unsubDismissKeyboard = guidedTourOn('guidedTour.addFarmDismissKeyboard', () => {
       if (mode !== 'add') return;
-      nameInputRef.current?.blur();
-      regionInputRef.current?.blur();
-      areaInputRef.current?.blur();
-      customCropInputRef.current?.blur();
-      customVarietyInputRef.current?.blur();
-      Keyboard.dismiss();
+      dismissFarmKeyboard();
     });
 
     const unsubPhaseChanged = guidedTourOn('guidedTour.addFarmPhaseChanged', (payload) => {
@@ -288,6 +291,8 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       if (payload.focusField) {
         guidedTourLastFocusFieldRef.current = payload.focusField;
         focusGuidedField(payload.focusField);
+      } else if (payload.phase !== 'cta') {
+        dismissFarmKeyboard();
       }
       if (!payload.lockScroll) {
         setIsGuidedTourScrollLocked(false);
@@ -326,7 +331,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       unsubDismissKeyboard();
       unsubPhaseChanged();
     };
-  }, [focusGuidedField, mode]);
+  }, [dismissFarmKeyboard, focusGuidedField, mode]);
 
   const prevScrollLockedRef = useRef(false);
   useEffect(() => {
@@ -699,6 +704,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   };
 
   const openCropPicker = () => {
+    dismissFarmKeyboard();
     setFormState((prev) => ({ ...prev, showCropPicker: true }));
     if (getIsGuidedAddFarm()) {
       guidedTourEmit('guidedTour.addFarmCropPickerToggled', { open: true });

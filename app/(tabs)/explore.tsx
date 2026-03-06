@@ -453,25 +453,26 @@ export default function ExploreScreen() {
           >
             {t('farms.empty.subtitle')}
           </Text>
-          <GuidedTourTarget
-            targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
-            enabled={isAddFarmTargetEnabled}
-          >
-            <Pressable
-              style={{
-                paddingHorizontal: spacing[6],
-                paddingVertical: spacing[3],
-                borderRadius: borderRadius.xl,
-                marginTop: spacing[6],
-                backgroundColor: colors.primary[500],
-              }}
-              onPress={handleAddFarm}
+          <View style={{ marginTop: spacing[6] }}>
+            <GuidedTourTarget
+              targetId={GUIDED_TOUR_TARGET_IDS.ADD_FARM_PRIMARY}
+              enabled={isAddFarmTargetEnabled}
             >
-              <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
-                {t('farms.addFarm')}
-              </Text>
-            </Pressable>
-          </GuidedTourTarget>
+              <Pressable
+                style={{
+                  paddingHorizontal: spacing[6],
+                  paddingVertical: spacing[3],
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: colors.primary[500],
+                }}
+                onPress={handleAddFarm}
+              >
+                <Text style={{ color: m3.colorScheme.onPrimary, fontWeight: fontWeight.semibold }}>
+                  {t('farms.addFarm')}
+                </Text>
+              </Pressable>
+            </GuidedTourTarget>
+          </View>
         </View>
       );
     };
