@@ -85,9 +85,14 @@ export default function PhoneLoginScreen() {
   const lastRequestedOtpModeRef = useRef<PhoneAuthMode>(requestedMode);
   const [localPhoneError, setLocalPhoneError] = useState<string | null>(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    // Keep local auth mode and the OTP routing ref aligned when Expo Router
+    // reuses this screen instance with different query params.
+    lastRequestedOtpModeRef.current = requestedMode;
     setPhoneAuthMode(requestedMode);
   }, [requestedMode]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const {
     isLoading,
