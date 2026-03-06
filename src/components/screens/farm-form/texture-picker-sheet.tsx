@@ -80,6 +80,10 @@ export function TexturePickerSheet({
             </Text>
             <Pressable
               onPress={onClose}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+              accessibilityHint="Closes the texture picker"
               style={{
                 width: 40,
                 height: 40,

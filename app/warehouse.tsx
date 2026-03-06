@@ -526,6 +526,7 @@ export default function WarehouseScreen() {
               const isLowStock = item.reorder_quantity && item.quantity <= item.reorder_quantity;
               const itemValue = item.quantity * item.unit_price;
               const itemColor = item.type === 'fertilizer' ? fertilizerColor : sprayColor;
+              const itemAccessibilityName = item.name || item.id?.toString() || 'item';
 
               return (
                 <View
@@ -551,7 +552,15 @@ export default function WarehouseScreen() {
                       gap: spacing[3],
                     }}
                   >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: spacing[2],
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
                       <View
                         style={{
                           paddingHorizontal: 12,
@@ -563,9 +572,18 @@ export default function WarehouseScreen() {
                               : colorWithOpacity(sprayColor, 0.16),
                           borderWidth: 1,
                           borderColor: colorWithOpacity(itemColor, 0.18),
+                          flexShrink: 1,
+                          minWidth: 0,
                         }}
                       >
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            flexShrink: 1,
+                            minWidth: 0,
+                          }}
+                        >
                           <Icon
                             name={resolveSymbolIconName(
                               item.type === 'fertilizer'
@@ -581,7 +599,10 @@ export default function WarehouseScreen() {
                               fontSize: fontSize.xs,
                               fontWeight: fontWeight.semibold,
                               marginLeft: spacing[1],
+                              flexShrink: 1,
                             }}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
                           >
                             {item.type === 'fertilizer'
                               ? t('warehouse.itemTypes.fertilizer')
@@ -598,6 +619,8 @@ export default function WarehouseScreen() {
                             backgroundColor: colorWithOpacity(lowStockColor, 0.16),
                             borderWidth: 1,
                             borderColor: colorWithOpacity(lowStockColor, 0.24),
+                            flexShrink: 1,
+                            minWidth: 0,
                           }}
                         >
                           <Text
@@ -605,7 +628,10 @@ export default function WarehouseScreen() {
                               color: lowStockColor,
                               fontSize: fontSize.xs,
                               fontWeight: fontWeight.semibold,
+                              flexShrink: 1,
                             }}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
                           >
                             {t('common.labels.low')}
                           </Text>
@@ -615,6 +641,10 @@ export default function WarehouseScreen() {
                     <View style={{ flexDirection: 'row', gap: spacing[2] }}>
                       <Pressable
                         onPress={() => handleEditItem(item)}
+                        accessible
+                        accessibilityRole="button"
+                        accessibilityLabel={`Edit item ${itemAccessibilityName}`}
+                        accessibilityHint="Opens edit form"
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         style={{
                           width: 34,
@@ -629,6 +659,10 @@ export default function WarehouseScreen() {
                       </Pressable>
                       <Pressable
                         onPress={() => handleDeleteItem(item)}
+                        accessible
+                        accessibilityRole="button"
+                        accessibilityLabel={`Delete item ${itemAccessibilityName}`}
+                        accessibilityHint="Deletes this item"
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         style={{
                           width: 34,

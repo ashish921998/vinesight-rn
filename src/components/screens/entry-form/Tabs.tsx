@@ -59,7 +59,7 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
                   backgroundColor: isActive
                     ? colorWithOpacity(m3.colorScheme.primary, 0.14)
                     : 'transparent',
-                  borderWidth: isActive ? 1 : 0,
+                  borderWidth: 1,
                   borderColor: isActive
                     ? colorWithOpacity(m3.colorScheme.primary, 0.24)
                     : 'transparent',

@@ -100,6 +100,13 @@ export default function ExploreScreen() {
   const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilter>('all');
 
   const currency = useCurrency();
+  const metricCardBaseStyle = {
+    flex: 1,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+  };
 
   const openWarehouseItem = (item?: WarehouseItem | null) => {
     setAddWarehouseItem({ editingItem: item ?? null });
@@ -1150,15 +1157,13 @@ export default function ExploreScreen() {
 
                   <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[3] }}>
                     <View
-                      style={{
-                        flex: 1,
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[3],
-                        borderRadius: borderRadius.xl,
-                        backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
-                        borderWidth: 1,
-                        borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
-                      }}
+                      style={[
+                        metricCardBaseStyle,
+                        {
+                          backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
+                          borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
+                        },
+                      ]}
                     >
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
                         {t('common.labels.quantity')}
@@ -1175,15 +1180,13 @@ export default function ExploreScreen() {
                       </Text>
                     </View>
                     <View
-                      style={{
-                        flex: 1,
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[3],
-                        borderRadius: borderRadius.xl,
-                        backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
-                        borderWidth: 1,
-                        borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
-                      }}
+                      style={[
+                        metricCardBaseStyle,
+                        {
+                          backgroundColor: colorWithOpacity(m3.colorScheme.surface, 0.5),
+                          borderColor: colorWithOpacity(m3.colorScheme.outlineVariant, 0.18),
+                        },
+                      ]}
                     >
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
                         {t('common.labels.unitPrice')}
@@ -1201,15 +1204,13 @@ export default function ExploreScreen() {
                       </Text>
                     </View>
                     <View
-                      style={{
-                        flex: 1,
-                        paddingHorizontal: spacing[3],
-                        paddingVertical: spacing[3],
-                        borderRadius: borderRadius.xl,
-                        backgroundColor: colorWithOpacity(itemColor, 0.08),
-                        borderWidth: 1,
-                        borderColor: colorWithOpacity(itemColor, 0.16),
-                      }}
+                      style={[
+                        metricCardBaseStyle,
+                        {
+                          backgroundColor: colorWithOpacity(itemColor, 0.08),
+                          borderColor: colorWithOpacity(itemColor, 0.16),
+                        },
+                      ]}
                     >
                       <Text style={{ color: colors.surface[500], fontSize: fontSize.xs }}>
                         {t('common.labels.totalValue')}

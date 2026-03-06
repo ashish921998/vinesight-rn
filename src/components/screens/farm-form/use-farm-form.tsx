@@ -22,6 +22,7 @@ import { spacing } from '@/styles/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { telemetry } from '@/services/telemetry';
 import * as Sentry from '@sentry/react-native';
+import { formatNumber } from '@/i18n/format';
 import { getFarmErrorMeta, shouldCaptureFarmErrorInSentry } from '@/utils/farm-error-utils';
 import { triggerHapticSuccess } from '@/utils/haptics';
 import { validateAndParseOptionalFarmNumbers } from '@/utils/farm-form-submit-validation';
@@ -49,6 +50,25 @@ interface KnownCropOption {
   value: KnownCrop;
   label: string;
   sublabel: string;
+}
+
+function hasDefinedValue(value: unknown) {
+  return value !== null && value !== undefined;
+}
+
+function getFarmPayloadMetadata(payload: Record<string, unknown>) {
+  return {
+    fields: Object.keys(payload),
+    fieldCount: Object.keys(payload).length,
+    hasLocation: ['location_name', 'latitude', 'longitude'].some((key) =>
+      hasDefinedValue(payload[key]),
+    ),
+    hasAddress:
+      (typeof payload.address === 'string' && payload.address.trim().length > 0) ||
+      Object.entries(payload).some(
+        ([key, value]) => /^address(_|$)/.test(key) && hasDefinedValue(value),
+      ),
+  };
 }
 
 export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onClose: () => void) {
@@ -846,13 +866,14 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       }
 
       const overflowMessage = optionalNumberValidation.error.limits
-        .map(({ label, max }) =>
-          t('farmForm.overflowError', {
+        .map(({ label, max }) => {
+          const formattedMax = formatNumber(max);
+          return t('farmForm.overflowError', {
             fields: label,
-            max,
-            defaultValue: `${label} must be less than or equal to ${max}.`,
-          }),
-        )
+            max: formattedMax,
+            defaultValue: `${label} must be less than or equal to ${formattedMax}.`,
+          });
+        })
         .join(' ');
       Alert.alert(t('common.error'), overflowMessage);
       return;
@@ -919,15 +940,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       } catch (_error: unknown) {
         const errorMessage = getErrorMessage(_error, t('common.errors.failedToUpdateFarm'));
         const errorMeta = getFarmErrorMeta(_error);
-        const sanitizedUpdates = {
-          fields: Object.keys(updates),
-          fieldCount: Object.keys(updates).length,
-          hasLocation:
-            'location_name' in updates || 'latitude' in updates || 'longitude' in updates,
-          hasAddress:
-            'address' in updates ||
-            Object.keys(updates).some((key) => key === 'address' || key.startsWith('address_')),
-        };
+        const sanitizedUpdates = getFarmPayloadMetadata(updates as Record<string, unknown>);
         console.error('Failed to update farm:', _error, {
           farmId,
           updates: sanitizedUpdates,
@@ -1006,15 +1019,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     } catch (_error: unknown) {
       const errorMessage = getErrorMessage(_error, t('common.errors.failedToCreateFarm'));
       const errorMeta = getFarmErrorMeta(_error);
-      const sanitizedFarmData = {
-        fields: Object.keys(farmData),
-        fieldCount: Object.keys(farmData).length,
-        hasLocation:
-          'location_name' in farmData || 'latitude' in farmData || 'longitude' in farmData,
-        hasAddress:
-          'address' in farmData ||
-          Object.keys(farmData).some((key) => key === 'address' || key.startsWith('address_')),
-      };
+      const sanitizedFarmData = getFarmPayloadMetadata(farmData as Record<string, unknown>);
       console.error('Failed to create farm:', _error, {
         farmData: sanitizedFarmData,
         errorMeta,

@@ -428,7 +428,7 @@ export function GuidedTourCoachmark({
   const maxAllowedTop = screenHeight - tooltipHeight - TOOLTIP_BOTTOM_CLEARANCE;
   const canFitAbove = preferredAboveTop >= TOOLTIP_TOP_CLEARANCE;
   const canFitBelow = preferredBelowTop <= maxAllowedTop;
-  const bubbleTop = overlapsTarget
+  const chosenBubbleTop = overlapsTarget
     ? canFitAbove
       ? preferredAboveTop
       : canFitBelow
@@ -438,6 +438,7 @@ export function GuidedTourCoachmark({
           ? TOOLTIP_TOP_CLEARANCE
           : maxAllowedTop
     : clampedTop;
+  const bubbleTop = Math.max(chosenBubbleTop, TOOLTIP_TOP_CLEARANCE);
   const bubbleLeft = tooltipPlacement === 'top' ? spacing[4] : tooltipLeft;
   const bubbleRight = spacing[4];
   const bubbleWidth = Math.min(tooltipMaxWidth, screenWidth - bubbleLeft - bubbleRight);
@@ -601,7 +602,7 @@ export function GuidedTourCoachmark({
                       fontWeight: fontWeight.semibold,
                     }}
                   >
-                    {t('guidedTour.cta.skipTour', 'Skip')}
+                    {t('guidedTour.cta.skipTour', 'Skip tour')}
                   </Text>
                 </Pressable>
               ) : null}
@@ -793,7 +794,7 @@ export function GuidedTourCoachmark({
             <Text
               style={{ color: isDark ? primaryTextColor : '#FFF', fontWeight: fontWeight.semibold }}
             >
-              {t('guidedTour.cta.skipTour')}
+              {t('guidedTour.cta.skipTour', 'Skip tour')}
             </Text>
           </Pressable>
         </View>

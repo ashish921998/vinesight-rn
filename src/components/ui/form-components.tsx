@@ -45,6 +45,14 @@ interface FormModalProps {
   saveButtonTargetId?: string;
 }
 
+function useCloseIconColor() {
+  const colors = useThemeColors();
+  const isDark = useIsDark();
+  const m3 = useM3();
+
+  return isDark ? colorWithOpacity(m3.colorScheme.onSurface, 0.92) : colors.surface[300];
+}
+
 export function FormModal({
   visible = true,
   onClose,
@@ -66,8 +74,7 @@ export function FormModal({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const isDark = useIsDark();
-  const m3 = useM3();
+  const closeIconColor = useCloseIconColor();
   const resolvedSaveLabel = saveLabel ?? t('common.next');
   const {
     style: scrollStyle,
@@ -131,10 +138,6 @@ export function FormModal({
     fontWeight: fontWeight.semibold,
     color: isSaveDisabled || isLoading ? colors.surface[500] : colors.white,
   };
-
-  const closeIconColor = isDark
-    ? colorWithOpacity(m3.colorScheme.onSurface, 0.92)
-    : colors.surface[300];
 
   const content = (
     <KeyboardAvoidingView
@@ -274,8 +277,7 @@ export function FullScreenForm({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const isDark = useIsDark();
-  const m3 = useM3();
+  const closeIconColor = useCloseIconColor();
   const resolvedSaveLabel = saveLabel ?? t('common.next');
   const {
     style: scrollStyle,
@@ -339,10 +341,6 @@ export function FullScreenForm({
     fontWeight: fontWeight.semibold,
     color: isSaveDisabled || isLoading ? colors.surface[500] : colors.white,
   };
-
-  const closeIconColor = isDark
-    ? colorWithOpacity(m3.colorScheme.onSurface, 0.92)
-    : colors.surface[300];
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface[100] }}>

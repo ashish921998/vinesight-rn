@@ -90,6 +90,9 @@ export function VarietyPickerSheet({
             </Text>
             <Pressable
               onPress={onClose}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel="Close variety picker"
               style={{
                 width: 40,
                 height: 40,
