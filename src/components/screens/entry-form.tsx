@@ -3361,7 +3361,10 @@ export function EntryForm({
                           ]}
                         >
                           {pendingLogs.length > 0
-                            ? t('entryForm.saveLogs', { count: pendingLogs.length })
+                            ? t('entryForm.saveLogs', {
+                                count: pendingLogs.length,
+                                defaultValue: `Save ${pendingLogs.length} log${pendingLogs.length === 1 ? '' : 's'}`,
+                              })
                             : t('common.save')}
                         </Text>
                       </>

@@ -99,7 +99,9 @@ export const buildFormStateFromFarm = (farm?: Farm | null) => {
     name: farm?.name ?? '',
     region: farm?.region ?? '',
     area: farm?.area?.toString() ?? '',
-    cropVariety: isCustomVariety ? 'Custom' : (farmVariety ?? ''),
+    // Preserve saved custom varieties as the selected value so the picker can
+    // restore and highlight them on edit.
+    cropVariety: farmVariety ?? '',
     customVariety: isCustomVariety ? farmVariety : '',
     cropSearchQuery: '',
     varietySearchQuery: '',

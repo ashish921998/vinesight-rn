@@ -643,8 +643,10 @@ export default function WarehouseScreen() {
                         onPress={() => handleEditItem(item)}
                         accessible
                         accessibilityRole="button"
-                        accessibilityLabel={`Edit item ${itemAccessibilityName}`}
-                        accessibilityHint="Opens edit form"
+                        accessibilityLabel={t('common.a11y.editWithName', {
+                          name: itemAccessibilityName,
+                        })}
+                        accessibilityHint={t('common.a11y.opensEditForm')}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         style={{
                           width: 34,
@@ -661,8 +663,10 @@ export default function WarehouseScreen() {
                         onPress={() => handleDeleteItem(item)}
                         accessible
                         accessibilityRole="button"
-                        accessibilityLabel={`Delete item ${itemAccessibilityName}`}
-                        accessibilityHint="Deletes this item"
+                        accessibilityLabel={t('common.a11y.deleteWithName', {
+                          name: itemAccessibilityName,
+                        })}
+                        accessibilityHint={t('common.a11y.deletesThisItem')}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         style={{
                           width: 34,

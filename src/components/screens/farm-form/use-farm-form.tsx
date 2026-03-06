@@ -434,13 +434,20 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
   // Derived values
   // ---------------------------------------------------------------------------
 
-  const varieties = useMemo(
-    () =>
+  const varieties = useMemo(() => {
+    const baseVarieties =
       formState.selectedCrop === 'Other'
         ? ['Custom']
-        : (CROP_VARIETIES[formState.selectedCrop] ?? ['Custom']),
-    [formState.selectedCrop],
-  );
+        : (CROP_VARIETIES[formState.selectedCrop] ?? ['Custom']);
+    const selectedCustomVariety =
+      formState.cropVariety &&
+      formState.cropVariety !== 'Custom' &&
+      !baseVarieties.includes(formState.cropVariety)
+        ? [formState.cropVariety]
+        : [];
+
+    return [...selectedCustomVariety, ...baseVarieties];
+  }, [formState.cropVariety, formState.selectedCrop]);
 
   const knownCropOptions: KnownCropOption[] = useMemo(
     () =>
@@ -465,6 +472,7 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
 
   const cropSearchQueryTrimmed = formState.cropSearchQuery.trim();
   const cropSearchQueryLower = cropSearchQueryTrimmed.toLowerCase();
+  const varietySearchQueryTrimmed = formState.varietySearchQuery.trim();
   const varietySearchQueryLower = formState.varietySearchQuery.trim().toLowerCase();
 
   const filteredCropOptions = useMemo(() => {
@@ -489,6 +497,11 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     if (!varietySearchQueryLower) return varieties;
     return varieties.filter((variety) => variety.toLowerCase().includes(varietySearchQueryLower));
   }, [varieties, varietySearchQueryLower]);
+
+  const canCreateCustomVariety = useMemo(() => {
+    if (!varietySearchQueryTrimmed) return false;
+    return !varieties.some((variety) => variety.toLowerCase() === varietySearchQueryLower);
+  }, [varieties, varietySearchQueryLower, varietySearchQueryTrimmed]);
 
   const selectedCropLabel = useMemo(() => {
     if (formState.selectedCrop === 'Other') {
@@ -1128,9 +1141,11 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     filteredCropOptions,
     filteredVarieties,
     canCreateCustomCrop,
+    canCreateCustomVariety,
     selectedCropLabel,
     cropSearchQueryTrimmed,
     cropSearchQueryLower,
+    varietySearchQueryTrimmed,
     soilCompositionWarning,
     varieties,
     androidKeyboardLift,

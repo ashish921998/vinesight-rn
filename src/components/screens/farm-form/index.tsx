@@ -821,7 +821,9 @@ export function FarmForm({ mode, farmId, onClose }: FarmFormProps) {
         visible={form.formState.showVarietyPicker}
         cropVariety={form.formState.cropVariety}
         varietySearchQuery={form.formState.varietySearchQuery}
+        varietySearchQueryTrimmed={form.varietySearchQueryTrimmed}
         filteredVarieties={form.filteredVarieties}
+        canCreateCustomVariety={form.canCreateCustomVariety}
         varietySheetHeight={form.varietySheetHeight}
         androidKeyboardLift={form.androidKeyboardLift}
         onClose={() => form.setShowVarietyPicker(false)}

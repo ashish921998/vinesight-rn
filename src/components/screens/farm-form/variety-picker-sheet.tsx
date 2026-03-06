@@ -17,7 +17,9 @@ interface VarietyPickerSheetProps {
   visible: boolean;
   cropVariety: string;
   varietySearchQuery: string;
+  varietySearchQueryTrimmed: string;
   filteredVarieties: string[];
+  canCreateCustomVariety: boolean;
   varietySheetHeight: number;
   androidKeyboardLift: number;
   onClose: () => void;
@@ -30,7 +32,9 @@ export function VarietyPickerSheet({
   visible,
   cropVariety,
   varietySearchQuery,
+  varietySearchQueryTrimmed,
   filteredVarieties,
+  canCreateCustomVariety,
   varietySheetHeight,
   androidKeyboardLift,
   onClose,
@@ -152,6 +156,31 @@ export function VarietyPickerSheet({
 
             {/* List */}
             <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+              {canCreateCustomVariety && (
+                <Pressable
+                  style={{
+                    paddingHorizontal: spacing[6],
+                    paddingVertical: spacing[4],
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.surface[100],
+                    backgroundColor: colors.surface[50],
+                  }}
+                  onPress={() => onSelectVariety(varietySearchQueryTrimmed)}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSize.base,
+                      color: colors.primary[600],
+                      fontWeight: fontWeight.semibold,
+                    }}
+                  >
+                    {t('farmForm.variety.useCustom', {
+                      variety: varietySearchQueryTrimmed,
+                      defaultValue: 'Use "{{variety}}"',
+                    })}
+                  </Text>
+                </Pressable>
+              )}
               {filteredVarieties.map((variety) => {
                 const isSelected = cropVariety === variety;
                 return (
@@ -189,7 +218,7 @@ export function VarietyPickerSheet({
                   </Pressable>
                 );
               })}
-              {filteredVarieties.length === 0 && (
+              {filteredVarieties.length === 0 && !canCreateCustomVariety && (
                 <View style={{ paddingHorizontal: spacing[6], paddingVertical: spacing[5] }}>
                   <Text style={{ fontSize: fontSize.sm, color: colors.surface[500] }}>
                     {t('common.noResultsFound')}

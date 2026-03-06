@@ -56,6 +56,8 @@ export const hi = {
     a11y: {
       editWithName: '{{name}} संपादित करें',
       deleteWithName: '{{name}} हटाएं',
+      opensEditForm: 'संपादन फ़ॉर्म खोलता है',
+      deletesThisItem: 'इस आइटम को हटाता है',
     },
     actions: {
       takePhoto: 'फोटो लें',

@@ -59,6 +59,8 @@ export const en = {
     a11y: {
       editWithName: 'Edit {{name}}',
       deleteWithName: 'Delete {{name}}',
+      opensEditForm: 'Opens edit form',
+      deletesThisItem: 'Deletes this item',
     },
     actions: {
       takePhoto: 'Take photo',
