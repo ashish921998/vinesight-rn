@@ -38,6 +38,7 @@ type AuthErrorContext =
   | 'verify_email_otp'
   | 'resend_email_otp'
   | 'send_phone_otp'
+  | 'send_phone_signin_otp'
   | 'verify_phone_otp'
   | 'link_phone_otp'
   | 'verify_phone_link_otp'
@@ -89,6 +90,10 @@ const getAuthErrorMessage = (
 
   if (context === 'send_phone_otp') {
     return 'Could not send verification code to your phone. Please try again.';
+  }
+
+  if (context === 'send_phone_signin_otp') {
+    return fallback;
   }
 
   if (context === 'link_phone_otp') {
@@ -1119,7 +1124,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
             : getAuthErrorMessage(
                 error,
                 fallbackMessage,
-                mode === 'signup' ? 'send_phone_otp' : 'generic',
+                mode === 'signup' ? 'send_phone_otp' : 'send_phone_signin_otp',
               ),
         otpSentSuccessfully: false,
         isLoading: false,
