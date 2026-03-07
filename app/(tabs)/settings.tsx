@@ -50,7 +50,11 @@ import { getDefaultCurrency } from '@/i18n/currency';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
 import { assistantMemoryService } from '@/services/assistant-memory';
 import { telemetry } from '@/services/telemetry';
-import { upsertGuidedTourServerState } from '@/features/guided-tour/service';
+import {
+  syncPushDeviceRegistration,
+  updatePushDevicePreferences,
+  upsertGuidedTourServerState,
+} from '@/features/guided-tour/service';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { GUIDED_TOUR_VERSION } from '@/features/guided-tour/constants';
 import { ASSISTANT_MEMORY_RETENTION_DAYS } from '@/constants/assistant-memory';
@@ -190,6 +194,8 @@ export default function SettingsScreen() {
   const setDailyWaterNotificationId = useNotificationStore(
     (s) => s.setDailyWaterReminderNotificationId,
   );
+  const featureOverviewEnabled = useNotificationStore((s) => s.featureOverviewEnabled);
+  const setFeatureOverviewEnabled = useNotificationStore((s) => s.setFeatureOverviewEnabled);
 
   const lowWaterAlertsEnabled = useNotificationStore((s) => s.lowWaterAlertsEnabled);
   const setLowWaterAlertsEnabled = useNotificationStore((s) => s.setLowWaterAlertsEnabled);
@@ -513,6 +519,42 @@ export default function SettingsScreen() {
     }
     setDailyWaterNotificationId(null);
     setDailyWaterReminderEnabled(false);
+  };
+
+  const handleToggleFeatureOverview = async (enabled: boolean) => {
+    const normalizedLanguage =
+      language === 'en' || language === 'hi' || language === 'mr' ? language : 'en';
+
+    if (enabled) {
+      const granted = await ensureNotificationPermissions();
+      if (!granted) {
+        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
+        return;
+      }
+
+      const synced = await syncPushDeviceRegistration(normalizedLanguage, {
+        notificationsEnabled: true,
+        featureOverviewEnabled: true,
+      });
+      if (!synced) {
+        Alert.alert(t('common.error'), t('common.tryAgain'));
+        return;
+      }
+
+      setFeatureOverviewEnabled(true);
+      return;
+    }
+
+    const synced = await updatePushDevicePreferences(normalizedLanguage, {
+      notificationsEnabled: true,
+      featureOverviewEnabled: false,
+    });
+    if (!synced) {
+      Alert.alert(t('common.error'), t('common.tryAgain'));
+      return;
+    }
+
+    setFeatureOverviewEnabled(false);
   };
 
   const handleToggleTaskReminders = async (enabled: boolean) => {
@@ -1375,6 +1417,15 @@ export default function SettingsScreen() {
           {t('settings.sectionNotifications')}
         </Text>
         <View style={styles.sectionContent}>
+          <NotificationToggle
+            title={t('settings.featureOverviewNotifications')}
+            subtitle={t('settings.featureOverviewNotificationsSubtitle')}
+            enabled={featureOverviewEnabled}
+            onToggle={handleToggleFeatureOverview}
+            styles={styles}
+            colors={colors}
+            m3={m3}
+          />
           <NotificationToggle
             title={t('settings.dailyWaterReminder')}
             subtitle={t('settings.dailyWaterReminderSubtitle')}

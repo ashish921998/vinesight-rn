@@ -16,9 +16,29 @@ export function normalizeLocalPhoneDigits(phoneNumber: string): string {
   return digitsOnly.replace(/^0+/, '');
 }
 
-export function buildE164PhoneNumber(dialCode: string, localPhoneNumber: string): string {
+export function getLocalPhoneDigitLimit(dialCode: string): number {
+  if (dialCode === '+91') return 10;
+  return 15;
+}
+
+export function limitLocalPhoneDigits(dialCode: string, phoneNumber: string): string {
+  const normalizedDigits = normalizeLocalPhoneDigits(phoneNumber);
+  return normalizedDigits.slice(0, getLocalPhoneDigitLimit(dialCode));
+}
+
+export function isValidLocalPhoneNumberForDialCode(
+  dialCode: string,
+  localPhoneNumber: string,
+): boolean {
   const normalizedLocalNumber = normalizeLocalPhoneDigits(localPhoneNumber);
-  if (!normalizedLocalNumber) return '';
+  if (!normalizedLocalNumber) return false;
+  if (dialCode === '+91') return normalizedLocalNumber.length === 10;
+  return normalizedLocalNumber.length <= getLocalPhoneDigitLimit(dialCode);
+}
+
+export function buildE164PhoneNumber(dialCode: string, localPhoneNumber: string): string {
+  const normalizedLocalNumber = limitLocalPhoneDigits(dialCode, localPhoneNumber);
+  if (!isValidLocalPhoneNumberForDialCode(dialCode, normalizedLocalNumber)) return '';
   const fullNumber = `${dialCode}${normalizedLocalNumber}`;
   return isValidE164PhoneNumber(fullNumber) ? fullNumber : '';
 }

@@ -1290,6 +1290,32 @@ export const en = {
       item1: 'Irrigation reminders',
       item2: 'Task deadlines',
       item3: 'Weather alerts',
+      eyebrow: 'Stay ahead',
+      slideTitle: 'Turn on alerts only for moments that cost you.',
+      slideSubtitle:
+        'Spray windows, irrigation timing, and labour changes come through before the day gets away from you.',
+      stats: {
+        lateSpray: 'Late spray updates can cost export quality',
+        missedIrrigation: 'Missed irrigation timing stresses the block',
+        unclearLabour: 'Unclear labour changes become payroll friction',
+      },
+      assurance: 'Useful reminders only. You can change this later in settings.',
+      enableAlerts: 'Enable alerts',
+      checkingPermissions: 'Checking permissions...',
+      skipAlerts: 'Continue without alerts',
+    },
+    firstFarm: {
+      title: 'Add your first farm.',
+      subtitle: 'Start with the essentials. You can edit details later.',
+      assurance:
+        'You only need the essentials now. Everything else can be added from the farm page.',
+      createButton: 'Create first farm',
+      existingTitle: 'Your first farm already exists.',
+      existingSubtitle:
+        'Continue to alerts and finish onboarding. You can edit the farm details later.',
+      existingFarmFallback: 'Farm',
+      existingRegionFallback: 'Region',
+      existingCropFallback: 'Crop',
     },
     complete: {
       title: "You're all set!",
@@ -1400,6 +1426,9 @@ export const en = {
     themeDark: 'Dark',
     areaUnit: 'Area Unit',
     currency: 'Currency',
+    featureOverviewNotifications: 'Daily Feature Overview',
+    featureOverviewNotificationsSubtitle:
+      'Show one featured core module each day for your first 7 days',
     dailyWaterReminder: 'Daily Water Reminder',
     dailyWaterReminderSubtitle: 'Remind to check water levels',
     lowWaterAlerts: 'Low Water Alerts',
@@ -1410,7 +1439,8 @@ export const en = {
     warehouseReorderAlertsSubtitle: 'Alert when items fall below reorder quantity',
     petioleTestReminders: 'Petiole Test Reminders',
     petioleTestRemindersSubtitle: 'Remind one day before Day 30, 60, 90, 120 of pruning',
-    notificationNote: 'Notification settings are stored locally',
+    notificationNote:
+      'Reminder settings stay on this device. Daily feature overview also syncs to your account.',
     madeForVineyardManagement: 'Made for vineyard management',
     sentry: {
       testButton: 'Send Sentry test event',

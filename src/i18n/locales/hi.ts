@@ -1385,6 +1385,8 @@ export const hi = {
     themeDark: 'डार्क',
     areaUnit: 'क्षेत्रफल इकाई',
     currency: 'मुद्रा',
+    featureOverviewNotifications: 'दैनिक फीचर ओवरव्यू',
+    featureOverviewNotificationsSubtitle: 'पहले 7 दिनों तक हर दिन एक मुख्य मॉड्यूल का परिचय दिखाएं',
     dailyWaterReminder: 'दैनिक जल अनुस्मारक',
     dailyWaterReminderSubtitle: 'पानी के स्तर की जांच करने के लिए याद दिलाएं',
     lowWaterAlerts: 'कम पानी अलर्ट',
@@ -1395,7 +1397,8 @@ export const hi = {
     warehouseReorderAlertsSubtitle: 'जब वस्तु पुनः ऑर्डर मात्रा से कम हो तो अलर्ट करें',
     petioleTestReminders: 'पेटीओल परीक्षण अनुस्मारक',
     petioleTestRemindersSubtitle: 'छंटाई के 30, 60, 90, 120वें दिन से एक दिन पहले याद दिलाएं',
-    notificationNote: 'सूचना सेटिंग्स स्थानीय रूप से संग्रहीत हैं',
+    notificationNote:
+      'रिमाइंडर सेटिंग्स इस डिवाइस पर रहती हैं। दैनिक फीचर ओवरव्यू आपके खाते से भी सिंक होता है।',
     madeForVineyardManagement: 'दाख की बारी प्रबंधन के लिए बनाया गया',
     sentry: {
       testButton: 'Sentry टेस्ट इवेंट भेजें',

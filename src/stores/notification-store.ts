@@ -15,7 +15,9 @@ export interface PetioleNotificationSchedule {
 
 interface NotificationState {
   hasHydrated: boolean;
+  notificationPermissionPrompted: boolean;
 
+  featureOverviewEnabled: boolean;
   dailyWaterReminderEnabled: boolean;
   dailyWaterReminderNotificationId: string | null;
 
@@ -32,7 +34,9 @@ interface NotificationState {
 
 interface NotificationActions {
   _setHasHydrated: (value: boolean) => void;
+  setNotificationPermissionPrompted: (prompted: boolean) => void;
 
+  setFeatureOverviewEnabled: (enabled: boolean) => void;
   setDailyWaterReminderEnabled: (enabled: boolean) => void;
   setDailyWaterReminderNotificationId: (id: string | null) => void;
 
@@ -58,7 +62,9 @@ export const useNotificationStore = create<NotificationState & NotificationActio
   persist(
     (set) => ({
       hasHydrated: false,
+      notificationPermissionPrompted: false,
 
+      featureOverviewEnabled: true,
       dailyWaterReminderEnabled: false,
       dailyWaterReminderNotificationId: null,
 
@@ -72,7 +78,10 @@ export const useNotificationStore = create<NotificationState & NotificationActio
       notifiedWarehouseItemIds: new Set(),
 
       _setHasHydrated: (value) => set({ hasHydrated: value }),
+      setNotificationPermissionPrompted: (prompted) =>
+        set({ notificationPermissionPrompted: prompted }),
 
+      setFeatureOverviewEnabled: (enabled) => set({ featureOverviewEnabled: enabled }),
       setDailyWaterReminderEnabled: (enabled) => set({ dailyWaterReminderEnabled: enabled }),
       setDailyWaterReminderNotificationId: (id) => set({ dailyWaterReminderNotificationId: id }),
 
@@ -122,7 +131,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
     }),
     {
       name: 'vinesight-notifications',
-      version: 2,
+      version: 4,
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Record<string, unknown>;
         if (!state) return persistedState;
@@ -150,6 +159,12 @@ export const useNotificationStore = create<NotificationState & NotificationActio
         }
         if (version < 2) {
           state.notifiedWarehouseItemIds = new Set();
+        }
+        if (version < 3) {
+          state.notificationPermissionPrompted = false;
+        }
+        if (version < 4) {
+          state.featureOverviewEnabled = true;
         }
         return state as unknown as NotificationState & NotificationActions;
       },

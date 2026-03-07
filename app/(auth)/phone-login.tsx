@@ -23,7 +23,11 @@ import { useTranslation } from 'react-i18next';
 import { spacing, borderRadius, fontSize, fontWeight, size } from '@/styles/theme';
 import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { buildE164PhoneNumber } from '@/utils/phone';
+import {
+  buildE164PhoneNumber,
+  getLocalPhoneDigitLimit,
+  limitLocalPhoneDigits,
+} from '@/utils/phone';
 import type { PhoneAuthMode } from '@/types/auth';
 import appLogoDark from '../../assets/icons/ios-dark.png';
 import appLogoLight from '../../assets/icons/ios-light.png';
@@ -127,6 +131,10 @@ export default function PhoneLoginScreen() {
     () => buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber),
     [selectedCountry.dialCode, phoneNumber],
   );
+  const localPhoneDigitLimit = useMemo(
+    () => getLocalPhoneDigitLimit(selectedCountry.dialCode),
+    [selectedCountry.dialCode],
+  );
 
   useEffect(() => {
     if (isAuthenticated && needsProfileCompletion) {
@@ -151,6 +159,7 @@ export default function PhoneLoginScreen() {
 
   const handleSelectCountry = (country: Country) => {
     setSelectedCountry(country);
+    setPhoneNumber((current) => limitLocalPhoneDigits(country.dialCode, current));
     setShowCountryPicker(false);
     setCountrySearch('');
   };
@@ -524,11 +533,11 @@ export default function PhoneLoginScreen() {
                 value={phoneNumber}
                 onChangeText={(value) => {
                   setLocalPhoneError(null);
-                  setPhoneNumber(value.replace(/[^\d]/g, ''));
+                  setPhoneNumber(limitLocalPhoneDigits(selectedCountry.dialCode, value));
                 }}
                 leftIcon="phone.fill"
                 keyboardType="phone-pad"
-                maxLength={15}
+                maxLength={localPhoneDigitLimit}
                 autoCapitalize="none"
                 textContentType="telephoneNumber"
                 autoComplete="tel"

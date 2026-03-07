@@ -1406,6 +1406,8 @@ export const mr = {
     themeDark: 'डार्क',
     areaUnit: 'क्षेत्रफळ एकक',
     currency: 'चलन',
+    featureOverviewNotifications: 'दैनिक फीचर ओव्हरव्ह्यू',
+    featureOverviewNotificationsSubtitle: 'पहिल्या 7 दिवसांसाठी दररोज एक मुख्य मॉड्यूलची ओळख दाखवा',
     dailyWaterReminder: 'दैनिक पाणी आठवण',
     dailyWaterReminderSubtitle: '$t(glossary.waterLevel) तपासण्याची आठवण',
     lowWaterAlerts: 'कमी $t(glossary.waterLevel) इशारे',
@@ -1416,7 +1418,8 @@ export const mr = {
     warehouseReorderAlertsSubtitle: 'वस्तू पुनर्भरण मर्यादेपेक्षा कमी झाल्यावर इशारा द्या',
     petioleTestReminders: '$t(glossary.petiole) चाचणी आठवणी',
     petioleTestRemindersSubtitle: 'छाटणीच्या ३०, ६०, ९०, १२० दिवसांच्या एक दिवस आधी आठवण',
-    notificationNote: 'सूचना सेटिंग्ज स्थानिकरित्या जतन होतात',
+    notificationNote:
+      'रिमाइंडर सेटिंग्ज या डिव्हाइसवर राहतात. दैनिक फीचर ओव्हरव्ह्यू तुमच्या खात्यासोबतही सिंक होतो.',
     madeForVineyardManagement: 'द्राक्षमळा व्यवस्थापनासाठी',
     sentry: {
       testButton: 'Sentry चाचणी इव्हेंट पाठवा',

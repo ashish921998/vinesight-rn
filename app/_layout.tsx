@@ -34,6 +34,8 @@ import { androidTextPadding } from '@/styles/theme';
 import { useThemeTokens } from '@/styles/use-theme';
 import { queryClient, queryPersister, QUERY_CACHE_MAX_AGE_MS } from '@/lib/query-cache';
 import { GuidedTourController, guidedTourEmit } from '@/features/guided-tour';
+import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
+import { resolveFeatureOverviewRoute } from '@/services/feature-overview-notifications';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
@@ -127,7 +129,9 @@ function PetioleReminderSync() {
 
 export default Sentry.wrap(function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const needsProfileCompletion = useAuthStore((state) => state.needsProfileCompletion);
   const themeHydrated = useThemeStore((state) => state.hasHydrated);
   const { isDark, m3 } = useThemeTokens();
 
@@ -144,6 +148,12 @@ export default Sentry.wrap(function RootLayout() {
   const languageHydrated = useLanguageStore((s) => s.hasHydrated);
 
   const notificationsHydrated = useNotificationStore((s) => s.hasHydrated);
+  const notificationPermissionPrompted = useNotificationStore(
+    (s) => s.notificationPermissionPrompted,
+  );
+  const setNotificationPermissionPrompted = useNotificationStore(
+    (s) => s.setNotificationPermissionPrompted,
+  );
   const prevLanguageRef = useRef<string | null>(null);
   const reschedulePromiseRef = useRef<Promise<void> | null>(null);
   const router = useRouter();
@@ -175,6 +185,83 @@ export default Sentry.wrap(function RootLayout() {
   }, [screenName]);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    if (
+      isLoading ||
+      !themeHydrated ||
+      !languageHydrated ||
+      !notificationsHydrated ||
+      !isAuthenticated ||
+      needsProfileCompletion ||
+      notificationPermissionPrompted
+    ) {
+      return;
+    }
+    if (!pathname || pathname === '/') return;
+    if (segments[0] === '(auth)') return;
+
+    let cancelled = false;
+
+    const requestNotificationPermission = async () => {
+      setNotificationPermissionPrompted(true);
+
+      try {
+        const Notifications = await import('expo-notifications');
+        const permission = await Notifications.getPermissionsAsync();
+        if (cancelled) return;
+
+        if (permission.status === 'granted') {
+          if (language === 'en' || language === 'hi' || language === 'mr') {
+            const notificationState = useNotificationStore.getState();
+            await syncPushDeviceRegistration(language, {
+              notificationsEnabled: true,
+              featureOverviewEnabled: notificationState.featureOverviewEnabled,
+            });
+          }
+          return;
+        }
+
+        if (!permission.canAskAgain && permission.status !== 'undetermined') {
+          return;
+        }
+
+        const requested = await Notifications.requestPermissionsAsync();
+        if (cancelled || requested.status !== 'granted') return;
+
+        if (language === 'en' || language === 'hi' || language === 'mr') {
+          const notificationState = useNotificationStore.getState();
+          await syncPushDeviceRegistration(language, {
+            notificationsEnabled: true,
+            featureOverviewEnabled: notificationState.featureOverviewEnabled,
+          });
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('Failed to request notification permissions on first app open:', error);
+        }
+      }
+    };
+
+    void requestNotificationPermission();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isAuthenticated,
+    isLoading,
+    language,
+    languageHydrated,
+    needsProfileCompletion,
+    notificationPermissionPrompted,
+    notificationsHydrated,
+    pathname,
+    segments,
+    setNotificationPermissionPrompted,
+    themeHydrated,
+  ]);
+
+  useEffect(() => {
     if (!languageHydrated) return;
 
     const effective = language ?? getDeviceLanguage();
@@ -202,6 +289,19 @@ export default Sentry.wrap(function RootLayout() {
 
     const reschedule = async () => {
       const state = useNotificationStore.getState();
+
+      if (language === 'en' || language === 'hi' || language === 'mr') {
+        try {
+          await syncPushDeviceRegistration(language, {
+            notificationsEnabled: true,
+            featureOverviewEnabled: state.featureOverviewEnabled,
+          });
+        } catch (error) {
+          if (__DEV__) {
+            console.error('Failed to sync push device metadata:', error);
+          }
+        }
+      }
 
       try {
         if (state.dailyWaterReminderEnabled) {
@@ -375,6 +475,9 @@ export default Sentry.wrap(function RootLayout() {
       const data = response.notification.request.content.data as {
         type?: string;
         sequence?: number;
+        route?: string;
+        campaign?: string;
+        day?: number;
       };
       const currentRouter = routerRef.current;
       if (!currentRouter) return;
@@ -382,6 +485,17 @@ export default Sentry.wrap(function RootLayout() {
       if (data?.type === 'guided_tour_reminder') {
         const sequence = data.sequence === 2 ? 2 : 1;
         guidedTourEmit('guidedTour.notificationOpened', { sequence });
+      } else if (data?.type === 'feature_overview') {
+        const route = resolveFeatureOverviewRoute(data);
+        if (!route) {
+          telemetry.capture('feature_overview_notification_invalid_route', {
+            route: data.route ?? null,
+            campaign: data.campaign ?? null,
+            day: data.day ?? null,
+          });
+          return;
+        }
+        currentRouter.push(route);
       } else if (
         data?.type === 'task_due' ||
         data?.type === 'task_due_tomorrow' ||
@@ -565,7 +679,7 @@ export default Sentry.wrap(function RootLayout() {
                 <Stack.Screen name="fertilizer-plans" />
                 <Stack.Screen name="lab-tests" />
                 <Stack.Screen name="logs" />
-                <Stack.Screen name="onboarding" />
+                <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
                 <Stack.Screen name="petiole-trends" />
                 <Stack.Screen name="reports" />
                 <Stack.Screen name="soil-profiling" />

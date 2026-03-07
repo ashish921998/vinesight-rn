@@ -2,11 +2,21 @@
  * Farm Form – pure utility functions
  */
 
-import type { Farm } from '@/types';
+import type { Farm, FarmInsert } from '@/types';
 import type { CropType } from '@/constants/crop-varieties';
 import { CROP_VARIETIES } from '@/constants/crop-varieties';
 import { KNOWN_CROPS } from './constants';
 import type { KnownCrop } from '@/utils/farm-crop-visuals';
+
+export interface FarmCoreFields {
+  name: string;
+  region: string;
+  area: string;
+  selectedCrop: CropType;
+  customCropName: string;
+  cropVariety: string;
+  customVariety: string;
+}
 
 // ---------------------------------------------------------------------------
 // Crop selection helpers
@@ -81,6 +91,57 @@ export const getErrorMessage = (error: unknown, fallback: string): string => {
     if (typeof message === 'string' && message.trim()) return message;
   }
   return fallback;
+};
+
+export const resolveFarmCoreSelection = ({
+  selectedCrop,
+  customCropName,
+  cropVariety,
+  customVariety,
+}: Pick<FarmCoreFields, 'selectedCrop' | 'customCropName' | 'cropVariety' | 'customVariety'>) => ({
+  crop: selectedCrop === 'Other' ? customCropName.trim() : selectedCrop,
+  variety: cropVariety === 'Custom' ? customVariety.trim() : cropVariety.trim(),
+});
+
+export const isFarmCoreFieldsValid = ({
+  name,
+  region,
+  area,
+  selectedCrop,
+  customCropName,
+  cropVariety,
+  customVariety,
+}: FarmCoreFields): boolean => {
+  if (!name.trim()) return false;
+  if (!region.trim()) return false;
+  const areaValue = Number(area);
+  if (!Number.isFinite(areaValue) || areaValue <= 0) return false;
+  if (selectedCrop === 'Other' && !customCropName.trim()) return false;
+  if (cropVariety === 'Custom' && !customVariety.trim()) return false;
+  if (!cropVariety.trim() && !customVariety.trim()) return false;
+  return true;
+};
+
+export const buildFarmInsertFromCoreFields = (
+  fields: FarmCoreFields,
+  plantingDate: Date = new Date(),
+): FarmInsert | null => {
+  if (!isFarmCoreFieldsValid(fields)) return null;
+
+  const areaValue = Number(fields.area);
+  if (!Number.isFinite(areaValue) || areaValue <= 0) return null;
+
+  const { crop, variety } = resolveFarmCoreSelection(fields);
+  if (!crop || !variety) return null;
+
+  return {
+    name: fields.name.trim(),
+    region: fields.region.trim(),
+    area: areaValue,
+    crop,
+    crop_variety: variety,
+    planting_date: formatLocalDate(ensureValidDate(plantingDate)),
+  };
 };
 
 // ---------------------------------------------------------------------------

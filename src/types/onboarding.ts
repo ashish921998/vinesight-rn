@@ -3,13 +3,7 @@
  * Types for the onboarding flow
  */
 
-export type OnboardingStep =
-  | 'language'
-  | 'welcome'
-  | 'features'
-  | 'preferences'
-  | 'notifications'
-  | 'complete';
+export type OnboardingStep = 'welcome' | 'features' | 'firstFarm' | 'notifications' | 'complete';
 
 export interface OnboardingState {
   isComplete: boolean;
@@ -32,10 +26,9 @@ export interface OnboardingFeature {
 }
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
-  'language',
   'welcome',
   'features',
-  'preferences',
+  'firstFarm',
   'notifications',
   'complete',
 ];
