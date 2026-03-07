@@ -203,8 +203,6 @@ export default Sentry.wrap(function RootLayout() {
     let cancelled = false;
 
     const requestNotificationPermission = async () => {
-      setNotificationPermissionPrompted(true);
-
       try {
         const Notifications = await import('expo-notifications');
         const permission = await Notifications.getPermissionsAsync();
@@ -218,23 +216,28 @@ export default Sentry.wrap(function RootLayout() {
               featureOverviewEnabled: notificationState.featureOverviewEnabled,
             });
           }
+          setNotificationPermissionPrompted(true);
           return;
         }
 
         if (!permission.canAskAgain && permission.status !== 'undetermined') {
+          setNotificationPermissionPrompted(true);
           return;
         }
 
         const requested = await Notifications.requestPermissionsAsync();
-        if (cancelled || requested.status !== 'granted') return;
+        if (cancelled) return;
 
-        if (language === 'en' || language === 'hi' || language === 'mr') {
-          const notificationState = useNotificationStore.getState();
-          await syncPushDeviceRegistration(language, {
-            notificationsEnabled: true,
-            featureOverviewEnabled: notificationState.featureOverviewEnabled,
-          });
+        if (requested.status === 'granted') {
+          if (language === 'en' || language === 'hi' || language === 'mr') {
+            const notificationState = useNotificationStore.getState();
+            await syncPushDeviceRegistration(language, {
+              notificationsEnabled: true,
+              featureOverviewEnabled: notificationState.featureOverviewEnabled,
+            });
+          }
         }
+        setNotificationPermissionPrompted(true);
       } catch (error) {
         if (__DEV__) {
           console.warn('Failed to request notification permissions on first app open:', error);

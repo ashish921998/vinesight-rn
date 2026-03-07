@@ -1,6 +1,7 @@
 import { View, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/stores';
+import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useProfile } from '@/hooks';
 import { getConfigurationStatus } from '@/lib/supabase';
 import { AnimatedSplash } from '@/components/animated-splash';
@@ -14,7 +15,8 @@ import { colorWithOpacity } from '@/utils/color';
  * Redirects to auth or main tabs based on authentication state
  */
 export default function Index() {
-  const { isAuthenticated, isLoading, needsProfileCompletion, hasSeenOnboarding } = useAuthStore();
+  const { isAuthenticated, isLoading, needsProfileCompletion } = useAuthStore();
+  const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
   const configStatus = getConfigurationStatus();
   const colors = useThemeColors();
@@ -106,7 +108,7 @@ export default function Index() {
     if (needsProfileCompletion || !hasProfileName) {
       return <Redirect href="/(auth)/profile-completion" />;
     }
-    if (!hasSeenOnboarding) {
+    if (!onboardingComplete) {
       return <Redirect href="/onboarding" />;
     }
     return <Redirect href="/(tabs)" />;
