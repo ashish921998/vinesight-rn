@@ -34,7 +34,8 @@ export function OnboardingScreen() {
   const language = useLanguageStore((s) => s.language);
   const scrollX = useSharedValue(0);
   const scrollRef = useRef<Animated.ScrollView>(null);
-  const viewedSlides = useRef(new Set<number>([0]));
+  const viewedSlides = useRef(new Set<number>());
+  const farmCreatedRef = useRef(false);
   const [activatedSlides, setActivatedSlides] = useState(new Set<number>([0]));
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [createdFarmId, setCreatedFarmId] = useState<number | null>(null);
@@ -67,7 +68,7 @@ export function OnboardingScreen() {
   const handleMomentumEnd = useCallback(
     (event: { nativeEvent: { contentOffset: { x: number } } }) => {
       const page = Math.round(event.nativeEvent.contentOffset.x / width);
-      if (page > FIRST_FARM_PAGE_INDEX && !hasAtLeastOneFarm) {
+      if (page > FIRST_FARM_PAGE_INDEX && !hasAtLeastOneFarm && !farmCreatedRef.current) {
         scrollRef.current?.scrollTo({ x: FIRST_FARM_PAGE_INDEX * width, animated: true });
         setCurrentPageIndex(FIRST_FARM_PAGE_INDEX);
         handleSlideChange(FIRST_FARM_PAGE_INDEX);
@@ -136,6 +137,9 @@ export function OnboardingScreen() {
 
   const handleFarmResolved = useCallback(
     (farmId: number | null) => {
+      if (farmId !== null) {
+        farmCreatedRef.current = true;
+      }
       setCreatedFarmId(farmId);
       jumpToPage(NOTIFICATIONS_PAGE_INDEX);
     },
@@ -143,6 +147,8 @@ export function OnboardingScreen() {
   );
 
   React.useEffect(() => {
+    if (viewedSlides.current.has(0)) return;
+    viewedSlides.current.add(0);
     telemetry.capture('onboarding_slide_viewed', { slide: 0 });
   }, []);
 

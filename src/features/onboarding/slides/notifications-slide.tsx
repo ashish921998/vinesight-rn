@@ -21,6 +21,7 @@ const NOTIFICATION_STATS = [
   },
   { icon: 'person.fill.xmark' as const, i18nKey: 'onboarding.notifications.stats.unclearLabour' },
 ] as const;
+const NOTIFICATION_ACCENT_COLOR = '#408059';
 
 export function NotificationsSlide({ isActive, onFinish }: NotificationsSlideProps) {
   const { t } = useTranslation();
@@ -30,7 +31,7 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
 
   const bellCircleStyle = useMemo(
     () => ({
-      backgroundColor: colorWithOpacity('#408059', isDark ? 0.15 : 0.08),
+      backgroundColor: colorWithOpacity(NOTIFICATION_ACCENT_COLOR, isDark ? 0.15 : 0.08),
     }),
     [isDark],
   );
@@ -80,9 +81,10 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
   }, [isRequesting, onFinish]);
 
   const handleSkip = useCallback(() => {
+    if (isRequesting) return;
     triggerHapticMedium();
     void onFinish(false);
-  }, [onFinish]);
+  }, [isRequesting, onFinish]);
 
   return (
     <View style={[styles.container, { backgroundColor: m3.colorScheme.background }]}>
@@ -103,7 +105,7 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
           style={styles.iconContainer}
         >
           <View style={[styles.bellCircle, bellCircleStyle]}>
-            <SymbolIcon name="bell.badge.fill" size={34} color="#408059" />
+            <SymbolIcon name="bell.badge.fill" size={34} color={NOTIFICATION_ACCENT_COLOR} />
           </View>
         </Animated.View>
 
@@ -129,9 +131,12 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
           {NOTIFICATION_STATS.map((stat) => (
             <View key={stat.i18nKey} style={[styles.statRow, statRowStyle]}>
               <View
-                style={[styles.statIcon, { backgroundColor: colorWithOpacity('#408059', 0.1) }]}
+                style={[
+                  styles.statIcon,
+                  { backgroundColor: colorWithOpacity(NOTIFICATION_ACCENT_COLOR, 0.1) },
+                ]}
               >
-                <SymbolIcon name={stat.icon} size={18} color="#408059" />
+                <SymbolIcon name={stat.icon} size={18} color={NOTIFICATION_ACCENT_COLOR} />
               </View>
               <Text style={[styles.statText, { color: m3.colorScheme.onSurface }]}>
                 {t(stat.i18nKey)}
@@ -163,7 +168,7 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
             style={({ pressed }) => [
               styles.ctaButton,
               {
-                backgroundColor: '#408059',
+                backgroundColor: NOTIFICATION_ACCENT_COLOR,
                 opacity: isRequesting ? 0.72 : 1,
                 transform: [{ scale: pressed ? 0.97 : 1 }],
               },
@@ -177,8 +182,13 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
             </Text>
           </Pressable>
 
-          <Pressable onPress={handleSkip} style={styles.skipButton}>
-            <Text style={[styles.skipText, { color: m3.colorScheme.onSurfaceVariant }]}>
+          <Pressable onPress={handleSkip} disabled={isRequesting} style={styles.skipButton}>
+            <Text
+              style={[
+                styles.skipText,
+                { color: m3.colorScheme.onSurfaceVariant, opacity: isRequesting ? 0.5 : 1 },
+              ]}
+            >
               {t('onboarding.notifications.skipAlerts')}
             </Text>
           </Pressable>

@@ -8,6 +8,32 @@ const PACKAGE_CALL = 'add(PhoneNumberHintPackage())';
 const GRADLE_DEPENDENCY = 'implementation("com.google.android.gms:play-services-auth:21.5.1")';
 const GRADLE_MARKER = '// [Phone Number Hint]';
 
+function copyKotlinFilesRecursively(sourceDir, targetDir) {
+  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+    const sourcePath = path.join(sourceDir, entry.name);
+    const targetPath = path.join(targetDir, entry.name);
+
+    if (entry.isDirectory()) {
+      if (!fs.existsSync(targetPath)) {
+        fs.mkdirSync(targetPath, { recursive: true });
+      }
+      copyKotlinFilesRecursively(sourcePath, targetPath);
+      continue;
+    }
+
+    if (!entry.isFile() || !entry.name.endsWith('.kt')) continue;
+
+    try {
+      fs.copyFileSync(sourcePath, targetPath);
+    } catch (error) {
+      console.warn(
+        `[android-phone-number-hint] Failed to copy ${sourcePath} -> ${targetPath}:`,
+        error,
+      );
+    }
+  }
+}
+
 function withMainApplicationKotlin(config) {
   return withDangerousMod(config, [
     'android',
@@ -115,21 +141,7 @@ function withKotlinSources(config) {
         fs.mkdirSync(targetPath, { recursive: true });
       }
 
-      for (const entry of fs.readdirSync(pluginPath, { withFileTypes: true })) {
-        if (!entry.isFile() || !entry.name.endsWith('.kt')) continue;
-
-        const sourcePath = path.join(pluginPath, entry.name);
-        const targetFilePath = path.join(targetPath, entry.name);
-
-        try {
-          fs.copyFileSync(sourcePath, targetFilePath);
-        } catch (error) {
-          console.warn(
-            `[android-phone-number-hint] Failed to copy ${sourcePath} -> ${targetFilePath}:`,
-            error,
-          );
-        }
-      }
+      copyKotlinFilesRecursively(pluginPath, targetPath);
 
       return config;
     },

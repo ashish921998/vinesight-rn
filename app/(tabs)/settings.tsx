@@ -1111,8 +1111,6 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      {/* Assistant Section */}
-
       {/* Account Section */}
       <View style={styles.section}>
         <Text
@@ -2439,25 +2437,7 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     opacity: 0.6,
   } as ViewStyle,
 
-  notificationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-  } as ViewStyle,
   flex1: { flex: 1 } as ViewStyle,
-  notificationTitle: { fontSize: fontSize.base, color: colors.surface[900] } as TextStyle,
-  notificationSubtitle: {
-    fontSize: fontSize.xs,
-    color: colors.surface[500],
-    marginTop: 2,
-  } as TextStyle,
-  notificationNote: {
-    fontSize: fontSize.xs,
-    color: colors.surface[400],
-    marginTop: spacing[2],
-    paddingHorizontal: spacing[2],
-  } as TextStyle,
 
   appVersionContainer: { alignItems: 'center', marginTop: spacing[8] } as ViewStyle,
   appVersion: { fontSize: fontSize.sm, color: colors.surface[400] } as TextStyle,

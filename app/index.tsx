@@ -15,7 +15,7 @@ import { colorWithOpacity } from '@/utils/color';
  * Redirects to auth or main tabs based on authentication state
  */
 export default function Index() {
-  const { isAuthenticated, isLoading, needsProfileCompletion } = useAuthStore();
+  const { isAuthenticated, isLoading, needsProfileCompletion, hasSeenOnboarding } = useAuthStore();
   const onboardingHydrated = useOnboardingStore((s) => s.hasHydrated);
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
@@ -113,7 +113,7 @@ export default function Index() {
     if (needsProfileCompletion || !hasProfileName) {
       return <Redirect href="/(auth)/profile-completion" />;
     }
-    if (!onboardingComplete) {
+    if (!onboardingComplete && !hasSeenOnboarding) {
       return <Redirect href="/onboarding" />;
     }
     return <Redirect href="/(tabs)" />;

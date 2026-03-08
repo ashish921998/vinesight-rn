@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.util.Log
+import java.util.concurrent.atomic.AtomicReference
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.ActivityEventListener
 import com.facebook.react.bridge.BaseActivityEventListener
@@ -34,14 +35,13 @@ class PhoneNumberHintModule(
   private val reactContext: ReactApplicationContext,
 ) : ReactContextBaseJavaModule(reactContext) {
 
-  private var pendingPromise: Promise? = null
+  private val pendingPromise = AtomicReference<Promise?>(null)
 
   private val activityEventListener: ActivityEventListener = object : BaseActivityEventListener() {
     override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
       if (requestCode != PHONE_NUMBER_HINT_REQUEST_CODE) return
 
-      val promise = pendingPromise ?: return
-      pendingPromise = null
+      val promise = pendingPromise.getAndSet(null) ?: return
 
       if (resultCode != Activity.RESULT_OK || data == null) {
         promise.resolve(null)
@@ -52,6 +52,7 @@ class PhoneNumberHintModule(
         val phoneNumber = Identity.getSignInClient(activity).getPhoneNumberFromIntent(data)
         promise.resolve(phoneNumber)
       } catch (error: Exception) {
+        Log.w(TAG, "Failed to extract phone number from hint intent", error)
         promise.resolve(null)
       }
     }
@@ -65,8 +66,7 @@ class PhoneNumberHintModule(
 
   override fun invalidate() {
     reactContext.removeActivityEventListener(activityEventListener)
-    pendingPromise?.reject("MODULE_INVALIDATED", "PhoneNumberHintModule has been invalidated")
-    pendingPromise = null
+    pendingPromise.getAndSet(null)?.reject("MODULE_INVALIDATED", "PhoneNumberHintModule has been invalidated")
     super.invalidate()
   }
 
@@ -82,18 +82,17 @@ class PhoneNumberHintModule(
 
   @ReactMethod
   fun requestPhoneNumberHint(promise: Promise) {
-    if (pendingPromise != null) {
+    if (!pendingPromise.compareAndSet(null, promise)) {
       promise.reject("IN_PROGRESS", "Phone number hint request already in progress.")
       return
     }
 
     val activity = reactApplicationContext.currentActivity
     if (activity == null || !isPhoneNumberHintSupported()) {
+      pendingPromise.getAndSet(null)
       promise.resolve(null)
       return
     }
-
-    pendingPromise = promise
 
     val request = GetPhoneNumberHintIntentRequest.builder().build()
 
@@ -110,19 +109,21 @@ class PhoneNumberHintModule(
             0,
           )
         } catch (error: IntentSender.SendIntentException) {
+          Log.w(TAG, "Failed to start phone number hint intent", error)
           resolvePendingPromise(null)
         } catch (error: Exception) {
+          Log.w(TAG, "Unexpected error while starting phone number hint intent", error)
           resolvePendingPromise(null)
         }
       }
-      .addOnFailureListener {
+      .addOnFailureListener { error ->
+        Log.w(TAG, "Failed to get phone number hint intent", error)
         resolvePendingPromise(null)
       }
   }
 
   private fun resolvePendingPromise(value: String?) {
-    pendingPromise?.resolve(value)
-    pendingPromise = null
+    pendingPromise.getAndSet(null)?.resolve(value)
   }
 
   private fun isPhoneNumberHintSupported(): Boolean {
