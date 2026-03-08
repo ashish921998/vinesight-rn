@@ -73,7 +73,10 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
       } else {
         await onFinish(false);
       }
-    } catch {
+    } catch (err) {
+      if (__DEV__) {
+        console.error('[Notifications Slide] Error requesting notification permissions:', err);
+      }
       await onFinish(false);
     } finally {
       setIsRequesting(false);

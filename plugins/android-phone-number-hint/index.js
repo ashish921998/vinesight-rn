@@ -150,15 +150,26 @@ function withKotlinSources(config) {
 
 function withPhoneNumberHintDependency(config) {
   return withAppBuildGradle(config, (config) => {
-    if (config.modResults.contents.includes(GRADLE_DEPENDENCY)) {
-      return config;
+    let contents = config.modResults.contents;
+
+    const playServicesAuthRegex =
+      /implementation\s*\(\s*["']com\.google\.android\.gms:play-services-auth:[^"']+["']\s*\)/;
+    const existingMatch = contents.match(playServicesAuthRegex);
+
+    if (existingMatch) {
+      contents = contents.replace(existingMatch[0], GRADLE_DEPENDENCY);
+    } else if (!contents.includes(GRADLE_DEPENDENCY)) {
+      contents = contents.replace(
+        /dependencies\s*\{/,
+        `dependencies {\n    ${GRADLE_MARKER}\n    ${GRADLE_DEPENDENCY}`,
+      );
     }
 
-    config.modResults.contents = config.modResults.contents.replace(
-      /dependencies\s*\{/,
-      `dependencies {\n    ${GRADLE_MARKER}\n    ${GRADLE_DEPENDENCY}`,
-    );
+    if (!contents.includes(GRADLE_MARKER)) {
+      contents = contents.replace(/dependencies\s*\{/, `dependencies {\n    ${GRADLE_MARKER}`);
+    }
 
+    config.modResults.contents = contents;
     return config;
   });
 }
