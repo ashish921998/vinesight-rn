@@ -8,6 +8,106 @@ import type { GuidedTourPatchPayload, GuidedTourServerState } from './types';
 const GUIDED_TOUR_TABLE = 'user_guided_tour_state';
 const PUSH_DEVICES_TABLE = 'user_push_devices';
 const FARMS_TABLE = 'farms';
+const SUPPORTED_PUSH_LOCALES = ['en', 'hi', 'mr'] as const;
+
+export type PushDeviceLocale = (typeof SUPPORTED_PUSH_LOCALES)[number];
+
+interface PushDeviceSyncOptions {
+  notificationsEnabled?: boolean;
+  featureOverviewEnabled?: boolean;
+}
+
+function getDeviceTimezone(): string | null {
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone?.trim();
+    return timezone ? timezone : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getExpoPushToken(): Promise<string | null> {
+  const Notifications = await import('expo-notifications');
+  const permission = await Notifications.getPermissionsAsync();
+  if (permission.status !== 'granted') return null;
+
+  const projectId =
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    (Constants as typeof Constants & { easConfig?: { projectId?: string } }).easConfig?.projectId;
+
+  const tokenResult = await Notifications.getExpoPushTokenAsync(
+    projectId ? { projectId } : undefined,
+  );
+  return tokenResult.data || null;
+}
+
+function normalizePushLocale(locale: string): PushDeviceLocale {
+  if ((SUPPORTED_PUSH_LOCALES as readonly string[]).includes(locale)) {
+    return locale as PushDeviceLocale;
+  }
+  return 'en';
+}
+
+async function updatePushDeviceRow(
+  userId: string,
+  expoPushToken: string,
+  locale: PushDeviceLocale,
+  options: PushDeviceSyncOptions,
+): Promise<void> {
+  const now = new Date().toISOString();
+  const timezone = getDeviceTimezone();
+  const featureOverviewEnabled = options.featureOverviewEnabled ?? true;
+  const notificationsEnabled = options.notificationsEnabled ?? true;
+
+  const { data: existingRow, error: existingError } = await supabase
+    .from(PUSH_DEVICES_TABLE)
+    .select('id,feature_overview_started_at')
+    .eq('user_id', userId)
+    .eq('expo_push_token', expoPushToken)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  const featureOverviewStartedAt =
+    featureOverviewEnabled && !existingRow?.feature_overview_started_at ? now : undefined;
+
+  if (existingRow?.id) {
+    const { error } = await supabase
+      .from(PUSH_DEVICES_TABLE)
+      .update({
+        platform: Platform.OS === 'ios' ? 'ios' : 'android',
+        locale,
+        timezone,
+        notifications_enabled: notificationsEnabled,
+        feature_overview_enabled: featureOverviewEnabled,
+        last_seen_at: now,
+        updated_at: now,
+        ...(featureOverviewStartedAt
+          ? { feature_overview_started_at: featureOverviewStartedAt }
+          : {}),
+      })
+      .eq('id', existingRow.id)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return;
+  }
+
+  const { error } = await supabase.from(PUSH_DEVICES_TABLE).insert({
+    user_id: userId,
+    expo_push_token: expoPushToken,
+    platform: Platform.OS === 'ios' ? 'ios' : 'android',
+    locale,
+    timezone,
+    notifications_enabled: notificationsEnabled,
+    feature_overview_enabled: featureOverviewEnabled,
+    feature_overview_started_at: featureOverviewEnabled ? now : null,
+    last_seen_at: now,
+    updated_at: now,
+  });
+
+  if (error) throw error;
+}
 
 async function getUserId(): Promise<string | null> {
   const {
@@ -60,47 +160,42 @@ export async function userHasAnyFarms(): Promise<boolean> {
   return (data?.length ?? 0) > 0;
 }
 
-export async function registerGuidedTourPushDevice(locale: 'en' | 'hi' | 'mr'): Promise<void> {
-  if (Platform.OS === 'web') return;
-  if (!Device.isDevice) return;
+export async function syncPushDeviceRegistration(
+  locale: string,
+  options: PushDeviceSyncOptions = {},
+): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  if (!Device.isDevice) return false;
 
   const userId = await getUserId();
-  if (!userId) return;
+  if (!userId) return false;
 
   try {
-    const Notifications = await import('expo-notifications');
-    const permission = await Notifications.getPermissionsAsync();
-    if (permission.status !== 'granted') return;
+    const expoPushToken = await getExpoPushToken();
+    if (!expoPushToken) return false;
 
-    const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ??
-      (Constants as typeof Constants & { easConfig?: { projectId?: string } }).easConfig?.projectId;
-
-    const tokenResult = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined,
-    );
-    const expoPushToken = tokenResult.data;
-    if (!expoPushToken) return;
-
-    const { error } = await supabase.from(PUSH_DEVICES_TABLE).upsert(
-      {
-        user_id: userId,
-        expo_push_token: expoPushToken,
-        platform: Platform.OS === 'ios' ? 'ios' : 'android',
-        locale,
-        notifications_enabled: true,
-        last_seen_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,expo_push_token' },
-    );
-    if (error) throw error;
+    await updatePushDeviceRow(userId, expoPushToken, normalizePushLocale(locale), options);
+    return true;
   } catch (error) {
     telemetry.capture('guided_tour_push_registration_failed', {
-      context: 'registerGuidedTourPushDevice',
+      context: 'syncPushDeviceRegistration',
     });
     if (__DEV__) {
       console.warn('[guided-tour] push device registration failed', error);
     }
+    return false;
   }
+}
+
+export async function updatePushDevicePreferences(
+  locale: string,
+  options: PushDeviceSyncOptions,
+): Promise<boolean> {
+  return syncPushDeviceRegistration(locale, options);
+}
+
+export async function registerGuidedTourPushDevice(locale: PushDeviceLocale): Promise<void> {
+  await syncPushDeviceRegistration(locale, {
+    notificationsEnabled: true,
+  });
 }

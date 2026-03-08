@@ -40,9 +40,12 @@ import type { FarmFormMode, AddFarmFocusField, FormState } from './types';
 import { KNOWN_CROPS, POPULAR_CROPS, CROP_I18N_KEY_MAP, SOIL_TEXTURE_OPTIONS } from './constants';
 import {
   buildFormStateFromFarm,
+  buildFarmInsertFromCoreFields,
   ensureValidDate,
   formatLocalDate,
   getErrorMessage,
+  isFarmCoreFieldsValid,
+  resolveFarmCoreSelection,
   sanitizeDecimalInput,
 } from './utils';
 
@@ -587,24 +590,27 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
     [windowHeight, pickerAvailableHeight],
   );
 
-  const isValid = useMemo(() => {
-    if (!formState.name.trim()) return false;
-    if (!formState.region.trim()) return false;
-    const areaValue = Number(formState.area);
-    if (!Number.isFinite(areaValue) || areaValue <= 0) return false;
-    if (formState.selectedCrop === 'Other' && !formState.customCropName.trim()) return false;
-    if (formState.cropVariety === 'Custom' && !formState.customVariety.trim()) return false;
-    if (!formState.cropVariety && !formState.customVariety.trim()) return false;
-    return true;
-  }, [
-    formState.name,
-    formState.region,
-    formState.area,
-    formState.selectedCrop,
-    formState.customCropName,
-    formState.cropVariety,
-    formState.customVariety,
-  ]);
+  const isValid = useMemo(
+    () =>
+      isFarmCoreFieldsValid({
+        name: formState.name,
+        region: formState.region,
+        area: formState.area,
+        selectedCrop: formState.selectedCrop,
+        customCropName: formState.customCropName,
+        cropVariety: formState.cropVariety,
+        customVariety: formState.customVariety,
+      }),
+    [
+      formState.name,
+      formState.region,
+      formState.area,
+      formState.selectedCrop,
+      formState.customCropName,
+      formState.cropVariety,
+      formState.customVariety,
+    ],
+  );
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -908,10 +914,12 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       soilWaterRetention: soilWaterRetentionValue,
     } = optionalNumberValidation.parsed;
 
-    const finalCrop =
-      formState.selectedCrop === 'Other' ? formState.customCropName.trim() : formState.selectedCrop;
-    const finalVariety =
-      formState.cropVariety === 'Custom' ? formState.customVariety : formState.cropVariety;
+    const { crop: finalCrop, variety: finalVariety } = resolveFarmCoreSelection({
+      selectedCrop: formState.selectedCrop,
+      customCropName: formState.customCropName,
+      cropVariety: formState.cropVariety,
+      customVariety: formState.customVariety,
+    });
 
     if (isEdit) {
       if (!farmId) {
@@ -989,13 +997,29 @@ export function useFarmForm(mode: FarmFormMode, farmId: number | undefined, onCl
       return;
     }
 
+    const baseFarmData = buildFarmInsertFromCoreFields(
+      {
+        name: formState.name,
+        region: formState.region,
+        area: formState.area,
+        selectedCrop: formState.selectedCrop,
+        customCropName: formState.customCropName,
+        cropVariety: formState.cropVariety,
+        customVariety: formState.customVariety,
+      },
+      formState.plantingDate,
+    );
+
+    if (!baseFarmData) {
+      Alert.alert(
+        t('common.alerts.missingInformationTitle'),
+        t('common.alerts.fillAllRequiredFields'),
+      );
+      return;
+    }
+
     const farmData: FarmInsert = {
-      name: formState.name.trim(),
-      region: formState.region.trim(),
-      area: areaValue,
-      crop: finalCrop,
-      crop_variety: finalVariety,
-      planting_date: formatLocalDate(formState.plantingDate),
+      ...baseFarmData,
       vine_spacing: vineSpacingValue,
       row_spacing: rowSpacingValue,
       total_tank_capacity: totalTankCapacityValue,

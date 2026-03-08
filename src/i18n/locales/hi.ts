@@ -1274,6 +1274,32 @@ export const hi = {
       item1: 'सिंचाई अनुस्मारक',
       item2: 'कार्य समय सीमा',
       item3: 'मौसम अलर्ट',
+      eyebrow: 'एक कदम आगे रहें',
+      slideTitle: 'अलर्ट केवल उन पलों के लिए चालू करें जो आपको महंगे पड़ते हैं।',
+      slideSubtitle:
+        'स्प्रे विंडो, सिंचाई का समय और श्रमिक बदलाव की जानकारी दिन निकलने से पहले आपके पास पहुंचती है।',
+      stats: {
+        lateSpray: 'देर से स्प्रे की जानकारी निर्यात गुणवत्ता को नुकसान पहुंचा सकती है',
+        missedIrrigation: 'सिंचाई का समय चूकने से खेत पर तनाव बढ़ता है',
+        unclearLabour: 'अस्पष्ट श्रमिक बदलाव पेरोल में परेशानी बनते हैं',
+      },
+      assurance: 'सिर्फ उपयोगी अनुस्मारक। आप इसे बाद में सेटिंग्स में बदल सकते हैं।',
+      enableAlerts: 'अलर्ट चालू करें',
+      checkingPermissions: 'अनुमतियां जांची जा रही हैं...',
+      skipAlerts: 'अलर्ट के बिना जारी रखें',
+    },
+    firstFarm: {
+      title: 'अपना पहला खेत जोड़ें।',
+      subtitle: 'ज़रूरी जानकारी से शुरू करें। आप बाद में विवरण संपादित कर सकते हैं।',
+      assurance:
+        'अभी आपको केवल ज़रूरी बातें चाहिए। बाकी सब कुछ बाद में खेत पेज से जोड़ा जा सकता है।',
+      createButton: 'पहला खेत बनाएं',
+      existingTitle: 'आपका पहला खेत पहले से मौजूद है।',
+      existingSubtitle:
+        'अलर्ट तक आगे बढ़ें और ऑनबोर्डिंग पूरी करें। आप बाद में खेत का विवरण संपादित कर सकते हैं।',
+      existingFarmFallback: 'खेत',
+      existingRegionFallback: 'क्षेत्र',
+      existingCropFallback: 'फसल',
     },
     complete: {
       title: 'आप सभी सेट हैं!',
@@ -1385,6 +1411,8 @@ export const hi = {
     themeDark: 'डार्क',
     areaUnit: 'क्षेत्रफल इकाई',
     currency: 'मुद्रा',
+    featureOverviewNotifications: 'दैनिक फीचर ओवरव्यू',
+    featureOverviewNotificationsSubtitle: 'पहले 7 दिनों तक हर दिन एक मुख्य मॉड्यूल का परिचय दिखाएं',
     dailyWaterReminder: 'दैनिक जल अनुस्मारक',
     dailyWaterReminderSubtitle: 'पानी के स्तर की जांच करने के लिए याद दिलाएं',
     lowWaterAlerts: 'कम पानी अलर्ट',
@@ -1395,7 +1423,8 @@ export const hi = {
     warehouseReorderAlertsSubtitle: 'जब वस्तु पुनः ऑर्डर मात्रा से कम हो तो अलर्ट करें',
     petioleTestReminders: 'पेटीओल परीक्षण अनुस्मारक',
     petioleTestRemindersSubtitle: 'छंटाई के 30, 60, 90, 120वें दिन से एक दिन पहले याद दिलाएं',
-    notificationNote: 'सूचना सेटिंग्स स्थानीय रूप से संग्रहीत हैं',
+    notificationNote:
+      'रिमाइंडर सेटिंग्स इस डिवाइस पर रहती हैं। दैनिक फीचर ओवरव्यू आपके खाते से भी सिंक होता है।',
     madeForVineyardManagement: 'दाख की बारी प्रबंधन के लिए बनाया गया',
     sentry: {
       testButton: 'Sentry टेस्ट इवेंट भेजें',

@@ -26,7 +26,7 @@ interface OnboardingStore extends OnboardingState {
 const initialState: OnboardingState = {
   isComplete: false,
   hasHydrated: false,
-  currentStep: 'language',
+  currentStep: 'welcome',
   preferences: {
     country: '',
     currency: '',
@@ -102,7 +102,23 @@ export const useOnboardingStore = create<OnboardingStore>()(
     }),
     {
       name: 'vinesight-onboarding',
+      version: 1,
       storage: createJSONStorage(() => onboardingStorage),
+      migrate: (persistedState, version) => {
+        const state = persistedState as Record<string, unknown>;
+        if (version === 0) {
+          // v0 → v1: 'preferences' step was renamed to 'firstFarm',
+          // 'language' step was renamed to 'welcome'.
+          // Fall back any unknown step to 'welcome' so users don't get stuck.
+          const step = state.currentStep as string;
+          if (step === 'preferences') {
+            state.currentStep = 'firstFarm';
+          } else if (step === 'language' || !ONBOARDING_STEPS.includes(step as OnboardingStep)) {
+            state.currentStep = 'welcome';
+          }
+        }
+        return state as unknown as OnboardingStore;
+      },
       onRehydrateStorage: () => () => {
         useOnboardingStore.setState({ hasHydrated: true });
       },

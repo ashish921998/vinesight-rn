@@ -23,7 +23,13 @@ import { useTranslation } from 'react-i18next';
 import { spacing, borderRadius, fontSize, fontWeight, size } from '@/styles/theme';
 import { useIsDark, useM3 } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
-import { buildE164PhoneNumber } from '@/utils/phone';
+import {
+  buildE164PhoneNumber,
+  getLocalPhoneDigitLimit,
+  limitLocalPhoneDigits,
+  matchPhoneNumberHintToCountry,
+} from '@/utils/phone';
+import { isPhoneNumberHintSupported, requestPhoneNumberHint } from '@/services/phone-number-hint';
 import type { PhoneAuthMode } from '@/types/auth';
 import appLogoDark from '../../assets/icons/ios-dark.png';
 import appLogoLight from '../../assets/icons/ios-light.png';
@@ -72,10 +78,6 @@ export default function PhoneLoginScreen() {
   }, [redirect]);
   const requestedMode: PhoneAuthMode = mode === 'signin' ? 'signin' : 'signup';
 
-  useEffect(() => {
-    WebBrowser.maybeCompleteAuthSession();
-  }, []);
-
   const [phoneAuthMode, setPhoneAuthMode] = useState<PhoneAuthMode>(requestedMode);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
@@ -84,6 +86,28 @@ export default function PhoneLoginScreen() {
   const lastNavigatedPhoneRef = useRef<string | null>(null);
   const lastRequestedOtpModeRef = useRef<PhoneAuthMode>(requestedMode);
   const [localPhoneError, setLocalPhoneError] = useState<string | null>(null);
+  const [isPhoneHintAvailable, setIsPhoneHintAvailable] = useState(false);
+
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPhoneHintSupport = async () => {
+      const supported = await isPhoneNumberHintSupported();
+      if (isMounted) {
+        setIsPhoneHintAvailable(supported);
+      }
+    };
+
+    void loadPhoneHintSupport();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -127,6 +151,10 @@ export default function PhoneLoginScreen() {
     () => buildE164PhoneNumber(selectedCountry.dialCode, phoneNumber),
     [selectedCountry.dialCode, phoneNumber],
   );
+  const localPhoneDigitLimit = useMemo(
+    () => getLocalPhoneDigitLimit(selectedCountry.dialCode),
+    [selectedCountry.dialCode],
+  );
 
   useEffect(() => {
     if (isAuthenticated && needsProfileCompletion) {
@@ -149,8 +177,30 @@ export default function PhoneLoginScreen() {
     await signInWithPhone(fullPhoneNumber, submitMode);
   };
 
+  const handleUseMyNumber = async () => {
+    setLocalPhoneError(null);
+    clearError();
+
+    const phoneNumberHint = await requestPhoneNumberHint();
+    if (!phoneNumberHint) return;
+
+    const matchedPhone = matchPhoneNumberHintToCountry(phoneNumberHint, COUNTRIES);
+    if (!matchedPhone) {
+      setLocalPhoneError(
+        t('authPhone.phoneHintUnsupported', {
+          defaultValue: 'Could not fill this number automatically. Please enter it manually.',
+        }),
+      );
+      return;
+    }
+
+    setSelectedCountry(matchedPhone.country);
+    setPhoneNumber(matchedPhone.localNumber);
+  };
+
   const handleSelectCountry = (country: Country) => {
     setSelectedCountry(country);
+    setPhoneNumber((current) => limitLocalPhoneDigits(country.dialCode, current));
     setShowCountryPicker(false);
     setCountrySearch('');
   };
@@ -524,16 +574,31 @@ export default function PhoneLoginScreen() {
                 value={phoneNumber}
                 onChangeText={(value) => {
                   setLocalPhoneError(null);
-                  setPhoneNumber(value.replace(/[^\d]/g, ''));
+                  setPhoneNumber(limitLocalPhoneDigits(selectedCountry.dialCode, value));
                 }}
                 leftIcon="phone.fill"
                 keyboardType="phone-pad"
-                maxLength={15}
+                maxLength={localPhoneDigitLimit}
                 autoCapitalize="none"
                 textContentType="telephoneNumber"
                 autoComplete="tel"
                 containerStyle={{ marginBottom: spacing[2] }}
               />
+
+              {Platform.OS === 'android' && isPhoneHintAvailable && (
+                <Button
+                  title={t('authPhone.useMyNumber', { defaultValue: 'Use my number' })}
+                  variant="ghost"
+                  size="sm"
+                  fullWidth={false}
+                  onPress={handleUseMyNumber}
+                  disabled={isLoading}
+                  testID="phone-hint-button"
+                  accessibilityLabel={t('authPhone.useMyNumberA11y', {
+                    defaultValue: 'Choose a phone number from this device',
+                  })}
+                />
+              )}
 
               {/* Error Message */}
               {(errorMessage || localPhoneError) && (

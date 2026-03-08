@@ -18,6 +18,7 @@ interface GuidedTourStore extends GuidedTourState {
   replayResetPending: boolean;
   hydrateComplete: () => void;
   startTour: () => void;
+  startTourAtStep: (step: GuidedTourStep, meta?: GuidedTourStepMeta) => void;
   showStep: (step: GuidedTourStep) => void;
   completeStep: (step: GuidedTourStep, meta?: GuidedTourStepMeta) => void;
   skipTour: (step: GuidedTourStep) => void;
@@ -99,6 +100,18 @@ export const useGuidedTourStore = create<GuidedTourStore>()(
           stepShownAt: null,
           skippedAtStep: null,
           activeFarmId: state.activeFarmId ?? null,
+          hasSeenWelcomeThisSession: true,
+          expiredAt: null,
+          completedAt: null,
+        })),
+      startTourAtStep: (step, meta) =>
+        set((state) => ({
+          status: 'in_progress',
+          currentStep: step,
+          startedAt: state.startedAt ?? nowIso(),
+          stepShownAt: null,
+          skippedAtStep: null,
+          activeFarmId: typeof meta?.farmId === 'number' ? meta.farmId : state.activeFarmId,
           hasSeenWelcomeThisSession: true,
           expiredAt: null,
           completedAt: null,

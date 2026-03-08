@@ -1,0 +1,257 @@
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { Platform, Pressable, Text, TextInput, View } from 'react-native';
+import PhoneLoginScreen from '../app/(auth)/phone-login';
+import { matchPhoneNumberHintToCountry } from '@/utils/phone';
+
+const mockRouterPush = jest.fn();
+const mockRouterReplace = jest.fn();
+const mockMaybeCompleteAuthSession = jest.fn();
+const mockIsPhoneNumberHintSupported = jest.fn();
+const mockRequestPhoneNumberHint = jest.fn();
+
+const mockAuthState = {
+  isLoading: false,
+  errorMessage: null as string | null,
+  pendingOTPPhone: null as string | null,
+  isAuthenticated: false,
+  needsProfileCompletion: false,
+  signInWithPhone: jest.fn(),
+  signInWithApple: jest.fn(),
+  signInWithGoogle: jest.fn(),
+  clearError: jest.fn(),
+};
+
+jest.mock('expo-router', () => ({
+  router: {
+    push: (...args: unknown[]) => mockRouterPush(...args),
+    replace: (...args: unknown[]) => mockRouterReplace(...args),
+  },
+  useLocalSearchParams: () => ({}),
+}));
+
+jest.mock('expo-web-browser', () => ({
+  maybeCompleteAuthSession: () => mockMaybeCompleteAuthSession(),
+}));
+
+jest.mock('@/services/phone-number-hint', () => ({
+  isPhoneNumberHintSupported: () => mockIsPhoneNumberHintSupported(),
+  requestPhoneNumberHint: () => mockRequestPhoneNumberHint(),
+}));
+
+jest.mock('@/stores', () => ({
+  useAuthStore: () => mockAuthState,
+}));
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { defaultValue?: string }) => {
+      const translations: Record<string, string> = {
+        'authPhone.phoneNumber': 'Phone number',
+        'authPhone.invalidPhone': 'Please enter a valid phone number with country code',
+        'authPhone.useMyNumber': 'Use my number',
+        'authPhone.useMyNumberA11y': 'Choose a phone number from this device',
+        'authPhone.phoneHintUnsupported':
+          'Could not fill this number automatically. Please enter it manually.',
+        'authPhone.signinTitle': 'Phone Sign In',
+        'authPhone.signupTitle': 'Phone Sign Up',
+        'authPhone.signinSubtitle':
+          'Sign in with your mobile number and we will send a verification code.',
+        'authPhone.signupSubtitle':
+          'Create your account with your mobile number and we will send a verification code.',
+        'auth.signIn': 'Sign In',
+        'auth.signUp': 'Sign Up',
+        'auth.continueWithGoogle': 'Continue with Google',
+        'auth.continueWithApple': 'Continue with Apple',
+        'auth.continueWithEmail': 'Sign in with email',
+        'auth.or': 'or',
+        'authPhone.preferEmail': 'Prefer email?',
+        'authPhone.signInWithEmail': 'Sign in with email',
+        'auth.alreadyHaveAccount': 'Already have an account?',
+        'auth.dontHaveAccount': "Don't have an account?",
+        'auth.a11y.switchToSignIn': 'Switch to sign in',
+        'auth.a11y.switchToSignUp': 'Switch to sign up',
+        'authPhone.selectCountryA11y': 'Open country picker',
+        'authPhone.selectCountry': 'Select country',
+        'authPhone.closeA11y': 'Close country picker',
+        'authPhone.searchCountry': 'Search country...',
+      };
+
+      return options?.defaultValue ?? translations[key] ?? key;
+    },
+  }),
+}));
+
+jest.mock('@/styles/use-theme', () => ({
+  useM3: () => ({
+    colorScheme: {
+      surface: '#fff',
+      surfaceVariant: '#eee',
+      primary: '#0a0',
+      onPrimary: '#fff',
+      onSurface: '#111',
+      onSurfaceVariant: '#666',
+      outline: '#999',
+      outlineVariant: '#bbb',
+      error: '#d00',
+    },
+    surface: {
+      surfaceContainerLow: '#f4f4f4',
+      surfaceContainerHigh: '#ededed',
+      surfaceContainerLowest: '#fafafa',
+    },
+    stateLayerOpacity: { pressed: 0.08 },
+    shape: { cornerMedium: 16 },
+    typography: {
+      labelLarge: {
+        fontSize: 14,
+      },
+    },
+  }),
+  useIsDark: () => false,
+}));
+
+jest.mock('@/components/ui/symbol', () => ({
+  Symbol: () => null,
+}));
+
+jest.mock('@/components/ui', () => {
+  return {
+    Input: ({
+      leftIcon: _leftIcon,
+      rightIcon: _rightIcon,
+      containerStyle,
+      ...props
+    }: {
+      leftIcon?: React.ReactNode;
+      rightIcon?: React.ReactNode;
+      containerStyle?: object;
+      [key: string]: unknown;
+    }) => (
+      <View style={containerStyle}>
+        <TextInput {...props} />
+      </View>
+    ),
+    Button: ({
+      title,
+      onPress,
+      testID,
+      accessibilityLabel,
+      disabled,
+    }: {
+      title: string;
+      onPress?: () => void;
+      testID?: string;
+      accessibilityLabel?: string;
+      disabled?: boolean;
+    }) => (
+      <Pressable
+        onPress={onPress}
+        testID={testID}
+        accessibilityLabel={accessibilityLabel ?? title}
+        disabled={disabled}
+      >
+        <Text>{title}</Text>
+      </Pressable>
+    ),
+  };
+});
+
+describe('matchPhoneNumberHintToCountry', () => {
+  const countries = [
+    { name: 'India', code: 'IN', dialCode: '+91' },
+    { name: 'United States', code: 'US', dialCode: '+1' },
+    { name: 'Canada', code: 'CA', dialCode: '+1' },
+    { name: 'United Kingdom', code: 'GB', dialCode: '+44' },
+  ];
+
+  it('maps an Indian number and strips the dial code', () => {
+    expect(matchPhoneNumberHintToCountry('+919422724937', countries)).toEqual({
+      country: countries[0],
+      localNumber: '9422724937',
+    });
+  });
+
+  it('preserves repo ordering for shared +1 countries', () => {
+    expect(matchPhoneNumberHintToCountry('+14155552671', countries)).toEqual({
+      country: countries[1],
+      localNumber: '4155552671',
+    });
+  });
+
+  it('returns null for unsupported dial codes', () => {
+    expect(matchPhoneNumberHintToCountry('+81312345678', countries)).toBeNull();
+  });
+
+  it('sanitizes formatting before validating local digits', () => {
+    expect(matchPhoneNumberHintToCountry(' +44 7911-123456 ', countries)).toEqual({
+      country: countries[3],
+      localNumber: '7911123456',
+    });
+  });
+});
+
+describe('PhoneLoginScreen phone hint CTA', () => {
+  const originalPlatform = Platform.OS;
+
+  beforeEach(() => {
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' });
+    mockRouterPush.mockReset();
+    mockRouterReplace.mockReset();
+    mockMaybeCompleteAuthSession.mockReset();
+    mockIsPhoneNumberHintSupported.mockReset().mockResolvedValue(true);
+    mockRequestPhoneNumberHint.mockReset().mockResolvedValue(null);
+    mockAuthState.isLoading = false;
+    mockAuthState.errorMessage = null;
+    mockAuthState.pendingOTPPhone = null;
+    mockAuthState.isAuthenticated = false;
+    mockAuthState.needsProfileCompletion = false;
+    mockAuthState.signInWithPhone.mockReset();
+    mockAuthState.signInWithApple.mockReset();
+    mockAuthState.signInWithGoogle.mockReset();
+    mockAuthState.clearError.mockReset();
+  });
+
+  afterAll(() => {
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: originalPlatform });
+  });
+
+  it('shows the Android CTA and fills country plus local number after a successful hint', async () => {
+    mockRequestPhoneNumberHint.mockResolvedValue('+919422724937');
+
+    render(<PhoneLoginScreen />);
+
+    await waitFor(() => expect(screen.getByTestId('phone-hint-button')).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId('phone-hint-button'));
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('9422724937')).toBeTruthy();
+    });
+    expect(screen.getByText('India')).toBeTruthy();
+    expect(mockAuthState.clearError).toHaveBeenCalled();
+  });
+
+  it('does not render the CTA on iOS', async () => {
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'ios' });
+
+    render(<PhoneLoginScreen />);
+
+    await waitFor(() => expect(mockMaybeCompleteAuthSession).toHaveBeenCalled());
+    expect(screen.queryByTestId('phone-hint-button')).toBeNull();
+  });
+
+  it('leaves the field unchanged when the chooser is cancelled', async () => {
+    render(<PhoneLoginScreen />);
+
+    await waitFor(() => expect(screen.getByTestId('phone-hint-button')).toBeTruthy());
+
+    const input = screen.getByPlaceholderText('Phone number');
+    fireEvent.changeText(input, '9999999999');
+    fireEvent.press(screen.getByTestId('phone-hint-button'));
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('9999999999')).toBeTruthy();
+    });
+  });
+});

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Redirect } from 'expo-router';
+import { OnboardingScreen } from '@/features/onboarding';
 
-export default function DeprecatedOnboardingRoute() {
-  return <Redirect href="/(tabs)/settings" />;
+export default function OnboardingRoute() {
+  return <OnboardingScreen />;
 }

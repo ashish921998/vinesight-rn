@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Vinesight',
     slug: 'vinesight-rn',
-    version: '3.2.1',
+    version: '3.2.2',
     orientation: 'portrait',
     icon: './assets/icons/ios-light.png',
     userInterfaceStyle: 'automatic',
@@ -18,7 +18,7 @@ module.exports = {
       bundleIdentifier: 'com.vinesight.ios',
       scheme: 'vinesight',
       usesAppleSignIn: true,
-      buildNumber: '1.2.8',
+      buildNumber: '1.2.9',
       entitlements: {
         'com.apple.security.application-groups': ['group.com.vinesight.app'],
       },
@@ -59,7 +59,7 @@ module.exports = {
     },
     android: {
       package: 'com.vinesight.app',
-      versionCode: 27,
+      versionCode: 28,
       permissions: ['android.permission.RECORD_AUDIO', 'android.permission.POST_NOTIFICATIONS'],
       config: {
         googleMaps: {
@@ -112,6 +112,7 @@ module.exports = {
       'expo-localization',
       '@bacons/apple-targets',
       './plugins/android-widget',
+      './plugins/android-phone-number-hint',
       './plugins/with-android-16kb-pages',
       './plugins/with-ios-entitlements-codesign',
       [

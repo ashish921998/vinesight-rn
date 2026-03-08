@@ -1290,6 +1290,31 @@ export const en = {
       item1: 'Irrigation reminders',
       item2: 'Task deadlines',
       item3: 'Weather alerts',
+      eyebrow: 'Stay ahead',
+      slideTitle: 'Know before it costs you.',
+      slideSubtitle: 'Timely alerts for sprays, irrigation, and labour changes.',
+      stats: {
+        lateSpray: 'Late sprays risk export quality',
+        missedIrrigation: 'Missed irrigation stresses the block',
+        unclearLabour: 'Labour changes cause payroll issues',
+      },
+      assurance: 'No spam — change anytime in settings.',
+      enableAlerts: 'Enable alerts',
+      checkingPermissions: 'Checking permissions...',
+      skipAlerts: 'Skip for now',
+    },
+    firstFarm: {
+      title: 'Add your first farm.',
+      subtitle: 'Start with the essentials. You can edit details later.',
+      assurance:
+        'You only need the essentials now. Everything else can be added from the farm page.',
+      createButton: 'Create first farm',
+      existingTitle: 'Your first farm already exists.',
+      existingSubtitle:
+        'Continue to alerts and finish onboarding. You can edit the farm details later.',
+      existingFarmFallback: 'Farm',
+      existingRegionFallback: 'Region',
+      existingCropFallback: 'Crop',
     },
     complete: {
       title: "You're all set!",
@@ -1357,6 +1382,9 @@ export const en = {
     backToLoginLink: 'email sign in',
     backToLoginA11y: 'Go back to email sign in',
     invalidPhone: 'Please enter a valid phone number with country code',
+    useMyNumber: 'Use my number',
+    useMyNumberA11y: 'Choose a phone number from this device',
+    phoneHintUnsupported: 'Could not fill this number automatically. Please enter it manually.',
     countryCode: 'Country Code',
     searchCountry: 'Search country...',
     a11y: {
@@ -1400,6 +1428,9 @@ export const en = {
     themeDark: 'Dark',
     areaUnit: 'Area Unit',
     currency: 'Currency',
+    featureOverviewNotifications: 'Daily Feature Overview',
+    featureOverviewNotificationsSubtitle:
+      'Show one featured core module each day for your first 7 days',
     dailyWaterReminder: 'Daily Water Reminder',
     dailyWaterReminderSubtitle: 'Remind to check water levels',
     lowWaterAlerts: 'Low Water Alerts',
@@ -1410,7 +1441,8 @@ export const en = {
     warehouseReorderAlertsSubtitle: 'Alert when items fall below reorder quantity',
     petioleTestReminders: 'Petiole Test Reminders',
     petioleTestRemindersSubtitle: 'Remind one day before Day 30, 60, 90, 120 of pruning',
-    notificationNote: 'Notification settings are stored locally',
+    notificationNote:
+      'Reminder settings stay on this device. Daily feature overview also syncs to your account.',
     madeForVineyardManagement: 'Made for vineyard management',
     sentry: {
       testButton: 'Send Sentry test event',

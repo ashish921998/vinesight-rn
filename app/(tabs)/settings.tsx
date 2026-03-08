@@ -1,7 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
 import {
   View,
   Text,
@@ -10,7 +8,6 @@ import {
   FlatList,
   Alert,
   TextInput,
-  Switch,
   ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
@@ -23,7 +20,7 @@ import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import * as Sentry from '@sentry/react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore, useLanguageStore, useNotificationStore, useThemeStore } from '@/stores';
+import { useAuthStore, useLanguageStore, useThemeStore } from '@/stores';
 import { useProfile, useUpdateProfile, useCurrency, isIOS } from '@/hooks';
 import { CURRENCIES, AREA_UNITS } from '@/constants/calculator-models';
 import { Symbol as UISymbol } from '@/components/ui/symbol';
@@ -39,22 +36,15 @@ import { supabase } from '@/lib/supabase';
 import { setAppLanguage } from '@/i18n';
 import type { SupportedLanguageCode } from '@/i18n/languages';
 import type { ThemeMode } from '@/stores/theme-store';
-import {
-  ensureNotificationPermissions,
-  scheduleDailyWaterReminder,
-  cancelNotification,
-} from '@/services/notifications';
 import { useM3, useThemeColors } from '@/styles/use-theme';
 import { colorWithOpacity } from '@/utils/color';
 import { getDefaultCurrency } from '@/i18n/currency';
 import { resolveAreaUnitPreference } from '@/utils/preferences';
-import { assistantMemoryService } from '@/services/assistant-memory';
 import { telemetry } from '@/services/telemetry';
 import { upsertGuidedTourServerState } from '@/features/guided-tour/service';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { GUIDED_TOUR_VERSION } from '@/features/guided-tour/constants';
-import { ASSISTANT_MEMORY_RETENTION_DAYS } from '@/constants/assistant-memory';
-import { assistantFeatureFlags } from '@/constants/assistant-flags';
+
 import {
   buildE164PhoneNumber as buildNormalizedE164PhoneNumber,
   sanitizePhoneDigits,
@@ -184,37 +174,6 @@ export default function SettingsScreen() {
   const themeMode = useThemeStore((s) => s.mode);
   const setThemeMode = useThemeStore((s) => s.setMode);
 
-  const dailyWaterReminderEnabled = useNotificationStore((s) => s.dailyWaterReminderEnabled);
-  const dailyWaterNotificationId = useNotificationStore((s) => s.dailyWaterReminderNotificationId);
-  const setDailyWaterReminderEnabled = useNotificationStore((s) => s.setDailyWaterReminderEnabled);
-  const setDailyWaterNotificationId = useNotificationStore(
-    (s) => s.setDailyWaterReminderNotificationId,
-  );
-
-  const lowWaterAlertsEnabled = useNotificationStore((s) => s.lowWaterAlertsEnabled);
-  const setLowWaterAlertsEnabled = useNotificationStore((s) => s.setLowWaterAlertsEnabled);
-
-  const taskRemindersEnabled = useNotificationStore((s) => s.taskRemindersEnabled);
-  const setTaskRemindersEnabled = useNotificationStore((s) => s.setTaskRemindersEnabled);
-  const taskSchedules = useNotificationStore((s) => s.taskSchedules);
-  const clearAllTaskSchedules = useNotificationStore((s) => s.clearAllTaskSchedules);
-
-  const warehouseReorderAlertsEnabled = useNotificationStore(
-    (s) => s.warehouseReorderAlertsEnabled,
-  );
-  const setWarehouseReorderAlertsEnabled = useNotificationStore(
-    (s) => s.setWarehouseReorderAlertsEnabled,
-  );
-  const clearNotifiedWarehouseItemIds = useNotificationStore(
-    (s) => s.clearNotifiedWarehouseItemIds,
-  );
-
-  const petioleTestRemindersEnabled = useNotificationStore((s) => s.petioleTestRemindersEnabled);
-  const setPetioleTestRemindersEnabled = useNotificationStore(
-    (s) => s.setPetioleTestRemindersEnabled,
-  );
-  const petioleTestSchedules = useNotificationStore((s) => s.petioleTestSchedules);
-  const clearAllPetioleTestSchedules = useNotificationStore((s) => s.clearAllPetioleTestSchedules);
   const { data: profile, refetch: refetchProfile } = useProfile();
   const updateProfile = useUpdateProfile();
 
@@ -225,8 +184,7 @@ export default function SettingsScreen() {
   const [showAreaPicker, setShowAreaPicker] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [showLinkPhoneModal, setShowLinkPhoneModal] = useState(false);
-  const [isExportingAssistantData, setIsExportingAssistantData] = useState(false);
-  const [isDeletingAssistantData, setIsDeletingAssistantData] = useState(false);
+
   const [isResettingGuidedTour, setIsResettingGuidedTour] = useState(false);
 
   // Edit profile form state
@@ -490,94 +448,6 @@ export default function SettingsScreen() {
       setIsResettingGuidedTour(false);
     }
   }, [isResettingGuidedTour, language, resetGuidedTour, router, t, setReplayResetPending]);
-
-  const handleToggleDailyWaterReminder = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await ensureNotificationPermissions();
-      if (!granted) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
-        return;
-      }
-      const id = await scheduleDailyWaterReminder();
-      if (!id) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsUnavailable'));
-        return;
-      }
-      setDailyWaterNotificationId(id);
-      setDailyWaterReminderEnabled(true);
-      return;
-    }
-
-    if (dailyWaterNotificationId) {
-      await cancelNotification(dailyWaterNotificationId);
-    }
-    setDailyWaterNotificationId(null);
-    setDailyWaterReminderEnabled(false);
-  };
-
-  const handleToggleTaskReminders = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await ensureNotificationPermissions();
-      if (!granted) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
-        return;
-      }
-      setTaskRemindersEnabled(true);
-      return;
-    }
-
-    // Disable: cancel any scheduled task notifications we know about
-    const ids = Object.values(taskSchedules).flatMap((s) => s.notificationIds ?? []);
-    await Promise.allSettled(ids.map((id) => cancelNotification(id)));
-    clearAllTaskSchedules();
-    setTaskRemindersEnabled(false);
-  };
-
-  const handleToggleLowWaterAlerts = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await ensureNotificationPermissions();
-      if (!granted) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
-        return;
-      }
-      setLowWaterAlertsEnabled(true);
-      return;
-    }
-
-    setLowWaterAlertsEnabled(false);
-  };
-
-  const handleToggleWarehouseReorderAlerts = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await ensureNotificationPermissions();
-      if (!granted) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
-        return;
-      }
-      setWarehouseReorderAlertsEnabled(true);
-      return;
-    }
-    setWarehouseReorderAlertsEnabled(false);
-    clearNotifiedWarehouseItemIds();
-  };
-
-  const handleTogglePetioleTestReminders = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await ensureNotificationPermissions();
-      if (!granted) {
-        Alert.alert(t('common.error'), t('settings.errors.notificationsPermissionDenied'));
-        return;
-      }
-      setPetioleTestRemindersEnabled(true);
-      return;
-    }
-
-    // Disable: cancel any scheduled petiole test notifications
-    const ids = Object.values(petioleTestSchedules).flatMap((s) => s.notificationIds ?? []);
-    await Promise.allSettled(ids.map((id) => cancelNotification(id)));
-    clearAllPetioleTestSchedules();
-    setPetioleTestRemindersEnabled(false);
-  };
 
   const handleDeleteAccount = () => {
     telemetry.capture('account_delete_flow_opened', {
@@ -884,130 +754,6 @@ export default function SettingsScreen() {
     } finally {
       setIsVerifyingDeleteOtp(false);
     }
-  };
-
-  const handleExportAssistantMemory = async () => {
-    if (isExportingAssistantData || isDeletingAssistantData) return;
-    setIsExportingAssistantData(true);
-
-    let fileUri: string | null = null;
-    let shouldDelayCleanup = false;
-
-    try {
-      const exportData = await assistantMemoryService.exportUserData();
-      if (!exportData) {
-        Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
-        return;
-      }
-
-      const payload = {
-        exported_at: new Date().toISOString(),
-        retention_days: ASSISTANT_MEMORY_RETENTION_DAYS,
-        ...exportData,
-      };
-
-      const fileName = `vinesight-assistant-memory-${Date.now()}.json`;
-      const directory = FileSystem.cacheDirectory;
-      fileUri = directory ? `${directory}${fileName}` : null;
-
-      if (!fileUri) {
-        Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
-        return;
-      }
-
-      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(payload, null, 2));
-
-      const canShare = await Sharing.isAvailableAsync();
-      if (!canShare) {
-        Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
-        return;
-      }
-
-      await Sharing.shareAsync(fileUri, {
-        mimeType: 'application/json',
-        dialogTitle: t('settings.assistantMemory.exportShareTitle'),
-      });
-      shouldDelayCleanup = true;
-
-      telemetry.capture('assistant_memory_exported', {
-        conversations_count: exportData.conversations.length,
-        turns_count: exportData.turns.length,
-        memories_count: exportData.memories.length,
-      });
-
-      Alert.alert(
-        t('settings.assistantMemory.exportedTitle'),
-        t('settings.assistantMemory.exportedBody', {
-          conversations: exportData.conversations.length,
-          turns: exportData.turns.length,
-          memories: exportData.memories.length,
-        }),
-      );
-    } catch (error) {
-      if (__DEV__) {
-        console.error('Assistant memory export failed:', error);
-      }
-      Alert.alert(t('common.error'), t('settings.errors.assistantMemoryExportFailed'));
-    } finally {
-      if (fileUri) {
-        if (shouldDelayCleanup) {
-          setTimeout(() => {
-            FileSystem.deleteAsync(fileUri!).catch((deleteError) => {
-              if (__DEV__) {
-                console.warn('Failed to delete temp file:', deleteError);
-              }
-            });
-          }, 2000);
-        } else {
-          try {
-            await FileSystem.deleteAsync(fileUri);
-          } catch (deleteError) {
-            if (__DEV__) {
-              console.warn('Failed to delete temp file:', deleteError);
-            }
-          }
-        }
-      }
-      setIsExportingAssistantData(false);
-    }
-  };
-
-  const handleDeleteAssistantMemory = () => {
-    if (isDeletingAssistantData || isExportingAssistantData) return;
-
-    Alert.alert(
-      t('settings.assistantMemory.deleteConfirmTitle'),
-      t('settings.assistantMemory.deleteConfirmBody'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.assistantMemory.deleteAction'),
-          style: 'destructive',
-          onPress: async () => {
-            setIsDeletingAssistantData(true);
-            try {
-              const success = await assistantMemoryService.deleteUserData();
-              if (!success) {
-                Alert.alert(t('common.error'), t('settings.errors.assistantMemoryDeleteFailed'));
-                return;
-              }
-              telemetry.capture('assistant_memory_deleted');
-              Alert.alert(
-                t('settings.assistantMemory.deletedTitle'),
-                t('settings.assistantMemory.deletedBody'),
-              );
-            } catch (error) {
-              if (__DEV__) {
-                console.error('Assistant memory delete failed:', error);
-              }
-              Alert.alert(t('common.error'), t('settings.errors.assistantMemoryDeleteFailed'));
-            } finally {
-              setIsDeletingAssistantData(false);
-            }
-          },
-        },
-      ],
-    );
   };
 
   const handleOpenLinkPhone = () => {
@@ -1344,7 +1090,7 @@ export default function SettingsScreen() {
           </Pressable>
           <Pressable onPress={() => setShowCurrencyPicker(true)}>
             <SettingsItem
-              icon="dollarsign.circle"
+              icon="banknote"
               title={t('settings.currency')}
               value={getCurrencyLabel(selectedCurrency)}
               isLast={false}
@@ -1365,144 +1111,6 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      {/* Notifications Section */}
-      <View style={styles.section}>
-        <Text
-          style={styles.sectionHeader}
-          textBreakStrategy="highQuality"
-          lineBreakStrategyIOS="standard"
-        >
-          {t('settings.sectionNotifications')}
-        </Text>
-        <View style={styles.sectionContent}>
-          <NotificationToggle
-            title={t('settings.dailyWaterReminder')}
-            subtitle={t('settings.dailyWaterReminderSubtitle')}
-            enabled={dailyWaterReminderEnabled}
-            onToggle={handleToggleDailyWaterReminder}
-            styles={styles}
-            colors={colors}
-            m3={m3}
-          />
-          <NotificationToggle
-            title={t('settings.lowWaterAlerts')}
-            subtitle={t('settings.lowWaterAlertsSubtitle')}
-            enabled={lowWaterAlertsEnabled}
-            onToggle={handleToggleLowWaterAlerts}
-            styles={styles}
-            colors={colors}
-            m3={m3}
-          />
-          <NotificationToggle
-            title={t('settings.taskReminders')}
-            subtitle={t('settings.taskRemindersSubtitle')}
-            enabled={taskRemindersEnabled}
-            onToggle={handleToggleTaskReminders}
-            styles={styles}
-            colors={colors}
-            m3={m3}
-          />
-          <NotificationToggle
-            title={t('settings.warehouseReorderAlerts')}
-            subtitle={t('settings.warehouseReorderAlertsSubtitle')}
-            enabled={warehouseReorderAlertsEnabled}
-            onToggle={handleToggleWarehouseReorderAlerts}
-            styles={styles}
-            colors={colors}
-            m3={m3}
-          />
-          <NotificationToggle
-            title={t('settings.petioleTestReminders')}
-            subtitle={t('settings.petioleTestRemindersSubtitle')}
-            enabled={petioleTestRemindersEnabled}
-            onToggle={handleTogglePetioleTestReminders}
-            isLast
-            styles={styles}
-            colors={colors}
-            m3={m3}
-          />
-        </View>
-        <Text
-          style={styles.notificationNote}
-          textBreakStrategy="highQuality"
-          lineBreakStrategyIOS="standard"
-        >
-          {t('settings.notificationNote')}
-        </Text>
-      </View>
-
-      {/* Assistant Section */}
-      {assistantFeatureFlags.memoryEnabled && (
-        <View style={styles.section}>
-          <Text
-            style={styles.sectionHeader}
-            textBreakStrategy="highQuality"
-            lineBreakStrategyIOS="standard"
-          >
-            {t('settings.sectionAssistant')}
-          </Text>
-          <View style={styles.sectionContent}>
-            <Pressable
-              onPress={handleExportAssistantMemory}
-              disabled={isExportingAssistantData || isDeletingAssistantData}
-              style={[
-                styles.settingsItem,
-                styles.borderBottom,
-                (isExportingAssistantData || isDeletingAssistantData) && styles.disabledItem,
-              ]}
-            >
-              <View style={styles.settingsIcon}>
-                <UISymbol name="doc.text" size={20} color={m3.colorScheme.primary} />
-              </View>
-              <Text
-                style={styles.settingsTitle}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                {t('settings.assistantMemory.exportAction')}
-              </Text>
-              {isExportingAssistantData ? (
-                <ActivityIndicator size="small" color={m3.colorScheme.primary} />
-              ) : (
-                <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
-              )}
-            </Pressable>
-            <Pressable
-              onPress={handleDeleteAssistantMemory}
-              disabled={isDeletingAssistantData || isExportingAssistantData}
-              style={[
-                styles.settingsItem,
-                (isDeletingAssistantData || isExportingAssistantData) && styles.disabledItem,
-              ]}
-            >
-              <View style={styles.deleteIcon}>
-                <UISymbol name="trash" size={20} color={colors.error} />
-              </View>
-              <Text
-                style={styles.deleteText}
-                textBreakStrategy="highQuality"
-                lineBreakStrategyIOS="standard"
-              >
-                {t('settings.assistantMemory.deleteAction')}
-              </Text>
-              {isDeletingAssistantData ? (
-                <ActivityIndicator size="small" color={colors.error} />
-              ) : (
-                <UISymbol name="chevron.right" size={16} color={colors.surface[400]} />
-              )}
-            </Pressable>
-          </View>
-          <Text
-            style={styles.notificationNote}
-            textBreakStrategy="highQuality"
-            lineBreakStrategyIOS="standard"
-          >
-            {t('settings.assistantMemory.retentionNote', {
-              days: ASSISTANT_MEMORY_RETENTION_DAYS,
-            })}
-          </Text>
-        </View>
-      )}
       {/* Account Section */}
       <View style={styles.section}>
         <Text
@@ -2724,63 +2332,6 @@ function SettingsItem({
   );
 }
 
-// Notification Toggle Component
-function NotificationToggle({
-  title,
-  subtitle,
-  enabled,
-  onToggle,
-  isLast,
-  styles,
-  colors,
-  m3,
-}: {
-  title: string;
-  subtitle: string;
-  enabled: boolean;
-  onToggle: (enabled: boolean) => void | Promise<void>;
-  isLast?: boolean;
-  styles: SettingsStyles;
-  colors: ThemeColors;
-  m3: ReturnType<typeof getM3Theme>;
-}) {
-  return (
-    <View style={[styles.notificationItem, !isLast && styles.borderBottom]}>
-      <View style={styles.flex1}>
-        <Text
-          style={styles.notificationTitle}
-          textBreakStrategy="highQuality"
-          lineBreakStrategyIOS="standard"
-        >
-          {title}
-        </Text>
-        <Text
-          style={styles.notificationSubtitle}
-          textBreakStrategy="highQuality"
-          lineBreakStrategyIOS="standard"
-        >
-          {subtitle}
-        </Text>
-      </View>
-      <Switch
-        value={enabled}
-        onValueChange={(value) => {
-          Promise.resolve(onToggle(value)).catch((error) => {
-            if (__DEV__) {
-              console.error('Toggle error:', error);
-            }
-          });
-        }}
-        trackColor={{
-          false: colors.surface[300],
-          true: colorWithOpacity(m3.colorScheme.primary, 0.4),
-        }}
-        thumbColor={enabled ? m3.colorScheme.primary : colors.surface[100]}
-      />
-    </View>
-  );
-}
-
 const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) => ({
   container: { flex: 1, backgroundColor: colors.surface[50] } as ViewStyle,
   profileCard: {
@@ -2886,25 +2437,7 @@ const createStyles = (colors: ThemeColors, m3: ReturnType<typeof getM3Theme>) =>
     opacity: 0.6,
   } as ViewStyle,
 
-  notificationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-  } as ViewStyle,
   flex1: { flex: 1 } as ViewStyle,
-  notificationTitle: { fontSize: fontSize.base, color: colors.surface[900] } as TextStyle,
-  notificationSubtitle: {
-    fontSize: fontSize.xs,
-    color: colors.surface[500],
-    marginTop: 2,
-  } as TextStyle,
-  notificationNote: {
-    fontSize: fontSize.xs,
-    color: colors.surface[400],
-    marginTop: spacing[2],
-    paddingHorizontal: spacing[2],
-  } as TextStyle,
 
   appVersionContainer: { alignItems: 'center', marginTop: spacing[8] } as ViewStyle,
   appVersion: { fontSize: fontSize.sm, color: colors.surface[400] } as TextStyle,

@@ -1295,6 +1295,32 @@ export const mr = {
       item1: '$t(glossary.irrigation) आठवणी',
       item2: '$t(glossary.task) अंतिम वेळ',
       item3: '$t(glossary.weather) इशारे',
+      eyebrow: 'एक पाऊल पुढे रहा',
+      slideTitle: 'फक्त त्या क्षणांसाठी इशारे चालू करा जे तुम्हाला महागात पडू शकतात.',
+      slideSubtitle:
+        'स्प्रे विंडो, $t(glossary.irrigation) ची वेळ आणि मजुरांतील बदल दिवस हातातून जाण्यापूर्वी तुम्हाला कळतात.',
+      stats: {
+        lateSpray: 'उशिरा मिळालेली स्प्रे माहिती निर्यात गुणवत्तेला फटका देऊ शकते',
+        missedIrrigation: '$t(glossary.irrigation) ची वेळ चुकल्याने ब्लॉकवर ताण येतो',
+        unclearLabour: 'अस्पष्ट मजूर बदल पेरोलमध्ये अडचण निर्माण करतात',
+      },
+      assurance: 'फक्त उपयोगी आठवणी. हे तुम्ही नंतर सेटिंग्जमध्ये बदलू शकता.',
+      enableAlerts: 'इशारे चालू करा',
+      checkingPermissions: 'परवानग्या तपासत आहोत...',
+      skipAlerts: 'इशाऱ्यांशिवाय पुढे चला',
+    },
+    firstFarm: {
+      title: 'तुमचे पहिले $t(glossary.farm) जोडा.',
+      subtitle: 'आवश्यक गोष्टींनी सुरुवात करा. तपशील नंतर संपादित करू शकता.',
+      assurance:
+        'आत्ता फक्त आवश्यक गोष्टी पुरेशा आहेत. उरलेले सर्व नंतर $t(glossary.farm) पानावरून जोडता येईल.',
+      createButton: 'पहिले $t(glossary.farm) तयार करा',
+      existingTitle: 'तुमचे पहिले $t(glossary.farm) आधीच अस्तित्वात आहे.',
+      existingSubtitle:
+        'इशाऱ्यांपर्यंत पुढे जा आणि ऑनबोर्डिंग पूर्ण करा. $t(glossary.farm) चे तपशील नंतर संपादित करू शकता.',
+      existingFarmFallback: '$t(glossary.farm)',
+      existingRegionFallback: 'प्रदेश',
+      existingCropFallback: '$t(glossary.crop)',
     },
     complete: {
       title: 'सर्व तयार!',
@@ -1406,6 +1432,8 @@ export const mr = {
     themeDark: 'डार्क',
     areaUnit: 'क्षेत्रफळ एकक',
     currency: 'चलन',
+    featureOverviewNotifications: 'दैनिक फीचर ओव्हरव्ह्यू',
+    featureOverviewNotificationsSubtitle: 'पहिल्या 7 दिवसांसाठी दररोज एक मुख्य मॉड्यूलची ओळख दाखवा',
     dailyWaterReminder: 'दैनिक पाणी आठवण',
     dailyWaterReminderSubtitle: '$t(glossary.waterLevel) तपासण्याची आठवण',
     lowWaterAlerts: 'कमी $t(glossary.waterLevel) इशारे',
@@ -1416,7 +1444,8 @@ export const mr = {
     warehouseReorderAlertsSubtitle: 'वस्तू पुनर्भरण मर्यादेपेक्षा कमी झाल्यावर इशारा द्या',
     petioleTestReminders: '$t(glossary.petiole) चाचणी आठवणी',
     petioleTestRemindersSubtitle: 'छाटणीच्या ३०, ६०, ९०, १२० दिवसांच्या एक दिवस आधी आठवण',
-    notificationNote: 'सूचना सेटिंग्ज स्थानिकरित्या जतन होतात',
+    notificationNote:
+      'रिमाइंडर सेटिंग्ज या डिव्हाइसवर राहतात. दैनिक फीचर ओव्हरव्ह्यू तुमच्या खात्यासोबतही सिंक होतो.',
     madeForVineyardManagement: 'द्राक्षमळा व्यवस्थापनासाठी',
     sentry: {
       testButton: 'Sentry चाचणी इव्हेंट पाठवा',
