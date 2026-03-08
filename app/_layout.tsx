@@ -202,6 +202,7 @@ export default Sentry.wrap(function RootLayout() {
     if (segments[0] === '(auth)') return;
 
     let cancelled = false;
+    let languageUnsub: (() => void) | null = null;
 
     const requestNotificationPermission = async () => {
       try {
@@ -218,14 +219,14 @@ export default Sentry.wrap(function RootLayout() {
             });
           } else {
             useLanguageStore.getState();
-            const unsub = useLanguageStore.subscribe((state) => {
+            languageUnsub = useLanguageStore.subscribe((state) => {
               if (state.language === 'en' || state.language === 'hi' || state.language === 'mr') {
                 const notificationState = useNotificationStore.getState();
                 syncPushDeviceRegistration(state.language, {
                   notificationsEnabled: true,
                   featureOverviewEnabled: notificationState.featureOverviewEnabled,
                 });
-                unsub();
+                languageUnsub?.();
               }
             });
           }
@@ -250,14 +251,14 @@ export default Sentry.wrap(function RootLayout() {
             });
           } else {
             useLanguageStore.getState();
-            const unsub = useLanguageStore.subscribe((state) => {
+            languageUnsub = useLanguageStore.subscribe((state) => {
               if (state.language === 'en' || state.language === 'hi' || state.language === 'mr') {
                 const notificationState = useNotificationStore.getState();
                 syncPushDeviceRegistration(state.language, {
                   notificationsEnabled: true,
                   featureOverviewEnabled: notificationState.featureOverviewEnabled,
                 });
-                unsub();
+                languageUnsub?.();
               }
             });
           }
@@ -274,6 +275,7 @@ export default Sentry.wrap(function RootLayout() {
 
     return () => {
       cancelled = true;
+      languageUnsub?.();
     };
   }, [
     isAuthenticated,
