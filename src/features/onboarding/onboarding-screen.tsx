@@ -11,8 +11,9 @@ import { useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
-import { useAuthStore, useNotificationStore } from '@/stores';
+import { useAuthStore, useLanguageStore, useNotificationStore } from '@/stores';
 import { useOnboardingStore } from '@/stores/onboarding-store';
+import { syncPushDeviceRegistration } from '@/features/guided-tour/service';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { colorWithOpacity } from '@/utils/color';
 import { OnboardingButton } from './components/onboarding-button';
@@ -30,6 +31,7 @@ export function OnboardingScreen() {
   const m3 = useM3();
   const { width } = useWindowDimensions();
   const { data: farms = [] } = useFarms();
+  const language = useLanguageStore((s) => s.language);
   const scrollX = useSharedValue(0);
   const scrollRef = useRef<Animated.ScrollView>(null);
   const viewedSlides = useRef(new Set<number>([0]));
@@ -86,8 +88,16 @@ export function OnboardingScreen() {
   }, [currentPageIndex, handleSlideChange, width]);
 
   const finishOnboarding = useCallback(
-    (notificationsEnabled: boolean) => {
+    async (notificationsEnabled: boolean) => {
       useOnboardingStore.getState().setPreferences({ notificationsEnabled });
+
+      if (notificationsEnabled && (language === 'en' || language === 'hi' || language === 'mr')) {
+        await syncPushDeviceRegistration(language, {
+          notificationsEnabled: true,
+          featureOverviewEnabled: useNotificationStore.getState().featureOverviewEnabled,
+        });
+      }
+
       useNotificationStore.getState().setNotificationPermissionPrompted(true);
       useAuthStore.getState().setHasSeenOnboarding(true);
       useOnboardingStore.getState().completeOnboarding();
@@ -99,7 +109,7 @@ export function OnboardingScreen() {
       }
       router.replace('/(tabs)');
     },
-    [createdFarmId],
+    [createdFarmId, language],
   );
 
   const jumpToPage = useCallback(
@@ -120,7 +130,7 @@ export function OnboardingScreen() {
 
     if (currentPageIndex === NOTIFICATIONS_PAGE_INDEX) {
       telemetry.capture('onboarding_skipped', { step: 'notifications' });
-      finishOnboarding(false);
+      void finishOnboarding(false);
     }
   }, [currentPageIndex, finishOnboarding, jumpToPage]);
 

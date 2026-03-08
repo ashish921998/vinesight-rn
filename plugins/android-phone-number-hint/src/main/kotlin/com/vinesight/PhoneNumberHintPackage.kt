@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.util.Log
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.ActivityEventListener
 import com.facebook.react.bridge.BaseActivityEventListener
@@ -62,11 +63,19 @@ class PhoneNumberHintModule(
 
   override fun getName(): String = "PhoneNumberHintBridge"
 
+  override fun invalidate() {
+    reactContext.removeActivityEventListener(activityEventListener)
+    pendingPromise?.reject("MODULE_INVALIDATED", "PhoneNumberHintModule has been invalidated")
+    pendingPromise = null
+    super.invalidate()
+  }
+
   @ReactMethod
   fun isSupported(promise: Promise) {
     try {
       promise.resolve(isPhoneNumberHintSupported())
     } catch (error: Exception) {
+      Log.e(TAG, "isSupported check failed", error)
       promise.resolve(false)
     }
   }
@@ -124,5 +133,6 @@ class PhoneNumberHintModule(
 
   companion object {
     private const val PHONE_NUMBER_HINT_REQUEST_CODE = 19031
+    private const val TAG = "PhoneNumberHintPackage"
   }
 }

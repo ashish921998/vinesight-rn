@@ -5,7 +5,7 @@ const path = require('path');
 
 const PACKAGE_IMPORT = 'import com.vinesight.PhoneNumberHintPackage';
 const PACKAGE_CALL = 'add(PhoneNumberHintPackage())';
-const GRADLE_DEPENDENCY = 'implementation("com.google.android.gms:play-services-auth:21.5.0")';
+const GRADLE_DEPENDENCY = 'implementation("com.google.android.gms:play-services-auth:21.5.1")';
 const GRADLE_MARKER = '// [Phone Number Hint]';
 
 function withMainApplicationKotlin(config) {

@@ -256,19 +256,25 @@ async function sendExpoPushBatch(messages: ExpoPushMessage[]): Promise<ExpoPushT
 
   for (let i = 0; i < messages.length; i += EXPO_BATCH_LIMIT) {
     const chunk = messages.slice(i, i + EXPO_BATCH_LIMIT);
-    const response = await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(chunk),
-    });
+    try {
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(chunk),
+      });
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Expo push send failed (${response.status}): ${text}`);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Expo push batch failed', { status: response.status, text, batchIndex: i });
+        break;
+      }
+
+      const data = (await response.json()) as { data?: ExpoPushTicket[] };
+      allTickets.push(...(data.data ?? []));
+    } catch (batchError) {
+      console.error('Expo push batch error', { error: String(batchError), batchIndex: i });
+      break;
     }
-
-    const data = (await response.json()) as { data?: ExpoPushTicket[] };
-    allTickets.push(...(data.data ?? []));
   }
 
   return allTickets;

@@ -10,7 +10,7 @@ import { triggerHapticMedium, triggerHapticSuccess } from '@/utils/haptics';
 
 interface NotificationsSlideProps {
   isActive: boolean;
-  onFinish: (notificationsEnabled: boolean) => void;
+  onFinish: (notificationsEnabled: boolean) => void | Promise<void>;
 }
 
 const NOTIFICATION_STATS = [
@@ -61,19 +61,19 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
 
       if (existingStatus === 'granted') {
         triggerHapticSuccess();
-        onFinish(true);
+        await onFinish(true);
         return;
       }
 
       const { status } = await Notifications.requestPermissionsAsync();
       if (status === 'granted') {
         triggerHapticSuccess();
-        onFinish(true);
+        await onFinish(true);
       } else {
-        onFinish(false);
+        await onFinish(false);
       }
     } catch {
-      onFinish(false);
+      await onFinish(false);
     } finally {
       setIsRequesting(false);
     }
@@ -81,7 +81,7 @@ export function NotificationsSlide({ isActive, onFinish }: NotificationsSlidePro
 
   const handleSkip = useCallback(() => {
     triggerHapticMedium();
-    onFinish(false);
+    void onFinish(false);
   }, [onFinish]);
 
   return (

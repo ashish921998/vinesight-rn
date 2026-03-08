@@ -16,6 +16,7 @@ import { colorWithOpacity } from '@/utils/color';
  */
 export default function Index() {
   const { isAuthenticated, isLoading, needsProfileCompletion } = useAuthStore();
+  const onboardingHydrated = useOnboardingStore((s) => s.hasHydrated);
   const onboardingComplete = useOnboardingStore((s) => s.isComplete);
   const { data: profile, isLoading: profileLoading } = useProfile({ enabled: isAuthenticated });
   const configStatus = getConfigurationStatus();
@@ -98,6 +99,10 @@ export default function Index() {
   }
 
   if (isAuthenticated && profileLoading) {
+    return <AnimatedSplash duration={2500} />;
+  }
+
+  if (isAuthenticated && !onboardingHydrated) {
     return <AnimatedSplash duration={2500} />;
   }
 
