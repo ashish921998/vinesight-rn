@@ -545,16 +545,18 @@ export default function SettingsScreen() {
       return;
     }
 
+    setFeatureOverviewEnabled(false);
+
     const synced = await updatePushDevicePreferences(normalizedLanguage, {
       notificationsEnabled: true,
       featureOverviewEnabled: false,
     });
     if (!synced) {
-      Alert.alert(t('common.error'), t('common.tryAgain'));
+      if (__DEV__) {
+        console.warn('Failed to sync feature overview preference while disabling it.');
+      }
       return;
     }
-
-    setFeatureOverviewEnabled(false);
   };
 
   const handleToggleTaskReminders = async (enabled: boolean) => {

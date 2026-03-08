@@ -198,6 +198,7 @@ export default Sentry.wrap(function RootLayout() {
       return;
     }
     if (!pathname || pathname === '/') return;
+    if (pathname === '/onboarding' || segments[0] === 'onboarding') return;
     if (segments[0] === '(auth)') return;
 
     let cancelled = false;
@@ -209,11 +210,23 @@ export default Sentry.wrap(function RootLayout() {
         if (cancelled) return;
 
         if (permission.status === 'granted') {
-          if (language === 'en' || language === 'hi' || language === 'mr') {
+          if (language) {
             const notificationState = useNotificationStore.getState();
             await syncPushDeviceRegistration(language, {
               notificationsEnabled: true,
               featureOverviewEnabled: notificationState.featureOverviewEnabled,
+            });
+          } else {
+            useLanguageStore.getState();
+            const unsub = useLanguageStore.subscribe((state) => {
+              if (state.language === 'en' || state.language === 'hi' || state.language === 'mr') {
+                const notificationState = useNotificationStore.getState();
+                syncPushDeviceRegistration(state.language, {
+                  notificationsEnabled: true,
+                  featureOverviewEnabled: notificationState.featureOverviewEnabled,
+                });
+                unsub();
+              }
             });
           }
           setNotificationPermissionPrompted(true);
@@ -229,11 +242,23 @@ export default Sentry.wrap(function RootLayout() {
         if (cancelled) return;
 
         if (requested.status === 'granted') {
-          if (language === 'en' || language === 'hi' || language === 'mr') {
+          if (language) {
             const notificationState = useNotificationStore.getState();
             await syncPushDeviceRegistration(language, {
               notificationsEnabled: true,
               featureOverviewEnabled: notificationState.featureOverviewEnabled,
+            });
+          } else {
+            useLanguageStore.getState();
+            const unsub = useLanguageStore.subscribe((state) => {
+              if (state.language === 'en' || state.language === 'hi' || state.language === 'mr') {
+                const notificationState = useNotificationStore.getState();
+                syncPushDeviceRegistration(state.language, {
+                  notificationsEnabled: true,
+                  featureOverviewEnabled: notificationState.featureOverviewEnabled,
+                });
+                unsub();
+              }
             });
           }
         }
