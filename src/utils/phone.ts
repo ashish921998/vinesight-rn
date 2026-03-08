@@ -42,3 +42,49 @@ export function buildE164PhoneNumber(dialCode: string, localPhoneNumber: string)
   const fullNumber = `${dialCode}${normalizedLocalNumber}`;
   return isValidE164PhoneNumber(fullNumber) ? fullNumber : '';
 }
+
+export interface PhoneDialCodeCountry {
+  dialCode: string;
+}
+
+export interface PhoneNumberHintMatch<TCountry extends PhoneDialCodeCountry> {
+  country: TCountry;
+  localNumber: string;
+}
+
+export function matchPhoneNumberHintToCountry<TCountry extends PhoneDialCodeCountry>(
+  phoneNumberHint: string,
+  countries: readonly TCountry[],
+): PhoneNumberHintMatch<TCountry> | null {
+  const trimmedHint = phoneNumberHint.trim();
+  if (!trimmedHint.startsWith('+')) return null;
+
+  const normalizedHint = `+${sanitizePhoneDigits(trimmedHint)}`;
+  if (!isValidE164PhoneNumber(normalizedHint)) return null;
+
+  let matchedCountry: TCountry | null = null;
+
+  for (const country of countries) {
+    if (!normalizedHint.startsWith(country.dialCode)) continue;
+
+    if (!matchedCountry || country.dialCode.length > matchedCountry.dialCode.length) {
+      matchedCountry = country;
+    }
+  }
+
+  if (!matchedCountry) return null;
+
+  const localNumber = limitLocalPhoneDigits(
+    matchedCountry.dialCode,
+    normalizedHint.slice(matchedCountry.dialCode.length),
+  );
+
+  if (!isValidLocalPhoneNumberForDialCode(matchedCountry.dialCode, localNumber)) {
+    return null;
+  }
+
+  return {
+    country: matchedCountry,
+    localNumber,
+  };
+}

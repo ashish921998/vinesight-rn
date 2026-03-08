@@ -1382,6 +1382,9 @@ export const en = {
     backToLoginLink: 'email sign in',
     backToLoginA11y: 'Go back to email sign in',
     invalidPhone: 'Please enter a valid phone number with country code',
+    useMyNumber: 'Use my number',
+    useMyNumberA11y: 'Choose a phone number from this device',
+    phoneHintUnsupported: 'Could not fill this number automatically. Please enter it manually.',
     countryCode: 'Country Code',
     searchCountry: 'Search country...',
     a11y: {

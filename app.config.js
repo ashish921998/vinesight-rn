@@ -112,6 +112,7 @@ module.exports = {
       'expo-localization',
       '@bacons/apple-targets',
       './plugins/android-widget',
+      './plugins/android-phone-number-hint',
       './plugins/with-android-16kb-pages',
       './plugins/with-ios-entitlements-codesign',
       [

@@ -11,7 +11,7 @@ import { useFarms } from '@/hooks';
 import { telemetry } from '@/services/telemetry';
 import { useM3 } from '@/styles/use-theme';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/styles/theme';
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useNotificationStore } from '@/stores';
 import { useOnboardingStore } from '@/stores/onboarding-store';
 import { useGuidedTourStore } from '@/features/guided-tour/store';
 import { colorWithOpacity } from '@/utils/color';
@@ -88,6 +88,7 @@ export function OnboardingScreen() {
   const finishOnboarding = useCallback(
     (notificationsEnabled: boolean) => {
       useOnboardingStore.getState().setPreferences({ notificationsEnabled });
+      useNotificationStore.getState().setNotificationPermissionPrompted(true);
       useAuthStore.getState().setHasSeenOnboarding(true);
       useOnboardingStore.getState().completeOnboarding();
       telemetry.capture('onboarding_completed', { notifications_enabled: notificationsEnabled });

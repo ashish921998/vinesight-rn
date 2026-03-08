@@ -218,15 +218,15 @@ export default Sentry.wrap(function RootLayout() {
               featureOverviewEnabled: notificationState.featureOverviewEnabled,
             });
           } else {
-            useLanguageStore.getState();
             languageUnsub = useLanguageStore.subscribe((state) => {
               if (state.language === 'en' || state.language === 'hi' || state.language === 'mr') {
                 const notificationState = useNotificationStore.getState();
                 syncPushDeviceRegistration(state.language, {
                   notificationsEnabled: true,
                   featureOverviewEnabled: notificationState.featureOverviewEnabled,
-                });
-                languageUnsub?.();
+                })
+                  .then(() => languageUnsub?.())
+                  .catch(() => languageUnsub?.());
               }
             });
           }
@@ -250,15 +250,15 @@ export default Sentry.wrap(function RootLayout() {
               featureOverviewEnabled: notificationState.featureOverviewEnabled,
             });
           } else {
-            useLanguageStore.getState();
             languageUnsub = useLanguageStore.subscribe((state) => {
               if (state.language === 'en' || state.language === 'hi' || state.language === 'mr') {
                 const notificationState = useNotificationStore.getState();
                 syncPushDeviceRegistration(state.language, {
                   notificationsEnabled: true,
                   featureOverviewEnabled: notificationState.featureOverviewEnabled,
-                });
-                languageUnsub?.();
+                })
+                  .then(() => languageUnsub?.())
+                  .catch(() => languageUnsub?.());
               }
             });
           }
