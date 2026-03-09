@@ -2095,14 +2095,7 @@ Deno.serve(async (req) => {
     if (inputMode === 'audio') {
       const audioBase64 = body?.input_audio_b64?.trim();
       const audioMimeType = body?.audio_format?.trim() || 'audio/mpeg';
-      if (!audioBase64) {
-        if (!transcript) {
-          return jsonResponse(
-            { error: 'Audio input mode requires input_audio_b64 or input_text' },
-            400,
-          );
-        }
-
+      if (transcript) {
         effectiveInputMode = 'text';
         sttProviderUsed = 'client_transcript';
         toolCalls.push({
@@ -2110,9 +2103,15 @@ Deno.serve(async (req) => {
           status: 'skipped',
           output: {
             stt_provider: 'client_transcript',
+            skip_reason: audioBase64 ? 'client_transcript_preferred' : 'client_transcript_only',
             legacy_tool_name: 'farm_context.get',
           },
         });
+      } else if (!audioBase64) {
+        return jsonResponse(
+          { error: 'Audio input mode requires input_audio_b64 or input_text' },
+          400,
+        );
       } else {
         const normalizedAudioBase64 = normalizeBase64Input(audioBase64);
         const estimatedAudioBytes = estimateBase64Bytes(normalizedAudioBase64);

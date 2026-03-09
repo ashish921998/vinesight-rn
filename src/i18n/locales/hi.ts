@@ -831,6 +831,7 @@ export const hi = {
   safeToSpray: {
     title: 'Safe-to-spray चेकर',
     subtitle: 'लक्ष्य कटाई तिथि दर्ज करें और सुरक्षित स्प्रे देखें।',
+    searchPlaceholder: 'मिक्स, कीट या उत्पाद खोजें',
     targetDate: 'लक्ष्य कटाई तिथि',
     saveSeasonTarget: 'सीज़न में लक्ष्य तिथि सहेजें',
     blocking: 'गवर्निंग PHI: {{days}} दिन ({{component}})',
@@ -1586,6 +1587,7 @@ export const hi = {
       recordingTooShortDetailBody:
         'ऑडियो बहुत छोटा था {{reason}} के कारण। बोलें दबाएँ, कम से कम 1 सेकंड रुकें, फिर रोकें दबाएँ।',
       voiceMessage: 'वॉइस मैसेज',
+      replyVoiceUnavailable: 'इस जवाब के लिए आवाज़ उपलब्ध नहीं है।',
       sttNotReadyTitle: 'सर्वर STT तैयार नहीं',
       sttNotReadyBody:
         'माइक्रोफ़ोन रिकॉर्डिंग शुरू नहीं हो सकी, इसलिए सर्वर स्पीच-टू-टेक्स्ट का उपयोग नहीं हो सकता।',
@@ -1614,6 +1616,9 @@ export const hi = {
       newChat: 'नई चैट',
       newConversation: 'नई बातचीत',
       noPreviousChats: 'अभी तक कोई पिछली चैट नहीं है।',
+      deleteChat: 'चैट हटाएँ',
+      deleteChatConfirm: 'क्या आप वाकई इस चैट को हटाना चाहते हैं? यह पूर्ववत नहीं किया जा सकता।',
+      deleteChatFailed: 'चैट हटाने में विफल। कृपया दोबारा प्रयास करें।',
       stop: 'रोकें',
       replay: 'फिर चलाएँ',
       replayVoiceA11y: 'सहायक की आवाज़ फिर चलाएँ',

@@ -848,6 +848,7 @@ export const en = {
   safeToSpray: {
     title: 'Safe-to-Spray Checker',
     subtitle: 'Enter target harvest date to check safe spray windows.',
+    searchPlaceholder: 'Search mix, pest, or product',
     targetDate: 'Target harvest date',
     saveSeasonTarget: 'Save target date to season',
     blocking: 'Governing PHI: {{days}} days ({{component}})',
@@ -1605,6 +1606,7 @@ export const en = {
       recordingTooShortDetailBody:
         'Audio was too short{{reason}}. Tap Speak, wait at least 1 second, then tap Stop.',
       voiceMessage: 'Voice message',
+      replyVoiceUnavailable: 'Voice unavailable for this reply.',
       sttNotReadyTitle: 'Server STT not ready',
       sttNotReadyBody:
         'Microphone recording could not be started, so server speech-to-text cannot be used.',
@@ -1633,6 +1635,9 @@ export const en = {
       newChat: 'New chat',
       newConversation: 'New conversation',
       noPreviousChats: 'No previous chats yet.',
+      deleteChat: 'Delete chat',
+      deleteChatConfirm: 'Are you sure you want to delete this chat? This cannot be undone.',
+      deleteChatFailed: 'Failed to delete chat. Please try again.',
       stop: 'Stop',
       replay: 'Replay',
       replayVoiceA11y: 'Replay assistant voice',

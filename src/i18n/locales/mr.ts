@@ -851,6 +851,7 @@ export const mr = {
   safeToSpray: {
     title: 'Safe-to-spray तपासणी',
     subtitle: 'लक्ष्य $t(glossary.harvest) दिनांक टाका आणि सुरक्षित स्प्रे पाहा.',
+    searchPlaceholder: 'मिक्स, कीड किंवा उत्पादन शोधा',
     targetDate: 'लक्ष्य $t(glossary.harvest) दिनांक',
     saveSeasonTarget: 'हा दिनांक हंगामासाठी जतन करा',
     blocking: 'गव्हर्निंग PHI: {{days}} दिवस ({{component}})',
@@ -1611,6 +1612,7 @@ export const mr = {
       recordingTooShortDetailBody:
         'ऑडिओ खूप लहान होता, {{reason}}. बोला दाबा, किमान 1 सेकंद थांबा, मग थांबा दाबा.',
       voiceMessage: 'व्हॉइस मेसेज',
+      replyVoiceUnavailable: 'या उत्तरासाठी आवाज उपलब्ध नाही.',
       sttNotReadyTitle: 'सर्व्हर STT तयार नाही',
       sttNotReadyBody:
         'मायक्रोफोन रेकॉर्डिंग सुरू होऊ शकले नाही, त्यामुळे सर्व्हर स्पीच-टू-टेक्स्ट वापरता येत नाही.',
@@ -1639,6 +1641,10 @@ export const mr = {
       newChat: 'नवीन चॅट',
       newConversation: 'नवीन संवाद',
       noPreviousChats: 'आतापर्यंत कोणतेही जुने चॅट नाहीत.',
+      deleteChat: 'चॅट हटवा',
+      deleteChatConfirm:
+        'तुम्हाला खात्री आहे की तुम्ही हा चॅट हटवू इच्छिता? हे पूर्ववत करता येणार नाही.',
+      deleteChatFailed: 'चॅट हटवता आला नाही. कृपया पुन्हा प्रयत्न करा.',
       stop: 'थांबवा',
       replay: 'पुन्हा वाजवा',
       replayVoiceA11y: 'सहाय्यकाचा आवाज पुन्हा वाजवा',

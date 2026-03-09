@@ -12,6 +12,7 @@ interface PlaybackOptions {
   onDone?: () => void;
   onStopped?: () => void;
   onError?: () => void;
+  allowDeviceFallback?: boolean;
 }
 
 interface PlaybackStatusUpdate {
@@ -146,7 +147,7 @@ class VoiceOutputService {
         if (played) return;
       }
 
-      if (text) {
+      if (text && options.allowDeviceFallback !== false) {
         options.onStateChange?.(true);
         Speech.speak(text, {
           language: resolveLocale(options.language),
@@ -172,7 +173,7 @@ class VoiceOutputService {
             console.warn('Failed to delete replaced audio file after write failure:', error);
         });
       }
-      if (text) {
+      if (text && options.allowDeviceFallback !== false) {
         options.onStateChange?.(true);
         Speech.speak(text, {
           language: resolveLocale(options.language),
@@ -192,6 +193,7 @@ class VoiceOutputService {
         });
       } else {
         options.onStateChange?.(false);
+        options.onError?.();
       }
     }
   }

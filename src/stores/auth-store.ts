@@ -171,7 +171,7 @@ interface AuthActions {
   cancelOTPFlow: () => void;
 
   // Phone OTP methods
-  signInWithPhone: (phone: string, mode?: PhoneAuthMode) => Promise<void>;
+  signInWithPhone: (phone: string, mode?: PhoneAuthMode, name?: string) => Promise<void>;
   verifyPhoneOTP: (phone: string, code: string) => Promise<void>;
   resendPhoneOTP: (mode?: PhoneAuthMode, phone?: string) => Promise<void>;
   cancelPhoneOTPFlow: () => void;
@@ -1075,7 +1075,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // Sign in with phone (send OTP via SMS)
-  signInWithPhone: async (phone: string, mode: PhoneAuthMode = 'signin') => {
+  signInWithPhone: async (phone: string, mode: PhoneAuthMode = 'signin', name?: string) => {
     const trimmedPhone = phone.trim();
     const maskedPhone = trimmedPhone.replace(/\d(?=\d{4})/g, '*');
 
@@ -1095,13 +1095,27 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phone: maskedPhone,
         mode,
         shouldCreateUser: mode === 'signup',
+        name: name ?? undefined,
       });
     }
 
     try {
+      const options: { shouldCreateUser: boolean; data?: { full_name?: string } } = {
+        shouldCreateUser: mode === 'signup',
+      };
+      if (mode === 'signup' && name && name.trim()) {
+        options.data = { full_name: name.trim() };
+        if (__DEV__) {
+          console.log('[auth] signInWithPhone - Capturing name for signup:', {
+            name: name.trim(),
+            phone: maskedPhone,
+          });
+        }
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         phone: trimmedPhone,
-        options: { shouldCreateUser: mode === 'signup' },
+        options,
       });
       if (error) throw error;
 
@@ -1159,6 +1173,17 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         telemetry.identify(data.user.id, {
           email_domain: getEmailDomain(data.user.email),
         });
+        if (__DEV__) {
+          console.log('[auth] verifyPhoneOTP - User metadata:', {
+            user_id: data.user.id,
+            metadata: data.user.user_metadata,
+            has_full_name: Boolean(data.user.user_metadata?.full_name),
+            has_name_parts: Boolean(
+              data.user.user_metadata?.first_name && data.user.user_metadata?.last_name,
+            ),
+            was_authenticated: wasAuthenticated,
+          });
+        }
       }
       telemetry.capture('auth_phone_otp_verify_succeeded');
 
@@ -1168,6 +1193,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       // - Not prompt users who previously authenticated via email OTP and have email in metadata
       // This is an intentional design trade-off for simplicity.
       const isNewUser = !hasCompletedProfileName(data.user);
+      const hasName = hasCompletedProfileName(data.user);
 
       if (isNewUser) {
         telemetry.capture('user_signed_up', { method: 'phone' });
@@ -1180,8 +1206,22 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           needsProfileCompletion: true,
           isLoading: false,
         });
-      } else {
+      } else if (data.user) {
         telemetry.capture('user_logged_in', { method: 'phone' });
+        // Track "New user created" when user completes registration with name
+        if (hasName && wasAuthenticated === false) {
+          telemetry.capture('New user created', {
+            method: 'phone',
+            name: data.user?.user_metadata?.full_name ?? 'captured',
+          });
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
+          if (__DEV__) {
+            console.log('[auth] verifyPhoneOTP - "New user created" event tracked', {
+              user_id: data.user.id,
+              name: data.user?.user_metadata?.full_name,
+            });
+          }
+        }
         set({
           user: data.user,
           session: data.session,
@@ -1512,9 +1552,19 @@ export const initAuthListener = () => {
       const currentState = useAuthStore.getState();
       const looksLikeNewPhoneUser =
         Boolean(currentState.pendingOTPPhone) && !hasCompletedProfileName(session.user);
+      const hasName = hasCompletedProfileName(session.user);
       setSentryUser(session.user);
       telemetry.identify(session.user.id, { email_domain: getEmailDomain(session.user.email) });
       telemetry.capture('auth_state_changed', { event: 'SIGNED_IN' });
+      if (__DEV__) {
+        console.log('[auth] Auth state changed - SIGNED_IN', {
+          user_id: session.user.id,
+          has_name: hasName,
+          pending_otp_phone: currentState.pendingOTPPhone,
+          looks_like_new_phone_user: looksLikeNewPhoneUser,
+          metadata: session.user.user_metadata,
+        });
+      }
       useAuthStore.setState((state) => ({
         ...state,
         user: session.user,
