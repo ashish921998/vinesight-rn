@@ -183,9 +183,9 @@ export default function PhoneLoginScreen() {
     setNameError(null);
     if (__DEV__) {
       console.log('[phone-login] handleSendCode - Sending OTP', {
-        phone: fullPhoneNumber,
         mode: submitMode,
-        name: isSignUp ? name.trim() : undefined,
+        isSignUp,
+        hasName: isSignUp ? name.trim().length > 0 : undefined,
       });
     }
     await signInWithPhone(fullPhoneNumber, submitMode, isSignUp ? name.trim() : undefined);
@@ -572,8 +572,21 @@ export default function PhoneLoginScreen() {
                   placeholder={t('authPhone.namePlaceholder', { defaultValue: 'Your name' })}
                   value={name}
                   onChangeText={(value) => {
-                    setNameError(null);
                     setName(value);
+                    if (value.trim().length >= 2) {
+                      setNameError(null);
+                    } else if (value.trim().length > 0) {
+                      setNameError(
+                        t('authPhone.nameRequired', { defaultValue: 'Please enter your name' }),
+                      );
+                    }
+                  }}
+                  onBlur={() => {
+                    if (isSignUp && name.trim().length > 0 && name.trim().length < 2) {
+                      setNameError(
+                        t('authPhone.nameRequired', { defaultValue: 'Please enter your name' }),
+                      );
+                    }
                   }}
                   leftIcon="person.fill"
                   autoCapitalize="words"

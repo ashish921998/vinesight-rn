@@ -1095,7 +1095,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         phone: maskedPhone,
         mode,
         shouldCreateUser: mode === 'signup',
-        name: name ?? undefined,
+        hasName: Boolean(name?.trim()),
       });
     }
 
@@ -1107,7 +1107,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         options.data = { full_name: name.trim() };
         if (__DEV__) {
           console.log('[auth] signInWithPhone - Capturing name for signup:', {
-            name: name.trim(),
+            hasName: true,
             phone: maskedPhone,
           });
         }
@@ -1193,7 +1193,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       // - Not prompt users who previously authenticated via email OTP and have email in metadata
       // This is an intentional design trade-off for simplicity.
       const isNewUser = !hasCompletedProfileName(data.user);
-      const hasName = hasCompletedProfileName(data.user);
 
       if (isNewUser) {
         telemetry.capture('user_signed_up', { method: 'phone' });
@@ -1208,20 +1207,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         });
       } else if (data.user) {
         telemetry.capture('user_logged_in', { method: 'phone' });
-        // Track "New user created" when user completes registration with name
-        if (hasName && wasAuthenticated === false) {
-          telemetry.capture('New user created', {
-            method: 'phone',
-            name: data.user?.user_metadata?.full_name ?? 'captured',
-          });
-          await upsertProfileNameFromAuthUserBestEffort(data.user);
-          if (__DEV__) {
-            console.log('[auth] verifyPhoneOTP - "New user created" event tracked', {
-              user_id: data.user.id,
-              name: data.user?.user_metadata?.full_name,
-            });
-          }
-        }
         set({
           user: data.user,
           session: data.session,

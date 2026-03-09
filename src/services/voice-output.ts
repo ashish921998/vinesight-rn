@@ -38,6 +38,8 @@ class VoiceOutputService {
 
   private lastAudioUri: string | null = null;
 
+  private lastAllowDeviceFallback: boolean = true;
+
   private async playAudioUri(fileUri: string, options: PlaybackOptions): Promise<boolean> {
     if (!fileUri) return false;
 
@@ -115,6 +117,7 @@ class VoiceOutputService {
     let replacedAudioUriDeleted = false;
     this.lastLanguage = options.language;
     this.lastMessageText = text || null;
+    this.lastAllowDeviceFallback = options.allowDeviceFallback !== false;
 
     if (!audio?.base64 && this.lastAudioUri) {
       const staleAudioUri = this.lastAudioUri;
@@ -165,6 +168,9 @@ class VoiceOutputService {
             options.onError?.();
           },
         });
+      } else if (text && options.allowDeviceFallback === false) {
+        options.onStateChange?.(false);
+        options.onError?.();
       }
     } catch {
       if (replacedAudioUri && !replacedAudioUriDeleted) {
@@ -227,7 +233,7 @@ class VoiceOutputService {
       });
     }
 
-    if (this.lastMessageText) {
+    if (this.lastMessageText && this.lastAllowDeviceFallback) {
       options?.onStateChange?.(true);
       Speech.speak(this.lastMessageText, {
         language: resolveLocale(this.lastLanguage),
@@ -245,6 +251,9 @@ class VoiceOutputService {
           options?.onError?.();
         },
       });
+    } else if (this.lastMessageText && !this.lastAllowDeviceFallback) {
+      options?.onStateChange?.(false);
+      options?.onError?.();
     }
   }
 

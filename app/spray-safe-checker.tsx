@@ -27,7 +27,7 @@ export default function SpraySafeCheckerScreen() {
   const [targetDateOverride, setTargetDateOverride] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const { data: farms = [] } = useFarms();
-  const { data: catalogMixes = [] } = useChemicalCatalog();
+  const { data: catalogMixes = [], isLoading: isCatalogLoading } = useChemicalCatalog();
   const initialFarmId = params.farmId ? Number.parseInt(params.farmId, 10) : null;
   const activeFarmId = Number.isFinite(initialFarmId ?? NaN)
     ? initialFarmId
@@ -292,11 +292,11 @@ export default function SpraySafeCheckerScreen() {
         </Pressable>
       ) : null}
 
-      {matrixQuery.isLoading ? (
+      {matrixQuery.isLoading || isCatalogLoading ? (
         <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
           {t('common.loading', { defaultValue: 'Loading…' })}
         </Text>
-      ) : filteredStatuses.length === 0 ? (
+      ) : filteredStatuses.length === 0 && query.trim() ? (
         <View style={{ marginTop: spacing[2] }}>
           <Text style={{ color: m3.colorScheme.onSurfaceVariant }}>
             {t('common.noResultsFound', { defaultValue: 'No results found' })}

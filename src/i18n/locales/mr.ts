@@ -1612,6 +1612,7 @@ export const mr = {
       recordingTooShortDetailBody:
         'ऑडिओ खूप लहान होता, {{reason}}. बोला दाबा, किमान 1 सेकंद थांबा, मग थांबा दाबा.',
       voiceMessage: 'व्हॉइस मेसेज',
+      microphoneOff: 'मायक्रोफोन बंद',
       replyVoiceUnavailable: 'या उत्तरासाठी आवाज उपलब्ध नाही.',
       sttNotReadyTitle: 'सर्व्हर STT तयार नाही',
       sttNotReadyBody:

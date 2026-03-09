@@ -1606,6 +1606,7 @@ export const en = {
       recordingTooShortDetailBody:
         'Audio was too short{{reason}}. Tap Speak, wait at least 1 second, then tap Stop.',
       voiceMessage: 'Voice message',
+      microphoneOff: 'Microphone off',
       replyVoiceUnavailable: 'Voice unavailable for this reply.',
       sttNotReadyTitle: 'Server STT not ready',
       sttNotReadyBody:

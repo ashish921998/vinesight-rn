@@ -670,7 +670,10 @@ function VoiceModeModal({
       }, []),
     [messages],
   );
-  const recentAssistantIndices = new Set(assistantMessageIndices.slice(-2));
+  const recentAssistantIndices = useMemo(
+    () => new Set(assistantMessageIndices.slice(-2)),
+    [assistantMessageIndices],
+  );
 
   const statusText = isAssistantSpeaking
     ? t('ai.chat.assistantSpeaking')
@@ -680,7 +683,7 @@ function VoiceModeModal({
         ? t('ai.voice.listening')
         : isVoiceModeMicEnabled
           ? t('ai.chat.tapToSpeak')
-          : 'Microphone off';
+          : t('ai.voice.microphoneOff', { defaultValue: 'Microphone off' });
 
   const primaryActionLabel = t('ai.chat.stop');
   const primaryActionSymbol = 'stop.fill';
@@ -1181,9 +1184,9 @@ export default function AIChatScreen() {
     ],
   );
 
-  const startNewConversation = useCallback(() => {
-    setIsHistoryVisible(false);
+  const resetConversationState = useCallback(() => {
     cancelInFlightAssistantRequest();
+    conversationAsyncTokenRef.current += 1;
     setIsLoading(false);
     setRouteClarificationPending(false);
     setPendingAmbiguousTranscript(null);
@@ -1199,6 +1202,11 @@ export default function AIChatScreen() {
     setMessages([]);
     setSuggestions([]);
   }, [cancelInFlightAssistantRequest]);
+
+  const startNewConversation = useCallback(() => {
+    setIsHistoryVisible(false);
+    resetConversationState();
+  }, [resetConversationState]);
 
   const DEFAULT_SUGGESTIONS = useMemo(
     () => [
@@ -1224,24 +1232,15 @@ export default function AIChatScreen() {
               return;
             }
             if (conversationId === targetConversationId) {
-              cancelInFlightAssistantRequest();
-              setConversationId(null);
-              setMessages([]);
+              resetConversationState();
               setSuggestions(DEFAULT_SUGGESTIONS);
-              setIsLoading(false);
             }
             void refreshConversationHistory();
           },
         },
       ]);
     },
-    [
-      cancelInFlightAssistantRequest,
-      conversationId,
-      DEFAULT_SUGGESTIONS,
-      refreshConversationHistory,
-      t,
-    ],
+    [conversationId, DEFAULT_SUGGESTIONS, refreshConversationHistory, resetConversationState, t],
   );
   const voiceLogDraftSummary = useMemo(() => {
     if (!voiceLogDraft) return null;
@@ -1578,10 +1577,7 @@ export default function AIChatScreen() {
     const voicePayloadValidation = validateVoiceAudioPayload(voicePayload);
     const transcriptText = finalVoiceTranscriptRef.current.trim();
     const fallbackTranscriptText =
-      transcriptText ||
-      pendingVoiceTranscriptRef.current.trim() ||
-      liveVoiceTranscript.trim() ||
-      inputText.trim();
+      transcriptText || pendingVoiceTranscriptRef.current.trim() || liveVoiceTranscript.trim();
     if (!voicePayloadValidation.ok) {
       const debugLine = formatVoicePayloadDebug({
         reason: voicePayloadValidation.reason,
@@ -1638,7 +1634,7 @@ export default function AIChatScreen() {
 
     const previewText = fallbackTranscriptText;
     void sendMessageRef.current?.(previewText, 'voice', voicePayload);
-  }, [inputText, liveVoiceTranscript, stopVoiceRecording, t]);
+  }, [liveVoiceTranscript, stopVoiceRecording, t]);
 
   const handleSendMessage = useCallback(
     async (
@@ -1693,7 +1689,8 @@ export default function AIChatScreen() {
         content:
           visibleUserContent ||
           pendingVoiceTranscriptRef.current.trim() ||
-          liveVoiceTranscript.trim(),
+          liveVoiceTranscript.trim() ||
+          (source === 'voice' ? t('ai.voice.voiceMessage') : ''),
         timestamp: new Date(),
       };
 
@@ -2497,7 +2494,7 @@ export default function AIChatScreen() {
             language: languageCode,
             rate: 1,
             onStateChange: setIsAssistantSpeaking,
-            allowDeviceFallback: true,
+            allowDeviceFallback: false,
             onError: () => {
               setVoiceModeNotice(t('ai.voice.replyVoiceUnavailable'));
               if (__DEV__) {
@@ -2619,6 +2616,7 @@ export default function AIChatScreen() {
   });
 
   useSpeechRecognitionEvent('result', (event) => {
+    if (suppressVoiceRecognitionEventsRef.current) return;
     const transcript = event.results[0]?.transcript ?? '';
     if (!transcript) return;
 
@@ -2769,6 +2767,7 @@ export default function AIChatScreen() {
             setVoiceInputState('listening');
             return;
           }
+          void stopVoiceRecording({ discard: true });
           setVoiceInputState('idle');
           setIsVoiceModeMicEnabled(false);
           setVoiceModeError(t('ai.voice.permissionBody'));

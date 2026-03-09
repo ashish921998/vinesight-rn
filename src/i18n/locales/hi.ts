@@ -1587,6 +1587,7 @@ export const hi = {
       recordingTooShortDetailBody:
         'ऑडियो बहुत छोटा था {{reason}} के कारण। बोलें दबाएँ, कम से कम 1 सेकंड रुकें, फिर रोकें दबाएँ।',
       voiceMessage: 'वॉइस मैसेज',
+      microphoneOff: 'माइक्रोफ़ोन बंद',
       replyVoiceUnavailable: 'इस जवाब के लिए आवाज़ उपलब्ध नहीं है।',
       sttNotReadyTitle: 'सर्वर STT तैयार नहीं',
       sttNotReadyBody:
