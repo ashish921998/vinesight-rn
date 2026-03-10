@@ -1188,11 +1188,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const isSignup = pendingPhoneMode === 'signup';
       const needsProfileCompletion = !hasCompletedProfileName(data.user);
 
-      if (isSignup) {
+      if (isSignup && data.user) {
         await upsertProfileNameFromAuthUserBestEffort(data.user, pendingSignupName || undefined);
         telemetry.capture('user_signed_up', {
           method: 'phone',
-          hasSignupName: Boolean(pendingSignupName),
+          has_signup_name: Boolean(pendingSignupName),
         });
         set({
           user: data.user,
@@ -1205,13 +1205,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           needsProfileCompletion,
           isLoading: false,
         });
-      } else if (data.user) {
-        await upsertProfileNameFromAuthUserBestEffort(data.user);
-        telemetry.capture('user_logged_in', { method: 'phone' });
+      } else {
+        if (data.user) {
+          await upsertProfileNameFromAuthUserBestEffort(data.user);
+          telemetry.capture('user_logged_in', { method: 'phone' });
+        }
         set({
           user: data.user,
           session: data.session,
-          isAuthenticated: true,
+          isAuthenticated: Boolean(data.user),
           pendingOTPPhone: null,
           pendingOTPPhoneName: null,
           pendingOTPPhoneMode: null,
